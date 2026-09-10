@@ -78,9 +78,11 @@ export type FieldMeta = {
    *
    * ⚠️ **THE FIRST TIME THIS LAYER HAS HAD THE CONCEPT, AND THE SERVER HAS HAD
    * IT SINCE #26.12.** `origin` on document types is create-only and is kept so
-   * by two zod schemas plus a strip function — `documentTypeSchema` has it,
-   * `documentTypeUpdateSchema` omits it, `stripDocumentTypeOrigin` removes it a
-   * second time for callers that are not the route. What did not exist was any
+   * by two zod schemas plus a strip — `documentTypeSchema` has it,
+   * `documentTypeUpdateSchema` omits it, and `stripDocumentTypeOrigin` removes
+   * it again for callers that are not the route, on top of the unconditional
+   * `stripLookupOrigin` that Slice #34.14 put above `updateValue`'s switch for
+   * every list. What did not exist was any
    * way to SAY it on the form, because `value-list-modal.tsx` has one
    * `EditForm` for both verbs and branches on `state.id === null` in exactly
    * two places (the heading, and the URL). So a create-only field had nowhere

@@ -290,7 +290,10 @@ export const documentTypeSchema = z.object({
   key: optionalDocumentTypeKey,
   // Slice #26.12 — how this type came to exist. CREATE ONLY: see
   // documentTypeUpdateSchema below, which omits it, and updateValue, which
-  // strips it a second time.
+  // strips it twice over since Slice #34.14 — once for every list above its
+  // switch (`stripLookupOrigin`) and once again in the `document-types` branch.
+  // ⚠️ This field is why `createValue`'s strip has one named exception: on this
+  // ONE list a POST may legitimately state an origin.
   //
   // ⚠️ **No `.default()`, and that is the point.** A default would make the
   // field present-and-MANUAL on every parse, so a payload that never mentioned
@@ -308,11 +311,14 @@ export const documentTypeSchema = z.object({
  * renders — `{ name }` for document types, since Slice #34.09 added a
  * `createOnly` `key` beside it that `startEdit` does not seed — and PUT is a
  * FULL-REPLACE update: `updateValue` does
- * `.set(parsed.data)`. Had `origin` carried a `.default("MANUAL")` on the
- * shared schema, every rename of an imported type would have parsed to
- * `{ name, sortOrder: 0, origin: "MANUAL" }` and quietly re-originated it —
- * blue to black, "AI scanned" to "New", with nothing in the diff to see. So the
- * update path cannot even name the column.
+ * `.set(stripLookupOrigin(parsed.data))`. Had `origin` carried a
+ * `.default("MANUAL")` on the shared schema, every rename of an imported type
+ * would have parsed to `{ name, sortOrder: 0, origin: "MANUAL" }` and quietly
+ * re-originated it — blue to black, "AI scanned" to "New", with nothing in the
+ * diff to see. So the update path cannot even name the column. (⚠️ Since Slice
+ * #34.14 the strip would take it back out even if it did; that is a second
+ * layer, not a reason to relax this one. The `.set(parsed.data)` this sentence
+ * used to say is why the second layer had to be written.)
  *
  * `.omit()` rather than a hand-written second object so the two can never fall
  * out of step on `name`, `sortOrder` or `templateFields`.
@@ -364,12 +370,19 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
 /**
  * Drop `origin` from an update payload.   (Slice #26.12)
  *
- * ⚠️ **The second of two guards on a write-once column, and the redundancy is
- * deliberate.** `updateValue` in ./queries.ts is a full-replace `.set(...)`, so
- * anything that reaches it is written. `LIST_UPDATE_SCHEMAS` below protects the
- * HTTP route by omitting the column from the PUT schema; this protects every
- * OTHER caller — a script, a future admin action, a test — from re-originating
- * a type by handing back the row it just read. A rename must never turn an
+ * ⚠️ **SINCE SLICE #34.14 THIS IS THE THIRD OF THREE LAYERS, NOT THE SECOND OF
+ * TWO, AND WHAT IT BUYS HAS CHANGED.** `stripLookupOrigin` below now runs above
+ * `updateValue`'s switch for every list, so the column is already gone by the
+ * time this is reached. What this name still buys is the composed expression
+ * the `document-types` branch is pinned on — four guards on one write, and a
+ * test that fails if any of them is unwrapped.
+ *
+ * The original argument, still the reason all three layers exist:
+ * `updateValue` in ./queries.ts is a full-replace `.set(...)`, so anything that
+ * reaches it is written. `LIST_UPDATE_SCHEMAS` below protects the HTTP route by
+ * omitting the column from the PUT schema; the strip protects every OTHER
+ * caller — a script, a future admin action, a test — from re-originating a type
+ * by handing back the row it just read. A rename must never turn an
  * import-created type into a hand-added one.
  *
  * ⚠️ **It lives HERE, not next to its call site**, for one blunt reason:
@@ -385,6 +398,65 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
  * moved the strip out of the branch that needs it.
  */
 export function stripDocumentTypeOrigin<T extends Record<string, unknown>>(
+  data: T,
+): Omit<T, "origin"> {
+  // ⚠️ **A DELEGATION, NOT A COPY, SINCE SLICE #34.14.** The strip is now
+  // generic — `updateValue` applies `stripLookupOrigin` to EVERY list before it
+  // dispatches — and this name is kept for the one branch that composes it with
+  // three other guards. Two names for one behaviour is the smaller cost: the
+  // composed expression in the `document-types` branch is pinned character for
+  // character by `document-type-origin-single-source.test.ts`, and that pin is
+  // the thing standing between four guards and a refactor that unwraps one.
+  return stripLookupOrigin(data);
+}
+
+/**
+ * Drop `origin` from a payload, on both write doors.            (Slice #34.14)
+ *
+ * ⚠️ **THREE LOOKUP TABLES CARRY AN `origin` COLUMN AND ONE BRANCH OF
+ * `updateValue` GUARDED IT.** migration_069 gave the column to
+ * `lookup_document_type`; migration_077 gave the same column, with the same
+ * write-once meaning, to `lookup_tarla` and `lookup_institution`. The strip did
+ * not follow: the `tarla` and `institutions` branches were a bare
+ * `.set(data)`, so a caller that is not the HTTP route could re-originate a
+ * code or an institution by handing back the row it had just read — turning
+ * „Creat la import" into „Adăugat manual" with nothing in the diff to see, on
+ * the very column `origin-status.ts`'s filter is built on.
+ *
+ * ⚠️ **ZOD WAS THE ONLY THING STOPPING IT, AND ZOD IS ON THE OTHER SIDE OF THE
+ * DOOR.** `LIST_UPDATE_SCHEMAS` protects the route by never naming the column;
+ * `updateValue` is `.set(...)` over whatever object it is handed. That is the
+ * distinction `stripDocumentTypeOrigin`'s own header drew in #26.12 and it is
+ * the same one here — a script, a future admin action or a test does not parse
+ * through zod on its way in.
+ *
+ * ⚠️ **IT RUNS FOR ALL ELEVEN LISTS, NOT FOR THE THREE THAT HAVE THE COLUMN,
+ * AND THAT IS THE POINT.** A set of origin-carrying lists would be a fourth
+ * thing to remember to update — and the record is two migrations that grew the
+ * set and no slice that grew the guard. On the eight lists with no such column
+ * an `origin` key is not a column at all, so removing it removes nothing a
+ * legitimate caller could have meant; on a TWELFTH list that arrives with one,
+ * the guard is already there. `value-list-write-door.test.ts` pins the
+ * three-table set so its growth is at least visible, and pins that the raw
+ * payload never reaches either switch UNDER ITS OWN NAME — on the create door
+ * the `document-types` branch deliberately receives it, as the next paragraph
+ * says, so on that one branch the stripped object and the payload are the same
+ * object.
+ *
+ * ⚠️ **BOTH DOORS CALL IT, AND THE CREATE DOOR HAS ONE NAMED EXCEPTION.**
+ * `updateValue` strips for all eleven lists — a PUT may never restate the
+ * column on any of them. `createValue` strips for ten: `document-types` is the
+ * one list whose POST schema deliberately carries `origin` as a create-only
+ * field, and `createDocumentTypeRow` honours it. The full argument, including
+ * why that contract is a known weakness rather than a model, is at the call
+ * site in ./queries.ts.
+ *
+ * Lives here rather than beside its call site for the reason
+ * `stripDocumentTypeOrigin` gives: `queries.ts` imports `@/db`, which opens a
+ * `pg.Pool` at module load, so a Jest test importing it would connect to a
+ * database to check an object spread. This module is zod-only.
+ */
+export function stripLookupOrigin<T extends Record<string, unknown>>(
   data: T,
 ): Omit<T, "origin"> {
   const { origin: _ignored, ...safe } = data;

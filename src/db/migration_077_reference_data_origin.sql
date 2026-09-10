@@ -68,6 +68,22 @@
 --   maintenance script for this column would take. Extending the strip to
 --   those two branches belongs with the code half of this slice.
 --
+--   ⚠️ RETRACTED BY SLICE #34.14 - THE PARAGRAPH ABOVE IS HISTORY, NOT THE
+--   CURRENT STATE, and it is left standing because it is the argument the fix
+--   was built from. `updateValue` now calls `stripLookupOrigin` ONCE above its
+--   switch, so all eleven lists are stripped on the way in and the property no
+--   longer rests on a schema that happens not to mention the column;
+--   `createValue` strips it too, for every list but `document-types`, whose
+--   POST schema carries `origin` as a create-only field on purpose. Zod is
+--   still the route-side half and is still worth having.
+--
+--   ⚠️ AND THE COMMENT ON lookup_tarla.origin BELOW STILL SAYS THE OLD THING -
+--   "no explicit strip guards the value-lists PUT for this table - Zod drops an
+--   unknown origin from the update payload and that is the only guard". That
+--   text is LIVE IN THE DATABASE, not just in this file, so correcting it needs
+--   a `COMMENT ON COLUMN` in a new migration rather than an edit here. It is in
+--   the #34.14 handover.
+--
 -- WHY 'IMPORT' IS STILL THE RIGHT WORD FOR A CODE READ OFF A FOLDER NAME
 --   The slice asks whether it is, because a tarla code arrives from a FOLDER
 --   NAME rather than from a document. It is, and the reason is that every path

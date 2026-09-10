@@ -739,13 +739,18 @@ export const lookupTarla = pgTable("lookup_tarla", {
   // pins both halves: the closed two-writer list, and that this writer takes no
   // origin argument.
   //
-  // ⚠️ **The rename guard is ONE layer here, not two.**
-  // `stripDocumentTypeOrigin` is called from the `document-types` branch of
-  // `updateValue` alone; the `tarla` and `institutions` branches are a bare
-  // `.set(data)`. What holds the property today is Zod — the update schemas for
-  // both lists are plain `z.object`, so an unknown `origin` never reaches the
-  // query layer. Extending the explicit strip belongs with the code half of
-  // #34.02; until then a non-HTTP caller could re-origin a row.
+  // ⚠️ **The rename guard was ONE layer here, not two — SLICE #34.14 IS WHERE
+  // THAT WAS FIXED.** What stood here: „`stripDocumentTypeOrigin` is called
+  // from the `document-types` branch of `updateValue` alone; the `tarla` and
+  // `institutions` branches are a bare `.set(data)`. What holds the property
+  // today is Zod — the update schemas for both lists are plain `z.object`, so
+  // an unknown `origin` never reaches the query layer." migration_077's own
+  // header names the same gap. `updateValue` now calls `stripLookupOrigin` ONCE
+  // above its switch, so every list is stripped on the way in and the property
+  // no longer rests on a schema that happens not to mention the column;
+  // `createValue` strips it too, for every list but `document-types`, whose
+  // create legitimately honours a caller's origin. Zod is still the route-side
+  // half and is still worth having.
   //
   // ⚠️ **Only an import can reach the auto-seed, which is why the import word
   // is the honest one for a folder name.** POST /api/properties has two

@@ -50,6 +50,28 @@ import { cadastralKey } from "@/lib/properties/cadastral-identity";
 const SRC = join(process.cwd(), "src");
 const read = (...p: string[]) => readFileSync(join(SRC, ...p), "utf8");
 
+/**
+ * `resolveTarlaForCreate`'s body alone, comment- and string-blanked.
+ *                                                          (Slice #34.14)
+ *
+ * ⚠️ **A CHARACTER WINDOW IS NOT A FUNCTION, AND THIS ONE HAD ALREADY DRIFTED
+ * ONCE.** What stood here was `body.slice(at, at + 1400)`, sized to the
+ * function as #34.03 left it; #34.14 added an advisory lock and a second scan,
+ * and the landmark it pins moved to within 350 characters of falling out of the
+ * window. Widening the number would only reset the same clock — and a window
+ * WIDER than the function is worse than a narrow one, because every assertion
+ * here is a `toContain` or an index comparison, so a needle satisfied by the
+ * NEXT function reads as green. The next top-level `export` is the honest end:
+ * this is a private function and `createPropertyIn` follows it.
+ */
+function resolveTarlaSource(source: string): string {
+  const body = code(source);
+  const at = body.indexOf("async function resolveTarlaForCreate");
+  if (at < 0) return "";
+  const next = body.indexOf("\nexport ", at + 1);
+  return body.slice(at, next < 0 ? body.length : next);
+}
+
 /** Comments and string bodies blanked — a claim must not be met by a comment. */
 function code(source: string): string {
   return source
@@ -261,12 +283,87 @@ describe("only an import can still create a tarla code", () => {
     // `tarlaCode` — a field the Property form does not send. That is what makes
     // "only an import mints a code" a fact about the type rather than an
     // argument about five call sites.
-    const body = code(q);
-    const at = body.indexOf("async function resolveTarlaForCreate");
-    expect(at).toBeGreaterThan(-1);
-    const fn = body.slice(at, at + 1400);
+    const fn = resolveTarlaSource(q);
+    expect(fn).not.toBe("");
     expect(fn.indexOf("if (input.tarlaId) return input.tarlaId;"))
       .toBeLessThan(fn.indexOf("insert(lookupTarla)"));
+  });
+
+  /**
+   * …AND TWO CREATES OF THE SAME NEW CODE CANNOT BOTH INSERT IT.
+   *                                                          (Slice #34.14)
+   *
+   * ⚠️ **THE FOLD CLOSED THE SPELLING HALF OF THE TWIN PROBLEM AND NOT THE
+   * CONCURRENCY HALF**, which this function's own header said in as many words
+   * and left open. Read-all-rows, find, insert is not atomic: two creates
+   * carrying the same NEW code could interleave, both miss, and both insert —
+   * the twin pair migration_078 refuses to resolve, manufactured by the
+   * application, with #34.03's `ambiguous-value` refusal no longer downstream
+   * to catch it.
+   *
+   * ⚠️ **THE ORDER IS THE WHOLE ASSERTION, AND IT IS WHY THIS IS FOUR
+   * INDEXES AND NOT A `toContain`.** A lock taken AFTER the scan it is meant to
+   * protect, or an insert that does not re-check under it, is a lock that costs
+   * a round trip and prevents nothing — and both read as "the advisory lock is
+   * in place" to anything looking for the call alone.
+   */
+  it("takes an advisory lock on the folded code, and re-checks under it", () => {
+    const fn = resolveTarlaSource(q);
+
+    const firstScan = fn.indexOf("const hit = await findFolded();");
+    const lockKeys  = fn.indexOf("advisoryLockKeys(`tarla:${wanted}`)");
+    const lockCall  = fn.indexOf("pg_advisory_xact_lock");
+    const recheck   = fn.indexOf("const raced = await findFolded();");
+    const insert    = fn.indexOf("insert(lookupTarla)");
+
+    for (const [what, idx] of [
+      ["first scan", firstScan], ["lock keys", lockKeys], ["lock call", lockCall],
+      ["re-check", recheck], ["insert", insert],
+    ] as const) {
+      expect(`${what}: ${idx > -1 ? "present" : "MISSING"}`).toBe(`${what}: present`);
+    }
+
+    // scan → lock → scan again → insert. Nothing out of order.
+    expect(firstScan).toBeLessThan(lockKeys);
+    expect(lockKeys).toBeLessThan(lockCall);
+    expect(lockCall).toBeLessThan(recheck);
+    expect(recheck).toBeLessThan(insert);
+  });
+
+  /**
+   * The lock is NAMESPACED, and the namespace is not decoration.
+   *
+   * `ensurePropertyForFolder` takes `advisoryLockKeys(<cadastral identity>)` in
+   * the same transaction, and an identity is the two folded halves joined by a
+   * hyphen (`cadastralIdentityKey`) — so the two key spaces overlap wherever a
+   * tarla CODE contains that join character. `48-50d` is such a code, it is in
+   * `property-cadastral-identity.test.ts`'s own fixture, and
+   * `POST /api/properties` takes `tarlaCode` as free text: unprefixed, it would
+   * be character for character the identity of tarla `48`, parcela `50d`, and
+   * two unrelated writes would serialise on each other — invisible rather than
+   * wrong, which is the worst kind. The prefix costs nothing and removes the
+   * class. (It removes STRING equality, not hash collision; `advisoryLockKeys`
+   * concedes that one and prices it at a wait.)
+   */
+  it("namespaces its lock key so it cannot mean a parcel identity", () => {
+    expect(code(q)).toContain("advisoryLockKeys(`tarla:${wanted}`)");
+  });
+
+  /**
+   * ⚠️ **AND THE `origin` LITERAL STILL TAKES NO PARAMETER.** The slice
+   * description asks for this by name: whatever is done about the race must not
+   * turn the write-once column into an argument a caller supplies. Pinned as
+   * the literal object rather than as a substring of the file, because the
+   * value appears in comments and in `lookup-origin-status` prose too.
+   */
+  it("writes origin as a literal at the insert, with no caller able to state one", () => {
+    const fn = resolveTarlaSource(q);
+    // `code()` blanks string BODIES, so `origin: "IMPORT"` reads as `origin: ""`
+    // here. This half asserts the SHAPE — a literal in the `.values(...)`, no
+    // identifier, nothing off `input` — inside this function and no other.
+    expect(fn.replace(/\s+/g, "")).toContain('.values({indicativ:value,origin:""})');
+    // …and this half asserts the VALUE, unblanked.
+    expect(q).toContain('.values({ indicativ: value, origin: "IMPORT" })');
   });
 });
 

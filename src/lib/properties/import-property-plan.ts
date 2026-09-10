@@ -51,7 +51,15 @@ export type PropertyFolderInput = {
 // ---------------------------------------------------------------------------
 
 /**
- * A stable pair of 32-bit lock numbers for a parcel identity.
+ * A stable pair of 32-bit lock numbers for a string.
+ *
+ * ⚠️ **"FOR A PARCEL IDENTITY" IS WHAT THIS SAID UNTIL SLICE #34.14**, which
+ * gave it a second key space: `resolveTarlaForCreate` locks on
+ * `` `tarla:${cadastralKey(code)}` `` before it mints a tarla code. Hence the
+ * namespace prefix there and not here — a hyphenated code like `48-50d` is
+ * character for character the identity of tarla `48`, parcela `50d`, so the
+ * two spaces overlap unless the caller separates them. This function stays
+ * ignorant of both: it hashes whatever string it is handed.
  *
  * Computed here rather than by Postgres's `hashtext`, and the reason is not
  * taste: `hashtext` is an internal function with no compatibility promise, and

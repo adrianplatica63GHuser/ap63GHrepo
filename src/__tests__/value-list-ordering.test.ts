@@ -4,6 +4,9 @@
 
 /**
  * Slice #34.01 — a value list reads back in the same order every time.
+ * Slice #34.14 — …and "every time" stopped meaning "unless two rows tie on
+ * everything", on nine of the eleven. See §2's second assertion, §3, §4's last
+ * test and §5.
  *
  * THE DEFECT THIS FILE IS ABOUT
  *   Seven of the eleven branches of `listValues`
@@ -25,19 +28,31 @@
  *   each half for what it is, in the style of value-list-move-history:
  *
  *     • **The SORT KEY the code really passes** (§1–§4), read out of the
- *       source of `listValues` itself. §2 is the generic guard — every branch
- *       must END on the list's own required, user-entered field — and §3/§4
- *       pin the exact term LIST per branch, which is what catches a key
- *       written in the wrong order or a "harmonisation" of the two branches
- *       that must not become `sort_order, name`.
+ *       source of `listValues` itself. §2 is the generic guard — since Slice
+ *       #34.14 every branch must END on the PRIMARY KEY, with the list's own
+ *       required, user-entered field immediately before it, the two named
+ *       exceptions apart — and §3/§4 pin the exact term LIST per branch, which
+ *       is what catches a key written in the wrong order or a "harmonisation"
+ *       of the two branches that must not become `sort_order, name`.
  *
  *     • **Tie-breaking, exercised for real** (§5), over a fixture in which
  *       several rows share `sort_order = 0` — the case that had no answer
  *       before this slice — from three arrival orders, which is what "the same
  *       rows, read twice" means when the server is free to hand tied rows over
  *       in any order. §5 also runs the negative control (the OLD key,
- *       `sort_order` alone, does NOT survive a different arrival order) and
- *       the residual (two rows sharing EVERY sort key still can swap).
+ *       `sort_order` alone, does NOT survive a different arrival order), the
+ *       total-key case Slice #34.14 added (rows tied on BOTH `sort_order` and
+ *       the required field come back the same way from every arrival order),
+ *       and what is left of the residual (`person-roles`, which #34.14 did not
+ *       touch, still can swap).
+ *
+ *     • **The second reader of the two relationship lists** (§7, Slice
+ *       #34.14). Those two tables are read by `listValues` for Reference
+ *       Data's modal and by `listPropertyPropertyRoles` /
+ *       `listDocumentDocumentRoles` for the association screens' dropdowns.
+ *       Slice #29.13 shaped the branches to match the pickers; §7 pins that
+ *       #34.14's third sort term reached both, so the two cannot disagree
+ *       about a tied pair.
  *
  *     • **The write side of the one column this slice retired** (§6):
  *       `personRoleSchema` no longer carries `sortOrder`, and the two
@@ -51,34 +66,38 @@
  *   being TOTAL, which is a property of the key and not of the order it is
  *   read in. §5 models tie-breaking, and only tie-breaking.
  *
- *   ⚠️ **AND `(sort_order, name)` IS NOT TOTAL IN THE DATABASE — ON TEN OF THE
- *   ELEVEN LISTS.** No lookup table has a UNIQUE constraint on its display
- *   field, so two rows sharing BOTH keys may still swap — the residual §5
- *   measures rather than assumes. The exception since Slice #34.09 is
- *   `document-types`: migration_080 puts a partial unique index over the
- *   normalised name on `lookup_document_type`, so two rows can no longer hold
- *   one name and that list's key is total in a database that migration has been
- *   APPLIED to. ⚠️ That qualifier is not pedantry: `supabase_schema_full.sql`
- *   is generated, and until it is regenerated a cloud project rebuilt from it
- *   has the code and not the index. #34.09's handover carries the regeneration
- *   and the re-baseline as its first step for exactly this reason.
+ *   ⚠️ **`(sort_order, name)` WAS NOT TOTAL IN THE DATABASE, AND SLICE #34.14
+ *   IS WHERE THAT STOPPED BEING TRUE ON NINE LISTS.** No lookup table has a
+ *   UNIQUE constraint over its display field, so two rows sharing BOTH keys
+ *   could swap between reads — which is why #34.01 shipped with a residual and
+ *   named `asc(id)` as the one-line fix. #34.14 applied it: nine branches now
+ *   close on the primary key, so their sort key is total by construction rather
+ *   than by observation, and §5 asserts the tied pair holds still instead of
+ *   asserting that it swaps. §2 pins the required field as the term BEFORE
+ *   `id`, so no branch can end up sorted by a uuid.
+ *
+ *   ⚠️ **THE TWO EXCEPTIONS, AND THEY ARE NOT THE SAME KIND OF EXCEPTION.**
+ *     • `document-types` — nothing left to break. Since Slice #34.09,
+ *       migration_080 puts a partial unique index over the normalised name on
+ *       `lookup_document_type`, so two rows can no longer hold one name. ⚠️
+ *       That is true of a database the migration has been APPLIED to:
+ *       `supabase_schema_full.sql` is generated, and until it is regenerated a
+ *       cloud project rebuilt from it has the code and not the index. (The
+ *       sentence this replaces is kept for the reason the index exists:
+ *       duplicate names were documented and EXPECTED here, and
+ *       `matchDocumentType` takes the first name match, so a tie decided which
+ *       of two same-named types an import ADOPTED, not merely where a row sat.)
+ *       §5 still cannot reach this branch — its first term is raw `sql`.
+ *     • `person-roles` — the residual SURVIVES, deliberately. Its branch is
+ *       `ORDER BY name` alone and #34.14's out-of-scope keeps it that way, so
+ *       two roles sharing one name can still swap. §5 measures that rather than
+ *       assuming it, and it is in the #34.14 handover.
  *   On the four lists whose name is the only column (`use-categories`,
- *   `person-types`, `citizenships`, `judicial-person-types`) that cannot be
- *   seen. On the other seven it can: the modal renders every `LIST_META` field
- *   as a column, so tied rows visibly exchange places. Two of the seven are
- *   worse than cosmetic:
- *     • `document-types` — RESOLVED by Slice #34.09, and the sentence is kept
- *       because it is the reason the fix exists. It read: "where duplicate
- *       names are documented and EXPECTED — only `key` is UNIQUE and
- *       `matchDocumentType` takes the first name match, so a tie decides which
- *       of two same-named types an import ADOPTS, not merely where a row
- *       sits". Two rows can no longer share a name, so there is no tie to
- *       decide. That branch is still one of the four #34.01 does not touch,
- *       and §5 still cannot reach it (its first term is raw `sql`).
- *     • `tarla`, where ties at `sort_order = 0` are the normal state rather
- *       than an edge case, because `createPropertyIn` auto-seeds every code.
- *   Both are named in the Slice #34.01 handover; a third key (`id`) is the
- *   one-line fix if either ever bites.
+ *   `person-types`, `citizenships`, `judicial-person-types`) a swap could never
+ *   be SEEN in any case. On the others it could: the modal renders every
+ *   `LIST_META` field as a column, so tied rows visibly exchange places —
+ *   `tarla` most of all, where ties at `sort_order = 0` are the normal state
+ *   rather than an edge case, because `createPropertyIn` auto-seeds every code.
  *
  *   The half none of this can reach — that a live list against live rows
  *   really holds still — is Adrian's, through the UI, and is in the handover.
@@ -279,23 +298,54 @@ describe("§1 listValues covers every list, with an ORDER BY this file can read"
   });
 });
 
-// ── §2 The last sort term is the list's required field ───────────────────────
+// ── §2 The last sort term separates rows the earlier terms cannot ────────────
 //
 // This is the whole of Slice #34.01 in one assertion, and it is written
 // generically on purpose: a TWELFTH list added to VALID_LIST_KEYS with
 // `ORDER BY sort_order` alone fails here, which is the failure mode this slice
 // removed from seven lists at once.
 
+/**
+ * The nine branches Slice #34.14 closed on the primary key.
+ *
+ * The other two are named rather than filtered so that a TWELFTH list cannot
+ * join them by accident: a new key is in `TOTAL_KEY` unless somebody writes it
+ * into this list and says why. `person-roles` orders by name alone and keeps
+ * its residual (§5); `document-types` cannot tie at all since migration_080.
+ */
+const NO_ID_KEY: ListKey[] = ["person-roles", "document-types"];
+const TOTAL_KEY: ListKey[] = VALID_LIST_KEYS.filter((k) => !NO_ID_KEY.includes(k));
+
 describe("§2 every list's ORDER BY ends on a column that distinguishes rows", () => {
   it.each(VALID_LIST_KEYS.map((k) => [k]))(
-    "%s ends on its required field, ascending, and not on sortOrder",
+    "%s ends on the primary key where it takes one, and never on sortOrder",
     (key) => {
       const { terms } = BRANCHES[key];
       const last = terms[terms.length - 1];
       expect(`${key}: ${last?.kind}`).toBe(`${key}: column`);
       if (!last || last.kind !== "column") return;
-      expect(`${key}: ${last.column}`).toBe(`${key}: ${requiredField(key)}`);
+      const closesOnId = TOTAL_KEY.includes(key);
+      expect(`${key}: ${last.column}`).toBe(
+        `${key}: ${closesOnId ? "id" : requiredField(key)}`,
+      );
       expect(`${key}: ${last.dir}`).toBe(`${key}: asc`);
+    },
+  );
+
+  // ⚠️ **`id` MAY ONLY BREAK TIES, NEVER DECIDE THE ORDER.** (Slice #34.14.)
+  // A branch that closed on `asc(id)` with the required field MISSING would
+  // pass the assertion above and sort the list by a random uuid — every row in
+  // an order no reader can predict, which is a worse version of the defect
+  // #34.01 fixed. So the term before `id` is pinned too.
+  it.each(TOTAL_KEY.map((k) => [k]))(
+    "%s still decides its visible order on its required field, before id",
+    (key) => {
+      const { terms } = BRANCHES[key];
+      const beforeLast = terms[terms.length - 2];
+      expect(`${key}: ${beforeLast?.kind}`).toBe(`${key}: column`);
+      if (!beforeLast || beforeLast.kind !== "column") return;
+      expect(`${key}: ${beforeLast.column}`).toBe(`${key}: ${requiredField(key)}`);
+      expect(`${key}: ${beforeLast.dir}`).toBe(`${key}: asc`);
     },
   );
 
@@ -332,15 +382,27 @@ const FIXED_BY_34_01: ListKey[] = [
 ];
 
 describe("§3 the seven sort_order-only lists gained a second key, in that order", () => {
-  it.each(FIXED_BY_34_01.map((k) => [k]))("%s is sortOrder then the required field", (key) => {
-    expect(BRANCHES[key].terms.map((t) => t.raw)).toEqual([
-      `asc(${BRANCHES[key].from}.sortOrder)`,
-      `asc(${BRANCHES[key].from}.${requiredField(key)})`,
-    ]);
-  });
+  // Slice #34.14 added a THIRD, `asc(id)`, which is what turns "unique in
+  // practice" into "unique by construction" — see §5's residual.
+  it.each(FIXED_BY_34_01.map((k) => [k]))(
+    "%s is sortOrder, then the required field, then id",
+    (key) => {
+      expect(BRANCHES[key].terms.map((t) => t.raw)).toEqual([
+        `asc(${BRANCHES[key].from}.sortOrder)`,
+        `asc(${BRANCHES[key].from}.${requiredField(key)})`,
+        `asc(${BRANCHES[key].from}.id)`,
+      ]);
+    },
+  );
 });
 
-// ── §4 The four that were already deterministic, pinned ──────────────────────
+// ── §4 The four that already had a tiebreaker, pinned ────────────────────────
+//
+// ⚠️ **"UNTOUCHED" IS WHAT THIS SECTION SAID AFTER #34.01 AND IT IS NO LONGER
+// TRUE OF ALL FOUR.** The two relationship lists took `asc(id)` with the seven
+// in #34.14; `person-roles` and `document-types` did not, and the last test
+// here pins that they did not. What has never changed is the reason the first
+// two must not be harmonised into `sort_order, name`, below.
 //
 // ⚠️ Two of these must NOT become `sortOrder, name`, and the reasons are not
 // visible from this file:
@@ -356,7 +418,7 @@ describe("§3 the seven sort_order-only lists gained a second key, in that order
 //     first name match, and src/lib/documents/resolve-document-type.ts
 //     restates the same clause deliberately rather than importing it.
 
-describe("§4 the four lists with an existing tiebreaker are untouched", () => {
+describe("§4 the four lists that already had a tiebreaker", () => {
   it("person-roles sorts by name alone — NOT by sortOrder", () => {
     expect(BRANCHES["person-roles"].terms.map((t) => t.raw)).toEqual([
       "asc(lookupPersonRole.name)",
@@ -374,11 +436,25 @@ describe("§4 the four lists with an existing tiebreaker are untouched", () => {
   it.each([
     ["property-property-roles", "lookupPropertyPropertyRole"],
     ["document-document-roles", "lookupDocumentDocumentRole"],
-  ] as const)("%s is still sortOrder then name", (key, table) => {
+  ] as const)("%s is still sortOrder then name, now closing on id", (key, table) => {
     expect(BRANCHES[key].terms.map((t) => t.raw)).toEqual([
       `asc(${table}.sortOrder)`,
       `asc(${table}.name)`,
+      `asc(${table}.id)`,
     ]);
+  });
+
+  /**
+   * ⚠️ **AND THE TWO THAT DID NOT GET `id` ARE PINNED AS NOT HAVING IT.**
+   * (Slice #34.14.) Both exclusions are decisions, not oversights — the slice's
+   * own out-of-scope names them — and a decision nothing asserts is one the
+   * next tidy-up reverses. `document-types` has no tie left to break
+   * (migration_080); `person-roles` keeps its residual, which §5 measures.
+   */
+  it.each(NO_ID_KEY.map((k) => [k]))("%s deliberately does NOT sort by id", (key) => {
+    expect(
+      `${key}: ${BRANCHES[key].terms.filter((t) => t.kind === "column" && t.column === "id").length} id term(s)`,
+    ).toBe(`${key}: 0 id term(s)`);
   });
 });
 
@@ -476,26 +552,55 @@ describe("§5 the same rows, read three times, come back in the same order", () 
   });
 
   /**
-   * THE RESIDUAL, MEASURED RATHER THAN ASSUMED. No lookup table has a UNIQUE
-   * constraint on its display field, so `(sort_order, name)` is unique in
-   * practice and not by construction. Two rows that share every sort key can
-   * still swap between reads. This test exists so that the limit is a stated,
-   * failing-if-it-changes fact rather than a sentence in a comment — the day a
-   * third key (`id`) is added, it goes red and is deleted with the caveat.
+   * THE RESIDUAL, CLOSED ON NINE LISTS AND MEASURED ON THE TENTH.
+   *                                                          (Slice #34.14)
+   *
+   * What stood here ran over every modellable list and asserted that two rows
+   * sharing EVERY sort key still swap — the honest limit of `(sort_order,
+   * name)` on tables with no UNIQUE constraint over their display field. It
+   * ended: "the day a third key (`id`) is added, it goes red and is deleted
+   * with the caveat." That day is this slice, so the test is SPLIT rather than
+   * deleted: the nine that took `asc(id)` are asserted to hold still, and
+   * `person-roles` — which the slice deliberately did not touch — keeps the
+   * original assertion, because a residual nothing measures is a residual
+   * nobody knows is still there.
+   *
+   * ⚠️ **`id` IS A uuid IN THE DATABASE AND A LABEL IN THIS FIXTURE**, so what
+   * the first half models is that the key SEPARATES the rows, not the order it
+   * puts them in. That is the whole claim: a total key means two reads agree,
+   * whatever the collation says about which comes first.
    */
-  it.each(MODELLABLE.map((k) => [k]))(
-    "%s — RESIDUAL: two rows sharing every sort key can still swap",
+  it.each(
+    MODELLABLE.filter((k) => TOTAL_KEY.includes(k)).map((k) => [k]),
+  )(
+    "%s — two rows tied on BOTH sort_order and name come back the same way twice",
     (key) => {
       const field = requiredField(key);
       const twins: FixtureRow[] = [
         { id: "twin-a", sortOrder: 0, [field]: "Același" },
         { id: "twin-b", sortOrder: 0, [field]: "Același" },
       ];
+      // ⚠️ **NOT `arrivals()`, and the reason is arithmetic.** That helper's
+      // third order is `[...rows.slice(2), ...rows.slice(0, 2)]`, which for a
+      // TWO-row fixture is the first order again — so a third `toEqual` here
+      // would be a line that cannot fail. Two rows have exactly two arrival
+      // orders and both are asserted.
       const forwards = orderBy(twins, BRANCHES[key].terms).map((r) => r.id);
       const backwards = orderBy([...twins].reverse(), BRANCHES[key].terms).map((r) => r.id);
-      expect(backwards).not.toEqual(forwards);
+      expect(backwards).toEqual(forwards);
     },
   );
+
+  it("person-roles — RESIDUAL: two roles sharing one name can still swap", () => {
+    const twins: FixtureRow[] = [
+      { id: "twin-a", sortOrder: 0, name: "Același" },
+      { id: "twin-b", sortOrder: 0, name: "Același" },
+    ];
+    const terms = BRANCHES["person-roles"].terms;
+    const forwards = orderBy(twins, terms).map((r) => r.id);
+    const backwards = orderBy([...twins].reverse(), terms).map((r) => r.id);
+    expect(backwards).not.toEqual(forwards);
+  });
 });
 
 // ── §6 person-roles: the column is no longer written either ──────────────────
@@ -533,5 +638,44 @@ describe("§6 person-roles does not write sort_order", () => {
       expect(LIST_SCHEMAS[key].parse({ name: "Anexă" }).sortOrder).toBe(0);
       expect(LIST_SCHEMAS[key].parse({ name: "Anexă", sortOrder: 7 }).sortOrder).toBe(7);
     }
+  });
+});
+
+// ── §7 The two lists that are read TWICE, and must agree with themselves ─────
+//
+// ⚠️ **A SORT KEY IS A PROPERTY OF THE SCREEN, NOT OF THE FUNCTION, AND TWO OF
+// THESE LISTS HAVE TWO READERS.** (Slice #34.14.) The relationship-role lists
+// are served to Reference Data's modal by `listValues` and to the association
+// screens' dropdowns by `listPropertyPropertyRoles` /
+// `listDocumentDocumentRoles` — two functions, two files, one table. Slice
+// #29.13 shaped the `listValues` branches to match the pickers precisely so
+// the two would agree; closing one on `asc(id)` and not the other would have
+// undone that from the other side, with tied rows sitting one way in the modal
+// and the other way in the dropdown.
+//
+// Asserted as the sibling's own ORDER BY rather than by comparing the two term
+// lists, because the two files spell their terms differently — `asc(x.name)`
+// in `listValues`, a bare `x.name` in the pickers (Drizzle treats a bare column
+// as ascending). Normalising one into the other would be a third opinion about
+// what the two mean.
+
+describe("§7 the relationship lists' second reader sorts the same way", () => {
+  it.each([
+    ["property-property-roles", "lookupPropertyPropertyRole"],
+    ["document-document-roles", "lookupDocumentDocumentRole"],
+  ] as const)("%s's dropdown reader ends on id too", (dir, table) => {
+    const src = read("lib", "admin", dir, "queries.ts")
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/\/\/[^\n]*/g, " ");
+    const at = src.indexOf(".orderBy(");
+    expect(`${dir}: ${at > -1 ? "has an orderBy" : "NO orderBy"}`).toBe(
+      `${dir}: has an orderBy`,
+    );
+    const args = at < 0 ? null : balanced(src, at + ".orderBy".length);
+    expect(args === null ? [] : splitArgs(args)).toEqual([
+      `${table}.sortOrder`,
+      `${table}.name`,
+      `${table}.id`,
+    ]);
   });
 });

@@ -42,5 +42,15 @@ export async function listDocumentDocumentRoles(): Promise<DocumentDocumentRoleR
       sortOrder:   lookupDocumentDocumentRole.sortOrder,
     })
     .from(lookupDocumentDocumentRole)
-    .orderBy(lookupDocumentDocumentRole.sortOrder, lookupDocumentDocumentRole.name);
+    // ⚠️ **THE THIRD TERM IS `id`, AND IT IS HERE BECAUSE IT IS THERE.**
+    //                                                        (Slice #34.14)
+    // This reader exists so the association screen's dropdown shows the same
+    // list, in the same order, as Reference Data's modal — `listValues`'
+    // `document-document-roles` branch, whose ordering #29.13 shaped to match
+    // this one. #34.14 closed that branch on the primary key, which makes its
+    // key TOTAL; leaving this one at `(sort_order, name)` would mean two rows
+    // tied on both can sit one way in the modal and the other way in the
+    // dropdown, which is the disagreement #29.13 was written to prevent,
+    // reintroduced from the other side. See the header above `listValues`.
+    .orderBy(lookupDocumentDocumentRole.sortOrder, lookupDocumentDocumentRole.name, lookupDocumentDocumentRole.id);
 }

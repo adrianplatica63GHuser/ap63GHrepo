@@ -16,7 +16,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzl
 import { db, type DbTransaction } from "@/db";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey, cadastralValue } from "./cadastral-identity";
-import type { CadastralMatch } from "./import-property-plan";
+import { advisoryLockKeys, type CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 // Slice #34.07: the snapshot key sets come from the registry that already
@@ -759,20 +759,61 @@ export async function createProperty(
  *
  * `tarlaId` wins over `tarlaCode` when both arrive: an id is a decision.
  *
- * ⚠️ **WHAT THE FOLD CLOSES IS THE SPELLING HALF, NOT THE CONCURRENCY HALF**,
- * and a review round is why that is stated rather than left to be discovered.
- * Read-all-rows, find, insert is not atomic and nothing locks `lookup_tarla`:
- * two creates carrying the same NEW code can interleave and both insert,
- * producing exactly the twin pair migration_078 refuses to resolve. The
- * import's advisory lock does not cover it — that keys on the cadastral
- * IDENTITY (`tarla-parcela`), so two folders sharing a tarla take different
- * locks — and `POST /api/properties` with a `tarlaCode` takes none at all.
- * Left as it is deliberately: one business user, imports run one at a time,
- * and both fixes cost more than the race does. A unique index over the folded
- * `indicativ` would close it and is the follow-up migration_078's header
- * declines for its own reasons; an advisory lock on the folded code would
- * close it without a migration, and is the smaller of the two if it ever
- * bites.
+ * ⚠️ **THE FOLD CLOSES THE SPELLING HALF; SLICE #34.14 CLOSES THE CONCURRENCY
+ * HALF, AND THE TWO ARE DIFFERENT BUGS.** Read-all-rows, find, insert is not
+ * atomic. Two creates carrying the same NEW code could interleave, both miss,
+ * and both insert — producing exactly the twin pair migration_078 refuses to
+ * resolve, with properties pointing at both rows and #34.03's `ambiguous-value`
+ * refusal no longer downstream to catch it. The import's own advisory lock does
+ * not cover this: it keys on the cadastral IDENTITY (`tarla-parcela`), so two
+ * folders sharing a tarla take DIFFERENT locks, and `POST /api/properties`
+ * takes no identity lock at all. (It takes the CODE lock below — that is what
+ * this slice adds; before it, that door was unserialised in both senses.)
+ *
+ * **So this function takes its own lock, on the FOLDED CODE, and it takes it
+ * only when it is about to insert.** `pg_advisory_xact_lock` inside the
+ * transaction the caller already opened: no migration, no schema object,
+ * released by the commit or the rollback whatever happens in between. The
+ * pattern is double-checked — scan, and only on a MISS take the lock and scan
+ * again — for two reasons, neither of them micro-optimisation:
+ *   • a transaction-scoped lock is held until COMMIT, so locking on every
+ *     create would serialise every folder of an import that shares one tarla
+ *     against every other, for the whole of each transaction;
+ *   • the second scan is what makes the lock mean anything. The racer that got
+ *     there first commits, we take the lock it released, we look again, and we
+ *     ADOPT its row instead of writing a twin.
+ *
+ * **The key is `advisoryLockKeys("tarla:" + wanted)`** — the same hash pair
+ * `ensurePropertyForFolder` uses, over a NAMESPACED string so a tarla lock and
+ * a parcel-identity lock can never be the SAME STRING. (Not "can never
+ * collide": these are two 32-bit hashes and `advisoryLockKeys`'s own header
+ * concedes that a hash collision costs a wait and nothing else. What the prefix
+ * removes is the case where the two are equal by construction — a hyphenated
+ * code like `48-50d`, which `POST /api/properties` accepts as free text, is
+ * character for character the identity of tarla `48`, parcela `50d`.) It reuses
+ * that function rather than copying it for the reason stated there: a hash
+ * computed in this codebase cannot drift out from under the code that depends
+ * on it.
+ *
+ * ⚠️ **NO DEADLOCK, AND IT IS ORDERING THAT BUYS THAT, NOT LUCK.** The only
+ * caller that holds a parcel-identity lock takes it BEFORE `createPropertyIn`
+ * runs, so the acquisition order is always identity-then-code; nothing anywhere
+ * takes a tarla lock and then waits for an identity one. Two transactions
+ * wanting the same new code simply queue.
+ *
+ * ⚠️ **WHAT THE LOCK DOES NOT COVER, NAMED RATHER THAN IMPLIED.** It
+ * serialises this function against itself, and this function is the only door
+ * that MINTS a code from a folder name. The other writer of `lookup_tarla` is
+ * Reference Data's „Adaugă", through `createValue` — which takes no lock and
+ * applies no fold, so an administrator typing `t3` beside an existing `T3`
+ * still makes the twin pair, with or without a race. That gap is older than
+ * this slice and is the one a unique index would close; it is in the #34.14
+ * handover rather than papered over here.
+ *
+ * A unique index over the folded `indicativ` would close both at the database.
+ * That remains the follow-up migration_078's header declines for its own
+ * reasons — an admin form's second „T1" would become a 23505 needing a friendly
+ * refusal per outcome, which is a slice, not a line.
  */
 async function resolveTarlaForCreate(
   tx: DbTransaction,
@@ -790,12 +831,53 @@ async function resolveTarlaForCreate(
   const wanted = cadastralKey(value);
   if (wanted === "") return null;
 
-  const rows = await tx
-    .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
-    .from(lookupTarla)
-    .orderBy(lookupTarla.indicativ);
-  const hit = rows.find((r) => cadastralKey(r.indicativ) === wanted);
-  if (hit) return hit.id;
+  // The scan is a helper rather than two copies, because the SECOND scan
+  // deciding differently from the first — a looser fold, a stale `wanted` — is
+  // the one way this pattern fails silently: it would insert the twin the lock
+  // was taken to prevent, under the lock, and look correct doing it.
+  //
+  // ⚠️ **`id` IS THE SECOND SORT TERM, AND ON THIS READ IT IS NOT COSMETIC.**
+  // (Slice #34.14.) `indicativ` has no unique constraint — the header above
+  // names the writer that can still make a twin pair with no race at all,
+  // Reference Data's „Adaugă", which applies no fold — so `ORDER BY indicativ`
+  // alone leaves `rows.find` picking whichever of two identical codes Postgres
+  // handed over first. That pick is not a row's position on a screen: it is
+  // written into `property.tarla_id`, a foreign key, so two creates of one code
+  // could point at two different rows, and every count, move and delete in
+  // Reference Data would then see two populations where there is one code.
+  // Same one-line fix as the nine `listValues` branches, on the read where
+  // being wrong is persisted rather than displayed.
+  const findFolded = async (): Promise<string | null> => {
+    const rows = await tx
+      .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
+      .from(lookupTarla)
+      .orderBy(lookupTarla.indicativ, lookupTarla.id);
+    return rows.find((r) => cadastralKey(r.indicativ) === wanted)?.id ?? null;
+  };
+
+  const hit = await findFolded();
+  if (hit) return hit;
+
+  // ── About to mint a code: serialise on it first. ─────────  (Slice #34.14)
+  //
+  // Namespaced, so this lock cannot collide with `ensurePropertyForFolder`'s
+  // lock on a cadastral identity. See the header above for the double check,
+  // the ordering that rules out a deadlock, and why the lock is not taken on
+  // the hit path.
+  const [lockA, lockB] = advisoryLockKeys(`tarla:${wanted}`);
+  await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
+
+  // The second half of the double check. A racer that committed its row while
+  // we waited for the lock is ADOPTED here rather than duplicated.
+  //
+  // ⚠️ **THIS SCAN SEES THE RACER ONLY BECAUSE `db.transaction()` IS READ
+  // COMMITTED** — a bare `BEGIN`, so every statement takes its own snapshot.
+  // Raise the isolation level and this re-read would reuse the snapshot the
+  // FIRST scan took, miss the committed row, and insert the twin under the lock
+  // that was taken to prevent it. Stated because it is invisible: the code
+  // would look exactly the same and be exactly wrong.
+  const raced = await findFolded();
+  if (raced) return raced;
 
   // ⚠️ The origin literal is written HERE and takes no parameter, so no caller
   // can express one and no sixth caller can forget it. See migration_077.

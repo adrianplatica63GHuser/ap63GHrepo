@@ -27,7 +27,19 @@
  * Slice #34.01: every branch of `listValues` now ends its `ORDER BY` on the
  * list's own required field, so a list reads back in the same order every
  * time — on every list but `document-types`, whose `name` is not unique even
- * in practice. See the header above `listValues`.
+ * in practice. See the header above `listValues`. (⚠️ Both halves have since
+ * moved: #34.09's partial unique index made `document-types`' name unique for
+ * every name a person would type, and #34.14 put `asc(id)` AFTER the required
+ * field on nine branches, so "ends on" is now true of two of the eleven. The
+ * paragraph is kept because it is why the required field is in the key at all.)
+ *
+ * Slice #34.14: the two write doors and the read. `updateValue` was guarded on
+ * ONE branch of eleven and `createValue` on none; both now strip `origin`
+ * before they dispatch — `updateValue` for all eleven lists, `createValue` for
+ * ten, `document-types` excepted because its POST schema carries the column on
+ * purpose. And nine branches of `listValues` close on `asc(id)`, which makes
+ * their sort key total rather than unique-by-observation. See the headers above
+ * each.
  *
  * Create and update still dispatch on the ListKey string via a switch —
  * verbose but fully type-safe within each case. The delete no longer does:
@@ -67,6 +79,7 @@ import {
 import {
   sanitizeDocumentTypeTemplateFields,
   stripDocumentTypeOrigin,
+  stripLookupOrigin,
 } from "./validation";
 import {
   documentTypeHasForm,
@@ -180,40 +193,72 @@ async function generateUniqueDocumentTypeKey(
  * list's own required, user-entered field — `name` on ten lists, `indicativ`
  * on `tarla` — which makes the key total in practice, leaves `sort_order`
  * doing exactly what it did for the rows that have one, and needs no
- * migration, no form field and no data change.
+ * migration, no form field and no data change. (⚠️ **"ends on" was true of
+ * #34.01 and is not true now**: since #34.14 nine branches end on `asc(id)`
+ * and the required field is the term before it. The paragraph is kept because
+ * it is still why the required field is IN the key at all.)
  *
- * ⚠️ **"IN PRACTICE" IS DOING WORK: NO LOOKUP TABLE HAS A UNIQUE CONSTRAINT ON
- * ITS DISPLAY FIELD — EXCEPT `document-types`, SINCE SLICE #34.09.**
- * migration_080 puts a partial unique index over the NORMALISED name on
- * `lookup_document_type`, so on that one list a tie is no longer reachable at
- * all: two rows the ORDER BY could not separate would have to hold the same
- * name, and the database now refuses the second. The paragraph below is left
- * standing for the other ten, where it is still exactly true; the
- * `document-types` bullet inside it is corrected in place.
- * Two rows sharing BOTH keys can still swap. On the four
- * lists whose name is the only column — `use-categories`, `person-types`,
- * `citizenships`, `judicial-person-types` — that cannot be seen: the two lines
- * read the same. On the other seven it can, because the modal renders every
- * `LIST_META` field as a column (`displayFields = meta.fields`,
- * value-list-modal.tsx), so tied rows visibly exchange places.
+ * ⚠️ **"IN PRACTICE" WAS DOING WORK, AND SLICE #34.14 TOOK THE WORD OUT OF
+ * NINE OF THE ELEVEN.** No lookup table has a UNIQUE constraint on its display
+ * field — `document-types` excepted, where migration_080 puts a partial unique
+ * index over the NORMALISED name — so `(sort_order, name)` was unique by
+ * observation and not by construction, and two rows sharing BOTH keys could
+ * still come back in either order. #34.01's own header named `id` as the
+ * one-line fix if it ever bit; this slice applied it without waiting to be
+ * bitten, because "nothing guarantees two reads agree" is cheaper to close than
+ * to keep explaining.
  *
- * Two of those seven are worse than cosmetic:
- *   • `document-types`, where duplicate names WERE documented and EXPECTED —
- *     that sentence went on to say "only `key` is UNIQUE, and
- *     `matchDocumentType` takes the FIRST name match, so a tie decides which of
- *     two same-named types an import ADOPTS, not merely where a row sits". True
- *     until Slice #34.09, which made the tie unreachable: two rows can no
- *     longer hold one name. `matchDocumentType` still takes the first match and
- *     the restated ORDER BY in resolve-document-type.ts is still load-bearing —
- *     what is gone is the case where "first" was a coin toss.
- *   • `tarla`, where ties at `sort_order = 0` are the normal state rather than
- *     an edge case, because `createPropertyIn` auto-seeds every code there.
- * Neither is changed by this slice — document-types is one of the four
- * branches it does not touch — and both are in the #34.01 handover. A third
- * key (`id`) is the one-line fix if either bites.
+ * **`asc(<table>.id)` is now the LAST term on nine branches** —
+ * `property-types`, `tarla`, `use-categories`, `person-types`, `citizenships`,
+ * `judicial-person-types`, `institutions` and the two relationship lists. The
+ * primary key is unique by definition, so on those nine the key is TOTAL: not
+ * "unique in practice", not "unique unless someone types the same name twice",
+ * total. It changes no visible order — it can only separate rows that were
+ * already indistinguishable to every earlier term — and it needs no migration
+ * and no form field.
  *
- * ⚠️ **THE OTHER FOUR BRANCHES ALREADY HAD A TIEBREAKER AND ARE UNTOUCHED —
- * AND TWO OF THEM MUST NEVER BE HARMONISED INTO `sort_order, name`.**
+ * ⚠️ **THE TWO IT DOES NOT TOUCH, AND WHY EACH IS DIFFERENT.**
+ *   • `document-types` — the tie is all but unreachable, and #34.14's
+ *     out-of-scope leaves the branch alone. migration_080 refuses a second row
+ *     with the same normalised name, so for every name a person would type
+ *     there is nothing left for the ORDER BY to separate. (The sentence this
+ *     replaces is worth keeping for the reason the fix exists: duplicate names
+ *     WERE documented and expected here, and `matchDocumentType` takes the
+ *     FIRST name match, so a tie decided which of two same-named types an
+ *     import ADOPTED — not merely where a row sat. #34.09 removed the case
+ *     where "first" was a coin toss.)
+ *     ⚠️ **"ALL BUT" IS EXACT: THAT INDEX IS PARTIAL.** It excludes the EMPTY
+ *     normalised form — see `lookupDocumentType`'s index in schema/index.ts,
+ *     which says why: `sameDocumentTypeName` refuses to call two empty forms
+ *     equal. `name` is `min(1)`, so „—" or a single space is an accepted name
+ *     that normalises to nothing, and TWO such rows insert. They then tie here
+ *     with no third term. The consequence is cosmetic — two rows that look the
+ *     same swapping places — because `sameDocumentTypeName` will not equate
+ *     them either, so no import ADOPTS the wrong one. It is a residual, it is
+ *     in the #34.14 handover, and the fix is one term.
+ *   • `person-roles` — LEFT WITH THE RESIDUAL, deliberately. Its branch is
+ *     `ORDER BY name` alone and the slice's own out-of-scope keeps it exactly
+ *     as it is, so two roles sharing one name can still swap. That is a real
+ *     residual and it is in the #34.14 handover rather than in a comment that
+ *     claims otherwise. ⚠️ It is a residual on the same footing as the other
+ *     ten had: `createValue`'s `person-roles` branch is a bare insert with no
+ *     unique index and no server-side name check, so two roles CAN share a
+ *     name. The exclusion is scope, not safety, and the fix is the same one
+ *     line the day it matters.
+ *
+ * On the four lists whose name is the only column — `use-categories`,
+ * `person-types`, `citizenships`, `judicial-person-types` — a swap could never
+ * have been SEEN anyway: the two lines read the same. On the others it could,
+ * because the modal renders every `LIST_META` field as a column
+ * (`displayFields = meta.fields`, value-list-modal.tsx). `tarla` was the one
+ * that mattered: ties at `sort_order = 0` are the normal state there rather
+ * than an edge case, because `createPropertyIn` auto-seeds every code.
+ *
+ * ⚠️ **THE FOUR BRANCHES THAT ALREADY HAD A TIEBREAKER — AND TWO OF THEM MUST
+ * NEVER BE HARMONISED INTO `sort_order, name`.** ("UNTOUCHED" is what this said
+ * after #34.01 and it is no longer true of the last bullet: the two
+ * relationship lists took `asc(id)` with the seven in #34.14. The two that must
+ * not be harmonised are also the two that did not.)
  *   • `person-roles` orders by `name` ALONE. Its `sort_order` reaches no
  *     screen at all, and its seeded 1..N is a numbering of the seed list
  *     rather than a curated order — reading it would pin every role added
@@ -225,13 +270,15 @@ async function generateUniqueDocumentTypeKey(
  *     pin is load-bearing: `matchDocumentType` takes the first name match, and
  *     src/lib/documents/resolve-document-type.ts restates the same clause
  *     deliberately rather than importing it.
- *   • the two relationship-role lists were already `sort_order, name` — they
- *     are the shape the seven above now copy.
+ *   • the two relationship-role lists were already `sort_order, name` — the
+ *     shape the seven copied in #34.01 — and they took `asc(id)` alongside them
+ *     in #34.14, so all nine now read `sort_order, name, id`.
  *
- * **A twelfth list must end its `ORDER BY` on a required field too.**
+ * **A twelfth list must end its `ORDER BY` on `id`, after its required field.**
  * `src/__tests__/value-list-ordering.test.ts` reads this function's source and
- * fails when a branch's last sort term is `sortOrder`, or when it has no
- * `orderBy` at all.
+ * fails when a branch's last sort term is `sortOrder`, when a branch has no
+ * `orderBy` at all, or when a branch outside the two named above does not close
+ * on the primary key.
  */
 export async function listValues(key: ListKey): Promise<LookupRow[]> {
   switch (key) {
@@ -246,6 +293,7 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         .orderBy(
           asc(lookupPropertyType.sortOrder),
           asc(lookupPropertyType.name),
+          asc(lookupPropertyType.id),
         ) as Promise<LookupRow[]>;
     case "tarla":
       return db.select().from(lookupTarla)
@@ -253,18 +301,21 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
           asc(lookupTarla.sortOrder),
           // `indicativ` rather than `name` — it is this list's required field.
           asc(lookupTarla.indicativ),
+          asc(lookupTarla.id),
         ) as Promise<LookupRow[]>;
     case "use-categories":
       return db.select().from(lookupUseCategory)
         .orderBy(
           asc(lookupUseCategory.sortOrder),
           asc(lookupUseCategory.name),
+          asc(lookupUseCategory.id),
         ) as Promise<LookupRow[]>;
     case "person-types":
       return db.select().from(lookupPersonType)
         .orderBy(
           asc(lookupPersonType.sortOrder),
           asc(lookupPersonType.name),
+          asc(lookupPersonType.id),
         ) as Promise<LookupRow[]>;
     case "person-roles":
       return db.select().from(lookupPersonRole)
@@ -274,12 +325,14 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         .orderBy(
           asc(lookupCitizenship.sortOrder),
           asc(lookupCitizenship.name),
+          asc(lookupCitizenship.id),
         ) as Promise<LookupRow[]>;
     case "judicial-person-types":
       return db.select().from(lookupJudicialPersonType)
         .orderBy(
           asc(lookupJudicialPersonType.sortOrder),
           asc(lookupJudicialPersonType.name),
+          asc(lookupJudicialPersonType.id),
         ) as Promise<LookupRow[]>;
     case "document-types":
       // UNCLASSIFIED (NECLASIFICAT) pinned first; rest alphabetical.
@@ -293,6 +346,7 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         .orderBy(
           asc(lookupInstitution.sortOrder),
           asc(lookupInstitution.name),
+          asc(lookupInstitution.id),
         ) as Promise<LookupRow[]>;
     // Slice #29.13: sort order then name — the ordering their own
     // `listPropertyPropertyRoles` / `listDocumentDocumentRoles` used, kept so
@@ -302,12 +356,14 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         .orderBy(
           asc(lookupPropertyPropertyRole.sortOrder),
           asc(lookupPropertyPropertyRole.name),
+          asc(lookupPropertyPropertyRole.id),
         ) as Promise<LookupRow[]>;
     case "document-document-roles":
       return db.select().from(lookupDocumentDocumentRole)
         .orderBy(
           asc(lookupDocumentDocumentRole.sortOrder),
           asc(lookupDocumentDocumentRole.name),
+          asc(lookupDocumentDocumentRole.id),
         ) as Promise<LookupRow[]>;
   }
 }
@@ -317,8 +373,43 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
 export async function createValue(
   key: ListKey,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any,
+  payload: any,
 ): Promise<LookupRow> {
+  // ── THE SAME COLUMN, THE OTHER VERB. ──────────────────────  (Slice #34.14)
+  //
+  // ⚠️ **A DOOR THAT JUDGES ON THE WAY OUT AND NOT ON THE WAY IN IS THE SAME
+  // DOOR THIS SLICE JUST CLOSED, FACING THE OTHER WAY.** `updateValue` now
+  // strips `origin` for every list; leaving `createValue`'s `tarla` and
+  // `institutions` branches as a bare `.values(data)` would keep the inverse
+  // hole open — a script could mint an IMPORT-origin tarla code for a value a
+  // PERSON chose, which is exactly what `lookupTarla.origin`'s own header
+  // forbids in as many words: „This is the ONE column on this table the server
+  // decides and no payload may state." Zod is on the other side of this
+  // function too.
+  //
+  // ⚠️ **AND `document-types` IS THE ONE EXCEPTION, BECAUSE ON THAT LIST THE
+  // ORIGIN REALLY DOES COME OFF THE BODY.** `documentTypeSchema` carries
+  // `origin` as a CREATE-ONLY field (validation.ts) — the one list whose POST
+  // schema names the column — and `createDocumentTypeRow` honours what it is
+  // given, `isDocumentTypeOrigin(data.origin) ? data.origin : "MANUAL"`, pinned
+  // as an expression by `document-type-origin-single-source.test.ts`. Stripping
+  // here would silently retire a shipped contract, which is not what a slice
+  // about a WRITE-ONCE column gets to do on the way past.
+  //
+  // ⚠️ **THAT CONTRACT IS ITSELF A KNOWN WEAKNESS, AND IT IS NOT THIS SLICE'S
+  // TO CLOSE.** `lookupTarla.origin`'s header says so in as many words: „The
+  // create path for this list must not start reading `origin` off a body
+  // either — that is the weakness in migration_069 this column is copied from,
+  // not a shape to copy." So a person POSTing „Adaugă" with an `origin` of
+  // their choosing is still believed on this one list. It is in the #34.14
+  // handover.
+  //
+  // ⚠️ **NOTE WHICH DOOR THIS IS NOT.** The classifier's resolver does not come
+  // through here at all — it calls `createDocumentTypeRow` directly, inside its
+  // own advisory lock — so the exception is not protecting the import; the
+  // import would be unaffected either way.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = key === "document-types" ? payload : stripLookupOrigin(payload);
   switch (key) {
     case "property-types": {
       // Slice #34.03: no generated `key` — see the note above
@@ -648,8 +739,35 @@ export async function updateValue(
   key: ListKey,
   id: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any,
+  payload: any,
 ): Promise<LookupRow | null> {
+  // ── THE WRITE DOOR, FOR ALL ELEVEN LISTS AT ONCE. ──────────  (Slice #34.14)
+  //
+  // ⚠️ **`origin` IS WRITE-ONCE ON THREE OF THESE TABLES AND EXACTLY ONE
+  // BRANCH BELOW WAS GUARDING IT.** `lookup_document_type` (migration_069),
+  // `lookup_tarla` and `lookup_institution` (migration_077) all carry the
+  // column, all three mean the same thing by it — who CHOSE this row, a person
+  // or a machine — and until this slice the `tarla` and `institutions`
+  // branches were a bare `.set(data)`. Zod kept the HTTP route honest and zod
+  // is on the OTHER side of this function: `updateValue` writes whatever object
+  // it is handed, which is the same hole `stripDocumentTypeOrigin` was written
+  // for in #26.12 and the same one the identity-card guard was moved INTO this
+  // layer to close in #32.07.
+  //
+  // ⚠️ **ONCE, ABOVE THE SWITCH — NOT THREE TIMES INSIDE IT.** A per-branch
+  // strip is a list of three tables to keep in step with the schema, and the
+  // record is two migrations that grew that list and no slice that grew the
+  // guard. Stripping unconditionally has nothing to keep in step: the eight
+  // lists with no such column lose a key that was never a column, and a
+  // TWELFTH list arrives already guarded.
+  //
+  // ⚠️ **`payload` IS NEVER READ AGAIN AFTER THIS LINE**, and that is what
+  // `value-list-write-door.test.ts` pins — it reads this function's source,
+  // comments stripped, and fails if the parameter appears anywhere below or if
+  // any `.set(...)` takes something other than `data` (or the
+  // `document-types` branch's `values`, which is derived from it).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = stripLookupOrigin(payload);
   switch (key) {
     case "property-types": {
       const [row] = await db.update(lookupPropertyType).set(data).where(eq(lookupPropertyType.id, id)).returning();
