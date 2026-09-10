@@ -7,6 +7,12 @@
  */
 
 import { z } from "zod/v4";
+import {
+  resolveSnapshotLookup,
+  snapshotRecordedText,
+  type SnapshotLookupOption,
+  type SnapshotLookupState,
+} from "@/lib/versioning/snapshot-lookup";
 import type {
   PropertyCreate,
   PropertySnapshot,
@@ -428,6 +434,133 @@ export function formValuesEqual(a: FormValues, b: FormValues): boolean {
     if (normVal(a.address[k]) !== normVal(b.address[k])) return false;
   }
   return true;
+}
+
+// ===========================================================================
+// A version's lookup values, and what can be done with them   (Slice #34.17)
+//
+// The three fields below store a row of an admin-managed list. `dependents.ts`
+// decides on purpose that a version snapshot is NOT a dependent, so an admin
+// may delete a row that only a snapshot still names — and every snapshot
+// written before migration_078 holds the tarla as the CODE in text under
+// `tarlaSola`, with no id at all, because Slice #34.03 deliberately did not
+// rewrite them. Both used to render as an empty box on the version view.
+//
+// ⚠️ **THE `isOnLatest` GATE IS IN HERE RATHER THAN AT THE CALL SITE, AND THAT
+// IS THE POINT.** It is the one condition whose failure is invisible in a test
+// of the resolver: drop it and the LIVE, EDITABLE row would print „valoare
+// ștearsă" over a picker the user is allowed to change. Pure and exported, so
+// that condition is a unit test rather than a source-reading guard.
+// ===========================================================================
+
+/** The three property fields whose stored value is a row of a lookup list. */
+export type PropertyLookupField = "propertyTypeId" | "useCategoryId" | "tarlaId";
+
+export type PropertyLookupStates = Record<PropertyLookupField, SnapshotLookupState>;
+
+/**
+ * A FRESH object every time, not a shared constant.
+ *
+ * ⚠️ A review round found a module-level singleton here, frozen — SHALLOWLY, so
+ * the three members inside it stayed writable. One stray mutation would have
+ * corrupted every later call in the tab, and it would have landed on the LATEST
+ * version: "Make current" refused for ever, naming a field that is perfectly
+ * fine. Three object literals per render is not a cost worth reasoning about;
+ * a process-wide singleton is.
+ */
+function nothingRecorded(): PropertyLookupStates {
+  return {
+    propertyTypeId: { kind: "empty" },
+    useCategoryId:  { kind: "empty" },
+    tarlaId:        { kind: "empty" },
+  };
+}
+
+/**
+ * What the VIEWED version recorded in each of the three lookup fields.
+ *
+ * `isOnLatest` short-circuits everything to `empty`: the latest version IS the
+ * live row, and all three columns are `ON DELETE SET NULL`, so deleting a
+ * lookup row blanks them there rather than stranding an id — the live copy
+ * cannot reach `deleted`, and a label printed over an editable picker would be
+ * both wrong and unchangeable.
+ *
+ * Each option list is the assembled array the form renders, or `undefined`
+ * while its query has not resolved. That distinction is the difference between
+ * "the list holds no such row" and "the list has not been read yet"; see
+ * `snapshot-lookup.ts`.
+ */
+export function snapshotLookupStates(input: {
+  snapshot:       PropertySnapshot | undefined;
+  isOnLatest:     boolean;
+  propertyTypes:  readonly SnapshotLookupOption[] | undefined;
+  useCategories:  readonly SnapshotLookupOption[] | undefined;
+  tarla:          readonly SnapshotLookupOption[] | undefined;
+}): PropertyLookupStates {
+  if (input.isOnLatest || !input.snapshot) return nothingRecorded();
+  const p = input.snapshot.property;
+  return {
+    propertyTypeId: resolveSnapshotLookup({ id: p.propertyTypeId, options: input.propertyTypes }),
+    useCategoryId:  resolveSnapshotLookup({ id: p.useCategoryId,  options: input.useCategories }),
+    // The only one of the three with a third state to answer.
+    tarlaId: resolveSnapshotLookup({
+      id:           p.tarlaId,
+      recordedText: snapshotRecordedText(p, "tarlaSola"),
+      options:      input.tarla,
+    }),
+  };
+}
+
+const FIELD_ORDER: PropertyLookupField[] = ["propertyTypeId", "useCategoryId", "tarlaId"];
+
+/**
+ * The fields that make "Make this version current" IMPOSSIBLE, in display order.
+ *
+ * "Make current" re-saves `form.getValues()` — the values `snapshotToFormValues`
+ * put on the form when the version was opened, which is the snapshot's own
+ * content. A `deleted` id is still among them and its column is a foreign key,
+ * so the PATCH comes back 23503 and `dbErrorToResponse` hands the user the
+ * string „Foreign key violation", in English. So the press is REFUSED, in a
+ * single-button dialog that NAMES the fields — not by greying the button out,
+ * which puts the reason in a `title` on a control that is out of the tab order
+ * and unannounced. Naming them is the point: the field that blocks may not
+ * even be on screen, since `hideTarlaParcela` removes the tarla for urban
+ * property types.
+ *
+ * ⚠️ **`recorded` DOES NOT BLOCK, AND THE FIRST DRAFT OF THIS SLICE HAD IT
+ * BLOCKING — a review round showed that was worse than what it prevented.**
+ * A pre-migration_078 version has no tarla id, so `snapshotToFormValues` puts
+ * `""` on the form and `toApiPayload` sends `null`: the restore drops the tarla
+ * whatever the screen says, and it did so before this slice too, when the box
+ * was merely empty. Blocking would have taken the ONLY one-click route back to
+ * a whole population of versions — their corners, areas, notes and nickname —
+ * to protect one field that cannot be carried either way. It is disclosed in
+ * the confirmation dialog instead; see `restoreDropsRecorded`.
+ *
+ * `pending` never blocks: an unread list is not evidence of anything. ⚠️ **It
+ * usually resolves in one round trip, and it does NOT always** — a value-list
+ * fetch that keeps failing leaves the query's data `undefined` for as long as
+ * the failure lasts, and in that window a deleted row is indistinguishable from
+ * an unread one, so a restore can still reach the 23503 this function exists to
+ * prevent. Refusing on `pending` would be worse: it would take every restore
+ * away for the same window, on evidence nobody has read. The window is in the
+ * #34.17 handover. `handleMakeCurrent` re-checks this predicate for the
+ * narrower case it CAN close: a list that resolves while the confirmation
+ * dialog is open.
+ */
+export function restoreBlockedBy(states: PropertyLookupStates): PropertyLookupField[] {
+  return FIELD_ORDER.filter((f) => states[f].kind === "deleted");
+}
+
+/**
+ * The fields whose value a restore would drop, in display order.
+ *
+ * Only `recorded` — text the snapshot holds with no id to carry it back. Says
+ * so in the confirmation dialog, so the one field that will not survive is
+ * named before the press rather than missed afterwards.
+ */
+export function restoreDropsRecorded(states: PropertyLookupStates): PropertyLookupField[] {
+  return FIELD_ORDER.filter((f) => states[f].kind === "recorded");
 }
 
 /** Props for the version navigation controls rendered on the corners-line. */

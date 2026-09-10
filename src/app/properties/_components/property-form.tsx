@@ -35,6 +35,10 @@ import {
   formSchema,
   formValuesEqual,
   hasFormData,
+  restoreBlockedBy,
+  restoreDropsRecorded,
+  snapshotLookupStates,
+  type PropertyLookupField,
   type Corner,
   type CornerDiffEntry,
   type FieldHighlights,
@@ -56,6 +60,11 @@ import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { AsyncSelect } from "@/components/forms/async-select";
+import { SnapshotValue } from "@/components/versioning/snapshot-value";
+import {
+  snapshotReplacesPicker,
+  type SnapshotLookupState,
+} from "@/lib/versioning/snapshot-lookup";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import { safeMutate } from "@/lib/api/safe-mutate";
@@ -232,6 +241,12 @@ export function PropertyForm({
   // which is what gates the cannot-delete-from-here dialog further down.
   const [associatedEditing, setAssociatedEditing] = useState(false);
   const [showCannotDelete,   setShowCannotDelete]   = useState(false);
+  // Slice #34.17: the refusal dialog for a version whose lookup value cannot be
+  // written back. An INFO dialog rather than a disabled button, and the reason
+  // is the whole point of the slice: a disabled control is out of the tab order
+  // and its `title` is not announced, so the one sentence naming the field
+  // would reach nobody who did not happen to hover the mouse over it.
+  const [showCannotRestore,  setShowCannotRestore]  = useState(false);
   const [bigMap,           setBigMap]           = useState(false);
   const [showStreetView,   setShowStreetView]   = useState(false);
   const [showAngles,       setShowAngles]       = useState(false);
@@ -589,6 +604,16 @@ export function PropertyForm({
   // returning to the latest always restores the clean baseline.
   const goToVersion = (target: number) => {
     const leaving = effectiveVersion;
+    // ⚠️ **Both make-current dialogs are about the version being LEFT.** #34.17
+    // A review round walked out from under one: `ConfirmDialog` has no focus
+    // trap and the ◀/▶ nav is portalled outside it, so Shift+Tab and Enter step
+    // to another version with the dialog still up — and its sentence then names
+    // fields from a version nobody is looking at, or, on the latest, names
+    // nothing at all („… scrisă înapoi: ."). The confirmation is the worse half:
+    // it would have restored the version the user arrived at, not the one they
+    // agreed to.
+    setShowCannotRestore(false);
+    setConfirmMakeCurrent(false);
     if (target === latestVersion) {
       form.reset(baseline.values);
       setCorners(baseline.corners);
@@ -632,6 +657,41 @@ export function PropertyForm({
       ? computeCornerDiff(snapshotToCorners(prevSnap), snapshotToCorners(currSnap))
       : null;
 
+  // Slice #34.17: what the VIEWED VERSION recorded in its three lookup fields.
+  //
+  // ⚠️ **Each list is handed over ONLY once its query has data**, which is what
+  // makes `undefined` mean "not read yet" rather than "holds no such row" — the
+  // assembled `…Options` arrays are never undefined, because `noneOption` is
+  // prepended to them unconditionally. Labelling an unread list's ids „valoare
+  // ștearsă" would be a confident sentence about something nobody has read.
+  //
+  // The `isOnLatest` gate lives inside `snapshotLookupStates` rather than here;
+  // its docblock says why.
+  const snapshotLookups = snapshotLookupStates({
+    snapshot:      currSnap,
+    isOnLatest,
+    propertyTypes: propertyTypes  ? propertyTypeOptions : undefined,
+    useCategories: useCategories  ? useCategoryOptions  : undefined,
+    tarla:         tarlaItems     ? tarlaOptions        : undefined,
+  });
+
+  // What "Make this version current" can and cannot do with this version.
+  // `restoreBlocked` is fatal (a dangling id into a foreign key — a 23503 and
+  // an English error string); `restoreDrops` is disclosed instead of blocked,
+  // because the value cannot be carried back either way. Both are NAMED to the
+  // user rather than merely counted: the tarla field is not even on screen for
+  // an urban property type (`hideTarlaParcela`), so "a value" would be a reason
+  // nobody could act on. `restoreBlockedBy` argues both halves.
+  const restoreBlocked = restoreBlockedBy(snapshotLookups);
+  const restoreDrops = restoreDropsRecorded(snapshotLookups);
+  const lookupFieldLabels: Record<PropertyLookupField, string> = {
+    propertyTypeId: t("fields.propertyType"),
+    useCategoryId:  t("fields.useCategory"),
+    tarlaId:        t("fields.tarlaSola"),
+  };
+  const namedFields = (fields: PropertyLookupField[]) =>
+    fields.map((f) => lookupFieldLabels[f]).join(", ");
+
   // Version-nav controls (rendered on the corners-line) — only once versions
   // have loaded for an existing property.
   const navLocked = isOnLatest && editDirty;
@@ -649,7 +709,13 @@ export function PropertyForm({
           onNext: () => goToVersion(effectiveVersion + 1),
           // Enabled only while viewing a past version (disabled on the latest).
           canMakeCurrent: !isOnLatest,
-          onMakeCurrent: () => setConfirmMakeCurrent(true),
+          // Slice #34.17: a version that cannot be written back says so, in a
+          // dialog. The button stays enabled on purpose — see
+          // `showCannotRestore` above for why a disabled one would not do.
+          onMakeCurrent: () =>
+            restoreBlocked.length > 0
+              ? setShowCannotRestore(true)
+              : setConfirmMakeCurrent(true),
         }
       : null;
 
@@ -659,6 +725,17 @@ export function PropertyForm({
   // latest (it differs from the current latest), and we follow that new version.
   const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
   const handleMakeCurrent = async () => {
+    // ⚠️ **The press is not the last word — this is.**               (#34.17)
+    // A value list that resolves while the confirmation dialog is open turns a
+    // `pending` field into a `deleted` one, and `onYes` still fires. Swapping
+    // the dialogs rather than returning silently, because a press that was
+    // legal a second ago deserves the reason rather than a dialog that just
+    // disappears — and „Foreign key violation" is what the alternative says.
+    if (restoreBlocked.length > 0) {
+      setConfirmMakeCurrent(false);
+      setShowCannotRestore(true);
+      return;
+    }
     const values = form.getValues();
     const restoredCorners = corners;
     const ok = await doSave(values);
@@ -883,6 +960,7 @@ export function PropertyForm({
                       error={errors.tarlaId?.message}
                       options={tarlaOptions}
                       highlight={displayHighlights?.property.tarlaId}
+                      snapshot={snapshotLookups.tarlaId}
                     />
                   </div>
                 </>
@@ -967,6 +1045,7 @@ export function PropertyForm({
                   error={errors.useCategoryId?.message}
                   options={useCategoryOptions}
                   highlight={displayHighlights?.property.useCategoryId}
+                  snapshot={snapshotLookups.useCategoryId}
                 />
               </div>
               <div className="row-start-3 col-start-2">
@@ -978,6 +1057,7 @@ export function PropertyForm({
                   error={errors.propertyTypeId?.message}
                   options={propertyTypeOptions}
                   highlight={displayHighlights?.property.propertyTypeId}
+                  snapshot={snapshotLookups.propertyTypeId}
                 />
               </div>
               <div className="row-start-3 col-start-3 col-span-2">
@@ -1371,15 +1451,47 @@ export function PropertyForm({
       {confirmMakeCurrent && (
         <ConfirmDialog
           title={t("makeCurrent.title")}
-          body={t("makeCurrent.body", {
-            viewed: effectiveVersion ?? 0,
-            next: makeCurrentNextNumber,
-          })}
+          body={
+            t("makeCurrent.body", {
+              viewed: effectiveVersion ?? 0,
+              next: makeCurrentNextNumber,
+            }) +
+            // Slice #34.17: the one thing a restore cannot carry, named before
+            // the press. Appended to the body rather than given its own line
+            // because `ConfirmDialog` takes a plain string.
+            //
+            // ⚠️ It says the PROPERTY will be left without it, not "the new
+            // version": when nothing else about the restored version differs
+            // from the latest, `snapshotsEqual` writes no version row at all —
+            // it compares `tarlaId`, null on both sides — so a sentence
+            // promising a new version would be false in exactly that case. The
+            // live column is cleared either way.
+            (restoreDrops.length > 0
+              ? " " + t("makeCurrent.dropsRecorded", { fields: namedFields(restoreDrops) })
+              : "")
+          }
           yesLabel={t("makeCurrent.ok")}
           noLabel={t("makeCurrent.cancel")}
           onYes={handleMakeCurrent}
           onNo={() => setConfirmMakeCurrent(false)}
           busy={submitting}
+        />
+      )}
+
+      {/* Slice #34.17 — the refusal, with the fields named. `blockedTitle` is
+          a statement rather than a question, and the single-button info shape
+          is the one `cannotDeleteAssociated` has used since #21.04.Import. */}
+      {/* `&& restoreBlocked.length > 0` so the dialog cannot outlive its own
+          reason: it names fields, and a version list that empties under it
+          would leave it saying „Câmpuri: ." — the degenerate sentence
+          `goToVersion` closes it to avoid on the path that actually happens. */}
+      {showCannotRestore && restoreBlocked.length > 0 && (
+        <ConfirmDialog
+          title={t("makeCurrent.blockedTitle")}
+          body={t("makeCurrent.blocked", { fields: namedFields(restoreBlocked) })}
+          yesLabel={t("makeCurrent.ok")}
+          onYes={() => setShowCannotRestore(false)}
+          busy={false}
         />
       )}
 
@@ -1486,11 +1598,49 @@ function SelectField({
   error,
   options,
   highlight,
+  snapshot,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
+  /**
+   * Slice #34.17: what the viewed VERSION recorded in this field.
+   *
+   * `empty` in create mode and on the latest — `snapshotLookupStates` returns
+   * that for both — and `resolved` or `pending` on a version the list can still
+   * answer for. All three render the `<select>` below exactly as it always has;
+   * only `deleted` and `recorded` take the field over. Optional so a call site
+   * that has no version to read (there is none today) can omit it.
+   */
+  snapshot?: SnapshotLookupState;
 }) {
+  const tShared = useTranslations("shared");
   const ring = usePulseRing(highlight);
+
+  // A version whose lookup row an admin deleted, or whose tarla was recorded as
+  // text before the column had an id, PRINTS what the snapshot holds instead of
+  // offering a picker that has no option for it — which is the empty box both
+  // rendered until this slice. Not a `<label>`: there is no control to
+  // associate with it, exactly like `<ReadOnlyField>` further down.
+  if (snapshot && snapshotReplacesPicker(snapshot)) {
+    // `role="group"` + `aria-labelledby` because the value is no longer a
+    // control for the `<label>` to point at, and a `<span>` beside a `<div>`
+    // is nothing to a screen reader. `<ReadOnlyField>` below predates this and
+    // still has that gap; it is in the handover.
+    const labelId = `${name}-version-label`;
+    return (
+      <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
+        <span id={labelId} className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <SnapshotValue
+            state={snapshot}
+            deletedLabel={tShared("snapshotValue.deleted")}
+            className={ring}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>

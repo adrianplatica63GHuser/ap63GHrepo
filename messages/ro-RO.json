@@ -332,6 +332,9 @@
     "makeCurrent": {
       "title": "Setați această versiune ca actuală?",
       "body": "Versiunea {viewed} va fi copiată într-o versiune nouă {next}, care devine versiunea actuală. Continuați?",
+      "blockedTitle": "Această versiune nu poate deveni versiunea actuală",
+      "blocked": "Ce a înregistrat această versiune nu mai există în Date de referință, așa că nu poate fi scris înapoi. Câmpuri: {fields}.",
+      "dropsRecorded": "Atenție: {fields} — înregistrat ca text, înainte ca lista să existe — nu poate fi legat de o valoare din listă, așa că proprietatea va rămâne fără această informație.",
       "ok": "OK",
       "cancel": "Anulează"
     },
@@ -829,6 +832,9 @@
     "readonlyView": {
       "backToList": "Înapoi la listă",
       "modifyNeedsLatest": "Doar versiunea curentă poate fi modificată — folosiți săgețile de versiune pentru a reveni la ea."
+    },
+    "snapshotValue": {
+      "deleted": "valoare ștearsă"
     }
   },
   "naturalPerson": {

@@ -332,6 +332,9 @@
     "makeCurrent": {
       "title": "Make this version current?",
       "body": "Version {viewed} will be copied to a new version {next}, which becomes the current version. Continue?",
+      "blockedTitle": "This version cannot become the current version",
+      "blocked": "What this version recorded no longer exists in Reference Data, so it cannot be written back. Fields: {fields}.",
+      "dropsRecorded": "Note: {fields} — recorded as text, before the list existed — cannot be linked to a list value, so the property will be left without it.",
       "ok": "OK",
       "cancel": "Cancel"
     },
@@ -829,6 +832,9 @@
     "readonlyView": {
       "backToList": "Back to list",
       "modifyNeedsLatest": "Only the current version can be modified — use the version arrows to go back to it."
+    },
+    "snapshotValue": {
+      "deleted": "deleted value"
     }
   },
   "naturalPerson": {

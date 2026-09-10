@@ -238,10 +238,18 @@ describe("AsyncSelect", () => {
     // **version snapshot** holds lookup ids in jsonb with no FK, and
     // `dependents.ts` decides on purpose that snapshots do not count as
     // dependents - so an admin CAN delete a lookup row that only an old
-    // version still names, and paging back to that version shows an empty box.
-    // Since #34.03 that is true of the tarla field too. Labelling it
-    // ("valoare stearsa") is a slice of its own; this test is what will fail
-    // when somebody does it, which is the right way round.
+    // version still names, and paging back to that version showed an empty box.
+    // Since #34.03 that was true of the tarla field too.
+    //
+    // ⚠️ **Slice #34.17 labelled it ("valoare stearsa") and this test stayed
+    // GREEN, which an earlier version of this comment said would be the
+    // tripwire. It was the wrong tripwire and the miss is the point:** the
+    // label went into the CALLER - `SelectField` prints the value instead of
+    // rendering this component at all - precisely so that a deleted id never
+    // becomes an `<option>` here. What this test pins is unchanged and still
+    // worth pinning: handed a value its list does not contain, `<AsyncSelect>`
+    // shows nothing and synthesises nothing. The version view's own three
+    // states are pinned in `snapshot-lookup.test.tsx`.
     openThenLoad("47/2", { resetTo: "98/1" });
 
     await act(async () => {

@@ -154,15 +154,25 @@ export type PropertySnapshotProperty = {
    *      and an explicit null are the same fact. That was the half this note
    *      originally described, and it was the half that was wrong.)
    *
-   *   2. **Every version saved before this slice now renders its tarla box
-   *      EMPTY, permanently.** `fromApiPayload` reads `tarlaId`; the old text
-   *      is still in the jsonb and there is no id to resolve it to. Not fixed
-   *      here, and it is the same shape as the gap `async-select.tsx`'s
-   *      docblock already records — a snapshot holds lookup ids with no FK, so
-   *      a deleted lookup row leaves an old version showing an empty box too.
-   *      Both want the same thing: a version view that can say "valoare
-   *      ștearsă" or print a snapshot's own recorded text. That is a slice of
-   *      its own; it is in the #34.03 handover.
+   *   2. **Every version saved before this slice rendered its tarla box EMPTY,
+   *      permanently — until Slice #34.17.** `fromApiPayload` reads `tarlaId`;
+   *      the old text is still in the jsonb and there is no id to resolve it
+   *      to. It was the same shape as the gap `async-select.tsx`'s docblock
+   *      recorded — a snapshot holds lookup ids with no FK, so a deleted lookup
+   *      row left an old version showing an empty box too — and #34.17 answered
+   *      both: `src/lib/versioning/snapshot-lookup.ts` classifies what the
+   *      snapshot holds, and the property version view prints the row's label,
+   *      the snapshot's own recorded text, or „valoare ștearsă". The jsonb is
+   *      still not rewritten, and this note is still the reason why.
+   *
+   *      What #34.17 did NOT close, because it cannot be closed without
+   *      rewriting snapshots: the DIFF is still blind to `tarlaSola` — it is
+   *      in neither `PROPERTY_SNAPSHOT_PROPERTY_KEYS` nor the nine-key
+   *      `PROPERTY_SNAP_KEYS` that `computeFieldHighlights` actually walks — so
+   *      two pre-078 versions
+   *      whose tarla text differs now show two different values with no frame
+   *      between them, and the boundary pair in point 1 is framed green
+   *      ("added") over a predecessor that visibly shows a tarla.
    */
   tarlaId:         string | null;
   parcela:         string | null;

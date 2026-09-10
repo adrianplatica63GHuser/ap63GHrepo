@@ -62,6 +62,15 @@
  *      is not acceptable is a count that silently leaves them out, which is
  *      the failure mode CLAUDE.md's copy-detection story is about.
  *
+ *      ⚠️ **Slice #34.17 is what makes keeping this decision comfortable rather
+ *      than merely defensible, and it changed nothing here.** Snapshots are
+ *      still not dependents and nothing below counts them; what changed is what
+ *      the user sees on the other side of the delete. Paging back to a version
+ *      whose lookup row is gone used to render an EMPTY BOX — indistinguishable
+ *      from a value that was never entered — and now says „valoare ștearsă"
+ *      (`src/lib/versioning/snapshot-lookup.ts`). The delete stays offered; the
+ *      history it leaves behind explains itself.
+ *
  *      The note is DERIVED, not asserted: `snapshot.field` is looked up in the
  *      real key array from `snapshot-registry.ts`, so if a snapshot ever stops
  *      carrying the id the sentence stops being printed. The test in the other

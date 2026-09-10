@@ -182,9 +182,11 @@ describe("the shared component keeps both halves of the idiom", () => {
  * fails on.
  *
  * (The version-snapshot case in the component's docblock is untouched by any
- * of it: a snapshot holds lookup ids in jsonb with no FK and can dangle, which
- * needs a label rather than a synthesised option, and now covers `tarlaId`
- * too.)
+ * of it, and stayed that way when Slice #34.17 answered it: a snapshot holds
+ * lookup ids in jsonb with no FK and can dangle, which wanted a LABEL rather
+ * than a synthesised option — so the label went into the caller, where
+ * `SelectField` prints the value instead of rendering this component at all.
+ * Nothing about that reaches the sweep below, which is the right way round.)
  */
 describe("no column may render an unlisted value any more", () => {
   it("nothing opts in, and the prop no longer exists to opt into", () => {

@@ -32,15 +32,30 @@ export type AsyncSelectOption = { value: string; label: string };
  * lives in the lookup row, and those *live* columns are `ON DELETE SET NULL`,
  * so they cannot hold an id the list lacks. (The static ones — `gender` twice
  * and `idDocumentType` — are pg enums whose option lists enumerate them
- * exactly.) One case remains outside that guarantee and is still unhandled: a
- * **version snapshot** holds lookup ids in jsonb with no FK, and
+ * exactly.)
+ *
+ * ⚠️ **The one case outside that guarantee is a SNAPSHOT, and since Slice
+ * #34.17 it is answered on the version view rather than left open here.** A
+ * version snapshot holds lookup ids in jsonb with no FK, and
  * `src/lib/admin/value-lists/dependents.ts` decides on purpose that snapshots
  * do not count as dependents — so an admin can delete a lookup row that only a
- * snapshot still names, and paging back to that version shows an empty box.
- * Labelling that case ("valoare ștearsă") needs its own slice; printing the raw
- * uuid instead would be worse. **#34.03 puts `tarlaId` into that same
- * category** — the snapshot now holds the id like the other two — so the day
- * that slice happens it covers three fields rather than two.
+ * snapshot still names, and paging back to that version used to show an empty
+ * box. `src/lib/versioning/snapshot-lookup.ts` now classifies what the snapshot
+ * recorded and the version view PRINTS it — the row's current label, the
+ * snapshot's own recorded text, or "valoare ștearsă" — in place of the picker.
+ * This component is unchanged by that on purpose: it still renders nothing but
+ * options the list holds, and a deleted id never enters the DOM as an
+ * `<option>`, which is the difference between #34.17 and the
+ * `optionsWithUnlistedValues` deleted above. Printing the raw uuid was
+ * considered and is worse than either.
+ *
+ * ⚠️ **The property form is the only call site wired up.** #34.17 covers its
+ * three fields — `propertyTypeId`, `useCategoryId`, and the `tarlaId` that
+ * #34.03 put in the same category by moving the snapshot from the code as text
+ * to the row's id. The identical snapshot gap is still open on the two person
+ * forms (`citizenshipId`, `physicalPersonTypeId`, `judicialPersonTypeId`) and
+ * on `document-form.tsx` (`documentTypeId`, `institutionId`): the helper is
+ * entity-agnostic, so each of those is a call site rather than a redesign.
  */
 
 type AsyncSelectProps<T extends FieldValues> = {
