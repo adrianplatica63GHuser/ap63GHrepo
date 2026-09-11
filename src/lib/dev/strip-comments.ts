@@ -4,12 +4,25 @@
  * A comment stripper for the source-reading GUARDS.   (Slice #34.06)
  *
  * ⚠️ **NOT PRODUCTION CODE, AND IT LIVES HERE ANYWAY.** Nothing in the app
- * imports it; four tests do — `file-kinds-single-source.test.ts`,
- * `upload-file-types.test.ts`, `import-constraint-rules.test.ts` and
- * `format-mb.test.ts`. It cannot live under `src/__tests__/` because
- * this project has no `testMatch` override, so Jest's default pattern treats
- * every `.ts` file under a `__tests__` folder as a suite and fails it for
- * containing no tests.
+ * imports it; ten tests under `src/__tests__/` do — ten as of Slice #34.21.
+ * That count was written here as four and left wrong while six more callers
+ * arrived, so re-derive it rather than trusting it, and correct this line when
+ * it has moved again. The needle is the IMPORT, not the identifier and not the
+ * module name: a dozen other suites carry their own local copy of
+ * `stripComments`, so grepping the identifier finds 22 files, and a thirteenth
+ * (`import-structure-rules.test.ts`) names this file in a comment without using
+ * it, so grepping the module name finds 11.
+ *
+ *   cd C:\dev\ga40prj; @(Get-ChildItem -Recurse src\__tests__\*.ts* | Select-String -Pattern 'from ["'']@/lib/dev/strip-comments["'']' -List).Count
+ *
+ * `-List` makes that a count of FILES rather than of matching lines; `-Recurse`
+ * and `*.ts*` catch a future subfolder or `.tsx` caller; and the quote class
+ * covers both spellings, because this repo has no ESLint `quotes` rule to make
+ * one of them wrong.
+ *
+ * It cannot live under `src/__tests__/` because this project has no `testMatch`
+ * override, so Jest's default pattern treats every `.ts` file under a
+ * `__tests__` folder as a suite and fails it for containing no tests.
  *
  * WHY IT IS SHARED RATHER THAN COPIED
  * ───────────────────────────────────
