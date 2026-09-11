@@ -68,9 +68,15 @@ import {
 import type { FileMeta } from "@/lib/import/checks";
 import { stripComments } from "@/lib/dev/strip-comments";
 
-/** A readable file of a given size — the shape `firstBrokenRule` takes. */
-const m = (size: number, type: string): FileMeta => ({ size, type });
-const JPEG = (size = 5_000) => m(size, "image/jpeg");
+/**
+ * A readable file of a given size — the shape `firstBrokenRule` takes.
+ *
+ * ⚠️ It took a `type` too until #34.22 deleted `FileMeta.type`. Every call
+ * below that spelled a MIME out was spelling out a field no rule read; size is
+ * what the two size rules answer from, and the name is passed separately.
+ */
+const m = (size: number): FileMeta => ({ size });
+const JPEG = (size = 5_000) => m(size);
 
 // ---------------------------------------------------------------------------
 // The catalogue itself
@@ -170,36 +176,43 @@ describe("the predicates delegate rather than restate", () => {
     expect(isUnrecognisedFileName("note.txt")).toBe(false);
   });
 
-  it("⚠️ has no rule about the type Windows reports, and that is a decision", () => {
-    // F-11 was drafted as a constraint and taken back out by this slice's
+  it("⚠️ admits the archival .tif that a rule about the reported type would have failed", () => {
+    // F-11 was drafted as a constraint and taken back out by #26.05's
     // adversarial review. `File.type` is derived from the extension by way of
     // the OS registry, never from the bytes — so a blocking rule would fire on
     // a perfectly good `.tif` on a machine with no registry entry for it, and
     // never on the corrupt `.jpg` its example described. Nothing is lost: the
     // file uploads, is stored, and serves. It became a quiet finding in
     // `checks.ts` instead, and #34.12 deleted that as well once #34.06 had left
-    // it reporting a fact with no consequence. So there is no rule about the
-    // reported type ANYWHERE now, and this is the assertion of that for THIS
-    // catalogue — `import-constraint-check.test.ts` makes it for the stage and
-    // `import-checks.test.ts` for the report. It exists so the next reader
-    // finds the decision rather than the gap.
-    expect(firstBrokenRule("1.jpg", m(5_000, ""))).toBeNull();
-    expect(firstBrokenRule("Plan.tif", m(400_000, ""))).toBeNull();
+    // it reporting a fact with no consequence.
+    //
+    // ⚠️ **This case USED TO PASS an empty type and assert that nothing fired
+    // on it, and #34.22 took the field away.** The decision is now held by the
+    // type system rather than by two assertions: `FileMeta` has no `type`, so a
+    // rule about the reported type is unwriteable here, not merely absent. What
+    // is left is the half that can still fail — the `.tif` itself. It is the
+    // file the deleted rule would have refused, it is a perfectly good archival
+    // scan, and this catalogue must keep admitting it. Retitled rather than
+    // deleted: a case named for a field that no longer exists is exactly the
+    // wrong turn #34.22 is about, and a case that cannot fail is the shape this
+    // codebase has removed twice.
+    expect(firstBrokenRule("Plan.tif", m(400_000))).toBeNull();
+    expect(firstBrokenRule("1.jpg", m(5_000))).toBeNull();
   });
 });
 
 describe("firstBrokenRule", () => {
   it("says nothing about a file that breaks nothing", () => {
-    expect(firstBrokenRule("contract.pdf", m(1_000_000, "application/pdf"))).toBeNull();
+    expect(firstBrokenRule("contract.pdf", m(1_000_000))).toBeNull();
     expect(firstBrokenRule("1.jpg", JPEG())).toBeNull();
-    expect(firstBrokenRule("note.txt", m(400, "text/plain"))).toBeNull();
+    expect(firstBrokenRule("note.txt", m(400))).toBeNull();
   });
 
   it("answers each rule for the file it is about", () => {
-    expect(firstBrokenRule("tabel.csv", m(1_000, "text/csv"))).toBe("CON-01");
-    expect(firstBrokenRule("IMG_1.heic", m(1_000, ""))).toBe("CON-02");
-    expect(firstBrokenRule("proiect.xyz", m(1_000, ""))).toBe("CON-03");
-    expect(firstBrokenRule("1.jpg", m(0, "image/jpeg"))).toBe("CON-04");
+    expect(firstBrokenRule("tabel.csv", m(1_000))).toBe("CON-01");
+    expect(firstBrokenRule("IMG_1.heic", m(1_000))).toBe("CON-02");
+    expect(firstBrokenRule("proiect.xyz", m(1_000))).toBe("CON-03");
+    expect(firstBrokenRule("1.jpg", m(0))).toBe("CON-04");
     expect(firstBrokenRule("1.jpg", JPEG(MAX_UPLOAD_BYTES + 1))).toBe("CON-05");
   });
 
@@ -232,8 +245,8 @@ describe("firstBrokenRule", () => {
     // come first in the catalogue, and this is what pins that it does.
     expect(isUnrecognisedFileName("tabel.csv")).toBe(true);
     expect(isUnrecognisedFileName("IMG_1.heic")).toBe(true);
-    expect(firstBrokenRule("tabel.csv", m(1_000, ""))).toBe("CON-01");
-    expect(firstBrokenRule("IMG_1.heic", m(1_000, ""))).toBe("CON-02");
+    expect(firstBrokenRule("tabel.csv", m(1_000))).toBe("CON-01");
+    expect(firstBrokenRule("IMG_1.heic", m(1_000))).toBe("CON-02");
   });
 
   it("⚠️ runs its rules in the catalogue's own order, whatever the file breaks", () => {
@@ -244,9 +257,9 @@ describe("firstBrokenRule", () => {
     //
     // A `.csv` that is also zero bytes breaks CON-01, CON-03 and CON-04; the
     // answer must be CON-01.
-    expect(firstBrokenRule("tabel.csv", m(0, ""))).toBe("CON-01");
+    expect(firstBrokenRule("tabel.csv", m(0))).toBe("CON-01");
     // A `.heic` that is also enormous breaks CON-02, CON-03 and CON-05.
-    expect(firstBrokenRule("IMG_1.heic", m(MAX_UPLOAD_BYTES + 1, ""))).toBe("CON-02");
+    expect(firstBrokenRule("IMG_1.heic", m(MAX_UPLOAD_BYTES + 1))).toBe("CON-02");
     // A file is never both empty and too large, so the pair below proves
     // CON-04 precedes CON-05 rather than merely that both exist.
     expect(CONSTRAINT_RULE_IDS.indexOf("CON-04"))

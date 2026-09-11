@@ -22,7 +22,9 @@
  * `import-constraint-check.test.ts`.
  *
  * ⚠️ **And what #34.12 removed, which is the third kind of removal in this
- * file.** F-11 came back from #26.05's list and was tested below as the one T1
+ * file** — with a fourth, #34.22's, recorded at the case itself: the rule went
+ * first and the FIELD it read went one slice later, so the fixture that used to
+ * spell an empty type out no longer can. F-11 came back from #26.05's list and was tested below as the one T1
  * rule that stayed. #34.06 then took the type from the file NAME at upload, at
  * serve and at AI-interpret, so an empty `File.type` costs nothing — and a
  * finding that reports a fact with no consequence is worse than no finding,
@@ -60,8 +62,15 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { checkFolder, FINDING_KINDS, type FileMeta } from "@/lib/import/checks";
+import {
+  checkFolder,
+  FINDING_KINDS,
+  IGNORED_REASONS,
+  type FileMeta,
+  type FindingKind,
+} from "@/lib/import/checks";
 import type { DirectoryObservation, DroppedFile, FSEntry } from "@/lib/import/folder-utils";
+import { stripComments } from "@/lib/dev/strip-comments";
 import { scanIcu } from "@/test-support/icu";
 
 // ---------------------------------------------------------------------------
@@ -96,9 +105,14 @@ function file(path: string): FSEntry {
   };
 }
 
-/** T1 metadata, keyed the way `metadataKeyFor` keys it. */
-const meta = (entries: [string, number, string][]) =>
-  new Map<string, FileMeta>(entries.map(([p, size, type]) => [p, { size, type }]));
+/**
+ * T1 metadata, keyed the way `metadataKeyFor` keys it.
+ *
+ * ⚠️ The tuple carried a third member — the type Windows reported — until
+ * #34.22 deleted `FileMeta.type`. Only `size` was ever read.
+ */
+const meta = (entries: [string, number][]) =>
+  new Map<string, FileMeta>(entries.map(([p, size]) => [p, { size }]));
 
 function dropped(path: string, reason: DroppedFile["reason"]): DroppedFile {
   const name = path.split("/").pop()!;
@@ -202,10 +216,10 @@ describe("file findings", () => {
     const r = run({
       entries: [file("a.xyz"), file("IMG_1.heic"), file("big.jpg"), file("gol.jpg")],
       metadata: meta([
-        ["a.xyz", 100, "application/octet-stream"],
-        ["IMG_1.heic", 100, "application/octet-stream"],
-        ["big.jpg", 40 * 1024 * 1024, "image/jpeg"],
-        ["gol.jpg", 0, "image/jpeg"],
+        ["a.xyz", 100],
+        ["IMG_1.heic", 100],
+        ["big.jpg", 40 * 1024 * 1024],
+        ["gol.jpg", 0],
       ]),
       observations: [obs({ dropped: [dropped("Acte/folder.jpg", "system-file")] })],
     });
@@ -214,30 +228,36 @@ describe("file findings", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T1 — the negative, since #34.12 deleted the last rule that read it
+// T1 — the negative, since #34.12 deleted the last rule that read it and
+// #34.22 deleted the field it read
 // ---------------------------------------------------------------------------
 
-describe("T1 — no rule reads File metadata any more (F-11, deleted by #34.12)", () => {
-  it("⚠️ says NOTHING about a file whose type Windows did not report", () => {
+describe("T1 — only `size` survives (F-11 deleted by #34.12, its field by #34.22)", () => {
+  it("⚠️ says NOTHING about the archival .tif, and still totals it", () => {
     // This is F-11's own input, kept as the negative half of its deletion.
     //
-    // ⚠️ `.tif` and not `.jpg`, and the difference is why the fixture is worth
-    // preserving even though the rule is gone. `File.type` comes from the
-    // extension by way of the OS registry — Chromium hard-codes `.jpg` and
-    // falls through to the registry for `.tif`/`.bmp` — so a `.jpg` with an
-    // empty type is a state the browser does not produce and a test built on
-    // one would prove nothing. A `.tif` on a machine with no registry entry is
-    // the case that actually happens, and it is a perfectly good archival scan.
+    // ⚠️ **The fixture CARRIED an empty type until #34.22 deleted the field.**
+    // What that case asserted — that no rule reads the reported type — is now
+    // held by `FileMeta` itself: there is no `type` to read, so such a rule is
+    // unwriteable rather than merely unwritten, and
+    // `describe("nothing reads a type off the metadata map")` below walks
+    // `src/` to keep it that way. The title moved with the fixture rather than
+    // outliving it, which is the whole lesson of #34.22.
     //
-    // Since #34.06 the recorded type is derived from the file NAME at upload,
-    // at serve and at AI-interpret, so this file loses nothing: there is no
-    // consequence left to report, and a sentence naming it would be a sentence
-    // the user can do nothing with. `toEqual([])` and not `not.toContain`,
-    // because the failure worth catching is a REPLACEMENT finding under some
-    // other kind, and a negative assertion would sail straight past it.
+    // ⚠️ `.tif` and not `.jpg`, and the difference is why the FILE is worth
+    // preserving even though both the rule and the field are gone. `File.type`
+    // came from the extension by way of the OS registry — Chromium hard-codes
+    // `.jpg` and falls through to the registry for `.tif`/`.bmp` — so the empty
+    // type was a state only a `.tif` produced, and it is a perfectly good
+    // archival scan. It is the file F-11 shouted at, so it is the file this
+    // report has to stay silent about.
+    //
+    // `toEqual([])` and not `not.toContain`, because the failure worth catching
+    // is a REPLACEMENT finding under some other kind, and a negative assertion
+    // would sail straight past it.
     const r = run({
       entries: [file("Plan.tif")],
-      metadata: meta([["Plan.tif", 400_000, ""]]),
+      metadata: meta([["Plan.tif", 400_000]]),
     });
     expect(kinds(r)).toEqual([]);
     // …and the argument that used to feed F-11 is still read — by `sumBytes`,
@@ -406,13 +426,251 @@ describe("every finding kind has copy, and every copy has a kind", () => {
       }
     }
   });
+
+  /**
+   * One folder per kind, chosen to make exactly that kind fire.
+   *
+   * ⚠️ **Built from what `checkFolder` ACTUALLY EMITS, not from a table of
+   * expected counts written here.** `FINDING_KINDS` is a list of names and
+   * declares no counts — unlike `STRUCTURE_RULE_BY_ID`, which is where
+   * `import-structure-rules.test.ts` reads them for the same check — so the
+   * only honest source for "what does this rule supply" is the rule. A table in
+   * this file would be a second copy of `checks.ts`, and the drift it exists to
+   * catch is the first thing it would hide.
+   */
+  const FIXTURE_FOR: Record<FindingKind, Parameters<typeof run>[0]> = {
+    osDirectories: { observations: [obs({ pathParts: ["Acte", "$RECYCLE.BIN"] })] },
+    officeFiles: { entries: [file("nota.docx")] },
+    walkLoopedOnShortcut: { observations: [obs({ truncated: "depth" })] },
+    walkTooManyFolders: { observations: [obs({ truncated: "budget" })] },
+    walkTooManyFiles: { observations: [obs({ truncated: "breadth" })] },
+  };
+
+  it("⚠️ produces every kind in the catalogue, so the guard below covers all of them", () => {
+    // The orphan problem one level up: a kind whose fixture quietly stopped
+    // producing it would skip the counts check in silence, and a guard that
+    // stops guarding without saying so is worse than one never written.
+    // Compared whole and sorted, for the reason the parity case above gives.
+    const produced = FINDING_KINDS.map((kind) => find(run(FIXTURE_FOR[kind]), kind)?.kind);
+    expect([...produced].sort()).toEqual([...FINDING_KINDS].sort());
+  });
+
+  it.each(LOCALES)("%s interpolates exactly the counts the rule supplies", (localeFile) => {
+    // ⚠️ **THE STRONGER CHECK, AND #34.12 LEFT IT OUT ON PURPOSE.** That slice
+    // recorded it as noticed-not-fixed: it went red on S-17, which supplied
+    // `{ places, limit }` for all three of its kinds while no locale's copy
+    // named `places`, and whose depth kind carried a filler `limit: 0` that no
+    // sentence could ever use. Adding the guard therefore meant deciding about
+    // another finding, which was not #34.12's to decide. #34.22 decided it:
+    // `{places}` is named in all three sentences in both locales, and the depth
+    // kind no longer carries a limit. So the guard can be built, and this is it.
+    //
+    // Both directions, whole and sorted, in the shape
+    // `import-structure-rules.test.ts` already uses for its own catalogue. A
+    // placeholder the sentence names and the rule does not supply renders as a
+    // raw `{places}` to a Romanian user under `DEFAULT_LOCALE`; a count the rule
+    // supplies and no sentence names is a number computed for nothing. A
+    // membership test one way would pass both.
+    //
+    // ⚠️ No separate "a plural argument must be a count" case, unlike the
+    // structure-rules suite. It needs one because it compares against the UNION
+    // of `counts` and `values`; a `Finding` has only `counts`, so the equality
+    // below already says every plural argument is one. Said rather than left
+    // for the next reader to wonder which check went missing.
+    for (const kind of FINDING_KINDS) {
+      const finding = find(run(FIXTURE_FOR[kind]), kind)!;
+      expect({ kind, args: [...scanIcu(copyFor(localeFile, kind)).args].sort() }).toEqual({
+        kind,
+        args: Object.keys(finding.counts).sort(),
+      });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The skipped reasons and their copy — the report's SECOND runtime key surface
+// ---------------------------------------------------------------------------
+
+/**
+ * ⚠️ **NEW IN #34.22, AND IT CLOSES WHAT #34.12 SAID IT WAS LEAVING OPEN.**
+ * That slice guarded `FINDING_KINDS` and wrote, in as many words, that
+ * `report-sections.tsx` builds a second key surface the same way and that "the
+ * finding keys are guarded" must not be read as "the component's keys are
+ * guarded". This is that second surface.
+ *
+ * ``t(`skippedReason.${g.reason}`)`` at two sites in `report-sections.tsx` —
+ * the panel, and the downloadable document's renderer — a key built at run
+ * time, so `tsc` cannot see the message files. `DEFAULT_LOCALE` is `ro-RO` and
+ * does not fall back to English, so a reason whose copy is missing renders its
+ * own key path at the user, and an orphaned key is silent for ever.
+ *
+ * ⚠️ It needed no new list. `groupSkipped` already held all three reasons in
+ * display order, typed `IgnoredReason[]`; #34.22 gave that array a name, froze
+ * it and exported it as `IGNORED_REASONS`. A list invented here would have been
+ * a second copy of the display order, and the first thing to drift from it.
+ */
+function skippedCopy(localeFile: string): Record<string, string> {
+  const raw = fs.readFileSync(path.join(process.cwd(), "messages", localeFile), "utf8");
+  const messages = JSON.parse(raw) as Record<string, unknown>;
+  const block = ["adminImport", "wizard", "report", "skippedReason"].reduce<unknown>(
+    (node, part) =>
+      node !== null && typeof node === "object"
+        ? (node as Record<string, unknown>)[part]
+        : undefined,
+    messages,
+  );
+  if (block === null || typeof block !== "object") {
+    throw new Error(`${localeFile} has no adminImport.wizard.report.skippedReason block`);
+  }
+  return block as Record<string, string>;
+}
+
+describe("every skipped reason has copy, and every copy has a reason", () => {
+  it("keeps the catalogue frozen, and here that is a live hazard", () => {
+    // ⚠️ Unlike `FINDING_KINDS`, this array IS read by the engine —
+    // `groupSkipped` iterates it to order the panel — so an unfrozen one is a
+    // shared mutable that a `sort()` anywhere could re-order the user's screen
+    // with. Convention there; a real exposure here.
+    expect(Object.isFrozen(IGNORED_REASONS)).toBe(true);
+  });
+
+  it.each(LOCALES)("%s carries exactly the reasons the catalogue declares", (localeFile) => {
+    // Sorted and compared whole, for the reason the finding-kinds case gives:
+    // a one-way check passes an orphan, and an orphan is what a half-done
+    // deletion leaves behind.
+    expect(Object.keys(skippedCopy(localeFile)).sort()).toEqual([...IGNORED_REASONS].sort());
+  });
+
+  it("declares one, few and other in every Romanian plural", () => {
+    // Every one of these sentences counts files — `report-sections.tsx` hands
+    // each `{ count: g.paths.length }` — so all three arms are load-bearing,
+    // and `few`, not `other`, is the ZERO case in Romanian.
+    for (const reason of IGNORED_REASONS) {
+      for (const block of scanIcu(skippedCopy("ro-RO.json")[reason]).plurals) {
+        expect(block.categories).toEqual(expect.arrayContaining(["one", "few", "other"]));
+      }
+    }
+  });
+
+  it.each(LOCALES)("%s interpolates the count, and only the count", (localeFile) => {
+    // The counts-versus-arguments guard for this surface. It is simpler than
+    // the findings' because the argument is fixed at both call sites rather
+    // than built per-kind: `{ count: g.paths.length }`, nothing else.
+    for (const reason of IGNORED_REASONS) {
+      expect({ reason, args: [...scanIcu(skippedCopy(localeFile)[reason]).args] }).toEqual({
+        reason,
+        args: ["count"],
+      });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The field that is gone — `FileMeta.type`, deleted by #34.22
+// ---------------------------------------------------------------------------
+
+const SRC = path.join(process.cwd(), "src");
+
+/** Every `.ts`/`.tsx` under `src/` — the walk `file-kinds-single-source.test.ts` uses. */
+function walkSrc(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of fs.readdirSync(dir)) {
+    const full = path.join(dir, entry);
+    if (fs.statSync(full).isDirectory()) {
+      if (entry === "node_modules" || entry === ".next") continue;
+      out.push(...walkSrc(full));
+    } else if (entry.endsWith(".ts") || entry.endsWith(".tsx")) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+const relOf = (full: string) => path.relative(SRC, full).split(path.sep).join("/");
+
+/**
+ * The one file the walk skips, and the whole of the reason.
+ *
+ * The patterns below spell the forbidden shape out in order to look for it, so
+ * this file matches itself. Excluding it by exact path is the honest fix, and
+ * it is what `file-kinds-single-source.test.ts` does with its own guard; the
+ * alternative — assembling the patterns from fragments so the source never
+ * holds the shape — is a trick that reads as a bug to everyone after you.
+ *
+ * ⚠️ ONE entry, pinned by the case below. An exclusion list is the obvious
+ * place to quietly park a failing file, so a second entry has to be argued for
+ * in a diff rather than added in passing.
+ */
+const NOT_WALKED = ["__tests__/import-checks.test.ts"];
+
+describe("nothing reads a type off the metadata map", () => {
+  it("skips exactly one file, which is this one", () => {
+    expect(NOT_WALKED).toEqual(["__tests__/import-checks.test.ts"]);
+    expect(fs.existsSync(path.join(SRC, ...NOT_WALKED[0].split("/")))).toBe(true);
+  });
+
+  it("⚠️ finds no `type` beside a `size` anywhere under src/", () => {
+    // ⚠️ **THE DELETION IS THE GUARD; THIS IS WHAT KEEPS THE DELETION.**
+    // `FileMeta.type` was written by `metadata-pass.ts` and read by nothing for
+    // one slice, protected only by a paragraph asking the next author not to
+    // reach for it — and what they would have got is the Windows-registry value
+    // #34.06 declared untrustworthy, `""` and all, on exactly the archival
+    // `.tif` that made F-11 worthless. #34.22 deleted the field, which makes
+    // `tsc` the real guard: `meta.type` no longer compiles.
+    //
+    // So why this case at all? Because `tsc` stops guarding the moment someone
+    // widens the shape back, and that does not happen by malice — it happens as
+    // a `Map<string, { size: number; type: string }>` written out longhand in a
+    // new module because importing `FileMeta` was inconvenient. That compiles.
+    // This does not let it in.
+    //
+    // ⚠️ **Comments are stripped first, and that is not optional.** This file,
+    // `checks.ts`, `metadata-pass.ts` and `constraint-rules.ts` all discuss
+    // `File.type` at length and must keep doing so — the decision is the thing
+    // worth recording, and #34.22's whole argument is that the record is what
+    // the next reader needs. A guard that could not tell prose from code would
+    // force that history out of the files to stay green.
+    //
+    // ⚠️ **It cannot catch a rule reading `File.type` STRAIGHT OFF a `File`.**
+    // `file.type` at a fresh `getFile()` is a different expression and a
+    // legitimate one elsewhere in the app. The shape policed here is the one
+    // that actually threatened: the RECORDED type, carried in the map and read
+    // back later. Saying so beats letting the next reader think this is
+    // airtight.
+    //
+    // ⚠️ **And it looks for the SHAPE, not for a read like `meta.type`.** A
+    // pattern on the variable name was written first and taken back out: `meta`
+    // is used across this app for metadata that has nothing to do with this map
+    // — `src/lib/metadata/`, the entity metadata tab — so it would have gone
+    // red on honest code and been widened into uselessness within a slice.
+    // Nothing is lost by dropping it. A read needs a value that HAS a type,
+    // which needs the shape below to exist somewhere first, so the structural
+    // patterns catch the cause rather than one of its symptoms.
+    const offenders: string[] = [];
+    for (const full of walkSrc(SRC)) {
+      const rel = relOf(full);
+      if (NOT_WALKED.includes(rel)) continue;
+      const code = stripComments(fs.readFileSync(full, "utf8"));
+      const hits = [
+        // `{ size: number; type: string }` written longhand, either order.
+        ...code.matchAll(/\bsize\s*:\s*number\s*[;,]\s*type\s*:\s*string\b/g),
+        ...code.matchAll(/\btype\s*:\s*string\s*[;,]\s*size\s*:\s*number\b/g),
+        // `FileMeta` and a `type` on one line — a re-widened alias or a cast.
+        ...code.matchAll(/\bFileMeta\b[^\n]*?\btype\b/g),
+      ];
+      if (hits.length > 0) offenders.push(`${rel}: ${hits.map((h) => h[0].trim()).join(" | ")}`);
+    }
+    // The offenders themselves, never a count: `toHaveLength(0)` tells the next
+    // reader that something is wrong and nothing about where.
+    expect(offenders).toEqual([]);
+  });
 });
 
 describe("uploadBytes", () => {
   it("sums every file the run will upload", () => {
     const r = run({
       entries: [file("a.jpg"), file("b.jpg")],
-      metadata: meta([["a.jpg", 1000, "image/jpeg"], ["b.jpg", 2500, "image/jpeg"]]),
+      metadata: meta([["a.jpg", 1000], ["b.jpg", 2500]]),
     });
     expect(r.uploadBytes).toBe(3500);
   });
@@ -425,7 +683,7 @@ describe("uploadBytes", () => {
     const r = run({
       entries: [file("a.jpg")],
       observations: [obs({ dropped: [dropped("Acte/plan.dwg", "ignored-extension")] })],
-      metadata: meta([["a.jpg", 1000, "image/jpeg"], ["Acte/plan.dwg", 999_000, ""]]),
+      metadata: meta([["a.jpg", 1000], ["Acte/plan.dwg", 999_000]]),
     });
     expect(r.uploadBytes).toBe(1000);
   });

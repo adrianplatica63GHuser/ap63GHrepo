@@ -96,8 +96,8 @@ function dropped(path: string): DroppedFile {
   return { name, path, reason: "system-file", handle: handle(name) };
 }
 
-const meta = (rows: [string, number, string][]) =>
-  new Map<string, FileMeta>(rows.map(([p, size, type]) => [p, { size, type }]));
+const meta = (rows: [string, number][]) =>
+  new Map<string, FileMeta>(rows.map(([p, size]) => [p, { size }]));
 
 const JPEG = 5_000;
 
@@ -123,10 +123,10 @@ const COMPLIANT = {
   ],
   observations: [obs(), obs({ pathParts: ["48-50D"] })],
   metadata: meta([
-    ["48-50D/Extras CF.pdf", 900_000, "application/pdf"],
-    ["48-50D/note.txt", 400, "text/plain"],
-    ["48-50D/Contract vanzare/1.jpg", JPEG, "image/jpeg"],
-    ["48-50D/Contract vanzare/2.jpg", JPEG, "image/jpeg"],
+    ["48-50D/Extras CF.pdf", 900_000],
+    ["48-50D/note.txt", 400],
+    ["48-50D/Contract vanzare/1.jpg", JPEG],
+    ["48-50D/Contract vanzare/2.jpg", JPEG],
   ]),
 };
 
@@ -161,48 +161,55 @@ describe("a compliant folder", () => {
 // ---------------------------------------------------------------------------
 
 describe("the rules", () => {
-  const one = (name: string, size: number, type: string) =>
+  const one = (name: string, size: number) =>
     checkConstraints({
       entries: [file(name)],
       observations: [obs()],
-      metadata: meta([[name, size, type]]),
+      metadata: meta([[name, size]]),
     });
 
   it("CON-01 — a table export cannot be imported at all", () => {
-    expect(ids(one("situatie.csv", 4_000, "text/csv"))).toEqual(["CON-01"]);
+    expect(ids(one("situatie.csv", 4_000))).toEqual(["CON-01"]);
   });
 
   it("CON-02 — an iPhone photo uploads and is then read by nothing", () => {
-    expect(ids(one("IMG_0421.heic", 2_000_000, ""))).toEqual(["CON-02"]);
+    expect(ids(one("IMG_0421.heic", 2_000_000))).toEqual(["CON-02"]);
   });
 
   it("CON-03 — an unrecognised file halts the whole run behind a question", () => {
-    expect(ids(one("proiect.xyz", 4_000, ""))).toEqual(["CON-03"]);
+    expect(ids(one("proiect.xyz", 4_000))).toEqual(["CON-03"]);
   });
 
   it("CON-04 — an empty file", () => {
-    expect(ids(one("1.jpg", 0, "image/jpeg"))).toEqual(["CON-04"]);
+    expect(ids(one("1.jpg", 0))).toEqual(["CON-04"]);
   });
 
   it("CON-05 — a file over the upload limit, with the limit in its own counts", () => {
-    const v = only(one("1.jpg", MAX_UPLOAD_BYTES + 1, "image/jpeg"), "CON-05");
+    const v = only(one("1.jpg", MAX_UPLOAD_BYTES + 1), "CON-05");
     expect(v.counts).toEqual({ files: 1, limitMb: 20 });
   });
 
-  it("says nothing about a type Windows did not report", () => {
+  it("⚠️ passes the archival .tif a rule about the reported type would have stopped", () => {
     // F-11 was drafted here and taken back out; it lived on as a quiet finding
-    // in `checks.ts` until #34.12 deleted that too, so nothing anywhere reports
-    // the type Windows gives. `.tif` is the realistic carrier (Chromium falls
-    // through to the Windows registry for it), and it must pass this stage.
-    expect(one("Plan.tif", 400_000, "")).toEqual([]);
-    expect(one("1.jpg", JPEG, "")).toEqual([]);
+    // in `checks.ts` until #34.12 deleted that too, and #34.22 then deleted
+    // `FileMeta.type` itself — so there is no reported type at this stage to
+    // have a rule about. The guarantee moved from this case to the type: it is
+    // unwriteable now, not merely unwritten.
+    //
+    // What still earns its place is the file. `.tif` is the realistic carrier
+    // of the empty type (Chromium hard-codes `.jpg` and falls through to the
+    // Windows registry for `.tif`), it is a perfectly good archival scan, and
+    // it must pass this stage — which is an assertion about CON-01 … CON-06
+    // admitting it, and can still fail.
+    expect(one("Plan.tif", 400_000)).toEqual([]);
+    expect(one("1.jpg", JPEG)).toEqual([]);
   });
 
   it("CON-06 — a real scan named folder.jpg, which the walk removed on sight", () => {
     const violations = checkConstraints({
       entries: [],
       observations: [obs({ pathParts: ["48-50D"], dropped: [dropped("48-50D/folder.jpg")] })],
-      metadata: meta([["48-50D/folder.jpg", THUMBNAIL_BYTES + 1, "image/jpeg"]]),
+      metadata: meta([["48-50D/folder.jpg", THUMBNAIL_BYTES + 1]]),
     });
     expect(ids(violations)).toEqual(["CON-06"]);
     expect(only(violations, "CON-06").paths).toEqual(["48-50D/folder.jpg"]);
@@ -213,7 +220,7 @@ describe("the rules", () => {
       checkConstraints({
         entries: [],
         observations: [obs({ dropped: [dropped("48-50D/folder.jpg")] })],
-        metadata: meta([["48-50D/folder.jpg", 4_000, "image/jpeg"]]),
+        metadata: meta([["48-50D/folder.jpg", 4_000]]),
       }),
     ).toEqual([]);
   });
@@ -234,7 +241,7 @@ describe("the rules", () => {
   it("gives one file ONE violation, however many rules it breaks", () => {
     // A `.heic` is also unrecognised, and the user must not be handed two
     // sentences about one photo. See `firstBrokenRule`.
-    expect(ids(one("IMG_0421.heic", 0, ""))).toEqual(["CON-02"]);
+    expect(ids(one("IMG_0421.heic", 0))).toEqual(["CON-02"]);
   });
 
   it("groups every offending file under one sentence, not one sentence per file", () => {
@@ -246,7 +253,7 @@ describe("the rules", () => {
     const violations = checkConstraints({
       entries: names.map(file),
       observations: [obs()],
-      metadata: meta(names.map((n) => [n, 2_000_000, ""] as [string, number, string])),
+      metadata: meta(names.map((n) => [n, 2_000_000] as [string, number])),
     });
     expect(violations).toHaveLength(1);
     const v = only(violations, "CON-02");
@@ -263,11 +270,11 @@ describe("the rules", () => {
       entries,
       observations: [obs()],
       metadata: meta([
-        ["a.csv", 100, "text/csv"],
-        ["b.heic", 100, ""],
-        ["c.xyz", 100, ""],
-        ["d.jpg", 0, "image/jpeg"],
-        ["e.jpg", MAX_UPLOAD_BYTES + 1, "image/jpeg"],
+        ["a.csv", 100],
+        ["b.heic", 100],
+        ["c.xyz", 100],
+        ["d.jpg", 0],
+        ["e.jpg", MAX_UPLOAD_BYTES + 1],
       ]),
     });
     expect(ids(violations)).toEqual(["CON-01", "CON-02", "CON-03", "CON-04", "CON-05"]);
@@ -286,8 +293,8 @@ describe("the upload set", () => {
       entries: [pageGroup("48-50D/CVC", ["1.jpg", "2.jpg"])],
       observations: [obs()],
       metadata: meta([
-        ["48-50D/CVC/1.jpg", JPEG, "image/jpeg"],
-        ["48-50D/CVC/2.jpg", MAX_UPLOAD_BYTES + 1, "image/jpeg"],
+        ["48-50D/CVC/1.jpg", JPEG],
+        ["48-50D/CVC/2.jpg", MAX_UPLOAD_BYTES + 1],
       ]),
     });
     expect(only(violations, "CON-05").paths).toEqual(["48-50D/CVC/2.jpg"]);
@@ -301,7 +308,7 @@ describe("the upload set", () => {
     const violations = checkConstraints({
       entries: [pageGroup("48-50D/situatie.csv", ["1.jpg"])],
       observations: [obs()],
-      metadata: meta([["48-50D/situatie.csv/1.jpg", JPEG, "image/jpeg"]]),
+      metadata: meta([["48-50D/situatie.csv/1.jpg", JPEG]]),
     });
     expect(violations).toEqual([]);
   });
@@ -315,8 +322,8 @@ describe("the upload set", () => {
       entries: [file("48-50D/scan.jpg")],
       observations: [obs({ pathParts: ["48-50D"], dropped: [dropped("48-50D/arhiva.zip")] })],
       metadata: meta([
-        ["48-50D/scan.jpg", JPEG, "image/jpeg"],
-        ["48-50D/arhiva.zip", MAX_UPLOAD_BYTES + 1, ""],
+        ["48-50D/scan.jpg", JPEG],
+        ["48-50D/arhiva.zip", MAX_UPLOAD_BYTES + 1],
       ]),
     };
     expect(checkConstraints(input)).toEqual([]);
@@ -334,7 +341,7 @@ describe("files that could not be read", () => {
     const verdict = checkConstraintsStage({
       entries: [file("a.jpg"), file("b.jpg")],
       observations: [obs()],
-      metadata: meta([["a.jpg", JPEG, "image/jpeg"]]),
+      metadata: meta([["a.jpg", JPEG]]),
     });
     expect(verdict.violations).toEqual([]);
     expect(verdict.unreadable).toEqual(["b.jpg"]);
@@ -345,7 +352,7 @@ describe("files that could not be read", () => {
     const verdict = checkConstraintsStage({
       entries: [file("tabel.csv"), file("b.jpg")],
       observations: [obs()],
-      metadata: meta([["tabel.csv", 100, "text/csv"]]),
+      metadata: meta([["tabel.csv", 100]]),
     });
     expect(ids(verdict.violations)).toEqual(["CON-01"]);
     expect(verdict.unreadable).toEqual(["b.jpg"]);
@@ -400,11 +407,11 @@ describe("determinism", () => {
   // literal array twice proves only that the module is pure, which any
   // implementation is. `walkFolder` observes and emits in whatever order the
   // filesystem produced, and reversing is the cheapest fixture for that.
-  const rows: [string, number, string][] = [
-    ["Poze/b.heic", 100, ""],
-    ["Poze/a.heic", 100, ""],
-    ["Poze/c.heic", 100, ""],
-    ["x.jpg", 0, "image/jpeg"],
+  const rows: [string, number][] = [
+    ["Poze/b.heic", 100],
+    ["Poze/a.heic", 100],
+    ["Poze/c.heic", 100],
+    ["x.jpg", 0],
   ];
   const build = (order: "asIs" | "reversed") => {
     const put = order === "asIs" ? rows : [...rows].reverse();
@@ -559,7 +566,7 @@ describe("a folder near the walk's own ceiling", () => {
     return {
       entries: names.map(file),
       observations: [obs()],
-      metadata: meta(names.map((n) => [n, 2_000, ""] as [string, number, string])),
+      metadata: meta(names.map((n) => [n, 2_000] as [string, number])),
     };
   }
 
@@ -667,12 +674,12 @@ const EVERY_VIOLATION = checkConstraints({
   ],
   observations: [obs({ dropped: [dropped("folder.jpg")] })],
   metadata: meta([
-    ["situatie.csv", 100, "text/csv"],
-    ["IMG_1.heic", 100, ""],
-    ["proiect.xyz", 100, ""],
-    ["gol.jpg", 0, "image/jpeg"],
-    ["urias.jpg", MAX_UPLOAD_BYTES + 1, "image/jpeg"],
-    ["folder.jpg", THUMBNAIL_BYTES + 1, "image/jpeg"],
+    ["situatie.csv", 100],
+    ["IMG_1.heic", 100],
+    ["proiect.xyz", 100],
+    ["gol.jpg", 0],
+    ["urias.jpg", MAX_UPLOAD_BYTES + 1],
+    ["folder.jpg", THUMBNAIL_BYTES + 1],
   ]),
 });
 
@@ -714,7 +721,7 @@ describe("every rule in the catalogue", () => {
     const input = {
       entries: [file("situatie.csv"), file("gol.jpg")],
       observations: [obs()],
-      metadata: meta([["situatie.csv", 100, "text/csv"], ["gol.jpg", 0, "image/jpeg"]]),
+      metadata: meta([["situatie.csv", 100], ["gol.jpg", 0]]),
     };
     expect(checkConstraintsStage(input).violations).toEqual(checkConstraints(input));
   });

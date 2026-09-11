@@ -27,10 +27,17 @@
  *     substring check, and a sentence argument missing from the catalogue
  *     makes the format throw.
  *
- *  4. **The Romanian does not agree.** Romanian plural categories are
- *     one / few (2–19) / other (0, 20+), and a sentence written with only
- *     one/other renders "20 proprietăți" where it must read
- *     "20 de proprietăți". Every Romanian plural block must declare all three.
+ *  4. **The Romanian does not agree.** Romanian plural categories are one (1),
+ *     few (0, and anything ending 1–19 in its last hundred except 1 itself —
+ *     so 101 and 118 are `few`, 120 is not) and other (everything else), and a
+ *     sentence written with only one/other renders "20 proprietăți" where it
+ *     must read "20 de proprietăți". Every Romanian plural block must declare
+ *     all three. **ZERO is `few`, not `other`** — this paragraph and the one at
+ *     `describe("Romanian plural agreement")` said otherwise until #34.22,
+ *     which is why `import-checks.test.ts` and `import-constraint-rules.test.ts`
+ *     have carried the correct wording while this file contradicted them twice.
+ *     No assertion changed: all three files assert
+ *     `arrayContaining(["one", "few", "other"])`, so only the prose was wrong.
  *
  * WHY THIS FILE PARSES ICU RATHER THAN FORMATTING IT
  * ──────────────────────────────────────────────────
@@ -770,9 +777,11 @@ describe("every sentence uses exactly the placeholders the catalogue declares", 
 
 describe("Romanian plural agreement", () => {
   it("declares all three categories in every Romanian plural", () => {
-    // Romanian is one / few (2–19) / other (0, 20+). A message written with
-    // only one/other renders "20 proprietăți" where it must read
-    // "20 de proprietăți" — and English, which has no `few`, looks fine.
+    // Romanian is one (1) / few (0, and anything ending 1–19 in its last
+    // hundred except 1 itself — so 101 and 118 are `few`, 120 is not) / other
+    // (everything else). ZERO is `few`. A message written with only one/other
+    // renders "20 proprietăți" where it must read "20 de proprietăți"
+    // — and English, which has no `few`, looks fine.
     const rules = loadRuleMessages("ro-RO.json");
     for (const id of STRUCTURE_RULE_IDS) {
       for (const part of RULE_MESSAGE_PARTS) {

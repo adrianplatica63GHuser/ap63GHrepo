@@ -2,10 +2,10 @@
  * src/lib/import/metadata-pass.ts — the T1 pass, which since #26.05 runs for
  * the Constraints stage rather than for the report. (Slice #24.02b)
  *
- * Reads `size` and `type` for every file the run will upload, by calling
- * `getFile()` on each handle. The SIZE is what separates three cheap
- * high-value checks from being uncheckable — all three moved to the Constraints
- * stage in #26.05, where they BLOCK rather than advise:
+ * Reads `size` for every file the run will upload, by calling `getFile()` on
+ * each handle. The size is what separates three cheap high-value checks from
+ * being uncheckable — all three moved to the Constraints stage in #26.05,
+ * where they BLOCK rather than advise:
  *
  *   CON-05  a file over 20 MB → HTTP 413, *after* its Document row exists
  *   CON-04  a zero-byte file  → HTTP 400 "file is required", which misleads
@@ -18,20 +18,30 @@
  * name at upload, at serve and at AI-interpret, leaving a finding with no
  * consequence, and #34.12 deleted it.
  *
- * **So `FileMeta.type` is now written below and read by nothing.** Every rule
- * that survives answers from the file NAME or from `size`; nothing anywhere
- * looks at the recorded type. It was left in place rather than swept up in
- * #34.12, which is a scope decision and not evidence of a consumer: dropping
- * the field is two source edits (`checks.ts`'s `FileMeta`, and the write below)
- * plus five test fixtures that spell a type out, and none of the modules that
- * merely pass the map along would change at all.
+ * ⚠️ **`FileMeta.type` WAS WRITTEN HERE AND IS GONE, deleted by #34.22.** It
+ * survived #34.12 as a scope decision rather than as evidence of a consumer,
+ * and for one slice it sat in the map written by this pass and read by nothing.
+ * That is not an inert field, it is an invitation: the next rule author who
+ * reached for it would have got the Windows-registry value #34.06 declared
+ * untrustworthy, `""` and all, on exactly the archival `.tif` that made F-11
+ * worthless — and nothing would have failed. The header that stood here was
+ * the whole of the protection, and it said so; it also said what to do when a
+ * second rule wanted the field, which was to delete the field instead of
+ * reading it. #34.22 did that. **There is now nothing to read, which is a
+ * guard rather than a paragraph asking to be believed.**
  *
- * ⚠️ **And it is unguarded, deliberately and knowingly.** Nothing fails if the
- * next rule author reads `meta.type` and builds on it — they will get the
- * Windows-registry value #34.06 declared untrustworthy, `""` and all, on
- * exactly the archival `.tif` that made F-11 worthless. This paragraph is the
- * whole of the protection. If a second rule ever wants it, delete the field
- * instead of reading it.
+ * The deletion cost what this header predicted: the type at `checks.ts`'s
+ * `FileMeta`, the write below, and five test fixtures that spelled a type out
+ * (`import-checks.test.ts`'s `meta`, `import-constraint-check.test.ts`'s `meta`
+ * and `one`, `import-constraint-rules.test.ts`'s `m` and `JPEG`). None of the
+ * modules that merely pass the map along changed at all.
+ *
+ * ⚠️ **If you want a rule about the file's type, read the NAME.** That is not a
+ * workaround, it is the finding of #34.06 and the admission test in
+ * `constraint-rules.ts`: the extension is what the registry was guessing from
+ * in the first place, so the name is the same information without the machine
+ * dependency. `src/__tests__/import-checks.test.ts` walks `src/` and fails if
+ * anything reads a `.type` off this map again.
  *
  * ⚠️ **It therefore runs for the Constraints stage now, not for the report.**
  * `ImportWizard` calls it once the structure check is clean and the user has
@@ -39,11 +49,11 @@
  * produced. A pass that read nothing is not "no findings" at that stage — see
  * `checkConstraintsStage`.
  *
- * `getFile()` returns a `File` whose `size` and `type` come from the directory
- * entry — it does not read the contents, so this is metadata, not I/O over the
- * bytes. On Adrian's archive it is ~760 calls and finishes in well under a
- * second; it is still reported through `onProgress` because "well under a
- * second" is a claim about his laptop, not about every machine.
+ * `getFile()` returns a `File` whose `size` comes from the directory entry — it
+ * does not read the contents, so this is metadata, not I/O over the bytes. On
+ * Adrian's archive it is ~760 calls and finishes in well under a second; it is
+ * still reported through `onProgress` because "well under a second" is a claim
+ * about his laptop, not about every machine.
  *
  * ⚠️ It also touches the DROPPED files, which is deliberate and is the whole
  * point of CON-06. `folder.jpg` is removed by NAME, so the only way to tell a
@@ -127,7 +137,7 @@ export async function readFileMetadata(
       const { key, handle } = targets[index];
       try {
         const file = await handle.getFile();
-        result.set(key, { size: file.size, type: file.type });
+        result.set(key, { size: file.size });
       } catch {
         // Unreadable — see the docblock. Omitted, never defaulted.
       }

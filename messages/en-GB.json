@@ -2347,9 +2347,9 @@
         "finding": {
           "osDirectories": "{folders} Windows system folders will be imported like ordinary folders, and their names will become tags.",
           "officeFiles": "{files} Word/Excel files will be stored, but their contents cannot be read or searched.",
-          "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
-          "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
-          "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again."
+          "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep — the walk stopped in {places} places. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
+          "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete — the walk stopped in {places} places. Split it into several smaller folders and check again.",
+          "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete — the walk stopped in {places} places. Split it into several smaller folders and check again."
         },
         "downloadButton": "Download this list",
         "downloadHint": "Saves a file you can open in Word. It lists every affected file, not only the examples shown on screen.",

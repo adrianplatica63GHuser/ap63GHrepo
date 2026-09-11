@@ -292,8 +292,19 @@ export type Finding = {
   counts: Record<string, number>;
 };
 
-/** One `File` worth of metadata, keyed by full path from the picked root. */
-export type FileMeta = { size: number; type: string };
+/**
+ * One `File` worth of size, keyed by full path from the picked root.
+ *
+ * ⚠️ **It carried a `type` until #34.22, and the field is gone rather than
+ * unused.** `File.type` is the Windows-registry guess at a MIME from the
+ * extension, which #34.06 declared untrustworthy; F-11 was its last reader and
+ * #34.12 deleted that. A field written by the metadata pass and read by nothing
+ * is not inert — it is an invitation, and what it invites is a rule built on
+ * `""` for exactly the archival `.tif` that made F-11 worthless. Deleting it is
+ * the guard: there is now nothing to read. Every surviving rule answers from
+ * the file NAME or from `size` — see `constraint-rules.ts`'s admission test.
+ */
+export type FileMeta = { size: number };
 
 export type SkippedGroup = {
   reason: IgnoredReason;
@@ -462,8 +473,16 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
  * property folders to go and find a shortcut that did not exist.
  */
 function truncationFindings(observations: readonly DirectoryObservation[]): Finding[] {
+  // ⚠️ `limit: null` for depth, and it was `0` until #34.22. A shortcut loop is
+  // not a cap the user exceeded — the walk stopped because the folder is
+  // endlessly deep, and there is no number they can act on. `0` was filler that
+  // kept this table uniform, and it was carried into `counts` where it became a
+  // count the copy could never name: "more than 0 subfolders" is not a sentence
+  // anyone can ship. The guard in `import-checks.test.ts` compares each
+  // message's arguments against these counts WHOLE, in both directions, so a
+  // count no sentence names now fails rather than sitting there.
   const BY_REASON = {
-    depth: { kind: "walkLoopedOnShortcut", limit: 0 },
+    depth: { kind: "walkLoopedOnShortcut", limit: null },
     budget: { kind: "walkTooManyFolders", limit: MAX_WALK_DIRECTORIES },
     breadth: { kind: "walkTooManyFiles", limit: MAX_WALK_ENTRIES },
   } as const;
@@ -477,7 +496,10 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
     // every affected path" contract the rest of the report follows. A
     // branching loop truncates in thousands of places whose paths are the same
     // folder names in thousands of orders; listing them is noise, not
-    // completeness, and `places` still carries the true total.
+    // completeness, and `places` carries the true total — SAID OUT LOUD since
+    // #34.22, which put `{places}` into all three sentences in both locales. A
+    // walk that stopped in eleven places is a different fact from a walk that
+    // stopped, and the number was already computed and already true.
     //
     // For a loop the example is useful despite its length: the repetition IS
     // the evidence, and `Scurtatura/Acte/Scurtatura/Acte/…` shows the user
@@ -489,7 +511,7 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
       kind,
       loudness: "loud",
       paths: [hits[0].path],
-      counts: { places: hits.length, limit },
+      counts: limit === null ? { places: hits.length } : { places: hits.length, limit },
     });
   }
   return out;
@@ -514,6 +536,47 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
 // Skipped
 // ---------------------------------------------------------------------------
 
+/**
+ * Every `IgnoredReason`, in the order the panel shows them.
+ *
+ * Stable, most-surprising first: an extension the user chose to put there beats
+ * a hidden file they never see.
+ *
+ * ⚠️ **EXPORTED AND FROZEN SINCE #34.22, AND IT IS THE SECOND RUNTIME KEY
+ * SURFACE — not a new list.** This array has held all three members since the
+ * function was written; what it lacked was a name outside this file.
+ * `report-sections.tsx` resolves the label with ``t(`skippedReason.${reason}`)``
+ * at two sites, a key built at run time, so `tsc` cannot see the message files
+ * and #34.12's catalogue guard — which covers `FINDING_KINDS` — never counted
+ * these. `DEFAULT_LOCALE` is `ro-RO` and does not fall back to English, so a
+ * reason whose copy is missing renders the literal
+ * `adminImport.wizard.report.skipped.skippedReason.<reason>` at the user, and
+ * an orphaned key is silent for ever. `import-checks.test.ts` ties the three
+ * together now, in both directions and in both locales.
+ *
+ * ⚠️ **`Object.freeze`, not `as const` alone**, because `as const` is erased at
+ * runtime and an unfrozen module-level array is a shared mutable that one
+ * caller can `sort()` or `push()` on behalf of the whole process — the same
+ * convention `FINDING_KINDS` above and every catalogue in this folder follows.
+ * Unlike `FINDING_KINDS`, this one IS read by the engine: `groupSkipped` below
+ * iterates it, so a re-order here moves what the user sees.
+ *
+ * ⚠️ **What the `readonly IgnoredReason[]` annotation does and does not buy.**
+ * It catches a typo and a member `folder-utils.ts` has RETIRED — either is a
+ * compile error here. It does NOT catch a reason ADDED to the union and left
+ * out of this array: an annotation is not an exhaustiveness check, and a
+ * reason missing from here is a reason the panel silently never shows. The
+ * parity case catches that only once its copy exists in the message files.
+ * Say it plainly rather than leave the next reader to assume the type covers
+ * it: the array is the display list, and adding a reason means editing three
+ * places — the union, this array, and both locales.
+ */
+export const IGNORED_REASONS: readonly IgnoredReason[] = Object.freeze([
+  "ignored-extension",
+  "system-file",
+  "hidden",
+] as const);
+
 function groupSkipped(observations: readonly DirectoryObservation[]): SkippedGroup[] {
   const byReason = new Map<IgnoredReason, string[]>();
   for (const obs of observations) {
@@ -521,12 +584,10 @@ function groupSkipped(observations: readonly DirectoryObservation[]): SkippedGro
       byReason.set(d.reason, [...(byReason.get(d.reason) ?? []), d.path]);
     }
   }
-  // Stable, most-surprising first: an extension the user chose to put there
-  // beats a hidden file they never see.
-  const order: IgnoredReason[] = ["ignored-extension", "system-file", "hidden"];
-  return order
-    .filter((r) => byReason.has(r))
-    .map((reason) => ({ reason, paths: byReason.get(reason)! }));
+  return IGNORED_REASONS.filter((r) => byReason.has(r)).map((reason) => ({
+    reason,
+    paths: byReason.get(reason)!,
+  }));
 }
 
 // ---------------------------------------------------------------------------
