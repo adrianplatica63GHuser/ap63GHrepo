@@ -50,6 +50,7 @@ import {
 } from "@/app/api/judicial-persons/[id]/route";
 import * as judicialQueries from "@/lib/judicial-persons/queries";
 import * as personQueries from "@/lib/persons/queries";
+import { withExpectedServerErrorLog } from "@/test-support/server-error-log";
 
 const jMocks = judicialQueries as unknown as {
   listJudicialPersons: jest.Mock;
@@ -124,13 +125,11 @@ describe("GET /api/judicial-persons", () => {
 
   it("returns 500 when the DB query throws", async () => {
     jMocks.listJudicialPersons.mockRejectedValueOnce(new Error("boom"));
-    const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-    try {
-      const res = await listGet(req("http://localhost/api/judicial-persons"));
-      expect(res.status).toBe(500);
-    } finally {
-      errSpy.mockRestore();
-    }
+    // Slice #34.20: see the helper's header — it asserts the log, these did not.
+    const res = await withExpectedServerErrorLog(() =>
+      listGet(req("http://localhost/api/judicial-persons")),
+    );
+    expect(res.status).toBe(500);
   });
 });
 

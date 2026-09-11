@@ -86,6 +86,7 @@ import {
   type RoleAttachmentKind,
 } from "@/lib/admin/value-lists/role-attachment";
 import { roleNotOfferedToResponse } from "@/lib/api/errors";
+import { withExpectedServerErrorLog } from "@/test-support/server-error-log";
 
 import { POST as postDocumentPersons } from "@/app/api/documents/[id]/persons/route";
 import { POST as postPropertyPersons } from "@/app/api/properties/[id]/persons/route";
@@ -412,10 +413,19 @@ describe("a POST carrying a role no whitelist offers", () => {
    * ⚠️ **Everything else still 500s.** The narrowing has to be the refusal and
    * nothing near it — a route that answered 400 to a dropped connection would
    * tell the client its request was wrong.
+   *
+   * ⚠️ **AND IT STILL LOGS, WHICH IS WHY THE CALL IS WRAPPED.** `unexpectedError`
+   * writes the underlying error to the server console before answering 500, so
+   * before Slice #34.20 this one `it.each` printed five stack traces on every
+   * `npx jest` — a screenful of `jest-circus` frames under a PASSING suite,
+   * which is how a reader learns to skim console output and how a real one gets
+   * missed. `withExpectedServerErrorLog` silences it AND asserts it happened,
+   * so the second half of that catch's contract is now checked here rather than
+   * merely endured.
    */
   it.each(ROUTES.map((r) => [r.label, r] as const))("%s still 500s on anything else", async (_label, route) => {
     route.mock.mockRejectedValueOnce(new Error("ECONNREFUSED"));
-    const res = await route.post(route.withRole);
+    const res = await withExpectedServerErrorLog(() => route.post(route.withRole));
     expect(res.status).toBe(500);
   });
 

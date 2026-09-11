@@ -25,8 +25,10 @@
  * Jest's default `testMatch` claims **every** file under a `__tests__` folder,
  * so a helper placed there is loaded as a suite and fails with "Your test suite
  * must contain at least one test". `src/test-support/` is outside that pattern
- * and outside the app's import graph — nothing in `src/app` or `src/lib` may
- * import from here.
+ * and outside the app's import graph — nothing that ships may import from here,
+ * anywhere under `src`. (This sentence named `src/app` and `src/lib` only until
+ * Slice #34.20, which widened it and made it a guard:
+ * `import-structure-rules.test.ts` walks the whole of `src`.)
  *
  * It moved out of the structure-rules suite because #26.05 added a second rule
  * catalogue with the same three-sentence shape, and a hand-written ICU parser

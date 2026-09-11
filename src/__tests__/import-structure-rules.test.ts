@@ -615,6 +615,98 @@ describe("rule text", () => {
   });
 });
 
+/**
+ * `src/test-support/` is for TESTS, and this is what says so.  (Slice #34.20)
+ *
+ * `icu.ts` carried the sentence "nothing in `src/app` or `src/lib` may import
+ * from here" in its header from #26.05 until this slice widened it; both files
+ * in the directory now name the whole of `src`. Either way it was prose,
+ * checked by nothing. That was cheap while the directory held one pure ICU
+ * parser, which in a bundle would merely have been dead weight.
+ * `server-error-log.ts` is not that: it calls `jest.spyOn`, so a CALL to it
+ * from a request path or a component is a `ReferenceError` in production —
+ * importing it is still inert, which is precisely why nothing would notice
+ * until the day something ran it.
+ *
+ * ⚠️ **WALKED FROM `src`, NOT READ OUT OF A LIST OF DIRECTORIES, AND TWO REVIEW
+ * ROUNDS ARE WHY.** The first draft walked `src/app` and `src/lib`, because
+ * that is what the header sentence said; the second added `src/components` and
+ * `src/hooks` — and still missed `src/db` and `src/i18n`, which ship by exactly
+ * the same argument. `object-writers-enumerated.test.ts` already wrote the
+ * lesson down: "A directory list is one more thing to remember to extend, and
+ * forgetting silently un-covers a writer — the exact failure this suite exists
+ * to prevent." So the walk starts at `src` and skips only the two directories
+ * that are ALLOWED to import from here.
+ *
+ * ⚠️ **`src/lib/dev/` IS TEST-ONLY TOO AND IS SCANNED ANYWAY, DELIBERATELY.**
+ * `strip-comments.ts` opens "⚠️ **NOT PRODUCTION CODE, AND IT LIVES HERE
+ * ANYWAY.**" and is imported only by tests, for the same `testMatch` reason
+ * `src/test-support/` exists. It is not exempted here, and the reason is not a
+ * mechanical one — the set below holds paths, so `"lib/dev"` would be exactly
+ * as narrow an entry as `"test-support"`. It is that an exemption has to be
+ * earned, and a comment-stripper has no business importing test-support. The
+ * practical effect is a constraint worth stating rather than a hole: if that
+ * day ever comes, move the module INTO `src/test-support/`, where it arguably
+ * belongs already, rather than widening this set.
+ *
+ * ⚠️ **THE NEEDLE IS A REGEX BECAUSE THE HOUSE STYLE IS NOT UNIVERSAL.** A
+ * plain `.includes('"@/test-support/')` misses a single-quoted import — and
+ * `src/app/api/geo/convert/route.ts` really does import `'@/lib/geo/transdatRO'`
+ * in single quotes today, with no ESLint `quotes` rule to stop it — as well as
+ * a dynamic `import(\`@/test-support/x\`)` and a relative `../../test-support/x`.
+ * All four spellings are matched.
+ *
+ * ⚠️ **ONE WALK MAKES THE FLOOR HONEST AGAIN.** With four separate walks no
+ * single number could be an anti-vacuity guard — `src/hooks` is three files, so
+ * any floor that the other three clear is one the missing fourth also clears.
+ * With one walk, any floor well under the measured 428 fails the moment the
+ * walk stops finding the tree. It is set at 200 rather than just below 428 on
+ * purpose: the assertion is "the walk still walks", not "the tree is this big",
+ * and a floor with no headroom turns any slice that deletes thirty files into a
+ * red test in an unrelated suite.
+ *
+ * It lives in THIS file because this is where `scanIcu`'s own tests live, for
+ * the reason `src/test-support/icu.ts` states in its header: jest's default
+ * `testMatch` claims every file under a `__tests__` folder, so the directory
+ * cannot hold its own suite.
+ */
+describe("the src/test-support boundary", () => {
+  it("is imported by nothing that ships", () => {
+    const SRC = path.join(process.cwd(), "src");
+    // `@/test-support/…`, and every relative spelling: `./`, `../`, `../../`.
+    const IMPORTS_TEST_SUPPORT = /["'`](?:@\/|(?:\.{1,2}\/)+)test-support\//;
+    // The two that MAY reach it: the tests themselves, and the directory itself
+    // (icu.ts and server-error-log.ts are siblings and may cite each other).
+    //
+    // ⚠️ Matched on the path relative to `src`, not on the bare directory name:
+    // `ALLOWED.has(entry.name)` would exempt a future `src/app/**/test-support/`
+    // at any depth, which is the one spelling an offender would most plausibly
+    // arrive under. Only these two exact locations are exempt.
+    const ALLOWED = new Set(["__tests__", "test-support"]);
+    const offenders: string[] = [];
+    let scanned = 0;
+    const walk = (dir: string): void => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          const rel = path.relative(SRC, full).split(path.sep).join("/");
+          if (!ALLOWED.has(rel)) walk(full);
+          continue;
+        }
+        if (!/\.(tsx?|mts)$/.test(entry.name)) continue;
+        scanned += 1;
+        if (IMPORTS_TEST_SUPPORT.test(fs.readFileSync(full, "utf8"))) {
+          offenders.push(path.relative(SRC, full).split(path.sep).join("/"));
+        }
+      }
+    };
+    walk(SRC);
+    // A walk that stopped finding the tree would otherwise pass by checking none.
+    expect(scanned).toBeGreaterThan(200);
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe("scanIcu — the reader the message tests depend on", () => {
   it("finds simple placeholders", () => {
     expect([...scanIcu("plain {folder} here").args]).toEqual(["folder"]);

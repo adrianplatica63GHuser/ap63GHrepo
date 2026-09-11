@@ -39,6 +39,7 @@ import {
   DELETE as oneDelete,
 } from "@/app/api/properties/[id]/route";
 import * as queries from "@/lib/properties/queries";
+import { withExpectedServerErrorLog } from "@/test-support/server-error-log";
 
 const mocks = queries as unknown as {
   listProperties:     jest.Mock;
@@ -108,13 +109,11 @@ describe("GET /api/properties", () => {
 
   it("returns 500 when the DB throws", async () => {
     mocks.listProperties.mockRejectedValueOnce(new Error("db boom"));
-    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
-    try {
-      const res = await listGet(req("http://localhost/api/properties"));
-      expect(res.status).toBe(500);
-    } finally {
-      spy.mockRestore();
-    }
+    // Slice #34.20: see the helper's header — it asserts the log, these did not.
+    const res = await withExpectedServerErrorLog(() =>
+      listGet(req("http://localhost/api/properties")),
+    );
+    expect(res.status).toBe(500);
   });
 });
 

@@ -46,6 +46,7 @@ import {
   DELETE as oneDelete,
 } from "@/app/api/people/[id]/route";
 import * as queries from "@/lib/persons/queries";
+import { withExpectedServerErrorLog } from "@/test-support/server-error-log";
 
 const mocks = queries as unknown as {
   listPersons: jest.Mock;
@@ -124,14 +125,12 @@ describe("GET /api/people", () => {
 
   it("returns 500 when the DB query throws", async () => {
     mocks.listPersons.mockRejectedValueOnce(new Error("boom"));
-    // Silence the expected console.error from unexpectedError().
-    const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-    try {
-      const res = await listGet(req("http://localhost/api/people"));
-      expect(res.status).toBe(500);
-    } finally {
-      errSpy.mockRestore();
-    }
+    // Slice #34.20: was six hand-written lines spying on console.error. The
+    // helper also ASSERTS the log fired, which these lines never did.
+    const res = await withExpectedServerErrorLog(() =>
+      listGet(req("http://localhost/api/people")),
+    );
+    expect(res.status).toBe(500);
   });
 });
 
