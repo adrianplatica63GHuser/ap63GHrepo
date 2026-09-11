@@ -288,6 +288,10 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
   const wasOpenRef      = useRef(false);
   const listTitleId     = useId();
   const confirmTitleId  = useId();
+  /** Names the failure sentence beside „+ Adaugă".             (Slice #34.20) */
+  const lookupHintId    = useId();
+  /** Names the wait beside it. A separate node: see the toolbar's comment. */
+  const lookupWaitId    = useId();
 
   /**
    * Hand focus back when the confirmation closes.
@@ -380,6 +384,48 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
   });
 
   /**
+   * ⚠️ **THE TWO LOOKUPS THE ADD FORM IS MADE OF, ANSWERED AS ONE — AND
+   * „+ Adaugă" OPENED NOTHING UNTIL THEY WERE.**                (Slice #34.20)
+   *
+   * `assocQuery` has said `loading` and `error` on screen since this panel was
+   * written (the two table rows below). These two said neither. The add form is
+   * rendered by `showAdd && docTypesQuery.data && rolesQuery.data`, and the
+   * button was disabled by `showAdd` ALONE — so with either lookup failed the
+   * button was live, the press set `showAdd`, no form appeared, and the button
+   * then disabled ITSELF: a press that produced nothing and then refused a
+   * second try, with the reason nowhere on the screen.
+   *
+   * `lookupsReady` is what the button is gated on, and it is the same two
+   * facts the form is rendered by — `.data` on each, not a paraphrase such as
+   * `!isLoading && !isError`. That is the point: a button whose enabled
+   * condition is the render condition cannot open a form that does not draw —
+   * in flight, failed, or in any third state React Query grows later. (The JSX
+   * below keeps writing `docTypesQuery.data && rolesQuery.data` rather than
+   * this const because that is what NARROWS the two props for `AddForm`; a
+   * boolean would buy the `!` this file does not otherwise need.)
+   *
+   * `lookupsFailed` decides only WHICH sentence stands beside the button, and
+   * `!lookupsReady &&` is what makes that claim true rather than nearly true.
+   * A THIRD adversarial round measured the version without it: in React Query
+   * v5 a BACKGROUND REFETCH that fails sets `status: "error"` while `data`
+   * stays, and both mutations here call `qc.invalidateQueries()` with no
+   * filter — so saving an association refetches these two lists, and one blip
+   * put a red assertive „nu se poate adăuga o asociere" beside a button that
+   * was still enabled, over a form that still drew from cache, describing an
+   * enabled control as impossible. Failed means "failed AND there is nothing
+   * to work with"; anything else is a refetch the user need not hear about.
+   *
+   * There is no third const for "loading": "not ready and not failed" IS still
+   * coming, and a second name for it would be a second thing to keep true.
+   *
+   * Retrying is deliberately not offered: `refetchOnWindowFocus` is off
+   * globally and stays off (#34.20's scope), so the honest instruction is the
+   * one the sentence gives — reload.
+   */
+  const lookupsReady   = !!docTypesQuery.data && !!rolesQuery.data;
+  const lookupsFailed  = !lookupsReady && (docTypesQuery.isError || rolesQuery.isError);
+
+  /**
    * ⚠️ **`onError` — this mutation had none.**                 (Slice #29.13)
    *
    * A failed delete left the confirmation dialog sitting there with its button
@@ -435,7 +481,14 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
         // the same way. Pre-existing, and it costs more since this panel moved:
         // it is two modals deep now, so the key the user is pressing is the one
         // that gets them out of both.
-        if (showAdd && docTypesQuery.data && rolesQuery.data) { setShowAdd(false); return; }
+        //
+        // ⚠️ **STILL GUARDED, THOUGH #34.20 MADE THE GAP MUCH SMALLER.** The
+        // button is now disabled until `lookupsReady`, so the press that used
+        // to open this window cannot happen; what remains is the form already
+        // open when a lookup's data goes away under it. Same condition, one
+        // name — `lookupsReady` IS `showAdd`'s other half, and writing it twice
+        // is how the two drift.
+        if (showAdd && lookupsReady) { setShowAdd(false); return; }
         onClose();
       }
     }
@@ -444,8 +497,7 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
   }, [
     confirmDeleteId,
     showAdd,
-    docTypesQuery.data,
-    rolesQuery.data,
+    lookupsReady,
     onClose,
     closeConfirm,
     deleteMutation.isPending,
@@ -532,16 +584,78 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
             )}
 
             {/* Toolbar */}
-            <div className="mb-3 flex items-center justify-between">
-              <button
-                onClick={() => setShowAdd(true)}
-                disabled={showAdd}
-                className={buttonClass({ variant: "primary", size: "sm" })}
-              >
-                + {t("add")}
-              </button>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  onClick={() => setShowAdd(true)}
+                  // See `lookupsReady`: the button's enabled condition is the
+                  // form's render condition, so a press can never leave the
+                  // panel with `showAdd` true and nothing drawn. (Slice #34.20)
+                  disabled={showAdd || !lookupsReady}
+                  // ⚠️ **The sentence is NAMED by the button, not merely next
+                  // to it.** The live region below is what ANNOUNCES a failure
+                  // when it arrives; this is what answers "why can I not press
+                  // this?" for a user who reaches the button afterwards —
+                  // browse-mode cursors visit disabled controls even though Tab
+                  // does not. Whichever hint is actually PRESENT — a
+                  // description pointing at the empty one describes nothing,
+                  // and the failure span is empty while the wait span is not.
+                  //                                        (Slice #34.20)
+                  aria-describedby={
+                    lookupsFailed ? lookupHintId : lookupsReady ? undefined : lookupWaitId
+                  }
+                  // `shrink-0` / `whitespace-nowrap`: the failure sentence is a
+                  // full instruction and this panel is `inset-x-4` on a phone,
+                  // so without them the button's own label wraps mid-word
+                  // before the sentence does.
+                  className={buttonClass({
+                    variant: "primary",
+                    size: "sm",
+                    className: "shrink-0 whitespace-nowrap",
+                  })}
+                >
+                  + {t("add")}
+                </button>
+                {/* ⚠️ **TWO SPANS, AND AN ADVERSARIAL ROUND FOUND BOTH REASONS.**
+
+                    The FAILURE span is rendered unconditionally with a bare
+                    `role="alert"` — the rule this file already states 100 lines
+                    below, on #29.13's delete refusal: "a live region mounted
+                    together with its text is not reliably announced". A first
+                    draft mounted one span only while `!lookupsReady` and
+                    switched the role on with the text, which is that same
+                    mistake in that same file.
+
+                    The WAIT is a separate, non-live span, and that is the
+                    second round's finding. `role="alert"` is `aria-live`
+                    ASSERTIVE. With one span carrying both sentences, the region
+                    mounts already holding „Se încarcă listele…" in the same
+                    commit as #34.10's `listPanelRef.current?.focus()` — so
+                    every open of this panel on the happy path interrupted the
+                    dialog's own name with a loading hint. A wait is not news.
+
+                    ⚠️ **AND NEITHER IS `empty:hidden`.** `display: none` takes
+                    a node out of the accessibility tree, so a region hidden
+                    while empty is registered at the moment its text appears —
+                    the very thing the first paragraph is about, reintroduced by
+                    the class that looks like tidying. #29.13's span uses
+                    `empty:mb-0` for the same reason; here an empty span costs
+                    one `gap-3`.                            (Slice #34.20) */}
+                <span
+                  id={lookupHintId}
+                  role="alert"
+                  className="min-w-0 text-xs text-red-600 dark:text-red-400"
+                >
+                  {lookupsFailed ? t("lookupsError") : ""}
+                </span>
+                {!lookupsReady && !lookupsFailed && (
+                  <span id={lookupWaitId} className="min-w-0 text-xs text-fade dark:text-zinc-400">
+                    {t("lookupsLoading")}
+                  </span>
+                )}
+              </div>
               {assocQuery.data && (
-                <span className="text-xs text-fade dark:text-zinc-400">
+                <span className="shrink-0 whitespace-nowrap text-xs text-fade dark:text-zinc-400">
                   {t("count", { count: assocQuery.data.length })}
                 </span>
               )}

@@ -97,11 +97,15 @@ function stringEndsOnSameLine(source: string, start: number, quote: string): num
  *
  * A regex-based stripper cannot do this, and the difference is not academic. A
  * naive block-comment regex treats the slash-star inside
- * `accept="image/*"` (add-property-dialog.tsx:794; pages-panel.tsx carried a
- * longer one until #34.06 derived it) as the start of a comment and
- * deletes everything up to the next real terminator — 207 lines of a live
- * component silently unscanned, in the one file most likely to grow the next
- * duplicate list. The same trap is set by a regex literal: `/[/*]/` opens a
+ * a value such as `"image/*"` as the start of a comment and deletes everything
+ * up to the next real terminator. Measured on `add-property-dialog.tsx`, which
+ * held `accept="image/*"` inline until #34.20 moved it to
+ * `lib/files/picker-accept.ts`: **207 lines of a live component silently
+ * unscanned**, in the file most likely at the time to grow the next duplicate
+ * list. (`pages-panel.tsx` held a longer one until #34.06 derived it. The
+ * literal now lives in a 60-line lib module, which makes the measurement
+ * historical and the hazard exactly as live: the next inline one is one
+ * component away.) The same trap is set by a regex literal: `/[/*]/` opens a
  * phantom comment, and `p.replace(/https?:\/\//, "")` opens a phantom line
  * comment that eats the rest of its line. This walks the source character by
  * character and knows the difference between a comment, a quote and a regex.

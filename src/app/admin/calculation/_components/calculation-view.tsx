@@ -7,6 +7,10 @@ import { useSearchParams } from "next/navigation";
 import { PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+// Slice #34.20 — the coordinate picker's offer, named once for the two
+// screens that make it. See `picker-accept.ts` for why it is not derived
+// from the file-kind registry.
+import { COORDINATE_FILE_ACCEPT } from "@/lib/files/picker-accept";
 
 // ---------------------------------------------------------------------------
 // Types (mirror src/lib/calculation/compute.ts — redeclared so this client
@@ -272,7 +276,7 @@ export function CalculationView() {
           {t("buttons.chooseFile")}
           <input
             type="file"
-            accept=".txt,text/plain"
+            accept={COORDINATE_FILE_ACCEPT}
             onChange={handleFile}
             className="sr-only"
           />

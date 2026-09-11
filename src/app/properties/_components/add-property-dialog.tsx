@@ -43,6 +43,12 @@ import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
+// Slice #34.20 — this dialog makes two of the three offers, and the
+// coordinate one is the copy `calculation-view.tsx` also held.
+import {
+  COORDINATE_FILE_ACCEPT,
+  PROPERTY_PHOTO_ACCEPT,
+} from "@/lib/files/picker-accept";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -872,7 +878,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={PROPERTY_PHOTO_ACCEPT}
                   className="sr-only"
                   onChange={handleImageChange}
                   aria-label={t("uploadLabel")}
@@ -1011,7 +1017,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <input
                   ref={textInputRef}
                   type="file"
-                  accept=".txt,text/plain"
+                  accept={COORDINATE_FILE_ACCEPT}
                   className="sr-only"
                   onChange={handleTextFileChange}
                   aria-label={t("uploadTextLabel")}

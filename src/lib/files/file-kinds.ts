@@ -142,10 +142,19 @@
  * ────────────────────────────────────────────────
  *
  *  - The two coordinate-file pickers (`calculation-view.tsx`,
- *    `add-property-dialog.tsx`) still type `accept=".txt,text/plain"` rather
- *    than deriving it from the `"coordinate-candidate"` kind, and the property
- *    photo picker still says `accept="image/*"`. Neither creates a document
- *    page, which is what #34.06 was scoped to, so both were left alone.
+ *    `add-property-dialog.tsx`) do not derive their offer from the
+ *    `"coordinate-candidate"` kind, and the property photo picker offers a
+ *    browser wildcard. Neither creates a document page, which is what #34.06
+ *    was scoped to, so both were left alone.
+ *
+ *    **Half-closed by Slice #34.20**, which found the same value typed in two
+ *    files and moved all three into `lib/files/picker-accept.ts` — one place
+ *    each, guarded by `picker-accept.test.ts`. Still NOT derived from this
+ *    registry, deliberately and for the reason recorded there: deriving them
+ *    from the uploadable set would widen them in the wrong direction, offering
+ *    a spreadsheet to a coordinate parser. What remains open is the part that
+ *    matters to a user and that no picker can fix on its own — a file the
+ *    browser's own filter excludes is never offered and nothing says why.
  *  - A `.bmp` or `.tif` is accepted, stored and served correctly, and the AI
  *    routes still refuse it. #34.06 chose to say so in the copy rather than to
  *    widen the routes — see the `noSamples` and `arithmeticCalls` strings.

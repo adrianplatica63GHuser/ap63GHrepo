@@ -154,6 +154,16 @@ import {
   tagsForEntry,
 } from "@/lib/import/folder-utils";
 import { isFileKind, isModelReadable } from "@/lib/files/file-kinds";
+// Slice #34.20 — the limit the pages route refuses on, so the row that reports
+// the refusal can name the same number the route enforced, and the two refusals
+// that route can name. `uploadPage` throws the sentinel; the per-task catch,
+// which has a translator, turns it into the sentence. See the module header for
+// why the string between them is written in exactly one place.
+import { MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
+import {
+  pageRefusalOfCode,
+  pageRefusalOfSentinel,
+} from "@/lib/import/page-upload-refusals";
 import {
   IMPORT_SESSION_KEY,
   type SavedImportEntry,
@@ -1708,16 +1718,16 @@ async function uploadPage(documentId: string, file: File, pageNumber: number): P
   const res = await fetch(`/api/documents/${documentId}/pages`, { method: "POST", body: fd });
   if (res.redirected) throw new Error("session-expired");
   if (!res.ok) {
-    // ⚠️ The route's `error` is ENGLISH, and Slice #34.06 added a `code` beside
-    // it so a client can translate the two refusals it can produce. This client
-    // deliberately does not: it is a module-level function with no translator
-    // (the same reason `idCardImage` throws a sentinel), and neither refusal is
-    // reachable from here — CON-01/02/03 stop every extension outside the
-    // registry and CON-05 every oversize file before the run starts, so a 415
-    // or 413 on this path means a constraint was relaxed and the English is the
-    // least of it. `pages-panel.tsx`, whose dialog a user reaches directly, does
-    // map both codes.
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    // The route's `error` is ENGLISH and its `code` is not; see
+    // `page-upload-refusals.ts` for why the code leaves here as a sentinel
+    // rather than as a sentence, and for what the fallback below still covers.
+    const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+    const refusal = pageRefusalOfCode(body.code);
+    if (refusal) throw new Error(refusal.sentinel);
+    // Anything else is a shape this client cannot name: a 500, a proxy, a
+    // `code` added to the route after this list was written. The route's own
+    // English is a worse answer than a Romanian one and a better answer than
+    // `HTTP 500` — it is what the row has always carried and it stays.
     throw new Error(body.error ?? `HTTP ${res.status}`);
   }
 }
@@ -3464,7 +3474,18 @@ export function BulkImportDialog({
             setSessionExpired(true);
             updateResult(entry.path, { status: "error", errorMsg: t("sessionExpiredShort") });
           } else {
-            updateResult(entry.path, { status: "error", errorMsg: msg });
+            // Slice #34.20 — the pages route's two named refusals, said in
+            // Romanian HERE because this is the scope that has a translator and
+            // `uploadPage` is not. See `page-upload-refusals.ts`. Unlike
+            // `session-expired` neither aborts the run: one file the archive
+            // will not take says nothing about the next one.
+            const refusal = pageRefusalOfSentinel(msg);
+            updateResult(entry.path, {
+              status: "error",
+              errorMsg: refusal
+                ? t(refusal.messageKey, { limitMb: MAX_UPLOAD_MB })
+                : msg,
+            });
           }
         }
       });

@@ -39,10 +39,17 @@
  * The 415 was effectively unreachable before this slice (see above), so nobody
  * had met it; it now fires for every extension outside the registry, and a code
  * the client can translate is the difference between that being a fix and a
- * regression. `pages-panel.tsx` maps both. The other client,
- * `bulk-import-dialog.tsx`, deliberately does not — it has no translator at
- * that point and its own constraints gate makes both refusals unreachable; the
- * reason is written at its `uploadPage`.
+ * regression. **Both clients map both codes**: `pages-panel.tsx` since #34.06,
+ * and `bulk-import-dialog.tsx` since #34.20 — which is where this paragraph
+ * used to say the opposite. That dialog deliberately did not, because
+ * `uploadPage` is module-level with no translator and its own constraints gate
+ * (CON-01/02/03, CON-05) makes both refusals unreachable from a run. #34.20
+ * closed it anyway: unreachable is one constraint change away from being the
+ * sentence a Romanian user reads, permanently, in a saved report. It carries
+ * the code out as a sentinel to the scope that has a translator; the table is
+ * `lib/import/page-upload-refusals.ts`, and `page-upload-refusals.test.ts`
+ * reads THIS file for the code strings, so a third code added below and left
+ * unmapped fails there.
  */
 
 import type { NextRequest } from "next/server";

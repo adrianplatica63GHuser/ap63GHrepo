@@ -1923,7 +1923,9 @@
       "loading": "Se încarcă…",
       "error": "Eroare la încărcare",
       "empty": "Nicio asociere",
-      "errorBothRequired": "Selectați atât tipul de document cât și rolul persoanei."
+      "errorBothRequired": "Selectați atât tipul de document cât și rolul persoanei.",
+      "lookupsLoading": "Se încarcă listele…",
+      "lookupsError": "Listele necesare (Tipuri de Document, Roluri Persoană) nu au putut fi încărcate, prin urmare nu se poate adăuga o asociere. Reîncărcați pagina."
     }
   },
   "adminTags": {
@@ -2093,6 +2095,8 @@
         "colStatus": "Status",
         "sessionExpiredBanner": "Sesiunea a expirat în timpul importului. Fișierele marcate cu erori mai jos nu au fost salvate. Conectați-vă din nou, apoi reimportați-le.",
         "sessionExpiredShort": "Sesiune expirată",
+        "pageFileTypeRefused": "Tip de fișier neacceptat ca pagină",
+        "pageFileTooLarge": "Fișier peste limita de {limitMb} MB",
         "cornerSourceConflict": "Acest fișier de coordonate a fost deja folosit pentru proprietatea {code}. Un fișier de coordonate poate defini o singură proprietate.",
         "signInAgain": "Conectați-vă",
         "aiProcessedBadge": "Procesat AI",

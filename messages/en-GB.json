@@ -1923,7 +1923,9 @@
       "loading": "Loading…",
       "error": "Failed to load",
       "empty": "No associations yet",
-      "errorBothRequired": "Please select both a document type and a person role."
+      "errorBothRequired": "Please select both a document type and a person role.",
+      "lookupsLoading": "Loading the lists…",
+      "lookupsError": "The lists this form needs (Document Types, Person Roles) could not be loaded, so an association cannot be added. Reload the page."
     }
   },
   "adminTags": {
@@ -2093,6 +2095,8 @@
         "colStatus": "Status",
         "sessionExpiredBanner": "Your session expired during import. The files marked with errors below were not saved. Please sign in again, then re-import them.",
         "sessionExpiredShort": "Session expired",
+        "pageFileTypeRefused": "File type not accepted as a page",
+        "pageFileTooLarge": "File over the {limitMb} MB limit",
         "cornerSourceConflict": "This coordinate file has already been used for property {code}. A coordinate file can define only one property.",
         "signInAgain": "Sign in again",
         "aiProcessedBadge": "AI Done",
