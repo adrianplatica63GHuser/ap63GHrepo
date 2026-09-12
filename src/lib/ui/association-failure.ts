@@ -22,6 +22,15 @@
  * message is how you recognise something you did not mean. The `error` string
  * is free to be reworded; `ROLE_NOT_OFFERED` is the contract.
  *
+ * ⚠️ **A SECOND RECOGNISED CODE SINCE SLICE #34.26, AND IT IS OPTIONAL ON
+ * PURPOSE.** `DOCUMENT_NOT_FOUND` can only come back from
+ * `POST /api/documents/[id]/persons`, whose entity is the document the path
+ * names; the other seven screens post to routes that cannot produce it, and a
+ * required parameter would make all eight carry a sentence one of them can
+ * show. Omitted, it falls through to the route's own `error` exactly as an
+ * unrecognised code always has — so adding a screen to this function later
+ * costs one argument and no behaviour anywhere else.
+ *
  * Pure, and deliberately takes the already-translated sentence rather than a
  * translator: it is called from a client component's async handler, where
  * `useTranslations` cannot be called, and keeping i18n out of it is what lets
@@ -31,9 +40,13 @@ export function associationFailureMessage(
   body: unknown,
   status: number,
   roleNotOffered: string,
+  documentNotFound?: string,
 ): string {
   const parsed = body as { error?: unknown; code?: unknown } | null | undefined;
   if (parsed?.code === "ROLE_NOT_OFFERED") return roleNotOffered;
+  if (parsed?.code === "DOCUMENT_NOT_FOUND" && documentNotFound !== undefined) {
+    return documentNotFound;
+  }
   // Unchanged from what these screens did before: the route's own sentence,
   // falling back to the status when a body could not be read at all.
   return typeof parsed?.error === "string" ? parsed.error : `HTTP ${status}`;

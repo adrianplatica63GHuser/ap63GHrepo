@@ -532,6 +532,9 @@
     "roleNoLongerOffered": "{role} (no longer available)",
     "noRolesForType": "This document type has no person roles configured, so no role can be chosen here. Roles are configured in Reference Data → Document Types → Document Persons. The association can still be made without a role.",
     "noRolesForTypeLink": "Open Document Types (opens in a new tab)",
+    "roleStranded": "{count, plural, one {The chosen role is not configured for the type of document {documents}. The association will still be made, but the role will not be offered for it again.} other {The chosen role is not configured for the type of these documents: {documents}. The association will still be made, but the role will not be offered for them again.}} Roles are configured in Reference Data → Document Types → Document Persons.",
+    "roleStrandedUnknown": "{count, plural, one {It cannot be said whether the chosen role will still be offered for document {documents}, because its role list could not be read.} other {It cannot be said whether the chosen role will still be offered for these documents, because their role lists could not be read: {documents}.}} The association will still be made with the chosen role.",
+    "documentNotFound": "The selected document no longer exists — it has probably been deleted in the meantime. Reload the page and try again.",
     "properties": {
       "empty": "No properties associated",
       "colCode": "Code",

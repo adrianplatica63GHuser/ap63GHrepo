@@ -35,6 +35,7 @@ import { customFieldFilter } from "./custom-field-filter";
 // Pure, so the rule is testable without a connection; the offered set is read
 // by the caller, because only the caller knows which whitelist governs it.
 import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
+import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -1058,6 +1059,45 @@ export async function associatePersonsToDocument(
   quality?:     PersonDocumentQuality | null,
   personRoleId: string | null = null,
 ): Promise<void> {
+  /*
+   * ⚠️ **THE DOCUMENT IS CHECKED BEFORE THE ROLE, AND THE ORDER IS THE WHOLE
+   * FIX.**                                                     (Slice #34.26)
+   *
+   * The door's offered set is `listPersonRolesForDocument(documentId)`, and
+   * that function answers `[]` for a document that does not exist — deliberately,
+   * for the reasons its own header gives. An empty offered set refuses every
+   * non-null role, correctly, so a POST naming a document that is gone came
+   * back `ROLE_NOT_OFFERED` and the screen told the user in Romanian that their
+   * ROLE had been withdrawn. Two true statements composing into a false one;
+   * #34.15's handover recorded it the day the door went in.
+   *
+   * ⚠️ **HERE RATHER THAN IN `listPersonRolesForDocument`.** That function is
+   * also what `/api/documents/[id]/valid-person-roles` serves, whose job is to
+   * answer a LIST; teaching it to throw would turn a document deleted in
+   * another session into a 500 on a read, which its header refuses in as many
+   * words. The write is the caller that needs the difference, so the write is
+   * where it is asked.
+   *
+   * ⚠️ **AND BEFORE THE ROLE RATHER THAN AFTER, SO A ROLE-LESS POST IS ANSWERED
+   * THE SAME WAY.** With no role the door reads nothing and the insert used to
+   * fail on the foreign key, which this route turns into a 500 —
+   * „Internal server error" for a request that is simply naming something that
+   * is not there. One check before both covers both, and the second read of the
+   * same row on the role path is one SELECT on a write.
+   *
+   * ⚠️ **IT DOES NOT CHECK THE PEOPLE.** `personIds` is still left to the
+   * foreign key: the route's entity is the DOCUMENT, it is the one the path
+   * names, and the one #34.15's note is about. Widening this to every id in the
+   * body is a different decision about a different failure and is in the
+   * handover, not here.
+   */
+  const [documentRow] = await db
+    .select({ id: document.id })
+    .from(document)
+    .where(eq(document.id, documentId))
+    .limit(1);
+  if (!documentRow) throw new DocumentNotFoundError(documentId);
+
   await assertRoleMayBeAttached("document-person", personRoleId, async () =>
     (await listPersonRolesForDocument(documentId)).map((r) => r.id),
   );
@@ -1154,10 +1194,26 @@ export type RoleItem = { id: string; name: string };
  * document" screens there is no such bound** — the route's entity is a PERSON,
  * and the document id comes from a search result the user ticks, which nothing
  * revalidates. An adversarial round is what found that the bound covered one
- * screen out of three. It is left as `[]` all the same: the write that follows
- * fails on the foreign key, so the wrong sentence is a moment of confusion
- * rather than a wrong row, and the alternative is a second shape in this return
- * type plus a 404 branch on a route whose job is to answer a list.
+ * screen out of three. It is left as `[]` all the same: the alternative is a
+ * second shape in this return type plus a 404 branch on a route whose job is to
+ * answer a list.
+ *
+ * ⚠️ **AND THE „IT ONLY COSTS A MOMENT OF CONFUSION" HALF OF THAT ARGUMENT NOW
+ * HAS TO NAME ITS CALLER — Slice #34.26.** It used to read „the write that
+ * follows fails on the foreign key, so the wrong sentence is a moment of
+ * confusion rather than a wrong row", which was true of both writes. It is now
+ * true only of `associateDocumentsToPerson` (the person-side POST, which never
+ * looks the document up). `associatePersonsToDocument` looks it up itself and
+ * throws `DocumentNotFoundError` before the door, so on THAT path the write no
+ * longer reaches the foreign key and answers 404. Two callers, two endings,
+ * both correct, and the difference is worth a sentence because this function's
+ * `[]` is what makes the second one necessary.
+ *
+ * ⚠️ **#34.26 EXTENDED THAT RESIDUAL TO A SECOND SENTENCE, WHICH IS RECORDED
+ * HERE RATHER THAN ONLY ON THE SCREEN.** The person-side screens now also read
+ * this function once per TICKED document, to name the ones whose type will not
+ * offer a chosen role again. A deleted document answers `[]` here and is
+ * therefore named by that sentence too, for a reason that is not its type.
  */
 export async function listPersonRolesForDocument(documentId: string): Promise<RoleItem[]> {
   const [doc] = await db

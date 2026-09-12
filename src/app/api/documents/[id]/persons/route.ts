@@ -3,7 +3,12 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { roleNotOfferedToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import {
+  documentNotFoundToResponse,
+  roleNotOfferedToResponse,
+  unexpectedError,
+  zodErrorToResponse,
+} from "@/lib/api/errors";
 import { listDocumentPersons, associatePersonsToDocument } from "@/lib/documents/queries";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -38,6 +43,14 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     );
     return new Response(null, { status: 204 });
   } catch (err) {
+    // Slice #34.26: FIRST, and the order is the fix. Until this slice a POST
+    // naming a document that no longer exists came back as the refusal below —
+    // the offered set for a missing document is `[]`, and an empty offered set
+    // refuses every role, so the screen told the user their ROLE had been
+    // withdrawn. `associatePersonsToDocument` now decides which of the two it
+    // is, and this is the half that says so.
+    const missing = documentNotFoundToResponse(err);
+    if (missing) return missing;
     // Slice #34.15: `associatePersonsToDocument` refuses a role the document's
     // own whitelist does not offer. It is the request that is wrong, not the
     // server, so it is a 400 — and it reaches this catch rather than a check

@@ -142,8 +142,18 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
         // its `error` is English by design. `associationFailureMessage`
         // recognises that one case by `code` and answers it in the user's own
         // language; everything else reads exactly as it did before.
+        // Slice #34.26 — the fourth argument is this screen's alone: it is the
+        // only one of the eight whose route can answer `DOCUMENT_NOT_FOUND`,
+        // because the document is the entity its own path names. Until this
+        // slice that case arrived as `ROLE_NOT_OFFERED` and the user was told
+        // their role had been withdrawn.
         throw new Error(
-          associationFailureMessage(body, res.status, tShared("roleNotOffered")),
+          associationFailureMessage(
+            body,
+            res.status,
+            tShared("roleNotOffered"),
+            tShared("documentNotFound"),
+          ),
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });

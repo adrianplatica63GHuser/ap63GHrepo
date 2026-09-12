@@ -215,10 +215,19 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           roles are ticked" — which is what this condition used to do. */}
       {pickerOptions.length > 0 && (
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-ink dark:text-zinc-300">
+          {/* ⚠️ **`htmlFor`/`id` — Slice #34.26.** These two screens are the
+              only ones of the eight whose role `<label>` neither wrapped its
+              `<select>` nor named it, so clicking the word „Rol" did nothing
+              and a screen reader read the control unlabelled. #34.15 built the
+              judicial screen as a copy of the natural one and copied this
+              faithfully; its own handover recorded it as pre-existing. The six
+              others are already tied — four by `htmlFor`, two by nesting the
+              `<select>` inside the `<label>` — and are left as they are. */}
+          <label htmlFor="role-select" className="text-sm font-medium text-ink dark:text-zinc-300">
             {t("labelRole")}
           </label>
           <select
+            id="role-select"
             value={selectedRoleId}
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"

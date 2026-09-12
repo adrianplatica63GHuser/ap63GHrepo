@@ -5,6 +5,7 @@
 
 import type { ZodError } from "zod/v4";
 import { RoleNotOfferedError } from "@/lib/admin/value-lists/role-attachment";
+import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
 
 /** Postgres errors come through pg with a numeric SQLSTATE code. */
 type PgError = {
@@ -175,6 +176,53 @@ export function roleNotOfferedToResponse(err: unknown): Response | null {
       kind:  err.kind,
     },
     { status: 400 },
+  );
+}
+
+/**
+ * The 404 for a document that does not exist, or `null` for anything else.
+ *                                                              (Slice #34.26)
+ *
+ * ⚠️ **IT IS TRIED BEFORE `roleNotOfferedToResponse`, AND THAT IS THE POINT.**
+ * The two cannot both be thrown — `associatePersonsToDocument` checks the
+ * document first and returns — but the order in the route's catch is the thing
+ * a reader checks, so it is stated rather than left to the throw site.
+ *
+ * ⚠️ **404, NOT 400.** Nothing about the request's SHAPE is wrong: the id is a
+ * well-formed uuid naming a row that is not there. 400 is what this route
+ * already answers for a body it cannot parse and for a role no whitelist
+ * offers, and giving the three the same status is how a screen ends up guessing
+ * which of them happened.
+ *
+ * ⚠️ **`code` IS THE PART WITH A CONSUMER**, for the reason
+ * `roleNotOfferedToResponse` states at length: the English `error` is written
+ * for a hand-made request, and `associationFailureMessage` matches
+ * `DOCUMENT_NOT_FOUND` to print `shared.documentNotFound` instead. Matching the
+ * prose is how you recognise something you did not mean.
+ *
+ * ⚠️ **THE REACHABLE CASE IS A DOCUMENT DELETED IN ANOTHER SESSION**, not
+ * devtools — the same race the whole of #34.15's 400 exists for. It reaches
+ * this route from the document's own „Asociază persoană" screen, which 404s at
+ * mount but not afterwards, and from `ai-party-linker-dialog.tsx`, which POSTs
+ * here while the dialog is open.
+ *
+ * ⚠️ **THE TWO PERSON-SIDE „Asociază document" SCREENS ARE NOT AMONG THEM, AND
+ * AN ADVERSARIAL ROUND CAUGHT THIS PARAGRAPH SAYING THEY WERE.** They POST to
+ * `/api/people/[id]/documents` → `associateDocumentsToPerson`, which reads the
+ * archive-wide list and never touches the document, so a document deleted under
+ * them still fails on the foreign key and still answers 500. That is the older,
+ * wider defect; this one is #34.15's, created the day the offered set for
+ * `document-person` became document-derived. Closing the other means an
+ * existence check over every id in `documentIds` and is in the handover.
+ */
+export function documentNotFoundToResponse(err: unknown): Response | null {
+  if (!(err instanceof DocumentNotFoundError)) return null;
+  return Response.json(
+    {
+      error: "That document does not exist.",
+      code:  "DOCUMENT_NOT_FOUND",
+    },
+    { status: 404 },
   );
 }
 

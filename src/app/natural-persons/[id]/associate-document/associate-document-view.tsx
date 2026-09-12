@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { NoRolesForTypeNote } from "@/components/forms/no-roles-for-type-note";
+import { RoleStrandedNote } from "@/components/forms/role-stranded-note";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
+// Slice #34.26 — „which of these documents will not be able to offer this role
+// again", kept pure so the rule is driven from a test without a connection.
+import {
+  documentsStrandingRole,
+  type DocumentRoleOffer,
+} from "@/lib/admin/value-lists/role-stranding";
 // Slice #34.15 — one definition of „the list could not be read", shared with
 // the four screens that read their roles through a hook in that file.
 import { lookupListState } from "@/hooks/use-lookup-options";
@@ -65,13 +72,23 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
 
   const [qInput,         setQInput]         = useState("");
   const [page,           setPage]           = useState(0);
-  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set());
+  /*
+   * ⚠️ **A `Map` RATHER THAN A `Set` SINCE SLICE #34.26, AND PAGINATION IS
+   * WHY.** The save-time sentence has to NAME the documents whose own type will
+   * not offer the chosen role again, and a tick survives paging: `setPage` does
+   * not clear the selection, so a document ticked on page 1 is not in `items`
+   * while page 2 is on screen and could not be named from the search results at
+   * all. The label is therefore captured from the row at the moment it is
+   * ticked. One structure rather than a `Set` beside a label record, because
+   * two structures mutated in one handler are two that can disagree.
+   */
+  const [selected,       setSelected]       = useState<Map<string, string>>(new Map());
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
   const [submitting,     setSubmitting]     = useState(false);
   const [submitError,    setSubmitError]    = useState<string | null>(null);
 
   // Derived: the single selected document ID, or null when 0 or 2+ are selected.
-  const singleSelectedId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : null;
+  const singleSelectedId = selected.size === 1 ? Array.from(selected.keys())[0] : null;
 
   // Reset the role picker whenever the single-selection changes.
   // Uses "derived state during render" to avoid react-hooks/set-state-in-effect.
@@ -133,6 +150,111 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
       );
 
   /*
+   * ⚠️ **ONE READ PER TICKED DOCUMENT, AND ONLY ONCE A ROLE IS CHOSEN.**
+   *                                                             (Slice #34.26)
+   *
+   * The sentence below answers „does THIS document's own type offer the chosen
+   * role", per ticked document — which `roles` above cannot answer, because
+   * with 2+ ticked it is deliberately the WIDE list (every role ticked for SOME
+   * type) and `role-offers.ts:79-89` refuses to narrow it. So the screen asks
+   * the per-document question separately, of the endpoint the single-selection
+   * branch already reads.
+   *
+   * ⚠️ **AND THIS SCREEN'S OWN DOOR DOES NOT ASK IT, WHICH IS THE WHOLE REASON
+   * THE SENTENCE HAS TO EXIST.** The POST below goes to
+   * `/api/people/[id]/documents` → `associateDocumentsToPerson`, whose offered
+   * set is `personRoleIdsAcrossDocumentTypes` — the same wide list the select
+   * shows — so nothing refuses this write and nothing will. What
+   * `listPersonRolesForDocument` answers is what the DOCUMENT side's door and
+   * the document's own picker read, and the gap between the two is exactly the
+   * one-way door being warned about. An adversarial round found the first draft
+   * of this paragraph claiming the door and the sentence read one function,
+   * which would tell a reader the write was already being refused.
+   *
+   * ⚠️ **THE SAME `queryKey` AS `singleDocRolesQuery`, ON PURPOSE.** Not for
+   * the caching — ticking a second document drives `singleSelectedId` to null,
+   * which the derived-state block above uses to reset the role, so these reads
+   * are disabled again until a role is picked and `staleTime` decides the rest.
+   * The reason is that one question must have one key: two keys over
+   * `/api/documents/[id]/valid-person-roles` would be two answers that agree
+   * today, which is the drift `role-offers.ts` and `carried-roles-merge.ts`
+   * each refuse for their own rule.
+   *
+   * ⚠️ **`enabled` ON THE ROLE, SO THE COMMON PATH COSTS NOTHING.** The role is
+   * optional and usually left alone; with none chosen nothing can be stranded
+   * and `documentsStrandingRole` reads no offer at all. The same laziness
+   * `assertRoleMayBeAttached`'s thunk has on the write side, for the same
+   * reason.
+   *
+   * ⚠️ **THE FAN-OUT IS UNCAPPED AND UNBATCHED, STATED RATHER THAN LEFT TO BE
+   * MEASURED.** One GET per ticked document, all at once, the moment a role is
+   * picked — and the selection survives paging, so forty rows ticked across
+   * three pages is forty parallel requests. Left as it is because the endpoint
+   * is a two-table read, the realistic selection is a handful, and the
+   * alternative is a new route taking a list of ids — a shipped contract for a
+   * screen whose warning is dormant until the first document type is
+   * configured. In the handover with what that route would look like.
+   */
+  const tickedDocuments = Array.from(selected, ([id, label]) => ({ id, label }));
+
+  const tickedRoleQueries = useQueries({
+    queries: tickedDocuments.map((doc) => ({
+      queryKey: ["document-valid-roles", doc.id],
+      queryFn:  () => fetchValidRoles(doc.id),
+      enabled:  selectedRoleId !== "",
+    })),
+  });
+
+  /*
+   * ⚠️ **THE THREE STATES CARRIED THROUGH RATHER THAN COLLAPSED.** „Still
+   * loading" and „could not be read" are not „this type offers nothing": one of
+   * them would name a document in a sentence about a fact nobody has
+   * established, which is the mistake `role-attachment.ts` refuses for its own
+   * offered set. `lookupListState` is the one definition of „failed" and this
+   * reads it, exactly as the two branches above do.
+   */
+  const offerByDocument = new Map<string, DocumentRoleOffer>();
+  tickedDocuments.forEach((doc, index) => {
+    const q = tickedRoleQueries[index];
+    const state = lookupListState(q.isPending, q.isLoadingError, q.fetchStatus);
+    offerByDocument.set(
+      doc.id,
+      state === "loaded"
+        ? { state: "loaded", roleIds: (q.data ?? []).map((r) => r.id) }
+        : state === "failed"
+          ? { state: "failed" }
+          : { state: "loading" },
+    );
+  });
+
+  /*
+   * ⚠️ **A DOCUMENT WITH NO ENTRY READS AS „loading", NEVER AS „offers
+   * nothing".** The map is built from the very array the lookup walks, so a
+   * miss is unreachable — but the fallback still has to be the safe one,
+   * because an empty offer is what makes `documentsStrandingRole` NAME a
+   * document, and a miss that read that way would invent the sentence instead
+   * of withholding it.
+   */
+  /*
+   * ⚠️ **THE RESIDUAL, STATED RATHER THAN LEFT TO BE REDISCOVERED: A DELETED
+   * DOCUMENT IS NAMED BY THIS SENTENCE, FOR THE WRONG REASON.**
+   * `listPersonRolesForDocument` answers `[]` with a 200 for a document that no
+   * longer exists — deliberately, and its header argues the case — so a
+   * document deleted in another session reads here as „a type that offers
+   * nothing" and gets named. The sentence then promises an association that
+   * will in fact fail on the foreign key. It is the same residual that header
+   * already records for `shared.noRolesForType` on these two screens, extended
+   * to a second sentence; naming it here so the extension is on the record.
+   * Distinguishing the two would mean a 404 on a route whose job is to answer a
+   * list, which is what that header refuses.
+   */
+  const strandedByThisRole = documentsStrandingRole(
+    tickedDocuments,
+    selectedRoleId || null,
+    (id) => offerByDocument.get(id) ?? { state: "loading" },
+  );
+
+  /*
    * ⚠️ **NO „(nu mai este disponibil)" MARK ON THIS SCREEN, AND IT IS A
    * DECISION RATHER THAN AN OVERSIGHT.**                      (Slice #34.05)
    *
@@ -158,16 +280,22 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
 
-  const toggle = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+  const toggle = (item: DocumentSearchItem) => {
+    setSelected((prev) => {
+      const next = new Map(prev);
+      // Slice #34.26 — the label the sentence prints, captured here because the
+      // row may be off-screen by the time it is needed. Title first and the
+      // code when a document has none: the same fallback the results table's
+      // own checkbox `aria-label` uses, rather than the „Titlu" cell's, which
+      // falls back to an em dash and would name nothing.
+      if (next.has(item.id)) next.delete(item.id);
+      else next.set(item.id, item.title ?? item.code);
       return next;
     });
   };
 
   const handleAssociate = async () => {
-    if (selectedIds.size === 0) return;
+    if (selected.size === 0) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -175,7 +303,7 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
-          documentIds:  Array.from(selectedIds),
+          documentIds:  Array.from(selected.keys()),
           personRoleId: selectedRoleId || null,
         }),
       });
@@ -214,7 +342,7 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
           <input
             type="text"
             value={qInput}
-            onChange={(e) => { setQInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
+            onChange={(e) => { setQInput(e.target.value); setPage(0); setSelected(new Map()); }}
             placeholder={t("searchPlaceholder")}
             className="w-64 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
@@ -242,14 +370,14 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => toggle(item.id)}
+                  onClick={() => toggle(item)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
-                    selectedIds.has(item.id) ? "bg-cta-pale dark:bg-cta/10" : "hover:bg-canvas dark:hover:bg-zinc-800/50",
+                    selected.has(item.id) ? "bg-cta-pale dark:bg-cta/10" : "hover:bg-canvas dark:hover:bg-zinc-800/50",
                   ].join(" ")}
                 >
                   <td className="px-3 py-2">
-                    <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)}
+                    <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item)}
                       onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.title ?? item.code} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
@@ -335,10 +463,46 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
         canConfigureRoles={canConfigureRoles}
       />
 
+      {/*
+        ⚠️ **THE SENTENCE THIS SLICE EXISTS FOR, AND IT IS BESIDE THE CHOICE
+        RATHER THAN AFTER THE WRITE.**                           (Slice #34.26)
+
+        With 2+ documents ticked the select above offers every role ticked for
+        SOME document type, and `role-offers.ts` carries at length why that
+        width is right and why narrowing it per selected document was refused.
+        What the width costs is this: a role saved onto a document whose own
+        type does not tick it can never be chosen for that document again —
+        `listPersonRolesForDocument` answers nothing there — so the offer is a
+        one-way door that was walked through in silence. The decision recorded
+        in `role-offers.ts` was to keep offering the wide list and to say so
+        here, before the write, naming the documents.
+
+        ⚠️ **IT CANNOT FIRE ON THE SINGLE-DOCUMENT BRANCH, AND NOTHING ASKS IT
+        NOT TO.** With exactly one ticked, `roles` IS that document's own
+        whitelist, so a role chosen from it is in the very list this checks.
+        `role-stranding.ts` says why that is left to the rule rather than
+        written as a second condition here.
+
+        ⚠️ **THE VERDICT IS PASSED WHOLE, NOT FLATTENED.** It has three
+        outcomes, and which silence means what is decided in
+        `role-stranding.ts`: nothing stranded and still-loading both print
+        nothing, and a ticked document whose own list could not be READ prints a
+        sentence of its own — because Save is deliberately never blocked, so
+        saying nothing there would strand a role in the silence this slice
+        exists to remove. An adversarial round found the first draft flattening
+        all three into a `string[]`.
+
+        ⚠️ **THE CONDITION IS A PROP, NOT A `&&` AROUND THE ELEMENT**, for the
+        reason the note above it carries: the component owns an `aria-live`
+        region and has to be mounted before its content appears, or a screen
+        reader is not reliably told.
+      */}
+      <RoleStrandedNote verdict={strandedByThisRole} />
+
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
       <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-        <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
+        <button type="button" onClick={handleAssociate} disabled={submitting || selected.size === 0}
           className={buttonClass({ variant: "primary", size: "lg" })}>
           {submitting ? t("associating") : t("associate")}
         </button>
@@ -346,7 +510,7 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
           className={buttonClass({ variant: "secondary", size: "lg" })}>
           {t("cancel")}
         </button>
-        {selectedIds.size === 0 && !isLoading && items.length > 0 && (
+        {selected.size === 0 && !isLoading && items.length > 0 && (
           <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
         )}
       </div>
