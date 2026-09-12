@@ -111,6 +111,7 @@ import {
   citizenshipForWrite,
   citizenshipIsHidden,
   institutionForCardWrite,
+  institutionSelectCanShow,
   institutionSelectSeed,
 } from "@/lib/import/id-card-review";
 import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
@@ -204,6 +205,22 @@ const ADDRESS_FIELD_MAP: Record<string, string> = {
 const PERSON_PROVENANCE = inferProvenance("AI_EXTRACTION");
 
 /**
+ * The institution sentence's element id, so the `<select>` can point at it.
+ *                                                              (Slice #34.25)
+ *
+ * ⚠️ **This region is a hand-rolled `<select>` rather than a `<SelectField>`,
+ * and that is why the association has to be written out here.** `SelectField`
+ * has carried `aria-describedby` since #34.13; this control could not use it,
+ * because the institution is a DOCUMENT column and not a form field (see
+ * `chosenInstitutionId`'s note). Without the pointer the one sentence saying
+ * the card's authority is about to be discarded is invisible to a screen
+ * reader — announced nowhere, beside a box that simply looks empty. A module
+ * constant rather than a template literal: there is exactly one of this control
+ * on screen, and one id it must agree with in two places.
+ */
+const INSTITUTION_HINT_ID = "id-card-institution-hint";
+
+/**
  * ⚠️ **`null` means "could not read", `[]` means "the archive holds none" —
  * and an adversarial round is why they are different values.** Collapsing a
  * failed GET to an empty array presents an unreadable list as an EMPTY one, and
@@ -249,6 +266,16 @@ function useInstitutionOptions(): {
   listState: "loading" | "loaded" | "failed";
   reload: () => Promise<void>;
   /**
+   * In flight while `reload` is running.                        (Slice #34.25)
+   *
+   * ⚠️ **Needed because `listState` does not move during a retry.** A re-read
+   * of a failed list says „failed" from the click until the answer lands, so
+   * without this nothing on screen changes for the whole round trip and the
+   * button reads as dead. Same reason `useCitizenshipOptions` exposes it, and
+   * #34.13 says so there.
+   */
+  isReloading: boolean;
+  /**
    * ⚠️ **Add one row without a round trip, so a created institution is
    * selectable even if the re-read fails.** A second review round found that
    * "keep the previous list on failure" does not cover the case it was written
@@ -264,6 +291,7 @@ function useInstitutionOptions(): {
 } {
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   const [listState, setListState] = useState<"loading" | "loaded" | "failed">("loading");
+  const [isReloading, setIsReloading] = useState(false);
   // ⚠️ **The initial read is a `.then` chain with a `cancelled` latch rather
   // than an `await` in the effect body.**
   // `react-hooks/set-state-in-effect` rejects the second shape — it cannot see
@@ -289,19 +317,27 @@ function useInstitutionOptions(): {
     };
   }, []);
   const reload = useCallback(async (): Promise<void> => {
-    const rows = await fetchInstitutions();
-    // ⚠️ **A failed re-read KEEPS the list it already has.** Overwriting it with
-    // nothing after a successful POST left the select holding an id with no
-    // matching option — blank on screen, the hint and the button both hidden
-    // because they gate on the id being set, and the preview row filtered out
-    // for having an empty label. The FK was still written, with no trace of it
-    // anywhere the user could see.
-    if (rows === null) {
-      setListState("failed");
-      return;
+    setIsReloading(true);
+    try {
+      const rows = await fetchInstitutions();
+      // ⚠️ **A failed re-read KEEPS the list it already has.** Overwriting it
+      // with nothing after a successful POST left the select holding an id with
+      // no matching option — blank on screen, the hint and the button both
+      // hidden because they gate on the id being set, and the preview row
+      // filtered out for having an empty label. The FK was still written, with
+      // no trace of it anywhere the user could see.
+      if (rows === null) {
+        setListState("failed");
+        return;
+      }
+      setOptions(toInstitutionOptions(rows));
+      setListState("loaded");
+    } finally {
+      // `finally`, not a line after each branch: the early return above is the
+      // failure path, and that is precisely the one a stuck „Se reîncearcă…"
+      // would sit on for ever.
+      setIsReloading(false);
     }
-    setOptions(toInstitutionOptions(rows));
-    setListState("loaded");
   }, []);
   const upsert = useCallback((row: { id: string; name: string }): void => {
     setOptions((prev) =>
@@ -310,7 +346,7 @@ function useInstitutionOptions(): {
         : [...prev, { value: row.id, label: row.name }],
     );
   }, []);
-  return { options, listState, reload, upsert };
+  return { options, listState, reload, isReloading, upsert };
 }
 
 // ---------------------------------------------------------------------------
@@ -429,6 +465,12 @@ export function IdCardPersonDialog({
     options: institutionOptions,
     listState: institutionListState,
     reload: reloadInstitutions,
+    // Slice #34.25 — the way out of „failed", for the same reason #34.13 gave
+    // the citizenship select one: this dialog is opened by the run rather than
+    // by the user, so „close and reopen" is recorded as a decision not to
+    // create the person, and the sentence under the picker now tells them to
+    // re-read the list before confirming.
+    isReloading: institutionReloading,
     upsert: upsertInstitution,
   } = useInstitutionOptions();
   /**
@@ -837,6 +879,65 @@ export function IdCardPersonDialog({
       : null;
 
   /**
+   * Could nobody here see an institution to pick — AND is that visible?
+   *                                                            (Slice #34.25)
+   *
+   * ⚠️ **ASKED OF THE OPTIONS, NOT OF `institutionListState`, and that is the
+   * idiom.** `institutionSelectCanShow` is `citizenshipForWrite`'s shape one
+   * control over: a failed GET and a `lookup_institution` emptied between the
+   * model reading the card and this click look identical on screen and want the
+   * same answer, and a predicate over the options cannot drift from what the
+   * select is actually showing. Reading `listState` alone would answer only one
+   * of the two, and would answer it about a moment rather than about the
+   * control.
+   *
+   * ⚠️ **AND IT IS GATED ON THE STATE BEING SAYABLE, WHICH AN ADVERSARIAL
+   * ROUND IS WHY.** This value makes `documentFieldsFromIdCard` withhold the
+   * card's authority, so it may only be true where the sentence below is
+   * actually on screen to say so — otherwise the reading vanishes silently,
+   * which is the defect the `subject` fallback exists to prevent, reintroduced
+   * by its own fix. Three gates, each closing a state where the write would
+   * have been mute:
+   *
+   *   `showForm` — the picker, the sentence and the retry all live inside the
+   *                create branch's form. On the confirm-match branch nobody
+   *                sees any of them, and the preview beside it is the only
+   *                thing the user is shown; there the prose is the right home
+   *                for the reading, exactly as #34.02 left it.
+   *   not „loading" — an options array is empty while the list is still
+   *                arriving, and the sentence deliberately says „se încarcă…"
+   *                there. Confirm is not blocked on that read, so without this
+   *                a fast click would drop the authority under a neutral
+   *                progress message.
+   *   the document holds one — the same question the mapping asks of `current`,
+   *                asked here of the value this dialog actually SHOWS. The two
+   *                reads are different (this one opens the dialog, the mapping's
+   *                is taken at submit) and this one is silent on failure, so it
+   *                is `""` when it could not be read — which lands on writing
+   *                the prose, the safe side: a duplicate beats a disappearance.
+   *
+   * ⚠️ **AND THE LAST TEST IS A UNION, BECAUSE A FAILED RE-READ KEEPS ITS
+   * ROWS.** (Third adversarial round.) The options answer „could anybody SEE an
+   * institution", which is the question `institutionSelectCanShow` exists for
+   * and the one the citizenship idiom is about. It is not quite the question
+   * here, which is „was the FK withheld because of this list" — and
+   * `institutionForWrite` above answers that with `institutionListState ===
+   * "loaded"`. The two part company in one state, and it is the commonest one:
+   * „adaugă" succeeds, the reload behind it flakes, and the dropdown is left
+   * FULL — with the row the user just created selected in it — while the write
+   * still refuses it. Asking only the options there wrote „Eliberată de …" into
+   * `subject` beside the document's other institution, which is the exact
+   * sentence this slice exists to stop. The options stay the primary test; the
+   * load state is the second way in, and it mirrors the gate the FK is actually
+   * refused by.
+   */
+  const institutionListUnreadable =
+    showForm &&
+    institutionListState !== "loading" &&
+    documentInstitutionId.trim() !== "" &&
+    (institutionListState === "failed" || !institutionSelectCanShow(institutionOptions));
+
+  /**
    * Make the institution the card names, in one click.          (Slice #34.02)
    *
    * ⚠️ **A PERSON PRESSES THIS. Nothing else may create the row** —
@@ -930,7 +1031,14 @@ export function IdCardPersonDialog({
           return { written: 0, failed: true };
         }
 
-        const patch = documentFieldsFromIdCard(card, current);
+        // Slice #34.25 — the third argument is about the SCREEN, not the card:
+        // with no institution selectable here, an unwritten FK means „nobody
+        // could read the list" rather than „a different authority", and on a
+        // document that already holds one the mapping then writes nothing at
+        // all instead of prose beside the column.
+        const patch = documentFieldsFromIdCard(card, current, {
+          institutionListUnreadable,
+        });
 
         const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
           method: "PATCH",
@@ -945,7 +1053,7 @@ export function IdCardPersonDialog({
         return { written: 0, failed: true };
       }
     },
-    [documentId, institutionForWrite, t],
+    [documentId, institutionForWrite, institutionListUnreadable, t],
   );
 
   const finish = useCallback(
@@ -1135,6 +1243,15 @@ export function IdCardPersonDialog({
       institutionId:      institutionForWrite,
     },
     {},
+    // ⚠️ **Passed so the preview and the write call one function with one set
+    // of answers — and it cannot fire HERE, which is why the „Subiect" row is
+    // ALSO gated below.** (Slice #34.25.) The new branch needs a document that
+    // already holds an institution, and this preview is built against an EMPTY
+    // `current` on purpose (see the note above: it shows what the CARD offers,
+    // not which targets are still blank). So the argument keeps the two call
+    // sites honest about each other, and the row gating is what keeps the panel
+    // honest about the click.
+    { institutionListUnreadable },
   );
   const docPreviewRows = (
     [
@@ -1145,7 +1262,25 @@ export function IdCardPersonDialog({
       [t("docFieldNrDocument"),     docPreview.nrDocument],
       [t("docFieldDateDocument"),   docPreview.dateDocument],
       [t("docFieldDateValidUntil"), docPreview.dateValidUntil],
-      [t("docFieldSubject"),        docPreview.subject],
+      // ⚠️ **DROPPED WHEN THE WRITE IS ABOUT TO WITHHOLD IT, and a second
+      // adversarial round is why.** (Slice #34.25.) This panel is headed „Se
+      // completează și pe document" — a promise — and every other row it omits
+      // is omitted because the target is already filled, which `docFieldsHint`
+      // explains. This one is different: `document.subject` can be perfectly
+      // empty and the line still not written, for a reason the hint does not
+      // describe. Left in, the panel promised „Subiect: Eliberată de SPCLEP
+      // Bragadiru" thirty lines above a red sentence saying that exact text was
+      // NOT filed. `institutionListUnreadable` is the same value the PATCH is
+      // given, so the row cannot promise what the sentence denies. The one
+      // residual gap runs the safe way: this flag reads the institution the
+      // dialog saw when it OPENED and the mapping re-reads the document at
+      // submit, so a document whose institution is cleared in between hides the
+      // row and then writes the prose after all — under-promising, which is the
+      // direction #34.02's fallback is written to fail in.
+      [
+        t("docFieldSubject"),
+        institutionListUnreadable ? undefined : docPreview.subject,
+      ],
       // The institution is a FK, so the preview names the row rather than the
       // uuid — a preview printing an id tells a business user nothing.
       [
@@ -1172,6 +1307,18 @@ export function IdCardPersonDialog({
    * path exists to prevent gets made.
    */
   const institutionListUnusable = lookupUnavailable || institutionListState === "failed";
+  /**
+   * Was the card's authority read, and then NOT filed anywhere? (Slice #34.25)
+   *
+   * ⚠️ **THE SAME VALUE THE WRITE IS GIVEN, plus the one question the write
+   * does not need.** `institutionListUnreadable` is exactly what travels to
+   * `documentFieldsFromIdCard`, so the sentence cannot describe a state the
+   * patch is not in — the defect #34.13 closed one control over, and the reason
+   * `institutionSelectCanShow` is a module rather than an expression. What is
+   * added here is that there has to be something to report: a card whose
+   * authority the model never read loses nothing when the list fails.
+   */
+  const authorityNotFiled = institutionListUnreadable && authorityText !== "";
   /**
    * A row already listed whose name contains this reading as a whole word.
    *
@@ -1234,7 +1381,28 @@ export function IdCardPersonDialog({
     authorityText !== "" &&
     institutionListState === "loaded" &&
     !institutionListUnusable &&
+    // Fixed in passing, #34.25: #34.02's rule is „withhold the offer when an
+    // empty box means «could not look»", and `institutionListState` answers
+    // that for a failed GET only. A list that came back EMPTY on a document
+    // filed under one of its rows is the same thing seen from the other end —
+    // the row demonstrably exists — and offering to create it there makes
+    // precisely the duplicate this path exists to prevent.
+    !institutionListUnreadable &&
     alreadyListedInstitution === null;
+  /**
+   * Is there a sentence under this picker at all?               (Slice #34.25)
+   *
+   * ⚠️ **ONE CONDITION, READ IN THREE PLACES**, because they must never
+   * disagree: the paragraph renders on it, the `<select>`'s `aria-describedby`
+   * points at the paragraph on it, and the „Reîncearcă" button — which only
+   * makes sense beside a sentence telling the user to re-read the list — is
+   * gated on it too. Written out once rather than repeated: a dangling
+   * `aria-describedby` names an element that is not there, and an unexplained
+   * button beside an empty box is worse than no button.
+   */
+  const showInstitutionHint =
+    authorityText !== "" &&
+    (authorityNotFiled || institutionListUnusable || !cardAuthorityPlaced);
 
   // ── Slice #34.13: the citizenship the select cannot show ─────────────────
   //
@@ -1551,6 +1719,11 @@ export function IdCardPersonDialog({
                     without a key trick. */}
                 <select
                   id="id-card-institution"
+                  // Slice #34.25 — the sentence below is a DESCRIPTION of this
+                  // control, announced after its name rather than as part of
+                  // it. Same reasoning as `SelectField`'s, which this region
+                  // could not reuse.
+                  aria-describedby={showInstitutionHint ? INSTITUTION_HINT_ID : undefined}
                   value={institutionId}
                   // ⚠️ **Re-selecting the value the seed already showed is
                   //    recorded as UNTOUCHED, and an adversarial round is why.**
@@ -1609,10 +1782,68 @@ export function IdCardPersonDialog({
                   picker can now be showing the document's own institution while
                   nobody has said anything about the authority the card names.
                   See `cardAuthorityPlaced`. */}
-              {authorityText !== "" && (institutionListUnusable || !cardAuthorityPlaced) && (
-                <p className="mt-1 text-xs text-fade dark:text-zinc-400">
+              {/* ⚠️ **#34.25 adds a fourth state, and it goes FIRST among the
+                  answers — before `institutionListUnusable`, which it is a
+                  narrower case of.** „Lista nu a putut fi citită" is true in
+                  both, but only here does the document already hold an
+                  institution, and only here does the card's authority end up
+                  written nowhere at all. Told the general sentence, a user
+                  would be reading „nu se poate spune dacă instituția există
+                  deja" about a click that is silently dropping the reading.
+                  Still after „loading", which stays the first answer: the same
+                  options are empty while the list is still arriving, and an
+                  alarm about a state nobody has reached yet is the failure
+                  #34.13's citizenship note refused to ship. */}
+              {showInstitutionHint && (
+                <p
+                  id={INSTITUTION_HINT_ID}
+                  // ⚠️ **NO `role="alert"` HERE, AND THAT IS A DEPARTURE FROM
+                  // `SelectField`'s citizenship sentence RATHER THAN AN
+                  // OVERSIGHT.** (Slice #34.25, second adversarial round.) A
+                  // draft of this slice put one on, reasoning that a sentence
+                  // reporting data NOT being written deserves the same
+                  // treatment. It does not, because this sentence interpolates
+                  // `authorityText` — „Instituție emitentă" is an EDITABLE
+                  // field two rows up, watched on every keystroke — and
+                  // `alert` is an assertive live region: a screen reader would
+                  // re-read the whole sentence and interrupt the character
+                  // echo on every letter typed, in the one state where the
+                  // sentence is asking the user to act. The citizenship one is
+                  // safe because `citizenshipRaw` is set once by the
+                  // extraction and never edited. `aria-describedby` on the
+                  // select carries it instead, announced when the control is
+                  // reached; the colour carries the urgency on screen.
+                  className={
+                    authorityNotFiled
+                      ? "mt-1 text-xs text-red-600 dark:text-red-400"
+                      : "mt-1 text-xs text-fade dark:text-zinc-400"
+                  }
+                >
                   {institutionListState === "loading"
                     ? t("institutionLoading")
+                    : authorityNotFiled
+                    ? t("institutionNotFiledListUnread", { name: authorityText })
+                    : /* ⚠️ **THIS DIALOG'S OWN READ, WHICH IS THE ONE THE
+                         BUTTON BELOW REPAIRS.** (Slice #34.25, second
+                         adversarial round.) The two failures underneath
+                         `institutionListUnusable` want different advice and
+                         were sharing one sentence: „Reîncărcați dialogul" was
+                         written when reopening was the only recovery, and it
+                         would now sit directly above a „Reîncearcă" button that
+                         does the thing. The SERVER's lookup failing keeps that
+                         sentence, below, because there this list is fine, the
+                         dropdown works, and re-reading it would repair nothing.
+                         ⚠️ **AND IT DOES NOT CLAIM THE BOX IS EMPTY, which a
+                         third round caught a draft of it doing.** A failed
+                         re-read KEEPS the rows it already had — deliberately;
+                         see `reload` — so the commonest way into this state is
+                         „adaugă" succeeding and the reload behind it flaking,
+                         which leaves a full dropdown with the new row selected
+                         in it. What is true in BOTH sub-states is that nothing
+                         here can vouch for the list, which is what it now
+                         says. */
+                    institutionListState === "failed"
+                    ? t("institutionListFailed")
                     : institutionListUnusable
                     ? t("institutionLookupUnavailable")
                     : alreadyListedInstitution
@@ -1620,6 +1851,26 @@ export function IdCardPersonDialog({
                     : t("institutionUnmatched", { name: authorityText })}
                 </p>
               )}
+              {/* The way out of the state the sentence describes, and it is the
+                  reason the sentence can say „reîncercați citirea listei".
+                  (Slice #34.25.) #34.13 put one under the citizenship select for
+                  exactly this reason — the dialog is opened by the RUN, so
+                  „închideți și redeschideți", which `institutionLookupUnavailable`
+                  still says, is not a recovery available to the person reading
+                  it. Gated on this dialog's OWN read having failed: a
+                  `lookupUnavailable` from the extraction route is the server's
+                  read, and re-reading the list here would not touch it. */}
+              {showInstitutionHint &&
+                (institutionListState === "failed" || institutionListUnreadable) && (
+                  <button
+                    type="button"
+                    onClick={() => void reloadInstitutions()}
+                    disabled={busy || addingInstitution || institutionReloading}
+                    className={`mt-1 ${buttonClass({ variant: "secondary", size: "sm" })}`}
+                  >
+                    {institutionReloading ? t("institutionRetrying") : t("institutionRetry")}
+                  </button>
+                )}
               {addInstitutionError && (
                 <p role="alert" className="mt-1 text-xs text-rose-700 dark:text-rose-400">
                   {addInstitutionError}

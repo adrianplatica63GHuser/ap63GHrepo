@@ -26,6 +26,7 @@ import {
   citizenshipForWrite,
   citizenshipIsHidden,
   institutionForCardWrite,
+  institutionSelectCanShow,
   institutionSelectSeed,
 } from "@/lib/import/id-card-review";
 
@@ -168,6 +169,59 @@ describe("institutionForCardWrite — whose answer is on screen", () => {
 // citizenshipForWrite / citizenshipIsHidden
 // ---------------------------------------------------------------------------
 
+/**
+ * Slice #34.25 — can the institution picker show anything at all?
+ *
+ * ⚠️ **A PREDICATE OVER THE OPTIONS, WHICH IS THE POINT AND NOT AN
+ * IMPLEMENTATION DETAIL.** The question it answers — „is an unwritten foreign
+ * key the user's decision, or nobody's?" — has two causes with one appearance:
+ * the dialog's GET failing, and `lookup_institution` emptied between the model
+ * reading the card and the Confirm click. A load flag answers only the first
+ * and answers it about a moment; the options answer both and cannot drift from
+ * what is on screen. That is `citizenshipForWrite`'s idiom, and the last
+ * assertion here pins the shape rather than the wording.
+ */
+describe("institutionSelectCanShow — can the picker show an institution", () => {
+  it("is false for a list nobody could read", () => {
+    expect(institutionSelectCanShow([])).toBe(false);
+  });
+
+  it("is true as soon as one real row is selectable", () => {
+    expect(institutionSelectCanShow([{ value: DOC }])).toBe(true);
+    expect(institutionSelectCanShow([{ value: DOC }, { value: MATCHED }])).toBe(true);
+  });
+
+  it("does not count „—”, which shows no institution", () => {
+    // The placeholder is rendered beside `institutionOptions` rather than
+    // inside it, so this should never arrive — but a list that is nothing but
+    // the empty entry is precisely as unusable as no list, and counting it
+    // would make the write think somebody could have picked a row.
+    expect(institutionSelectCanShow([{ value: "" }])).toBe(false);
+    expect(institutionSelectCanShow([{ value: "   " }])).toBe(false);
+    expect(institutionSelectCanShow([{ value: "" }, { value: DOC }])).toBe(true);
+  });
+
+  it("only ever gets MORE usable as rows arrive, never less", () => {
+    // ⚠️ **The property the retry rests on, and it is not the body restated.**
+    // The dialog re-reads the list and `upsert`s a created row into it; both
+    // only ADD entries. If adding one could ever flip this false, a successful
+    // recovery would start withholding the card's authority — the opposite of
+    // what the button is for. Asserted over every shape the options take.
+    const rows = [{ value: "" }, { value: "   " }, { value: DOC }, { value: MATCHED }];
+    for (const before of [[], [rows[0]], [rows[0], rows[1]], [rows[2]], rows]) {
+      for (const added of rows) {
+        const after = [...before, added];
+        const where = [before.length, added.value];
+        if (institutionSelectCanShow(before)) {
+          expect([...where, institutionSelectCanShow(after)]).toEqual([...where, true]);
+        }
+      }
+    }
+    // …and the floor: no rows at all is the one answer that must be false.
+    expect(institutionSelectCanShow([])).toBe(false);
+  });
+});
+
 describe("citizenshipForWrite — Confirm never writes what the select hides", () => {
   const LIST = [{ value: "ro" }, { value: "md" }];
 
@@ -252,11 +306,14 @@ describe("citizenshipIsHidden — the sentence and the write agree", () => {
 describe("the dialog decides through these rules and not beside them", () => {
   const code = stripComments(read(...DIALOG));
 
-  it("imports all three from the one module", () => {
+  it("imports every rule from the one module", () => {
     expect(code).toContain('from "@/lib/import/id-card-review"');
     expect(code).toContain("institutionSelectSeed");
     expect(code).toContain("citizenshipForWrite");
     expect(code).toContain("citizenshipIsHidden");
+    // Slice #34.25 — the fourth, added because „no FK" had three meanings and
+    // the mapping could not tell them apart.
+    expect(code).toContain("institutionSelectCanShow");
   });
 
   it("reads the document's own institution, and records it as the DOCUMENT's", () => {
@@ -391,6 +448,165 @@ describe("the dialog decides through these rules and not beside them", () => {
     expect(field.slice(labelClose)).toContain("hintAction");
     expect(field.slice(labelClose)).toContain("{hint}");
     expect(inLabel).toMatch(/aria-describedby=\{showHint \? hintId : undefined\}/);
+  });
+
+  it("asks the OPTIONS whether an institution can be shown, not the load state", () => {
+    // Slice #34.25. Reading `institutionListState` for the ANSWER would cover
+    // only the failed-GET half, and would cover it about a moment rather than
+    // about the control — a `lookup_institution` emptied under the user looks
+    // identical on screen and wants the same reply.
+    expect(code).toMatch(/!institutionSelectCanShow\(institutionOptions\)/);
+  });
+
+  it("claims the state only where the dialog can SAY it", () => {
+    // ⚠️ **The first adversarial round's finding, and it is the defect the
+    // `subject` fallback exists to prevent, reintroduced by its own fix.** This
+    // value makes the mapping withhold the card's authority, so in any state
+    // where the sentence is not on screen the reading would vanish with nothing
+    // said. Three gates, each closing one such state: the confirm-match branch
+    // (no picker, no sentence, no retry — and the preview beside it still shows
+    // the „Subiect" row); a list that has not arrived yet, which is empty for a
+    // reason the sentence calls „se încarcă…"; and a document this dialog has
+    // not read an institution for, whose own GET is silent on failure.
+    const decl = code.slice(code.indexOf("const institutionListUnreadable ="));
+    const body = decl.slice(0, decl.indexOf(";"));
+    expect(body).toMatch(/showForm/);
+    expect(body).toMatch(/institutionListState !== "loading"/);
+    expect(body).toMatch(/documentInstitutionId\.trim\(\) !== ""/);
+    // ⚠️ **And the load state is the SECOND way in, which the third round
+    // found missing.** A failed re-read keeps the rows it had — „adaugă"
+    // succeeding with the reload behind it flaking is the commonest route — so
+    // the options can be full while `institutionForWrite` still refuses the FK
+    // for `listState !== "loaded"`. Asking only the options there wrote the
+    // prose beside the document's other institution, which is the one sentence
+    // this slice exists to stop.
+    expect(body).toMatch(
+      /institutionListState === "failed" \|\| !institutionSelectCanShow\(institutionOptions\)/,
+    );
+  });
+
+  it("hands that state to the document mapping rather than deciding beside it", () => {
+    // The rule is worth nothing if the dialog computes it for a sentence and
+    // then writes the patch from something else — which is the exact defect
+    // #34.13 closed one control over.
+    expect(code).toMatch(
+      /documentFieldsFromIdCard\(card, current, \{\s*institutionListUnreadable,?\s*\}\)/,
+    );
+    // …and it is a dependency of the callback that sends it. Without this the
+    // write keeps the value from the render that first created the callback,
+    // so a retry that repaired the list would still submit „unreadable".
+    expect(code).toMatch(
+      /\[documentId, institutionForWrite, institutionListUnreadable, t\]/,
+    );
+  });
+
+  it("says on screen what the write is about to withhold", () => {
+    // The sentence and the patch are built from the same two answers: the
+    // picker can show nothing, and the document already carries an institution.
+    // A third — that the card named an authority at all — decides whether there
+    // is anything to report.
+    // Built FROM the value the write is given, rather than from a second copy
+    // of the same reasoning — the two cannot drift because there is one of them.
+    expect(code).toMatch(/const authorityNotFiled = institutionListUnreadable && authorityText/);
+    expect(code).toMatch(/t\("institutionNotFiledListUnread", \{ name: authorityText \}\)/);
+    // First among the answers, because it is a narrower case of
+    // „institutionListUnusable" and that sentence would describe the wrong
+    // failure here — and still after „loading", which is unreachable rather
+    // than unhandled for the same reason #34.13 gave for the citizenship line.
+    const chain = code.slice(code.indexOf('t("institutionLoading")'));
+    expect(chain.indexOf('t("institutionNotFiledListUnread"')).toBeLessThan(
+      chain.indexOf('t("institutionListFailed")'),
+    );
+    expect(chain.indexOf('t("institutionListFailed")')).toBeLessThan(
+      chain.indexOf('t("institutionLookupUnavailable")'),
+    );
+  });
+
+  it("stops telling the user to reopen a dialog that now has a retry", () => {
+    // ⚠️ **Two failures were sharing one sentence, and the second adversarial
+    // round found them wanting opposite advice.** `institutionListUnusable` is
+    // true for THIS dialog's failed GET and for the SERVER's failed lookup
+    // inside `extract-id-card`. Only the first is repaired by the button this
+    // slice adds; the second leaves the dropdown working, so „Reîncărcați
+    // dialogul" is still right there and wrong above a „Reîncearcă".
+    expect(code).toMatch(/t\("institutionListFailed"\)/);
+    expect(code).toMatch(/t\("institutionLookupUnavailable"\)/);
+  });
+
+  it("keeps the preview from promising the line the write is withholding", () => {
+    // The panel is headed „Se completează și pe document" and is rendered on
+    // both branches; `docPreview` is built against an EMPTY current, so the
+    // „Subiect" row would go on showing the authority thirty lines above a
+    // sentence saying it was not filed. Gated on the same value the PATCH is
+    // given, so the two cannot disagree.
+    expect(code).toMatch(
+      /t\("docFieldSubject"\),\s*institutionListUnreadable \? undefined : docPreview\.subject/,
+    );
+  });
+
+  it("does not shout the sentence that interpolates a field being typed in", () => {
+    // ⚠️ **A BEHAVIOUR guard, and a deliberate departure from `SelectField`.**
+    // „Instituție emitentă" is editable and watched, so an assertive live
+    // region over a sentence naming its value re-reads the whole sentence on
+    // every keystroke and interrupts the character echo — in the one state
+    // where the sentence is asking the user to act. `aria-describedby` carries
+    // it instead. The citizenship sentence is safe because `citizenshipRaw` is
+    // set once by the extraction and never edited.
+    const region = code.slice(
+      code.indexOf("id={INSTITUTION_HINT_ID}"),
+      code.indexOf("t(\"institutionLoading\")"),
+    );
+    expect(region).not.toContain("role=");
+    expect(region).not.toContain("aria-live");
+  });
+
+  it("offers a way out of the institution state, as #34.13 did for citizenship", () => {
+    // Slice #34.25 — „reîncercați citirea listei" is only advice if there is a
+    // control that does it. #34.13 gave the citizenship select one for the same
+    // reason: the dialog is opened by the RUN, so closing it to recover is
+    // recorded as a decision not to create the person.
+    expect(code).toMatch(/isReloading:\s*institutionReloading/);
+    expect(code).toMatch(/onClick=\{\(\) => void reloadInstitutions\(\)\}/);
+    expect(code).toMatch(/institutionReloading \? t\("institutionRetrying"\)/);
+    // ⚠️ **Offered on the EMPTIED list too, not only on the failed GET** — the
+    // first adversarial round found the sentence saying „reîncercați citirea
+    // listei" in the one state the button did not render. And never on its own:
+    // a button beside an empty box with no sentence explains nothing, so it is
+    // gated on the same condition the paragraph is.
+    expect(code).toMatch(
+      /showInstitutionHint &&\s*\(institutionListState === "failed" \|\| institutionListUnreadable\)/,
+    );
+  });
+
+  it("points the picker at the sentence, and never at an absent one", () => {
+    // The institution region is a hand-rolled <select>, so it cannot inherit
+    // `SelectField`'s `aria-describedby` — and without this the one sentence
+    // saying the card's authority is about to be discarded is announced
+    // nowhere, beside a box that simply looks empty. One condition drives the
+    // paragraph, the pointer and the button, so the id can never dangle.
+    expect(code).toMatch(
+      /aria-describedby=\{showInstitutionHint \? INSTITUTION_HINT_ID : undefined\}/,
+    );
+    expect(code).toMatch(/id=\{INSTITUTION_HINT_ID\}/);
+    // The colour carries the urgency that the live region deliberately does
+    // not — see the assertion below for why there is no `role` here.
+    expect(code).toMatch(/authorityNotFiled\s*\?\s*"mt-1 text-xs text-red-600/);
+  });
+
+  it("did not teach institutionForCardWrite the new question", () => {
+    // ⚠️ **A BEHAVIOUR guard, so it reads code with the comments stripped.**
+    // (Slice #34.25, and the rule's own header says why.) That function answers
+    // „whose answer is on screen", which does not change when the list fails;
+    // the document's institution is forbidden to it for the same reason and a
+    // first draft of #34.13 proved what accepting it costs — two of its tests
+    // passed for the wrong reason.
+    const rules = stripComments(read("lib", "import", "id-card-review.ts"));
+    const start = rules.indexOf("export function institutionForCardWrite");
+    expect(start).toBeGreaterThan(-1);
+    const signature = rules.slice(start, rules.indexOf("): string | null", start));
+    expect(signature).not.toContain("documentInstitutionId");
+    expect(signature).not.toContain("options");
+    expect(signature).not.toContain("institutionList");
   });
 
   it("still sends both of the card's numbers to the document mapping", () => {

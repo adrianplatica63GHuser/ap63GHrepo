@@ -363,6 +363,150 @@ describe("documentFieldsFromIdCard — the provenance note", () => {
   });
 });
 
+/**
+ * Slice #34.25 — the authority the dialog could not place, on a document that
+ * already holds an institution.
+ *
+ * ⚠️ **THE PREMISE IS THAT „NO FK" HAS MORE THAN ONE CAUSE.**
+ * `institutionForCardWrite` returns null for an empty picker, for a picker
+ * nobody moved that the matcher did not name, and for one that disagrees with
+ * the matcher — and a list that FAILED TO LOAD lands in the first. Until this
+ * slice all three took the `subject` arm, so a document already filed under an
+ * institution ended up with „Eliberată de SPCLEP Bragadiru" in `subject` beside
+ * a foreign key pointing somewhere else: the freely-editable second copy the
+ * mapping's own header forbids, written because of a failure that heals on a
+ * button press.
+ *
+ * ⚠️ **AND THE ASSERTIONS RUN IN BOTH DIRECTIONS, because the risk here is a
+ * fix that reaches further than it was asked to.** Withholding the prose on a
+ * document with NO institution would drop the reading on the floor — the defect
+ * the fallback exists to prevent — so every test below that pins the silence is
+ * paired with one that pins the prose still being written.
+ */
+describe("documentFieldsFromIdCard — the list nobody could read", () => {
+  const OTHER = "99999999-8888-7777-6666-555555555555";
+  const CHOSEN = "11111111-2222-3333-4444-555555555555";
+  const UNREAD = { institutionListUnreadable: true } as const;
+  /** Every other target already filled, so the authority is the only question. */
+  const FILED_DOC = {
+    title: "Titlu scris de om",
+    nrDocument: "RT123456",
+    dateDocument: "2019-04-02",
+    dateValidUntil: "2029-04-02",
+    institutionId: OTHER,
+  };
+
+  it("writes nothing at all — no FK, no prose, no note", () => {
+    const patch = documentFieldsFromIdCard(FULL_CARD, FILED_DOC, UNREAD);
+    expect(patch).toEqual({});
+    expect(patch.institutionId).toBeUndefined();
+    expect(patch.subject).toBeUndefined();
+    // ⚠️ The note is the one that would be a LIE rather than a duplicate: it
+    // claims data was taken from the card, on a document where none was.
+    expect(patch.notes).toBeUndefined();
+    expect(idCardDocumentFieldCount(patch)).toBe(0);
+  });
+
+  it("is the only difference — the same call without the flag still writes the prose", () => {
+    // The contrast that makes the assertion above about THIS slice rather than
+    // about the fixture: one argument apart, same card, same document.
+    const before = documentFieldsFromIdCard(FULL_CARD, FILED_DOC);
+    expect(before.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
+    expect(before.notes).toBe(ID_CARD_NOTE_LINE);
+    expect(idCardDocumentFieldCount(before)).toBe(1);
+  });
+
+  it("keeps the prose when the list LOADED and simply holds no match", () => {
+    // The state this slice must NOT touch: the list read fine, nobody placed
+    // the authority against a row, and the document holds a different one. The
+    // reading has nowhere else to go, so #34.02's fallback still fires — with
+    // the flag explicitly false as well as absent, because a caller that
+    // answers the question is not the same as one that never asked it.
+    for (const review of [undefined, {}, { institutionListUnreadable: false }]) {
+      const patch = documentFieldsFromIdCard(FULL_CARD, FILED_DOC, review);
+      expect([review, patch.subject]).toEqual([
+        review,
+        `${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`,
+      ]);
+    }
+  });
+
+  it("keeps the prose on a document with NO institution, unreadable list or not", () => {
+    // ⚠️ **The scope of the new branch, asserted from the outside.** On a blank
+    // document the prose is the ONLY place the card's authority can go, and an
+    // unreadable list is exactly the state #34.02 wrote that degraded path for.
+    // A branch that fired here would lose the reading rather than de-duplicate
+    // it — the defect the fallback exists to prevent, reintroduced by its own
+    // fix.
+    const blank = documentFieldsFromIdCard(FULL_CARD, {}, UNREAD);
+    expect(blank.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
+    expect(blank.institutionId).toBeUndefined();
+
+    // …and a whitespace-only institution on the document is „none", exactly as
+    // `filled` reads it everywhere else here.
+    const whitespace = documentFieldsFromIdCard(FULL_CARD, { institutionId: "   " }, UNREAD);
+    expect(whitespace.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
+  });
+
+  it("takes nothing away from the card's other fields", () => {
+    // The branch is about the authority and about nothing else: on a document
+    // that is blank apart from its institution, every other target still fills.
+    const patch = documentFieldsFromIdCard(FULL_CARD, { institutionId: OTHER }, UNREAD);
+    expect(patch.nrDocument).toBe("RT123456");
+    expect(patch.dateDocument).toBe("2019-04-02");
+    expect(patch.dateValidUntil).toBe("2029-04-02");
+    expect(patch.title).toBe(`${ID_CARD_TITLE_PREFIX}Popescu Ion`);
+    expect(patch.subject).toBeUndefined();
+    // Something WAS written, so the provenance note is not a lie and goes on.
+    expect(patch.notes).toBe(ID_CARD_NOTE_LINE);
+    expect(idCardDocumentFieldCount(patch)).toBe(4);
+  });
+
+  it("cannot collide with the FK arm, whatever the flag says", () => {
+    // ⚠️ **Exclusive by construction rather than by ordering.** The FK arm
+    // needs `current.institutionId` EMPTY and this branch needs it filled, so a
+    // card carrying a chosen row on a blank document writes the FK even with
+    // the flag set — which is the honest answer: the picker cannot have been
+    // unreadable and have produced that id, and if a caller says both, the id
+    // in hand is the better evidence.
+    const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId: CHOSEN }, {}, UNREAD);
+    expect(patch.institutionId).toBe(CHOSEN);
+    expect(patch.subject).toBeUndefined();
+  });
+
+  it("leaves sameInstitutionAlready taking neither arm, as #34.02 left it", () => {
+    // The adjacent silence, unchanged: a document already filed under the row
+    // the dialog is offering writes neither the FK nor the prose, with or
+    // without this slice's flag. Two different reasons for one outcome, and
+    // neither is allowed to start depending on the other.
+    for (const review of [undefined, UNREAD]) {
+      const patch = documentFieldsFromIdCard(
+        { ...FULL_CARD, institutionId: CHOSEN },
+        { institutionId: CHOSEN },
+        review,
+      );
+      expect([review, patch.institutionId]).toEqual([review, undefined]);
+      expect([review, patch.subject]).toEqual([review, undefined]);
+    }
+  });
+
+  it("changes nothing at all for a card that named no authority", () => {
+    // Nothing was read, so there is nothing to withhold — and the branch must
+    // not become a general „an unreadable list makes this card quieter". The
+    // assertion is the EQUALITY of the two patches rather than the shape of
+    // either: an earlier draft of this test used a document with every target
+    // already filled, so both sides were `{}` and it would have passed against
+    // any implementation whatsoever.
+    const card = { ...FULL_CARD, idIssuingAuthority: null };
+    const withFlag = documentFieldsFromIdCard(card, { institutionId: OTHER }, UNREAD);
+    const without = documentFieldsFromIdCard(card, { institutionId: OTHER });
+    expect(withFlag).toEqual(without);
+    expect(withFlag.subject).toBeUndefined();
+    expect(withFlag.nrDocument).toBe("RT123456");
+    expect(idCardDocumentFieldCount(withFlag)).toBe(4);
+  });
+});
+
 describe("idCardDocumentFieldCount", () => {
   it("counts document fields and excludes the notes line", () => {
     const patch = documentFieldsFromIdCard(FULL_CARD, {});

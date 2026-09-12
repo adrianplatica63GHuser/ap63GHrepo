@@ -1,16 +1,21 @@
 /**
- * The two decisions the ID-card review dialog makes about a value it did not
- * read off the card.                                            (Slice #34.13)
+ * The decisions the ID-card review dialog makes about a value it did not
+ * read off the card.                                    (Slice #34.13, #34.25)
  *
- * Both were inline expressions in `id-card-person-dialog.tsx`, and both were
- * wrong in the same way: a control showed one thing and the submit wrote
- * another. Pulled out here so they can be asserted without rendering a dialog
+ * („The TWO decisions" until #34.25 added a third — `institutionSelectCanShow`,
+ * which asks whether the institution picker can show anything at all. Counting
+ * them in the first line was always going to go stale; the count is gone rather
+ * than corrected.)
+ *
+ * #34.13's pair were inline expressions in `id-card-person-dialog.tsx`, and
+ * both were wrong in the same way: a control showed one thing and the submit
+ * wrote another. Pulled out here so they can be asserted without rendering a dialog
  * that opens with three fetches — and so the RULE is one sentence in one place
  * rather than a condition repeated at a control and at a write.
  *
  * ⚠️ **Not merged into `id-card.ts`, deliberately.** That module answers "what
  * does this card put on the Document" and is imported by the extraction route,
- * by the wizard and by non-React code. These two answer "what may this dialog
+ * by the wizard and by non-React code. These answer "what may this dialog
  * SHOW and SUBMIT" — a question about one screen — and one of them
  * (`citizenshipForWrite`) is about a `natural_person` column that never reaches
  * a document at all. Same reason `id-card.ts` refuses to carry `cnp`.
@@ -102,6 +107,20 @@ export type InstitutionAnswers = {
  * refuses whatever the document holds, and there is no branch that could ever
  * consult it.
  *
+ * ⚠️ **NOR IS THE OPTIONS LIST, WHICH #34.25 DELIBERATELY DID NOT ADD AS A
+ * FOURTH PARAMETER.** That slice needed a second question answered — „could
+ * anybody READ the list", asked of `institutionSelectCanShow` below — and the
+ * obvious place to put it looked like a fourth ground here. It is not one.
+ * This rule answers WHOSE ANSWER IS ON SCREEN, and the answer to that does not
+ * change when the list fails: a person who picked a row before the reload broke
+ * still picked it, and a matcher that named one still named it. What an
+ * unreadable list changes is what the DOCUMENT should be given, which is
+ * `documentFieldsFromIdCard`'s question and is answered there, against the
+ * `current` institution this function is forbidden to see. Folding the two
+ * together would return null for „the list is unreadable" and lose the
+ * distinction the whole slice exists to draw — three meanings of null became
+ * four, in the one function that already could not tell them apart.
+ *
  * Returns null for „nobody has placed this authority", which is the state
  * `documentFieldsFromIdCard` answers with the `subject` line — and, in the
  * dialog, the state that offers „adaugă «…»" and the sentence beside it.
@@ -119,6 +138,42 @@ export function institutionForCardWrite(state: {
   if (state.chosen) return selected;
   const matched = filled(state.matchedInstitutionId) ? state.matchedInstitutionId.trim() : "";
   return selected === matched ? selected : null;
+}
+
+/**
+ * Can the institution picker show an institution AT ALL?        (Slice #34.25)
+ *
+ * ⚠️ **THE TEST IS "CAN THE SELECT SHOW ONE", NOT "DID THE LIST FAIL", and it
+ * is `citizenshipForWrite`'s idiom one control over.** The picker's only
+ * entries are `institutionOptions` plus the „—" placeholder, so an options
+ * array with nothing selectable in it means nobody looking at this dialog could
+ * have placed the card's authority against a real row — whatever the reason.
+ * There are two, and asking a load flag covers only one of them: the GET
+ * failing, and a `lookup_institution` emptied between the model reading the
+ * card and the user pressing Confirm. Asking the OPTIONS covers both with one
+ * sentence and cannot drift from what is on screen, which is the property that
+ * made the citizenship rule worth writing this way.
+ *
+ * ⚠️ **AND „THE ARCHIVE GENUINELY HOLDS NONE" NEEDS NO SEPARATE ANSWER, which
+ * is what makes the collapse safe rather than lazy.** Every caller acts on this
+ * only where a DOCUMENT already carries an institution — and a document cannot
+ * carry one the archive does not have, because `document.institution_id` is a
+ * foreign key into the very table this list reads, unfiltered (`GET
+ * /api/admin/value-lists/[list]` returns every row; there is no active/archived
+ * predicate to make a healthy list look empty). So on the branch that consults
+ * it, "empty" can only ever mean "unread". The two readings are the same fact
+ * seen from either end.
+ *
+ * ⚠️ **IT REFUSES AN OPTION WITH NO VALUE.** A `{ value: "" }` row is the „—"
+ * entry, which shows no institution; counting it would make a select holding
+ * nothing but the placeholder look usable.
+ *
+ * Returns true when at least one real row is selectable.
+ */
+export function institutionSelectCanShow(
+  options: readonly { value: string }[],
+): boolean {
+  return options.some((o) => filled(o.value));
 }
 
 /**

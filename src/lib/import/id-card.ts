@@ -387,6 +387,35 @@ export type IdCardDocumentCurrent = {
   institutionId?: string | null;
 };
 
+/**
+ * What the REVIEW SCREEN could show — not a property of the card.
+ *                                                              (Slice #34.25)
+ *
+ * ⚠️ **A THIRD PARAMETER RATHER THAN A FIELD ON `IdCardDocumentSource`, and
+ * the split is the point.** That type is „card-derived values, as they stand
+ * in the review form at submit time": every field on it is something the card
+ * says, corrected by a human. Whether the dialog's own GET of
+ * `lookup_institution` came back is not something the card says — it is a fact
+ * about one screen on one afternoon — and putting it there would invite the
+ * next reader to treat it as a reading, which is exactly the confusion
+ * `institutionId`'s own docblock spends twenty lines undoing.
+ *
+ * Optional, and absent means „the question does not arise": every caller that
+ * has no dialog behind it — the extraction route, the wizard, a test of the
+ * mapping itself — gets #34.02's behaviour unchanged.
+ */
+export type IdCardReviewState = {
+  /**
+   * Could nobody looking at the review dialog see an institution to pick?
+   *
+   * Answered by `institutionSelectCanShow` in
+   * `src/lib/import/id-card-review.ts`, which asks the picker's OPTIONS rather
+   * than a load flag — so it covers a failed GET and a list emptied under the
+   * user with one sentence, and cannot drift from what is on screen.
+   */
+  institutionListUnreadable?: boolean;
+};
+
 /** Only the keys that should actually change. Empty object = nothing to write. */
 export type IdCardDocumentPatch = {
   title?: string;
@@ -472,10 +501,21 @@ const isoDate = (v: string | null | undefined): v is string =>
  * If every target is already filled this returns `{}` and the caller sends only
  * aiInterpretedAt — which is not versioned, so the no-op backstop appends no
  * version row at all rather than an empty one.
+ *
+ * ── What the screen could show ───────────────────────────────────────────────
+ *
+ * The third parameter is the only thing here that is not about the card or the
+ * document (Slice #34.25). It carries one fact — could anybody looking at the
+ * review dialog see an institution to pick — because „the foreign key was not
+ * written" has more than one cause and they do not want the same answer. It
+ * defaults to `{}`, so every caller without a dialog behind it keeps #34.02's
+ * behaviour exactly. See `IdCardReviewState` for why it is not a field on
+ * `IdCardDocumentSource`.
  */
 export function documentFieldsFromIdCard(
   card: IdCardDocumentSource,
   current: IdCardDocumentCurrent,
+  review: IdCardReviewState = {},
 ): IdCardDocumentPatch {
   const patch: IdCardDocumentPatch = {};
 
@@ -571,8 +611,43 @@ export function documentFieldsFromIdCard(
     filled(card.institutionId) &&
     filled(current.institutionId) &&
     card.institutionId.trim() === current.institutionId.trim();
+  // ⚠️ **…AND IT DOES NOT FIRE WHEN THE FK IS MISSING ONLY BECAUSE NOBODY
+  // COULD READ THE LIST.**                                      (Slice #34.25)
+  //
+  // `institutionForCardWrite` returns null for three different states, and the
+  // fallback above could not tell them apart: an empty picker, a picker nobody
+  // moved that the matcher did not name, and a picker nobody moved that
+  // disagrees with the matcher. A list that FAILED TO LOAD lands in the first
+  // of those — and that is not „a different authority", it is „nobody could see
+  // the list". On a document that ALREADY holds an institution, the result was
+  // „Eliberată de SPCLEP Bragadiru" sitting in `subject` beside a foreign key
+  // pointing somewhere else: the second, freely-editable copy the header above
+  // forbids, written for a reason that heals on a button press.
+  //
+  // ⚠️ **SCOPED TO A DOCUMENT THAT ALREADY HOLDS ONE, AND THE SCOPE IS LOAD-
+  // BEARING.** On a document with NO institution the prose is the only place
+  // the authority can go, and #34.02's degraded path — no FK, the reading kept
+  // as prose — stays exactly as it is. Withholding it there would drop the
+  // reading on the floor, which is the defect the fallback exists to prevent
+  // (see the paragraph above) rather than a stricter version of this one. The
+  // authority is withheld only where the column it duplicates is already
+  // filled, and where the dialog says on screen that this is what happened.
+  //
+  // ⚠️ **AND IT IS EXCLUSIVE WITH THE FK ARM BY CONSTRUCTION, not by
+  // ordering.** `institutionWritten` requires `current.institutionId` to be
+  // EMPTY and this requires it to be filled, so no card can take both however
+  // they are arranged.
+  const institutionUnreadableOnFiledDocument =
+    review.institutionListUnreadable === true && filled(current.institutionId);
   if (institutionWritten) {
     patch.institutionId = (card.institutionId as string).trim();
+  } else if (institutionUnreadableOnFiledDocument) {
+    // Nothing — deliberately, and the silence is the whole slice. No FK
+    // (write-if-empty blocks it), no prose (it would duplicate the column the
+    // document already holds), and therefore no provenance note either: the
+    // count below is what makes „0 câmpuri" honest, and the sentence under the
+    // institution picker is where the user is told the card's authority was
+    // read and not filed.
   } else if (
     !sameInstitutionAlready &&
     filled(card.idIssuingAuthority) &&
