@@ -475,8 +475,8 @@
       "choiceTextFileDesc": "Încărcați un fișier .txt cu coloane index, X (Northing), Y (Easting)",
       "choiceTextFolder": "Din folder text",
       "choiceTextFolderDesc": "Selectați un folder — fiecare fișier .txt va fi importat ca proprietate separată",
-      "uploadTextTitle": "Selectați fișierul text",
-      "uploadTextLabel": "Selectați fișierul .txt",
+      "uploadTextTitle": "Încarcă fișier cu coordonate",
+      "uploadTextLabel": "Selectați fișierul cu coordonate",
       "uploadTextHint": "Rânduri separate prin tab sau virgulă: index, X [m] (Northing), Y [m] (Easting). Primele 3 linii sunt întotdeauna ignorate.",
       "uploadFolderTitle": "Selectați folderul",
       "uploadFolderLabel": "Selectați folderul cu fișierele .txt",
@@ -835,6 +835,10 @@
     },
     "snapshotValue": {
       "deleted": "valoare ștearsă"
+    },
+    "filePicker": {
+      "offersExtensions": "Fereastra de fișiere arată doar fișiere {list}. Dacă fișierul dumneavoastră nu apare acolo, schimbați filtrul pe „Toate fișierele”.",
+      "offersImages": "Fereastra de fișiere arată doar imagini. Dacă fișierul dumneavoastră nu apare acolo, schimbați filtrul pe „Toate fișierele”."
     }
   },
   "naturalPerson": {

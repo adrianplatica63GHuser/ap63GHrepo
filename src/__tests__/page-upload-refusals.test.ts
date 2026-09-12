@@ -293,15 +293,35 @@ describe("the message keys exist where the catch will look for them", () => {
   });
 
   /**
-   * Short, because the two readers that get it are a `title` tooltip and a
-   * permanent HTML report — NOT the visible cell, which shows the constant
-   * „Eroare". See the module header; an adversarial round corrected the
-   * opposite claim there.
+   * Short, and since Slice #34.23 the reason is the strongest it has been:
+   * these sentences are PRINTED IN THE CELL, not only carried on its `title`
+   * and into the permanent HTML report. A status column beside „Se importă…”
+   * is a place for a label, and `reportRowFailed` — "nu a fost importat:
+   * {reason}" — is a place for one too. See the module header, where #34.23
+   * re-decided the register rather than inheriting it.
+   *
+   * ⚠️ **40 RATHER THAN 60, AND THE NUMBER IS NOW A COLUMN WIDTH.** #34.20 set
+   * this at 60 for a tooltip, where nothing is too long. The cell is `w-40` —
+   * 10rem — and the longest of these, „Fișier peste limita de {limitMb} MB",
+   * is 35 characters and wraps to two lines there. 40 leaves a translator a
+   * little room and keeps two lines as the ceiling; a sentence that needs more
+   * than that needs the column resized in `bulk-import-dialog.tsx` in the same
+   * commit, which is the point of failing here rather than on somebody's
+   * screen.
    */
-  it.each(locales)("%s keeps both refusals to the register of sessionExpiredShort", (locale) => {
+  it.each(locales)("%s keeps both refusals to the register of the status column", (locale) => {
     const block = importDialogMessages(locale);
     for (const refusal of PAGE_REFUSALS) {
-      expect(block[refusal.messageKey].length).toBeLessThan(60);
+      expect(block[refusal.messageKey].length).toBeLessThan(40);
     }
+  });
+
+  /**
+   * And the one that is not a refusal but shares the cell with them. It was
+   * written short for a `title` it turned out never to reach; #34.23 kept the
+   * register deliberately rather than by omission, so it is pinned with them.
+   */
+  it.each(locales)("%s keeps sessionExpiredShort to the same register", (locale) => {
+    expect(importDialogMessages(locale).sessionExpiredShort.length).toBeLessThan(40);
   });
 });

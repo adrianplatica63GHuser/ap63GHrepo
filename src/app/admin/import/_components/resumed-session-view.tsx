@@ -154,8 +154,15 @@ function StatusBadge({
             say a page group landed three of its five pages, or that a scanless
             Document is in the archive under this row's name; the resumed view
             is the only one of the three that survives a reload, and it showed a
-            bare "eroare". Same keys as the live row, so the three cannot word it
-            differently. The `"left"` row carries a `docId` on purpose — it is
+            bare "eroare". Same keys as the live row for everything below —
+            but NOT for the status word itself any more: Slice #34.23 gave the
+            live cell `ImportResult.errorMsgTranslated`, and `SavedImportEntry`
+            deliberately does not carry it, so a resumed row shows „Eroare" with
+            the message on hover where the live row showed the message itself.
+            That divergence is recorded at the write site in
+            `bulk-import-dialog.tsx`; closing it means adding the flag to the
+            saved session, which #34.23 put out of scope. The `"left"` row
+            carries a `docId` on purpose — it is
             the one error row that names something worth opening — and it is
             drawn as its own link rather than through the `done` branch above,
             which means "this file was imported". */}

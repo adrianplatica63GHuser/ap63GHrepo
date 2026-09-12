@@ -4,14 +4,19 @@
  * A comment stripper for the source-reading GUARDS.   (Slice #34.06)
  *
  * ⚠️ **NOT PRODUCTION CODE, AND IT LIVES HERE ANYWAY.** Nothing in the app
- * imports it; ten tests under `src/__tests__/` do — ten as of Slice #34.21.
- * That count was written here as four and left wrong while six more callers
- * arrived, so re-derive it rather than trusting it, and correct this line when
- * it has moved again. The needle is the IMPORT, not the identifier and not the
+ * imports it; twelve tests under `src/__tests__/` do — twelve as of Slice
+ * #34.23, counted over the whole suite rather than inherited. That count was
+ * written here as four and left wrong while six more callers arrived; it was
+ * then corrected to ten in #34.21 and went stale again within two slices
+ * (#34.22 added `import-checks.test.ts`, #34.23 `import-error-cell.test.ts`).
+ * So re-derive it rather than trusting it, and correct this line when it has
+ * moved again. The needle is the IMPORT, not the identifier and not the
  * module name: a dozen other suites carry their own local copy of
- * `stripComments`, so grepping the identifier finds 22 files, and a thirteenth
+ * `stripComments`, so grepping the identifier finds 24 files, and one more
  * (`import-structure-rules.test.ts`) names this file in a comment without using
- * it, so grepping the module name finds 11.
+ * it, so grepping the module name finds 13. All three numbers were re-derived
+ * over `src\__tests__` in #34.23 — the first was right and the other two were
+ * two behind, in the paragraph whose whole job is to say which grep to trust.
  *
  *   cd C:\dev\ga40prj; @(Get-ChildItem -Recurse src\__tests__\*.ts* | Select-String -Pattern 'from ["'']@/lib/dev/strip-comments["'']' -List).Count
  *

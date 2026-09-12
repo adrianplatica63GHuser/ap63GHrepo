@@ -10,7 +10,9 @@ import { buttonClass } from "@/lib/ui/button-styles";
 // Slice #34.20 — the coordinate picker's offer, named once for the two
 // screens that make it. See `picker-accept.ts` for why it is not derived
 // from the file-kind registry.
-import { COORDINATE_FILE_ACCEPT } from "@/lib/files/picker-accept";
+// Slice #34.23 — and the list the sentence beside it names, derived from that
+// same value so the copy cannot outlive it.
+import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
 
 // ---------------------------------------------------------------------------
 // Types (mirror src/lib/calculation/compute.ts — redeclared so this client
@@ -98,8 +100,21 @@ function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
 // Component
 // ---------------------------------------------------------------------------
 
+/**
+ * The id joining this screen's picker to the sentence describing it.
+ *                                                              (Slice #34.23)
+ *
+ * A constant rather than a literal in two places, for the ordinary reason: an
+ * `aria-describedby` pointing at an id that no longer exists is silent, both to
+ * the user and to every test that does not go looking for it.
+ */
+const COORDINATE_PICKER_OFFER_ID = "calculation-coordinate-picker-offer";
+
 export function CalculationView() {
   const t            = useTranslations("calculation");
+  // Slice #34.23 — the picker sentence is `shared` because two screens make the
+  // same offer; see `picker-accept.ts`.
+  const tShared      = useTranslations("shared");
   const searchParams = useSearchParams();
 
   // Slice #20.09: parse a re-run payload from sessionStorage during the first
@@ -279,6 +294,15 @@ export function CalculationView() {
             accept={COORDINATE_FILE_ACCEPT}
             onChange={handleFile}
             className="sr-only"
+            // Slice #34.23 — the input is `sr-only`, and its accessible name
+            // is the button text of the `<label>` wrapping it and NOTHING
+            // else; a paragraph sitting beside it is invisible to the one user
+            // most likely to be lost in a file dialog. `aria-describedby` is
+            // what makes the sentence part of the control. (In
+            // `add-property-dialog.tsx` the name comes from an `aria-label`
+            // instead, and the same argument applies — do NOT add one here,
+            // where it would override the label text.)
+            aria-describedby={COORDINATE_PICKER_OFFER_ID}
           />
         </label>
         <HelpHint hintKey="calc-file-format" />
@@ -294,6 +318,27 @@ export function CalculationView() {
           </button>
         )}
       </div>
+
+      {/*
+        Slice #34.23 — what the file window will and will not show.
+
+        The button above opens a dialog filtered to `COORDINATE_FILE_ACCEPT`,
+        and until this line a user whose export was named something else met a
+        window that simply did not list it and said nothing. The list of
+        extensions is `COORDINATE_FILE_OFFER`, derived from that same `accept`
+        value, so widening one widens the other.
+
+        ⚠️ Worded as what the WINDOW shows, never as what this screen accepts:
+        `accept` filters a dialog and decides nothing about the parse. See
+        `picker-accept.ts`.
+      */}
+      <p
+        id={COORDINATE_PICKER_OFFER_ID}
+        className="text-xs text-fade dark:text-zinc-400"
+        role="note"
+      >
+        {tShared("filePicker.offersExtensions", { list: COORDINATE_FILE_OFFER })}
+      </p>
 
       {previewing && (
         <p className="text-sm text-fade dark:text-zinc-400">{t("status.computing")}</p>

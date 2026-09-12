@@ -30,20 +30,42 @@
  * copies of two words honest; if a fourth appears, that is the slice that
  * should make them one.
  *
- * ⚠️ **`messageKey` IS A KEY UNDER `adminImport.wizard.importDialog`, AND THE
- * SENTENCES ARE SHORT ON PURPOSE.** `errorMsg` has three readers and an
- * adversarial round corrected an earlier draft of this paragraph that named
- * only the flattering one: the results row shows the CONSTANT „Eroare" and
- * carries `errorMsg` as the cell's `title`, the saved session keeps it, and the
- * saved HTML report prints it verbatim. So on the screen itself the refusal is
- * a hover, not a sentence — a limitation this slice did NOT lift, because the
- * cell is shared by every failure the run can have, including the English ones
- * the fallback still produces, and changing what it shows is a display contract
- * for rows #34.20 never touched. It is in #34.20's handover.
+ * ⚠️ **`messageKey` IS A KEY UNDER `adminImport.wizard.importDialog`, AND SINCE
+ * SLICE #34.23 THE RESULTS CELL PRINTS IT.** `errorMsg` has three readers, and
+ * the one this paragraph used to apologise for is the one that changed: the
+ * cell showed the CONSTANT „Eroare” and carried `errorMsg` only as its `title`,
+ * so on the screen the refusal was a hover rather than a sentence. #34.20 did
+ * not lift that, and said why — the cell is shared by every failure a run can
+ * have, including the English ones the fallback below still produces, so
+ * showing `errorMsg` unconditionally would have put `HTTP 500` on a Romanian
+ * screen. #34.23 lifted it the only way that is safe: a second field,
+ * `ImportResult.errorMsgTranslated`, written by the sites that call `t(…)`, and
+ * `errorCell` in `error-cell.ts` reading THAT rather than guessing at the
+ * string. The other two readers did not change — the saved session keeps
+ * `errorMsg` verbatim and the saved HTML report prints it verbatim.
  *
- * They are short anyway, and for the reader that is left: the report is a
- * permanent document and a `title` is a tooltip, both of which want the
- * register of `sessionExpiredShort` — two words — rather than a paragraph.
+ * ⚠️ **AND THE SENTENCES STAY SHORT, WHICH #34.23 RE-DECIDED RATHER THAN
+ * INHERITED.** The register was argued here for a `title` and a permanent
+ * report; a visible cell is a third reader and could have wanted more. It does
+ * not. The cell sits in a status column beside „Se importă…” and „Deschide →”,
+ * where a label is the register and a paragraph would wrap a table; and the
+ * same string is the `{reason}` of `reportRowFailed` — "nu a fost importat:
+ * {reason}" — which a paragraph reads badly inside. So all three sentences keep
+ * the register of `sessionExpiredShort`, and `sessionExpiredShort` itself was
+ * left at „Sesiune expirată” for the same reason. The `< 40` guard in
+ * `page-upload-refusals.test.ts` is what holds it — and 40 rather than #34.20's
+ * 60 because the number now means a COLUMN, `w-40` in the results table, not a
+ * tooltip budget. A sentence that needs more than that needs the column resized
+ * in the same commit.
+ *
+ * ⚠️ **THE GUARD IS OVER THESE THREE AND NOT OVER EVERY SENTENCE THE CELL CAN
+ * SHOW, AND THAT IS DELIBERATE.** `cornerSourceConflict` also reaches the cell
+ * since #34.23, and it is 134 characters: it has to name the property that
+ * already claimed the coordinate file, and a label cannot carry a `{code}`.
+ * Short is the register where a sentence has only a CATEGORY to give — a type
+ * refused, a size exceeded, a session gone — and it stops being the register
+ * the moment the useful part of the answer is a specific record. That row wraps
+ * and is worth it; these three do not need to.
  * `document.pages.dialog.fileTypeNotAllowed` — the one of the two that has to
  * explain what a page MAY be — is a paragraph, correctly, because it sits
  * beside a control the user can act on; here the run is over and there is no

@@ -45,8 +45,12 @@ import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 // Slice #34.20 — this dialog makes two of the three offers, and the
 // coordinate one is the copy `calculation-view.tsx` also held.
+// Slice #34.23 — and the list the coordinate sentence names. The photo picker
+// has no list to name: `image/*` resolves differently on every OS, so its
+// sentence names a kind of file instead. See `offeredExtensions`.
 import {
   COORDINATE_FILE_ACCEPT,
+  COORDINATE_FILE_OFFER,
   PROPERTY_PHOTO_ACCEPT,
 } from "@/lib/files/picker-accept";
 
@@ -225,6 +229,34 @@ const NO_IDENTITY_LINE = "mt-1 text-xs font-medium text-amber-700 dark:text-ambe
 const NO_IDENTITY_BOX =
   "rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 " +
   "dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300";
+
+/**
+ * The ids joining this dialog's two file pickers to the sentences describing
+ * them.                                                        (Slice #34.23)
+ *
+ * Two ids and not one, even though the two pickers are never on screen at the
+ * same time — `step` shows one of them — because "never at the same time" is a
+ * fact about today's step machine and a duplicated id is invalid the moment
+ * that changes. Constants rather than literals, so an `aria-describedby` cannot
+ * outlive the element it points at: a dangling one is silent.
+ */
+const PHOTO_PICKER_OFFER_ID = "property-photo-picker-offer";
+const COORDINATE_PICKER_OFFER_ID = "property-coordinate-picker-offer";
+
+/**
+ * …and the format hints that were already on screen and already unreachable.
+ *                                                              (Slice #34.23)
+ *
+ * ⚠️ **A THIRD ADVERSARIAL ROUND FOUND THE SLICE ARGUING THIS AND NOT DOING
+ * IT.** `aria-label` on a `role="button"` REPLACES its content as the
+ * accessible name, so „Sunt acceptate formatele JPEG, PNG…" and the coordinate
+ * file's column spec were announced by nothing at all — the same defect the new
+ * sentence was written to avoid, one span higher, and the very line this
+ * slice's own comment cites as the reason the new sentence is needed. Both go
+ * into `aria-describedby`, hint first, in the order they are read on screen.
+ */
+const PHOTO_PICKER_HINT_ID = "property-photo-picker-hint";
+const COORDINATE_PICKER_HINT_ID = "property-coordinate-picker-hint";
 
 interface Props {
   onClose: () => void;
@@ -869,12 +901,23 @@ export function AddPropertyDialog({ onClose }: Props) {
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") imageInputRef.current?.click(); }}
                 aria-label={t("uploadLabel")}
+                // ⚠️ **ON THE WRAPPER AS WELL AS ON THE INPUT, AND A SECOND
+                // ADVERSARIAL ROUND IS WHY.** (Slice #34.23.) This div is the
+                // control: it has the click handler, the visible drop zone and
+                // its own accessible name. The `sr-only` input inside it is a
+                // separate tab stop, so a description put only there is never
+                // heard by somebody who reaches the button — which is the user
+                // this sentence was written for. Both carry it; neither is
+                // redundant, because either can be the one focused.
+                aria-describedby={`${PHOTO_PICKER_HINT_ID} ${PHOTO_PICKER_OFFER_ID}`}
               >
                 <UploadIcon />
                 <span className="text-sm font-medium text-ink dark:text-zinc-200">
                   {selectedFile ? selectedFile.name : t("uploadLabel")}
                 </span>
-                <span className="mt-1 text-xs text-fade">{t("uploadHint")}</span>
+                <span id={PHOTO_PICKER_HINT_ID} className="mt-1 text-xs text-fade">
+                  {t("uploadHint")}
+                </span>
                 <input
                   ref={imageInputRef}
                   type="file"
@@ -882,8 +925,40 @@ export function AddPropertyDialog({ onClose }: Props) {
                   className="sr-only"
                   onChange={handleImageChange}
                   aria-label={t("uploadLabel")}
+                  // Slice #34.23 — `aria-label` is the whole accessible name of
+                  // an `sr-only` input, so the two lines below it have to be
+                  // attached rather than merely adjacent. Hint first, then the
+                  // sentence about the window, which is their order on screen.
+                  aria-describedby={`${PHOTO_PICKER_HINT_ID} ${PHOTO_PICKER_OFFER_ID}`}
                 />
               </div>
+
+              {/*
+                Slice #34.23 — what the file window shows, beside the control
+                that opens it.
+
+                ⚠️ **NOT A SECOND `uploadHint`.** That line says which image
+                FORMATS this screen accepts, which is a fact about the route;
+                this one says what the dialog will list, which is a fact about
+                `PROPERTY_PHOTO_ACCEPT`. The two answer different questions and
+                a user who cannot see their file needs this one. It names no
+                extensions because `image/*` names none — see
+                `offeredExtensions` in `picker-accept.ts`.
+
+                ⚠️ **AND IT KEEPS THE „Toate fișierele" HALF, WHICH A REVIEW
+                ROUND TOOK OUT AND A LATER ONE PUT BACK.** The argument for
+                dropping it was that the escape hatch leads to a file the scan
+                route will refuse anyway. That is wrong here in the one
+                direction that matters: `uploadHint` above says the route takes
+                TIFF and BMP, and `image/*` is resolved by the OS — the module
+                header records that it drags HEIC in or out depending on the
+                platform — so the window can hide a file this screen would
+                accept. That is exactly the case the second sentence exists
+                for.
+              */}
+              <p id={PHOTO_PICKER_OFFER_ID} className="text-xs text-fade" role="note">
+                {tShared("filePicker.offersImages")}
+              </p>
 
               {error && <ErrorBanner message={error} />}
 
@@ -1008,12 +1083,16 @@ export function AddPropertyDialog({ onClose }: Props) {
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") textInputRef.current?.click(); }}
                 aria-label={t("uploadTextLabel")}
+                // Slice #34.23 — see the photo picker above.
+                aria-describedby={`${COORDINATE_PICKER_HINT_ID} ${COORDINATE_PICKER_OFFER_ID}`}
               >
                 <TextFileIcon />
                 <span className="text-sm font-medium text-ink dark:text-zinc-200">
                   {textFile ? textFile.name : t("uploadTextLabel")}
                 </span>
-                <span className="mt-1 text-xs text-fade">{t("uploadTextHint")}</span>
+                <span id={COORDINATE_PICKER_HINT_ID} className="mt-1 text-xs text-fade">
+                  {t("uploadTextHint")}
+                </span>
                 <input
                   ref={textInputRef}
                   type="file"
@@ -1021,8 +1100,23 @@ export function AddPropertyDialog({ onClose }: Props) {
                   className="sr-only"
                   onChange={handleTextFileChange}
                   aria-label={t("uploadTextLabel")}
+                  // Slice #34.23 — see the photo picker above.
+                  aria-describedby={`${COORDINATE_PICKER_HINT_ID} ${COORDINATE_PICKER_OFFER_ID}`}
                 />
               </div>
+
+              {/*
+                Slice #34.23 — the same sentence the calculation screen makes,
+                from the same module, because it is the same offer. See the
+                photo picker above for why the two are not one line.
+              */}
+              <p
+                id={COORDINATE_PICKER_OFFER_ID}
+                className="text-xs text-fade"
+                role="note"
+              >
+                {tShared("filePicker.offersExtensions", { list: COORDINATE_FILE_OFFER })}
+              </p>
 
               {error && <ErrorBanner message={error} />}
 

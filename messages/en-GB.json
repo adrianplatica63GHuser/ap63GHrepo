@@ -475,8 +475,8 @@
       "choiceTextFileDesc": "Upload a .txt file with index, X (Northing), Y (Easting) columns",
       "choiceTextFolder": "From a text folder",
       "choiceTextFolderDesc": "Select a folder — every .txt file inside will be imported as a separate property",
-      "uploadTextTitle": "Select text file",
-      "uploadTextLabel": "Select .txt file",
+      "uploadTextTitle": "Upload coordinate file",
+      "uploadTextLabel": "Select the coordinate file",
       "uploadTextHint": "Tab or comma-separated rows: index, X [m] (Northing), Y [m] (Easting). First 3 lines are always skipped.",
       "uploadFolderTitle": "Select folder",
       "uploadFolderLabel": "Select folder containing .txt files",
@@ -835,6 +835,10 @@
     },
     "snapshotValue": {
       "deleted": "deleted value"
+    },
+    "filePicker": {
+      "offersExtensions": "The file window only lists {list} files. If yours is not there, switch its filter to “All files”.",
+      "offersImages": "The file window only lists pictures. If yours is not there, switch its filter to “All files”."
     }
   },
   "naturalPerson": {

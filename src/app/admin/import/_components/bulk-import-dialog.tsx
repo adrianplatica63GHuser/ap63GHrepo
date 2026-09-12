@@ -164,6 +164,11 @@ import {
   pageRefusalOfCode,
   pageRefusalOfSentinel,
 } from "@/lib/import/page-upload-refusals";
+// Slice #34.23 — which of the two kinds of `errorMsg` a failed row is carrying,
+// and therefore whether the results cell prints it or prints „Eroare” with it on
+// hover. The decision is a module because it is shared by nothing and argued at
+// length; see `error-cell.ts`.
+import { errorCell, TranslatedError } from "@/lib/import/error-cell";
 import {
   IMPORT_SESSION_KEY,
   type SavedImportEntry,
@@ -259,6 +264,33 @@ export type ImportResult = {
   entry: FSEntry;
   status: ImportStatus;
   errorMsg?: string;
+  /**
+   * `errorMsg` is a sentence a user can read, rather than a caught string.
+   *                                                            (Slice #34.23)
+   *
+   * ⚠️ **WRITTEN BY THE WRITER, BECAUSE ONLY THE WRITER KNOWS.** Four sites
+   * below set `errorMsg`: three call `t(…)`, and the fourth writes whatever the
+   * caught `Error` carried — which is `HTTP 500`, `Failed to fetch` or
+   * `Import failed` from the fetch helpers, a page refusal `uploadPage` sent as
+   * a token, OR a Romanian sentence this file threw itself (the corner-source
+   * conflict, the provenance guard) and caught two hundred lines later. That is
+   * one field holding two populations mixed at one site, and no reader can tell
+   * them apart from the string: a Romanian word list, a diacritic test, a "does
+   * it look English" heuristic are each a guess that goes wrong on the first
+   * message either side adds. So every writer that has a translator says so —
+   * here directly, or through `TranslatedError` where a throw is in the way —
+   * and `errorCell` reads this flag and nothing else about the text.
+   *
+   * ⚠️ **IT IS THE SCREEN'S CONTRACT AND ONLY THE SCREEN'S.** The saved
+   * session (see `SavedImportEntry` below) and the saved HTML report both keep
+   * `errorMsg` verbatim and neither carries this flag — the report is a
+   * permanent document, and #34.23 changed what the CELL shows, not what those
+   * two print. `import-error-cell.test.ts` pins both.
+   *
+   * `undefined` rather than `false` when the writer had no translator, which
+   * is this file's convention for a flag only ever interesting when true.
+   */
+  errorMsgTranslated?: boolean;
   /** created Document id */
   docId?: string;
   /** principalObjectId for tagging */
@@ -2705,6 +2737,9 @@ export function BulkImportDialog({
           updateResult(entry.path, {
             status: "error",
             errorMsg: t("sessionExpiredShort"),
+            // Slice #34.23 — `t`, so the cell may print it. See
+            // `ImportResult.errorMsgTranslated`.
+            errorMsgTranslated: true,
           });
           return;
         }
@@ -2863,7 +2898,10 @@ export function BulkImportDialog({
           //    here, so the fallback branch is defensive only.
           const entryProvenance = provenanceRef.current(entry);
           if (!entryProvenance) {
-            throw new Error(tprov("required"));
+            // Slice #34.23 — `TranslatedError`, because this sentence is
+            // already Romanian and the catch cannot tell that from the string.
+            // See `error-cell.ts`.
+            throw new TranslatedError(tprov("required"));
           }
           const { id: docId, principalObjectId } = await createDocument({
             documentTypeId: resolvedTypeId,
@@ -2958,7 +2996,15 @@ export function BulkImportDialog({
             if (cornerOwner !== undefined) {
               const claim = await claimCornerSource(docId, cornerOwner, "session-expired");
               if (claim.kind === "conflict") {
-                throw new Error(
+                // ⚠️ **`TranslatedError`, AND THIS IS THE ROW THAT MADE #34.23
+                // WORTH DOING.** The comment above calls this the commonest
+                // coordinate-file failure, and until this slice its sentence —
+                // which names the property already holding the file — reached
+                // the user only by hovering a cell that said „Eroare”. It is
+                // long, and it is long on purpose: a label cannot carry
+                // `{code}`, and the whole remedy is knowing which property that
+                // is. See `error-cell.ts`.
+                throw new TranslatedError(
                   t("cornerSourceConflict", {
                     code: claim.link?.propertyCode ?? "?",
                   }),
@@ -3472,7 +3518,12 @@ export function BulkImportDialog({
           if (msg === "session-expired") {
             abortRef.current = true;
             setSessionExpired(true);
-            updateResult(entry.path, { status: "error", errorMsg: t("sessionExpiredShort") });
+            updateResult(entry.path, {
+              status: "error",
+              errorMsg: t("sessionExpiredShort"),
+              // Slice #34.23 — see `ImportResult.errorMsgTranslated`.
+              errorMsgTranslated: true,
+            });
           } else {
             // Slice #34.20 — the pages route's two named refusals, said in
             // Romanian HERE because this is the scope that has a translator and
@@ -3480,11 +3531,22 @@ export function BulkImportDialog({
             // `session-expired` neither aborts the run: one file the archive
             // will not take says nothing about the next one.
             const refusal = pageRefusalOfSentinel(msg);
+            // ⚠️ **THE ONE SITE THAT WRITES BOTH KINDS, AND THE TWO WAYS A
+            // SENTENCE CAN GET HERE ARE BOTH TESTS OF THE THROW.**
+            // (Slice #34.23.) `refusal` is a token `uploadPage` sent because it
+            // had no translator; `TranslatedError` is what the run's own throws
+            // send because they did. Neither looks at the text — writing this
+            // flag from anything that does is how `Failed to fetch` reaches a
+            // Romanian cell, and it is what `import-error-cell.test.ts` spends
+            // most of its guards stopping.
+            const translated = refusal !== null || err instanceof TranslatedError;
             updateResult(entry.path, {
               status: "error",
               errorMsg: refusal
                 ? t(refusal.messageKey, { limitMb: MAX_UPLOAD_MB })
                 : msg,
+              // `undefined` and not `false`: see the field.
+              errorMsgTranslated: translated ? true : undefined,
             });
           }
         }
@@ -3566,7 +3628,17 @@ export function BulkImportDialog({
         // true: nothing was imported. The same patch the per-entry catch
         // applies to a task skipped after an abort.
         setResults((prev) =>
-          prev.map((r) => ({ ...r, status: "error", errorMsg: t("sessionExpiredShort") })),
+          // ⚠️ **AND THE FLAG IS SET RATHER THAN INHERITED.** (Slice #34.23.)
+          // This patches rows that may already carry an error of their own, so
+          // a spread that left `errorMsgTranslated` alone would leave a row
+          // whose English `HTTP 500` had just been replaced by a Romanian
+          // sentence still showing „Eroare”.
+          prev.map((r) => ({
+            ...r,
+            status: "error",
+            errorMsg: t("sessionExpiredShort"),
+            errorMsgTranslated: true,
+          })),
         );
         return;
       }
@@ -3658,6 +3730,25 @@ export function BulkImportDialog({
         // `SavedImportEntry.preexisting`.
         preexisting:      r.preexisting,
         docId:            r.docId,
+        // ⚠️ **VERBATIM, AND `errorMsgTranslated` IS DELIBERATELY NOT BESIDE
+        // IT — FOR A SCOPE REASON, NOT A COMPATIBILITY ONE.** (Slice #34.23.)
+        // #34.23 changed what the live CELL shows and left this string exactly
+        // as it was; `import-error-cell.test.ts` fails if that stops being
+        // true.
+        //
+        // The consequence is real and is not a corner case: a user reads
+        // „Fișier peste limita de 50 MB" on the row, reloads, and
+        // `resumed-session-view.tsx` puts the same sentence back into a hover
+        // under „Eroare" — the defect this slice was raised to fix, on the one
+        // artefact that survives a reload. Closing it is three lines
+        // (`errorMsgTranslated?: boolean` on `SavedImportEntry`, carried here,
+        // read through `errorCell` there) and it is NOT blocked by old saved
+        // sessions: `loadSavedSession` is a bare `JSON.parse(...) as`, and an
+        // absent optional flag is exactly today's behaviour. What stopped it is
+        // that the slice put the saved session out of scope — one more field on
+        // a durable artefact is its own decision. An adversarial round corrected
+        // an earlier version of this comment that claimed back-compatibility as
+        // the reason; it would have been quoted back as precedent.
         errorMsg:         r.errorMsg,
         scanDescription:  sr?.description,
         confidence:       sr?.confidence,
@@ -5961,6 +6052,13 @@ export function BulkImportDialog({
       // strictly MORE reassuring than the screen it came from — the exact
       // inversion this module's header forbids.
       const notes: string[] = [
+        // ⚠️ **`errorMsg` VERBATIM, AND THE FLAG IS NOT CONSULTED HERE.**
+        // (Slice #34.23.) This line is a permanent document that cannot be
+        // edited after it is saved, so it prints every reason it has —
+        // including the English ones — rather than narrowing to the reasons the
+        // screen is now willing to print. `errorShort` remains its answer for a
+        // row that carried no message at all. Byte-identical before and after
+        // #34.23, pinned by `import-error-cell.test.ts`.
         ...(r.status === "error"
           ? [tres("reportRowFailed", { reason: r.errorMsg ?? t("errorShort") })]
           : r.preexisting === undefined
@@ -6767,7 +6865,25 @@ export function BulkImportDialog({
             <thead>
               <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
                 <th className="pb-2 pr-3">{t("colDocument")}</th>
-                <th className="w-28 pb-2">{t("colStatus")}</th>
+                {/* ⚠️ **WIDENED IN #34.23, BECAUSE THE COLUMN NOW HOLDS A
+                    SENTENCE.** At `w-28` — 7rem, about 100px of usable width
+                    at `text-xs` — the widest thing it ever held was
+                    „Se citește cu AI…"; the error cell can now hold
+                    „Tip de fișier neacceptat ca pagină", 34 characters, which
+                    is three lines there and makes the failed rows taller than
+                    every other one. `w-40` fits the short statuses on one line
+                    and the two page refusals on two. The alternative — sizing
+                    it to the longest sentence — takes the width from the
+                    document name beside it, which is `truncate` and has
+                    nowhere to go.
+
+                    The `< 40` register guard in `page-upload-refusals.test.ts`
+                    is a CONSERVATIVE cap, not a measured ceiling: two lines
+                    here is roughly 48 characters, and 40 leaves the longest
+                    current message five to spare and a translator some room.
+                    What it buys is that a sentence outgrowing the column fails
+                    a test instead of a screen. */}
+                <th className="w-40 pb-2">{t("colStatus")}</th>
                 {/* Slice #26.10 — "Ce s-a făcut", not "Acțiuni". The column
                     holds no actions any more, and a heading that says it does
                     is the screen contradicting itself in one word. */}
@@ -6977,6 +7093,8 @@ function ResultRow({
     entry,
     status,
     errorMsg,
+    // Slice #34.23 — the flag beside it, never a test of the string itself.
+    errorMsgTranslated,
     docId,
     personId,
     idCardDocFields,
@@ -7011,6 +7129,9 @@ function ResultRow({
     refillErrorDetail,
   } = result;
   const displayName = titleForEntry(entry);
+  // Slice #34.23 — computed for every row and read only by the error branch,
+  // which is what keeps the hook-free component hook-free and the cell one line.
+  const failure = errorCell({ errorMsg, errorMsgTranslated }, t("errorShort"));
 
   return (
     <tr className="border-b border-crease dark:border-zinc-800">
@@ -7045,9 +7166,24 @@ function ResultRow({
             {aiStatus === "running" ? t("interpretingShort") : t("importingShort")}
           </span>
         )}
+        {/*
+          Slice #34.23 — the row says WHY when the run can name a reason, and
+          keeps „Eroare” when it cannot.
+
+          ⚠️ **ONE DECISION, READ TWICE, AND IT IS NOT TAKEN HERE.** The text
+          and the tooltip are two halves of one answer — printing the sentence
+          and keeping a `title` that repeats it is a tooltip over the words it
+          duplicates — so `errorCell` returns both and this cell spends neither.
+          What it must not become is a condition on `errorMsg` itself: see that
+          module's header for why the flag is a second field.
+
+          „Eroare” is still the honest answer for an `HTTP 500` or a
+          `Failed to fetch`, and the raw text is still on the hover exactly
+          where #34.20 left it.
+        */}
         {status === "error" && (
-          <span className="text-xs text-red-600 dark:text-red-400" title={errorMsg}>
-            {t("errorShort")}
+          <span className="text-xs text-red-600 dark:text-red-400" title={failure.title}>
+            {failure.text}
           </span>
         )}
         {status === "done" && docId && (
