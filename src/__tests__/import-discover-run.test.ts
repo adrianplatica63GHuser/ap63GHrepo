@@ -419,8 +419,18 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
       expect([what, pattern.test(code)]).toEqual([what, true]);
     }
 
-    // The import dialog's four sites all read the row it looked up, and the
+    // The import dialog's five sites all read the row they looked up, and the
     // `?? null` is the mid-run-invented type the module header argues about.
+    //
+    // ⚠️ **FIVE SINCE #34.24, AND THE FIFTH SPELLS IT DIFFERENTLY ON PURPOSE.**
+    // `handleRecheckTypeForm` returns before this call when its fresh list does
+    // not hold the type (`if (row === null)`), so at the call it HAS a row and
+    // says so — `typeKey: row.key` — where the other four carry a `?? null` for
+    // the type `runAiInterpret` can invent mid-run. That is this test's own rule
+    // being followed, not bent: the shape it exists to catch is a site with a
+    // row in a local variable passing `null` anyway, which is the opposite. So
+    // the assertion is "both columns, read from a row" rather than one
+    // variable's name.
     // ⚠️ **Comments stripped: this counts CALLS, so it must not see the
     // eighteen places that file discusses these two functions by name.** None
     // of them currently spells `({`, so the raw version passed — and would go
@@ -434,19 +444,31 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
     const calls = [
       ...dialog.matchAll(/(?:typeAwaitsForm|shouldDiscoverType)\(\{[\s\S]*?\}\)/g),
     ].map((m) => m[0]);
-    expect(calls).toHaveLength(4);
+    expect(calls).toHaveLength(5);
     for (const call of calls) {
-      expect(call).toContain("typeKey: finalTypeRow?.key ?? null");
-      expect(call).toContain("typeName: finalTypeRow?.name ?? null");
+      // Both columns, each read from a row — either the nullable lookup the
+      // four older sites share, or the narrowed one #34.24's site has after its
+      // own null branch has returned.
+      expect([call, /typeKey: (?:finalTypeRow\?\.key \?\? null|row\.key),/.test(call)]).toEqual([
+        call,
+        true,
+      ]);
+      expect([
+        call,
+        /typeName: (?:finalTypeRow\?\.name \?\? null|row\.name),/.test(call),
+      ]).toEqual([call, true]);
       // ⚠️ Never a bare `null` literal: that would be the false claim above.
       expect(call).not.toMatch(/typeKey: null/);
       expect(call).not.toMatch(/typeName: null/);
     }
-    // …and `finalTypeRow` really is looked up from a list, twice — once in the
-    // run loop off `docTypeItems`, once in the retry off `preflight.typeRows`.
+    // …and every one of those rows really is looked up from a list:
+    // `finalTypeRow` twice — once in the run loop off `docTypeItems`, once in
+    // the retry off `preflight.typeRows` — and #34.24's own `row` off the fresh
+    // list its free GET has just read.
     expect([...dialog.matchAll(/const finalTypeRow =/g)]).toHaveLength(2);
     expect(dialog).toContain("docTypeItems.find((i) => i.id === finalTypeId)");
     expect(dialog).toContain("preflight.typeRows?.find((r) => r.id === finalTypeId)");
+    expect(dialog).toContain("const row = fresh.typeRows?.find((r) => r.id === typeId) ?? null;");
   });
 
   it("⚠️ reads a BLANK key as 'ask the name', not as a catch-all", () => {

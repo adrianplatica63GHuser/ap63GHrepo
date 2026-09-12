@@ -203,6 +203,16 @@ import {
   type NewTypeProgress,
 } from "@/app/documents/_components/discover-review-dialog";
 import { discoverForType, shouldDiscoverType, typeAwaitsForm } from "@/lib/import/discover-run";
+// Slice #34.24 — the rule for the row whose document was read while the type
+// CATALOGUE was not. Pure, because it is decided inside a `useCallback` in a
+// file nothing in `src/__tests__/` renders; see that module's own header.
+import {
+  canRecheckTypeCatalogue,
+  typeCatalogueWitness,
+  typeFormPatchAfterFailedRecheck,
+  typeFormPatchAfterRecheck,
+  typeFormPatchForDeletedType,
+} from "@/lib/import/type-form-witness";
 import { documentTypeHasForm } from "@/lib/documents/status";
 import {
   fetchDocumentTypeCatalogue,
@@ -617,6 +627,54 @@ export type ImportResult = {
   typeFormMissing?: boolean;
   /** …and the user gave that type a form during this run.   (Slice #27.05) */
   typeFormAdded?: boolean;
+  /**
+   * The two flags above were never decided, because the TYPE LIST could not be
+   * read.                                                      (Slice #34.24)
+   *
+   * ⚠️ **A FACT ABOUT THE READ, NOT A CLAIM ABOUT THE TYPE, and that is why it
+   * is a third field rather than a third state of `typeFormMissing`.** #34.11
+   * withholds that flag when the retry's catalogue GET does not come back,
+   * because writing `true` there draws "tipul acestui document nu are încă
+   * formular" over a type that may well have a form — permanently, in the saved
+   * report. Silence is the one answer that is never a false claim; what it
+   * costs is that the row drops out of `handleDiscoverSaved`'s sweep, out of
+   * `formArrivedElsewhere` and out of `summariseImportRun.typesWithoutForm`, so
+   * a run reports clean over a type that has no form. This is the witness that
+   * makes such a row recoverable, and `handleRecheckTypeForm` is what recovers
+   * it — with a free GET, never a second billed read. See
+   * `src/lib/import/type-form-witness.ts`.
+   *
+   * ⚠️ **Only ever set on a row that HAS a type.** With no `documentTypeId`
+   * there is nothing to re-check, and a control that can answer nothing is one
+   * more thing on the screen to press.
+   *
+   * Transient, like `refill` beside it: the saved session records what was
+   * written, and this is a question about a click that has not happened yet.
+   */
+  typeCatalogueUnread?: boolean;
+  /**
+   * …and the last re-check could not read it either.           (Slice #34.24)
+   *
+   * ⚠️ **THE LAST PRESS'S OUTCOME, NOT A FACT ABOUT THE RUN**, so it is cleared
+   * at the start of every attempt and by the one that succeeds. It exists
+   * because the alternative is a control that does nothing visible — which is
+   * how a rescue path becomes indistinguishable from a broken button, the
+   * sentence this file already writes about `handleReviewTypes`. The witness
+   * above deliberately survives it: a second failure is not an answer, and the
+   * archive may be readable a minute later.
+   */
+  typeCatalogueRecheckFailed?: boolean;
+  /**
+   * …or the list came back and this type is not in it at all.  (Slice #34.24)
+   *
+   * The type was deleted from the archive between this row's read and the
+   * re-check. Nothing is claimed about it — a `typeFormMissing` here would name
+   * a type that does not exist, permanently, in the saved report — and the
+   * witness is cleared, because the question HAS been answered. This is what the
+   * row says instead: without it the whole block vanished on the press, which is
+   * the broken button the control exists to stop being.
+   */
+  typeCatalogueTypeGone?: boolean;
   /**
    * Where this document is in the run's re-read queue.        (Slice #27.06)
    *
@@ -2261,12 +2319,16 @@ export function BulkImportDialog({
    * Everything a fresh type-list read tells the rest of the screen.
    *                                                              (Slice #27.07)
    *
-   * ⚠️ **One function because there are FOUR call sites**, which is the habit
+   * ⚠️ **One function because there are FIVE call sites**, which is the habit
    * this codebase names in as many words: centralise a rule at the third copy
    * site, not the fourth. The end-of-run enrichment, `handleReviewTypes`, and
    * the retry's preflight and its second read all enrich the same queue from
    * the same GET, and all four owe the same follow-ups; before this slice each
    * restated one of them by hand, and #27.07 was about to make that four each.
+   * ⚠️ **The fifth is `handleRecheckTypeForm`** (Slice #34.24), which is the
+   * same GET again for a row whose first one did not come back — and it owes
+   * every one of these follow-ups for the same reasons, which is the argument
+   * for this function rather than for a fifth hand-written copy of them.
    *
    * `names` is deliberately NOT folded in here: ONE of the four does something
    * extra in that branch — `handleReviewTypes` clears the session banner off the
@@ -2405,6 +2467,36 @@ export function BulkImportDialog({
    * frame that view has not reached yet.
    */
   const readRunningRef = useRef(false);
+  /**
+   * …and the FREE read on a settled row: which row's type list is being
+   * re-checked, or null.                                        (Slice #34.24)
+   *
+   * ⚠️ **A SECOND SHARED CLAIM RATHER THAN A TERM ON THE ONE ABOVE, AND AN
+   * ADVERSARIAL ROUND FOUND WHAT A PRIVATE ONE COSTS.** This control makes no
+   * billed call, so it must not take `readRunningRef`: that ref means "a BILLED
+   * read on a settled row is in flight", and every reader of it is entitled to
+   * that meaning. (Close and Save-report do end up disabled here too — by their
+   * own term, for the artefact argument their own note makes, which is about
+   * what a report written mid-read says rather than about money.) But it is
+   * still an await followed by a
+   * PATCH of one row, and the row it patches is the one row on the screen that
+   * can still be retried (`aiPartialWrite` keeps the retry button). The first
+   * draft claimed this privately and nothing else consulted it, so: press the
+   * re-check, press the retry while the GET is in flight, the retry lands first
+   * and RE-TYPES the document — and the GET then writes a `typeFormMissing`
+   * earned about the OLD type onto a row that now carries the new one. That is
+   * exactly the claim the retry's own `preflight.readFailed` re-type arm exists
+   * to prevent, rebuilt one handler over, and unfixable afterwards: the retry
+   * button is gone with `aiPartialWrite`, and this control's own witness has
+   * just been cleared.
+   *
+   * So the three other async handlers on this screen read it, and this one reads
+   * theirs. The PATH rather than a boolean because the row also renders a cue
+   * from it, and two facts answered by one value cannot come apart.
+   */
+  const recheckingRef = useRef<string | null>(null);
+  /** The render-time view of the same fact — `readRunningRef`'s pairing. */
+  const [recheckingPath, setRecheckingPath] = useState<string | null>(null);
   /**
    * How many times a call has reported the session GONE.   (Slice #27.06)
    *
@@ -4057,6 +4149,11 @@ export function BulkImportDialog({
     // person 1 of 3 was already linked, and answering "create" the second time
     // makes the duplicate person the whole 26.xx redesign exists to prevent.
     if (reviewingTypes) return;
+    // ⚠️ **…and not on top of a free type-list re-check either** (Slice #34.24),
+    // which is the same collision one size down: that handler awaits the same
+    // GET and then patches a row, and this one REPLACES the queue that GET has
+    // just pruned. See `recheckingRef`.
+    if (recheckingRef.current !== null) return;
     // ⚠️ **…and the synchronous half of it, added with #27.06's walk.** The
     // state guard above is one commit behind, so this and the re-read button
     // beside it could both be pressed in a single frame. Checked HERE, before
@@ -4067,9 +4164,29 @@ export function BulkImportDialog({
     setReviewTypesError(null);
     // Captured BEFORE the await — see `sessionLossSeqRef`.
     const seenLosses = sessionLossSeqRef.current;
-    const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
+    // ⚠️ **`finally`, and it is FIXED IN PASSING by #34.24 because that slice
+    // made the consequence worse.** `enrichDiscoverSteps` catches its own fetch,
+    // but the prune loop after it parses template fields and can throw — and
+    // this handler is invoked as `void handleReviewTypes()`, so the rejection is
+    // swallowed and nothing ever lowers this flag again. It already killed the
+    // re-read button for the life of the dialog; since #34.24 it kills the free
+    // type-list re-check with it, which is the one control a row with no retry
+    // left has.
+    let enriched: EnrichResult;
+    try {
+      enriched = await enrichDiscoverSteps(discoverStepsRef.current);
+    } finally {
+      if (mountedRef.current) {
+        setReviewingTypes(false);
+        // ⚠️ **The backlog with it**, because that loop deletes as it walks: a
+        // throw half-way through it otherwise leaves the header offering a
+        // review over a queue that has already shrunk, with the control it has
+        // just been given back. The success path refreshes it again below, off
+        // the same already-pruned ref, so the two agree by construction.
+        setDiscoverBacklog(discoverStepsRef.current.size);
+      }
+    }
     if (!mountedRef.current) return;
-    setReviewingTypes(false);
     // A press into a still-dead session re-raises the banner rather than
     // reporting a connection problem, and costs one 401 to find out — the same
     // trade `canRetryReads` records for the retry button.
@@ -4557,6 +4674,10 @@ export function BulkImportDialog({
     // See `readRunningRef` — the shared claim, so this walk cannot start on top
     // of a retry that began in the same frame, nor be started twice itself.
     if (readRunningRef.current) return;
+    // ⚠️ **…and not on top of a free type-list re-check** (Slice #34.24): that
+    // handler patches one row after its GET, and this walk rewrites `refill` on
+    // every row it touches. See `recheckingRef`.
+    if (recheckingRef.current !== null) return;
     // ⚠️ **…and not underneath a follow-up modal, which a third round found the
     // ref alone does not cover.** `handleConfirmPending` is synchronous: it
     // publishes the person queue and returns without ever claiming the ref, so
@@ -4904,6 +5025,16 @@ export function BulkImportDialog({
       // over the answer and re-queues the same people, which is the duplicate
       // person the whole 26.xx redesign exists to prevent.
       if (followUpsOpenRef.current) return;
+      // ⚠️ **…and not on top of a free type-list re-check, which an adversarial
+      // round found is the one collision that writes a permanent false
+      // claim.**                                                (Slice #34.24)
+      // This handler can RE-TYPE the document; the re-check's GET is holding a
+      // `documentTypeId` captured before it went out, and the patch it makes
+      // when it lands would name the new type as one waiting for a form. Both
+      // controls are drawn together on an `aiPartialWrite` row, which is the
+      // only row that carries the witness AND a retry button. See
+      // `recheckingRef`.
+      if (recheckingRef.current !== null) return;
       readRunningRef.current = true;
       try {
 
@@ -5413,6 +5544,50 @@ export function BulkImportDialog({
               ? { typeFormMissing: undefined }
               : {}
             : { typeFormMissing: (awaitsForm && !typeAbsolved) || undefined }),
+          // …and the row REMEMBERS that the question was never asked.
+          //                                                    (Slice #34.24)
+          //
+          // ⚠️ **A SEPARATE SPREAD, NOT A KEY INSIDE THE TERNARY ABOVE, and the
+          // ternary's shape is the reason.** That one has three arms and two of
+          // them are about the CLAIM: withhold it on a failed read, and clear it
+          // on the re-type half of a failed read because a `true` earned about
+          // the old type would name the new one. This is about the READ, and it
+          // is the same answer on both of those arms — the list did not come
+          // back, so nothing was decided, so the row keeps a way back. Folding
+          // it in would have lost exactly the row the recovery is most useful
+          // for: the one moved onto a type nobody has looked at at all.
+          //
+          // ⚠️ **`typeCatalogueWitness` and not an inline `preflight.readFailed
+          // || undefined`**, so that the clear on the good path — a second
+          // retry, on an `aiPartialWrite` row, whose catalogue read DID come
+          // back — is written once and tested, rather than being the kind of
+          // absence a later reader deletes as redundant.
+          // ⚠️ **`alreadyAnswered` — two ways this row's form question is
+          // already settled, and THREE adversarial rounds went into the second
+          // one being a property rather than a list of flags.**
+          //
+          //   - the `typeFormMissing` this failed read leaves standing. The run
+          //     loop writes it on every document it reads, and the arm above
+          //     writes an ABSENT key, which erases nothing — so the row is
+          //     already counted and already draws the sentence. Conditioned on
+          //     there being no re-type, because the OTHER arm clears it;
+          //   - `!awaitsForm`. The first draft enumerated the flags that imply
+          //     it — `typeFormAdded`, then `refill: "pending"` written by
+          //     `formArrivedElsewhere`, which sets no flag at all and so was
+          //     missed — and each round found one more row drawing two sentences
+          //     at once. `awaitsForm` is the thing they all reduce to, and on
+          //     this path a `false` from it is never the unread list talking:
+          //     with a null key and a null name it can only come from
+          //     `typeHasForm`, `typeIsIdCard` or the catch-all's id, and those
+          //     three are read from refs this run only ever RAISES. A real
+          //     answer, so there is nothing to recover.
+          ...typeCatalogueWitness({
+            catalogueReadFailed: preflight.readFailed,
+            typeKnown: finalTypeId !== null,
+            alreadyAnswered:
+              (result.typeFormMissing === true && interpreted.documentTypeId === null) ||
+              !awaitsForm,
+          }),
           // A type that has since gained a form is no longer waiting for one,
           // and this row has never claimed it gained one — so the flag is
           // cleared rather than left to contradict the sentence beside it.
@@ -5585,6 +5760,189 @@ export function BulkImportDialog({
     [absorbTypeList, aiFailureDetail, formsWaived, raiseSessionExpired, scanResults, t, updateResult],
   );
 
+  /**
+   * Ask the type list again, for a row whose document was read while the
+   * catalogue was not.                                          (Slice #34.24)
+   *
+   * ⚠️ **THIS IS NOT THE RETRY WITH A FLAG, AND THE DIFFERENCE IS THE WHOLE
+   * SLICE.** The retry re-reads the DOCUMENT: one billed model call, on a count
+   * the user approved before the run that did not include retries. This row's
+   * document was read — its fields are written, its people were queued, its
+   * type was settled. The only thing that failed was a GET, and a GET is free.
+   * So the action re-runs the preflight and the decision that hangs off it, and
+   * buys nothing; the row's own retry button is untouched and its three terms
+   * (`canRetryReads`, `!aiRefused`, `!refillRefused`) keep the contracts their
+   * headers record rounds of review for.
+   *
+   * ⚠️ **`discoverClaimedRef` IS NOT TOUCHED, IN EITHER DIRECTION.** That ref
+   * keeps a failed DISCOVERY claimed on purpose, so one rate limit cannot buy
+   * three more attempts inside a run — and nothing here makes a discovery to
+   * claim. A type whose catalogue read failed was never claimed by the refused
+   * spend above, so it stays discoverable by a later retry exactly as it was;
+   * re-opening the claim here would be re-opening a decision that is settled and
+   * is about money.
+   *
+   * ⚠️ **AND `shouldDiscoverType` IS NOT ASKED AGAIN.** The argument is written
+   * out in `type-form-witness.ts`: acting on a yes costs a billed read, and
+   * computing one nobody may act on is a value no reader has. What comes back
+   * is the REPORTING — the row's sentence, `handleDiscoverSaved`'s sweep,
+   * `formArrivedElsewhere`, and the count and names in the saved report.
+   *
+   * ⚠️ **The synchronous guards are `handleReviewTypes`', for its reasons.**
+   * `canRetry` is render-time state and so is one commit behind, and this
+   * handler writes a row that a retry in flight captured before its own model
+   * call. `recheckingRef` is this control's own: it awaits a GET and then
+   * patches, and two presses in one frame would resolve in turn over one row.
+   */
+  const handleRecheckTypeForm = useCallback(
+    async (result: ImportResult) => {
+      const path = result.entry.path;
+      const typeId = result.documentTypeId;
+      // The row's own half of the question, said once and in a testable place.
+      if (!canRecheckTypeCatalogue(result) || typeId === undefined) return;
+      if (readRunningRef.current) return;
+      if (followUpsOpenRef.current) return;
+      if (recheckingRef.current !== null) return;
+      // ⚠️ **…and `reviewingTypes`, which is STATE and so is one commit behind
+      // — the same guard, with the same known one-frame window,
+      // `handleReviewTypes` keeps against this control.** #27.05 priced that
+      // window at one extra GET and accepted it; what is not acceptable is only
+      // one of the two directions being guarded at all, which is what a first
+      // draft of this handler had.
+      if (reviewingTypes) return;
+      recheckingRef.current = path;
+      setRecheckingPath(path);
+      // The LAST press's outcome, so it goes before this one rather than after
+      // it — a stale "could not be read" over a check that is running again is
+      // the row contradicting the cue beside it.
+      updateResult(path, { typeCatalogueRecheckFailed: undefined });
+      // Captured BEFORE the await — see `sessionLossSeqRef`, and
+      // `handleReviewTypes`, which clears the banner off the same evidence.
+      const seenLosses = sessionLossSeqRef.current;
+      try {
+        const fresh = await enrichDiscoverSteps(discoverStepsRef.current);
+        if (!mountedRef.current) return;
+        // ⚠️ **Every follow-up this GET owes, through the one function that
+        // owes them** — the refs `typeAwaitsForm` reads two lines down, the
+        // identity-card clear, the run's type names, and the re-read queue for
+        // a type that gained a form elsewhere. See `absorbTypeList`, whose
+        // fifth call site this is.
+        if (fresh.names !== null) {
+          setTypeNames(fresh.names);
+          // The session is demonstrably alive — this GET went through it —
+          // unless something said otherwise while it was in flight.
+          if (sessionLossSeqRef.current === seenLosses) setSessionExpired(false);
+        }
+        absorbTypeList(fresh);
+        // ⚠️ **Refreshed whichever way this went**, for `handleReviewTypes`'
+        // reason: `enrichDiscoverSteps` prunes the ref as it walks, so a press
+        // that bailed below would otherwise leave the header offering a review
+        // over a queue that has just shrunk.
+        setDiscoverBacklog(discoverStepsRef.current.size);
+        if (fresh.sessionLost) {
+          abortRef.current = true;
+          raiseSessionExpired();
+        }
+        if (fresh.readFailed) {
+          // Still no list, so still no answer — and the witness stays, which is
+          // the whole point of it. What the row gains is a sentence saying the
+          // press happened and found nothing, because a control that does
+          // nothing visible is indistinguishable from a broken one.
+          updateResult(path, typeFormPatchAfterFailedRecheck());
+          return;
+        }
+        // ⚠️ **`find`, and the `null` it can give is the DELETED-type race that
+        // `finalTypeRow`'s own header names as a known gap.** The list was read,
+        // so this id not being in it is a statement about the archive rather
+        // than about the network; #34.11 deliberately declined to buy that race
+        // a witness, and this handler answers it exactly as the retry does one
+        // screen up rather than inventing a second answer for it here.
+        const row = fresh.typeRows?.find((r) => r.id === typeId) ?? null;
+        if (row === null) {
+          // The list came back and this id is not in it, so the type has been
+          // deleted from the archive. Nothing is claimed about it and the
+          // control closes — see `typeFormPatchForDeletedType`, which is where
+          // the argument for taking this race HERE while leaving the retry's
+          // alone is written out.
+          updateResult(path, typeFormPatchForDeletedType());
+          return;
+        }
+        const typeIsIdCard =
+          docTypeIdCardRef.current.get(typeId) === true ||
+          isIdCardEntry(scanResults.get(path));
+        const awaitsForm = typeAwaitsForm({
+          typeId,
+          // ⚠️ **Both columns, and #34.10 made them required-and-nullable so a
+          // new call site cannot answer the narrow, id-only way by forgetting
+          // them.** Never null here — the branch above returns on a missing
+          // row — and written as the row's own values rather than as `??  null`
+          // so that this site says it HAS a row, which is the whole difference
+          // between the two answers that predicate can give.
+          typeKey: row.key,
+          typeName: row.name,
+          fallbackTypeId: fallbackTypeIdRef.current,
+          typeHasForm: docTypeFormRef.current.get(typeId) === true,
+          typeIsIdCard,
+        });
+        // The two causes `typeAbsolved` covers on the retry path, asked of the
+        // read that has just happened: a type the enrichment recognised as an
+        // identity card, and one that has a form. `row?.hasForm` rather than a
+        // fourth `typeRows?.some(…)`, which is the same question in a shape the
+        // #34.11 suite counts.
+        const typeAbsolved = fresh.idCardTypeIds.includes(typeId) || row.hasForm;
+        updateResult(
+          path,
+          typeFormPatchAfterRecheck({
+            awaitsForm,
+            typeAbsolved,
+            // ⚠️ **`row.hasForm` ALONE, and the witness on this row is what
+            // makes that the whole test.** A first draft compared it against
+            // `docTypeFormRef` captured before this GET — which is a RUN-WIDE
+            // map that every catalogue read in the dialog raises, so it
+            // protected the press from itself and from nothing else: re-check
+            // two rows of one type, or accept that type's form in the review
+            // first, and the second row was silently dropped from the queue its
+            // siblings were all put in. The map is not needed. A row can only
+            // carry the witness if `awaitsForm` was TRUE when it was read (see
+            // `alreadyAnswered`, whose `!awaitsForm` term is what refuses the
+            // witness otherwise) — and `awaitsForm` is false whenever the run
+            // knows of a form. So the witness is already the record that this
+            // run had never seen a form for this type when this document was
+            // read, which is exactly what `formArrivedElsewhere` decides from
+            // for every other row.
+            formArrivedSinceRead: row.hasForm,
+            // ⚠️ **`awaitsRefill`'s own invariant — a row in that queue has a
+            // document** — and `refill === undefined` so this never overwrites a
+            // position the walk or the retry has already settled.
+            canQueueRefill: result.docId !== undefined && result.refill === undefined,
+          }),
+        );
+      } catch {
+        // ⚠️ **Reaching here means the GET itself came BACK and something after
+        // it threw** — `enrichDiscoverSteps` catches its own fetch, and what is
+        // left is the prune loop's parsing. So the row must not be told the list
+        // could not be read: `typeCatalogueStillUnread` says only that the check
+        // did not succeed and that nothing was sent to the AI, both of which are
+        // true on every path that reaches either writer of it.
+        //
+        // ⚠️ **And the backlog is refreshed here too**, because that loop
+        // deletes as it walks: a throw half-way through it otherwise leaves the
+        // header offering a review over a queue that has already shrunk.
+        if (mountedRef.current) {
+          setDiscoverBacklog(discoverStepsRef.current.size);
+          updateResult(path, typeFormPatchAfterFailedRecheck());
+        }
+      } finally {
+        // Released whichever way this returned, including the `!mountedRef`
+        // path: the ref outlives the render tree and a claim left standing
+        // would make every later press a no-op.
+        recheckingRef.current = null;
+        if (mountedRef.current) setRecheckingPath(null);
+      }
+    },
+    [absorbTypeList, raiseSessionExpired, reviewingTypes, scanResults, updateResult],
+  );
+
   // ---------------------------------------------------------------------------
   // Counts
   // ---------------------------------------------------------------------------
@@ -5640,6 +5998,23 @@ export function BulkImportDialog({
   const unreadRetryableCount = results.filter(
     (r) => (r.aiStatus === "failed" || r.aiPartialWrite) && !readRefused(r),
   ).length;
+  /**
+   * Rows whose TYPE question was never asked, because the catalogue could not be
+   * read.                                                       (Slice #34.24)
+   *
+   * ⚠️ **SAID IN THE HEADER FOR `unreadRetryableCount`'S OWN REASON, AND AN
+   * ADVERSARIAL ROUND FOUND IT MISSING.** Close is the end of this window too:
+   * neither of the two flags behind it is persisted, so a run can end with N
+   * rows whose type question is open, `typesWithoutForm: 0` in the saved report,
+   * and the cure reachable only by scrolling to the right row. Every other
+   * outstanding state on this screen has a line and a count; this one had a
+   * button and nothing above the fold.
+   *
+   * `canRecheckTypeCatalogue` rather than a hand-written test, for the reason
+   * `refillCount` gives about `awaitsRefill`: the number the sentence prices has
+   * to be the number of rows that actually draw the control.
+   */
+  const typeCatalogueUnreadCount = results.filter(canRecheckTypeCatalogue).length;
   /** …and these cannot: the read was refused, and a second press buys the same 422. */
   const unreadRefusedCount = results.filter(
     // ⚠️ **THE SAME "IS UNREAD" TEST THE LINE ABOVE CARRIES, and a third round
@@ -5751,7 +6126,17 @@ export function BulkImportDialog({
     // Since #27.06 this term also covers a re-read walk — see `readRunning`.
     // The rule is unchanged: no second billed call on a settled row while one
     // is already in flight.
-    retryRunning: readRunning,
+    // ⚠️ **…and since #34.24 a FREE type-list re-check counts too, and it is
+    // fed in HERE rather than at the buttons.** That press makes no model call,
+    // so it is deliberately not part of `readRunning` — which is what disables
+    // Close and Save-report over money in flight. But its handler refuses to
+    // start on top of one of these (`recheckingRef`), so leaving the term out
+    // left three enabled controls returning silently for the length of a GET:
+    // a rescue path indistinguishable from a broken button, and the header
+    // sentence disagreeing with buttons that are drawn but inert — the exact
+    // pair `canRetryReads` exists to keep in step. One expression, so the
+    // sentence and the buttons go quiet and come back together.
+    retryRunning: readRunning || recheckingPath !== null,
   });
   /**
    * May the queued forms be opened right now?   (Slice #27.05)
@@ -5768,7 +6153,13 @@ export function BulkImportDialog({
    * when it lands.
    */
   const canReviewTypes =
-    discoverBacklog > 0 && currentFollowUp === null && !readRunning;
+    discoverBacklog > 0 &&
+    currentFollowUp === null &&
+    !readRunning &&
+    // Slice #34.24 — its handler refuses to start on top of a free re-check
+    // (that GET prunes the very queue this control republishes), so the control
+    // must not be offered while one is in flight either.
+    recheckingPath === null;
   /**
    * Documents read before their type had a form, and not yet read again.
    *                                                              (Slice #27.06)
@@ -5801,7 +6192,40 @@ export function BulkImportDialog({
    * running, so without this the re-read button is live underneath it.
    */
   const canRefill =
-    refillCount > 0 && currentFollowUp === null && !readRunning && !reviewingTypes;
+    refillCount > 0 &&
+    currentFollowUp === null &&
+    !readRunning &&
+    !reviewingTypes &&
+    // Slice #34.24 — the same reason as above, one control along.
+    recheckingPath === null;
+  /**
+   * May a row's free re-check of the type list be pressed right now?
+   *                                                              (Slice #34.24)
+   *
+   * ⚠️ **THE TERMS ARE `canRetryReads`' OWN, READ RATHER THAN REWRITTEN — and
+   * that is the difference between adding a READER and adding a TERM.** The
+   * slice that opened this one named the one-line fix it declined to take:
+   * leaving the row retryable on `preflight.readFailed` "touches the retry
+   * button's own contract", which is `canRetryReads` together with `!aiRefused`
+   * and `!refillRefused`, each carrying a header that records rounds of review —
+   * three of them spent making the button survive a session expiry. Nothing here
+   * changes any of the three. This asks the same boolean the retry asks, for the
+   * same three reasons, exactly as `canReviewTypes` and `canRefill` above do:
+   * the run has settled, no follow-up is open (nothing in this app traps focus,
+   * so a control drawn under a modal is reachable from inside it), and no billed
+   * call is in flight whose row-snapshot this would resolve against.
+   *
+   * ⚠️ **`!reviewingTypes` is `canRefill`'s term and it is here for its
+   * reason**: that control awaits a GET and then REPLACES the queue, and for the
+   * length of that await no follow-up is open and no read is running — so
+   * without this, a press here would prune the very map it is replacing.
+   *
+   * ⚠️ **`recheckingPath === null` is this control's own**, and it is the state
+   * half of `recheckingRef`: one free GET at a time, so two rows cannot resolve
+   * in turn over each other's answer.
+   */
+  const canRecheckTypeForm =
+    canRetry && !reviewingTypes && recheckingPath === null;
   const totalCount = results.length;
   const progressPct = totalCount > 0 ? ((doneCount + errorCount) / totalCount) * 100 : 0;
 
@@ -6252,6 +6676,27 @@ export function BulkImportDialog({
                 {t("doneUnreadRefused", { count: unreadRefusedCount })}
               </p>
             )}
+            {/* ⚠️ **ITS OWN LINE AGAIN, AND TWO BRANCHES RATHER THAN THREE.**
+                (Slice #34.24.) These rows were read perfectly; what did not
+                happen is the type-list GET beside the read, so neither of the
+                sentences above fits and neither of their remedies applies. The
+                press this one offers is FREE, which is the one thing it has to
+                say that the retry's line says the opposite of.
+
+                ⚠️ **No `sessionExpired` branch, and that is deliberate.** The
+                session is not a term of the control either — `canRetryReads`'
+                own header records three rounds establishing that gating on a
+                flag nothing lowers makes an expiry a one-way door. A press into
+                a dead session re-raises the banner and costs nothing at all
+                here, which is a better way to find out than a sentence that
+                takes the control away. */}
+            {done && typeCatalogueUnreadCount > 0 && (
+              <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                {canRecheckTypeForm
+                  ? t("doneTypeCatalogueUnread", { count: typeCatalogueUnreadCount })
+                  : t("doneTypeCatalogueUnreadWaiting", { count: typeCatalogueUnreadCount })}
+              </p>
+            )}
             {/* Its own line and its own control, because it is a different
                 problem with a different remedy: these documents were read
                 perfectly and what is outstanding is a human answer. Shown only
@@ -6577,7 +7022,16 @@ export function BulkImportDialog({
                 // screen behind it is visibly still doing. Since #27.06 the
                 // same holds for a re-read walk, whose rows say "waiting to be
                 // read again" until each one lands.
-                disabled={currentFollowUp !== null || readRunning}
+                // ⚠️ **`recheckingPath` too, since #34.24, and its argument is
+                // this button's own** (see the note above): the run's one
+                // durable artefact must not be written in the middle of a read
+                // the screen behind it is visibly still doing. That read is
+                // free rather than billed, which is why it is NOT part of
+                // `readRunning` — but the artefact argument is about the
+                // artefact, and a report saved one second before the answer
+                // lands says „niciun tip fără formular" over a type that has
+                // none, with `saveDone` showing so nobody saves again.
+                disabled={currentFollowUp !== null || readRunning || recheckingPath !== null}
                 className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {tres("saveButton")}
@@ -6612,7 +7066,11 @@ export function BulkImportDialog({
               // Since #27.06, `readRunning` also covers a re-read walk —
               // closing mid-walk would abandon the documents it has not reached
               // with no record that they are still owed a read.
-              disabled={currentFollowUp !== null || readRunning}
+              // …and Close with it (Slice #34.24): closing mid-re-check
+              // discards the answer, and neither of that press's two flags is
+              // persisted — the resumed session has no trace of the question and
+              // no way back to it.
+              disabled={currentFollowUp !== null || readRunning || recheckingPath !== null}
               // ⚠️ `buttonClass`, not the hand-written classes this button
               // carried since #21.01, and the change is forced rather than
               // cosmetic: giving it a `disabled` state meant hand-writing the
@@ -6924,6 +7382,15 @@ export function BulkImportDialog({
                   // the open dialog would reach this button.
                   canRetryInterpret={canRetry}
                   onRetryInterpret={() => void handleRetryInterpret(r)}
+                  // Slice #34.24 — the free one. Same three terms as the retry
+                  // beside it and two of its own; see `canRecheckTypeForm`. The
+                  // per-ROW half of the question is `canRecheckTypeCatalogue`,
+                  // asked inside the row off `result`, exactly as `aiRefused`
+                  // is: this is a fact about the RUN, that is a fact about this
+                  // one document.
+                  canRecheckTypeForm={canRecheckTypeForm}
+                  typeFormRechecking={recheckingPath === r.entry.path}
+                  onRecheckTypeForm={() => void handleRecheckTypeForm(r)}
                 />
               ))}
             </tbody>
@@ -7079,6 +7546,16 @@ type ResultRowProps = {
   /** A retry can neither race the run nor be pointless — see the call site. */
   canRetryInterpret: boolean;
   onRetryInterpret: () => void;
+  /**
+   * …and the free re-check of the type list can do neither either.
+   *                                                              (Slice #34.24)
+   * One boolean for the whole run — see `canRecheckTypeForm` — and one for this
+   * row, which is the only one of the three that is per-document because one
+   * free GET runs at a time.
+   */
+  canRecheckTypeForm: boolean;
+  typeFormRechecking: boolean;
+  onRecheckTypeForm: () => void;
 };
 
 function ResultRow({
@@ -7088,6 +7565,9 @@ function ResultRow({
   confidenceNote,
   canRetryInterpret,
   onRetryInterpret,
+  canRecheckTypeForm,
+  typeFormRechecking,
+  onRecheckTypeForm,
 }: ResultRowProps) {
   const {
     entry,
@@ -7127,6 +7607,12 @@ function ResultRow({
     preexisting,
     refill,
     refillErrorDetail,
+    // Slice #34.24 — the LAST press's outcome, and the one answer that closes
+    // the control. The witness itself is read through
+    // `canRecheckTypeCatalogue(result)` below, which asks for the type as well,
+    // so there is nothing here to keep the two halves in step.
+    typeCatalogueRecheckFailed,
+    typeCatalogueTypeGone,
   } = result;
   const displayName = titleForEntry(entry);
   // Slice #34.23 — computed for every row and read only by the error branch,
@@ -7368,6 +7854,82 @@ function ResultRow({
                 >
                   {t("interpretRetry")}
                 </button>
+              )}
+            </>
+          )}
+
+          {/* ⚠️ **THE TYPE LIST COULD NOT BE READ, SO THIS ROW NEVER FOUND OUT
+              WHETHER ITS TYPE HAS A FORM — AND HERE IS THE WAY BACK.**
+                                                            (Slice #34.24)
+
+              Amber by this file's own vocabulary: the document landed and a
+              decision is owed. The sentence is not a claim about the type —
+              that is the one thing #34.11 refused to make off a list nobody
+              read — it is a statement about the READ, which is the only fact
+              anyone has.
+
+              ⚠️ **DRAWN OUTSIDE the amber `aiStatus === "failed" ||
+              aiPartialWrite` block above, and that is the whole reason this
+              control exists.** The row this is for is `done` with
+              `aiPartialWrite` false — its document was read, completely — so it
+              is drawn inside NOTHING that block gates, and the retry button
+              there is gone from it for good.
+
+              ⚠️ **NO `!aiRefused`/`!refillRefused`, and their absence is
+              deliberate.** Both of those are about money: a refused read cannot
+              answer differently and is billed every time. This press makes no
+              model call, and a refused row is one that will never be read
+              again — which makes the state of its type the only thing left that
+              anything can still fix. */}
+          {(canRecheckTypeCatalogue(result) || typeCatalogueTypeGone === true) && (
+            <>
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                {/* ⚠️ **THREE SENTENCES AND ONLY ONE OF THEM KEEPS THE BUTTON.**
+                    The type being gone is an ANSWER — the list was read — so the
+                    witness is cleared with it and `canRecheckTypeCatalogue` is
+                    false from then on; the block is drawn off this flag instead,
+                    because a press that makes the whole block vanish with no
+                    message is the broken button this control exists to stop
+                    being. */}
+                {typeCatalogueTypeGone === true
+                  ? t("typeCatalogueTypeGone")
+                  : typeCatalogueRecheckFailed === true
+                    ? t("typeCatalogueStillUnread")
+                    : t("typeCatalogueUnread")}
+              </span>
+              {/* A press that is running says so, for the reason the retry's own
+                  cue exists: the status cell says "Se importă…" only while the
+                  row is `importing`, and this happens on a row that is already
+                  `done`. */}
+              {typeFormRechecking ? (
+                <span className="ga-cue-blink text-xs font-medium text-cta">
+                  {t("typeCatalogueChecking")}
+                </span>
+              ) : (
+                // ⚠️ **BOTH HALVES, and the per-row one stopped being implied by
+                // the block above the moment that block learned to draw the
+                // deleted-type sentence.** `canRecheckTypeForm` is a fact about
+                // the RUN; this is the fact about this document, and the handler
+                // refuses on it — so without it a type-gone row drew a live
+                // button whose every press returned silently, for the life of
+                // the dialog.
+                canRecheckTypeCatalogue(result) &&
+                canRecheckTypeForm && (
+                  <button
+                    type="button"
+                    onClick={onRecheckTypeForm}
+                    // ⚠️ **The hint says what the retry's says the opposite of,
+                    // and it is the sentence the whole slice turns on.** That
+                    // one warns that the click is one billed model call; this
+                    // one promises that it is not. A user who has just been
+                    // told a read costs money needs to be told when one does
+                    // not, or the control goes unpressed for the right reason.
+                    title={t("typeCatalogueRecheckHint")}
+                    className={buttonClass({ variant: "ghost", size: "xs" })}
+                  >
+                    {t("typeCatalogueRecheck")}
+                  </button>
+                )
               )}
             </>
           )}
