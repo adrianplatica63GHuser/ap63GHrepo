@@ -126,9 +126,90 @@ export function dbErrorToResponse(err: unknown): Response | null {
   // Slice #29.04 made reference-data deletes real, this is now a reachable
   // response rather than a theoretical one — deleting a document type any
   // document uses lands here.
+  //
+  // ⚠️ **`code` ADDED BY SLICE #34.28, AND THE `error` PROSE IS STILL ENGLISH
+  // ON PURPOSE.** That is the shape `roleNotOfferedToResponse` and
+  // `documentNotFoundToResponse` below already ship: the sentence is written
+  // for a hand-made request, and `code` is the contract a screen matches so it
+  // can print its own Romanian. Matching «Foreign key violation» instead is how
+  // you recognise something you did not mean — `pgErrorConstraint`'s header
+  // makes the same point about `includes` on a constraint name — so the wording
+  // is free to change and `FOREIGN_KEY_VIOLATION` is not.
+  //
+  // ⚠️ **A BARE LITERAL AT EACH END, NOT A SHARED CONSTANT, AND THAT IS THE
+  // SHAPE RATHER THAN AN OVERSIGHT.** `ROLE_NOT_OFFERED` and
+  // `DOCUMENT_NOT_FOUND` are written out here and written out again in
+  // `association-failure.ts`. **What decides is WHERE the constant would have to
+  // live, not which side reads it** — an eighth review round caught this
+  // paragraph saying the value-lists codes are shared constants „because their
+  // two ends are both server-side", which is simply untrue: four client
+  // components import `DOCUMENT_TYPE_NAME_TAKEN_CODE` or `failures.ts`. Those
+  // constants live in light modules that a client component can import. This
+  // one's other end is `safe-mutate.ts`, which every form component imports, and
+  // its home would be THIS module — which constructs `RoleNotOfferedError` and
+  // `DocumentNotFoundError` — so an `export const` here would pull all of that
+  // into the client bundle to carry one string. `src/__tests__/foreign-key-
+  // refusal.test.ts` asserts the two spellings agree, which is the part a
+  // shared constant would have bought.
+  //
+  // ⚠️ **THE REACHABLE CASE IS A SAVE, NOT A DELETE, AND #34.17 MEASURED IT.**
+  // Two windows leave a property version naming a lookup row the form cannot
+  // check: a value list whose fetch keeps FAILING leaves every id `pending`,
+  // and a row deleted inside the five-minute `staleTime` still reads
+  // `resolved`. In both, „Make current" is offered, the PATCH goes, and this is
+  // what comes back — on a screen whose every other sentence is Romanian.
+  // `safeMutate` is what turns it into one; see `src/lib/api/safe-mutate.ts`.
+  //
+  // ⚠️ **ADDING `code` HERE IS ADDITIVE, AND THE ARGUMENT IS A PROPERTY RATHER
+  // THAN A LIST — BECAUSE TWO DRAFTS OF THIS PARAGRAPH TRIED THE LIST AND BOTH
+  // WERE SHORT.** The first said „both were checked" and named two; #34.28's
+  // first review round found two more, and the SECOND round found three more
+  // again. So state the property instead, which is checkable in one grep and
+  // does not go stale: **no reader of `code` anywhere in this repo tests
+  // `FOREIGN_KEY_VIOLATION`, so every one of them falls through exactly as it
+  // did when the body had no `code` at all.** That is one grep, and it is the
+  // whole argument. ⚠️ **Do NOT turn it back into a list of consumers:** three
+  // drafts tried, and review rounds found the list short every time — two, then
+  // four, then seven, and a seventh round found `discover-review-dialog.tsx`
+  // reading `code` off a value-lists door that calls this function. Roughly
+  // twenty-five sites read a `code` off some API body; counting the ones that
+  // can receive THIS body is a question nobody has answered correctly yet, and
+  // the property above makes it unnecessary. The one reader that IS gated on
+  // this code is `safeMutate`, which this slice adds and which is the point.
+  //
+  // ⚠️ **THE SCREENS THAT STILL PAINT IT IN ENGLISH.** #34.28 translated the FK
+  // case for the four forms that go through `safeMutate`; every screen that
+  // hand-rolls its own fetch still shows „Foreign key violation" verbatim. What
+  // a follow-up slice should know before ranking them — a seventh review round
+  // corrected an earlier draft of this paragraph that had the ranking upside
+  // down:
+  //   • `groups-list-view.tsx` and `stamps-list-view.tsx` are the WORST and have
+  //     nothing to do with foreign keys. They have **no `res.redirected` check
+  //     at all**, so an expired session makes a create return the sign-in page
+  //     as a 200 and the write is lost in silence. That is the failure
+  //     `safeMutate` exists for. Move these first.
+  //   • `group-editor.tsx` and `stamp-applicator.tsx` have the `"__SESSION__"`
+  //     sentinel and so are safe from that, but their FK window is much narrower
+  //     than it looks: `lib/groups/queries.ts` and `lib/stamps/queries.ts`
+  //     resolve entity ids to principal ids with a SELECT and `.filter(Boolean)`
+  //     first, so a principal already deleted is silently DROPPED from the write
+  //     rather than refused — a different defect, and one nobody is told about.
+  //     Only a delete committing inside the transaction reaches 23503.
+  //   • `property-step-dialog.tsx` was named in an earlier draft as „the one
+  //     with a properly reachable 23503", and that was simply wrong. The Zod
+  //     body of `/api/admin/import/property` accepts `tarlaSola`, `parcela`,
+  //     `nickname`, `corners` and a `confirm` block and **no lookup id at all**;
+  //     `createPropertyIn` therefore writes `propertyTypeId`/`useCategoryId` as
+  //     null on that path, and `tarlaId` is resolved by a SELECT inside the same
+  //     transaction. The screen never holds a lookup id, so the stale-list race
+  //     cannot happen there — only the same in-transaction window as above.
+  //   So no screen outside the four forms has #34.17's measured race. The fix
+  //   for all of them is to move onto `safeMutate` rather than bolt a second
+  //   sentinel beside the one two of them have; it is its own slice, and it is
+  //   in the #34.28 handover.
   if (e.code === "23503") {
     return Response.json(
-      { error: "Foreign key violation", constraint: e.constraint },
+      { error: "Foreign key violation", code: "FOREIGN_KEY_VIOLATION", constraint: e.constraint },
       { status: 400 },
     );
   }

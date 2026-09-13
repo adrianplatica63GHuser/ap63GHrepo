@@ -548,8 +548,11 @@ const FIELD_ORDER: PropertyLookupField[] = ["propertyTypeId", "useCategoryId", "
  * "Make current" re-saves `form.getValues()` — the values `snapshotToFormValues`
  * put on the form when the version was opened, which is the snapshot's own
  * content. A `deleted` id is still among them and its column is a foreign key,
- * so the PATCH comes back 23503 and `dbErrorToResponse` hands the user the
- * string „Foreign key violation", in English. So the press is REFUSED, in a
+ * so the PATCH comes back 23503. `dbErrorToResponse` handed the user the string
+ * „Foreign key violation", in English, until Slice #34.28 gave that body a
+ * `code` and had `safeMutate` answer it in Romanian — which is a better
+ * sentence, not a substitute for this: it names no field, and the field that
+ * blocks is the whole point below. So the press is REFUSED, in a
  * single-button dialog that NAMES the fields — not by greying the button out,
  * which puts the reason in a `title` on a control that is out of the tab order
  * and unannounced. Naming them is the point: the field that blocks may not

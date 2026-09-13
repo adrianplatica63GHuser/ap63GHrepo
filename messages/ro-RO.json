@@ -215,6 +215,7 @@
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
+    "saveErrorForeignKey": "O valoare la care se referă acest formular nu mai există. Alegeți altă valoare sau reîncărcați pagina.",
     "deleteError": "Ștergerea a eșuat",
     "sections": {
       "cadastral": "Date cadastrale",
@@ -858,6 +859,7 @@
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
+    "saveErrorForeignKey": "O valoare la care se referă acest formular nu mai există. Alegeți altă valoare sau reîncărcați pagina.",
     "deleteError": "Ștergerea a eșuat",
     "version": {
       "label": "v {n}",
@@ -984,6 +986,7 @@
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
+    "saveErrorForeignKey": "O valoare la care se referă acest formular nu mai există. Alegeți altă valoare sau reîncărcați pagina.",
     "deleteError": "Ștergerea a eșuat",
     "version": {
       "label": "v {n}",
@@ -1261,6 +1264,7 @@
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
+    "saveErrorForeignKey": "O valoare la care se referă acest formular nu mai există. Alegeți altă valoare sau reîncărcați pagina.",
     "deleteError": "Ștergerea a eșuat",
     "version": {
       "label": "v {n}",

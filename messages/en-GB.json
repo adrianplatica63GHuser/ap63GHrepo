@@ -215,6 +215,7 @@
     "createTitle": "New Property",
     "saveError": "Could not save",
     "saveErrorSession": "Your session expired — please sign in again and retry.",
+    "saveErrorForeignKey": "A value this form refers to no longer exists. Choose another value, or reload the page.",
     "deleteError": "Could not delete",
     "sections": {
       "cadastral": "Cadastral Data",
@@ -858,6 +859,7 @@
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
     "saveErrorSession": "Your session expired — please sign in again and retry.",
+    "saveErrorForeignKey": "A value this form refers to no longer exists. Choose another value, or reload the page.",
     "deleteError": "Could not delete",
     "version": {
       "label": "v {n}",
@@ -984,6 +986,7 @@
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
     "saveErrorSession": "Your session expired — please sign in again and retry.",
+    "saveErrorForeignKey": "A value this form refers to no longer exists. Choose another value, or reload the page.",
     "deleteError": "Could not delete",
     "version": {
       "label": "v {n}",
@@ -1261,6 +1264,7 @@
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
     "saveErrorSession": "Your session expired — please sign in again and retry.",
+    "saveErrorForeignKey": "A value this form refers to no longer exists. Choose another value, or reload the page.",
     "deleteError": "Could not delete",
     "version": {
       "label": "v {n}",
