@@ -31,6 +31,11 @@ import {
   PERSON_ADDRESS_SNAPSHOT_KEYS,
 } from "@/lib/versioning/snapshot-registry";
 import {
+  resolveSnapshotLookup,
+  type SnapshotLookupOption,
+  type SnapshotLookupState,
+} from "@/lib/versioning/snapshot-lookup";
+import {
   diffFieldMap,
   labelColorFromHighlights,
   normVal,
@@ -419,4 +424,127 @@ export function formValuesEqual(a: FormValues, b: FormValues): boolean {
     }
   }
   return true;
+}
+
+// ===========================================================================
+// A version's lookup value, and what the version view prints    (Slice #34.27)
+//
+// `judicialPersonTypeId` stores a row of an admin-managed list.
+// `src/lib/admin/value-lists/dependents.ts` decides ON PURPOSE that a version
+// snapshot is NOT a dependent — a version records what was true when it was
+// saved, so re-pointing it would rewrite history and deleting it would destroy
+// history — so an admin may delete a `lookup_judicial_person_type` row that
+// only a snapshot still names. Paging back to that version then showed an
+// EMPTY BOX with nothing to explain it. The live column cannot reach that state
+// (it is `ON DELETE SET NULL`), so this is a snapshot-only problem and the
+// answer belongs on the version view.
+//
+// ⚠️ **THIS IS NOT `optionsWithUnlistedValues` COMING BACK.** That function,
+// deleted in Slice #34.03 along with the `allowUnlistedValue` prop, synthesised
+// an `<option>` INSIDE A LIVE PICKER, so a value the list did not hold stayed
+// selectable and could be saved back. Nothing here is selectable and nothing
+// here is written: the version view prints a value INSTEAD of offering a
+// picker, and the dangling id never enters the DOM.
+//
+// ⚠️ **THE `isOnLatest` GATE IS IN HERE RATHER THAN AT THE CALL SITE, AND THAT
+// IS THE POINT.** It is the one condition whose failure is invisible in a test
+// of the resolver: drop it and the LIVE, EDITABLE row would print „valoare
+// ștearsă" over a picker the user is allowed to change. Pure and exported, so
+// that condition is a unit test rather than a source-reading guard. The
+// property and natural-person forms put it in the same place for the same
+// reason.
+// ===========================================================================
+
+/** The one judicial-person field whose stored value is a row of a lookup list. */
+export type JudicialLookupField = "judicialPersonTypeId";
+
+export type JudicialLookupStates = Record<JudicialLookupField, SnapshotLookupState>;
+
+/**
+ * A FRESH object every time, not a shared constant.
+ *
+ * ⚠️ A review round found a module-level singleton in the property form's copy
+ * of this, frozen — SHALLOWLY, so the member inside it stayed writable. One
+ * stray mutation would have corrupted every later call in the tab, and it would
+ * have landed on the LATEST version: a live, editable field labelled as a value
+ * that is perfectly fine. One object literal per render is not a cost worth
+ * reasoning about; a process-wide singleton is. It is a single-member record
+ * today and the reasoning does not depend on the count.
+ */
+function nothingRecorded(): JudicialLookupStates {
+  return { judicialPersonTypeId: { kind: "empty" } };
+}
+
+/**
+ * What the VIEWED version recorded in its lookup field.
+ *
+ * `isOnLatest` short-circuits to `empty`: the latest version IS the live row,
+ * and the column is `ON DELETE SET NULL`, so deleting a lookup row blanks it
+ * there rather than stranding an id — the live copy cannot reach `deleted`, and
+ * a label printed over an editable picker would be both wrong and unchangeable.
+ *
+ * ⚠️ **`judicialTypes` IS THE QUERY'S DATA — `undefined` while it is unread,
+ * and STILL `undefined` when the read failed.** That is what separates "the
+ * list holds no such row" from "nobody has read the list", and treating the
+ * second as the first would label every historical type „valoare ștearsă" for
+ * as long as the list was unread. `fetchJudicialPersonTypes` in
+ * `judicial-person-form.tsx` rejects `res.redirected` as well as `!res.ok`
+ * (Slice #34.04), so an expired session throws rather than caching the login
+ * page's `{}` as a successful empty array — checked for this slice, on that
+ * fetcher, before `[]` was trusted as a real `deleted`.
+ *
+ * ⚠️ **THE NATURAL-PERSON ADAPTER TAKES A DIFFERENT SHAPE — `{ options,
+ * listState }` — AND THAT IS NOT AN INCONSISTENCY TO TIDY.** Its two lists come
+ * from hooks that return `options: data ?? NO_OPTIONS`, so the `undefined` is
+ * already gone by the time the form sees it and `listState` is what
+ * reconstructs it. This list does not go through a hook, so its `data` still
+ * carries the distinction and there is nothing to reconstruct. Which shape a
+ * third form copies is decided by where its list comes from.
+ *
+ * There is no `recorded` state to answer: no migration ever turned a free-TEXT
+ * judicial-person column into an FK the way migration_078 did to
+ * `property.tarla_sola`, so a snapshot holds an id or it holds nothing.
+ */
+export function snapshotLookupStates(input: {
+  snapshot:      JudicialPersonSnapshot | undefined;
+  isOnLatest:    boolean;
+  judicialTypes: readonly SnapshotLookupOption[] | undefined;
+}): JudicialLookupStates {
+  if (input.isOnLatest || !input.snapshot) return nothingRecorded();
+  return {
+    judicialPersonTypeId: resolveSnapshotLookup({
+      id:      input.snapshot.judicial.judicialPersonTypeId,
+      options: input.judicialTypes,
+    }),
+  };
+}
+
+/**
+ * The field that makes "Make this version current" IMPOSSIBLE, in display order.
+ *                                                              (Slice #34.27)
+ *
+ * "Make current" re-saves `form.getValues()` — the values `snapshotToFormValues`
+ * put on the form when the version was opened, which is the snapshot's own
+ * content. A `deleted` id is still among them and `judicial_person.
+ * judicial_person_type_id` is a foreign key, so the PATCH comes back 23503 and
+ * `dbErrorToResponse` hands the user the string „Foreign key violation", in
+ * English.
+ *
+ * ⚠️ **THIS SLICE IS WHAT MAKES THE PRESS LIKELY, WHICH IS WHY IT ARRIVES WITH
+ * THE REFUSAL.** Before it the field was an empty box and the press was a
+ * mistake; „valoare ștearsă" is precisely the cue that invites a user to repair
+ * the record by restoring the version.
+ *
+ * A list rather than a boolean, and a `filter` over a one-member order rather
+ * than an `if`: the dialog NAMES the field, and the day this form grows a
+ * second lookup the shape does not have to change. The property and
+ * natural-person forms read identically.
+ *
+ * `pending` never blocks — an unread list is not evidence of anything; see the
+ * natural-person twin for the whole argument, which is the same one.
+ */
+const JUDICIAL_LOOKUP_FIELD_ORDER: JudicialLookupField[] = ["judicialPersonTypeId"];
+
+export function restoreBlockedBy(states: JudicialLookupStates): JudicialLookupField[] {
+  return JUDICIAL_LOOKUP_FIELD_ORDER.filter((f) => states[f].kind === "deleted");
 }

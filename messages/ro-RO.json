@@ -870,6 +870,8 @@
     "makeCurrent": {
       "title": "Faceți această versiune curentă?",
       "body": "Versiunea {viewed} va fi copiată într-o nouă versiune {next}, care devine versiunea curentă. Continuați?",
+      "blockedTitle": "Această versiune nu poate deveni versiunea actuală",
+      "blocked": "Ce a înregistrat această versiune nu mai există în Date de referință, așa că nu poate fi scris înapoi. Câmpuri: {fields}.",
       "ok": "OK",
       "cancel": "Anulează"
     },
@@ -994,6 +996,8 @@
     "makeCurrent": {
       "title": "Faceți această versiune curentă?",
       "body": "Versiunea {viewed} va fi copiată într-o nouă versiune {next}, care devine versiunea curentă. Continuați?",
+      "blockedTitle": "Această versiune nu poate deveni versiunea actuală",
+      "blocked": "Ce a înregistrat această versiune nu mai există în Date de referință, așa că nu poate fi scris înapoi. Câmpuri: {fields}.",
       "ok": "OK",
       "cancel": "Anulează"
     },

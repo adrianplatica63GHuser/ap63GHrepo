@@ -26,6 +26,11 @@ import {
   type VersionNavView,
 } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
+import { SnapshotValue } from "@/components/versioning/snapshot-value";
+import {
+  snapshotReplacesPicker,
+  type SnapshotLookupState,
+} from "@/lib/versioning/snapshot-lookup";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
@@ -37,6 +42,9 @@ import {
   formValuesEqual,
   type FormValues,
   type JudicialFieldHighlights,
+  type JudicialLookupField,
+  restoreBlockedBy,
+  snapshotLookupStates,
   snapshotToFormValues,
   toApiPayload,
   versionLabelColor,
@@ -137,6 +145,8 @@ export function JudicialPersonForm({
   // which is what gates the cannot-delete-from-here dialog further down.
   const [associatedEditing, setAssociatedEditing] = useState(false);
   const [showCannotDelete, setShowCannotDelete] = useState(false);
+  // Slice #34.27: the refusal dialog for a version that cannot be written back.
+  const [showCannotRestore, setShowCannotRestore] = useState(false);
 
   // Which contact-person picker is open: 1, 2, or null.
   const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
@@ -154,6 +164,14 @@ export function JudicialPersonForm({
     staleTime: 5 * 60 * 1000,
   });
   const judicialPersonTypeOptions = judicialPersonTypes ?? [];
+  // Hoisted out of the JSX so the picker and the version view read the SAME
+  // array. The none-option is prepended unconditionally, which is why the
+  // assembled array is never `undefined` and why `snapshotLookupStates` below
+  // is gated on the QUERY's data instead — see its docblock.
+  const judicialPersonTypeSelectOptions = [
+    { value: "", label: "—" },
+    ...judicialPersonTypeOptions.map((opt) => ({ value: opt.id, label: opt.name })),
+  ];
 
   // --- Version history (Slice #18.05) ------------------------------------
   const versionsQuery = useQuery({
@@ -232,6 +250,16 @@ export function JudicialPersonForm({
 
   const goToVersion = (target: number) => {
     const leaving = effectiveVersion;
+    // ⚠️ **Both make-current dialogs are about the version being LEFT.** #34.27
+    // `ConfirmDialog` has no focus trap and the ◀/▶ nav is portalled outside it
+    // (`versionNavSlot`), so Shift+Tab and Enter step to another version with a
+    // dialog still up — and the refusal's sentence then names fields from a
+    // version nobody is looking at, or opens again, unpressed, on the next
+    // blocked version it lands on. The confirmation is the worse half: it would
+    // restore the version the user arrived at, not the one they agreed to.
+    // `property-form.tsx` has cleared both here since #34.17.
+    setShowCannotRestore(false);
+    setConfirmMakeCurrent(false);
     if (target === latestVersion) {
       form.reset(baseline.values);
       // Bug 1: arriving on the latest from a different version pulses N-1 -> N.
@@ -260,6 +288,35 @@ export function JudicialPersonForm({
   // the transient pulse on the latest. `pulsing` swaps the static ring for the
   // animated pulse class (Bug 1).
   const displayHighlights: JudicialFieldHighlights | null = fieldHighlights ?? pulse;
+
+  // Slice #34.27: what the VIEWED VERSION recorded in its lookup field.
+  //
+  // ⚠️ **The list is handed over ONLY once its query has data**, which is what
+  // makes `undefined` mean "not read yet" rather than "holds no such row" — the
+  // assembled array above is never undefined, because the none-option is
+  // prepended to it unconditionally. Labelling an unread list's id „valoare
+  // ștearsă" would be a confident sentence about something nobody has read.
+  //
+  // The `isOnLatest` gate lives inside `snapshotLookupStates` rather than here;
+  // its docblock says why.
+  const snapshotLookups = snapshotLookupStates({
+    snapshot:      currSnap,
+    isOnLatest,
+    judicialTypes: judicialPersonTypes ? judicialPersonTypeSelectOptions : undefined,
+  });
+
+  // What "Make this version current" can do with this version. A `deleted` id is
+  // still on the form — `goToVersion` reset the form to the snapshot — and the
+  // column is a foreign key, so the restore would PATCH a dangling uuid and come
+  // back 23503 as the English string „Foreign key violation". The press is
+  // refused instead, in a dialog that NAMES the field. `restoreBlockedBy` argues
+  // the rest, including why `pending` does not block.
+  const restoreBlocked = restoreBlockedBy(snapshotLookups);
+  const lookupFieldLabels: Record<JudicialLookupField, string> = {
+    judicialPersonTypeId: t("fields.judicialType"),
+  };
+  const namedFields = (fields: JudicialLookupField[]) =>
+    fields.map((f) => lookupFieldLabels[f]).join(", ");
   const pulsing = fieldHighlights === null && pulse !== null;
 
   const navLocked = isOnLatest && editDirty;
@@ -276,7 +333,13 @@ export function JudicialPersonForm({
           onPrev: () => goToVersion(effectiveVersion - 1),
           onNext: () => goToVersion(effectiveVersion + 1),
           canMakeCurrent: !isOnLatest,
-          onMakeCurrent: () => setConfirmMakeCurrent(true),
+          // Slice #34.27: a version that cannot be written back says so, in a
+          // dialog. The button stays enabled on purpose — a disabled one puts
+          // its reason in a `title`, on a control out of the tab order.
+          onMakeCurrent: () =>
+            restoreBlocked.length > 0
+              ? setShowCannotRestore(true)
+              : setConfirmMakeCurrent(true),
         }
       : null;
 
@@ -348,6 +411,17 @@ export function JudicialPersonForm({
   };
 
   const handleMakeCurrent = async () => {
+    // ⚠️ **The press is not the last word — this is.**             (#34.27)
+    // A value list that resolves while the confirmation dialog is open turns a
+    // `pending` field into a `deleted` one, and `onYes` still fires. Swapping
+    // the dialogs rather than returning silently, because a press that was
+    // legal a second ago deserves the reason — and „Foreign key violation" is
+    // what the alternative says.
+    if (restoreBlocked.length > 0) {
+      setConfirmMakeCurrent(false);
+      setShowCannotRestore(true);
+      return;
+    }
     const values = form.getValues();
     const ok = await doSave(values);
     if (!ok) {
@@ -502,14 +576,9 @@ export function JudicialPersonForm({
               register={register}
               control={control}
               error={errors.judicialPersonTypeId?.message}
-              options={[
-                { value: "", label: "—" },
-                ...judicialPersonTypeOptions.map((opt) => ({
-                  value: opt.id,
-                  label: opt.name,
-                })),
-              ]}
+              options={judicialPersonTypeSelectOptions}
               highlight={displayHighlights?.fields.judicialPersonTypeId}
+              snapshot={snapshotLookups.judicialPersonTypeId}
             />
           </div>
           {/* Row 3: CUI | Trade Register No. */}
@@ -770,6 +839,22 @@ export function JudicialPersonForm({
           onYes={handleMakeCurrent}
           onNo={() => setConfirmMakeCurrent(false)}
           busy={submitting}
+        />
+      )}
+
+      {/* Slice #34.27 — the refusal, with the field named. `blockedTitle` is a
+          statement rather than a question, and the single-button info shape is
+          the one `cannotDeleteAssociated` has used since #21.04.Import.
+          `&& restoreBlocked.length > 0` so the dialog cannot outlive its own
+          reason: it names fields, and a list that resolved under it would
+          otherwise leave it saying „Câmpuri: ." */}
+      {showCannotRestore && restoreBlocked.length > 0 && (
+        <ConfirmDialog
+          title={t("makeCurrent.blockedTitle")}
+          body={t("makeCurrent.blocked", { fields: namedFields(restoreBlocked) })}
+          yesLabel={t("makeCurrent.ok")}
+          onYes={() => setShowCannotRestore(false)}
+          busy={false}
         />
       )}
 
@@ -1231,11 +1316,73 @@ function SelectField({
   error,
   options,
   highlight,
+  snapshot,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
+  /**
+   * Slice #34.27: what the viewed VERSION recorded in this field.
+   *
+   * `empty` in create mode and on the latest — `snapshotLookupStates` returns
+   * that for both — and `resolved` or `pending` on a version whose list can
+   * still answer for it. All three render the picker below exactly as it always
+   * has; only `deleted` takes the field over here, because a person snapshot
+   * holds an id or nothing and can never reach `recorded`. Optional because the
+   * prop is for call sites whose options come from an admin-managed list; this
+   * form has exactly one `SelectField` and it does pass `snapshot`, so nothing
+   * omits it today.
+   *
+   * `error` is not rendered on the printed branch. It is unreachable there
+   * rather than dropped — a historical version resolves `effectiveMode` to
+   * "view", `form.reset` clears errors, and this field carries no rule that
+   * could set one. The day it does, this branch needs the error span the picker
+   * branch has.
+   */
+  snapshot?: SnapshotLookupState;
 }) {
+  // ⚠️ **`tSnapshot`, NOT a second `tShared`, AND `record-list-agreement.test.ts`
+  // IS WHY.** This file's component-scope `tShared` binds
+  // `shared.readonlyView`; that suite reads the FIRST `const tShared =
+  // useTranslations("…")` in a file and then requires every `tShared("key")` in
+  // it to resolve under that one namespace. A second `tShared` bound to
+  // `shared` made the identifier mean two things in one file — unreadable to the
+  // guard and to a reader — and composed `shared.readonlyView.snapshotValue.
+  // deleted`, which does not exist. `property-form.tsx` reuses the name legally
+  // because BOTH of its bindings are `shared`; here the name is already taken
+  // for something else, so the label gets its own.
+  const tSnapshot = useTranslations("shared");
   const ring = usePulseRing(highlight);
+
+  // A version whose lookup row an admin deleted PRINTS what the snapshot holds
+  // instead of offering a picker that has no option for it — which is the empty
+  // box it rendered until this slice. ⚠️ **Not `optionsWithUnlistedValues`
+  // coming back:** that function (deleted in Slice #34.03 with the
+  // `allowUnlistedValue` prop) synthesised an `<option>` inside a LIVE picker,
+  // so an unlisted value stayed selectable and could be saved back. Nothing
+  // here is selectable and nothing here is written — the dangling id never
+  // enters the DOM at all. Not a `<label>`: there is no control to associate
+  // with, exactly like `<ReadOnlyField>` further down.
+  if (snapshot && snapshotReplacesPicker(snapshot)) {
+    // `role="group"` + `aria-labelledby` because the value is no longer a
+    // control for the `<label>` to point at, and a `<span>` beside a `<div>` is
+    // nothing to a screen reader.
+    const labelId = `${name}-version-label`;
+    return (
+      <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
+        <span id={labelId} className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+          {label}
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <SnapshotValue
+            state={snapshot}
+            deletedLabel={tSnapshot("snapshotValue.deleted")}
+            className={ring}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">

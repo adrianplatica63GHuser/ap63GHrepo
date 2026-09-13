@@ -22,6 +22,12 @@ import {
   NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS,
   PERSON_ADDRESS_SNAPSHOT_KEYS,
 } from "@/lib/versioning/snapshot-registry";
+import type { LookupListState } from "@/hooks/use-lookup-options";
+import {
+  resolveSnapshotLookup,
+  type SnapshotLookupOption,
+  type SnapshotLookupState,
+} from "@/lib/versioning/snapshot-lookup";
 import {
   diffFieldMap,
   labelColorFromHighlights,
@@ -509,4 +515,195 @@ export function formValuesEqual(a: FormValues, b: FormValues): boolean {
     }
   }
   return true;
+}
+
+// ===========================================================================
+// A version's lookup values, and what the version view prints   (Slice #34.27)
+//
+// The two fields below store a row of an admin-managed list.
+// `src/lib/admin/value-lists/dependents.ts` decides ON PURPOSE that a version
+// snapshot is NOT a dependent — a version records what was true when it was
+// saved, so re-pointing it would rewrite history and deleting it would destroy
+// history — so an admin may delete a `lookup_person_type` or
+// `lookup_citizenship` row that only a snapshot still names. Paging back to
+// that version then showed an EMPTY BOX with nothing to explain it. The live
+// columns cannot reach that state (they are `ON DELETE SET NULL`), so this is a
+// snapshot-only problem and the answer belongs on the version view.
+//
+// ⚠️ **THIS IS NOT `optionsWithUnlistedValues` COMING BACK.** That function,
+// deleted in Slice #34.03 along with the `allowUnlistedValue` prop, synthesised
+// an `<option>` INSIDE A LIVE PICKER, so a value the list did not hold stayed
+// selectable and could be saved back. Nothing here is selectable and nothing
+// here is written: the version view prints a value INSTEAD of offering a
+// picker, and the dangling id never enters the DOM.
+//
+// ⚠️ **THE `isOnLatest` GATE IS IN HERE RATHER THAN AT THE CALL SITE, AND THAT
+// IS THE POINT.** It is the one condition whose failure is invisible in a test
+// of the resolver: drop it and the LIVE, EDITABLE row would print „valoare
+// ștearsă" over a picker the user is allowed to change. Pure and exported, so
+// that condition is a unit test rather than a source-reading guard. The
+// property form put it in the same place for the same reason
+// (`properties/_components/form-schema.ts`).
+//
+// ⚠️ **`citizenshipId` HAS A RULE ABOUT IT ONE MODULE AWAY, AND THIS IS NOT
+// THAT RULE.** `src/lib/import/id-card-review.ts` decides what an identity-card
+// read may WRITE into `citizenship_id`, by asking whether the select can show
+// the value. This decides what a VERSION VIEW PRINTS for the same column, on a
+// screen where nothing is written at all. Different questions, same field.
+// ===========================================================================
+
+/** The two natural-person fields whose stored value is a row of a lookup list. */
+export type NaturalLookupField = "physicalPersonTypeId" | "citizenshipId";
+
+export type NaturalLookupStates = Record<NaturalLookupField, SnapshotLookupState>;
+
+/**
+ * One value list as its hook hands it back.
+ *
+ * ⚠️ **BOTH MEMBERS, AND THE SECOND ONE IS THE WHOLE REASON THIS TYPE EXISTS.**
+ * `useCitizenshipOptions` / `usePersonTypeOptions` return `options: data ??
+ * NO_OPTIONS`, so an UNREAD list and a list that genuinely holds no rows are
+ * both `[]` by the time a caller sees them. Reading `options` alone would
+ * therefore label every historical lookup on the page „valoare ștearsă" for as
+ * long as the list was unread — and for ever if it could not be read at all,
+ * which is a confident sentence measured against nothing. `listState` is what
+ * still separates the two: `"loaded"` is exactly `data !== undefined`
+ * (`lookupListState` returns it only when the query is not pending), so
+ * `readList` below reconstructs the `undefined` the resolver needs.
+ *
+ * The property form hands its resolver `query.data ? assembledOptions :
+ * undefined` directly, because its three lists are plain `useQuery` call sites
+ * whose `data` it can see. These two are not; this is the same distinction
+ * arrived at through the hook's own shape. ⚠️ **The judicial-person adapter
+ * takes the property form's shape rather than this one, DELIBERATELY** — its
+ * one list is a plain `useQuery` in the component, so its `data` is still
+ * `undefined` when unread and there is nothing to reconstruct. Two shapes, one
+ * distinction; which one a third form copies is decided by where its list comes
+ * from, not by taste.
+ */
+export type NaturalLookupList = {
+  options:   readonly SnapshotLookupOption[];
+  listState: LookupListState;
+};
+
+/**
+ * The option list, or `undefined` while nobody has successfully read it.
+ *
+ * ⚠️ **An empty-but-LOADED list is a real `deleted`, and that is only safe
+ * because of Slice #34.04.** A list that read back as `[]` used to be reachable
+ * without anybody deleting anything: an expired session answered the value-list
+ * fetch with a redirect to the login page, whose HTML parsed to `{}`, and
+ * `data.items ?? []` cached that as a successful empty array. `fetchValueList`
+ * — the single fetcher behind BOTH hooks below — now rejects `res.redirected`
+ * as well as `!res.ok`, so an unreadable list throws, leaves `data` undefined,
+ * and lands in `pending` instead. That guard was checked for this slice, on
+ * that fetcher, before `[]` was trusted here.
+ *
+ * ⚠️ **`"loaded"` MEANS "there is data", NOT "the data is current", AND THAT
+ * GAP IS INHERITED RATHER THAN INTRODUCED HERE.** `lookupListState` reports
+ * `isLoadingError` rather than `isError` on purpose (its docblock argues why),
+ * so a FAILED BACKGROUND REFETCH of a list that was read successfully earlier
+ * keeps the last good array and still says `"loaded"` — and the red hint under
+ * the field renders only on `"failed"`, so nothing says otherwise on screen. In
+ * that window a row added since the cached read prints „valoare ștearsă", and a
+ * row deleted since it prints its old label. The property form has the same
+ * window through `query.data`, which is also the stale value; closing it means
+ * changing what „read" means for every dropdown in the app, not just here.
+ */
+function readList(list: NaturalLookupList): readonly SnapshotLookupOption[] | undefined {
+  return list.listState === "loaded" ? list.options : undefined;
+}
+
+/**
+ * A FRESH object every time, not a shared constant.
+ *
+ * ⚠️ A review round found a module-level singleton in the property form's copy
+ * of this, frozen — SHALLOWLY, so the members inside it stayed writable. One
+ * stray mutation would have corrupted every later call in the tab, and it would
+ * have landed on the LATEST version: a live, editable field labelled as a value
+ * that is perfectly fine. Two object literals per render is not a cost worth
+ * reasoning about; a process-wide singleton is.
+ */
+function nothingRecorded(): NaturalLookupStates {
+  return {
+    physicalPersonTypeId: { kind: "empty" },
+    citizenshipId:        { kind: "empty" },
+  };
+}
+
+/**
+ * What the VIEWED version recorded in each of the two lookup fields.
+ *
+ * `isOnLatest` short-circuits everything to `empty`: the latest version IS the
+ * live row, and both columns are `ON DELETE SET NULL`, so deleting a lookup row
+ * blanks them there rather than stranding an id — the live copy cannot reach
+ * `deleted`, and a label printed over an editable picker would be both wrong
+ * and unchangeable.
+ *
+ * Neither field has a `recorded` state to answer: no migration ever turned a
+ * free-TEXT person column into an FK the way migration_078 did to
+ * `property.tarla_sola`, so a natural-person snapshot holds an id or it holds
+ * nothing. `recorded` stays unreachable here, and `snapshot-lookup.ts` keeps
+ * owning it for the one field that has it.
+ */
+export function snapshotLookupStates(input: {
+  snapshot:     NaturalPersonSnapshot | undefined;
+  isOnLatest:   boolean;
+  personTypes:  NaturalLookupList;
+  citizenships: NaturalLookupList;
+}): NaturalLookupStates {
+  if (input.isOnLatest || !input.snapshot) return nothingRecorded();
+  const n = input.snapshot.natural;
+  return {
+    physicalPersonTypeId: resolveSnapshotLookup({
+      id:      n.physicalPersonTypeId,
+      options: readList(input.personTypes),
+    }),
+    citizenshipId: resolveSnapshotLookup({
+      id:      n.citizenshipId,
+      options: readList(input.citizenships),
+    }),
+  };
+}
+
+/**
+ * The fields that make "Make this version current" IMPOSSIBLE, in display order.
+ *                                                              (Slice #34.27)
+ *
+ * "Make current" re-saves `form.getValues()` — the values `snapshotToFormValues`
+ * put on the form when the version was opened, which is the snapshot's own
+ * content. A `deleted` id is still among them and its column is a foreign key,
+ * so the PATCH comes back 23503 and `dbErrorToResponse` hands the user the
+ * string „Foreign key violation", in English.
+ *
+ * ⚠️ **THIS SLICE IS WHAT MAKES THE PRESS LIKELY, WHICH IS WHY IT ARRIVES WITH
+ * THE REFUSAL.** Before it the field was an empty box and the press was a
+ * mistake; „valoare ștearsă" is precisely the cue that invites a user to repair
+ * the record by restoring the version. The property form has carried this
+ * predicate since #34.17 for the same reason and with the same wording.
+ *
+ * So the press is REFUSED, in a single-button dialog that NAMES the fields —
+ * not by greying the button out, which puts the reason in a `title` on a
+ * control that is out of the tab order and unannounced.
+ *
+ * Neither field can reach `recorded`, so there is no `restoreDropsRecorded`
+ * sibling here: nothing a person version holds is text without an id.
+ *
+ * `pending` never blocks: an unread list is not evidence of anything. It
+ * usually resolves in one round trip and it does NOT always — a value-list
+ * fetch that keeps failing leaves the query's data `undefined` for as long as
+ * the failure lasts, and in that window a deleted row is indistinguishable from
+ * an unread one, so a restore can still reach the 23503 this function exists to
+ * prevent. Refusing on `pending` would be worse: it would take every restore
+ * away for the same window, on evidence nobody has read. `handleMakeCurrent`
+ * re-checks this predicate for the narrower case it CAN close: a list that
+ * resolves while the confirmation dialog is open.
+ */
+const NATURAL_LOOKUP_FIELD_ORDER: NaturalLookupField[] = [
+  "physicalPersonTypeId",
+  "citizenshipId",
+];
+
+export function restoreBlockedBy(states: NaturalLookupStates): NaturalLookupField[] {
+  return NATURAL_LOOKUP_FIELD_ORDER.filter((f) => states[f].kind === "deleted");
 }
