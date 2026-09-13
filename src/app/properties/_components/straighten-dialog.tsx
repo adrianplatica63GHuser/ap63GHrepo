@@ -140,11 +140,26 @@ export function StraightenDialog({
   const hasOwnNumbers = numbers.some((n) => n != null);
 
   return (
+    // ⚠️ **z-60, RAISED FROM z-50 BY SLICE #34.28 — fixed in passing.** The
+    // theater-map overlay in `property-form.tsx` renders through `createPortal`
+    // to `document.body` while this dialog is inline in the form, so at an equal
+    // `z-50` the later-in-document portal painted ON TOP. The Straighten button
+    // stays tabbable behind that map, and the very press that mounts this dialog
+    // also mounts `straightenImpossible` on its other branch — #34.28 raised the
+    // `ConfirmDialog` that draws the second branch and would otherwise have left
+    // the two halves of one button on different layers. Below
+    // `unsaved-changes-provider.tsx`'s `z-[100]`, which is correctly outermost.
+    //
+    // ⚠️ **THE TRAP AND THE ESCAPE HANDLER `ConfirmDialog` GOT ARE NOT HERE.**
+    // This dialog declares `aria-modal="true"` and keeps none of it, exactly as
+    // that one did — the fix is `tabTrapMove` from `@/lib/ui/dialog-focus` plus
+    // the same capture-phase Escape effect, and it is larger than a line. It is
+    // in the #34.28 handover under „Noticed, not fixed".
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="straighten-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4"
     >
       <div className="w-full max-w-lg rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
         <h3

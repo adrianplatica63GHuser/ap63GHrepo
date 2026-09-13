@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type Control,
@@ -70,6 +70,7 @@ import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { tabTrapMove } from "@/lib/ui/dialog-focus";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -605,13 +606,22 @@ export function PropertyForm({
   const goToVersion = (target: number) => {
     const leaving = effectiveVersion;
     // ⚠️ **Both make-current dialogs are about the version being LEFT.** #34.17
-    // A review round walked out from under one: `ConfirmDialog` has no focus
-    // trap and the ◀/▶ nav is portalled outside it, so Shift+Tab and Enter step
-    // to another version with the dialog still up — and its sentence then names
-    // fields from a version nobody is looking at, or, on the latest, names
+    // A review round walked out from under one: `ConfirmDialog` HAD no focus
+    // trap and the ◀/▶ nav is portalled outside it, so Shift+Tab and Enter
+    // stepped to another version with the dialog still up — and its sentence
+    // then named fields from a version nobody was looking at, or, on the latest,
     // nothing at all („… scrisă înapoi: ."). The confirmation is the worse half:
     // it would have restored the version the user arrived at, not the one they
     // agreed to.
+    //
+    // ⚠️ **SLICE #34.28 GAVE `ConfirmDialog` A TRAP, AND THAT IS NOT A REASON TO
+    // DELETE THESE TWO LINES.** An adversarial round asked precisely that, off
+    // the paragraph above, which until #34.28 still said „has no focus trap" in
+    // the present tense. The trap closes the TAB route to the nav. It does not
+    // close the mouse route — a dialog inline in the form leaves the portalled
+    // nav uncovered by its own backdrop — nor the history chip. So the two
+    // guards answer different presses, and `confirm-dialog-focus.test.ts` holds
+    // this statement in place.
     setShowCannotRestore(false);
     setConfirmMakeCurrent(false);
     if (target === latestVersion) {
@@ -730,7 +740,12 @@ export function PropertyForm({
     // `pending` field into a `deleted` one, and `onYes` still fires. Swapping
     // the dialogs rather than returning silently, because a press that was
     // legal a second ago deserves the reason rather than a dialog that just
-    // disappears — and „Foreign key violation" is what the alternative says.
+    // disappears — and the alternative is a generic „o valoare … nu mai
+    // există", which names no field. (It said „Foreign key violation", in
+    // English, until Slice #34.28 translated that case in `safe-mutate.ts`.
+    // Translated is not the same as answered: this refusal NAMES the fields and
+    // the sentence behind it cannot, which is why #34.28 changed the message
+    // and left this refusal exactly as wide as it was.)
     if (restoreBlocked.length > 0) {
       setConfirmMakeCurrent(false);
       setShowCannotRestore(true);
@@ -1624,8 +1639,12 @@ function SelectField({
   if (snapshot && snapshotReplacesPicker(snapshot)) {
     // `role="group"` + `aria-labelledby` because the value is no longer a
     // control for the `<label>` to point at, and a `<span>` beside a `<div>`
-    // is nothing to a screen reader. `<ReadOnlyField>` below predates this and
-    // still has that gap; it is in the handover.
+    // is nothing to a screen reader. `<ReadOnlyField>` below predated this and
+    // had the same gap; Slice #34.28 closed it there with the same two
+    // attributes — and had to hang the id on an INNER span, because that
+    // component's label cell also carries a `<HelpHint>` whose button label,
+    // and open hint text, `aria-labelledby` would otherwise fold into the name.
+    // There is no `hint` here, which is why this one can name the span itself.
     const labelId = `${name}-version-label`;
     return (
       <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
@@ -1675,6 +1694,30 @@ function SelectField({
   );
 }
 
+/**
+ * A label beside a value that is not a control.
+ *
+ * ⚠️ **`role="group"` + `aria-labelledby`, FOR THE REASON THE PRINTED SNAPSHOT
+ * BOX ABOVE GIVES.**                                            (Slice #34.28)
+ * There is no control here for a `<label>` to point at, and a `<span>` beside a
+ * `<div>` is nothing to a screen reader: the value was announced with no idea
+ * what it was the value OF. This is the same two attributes `SelectField`'s
+ * snapshot branch got in #34.17, arriving on the component that predates it.
+ *
+ * ⚠️ **THE ID IS ON AN INNER SPAN, AND THE OUTER ONE WOULD HAVE BEEN WRONG.**
+ * The label cell also carries `hint` — a `<HelpHint>`, which renders a
+ * `<button aria-label="…">` and, once opened, a `<p>` holding the whole hint
+ * text. `aria-labelledby` takes the SUBTREE of what it names, so pointing it at
+ * the outer span would have made this group's accessible name „Suprafață
+ * calculată" plus the hint button's label — and, with the hint open, plus every
+ * word of the hint. The snapshot box above has no `hint` and so did not have to
+ * answer this.
+ *
+ * ⚠️ **`useId`, NOT A NAME-DERIVED ID.** `ReadOnlyField` takes no `name`, and
+ * two of its call sites sit on the same screen; a label-derived id would
+ * collide the day two read-only fields share a label, which is a bug that
+ * announces the wrong field rather than failing.
+ */
 function ReadOnlyField({
   label,
   value,
@@ -1685,10 +1728,11 @@ function ReadOnlyField({
   /** Optional <HelpHint> — most callers have no hidden behaviour to explain. */
   hint?: React.ReactNode;
 }) {
+  const labelId = useId();
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300 flex items-center gap-1">
-        {label}
+        <span id={labelId}>{label}</span>
         {hint}
       </span>
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
@@ -1698,6 +1742,69 @@ function ReadOnlyField({
   );
 }
 
+/**
+ * The five confirmations and refusals this form draws.
+ *
+ * ⚠️ **`aria-modal="true"` WAS A PROMISE NOTHING KEPT, AND #34.17 WATCHED IT
+ * BREAK.**                                                      (Slice #34.28)
+ * The backdrop stopped the mouse and nothing stopped the keyboard: Shift+Tab
+ * walked out of the refusal dialog into the ◀/▶ version nav — which is
+ * PORTALLED into the breadcrumb header, so it is not even underneath this
+ * overlay in the DOM — and Enter there stepped to another version with the
+ * dialog still up, naming fields from a version nobody was looking at. #34.17
+ * closed that one consequence by having `goToVersion` shut both make-current
+ * dialogs; the absence itself was older and untouched. This is the absence.
+ *
+ * ⚠️ **IN PLACE, COVERING ALL FIVE INSTANCES.** The trap and the Escape handler
+ * live on the component, not on its call sites, so `straightenImpossible`,
+ * `confirmDelete`, `confirmMakeCurrent`, `showCannotRestore` and
+ * `showCannotDelete` get them without a prop and a sixth instance cannot be
+ * added without them. The arithmetic is in `@/lib/ui/dialog-focus`, which says
+ * why it is a separate module and why `inert` is not the mechanism here.
+ *
+ * ⚠️ **#34.10's THREE REGRESSIONS, CHECKED BY NAME, BECAUSE #34.20 RECORDED
+ * THEM AS THE COST OF ADDING ESCAPE TO A DIALOG THAT NEVER HAD ONE.**
+ *   1. *An Escape that closed the modal underneath.* Live here: the theater-map
+ *      overlay in this same file registers its own `window` keydown for Escape,
+ *      and regression 2 below explains how the two come to be open together.
+ *      Both listeners would fire on one press, so the map would close under a
+ *      dialog the user had not answered. The listener below is therefore
+ *      registered in the CAPTURE phase and calls
+ *      `stopPropagation`: window-capture runs before anything else in the
+ *      dispatch, so the topmost dialog consumes the key and the map stays open.
+ *      (Two `ConfirmDialog`s open at once would both close — `stopPropagation`
+ *      does not stop other listeners on the same node. No pair of these five
+ *      flags is set together today, and the two make-current ones are cleared
+ *      in the same statement.)
+ *   2. *A z-40/z-50 that painted under the panel the dialog had become a
+ *      sibling of.* ⚠️ **REACHABLE, AND THE FIRST DRAFT OF THIS COMMENT WAVED IT
+ *      THROUGH WITH A MOUSE ARGUMENT — an adversarial round caught that.** The
+ *      theater map above renders through `createPortal` to `document.body`
+ *      while these dialogs are inline in the form, so at an equal `z-50` the
+ *      later-in-document portal paints ON TOP: a confirmation opened with the
+ *      map up was trapping focus inside an overlay nobody could see, and the
+ *      first Escape closed the invisible one. Saying that nothing under a
+ *      `fixed inset-0` backdrop is clickable is a statement about the mouse, in
+ *      a slice whose whole premise is that the keyboard gets through anyway —
+ *      the Straighten button behind the map is still tabbable, and pressing it
+ *      is what mounts `straightenImpossible` underneath. So this overlay is
+ *      `z-60`, which is the value `value-list-modal.tsx` already uses for a
+ *      confirmation over a modal, and it stays below
+ *      `unsaved-changes-provider.tsx`'s `z-[100]`, which is correctly the
+ *      outermost thing on the page. (The map having no trap of its own is the
+ *      older, wider defect and is in the handover.)
+ *   3. *The panel behind not being `inert`.* Replaced rather than added, for the
+ *      two reasons `dialog-focus.ts` sets out — this dialog is a CHILD of the
+ *      form, so `inert` on the form would silence the dialog too, and the
+ *      version nav is outside the form anyway.
+ *
+ * ⚠️ **ESCAPE IS REFUSED WHILE `busy`**, which is `submitting` for the delete
+ * and the make-current. `discover-review-dialog.tsx` and
+ * `document-persons-modal.tsx` both carry the same guard and #29.13 wrote down
+ * why: the mutation completes regardless, so an Escape mid-flight unmounts the
+ * only place a refusal is ever reported, and a write that failed reads as one
+ * the user cancelled.
+ */
 function ConfirmDialog({
   title, body, yesLabel, noLabel, onYes, onNo, busy,
 }: {
@@ -1713,15 +1820,85 @@ function ConfirmDialog({
   busy:     boolean;
 }) {
   const isConfirm = !!noLabel && !!onNo;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  // Slice #34.28: `useId` rather than the literal `confirm-title` this carried
+  // since #21.04.Import. Fixed in passing — `aria-labelledby` names an id, and
+  // two of these mounted together would have given the document two nodes
+  // called `confirm-title`, where the pointer resolves to the first in the
+  // document and a dialog is announced with another dialog's heading.
+  const titleId = useId();
+
+  /**
+   * Take focus on open, hand it back on close.
+   *
+   * The overlay carries `tabIndex={-1}` so it can be focused at all, and
+   * `outline-none` because it is a container rather than a control — both
+   * buttons inside keep their own ring. Reading `document.activeElement` here
+   * rather than at the call site works because this effect runs before anything
+   * has moved focus; `document-persons-modal.tsx` has to capture its opener in
+   * the click handler instead, and only because the same commit marks its list
+   * `inert` and the UA has already blurred the button by effect time. Nothing is
+   * inert here.
+   *
+   * The `isConnected` guard is not defensive padding: `onDelete` navigates to
+   * /properties and `handleMakeCurrent` calls `router.refresh()`, so by unmount
+   * the button that opened this can be gone. Focus then stays where the browser
+   * put it, which is no worse than the state before this slice.
+   */
+  useEffect(() => {
+    openerRef.current = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    return () => {
+      const opener = openerRef.current;
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+
+  /** Escape dismisses — cancelling a confirmation, acknowledging an info box. */
+  const dismiss = useCallback(() => {
+    if (busy) return;
+    if (onNo) onNo();
+    else onYes();
+  }, [busy, onNo, onYes]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      // Consumed even while `busy`, where `dismiss` is a no-op: releasing it
+      // would hand the key to the theater-map listener, and closing the map out
+      // from under a save nobody can see the result of is the same failure by
+      // another route.
+      e.stopPropagation();
+      dismiss();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [dismiss]);
+
+  /** Keep Tab inside. The decision is in `@/lib/ui/dialog-focus`. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const move = tabTrapMove(panelRef.current, document.activeElement, e.shiftKey);
+      if (move.preventDefault) e.preventDefault();
+      move.focus?.focus();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+
   return (
     <div
+      ref={panelRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="confirm-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      aria-labelledby={titleId}
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4 outline-none"
     >
       <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
-        <h3 id="confirm-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+        <h3 id={titleId} className="text-base font-semibold text-ink dark:text-zinc-100">
           {title}
         </h3>
         <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
