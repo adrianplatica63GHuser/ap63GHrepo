@@ -14,10 +14,15 @@
 #
 # What this script does:
 #   0. Sanity checks (folder, .env)
-#   0.5. PRE-FLIGHT: verifies dev DB has no unapplied migrations before dumping.
-#        If any migration_*.sql in src\db\ is not recorded in schema_migrations,
-#        the script aborts -- generating ciprian-schema-update.sql from an
-#        incomplete schema would silently corrupt Ciprian's database.
+#   0.5. PRE-FLIGHT: verifies dev's migration state matches the repository
+#        before dumping. If any migration_*.sql in src\db\ is not recorded in
+#        schema_migrations -- or is recorded under a stale CHECKSUM, a changed
+#        name, or the wrong case -- the script aborts, because generating
+#        ciprian-schema-update.sql from a schema that is not the repository's
+#        would silently corrupt Ciprian's database. The comparison is the one
+#        in scripts\MigrationState.ps1, shared with Apply-Migration.ps1; until
+#        Slice #34.31 this step compared FILENAMES ONLY and a migration
+#        corrected after it was applied passed it.
 #   1. Reads NEXT_PUBLIC_* values from your .env file
 #   2. Builds the Docker image (takes 5-10 min on first run; faster after)
 #   3. Exports the image to C:\dev\ga40prj.Ciprian\docker\app\ga40prj-app.tar
@@ -152,7 +157,23 @@ trap {
     break
 }
 
-# ---- Step 0.5: pre-flight -- verify dev DB has no unapplied migrations -------
+# Step 0.5 asks the same question scripts\Apply-Migration.ps1 asks, so it uses
+# the same answer. Dot-sourced rather than copied: this script carried its own
+# filename-only version for four slices, #34.18 found it and named it, and a
+# second correction would only have set up a third divergence. (Slice #34.31)
+#
+# ⚠️ **BELOW `Remove-StagedFiles` AND `trap`, NOT ABOVE THEM.** `trap` is
+# scope-hoisted; a `function` definition is not. With the dot-source above line
+# 130, a checkout that does not carry scripts\MigrationState.ps1 -- an older
+# worktree, a partial pull, the file simply not committed yet, all realistic
+# for a file this new -- failed INTO the trap, which then died on "the term
+# 'Remove-StagedFiles' is not recognized" and the real diagnosis never reached
+# the console. Nothing is staged this early, so it cost only diagnosis; the
+# block above exists precisely to keep that function callable from every early
+# exit, and a dependency loaded on the wrong side of it defeats that.
+. (Join-Path $repoRoot "scripts\MigrationState.ps1")
+
+# ---- Step 0.5: pre-flight -- verify dev migration state matches the repo -----
 #
 # pg_dump (Step 4) captures whatever state ga40prj-postgres is in right now.
 # If a migration file exists in src\db\ but has not been applied, the dump
@@ -173,7 +194,7 @@ Write-Host "Pre-flight: checking dev migration state..." -ForegroundColor Cyan
 # that were already applied. On PowerShell 7.4 that path was unreachable
 # because the native-command preference terminated first; turning that off at
 # the top of this file (see there) is what makes these checks load-bearing.
-$smExists = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -c `
+$smExists = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -A -c `
     "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='schema_migrations');" `
     | ForEach-Object { "$_".Trim() } | Where-Object { $_ -ne "" }
 
@@ -191,9 +212,34 @@ if ($smExists -eq "f") {
     exit 1
 }
 
-# Read applied migration filenames from dev DB
-$appliedRaw = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -c `
-    "SELECT filename FROM schema_migrations ORDER BY filename;"
+# Read applied migrations from dev DB, WITH their checksums.
+#
+# ⚠️ **THE CHECKSUM IS THE HALF THIS STEP USED TO BE MISSING, AND IT IS THE
+# HALF THAT MATTERS HERE.** A filename-only comparison answers "has every file
+# been applied", which is not the question this script needs answered. What it
+# needs is "is the schema about to be dumped the schema the repository
+# describes", and a migration CORRECTED after it was applied breaks the second
+# while satisfying the first -- the file changed, the filename did not, and
+# nothing here noticed. That schema then went into Ciprian's image. #34.18
+# fixed this in the runner and named the second site rather than fixing it;
+# this is that site. The `|| E'\t' ||` and coalesce() form, and what an empty
+# checksum means, are stated in MigrationState.ps1.
+# ⚠️ **`-A` IS LOAD-BEARING AND IS THE WHOLE REASON THIS QUERY CAN CARRY TWO
+# VALUES.** psql's default ALIGNED output pads every column to the width of the
+# widest row AND renders control characters as spaces for that width
+# accounting -- so the TAB this query emits arrives as `\040`, the split below
+# finds no separator, and the ENTIRE LINE becomes the filename key with an
+# empty checksum. Every migration applied since #34.18 carries an MD5, so on
+# this dev box every one of those rows would become a garbage key, land in
+# Pending, and abort this script with "N migration(s) have not been applied"
+# naming migrations that are all applied -- verbatim the failure the comment
+# twelve lines above says was fixed last slice, by a different route. The
+# quieter half is worse: every stored checksum would read "", so Changed would
+# be permanently empty and the corrected-migration case this step exists to
+# catch would sail through. `Invoke-Psql` in Apply-Migration.ps1 passes `-A`
+# for exactly this reason and says so. Measured against psql 16 with `od -c`.
+$appliedRaw = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -A -c `
+    "SELECT filename || E'\t' || coalesce(checksum, '') FROM schema_migrations ORDER BY filename;"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
@@ -201,16 +247,62 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-$appliedSet = @{}
-foreach ($line in $appliedRaw) {
-    $trimmed = "$line".Trim()
-    if ($trimmed -ne "") { $appliedSet[$trimmed] = $true }
+$appliedMap = ConvertTo-AppliedMigrationMap -Rows @($appliedRaw)
+if ($null -ne $appliedMap.DuplicateName) {
+    Write-Host ""
+    Write-Host "ERROR: schema_migrations holds two rows whose filenames differ only in case:" -ForegroundColor Red
+    Write-Host "         $($appliedMap.DuplicateName)" -ForegroundColor Red
+    Write-Host "       Postgres treats them as two migrations; Windows treats the files as one." -ForegroundColor Red
+    Write-Host "       Fix: run  scripts\Apply-Migration.ps1  -- it prints the two commands." -ForegroundColor Yellow
+    exit 1
 }
+$appliedSet = $appliedMap.Applied
 
 # Compare against migration_*.sql files on disk
-$migrationsDir  = Join-Path $repoRoot "src\db"
-$migrationFiles = @(Get-ChildItem -Path $migrationsDir -Filter "migration_*.sql" | Sort-Object Name)
-$unapplied      = @($migrationFiles | Where-Object { -not $appliedSet.ContainsKey($_.Name) })
+$migrationsDir = Join-Path $repoRoot "src\db"
+$disk = Get-MigrationFilesOnDisk -MigrationsDir $migrationsDir
+if ($null -ne $disk.Error) {
+    Write-Host ""
+    Write-Host "ERROR: $($disk.Error)" -ForegroundColor Red
+    Write-Host "       Nothing has been generated." -ForegroundColor Red
+    exit 1
+}
+
+$state     = Compare-MigrationState -Disk $disk -Applied $appliedSet
+$unapplied = @($state.Pending)
+$changed   = @($state.Changed)
+$renamed   = @($state.Renamed)
+$miscased  = @($state.Miscased)
+
+# ⚠️ **A CHANGED, RENAMED OR MISCASED ROW ABORTS TOO, AND THE REASON IS NOT THE
+# RUNNER'S REASON.** Apply-Migration.ps1 stops on these because it is about to
+# EXECUTE something and cannot tell which SQL already ran. This script executes
+# nothing -- it dumps. It stops because the dump would be honest about a
+# database that is no longer honest about the repository, and would be shipped
+# under a filename that says otherwise. The repair is the runner's either way,
+# which is why the message sends Adrian there rather than printing a second
+# copy of its UPDATE commands.
+if ($changed.Count -gt 0 -or $renamed.Count -gt 0 -or $miscased.Count -gt 0) {
+    Write-Host ""
+    Write-Host "ERROR: dev's schema_migrations disagrees with src\db\:" -ForegroundColor Red
+    foreach ($c in $changed) {
+        Write-Host "         ! $($c.Name) -- recorded $($c.Stored), on disk $($c.Actual)" -ForegroundColor Red
+    }
+    foreach ($r in $renamed) {
+        Write-Host "         > $($r.Name) -- now on disk as $($r.NowCalled)" -ForegroundColor Red
+    }
+    foreach ($m in $miscased) {
+        Write-Host "         ~ $($m.Recorded) -- on disk as $($m.OnDisk)" -ForegroundColor Red
+    }
+    Write-Host ""
+    Write-Host "       The database was built from files that are no longer these files, so" -ForegroundColor Red
+    Write-Host "       ciprian-schema-update.sql would not be the schema this repository" -ForegroundColor Red
+    Write-Host "       describes -- and nothing downstream would ever say so." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "       Fix: run  scripts\Apply-Migration.ps1  -- it stops on the same rows and" -ForegroundColor Yellow
+    Write-Host "            prints the repair for each. Then re-run this script." -ForegroundColor Yellow
+    exit 1
+}
 
 if ($unapplied.Count -gt 0) {
     Write-Host ""
@@ -226,7 +318,41 @@ if ($unapplied.Count -gt 0) {
     exit 1
 }
 
-Write-Host "OK -- all $($appliedSet.Count) migration(s) applied. Dev schema is complete." -ForegroundColor Green
+# ⚠️ **NOT an abort, deliberately.** A recorded row with no file on disk is a
+# migration deleted from the repository. It says nothing about whether the live
+# schema matches the repository -- the schema it produced is still there, and
+# the dump will still capture it correctly -- so refusing here would block a
+# delivery over a bookkeeping row. The runner is where that gets resolved.
+if (@($state.Absent).Count -gt 0) {
+    Write-Host ""
+    Write-Host "NOTE: $(@($state.Absent).Count) recorded migration(s) have no file in src\db\:" -ForegroundColor Yellow
+    foreach ($n in $state.Absent) { Write-Host "        - $n" -ForegroundColor Yellow }
+    Write-Host "      Not a reason to stop -- the dump below is unaffected. scripts\Apply-Migration.ps1 explains it." -ForegroundColor Yellow
+}
+
+# ⚠️ **THE BREAKDOWN, NOT A BLANKET ASSURANCE.** An earlier line here read
+# "every recorded checksum still matches its file", which is a claim about rows
+# that were COMPARED -- and on this database most were not. migration_056
+# backfilled 008 to 056 by assertion, hashing nothing, so roughly fifty rows
+# carry no checksum and `Compare-MigrationState` files them under Unknown: an
+# edit to one of THOSE files is invisible here and always will be. Saying so is
+# the difference between this step and the filename-only one it replaced, which
+# also could not see an edit and did not mention it. Not an abort -- refusing
+# over the backfill would refuse every build -- but not a silence either.
+$comparable = $state.Comparable
+$unknown    = @($state.Unknown).Count
+if ($comparable -gt 0) {
+    Write-Host "OK -- $($disk.Files.Count) migration(s) on disk, all recorded. $comparable recorded row(s) carried a checksum and every one still hashes to its file." -ForegroundColor Green
+} else {
+    # ⚠️ Not the same sentence with a zero in it. "0 row(s) carried a checksum
+    # and every one still hashes to its file" asserts something about an empty
+    # set exactly where a reader looks for reassurance -- which is the failure
+    # the blanket line before it had, in smaller print.
+    Write-Host "OK -- $($disk.Files.Count) migration(s) on disk, all recorded. NOTHING was checksum-verified: no recorded row carries one." -ForegroundColor Green
+}
+if ($unknown -gt 0) {
+    Write-Host "      $unknown recorded row(s) carry NO checksum (migration_056's backfill) -- those files are NOT verified by this step, here or in Apply-Migration.ps1." -ForegroundColor Yellow
+}
 
 # ---- Step 1: read NEXT_PUBLIC_* from .env ------------------------------------
 

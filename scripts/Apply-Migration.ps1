@@ -74,6 +74,48 @@ $PSNativeCommandUseErrorActionPreference = $false
 $repoRoot      = Split-Path -Parent $PSScriptRoot
 $migrationsDir = Join-Path $repoRoot "src\db"
 
+# The comparison of src\db against schema_migrations lives in ONE file, because
+# build-ciprian-image.ps1 asks the same question and used to answer it by
+# FILENAME ALONE -- so a dev database holding a migration corrected since it was
+# applied passed its pre-flight, and that schema was dumped into Ciprian's
+# image. Steps 3, 4 and 5 below are now the REPORTING around three functions in
+# that file; the comparison itself has one home, and a third caller costs a
+# dot-source rather than a third transcription. (Slice #34.31. The second site
+# was named and left by #34.18.)
+# ⚠️ **TESTED, NOT JUST DOT-SOURCED, AND THIS SCRIPT IS THE ONE THAT NEEDS IT.**
+# A missing or half-written MigrationState.ps1 is realistic for a file this new
+# -- an older worktree, a partial pull, the file not committed yet -- and this
+# script sets no `$ErrorActionPreference = "Stop"` (deliberately: see the note
+# on $PSNativeCommandUseErrorActionPreference above, and every
+# `if ($LASTEXITCODE -ne 0)` block below depends on that). So a failed
+# dot-source is NON-TERMINATING here: execution carries on, every call below is
+# a CommandNotFound record on the error stream, `$applied` and `$state` are
+# never set, strict mode's complaints are non-terminating too -- and the script
+# reaches its own summary and prints `Applied : 0 / Failed : 0`, exit 0, with
+# every migration still pending and none applied. Anything reading that exit
+# code, including the `&&`-chained verification block, is told the database is
+# migrated. Measured, not imagined. (#34.31 review round 3.)
+#
+# `Get-Command` and not merely `Test-Path`, because a TRUNCATED file -- the
+# partial-pull case -- dot-sources without error and defines only some of them.
+#
+# build-ciprian-image.ps1 needs none of this: it sets `$ErrorActionPreference =
+# "Stop"`, so both failures are terminating there and its trap prints the real
+# diagnosis. The asymmetry is in the two scripts' error preferences, not an
+# oversight in one of them.
+$migrationStateLib = Join-Path $PSScriptRoot "MigrationState.ps1"
+if (-not (Test-Path -LiteralPath $migrationStateLib -PathType Leaf)) {
+    Write-Error "Cannot find $migrationStateLib, which holds the comparison of src\db against schema_migrations. Nothing has been applied. Check out the file (it is committed under scripts\) and run this again."
+    exit 1
+}
+. $migrationStateLib
+foreach ($fn in @("Get-MigrationFilesOnDisk", "ConvertTo-AppliedMigrationMap", "Compare-MigrationState")) {
+    if (-not (Get-Command $fn -CommandType Function -ErrorAction SilentlyContinue)) {
+        Write-Error "$migrationStateLib loaded but does not define $fn -- the file is truncated or is not the version this script expects. Nothing has been applied."
+        exit 1
+    }
+}
+
 Write-Host "==== GA40 Migration Runner ===="
 Write-Host "Container : $Container"
 Write-Host "Database  : $Database"
@@ -97,13 +139,29 @@ Write-Host ""
 # review, which also pointed out that the new Step 4 would have printed those
 # three rows under a heading calling them "not fatal".)
 #
-# -A (unaligned) as well as -t. Trim() below already removes aligned mode's
-# padding, so this is not a fix for a bug -- it is the difference between
-# parsing a table drawn for a human and reading a value written for a machine,
-# and it takes the column widths out of the contract. Note psql's own default
-# separator in unaligned mode is `|`, which is why Step 3's query joins its two
-# values with a TAB: a second column added later cannot then be mistaken for
-# the delimiter.
+# -A (unaligned) as well as -t, and it is LOAD-BEARING rather than tidiness.
+# It is the difference between parsing a table drawn for a human and reading a
+# value written for a machine, and it takes the column widths out of the
+# contract. Note psql's own default separator in unaligned mode is `|`, which
+# is why Step 3's query joins its two values with a TAB: a second column added
+# later cannot then be mistaken for the delimiter. ⚠️ **DROP THE `-A` AND
+# ALIGNED MODE RENDERS THAT TAB AS A SPACE** -- every row then parses as a
+# filename with an empty checksum, every real migration looks pending, and
+# Step 6 re-applies the lot against a live database. `migration-state-single-
+# source.test.ts` pins the flag on this call for that reason.
+#
+# ⚠️ **THE TRIM TAKES LINE ENDINGS ONLY, NOT WHITESPACE** (#34.31). It used to
+# be a bare `Trim()`, justified as removing aligned mode's padding -- but with
+# `-A` there IS no padding, so the only thing it could still strip was
+# whitespace that POSTGRES holds: a `filename` recorded with a leading space is
+# a DIFFERENT primary key there, and eating it here filed the row under a name
+# the table does not hold. Two consequences, both measured: this script
+# reported a migration that had never been applied as applied and exited 0,
+# and -- once build-ciprian-image.ps1 began reading the same rows without a
+# trim -- the two scripts bucketed one row differently, so the image build
+# aborted and named THIS script as the fix while this script said the database
+# was up to date. The empty-row filter still trims, because a row of spaces is
+# noise either way.
 # ---------------------------------------------------------------------------
 function Invoke-Psql {
     param([string]$Sql)
@@ -112,7 +170,7 @@ function Invoke-Psql {
         Write-Error "psql exited $LASTEXITCODE. Nothing has been applied. Query was: $Sql"
         exit 1
     }
-    return ($lines | ForEach-Object { "$_".Trim() } | Where-Object { $_ -ne "" })
+    return ($lines | ForEach-Object { "$_".Trim([char]13, [char]10) } | Where-Object { $_.Trim() -ne "" })
 }
 
 # ---------------------------------------------------------------------------
@@ -167,35 +225,27 @@ if ($tableCheck -eq "f") {
 # Step 4 reads as "unknown" and never as "changed" -- the two are different
 # facts and are reported as different sentences.
 # ---------------------------------------------------------------------------
+# The parsing, the coalesce() contract and the case-collision refusal are in
+# MigrationState.ps1 -> ConvertTo-AppliedMigrationMap, which states each at
+# length. What stays here is the MESSAGE, because it prints commands naming
+# this script's own -Container and -Database.
 $appliedRows = Invoke-Psql "SELECT filename || E'\t' || coalesce(checksum, '') FROM schema_migrations ORDER BY filename;"
-$applied = @{}
-foreach ($row in $appliedRows) {
-    if ($row -ne "") {
-        # A row whose checksum is NULL arrives as "<filename><TAB>", and
-        # Invoke-Psql's Trim() has already removed that trailing tab -- so the
-        # split yields ONE element and the else branch below is the normal
-        # path for every migration_056 backfill row, not an error case.
-        $parts = $row -split '\t', 2
-        $name  = $parts[0]
-        # `filename` is a case-SENSITIVE primary key in Postgres; a PowerShell
-        # hashtable is case-INSENSITIVE. Two rows differing only in case would
-        # therefore collapse into one key here, the second silently overwriting
-        # the first's checksum, and the discarded row would never be compared.
-        # Refuse instead of guessing which spelling is real.
-        if ($applied.ContainsKey($name)) {
-            Write-Host ""
-            Write-Host "schema_migrations holds two rows whose filenames differ only in case:"
-            Write-Host "   $name"
-            Write-Host "Postgres treats them as two migrations; Windows treats the files as one."
-            Write-Host "Find both rows, decide which spelling is real, and DELETE the other"
-            Write-Host "before running this script again:"
-            Write-Host "   docker exec $Container psql -U $DbUser -d $Database -c ""SELECT filename, checksum FROM schema_migrations WHERE lower(filename) = lower('$name');"""
-            Write-Host "   docker exec $Container psql -U $DbUser -d $Database -c ""DELETE FROM schema_migrations WHERE filename = '<the wrong spelling>';"""
-            exit 2
-        }
-        $applied[$name] = if ($parts.Count -gt 1) { $parts[1] } else { "" }
-    }
+$appliedMap  = ConvertTo-AppliedMigrationMap -Rows @($appliedRows)
+
+if ($null -ne $appliedMap.DuplicateName) {
+    $dupe = $appliedMap.DuplicateName
+    Write-Host ""
+    Write-Host "schema_migrations holds two rows whose filenames differ only in case:"
+    Write-Host "   $dupe"
+    Write-Host "Postgres treats them as two migrations; Windows treats the files as one."
+    Write-Host "Find both rows, decide which spelling is real, and DELETE the other"
+    Write-Host "before running this script again:"
+    Write-Host "   docker exec $Container psql -U $DbUser -d $Database -c ""SELECT filename, checksum FROM schema_migrations WHERE lower(filename) = lower('$dupe');"""
+    Write-Host "   docker exec $Container psql -U $DbUser -d $Database -c ""DELETE FROM schema_migrations WHERE filename = '<the wrong spelling>';"""
+    exit 2
 }
+
+$applied = $appliedMap.Applied
 Write-Host "Already applied : $($applied.Count) migration(s)"
 
 # ---------------------------------------------------------------------------
@@ -222,124 +272,28 @@ Write-Host "Already applied : $($applied.Count) migration(s)"
 # is itself never verified), have nothing to compare. Calling those "changed"
 # would bury the one row that matters under sixty that do not.
 # ---------------------------------------------------------------------------
-# ⚠️ The folder is checked before it is walked, and it is walked ONCE. A
-# missing or unreadable src\db makes Get-ChildItem write a non-terminating
-# error and return nothing, which used to end this run at "Database is up to
-# date. Nothing to do.", exit 0 -- with every recorded row in the NO FILE
-# bucket, under a heading telling the reader it is not evidence of anything.
-# Enumerating once also removes a race: Step 5 used to walk the folder again,
-# so a file appearing between the two walks was applied with an EMPTY checksum
-# and became permanently unverifiable -- the very row shape Step 4 exists to
-# eliminate. (Slice #34.18 review round 3.)
-if (-not (Test-Path -LiteralPath $migrationsDir -PathType Container)) {
-    Write-Error "Migrations folder not found: $migrationsDir. Nothing has been applied."
+# The folder guards, the single walk, the hashing and the bucketing are all in
+# MigrationState.ps1 -> Get-MigrationFilesOnDisk and Compare-MigrationState,
+# each with the review round that put it there written beside it. Everything
+# below this block is reporting.
+$disk = Get-MigrationFilesOnDisk -MigrationsDir $migrationsDir
+if ($null -ne $disk.Error) {
+    Write-Error "$($disk.Error) Nothing has been applied."
     exit 1
 }
 
-$allFiles   = @(Get-ChildItem -LiteralPath $migrationsDir -Filter "migration_*.sql" -File | Sort-Object Name)
+$state = Compare-MigrationState -Disk $disk -Applied $applied
 
-# ⚠️ Test-Path -PathType Container returns True for a directory that cannot be
-# ENUMERATED, and Get-ChildItem then returns nothing with no error at all -- so
-# the guard above passes, every recorded row lands in NO FILE, and the run used
-# to end at "Database is up to date. Nothing to do.", exit 0, with a genuinely
-# pending migration on disk and unmentioned. A sparse or half-copied checkout
-# reaches the same place with an empty folder. A database holding recorded
-# migrations while src\db offers none is not a state to report cheerfully.
-if ($allFiles.Count -eq 0) {
-    Write-Error "No migration_*.sql found in $migrationsDir. Either the folder is empty or it cannot be read; a database with recorded migrations and no files on disk is not something this script will call up to date. Nothing has been applied."
-    exit 1
-}
-
-$onDisk     = @{}   # filename -> full path
-$hashOnDisk = @{}   # filename -> MD5
-$byHash     = @{}   # MD5 -> filenames carrying it
-
-foreach ($f in $allFiles) {
-    # -File above, because -Filter matches a DIRECTORY named migration_*.sql
-    # too; and -ErrorAction here, because under Set-StrictMode -Version Latest
-    # `.Hash` on the nothing Get-FileHash returns for an unreadable path is a
-    # raw PropertyNotFoundException, in the one script whose entire design is
-    # tailored messages.
-    # -LiteralPath, matching the Test-Path above: -Path glob-expands, so a
-    # migration whose name contains [ or ] matches nothing and produces
-    # "Cannot read <file>" about a file that is perfectly readable.
-    $fh = Get-FileHash -Algorithm MD5 -LiteralPath $f.FullName -ErrorAction SilentlyContinue
-    if ($null -eq $fh) {
-        Write-Error "Cannot read $($f.FullName). Nothing has been applied."
-        exit 1
-    }
-    $h = $fh.Hash
-    $onDisk[$f.Name]     = $f.FullName
-    $hashOnDisk[$f.Name] = $h
-    if (-not $byHash.ContainsKey($h)) { $byHash[$h] = @() }
-    $byHash[$h] += $f.Name
-}
-
-$changed     = @()
-$renamed     = @()
-$claimedTwin = @{}   # file on disk -> the recorded names that hash to it
-$miscased = @()
-$unknown  = @()
-$absent   = @()
-
-foreach ($name in ($applied.Keys | Sort-Object)) {
-    $stored = $applied[$name]
-
-    if (-not $onDisk.ContainsKey($name)) {
-        # A RENAME is not a missing file: the same SQL is still on disk under a
-        # new name, so Step 5 sees the new name as pending and would apply it a
-        # SECOND time. The stored hash identifies it exactly, which is why this
-        # is a report and not a guess. (Slice #34.18 review round 2.)
-        # ⚠️ Only when the twin is itself UNRECORDED. A file carrying this
-        # hash that already has its own row is not somewhere this migration
-        # "went" -- Step 5 will not apply it, nothing is at risk, and calling
-        # it a rename produced a permanent exit 2 whose own printed repair
-        # (UPDATE ... SET filename = ...) then fails on the primary key. Two
-        # byte-identical migrations are enough to reach that state.
-        $twins = @()
-        if ($stored -ne "" -and $byHash.ContainsKey($stored)) {
-            $twins = @($byHash[$stored] | Where-Object { -not $applied.ContainsKey($_) })
-        }
-        if ($twins.Count -gt 0) {
-            # Which recorded names claim each file, so the report can say when
-            # TWO of them claim one -- there the printed UPDATE works once and
-            # then fails on the primary key, which is the shape round 2 fixed
-            # for the other arrangement. (Review round 4.)
-            foreach ($t in $twins) {
-                if (-not $claimedTwin.ContainsKey($t)) { $claimedTwin[$t] = @() }
-                $claimedTwin[$t] += $name
-            }
-            $renamed += [pscustomobject]@{ Name = $name; NowCalled = ($twins -join ", ") }
-        } else {
-            $absent += $name
-        }
-        continue
-    }
-
-    # Windows matches filenames case-insensitively; Postgres does not. A row
-    # typed by hand in the wrong case therefore looks applied here while being
-    # a different primary key there -- and Step 5's ContainsKey would report
-    # the real migration as already applied and never run it.
-    $realName = [System.IO.Path]::GetFileName($onDisk[$name])
-    if ($realName -cne $name) {
-        $miscased += [pscustomobject]@{ Recorded = $name; OnDisk = $realName }
-        continue
-    }
-
-    if ($stored -eq "") {
-        $unknown += $name
-        continue
-    }
-
-    # -ne on strings is case-INSENSITIVE in PowerShell, which is what is wanted
-    # here: Get-FileHash returns upper-case hex, and a row re-recorded by hand
-    # may not. Use -cne if that ever needs to become a difference.
-    if ($stored -ne $hashOnDisk[$name]) {
-        $changed += [pscustomobject]@{ Name = $name; Stored = $stored; Actual = $hashOnDisk[$name] }
-    }
-}
-
-$compared = $applied.Count - $unknown.Count - $absent.Count - $renamed.Count - $miscased.Count
+# Local names, so the reporting below reads as it did and a future edit to one
+# bucket's message does not have to thread $state through every line.
+$hashOnDisk  = $disk.HashOnDisk
+$changed     = @($state.Changed)
+$renamed     = @($state.Renamed)
+$claimedTwin = $state.ClaimedTwin
+$miscased    = @($state.Miscased)
+$unknown     = @($state.Unknown)
+$absent      = @($state.Absent)
+$compared    = $state.Comparable
 Write-Host "Checksum match  : $($compared - $changed.Count) of $compared comparable row(s); $($unknown.Count) unknown, $($absent.Count) with no file, $($renamed.Count) renamed, $($miscased.Count) wrong case"
 
 if ($unknown.Count -gt 0) {
@@ -466,9 +420,13 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 # Step 5 -- find pending migrations
 # ---------------------------------------------------------------------------
-# $allFiles comes from Step 4's single walk of the folder -- see the comment
-# there for why this is not enumerated a second time.
-$pending = @($allFiles | Where-Object { -not $applied.ContainsKey($_.Name) })
+# Not enumerated a second time, and not re-derived here either: Step 4's
+# Compare-MigrationState already produced this list from the same single walk.
+# A second walk was a race -- a file appearing between the two was applied with
+# an EMPTY checksum and became permanently unverifiable (#34.18 round 3) -- and
+# a second `Where-Object` would be a second copy of the pending rule, which is
+# the thing #34.31 came to remove.
+$pending = @($state.Pending)
 Write-Host "Pending         : $($pending.Count) migration(s)"
 Write-Host ""
 
