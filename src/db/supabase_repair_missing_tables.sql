@@ -87,13 +87,20 @@
 --       (importance IN (...))`, and the same shape for `chk_em_relevance` and
 --       `chk_em_provenance`. Each takes ACCESS EXCLUSIVE and validates every
 --       existing row - the same cost, and therefore the same reason to be
---       here, as the FK and the SET NOT NULLs above. ⚠️ **The importance and
---       relevance CHECKs have no count-first guard**, unlike provenance and
---       the three `origin` CHECKs below, so on a database holding a drifted
---       value they simply fail - and this file runs under `psql -f` with no
---       ON_ERROR_STOP, so that failure scrolls past a post-flight still
---       reporting OK. Adding the guard is in #34.18's handover under
---       "Noticed, not fixed"; the statements are listed here now either way.
+--       here, as the FK and the SET NOT NULLs above. **All three now COUNT
+--       FIRST** and RAISE a WARNING rather than attempting the ADD (#34.31
+--       for importance and relevance; provenance has done so since #26.12).
+--       The importance and relevance messages carry the count AND a query
+--       that lists the offending rows; provenance's carries the count and
+--       names migration_067, which is the file that remaps them. Until that slice the importance and relevance CHECKs had
+--       no such guard, so on a database holding a drifted value they simply
+--       failed - and this file runs under `psql -f` with no ON_ERROR_STOP, so
+--       that failure scrolled past a post-flight still reporting OK. ⚠️ **A
+--       WARNING here means the constraint is NOT on the table**, which is why
+--       section 10 now asks about ALL THREE by name - provenance included,
+--       which had warned without an answer at the end since #26.12: a guard
+--       that turns a failure into a skip has moved the problem rather than
+--       solved it unless something downstream says the skip happened.
 --
 --     * the `chk_ldt_origin`, `chk_lt_origin` and `chk_li_origin` constraints
 --       on lookup_document_type, lookup_tarla and lookup_institution (#26.12,
@@ -118,9 +125,12 @@
 --       and property_corner_source_document_unique. Each follows a
 --       `CREATE TABLE IF NOT EXISTS`, so on a project that already HAS the
 --       table with colliding rows the index build fails on existing data -
---       exactly the hazard spelled out for the unique index below, and
---       unguarded here. Adding the count-first guard is in #34.18's handover
---       under "Noticed, not fixed".
+--       exactly the hazard spelled out for the unique index below. **All three
+--       now COUNT FIRST** and RAISE a WARNING giving the number of colliding
+--       groups and a query that lists them, rather than attempting the CREATE
+--       (#34.31), and section 10 asks about
+--       each of them by name afterwards for the reason given in the bullet
+--       above.
 --
 --     * `ALTER TABLE <t> ALTER COLUMN <c> SET DEFAULT ...`, on
 --       lookup_person_role.valid_for_property and .valid_for_person and on the
@@ -132,8 +142,10 @@
 --     * `CREATE UNIQUE INDEX lookup_document_type_name_normalised_unique`
 --       (migration_080, #34.09). It is not additive in the way the ADD COLUMNs
 --       are: it takes SHARE on lookup_document_type for the length of the
---       build -- readers unaffected, writers blocked -- and, together with the
---       bullet above, IT CAN FAIL ON EXISTING DATA. Two types whose names
+--       build -- readers unaffected, writers blocked -- and IT COULD FAIL ON
+--       EXISTING DATA, which is why it counts first. (It used to say "together
+--       with the bullet above" and point at the three unguarded unique indexes;
+--       #34.31 guarded those, so this one is no longer one of a pair.) Two types whose names
 --       differ only by diacritics, case or punctuation are one name to the
 --       index. The block in section 8 therefore counts first and RAISEs a
 --       WARNING naming migration_080 rather than attempting the CREATE,
@@ -153,6 +165,23 @@
 --     an adversarial round pointed out it was assumed rather than stated)
 --   - table lookup_person_role (Slice #34.04's block in section 8 adds two
 --     columns to it; it is created by migration_013 and this file never has)
+--   - tables lookup_person_type and lookup_institution, referenced by the FKs
+--     in section 8's `natural_person` and `document` ALTERs. Neither is an
+--     ALTER TARGET, so neither shows up in a sweep of statement heads - and
+--     because each sits in a MULTI-CLAUSE `ALTER TABLE`, its absence takes the
+--     unrelated columns beside it down too: no lookup_person_type means
+--     natural_person gets neither physical_person_type_id NOR
+--     correspondence_same_as_home. lookup_institution's absence at least ends
+--     POST-FLIGHT FAILED; lookup_person_type's ends OK. (#34.31 round 5.)
+--   - tables natural_person, person_version, property_version,
+--     document_version, property_address, property_corner. Each is an ALTER
+--     target in section 8 and none was ever stated here; on a database
+--     lacking one, that ALTER raises and the run still ends POST-FLIGHT OK.
+--     Listed now because the list is free; the silent-failure half is in the
+--     #34.31 handover under "Noticed, not fixed".
+--   - table lookup_property_type (section 8 has added four columns to it and
+--     a UNIQUE to its `key` since long before this list existed, and never
+--     said so; #34.31 found the ALTER raising 42P01 on a database without it)
 --   - table lookup_document_type (Slice #34.09's block in section 8 puts a
 --     unique index on it; it is created by migration_002 and this file never
 --     has -- and section 8 has been adding its `origin` column since #26.12
@@ -307,8 +336,13 @@ CREATE TABLE IF NOT EXISTS stamps (
 );
 
 -- (migration_057 added stamps.deleted_at; Slice #29.04's migration_070
--- removed it again, so this file no longer creates it. The check at the
--- bottom of section 9 refuses to run against a database that still has it.)
+-- removed it again, so this file no longer creates it. ⚠️ **THE CHECK THAT
+-- NOTICES A DATABASE WHICH STILL HAS IT IS IN SECTION 0, NOT "at the bottom of
+-- section 9" - section 9 has no deleted_at test at all - AND IT DOES NOT
+-- REFUSE.** It RAISEs, which under the local `psql -f` route in HOW TO APPLY
+-- aborts its own DO block and nothing else; see the paragraph on that block
+-- for what actually happens next. Both halves of this sentence were wrong and
+-- are corrected rather than acted on here. #34.31)
 
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -332,11 +366,121 @@ CREATE TABLE IF NOT EXISTS stamp_member (
                                           REFERENCES principal_object(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS stamp_member_stamp_principal_object_unique
-  ON stamp_member (stamp_id, principal_object_id);
+-- ⚠️ **COUNT FIRST, BECAUSE A UNIQUE INDEX CAN FAIL ON EXISTING DATA AND THIS
+-- FILE HAS NO ON_ERROR_STOP.** The `CREATE TABLE IF NOT EXISTS` immediately
+-- above is a no-op on a project that already has the table, and that project's
+-- rows are the ones that collide - so this statement could fail, and under
+-- `psql -f` the failure scrolled past a post-flight still reporting OK. Same
+-- shape as the provenance CHECK in section 3 and the migration_080 index in
+-- section 8. (#34.31)
+--
+-- ⚠️ **`IF NOT EXISTS` IS STILL ON THE CREATE, AND THE `to_regclass` TESTS
+-- ABOVE IT ARE ONLY SHORT-CIRCUITS.** An earlier draft dropped the
+-- `IF NOT EXISTS` on the grounds that `to_regclass` had already asked the same
+-- question. Keeping it costs nothing and it is not the same question: the
+-- short-circuit is a `public.`-qualified name test made before the count,
+-- while `IF NOT EXISTS` is made by the CREATE itself, against the table's own
+-- schema, at the moment it runs. If the short-circuit's premise is ever wrong
+-- the ELSE branch is a no-op rather than a 42P07 scrolling past a post-flight
+-- - which is the failure this whole guard exists to remove, and not one worth
+-- re-introducing to save a keyword.
+--
+-- ⚠️ **AND `public.` IS NOT A SHORTCUT HERE, IT IS THIS FILE'S SCOPE.** Every
+-- name test in this file is `public.`-qualified, section 10 included
+-- (`table_schema = 'public'`), so a deployment whose tables live in another
+-- schema is outside what this file can verify at all - it would report OK
+-- while touching nothing. Do not "fix" that one block at a time: either the
+-- whole file is qualified or the whole file resolves by search_path, and the
+-- half-and-half state is the one that reports success over an untouched
+-- database.
+--
+-- ⚠️ **AND THE COUNT EXCLUDES NULLS, WHICH IS NOT THE SAME AS THE COLUMNS BEING
+-- NOT NULL.** A unique index treats two NULLs as DISTINCT; `GROUP BY` folds
+-- them into one group. Over a nullable column a bare count therefore
+-- over-reports and refuses an index that would have built - and the operator,
+-- handed a listing query whose "duplicate" key is NULL, has nothing to resolve
+-- and gets the same WARNING for ever. The columns are NOT NULL in the CREATE
+-- TABLE above, but that statement is a no-op on precisely the database this
+-- guard exists for, so its declaration proves nothing about the rows there.
+-- The two CHECK guards in section 3 exclude NULL for the mirror-image reason.
+DO $$
+DECLARE
+  dupes integer;
+  cols  integer;
+BEGIN
+  -- The table is created by the `CREATE TABLE IF NOT EXISTS` one statement
+  -- above -- but that statement can itself fail on a database missing the
+  -- table it references, and the aggregate below would then raise 42P01 into
+  -- a file with no ON_ERROR_STOP. Section 10 reports the missing table as a
+  -- FAULT, which is the louder and more accurate answer, so this returns.
+  IF to_regclass('public.stamp_member') IS NULL THEN
+    RETURN;
+  END IF;
 
-CREATE INDEX IF NOT EXISTS stamp_member_principal_object_idx
-  ON stamp_member (principal_object_id);
+  -- ⚠️ **AND THE COLUMNS, NOT ONLY THE TABLE - BECAUSE THE TABLE BEING THERE
+  -- IS PRECISELY WHY THEY MIGHT NOT BE.** `CREATE TABLE IF NOT EXISTS` is a
+  -- no-op over an existing table of the same name WHATEVER ITS SHAPE, and this
+  -- guard exists for exactly that database. Without this test the aggregate
+  -- below raised 42703 - twice, once here and once in the listing query - and
+  -- under `psql -f` with no ON_ERROR_STOP both scrolled past a POST-FLIGHT OK,
+  -- which is the outcome #34.31 wrote this guard to remove. Section 10's
+  -- warning would then have offered "rows that already collide" as the cause,
+  -- which would have been wrong. (#34.31 review round 3, which built it.)
+  SELECT count(*) INTO cols
+    FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND table_name   = 'stamp_member'
+     AND column_name IN ('stamp_id', 'principal_object_id');
+
+  IF cols < 2 THEN
+    RAISE WARNING 'stamp_member is on its pre-migration_051 shape: it has no principal_object_id (migration_044 created the table with a person_id/property_id/document_id triple, and migration_051 replaced that with one FK). The unique index cannot be built over a column that is not there, and this file does not attempt the backfill - section 9 says why. Apply src/db/migration_051_polymorphic_member_fk.sql, then re-run this file.';
+    RETURN;
+  END IF;
+
+
+  -- ⚠️ **THE `IS NULL` TEST IS HERE RATHER THAN AS AN EARLY `RETURN`, AND THE
+  -- DIFFERENCE IS THE PLAIN INDEX BELOW.** An earlier draft returned as soon
+  -- as the unique index was found, which skipped that statement on any
+  -- database that had the unique index and not the plain one. Nesting instead
+  -- of returning costs one level of indentation and keeps both statements
+  -- reachable on every run. (#34.31 review round 4.)
+  IF to_regclass('public.stamp_member_stamp_principal_object_unique') IS NULL THEN
+    SELECT count(*) INTO dupes FROM (
+      SELECT 1 FROM stamp_member
+        WHERE stamp_id IS NOT NULL AND principal_object_id IS NOT NULL
+        GROUP BY stamp_id, principal_object_id HAVING count(*) > 1
+    ) x;
+
+    IF dupes > 0 THEN
+      RAISE WARNING 'stamp_member_stamp_principal_object_unique not created: % group(s) of rows in stamp_member share one (stamp_id, principal_object_id). The repair is to resolve the duplicates and re-run this file; list them with: SELECT stamp_id, principal_object_id, count(*) FROM stamp_member WHERE stamp_id IS NOT NULL AND principal_object_id IS NOT NULL GROUP BY stamp_id, principal_object_id HAVING count(*) > 1;', dupes;
+    ELSE
+      CREATE UNIQUE INDEX IF NOT EXISTS stamp_member_stamp_principal_object_unique
+        ON stamp_member (stamp_id, principal_object_id);
+    END IF;
+  END IF;
+
+  -- ⚠️ **THE PLAIN INDEX IS INSIDE THIS BLOCK BECAUSE IT NAMES THE COLUMN THE
+  -- PROBE ABOVE ALREADY ASKED ABOUT.** It sat outside as a bare `CREATE INDEX
+  -- IF NOT EXISTS` and raised 42703 on the pre-migration_051 shape - one line
+  -- after the guard above had just explained that shape in a WARNING, which
+  -- made the run print a correct diagnosis and an unexplained error together.
+  -- It is outside the duplicate test because a non-unique index cannot fail on
+  -- duplicates.
+  --
+  -- ⚠️ **AND IT IS NOT THE ONLY BARE STATEMENT OF THIS SHAPE IN THE FILE - AN
+  -- EARLIER DRAFT OF THIS PARAGRAPH SAID IT WAS.** `CREATE TABLE IF NOT
+  -- EXISTS` is a no-op over ANY table of that name, so every bare statement
+  -- that follows one can meet a column that is not there; a round-4 sweep
+  -- found the same shape raising under a POST-FLIGHT OK for entity_metadata,
+  -- entity_provenance_log, entity_metadata_version, entity_cross_reference,
+  -- entity_tag, calculation_run_output, time_frame_setting and
+  -- property_corner_source. THIS one moved because the probe it needs was
+  -- already two lines above it; the rest are a separate piece of work and are
+  -- in the #34.31 handover under "Noticed, not fixed". Do not read this move
+  -- as the file having dealt with the class.
+  CREATE INDEX IF NOT EXISTS stamp_member_principal_object_idx
+    ON stamp_member (principal_object_id);
+END $$;
 
 
 -- ===========================================================================
@@ -389,22 +533,97 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- CHECK constraints. importance / relevance are added only if absent.
-DO $$ BEGIN
-  IF NOT EXISTS (
+-- CHECK constraints. All three count first and warn rather than failing.
+--
+-- ⚠️ **THE COUNT EXCLUDES NULL, AND THAT IS NOT TIDINESS.** Both columns are
+-- nullable (migration_045 declared them so) and a CHECK is satisfied by NULL -
+-- `NULL IN (...)` is unknown, not false, and a constraint fails only on false.
+-- A count that said `importance NOT IN (...)` without the NULL test would
+-- return 0 over any number of NULL rows either way, which is right, but it
+-- would also read as though NULLs were being vetted. The provenance block
+-- below spells its test the same way for the same reason.
+DO $$
+DECLARE
+  drifted integer;
+BEGIN
+  -- Section 10's note on `to_regclass` applies here: a literal
+  -- `'entity_metadata'::regclass` is constant-folded while this query is
+  -- planned, so on a database missing the table it raises 42P01 rather than
+  -- evaluating to false. The count below would raise anyway, hence the
+  -- short-circuit first. Section 10 reports the missing table as a FAULT.
+  IF to_regclass('public.entity_metadata') IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (
     SELECT 1 FROM pg_constraint
-    WHERE conname = 'chk_em_importance' AND conrelid = 'entity_metadata'::regclass
+    WHERE conname = 'chk_em_importance' AND conrelid = to_regclass('public.entity_metadata')
   ) THEN
+    RAISE NOTICE 'chk_em_importance already present -- left untouched.';
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO drifted
+    FROM entity_metadata
+   WHERE importance IS NOT NULL
+     AND importance NOT IN ('LOW', 'MEDIUM', 'HIGH');
+
+  -- No migration remaps importance, which is why this message asks for a look
+  -- rather than naming one: LOW/MEDIUM/HIGH is the only set the column has
+  -- ever had (migration_045 declared it, migration_047 constrained it), so a
+  -- value outside it was written by something that was not this application
+  -- and nobody can say in advance what it should become. Contrast the
+  -- relevance block below, where migration_047 DOES have the answer.
+  IF drifted > 0 THEN
+    RAISE WARNING 'chk_em_importance NOT added: % row(s) hold an importance outside LOW/MEDIUM/HIGH. Nothing remaps them automatically -- list them with: SELECT id, importance FROM entity_metadata WHERE importance IS NOT NULL AND importance NOT IN (''LOW'', ''MEDIUM'', ''HIGH''); -- correct or clear each one, then re-run this file.', drifted;
+  ELSE
     ALTER TABLE entity_metadata
       ADD CONSTRAINT chk_em_importance CHECK (importance IN ('LOW', 'MEDIUM', 'HIGH'));
   END IF;
 END $$;
 
-DO $$ BEGIN
-  IF NOT EXISTS (
+DO $$
+DECLARE
+  drifted integer;
+BEGIN
+  -- Section 10's note on `to_regclass` applies here: a literal
+  -- `'entity_metadata'::regclass` is constant-folded while this query is
+  -- planned, so on a database missing the table it raises 42P01 rather than
+  -- evaluating to false. The count below would raise anyway, hence the
+  -- short-circuit first. Section 10 reports the missing table as a FAULT.
+  IF to_regclass('public.entity_metadata') IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (
     SELECT 1 FROM pg_constraint
-    WHERE conname = 'chk_em_relevance' AND conrelid = 'entity_metadata'::regclass
+    WHERE conname = 'chk_em_relevance' AND conrelid = to_regclass('public.entity_metadata')
   ) THEN
+    RAISE NOTICE 'chk_em_relevance already present -- left untouched.';
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO drifted
+    FROM entity_metadata
+   WHERE relevance IS NOT NULL
+     AND relevance NOT IN ('INACTIVE', 'HISTORICAL', 'CURRENT', 'FUTURE');
+
+  -- ⚠️ **THE MESSAGE NAMES ONE STATEMENT, NOT THE MIGRATION THAT CONTAINS
+  -- IT, AND THAT IS DELIBERATE** - the provenance block below names
+  -- migration_067 as a whole because remapping IS what 067 is for.
+  -- migration_047 is not like that: its remap is one line, and the statements
+  -- after it ADD `chk_em_provenance` with the PRE-067 value set (IMAGE_UPLOAD,
+  -- TEXT_FILE, EXTERNAL_IMPORT). Telling an operator to "apply migration_047"
+  -- would therefore install, on a database this file has just refused
+  -- `chk_em_provenance` to, the very constraint migration_067 then has to
+  -- drop. That is the whole of the difference, and the ledger is NOT part of
+  -- it: applying 067 by hand skips `schema_migrations` exactly as applying 047
+  -- would, and the provenance block below says to do it anyway. This file
+  -- does not run the UPDATE itself: it is a write of a kind the header's NOT
+  -- PURELY ADDITIVE list does not cover.
+  IF drifted > 0 THEN
+    RAISE WARNING 'chk_em_relevance NOT added: % row(s) hold a relevance outside INACTIVE/HISTORICAL/CURRENT/FUTURE. If they read OBSOLETE this is a pre-migration_047 database: run migration_047''s remap, UPDATE entity_metadata SET relevance = ''INACTIVE'' WHERE relevance = ''OBSOLETE''; -- that one statement, not the whole migration -- then re-run this file. Anything else: SELECT id, relevance FROM entity_metadata WHERE relevance IS NOT NULL AND relevance NOT IN (''INACTIVE'', ''HISTORICAL'', ''CURRENT'', ''FUTURE'');', drifted;
+  ELSE
     ALTER TABLE entity_metadata
       ADD CONSTRAINT chk_em_relevance
         CHECK (relevance IN ('INACTIVE', 'HISTORICAL', 'CURRENT', 'FUTURE'));
@@ -419,9 +638,18 @@ DO $$
 DECLARE
   stale integer;
 BEGIN
+  -- The same short-circuit as the two blocks above, for the same reason: a
+  -- literal regclass cast is constant-folded at plan time. Left out of the
+  -- first draft of #34.31, which added the rule to its two neighbours and to
+  -- section 10 and then had one block in the section raising into exactly the
+  -- state the other two now handle.
+  IF to_regclass('public.entity_metadata') IS NULL THEN
+    RETURN;
+  END IF;
+
   IF EXISTS (
     SELECT 1 FROM pg_constraint
-    WHERE conname = 'chk_em_provenance' AND conrelid = 'entity_metadata'::regclass
+    WHERE conname = 'chk_em_provenance' AND conrelid = to_regclass('public.entity_metadata')
   ) THEN
     RAISE NOTICE 'chk_em_provenance already present -- left untouched.';
     RETURN;
@@ -510,9 +738,98 @@ CREATE TABLE IF NOT EXISTS entity_tag (
   created_at          timestamptz NOT NULL DEFAULT now()
 );
 
--- Unique on lower(tag): migration_060 normalised all tags to lower case.
-CREATE UNIQUE INDEX IF NOT EXISTS entity_tag_entity_tag_unique
-  ON entity_tag (principal_object_id, lower(tag));
+-- Unique on lower(tag): migration_060 normalised all tags to lower case, so
+-- the collision test below must fold the same way the index does - two rows
+-- reading "Casa" and "casa" are one key to this index and must be counted as
+-- one group here.
+-- ⚠️ **COUNT FIRST, BECAUSE A UNIQUE INDEX CAN FAIL ON EXISTING DATA AND THIS
+-- FILE HAS NO ON_ERROR_STOP.** The `CREATE TABLE IF NOT EXISTS` immediately
+-- above is a no-op on a project that already has the table, and that project's
+-- rows are the ones that collide - so this statement could fail, and under
+-- `psql -f` the failure scrolled past a post-flight still reporting OK. Same
+-- shape as the provenance CHECK in section 3 and the migration_080 index in
+-- section 8. (#34.31)
+--
+-- ⚠️ **`IF NOT EXISTS` IS STILL ON THE CREATE, AND THE `to_regclass` TESTS
+-- ABOVE IT ARE ONLY SHORT-CIRCUITS.** An earlier draft dropped the
+-- `IF NOT EXISTS` on the grounds that `to_regclass` had already asked the same
+-- question. Keeping it costs nothing and it is not the same question: the
+-- short-circuit is a `public.`-qualified name test made before the count,
+-- while `IF NOT EXISTS` is made by the CREATE itself, against the table's own
+-- schema, at the moment it runs. If the short-circuit's premise is ever wrong
+-- the ELSE branch is a no-op rather than a 42P07 scrolling past a post-flight
+-- - which is the failure this whole guard exists to remove, and not one worth
+-- re-introducing to save a keyword.
+--
+-- ⚠️ **AND `public.` IS NOT A SHORTCUT HERE, IT IS THIS FILE'S SCOPE.** Every
+-- name test in this file is `public.`-qualified, section 10 included
+-- (`table_schema = 'public'`), so a deployment whose tables live in another
+-- schema is outside what this file can verify at all - it would report OK
+-- while touching nothing. Do not "fix" that one block at a time: either the
+-- whole file is qualified or the whole file resolves by search_path, and the
+-- half-and-half state is the one that reports success over an untouched
+-- database.
+--
+-- ⚠️ **AND THE COUNT EXCLUDES NULLS, WHICH IS NOT THE SAME AS THE COLUMNS BEING
+-- NOT NULL.** A unique index treats two NULLs as DISTINCT; `GROUP BY` folds
+-- them into one group. Over a nullable column a bare count therefore
+-- over-reports and refuses an index that would have built - and the operator,
+-- handed a listing query whose "duplicate" key is NULL, has nothing to resolve
+-- and gets the same WARNING for ever. The columns are NOT NULL in the CREATE
+-- TABLE above, but that statement is a no-op on precisely the database this
+-- guard exists for, so its declaration proves nothing about the rows there.
+-- The two CHECK guards in section 3 exclude NULL for the mirror-image reason.
+DO $$
+DECLARE
+  dupes integer;
+  cols  integer;
+BEGIN
+  -- The table is created by the `CREATE TABLE IF NOT EXISTS` one statement
+  -- above -- but that statement can itself fail on a database missing the
+  -- table it references, and the aggregate below would then raise 42P01 into
+  -- a file with no ON_ERROR_STOP. Section 10 reports the missing table as a
+  -- FAULT, which is the louder and more accurate answer, so this returns.
+  IF to_regclass('public.entity_tag') IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- ⚠️ **AND THE COLUMNS, NOT ONLY THE TABLE - BECAUSE THE TABLE BEING THERE
+  -- IS PRECISELY WHY THEY MIGHT NOT BE.** `CREATE TABLE IF NOT EXISTS` is a
+  -- no-op over an existing table of the same name WHATEVER ITS SHAPE, and this
+  -- guard exists for exactly that database. Without this test the aggregate
+  -- below raised 42703 - twice, once here and once in the listing query - and
+  -- under `psql -f` with no ON_ERROR_STOP both scrolled past a POST-FLIGHT OK,
+  -- which is the outcome #34.31 wrote this guard to remove. Section 10's
+  -- warning would then have offered "rows that already collide" as the cause,
+  -- which would have been wrong. (#34.31 review round 3, which built it.)
+  SELECT count(*) INTO cols
+    FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND table_name   = 'entity_tag'
+     AND column_name IN ('principal_object_id', 'tag');
+
+  IF cols < 2 THEN
+    RAISE WARNING 'entity_tag does not carry both principal_object_id and tag, so the unique index cannot be built over them. That is a table this file creates, so the CREATE TABLE above was a no-op over an older table of the same name; compare it against src/db/schema/index.ts before re-running.';
+    RETURN;
+  END IF;
+
+  IF to_regclass('public.entity_tag_entity_tag_unique') IS NOT NULL THEN
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO dupes FROM (
+    SELECT 1 FROM entity_tag
+      WHERE principal_object_id IS NOT NULL AND tag IS NOT NULL
+      GROUP BY principal_object_id, lower(tag) HAVING count(*) > 1
+  ) x;
+
+  IF dupes > 0 THEN
+    RAISE WARNING 'entity_tag_entity_tag_unique not created: % group(s) of rows in entity_tag share one (principal_object_id, lower(tag)). The repair is to resolve the duplicates and re-run this file; list them with: SELECT principal_object_id, lower(tag), count(*) FROM entity_tag WHERE principal_object_id IS NOT NULL AND tag IS NOT NULL GROUP BY principal_object_id, lower(tag) HAVING count(*) > 1;', dupes;
+  ELSE
+    CREATE UNIQUE INDEX IF NOT EXISTS entity_tag_entity_tag_unique
+      ON entity_tag (principal_object_id, lower(tag));
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS entity_tag_principal_object_idx
   ON entity_tag (principal_object_id);
@@ -629,8 +946,94 @@ CREATE TABLE IF NOT EXISTS property_corner_source (
   created_by  text
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS property_corner_source_document_unique
-  ON property_corner_source (document_id);
+-- ⚠️ **COUNT FIRST, BECAUSE A UNIQUE INDEX CAN FAIL ON EXISTING DATA AND THIS
+-- FILE HAS NO ON_ERROR_STOP.** The `CREATE TABLE IF NOT EXISTS` immediately
+-- above is a no-op on a project that already has the table, and that project's
+-- rows are the ones that collide - so this statement could fail, and under
+-- `psql -f` the failure scrolled past a post-flight still reporting OK. Same
+-- shape as the provenance CHECK in section 3 and the migration_080 index in
+-- section 8. (#34.31)
+--
+-- ⚠️ **`IF NOT EXISTS` IS STILL ON THE CREATE, AND THE `to_regclass` TESTS
+-- ABOVE IT ARE ONLY SHORT-CIRCUITS.** An earlier draft dropped the
+-- `IF NOT EXISTS` on the grounds that `to_regclass` had already asked the same
+-- question. Keeping it costs nothing and it is not the same question: the
+-- short-circuit is a `public.`-qualified name test made before the count,
+-- while `IF NOT EXISTS` is made by the CREATE itself, against the table's own
+-- schema, at the moment it runs. If the short-circuit's premise is ever wrong
+-- the ELSE branch is a no-op rather than a 42P07 scrolling past a post-flight
+-- - which is the failure this whole guard exists to remove, and not one worth
+-- re-introducing to save a keyword.
+--
+-- ⚠️ **AND `public.` IS NOT A SHORTCUT HERE, IT IS THIS FILE'S SCOPE.** Every
+-- name test in this file is `public.`-qualified, section 10 included
+-- (`table_schema = 'public'`), so a deployment whose tables live in another
+-- schema is outside what this file can verify at all - it would report OK
+-- while touching nothing. Do not "fix" that one block at a time: either the
+-- whole file is qualified or the whole file resolves by search_path, and the
+-- half-and-half state is the one that reports success over an untouched
+-- database.
+--
+-- ⚠️ **AND THE COUNT EXCLUDES NULLS, WHICH IS NOT THE SAME AS THE COLUMNS BEING
+-- NOT NULL.** A unique index treats two NULLs as DISTINCT; `GROUP BY` folds
+-- them into one group. Over a nullable column a bare count therefore
+-- over-reports and refuses an index that would have built - and the operator,
+-- handed a listing query whose "duplicate" key is NULL, has nothing to resolve
+-- and gets the same WARNING for ever. The columns are NOT NULL in the CREATE
+-- TABLE above, but that statement is a no-op on precisely the database this
+-- guard exists for, so its declaration proves nothing about the rows there.
+-- The two CHECK guards in section 3 exclude NULL for the mirror-image reason.
+DO $$
+DECLARE
+  dupes integer;
+  cols  integer;
+BEGIN
+  -- The table is created by the `CREATE TABLE IF NOT EXISTS` one statement
+  -- above -- but that statement can itself fail on a database missing the
+  -- table it references, and the aggregate below would then raise 42P01 into
+  -- a file with no ON_ERROR_STOP. Section 10 reports the missing table as a
+  -- FAULT, which is the louder and more accurate answer, so this returns.
+  IF to_regclass('public.property_corner_source') IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- ⚠️ **AND THE COLUMNS, NOT ONLY THE TABLE - BECAUSE THE TABLE BEING THERE
+  -- IS PRECISELY WHY THEY MIGHT NOT BE.** `CREATE TABLE IF NOT EXISTS` is a
+  -- no-op over an existing table of the same name WHATEVER ITS SHAPE, and this
+  -- guard exists for exactly that database. Without this test the aggregate
+  -- below raised 42703 - twice, once here and once in the listing query - and
+  -- under `psql -f` with no ON_ERROR_STOP both scrolled past a POST-FLIGHT OK,
+  -- which is the outcome #34.31 wrote this guard to remove. Section 10's
+  -- warning would then have offered "rows that already collide" as the cause,
+  -- which would have been wrong. (#34.31 review round 3, which built it.)
+  SELECT count(*) INTO cols
+    FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND table_name   = 'property_corner_source'
+     AND column_name IN ('document_id');
+
+  IF cols < 1 THEN
+    RAISE WARNING 'property_corner_source does not carry document_id, so the unique index cannot be built over it. That is a table this file creates, so the CREATE TABLE above was a no-op over an older table of the same name; compare it against src/db/schema/index.ts before re-running.';
+    RETURN;
+  END IF;
+
+  IF to_regclass('public.property_corner_source_document_unique') IS NOT NULL THEN
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO dupes FROM (
+    SELECT 1 FROM property_corner_source
+      WHERE document_id IS NOT NULL
+      GROUP BY document_id HAVING count(*) > 1
+  ) x;
+
+  IF dupes > 0 THEN
+    RAISE WARNING 'property_corner_source_document_unique not created: % group(s) of rows in property_corner_source share one (document_id). The repair is to resolve the duplicates and re-run this file; list them with: SELECT document_id, count(*) FROM property_corner_source WHERE document_id IS NOT NULL GROUP BY document_id HAVING count(*) > 1;', dupes;
+  ELSE
+    CREATE UNIQUE INDEX IF NOT EXISTS property_corner_source_document_unique
+      ON property_corner_source (document_id);
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS property_corner_source_property_idx
   ON property_corner_source (property_id);
@@ -958,13 +1361,45 @@ END $$;
 -- was 500 lines too late — this file is run through `psql -f` with no
 -- --single-transaction, so by the time it raised, all thirteen tables had
 -- already been created and committed. (Found by an adversarial round.)
+--
+-- ⚠️ **AND MOVING IT CHANGED ONLY WHEN THE ERROR PRINTS. IT DID NOT STOP THE
+-- RUN, AND THIS PARAGRAPH READ AS THOUGH IT HAD.** A mid-file `RAISE
+-- EXCEPTION` aborts its own DO block; under the local route in HOW TO APPLY
+-- (`psql -f`, no ON_ERROR_STOP) psql prints the error and carries straight on,
+-- so all thirteen tables are created and committed one statement later, every
+-- non-purely-additive statement in the header's operator list runs, and the
+-- LAST line is still POST-FLIGHT OK, exit 0 - on a database the guard has just
+-- told the operator "Nothing has been changed." Measured against PostgreSQL 16
+-- by #34.31 review round 5. Under the Supabase route (the whole file in one
+-- transaction) the guard works exactly as written, which is why it stays.
+-- The fix is the one section 8 states for `chk_ldt_origin` - a `faults` entry
+-- in section 10, because the verdict line is the only thing that reaches an
+-- operator on this route - and it changes what this file REFUSES, so it is a
+-- decision rather than a correction. It is in the #34.31 handover under
+-- "Noticed, not fixed".
 
 -- migration_039 / 041 -- property type slug + panel-visibility flags
-ALTER TABLE lookup_property_type
-  ADD COLUMN IF NOT EXISTS key                text,
-  ADD COLUMN IF NOT EXISTS show_tarla_parcela boolean NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS show_address       boolean NOT NULL DEFAULT false,
-  ADD COLUMN IF NOT EXISTS show_street_view   boolean NOT NULL DEFAULT false;
+--
+-- ⚠️ **GATED, BECAUSE A BARE `ALTER TABLE` ON A MISSING TABLE RAISES BEFORE
+-- ANYTHING BELOW IT GETS A CHANCE TO SAY SO.** `lookup_property_type` is a
+-- PREREQUISITE - this file never creates it - and until #34.31 this statement
+-- raised 42P01 on a database without it, the error scrolled past (no
+-- ON_ERROR_STOP), and the file still ended POST-FLIGHT OK. The guarded block
+-- below got its own short-circuit in the same slice and it did NOT fix this:
+-- the ALTER raises first, so the WARNING the block prints arrives after the
+-- error it was supposed to replace. Both halves are needed, which is the
+-- lesson rather than the statement. (#34.31 review round 3.)
+DO $$ BEGIN
+  IF to_regclass('public.lookup_property_type') IS NULL THEN
+    RETURN;   -- the block below raises the WARNING; one per run is enough
+  END IF;
+
+  ALTER TABLE lookup_property_type
+    ADD COLUMN IF NOT EXISTS key                text,
+    ADD COLUMN IF NOT EXISTS show_tarla_parcela boolean NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS show_address       boolean NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS show_street_view   boolean NOT NULL DEFAULT false;
+END $$;
 
 -- ADD COLUMN cannot carry the UNIQUE that schema/index.ts declares on `key`,
 -- so add it separately -- but only when existing data would not violate it.
@@ -985,11 +1420,35 @@ BEGIN
   -- CREATE INDEX CONCURRENTLY, which enforces nothing; indpred IS NULL
   -- excludes a partial index, which enforces uniqueness only over part of the
   -- table. (Slice #31.01 review, round two.)
+  -- ⚠️ **SHORT-CIRCUIT FIRST, AND THIS ONE LEFT A GREEN VERDICT BEHIND IT.**
+  -- `lookup_property_type` is a PREREQUISITE table: this file does not create
+  -- it, it is not in the post-flight's `expected` array, and no column check
+  -- names it. So on a database missing it, the literal cast below raised
+  -- `relation "lookup_property_type" does not exist` - constant-folded at plan
+  -- time, so no IF in front of it can help - the error scrolled past (no
+  -- ON_ERROR_STOP), and the file's LAST LINE was still POST-FLIGHT OK. Worse
+  -- than the same defect in section 10, which at least destroyed the verdict
+  -- rather than leaving a false one. (#34.31; reproduced against PostgreSQL 16.)
+  --
+  -- ⚠️ **AND THIS SHORT-CIRCUIT ALONE DID NOT FIX THAT** - the first draft of
+  -- it said so and was wrong. The `ALTER TABLE` above raises on the same
+  -- database and raises FIRST, so all this achieved on its own was to add a
+  -- WARNING after an error. The ALTER is now gated too. What is STILL true is
+  -- that the verdict stays green: `lookup_property_type` is not in section
+  -- 10's `expected` array and its absence appends no fault, so a database
+  -- without it gets two WARNINGs and POST-FLIGHT OK. Making that a FAULT would
+  -- change what this file refuses, which is a decision rather than a fix; it
+  -- is in the #34.31 handover under "Noticed, not fixed".
+  IF to_regclass('public.lookup_property_type') IS NULL THEN
+    RAISE WARNING 'lookup_property_type is missing entirely; the UNIQUE on its `key` column was not considered. That table is a PREREQUISITE of this file, not one of the thirteen it creates - a database without it is behind the migration chain, not merely unrepaired.';
+    RETURN;
+  END IF;
+
   IF EXISTS (
     SELECT 1
       FROM pg_index i
       JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
-     WHERE i.indrelid = 'lookup_property_type'::regclass
+     WHERE i.indrelid = to_regclass('public.lookup_property_type')
        AND i.indisunique
        AND i.indisvalid
        AND i.indpred IS NULL
@@ -1016,8 +1475,17 @@ END $$;
 
 -- ── migration_080 (Slice #34.09) -- two document types may not share a name ──
 --
--- ⚠️ **THE ONLY STATEMENT IN THIS FILE THAT CAN FAIL ON EXISTING DATA, WHICH IS
--- WHY IT IS A GUARDED BLOCK AND NOT A `CREATE UNIQUE INDEX IF NOT EXISTS`.**
+-- ⚠️ **A STATEMENT THAT COULD FAIL ON EXISTING DATA, WHICH IS WHY IT IS A
+-- GUARDED BLOCK AND NOT A `CREATE UNIQUE INDEX IF NOT EXISTS`.** This read
+-- „THE ONLY STATEMENT IN THIS FILE THAT CAN FAIL ON EXISTING DATA" until
+-- #34.31, and that was already generous when written -- the provenance and
+-- `origin` CHECKs counted first for the same reason -- but the slice that
+-- guarded the last five unguarded ones is the slice that had to stop the
+-- sentence being repeated. The set is now: this index, the
+-- `lookup_property_type` UNIQUE above, `chk_em_importance`,
+-- `chk_em_relevance`, `chk_em_provenance`, the three `chk_*_origin` CHECKs,
+-- and the three unique indexes in sections 2, 4 and 7. All of them count
+-- first; none of them is alone.
 -- This file is fed to `psql -f` with no ON_ERROR_STOP (see the paragraph above
 -- section 10), so a failing bare statement scrolls past and the post-flight
 -- still says OK. Counting first and refusing loudly is the shape the
@@ -1129,9 +1597,18 @@ ALTER TABLE property
 -- getting it wrong on live data is destructive -- so this file only reports.
 
 DO $$ BEGIN
+  -- ⚠️ `table_schema` on both tests below (#34.31). `information_schema.columns`
+  -- spans every schema the role can see, so without it an UNRELATED table of
+  -- the same name in any other schema -- an `archive_2025.group_member`, a
+  -- restored copy -- answers the question, and the pre-051 shape goes
+  -- unreported under a POST-FLIGHT OK. No search_path change is needed to
+  -- reach that; the row simply exists. Every other name test in this file is
+  -- already `public`-qualified, and the paragraph in sections 2, 4 and 7 that
+  -- says so was false about this one block until it was.
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'group_member' AND column_name = 'principal_object_id'
+    WHERE table_schema = 'public'
+      AND table_name = 'group_member' AND column_name = 'principal_object_id'
   ) THEN
     RAISE WARNING 'group_member still has the pre-migration_051 shape. '
                   'Apply migration_051_polymorphic_member_fk.sql -- it does the '
@@ -1143,7 +1620,8 @@ DO $$ BEGIN
   -- migration_052. Dropping a column is destructive, so only report it.
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'document' AND column_name = 'institution'
+    WHERE table_schema = 'public'
+      AND table_name = 'document' AND column_name = 'institution'
   ) THEN
     RAISE WARNING 'document.institution still present (superseded by '
                   'institution_id). Apply migration_052_drop_dead_document_'
@@ -1387,11 +1865,25 @@ BEGIN
   --
   -- Same shape-based probe as section 8's block; a name-only test would be
   -- wrong here for the reason stated there.
+  --
+  -- ⚠️ **`to_regclass` IN THE SUBQUERY TOO, AND THE GUARD IN FRONT OF IT IS NOT
+  -- ENOUGH.** This read `i.indrelid = 'lookup_document_type'::regclass` until
+  -- #34.31, behind the `to_regclass(...) IS NOT NULL AND` that stands one line
+  -- above -- and that `AND` does not protect it. The whole IF is ONE SQL
+  -- expression, and a literal cast to regclass is constant-folded while that
+  -- expression is PLANNED, before any of it is evaluated. So on a project
+  -- missing `lookup_document_type` this raised `relation ... does not exist`,
+  -- which aborted the entire post-flight block: the file's last line became
+  -- that error instead of the POST-FLIGHT FAILED line naming what to fix, and
+  -- under `psql -f` with no ON_ERROR_STOP it still exited 0. Slice #34.03's
+  -- round four fixed exactly this shape in the property.tarla_id branches
+  -- below and this copy was missed. Reproduced against PostgreSQL 16 before
+  -- the change and after it.
   IF to_regclass('public.lookup_document_type') IS NOT NULL
      AND NOT EXISTS (
        SELECT 1
          FROM pg_index i
-        WHERE i.indrelid    = 'lookup_document_type'::regclass
+        WHERE i.indrelid    = to_regclass('public.lookup_document_type')
           AND i.indisunique
           AND i.indisvalid
           AND i.indpred IS NOT NULL
@@ -1401,12 +1893,119 @@ BEGIN
     RAISE WARNING 'lookup_document_type has no partial unique index over the normalised name (migration_080, Slice #34.09). Two document types can still be created with one display name by a racing writer; the application still refuses the ordinary case. Section 8 says why it was not created — a collision, or a missing table.';
   END IF;
 
+  -- Slice #34.31: the five statements that gained a count-first guard earlier
+  -- in this file, asked about here by name.
+  --
+  -- ⚠️ **A GUARD THAT TURNS A FAILURE INTO A SKIP HAS MOVED THE PROBLEM, NOT
+  -- SOLVED IT, UNLESS SOMETHING SAYS THE SKIP HAPPENED.** Before #34.31 these
+  -- five could FAIL under `psql -f` and scroll past a post-flight reporting OK.
+  -- Guarding them stops the failure; without the checks below it would replace
+  -- one silent outcome with another, and the sentence this file already wrote
+  -- about migration_080's index -- that a guarded skip needs an answer at the
+  -- end -- would be true of five more statements and acted on for one.
+  --
+  -- WARNINGS, NOT FAULTS, for the reason the migration_080 block above gives:
+  -- none of these absences breaks a query drizzle builds, so raising an
+  -- EXCEPTION would make this file refuse a database that is merely one
+  -- migration behind and otherwise serviceable.
+  --
+  -- ⚠️ **THE NAME IS THE HANDLE, BUT IT IS NOT THE WHOLE TEST.** Each probe
+  -- below resolves the index BY NAME and then asks `indisunique` and
+  -- `indisvalid`, because a relation of that name is not the same fact as a
+  -- unique index that enforces anything: a NON-UNIQUE index carrying the name,
+  -- or one left invalid by a failed `CREATE INDEX CONCURRENTLY`, would satisfy
+  -- a name-only test and let the post-flight report OK over rows that still
+  -- collide. The migration_080 check above asks the same two questions for the
+  -- same reason and its comment says a name-only test "would be wrong here".
+  -- (Added by #34.31 review round 2, which built exactly that database.)
+  --
+  -- ⚠️ **WHAT IS NAME-BASED IS WHICH INDEX WE ASK ABOUT, AND THERE THAT IS
+  -- CORRECT** - which is worth saying in the
+  -- file carrying the `lookup_property_type.key` scar, where a name-only test
+  -- was exactly the mistake. That trap needs a SECOND spelling for the same
+  -- object, minted by `drizzle-kit push` from a declaration in
+  -- schema/index.ts. These three have no second spelling to be fooled by:
+  -- schema/index.ts declares `property_corner_source_document_unique` under
+  -- that exact name, says in so many words of `stamp_member` that its unique
+  -- index is "defined in the migration; Drizzle cannot express it inline
+  -- here", and for `entity_tag` is silent about uniqueness altogether. Push
+  -- can only mint a name for something it declares, so in all three cases a
+  -- database either has the index under this name or does not have it.
+  --
+  -- `to_regclass(...)`, never `'entity_metadata'::regclass`: a literal cast to
+  -- regclass is constant-folded while the query is planned, so it raises
+  -- "relation does not exist" on a database missing the table even when the
+  -- test in front of it would have been false. The function returns NULL
+  -- instead, and a comparison against NULL is simply not true.
+  IF to_regclass('public.entity_metadata') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint c
+        WHERE c.conname  = 'chk_em_importance'
+          AND c.conrelid = to_regclass('public.entity_metadata')
+     ) THEN
+    RAISE WARNING 'entity_metadata has no chk_em_importance (migration_047). The usual cause is section 3 skipping it over rows holding an importance outside LOW/MEDIUM/HIGH, and its WARNING above then names the count and the query -- but this check only asks whether the constraint is there, so if no such WARNING was printed the ADD did not run at all (a privilege, a lock, a failure earlier in section 3) and that is what to look for. Either way nothing is broken: the column is unconstrained until the cause is cleared and this file is re-run.';
+  END IF;
+
+  IF to_regclass('public.entity_metadata') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint c
+        WHERE c.conname  = 'chk_em_relevance'
+          AND c.conrelid = to_regclass('public.entity_metadata')
+     ) THEN
+    RAISE WARNING 'entity_metadata has no chk_em_relevance (migration_047). The usual cause is section 3 skipping it over rows holding a relevance outside INACTIVE/HISTORICAL/CURRENT/FUTURE -- most often a pre-migration_047 database still holding OBSOLETE -- and its WARNING above then says which; if no such WARNING was printed, the ADD did not run at all and that is what to look for. Either way nothing is broken: the column is unconstrained until the cause is cleared and this file is re-run.';
+  END IF;
+
+  -- ⚠️ **AND PROVENANCE, WHICH IS OLDER THAN THIS SLICE AND WAS THE ONE
+  -- COUNT-FIRST GUARD WITH NO ANSWER AT THE END.** It is in the same header
+  -- bullet as the two above and has warned rather than failed since #26.12 --
+  -- so the sentence this section is built on applied to it first and nobody
+  -- had acted on it. A pre-migration_067 database holding IMAGE_UPLOAD reached
+  -- section 3's WARNING and then a POST-FLIGHT OK that did not mention it.
+  IF to_regclass('public.entity_metadata') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint c
+        WHERE c.conname  = 'chk_em_provenance'
+          AND c.conrelid = to_regclass('public.entity_metadata')
+     ) THEN
+    RAISE WARNING 'entity_metadata has no chk_em_provenance (migration_067). The usual cause is section 3 skipping it over rows holding a pre-migration_067 provenance value, and its WARNING above then names the count; if no such WARNING was printed, the ADD did not run at all. Either way nothing is broken: the column is unconstrained until the cause is cleared and this file is re-run.';
+  END IF;
+
+  IF to_regclass('public.stamp_member') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_index i
+        WHERE i.indexrelid = to_regclass('public.stamp_member_stamp_principal_object_unique')
+          AND i.indisunique
+          AND i.indisvalid
+     ) THEN
+    RAISE WARNING 'stamp_member has no stamp_member_stamp_principal_object_unique (migration_044). The usual cause is section 2 skipping it over rows that already share a (stamp_id, principal_object_id), and its WARNING above then names how many groups; if no such WARNING was printed, the CREATE did not run at all. Until the cause is cleared and this file is re-run, one principal object can be stamped twice by the same stamp.';
+  END IF;
+
+  IF to_regclass('public.entity_tag') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_index i
+        WHERE i.indexrelid = to_regclass('public.entity_tag_entity_tag_unique')
+          AND i.indisunique
+          AND i.indisvalid
+     ) THEN
+    RAISE WARNING 'entity_tag has no entity_tag_entity_tag_unique (migration_048/060). The usual cause is section 4 skipping it over rows that already share a (principal_object_id, lower(tag)), and its WARNING above then names how many groups; if no such WARNING was printed, the CREATE did not run at all. Until the cause is cleared and this file is re-run, one object can carry the same tag twice, differing only in case.';
+  END IF;
+
+  IF to_regclass('public.property_corner_source') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_index i
+        WHERE i.indexrelid = to_regclass('public.property_corner_source_document_unique')
+          AND i.indisunique
+          AND i.indisvalid
+     ) THEN
+    RAISE WARNING 'property_corner_source has no property_corner_source_document_unique (migration_068). The usual cause is section 7 skipping it over rows that already name one document_id, and its WARNING above then names how many; if no such WARNING was printed, the CREATE did not run at all. Until the cause is cleared and this file is re-run, one document can be the corner source for more than one property.';
+  END IF;
+
   IF array_length(missing, 1) IS NOT NULL THEN
     faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. Any WARNING above about lookup_document_type_name_normalised_unique is separate and is not a fault.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. A WARNING above about any of lookup_document_type_name_normalised_unique, lookup_property_type_key_unique, lookup_property_type itself, chk_em_importance, chk_em_relevance, chk_em_provenance, stamp_member_stamp_principal_object_unique, entity_tag_entity_tag_unique or property_corner_source_document_unique is separate and is not a fault -- each names a statement that is not on this database, says the usual reason it was skipped and what to resolve before re-running.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;
