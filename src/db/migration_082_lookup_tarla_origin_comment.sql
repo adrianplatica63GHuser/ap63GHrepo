@@ -1,0 +1,110 @@
+-- migration_082_lookup_tarla_origin_comment.sql
+-- Slice #34.31 - the live comment on lookup_tarla.origin stops saying the
+-- opposite of the code.
+--
+-- One statement. No column, no constraint, no data, no table. The whole file
+-- is a `COMMENT ON COLUMN`, because the text being corrected is not in a
+-- source file where a reader could be trusted to find the retraction beside
+-- it - it is IN THE DATABASE, where `\d+ lookup_tarla` prints it and nothing
+-- prints migration_077's retraction paragraph next to it.
+--
+-- ---------------------------------------------------------------------------
+-- WHAT THIS SUPERSEDES IN migration_077, AND WHY 077 WAS NOT EDITED INSTEAD
+-- ---------------------------------------------------------------------------
+--
+-- ⚠️ **migration_077_reference_data_origin.sql CANNOT BE EDITED, AND THAT IS
+-- THE WHOLE REASON THIS FILE EXISTS.** Its MD5 is recorded in
+-- `schema_migrations`, and `scripts/Apply-Migration.ps1` Step 4 compares every
+-- recorded checksum against the file on disk and STOPS THE RUN on a mismatch.
+-- Changing one character of one comment in 077 would report every database as
+-- differing from the repository, permanently. This is the same constraint
+-- migration_081 met with migration_072, and the same answer: forward, not in
+-- place.
+--
+-- ⚠️ **AND AN EDIT TO 077 WOULD NOT HAVE REACHED THE DATABASE ANYWAY** - which
+-- is the part that makes this a migration rather than a comment fix. A
+-- `COMMENT ON COLUMN` is EXECUTED: the text 077 installed is live in
+-- `pg_description` on every database 077 ever ran against. Correcting the file
+-- without re-executing a COMMENT would leave the repository right and every
+-- database wrong, which is the worse of the two directions.
+--
+-- THE SENTENCE BEING CORRECTED. migration_077 installed, and
+-- `src/db/supabase_schema_full.sql` still dumps:
+--
+--     „Write-once by convention: unlike lookup_document_type, no explicit
+--      strip guards the value-lists PUT for this table - Zod drops an unknown
+--      origin from the update payload and that is the only guard."
+--
+-- That was true when 077 was written and has been false since Slice #34.14.
+-- migration_077 says so itself, at its own lines 71-86: the paragraph is left
+-- standing there as the argument the fix was built from, and it ends by
+-- recording that correcting THIS comment „needs a `COMMENT ON COLUMN` in a new
+-- migration rather than an edit here. It is in the #34.14 handover." This file
+-- is that migration.
+--
+-- WHAT THE CODE DOES NOW, MEASURED RATHER THAN REMEMBERED
+--   src/lib/admin/value-lists/queries.ts
+--     `updateValue`  - `const data: any = stripLookupOrigin(payload)`, ONCE,
+--                      ABOVE the switch, so all eleven lists are stripped on
+--                      the way in and `tarla` is no longer an unnamed
+--                      exception.
+--     `createValue`  - `key === "document-types" ? payload :
+--                      stripLookupOrigin(payload)`, so every list but
+--                      document-types is stripped there too; that one POST
+--                      schema carries `origin` as a create-only field on
+--                      purpose.
+--   Zod is still the route-side half and is still worth having; what changed
+--   is that it is no longer the ONLY half.
+--   `src/__tests__/value-list-write-door.test.ts` pins the shape rather than
+--   the wording: it reads `updateValue`'s source with comments stripped and
+--   fails if `payload` is read anywhere below that line.
+--
+-- ⚠️ **„declares no origin field", NOT „a plain z.object".** The entry is
+-- `tarlaSchema.extend({ sortOrder: sortOrderOnUpdate })`, and
+-- src/lib/admin/value-lists/validation.ts treats extended-versus-unextended as
+-- load-bearing in its own comments - `person-roles` is unextended ON PURPOSE
+-- and says so. Calling this one "plain" would be the kind of nearly-right
+-- detail this whole migration exists to stop shipping. What the guard actually
+-- rests on is that no variant declares `origin`, so Zod's default strip drops
+-- it whatever else was extended on.
+--
+-- ⚠️ **THE NEW TEXT DOES NOT NAME A SLICE NUMBER FOR THE STRIP, DELIBERATELY.**
+-- A column comment is read by whoever is looking at the column, usually with
+-- no repository to hand, and "#34.14" is a lookup they cannot perform. It
+-- names the FUNCTION and the FILE, which are greppable, and leaves the slice
+-- archaeology to this header.
+--
+-- THE THIRD COPY, AND WHO CORRECTS IT
+--   `src/db/supabase_schema_full.sql` carries the retracted sentence verbatim
+--   as well. It is NOT edited here and must not be: its own header says
+--   „GENERATED FILE -- DO NOT EDIT BY HAND", and it is regenerated from the
+--   live schema by `scripts/Export-SupabaseSchema.ps1`. So it corrects itself
+--   the first time anyone re-exports AFTER this migration has been applied to
+--   the database that gets exported - and stays wrong until then. Hand-editing
+--   it would put a prediction where a record belongs.
+--
+-- NOT IN SCOPE
+--   `lookup_institution.origin` and `lookup_document_type.origin`. Neither
+--   comment makes the claim this one makes - institution's describes a column
+--   nothing writes IMPORT to yet, and document-type's was correct when written
+--   and still is. A migration that rewrote all three to be tidy would put two
+--   correct comments at risk for no gain.
+--
+-- APPLY WITH
+--   Local    : .\scripts\Apply-Migration.ps1
+--   Supabase : paste this file into the SQL Editor and run.
+--
+--   ⚠️ **BOTH, AND THE SECOND LINE IS NOT BOILERPLATE.** Apply-Migration.ps1
+--   talks to the local Docker container and to nothing else - `docker exec
+--   $Container psql`, every call. The text this migration corrects is live in
+--   `pg_description` on the Supabase project too, so a run that stops at the
+--   local database leaves that project still answering with the retracted
+--   sentence, which is the state this file's header calls the worse of the two
+--   directions. migration_081 carries the same two lines for the same reason.
+
+BEGIN;
+
+COMMENT ON COLUMN lookup_tarla.origin IS
+  'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. The origin is decided at that write site and is never read from a request body. Write-once, and guarded twice: stripLookupOrigin() removes origin from the payload of every value-lists PUT in updateValue (src/lib/admin/value-lists/queries.ts), for all eleven lists including this one, and from every POST but document-types in createValue - and this list''s route schema (LIST_UPDATE_SCHEMAS["tarla"], a Zod object that declares no origin field) drops an unknown origin before the query layer sees it. The document-types POST schema is the one exception anywhere, and it carries origin as a create-only field on purpose. Superseded the comment migration_077 installed, which said no explicit strip existed for this table and that Zod was the only guard; that stopped being true when the strip moved above updateValue''s switch. See migration_077 for the full note on what MANUAL and IMPORT mean, and migration_082 for why this text had to arrive as a second statement rather than an edit.';
+
+COMMIT;
