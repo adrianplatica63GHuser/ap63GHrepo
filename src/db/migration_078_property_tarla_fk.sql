@@ -1,6 +1,68 @@
 -- migration_078_property_tarla_fk.sql
 -- Slice #34.03 - a tarla code becomes an identity.
 --
+-- ---------------------------------------------------------------------------
+-- ⚠️ EDITED AFTER IT WAS APPLIED, BY SLICE #34.31, AND THE CHECKSUM WAS
+-- RE-RECORDED. READ THIS BEFORE EDITING IT AGAIN.
+-- ---------------------------------------------------------------------------
+--
+-- This file's MD5 is stored in `schema_migrations`, and
+-- `scripts/Apply-Migration.ps1` Step 4 compares every recorded checksum
+-- against the file on disk and STOPS THE RUN on a mismatch. So an edit here
+-- is not free: it must be followed, on every database that already holds the
+-- row, by the re-record that step's own message prescribes -
+--
+--     UPDATE schema_migrations SET checksum = '<new hash>'
+--      WHERE filename = 'migration_078_property_tarla_fk.sql';
+--
+-- - which #34.31 did deliberately, with Adrian's go-ahead, rather than leave
+-- the defects below uncorrected for every future run of this file. The
+-- alternative considered and rejected was recording them in
+-- `scripts/decision-checks.sql` and changing nothing here.
+--
+-- THREE THINGS WERE WRONG AND ALL THREE WERE IN THE REPORTING, NOT THE SCHEMA
+--   1. Section 5 COUNTED stale rows with `NOT EXISTS` and LISTED them with an
+--      INNER JOIN, so a `tarla_id` naming no `lookup_tarla` row was counted and
+--      never named - and if it was the only one, `string_agg` returned NULL,
+--      the message went NULL with it, and the block raised `WARNING: <NULL>`
+--      over a tarla value it was about to destroy. LEFT JOIN plus a `coalesce`;
+--      the block says why neither alone is enough.
+--   2. Section 2's foreign-key test did not ask `convalidated`, so a
+--      pre-existing NOT VALID foreign key of the right shape skipped the ADD -
+--      which is what let case 1 exist at all. Both the DROP loop and the ADD
+--      guard now ask it.
+--   3. The summary printed `n_blank` - blank TEXT - as "carried none and stay
+--      NULL", which is false on a database repaired through
+--      `supabase_repair_missing_tables.sql`, where a property can hold no text
+--      and a good `tarla_id`. Two counts now.
+--
+-- ⚠️ **WHAT THIS DOES NOT DO IS REPAIR ANYTHING ALREADY PRINTED.** On a
+-- database where 078 has already run, section 5 is finished and section 7 has
+-- dropped `tarla_sola`; both of those sections return early on the next run,
+-- so corrections 1 and 3 change nothing there. What they change is every
+-- FUTURE run of this file - a rebuilt cloud project, a restored backup, a
+-- `Verify-Rebuild` container. That is a real population and a small one, and
+-- saying so is the point: no forward migration can reach output that was
+-- already written.
+--
+-- ⚠️ **CORRECTION 2 IS THE EXCEPTION, AND A DRAFT OF THIS PARAGRAPH SWEPT IT
+-- IN WITH THE OTHER TWO. IT IS THE ONE TO READ BEFORE RE-RECORDING THE
+-- CHECKSUM.** Section 2 carries no `tarla_sola` guard - it is about the SCHEMA,
+-- not the text - so it runs in full on an already-applied database, and on one
+-- carrying a NOT VALID foreign key the re-run is not a no-op:
+--
+--   * with no dangling ids, it DROPS the NOT VALID constraint by its own name
+--     and adds `property_tarla_id_fkey` validated. On a `drizzle-kit push`
+--     database that constraint is called `property_tarla_id_lookup_tarla_id_fk`,
+--     so this is a rename as well as a validation - a real schema change on a
+--     database nobody was expecting one on.
+--   * with a dangling id, it ABORTS, where the old file completed silently.
+--
+-- Both are the intended behaviour and neither is destructive - the file is one
+-- transaction, and a database in either state was already wrong. But "no-op"
+-- would have been the wrong word for them, and this paragraph is where a
+-- reader decides whether the re-record is safe to ship. (#34.31 review.)
+--
 -- WHAT THE SLICE ASKS FOR
 --   Renaming a code in Reference Data -> "Indicative Tarla" fixes every
 --   property that carries it, in one write. Today it fixes none of them:
@@ -422,7 +484,9 @@
 --   record of which properties were still relying on it. BEGIN/COMMIT makes
 --   every failure in this file a rollback to exactly the state it started in.
 --   (Section 5 raises no exception - see its own header. The rollback
---   guarantee rests on section 3 and on the drop, not on it.)
+--   guarantee rests on section 3, on SECTION 2's dangling-`tarla_id` refusal -
+--   added by #34.31 and the EARLIEST abort in the file - and on the drop, not
+--   on section 5.)
 
 BEGIN;
 
@@ -490,7 +554,7 @@ ALTER TABLE property
 DO $$
 DECLARE
   tarla_attnum smallint;
-  wrong_fk     text;
+  wrong_fk     record;
 BEGIN
   SELECT attnum INTO STRICT tarla_attnum
     FROM pg_attribute
@@ -498,21 +562,56 @@ BEGIN
      AND attname  = 'tarla_id'
      AND NOT attisdropped;
 
-  -- Any FK on exactly (tarla_id) -> lookup_tarla whose delete action is not
-  -- SET NULL ('n'), by its own name. There can be more than one; loop.
+  -- Any FK on exactly (tarla_id) -> lookup_tarla that is wrong in either of
+  -- the two ways this block can detect, by its own name. There can be more
+  -- than one; loop.
+  --
+  -- ⚠️ **`convalidated` IS THE SECOND WAY, AND IT WAS MISSING UNTIL #34.31.**
+  -- A foreign key added `NOT VALID` carries the right conrelid, contype,
+  -- confrelid, conkey and confdeltype and has NEVER BEEN CHECKED AGAINST THE
+  -- ROWS ALREADY IN `property`: Postgres enforces it on new rows only. So a
+  -- `tarla_id` naming no `lookup_tarla` row survives it - and that is the ONLY
+  -- thing that makes section 5's dangling-id case reachable at all, because
+  -- this section runs first and a validated FK makes a dangling id impossible
+  -- by the time section 5 reads the table. Nothing in this repository creates
+  -- such a constraint; `scripts/decision-checks.sql` has carried the caveat
+  -- since #34.18, which is where it was written down rather than acted on.
+  --
+  -- ⚠️ **AND IT HAD TO GO IN THE DROP LOOP, NOT ONLY IN THE `IF NOT EXISTS`
+  -- BELOW.** Adding `AND c.convalidated` to the guard alone would have let the
+  -- ADD run while the NOT VALID constraint was still there under whatever name
+  -- it carries - leaving `property` with TWO foreign keys on `tarla_id`, which
+  -- is exactly the duplicate the paragraph above this block warns about and
+  -- cites `lookup_property_type.key` for. Dropping what is found by its own
+  -- name and re-adding it correctly is the answer this block already gave for
+  -- the wrong delete action; the second reason simply joins the first.
   FOR wrong_fk IN
-    SELECT c.conname
+    SELECT c.conname,
+           CASE
+             WHEN c.confdeltype <> 'n' AND NOT c.convalidated
+               THEN 'its ON DELETE action is not SET NULL, and it is NOT VALID'
+             WHEN c.confdeltype <> 'n'
+               THEN 'its ON DELETE action is not SET NULL'
+             ELSE 'it is NOT VALID, so the rows already in property have never been checked against it'
+           END AS why
       FROM pg_constraint c
      WHERE c.conrelid    = 'public.property'::regclass
        AND c.contype     = 'f'
        AND c.confrelid   = 'public.lookup_tarla'::regclass
        AND c.conkey      = ARRAY[tarla_attnum]::smallint[]
-       AND c.confdeltype <> 'n'
+       AND (c.confdeltype <> 'n' OR NOT c.convalidated)
   LOOP
-    RAISE NOTICE 'migration_078: dropping foreign key % on property(tarla_id) - its ON DELETE action is not SET NULL.', wrong_fk;
-    EXECUTE format('ALTER TABLE property DROP CONSTRAINT %I', wrong_fk);
+    -- The message says WHICH of the two it was: "dropping your foreign key"
+    -- under the wrong reason is worse than under no reason at all.
+    RAISE NOTICE 'migration_078: dropping foreign key % on property(tarla_id) - %.', wrong_fk.conname, wrong_fk.why;
+    EXECUTE format('ALTER TABLE property DROP CONSTRAINT %I', wrong_fk.conname);
   END LOOP;
 
+  -- `convalidated` here for the same reason it is in the loop above: a
+  -- NOT VALID constraint of otherwise-perfect shape would satisfy this test,
+  -- skip the ADD, and leave the migration running on over rows no foreign key
+  -- has ever looked at. The loop has just dropped any such constraint, so the
+  -- only thing that can satisfy this by the time it runs is a validated one.
   IF NOT EXISTS (
     SELECT 1
       FROM pg_constraint c
@@ -521,7 +620,68 @@ BEGIN
        AND c.confrelid   = 'public.lookup_tarla'::regclass
        AND c.conkey      = ARRAY[tarla_attnum]::smallint[]
        AND c.confdeltype = 'n'
+       AND c.convalidated
   ) THEN
+    -- ⚠️ **THE ONE PLACE THIS FILE REFUSES, AND IT IS SAID OUT LOUD RATHER
+    -- THAN LEFT TO POSTGRES.** Adding the constraint VALIDATED is the point of
+    -- the `convalidated` terms above - and validation checks the rows already
+    -- in `property`, so on a database carrying a `tarla_id` that names no
+    -- `lookup_tarla` row the ADD fails with 23503 and the whole file rolls
+    -- back. That is the correct outcome and #34.31 is not softening it: a
+    -- dangling id is not a value anybody typed, it is referential corruption
+    -- this application cannot produce, and nothing below this line can be
+    -- trusted to mean what it says while it is there.
+    --
+    -- What #34.31 changes is only WHO SAYS SO. Left to the ALTER, the operator
+    -- got `insert or update on table "property" violates foreign key
+    -- constraint` - true, and naming neither this migration, nor which
+    -- properties, nor what to do. The check below names all three before the
+    -- ALTER can. Section 5's principle is unaffected: section 5 warns about
+    -- VALUES A PERSON WROTE and does not refuse them, and that stands. This
+    -- refuses a broken POINTER, which is a different thing and the foreign key
+    -- would refuse it either way.
+    DECLARE
+      dangling  integer;
+      who       text;
+      text_left boolean;
+    BEGIN
+      SELECT count(*) INTO dangling
+        FROM property p
+       WHERE p.tarla_id IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM lookup_tarla t WHERE t.id = p.tarla_id);
+
+      IF dangling > 0 THEN
+        SELECT string_agg('  ' || p.code || ' -> ' || p.tarla_id::text, E'\n' ORDER BY p.code)
+          INTO who
+          FROM property p
+         WHERE p.tarla_id IS NOT NULL
+           AND NOT EXISTS (SELECT 1 FROM lookup_tarla t WHERE t.id = p.tarla_id);
+
+        -- ⚠️ **WHAT THE OPERATOR IS GIVING UP DEPENDS ON WHETHER THIS FILE
+        -- HAS RUN BEFORE, AND THE FIRST DRAFT OF THIS MESSAGE ASSUMED IT HAD
+        -- NOT.** The population that actually carries a dangling `tarla_id` is,
+        -- by the argument above, a database whose pre-existing NOT VALID FK let
+        -- an EARLIER run of this file COMPLETE - and that run dropped
+        -- `tarla_sola` in section 7. Telling such an operator that the text is
+        -- still there and section 5 will name it is false exactly where the
+        -- sentence is load-bearing. So the message asks the catalogue.
+        SELECT EXISTS (
+          SELECT 1 FROM pg_attribute
+           WHERE attrelid = 'public.property'::regclass
+             AND attname  = 'tarla_sola'
+             AND NOT attisdropped
+        ) INTO text_left;
+
+        RAISE EXCEPTION '%', 'migration_078 STOPS: ' || dangling || E' propert(y/ies) carry a tarla_id that names no lookup_tarla row. Nothing has been changed - this file is one transaction and it has rolled back.\n'
+          || who
+          || E'\n\nThe foreign key this section adds is validated against existing rows, so it cannot be added while those ids are there, and adding it NOT VALID instead would only hide them again - that is the state this guard was extended to detect (#34.31). Decide per property and re-run: clear the pointer with UPDATE property SET tarla_id = NULL WHERE code = ''...''; or add the missing lookup_tarla row if you know which code it was.'
+          || CASE WHEN text_left
+                  THEN E'\n\nproperty.tarla_sola is still on this database, so whatever text each of those properties carried is still readable - SELECT code, tarla_sola FROM property WHERE tarla_id IS NOT NULL; - and section 5 will name it on the next run.'
+                  ELSE E'\n\n⚠️ property.tarla_sola is ALREADY GONE on this database, which means an earlier run of this file completed over these same ids - that is how they survived. There is no text left to consult and section 5 will have nothing to say about them: the id is the whole of what remains, and it points at nothing. Recovering which code was meant is a restore, not a query.'
+             END;
+      END IF;
+    END;
+
     ALTER TABLE property
       ADD CONSTRAINT property_tarla_id_fkey
       FOREIGN KEY (tarla_id) REFERENCES lookup_tarla(id) ON DELETE SET NULL;
@@ -680,6 +840,7 @@ DO $$
 DECLARE
   n_with    integer;
   n_blank   integer;
+  n_blank_id integer;
   n_erased  integer;
   n_stale   integer;
   n_codes   integer;
@@ -697,6 +858,14 @@ BEGIN
 
   EXECUTE $q$SELECT count(*) FROM property WHERE pg_temp.ga40_fold(tarla_sola) <> ''$q$ INTO n_with;
   EXECUTE $q$SELECT count(*) FROM property WHERE pg_temp.ga40_fold(tarla_sola) =  ''$q$ INTO n_blank;
+  -- ⚠️ **BLANK TEXT IS NOT THE SAME FACT AS „stays NULL", AND THE SUMMARY
+  -- USED TO PRINT ONE FOR THE OTHER.** `n_blank` counts blank TEXT. On a
+  -- database repaired through `supabase_repair_missing_tables.sql` - which adds
+  -- `tarla_id` and does not drop `tarla_sola` - a property can hold no text and
+  -- a perfectly good `tarla_id`, so it is counted as blank and does NOT stay
+  -- NULL. Nothing was wrong with the data; the sentence was wrong about it.
+  -- Two counts, one per fact, which is the rule section 3 states.
+  EXECUTE $q$SELECT count(*) FROM property WHERE pg_temp.ga40_fold(tarla_sola) = '' AND tarla_id IS NOT NULL$q$ INTO n_blank_id;
   EXECUTE $q$SELECT count(*) FROM property WHERE pg_temp.ga40_fold(tarla_sola) <> '' AND tarla_id IS NULL$q$ INTO n_erased;
 
   -- The OTHER way a value can be dropped: the property already had a
@@ -741,15 +910,57 @@ BEGIN
   END IF;
 
   IF n_stale > 0 THEN
+    -- ⚠️ **LEFT JOIN, AND THE `coalesce` IS NOT DECORATION - EITHER ONE ALONE
+    -- STILL PRINTS `WARNING: <NULL>` OVER THE VALUE IT IS DESTROYING.** The
+    -- count above uses `NOT EXISTS`, which is true for BOTH a `tarla_id` whose
+    -- row disagrees AND a `tarla_id` naming no row at all; this listing used an
+    -- INNER JOIN, so the second kind was counted and never named. If it was the
+    -- only one, `string_agg` returned NULL over no rows, the concatenation that
+    -- builds the message went NULL with it, and the block raised a WARNING with
+    -- NULL as its whole text - on the very paragraph this file calls „the only
+    -- notice either value ever gets".
+    --
+    -- The LEFT JOIN brings that row back. It is NOT ENOUGH ON ITS OWN, and
+    -- #34.31 measured this against PostgreSQL 16 rather than reasoning about
+    -- it: with the join outer, `t.indicativ` is NULL for a dangling id, the
+    -- element concatenating it is therefore NULL, and `string_agg` SKIPS NULL
+    -- inputs - so a lone dangling row still yields NULL and still prints
+    -- WARNING NULL. The `coalesce` is what gives that row text of its own.
+    --
+    -- ⚠️ **AND AS OF THE SAME SLICE THIS BRANCH IS UNREACHABLE THROUGH THIS
+    -- FILE - WHICH IS NOT A REASON TO DELETE IT, BUT IS A REASON TO SAY SO.**
+    -- #34.31 also taught section 2 to ask `convalidated`, and every exit from
+    -- that section now leaves a VALIDATED foreign key on `property(tarla_id)`:
+    -- the loop drops anything that is NOT VALID or has the wrong delete action,
+    -- the guard demands both, and the branch under it either adds a validated
+    -- constraint or refuses. A validated FK cannot coexist with a dangling id,
+    -- so by the time this query runs there can be none. The `coalesce` stays
+    -- for two reasons: it is the difference between a defect and a defended
+    -- position if anything ever loosens section 2 again, and section 5 is read
+    -- and run on its own - a review round produced this branch by extracting
+    -- the block, which is exactly how the original defect was found. Do not
+    -- read "unreachable" as "dead": read it as "section 2 is the thing keeping
+    -- it unreachable, so do not weaken section 2 without returning to this block.
+    --
+    -- ⚠️ **AND `p.tarla_id IS NOT NULL` HAD TO COME WITH THE LEFT JOIN.** The
+    -- count carries it; the inner join used to imply it. Outer, without it,
+    -- every property with text and NO `tarla_id` also survives the join with
+    -- `t.indicativ` NULL, folds to '' <> its text, and would be listed here -
+    -- under „the id is kept" - having already been listed above as a value
+    -- about to be erased. A listing longer than the count it explains is its
+    -- own defect.
     EXECUTE $q$
       SELECT string_agg(
                '  ' || p.code || ': text "'
                     || btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g'))
-                    || '" vs code "' || t.indicativ || '" (the code is kept)',
+                    || '" vs '
+                    || coalesce('code "' || t.indicativ || '" (the code is kept)',
+                                'a tarla_id naming no lookup_tarla row at all (the id is kept, and it points at nothing)'),
                E'\n' ORDER BY p.code)
         FROM property p
-        JOIN lookup_tarla t ON t.id = p.tarla_id
+        LEFT JOIN lookup_tarla t ON t.id = p.tarla_id
        WHERE pg_temp.ga40_fold(p.tarla_sola) <> ''
+         AND p.tarla_id IS NOT NULL
          AND pg_temp.ga40_fold(t.indicativ) <> pg_temp.ga40_fold(p.tarla_sola)
     $q$ INTO disagreed;
 
@@ -763,8 +974,8 @@ BEGIN
   -- arguments under it - the rule section 3 states and an earlier draft of
   -- this block did not follow.
   SELECT count(*) INTO n_codes FROM lookup_tarla;
-  RAISE NOTICE 'migration_078: % propert(y/ies) carried a tarla value - % now point at a lookup_tarla row (% of those at a code that DISAGREED with the text, warned above) and % had no matching code and lose it; % carried none and stay NULL; lookup_tarla holds % row(s), unchanged by this file.',
-    n_with, n_with - n_erased, n_stale, n_erased, n_blank, n_codes;
+  RAISE NOTICE 'migration_078: % propert(y/ies) carried a tarla value - % now point at a lookup_tarla row (% of those at a code that DISAGREED with the text, warned above) and % had no matching code and lose it; % carried no text and stay NULL, and a further % carried no text but already carry a tarla_id; lookup_tarla holds % row(s), unchanged by this file.',
+    n_with, n_with - n_erased, n_stale, n_erased, n_blank - n_blank_id, n_blank_id, n_codes;
 END $$;
 
 -- ---------------------------------------------------------------------------

@@ -59,25 +59,35 @@ $$ LANGUAGE sql IMMUTABLE;
 --  #34.18 closed all of it, and an adversarial round is why the list is four
 --  fates rather than two:
 --
---    fate 1  a `tarla_id` names no lookup_tarla row. Section 2 adds the
---            foreign key BEFORE anything else happens, so the ADD CONSTRAINT
---            fails and the file rolls back.
+--    fate 1  a `tarla_id` names no lookup_tarla row. Section 2 REFUSES, by
+--            name, before it adds the foreign key, and the file rolls back.
+--            The message lists the offending properties with their ids and
+--            says whether `property.tarla_sola` is still there to consult.
+--            (Until Slice #34.31 the refusal was the ADD CONSTRAINT's own
+--            23503, which named neither the migration nor the properties -
+--            and on a database carrying a NOT VALID foreign key it did not
+--            happen at all; see the box under fate 2.)
 --    fate 2  the value matches MORE THAN ONE lookup_tarla row. Section 3 of
 --            the migration RAISEs and the whole file rolls back. Same
 --            outcome, different cause, and neither was visible here before.
 --            The two are numbered in the order the migration REACHES them,
 --            not by severity.
 --
---            ⚠️ Fate 1 predicts the FK's failure, and section 2 only ADDS the
---            FK when no constraint of that shape is already there. Its guard
---            tests conrelid, contype, confrelid, conkey and confdeltype but
---            NOT `convalidated`, so a pre-existing NOT VALID foreign key of
---            the right shape satisfies it, the ADD is skipped, nothing
---            validates, and the file runs on to destroy the text that fate 1
---            said it would not reach. Nothing in this repo creates such a
---            constraint; the gap is in #34.18's handover under "Noticed, not
---            fixed". If you have hand-built an FK here, check `convalidated`
---            before trusting fate 1.
+--            ⚠️ **THIS BOX USED TO SAY FATE 1 COULD NOT BE TRUSTED. IT CAN,
+--            SINCE SLICE #34.31, AND THE PARAGRAPH IS KEPT BECAUSE IT IS THE
+--            ARGUMENT THE FIX WAS BUILT FROM.** Section 2 only ADDS the FK
+--            when no constraint of that shape is already there, and its guard
+--            used to test conrelid, contype, confrelid, conkey and confdeltype
+--            but NOT `convalidated` - so a pre-existing NOT VALID foreign key
+--            of the right shape satisfied it, the ADD was skipped, nothing
+--            validated, and the file ran on to destroy the text fate 1 said it
+--            would not reach. (Worse: section 5 then counted the dangling row
+--            and could not name it, so the only notice the destroyed value got
+--            was the word NULL.) #34.31 added `convalidated` to BOTH that
+--            guard and the loop above it, so such a constraint is now dropped
+--            by its own name and re-added validated. Nothing in this repo
+--            creates one; if you have hand-built an FK here it is still worth
+--            knowing that the migration will REPLACE it rather than keep it.
 --    fate 3  no code matches the text: the text is ERASED at COMMIT and this
 --            is the only warning anyone gets.
 --    fate 4  the property already carries a DISAGREEING id: the id wins,
@@ -150,16 +160,25 @@ FROM property;
 \echo '=== 1b. What migration_078 will do to this database ==='
 \echo '    (empty result = it applies cleanly and no tarla VALUE is lost)'
 \echo '    (ABORT rows stop the whole file: nothing listed below them happens)'
--- Section 2 adds `property_tarla_id_fkey` BEFORE anything else happens - before
--- section 3's refusal, before section 4 resolves and before section 5 says a
--- word - so a `tarla_id` pointing at no lookup_tarla row fails the ADD
--- CONSTRAINT and rolls the whole file back. It is fate 1 because it is the
--- first thing that can stop the file, and it is NOT scoped by `tarla_sola` at
--- all: the FK validates every row, including the ones carrying no text.
+-- Section 2 settles `property_tarla_id_fkey` BEFORE anything else happens -
+-- before section 3's refusal, before section 4 resolves and before section 5
+-- says a word - so a `tarla_id` pointing at no lookup_tarla row stops the file
+-- there and rolls it back. It is fate 1 because it is the first thing that can
+-- stop the file, and it is NOT scoped by `tarla_sola` at all: the constraint
+-- concerns every row, including the ones carrying no text.
+--
+-- Since Slice #34.31 section 2 RAISEs its own message first, naming each
+-- offending property and its id, rather than letting the ADD CONSTRAINT's
+-- 23503 out. The outcome for this preview is the same - the file does not
+-- apply - which is why the fate is unchanged; what changed is that the
+-- operator is no longer handed an error that names neither the migration nor
+-- the rows. The same slice is also what makes this fate reliable: before it,
+-- a pre-existing NOT VALID foreign key let the ADD be skipped entirely and
+-- the file ran on. See the box under fate 2 in the header.
 -- One row per property, deliberately: an aggregate row here would take its
 -- `value` from one property and its example code from another.
 SELECT
-  '1. MIGRATION ABORTS - tarla_id names no lookup_tarla row (the FK fails)'  AS fate,
+  '1. MIGRATION ABORTS - tarla_id names no lookup_tarla row (section 2 refuses)' AS fate,
   coalesce(nullif(btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g')), ''), '(no text)') AS value,
   '(none - the id is a dangling reference)'                                  AS lookup_tarla_codes,
   1                                                                          AS properties_affected,
@@ -208,9 +227,16 @@ UNION ALL
 -- The other way a value goes, and the one 1b could not see at all. Section 5
 -- of migration_078 warns about it separately: the property already had an id,
 -- its text does not agree with the code that id names, the id wins - which is
--- right - and the text still disappears. Inner join, exactly as section 5's
--- own listing does, because the id that names nothing is fate 1 above and
--- never reaches section 5.
+-- right - and the text still disappears.
+--
+-- Inner join HERE, because the id that names nothing is fate 1 above and never
+-- reaches section 5. ⚠️ Note this no longer mirrors section 5, which since
+-- Slice #34.31 uses a LEFT JOIN and a coalesce: its count had always included
+-- the dangling id and its listing had not, so a lone dangling row printed a
+-- WARNING whose entire text was NULL. That listing is defence in depth now -
+-- section 2 refuses the case before section 5 can see it - whereas this query
+-- runs BEFORE the migration, where the case is live and is reported as fate 1.
+-- The two joins differ on purpose; do not "align" them.
 SELECT
   '4. text DISCARDED - the property already carries a DISAGREEING tarla_id'  AS fate,
   min(btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g')))                  AS value,
