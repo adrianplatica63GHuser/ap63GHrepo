@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-17 09:17
+-- Generated : 2026-09-17 15:13
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -1840,6 +1840,20 @@ CREATE UNIQUE INDEX lookup_document_type_name_normalised_unique ON public.lookup
 --
 
 COMMENT ON INDEX public.lookup_document_type_name_normalised_unique IS 'Two document types may not share one display name (Slice #34.09, migration_080). The expression is normaliseDocumentTypeName() from src/lib/documents/document-type-match.ts - NFD-decompose, strip the combining marks, lowercase, drop everything outside [a-z0-9] - written as the exact inline expansion of pg_temp.ga40_norm_name in scripts/decision-checks.sql, which is the fold the archive was measured under. PARTIAL, excluding the empty normalised form, because sameDocumentTypeName() refuses to call two empty forms equal: a name of "-" or of a single space normalises to nothing, and a total index would let the first such row take the empty slot and refuse every other one. The application-level refusal that produces a Romanian sentence instead of a 23505 is documentTypeNameTakenBy() in src/lib/documents/document-type-name-guard.ts; this index is what makes the rule true of a direct caller, a script, psql, and the race that a read-then-write refusal cannot close.';
+
+
+--
+-- Name: lookup_tarla_indicativ_folded_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX lookup_tarla_indicativ_folded_unique ON public.lookup_tarla USING btree (btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(indicativ, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text))) WHERE (btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(indicativ, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)) <> ''::text);
+
+
+--
+-- Name: INDEX lookup_tarla_indicativ_folded_unique; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public.lookup_tarla_indicativ_folded_unique IS 'Two tarla codes may not fold to one code (Slice #34.32, migration_083). The expression is pg_temp.ga40_fold from scripts/decision-checks.sql - the Postgres spelling of foldRomanian() in src/lib/import/id-card.ts: NFD-decompose, strip the combining marks by code point, lowercase, collapse whitespace, trim - which is the fold this table was measured under by query 1c, and which migration_078 resolves property.tarla_sola with. It is deliberately NOT normaliseDocumentTypeName()''s fold (migration_080): that one drops everything outside [a-z0-9], which would make 47/2 and 472 one code. PARTIAL, excluding the empty folded form, because tarlaSchema accepts a single space as an indicativ and a total index would let the first whitespace-only row take the empty slot and refuse every other one. The application-level refusal that produces a Romanian sentence instead of a 23505 is tarlaCodeTakenBy() in src/lib/properties/tarla-code-guard.ts; the import auto-seed adopts an existing row rather than reaching this index, in resolveTarlaForCreate() in src/lib/properties/queries.ts, and both application writers hold the two advisory locks tarlaLockIdentities() returns so neither can land a colliding row while the other is between its scan and its insert. This index is what makes the rule true of a direct caller, a script, psql, and the race that a read-then-write refusal cannot close.';
 
 
 --
