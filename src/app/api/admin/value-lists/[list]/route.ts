@@ -2,9 +2,10 @@
  * /api/admin/value-lists/[list]
  *
  * GET  — return all rows for a given lookup table, in the order `listValues`
- *         defines: `sort_order` then the list's own required field, except
- *         `person-roles` (name alone) and `document-types` (UNCLASSIFIED
- *         pinned first, then name). See `listValues`.      (Slice #34.01)
+ *         defines: `sort_order`, then the list's own required field, then `id`
+ *         — except `person-roles` (name alone) and `document-types`
+ *         (UNCLASSIFIED pinned first, then name, then id). See `listValues`.
+ *                                            (Slices #34.01, #34.14, #34.32)
  * POST — insert a new row; validates body against the per-list Zod schema
  */
 
@@ -42,6 +43,11 @@ import {
   DOCUMENT_TYPE_NAME_UNIQUE_INDEX,
   MAX_DOCUMENT_TYPE_KEY_LENGTH,
 } from "@/lib/documents/document-type-name-guard";
+import {
+  asTarlaCodeTaken,
+  TARLA_CODE_TAKEN_CODE,
+  TARLA_CODE_UNIQUE_INDEX,
+} from "@/lib/properties/tarla-code-guard";
 
 type Ctx = { params: Promise<{ list: string }> };
 
@@ -167,6 +173,66 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
             "A document type with this display name already exists (created by " +
             "another writer while this request was in flight).",
           code: DOCUMENT_TYPE_NAME_TAKEN_CODE,
+        },
+        { status: 400 },
+      );
+    }
+    // ⚠️ **TWO TARLA CODES MAY NOT FOLD TO ONE CODE.**          (Slice #34.32)
+    // The same shape as the document-type pair above, on the list beside it in
+    // the same modal, and it closes a hole that is older than any of them:
+    // `createValue`'s `tarla` branch applied no fold at all, so `t3` beside
+    // `T3` was creatable with no race involved — #34.14's handover named it and
+    // this is the fix. Thrown from the query layer so a direct caller of
+    // `createValue` is bound by it too; the `error` string is the English wire,
+    // never rendered.
+    //
+    // ⚠️ **The body names the SPELLING that already holds the code**, which the
+    // document-type refusal deliberately does not do. On this list the two
+    // spellings differ by exactly the thing the person cannot see — `t3`
+    // against `T3` — so a sentence that showed only one of them would read as a
+    // refusal of a code that is plainly not in the list.
+    const tarlaTaken = asTarlaCodeTaken(err);
+    if (tarlaTaken !== null) {
+      return Response.json(
+        {
+          error:
+            "A tarla code that folds to this one already exists: " +
+            `"${tarlaTaken.takenBy}". Two entries for one tarla are how a ` +
+            "property ends up counted under one of them and then the other.",
+          code: TARLA_CODE_TAKEN_CODE,
+          takenBy: tarlaTaken.takenBy,
+        },
+        { status: 400 },
+      );
+    }
+    // ⚠️ **AND THE SAME CODE, ARRIVING AS A RACE INSTEAD OF AS A STALE LIST.**
+    // The check above is a read and then a write, so two administrators typing
+    // one code in the same instant both pass it; migration_083's partial unique
+    // index is what makes the loser fail, and it has to arrive as the SAME
+    // sentence rather than as the generic one. Recognised by CONSTRAINT, for
+    // the reason the document-type branch above states. Ahead of the generic
+    // 23505 branch below, which would otherwise answer 409 and land on the
+    // generic Romanian sentence.
+    //
+    // ⚠️ **`takenBy` IS ABSENT HERE, AND THAT IS WHAT PICKS A DIFFERENT
+    // SENTENCE RATHER THAN LEAVING A HOLE IN THIS ONE.** The racing row's
+    // spelling is not in the error Postgres hands back — the 23505's detail
+    // names the FOLDED key, not the row — so there is nothing to interpolate.
+    // `failureFromResponse` reads the body for `takenBy` and answers
+    // `tarlaCodeTakenRace`, a SEPARATE message with no `{code}` placeholder;
+    // `valueList.confirm.errors.tarlaCodeTaken`'s placeholder is not optional
+    // and a shared sentence would render „…: „”" here. An adversarial round
+    // corrected an earlier version of this comment that said it was optional.
+    if (
+      pgErrorCode(err) === "23505" &&
+      pgErrorConstraint(err) === TARLA_CODE_UNIQUE_INDEX
+    ) {
+      return Response.json(
+        {
+          error:
+            "A tarla code that folds to this one already exists (created by " +
+            "another writer while this request was in flight).",
+          code: TARLA_CODE_TAKEN_CODE,
         },
         { status: 400 },
       );

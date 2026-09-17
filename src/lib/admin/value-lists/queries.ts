@@ -29,17 +29,18 @@
  * time — on every list but `document-types`, whose `name` is not unique even
  * in practice. See the header above `listValues`. (⚠️ Both halves have since
  * moved: #34.09's partial unique index made `document-types`' name unique for
- * every name a person would type, and #34.14 put `asc(id)` AFTER the required
- * field on nine branches, so "ends on" is now true of two of the eleven. The
+ * every name a person would type, #34.14 put `asc(id)` AFTER the required
+ * field on nine branches and #34.32 on the tenth, so "ends on" is now true of
+ * ONE of the eleven — `person-roles`. The
  * paragraph is kept because it is why the required field is in the key at all.)
  *
  * Slice #34.14: the two write doors and the read. `updateValue` was guarded on
  * ONE branch of eleven and `createValue` on none; both now strip `origin`
  * before they dispatch — `updateValue` for all eleven lists, `createValue` for
  * ten, `document-types` excepted because its POST schema carries the column on
- * purpose. And nine branches of `listValues` close on `asc(id)`, which makes
- * their sort key total rather than unique-by-observation. See the headers above
- * each.
+ * purpose. And nine branches of `listValues` close on `asc(id)` — ten since
+ * #34.32 — which makes their sort key total rather than unique-by-observation.
+ * See the headers above each.
  *
  * Create and update still dispatch on the ListKey string via a switch —
  * verbose but fully type-safe within each case. The delete no longer does:
@@ -97,6 +98,12 @@ import {
   documentTypeNameTakenBy,
 } from "@/lib/documents/document-type-name-guard";
 import { normaliseDocumentTypeName } from "@/lib/documents/document-type-match";
+import {
+  TarlaCodeTakenError,
+  tarlaCodeTakenBy,
+  tarlaLockIdentities,
+} from "@/lib/properties/tarla-code-guard";
+import { advisoryLockKeys } from "@/lib/properties/import-property-plan";
 import {
   CatchAllFormRefusedError,
   catchAllFormRefusal,
@@ -194,12 +201,12 @@ async function generateUniqueDocumentTypeKey(
  * on `tarla` — which makes the key total in practice, leaves `sort_order`
  * doing exactly what it did for the rows that have one, and needs no
  * migration, no form field and no data change. (⚠️ **"ends on" was true of
- * #34.01 and is not true now**: since #34.14 nine branches end on `asc(id)`
- * and the required field is the term before it. The paragraph is kept because
+ * #34.01 and is not true now**: since #34.14 nine branches end on `asc(id)`,
+ * ten since #34.32, and the required field is the term before it. The paragraph is kept because
  * it is still why the required field is IN the key at all.)
  *
  * ⚠️ **"IN PRACTICE" WAS DOING WORK, AND SLICE #34.14 TOOK THE WORD OUT OF
- * NINE OF THE ELEVEN.** No lookup table has a UNIQUE constraint on its display
+ * NINE OF THE ELEVEN — #34.32 OUT OF A TENTH.** No lookup table has a UNIQUE constraint on its display
  * field — `document-types` excepted, where migration_080 puts a partial unique
  * index over the NORMALISED name — so `(sort_order, name)` was unique by
  * observation and not by construction, and two rows sharing BOTH keys could
@@ -208,34 +215,45 @@ async function generateUniqueDocumentTypeKey(
  * bitten, because "nothing guarantees two reads agree" is cheaper to close than
  * to keep explaining.
  *
- * **`asc(<table>.id)` is now the LAST term on nine branches** —
+ * **`asc(<table>.id)` is now the LAST term on TEN branches** —
  * `property-types`, `tarla`, `use-categories`, `person-types`, `citizenships`,
- * `judicial-person-types`, `institutions` and the two relationship lists. The
- * primary key is unique by definition, so on those nine the key is TOTAL: not
+ * `judicial-person-types`, `institutions`, the two relationship lists, and
+ * since Slice #34.32 `document-types` as well. (⚠️ That last one is the
+ * enumeration this paragraph most needs to keep current: an adversarial round
+ * found it listing nine tables 140 lines above a branch that had just become
+ * the tenth, which is a header telling a reader the branch is exempt.) The
+ * primary key is unique by definition, so on those ten the key is TOTAL: not
  * "unique in practice", not "unique unless someone types the same name twice",
  * total. It changes no visible order — it can only separate rows that were
  * already indistinguishable to every earlier term — and it needs no migration
  * and no form field.
  *
- * ⚠️ **THE TWO IT DOES NOT TOUCH, AND WHY EACH IS DIFFERENT.**
- *   • `document-types` — the tie is all but unreachable, and #34.14's
- *     out-of-scope leaves the branch alone. migration_080 refuses a second row
- *     with the same normalised name, so for every name a person would type
- *     there is nothing left for the ORDER BY to separate. (The sentence this
- *     replaces is worth keeping for the reason the fix exists: duplicate names
+ * ⚠️ **THE TWO IT DID NOT TOUCH, AND WHY EACH WAS DIFFERENT — ONE OF THEM IS
+ * NO LONGER ON THIS LIST.**
+ *   • `document-types` — **TOOK THE THIRD TERM IN SLICE #34.32.** #34.14's
+ *     out-of-scope left the branch alone on the grounds that migration_080
+ *     refuses a second row with the same normalised name, "so for every name a
+ *     person would type there is nothing left for the ORDER BY to separate".
+ *     (That sentence is kept for the reason the index exists: duplicate names
  *     WERE documented and expected here, and `matchDocumentType` takes the
  *     FIRST name match, so a tie decided which of two same-named types an
  *     import ADOPTED — not merely where a row sat. #34.09 removed the case
  *     where "first" was a coin toss.)
- *     ⚠️ **"ALL BUT" IS EXACT: THAT INDEX IS PARTIAL.** It excludes the EMPTY
- *     normalised form — see `lookupDocumentType`'s index in schema/index.ts,
- *     which says why: `sameDocumentTypeName` refuses to call two empty forms
- *     equal. `name` is `min(1)`, so „—" or a single space is an accepted name
- *     that normalises to nothing, and TWO such rows insert. They then tie here
- *     with no third term. The consequence is cosmetic — two rows that look the
- *     same swapping places — because `sameDocumentTypeName` will not equate
- *     them either, so no import ADOPTS the wrong one. It is a residual, it is
- *     in the #34.14 handover, and the fix is one term.
+ *     ⚠️ **AND "ALL BUT UNREACHABLE" WAS THE WORD THAT HAD TO GO, BECAUSE THAT
+ *     INDEX IS PARTIAL.** It excludes the EMPTY normalised form — see
+ *     `lookupDocumentType`'s index in schema/index.ts, which says why:
+ *     `sameDocumentTypeName` refuses to call two empty forms equal. `name` is
+ *     `min(1)`, so a name of „—" is accepted, normalises to nothing, and is
+ *     outside the index — so **TWO ROWS MAY BOTH BE NAMED „—"**.
+ *     ⚠️ Note what the tie needs and what it does not: `asc(name)` compares the
+ *     RAW text, so „—" and „·" are separated perfectly well even though both
+ *     normalise to nothing. The tie is two rows whose `name` is the SAME
+ *     STRING, which only the empty normalised form permits; those tie on the
+ *     pin and the name together, and before #34.32 nothing came after. The
+ *     consequence is cosmetic — two rows that look the same swapping places —
+ *     because `sameDocumentTypeName` will not equate them either, so no import
+ *     ADOPTS the wrong one. That is why the fix travelled as one term inside
+ *     another slice rather than as one of its own.
  *   • `person-roles` — LEFT WITH THE RESIDUAL, deliberately. Its branch is
  *     `ORDER BY name` alone and the slice's own out-of-scope keeps it exactly
  *     as it is, so two roles sharing one name can still swap. That is a real
@@ -266,19 +284,21 @@ async function generateUniqueDocumentTypeKey(
  *     seventh of those. Slice #34.01 resolved the column the other way
  *     instead: `personRoleSchema` no longer writes it. The full argument, and
  *     the one non-screen reader that does not count, are in ./validation.ts.
- *   • `document-types` pins UNCLASSIFIED first and then orders by `name`. That
- *     pin is load-bearing: `matchDocumentType` takes the first name match, and
+ *   • `document-types` pins UNCLASSIFIED first, then orders by `name`, then —
+ *     since Slice #34.32 — by `id`. That pin is load-bearing and stays FIRST:
+ *     `matchDocumentType` takes the first name match, and
  *     src/lib/documents/resolve-document-type.ts restates the same clause
- *     deliberately rather than importing it.
+ *     deliberately rather than importing it, so the third term had to be
+ *     appended in both places in one commit.
  *   • the two relationship-role lists were already `sort_order, name` — the
  *     shape the seven copied in #34.01 — and they took `asc(id)` alongside them
- *     in #34.14, so all nine now read `sort_order, name, id`.
+ *     in #34.14, so all nine of those read `sort_order, name, id`.
  *
  * **A twelfth list must end its `ORDER BY` on `id`, after its required field.**
  * `src/__tests__/value-list-ordering.test.ts` reads this function's source and
  * fails when a branch's last sort term is `sortOrder`, when a branch has no
- * `orderBy` at all, or when a branch outside the two named above does not close
- * on the primary key.
+ * `orderBy` at all, or when a branch other than the one named above as exempt
+ * does not close on the primary key.
  */
 export async function listValues(key: ListKey): Promise<LookupRow[]> {
   switch (key) {
@@ -335,11 +355,31 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
           asc(lookupJudicialPersonType.id),
         ) as Promise<LookupRow[]>;
     case "document-types":
-      // UNCLASSIFIED (NECLASIFICAT) pinned first; rest alphabetical.
+      // UNCLASSIFIED (NECLASIFICAT) pinned first; rest alphabetical; then id.
+      //
+      // ⚠️ **THE THIRD TERM ARRIVED IN SLICE #34.32, AND THE REASON IT WAS
+      // LEFT OUT OF #34.14 TURNED OUT TO BE HALF TRUE.** That slice closed
+      // nine branches on `asc(id)` and deliberately skipped this one, on the
+      // grounds that migration_080's unique index means two rows can no longer
+      // hold one display name — so there was no tie left to break. That index
+      // is PARTIAL (`WHERE <normalised> <> ''`), deliberately, so that one
+      // punctuation-only type cannot absorb every other one — and a name of
+      // „—" normalises to nothing, so **two rows may both be named „—"**.
+      // ⚠️ It has to be the SAME string: `asc(name)` compares the raw text, so
+      // „—" and „·" are separated perfectly well. Two rows holding one string
+      // tie on the pin and the name together, and which came back first was
+      // then Postgres's choice and could differ between reads.
+      //
+      // ⚠️ **APPENDED, NEVER SUBSTITUTED.** The pin is load-bearing —
+      // `matchDocumentType` takes the first row that matches and the catch-all
+      // has to be seen first — and `src/lib/documents/resolve-document-type.ts`
+      // restates this whole clause rather than importing it, so the two must
+      // agree term for term. It took the same third term in the same commit.
       return db.select().from(lookupDocumentType)
         .orderBy(
           sql`CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`,
           asc(lookupDocumentType.name),
+          asc(lookupDocumentType.id),
         ) as Promise<LookupRow[]>;
     case "institutions":
       return db.select().from(lookupInstitution)
@@ -366,6 +406,68 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
           asc(lookupDocumentDocumentRole.id),
         ) as Promise<LookupRow[]>;
   }
+}
+
+/**
+ * Write a `lookup_tarla` row, refusing a code some other row already holds
+ * under the fold.                                                (Slice #34.32)
+ *
+ * ⚠️ **ONE FUNCTION, TWO DOORS, FOR THE REASON `stripLookupOrigin` IS CALLED
+ * ONCE ABOVE ITS SWITCH.** `createValue` and `updateValue` both need it — a
+ * guard on the create door alone is the lock-on-a-door-with-the-window-open
+ * shape, because Reference Data's edit form renames a code — and a copy per
+ * branch is two things to keep in step with one rule.
+ *
+ * ⚠️ **THE CHECK AND THE WRITE ARE IN ONE TRANSACTION, UNDER THE SAME TWO
+ * ADVISORY LOCKS THE IMPORT'S AUTO-SEED TAKES, AND AN ADVERSARIAL ROUND IS WHY.**
+ * The first version of this was a lockless read followed by a write on `db`,
+ * on the argument that migration_083's index is the serialisation and both
+ * routes map its 23505 into the same sentence. True of THIS door and false of
+ * the other one: `resolveTarlaForCreate` (src/lib/properties/queries.ts) also
+ * inserts here, and an administrator's `T3` committing between that function's
+ * scan and its insert makes the IMPORT lose the race — where the 23505 is not
+ * mapped at all and surfaces as the generic Romanian "operation failed" with
+ * the whole property create rolled back. Holding the same locks it holds, in
+ * the same order, removes the case. `tarlaLockIdentities` carries the argument
+ * for why there are two of them and why the order rules out a deadlock.
+ *
+ * ⚠️ **The locks are transaction-scoped, so the WRITE has to be inside the
+ * same transaction** — which is why this takes the write as a callback instead
+ * of being a guard the branches call before their own `db.insert`. A lock
+ * released at the end of a guard that then returns is a lock that guaranteed
+ * nothing.
+ *
+ * ⚠️ **EVERY ROW, IN JAVASCRIPT, RATHER THAN ONE INDEXED EQUALITY IN SQL.**
+ * Same shape and same reason as `resolveTarlaForCreate` one module over: the
+ * fold is `foldRomanian`, and restating it in SQL here would be a second
+ * opinion about the rule that could drift from the one the guard and the index
+ * share. `lookup_tarla` holds a few dozen rows, so the scan costs nothing.
+ *
+ * `exceptId` is the row being renamed; pass `null` on a create.
+ */
+async function writeTarlaRow<T>(
+  code: unknown,
+  exceptId: string | null,
+  write: (tx: DbTransaction) => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    // A write that names no code changes nothing this guard is about — on the
+    // rename door `indicativ` is required by the schema, so in practice this
+    // only spares a direct caller sending `{ descriere }` alone.
+    if (typeof code === "string") {
+      for (const identity of tarlaLockIdentities(code)) {
+        if (identity === "") continue;
+        const [lockA, lockB] = advisoryLockKeys(identity);
+        await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
+      }
+      const rows = await tx
+        .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
+        .from(lookupTarla);
+      const taken = tarlaCodeTakenBy(code, rows, exceptId);
+      if (taken !== null) throw new TarlaCodeTakenError(taken.indicativ);
+    }
+    return write(tx);
+  });
 }
 
 // ── Create ───────────────────────────────────────────────────────────────────
@@ -419,8 +521,12 @@ export async function createValue(
       return row as LookupRow;
     }
     case "tarla": {
-      const [row] = await db.insert(lookupTarla).values(data).returning();
-      return row as LookupRow;
+      // Slice #34.32: `t3` beside `T3` was creatable here, with no fold and no
+      // lock, since the list existed. See `writeTarlaRow` above.
+      return writeTarlaRow(data.indicativ, null, async (tx) => {
+        const [row] = await tx.insert(lookupTarla).values(data).returning();
+        return row as LookupRow;
+      });
     }
     case "use-categories": {
       const [row] = await db.insert(lookupUseCategory).values(data).returning();
@@ -774,8 +880,19 @@ export async function updateValue(
       return (row as LookupRow) ?? null;
     }
     case "tarla": {
-      const [row] = await db.update(lookupTarla).set(data).where(eq(lookupTarla.id, id)).returning();
-      return (row as LookupRow) ?? null;
+      // Slice #34.32: the rename half. `id` is passed as `exceptId` so a PUT
+      // that leaves the code alone, or respaces it, does not refuse itself.
+      //
+      // ⚠️ **`indicativ` is REQUIRED by `LIST_UPDATE_SCHEMAS["tarla"]`**
+      // (`tarlaSchema.extend({ sortOrder })`, and `tarlaSchema.indicativ` is
+      // `z.string().min(1)`), so through the HTTP door there is always a code
+      // to judge. `writeTarlaRow`'s "no code" arm is for a DIRECT caller — this
+      // function's `payload` is `any` — and is not a route behaviour. An
+      // adversarial round corrected a comment here that described it as one.
+      return writeTarlaRow(data.indicativ, id, async (tx) => {
+        const [row] = await tx.update(lookupTarla).set(data).where(eq(lookupTarla.id, id)).returning();
+        return (row as LookupRow) ?? null;
+      });
     }
     case "use-categories": {
       const [row] = await db.update(lookupUseCategory).set(data).where(eq(lookupUseCategory.id, id)).returning();

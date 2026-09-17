@@ -81,6 +81,9 @@ import { createDocument } from "@/lib/documents/queries";
 import { createJudicialPerson } from "@/lib/judicial-persons/queries";
 import { createNaturalPerson } from "@/lib/persons/queries";
 import { createPropertyIn } from "@/lib/properties/queries";
+// Slice #34.32 — migration_083's fold, so the tarla lookup below adopts a
+// differently-spelled row instead of inserting one the index refuses.
+import { sameTarlaCode } from "@/lib/properties/tarla-code-guard";
 import type { JudicialPersonCreate } from "@/lib/judicial-persons/validation";
 import {
   lookupDocumentType,
@@ -1426,15 +1429,33 @@ async function seed() {
       // Idempotent within this block: the properties seed only runs on an
       // empty `property` table, but `lookup_tarla` may already hold codes from
       // the reference-data load, so each is looked up before it is inserted.
+      //
+      // ⚠️ **THE LOOKUP IS BY FOLD, NOT BY `eq(indicativ, code)`, AND SINCE
+      // migration_083 THAT IS THE DIFFERENCE BETWEEN A SEED AND A 23505.**
+      //                                                          (Slice #34.32)
+      // It was an exact equality, which was merely untidy while nothing
+      // enforced uniqueness: a database whose reference-data load had put `T1`
+      // in and a fixture naming `t1` simply got a second row. There is a
+      // partial unique index over the FOLDED `indicativ` now, so that second
+      // row is refused - and this is one transaction, so the whole properties
+      // seed would roll back on a difference of case in a fixture file.
+      //
+      // ⚠️ **It adopts rather than refusing, which is `resolveTarlaForCreate`'s
+      // answer to the same question and for the same reason:** a machine
+      // reading a fixture has no business making a person decide whether `t1`
+      // and `T1` are one tarla. `sameTarlaCode` is the index's own fold, asked
+      // through the one function that owns it.
+      //
+      // Every row is read once rather than per code - `lookup_tarla` holds a
+      // few dozen rows and this loop runs over a fixture list.
       const tarlaIdByCode = new Map<string, string>();
+      const existingTarla = await tx
+        .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
+        .from(lookupTarla);
       for (const code of new Set(
         PROPERTIES.map((r) => r.tarlaSola).filter((c): c is string => !!c),
       )) {
-        const [existing] = await tx
-          .select({ id: lookupTarla.id })
-          .from(lookupTarla)
-          .where(eq(lookupTarla.indicativ, code))
-          .limit(1);
+        const existing = existingTarla.find((r) => sameTarlaCode(code, r.indicativ));
         if (existing) {
           tarlaIdByCode.set(code, existing.id);
           continue;
@@ -1444,6 +1465,10 @@ async function seed() {
           .values({ indicativ: code })
           .returning({ id: lookupTarla.id });
         tarlaIdByCode.set(code, created.id);
+        // So a second fixture code that folds to this one adopts it rather
+        // than inserting beside it — the same reason `resolveTarlaForCreate`
+        // re-scans after taking its lock.
+        existingTarla.push({ id: created.id, indicativ: code });
       }
 
       // ⚠️ **`createPropertyIn`, not `createProperty`, and that is what keeps

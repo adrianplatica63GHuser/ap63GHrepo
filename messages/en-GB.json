@@ -1882,6 +1882,8 @@
         "validation": "The data entered is incomplete or invalid. Check the required fields.",
         "duplicate": "That entry is already in the list.",
         "notFound": "The entry no longer exists — the list changed meanwhile. Close the dialog and open it again.",
+        "tarlaCodeTaken": "A tarla code that reads the same as this one already exists: “{code}”. Codes are compared without case, diacritics or extra spaces, so “t3” and “T3” are one code. Two entries for one tarla split its properties between them, so no total is correct. Change the code in the field above, or close the window — the tarla is already in the list, as “{code}”.",
+        "tarlaCodeTakenRace": "A tarla code that reads the same as this one has just appeared in the list. Close the window, refresh the list and use the code that already exists.",
         "generic": "The operation failed. Close the dialog, refresh the page and try again.",
         "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
         "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",

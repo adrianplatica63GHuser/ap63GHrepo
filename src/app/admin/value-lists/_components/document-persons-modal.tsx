@@ -154,7 +154,14 @@ function AddForm({
     // the Romanian sentence; anything unrecognised becomes the generic one
     // rather than leaking.                                     (Slice #29.13)
     onError: (err: Error) =>
-      setError(tErr(err instanceof RequestFailedError ? err.code : "generic")),
+      // Slice #34.32: the values object is passed unconditionally, for the
+      // reason value-list-modal.tsx states at length — a call that omits it
+      // does NOT throw, it renders the message VERBATIM, so a sentence with a
+      // placeholder reaches the screen as the literal text `{code}` with
+      // nothing logged. This panel resolves its code through the same shared
+      // `FailureCode` union as that one, and nothing its own route can answer
+      // takes an argument today.
+      setError(tErr(err instanceof RequestFailedError ? err.code : "generic", { code: "" })),
   });
 
   function handleSubmit() {
@@ -455,7 +462,7 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
       setConfirmDeleteId(null);
     },
     onError: (err: Error) =>
-      setDeleteError(tErr(err instanceof RequestFailedError ? err.code : "generic")),
+      setDeleteError(tErr(err instanceof RequestFailedError ? err.code : "generic", { code: "" })),
   });
 
   // Close on Escape

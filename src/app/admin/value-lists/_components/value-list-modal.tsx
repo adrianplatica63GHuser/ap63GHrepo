@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin/value-lists/responses";
 import {
   failureFromResponse,
+  takenByOf,
   throwRequestFailed,
   RequestFailedError,
   type FailureCode,
@@ -123,7 +124,18 @@ async function removeRow(listKey: ListKey, id: string): Promise<void> {
   if (res.ok || res.status === 204) return;
   const body: unknown = await res.json().catch(() => null);
   if (res.status === 409 && isInUseBody(body)) throw new DeleteRefusedError(body);
-  throw new RequestFailedError(failureFromResponse(res.status, body));
+  // ⚠️ **`takenByOf(body)` HERE TOO, THOUGH THIS DOOR CANNOT PRODUCE ONE.**
+  // (Slice #34.32.) This is the SECOND place a `RequestFailedError` is built —
+  // `throwRequestFailed` is the other — and the first version of that slice
+  // left this one dropping the new field. Nothing changes today: the DELETE
+  // route answers no `takenBy`, so this is `undefined` either way. What it
+  // removes is a landmine: two constructors, one of which silently discards a
+  // value the sentence it chooses may need, is how a refusal ends up rendering
+  // „…: „”" on the day some door starts sending one.
+  throw new RequestFailedError(
+    failureFromResponse(res.status, body),
+    takenByOf(body) ?? undefined,
+  );
 }
 
 /** What depends on one row, counted at the moment the dialog opens. */
@@ -391,7 +403,14 @@ function EditForm({
   // A CODE, not the server's message: those are English ("Validation failed",
   // "Internal server error") and this form is on a Romanian-only screen. Fixed
   // in passing with the delete dialog, which had the same leak.
-  const [error, setError] = useState<FailureCode | null>(null);
+  //
+  // ⚠️ **A CODE AND, SINCE SLICE #34.32, ONE VALUE BESIDE IT.** `detail` is not
+  // the server's sentence — that stays off the screen, which is the whole of
+  // `failures.ts` — it is a value the server looked up, today the tarla code
+  // that already exists. `tarlaCodeTaken` is the first sentence on this screen
+  // that has something to quote, and quoting it is the point: `t3` and `T3`
+  // differ by exactly what the person cannot see.
+  const [error, setError] = useState<{ code: FailureCode; detail?: string } | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   const qc = useQueryClient();
@@ -403,7 +422,11 @@ function EditForm({
       onSaved(row);
     },
     onError: (err: Error) =>
-      setError(err instanceof RequestFailedError ? err.code : "generic"),
+      setError(
+        err instanceof RequestFailedError
+          ? { code: err.code, detail: err.detail }
+          : { code: "generic" },
+      ),
   });
 
   useEffect(() => {
@@ -504,7 +527,25 @@ function EditForm({
           nothing at all. */}
       {error && (
         <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
-          {t(`confirm.errors.${error}` as Parameters<typeof t>[0])}
+          {/* ⚠️ **The values object is passed UNCONDITIONALLY, AND AN
+              ADVERSARIAL ROUND MEASURED WHY IT MATTERS MORE THAN THE FIRST
+              VERSION OF THIS COMMENT CLAIMED.** (Slice #34.32.) Exactly one
+              sentence takes a placeholder today (`tarlaCodeTaken`, `{code}`).
+              What stood here said an omitted argument "throws a
+              MISSING_FORMAT_VALUE that renders as the raw key path". It does
+              not: `use-intl` short-circuits with `return values || …` BEFORE
+              it reaches `IntlMessageFormat`, so a call with NO second argument
+              returns the message VERBATIM — the literal text `{code}` on
+              screen, no throw, nothing logged. (An empty `{}` is the case that
+              renders the key path.) So the failure a forgotten argument
+              produces is the silent one, which is the stronger reason to pass
+              the object at every call site rather than only at the one that
+              needs it. Extra values are ignored by every message with no
+              placeholder — measured across all 15 keys in both locales.
+              `tarla-code-unique.test.ts` §6 pins that every reader passes one. */}
+          {t(`confirm.errors.${error.code}` as Parameters<typeof t>[0], {
+            code: error.detail ?? "",
+          })}
         </p>
       )}
 
@@ -1688,7 +1729,10 @@ function DeleteDialog({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [targetId, setTargetId] = useState("");
-  const [failure, setFailure] = useState<FailureCode | null>(null);
+  // A code and, since Slice #34.32, the one value a sentence may quote —
+  // symmetric with the save form above, for `removeRow`'s reason: a shape that
+  // can hold the detail cannot silently drop it.
+  const [failure, setFailure] = useState<{ code: FailureCode; detail?: string } | null>(null);
   const [movedTotal, setMovedTotal] = useState<number | null>(null);
   /**
    * Whitelist ticks the move granted the target.               (Slice #29.13)
@@ -1734,7 +1778,11 @@ function DeleteDialog({
       dependents.refetch();
     },
     onError: (err: Error) =>
-      setFailure(err instanceof RequestFailedError ? err.code : "generic"),
+      setFailure(
+        err instanceof RequestFailedError
+          ? { code: err.code, detail: err.detail }
+          : { code: "generic" },
+      ),
   });
 
   const deleteMutation = useMutation({
@@ -1772,7 +1820,11 @@ function DeleteDialog({
         });
         return;
       }
-      setFailure(err instanceof RequestFailedError ? err.code : "generic");
+      setFailure(
+        err instanceof RequestFailedError
+          ? { code: err.code, detail: err.detail }
+          : { code: "generic" },
+      );
     },
   });
 
@@ -2084,7 +2136,15 @@ function DeleteDialog({
             server's own `error` strings are English. */}
         {failure && (
           <p role="alert" className="mb-2 text-xs text-red-600 dark:text-red-400">
-            {t(`confirm.errors.${failure}` as Parameters<typeof t>[0])}
+            {/* Values passed for the reason the save form's copy of this
+                states. This dialog's `failure` can only be a delete or a move
+                failure, neither of which takes an argument today — but it
+                carries `detail` anyway rather than hard-coding `""`, so the day
+                one does, the sentence names the row instead of quoting
+                nothing. */}
+            {t(`confirm.errors.${failure.code}` as Parameters<typeof t>[0], {
+              code: failure.detail ?? "",
+            })}
           </p>
         )}
 

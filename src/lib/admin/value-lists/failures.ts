@@ -40,6 +40,9 @@ import {
   DOCUMENT_TYPE_KEY_TAKEN_CODE,
   DOCUMENT_TYPE_NAME_TAKEN_CODE,
 } from "@/lib/documents/document-type-name-guard";
+import {
+  TARLA_CODE_TAKEN_CODE,
+} from "@/lib/properties/tarla-code-guard";
 
 /**
  * Everything a Reference Data screen knows how to say about a failure.
@@ -103,9 +106,14 @@ export const FAILURE_CODES = [
   // Slice #34.09 — the two things a person can now type into the document-type
   // ADD form that the archive may already hold.
   //
-  // ⚠️ **BOTH ARE LIVE, WHICH MAKES THEM THE FIRST PAIR HERE THAT IS.** The
-  // four members above are written-but-unreachable-through-this-function by
-  // construction, and each says so at length. These two are the opposite: a
+  // ⚠️ **BOTH ARE LIVE, WHICH MAKES THEM THE FIRST PAIR HERE THAT IS.** TWO of
+  // the four members above are written-but-unreachable-through-this-function by
+  // construction — `idCardForm` and `catchAllForm`, each of which says so at
+  // length; their `…Rename` partners are the live ones, as their own comments
+  // state. (⚠️ This said "the four members above", which contradicted those two
+  // comments forty lines up. Fixed in passing by Slice #34.32, which had
+  // propagated the wrong number into its own block below.) These two are the
+  // opposite of the unreachable pair: a
   // duplicate NAME is what a stale client list produces every time
   // (`createValue`'s own comment described the hole and #34.09 closed it), and
   // a duplicate KEY is reachable the moment the key field exists, because the
@@ -132,13 +140,51 @@ export const FAILURE_CODES = [
   // with itself about. See `documentTypeKeyRefusal`.
   "documentTypeKeyInvalid",
   "documentTypeKeyReserved",
+  // Slice #34.32 — two tarla codes may not fold to one, on the list beside
+  // document types in the same modal. BOTH are live, like the #34.09 pair
+  // above and unlike the two written-but-unreachable ones above that.
+  //
+  // ⚠️ **TWO MEMBERS FOR ONE REFUSAL, AND THE SPLIT IS NOT COSMETIC.** The
+  // server answers ONE `code` on the wire (`tarla_code_taken`, so the two doors
+  // and the guard cannot spell it three ways); this side splits it, because the
+  // two arms can say different amounts:
+  //   • `tarlaCodeTaken` — the ordinary case. The guard read the table, found
+  //     the row, and put its spelling on the wire as `takenBy`, so the sentence
+  //     can NAME it: `{code}`. On this list that is the whole value of the
+  //     message — the two spellings differ by exactly what the person cannot
+  //     see (`t3` against `T3`), and a sentence that showed neither would read
+  //     as a refusal of a code that is plainly not in the list.
+  //   • `tarlaCodeTakenRace` — migration_083's 23505. Postgres's error names
+  //     the FOLDED key, not the row, so there is no spelling to interpolate;
+  //     the honest sentence is a different one ("somebody else has just added
+  //     it"), not the same one with an empty slot in it.
+  // `failureFromResponse` picks between them on whether `takenBy` arrived, so
+  // the split lives here and the server stays with one code.
+  "tarlaCodeTaken",
+  "tarlaCodeTakenRace",
   "generic",
 ] as const;
 
 export type FailureCode = (typeof FAILURE_CODES)[number];
 
 export class RequestFailedError extends Error {
-  constructor(readonly code: FailureCode) {
+  /**
+   * `detail` is the one piece of the server's body a sentence may quote.
+   *                                                             (Slice #34.32)
+   *
+   * ⚠️ **NOT the server's `error` string, which is what this whole module
+   * exists to keep off the screen.** It is a VALUE the server looked up — today
+   * only `takenBy`, the tarla code that already exists — and it is rendered
+   * inside a Romanian sentence written on this side, never on its own. Optional
+   * because every other failure has nothing to quote: none of the four readers
+   * NEEDS the value, and the two that render a sentence fall back to `""`.
+   * (⚠️ This read "the four readers that do not need it are unchanged", which
+   * an adversarial round measured as false of all four — the two in
+   * `value-list-modal.tsx` carry `detail` in their state now and the two in
+   * `document-persons-modal.tsx` gained a values argument, in the same commit.
+   * Every reader was touched; none of them needs the value.)
+   */
+  constructor(readonly code: FailureCode, readonly detail?: string) {
     super(code);
     this.name = "RequestFailedError";
   }
@@ -187,7 +233,27 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   if (code === DOCUMENT_TYPE_KEY_TAKEN_CODE) return "documentTypeKeyTaken";
   if (code === DOCUMENT_TYPE_KEY_INVALID_CODE) return "documentTypeKeyInvalid";
   if (code === DOCUMENT_TYPE_KEY_RESERVED_CODE) return "documentTypeKeyReserved";
+  // Slice #34.32 — one code on the wire, two sentences on this side. Which one
+  // depends on whether the server had a row to name: the guard puts the
+  // colliding spelling in `takenBy`, migration_083's 23505 cannot. See
+  // FAILURE_CODES above for why that is two members rather than one sentence
+  // with an empty slot in it.
+  if (code === TARLA_CODE_TAKEN_CODE) {
+    return takenByOf(body) === null ? "tarlaCodeTakenRace" : "tarlaCodeTaken";
+  }
   return "generic";
+}
+
+/**
+ * The colliding tarla code the server named, or `null`.        (Slice #34.32)
+ *
+ * Exported so `throwRequestFailed` and its tests read the body the same way,
+ * and so the one place that decides what counts as "named" — a non-empty
+ * string — is not written twice.
+ */
+export function takenByOf(body: unknown): string | null {
+  const value = (body as { takenBy?: unknown } | null)?.takenBy;
+  return typeof value === "string" && value !== "" ? value : null;
 }
 
 /**
@@ -222,5 +288,8 @@ export async function throwRequestFailed(
   if (formRejects400 && (res.status === 400 || res.status === 422) && mapped === "generic") {
     throw new RequestFailedError("validation");
   }
-  throw new RequestFailedError(mapped);
+  // Slice #34.32: the value the sentence may quote, carried beside the code.
+  // `takenByOf` answers `null` for every other failure, so this is a no-op on
+  // all of them.
+  throw new RequestFailedError(mapped, takenByOf(body) ?? undefined);
 }

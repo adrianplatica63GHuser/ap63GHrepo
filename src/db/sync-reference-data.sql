@@ -155,7 +155,9 @@ INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
 --
 -- ⚠️ **`sort_order` IS NOT WHAT ORDERS THIS LIST ON SCREEN.** `listValues`
 -- (src/lib/admin/value-lists/queries.ts) orders document-types by
--- `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`, then by NAME — the column
+-- `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`, then by NAME, then by `id`
+-- (Slice #34.32 appended the third term — see that branch for why the second is
+-- not total) — the column
 -- is read for seven of the other eight lookup lists and not for this one
 -- (`person-roles` orders by name too). So the numbers
 -- below are a stable identity for the row and nothing more, existing values are
@@ -256,9 +258,9 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   -- it created took the column's DEFAULT 0, and a database seeded from this
   -- file gets 40-43 instead. Nothing reads the difference: `listValues`
   -- (src/lib/admin/value-lists/queries.ts) orders document-types by
-  -- `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END` and then by NAME, which
-  -- is why the paragraph above calls these numbers a stable identity for the
-  -- row and nothing more.
+  -- `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`, then by NAME, then by
+  -- `id` (Slice #34.32), which is why the paragraph above calls these numbers a
+  -- stable identity for the row and nothing more.
   --
   -- ⚠️ **THE MIGRATION CHAIN SEEDS THEM TOO, SINCE #34.30, AND A FIFTH ROW
   -- ADDED HERE WOULD NOT BE.** `migration_072_seed_document_types.sql` is

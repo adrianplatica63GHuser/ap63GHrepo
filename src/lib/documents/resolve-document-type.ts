@@ -209,6 +209,36 @@ type LockedCreate =
  * `ORDER BY name` would agree with it on every archive except one where a type
  * is NAMED the same as the catch-all — and "except one" is exactly the shape
  * of thing this codebase keeps learning to measure rather than assume.
+ *
+ * ⚠️ **AND SINCE SLICE #34.32 THE ORDER IS TOTAL, BECAUSE migration_080'S
+ * INDEX IS PARTIAL AND THE PARAGRAPH ABOVE OVERSTATED WHAT IT BOUGHT.** The
+ * sentence "two rows can no longer hold one name" is true only of a name that
+ * normalises to SOMETHING: the index is `WHERE <normalised> <> ''`
+ * (migration_080 `:98`, `:294-310`), deliberately, so that one punctuation-only
+ * type cannot absorb every other one. A name of „—" normalises to the empty
+ * string and is outside the index, so **TWO ROWS MAY BOTH BE NAMED „—"**.
+ *
+ * ⚠️ **AND IT HAS TO BE THE SAME STRING, WHICH IS NARROWER THAN "BOTH
+ * PUNCTUATION-ONLY" — AN ADVERSARIAL ROUND CORRECTED THE FIRST VERSION OF
+ * THIS PARAGRAPH, WHICH GAVE „—" AND „·" AS THE PAIR.** `asc(name)` compares
+ * the RAW text, so those two are separated perfectly well even though both
+ * normalise to nothing. What `(UNCLASSIFIED pin, name)` cannot separate is two
+ * rows holding ONE string — and which of those is SEEN first was decided by
+ * whatever order Postgres handed the rows over in, and could differ between
+ * two reads of the same table.
+ *
+ * `asc(id)` is APPENDED as a third term, never substituted: the pin and the
+ * name still decide the visible order, and `id` only breaks a tie the first
+ * two leave open. Nothing adopts the wrong row either way —
+ * `sameDocumentTypeName` refuses to equate two empty normalised forms, so no
+ * import matches either of them — which is why this is cosmetic today and is
+ * fixed as one term rather than as a slice of its own.
+ *
+ * ⚠️ **`listValues`' `document-types` branch took the same term in the same
+ * commit, and it had to.** This ORDER BY is a RESTATEMENT of that one, and the
+ * whole argument above is that the two must agree; appending a tie-break to
+ * one of two restatements would have made them disagree on exactly the pair
+ * this slice is about. `value-list-ordering.test.ts` §4 pins both.
  */
 async function readTypes(conn: DbTransaction | typeof db = db): Promise<DocumentTypeCandidate[]> {
   return conn
@@ -221,6 +251,8 @@ async function readTypes(conn: DbTransaction | typeof db = db): Promise<Document
     .orderBy(
       sql`CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`,
       asc(lookupDocumentType.name),
+      // Slice #34.32 — the third term, so the key is TOTAL. See the ⚠️ above.
+      asc(lookupDocumentType.id),
     );
 }
 

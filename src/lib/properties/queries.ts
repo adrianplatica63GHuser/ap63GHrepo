@@ -16,6 +16,9 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzl
 import { db, type DbTransaction } from "@/db";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey, cadastralValue } from "./cadastral-identity";
+// Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
+// rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
+import { sameTarlaCode, tarlaLockIdentities } from "./tarla-code-guard";
 import { advisoryLockKeys, type CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
@@ -757,8 +760,30 @@ export async function createProperty(
  * measured the database with, so it never places a property on evidence nobody
  * looked at. This function must CHOOSE, and choosing `47/2` for a code written
  * `47per2` is right — it is the same parcel to everyone except a string
- * comparison. Looser here can only ever create FEWER rows than the migration
- * would, never a twin the migration would have refused.
+ * comparison.
+ *
+ * ⚠️ **AND THE SENTENCE THAT FOLLOWED THAT ONE WAS WRONG, WHICH SLICE #34.32
+ * HAD TO MEASURE BECAUSE AN INDEX NOW DEPENDS ON IT.** What stood here:
+ * "Looser here can only ever create FEWER rows than the migration would, never
+ * a twin the migration would have refused." That treats `cadastralKey` as a
+ * COARSENING of `foldRomanian`, and it is not one — `perToSlash` runs BEFORE
+ * the fold and knows nothing about diacritics, so a spelling it cannot see
+ * through survives into a different key.
+ *
+ * Measured, with a stored row an administrator really can type (Reference
+ * Data's create door writes `indicativ` verbatim; it does not apply
+ * `cadastralValue`): the row is `47PER2`, the value this function would store
+ * for a folder saying `47pér2` is `47pér2`. To `cadastralKey` those are `47/2`
+ * and `47per2` — a MISS. To `foldRomanian` both are `47per2` — ONE CODE. The
+ * two folds cut the same strings into different classes; neither is a
+ * refinement of the other.
+ *
+ * That was harmless while nothing enforced either fold. migration_083 puts a
+ * unique index over `foldRomanian(indicativ)`, and this function is a writer
+ * of that column — so a scan that missed on `cadastralKey` alone would go on
+ * to INSERT a row the index refuses, and an import would die on a 23505 for a
+ * spelling. **So the scan now asks both folds, and the decision is ADOPT.**
+ * See `findFolded` below for the order and why it is that order.
  *
  * `tarlaId` wins over `tarlaCode` when both arrive: an id is a decision.
  *
@@ -786,37 +811,94 @@ export async function createProperty(
  *     there first commits, we take the lock it released, we look again, and we
  *     ADOPT its row instead of writing a twin.
  *
- * **The key is `advisoryLockKeys("tarla:" + wanted)`** — the same hash pair
- * `ensurePropertyForFolder` uses, over a NAMESPACED string so a tarla lock and
- * a parcel-identity lock can never be the SAME STRING. (Not "can never
- * collide": these are two 32-bit hashes and `advisoryLockKeys`'s own header
- * concedes that a hash collision costs a wait and nothing else. What the prefix
- * removes is the case where the two are equal by construction — a hyphenated
- * code like `48-50d`, which `POST /api/properties` accepts as free text, is
+ * **The keys are `tarlaLockIdentities(value)`** (src/lib/properties/
+ * tarla-code-guard.ts), hashed with the same `advisoryLockKeys`
+ * `ensurePropertyForFolder` uses, over NAMESPACED strings so a tarla lock and
+ * a parcel-identity lock can never be the SAME STRING.
+ *
+ * ⚠️ **TWO OF THEM SINCE SLICE #34.32, AND THE SECOND IS NOT OPTIONAL.** What
+ * stood here was `advisoryLockKeys("tarla:" + wanted)` alone — `wanted` being
+ * `cadastralKey(value)` — and it serialises this function against itself and
+ * against nothing else. Reference Data's write door folds with `foldRomanian`,
+ * migration_083's index folds with `foldRomanian`, and neither fold is a
+ * refinement of the other, so a single `cadastralKey` lock leaves the
+ * import-versus-administrator race open. `tarlaLockIdentities` returns both, in
+ * the order they must be taken; its header carries the measured pairs and the
+ * deadlock argument. (Not "can never collide": a lock key is a pair of
+ * independent 32-bit hashes, so a collision needs both to collide.
+ * ⚠️ **THIS SENTENCE USED TO ADD "and `advisoryLockKeys`'s own header concedes
+ * that a hash collision costs a wait and nothing else", AND BOTH HALVES OF
+ * THAT WERE WRONG BY THE TIME SLICE #34.32 LANDED.** That header
+ * (`./import-property-plan.ts`) prices nothing — it says only that two
+ * independent hashes mean a collision needs both — and the "costs a wait"
+ * reading stopped being the whole story here the moment this function began
+ * taking TWO locks in sequence. `tarlaLockIdentities`' header is where the
+ * narrowed version lives; do not restate it from memory. What the PREFIX
+ * removes is a different thing and still holds: the case where a tarla lock
+ * and a parcel-identity lock are equal by construction — a hyphenated code
+ * like `48-50d`, which `POST /api/properties` accepts as free text, is
  * character for character the identity of tarla `48`, parcela `50d`.) It reuses
  * that function rather than copying it for the reason stated there: a hash
  * computed in this codebase cannot drift out from under the code that depends
  * on it.
  *
- * ⚠️ **NO DEADLOCK, AND IT IS ORDERING THAT BUYS THAT, NOT LUCK.** The only
- * caller that holds a parcel-identity lock takes it BEFORE `createPropertyIn`
- * runs, so the acquisition order is always identity-then-code; nothing anywhere
- * takes a tarla lock and then waits for an identity one. Two transactions
- * wanting the same new code simply queue.
+ * ⚠️ **NO DEADLOCK, AND IT IS ORDERING THAT BUYS THAT, NOT LUCK — AS A CLAIM
+ * ABOUT THE IDENTITY STRINGS.** The only caller that holds a parcel-identity
+ * lock takes it BEFORE `createPropertyIn` runs, so the acquisition order is
+ * always identity-then-cadastral-key-then-fold; nothing anywhere takes a tarla
+ * lock and then waits for an identity one, and nothing takes the fold lock
+ * before the cadastral-key one. Two transactions wanting the same new code
+ * simply queue.
  *
- * ⚠️ **WHAT THE LOCK DOES NOT COVER, NAMED RATHER THAN IMPLIED.** It
- * serialises this function against itself, and this function is the only door
- * that MINTS a code from a folder name. The other writer of `lookup_tarla` is
- * Reference Data's „Adaugă", through `createValue` — which takes no lock and
- * applies no fold, so an administrator typing `t3` beside an existing `T3`
- * still makes the twin pair, with or without a race. That gap is older than
- * this slice and is the one a unique index would close; it is in the #34.14
- * handover rather than papered over here.
+ * ⚠️ **The one case that ordering does NOT rule out is a pair of hash
+ * collisions**, which is a statement about `advisoryLockKeys` rather than about
+ * the strings, and it is argued in full — with its arithmetic — in
+ * `tarlaLockIdentities`' header. It is stated there and pointed at here rather
+ * than restated, because this paragraph and that one are the two places a
+ * reader checks the deadlock argument from, and an adversarial round found them
+ * disagreeing.
  *
- * A unique index over the folded `indicativ` would close both at the database.
- * That remains the follow-up migration_078's header declines for its own
- * reasons — an admin form's second „T1" would become a 23505 needing a friendly
- * refusal per outcome, which is a slice, not a line.
+ * ⚠️ **WHAT THE LOCK DOES NOT COVER, NAMED RATHER THAN IMPLIED — AND SLICE
+ * #34.32 IS WHERE THE GAP WAS CLOSED.** It serialises this function against
+ * itself, and this function is the only door that MINTS a code from a folder
+ * name. The other writer of `lookup_tarla` is Reference Data's „Adaugă",
+ * through `createValue` — which took no lock and applied no fold, so an
+ * administrator typing `t3` beside an existing `T3` still made the twin pair,
+ * with or without a race. That gap was older than #34.14 and was in its
+ * handover; `writeTarlaRow` (src/lib/admin/value-lists/queries.ts) and
+ * migration_083's unique index are the two halves of the fix, and that function
+ * holds the same two locks this one does.
+ *
+ * ⚠️ **THE DECISION THIS FUNCTION OWES THAT INDEX: AN IMPORT ADOPTS, IT DOES
+ * NOT REFUSE.**                                                (Slice #34.32)
+ * The index reaches this path too, and a writer that met it head-on would
+ * fail an import on a constraint — a folder scan stopping because a directory
+ * said `t3` and the list said `T3`, reported as a 23505 nobody can act on.
+ * That is not a defensible outcome for a machine reading a folder name:
+ * `T3` and `t3` ARE the same tarla, the row already exists, and attaching the
+ * property to it is precisely what this function is for. Refusing would also
+ * be a change of contract — this path has ADOPTED since #34.03, under
+ * `cadastralKey` — and it would move a decision a person should make (are
+ * these two codes one tarla?) into the middle of an unattended import.
+ *
+ * So the rule is: **the import never creates a row the index would reject, and
+ * it never fails because of one.** Two things make that true, and an
+ * adversarial round is why it is two rather than one:
+ *   • it ADOPTS under `cadastralKey` first and then under `foldRomanian` — the
+ *     index's own fold — so the insert below is reachable only when no
+ *     COMMITTED row folds to this code; and
+ *   • it holds both of `tarlaLockIdentities`' locks while it re-scans and
+ *     inserts, so no UNCOMMITTED writer of this table — including Reference
+ *     Data's „Adaugă", which folds differently — can land a colliding row in
+ *     between. The first round of review found exactly that hole: with only the
+ *     `cadastralKey` lock, an administrator's `T3` committing between this
+ *     function's scan and its insert produced a 23505 that
+ *     `POST /api/admin/import/property` answered as the generic Romanian
+ *     "operation failed", with the whole property create rolled back.
+ * A person typing into Reference Data gets the opposite answer, and gets a
+ * sentence: see `tarla-code-guard.ts` for why the two doors differ on purpose.
+ *
+ * Covered by `src/__tests__/tarla-code-unique.test.ts` §4.
  */
 async function resolveTarlaForCreate(
   tx: DbTransaction,
@@ -850,12 +932,35 @@ async function resolveTarlaForCreate(
   // Reference Data would then see two populations where there is one code.
   // Same one-line fix as the nine `listValues` branches, on the read where
   // being wrong is persisted rather than displayed.
+  //
+  // ⚠️ **TWO PASSES, IN THIS ORDER, AND THE ORDER IS THE CONTRACT.**
+  //                                                            (Slice #34.32)
+  // The FIRST is `cadastralKey`, unchanged since #34.03: it is this codebase's
+  // answer to "are these two cadastral identifiers the same parcel", it sees
+  // through `47per2` → `47/2`, and it is what the existing behaviour and every
+  // existing row were decided by. It stays first so that nothing this function
+  // already adopted starts resolving to a different row.
+  //
+  // The SECOND is `foldRomanian` — migration_083's own fold, through
+  // `sameTarlaCode` so the exception for an empty fold is inherited rather
+  // than restated. It is reachable only where the first missed AND the index
+  // would still have refused the insert: the classes the two folds cut are
+  // different, neither a refinement of the other (see the header's measured
+  // `47pér2` case). Without it this function would insert a row the index
+  // rejects and kill an import on a 23505.
+  //
+  // ⚠️ **It compares `value`, not `raw`** — the decoded string that is about to
+  // be stored — because that is the text the index will actually see.
   const findFolded = async (): Promise<string | null> => {
     const rows = await tx
       .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
       .from(lookupTarla)
       .orderBy(lookupTarla.indicativ, lookupTarla.id);
-    return rows.find((r) => cadastralKey(r.indicativ) === wanted)?.id ?? null;
+    return (
+      rows.find((r) => cadastralKey(r.indicativ) === wanted)?.id ??
+      rows.find((r) => sameTarlaCode(value, r.indicativ))?.id ??
+      null
+    );
   };
 
   const hit = await findFolded();
@@ -863,12 +968,28 @@ async function resolveTarlaForCreate(
 
   // ── About to mint a code: serialise on it first. ─────────  (Slice #34.14)
   //
-  // Namespaced, so this lock cannot collide with `ensurePropertyForFolder`'s
+  // Namespaced, so these locks cannot collide with `ensurePropertyForFolder`'s
   // lock on a cadastral identity. See the header above for the double check,
-  // the ordering that rules out a deadlock, and why the lock is not taken on
+  // the ordering that rules out a deadlock, and why the locks are not taken on
   // the hit path.
-  const [lockA, lockB] = advisoryLockKeys(`tarla:${wanted}`);
-  await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
+  //
+  // ⚠️ **TWO LOCKS SINCE SLICE #34.32, AND THE SECOND ONE IS WHAT MAKES THE
+  // CLAIM IN THIS FUNCTION'S HEADER TRUE.** #34.14 took one, on
+  // `cadastralKey`, which serialises this function against ITSELF and against
+  // nothing else. Reference Data's „Adaugă" writes the same table under a
+  // DIFFERENT fold, so an administrator's `T3` and an import's `t3` could both
+  // pass their own checks and collide in migration_083's index — a 23505 the
+  // admin door turns into a sentence and this path would surface as the generic
+  // "operation failed" with the whole property create rolled back. Both writers
+  // now take both identities, in the order `tarlaLockIdentities` returns them.
+  // That function's header carries the full argument, including why the two
+  // folds are not refinements of each other and why the fixed order is what
+  // rules out a deadlock.
+  for (const identity of tarlaLockIdentities(value)) {
+    if (identity === "") continue;
+    const [lockA, lockB] = advisoryLockKeys(identity);
+    await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
+  }
 
   // The second half of the double check. A racer that committed its row while
   // we waited for the lock is ADOPTED here rather than duplicated.

@@ -43,6 +43,11 @@ import {
   DOCUMENT_TYPE_NAME_TAKEN_CODE,
   DOCUMENT_TYPE_NAME_UNIQUE_INDEX,
 } from "@/lib/documents/document-type-name-guard";
+import {
+  asTarlaCodeTaken,
+  TARLA_CODE_TAKEN_CODE,
+  TARLA_CODE_UNIQUE_INDEX,
+} from "@/lib/properties/tarla-code-guard";
 
 type Ctx = { params: Promise<{ list: string; id: string }> };
 
@@ -180,6 +185,44 @@ export async function PUT(
             "A document type with this display name already exists (created or " +
             "renamed by another writer while this request was in flight).",
           code: DOCUMENT_TYPE_NAME_TAKEN_CODE,
+        },
+        { status: 400 },
+      );
+    }
+    // ⚠️ **TWO TARLA CODES MAY NOT FOLD TO ONE, AND A RENAME IS THE OTHER WAY
+    // TO GET THERE.**                                            (Slice #34.32)
+    // The same refusal the POST answers, from the same guard in the same query
+    // layer, for the reason the document-type pair above grew a rename half:
+    // Reference Data's edit form renames a code, and renaming `T4` to `t3`
+    // where `T3` exists is the same two rows with the same one code, arrived at
+    // from the other side.
+    const tarlaTaken = asTarlaCodeTaken(err);
+    if (tarlaTaken !== null) {
+      return Response.json(
+        {
+          error:
+            "A tarla code that folds to this one already exists: " +
+            `"${tarlaTaken.takenBy}".`,
+          code: TARLA_CODE_TAKEN_CODE,
+          takenBy: tarlaTaken.takenBy,
+        },
+        { status: 400 },
+      );
+    }
+    // The race, recognised by CONSTRAINT. See the POST's copy of this branch
+    // for why `takenBy` is absent on this arm and why it is not
+    // `dbErrorToResponse`: this route answers ONE Postgres error per index, by
+    // name, and everything else still falls through to the 500 as before.
+    if (
+      pgErrorCode(err) === "23505" &&
+      pgErrorConstraint(err) === TARLA_CODE_UNIQUE_INDEX
+    ) {
+      return Response.json(
+        {
+          error:
+            "A tarla code that folds to this one already exists (created or " +
+            "renamed by another writer while this request was in flight).",
+          code: TARLA_CODE_TAKEN_CODE,
         },
         { status: 400 },
       );
