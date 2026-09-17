@@ -947,6 +947,11 @@ describe("migration_073's SQL predicate is the TypeScript one", () => {
       "src/db/sync-reference-data.sql",
       "src/db/seed_dev_data.sql",
       "src/db/migration_072_seed_document_types.sql",
+      // Slice #34.30. A document-type seed that runs AFTER migration_073 is
+      // exactly the shape this assertion exists to catch, and the list is the
+      // only thing that knows about it — it passed while 081 was absent, for
+      // no better reason than that 081 happens not to mention the key.
+      "src/db/migration_081_seed_act_document_types.sql",
     ]) {
       expect(read(seed)).not.toContain("CARTE_DE_IDENTITATE_DOUA_EXEMPLARE");
     }

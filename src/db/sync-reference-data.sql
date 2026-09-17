@@ -260,15 +260,25 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   -- is why the paragraph above calls these numbers a stable identity for the
   -- row and nothing more.
   --
-  -- ⚠️ **AND THE MIGRATION CHAIN DOES NOT SEED THEM.**
-  -- `migration_072_seed_document_types.sql` is generated from this block and
-  -- runs in the rebuild chain, which is why the fifteen rows above produced no
-  -- new REFDATA lines. It is an APPLIED migration whose MD5 is recorded in
-  -- `schema_migrations` (Apply-Migration.ps1 compares it), so it is not
-  -- regenerated in place: these four are seed-only until a later migration
-  -- adds them additively, and until then they are four new `+` lines in
-  -- src/db/rebuild-known-differences.txt. Re-baseline as the paragraph above
-  -- says.
+  -- ⚠️ **THE MIGRATION CHAIN SEEDS THEM TOO, SINCE #34.30, AND A FIFTH ROW
+  -- ADDED HERE WOULD NOT BE.** `migration_072_seed_document_types.sql` is
+  -- generated from this block and runs in the rebuild chain, which is why the
+  -- fifteen rows above produced no new REFDATA lines. It is an APPLIED
+  -- migration whose MD5 is recorded in `schema_migrations`
+  -- (Apply-Migration.ps1 compares it), so it is NOT regenerated in place —
+  -- which left these four seed-only for one slice, as four `+` lines in
+  -- src/db/rebuild-known-differences.txt. Slice #34.30 closed that the only
+  -- way that leaves 072 untouched: a new additive migration,
+  -- `migration_081_seed_act_document_types.sql`. Anything added to this block
+  -- from now on needs one of its own, for the same reason.
+  --
+  -- ⚠️ **AND THE `sort_order`s BELOW ARE NO LONGER FREE.** migration_081
+  -- carries 40-43 because `scripts/verify-rebuild.ts` compares reference rows
+  -- as whole tuples: a row seeded on both paths with a DIFFERENT sort_order is
+  -- not an agreement but a `+` line AND a `-` line. Changing one of these four
+  -- numbers here without changing it there costs two baselined differences per
+  -- row — which is the one way the „stable identity for the row and nothing
+  -- more" paragraph above is now too relaxed about this column.
   ('ACT_ADITIONAL',                 'Act Adițional',                     40),
   ('ACT_ALIPIRE',                   'Act de Alipire',                    41),
   ('ACT_DEZLIPIRE',                 'Act de Dezlipire',                  42),

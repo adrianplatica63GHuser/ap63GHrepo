@@ -39,11 +39,14 @@
  *      a catalogue the prompt does not render is a catalogue half the app
  *      believes in.
  *
- *   5. **The hand-run data script.** `scripts/add-document-types.sql` created
- *      four rows against the live database in Slice #34.09 and deliberately
- *      added them to neither list. Slice #34.19 added them to both, so the
- *      script is now a third place the same four (key, name) pairs are
- *      written and a third place they can drift.
+ *   5. **The hand-run data script, and the migration that caught the chain
+ *      up with it.** `scripts/add-document-types.sql` created four rows
+ *      against the live database in Slice #34.09 and deliberately added them
+ *      to neither list. Slice #34.19 added them to both; Slice #34.30 added
+ *      `migration_081_seed_act_document_types.sql` so the migration chain
+ *      seeds them too. The same four (key, name) pairs are now written in
+ *      FOUR places and can drift in four — and the migration is the one that
+ *      also has to agree on `sort_order`, for the reason its header gives.
  *
  * ⚠️ **`seed.ts` IS PARSED RATHER THAN IMPORTED.** It opens a database
  * connection at module scope; importing it from a test would try to reach
@@ -157,15 +160,24 @@ describe("the catalogue and the seed are one list", () => {
  * the script does turn that one assertion red, on purpose, and the three that
  * follow read the script.
  *
- * What this does NOT assert, deliberately: that the migration chain seeds them.
- * It does not. `migration_072_seed_document_types.sql` is generated from the
- * seed block but is an APPLIED migration whose MD5 is recorded in
- * `schema_migrations`, so #34.19 did not regenerate it in place — these four
- * are seed-only, which is four REFDATA lines in
- * `src/db/rebuild-known-differences.txt` and a re-baseline. Freezing that gap
- * as an assertion would make the slice that closes it fail for doing so.
+ * ⚠️ **THE GAP THIS BLOCK USED TO REFUSE TO ASSERT IS CLOSED, SO IT IS
+ * ASSERTED NOW.** What stood here said that the migration chain does NOT seed
+ * these four and that freezing the gap would make the slice that closed it
+ * fail for doing so. Slice #34.30 is that slice:
+ * `migration_081_seed_act_document_types.sql` seeds them additively, without
+ * touching `migration_072_seed_document_types.sql`, whose MD5 is recorded in
+ * `schema_migrations` and which therefore cannot be regenerated in place.
+ *
+ * ⚠️ **AND THE MIGRATION IS BOUND ON `sort_order` AS WELL AS ON THE NAME,
+ * WHICH IS THE ONE THING THE OTHER THREE FILES ARE NOT BOUND ON.**
+ * `scripts/verify-rebuild.ts` compares reference rows as whole tuples, so a
+ * row seeded on both paths with a different `sort_order` is not an agreement
+ * but TWO baselined differences — a `+` for the seed's value and a `-` for the
+ * chain's. Seeding these four with the column default would have turned four
+ * REFDATA lines into eight. The migration therefore carries 40-43, copied from
+ * the seed block, and this is what holds it there.
  */
-describe("the four act types are one list in three files", () => {
+describe("the four act types are one list in four files", () => {
   /** The `(key, name)` pairs `scripts/add-document-types.sql` inserts. */
   function scriptedActTypes(): { key: string; name: string }[] {
     const sql = sqlWithoutComments(read("scripts/add-document-types.sql"));
@@ -188,11 +200,54 @@ describe("the four act types are one list in three files", () => {
     ]);
   });
 
+  /**
+   * The `(key, name, sort_order)` rows `migration_081` inserts.
+   *
+   * Its `wanted` array carries three elements per row where the script's
+   * carries two, so this regex cannot silently read the script's rows and vice
+   * versa — the anti-vacuity assertion below is what proves it read anything
+   * at all.
+   */
+  function migratedActTypes(): { key: string; name: string; sortOrder: number }[] {
+    const sql = sqlWithoutComments(read("src/db/migration_081_seed_act_document_types.sql"));
+    return [...sql.matchAll(/ARRAY\['([A-Z0-9_]+)',\s*'([^']*)',\s*'(\d+)'\]/g)].map((m) => ({
+      key: m[1],
+      name: m[2],
+      sortOrder: Number(m[3]),
+    }));
+  }
+
   it("seeds each of them, under the name the script gives it", () => {
     const seeded = new Map(seededDocumentTypes().map((r) => [r.key, r.name]));
     const wrong = scriptedActTypes()
       .filter((row) => seeded.get(row.key) !== row.name)
       .map((row) => `${row.key}: script "${row.name}" vs seed "${seeded.get(row.key)}"`);
+    expect(wrong).toEqual([]);
+  });
+
+  it("reads four rows out of migration_081, and they are the same four acts", () => {
+    // Anti-vacuity, same reason as the assertion above it: a regex that matched
+    // nothing would make the two assertions below pass over no rows at all.
+    expect(migratedActTypes().map((r) => r.key).sort()).toEqual(
+      scriptedActTypes().map((r) => r.key).sort(),
+    );
+  });
+
+  it("gives the migration chain the same name AND sort_order as the seed", () => {
+    const seeded = new Map(seededDocumentTypes().map((r) => [r.key, r]));
+    const wrong = migratedActTypes()
+      .filter((row) => {
+        const seed = seeded.get(row.key);
+        return !seed || seed.name !== row.name || seed.sortOrder !== row.sortOrder;
+      })
+      .map((row) => {
+        const seed = seeded.get(row.key);
+        return `${row.key}: migration "${row.name}"/${row.sortOrder} vs seed ` +
+          (seed ? `"${seed.name}"/${seed.sortOrder}` : "(not seeded)");
+      });
+    // A failure here is not cosmetic: the two rebuild paths stop agreeing about
+    // these rows, and `src/db/rebuild-known-differences.txt` grows by up to
+    // eight lines on the next `Verify-Rebuild` run.
     expect(wrong).toEqual([]);
   });
 

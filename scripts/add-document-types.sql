@@ -93,14 +93,20 @@
 --
 --  What that changes, and what it does not:
 --    * A database rebuilt from `sync-reference-data.sql` (a fresh Supabase
---      project, the reference-data seed) now HAS these four rows. A database
---      built by replaying the migration chain still does not: the chain seeds
+--      project, the reference-data seed) now HAS these four rows. ⚠️ **AND SO
+--      DOES ONE BUILT BY REPLAYING THE MIGRATION CHAIN, SINCE SLICE #34.30 —
+--      THE SENTENCE THAT STOOD HERE SAID IT DID NOT.** The chain seeds
 --      document types through `migration_072_seed_document_types.sql`, which is
 --      generated from that block but is an APPLIED migration whose MD5 sits in
---      `schema_migrations`, so #34.19 did not regenerate it in place. The two
---      rebuild paths therefore differ by these four rows, which is four new
---      REFDATA `+` lines in `src/db/rebuild-known-differences.txt` and a
---      re-baseline (`npm run db:verify-rebuild -- --update-baseline`, Docker).
+--      `schema_migrations`, so #34.19 did not regenerate it in place, and for
+--      one slice the two rebuild paths differed by exactly these four rows —
+--      four REFDATA `+` lines in `src/db/rebuild-known-differences.txt`.
+--      #34.30 added `src/db/migration_081_seed_act_document_types.sql`, which
+--      seeds the same four additively and with the seed block's sort_orders,
+--      so the two paths agree and those four lines are gone. THIS FILE IS
+--      STILL NOT A MIGRATION and is still not globbed by anything; what
+--      changed is that it is no longer the only route by which a
+--      non-live database gets these rows.
 --    * `build-ciprian-image.ps1` pg_dumps LIVE reference data, so the rows do
 --      travel to Ciprian's box once this has been run against `ga40db` and the
 --      image is rebuilt. `scripts/supabase-sync.ts` copies live rows too. So
