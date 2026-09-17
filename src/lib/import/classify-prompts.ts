@@ -101,6 +101,15 @@
  * self-evident. Renaming any of those rows without editing the matching rule
  * puts the pair back where it started.
  *
+ * ⚠️ **THERE IS NOW A FOURTH CONFUSABLE SET AND IT IS A SET OF FOUR RATHER
+ * THAN A PAIR:** ACT_ALIPIRE, ACT_DEZLIPIRE, ACT_DEZMEMBRARE and ACT_LOTIZARE.
+ * The paragraphs further down are its evidence and CLASSIFY_SYSTEM_PROMPT
+ * below carries its rule. ACT_LOTIZARE arrived with the fifteen above and was not
+ * counted as confusable then, because nothing had read the documents; it is
+ * counted now. The renaming warning in the sentence above covers this set
+ * too — and covers it harder, because its rule quotes the Romanian headings
+ * rather than only naming the keys.
+ *
  * ⚠️ **FOUR ACT TYPES WERE ADDED BY SLICE #34.19, AND WHAT IS NEW IS THE KEY
  * RATHER THAN THE ROW.** ACT_ADITIONAL, ACT_ALIPIRE, ACT_DEZLIPIRE and
  * ACT_DEZMEMBRARE were created against the live database by
@@ -112,26 +121,116 @@
  * only reaching them through `matchDocumentType` on the display name, which is
  * what makes a `type-config` carve-out on one of them possible at all.
  *
- * ⚠️ **THE ALIPIRE / DEZLIPIRE / DEZMEMBRARE TRIO IS A CONFUSABLE SET AND
- * NOTHING SEPARATES THEM YET.** Alipire MERGES parcels, dezlipire and
- * dezmembrare SPLIT one — the same shape as ACT_PARTAJ beside CONTRACT_PARTAJ
- * two paragraphs up, which carries a rule in CLASSIFY_SYSTEM_PROMPT for
- * exactly this reason. #34.19 put the prompt out of scope, so the trio goes in
- * with their names alone to tell them apart. On a database seeded from
- * `sync-reference-data.sql` a wrong answer among the three is a mis-filed
- * type rather than a created one, because all four rows are there.
+ * ⚠️ **THE ALIPIRE / DEZLIPIRE / DEZMEMBRARE SET IS SEPARATED BY A RULE NOW,
+ * AND THE RULE IS NOT THE ONE #34.19 EXPECTED SOMEBODY TO FIND.** Alipire
+ * MERGES parcels and the other two SPLIT one — that much #34.19 already said,
+ * and it left the dezlipire/dezmembrare half open as a legal distinction to be
+ * looked up. #34.30 looked, and there is no distinction to find: „dezlipire"
+ * is the Civil Code's word for the operation (art. 879 alin. 2, „dacă se
+ * desparte o parte din imobil") and „dezmembrare" is the notarial-practice
+ * word for the same one. Catalogue 33.04 declined to separate them and was
+ * right to — it called the question „a legal distinction this run is not
+ * competent to make", and the answer is that the question has no answer.
  *
- * ⚠️ **ON A CHAIN-BUILT DATABASE THERE IS NO ROW FOR ANY OF THE FOUR YET, AND
- * THAT IS A CONSEQUENCE OF WHITELISTING THEM.** The migration chain seeds
+ * ⚠️ **SO THE RULE IS ABOUT WHERE TO READ, NOT ABOUT WHAT THE OPERATION DOES,
+ * AND THE ELEVEN SAMPLES ARE WHY.** Read against the documents themselves
+ * (`zzz ALIPIRE-DEZLIPIRE`, the eleven folders Catalogue 33.04 item 78 counted
+ * but never opened), FOUR of the eleven folder names disagree with the heading
+ * on the page: two folders named „Act dezlipire" hold acts headed ACT DE
+ * DEZMEMBRARE, and two named „Act dezmembrare" hold acts headed ACT DE
+ * LOTIZARE. Exactly ONE document in the archive is headed ACT DE DEZLIPIRE,
+ * and its own operative sentence reads „dispun dezmembrarea in 2 (două)
+ * loturi". The bodies are worse than the folder names: every act de
+ * dezmembrare there recites the earlier ALIPIRE that formed the parcel it is
+ * splitting, so a model reading the recitals has a merge and a split in front
+ * of it and no reason to prefer either. The heading is the only signal that is
+ * ever right, which is why the prompt rule says to use it and to ignore the
+ * rest — the same shape as the ACT_PARTAJ rule further up, arrived at from the
+ * opposite direction.
+ *
+ * ⚠️ **ACT_LOTIZARE IS IN THE RULE BECAUSE THE ARCHIVE PUT IT THERE.** It was
+ * seeded with the fifteen in #29.15 and nothing connected it to these; two of
+ * the five „dezmembrare" samples turn out to be acts de lotizare („dispunem
+ * lotizarea acestuia"), which is the same division under a fourth word. Only
+ * one of those two goes on to give a purpose („în vederea înstrăinării, către
+ * dobânditori diferiți"), so neither body phrase separates the pair reliably —
+ * which is why the prompt rule keys ACT_LOTIZARE off the HEADING („act de
+ * lotizare") like the other three, and says in the same sentence that a body
+ * ordering a lotizare under some other heading does not make the document one.
+ * Both of these samples ARE headed ACT DE LOTIZARE, which is what puts them in
+ * reach of a heading rule at all. Leaving it out
+ * would have written a rule for three of the four words the documents in one
+ * folder actually use. (Slice #34.30 widened the set by one key and this
+ * paragraph is the statement of it.)
+ *
+ * ⚠️ **AND THE RULE ENDS BY REFUSING TO GUESS, BECAUSE A HEADINGLESS PAGE CAN
+ * REACH THIS PROMPT — THOUGH NOT BY THE ROUTE AN EARLIER DRAFT OF THIS
+ * PARAGRAPH CLAIMED.** `/api/admin/import/scan-folder` „accepts a single image
+ * file", and the draft reasoned from that to „so it is asked once per page,
+ * and 32 of the 43 pages in those eleven folders have no heading". Both halves
+ * were wrong and a review round measured it: `scanEntry`
+ * (src/app/admin/import/_components/import-wizard.tsx) sends
+ * `entry.handles[0]` for a PAGE GROUP — the first page only — and all eleven
+ * of those folders are page groups (`isPageGroup`: every name a numbered
+ * image), so a bulk import of them makes eleven calls on eleven HEADED first
+ * pages and sends no continuation page at all. The folders hold 42 jpgs, not
+ * 43; 43 was the number of sample DOCUMENTS in the whole tree.
+ *
+ * What still reaches this prompt without a heading is a loose middle page
+ * filed as its own entry, and any folder that misses `isPageGroup` — one
+ * stray `.docx` or one non-numeric filename is enough, and the archive's own
+ * folder names show how casually those arise. So the decline rule is not the
+ * common path it was first justified as; it is the uncommon one, and it is
+ * kept because the cost is asymmetric. A rule that says „read the heading,
+ * ignore the body" and then supplies a DEFAULT for the headingless case turns
+ * such a page into a confident answer drawn from nothing: the first draft
+ * defaulted to ACT_DEZMEMBRARE, which would have filed a stray page of an ACT
+ * DE ALIPIRE as the opposite operation. The ACT_DEZMEMBRARE fallback survives
+ * only for the narrow case it was meant for — a heading that IS present and
+ * reads as a dezlipire or a dezmembrare, with the one word unreadable.
+ *
+ * ⚠️ **AND NULLING THE KEY IS ONLY HALF AN ANSWER, WHICH THE SECOND REVIEW
+ * ROUND IS WHAT ESTABLISHED.** `suggestedTypeKey` is not the only field that
+ * decides where a page is filed: with the key null,
+ * `resolveClassifiedDocumentType` falls through to `matchDocumentType` on
+ * `classifiedLabel`, which name-matches a stored row — and, where the label
+ * matches nothing stored, CREATES one, origin `IMPORT`, keyed off a slug of
+ * the label. So a rule that nulls the key and says nothing about the label is
+ * not cautious, it is finding F6 with extra steps: a headingless page whose
+ * label reads „Act de dezmembrare imobil" would mint a row per wording, where
+ * the version with a key would at least have short-circuited on the key. The
+ * rule therefore names „Document necunoscut" — `UNCLASSIFIED_DOCUMENT_LABEL`,
+ * and a member of `UNCLASSIFIED_LABELS`, so `declinesAgainst` reports it as a
+ * decline and the page lands on the catch-all rather than on a new row. It is
+ * also what `scan-folder/route.ts` already substitutes when the model returns
+ * no label at all, so the two paths agree.
+ *
+ * ⚠️ **THE SENTINEL IS NOW ASKED FOR IN TWO RULES AND BOTH ARE LOAD-BEARING.**
+ * The blank/rotated/not-a-document rule one group down had the same hole and
+ * had had it since it was written: it nulls the key and says nothing about the
+ * label, while the response shape declares `classifiedLabel` as a plain
+ * string — so a model describing a blank page as „Pagină goală" mints a
+ * document type of that name, origin `IMPORT`, one per wording. It was found
+ * by the review round that checked this paragraph's own fix and is fixed here
+ * in passing. A future edit that drops „Document necunoscut" from either rule
+ * re-opens the same hole; `UNCLASSIFIED_LABELS` is what makes the string
+ * special and `src/lib/documents/document-type-match.ts` is where it lives.
+ *
+ * ⚠️ **A CHAIN-BUILT DATABASE HOLDS ALL FOUR ROWS SINCE #34.30, AND THE GAP
+ * THIS PARAGRAPH USED TO DESCRIBE IS CLOSED.** The migration chain seeds
  * document types through `migration_072_seed_document_types.sql`, which #34.19
- * could not regenerate (its MD5 is recorded in `schema_migrations`), so a
- * database built by replaying migrations holds none of these keys. A model
- * answering `ACT_ALIPIRE` there now passes `canonicalTypeKey` — it did not
- * before — finds no stored row, and `resolveClassifiedDocumentType` CREATES
- * one. That is the #29.07 path working as designed rather than finding F6
- * returning: the created row carries the canonical key, so every carve-out
- * that matches it still fires. What it is not is a no-op, and the fix is the
- * additive forward migration that gives the chain the four rows.
+ * could not regenerate (its MD5 is recorded in `schema_migrations`), so for
+ * one slice a database built by replaying migrations held none of these keys:
+ * a model answering `ACT_ALIPIRE` there passed `canonicalTypeKey`, found no
+ * stored row, and `resolveClassifiedDocumentType` CREATED one. That was the
+ * #29.07 path working as designed rather than finding F6 returning — the
+ * created row carries the canonical key, so every carve-out matching it still
+ * fired — but it was not a no-op.
+ * `migration_081_seed_act_document_types.sql` is the additive forward
+ * migration that closed it: it seeds the same four (key, name) pairs, with the
+ * seed file's sort_orders, without touching a byte of 072. On every rebuild
+ * path a wrong answer among these four is now a MIS-FILED type rather than a
+ * created one — which is what the rule in CLASSIFY_SYSTEM_PROMPT is for.
  *
  * Six entries were removed by Slice #23.01.Import and stay removed:
  *
@@ -338,11 +437,16 @@ Rules:
 - ACT_PARTAJ and CONTRACT_PARTAJ both divide co-owned property and are NOT interchangeable. ACT_PARTAJ is the notarial deed that performs the division ("act de partaj", "act de partaj voluntar"); CONTRACT_PARTAJ is the contract the parties agree it under ("contract de partaj"). Read the document's own heading and use that; if the heading says only "partaj" with no other word, choose CONTRACT_PARTAJ.
 - ANTECONTRACT is a promise to sell later ("antecontract", "promisiune de vânzare"), never CONTRACT_VANZARE, which transfers ownership now.
 - PLAN_AMPLASAMENT_DELIMITARE and PLAN_PARCELAR are single drawings; DOCUMENTATIE_CADASTRALA is the whole surveyor's file that may contain one. Prefer the specific plan when the document IS the drawing.
+- ACT_ALIPIRE, ACT_DEZLIPIRE, ACT_DEZMEMBRARE and ACT_LOTIZARE are four names for two opposite operations on land, and you choose between them by the heading printed at the top of the document's FIRST page. ACT_ALIPIRE MERGES two or more immovables the same owner already holds into a single one ("act de alipire"); the other three SPLIT one immovable into numbered "loturi", each taking its own new cadastral number.
+- Among the three that split: "dezlipire" and "dezmembrare" are the SAME operation under two words, the Civil Code's and the notary's, so answer with whichever word the heading uses and do not try to tell them apart by what was split or into how many lots. ACT_LOTIZARE is the same division when the HEADING names it a lotizare ("act de lotizare") - a body that orders a lotizare under some other heading does not make the document one.
+- Never decide between those four from the body of the document. An act headed "ACT DE DEZMEMBRARE" normally recounts the earlier alipire that formed the parcel it is splitting, and an act headed "ACT DE DEZLIPIRE" normally performs what its own text calls "dezmembrarea" — so the recitals point the wrong way about as often as the right way.
+- This image may be a page out of the middle of such an act, and only its first page carries a heading. If the page has no heading and its text would otherwise have led you to one of those four, that is the case to decline: answer suggestedTypeKey=null AND set "classifiedLabel" to "Document necunoscut", because a label naming one of them is filed the same way a key would be. This applies to those four only - a headingless page of any other kind of document is classified from the page as usual.
+- If a heading IS there and reads as a dezlipire or a dezmembrare but the word itself is smudged or cut off, answer ACT_DEZMEMBRARE. If what is readable OF THE HEADING points to an alipire or a lotizare, answer that one instead - those two are not interchangeable with anything. Text elsewhere on the page is not a heading and does not count here.
 - "identityPersonCount" is about what THIS IMAGE IS, and it counts PEOPLE rather than card-shaped rectangles. Decide in this order.
 - FIRST: is the image itself a personal identity document (carte de identitate / buletin), or a sheet of nothing but such documents? If it is anything else — a contract, a plan, a certificate, a bank statement — answer 0. Answer 0 as well when the image is one of those and merely quotes, annexes or reproduces somebody's identity card alongside it: that is one legitimate document and the card belongs in it.
 - THEN, and only for an image that IS an identity document: answer 1 for a single person's card however many times that card appears — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, and two photographs of the same holder in one booklet are all ONE person.
 - Count a second person ONLY on positive evidence of a second person: a second, DIFFERENT CNP (the 13-digit Romanian personal code), or a different printed name together with a different document series. If you can read neither two distinct CNPs nor two distinct names, answer 1. Never infer a second person from a second rectangle, a second photograph, or a second page.
-- If the image is blank, rotated beyond reading, or is a photograph of furniture/people (not a document), set extractable=false and suggestedTypeKey=null.
+- If the image is blank, rotated beyond reading, or is a photograph of furniture/people (not a document), set extractable=false, suggestedTypeKey=null and "classifiedLabel" to "Document necunoscut" - a descriptive label here is read as the name of a document type and files the page under a new one.
 - If the document title is in the top-right corner (ANCPI template code), that is a strong signal — use it.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 
