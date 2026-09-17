@@ -98,10 +98,53 @@ async function execFile(pool: Pool, filePath: string): Promise<void> {
  */
 const REGENERATED_COLUMNS = new Set(["id", "created_at", "updated_at"]);
 
+/**
+ * What `planFor` resolves for one table: the columns to copy, and which of them
+ * are json/jsonb.
+ *
+ * ⚠️ **A jsonb VALUE CANNOT BE PASSED THROUGH AS A PARAMETER, AND AN ARRAY IS
+ * WHERE THAT BITES.** node-postgres parses json/jsonb on the way OUT, so
+ * `row[c]` is a live JavaScript value rather than text; on the way back IN its
+ * `prepareValue` branches on the shape. A plain object is `JSON.stringify`d and
+ * happens to be right. An ARRAY is serialised as a POSTGRES ARRAY LITERAL
+ * instead - measured on this repo's own pg:
+ *
+ *   [{ key: "nr", ... }]  ->  {"{\"key\":\"nr\", ... }"}
+ *
+ * which Postgres then refuses to read as json: `invalid input syntax for type
+ * json`, and the sync dies mid-copy.
+ *
+ * `lookup_document_type.template_fields` is the only json column in anything
+ * this script copies, and it holds a `DocumentTemplateField[]` - so the sync
+ * has been failing on the sixth table for as long as any document type has had
+ * a FORM, which is why a project can be several migrations stale without anyone
+ * having skipped a step. Tables one to five copy, then it stops.
+ *
+ * ⚠️ **AND AN EMPTY ARRAY NEVER CRASHED, WHICH IS THE WORSE HALF.** `[]`
+ * serialises to `{}`, which IS valid json, so a document type whose form was
+ * emptied has been landing on the project as a jsonb OBJECT - and
+ * `parseTemplateFields` reads a non-array as no form at all. Right row count,
+ * no error, wrong data. A review round found that one; the crash is only what
+ * made anybody look.
+ *
+ * ⚠️ **THE FIX IS A CAST IN THE SELECT, NOT A `JSON.stringify` ON THE WAY
+ * BACK.** Reading jsonb into a JS value and re-serialising it loses two things
+ * the database has: a stored jsonb `null` becomes indistinguishable from SQL
+ * NULL (`row[c]` is JS null for both), and a number outside IEEE-754 is
+ * rounded, because jsonb stores numbers as `numeric`. Neither is hypothetical
+ * for template_fields - `migration_073_id_card_types_hold_no_form.sql` is
+ * explicit that a non-array value is reachable and `sanitizeDocumentTypeTemplateFields`
+ * passes one through unchanged. Selecting `"col"::text` and handing the text
+ * straight to `$n` never makes it a JS value at all: Postgres infers jsonb from
+ * the INSERT target and parses it server-side, which is the same mechanism that
+ * made `JSON.stringify`'s output work, minus the round trip.
+ */
+type ColumnPlan = { dataColumns: string[]; jsonColumns: Set<string> };
+
 /** Column plan for one table, resolved and validated before anything is dropped. */
-async function planFor(table: string, orderBy: string): Promise<string[]> {
+async function planFor(table: string, orderBy: string): Promise<ColumnPlan> {
   const { rows: colRows } = await localPool.query(
-    `SELECT column_name
+    `SELECT column_name, data_type
        FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = $1
       ORDER BY ordinal_position`,
@@ -110,6 +153,18 @@ async function planFor(table: string, orderBy: string): Promise<string[]> {
   const dataColumns: string[] = colRows
     .map((r) => r.column_name as string)
     .filter((c) => !REGENERATED_COLUMNS.has(c));
+
+  // Resolved here rather than at copy time for the same reason as everything
+  // else in this function: after the TRUNCATE there is no safe place to throw.
+  // Returned WITH the column list rather than stashed in a second map, so the
+  // two halves of one query cannot be fetched separately - a `?? new Set()`
+  // beside a plan that exists is how this bug would come back silently.
+  const jsonColumns = new Set(
+    colRows
+      .filter((r) => r.data_type === "json" || r.data_type === "jsonb")
+      .map((r) => r.column_name as string)
+      .filter((c) => dataColumns.includes(c)),
+  );
 
   if (dataColumns.length === 0) {
     throw new Error(`${table}: no data columns found. Does the table exist in the local database?`);
@@ -147,7 +202,7 @@ async function planFor(table: string, orderBy: string): Promise<string[]> {
     );
   }
 
-  return dataColumns;
+  return { dataColumns, jsonColumns };
 }
 
 /**
@@ -161,20 +216,32 @@ async function planFor(table: string, orderBy: string): Promise<string[]> {
  * rebuilt the schema by the time this runs, so the project is on the schema
  * file's defaults. Re-running the sync is the way out.
  */
-const PLANS = new Map<string, string[]>();
+const PLANS = new Map<string, ColumnPlan>();
 async function planAll(tables: Array<[string, string]>): Promise<void> {
   for (const [t, orderBy] of tables) PLANS.set(t, await planFor(t, orderBy));
 }
 
 async function syncSimple(table: string, orderBy: string): Promise<void> {
-  const dataColumns = PLANS.get(table);
-  if (!dataColumns) throw new Error(`${table}: no column plan. planAll() must run before the truncate.`);
+  const plan = PLANS.get(table);
+  if (!plan) throw new Error(`${table}: no column plan. planAll() must run before the truncate.`);
+  const { dataColumns, jsonColumns } = plan;
   // Quoted: these names come from the catalogue, and an unquoted reserved word
   // or mixed-case column would be a syntax error rather than a wrong result.
   const cols = dataColumns.map((c) => `"${c}"`).join(", ");
+  // The INSERT names the column; the SELECT casts it. See the ColumnPlan note.
+  //
+  // ⚠️ **ALIASED BACK TO ITS OWN NAME, AND THAT IS NOT DECORATION.** The rows
+  // are read by key (`row[c]`), so the cast must not rename the output column.
+  // Postgres does preserve the name through a cast of a bare column reference,
+  // but relying on that puts the whole copy one naming rule away from writing
+  // NULL into every json column in silence - the failure this file has just
+  // spent a slice proving it cannot detect. The alias makes it explicit.
+  const selectCols = dataColumns
+    .map((c) => (jsonColumns.has(c) ? `"${c}"::text AS "${c}"` : `"${c}"`))
+    .join(", ");
   const placeholders = dataColumns.map((_, i) => `$${i + 1}`).join(", ");
   const { rows, rowCount } = await localPool.query(
-    `SELECT ${cols} FROM ${table} ORDER BY "${orderBy}"`,
+    `SELECT ${selectCols} FROM ${table} ORDER BY "${orderBy}"`,
   );
   for (const row of rows) {
     await supaPool.query(
