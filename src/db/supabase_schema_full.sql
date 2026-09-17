@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-08 19:25
+-- Generated : 2026-09-17 09:17
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -722,7 +722,7 @@ CREATE TABLE public.lookup_tarla (
 -- Name: COLUMN lookup_tarla.origin; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.lookup_tarla.origin IS 'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. The origin is decided at that write site and is never read from a request body. Write-once by convention: unlike lookup_document_type, no explicit strip guards the value-lists PUT for this table - Zod drops an unknown origin from the update payload and that is the only guard. See migration_077 for the full note.';
+COMMENT ON COLUMN public.lookup_tarla.origin IS 'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. The origin is decided at that write site and is never read from a request body. Write-once, and guarded twice: stripLookupOrigin() removes origin from the payload of every value-lists PUT in updateValue (src/lib/admin/value-lists/queries.ts), for all eleven lists including this one, and from every POST but document-types in createValue - and this list''s route schema (LIST_UPDATE_SCHEMAS["tarla"], a Zod object that declares no origin field) drops an unknown origin before the query layer sees it. The document-types POST schema is the one exception anywhere, and it carries origin as a create-only field on purpose. Superseded the comment migration_077 installed, which said no explicit strip existed for this table and that Zod was the only guard; that stopped being true when the strip moved above updateValue''s switch. See migration_077 for the full note on what MANUAL and IMPORT mean, and migration_082 for why this text had to arrive as a second statement rather than an edit.';
 
 
 --
