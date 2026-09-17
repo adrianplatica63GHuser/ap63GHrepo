@@ -152,6 +152,18 @@
 --       because this file runs under `psql -f` with no ON_ERROR_STOP and a
 --       bare failure would scroll past a post-flight still reporting OK.
 --
+--     * `CREATE UNIQUE INDEX lookup_tarla_indicativ_folded_unique`
+--       (migration_083, #34.32). The bullet above, one table over, and every
+--       word of its hazard applies: SHARE on lookup_tarla for the length of
+--       the build, and IT COULD FAIL ON EXISTING DATA, so its block counts
+--       first and RAISEs a WARNING naming migration_083. What differs is the
+--       FOLD. This one is `pg_temp.ga40_fold` - NFD-decompose, strip the
+--       combining marks, lowercase, collapse whitespace, trim - and NOT
+--       `ga40_norm_name`, which additionally drops everything outside
+--       [a-z0-9]. A tarla code is `47/2`; stripping the separator would make
+--       it one code with `472`. Two adjacent unique indexes, two different
+--       folds, deliberately - do not "harmonise" the two blocks in section 8.
+--
 -- HOW TO APPLY
 --   Supabase : paste this whole file into the SQL Editor and run.
 --   Local    : docker cp src/db/supabase_repair_missing_tables.sql ga40prj-postgres:/tmp/repair.sql
@@ -186,6 +198,10 @@
 --     unique index on it; it is created by migration_002 and this file never
 --     has -- and section 8 has been adding its `origin` column since #26.12
 --     without ever saying so here)
+--   - table lookup_tarla, again (Slice #34.32's block in section 8 puts a
+--     unique index on it, which is a second reason beyond #34.03's reference
+--     above; this file never creates it, and neither does any migration in
+--     `src/db/migration_*.sql` -- it predates the numbered chain)
 --
 -- Read the NOTICE output at the end. It reports anything still missing.
 -- ===========================================================================
@@ -1578,6 +1594,91 @@ BEGIN
   END IF;
 END $$;
 
+-- ── migration_083 (Slice #34.32) -- two tarla codes may not fold to one ─────
+--
+-- The block above, one table over, and every word of its argument applies: a
+-- guarded block rather than a `CREATE UNIQUE INDEX IF NOT EXISTS`, because
+-- this file runs under `psql -f` with no ON_ERROR_STOP and a failing bare
+-- statement scrolls past a post-flight that still says OK; a probe by SHAPE
+-- rather than by NAME, for the reason the lookup_property_type block records
+-- at length.
+--
+-- ⚠️ **THE FOLD IS NOT THE ONE ABOVE, AND THE TWO BLOCKS MUST NOT BE
+-- "HARMONISED".** This one is `pg_temp.ga40_fold` from
+-- `scripts/decision-checks.sql` -- the Postgres spelling of `foldRomanian` in
+-- src/lib/import/id-card.ts: NFD-decompose, strip the combining marks by code
+-- point, lowercase, collapse whitespace, trim. The block above additionally
+-- drops everything outside `[a-z0-9]`, which is right for a display NAME and
+-- wrong for a cadastral code: it would make `47/2` and `472` one code and
+-- refuse the second. migration_083's header carries the full argument.
+--
+-- ⚠️ **The SHAPE probe cannot tell this index from the one above, and it does
+-- not have to** -- it is scoped to `lookup_tarla`, which carries no other
+-- partial unique index over an expression. If one is ever added, this probe
+-- starts answering "already there" for the wrong index, and the remedy is the
+-- one the lookup_property_type block names: probe on something the two do not
+-- share. Said out loud because a shape probe that goes silently stale is the
+-- exact failure that block exists to record.
+
+DO $$
+DECLARE
+  dupes integer;
+BEGIN
+  IF to_regclass('public.lookup_tarla') IS NULL THEN
+    RAISE WARNING 'lookup_tarla is missing entirely; the folded-code unique index was not created. This file does not create lookup tables -- apply the migration chain.';
+    RETURN;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+      FROM pg_index i
+     WHERE i.indrelid    = 'lookup_tarla'::regclass
+       AND i.indisunique
+       AND i.indisvalid
+       AND i.indpred IS NOT NULL
+       AND i.indnkeyatts = 1
+       AND i.indkey[0]   = 0
+  ) THEN
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO dupes FROM (
+    SELECT btrim(regexp_replace(
+             regexp_replace(
+               lower(normalize(coalesce(indicativ, ''), NFD)),
+               '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+             '\s+', ' ', 'g')) AS folded
+      FROM lookup_tarla
+     GROUP BY 1
+    HAVING count(*) > 1
+       AND btrim(regexp_replace(
+             regexp_replace(
+               lower(normalize(coalesce(indicativ, ''), NFD)),
+               '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+             '\s+', ' ', 'g')) <> ''
+  ) x;
+
+  IF dupes > 0 THEN
+    RAISE WARNING 'lookup_tarla_indicativ_folded_unique not created: % group(s) of tarla codes fold to one code. Apply src/db/migration_083_tarla_code_unique.sql, which names the colliding rows and how many properties point at each, and resolve them first.', dupes;
+  ELSE
+    EXECUTE $q$
+      CREATE UNIQUE INDEX lookup_tarla_indicativ_folded_unique
+        ON lookup_tarla (
+          (btrim(regexp_replace(
+             regexp_replace(
+               lower(normalize(coalesce(indicativ, ''), NFD)),
+               '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+             '\s+', ' ', 'g')))
+        )
+        WHERE btrim(regexp_replace(
+                regexp_replace(
+                  lower(normalize(coalesce(indicativ, ''), NFD)),
+                  '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+                '\s+', ' ', 'g')) <> ''
+    $q$;
+  END IF;
+END $$;
+
 -- migration_034 -- Street View street line on the property address
 ALTER TABLE property_address
   ADD COLUMN IF NOT EXISTS street_view_street_line text;
@@ -1893,6 +1994,33 @@ BEGIN
     RAISE WARNING 'lookup_document_type has no partial unique index over the normalised name (migration_080, Slice #34.09). Two document types can still be created with one display name by a racing writer; the application still refuses the ordinary case. Section 8 says why it was not created — a collision, or a missing table.';
   END IF;
 
+  -- Slice #34.32: the same question about the same kind of index, on
+  -- lookup_tarla. A WARNING and not a fault, for the reason the block above
+  -- gives: nothing breaks without it — `writeTarlaRow` still refuses the
+  -- ordinary duplicate, the import's auto-seed adopts rather than inserting,
+  -- and both hold the same two advisory locks so they cannot race each other
+  -- either. What is lost is only a writer that takes no lock at all — a direct
+  -- `psql` session or a script — which is not a reason for a repair script to
+  -- refuse a database that is merely one migration behind.
+  --
+  -- ⚠️ `to_regclass(...)` in BOTH places rather than a `::regclass` literal, for
+  -- the reason the paragraph above this branch's neighbour records at length: a
+  -- literal cast is constant-folded at PLAN time, so on a project missing the
+  -- table it aborts the whole post-flight block.
+  IF to_regclass('public.lookup_tarla') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1
+         FROM pg_index i
+        WHERE i.indrelid    = to_regclass('public.lookup_tarla')
+          AND i.indisunique
+          AND i.indisvalid
+          AND i.indpred IS NOT NULL
+          AND i.indnkeyatts = 1
+          AND i.indkey[0]   = 0
+     ) THEN
+    RAISE WARNING 'lookup_tarla has no partial unique index over the folded indicativ (migration_083, Slice #34.32). Two codes meaning one tarla can still be created by a racing writer; the application still refuses the ordinary case. Section 8 says why it was not created - a collision, or a missing table.';
+  END IF;
+
   -- Slice #34.31: the five statements that gained a count-first guard earlier
   -- in this file, asked about here by name.
   --
@@ -2005,7 +2133,7 @@ BEGIN
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. A WARNING above about any of lookup_document_type_name_normalised_unique, lookup_property_type_key_unique, lookup_property_type itself, chk_em_importance, chk_em_relevance, chk_em_provenance, stamp_member_stamp_principal_object_unique, entity_tag_entity_tag_unique or property_corner_source_document_unique is separate and is not a fault -- each names a statement that is not on this database, says the usual reason it was skipped and what to resolve before re-running.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. A WARNING above about any of lookup_document_type_name_normalised_unique, lookup_property_type_key_unique, lookup_property_type itself, chk_em_importance, chk_em_relevance, chk_em_provenance, stamp_member_stamp_principal_object_unique, entity_tag_entity_tag_unique, property_corner_source_document_unique or lookup_tarla_indicativ_folded_unique is separate and is not a fault -- each names a statement that is not on this database, says the usual reason it was skipped and what to resolve before re-running.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;

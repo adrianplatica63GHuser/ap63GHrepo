@@ -785,7 +785,51 @@ export const lookupTarla = pgTable("lookup_tarla", {
   // risk, and a stray value becomes a compile error at every drizzle write site
   // rather than a CHECK violation at runtime.
   origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
-});
+},
+  // ── Two tarla codes may not fold to one code ──────────────  (Slice #34.32)
+  //
+  // migration_083_tarla_code_unique.sql is what actually creates this index —
+  // this project applies migrations by hand through
+  // `scripts\Apply-Migration.ps1` and does not generate them from here — so
+  // what follows is the CODE-side record of an index that exists in the
+  // database. Its header carries the full argument; the four things worth
+  // having in front of a reader of this file are:
+  //
+  // ⚠️ **The expression is `pg_temp.ga40_fold`** (scripts/decision-checks.sql,
+  // copied character for character into migration_078 section 1), which is the
+  // Postgres spelling of `foldRomanian` in src/lib/import/id-card.ts:
+  // NFD-decompose, strip the combining marks by code point, lowercase,
+  // collapse whitespace, trim. That is the fold this table was measured under
+  // by query 1c and the fold migration_078 resolves `property.tarla_sola`
+  // with.
+  //
+  // ⚠️ **It is NOT `lookupDocumentType`'s fold one table over.** That one
+  // (`normaliseDocumentTypeName`, migration_080) additionally drops everything
+  // outside `[a-z0-9]`, which is right for a display NAME and wrong for a
+  // cadastral code: it would make `47/2` and `472` one code and refuse the
+  // second. Two folds, deliberately, on two adjacent indexes — do not
+  // "harmonise" them.
+  //
+  // ⚠️ **PARTIAL, excluding the empty folded form**, because `tarlaSchema` is
+  // `indicativ: z.string().min(1)` and a single space is therefore a valid
+  // payload that folds to nothing. A TOTAL index would give the first such row
+  // the empty slot and refuse every other one. `sameTarlaCode`
+  // (src/lib/properties/tarla-code-guard.ts) inherits the same exception.
+  //
+  // ⚠️ **`.where()` and `.on()` must carry the SAME expression.** Postgres
+  // compares the two structurally when it decides whether a query may use a
+  // partial index; two folds that differed would still create, still enforce
+  // uniqueness, and cover a different set of rows than they appear to.
+  (t) => [
+    uniqueIndex("lookup_tarla_indicativ_folded_unique")
+      .on(
+        sql`btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.indicativ}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g'))`,
+      )
+      .where(
+        sql`btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.indicativ}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g')) <> ''`,
+      ),
+  ],
+);
 
 export const lookupUseCategory = pgTable("lookup_use_category", {
   id:        uuid("id").primaryKey().defaultRandom(),

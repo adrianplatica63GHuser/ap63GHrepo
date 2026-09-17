@@ -548,8 +548,27 @@ JOIN person p ON p.code = v.code;
 -- ordinary dev database this inserts nothing; it is here so that this file does
 -- not silently depend on the reference-data load having run first, which it
 -- never did before. `ON CONFLICT` is not available - `lookup_tarla.indicativ`
--- has no unique constraint, deliberately (see migration_078's header) - so the
--- guard is a NOT EXISTS.
+-- has no unique constraint ON THE COLUMN - so the guard is a NOT EXISTS.
+--
+-- ⚠️ **AND THE REASON GIVEN FOR THAT HAS CHANGED, WHICH MATTERS BECAUSE THE
+-- GUARD HAD TO CHANGE WITH IT.**                                (Slice #34.32)
+-- This comment used to end "deliberately (see migration_078's header)", and
+-- that is no longer the state of the schema: migration_083 puts a PARTIAL
+-- UNIQUE INDEX over the FOLDED `indicativ` on this table. `ON CONFLICT` is
+-- still unavailable, for a different reason - the index is over an expression
+-- and over a subset of rows, so there is no plain column to name in a conflict
+-- target - but the NOT EXISTS is no longer merely tidy. It was an EXACT
+-- equality, so a database already holding `t1` would have this file insert
+-- `T1` beside it; that insert is now REFUSED by the index, and this file runs
+-- under `psql -f` where a refused statement is a visible failure.
+--
+-- So the guard asks the INDEX'S OWN FOLD, written out in full: NFD-decompose,
+-- strip the combining marks by code point, lowercase, collapse whitespace,
+-- trim. It is `pg_temp.ga40_fold` from `scripts/decision-checks.sql`, inlined
+-- rather than defined, because this file is a plain sequence of statements and
+-- a temporary function in the middle of one would be a new thing to explain.
+-- ⚠️ Do not "simplify" it to `lower(...)`: a fold that differed from the index's
+-- would let exactly the row the index refuses through the guard.
 --
 -- ⚠️ `origin` is not named, so these take the DEFAULT 'MANUAL'. The IMPORT
 -- literal belongs to `resolveTarlaForCreate` in src/lib/properties/queries.ts
@@ -563,7 +582,17 @@ FROM (VALUES
   ('T4','Tarla 4'), ('T5','Tarla 5'), ('T6','Tarla 6')
 ) AS c(indicativ, descriere)
 WHERE NOT EXISTS (
-  SELECT 1 FROM lookup_tarla t WHERE t.indicativ = c.indicativ
+  SELECT 1 FROM lookup_tarla t
+   WHERE btrim(regexp_replace(
+           regexp_replace(
+             lower(normalize(coalesce(t.indicativ, ''), NFD)),
+             '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+           '\s+', ' ', 'g'))
+       = btrim(regexp_replace(
+           regexp_replace(
+             lower(normalize(coalesce(c.indicativ, ''), NFD)),
+             '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+           '\s+', ' ', 'g'))
 );
 
 INSERT INTO property (
