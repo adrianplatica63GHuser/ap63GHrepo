@@ -67,7 +67,7 @@
  *   read in. §5 models tie-breaking, and only tie-breaking.
  *
  *   ⚠️ **`(sort_order, name)` WAS NOT TOTAL IN THE DATABASE, AND SLICE #34.14
- *   IS WHERE THAT STOPPED BEING TRUE ON NINE LISTS.** No lookup table has a
+ *   IS WHERE THAT STOPPED BEING TRUE ON NINE LISTS — TEN SINCE #34.32.** No lookup table has a
  *   UNIQUE constraint over its display field, so two rows sharing BOTH keys
  *   could swap between reads — which is why #34.01 shipped with a residual and
  *   named `asc(id)` as the one-line fix. #34.14 applied it: nine branches now
@@ -76,18 +76,32 @@
  *   asserting that it swaps. §2 pins the required field as the term BEFORE
  *   `id`, so no branch can end up sorted by a uuid.
  *
- *   ⚠️ **THE TWO EXCEPTIONS, AND THEY ARE NOT THE SAME KIND OF EXCEPTION.**
- *     • `document-types` — nothing left to break. Since Slice #34.09,
- *       migration_080 puts a partial unique index over the normalised name on
- *       `lookup_document_type`, so two rows can no longer hold one name. ⚠️
- *       That is true of a database the migration has been APPLIED to:
- *       `supabase_schema_full.sql` is generated, and until it is regenerated a
- *       cloud project rebuilt from it has the code and not the index. (The
- *       sentence this replaces is kept for the reason the index exists:
- *       duplicate names were documented and EXPECTED here, and
- *       `matchDocumentType` takes the first name match, so a tie decided which
- *       of two same-named types an import ADOPTED, not merely where a row sat.)
- *       §5 still cannot reach this branch — its first term is raw `sql`.
+ *   ⚠️ **THERE IS ONE EXCEPTION LEFT, AND SLICE #34.32 IS WHERE THE OTHER ONE
+ *   STOPPED BEING ONE.**
+ *     • `document-types` — **WAS an exception until Slice #34.32, on a reason
+ *       that was half true.** What stood here, kept verbatim because it is the
+ *       claim that was wrong and the next reader should see it: "nothing left
+ *       to break. Since Slice #34.09, migration_080 puts a partial unique index
+ *       over the normalised name on `lookup_document_type`, so two rows can no
+ *       longer hold one name." The word doing the damage is **partial**.
+ *       migration_080's index is `WHERE <normalised> <> ''` — deliberately, so
+ *       that one punctuation-only type cannot absorb every other one — so a
+ *       name of „—" is outside it and TWO ROWS MAY BOTH BE NAMED „—".
+ *       ⚠️ It has to be the SAME string, which is narrower than "both
+ *       punctuation-only": `asc(name)` compares the RAW text, so „—" and „·"
+ *       are separated perfectly well. What `(pin, name)` cannot separate is
+ *       two rows holding ONE string. #34.32 appends `asc(id)` to this branch
+ *       and to `readTypes`, which restates it. The caveat about
+ *       a database the migration has not been applied to still stands and is
+ *       now moot for ordering: the third term is in the code, not in the
+ *       schema. (The sentence #34.09 kept is still worth keeping for the reason
+ *       the index exists: duplicate names were documented and EXPECTED here,
+ *       and `matchDocumentType` takes the first name match, so a tie decided
+ *       which of two same-named types an import ADOPTED, not merely where a row
+ *       sat. That is no longer reachable — `sameDocumentTypeName` refuses to
+ *       equate two empty normalised forms, so the surviving tie is cosmetic.)
+ *       §5 still cannot reach this branch — its first term is raw `sql` — so
+ *       §8 models it with a fixture that carries a `key`.
  *     • `person-roles` — the residual SURVIVES, deliberately. Its branch is
  *       `ORDER BY name` alone and #34.14's out-of-scope keeps it that way, so
  *       two roles sharing one name can still swap. §5 measures that rather than
@@ -306,14 +320,21 @@ describe("§1 listValues covers every list, with an ORDER BY this file can read"
 // removed from seven lists at once.
 
 /**
- * The nine branches Slice #34.14 closed on the primary key.
+ * The branches that close on the primary key — nine after Slice #34.14, ten
+ * since #34.32.
  *
- * The other two are named rather than filtered so that a TWELFTH list cannot
- * join them by accident: a new key is in `TOTAL_KEY` unless somebody writes it
- * into this list and says why. `person-roles` orders by name alone and keeps
- * its residual (§5); `document-types` cannot tie at all since migration_080.
+ * The exception is named rather than filtered so that a TWELFTH list cannot
+ * join it by accident: a new key is in `TOTAL_KEY` unless somebody writes it
+ * into this list and says why.
+ *
+ * ⚠️ **`document-types` WAS IN THIS LIST AND SLICE #34.32 TOOK IT OUT.** The
+ * reason given was "`document-types` cannot tie at all since migration_080",
+ * which is false of a PARTIAL index: two names that normalise to the empty
+ * string are outside it and both insert. See the file header.
+ *
+ * `person-roles` orders by name alone and keeps its residual (§5).
  */
-const NO_ID_KEY: ListKey[] = ["person-roles", "document-types"];
+const NO_ID_KEY: ListKey[] = ["person-roles"];
 const TOTAL_KEY: ListKey[] = VALID_LIST_KEYS.filter((k) => !NO_ID_KEY.includes(k));
 
 describe("§2 every list's ORDER BY ends on a column that distinguishes rows", () => {
@@ -398,11 +419,12 @@ describe("§3 the seven sort_order-only lists gained a second key, in that order
 
 // ── §4 The four that already had a tiebreaker, pinned ────────────────────────
 //
-// ⚠️ **"UNTOUCHED" IS WHAT THIS SECTION SAID AFTER #34.01 AND IT IS NO LONGER
-// TRUE OF ALL FOUR.** The two relationship lists took `asc(id)` with the seven
-// in #34.14; `person-roles` and `document-types` did not, and the last test
-// here pins that they did not. What has never changed is the reason the first
-// two must not be harmonised into `sort_order, name`, below.
+// ⚠️ **"UNTOUCHED" IS WHAT THIS SECTION SAID AFTER #34.01 AND IT IS NOW TRUE OF
+// ONE OF THE FOUR.** The two relationship lists took `asc(id)` with the seven
+// in #34.14; `document-types` took it in #34.32 (see the file header for the
+// claim that had to be retracted first); `person-roles` alone still has not,
+// and the last test here pins that it has not. What has never changed is the
+// reason the first two must not be harmonised into `sort_order, name`, below.
 //
 // ⚠️ Two of these must NOT become `sortOrder, name`, and the reasons are not
 // visible from this file:
@@ -414,9 +436,11 @@ describe("§3 the seven sort_order-only lists gained a second key, in that order
 //     above the 56 seeded ones. Slice #34.01 resolved the column the other way:
 //     `personRoleSchema` no longer writes it (§6). The full argument is in the
 //     header above `personRoleSchema` in ../lib/admin/value-lists/validation.ts.
-//   • `document-types` pins UNCLASSIFIED first. `matchDocumentType` takes the
-//     first name match, and src/lib/documents/resolve-document-type.ts
-//     restates the same clause deliberately rather than importing it.
+//   • `document-types` pins UNCLASSIFIED first, and the pin must stay FIRST:
+//     `matchDocumentType` takes the first name match, and
+//     src/lib/documents/resolve-document-type.ts restates the same clause
+//     deliberately rather than importing it. #34.32's `asc(id)` is APPENDED
+//     after the name for that reason; §9 pins that the restatement took it too.
 
 describe("§4 the four lists that already had a tiebreaker", () => {
   it("person-roles sorts by name alone — NOT by sortOrder", () => {
@@ -425,12 +449,19 @@ describe("§4 the four lists that already had a tiebreaker", () => {
     ]);
   });
 
-  it("document-types keeps the UNCLASSIFIED pin, then name", () => {
+  // ⚠️ **THIS ASSERTION READ `toBe(2)` AND SLICE #34.32 INVERTED IT IN PLACE.**
+  // The pin and the name are unchanged and still decide the visible order; what
+  // is new is the third term, and it is APPENDED rather than substituted for
+  // exactly that reason. The pin must stay first — `matchDocumentType` takes
+  // the first row that matches and the catch-all has to be seen first — so the
+  // first two terms are still pinned here term for term.
+  it("document-types keeps the UNCLASSIFIED pin, then name, and now closes on id", () => {
     const terms = BRANCHES["document-types"].terms;
-    expect(terms.length).toBe(2);
+    expect(terms.length).toBe(3);
     expect(terms[0].kind).toBe("sql");
     expect(terms[0].raw).toContain("UNCLASSIFIED");
     expect(terms[1].raw).toBe("asc(lookupDocumentType.name)");
+    expect(terms[2].raw).toBe("asc(lookupDocumentType.id)");
   });
 
   it.each([
@@ -445,11 +476,17 @@ describe("§4 the four lists that already had a tiebreaker", () => {
   });
 
   /**
-   * ⚠️ **AND THE TWO THAT DID NOT GET `id` ARE PINNED AS NOT HAVING IT.**
-   * (Slice #34.14.) Both exclusions are decisions, not oversights — the slice's
-   * own out-of-scope names them — and a decision nothing asserts is one the
-   * next tidy-up reverses. `document-types` has no tie left to break
-   * (migration_080); `person-roles` keeps its residual, which §5 measures.
+   * ⚠️ **AND THE ONE THAT STILL HAS NO `id` IS PINNED AS NOT HAVING IT.**
+   * (Slice #34.14; narrowed by #34.32.) The exclusion is a decision, not an
+   * oversight — #34.14's out-of-scope names it — and a decision nothing asserts
+   * is one the next tidy-up reverses. `person-roles` keeps its residual, which
+   * §5 measures.
+   *
+   * ⚠️ **`document-types` WAS THE SECOND MEMBER HERE, ON THE STATED GROUND
+   * THAT IT "has no tie left to break (migration_080)".** #34.32 measured that
+   * and it is wrong for the empty normalised form, which the partial index
+   * excludes on purpose. The branch closes on `id` now and the test above pins
+   * it.
    */
   it.each(NO_ID_KEY.map((k) => [k]))("%s deliberately does NOT sort by id", (key) => {
     expect(
@@ -509,8 +546,13 @@ function fixture(field: string): FixtureRow[] {
   ];
 }
 
-/** Three arrival orders standing in for three reads of the same rows. */
-function arrivals(rows: FixtureRow[]): FixtureRow[][] {
+/**
+ * Three arrival orders standing in for three reads of the same rows.
+ *
+ * Generic since Slice #34.32, so §8 can hand it `document-types` rows — which
+ * carry a `key` and no `sortOrder` — without a cast. The body is unchanged.
+ */
+function arrivals<T>(rows: T[]): T[][] {
   return [rows, [...rows].reverse(), [...rows.slice(2), ...rows.slice(0, 2)]];
 }
 
@@ -677,5 +719,213 @@ describe("§7 the relationship lists' second reader sorts the same way", () => {
       `${table}.name`,
       `${table}.id`,
     ]);
+  });
+});
+
+// ── §8 document-types: the tie migration_080 leaves open ─────────────────────
+//
+// ⚠️ **THE BRANCH §5 CANNOT MODEL, MODELLED — BECAUSE THE CASE IT WAS EXCUSED
+// FROM IS THE ONE SLICE #34.32 IS ABOUT.** §5 refuses a non-column term rather
+// than skipping it, deliberately (see `orderBy`'s docblock), so
+// `document-types` has never been exercised here at all — it was excused on the
+// claim that migration_080 left it nothing to tie on. That claim is false for
+// the EMPTY normalised form, which the index excludes on purpose so that one
+// punctuation-only type cannot absorb every other one.
+//
+// So this section carries its own two-line model of the one `sql` term — the
+// UNCLASSIFIED pin — rather than widening §5's, which would put a fixture
+// `key` column into nine lists that have no such thing.
+//
+// ⚠️ **THE MODEL IS DRIVEN BY THE PARSED TERMS, NOT BY A HAND-WRITTEN KEY.**
+// The first test below re-derives the shape from `BRANCHES["document-types"]`
+// and fails if it is not (pin, name, id), so the comparator cannot go on
+// asserting determinism about an ORDER BY the branch no longer has.
+
+type DocTypeRow = { id: string; key: string; name: string };
+
+/** `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`, in TypeScript. */
+function catchAllRank(row: DocTypeRow): number {
+  return row.key === "UNCLASSIFIED" ? 0 : 1;
+}
+
+/** The branch's key as three comparisons, in the order the branch states it. */
+function orderDocumentTypes(rows: DocTypeRow[], terms: SortTerm[]): string[] {
+  const columns = terms.slice(1).map((t) => {
+    if (t.kind !== "column") throw new Error(`§8 expected a column term: ${t.raw}`);
+    return t.column as keyof DocTypeRow;
+  });
+  return [...rows]
+    .sort((a, b) => {
+      const pin = catchAllRank(a) - catchAllRank(b);
+      if (pin !== 0) return pin;
+      for (const column of columns) {
+        const c = compare(a[column], b[column]);
+        if (c !== 0) return c;
+      }
+      return 0;
+    })
+    .map((r) => r.id);
+}
+
+/**
+ * ⚠️ **TWO ROWS WITH THE SAME NAME STRING, AND AN ADVERSARIAL ROUND IS WHY
+ * THEY ARE THE SAME STRING.** The first version of this fixture used „—" and
+ * „·" — two DIFFERENT punctuation-only names — on the reasoning that both
+ * normalise to nothing. They do, and it proves nothing: `asc(name)` compares
+ * the RAW text, so the second term separates them and the whole section stayed
+ * green with the third term deleted.
+ *
+ * The tie migration_080's PARTIAL index really lets through is two rows whose
+ * `name` is ONE string: `normaliseDocumentTypeName("—")` is `""`, the index is
+ * `WHERE <normalised> <> ''`, so a second row named „—" is not refused. Those
+ * two tie on the pin and on the name together, and `asc(id)` is the only thing
+ * that separates them.
+ *
+ * The catch-all and an ordinary type are here so the pin and the name both
+ * still have something to do — a fixture of two identical rows alone would
+ * pass under `ORDER BY id` by itself.
+ */
+function punctuationOnlyFixture(): DocTypeRow[] {
+  return [
+    { id: "type-b", key: "PUNCT_B", name: "—" },
+    { id: "type-ordinary", key: "CONTRACT", name: "Contract de Vânzare" },
+    { id: "type-a", key: "PUNCT_A", name: "—" },
+    { id: "type-catchall", key: "UNCLASSIFIED", name: "NECLASIFICAT" },
+  ];
+}
+
+describe("§8 document-types resolves a same-name tie the same way every read", () => {
+  it("the branch is the pin, then name, then id — which is what §8 models", () => {
+    const terms = BRANCHES["document-types"].terms;
+    expect(terms.map((t) => (t.kind === "sql" ? "sql" : t.raw))).toEqual([
+      "sql",
+      "asc(lookupDocumentType.name)",
+      "asc(lookupDocumentType.id)",
+    ]);
+  });
+
+  it("three arrival orders of the same rows come back identically", () => {
+    const rows = punctuationOnlyFixture();
+    const terms = BRANCHES["document-types"].terms;
+    const results = arrivals(rows).map((arrival) => orderDocumentTypes(arrival, terms));
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
+  });
+
+  /**
+   * ⚠️ **THE TEST ABOVE WOULD PASS WITHOUT THE THIRD TERM UNLESS THIS IS
+   * ASSERTED — AND ON THE FIRST FIXTURE IT DID.** Three stable reads prove the
+   * key is total; they do not prove which term made it total. Deleting
+   * `asc(id)` has to break the fixture, or the section is measuring the first
+   * two terms and reporting the third.
+   */
+  it("⚠️ and it is asc(id) that does it — without the third term they swap", () => {
+    const rows      = punctuationOnlyFixture();
+    const withoutId = BRANCHES["document-types"].terms.slice(0, 2);
+    const forwards  = orderDocumentTypes(rows, withoutId);
+    const backwards = orderDocumentTypes([...rows].reverse(), withoutId);
+    expect(backwards).not.toEqual(forwards);
+  });
+
+  /**
+   * ⚠️ **`id` MAY ONLY BREAK A TIE, NEVER DECIDE THE ORDER** — §2 pins that
+   * from the term list, and this pins it behaviourally.
+   *
+   * ⚠️ **AND THE FIRST VERSION OF THIS TEST MEASURED NOTHING, WHICH AN
+   * ADVERSARIAL ROUND PROVED BY MUTATION.** It compared the branch's terms
+   * against `terms.slice(0, 2)` — the branch's OWN first two terms — on a
+   * fixture with distinct names. Under a branch reordered to `(pin, id, name)`
+   * that slice is `(pin, id)`, already total, so the two agreed and the test
+   * was GREEN; its docblock claimed the opposite ("would pass §2's 'ends on id'
+   * test and fail here"), and both halves of that sentence were inverted:
+   * measured, §2 goes red on that reorder and this went green.
+   *
+   * The reference order is therefore WRITTEN OUT — pin, then name — rather than
+   * sliced off the thing under test. Now a branch that put `id` ahead of `name`
+   * sorts four distinctly-named rows by uuid and disagrees with it.
+   */
+  it("the UNCLASSIFIED pin wins, and id changes nothing when no two names tie", () => {
+    const distinct = punctuationOnlyFixture().map((r) =>
+      r.id === "type-b" ? { ...r, name: "·" } : r,
+    );
+    const PIN_THEN_NAME: SortTerm[] = [
+      { kind: "sql", raw: "sql`CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`" },
+      { kind: "column", raw: "asc(lookupDocumentType.name)", dir: "asc",
+        table: "lookupDocumentType", column: "name" },
+    ];
+    const asBranched = orderDocumentTypes(distinct, BRANCHES["document-types"].terms);
+    const byNameOnly = orderDocumentTypes(distinct, PIN_THEN_NAME);
+    expect(asBranched[0]).toBe("type-catchall");
+    expect(asBranched).toEqual(byNameOnly);
+  });
+
+  /**
+   * The same negative control reduced to the pair itself: two rows, one name,
+   * nothing else. This is what `document-types` did until Slice #34.32 — and,
+   * unlike §5's negative control, it is reachable with a name a person can
+   * really type, because migration_080's index does not cover the empty
+   * normalised form.
+   */
+  it("NEGATIVE CONTROL: without id, two identically-named types swap", () => {
+    const twins: DocTypeRow[] = [
+      { id: "twin-a", key: "PUNCT_A", name: "—" },
+      { id: "twin-b", key: "PUNCT_B", name: "—" },
+    ];
+    const withoutId = BRANCHES["document-types"].terms.slice(0, 2);
+    const forwards = orderDocumentTypes(twins, withoutId);
+    const backwards = orderDocumentTypes([...twins].reverse(), withoutId);
+    expect(backwards).not.toEqual(forwards);
+
+    // And with the term the branch really carries, they do not.
+    const terms = BRANCHES["document-types"].terms;
+    expect(orderDocumentTypes([...twins].reverse(), terms)).toEqual(
+      orderDocumentTypes(twins, terms),
+    );
+  });
+});
+
+// ── §9 The second reader of document-types must agree, term for term ─────────
+//
+// ⚠️ **`readTypes` IS A RESTATEMENT OF `listValues`' BRANCH, NOT AN IMPORT OF
+// IT, AND THAT IS WHAT MAKES THIS TEST NECESSARY RATHER THAN PEDANTIC.**
+// `src/lib/documents/resolve-document-type.ts` says so in its own ⚠️: the
+// import wizard matches against the list as
+// `GET /api/admin/value-lists/document-types` served it, and `matchDocumentType`
+// takes the FIRST row that matches — so if the two orders disagree, the wizard
+// shows one row and the resolver adopts another.
+//
+// Same shape as §7, which pins the relationship lists' second reader for the
+// same reason. The difference is that these two spell their terms identically,
+// so the two term lists are compared directly.
+
+describe("§9 readTypes restates listValues' document-types branch exactly", () => {
+  it("has the same three sort terms, in the same order", () => {
+    const src = read("lib", "documents", "resolve-document-type.ts")
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/\/\/[^\n]*/g, " ");
+    const at = src.indexOf(".orderBy(");
+    expect(`readTypes: ${at > -1 ? "has an orderBy" : "NO orderBy"}`).toBe(
+      "readTypes: has an orderBy",
+    );
+    const args = at < 0 ? null : balanced(src, at + ".orderBy".length);
+    const terms = (args === null ? [] : splitArgs(args)).map(parseTerm);
+
+    // ⚠️ **THE PIN IS COMPARED EXACTLY, AND AN ADVERSARIAL ROUND CORRECTED THE
+    // COMMENT THAT SAID OTHERWISE.** What stood here: "the `sql` CASE is
+    // compared by its content rather than by its exact whitespace: the two
+    // files format the template literal differently and always have." They do
+    // not — both are byte-identical today, and the `replace(/\s+/g, " ")` below
+    // is a normalisation that currently changes nothing. It is kept because a
+    // reformat of one file is not a change of meaning, but nobody should
+    // reformat the pin on the strength of a claim that it has already
+    // diverged. What must match is the pin itself and the two column terms.
+    expect(terms.map((t) => (t.kind === "sql" ? "sql" : t.raw))).toEqual(
+      BRANCHES["document-types"].terms.map((t) => (t.kind === "sql" ? "sql" : t.raw)),
+    );
+    expect(terms[0].kind).toBe("sql");
+    expect(terms[0].raw).toContain("UNCLASSIFIED");
+    expect(terms[0].raw.replace(/\s+/g, " ")).toBe(
+      BRANCHES["document-types"].terms[0].raw.replace(/\s+/g, " "),
+    );
   });
 });

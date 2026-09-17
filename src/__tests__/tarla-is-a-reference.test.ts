@@ -306,12 +306,23 @@ describe("only an import can still create a tarla code", () => {
    * protect, or an insert that does not re-check under it, is a lock that costs
    * a round trip and prevents nothing — and both read as "the advisory lock is
    * in place" to anything looking for the call alone.
+   *
+   * ⚠️ **ONE LOCK UNTIL SLICE #34.32, TWO SINCE, AND THE ASSERTION MOVED WITH
+   * IT RATHER THAN BEING DELETED.** What this line read: `fn.indexOf(
+   * "advisoryLockKeys(`tarla:${wanted}`)")` — the single `cadastralKey` lock
+   * #34.14 added. That lock serialises this function against ITSELF and
+   * against nothing else, and #34.32 gives `lookup_tarla` a unique index over
+   * `foldRomanian(indicativ)` plus a second application writer (Reference
+   * Data's create and rename doors) that folds the OTHER way. Neither fold is
+   * a refinement of the other, so both writers now take both identities from
+   * `tarlaLockIdentities` — see that function's header. The scan → lock →
+   * re-scan → insert order this test exists for is unchanged.
    */
-  it("takes an advisory lock on the folded code, and re-checks under it", () => {
+  it("takes its advisory locks on the folded code, and re-checks under them", () => {
     const fn = resolveTarlaSource(q);
 
     const firstScan = fn.indexOf("const hit = await findFolded();");
-    const lockKeys  = fn.indexOf("advisoryLockKeys(`tarla:${wanted}`)");
+    const lockKeys  = fn.indexOf("tarlaLockIdentities(value)");
     const lockCall  = fn.indexOf("pg_advisory_xact_lock");
     const recheck   = fn.indexOf("const raced = await findFolded();");
     const insert    = fn.indexOf("insert(lookupTarla)");
@@ -328,6 +339,11 @@ describe("only an import can still create a tarla code", () => {
     expect(lockKeys).toBeLessThan(lockCall);
     expect(lockCall).toBeLessThan(recheck);
     expect(recheck).toBeLessThan(insert);
+
+    // …and the hash is still `advisoryLockKeys`, per the header's own reason:
+    // a hash computed in this codebase cannot drift out from under the code
+    // that depends on it.
+    expect(fn).toContain("advisoryLockKeys(identity)");
   });
 
   /**
@@ -344,9 +360,32 @@ describe("only an import can still create a tarla code", () => {
    * wrong, which is the worst kind. The prefix costs nothing and removes the
    * class. (It removes STRING equality, not hash collision; `advisoryLockKeys`
    * concedes that one and prices it at a wait.)
+   *
+   * ⚠️ **THE PREFIX MOVED OUT OF THIS FUNCTION IN SLICE #34.32, SO THE
+   * ASSERTION FOLLOWED IT.** It was `expect(code(q)).toContain(
+   * "advisoryLockKeys(`tarla:${wanted}`)")` — the prefix written at the one
+   * call site. There are two writers and two identities now, so the strings are
+   * built in `tarlaLockIdentities` (src/lib/properties/tarla-code-guard.ts) and
+   * both doors take what it returns. Asserted THERE, where the prefixes are,
+   * plus the fact that this function uses that function rather than a string of
+   * its own — which is the same claim in two halves.
    */
-  it("namespaces its lock key so it cannot mean a parcel identity", () => {
-    expect(code(q)).toContain("advisoryLockKeys(`tarla:${wanted}`)");
+  it("namespaces its lock keys so they cannot mean a parcel identity", () => {
+    expect(code(q)).toContain("tarlaLockIdentities(value)");
+    const guard = code(read("lib", "properties", "tarla-code-guard.ts"));
+    expect(guard).toContain("`tarla:${key}`");
+    expect(guard).toContain("`tarla-fold:${fold}`");
+    // ⚠️ **AND THE TWO PREFIXES DIFFER FROM EACH OTHER, ASSERTED AGAINST THE
+    // GUARD RATHER THAN AGAINST TWO LITERALS IN THIS FILE.** What stood here
+    // was `expect("tarla:").not.toBe("tarla-fold:")` — two string literals
+    // written three lines apart in a test, which can never fail and says
+    // nothing about `tarlaLockIdentities`. An adversarial round measured it:
+    // changing the second identity to `` `tarla:${fold}` `` left it green,
+    // collapsing two lock classes into one. Read the prefixes OUT of the guard
+    // and compare those.
+    const prefixes = [...guard.matchAll(/`(tarla[a-z-]*):\$\{/g)].map((m) => m[1]);
+    expect(`${prefixes.length} prefix(es)`).toBe("2 prefix(es)");
+    expect(prefixes[0]).not.toBe(prefixes[1]);
   });
 
   /**
@@ -372,10 +411,28 @@ describe("only an import can still create a tarla code", () => {
 // ---------------------------------------------------------------------------
 
 describe("lookup_tarla", () => {
-  it("still has no unique constraint on its code, deliberately", () => {
+  it("has no unique constraint on the COLUMN — the uniqueness is an index", () => {
     /**
-     * migration_078 argues this at length: the FK removes the AMBIGUITY without
+     * migration_078 argued this at length: the FK removes the AMBIGUITY without
      * needing uniqueness, because a property points at one ROW.
+     *
+     * ⚠️ **AND SLICE #34.32 ADDED THE INDEX ANYWAY, SO WHAT THIS TEST MEANS
+     * CHANGED WHILE ITS ASSERTION DID NOT.** What the title read: "still has no
+     * unique constraint on its code, deliberately", and the paragraph below
+     * ended "That is the different slice, and it is still different." #34.32 is
+     * that slice: `migration_083_tarla_code_unique.sql` creates a PARTIAL
+     * unique index over `pg_temp.ga40_fold(indicativ)`, the named refusal lives
+     * in `src/lib/properties/tarla-code-guard.ts`, and both locales say it.
+     *
+     * The assertion below is kept EXACTLY as it was, and it is still the right
+     * one: `isUnique` is about a UNIQUE constraint on the COLUMN, which would
+     * make `T3` and `t3` two different codes and refuse only a byte-for-byte
+     * repeat — the wrong rule, and the one this file was written to keep out.
+     * What #34.32 adds is an index over an EXPRESSION, declared in the table's
+     * second callback in `src/db/schema/index.ts` and invisible to
+     * `getTableConfig(...).columns`. `tarla-code-unique.test.ts` §2 pins that
+     * one. So a plain `.unique()` appearing on this column is still a defect,
+     * and this test is still what catches it.
      *
      * ⚠️ **ONE OF ITS TWO SUPPORTING REASONS WAS RETRACTED BY SLICE #34.09,
      * AND THIS TEST STILL HOLDS.** What stood here was "A unique index over the
@@ -389,11 +446,12 @@ describe("lookup_tarla", () => {
      * `lookup_document_type`, and migration_078's own header now carries the
      * retraction. The second half stands, and #34.09 is what shows its size: a
      * named refusal, a `code` on the wire and a Romanian sentence in both
-     * locales, per outcome. That is the different slice, and it is still
-     * different.
+     * locales, per outcome. That is the different slice — and #34.32 is it, so
+     * the second half is no longer a reason to decline, it is a description of
+     * what was built.
      *
-     * Pinned so that adding one is a deliberate act with a test to update,
-     * rather than a tidy-up that changes what an administrator can do.
+     * Pinned so that a COLUMN-level unique is a deliberate act with a test to
+     * update, rather than a tidy-up that changes what an administrator can do.
      */
     const col = getTableConfig(lookupTarla).columns.find((c) => c.name === "indicativ");
     expect(col!.isUnique).toBe(false);
