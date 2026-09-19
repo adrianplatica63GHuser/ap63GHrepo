@@ -54,15 +54,22 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   started yourself. **Exit codes are not all pass/fail:** 0 pass, 1 fail, 2 partial (PostGIS was
   faked — never in CI), 3 the baseline was rewritten. Slice #31.01.
 
-- **Every slice gets an adversarial review before handover — not optional.** Once the code
-  is written and type-clean, spawn a subagent whose brief is to *prove the change wrong*:
-  find the input, state transition or call site that breaks it, and do not summarise
-  approvingly. Give it the diff, the new files, the claims the slice makes, and a numbered
-  list of specific things to attack. Tell it to prefer running code over reading it, and to
-  end with one line on what it could not break. Then fix what it finds and say so in the
-  handover, including anything deliberately left. It has caught a lying CTA, a probe that
-  would have blocked every import on Vercel, and a dialog that forced users to destroy
-  their own saved session — none of which type-checking or lint would ever see.
+- **SUSPENDED until 2027-01-19 — no slice gets an adversarial review.** Adrian, 2026-09-19,
+  explicitly, for four months: do not spawn a review subagent, do not offer one, do not hand back
+  an unasked-for findings list. The full block, including why and what it costs to ignore, is in
+  `C:\dev\CLAUDE.md` → "Speed is a requirement" → "Adversarial review rounds are SUSPENDED". What
+  follows is the rule as it stood, kept so it is not reinvented from scratch — and when it resumes
+  it resumes **narrowed** per that block: executable code on a destructive path only, never prose,
+  two rounds maximum. **The rule text below is dormant — do not act on it before that date:**
+  >
+  > Once the code is written and type-clean, spawn a subagent whose brief is to *prove the change
+  > wrong*: find the input, state transition or call site that breaks it, and do not summarise
+  > approvingly. Give it the diff, the new files, the claims the slice makes, and a numbered
+  > list of specific things to attack. Tell it to prefer running code over reading it, and to
+  > end with one line on what it could not break. Then fix what it finds and say so in the
+  > handover, including anything deliberately left. It has caught a lying CTA, a probe that
+  > would have blocked every import on Vercel, and a dialog that forced users to destroy
+  > their own saved session — none of which type-checking or lint would ever see.
 
 - **The recurring defect in this codebase is confident output that was never measured
   against a realistic input.** Recorded after Slice #26.00, when the import work had to be

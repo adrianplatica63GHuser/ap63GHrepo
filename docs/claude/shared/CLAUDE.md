@@ -60,23 +60,54 @@ So the default changed:
 - **Do not re-litigate a settled decision.** Once a choice is made and stated, build on it.
   Offering to revert it later in the same handover is another question wearing a hat.
 
-**The adversarial review is the one thing that does NOT get cut** (Adrian, explicitly). Every
-non-trivial slice goes to a fresh-context subagent with a "find what breaks" brief, and after
-the fixes it goes again — round after round until one comes back with nothing that matters.
-It has earned this: in Slice #26.02 the first round found a rule that told a business user to
-delete a folder full of documents, and the SECOND round — on the already-fixed code — found a
-walk bug that made a violation message unfixable, so the user could never leave the loop.
-A round that finds nothing is cheap; a round skipped is how those ship.
+### Adversarial review rounds are SUSPENDED until 2027-01-19
 
-What that costs is tokens and subagent time, not Adrian's time, which is the whole point:
-review rounds run without anyone waiting on them, and they never turn into a question. Do not
-ask whether to run one, do not report the clean rounds at length, and do not let a review
-round become a reason to stop and check in.
+**Adrian, 2026-09-19, explicitly: no adversarial review rounds for four months.** Do not spawn a
+review subagent, do not offer one, do not run "just one quick round", and do not hand back a slice
+with a findings list nobody asked for. Build it, self-review your own diff, ship it, hand it over.
+This overrides every other sentence about review rounds — in this file, in any project `CLAUDE.md`,
+and in `docs\claude\SLICE-HEADER-TEMPLATE.md`. Where they disagree with this block, this block wins.
+
+**On 2027-01-19 the suspension lapses on its own** and the narrowed rule at the end of this block
+resumes. Do not lift it early, and do not extend it: if Adrian wants either, the date here changes.
+
+**Why it was suspended, recorded so the same failure is not rebuilt.** The rule this replaces said
+every non-trivial slice gets a round, then "round after round until one comes back with nothing that
+matters". Nothing in that bounded anything, and three things went wrong at once:
+
+- **No stop condition a reviewer could satisfy.** A subagent briefed to *prove the change wrong* and
+  told not to summarise approvingly always returns something. "Nothing that matters" was therefore a
+  judgement Claude made about the reviewer's output, never a signal the reviewer sent — and with the
+  rule calling a skipped round the expensive mistake, one more round was always the safer call. The
+  loop ended on exhaustion, not on evidence.
+- **No scope limit.** "Non-trivial diff" caught prose: documentation, rule files, this file. Prose
+  has no runtime to measure against, so a round on it returns wording opinions, which read like
+  findings, which earn fixes, which are a new diff, which earns another round. That is the part that
+  ran for weeks and produced catalogued documentation instead of shipped slices.
+- **The cost was mis-stated right here.** This file claimed the rounds cost "tokens and subagent
+  time, not Adrian's time". That was false. They run *before* the handover, so the slice arrives
+  later; every fix they generate is more diff to review; and the tokens are Adrian's money. That
+  sentence is the reason nobody checked, and it is why it is quoted here rather than deleted.
+
+**What the rounds were genuinely good for is not in dispute.** #26.02's second round found a walk bug
+that made a violation message unfixable, so the user could never leave the loop; #34.02's third found
+a citizenship default that degraded dishonestly. Every win of that size was **executable code on a
+path that could destroy or corrupt a user's data.** That is the shape worth paying for, and it is the
+shape the rule should have named instead of "every non-trivial slice".
+
+**When it resumes on 2027-01-19, it resumes narrowed** — not as it was written before:
+
+- **Code only, never prose.** A diff of `.md` files, comments or handover text never gets a round.
+- **Only where a defect is expensive:** deletion, overwrite, import, migration, auth, money, or
+  anything that writes real user data. A component, a label, a lookup or a report gets the
+  self-review of the diff and nothing else.
+- **Two rounds maximum, then ship.** If a third looks worth it, that is a line in the handover, not
+  another round.
 
 Everything else in verification is proportionate: run `tsc --noEmit` where the mount allows it, re-read
 your own diff, and stop. The rest of the sequence — `npm run e2e`, `npm run lint`, `npx jest` — is
-handed to Adrian, because the sandbox can run none of them. Do not gold-plate the parts a review would
-not have caught anyway.
+handed to Adrian, because the sandbox can run none of them. Do not gold-plate: with the rounds
+suspended, the self-review of your own diff is the last word on the slice, not the first draft of one.
 
 ## The working contract
 
@@ -133,13 +164,12 @@ before assuming. When a question spans many files or you're unfamiliar with an a
 parallel subagents to map it and report back — that is cheaper than one wrong assumption.
 The old "read only these three files" restriction is withdrawn.
 
-**Verify deeply, and review adversarially every time.** `tsc --noEmit` green where the mount allows it, the rest of the
+**Verify deeply. Review rounds are suspended until 2027-01-19** — see "Speed is a requirement" above;
+until that date do not spawn a review subagent at all. `tsc --noEmit` green where the mount allows it, the rest of the
 verification sequence — `npm run e2e`, `npm run lint`, `npx jest` — in the handover for Adrian to run,
 because the sandbox can run none of them, so never report any of them as passing — and
-re-read your own diff. Then hand the diff to a fresh-context subagent briefed to find what
-breaks — and keep handing it back after each round of fixes until a round returns nothing
-worth acting on. This is not the thing to economise on; see "Speed is a requirement" above
-for what is.
+re-read your own diff. **That self-review of the diff is now the whole of it:** it is not a reason to
+stop and check in, and it does not become a findings report for Adrian to read.
 
 **Fix what you notice, when it is small.** An adjacent one-line bug, a stale comment, a
 message that contradicts the code: fix it and list it under **"Fixed in passing"** in the

@@ -39,12 +39,18 @@ every slice.
 
 | Value | What Claude does |
 |---|---|
-| `normal` | Plan → build → `tsc` → self-review the diff → adversarial fresh-context review of the diff, repeated after each round of fixes until a round returns nothing worth acting on → commit → hand over, with the verification sequence and the push for you to run. The default. |
+| `normal` | Plan → build → `tsc` → self-review the diff → commit → hand over, with the verification sequence and the push for you to run. The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
 | `deep` | Adds parallel subagents to map the affected code before planning. Use for anything touching versioning, auth, migrations, the import wizard, or more than ~10 files. |
 | `investigate` | No code at all. Claude reads, greps, fans out, and reports findings. No diff, so no adversarial round. Use when you're not yet sure a slice is the right shape. |
 
-**The adversarial round is not something you can switch off in the header.** Any depth that produces
-a non-trivial diff gets it, and gets it again after each round of fixes.
+**Adversarial rounds are suspended until 2027-01-19** — `C:\dev\CLAUDE.md` → "Speed is a
+requirement" → "Adversarial review rounds are SUSPENDED" has the block and the reasons. Until that
+date no depth produces one, and no header line brings one back.
+
+After that date it returns **narrowed** — executable code on a destructive path only, never prose,
+two rounds maximum — and it is still not something the header can switch on or off. Any diff that
+meets the narrowed test gets it; a header line asking for it on one that does not, or asking to skip
+it on one that does, is ignored.
 
 ## Lines worth adding when they apply
 
