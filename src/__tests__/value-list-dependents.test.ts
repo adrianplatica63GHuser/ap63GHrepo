@@ -71,6 +71,17 @@ import { FAILURE_CODES } from "@/lib/admin/value-lists/failures";
 
 const SRC = path.join(process.cwd(), "src");
 
+/**
+ * ⚠️ **A BEHAVIOUR GUARD MUST READ ONLY CODE** — the repo's own rule, and the
+ * two order assertions added in #36.02 are behaviour guards: the comments in
+ * `queries.ts` name both `collisionsForRef` and `moveRef`, in prose, in the
+ * wrong order, so a guard that read them would pass on a file that had lost the
+ * call.
+ */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 function read(...parts: string[]): string {
   return fs.readFileSync(path.join(SRC, ...parts), "utf8");
 }
@@ -210,14 +221,84 @@ describe("the dependency map", () => {
         "person-roles:lookup_doc_type_person_role.person_role_id",
       ].sort(),
     );
-    // Everything with a UNIQUE constraint over the moved column is in that
-    // set — otherwise `moveRef` would eventually hit a 23505 it no longer
-    // guards against.
+    /*
+     * ⚠️ **THIS ASSERTED `uniqueWith ⇒ configuration` UNTIL SLICE #36.02, AND
+     * THE WIDENING KILLED THE INVARIANT RATHER THAN BREAKING THE CODE.**
+     *
+     * The old line read `if (ref.uniqueWith) expect(ref.configuration).toBe(true)`,
+     * over the comment „everything with a UNIQUE constraint over the moved
+     * column is in that set — otherwise `moveRef` would eventually hit a 23505
+     * it no longer guards against". The reasoning was sound and the conclusion
+     * is now false: migration_084 put `person_role_id` into
+     * `person_document_unique`, and `person_document` is an OBJECT ref that must
+     * go on blocking deletes and go on being movable.
+     *
+     * ⚠️ **AND THE TEMPTING REPAIR IS THE DANGEROUS ONE.** Marking that ref
+     * `configuration: true` would make this line green again and would be a lie
+     * with consequences: configuration refs never block a delete and
+     * `reassignDependents` skips them, so deleting a role would silently blank
+     * real association rows. `value-list-move-history.test.ts` catches exactly
+     * that repair, deliberately, and this comment is here so nobody reaches for
+     * it in the first place.
+     *
+     * What replaces the invariant is the obligation it was standing in for: a
+     * `uniqueWith` on a NON-configuration ref means `moveRef` can hit a 23505,
+     * so `reassignDependents` must count the collisions first and refuse. That
+     * is asserted below, against the real function, rather than inferred from a
+     * flag.
+     */
     for (const list of LISTS) {
       for (const ref of LIST_DEPENDENCIES[list].refs) {
-        if (ref.uniqueWith) expect(ref.configuration).toBe(true);
+        if (ref.uniqueWith && !ref.configuration) {
+          // The one object ref this is true of. If a second ever appears, this
+          // line is what makes somebody decide about it on purpose.
+          expect([list, getTableName(ref.table)]).toEqual(["person-roles", "person_document"]);
+        }
       }
     }
+  });
+
+  /**
+   * The obligation that replaced `uniqueWith ⇒ configuration`.   (Slice #36.02)
+   *
+   * A NAME guard may read comments; this is a BEHAVIOUR guard, so it reads only
+   * code: `reassignDependents` must ask `collisionsForRef` before it calls
+   * `moveRef`, and the refusal must carry a count. Pinned at the source because
+   * the alternative — a live 23505 that rolls back the whole move including the
+   * whitelist grants, behind an error naming a constraint and neither row — is
+   * invisible to `tsc`, to ESLint and to every test that does not have a
+   * database.
+   */
+  it("reassignDependents counts collisions BEFORE it moves anything", () => {
+    const src = stripComments(read("lib", "admin", "value-lists", "queries.ts"));
+    const body = src.slice(src.indexOf("export async function reassignDependents("));
+
+    const check = body.indexOf("collisionsForRef(");
+    const move  = body.indexOf("moveRef(");
+    expect(check).toBeGreaterThan(-1);
+    expect(move).toBeGreaterThan(-1);
+    // Order is the whole assertion: a check after the first UPDATE refuses only
+    // once something has already been written, and `grantWhitelists` has run by
+    // then too.
+    expect(check).toBeLessThan(move);
+    expect(body).toContain('reason: "would-collide"');
+    expect(body).toContain("collisions");
+  });
+
+  /**
+   * ⚠️ **`IS NOT DISTINCT FROM`, NOT `=`, AND THE DIFFERENCE IS THE WHOLE
+   * CHECK.** The other key columns are nullable and the index is
+   * `NULLS NOT DISTINCT` (migration_084), so two NULLs DO collide. An `=` would
+   * answer false for them and report no collision on rows that are about to
+   * cause one — worse than not checking, because it looks checked.
+   */
+  it("the collision count compares the other key columns NULL-safely", () => {
+    const src = stripComments(read("lib", "admin", "value-lists", "queries.ts"));
+    const body = src.slice(
+      src.indexOf("async function collisionsForRef("),
+      src.indexOf("async function moveRef("),
+    );
+    expect(body).toContain("IS NOT DISTINCT FROM");
   });
 
   /**
@@ -342,8 +423,27 @@ describe("person-roles", () => {
     for (const t of ["property_person", "person_document", "person_person"]) {
       expect(byTable[t].enforcement).toBe("clears");
       expect(byTable[t].configuration).toBeUndefined();
-      expect(byTable[t].uniqueWith).toBeUndefined();
     }
+    /*
+     * ⚠️ **`person_document` USED TO BE IN THE LOOP ABOVE WITH A THIRD LINE,
+     * `expect(byTable[t].uniqueWith).toBeUndefined()`, AND THAT LINE BECAME A
+     * TEST PROTECTING A BUG.**                                  (Slice #36.02)
+     *
+     * migration_084 widened `person_document_unique` to include
+     * `person_role_id` — the very column this ref moves — so the honest map
+     * entry has a `uniqueWith`, and the old assertion failed on it. Leaving the
+     * map as it was would have kept this green over an unguarded 23505 in
+     * `moveRef`.
+     *
+     * Its two neighbours are still unique over nothing, so they keep the
+     * assertion; `person_document` gets the opposite one, naming the two
+     * columns it shares the key with.
+     */
+    expect(byTable["property_person"].uniqueWith).toBeUndefined();
+    expect(byTable["person_person"].uniqueWith).toBeUndefined();
+    expect(
+      (byTable["person_document"].uniqueWith ?? []).map((c) => c.name).sort(),
+    ).toEqual(["document_id", "person_id"]);
   });
 
   it("and the schema declares exactly those four behaviours", () => {

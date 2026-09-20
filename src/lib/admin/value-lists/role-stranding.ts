@@ -121,6 +121,29 @@ export type DocumentRoleOffer =
  * thing that makes the state actionable: it is what the user would have to
  * re-tick.
  */
+/**
+ * ⚠️ **HALF-STRANDING IS NOW REACHABLE AND THIS TYPE CANNOT NAME IT.**
+ *                                                              (Slice #36.02)
+ *
+ * The RULE below survives the widening untouched, and that is structural rather
+ * than lucky: it is keyed on document and role and never on the person, so a
+ * person holding two roles on one document still gets a correct verdict for the
+ * role in the form.
+ *
+ * What it cannot express is the STATE. `documents` is a list of document
+ * LABELS, and until migration_084 a label plus the person identified exactly one
+ * `person_document` row, so naming the document named the row. It no longer
+ * does: P can hold „Vânzător" (offered) and „Mandatar" (not) on document D, and
+ * the sentence names D while saying nothing about which of the two is the dead
+ * one. Nothing anywhere computes „which of this person's EXISTING roles on this
+ * document are unoffered" either — this rule only ever sees the role in the
+ * `<select>` and the documents ticked in this form, and reads nothing already
+ * written.
+ *
+ * Not fixed here: moving the verdict's unit from document to (document, role)
+ * changes the shape both screens render and the sentence both locales carry,
+ * and this slice's cost is already in the reader sweep. It is in the handover.
+ */
 export type StrandingVerdict =
   | { known: false; because: "loading" }
   | { known: false; because: "failed"; unreadable: string[] }

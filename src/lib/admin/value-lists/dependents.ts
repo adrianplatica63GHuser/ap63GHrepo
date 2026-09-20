@@ -256,11 +256,32 @@ export type DependentRef = {
   /**
    * The OTHER columns of a UNIQUE constraint that also covers `column`.
    *
-   * Every ref that has one is also `configuration`, and that is not a
-   * coincidence: a whitelist is unique over the thing it whitelists, which is
-   * the mechanical half of why moving one is not a move at all — an UPDATE
-   * onto a role the target already has would be a 23505 rather than a merge.
-   * Recorded here because it is the reason, and asserted in the test.
+   * ⚠️ **„EVERY REF THAT HAS ONE IS ALSO `configuration`" STOOD HERE UNTIL
+   * SLICE #36.02, AND THE WIDENING KILLED IT.** The sentence was true of the
+   * whitelists: a whitelist is unique over the thing it whitelists, which is
+   * the mechanical half of why moving one is not a move at all. migration_084
+   * then put `person_role_id` into `person_document_unique`, and
+   * `person_document` is an OBJECT ref — it must go on blocking a delete and
+   * go on being movable — so it now has a `uniqueWith` and is not
+   * configuration.
+   *
+   * ⚠️ **AND MARKING IT `configuration: true` TO KEEP THE OLD INVARIANT WOULD
+   * BE A LIE WITH CONSEQUENCES.** Configuration refs never block a delete and
+   * `reassignDependents` skips them, so deleting a role would silently blank
+   * real association rows instead of refusing. `value-list-move-history.test
+   * .ts` catches that particular fix, deliberately.
+   *
+   * So what this field means now is only what it says: the moved column is
+   * covered by a UNIQUE constraint, and therefore a plain
+   * `UPDATE … SET col = to WHERE col = from` can hit a 23505 rather than
+   * merging. What FOLLOWS from that is two different things depending on the
+   * ref:
+   *
+   *   * on a `configuration` ref, the move is not offered at all;
+   *   * on an object ref, `reassignDependents` counts the collisions FIRST and
+   *     refuses the whole move with a sentence naming how many — see
+   *     `collisionsForRef` in ./queries.ts.
+   *
    * `[]` means the FK column is unique on its own.
    */
   uniqueWith?: readonly PgColumn[];
@@ -418,6 +439,25 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: personDocument,
         column: personDocument.personRoleId,
         enforcement: "clears",
+        /*
+         * ⚠️ **THE ONLY OBJECT REF IN THIS FILE WITH A `uniqueWith`, AND IT IS
+         * NEW.**                                                (Slice #36.02)
+         *
+         * migration_084 widened `person_document_unique` from
+         * (person_id, document_id) to (person_id, document_id, person_role_id)
+         * `NULLS NOT DISTINCT`, so the column this ref MOVES is now part of a
+         * unique key. Concretely: a person holding „Vânzător" and „Mandatar" on
+         * one document, and an administrator merging the first role into the
+         * second, makes the UPDATE try to produce a row that already exists —
+         * 23505, and the whole `reassignDependents` transaction rolls back
+         * including the whitelist grants, with nothing in the error pointing at
+         * the pair that caused it.
+         *
+         * Declaring it here is what lets `reassignDependents` ask the question
+         * before the UPDATE and refuse with a number instead. Leaving it off
+         * would keep two tests green over a live 23505.
+         */
+        uniqueWith: [personDocument.personId, personDocument.documentId],
       },
       {
         kind: "column",

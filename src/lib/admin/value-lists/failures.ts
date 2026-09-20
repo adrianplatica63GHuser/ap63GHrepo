@@ -66,6 +66,13 @@ export const FAILURE_CODES = [
   "duplicate",
   "notFound",
   "validation",
+  // Slice #36.02 — the role merge that would make duplicates. It is the first
+  // member raised by a shape of data rather than by a form or a name clash:
+  // migration_084 put `person_role_id` into `person_document_unique`, so
+  // merging two roles one person holds on one document would produce a row
+  // that already exists. `reassignDependents` counts them and refuses before
+  // writing anything; this is the sentence that says so.
+  "roleMergeCollides",
   // Slice #32.07 — the two halves of the identity-card refusal. They are the
   // first members that arrive on a **400**, which is why `throwRequestFailed`
   // below had to start reading the body's `code` before it decided that a 400
@@ -212,6 +219,10 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   if (status === 404) return "notFound";
   const code = (body as { code?: string } | null)?.code;
   if (code === "SAME_VALUE") return "sameValue";
+  // Slice #36.02 — same 409 shape as SAME_VALUE, and for the same reason: a
+  // refusal the data caused, recognised by its code rather than by a status
+  // that three other doors also use.
+  if (code === "ROLE_MERGE_COLLIDES") return "roleMergeCollides";
   if (code === "DUPLICATE") return "duplicate";
   // ⚠️ **Slice #32.07 — snake_case, and the constants rather than literals.**
   // The same refusal reaches `PUT /api/document-types/[id]/template-fields`,

@@ -1907,6 +1907,7 @@
         "validation": "The data entered is incomplete or invalid. Check the required fields.",
         "duplicate": "That entry is already in the list.",
         "notFound": "The entry no longer exists — the list changed meanwhile. Close the dialog and open it again.",
+        "roleMergeCollides": "The role cannot be moved: {collisions} association(s) would become duplicates, because the same persons already hold the target role on the same documents. Nothing was changed. Remove the duplicate associations first, then move the role again.",
         "tarlaCodeTaken": "A tarla code that reads the same as this one already exists: “{code}”. Codes are compared without case, diacritics or extra spaces, so “t3” and “T3” are one code. Two entries for one tarla split its properties between them, so no total is correct. Change the code in the field above, or close the window — the tarla is already in the list, as “{code}”.",
         "tarlaCodeTakenRace": "A tarla code that reads the same as this one has just appeared in the list. Close the window, refresh the list and use the code that already exists.",
         "generic": "The operation failed. Close the dialog, refresh the page and try again.",

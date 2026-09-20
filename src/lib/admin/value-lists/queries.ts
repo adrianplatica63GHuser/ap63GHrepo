@@ -1283,6 +1283,66 @@ export type MovedRows = {
  * conclusion arrived at from the other end. The argument still holds for
  * `lookup_doc_type_person_role`, which is unique over the PAIR and stays.)
  */
+/**
+ * „How many rows would this move turn into duplicates?"        (Slice #36.02)
+ *
+ * WHY IT EXISTS
+ *   `moveRef` below is a bare
+ *   `UPDATE t SET col = to WHERE col = from`. That cannot collide while the
+ *   moved column is not part of a unique key — which was true of every object
+ *   ref in this file until migration_084 put `person_role_id` into
+ *   `person_document_unique`. It is now false for exactly one of them, and the
+ *   failure is ugly: person P holds „Vânzător" and „Mandatar" on document D, an
+ *   administrator merges the first role into the second, the UPDATE tries to
+ *   write a row that already exists, Postgres raises 23505, and the WHOLE
+ *   transaction rolls back — the other refs' moves and `grantWhitelists`'
+ *   grants with it — behind an error naming a constraint and neither row.
+ *
+ * ⚠️ **IT REFUSES; IT DOES NOT MERGE, AND THAT IS migration_080's ARGUMENT
+ * REUSED.** Merging means deciding which of two real rows survives, and those
+ * rows carry a `quality` and a cotă-parte that the other one does not. Picking
+ * for the user would be a data change nobody asked for, made silently, inside a
+ * transaction whose purpose was something else. The business question has an
+ * owner one room away, so the answer is to say how many rows are in the way and
+ * let him deal with them — exactly what migration_080 does with two document
+ * types sharing a name.
+ *
+ * ⚠️ **`IS NOT DISTINCT FROM`, NOT `=`.** The other key columns can be NULL —
+ * and under `NULLS NOT DISTINCT` two NULLs DO collide. `=` would answer false
+ * for them and report no collision on rows that are about to cause one, which
+ * is worse than not checking at all, because it looks checked.
+ */
+async function collisionsForRef(
+  tx: DbTransaction,
+  ref: DependentRef,
+  from: unknown,
+  to: unknown,
+): Promise<number> {
+  if (!ref.uniqueWith || ref.uniqueWith.length === 0) return 0;
+
+  const table  = sql.identifier(getTableName(ref.table));
+  const column = sql.identifier(ref.column.name);
+  const sameness = sql.join(
+    ref.uniqueWith.map(
+      (c) => sql`b.${sql.identifier(c.name)} IS NOT DISTINCT FROM a.${sql.identifier(c.name)}`,
+    ),
+    sql` AND `,
+  );
+
+  const result = await tx.execute(sql`
+    SELECT count(*)::int AS n
+      FROM ${table} a
+     WHERE a.${column} = ${from}
+       AND EXISTS (
+         SELECT 1 FROM ${table} b
+          WHERE b.${column} = ${to}
+            AND ${sameness}
+       )
+  `);
+  const row = result.rows[0] as { n?: number } | undefined;
+  return row?.n ?? 0;
+}
+
 async function moveRef(
   tx: DbTransaction,
   ref: DependentRef,
@@ -1356,7 +1416,14 @@ export type ReassignOutcome =
        */
       versions: number;
     }
-  | { ok: false; reason: "not-found" | "same-value" };
+  | { ok: false; reason: "not-found" | "same-value" }
+  /**
+   * The move would make duplicates of rows that already exist (#36.02). Carries
+   * the count so the dialog can say how many rather than „it failed", and the
+   * ref's own `labelKey` so it can say where. Nothing has been written: the
+   * check runs before the first UPDATE, inside the same transaction.
+   */
+  | { ok: false; reason: "would-collide"; labelKey: string; collisions: number };
 
 /**
  * Slice #29.13 made it whitelist-aware: a `person-roles` move now grants the
@@ -1476,6 +1543,25 @@ export async function reassignDependents(
       def.grantWhitelists && typeof from === "string" && typeof to === "string"
         ? await def.grantWhitelists(tx, from, to)
         : { granted: [], warnings: [] };
+
+    /*
+     * ⚠️ **ASK BEFORE MOVING ANYTHING, AND ASK FOR EVERY REF FIRST.**
+     *                                                          (Slice #36.02)
+     *
+     * A per-ref check inside the loop below would refuse only after the refs
+     * ahead of it had already been rewritten — and while the transaction would
+     * roll those back, `grantWhitelists` has already run by this point too, so
+     * the tidy thing is to have written nothing at all before deciding. It is
+     * one `count(*)` per ref that declares a `uniqueWith`, which today is one
+     * ref on one list.
+     */
+    for (const ref of def.refs) {
+      if (ref.configuration) continue;
+      const collisions = await collisionsForRef(tx, ref, from, to);
+      if (collisions > 0) {
+        return { ok: false, reason: "would-collide", labelKey: ref.labelKey, collisions } as const;
+      }
+    }
 
     const moved: DependentCount[] = [];
     let versions = 0;

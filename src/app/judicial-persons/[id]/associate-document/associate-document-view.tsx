@@ -278,6 +278,23 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
    * What would make it answerable is a picker on the ROW — an existing
    * `person_document` association whose role can be changed — which does not
    * exist today: associations are create-and-delete only. It is in the
+   * handover.   *
+   * ⚠️ **ONE SENTENCE ABOVE STOPPED BEING TRUE IN SLICE #36.02, AND THE REST OF
+   * THE ARGUMENT SURVIVED IT.** „The row a role could be carried on is a
+   * (person, document) pair that does not exist yet" was the mechanical half of
+   * the reason, and migration_084 removed it: the pair CAN already exist while
+   * a further role is being added, because one person may now hold several
+   * roles on one document. „The roles this person already holds on this
+   * document" is therefore a well-defined question for the first time.
+   *
+   * It is still not the question this screen can ask. `roles` above is the
+   * SELECTED DOCUMENT TYPE's whitelist and changes as documents are ticked, so
+   * the two scope arguments in the paragraph above — person-scoped marks a role
+   * unavailable where it was merely never a party, document-scoped prints other
+   * people's roles — are untouched by the widening and are what still decides
+   * it. What changed is that a THIRD scope now exists and is the one worth
+   * costing out: the (person, document) pair itself, on a screen where exactly
+   * one document is ticked. That is a slice, not a comment, and it is in the
    * handover.
    */
   const items = data?.items ?? [];

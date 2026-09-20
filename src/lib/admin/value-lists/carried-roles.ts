@@ -138,6 +138,19 @@ export async function listCarriedPersonRoles(
     // mark a true sentence; the reason is written out on both of those screens.
     // A `person-document` kind would be live surface answering exactly the
     // question those screens refuse to ask.
+    //
+    // ⚠️ **AND THE REASON THEY GIVE FOR REFUSING LOST ONE OF ITS LEGS IN SLICE
+    // #36.02.** Both of those screens argue, in part, that „the row a role could
+    // be carried on is a (person, document) pair that does not exist yet".
+    // migration_084 made that false — one person may now hold several roles on
+    // one document, so the pair can already exist while a further role is being
+    // added, and „which roles does this person already hold on this document" is
+    // a well-defined question at last. What still decides those screens is the
+    // OTHER half of their argument, which the widening does not touch: their
+    // offered list is the selected document TYPE's whitelist and moves as
+    // documents are ticked. Corrected here and on both screens rather than left
+    // standing, because a justification that has quietly become false is how a
+    // decision gets re-made by accident.
     case "document-person":
       return db
         .selectDistinct(selection)

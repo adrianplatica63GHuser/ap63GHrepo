@@ -1907,6 +1907,7 @@
         "validation": "Datele introduse nu sunt complete sau nu sunt valide. Verificați câmpurile obligatorii.",
         "duplicate": "Această înregistrare există deja în listă.",
         "notFound": "Înregistrarea nu mai există — lista s-a schimbat între timp. Închideți fereastra și deschideți-o din nou.",
+        "roleMergeCollides": "Rolul nu poate fi mutat: {collisions} asociere(ri) ar deveni duplicate, pentru că aceleași persoane dețin deja rolul-țintă pe aceleași acte. Nu s-a modificat nimic. Ștergeți mai întâi asocierile duplicate, apoi reluați mutarea.",
         "tarlaCodeTaken": "Există deja un indicativ de tarla care se citește la fel ca acesta: „{code}”. Indicativele se compară fără majuscule, fără diacritice și fără spații în plus, așa că „t3” și „T3” sunt același indicativ. Două înregistrări pentru aceeași tarla îi împart proprietățile între ele, iar totalurile nu mai sunt corecte. Schimbați indicativul din câmpul de mai sus sau închideți fereastra — tarlaua este deja în listă, sub „{code}”.",
         "tarlaCodeTakenRace": "Între timp a apărut în listă un indicativ de tarla care se citește la fel ca acesta. Închideți fereastra, reîmprospătați lista și folosiți indicativul care există deja.",
         "generic": "Operația nu a reușit. Închideți fereastra, reîmprospătați pagina și încercați din nou.",

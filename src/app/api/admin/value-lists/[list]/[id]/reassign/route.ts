@@ -93,6 +93,21 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     if (outcome.reason === "not-found") {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
+    // Slice #36.02 — the move would produce rows that already exist, so nothing
+    // was written. `collisions` and `labelKey` are carried so the dialog can
+    // say how many and where; the sentence itself is the client's, because the
+    // server has no locale.
+    if (outcome.reason === "would-collide") {
+      return Response.json(
+        {
+          error: "ROLE_MERGE_COLLIDES",
+          code: "ROLE_MERGE_COLLIDES",
+          labelKey: outcome.labelKey,
+          collisions: outcome.collisions,
+        },
+        { status: 409 },
+      );
+    }
     // ONE shape of no since Slice #34.03:
     // SAME_VALUE — the target IS this row. Moving onto it would rewrite
     //              nothing and report a move.
