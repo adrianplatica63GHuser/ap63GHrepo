@@ -1384,13 +1384,61 @@ export const personDocument = pgTable(
     // ON DELETE SET NULL — cleared automatically if the role is removed from lookup_person_role.
     personRoleId: uuid("person_role_id")
       .references(() => lookupPersonRole.id, { onDelete: "set null" }),
+    // Cota-parte — the undivided share this person holds on this document IN
+    // THIS ROLE (Slice #36.02, migration_084). All three nullable, and NULL is
+    // ORDINARY rather than a defect: a notary has no share, a mandatar usually
+    // has none, and a 2006 deed may state none at all.
+    //
+    // They sit here beside `personRoleId`, and not on `person`, because a share
+    // belongs to a PERSON IN A ROLE — the same man is a seller at 40% and a
+    // mandatar at nothing.
+    //
+    // ⚠️ **NO RANGE CHECK ON `cotaParte`, DELIBERATELY** — migration_084 says
+    // why at length: the archive's job is to show what the paper says, not to
+    // refuse the paper, which is the same sentence that makes the per-role
+    // total a warning and not a block. `numeric(7,4)` bounds it at 999.9999 as
+    // a consequence of its precision, which is a storage fact, not a rule.
+    //
+    // Four decimals on `cotaParte` because the archive holds 63,6400 / 9,0900 /
+    // 27,2700 / 10,4100 — thirds and elevenths written out, which two decimals
+    // round into a total that no longer reaches 100. `cotaSuprafataMp` matches
+    // `property.surfaceAreaMp`'s precision on purpose: the deeds state both the
+    // percentage and the mp, and the mp is what was signed.
+    cotaParte:       numeric("cota_parte",        { precision:  7, scale: 4 }),
+    cotaSuprafataMp: numeric("cota_suprafata_mp", { precision: 12, scale: 2 }),
+    // How the share is held. ASCII keys, not display text — the Romanian with
+    // diacritics is in messages/ro-RO.json under `document.persons.cotaMod.*`,
+    // so renaming a label is not a data migration.
+    // DB-enforced by person_document_cota_mod_check (migration_084).
+    cotaMod:    text("cota_mod"),
     createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex("person_document_unique").on(t.personId, t.documentId),
+    // ⚠️ **THIS DECLARATION UNDERSTATES THE INDEX, AND migration_084 IS THE
+    // TRUTH.** The real index carries `NULLS NOT DISTINCT`, without which a
+    // nullable `person_role_id` would let the same person be attached to the
+    // same document with NO role an unlimited number of times — a worse defect
+    // than the one the widening fixes, because the role-less attachment is the
+    // ordinary path from the general Persons tab.
+    //
+    // drizzle-orm 0.45.2's `uniqueIndex` builder has no `nullsNotDistinct()`;
+    // it exists only on `unique()`, the table CONSTRAINT builder
+    // (node_modules/drizzle-orm/pg-core/unique-constraint.d.ts). Drizzle is not
+    // what creates this index — migrations are applied by hand through
+    // `scripts\Apply-Migration.ps1` — and the only drizzle code that touches
+    // the conflict is `.onConflictDoNothing()` with NO conflict target, which
+    // covers every unique index on the table whatever its shape. So the
+    // approximation costs nothing at runtime and is named here rather than
+    // hidden. migration_084 records the partial-index pair that would have been
+    // exactly expressible, and why it was not taken.
+    uniqueIndex("person_document_unique").on(t.personId, t.documentId, t.personRoleId),
     check(
       "person_document_quality_check",
       sql`${t.quality} IS NULL OR ${t.quality} IN ('DEFUNCT', 'MOSTENITOR')`,
+    ),
+    check(
+      "person_document_cota_mod_check",
+      sql`${t.cotaMod} IS NULL OR ${t.cotaMod} IN ('NUME_PROPRIU', 'DEVALMASIE', 'INDIVIZIUNE', 'PRIN_MANDATAR')`,
     ),
   ],
 );
