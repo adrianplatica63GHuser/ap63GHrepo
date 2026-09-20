@@ -36,6 +36,7 @@ import { customFieldFilter } from "./custom-field-filter";
 // by the caller, because only the caller knows which whitelist governs it.
 import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
+import { cotaFromDb, cotaToDb, isCotaMod, type CotaMod } from "./cota-parte";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -1010,34 +1011,101 @@ export async function dissociatePropertyFromDocument(documentId: string, propert
 export type PersonDocumentQuality = "DEFUNCT" | "MOSTENITOR";
 
 export type DocumentPersonItem = {
-  id:           string;
-  code:         string;
-  type:         "NATURAL" | "JUDICIAL";
-  displayName:  string;
-  quality:      PersonDocumentQuality | null;
-  roleName:     string | null;
-  associatedAt: Date;
+  /**
+   * ⚠️ **`linkId` IS THE ROW AND `id` IS THE PERSON, AND AFTER #36.02 THE
+   * DIFFERENCE IS LOAD-BEARING.** Until this slice one person held at most one
+   * role on one document, so the person id identified the row and every
+   * consumer used it as both: the React key, the selection, and the path
+   * parameter of the DELETE. Now a person can appear twice — seller in his own
+   * name and mandatar for others — and the person id names BOTH rows, which
+   * collides the key, ticks both radios and, at the DELETE, removes the role
+   * the user did not ask about.
+   *
+   * So `linkId` is `person_document.id`, which the projection did not carry
+   * before, and it is what identifies a row anywhere a row must be identified.
+   * `id` stays the person id because that is what the „Vizualizare" link
+   * navigates to, and renaming it would touch every consumer to no purpose.
+   */
+  linkId:          string;
+  id:              string;
+  code:            string;
+  type:            "NATURAL" | "JUDICIAL";
+  displayName:     string;
+  quality:         PersonDocumentQuality | null;
+  /** Carried so the per-role total can group by role ID and never by name. */
+  personRoleId:    string | null;
+  roleName:        string | null;
+  cotaParte:       number | null;
+  cotaSuprafataMp: number | null;
+  cotaMod:         CotaMod | null;
+  associatedAt:    Date;
 };
 
 export async function listDocumentPersons(documentId: string): Promise<DocumentPersonItem[]> {
   const rows = await db
     .select({
-      id:           person.id,
-      code:         person.code,
-      type:         person.type,
-      displayName:  person.displayName,
-      quality:      personDocument.quality,
-      roleName:     lookupPersonRole.name,
-      associatedAt: personDocument.createdAt,
+      linkId:          personDocument.id,
+      id:              person.id,
+      code:            person.code,
+      type:            person.type,
+      displayName:     person.displayName,
+      quality:         personDocument.quality,
+      personRoleId:    personDocument.personRoleId,
+      roleName:        lookupPersonRole.name,
+      cotaParte:       personDocument.cotaParte,
+      cotaSuprafataMp: personDocument.cotaSuprafataMp,
+      cotaMod:         personDocument.cotaMod,
+      associatedAt:    personDocument.createdAt,
     })
     .from(personDocument)
     .innerJoin(person, eq(personDocument.personId, person.id))
     .leftJoin(lookupPersonRole, eq(personDocument.personRoleId, lookupPersonRole.id))
     .where(eq(personDocument.documentId, documentId))
-    .orderBy(person.displayName);
+    // ⚠️ **A TOTAL ORDER, WHICH `person.displayName` ALONE NO LONGER IS.** Two
+    // rows for one person tie on the name, and a tie in SQL is not a stable
+    // order — the two roles could swap places between two renders of the same
+    // unchanged document, which on a screen with an in-place editor means the
+    // row under the cursor moves. `createdAt` then `id` breaks it, and both
+    // rows of one insert batch share a `createdAt`, which is why the id is
+    // there as well.
+    .orderBy(person.displayName, personDocument.createdAt, personDocument.id);
 
-  return rows as DocumentPersonItem[];
+  // ⚠️ **NO `as DocumentPersonItem[]` ANY MORE.** `numeric` arrives from the
+  // driver as a STRING so no precision is lost in transit, so the unchecked
+  // cast this line used to be would have declared three string columns to be
+  // numbers and let them through to the UI as `"63.6400"`. `cotaFromDb` is the
+  // one place that conversion happens.
+  return rows.map((r) => ({
+    ...r,
+    quality:         r.quality as PersonDocumentQuality | null,
+    type:            r.type as "NATURAL" | "JUDICIAL",
+    cotaParte:       cotaFromDb(r.cotaParte),
+    cotaSuprafataMp: cotaFromDb(r.cotaSuprafataMp),
+    cotaMod:         isCotaMod(r.cotaMod) ? r.cotaMod : null,
+  }));
 }
+
+/** The three cotă columns, as they travel together through every write. */
+export type CotaInput = {
+  cotaParte?:       number | null;
+  cotaSuprafataMp?: number | null;
+  cotaMod?:         CotaMod | null;
+};
+
+/**
+ * What a write of `person_document` rows actually did.
+ *
+ * ⚠️ **`skipped` EXISTS BECAUSE `.onConflictDoNothing()` USED TO BE A LIE TO
+ * THE USER.** Before #36.02 the conflict was `(person_id, document_id)`, so a
+ * second role on one pair was swallowed: no error, no row, no word. After the
+ * widening the only thing that conflicts is the same person in the same role on
+ * the same document, which IS a genuine duplicate and is correctly ignored —
+ * but „correctly ignored" and „silently ignored" are not the same thing to
+ * someone who just pressed a button. The write now says how many rows it wrote
+ * and how many it did not, so the screen can say „este deja atașat cu acest
+ * rol" instead of appearing to work.
+ */
+export type AssociateResult = { inserted: number; skipped: number };
 
 /**
  * ⚠️ **THE ROLE IS CHECKED HERE RATHER THAN IN THE ROUTE.**    (Slice #34.15)
@@ -1058,7 +1126,8 @@ export async function associatePersonsToDocument(
   personIds:    string[],
   quality?:     PersonDocumentQuality | null,
   personRoleId: string | null = null,
-): Promise<void> {
+  cota:         CotaInput = {},
+): Promise<AssociateResult> {
   /*
    * ⚠️ **THE DOCUMENT IS CHECKED BEFORE THE ROLE, AND THE ORDER IS THE WHOLE
    * FIX.**                                                     (Slice #34.26)
@@ -1101,14 +1170,75 @@ export async function associatePersonsToDocument(
   await assertRoleMayBeAttached("document-person", personRoleId, async () =>
     (await listPersonRolesForDocument(documentId)).map((r) => r.id),
   );
-  await db.insert(personDocument)
+  /*
+   * ⚠️ **`.onConflictDoNothing()` STAYS, AND ITS MEANING CHANGED UNDER IT.**
+   *                                                              (Slice #36.02)
+   *
+   * Its conflict target is every unique index on the table, because it names
+   * none. Until migration_084 the only one was `(person_id, document_id)`, so
+   * this line swallowed a SECOND ROLE for a person already on the document —
+   * the defect that slice exists to remove, sitting in the one statement that
+   * could have reported it.
+   *
+   * After the widening the index is `(person_id, document_id, person_role_id)`
+   * `NULLS NOT DISTINCT`, so what conflicts now is the same person in the same
+   * role on the same document. That is a genuine duplicate and ignoring it is
+   * right: a double-submit, a re-POST from the AI party linker stepping over
+   * the same party twice, or a user pressing „Asociază" again must not create a
+   * second identical row. `NULLS NOT DISTINCT` is what keeps the role-LESS
+   * re-POST idempotent too; without it two `(person, document, NULL)` rows
+   * would both insert.
+   *
+   * ⚠️ **WHAT CHANGED IS THAT IT NO LONGER DOES IT SILENTLY.** `.returning()`
+   * yields one row per row actually inserted, so the difference against
+   * `personIds.length` is the number the conflict ate, and the caller gets it.
+   */
+  const written = await db.insert(personDocument)
     .values(personIds.map((pid) => ({
       personId: pid,
       documentId,
       quality: quality ?? null,
       personRoleId,
+      cotaParte:       cotaToDb(cota.cotaParte ?? null),
+      cotaSuprafataMp: cotaToDb(cota.cotaSuprafataMp ?? null),
+      cotaMod:         cota.cotaMod ?? null,
     })))
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .returning({ id: personDocument.id });
+
+  return { inserted: written.length, skipped: personIds.length - written.length };
+}
+
+/**
+ * Change the cotă on ONE association, in place, from the Persons tab.
+ *
+ * ⚠️ **IT IS ADDRESSED BY `linkId` AND CHECKED AGAINST ALL THREE.** The row id
+ * alone would be enough for Postgres; the document and person are in the WHERE
+ * as well so that a link id belonging to a different document cannot be edited
+ * through this document's route. The role is deliberately NOT editable here —
+ * changing a role is an attach and a detach, because the role is half of the
+ * row's identity under the widened index, and doing it as an UPDATE would slip
+ * past `assertRoleMayBeAttached`.
+ */
+export async function updateDocumentPersonCota(
+  documentId: string,
+  personId:   string,
+  linkId:     string,
+  cota:       CotaInput,
+): Promise<boolean> {
+  const result = await db.update(personDocument)
+    .set({
+      cotaParte:       cotaToDb(cota.cotaParte ?? null),
+      cotaSuprafataMp: cotaToDb(cota.cotaSuprafataMp ?? null),
+      cotaMod:         cota.cotaMod ?? null,
+    })
+    .where(and(
+      eq(personDocument.id, linkId),
+      eq(personDocument.documentId, documentId),
+      eq(personDocument.personId, personId),
+    ))
+    .returning({ id: personDocument.id });
+  return result.length > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1267,9 +1397,31 @@ export async function listPersonRolesForDocumentType(documentTypeId: string): Pr
     .orderBy(asc(lookupPersonRole.name));
 }
 
-export async function dissociatePersonFromDocument(documentId: string, personId: string): Promise<boolean> {
+/**
+ * ⚠️ **`linkId` IS REQUIRED, AND MAKING IT REQUIRED IS A DEFECT FIX.**
+ *                                                              (Slice #36.02)
+ *
+ * This deleted by `(documentId, personId)`. With one row per pair that named
+ * exactly one row; with several it names ALL of them, so a user unticking
+ * „Reprezentant legal / Mandatar" lost „Vânzător" in the same click, with no
+ * error and no warning — the same shape of silent loss as the insert that
+ * swallowed the second role, mirrored into the delete.
+ *
+ * The document and the person stay in the WHERE beside the row id: they are no
+ * longer what selects the row, they are what stops a link id from another
+ * document being deleted through this document's route.
+ */
+export async function dissociatePersonFromDocument(
+  documentId: string,
+  personId:   string,
+  linkId:     string,
+): Promise<boolean> {
   const result = await db.delete(personDocument)
-    .where(and(eq(personDocument.documentId, documentId), eq(personDocument.personId, personId)))
+    .where(and(
+      eq(personDocument.id, linkId),
+      eq(personDocument.documentId, documentId),
+      eq(personDocument.personId, personId),
+    ))
     .returning({ id: personDocument.id });
   return result.length > 0;
 }

@@ -264,3 +264,15 @@ export function cotaFromDb(value: string | number | null | undefined): number | 
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : null;
 }
+
+/**
+ * And back: drizzle's `numeric` column takes a STRING, not a number, so that
+ * the driver hands Postgres the digits rather than a double. One place
+ * converts, for the same reason `cotaFromDb` exists — two call sites each
+ * writing their own `String(...)` is two places for a `0` to appear where a
+ * `null` belongs.
+ */
+export function cotaToDb(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  return String(value);
+}

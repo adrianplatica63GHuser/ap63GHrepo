@@ -10,6 +10,7 @@ import {
   zodErrorToResponse,
 } from "@/lib/api/errors";
 import { listDocumentPersons, associatePersonsToDocument } from "@/lib/documents/queries";
+import { COTA_MOD_VALUES } from "@/lib/documents/cota-parte";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -26,6 +27,15 @@ const bodySchema = z.object({
   quality: z.enum(["DEFUNCT", "MOSTENITOR"]).nullable().optional(),
   // Optional person role from the Document Persons whitelist.
   personRoleId: z.string().uuid().nullable().optional(),
+  // ⚠️ **THE COTĂ ARRIVES AS A NUMBER, ALREADY PARSED.** „63,64" is Romanian
+  // and the parser that reads it is `src/lib/documents/cota-parte.ts`, on the
+  // client, beside the box the user typed into — which is the only place that
+  // can keep what they typed and show them the error in their own field. A
+  // route that accepted the raw string would be a second parser, and a second
+  // parser is a second answer.
+  cotaParte:       z.number().nullable().optional(),
+  cotaSuprafataMp: z.number().nullable().optional(),
+  cotaMod:         z.enum(COTA_MOD_VALUES).nullable().optional(),
 });
 
 export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
@@ -35,13 +45,24 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    await associatePersonsToDocument(
+    const result = await associatePersonsToDocument(
       id,
       parsed.data.personIds,
       parsed.data.quality ?? null,
       parsed.data.personRoleId ?? null,
+      {
+        cotaParte:       parsed.data.cotaParte ?? null,
+        cotaSuprafataMp: parsed.data.cotaSuprafataMp ?? null,
+        cotaMod:         parsed.data.cotaMod ?? null,
+      },
     );
-    return new Response(null, { status: 204 });
+    // ⚠️ **200 WITH A BODY, WHERE THIS WAS A BARE 204.**        (Slice #36.02)
+    // A 204 cannot say that nothing was added, and after the widening „nothing
+    // was added" is a real and ordinary answer: the person is already on this
+    // document IN THIS ROLE. The screen needs to tell the user that rather than
+    // appear to work, so the counts come back. Every existing caller checks
+    // `res.ok`, which a 200 satisfies exactly as a 204 did.
+    return Response.json(result);
   } catch (err) {
     // Slice #34.26: FIRST, and the order is the fix. Until this slice a POST
     // naming a document that no longer exists came back as the refusal below —

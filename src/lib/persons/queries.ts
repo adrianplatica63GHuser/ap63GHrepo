@@ -48,6 +48,8 @@ import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
 // rule is pure (`role-attachment.ts`); the offered sets are the same lists the
 // three pickers filter on (`role-offers.ts`).
 import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
+import { cotaFromDb, cotaToDb, isCotaMod, type CotaMod } from "@/lib/documents/cota-parte";
+import type { AssociateResult, CotaInput } from "@/lib/documents/queries";
 import {
   personRoleIdsAcrossDocumentTypes,
   personRoleIdsValidForPerson,
@@ -1092,34 +1094,59 @@ export async function dissociatePropertyFromPerson(personId: string, propertyId:
 // ---------------------------------------------------------------------------
 
 export type PersonDocumentItem = {
-  id:             string;
-  code:           string;
-  documentTypeId: string;
-  typeName:       string | null;
-  title:          string | null;
-  roleName:       string | null;
-  associatedAt:   Date;
+  /**
+   * ⚠️ **`linkId` IS THE ROW AND `id` IS THE DOCUMENT** — the mirror of
+   * `DocumentPersonItem` one axis over, and for the same reason (#36.02). One
+   * person holding two roles on one document makes this list show that document
+   * twice, and `id` names both of them. `linkId` is `person_document.id` and is
+   * what identifies a row for the key, the selection and the DELETE; `id` stays
+   * the document id because that is what „Vizualizare" navigates to.
+   */
+  linkId:          string;
+  id:              string;
+  code:            string;
+  documentTypeId:  string;
+  typeName:        string | null;
+  title:           string | null;
+  personRoleId:    string | null;
+  roleName:        string | null;
+  cotaParte:       number | null;
+  cotaSuprafataMp: number | null;
+  cotaMod:         CotaMod | null;
+  associatedAt:    Date;
 };
 
 export async function listPersonDocuments(personId: string): Promise<PersonDocumentItem[]> {
   const rows = await db
     .select({
-      id:             document.id,
-      code:           document.code,
-      documentTypeId: document.documentTypeId,
-      typeName:       lookupDocumentType.name,
-      title:          document.title,
-      roleName:       lookupPersonRole.name,
-      associatedAt:   personDocument.createdAt,
+      linkId:          personDocument.id,
+      id:              document.id,
+      code:            document.code,
+      documentTypeId:  document.documentTypeId,
+      typeName:        lookupDocumentType.name,
+      title:           document.title,
+      personRoleId:    personDocument.personRoleId,
+      roleName:        lookupPersonRole.name,
+      cotaParte:       personDocument.cotaParte,
+      cotaSuprafataMp: personDocument.cotaSuprafataMp,
+      cotaMod:         personDocument.cotaMod,
+      associatedAt:    personDocument.createdAt,
     })
     .from(personDocument)
     .innerJoin(document, eq(personDocument.documentId, document.id))
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
     .leftJoin(lookupPersonRole, eq(personDocument.personRoleId, lookupPersonRole.id))
     .where(eq(personDocument.personId, personId))
-    .orderBy(document.code);
+    // A total order: `document.code` alone ties on the two rows one person can
+    // now hold on one document, and a tie is not a stable order.
+    .orderBy(document.code, personDocument.createdAt, personDocument.id);
 
-  return rows as PersonDocumentItem[];
+  return rows.map((r) => ({
+    ...r,
+    cotaParte:       cotaFromDb(r.cotaParte),
+    cotaSuprafataMp: cotaFromDb(r.cotaSuprafataMp),
+    cotaMod:         isCotaMod(r.cotaMod) ? r.cotaMod : null,
+  }));
 }
 
 /**
@@ -1150,7 +1177,12 @@ export async function getPersonIdCardLink(
         inArray(lookupDocumentType.key, ID_CARD_TYPE_KEYS as readonly string[] as string[]),
       ),
     )
-    .orderBy(desc(personDocument.createdAt))
+    // ⚠️ `createdAt` alone stopped being a total order in #36.02: two roles for
+    // one person on one document are written in a single batch and share it to
+    // the microsecond, so `limit(1)` picked between them at the planner's whim.
+    // The id breaks the tie. Both rows name the same document, so the VALUE was
+    // never wrong — only unstable, which is how it would have stayed invisible.
+    .orderBy(desc(personDocument.createdAt), desc(personDocument.id))
     .limit(1);
 
   return rows[0] ?? null;
@@ -1169,16 +1201,65 @@ export async function associateDocumentsToPerson(
   personId:    string,
   documentIds: string[],
   personRoleId: string | null = null,
-): Promise<void> {
+  cota:        CotaInput = {},
+): Promise<AssociateResult> {
   await assertRoleMayBeAttached("person-document", personRoleId, personRoleIdsAcrossDocumentTypes);
-  await db.insert(personDocument)
-    .values(documentIds.map((did) => ({ personId, documentId: did, personRoleId })))
-    .onConflictDoNothing();
+  // The conflict target and what `skipped` means are the same here as on the
+  // document side; `associatePersonsToDocument` carries the note, once.
+  const written = await db.insert(personDocument)
+    .values(documentIds.map((did) => ({
+      personId,
+      documentId: did,
+      personRoleId,
+      cotaParte:       cotaToDb(cota.cotaParte ?? null),
+      cotaSuprafataMp: cotaToDb(cota.cotaSuprafataMp ?? null),
+      cotaMod:         cota.cotaMod ?? null,
+    })))
+    .onConflictDoNothing()
+    .returning({ id: personDocument.id });
+
+  return { inserted: written.length, skipped: documentIds.length - written.length };
 }
 
-export async function dissociateDocumentFromPerson(personId: string, documentId: string): Promise<boolean> {
+/** The mirror of `updateDocumentPersonCota`, addressed from the person side. */
+export async function updatePersonDocumentCota(
+  personId:   string,
+  documentId: string,
+  linkId:     string,
+  cota:       CotaInput,
+): Promise<boolean> {
+  const result = await db.update(personDocument)
+    .set({
+      cotaParte:       cotaToDb(cota.cotaParte ?? null),
+      cotaSuprafataMp: cotaToDb(cota.cotaSuprafataMp ?? null),
+      cotaMod:         cota.cotaMod ?? null,
+    })
+    .where(and(
+      eq(personDocument.id, linkId),
+      eq(personDocument.personId, personId),
+      eq(personDocument.documentId, documentId),
+    ))
+    .returning({ id: personDocument.id });
+  return result.length > 0;
+}
+
+/**
+ * ⚠️ **`linkId` IS REQUIRED** — the mirror of `dissociatePersonFromDocument`,
+ * and the same defect fix (#36.02): deleting by the `(person, document)` pair
+ * removed every role the person held on that document, not the one the user
+ * unticked.
+ */
+export async function dissociateDocumentFromPerson(
+  personId:   string,
+  documentId: string,
+  linkId:     string,
+): Promise<boolean> {
   const result = await db.delete(personDocument)
-    .where(and(eq(personDocument.personId, personId), eq(personDocument.documentId, documentId)))
+    .where(and(
+      eq(personDocument.id, linkId),
+      eq(personDocument.personId, personId),
+      eq(personDocument.documentId, documentId),
+    ))
     .returning({ id: personDocument.id });
   return result.length > 0;
 }
