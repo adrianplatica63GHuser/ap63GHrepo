@@ -54,6 +54,9 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
   const t           = useTranslations("document.associatePerson");
   // One sentence shared by every screen that hands out a role (Slice #34.15).
   const tShared     = useTranslations("shared");
+  // The one sentence this screen borrows from the Persons tab, rather than
+  // keeping a second copy of it that is free to drift.
+  const tCota       = useTranslations("document.persons");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -155,6 +158,27 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
             tShared("documentNotFound"),
           ),
         );
+      }
+      /*
+       * ⚠️ **A 200 THAT ADDED NOTHING IS NOT A SUCCESS TO NAVIGATE AWAY FROM.**
+       *                                                          (Slice #36.02)
+       *
+       * Before the widening, re-attaching a person who was already on the
+       * document with a DIFFERENT role was swallowed by
+       * `.onConflictDoNothing()` and this screen navigated back looking as
+       * though it had worked. After it, the only thing that conflicts is the
+       * SAME role — a genuine duplicate — but the screen must still say so
+       * rather than appear to work. The route answers `{ inserted, skipped }`;
+       * `inserted === 0` means every id in this batch was already there in this
+       * role, so the sentence goes in the error slot and the selection is left
+       * alone. A partial batch DOES navigate: something was written, and the
+       * Persons tab is where the user can see what.
+       */
+      const result = (await res.json().catch(() => null)) as { inserted?: number } | null;
+      if (result && result.inserted === 0) {
+        setSubmitError(tCota("alreadyAttached"));
+        setSubmitting(false);
+        return;
       }
       await queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
       router.push(`/documents/${encodeURIComponent(documentId)}?tab=persons`);

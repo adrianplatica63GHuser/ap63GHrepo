@@ -1451,7 +1451,32 @@
       "dissociating": "Se elimină…",
       "view": "Vizualizare",
       "loading": "Se încarcă…",
-      "error": "Eroare la încărcarea persoanelor"
+      "error": "Eroare la încărcarea persoanelor",
+      "colCota": "Cotă-parte",
+      "colCotaMp": "Suprafață echivalentă (mp)",
+      "colCotaMod": "Mod de deținere",
+      "cotaPlaceholder": "— fără cotă —",
+      "cotaMpPlaceholder": "— fără suprafață —",
+      "cotaModPlaceholder": "— nespecificat —",
+      "cotaMod": {
+        "NUME_PROPRIU": "în nume propriu",
+        "DEVALMASIE": "devălmășie",
+        "INDIVIZIUNE": "indiviziune",
+        "PRIN_MANDATAR": "prin mandatar"
+      },
+      "cotaError": {
+        "unreadable": "Nu am putut citi această valoare. Scrieți de exemplu 63,64 sau 63,64% sau 1/2.",
+        "zeroDenominator": "Numitorul unei fracții nu poate fi zero.",
+        "notStorable": "Valoarea este prea mare pentru acest câmp.",
+        "negative": "Valoarea nu poate fi negativă."
+      },
+      "cotaTotal": "Total {roleName}: {total}%",
+      "cotaTotalNoRole": "Total fără rol: {total}%",
+      "cotaTotalOff": "Cotele pentru „{roleName}” însumează {total}%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.",
+      "cotaTotalOffNoRole": "Cotele persoanelor fără rol însumează {total}%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.",
+      "cotaSaving": "Se salvează…",
+      "cotaSaveError": "Nu am putut salva cota-parte. Încercați din nou.",
+      "alreadyAttached": "Această persoană este deja atașată acestui act cu acest rol — nu s-a adăugat nimic."
     },
     "associatePerson": {
       "title": "Asociere persoană",

@@ -1451,7 +1451,32 @@
       "dissociating": "Removing…",
       "view": "View",
       "loading": "Loading…",
-      "error": "Failed to load persons"
+      "error": "Failed to load persons",
+      "colCota": "Share",
+      "colCotaMp": "Equivalent area (sqm)",
+      "colCotaMod": "How the share is held",
+      "cotaPlaceholder": "— no share —",
+      "cotaMpPlaceholder": "— no area —",
+      "cotaModPlaceholder": "— unspecified —",
+      "cotaMod": {
+        "NUME_PROPRIU": "in his/her own name",
+        "DEVALMASIE": "joint marital property",
+        "INDIVIZIUNE": "co-ownership in shares",
+        "PRIN_MANDATAR": "through a proxy"
+      },
+      "cotaError": {
+        "unreadable": "This value could not be read. Write for example 63,64 or 63,64% or 1/2.",
+        "zeroDenominator": "The denominator of a fraction cannot be zero.",
+        "notStorable": "This value is too large for this field.",
+        "negative": "This value cannot be negative."
+      },
+      "cotaTotal": "Total {roleName}: {total}%",
+      "cotaTotalNoRole": "Total with no role: {total}%",
+      "cotaTotalOff": "The shares for “{roleName}” add up to {total}%, not 100%. The document saves anyway — check what the deed says.",
+      "cotaTotalOffNoRole": "The shares for the persons with no role add up to {total}%, not 100%. The document saves anyway — check what the deed says.",
+      "cotaSaving": "Saving…",
+      "cotaSaveError": "The share could not be saved. Try again.",
+      "alreadyAttached": "This person is already attached to this document with this role — nothing was added."
     },
     "associatePerson": {
       "title": "Associate Person",

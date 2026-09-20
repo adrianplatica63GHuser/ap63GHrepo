@@ -76,6 +76,15 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import {
+  COTA_MOD_VALUES,
+  formatCotaParte,
+  formatCotaSuprafataMp,
+  parseCotaParte,
+  parseCotaSuprafataMp,
+  type CotaMod,
+  type CotaParseError,
+} from "@/lib/documents/cota-parte";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { HelpHint } from "@/components/help/help-hint";
 import {
@@ -125,6 +134,18 @@ export type AiExtractedParty = {
   rawText: string;
   matchCandidate: AiPartyMatchCandidate | null;
   possibleMatches: AiPartyPossibleMatch[];
+  /**
+   * The cotă-parte the reader found on the page, if it found one (#36.02).
+   *
+   * ⚠️ **OPTIONAL, BECAUSE `ai-interpret` DOES NOT FILL THEM YET.** Teaching the
+   * reader to look for a share is 36.01; this slice gives the dialog the three
+   * boxes and the wire, so a share that is on the page can be typed once here
+   * rather than retyped on the Persons tab afterwards. When 36.01 lands they
+   * arrive pre-filled and nothing here changes.
+   */
+  cotaParte?: number | null;
+  cotaSuprafataMp?: number | null;
+  cotaMod?: CotaMod | null;
 };
 
 export type AiPartyLinkerSummary = {
@@ -206,6 +227,11 @@ const subjectFromParty = (party: AiExtractedParty): ResolutionSubject => ({
 
 export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   const t = useTranslations("document.aiPartyLinker");
+  // The cotă labels, the four mod values and the parse errors live under
+  // `document.persons` because the Persons tab owns them; reading that
+  // namespace here is cheaper and safer than a second copy of eleven strings
+  // that would then be free to drift.
+  const tCota = useTranslations("document.persons");
   const [index, setIndex] = useState(0);
   const [counts, setCounts] = useState<AiPartyLinkerSummary>({
     linked: 0,
@@ -216,6 +242,23 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * The cotă for the party on screen (#36.02).
+   *
+   * ⚠️ **HELD AS TEXT, NOT AS A NUMBER.** „63,64" is what the user types and
+   * what must stay in the box when it cannot be read — `cota-parte.ts` refuses
+   * with a reason rather than a zero, and a `number` state would have nowhere
+   * to keep the refused text. `advance` resets all of it, the way it resets
+   * `forceCreate`, because the next party's share is not this one's.
+   *
+   * ⚠️ **UNDEFINED MEANS „NOT TOUCHED", SO THE READER'S OWN VALUE SHOWS.** The
+   * boxes fall back to whatever `party.cotaParte` holds, which is null today
+   * and pre-filled once 36.01 teaches the reader to look.
+   */
+  const [cotaDraft, setCotaDraft] = useState<{ parte?: string; mp?: string }>({});
+  const [cotaModDraft, setCotaModDraft] = useState<CotaMod | null | undefined>(undefined);
+  const [cotaErrors, setCotaErrors] = useState<{ parte?: CotaParseError; mp?: CotaParseError }>({});
   // Overrides the exact-match / possible-match branches for the CURRENT party
   // only — reset every time we advance to the next one.
   const [forceCreate, setForceCreate] = useState(false);
@@ -256,6 +299,61 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
 
   const party = parties[index];
   const total = parties.length;
+
+  /**
+   * ⚠️ **LITERAL KEYS, NOT `t(`cotaMod.${v}`)`** — the same reason
+   * `document-persons-tab.tsx` uses a switch: several copy suites in this repo
+   * find a component's keys by reading its SOURCE, and an exhaustive switch
+   * also makes TypeScript notice a fifth `cota_mod` value rather than a missing
+   * translation at runtime.
+   */
+  const modLabel = (value: CotaMod): string => {
+    switch (value) {
+      case "NUME_PROPRIU":  return tCota("cotaMod.NUME_PROPRIU");
+      case "DEVALMASIE":    return tCota("cotaMod.DEVALMASIE");
+      case "INDIVIZIUNE":   return tCota("cotaMod.INDIVIZIUNE");
+      case "PRIN_MANDATAR": return tCota("cotaMod.PRIN_MANDATAR");
+    }
+  };
+
+  const cotaErrorLabel = (error: CotaParseError): string => {
+    switch (error) {
+      case "unreadable":      return tCota("cotaError.unreadable");
+      case "zeroDenominator": return tCota("cotaError.zeroDenominator");
+      case "notStorable":     return tCota("cotaError.notStorable");
+      case "negative":        return tCota("cotaError.negative");
+    }
+  };
+
+  const cotaParteText = cotaDraft.parte ?? formatCotaParte(party?.cotaParte ?? null);
+  const cotaMpText    = cotaDraft.mp    ?? formatCotaSuprafataMp(party?.cotaSuprafataMp ?? null);
+  const cotaMod       = cotaModDraft !== undefined ? cotaModDraft : (party?.cotaMod ?? null);
+
+  /**
+   * The three values as the POST wants them, or the reason one of them cannot
+   * be read.
+   *
+   * ⚠️ **AN UNREADABLE SHARE STOPS THE LINK RATHER THAN BEING DROPPED.** The
+   * alternative — post the party with a null cotă and show the error afterwards
+   * — would put the association in the archive without the number the user was
+   * in the middle of typing, and the stepper would already have moved on.
+   */
+  const readCota = ():
+    | { ok: true; value: { cotaParte: number | null; cotaSuprafataMp: number | null; cotaMod: CotaMod | null } }
+    | { ok: false } => {
+    const parte = parseCotaParte(cotaParteText);
+    const mp    = parseCotaSuprafataMp(cotaMpText);
+    if (!parte.ok || !mp.ok) {
+      setCotaErrors({
+        parte: parte.ok ? undefined : parte.error,
+        mp:    mp.ok    ? undefined : mp.error,
+      });
+      setBusy(false);
+      return { ok: false };
+    }
+    setCotaErrors({});
+    return { ok: true, value: { cotaParte: parte.value, cotaSuprafataMp: mp.value, cotaMod } };
+  };
 
   /**
    * The type of the person the archive actually ends up holding.
@@ -314,6 +412,10 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
     setError(null);
     setForceCreate(false);
     setBusy(false);
+    // The share belongs to the party that is leaving, not to the next one.
+    setCotaDraft({});
+    setCotaModDraft(undefined);
+    setCotaErrors({});
     // This party is settled; whatever it created is no longer a retry to reuse.
     createdPersonRef.current = null;
     if (index + 1 >= total) {
@@ -327,6 +429,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   const linkPerson = async (personId: string, outcome: Outcome) => {
     setBusy(true);
     setError(null);
+    const cota = readCota();
+    if (!cota.ok) return;
     try {
       const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`, {
         method: "POST",
@@ -334,6 +438,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
         body: JSON.stringify({
           personIds: [personId],
           personRoleId: party.personRoleId,
+          ...cota.value,
         }),
       });
       if (!res.ok) {
@@ -345,6 +450,28 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
           return;
         }
         throw new Error(`HTTP ${res.status}`);
+      }
+      /*
+       * ⚠️ **„NOTHING WAS ADDED" IS AN ANSWER NOW, AND IT DOES NOT ADVANCE.**
+       *                                                          (Slice #36.02)
+       *
+       * Before the widening a re-POST of a person already on this document was
+       * swallowed by `.onConflictDoNothing()` and this dialog advanced as
+       * though it had linked them. It had not. The route now answers
+       * `{ inserted, skipped }`, and `inserted === 0` means this person already
+       * holds this exact role here.
+       *
+       * It stops on the sentence rather than advancing under it, deliberately:
+       * in a one-at-a-time stepper a message shown while moving to the next
+       * party is a message nobody reads. „Omite" is one click away and is the
+       * right answer when the association is already there — which is the
+       * price, and it is paid only on a party that was already linked.
+       */
+      const result = (await res.json().catch(() => null)) as { inserted?: number } | null;
+      if (result && result.inserted === 0) {
+        setBusy(false);
+        setError(tCota("alreadyAttached"));
+        return;
       }
       // The ARCHIVE row's type, not the model's reading of the document — see
       // `linkedPersonType`.
@@ -358,6 +485,11 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   const createAndLink = async () => {
     setBusy(true);
     setError(null);
+    // Read the share BEFORE creating the person: an unreadable box must not
+    // leave a new person in the archive attached to nothing.
+    const cota = readCota();
+    if (!cota.ok) return;
+    const linkCota = cota.value;
     try {
       const addressKind = party.personType === "NATURAL" ? "HOME" : "HEADQUARTERS";
       const addresses = party.domiciliu?.trim()
@@ -432,7 +564,11 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       const linkRes = await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personIds: [personId], personRoleId: party.personRoleId }),
+        body: JSON.stringify({
+          personIds: [personId],
+          personRoleId: party.personRoleId,
+          ...linkCota,
+        }),
       });
       if (!linkRes.ok) {
         // ⚠️ The person HAS been created by this point; only the link failed.
@@ -523,6 +659,78 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       onSkip={() => advance("skipped", party.personType)}
       onClose={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
     >
+      <fieldset className="mt-3 flex flex-wrap items-start gap-3 rounded-md border border-wire px-3 py-2 dark:border-zinc-700">
+        <legend className="px-1 text-xs font-medium text-fade dark:text-zinc-400">
+          {tCota("colCota")}
+        </legend>
+
+        <label className="flex flex-col gap-0.5 text-sm">
+          <span className="text-xs text-fade dark:text-zinc-400">{tCota("colCota")}</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={cotaParteText}
+            placeholder={tCota("cotaPlaceholder")}
+            disabled={busy}
+            aria-invalid={cotaErrors.parte ? true : undefined}
+            onChange={(e) => setCotaDraft((d) => ({ ...d, parte: e.target.value }))}
+            className={[
+              "w-28 rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:bg-zinc-950 dark:text-zinc-100",
+              cotaErrors.parte
+                ? "border-red-500 focus:border-red-600"
+                : "border-wire focus:border-focus dark:border-zinc-700",
+            ].join(" ")}
+          />
+          {cotaErrors.parte && (
+            <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+              {cotaErrorLabel(cotaErrors.parte)}
+            </span>
+          )}
+        </label>
+
+        <label className="flex flex-col gap-0.5 text-sm">
+          <span className="text-xs text-fade dark:text-zinc-400">{tCota("colCotaMp")}</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={cotaMpText}
+            placeholder={tCota("cotaMpPlaceholder")}
+            disabled={busy}
+            aria-invalid={cotaErrors.mp ? true : undefined}
+            onChange={(e) => setCotaDraft((d) => ({ ...d, mp: e.target.value }))}
+            className={[
+              "w-28 rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:bg-zinc-950 dark:text-zinc-100",
+              cotaErrors.mp
+                ? "border-red-500 focus:border-red-600"
+                : "border-wire focus:border-focus dark:border-zinc-700",
+            ].join(" ")}
+          />
+          {cotaErrors.mp && (
+            <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+              {cotaErrorLabel(cotaErrors.mp)}
+            </span>
+          )}
+        </label>
+
+        <label className="flex flex-col gap-0.5 text-sm">
+          <span className="text-xs text-fade dark:text-zinc-400">{tCota("colCotaMod")}</span>
+          <select
+            value={cotaMod ?? ""}
+            disabled={busy}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCotaModDraft((COTA_MOD_VALUES as readonly string[]).includes(v) ? (v as CotaMod) : null);
+            }}
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+          >
+            <option value="">{tCota("cotaModPlaceholder")}</option>
+            {COTA_MOD_VALUES.map((v) => (
+              <option key={v} value={v}>{modLabel(v)}</option>
+            ))}
+          </select>
+        </label>
+      </fieldset>
+
       {error && (
         <div
           role="alert"

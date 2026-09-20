@@ -6,7 +6,20 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 
+/**
+ * ⚠️ **`linkId` IS THE ROW AND `id` IS THE DOCUMENT.**          (Slice #36.02)
+ * The mirror of `document-persons-tab.tsx`, one axis over: a person holding two
+ * roles on one document makes that document appear twice in this list, and `id`
+ * names both rows. Everything that identifies a row — the key, the selection,
+ * the DELETE — uses `linkId`; `id` is what „Vizualizare" navigates to.
+ *
+ * The cotă is read but not shown here, deliberately: it is edited on the
+ * DOCUMENT's Persons tab, where the whole deed's rows sit together and the
+ * per-role total means something. A share rendered next to a single document,
+ * with no siblings to add up against, would be a number with no context.
+ */
 type AssociatedDocument = {
+  linkId:       string;
   id:           string;
   code:         string;
   typeName:     string | null;
@@ -48,11 +61,17 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
 
   const handleDissociate = async () => {
     if (!selectedId) return;
+    const target = items?.find((i) => i.linkId === selectedId);
+    if (!target) return;
     setDissociating(true);
     setDissociateErr(null);
     try {
+      // ⚠️ `linkId` is REQUIRED by the route, and that is the fix: addressed at
+      // the (person, document) pair this removed every role the person held on
+      // that document rather than the one selected.
       const res = await fetch(
-        `/api/people/${encodeURIComponent(personId)}/documents/${encodeURIComponent(selectedId)}`,
+        `/api/people/${encodeURIComponent(personId)}/documents/${encodeURIComponent(target.id)}`
+          + `?linkId=${encodeURIComponent(target.linkId)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -88,12 +107,12 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
             <tbody>
               {items.map((item) => (
                 <tr
-                  key={item.id}
-                  onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
+                  key={item.linkId}
+                  onClick={() => setSelectedId(item.linkId === selectedId ? null : item.linkId)}
                   onDoubleClick={() => router.push(`/documents/${encodeURIComponent(item.id)}?readonly=true`)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
-                    item.id === selectedId
+                    item.linkId === selectedId
                       ? "bg-cta-pale dark:bg-cta/10"
                       : "hover:bg-canvas dark:hover:bg-zinc-800/50",
                   ].join(" ")}
@@ -101,11 +120,11 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
                   <td className="px-3 py-2">
                     <input
                       type="radio"
-                      checked={item.id === selectedId}
-                      onChange={() => setSelectedId(item.id)}
+                      checked={item.linkId === selectedId}
+                      onChange={() => setSelectedId(item.linkId)}
                       onClick={(e) => e.stopPropagation()}
+                      aria-label={`${item.title ?? item.code} — ${item.roleName ?? "\u2014"}`}
                       className="accent-cta"
-                      aria-label={item.title ?? item.code}
                     />
                   </td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.typeName ?? "—"}</td>

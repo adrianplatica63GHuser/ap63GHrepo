@@ -12,7 +12,15 @@ import { useRouter } from "next/navigation";
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
 import { buttonClass } from "@/lib/ui/button-styles";
 
+/**
+ * `linkId` is `person_document.id` (#36.02). This panel reads the same endpoint
+ * as the Persons tab, so the same person can now appear twice in it — and both
+ * the React key and the remove button used the PERSON id, which after the
+ * widening collides the key and removes both rows. Neither is about succession
+ * as such; they are the same two lines the Persons tab needed.
+ */
 type PartyItem = {
+  linkId:      string;
   id:          string;
   code:        string;
   type:        "NATURAL" | "JUDICIAL";
@@ -79,12 +87,13 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
     router.push(`/documents/${encodeURIComponent(documentId)}/associate-party`);
   };
 
-  const handleRemove = async (personId: string) => {
-    setRemovingId(personId);
+  const handleRemove = async (item: PartyItem) => {
+    setRemovingId(item.linkId);
     setRemoveError(null);
     try {
       const res = await fetch(
-        `/api/documents/${encodeURIComponent(documentId)}/persons/${encodeURIComponent(personId)}`,
+        `/api/documents/${encodeURIComponent(documentId)}/persons/${encodeURIComponent(item.id)}`
+          + `?linkId=${encodeURIComponent(item.linkId)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -128,7 +137,7 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
           <tbody>
             {items.map((item) => (
               <tr
-                key={item.id}
+                key={item.linkId}
                 className="border-b border-card-rim last:border-0 dark:border-zinc-800"
               >
                 <td className="px-2 py-1.5 font-medium text-ink dark:text-zinc-100">
@@ -147,11 +156,11 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
                   <td className="px-2 py-1.5 text-right">
                     <button
                       type="button"
-                      onClick={() => handleRemove(item.id)}
-                      disabled={removingId === item.id}
+                      onClick={() => void handleRemove(item)}
+                      disabled={removingId === item.linkId}
                       className={buttonClass({ variant: "bare-danger", size: "xs" })}
                     >
-                      {removingId === item.id ? t("removing") : t("remove")}
+                      {removingId === item.linkId ? t("removing") : t("remove")}
                     </button>
                   </td>
                 )}

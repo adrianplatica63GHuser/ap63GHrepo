@@ -43,6 +43,8 @@ async function searchPersons(name: string, code: string, page: number): Promise<
 
 export function AssociatePartyView({ documentId, documentName }: Props) {
   const t           = useTranslations("document.associateParty");
+  // Borrowed from the Persons tab — one sentence, one place.
+  const tCota       = useTranslations("document.persons");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -77,6 +79,20 @@ export function AssociatePartyView({ documentId, documentName }: Props) {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+      /*
+       * „Nothing was added" reaches this screen too (#36.02). It posts no role
+       * at all, so the conflict it can hit is `(person, document, NULL)` —
+       * which `NULLS NOT DISTINCT` keeps deduplicated exactly as the old index
+       * did. Note that `quality` is NOT part of the key: attaching one person
+       * as DEFUNCT and then as MOSTENITOR is one row, which is right (nobody is
+       * both the deceased and an heir) and is what the sentence says.
+       */
+      const result = (await res.json().catch(() => null)) as { inserted?: number } | null;
+      if (result && result.inserted === 0) {
+        setSubmitError(tCota("alreadyAttached"));
+        setSubmitting(false);
+        return;
       }
       await queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
       router.push(`/documents/${encodeURIComponent(documentId)}`);
