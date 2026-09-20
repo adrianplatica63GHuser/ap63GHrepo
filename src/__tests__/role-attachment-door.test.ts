@@ -332,6 +332,21 @@ type RouteCase = {
   withRole: Record<string, unknown>;
   /** The same body with no role at all. */
   withoutRole: Record<string, unknown>;
+  /**
+   * What the route answers when the door allows the write.      (Slice #36.02)
+   *
+   * ⚠️ **THREE OF THE FIVE STILL ANSWER 204 AND TWO NOW ANSWER 200, AND THAT IS
+   * A DELIBERATE DIVERGENCE RATHER THAN DRIFT.** migration_084 let one person
+   * hold several roles on one document, which makes „nothing was added" an
+   * ordinary answer on the two `person_document` doors: the person is already
+   * attached IN THIS ROLE, `.onConflictDoNothing()` correctly ignores it, and a
+   * 204 cannot say so — four screens read that silence as success and navigated
+   * away. Those two now return `{ inserted, skipped }`. The other three write
+   * junctions that are still one row per pair and have nothing to report, so
+   * they are left alone; widening them to match would be a change to three
+   * working routes for symmetry.
+   */
+  okStatus: 200 | 204;
 };
 
 const ctx = { params: Promise.resolve({ id: ENTITY }) };
@@ -346,6 +361,7 @@ const request = (body: unknown): NextRequest =>
 const ROUTES: RouteCase[] = [
   {
     label: "POST /api/documents/[id]/persons",
+    okStatus: 200,
     kind: "document-person",
     post: (b) => postDocumentPersons(request(b), ctx),
     mock: (documentQueries as unknown as { associatePersonsToDocument: jest.Mock }).associatePersonsToDocument,
@@ -354,6 +370,7 @@ const ROUTES: RouteCase[] = [
   },
   {
     label: "POST /api/properties/[id]/persons",
+    okStatus: 204,
     kind: "property-person",
     post: (b) => postPropertyPersons(request(b), ctx),
     mock: (propertyQueries as unknown as { associatePersonsToProperty: jest.Mock }).associatePersonsToProperty,
@@ -362,6 +379,7 @@ const ROUTES: RouteCase[] = [
   },
   {
     label: "POST /api/people/[id]/properties",
+    okStatus: 204,
     kind: "person-property",
     post: (b) => postPersonProperties(request(b), ctx),
     mock: (personQueries as unknown as { associatePropertiesToPerson: jest.Mock }).associatePropertiesToPerson,
@@ -370,6 +388,7 @@ const ROUTES: RouteCase[] = [
   },
   {
     label: "POST /api/people/[id]/documents",
+    okStatus: 200,
     kind: "person-document",
     post: (b) => postPersonDocuments(request(b), ctx),
     mock: (personQueries as unknown as { associateDocumentsToPerson: jest.Mock }).associateDocumentsToPerson,
@@ -378,6 +397,7 @@ const ROUTES: RouteCase[] = [
   },
   {
     label: "POST /api/people/[id]/references",
+    okStatus: 204,
     kind: "person-person",
     post: (b) => postPersonReferences(request(b), ctx),
     mock: (personQueries as unknown as { associatePersonsToPerson: jest.Mock }).associatePersonsToPerson,
@@ -388,7 +408,12 @@ const ROUTES: RouteCase[] = [
 
 beforeEach(() => {
   jest.clearAllMocks();
-  for (const m of associateMocks) m.mockResolvedValue(undefined);
+  // ⚠️ `{ inserted, skipped }` rather than `undefined` (#36.02): the two
+  // `person_document` doors now put their writer's result straight into
+  // `Response.json(...)`, and `Response.json(undefined)` is not a body. The
+  // three routes that still answer 204 ignore the value, so one default serves
+  // all five.
+  for (const m of associateMocks) m.mockResolvedValue({ inserted: 1, skipped: 0 });
 });
 
 describe("a POST carrying a role no whitelist offers", () => {
@@ -431,9 +456,23 @@ describe("a POST carrying a role no whitelist offers", () => {
 
   it.each(ROUTES.map((r) => [r.label, r] as const))("%s still writes when the door allows it", async (_label, route) => {
     const res = await route.post(route.withoutRole);
-    expect(res.status).toBe(204);
+    expect([route.label, res.status]).toEqual([route.label, route.okStatus]);
     expect(route.mock).toHaveBeenCalledTimes(1);
   });
+
+  /**
+   * ⚠️ **AND THE TWO THAT ANSWER 200 MUST ACTUALLY CARRY THE COUNTS.** The
+   * status on its own would go green on a route that returned `{}` — and `{}`
+   * is what four screens would read as „something was added", which is the
+   * silence this slice removed.
+   */
+  it.each(ROUTES.filter((r) => r.okStatus === 200).map((r) => [r.label, r] as const))(
+    "%s reports what it wrote",
+    async (_label, route) => {
+      const res = await route.post(route.withoutRole);
+      expect(await res.json()).toMatchObject({ inserted: 1, skipped: 0 });
+    },
+  );
 });
 
 describe("roleNotOfferedToResponse", () => {
