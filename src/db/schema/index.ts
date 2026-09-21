@@ -1234,6 +1234,47 @@ export const document = pgTable("document", {
   // instead of every call site having to re-cast it from `unknown`.
   customFields: jsonb("custom_fields").$type<Record<string, string | null> | null>(),
 
+  /**
+   * The instruments THIS document's pages cite.                 (Slice #36.03)
+   *
+   * A READING, never a fact. Each entry is what the model saw printed — a type
+   * key, a number, a date, an issuer, what the instrument is FOR on this deed,
+   * and the page's own wording verbatim — plus the `status` a person gave it in
+   * the reference-linker dialog. **Nothing here is an association**: a
+   * `document_document` row is written only when somebody presses „Leagă", and
+   * no score is high enough to change that.
+   *
+   * ⚠️ **STORED RATHER THAN RE-READ, AND THE COLUMN IS WHAT BUYS THAT.**
+   * Reopening the dialog on a deed imported last month must not cost a billed
+   * vision call over every page. The shape and its sanitiser live in
+   * `src/lib/documents/referenced-instruments.ts`; there is no CHECK, because a
+   * constraint that rejected one malformed entry would throw away the whole
+   * paid read.
+   *
+   * ⚠️ **LEFT UNTYPED (bare `jsonb`), THE WAY `lookupDocumentType.templateFields`
+   * IS AND `customFields` IS NOT** — and the difference between those two
+   * neighbours is the rule. `customFields` carries a `$type<>()` because its
+   * shape is a built-in (`Record<string, string | null>`) that needs no import;
+   * this one's shape is a named type in a module of its own, and importing it
+   * here is exactly the circular risk `templateFields` declines. The
+   * application layer parses it through `parseReferencedInstruments`, which is
+   * the only thing that should ever have believed the column's contents anyway:
+   * a model wrote them.
+   *
+   * ⚠️ **NULL AND `[]` ARE DIFFERENT AND BOTH ARE ORDINARY.** NULL means this
+   * document has never been read for references — every document imported
+   * before this slice. `[]` means it was read and cited nothing.
+   *
+   * ⚠️ **NOT VERSIONED, AND NOT WRITABLE THROUGH THE DOCUMENT PATCH.**
+   * `DocumentSnapshot` omits it, `documentUpdateSchema` does not accept it and
+   * `updateDocument` never writes it — exactly as for `aiInterpretedAt` and
+   * `importTitle` beside it. The one writer is
+   * POST /api/documents/[id]/instrument-references. A reading that produced a
+   * `document_version` row every time somebody pressed „recitește" would fill
+   * the history with entries in which no field changed.
+   */
+  referencedInstruments: jsonb("referenced_instruments"),
+
   // Slice #21.02.Import: set when the server-side AI-interpret action has been
   // run on this document (extracts fields from the first uploaded page).
   // NOT versioned — operational metadata only; snapshotFromFull omits this.
@@ -1513,6 +1554,37 @@ export const documentDocument = pgTable(
     // existing associations; it just clears the role tag.
     relationshipRoleId: uuid("relationship_role_id")
       .references(() => lookupDocumentDocumentRole.id, { onDelete: "set null" }),
+
+    /**
+     * Which way `relationshipRoleId` reads.                     (Slice #36.03)
+     *
+     * TRUE — the default — means the role reads A to B: „document_id_a <role>
+     * document_id_b". FALSE means it reads B to A.
+     *
+     * ⚠️ **IT EXISTS BECAUSE THE PAIR ORDER BELOW MEANS NOTHING.** The CHECK is
+     * a canonicalisation trick that stops one pair being stored twice, and it
+     * orders by UUID — `associateDocumentToDocument` produces it with a literal
+     * `.sort()`. Every role migration_055 seeded is directional in its wording
+     * („Anexă la", „Versiune anterioară a"), so on a pair whose uuids happened
+     * to sort the other way the role READ BACKWARDS and nothing in the schema,
+     * the API or the screen could tell. That was a live defect before this
+     * slice; what makes it unacceptable now is „Titlu anterior al", in an
+     * archive whose whole job is proving a chain of title.
+     *
+     * ⚠️ **NOT NULL WITH A DEFAULT, SO THERE IS NO THIRD STATE.** Every reader
+     * gets a direction without a branch. Rows written from #36.03 on set it
+     * deliberately; rows that predate it took `true` unverified, and
+     * migration_086 counts and prints how many. The tidier fix — renaming the
+     * columns to from/to and dropping the CHECK — is refused in that file's
+     * header: the backfill for an existing row would be a coin toss recorded as
+     * truth, because the uuids are random.
+     *
+     * ⚠️ **AND IT IS NOT PART OF THE UNIQUE KEY.** One pair still stores one
+     * row: the flag says how that row reads, never how many of them there may
+     * be. A pair cannot be stored as „Titlu anterior al" in both senses.
+     */
+    roleReadsAToB: boolean("role_reads_a_to_b").notNull().default(true),
+
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
