@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-17 15:13
+-- Generated : 2026-09-20 20:10
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -799,8 +799,33 @@ CREATE TABLE public.person_document (
     quality text,
     person_role_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    cota_parte numeric(7,4),
+    cota_suprafata_mp numeric(12,2),
+    cota_mod text,
+    CONSTRAINT person_document_cota_mod_check CHECK (((cota_mod IS NULL) OR (cota_mod = ANY (ARRAY['NUME_PROPRIU'::text, 'DEVALMASIE'::text, 'INDIVIZIUNE'::text, 'PRIN_MANDATAR'::text])))),
     CONSTRAINT person_document_quality_check CHECK (((quality IS NULL) OR (quality = ANY (ARRAY['DEFUNCT'::text, 'MOSTENITOR'::text]))))
 );
+
+
+--
+-- Name: COLUMN person_document.cota_parte; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.person_document.cota_parte IS 'The undivided share this person holds on this document IN THIS ROLE, as a percentage. numeric(7,4) - four decimals because the archive holds 63,6400 / 9,0900 / 27,2700 / 10,4100, which are thirds and elevenths written out, and two decimals round them into a total that no longer reaches 100. NULL is ordinary and is not a defect: a notary has no share, a mandatar usually has none, and a 2006 deed may state none at all. NO range CHECK, deliberately - see migration_084. The per-role total that warns on a deed which does not close is code, in src/lib/documents/cota-parte-total.ts, and it warns rather than blocks.';
+
+
+--
+-- Name: COLUMN person_document.cota_suprafata_mp; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.person_document.cota_suprafata_mp IS 'The equivalent area in square metres where the deed states one, matching property.surface_area_mp''s numeric(12,2) on purpose. Not redundant with cota_parte: the deeds state both („63,64% (3.182 mp)", „10,41% = 114,86 mp din 1.103,38 mp") and it is the mp figure the deed was signed on - recomputing it from a rounded percentage gives a different number. NULL when the deed states only a percentage.';
+
+
+--
+-- Name: COLUMN person_document.cota_mod; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.person_document.cota_mod IS 'How the share is held: NUME_PROPRIU (in nume propriu), DEVALMASIE (comunitate devalmasa - spouses, no determinate shares between them), INDIVIZIUNE (coproprietate pe cote-parti), PRIN_MANDATAR (held through a mandatar). ASCII keys, not display text; the Romanian with diacritics is in messages/ro-RO.json under document.persons.cotaMod.*. DEVALMASIE is the reason this column exists: in 5-CVC 2-2-5000 CRH 2016 the sellers are two married couples holding 60% and 40% - four people, two shares - and splitting 60 into 30/30 is legally wrong while writing 60 on both rows makes the sellers total 200%. The counting rule (a devalmasie block counts ONCE) is in src/lib/documents/cota-parte-total.ts, not restated as a constraint.';
 
 
 --
@@ -1867,7 +1892,7 @@ CREATE UNIQUE INDEX natural_person_cnp_unique ON public.natural_person USING btr
 -- Name: person_document_unique; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX person_document_unique ON public.person_document USING btree (person_id, document_id);
+CREATE UNIQUE INDEX person_document_unique ON public.person_document USING btree (person_id, document_id, person_role_id) NULLS NOT DISTINCT;
 
 
 --
