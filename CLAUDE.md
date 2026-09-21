@@ -206,6 +206,7 @@ the source of truth for decisions and traps, and load automatically when relevan
 | Add version history to an entity | `.claude/skills/add-entity-versioning/` |
 | Onboard a new document type | `.claude/skills/onboard-document-type/` |
 | What a past slice actually did | `git log`, then `docs/claude/slice-log-archive.md` |
+| What every kind of testing here is for, and what nobody tests | `docs/testing/` |
 
 ## Starting a slice
 
