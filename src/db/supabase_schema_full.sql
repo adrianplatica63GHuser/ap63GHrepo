@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-20 20:10
+-- Generated : 2026-09-21 10:57
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -302,7 +302,8 @@ CREATE TABLE public.document (
     updated_by text,
     ai_interpreted_at timestamp with time zone,
     custom_fields jsonb,
-    import_title text
+    import_title text,
+    referenced_instruments jsonb
 );
 
 
@@ -311,6 +312,13 @@ CREATE TABLE public.document (
 --
 
 COMMENT ON COLUMN public.document.import_title IS 'The title the import derived from the folder entry (titleForEntry). The Pre-existing stage keys on import_title ?? title, so the AI rewriting document.title can no longer make a re-imported folder look new. Null for anything the import did not create. Slice #32.06.';
+
+
+--
+-- Name: COLUMN document.referenced_instruments; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.document.referenced_instruments IS 'The instruments THIS document''s pages cite, as the AI read returned them: an array of { typeKey, nrDocument, dateDocument, issuer, purpose, rawText, status }. A READING, never a fact - nothing here is an association and nothing here may be acted on until a person confirms it in the reference-linker dialog, which is what POST /api/documents/[id]/instrument-references writes back with each entry''s status. Stored rather than re-read because reopening that dialog otherwise costs a billed vision call over every page of the document. NULL means this document has never been read for references (every document imported before Slice #36.03); an empty array means it was read and cited nothing - the two are different and both are ordinary. NOT VERSIONED: DocumentSnapshot omits it, documentUpdateSchema does not accept it, and updateDocument never writes it, exactly as for ai_interpreted_at and import_title. The shape is declared and validated in src/lib/documents/referenced-instruments.ts rather than by a CHECK here, because a constraint that rejected one malformed entry would throw away the whole paid read.';
 
 
 --
@@ -323,8 +331,16 @@ CREATE TABLE public.document_document (
     document_id_b uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     relationship_role_id uuid,
+    role_reads_a_to_b boolean DEFAULT true NOT NULL,
     CONSTRAINT document_document_order CHECK ((document_id_a < document_id_b))
 );
+
+
+--
+-- Name: COLUMN document_document.role_reads_a_to_b; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.document_document.role_reads_a_to_b IS 'Which way relationship_role_id reads. TRUE (the default) means the role reads A to B - "document_id_a <role> document_id_b". FALSE means it reads B to A. WHY THIS EXISTS: the pair order in this table is canonicalised by UUID (CHECK document_document_order, document_id_a < document_id_b) purely so one pair cannot be stored twice - it carries NO meaning, and src/lib/documents/queries.ts produces it with a literal .sort(). Every role migration_055 seeded is directional in its wording, so on a pair whose uuids sort the other way "Anexa la" read backwards and nothing could tell. Slice #36.03 seeds "Titlu anterior al", where reading backwards in an archive that exists to prove a chain of title is a wrong answer presented as a fact. Rows written from #36.03 on set this deliberately; rows that predate it took the default, and migration_086 prints how many. The alternative - renaming the columns to from/to and dropping the CHECK - is tidier and was refused because the backfill for existing rows would be a coin toss recorded as truth.';
 
 
 --
