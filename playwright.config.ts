@@ -63,6 +63,13 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: "**/auth.setup.ts",
+      // ⚠️ **NOT THE DEFAULT 30 s, AND THE REASON IS `next dev`.** This project
+      // makes the first request of the run against a server that compiles on
+      // demand, so the first route compile happens INSIDE this test. On this app
+      // a cold start regularly exceeds 30 s, which failed the run with
+      // `net::ERR_ABORTED` on a server that was doing nothing wrong. The specs
+      // keep the default: by the time they run, the routes are warm.
+      timeout: 180_000,
     },
 
     // ── 2. All E2E specs ─────────────────────────────────────────────────────
