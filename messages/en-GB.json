@@ -1357,7 +1357,8 @@
       "notes": "Enhanced Notes",
       "subject": "Subject",
       "dateValidUntil": "Valid Until",
-      "surveyor": "Surveyor"
+      "surveyor": "Surveyor",
+      "customSelectEmpty": "— no value —"
     },
     "typeLabels": {
       "nrGeneric": "Document No.",
@@ -1761,7 +1762,10 @@
     "aiDiscoverErrorUnreadable": "The system cannot read this document's pages. Check the file formats.",
     "aiDiscoverErrorNotConfigured": "Automatic reading is not configured on this server. Tell the administrator.",
     "aiDiscoverCatchAllNoForm": "Document type “{type}” means “unclassified”, so it cannot have a form: it collects the documents whose type could not be established. The document stayed on this type, without a form. Do not press AI Discovery for it again — the answer will always be the same; choose a proper type on the form above.",
-    "aiDiscoverIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records; a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on this document — the answer will be the same, and the read is billed every time."
+    "aiDiscoverIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records; a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on this document — the answer will be the same, and the read is billed every time.",
+    "notebook": {
+      "tablistLabel": "Form sections"
+    }
   },
   "valueList": {
     "pageTitle": "Reference Data",
@@ -1843,13 +1847,15 @@
       "colLabelEn": "Label (EN)",
       "colType": "Type",
       "colGroup": "Panel",
+      "colTab": "Tab",
       "colHint": "AI hint",
       "colActions": "Actions",
       "types": {
         "text": "Text",
         "textarea": "Long text",
         "date": "Date",
-        "number": "Number"
+        "number": "Number",
+        "select": "Option list"
       },
       "groupNone": "— no panel —",
       "groupCustom": "Another panel…",
@@ -1888,7 +1894,12 @@
       "confirmDiscard": "Discard",
       "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. If the type already has fields, remove all of them and save — this window is the only place a form can be deleted. Otherwise close it without saving.",
       "errorCatchAllType": "This is the catch-all document type, so it cannot have a form. It holds the documents whose type could not be established, and a form here would be written onto the one row every unrecognised document in the archive shares. If the type already has fields, remove them and save — this window is the only place a form can be deleted, and removing is allowed where adding is not. Otherwise close it without saving.",
-      "errorTypeNameTaken": "A document type with this name already exists, so the form could not be saved. Names are compared without diacritics, case or punctuation. Close this window, refresh the list, and decide which of the two rows to keep."
+      "errorTypeNameTaken": "A document type with this name already exists, so the form could not be saved. Names are compared without diacritics, case or punctuation. Close this window, refresh the list, and decide which of the two rows to keep.",
+      "tabPlaceholder": "Tab name",
+      "tabAria": "Tab for {label}",
+      "optionsPlaceholder": "one option per line: value | Romanian label | English label",
+      "optionsAria": "Options for {label}",
+      "tabNote": "A tab is the page a panel sits on. When no field carries a tab, the form renders exactly as it did before — one column of panels, no tabs. Tab order is field order: a tab appears where its first field appears. A field with a tab and no panel becomes a panel of one on that tab; a field with a panel and no tab goes on the first tab."
     },
     "confirm": {
       "title": "Delete “{name}”?",
@@ -1915,8 +1926,8 @@
         "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
         "catchAllForm": "This is the catch-all document type, so it cannot be given a form. It holds the documents whose type could not be established — documents whose type is wrong, not documents whose type is unfinished — so a form here would be written onto the one row every unrecognised document in the archive shares. If the type already carries a form, open “Form” on its row, delete every field and save; removing fields is allowed, adding them is not.",
         "catchAllRename": "This document type already has a form, so it cannot be renamed into the catch-all: the catch-all holds the documents whose type could not be established, and a form there would be written onto the one row every unrecognised document in the archive shares. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
-        "documentTypeNameTaken": "A document type with this name already exists. Names are compared without diacritics, case or punctuation, so \u201cContract de V\u00e2nzare\u201d and \u201ccontract de vanzare\u201d are the same name. Choose another, or use the type that already exists.",
-        "documentTypeKeyTaken": "This key already belongs to another document type. A key is set once and never changes, so it is not given a numeric suffix \u2014 choose another key, or leave the field empty and one is generated from the name.",
+        "documentTypeNameTaken": "A document type with this name already exists. Names are compared without diacritics, case or punctuation, so “Contract de Vânzare” and “contract de vanzare” are the same name. Choose another, or use the type that already exists.",
+        "documentTypeKeyTaken": "This key already belongs to another document type. A key is set once and never changes, so it is not given a numeric suffix — choose another key, or leave the field empty and one is generated from the name.",
         "documentTypeKeyInvalid": "This key cannot be used: it contains nothing that can become a key, or it is too long. A key may hold letters and digits; spaces and punctuation become “_”. Leave the field empty if you want one generated from the name.",
         "documentTypeKeyReserved": "This key is reserved: the system matches on it itself, for the catch-all type or for an identity card. A row may hold it only if its name says the same thing. Choose another key."
       },

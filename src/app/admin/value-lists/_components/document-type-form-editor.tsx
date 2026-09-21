@@ -112,6 +112,9 @@ const FIELD_TYPES: readonly DocumentTemplateFieldType[] = [
   "textarea",
   "date",
   "number",
+  // Slice #36.01. Appended, so every existing row's stored type keeps the
+  // position it had in this list and nothing about the picker moves.
+  "select",
 ] as const;
 
 /** Which confirmation is open, if any. Only one ever is. */
@@ -223,6 +226,9 @@ export function DocumentTypeFormEditor({
   const titleId = `doc-type-form-editor-${typeId}`;
   /** The clear-only banner, referenced by the control it disables. */
   const lockNoteId = `doc-type-form-lock-${typeId}`;
+  // Slice #36.01: the `<datalist>` every row's Filă input points at. Per type,
+  // like the two ids above, so two editors open on two types cannot share one.
+  const tabListId = `doc-type-form-tabs-${typeId}`;
 
   const mutation = useMutation({
     mutationFn: async (fields: ReturnType<typeof fieldsFromEditorRows>) => {
@@ -393,6 +399,23 @@ export function DocumentTypeFormEditor({
   }, [pending]);
 
   const keys = useMemo(() => keysForRows(rows, reclaimable), [rows, reclaimable]);
+
+  /**
+   * The tab names already in use on this type, in row order. (Slice #36.01)
+   *
+   * Offered to every Filă input so the second field on a page is chosen rather
+   * than retyped. Deduplicated and unsorted: the order rows appear in IS the
+   * order the notebook will show the tabs in, so sorting them alphabetically
+   * here would suggest an ordering the form does not use.
+   */
+  const tabNamesInUse = useMemo(() => {
+    const names: string[] = [];
+    for (const row of rows) {
+      const name = row.tabName.trim();
+      if (name && !names.includes(name)) names.push(name);
+    }
+    return names;
+  }, [rows]);
   const atCapacity = rows.length >= MAX_TEMPLATE_FIELDS;
   /**
    * The type each stored row had when the dialog opened.
@@ -637,7 +660,7 @@ export function DocumentTypeFormEditor({
                 <table className="w-full border-collapse text-sm">
                   <caption className="sr-only">{t("tableCaption", { type: typeName })}</caption>
                   <thead>
-                    {/* Sticky: seven columns of near-identical text inputs, and
+                    {/* Sticky: eight columns of near-identical text inputs, and
                         past about eight rows there is nothing left to tell
                         "Etichetă (EN)" from "Indiciu AI". The border and the
                         background sit on the cells rather than the row, because
@@ -650,6 +673,9 @@ export function DocumentTypeFormEditor({
                         ["colLabelEn", "pr-3"],
                         ["colType", "w-32 pr-3"],
                         ["colGroup", "w-56 pr-3"],
+                        // Slice #36.01: beside „Panou", because a tab is the
+                        // page a panel sits on and the two are read together.
+                        ["colTab", "w-40 pr-3"],
                         ["colHint", "pr-3"],
                       ].map(([id, width]) => (
                         <th
@@ -794,6 +820,26 @@ export function DocumentTypeFormEditor({
                             )}
                           </td>
 
+                          {/* ── Filă (the notebook tab) ──────── (Slice #36.01)
+                              Free text, and a `<datalist>` of the tabs this
+                              type already uses so the second field on a tab is
+                              picked rather than retyped — an exact-text match
+                              decides which page a panel lands on, so a name one
+                              diacritic off is a new tab with one panel on it
+                              and nothing anywhere says why. */}
+                          <td className="py-2 pr-3">
+                            <input
+                              type="text"
+                              list={tabListId}
+                              value={row.tabName}
+                              disabled={saving}
+                              onChange={(e) => patch(row.rowId, { tabName: e.target.value })}
+                              placeholder={t("tabPlaceholder")}
+                              aria-label={t("tabAria", { label })}
+                              className={inputClass}
+                            />
+                          </td>
+
                           <td className="py-2 pr-3">
                             <input
                               type="text"
@@ -803,6 +849,24 @@ export function DocumentTypeFormEditor({
                               aria-label={t("hintAria", { label })}
                               className={inputClass}
                             />
+                            {/* ── The choices, for a `select` ── (Slice #36.01)
+                                One option per line, `valoare | RO | EN`. Shown
+                                under the hint because it is the other thing the
+                                extraction prompt is built from, and hidden on
+                                every other type — where the text is still kept
+                                on the row, so turning a field into a select and
+                                back does not destroy a list somebody typed. */}
+                            {row.type === "select" && (
+                              <textarea
+                                value={row.optionsText}
+                                disabled={saving}
+                                rows={3}
+                                onChange={(e) => patch(row.rowId, { optionsText: e.target.value })}
+                                placeholder={t("optionsPlaceholder")}
+                                aria-label={t("optionsAria", { label })}
+                                className={`${inputClass} mt-1 font-mono text-xs`}
+                              />
+                            )}
                           </td>
 
                           <td className="py-2">
@@ -851,8 +915,26 @@ export function DocumentTypeFormEditor({
 
             {/* Rule 1, said once in words rather than only implied by a
                 disabled input that does not exist. */}
+            {/* The tabs this type already uses, offered to every row's Filă
+                input. Derived from the rows on screen, so a tab named on the
+                row above is offered on the row below before either is saved. */}
+            <datalist id={tabListId}>
+              {tabNamesInUse.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+
             <p className="mt-4 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-300">
               {t("keyNote")}
+            </p>
+
+            {/* ── Slice #36.01 ───────────────────────────────────────────────
+                Two rules nobody can guess from the inputs: a field with a tab
+                and no panel is a panel of one on that tab, and a field with a
+                panel and no tab goes on the first tab. Said here because the
+                alternative is an administrator discovering them by saving. */}
+            <p className="mt-2 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-300">
+              {t("tabNote")}
             </p>
           </div>
 

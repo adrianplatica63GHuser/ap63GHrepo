@@ -1357,7 +1357,8 @@
       "notes": "Note extinse",
       "subject": "Subiect",
       "dateValidUntil": "Valabil până la",
-      "surveyor": "Topograf / Cadastrist"
+      "surveyor": "Topograf / Cadastrist",
+      "customSelectEmpty": "— fără valoare —"
     },
     "typeLabels": {
       "nrGeneric": "Nr. document",
@@ -1761,7 +1762,10 @@
     "aiDiscoverErrorUnreadable": "Paginile acestui document nu pot fi citite de sistem. Verificați formatul fișierelor.",
     "aiDiscoverErrorNotConfigured": "Citirea automată nu este configurată pe acest server. Anunțați administratorul.",
     "aiDiscoverCatchAllNoForm": "Tipul de document „{type}” înseamnă „neclasificat”, deci nu poate avea formular: el adună documentele al căror tip nu a putut fi stabilit. Documentul a rămas pe acest tip, fără formular. Nu apăsați din nou Descoperire AI pentru el — răspunsul va fi mereu același; alegeți un tip potrivit în formularul de mai sus.",
-    "aiDiscoverIdCardNoForm": "Tipul de document „{type}” este o carte de identitate, deci nu poate avea formular — formularul NU a fost salvat și nici nu poate fi. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem; un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Tipul rămâne în sistem fără formular, așa cum trebuie. NU reluați Descoperirea AI pentru acest document — răspunsul va fi același, iar citirea se plătește de fiecare dată."
+    "aiDiscoverIdCardNoForm": "Tipul de document „{type}” este o carte de identitate, deci nu poate avea formular — formularul NU a fost salvat și nici nu poate fi. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem; un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Tipul rămâne în sistem fără formular, așa cum trebuie. NU reluați Descoperirea AI pentru acest document — răspunsul va fi același, iar citirea se plătește de fiecare dată.",
+    "notebook": {
+      "tablistLabel": "Secțiunile formularului"
+    }
   },
   "valueList": {
     "pageTitle": "Date de referință",
@@ -1843,13 +1847,15 @@
       "colLabelEn": "Etichetă (EN)",
       "colType": "Tip",
       "colGroup": "Panou",
+      "colTab": "Filă",
       "colHint": "Indiciu AI",
       "colActions": "Acțiuni",
       "types": {
         "text": "Text",
         "textarea": "Text lung",
         "date": "Dată",
-        "number": "Număr"
+        "number": "Număr",
+        "select": "Listă de opțiuni"
       },
       "groupNone": "— fără panou —",
       "groupCustom": "Alt panou…",
@@ -1888,7 +1894,12 @@
       "confirmDiscard": "Renunță",
       "errorIdCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Dacă tipul are deja câmpuri, eliminați-le pe toate și salvați — aceasta este singura fereastră din care se poate șterge un formular. Altfel închideți fereastra fără să salvați.",
       "errorCatchAllType": "Acesta este tipul de rezervă pentru documentele neclasificate, deci nu poate avea formular. El adună documentele al căror tip nu a putut fi stabilit, iar un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Dacă tipul are deja câmpuri, eliminați-le și salvați — aceasta este singura fereastră din care se poate șterge un formular, iar eliminarea este permisă acolo unde adăugarea nu este. Altfel închideți fereastra fără să salvați.",
-      "errorTypeNameTaken": "Există deja un tip de document cu această denumire, deci formularul nu a putut fi salvat. Denumirile se compară fără diacritice, fără majuscule și fără semne de punctuație. Închideți fereastra, reîmprospătați lista și verificați care dintre cele două rânduri îl păstrați."
+      "errorTypeNameTaken": "Există deja un tip de document cu această denumire, deci formularul nu a putut fi salvat. Denumirile se compară fără diacritice, fără majuscule și fără semne de punctuație. Închideți fereastra, reîmprospătați lista și verificați care dintre cele două rânduri îl păstrați.",
+      "tabPlaceholder": "Denumirea filei",
+      "tabAria": "Fila pentru {label}",
+      "optionsPlaceholder": "o opțiune pe linie: valoare | etichetă RO | label EN",
+      "optionsAria": "Opțiunile pentru {label}",
+      "tabNote": "Fila este pagina pe care stă panoul. Dacă niciun câmp nu are filă, formularul arată exact ca până acum — o singură coloană de panouri, fără file. Ordinea filelor este ordinea câmpurilor: o filă apare acolo unde apare primul ei câmp. Un câmp cu filă și fără panou devine un panou de unul singur pe acea filă; un câmp cu panou și fără filă ajunge pe prima filă."
     },
     "confirm": {
       "title": "Ștergeți „{name}”?",

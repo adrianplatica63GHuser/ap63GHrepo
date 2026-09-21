@@ -36,12 +36,18 @@ import {
   versionLabelColor,
 } from "./form-schema";
 import { getTypeConfig } from "@/lib/documents/type-config";
-import { parseTemplateFields } from "@/lib/documents/template-fields";
+import { parseTemplateFields, selectOptionsForValue } from "@/lib/documents/template-fields";
 import {
   isCertificatesGroup,
   isFeesGroup,
   isFinancialGroup,
 } from "@/lib/documents/template-groups";
+import {
+  feesPairStaysTogether,
+  tabIndexOfFeesPair,
+  tabIndexOfPanel,
+  templateTabsOf,
+} from "@/lib/documents/template-tabs";
 import {
   documentTypeNeedsFormHint,
   documentTypeOptionLabel,
@@ -391,6 +397,18 @@ export function DocumentForm({
 
   // Slice #21.03.Import: the selected type's template fields, if any (Phase 3
   // — reintroduces type-specific fields as data, not hardcoded sections).
+  /**
+   * Which notebook page is open.                                (Slice #36.01)
+   *
+   * Declared here, with the rest of the state, because it is a hook: the
+   * notebook exists only for a type whose fields carry tabs, but the hook has
+   * to run on every render of every type regardless. Read through `activeTab`
+   * below, which clamps it against the type actually selected.
+   */
+  const [activeTabRaw, setActiveTabRaw] = useState(0);
+  /** Stable id prefix for the notebook's `aria-controls` / `aria-labelledby` pairs. */
+  const formTabsId = useId();
+
   const templateFields = useMemo(
     () => parseTemplateFields(selectedType?.templateFields),
     [selectedType],
@@ -1186,6 +1204,37 @@ export function DocumentForm({
     (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup,
   );
 
+  // ── The notebook ─────────────────────────────────── (Slice #36.01) ──
+  //
+  // A type whose fields carry `tabRo`/`tabEn` renders its Details tab as a
+  // notebook; a type whose fields carry none renders EXACTLY as it did before
+  // this slice — `tabs` is `[]`, `notebook` is false, and every branch below
+  // falls through to the single-column stack that has been here since #27.03.
+  // That is the compatibility guarantee every existing type depends on, and
+  // `template-tabs.test.ts` pins it on the module rather than on this JSX.
+  //
+  // ⚠️ **EVERY TAB'S PANELS STAY MOUNTED; the inactive ones are HIDDEN.**
+  // Unmounting them would be the obvious implementation and it is the wrong
+  // one on this form: react-hook-form values, `editDirty` against the
+  // baseline snapshot, the version-diff highlights and the field pulses are
+  // all computed over inputs that are on the page. A validation error on a
+  // page nobody is looking at would also be an error nobody can see. Hiding
+  // costs one `hidden` attribute and keeps all of that exactly as it is.
+  const tabs = templateTabsOf(templateFields);
+  const notebook = tabs.length > 0;
+  // Clamped on read rather than reset in an effect: the type can change under
+  // this component (`applyTypeChange`), and a stale index must not blank the
+  // page while an effect catches up.
+  const activeTab = notebook ? Math.min(activeTabRaw, tabs.length - 1) : 0;
+  const feesFields = feesGroup?.fields ?? [];
+  const financialFields = financialGroup?.fields ?? [];
+  const feesPaired = !!financialGroup && feesPairStaysTogether(feesFields, financialFields, tabs);
+  const feesUnitTab = feesPaired
+    ? tabIndexOfFeesPair(feesFields, financialFields, tabs)
+    : tabIndexOfPanel(feesFields, tabs);
+  const financialSoloTab = tabIndexOfPanel(financialFields, tabs);
+  const certificatesTab = tabIndexOfPanel(certificatesGroup?.fields ?? [], tabs);
+
   // Renders one custom field's input — shared by every group below.
   // `forceFullWidthTextarea` is set for Certificate și referințe so every
   // field there gets Vecinătăți's exact full-width/auto-grow treatment,
@@ -1196,6 +1245,39 @@ export function DocumentForm({
   ) => {
     const name = `customFields.${f.key}` as unknown as FieldPath<FormValues>;
     const fieldLabel = f.labelRo || f.labelEn || f.key;
+
+    // ── select ───────────────────────────────────────── (Slice #36.01) ──
+    //
+    // ⚠️ **A STORED VALUE THAT IS NO LONGER AN OPTION IS APPENDED AS ITS OWN
+    // CHOICE, and that is not a nicety.** A `<select>` whose value matches no
+    // `<option>` shows the first entry instead, so the form would display one
+    // clause state while `custom_fields` held another — the document would
+    // read differently from the deed it was captured off, with nothing on
+    // screen saying so. An option list is editable, so this happens the first
+    // time anyone tidies one.
+    //
+    // ⚠️ **Not forced full width, even under Certificate și referințe.** That
+    // group's treatment exists to give prose room to grow; a dropdown of three
+    // words does not grow, and a full-width one reads as a broken text box.
+    if (f.type === "select" && f.options && f.options.length > 0) {
+      const options = selectOptionsForValue(f.options, watchedValues.customFields?.[f.key]);
+      return (
+        <SelectField
+          key={f.key}
+          label={fieldLabel}
+          name={name}
+          register={register}
+          options={options}
+          // The blank choice is SELECTABLE here, unlike the type picker's
+          // hidden placeholder: a clause ticked by mistake has to be
+          // untickable, and "" is what `customFieldsEqual` already treats as
+          // unset.
+          emptyOptionLabel={t("fields.customSelectEmpty")}
+          disabled={typeMoveUnresolved}
+        />
+      );
+    }
+
     // Slice #27.04: the type-specific inputs are the second half of what a
     // `moveUnresolved` ending cannot save — see `typeMoveUnresolved`.
     return f.type === "textarea" || forceFullWidthTextarea ? (
@@ -1266,7 +1348,17 @@ export function DocumentForm({
   // same token as the vertical gap between stacked panels, so together they
   // align exactly with a regular full-width panel. Otherwise Taxe și
   // onorarii simply renders alone at full width.
-  const feesOrPairedSection = financialGroup ? (
+  //
+  // ⚠️ **Slice #36.01 made the test `feesPaired`, not `financialGroup`, and
+  // that is a correctness fix rather than a tidy-up.** With a notebook, a
+  // Financiar group whose fields sit on another page renders as its own panel
+  // THERE — so a condition of "does the type have a Financiar group" would
+  // have drawn its fields twice, once inside this pair and once on the other
+  // page, with two sets of inputs registered under the same names. With no
+  // notebook `feesPaired` is `!!financialGroup` exactly (`feesPairStaysTogether`
+  // returns true whenever `tabs` is empty), so nothing about the pre-#36.01
+  // rendering changes.
+  const feesOrPairedSection = feesPaired && financialGroup ? (
     <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
       <Section title={financialGroup.label} columns={1}>
         {financialGroup.fields.map((f) => renderCustomField(f))}
@@ -1277,23 +1369,18 @@ export function DocumentForm({
     feesSection
   );
 
-  const formElement = (
-    <form
-      id="document-form"
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
-      noValidate
-    >
-      {/* Slice #18.06: the disabled fieldset wraps ONLY the editable input
-          sections; the version nav lives in the header (portalled), outside
-          this fieldset, so its ◀/▶ buttons stay clickable on read-only
-          historical versions. */}
-      <fieldset disabled={effectiveMode === "view"} className="contents">
-      {/* ── General — code shown inline on the heading line (Slice
-          #21.06.misc: mirrors Person's Identity heading) + type / subject /
-          title / notes. Nr. document / Date / Institution moved out to the
-          always-present Taxe și onorarii panel below, for every document
-          type. ──────────────────────────────────────────────────────────── */}
+  // ── General ───────────────────────────────────────────────────────────
+  // Code shown inline on the heading line (Slice #21.06.misc: mirrors Person's
+  // Identity heading) + type / subject / title / notes. Nr. document / Date /
+  // Institution moved out to the always-present Taxe și onorarii panel below,
+  // for every document type.
+  //
+  // Slice #36.01 hoisted it out of the JSX into this const so the notebook can
+  // place it. It is always on the FIRST page: it is what the document IS — its
+  // type, its subject, its title — and a notebook page that could hide the type
+  // picker while another page edits that type's own fields is a page that can
+  // contradict itself.
+  const generalSection = (
       <Section
         title={t("sections.general")}
         code={mode !== "create" ? documentCode : undefined}
@@ -1378,14 +1465,36 @@ export function DocumentForm({
           watchValue={watchedValues.notes}
         />
       </Section>
+  );
+
+  /**
+   * The panels that belong on notebook page `tab`.              (Slice #36.01)
+   *
+   * With no notebook this is called once with 0, `tabs` is `[]`, and every
+   * index below is 0 — so the output is the same stack, in the same order, as
+   * before this slice: General, the fees panel (alone or paired), Certificate
+   * și referințe, then every other group in first-appearance order.
+   */
+  const panelsOf = (tab: number) => (
+    <>
+      {tab === 0 && generalSection}
 
       {/* ── Taxe și onorarii (alone or paired with Financiar) ──────────── */}
-      {feesOrPairedSection}
+      {feesUnitTab === tab && feesOrPairedSection}
+
+      {/* Slice #36.01: a Financiar group whose fields sit on a different page
+          from the fees panel's cannot pair with it — half a pair drawn on each
+          page would be the same panel twice. It renders alone there instead. */}
+      {!feesPaired && financialGroup && financialSoloTab === tab && (
+        <Section title={financialGroup.label} columns={1}>
+          {financialGroup.fields.map((f) => renderCustomField(f))}
+        </Section>
+      )}
 
       {/* ── Certificate și referințe — every field forced full-width /
           auto-grow (Vecinătăți's exact treatment), whatever `type` is
           configured on it in Reference Data. ──────────────────────────── */}
-      {certificatesGroup && (
+      {certificatesGroup && certificatesTab === tab && (
         <Section title={certificatesGroup.label} columns={1}>
           {certificatesGroup.fields.map((f) => renderCustomField(f, true))}
         </Section>
@@ -1393,11 +1502,95 @@ export function DocumentForm({
 
       {/* ── Any other template groups — unchanged generic 2-column
           rendering, same as before this slice. ─────────────────────────── */}
-      {otherGroups.map(({ label, fields }) => (
-        <Section key={label || "_ungrouped"} title={label || t("sections.customFields")} columns={2}>
-          {fields.map((f) => renderCustomField(f))}
-        </Section>
-      ))}
+      {otherGroups
+        .filter(({ fields }) => tabIndexOfPanel(fields, tabs) === tab)
+        .map(({ label, fields }) => (
+          <Section key={label || "_ungrouped"} title={label || t("sections.customFields")} columns={2}>
+            {fields.map((f) => renderCustomField(f))}
+          </Section>
+        ))}
+    </>
+  );
+
+  const formElement = (
+    <form
+      id="document-form"
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+      noValidate
+    >
+      {/* Slice #18.06: the disabled fieldset wraps ONLY the editable input
+          sections; the version nav lives in the header (portalled), outside
+          this fieldset, so its ◀/▶ buttons stay clickable on read-only
+          historical versions. */}
+      <fieldset disabled={effectiveMode === "view"} className="contents">
+      {/* ── The page stack, and the notebook that may hold it ─────────────
+          Slice #36.01. `panelsOf(tab)` returns the panels that belong on one
+          notebook page; with no notebook there is exactly one call, with
+          `tabs` empty, and every `=== tab` test below is `0 === 0` — which is
+          how the no-tab rendering stays what it was rather than becoming a
+          special case of the new one. ──────────────────────────────────── */}
+      {notebook ? (
+        <>
+          {/* A real tablist: roving arrow keys, one stop in the tab order,
+              `aria-controls` onto the page each button opens. */}
+          <div
+            role="tablist"
+            aria-label={t("notebook.tablistLabel")}
+            className="flex flex-wrap gap-1 border-b border-crease dark:border-zinc-700"
+            onKeyDown={(e) => {
+              const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+              if (delta === 0) return;
+              e.preventDefault();
+              const next = (activeTab + delta + tabs.length) % tabs.length;
+              setActiveTabRaw(next);
+              document.getElementById(`${formTabsId}-tab-${next}`)?.focus();
+            }}
+          >
+            {tabs.map((label, i) => (
+              <button
+                key={label}
+                id={`${formTabsId}-tab-${i}`}
+                type="button"
+                role="tab"
+                aria-selected={i === activeTab}
+                aria-controls={`${formTabsId}-panel-${i}`}
+                tabIndex={i === activeTab ? 0 : -1}
+                onClick={() => setActiveTabRaw(i)}
+                className={[
+                  "-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium",
+                  i === activeTab
+                    ? "border-focus text-ink dark:text-zinc-100"
+                    : "border-transparent text-fade hover:text-ink dark:text-zinc-400 dark:hover:text-zinc-100",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {tabs.map((label, i) => (
+            <div
+              key={label}
+              id={`${formTabsId}-panel-${i}`}
+              role="tabpanel"
+              aria-labelledby={`${formTabsId}-tab-${i}`}
+              // ⚠️ **BOTH the attribute and the class, and the class is what
+              //     actually hides it.** `[hidden]` is a UA rule, and any
+              //     author `display` utility on the same element beats the UA
+              //     sheet outright — a page left with `flex` here stays
+              //     visible with `hidden` set, which is every tab drawn at
+              //     once. The attribute stays because it is what assistive
+              //     technology and find-in-page read.
+              hidden={i !== activeTab}
+              className={i === activeTab ? "flex flex-col gap-4" : "hidden"}
+            >
+              {panelsOf(i)}
+            </div>
+          ))}
+        </>
+      ) : (
+        panelsOf(0)
+      )}
 
       </fieldset>
 
@@ -2096,8 +2289,18 @@ function SelectField({
   highlight,
   hint,
   disabled,
+  emptyOptionLabel,
 }: FieldProps & {
   options: { value: string; label: string }[];
+  /**
+   * Slice #36.01: when set, the blank choice is a REAL, selectable option
+   * carrying this caption, instead of the hidden disabled placeholder below.
+   * Used by template `select` fields, where "no value" is an answer a user has
+   * to be able to give back — a clause ticked by mistake must be untickable,
+   * and `customFieldsEqual` already reads "" as unset. Omitted everywhere
+   * else, so every pre-existing caller renders exactly as before.
+   */
+  emptyOptionLabel?: string;
   /**
    * Slice #27.02: a plain statement about the chosen option, rendered under the
    * control. NOT a validation message — it is muted body text with no icon and
@@ -2178,7 +2381,11 @@ function SelectField({
             ring,
           ].join(" ")}
         >
-          <option value="" disabled hidden />
+          {emptyOptionLabel !== undefined ? (
+            <option value="">{emptyOptionLabel}</option>
+          ) : (
+            <option value="" disabled hidden />
+          )}
           {options.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
