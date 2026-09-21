@@ -26,11 +26,31 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    await associateDocumentToDocument(
+    const result = await associateDocumentToDocument(
       id,
       parsed.data.documentIds,
       parsed.data.relationshipRoleId ?? null,
     );
-    return new Response(null, { status: 204 });
+    /**
+     * ⚠️ **A BODY WHERE THIS USED TO ANSWER 204, AND THE SILENCE WAS THE
+     * DEFECT.**                                                (Slice #36.03)
+     *
+     * `associateDocumentToDocument` ends in `.onConflictDoNothing()` over a
+     * unique index on the PAIR, so associating two documents that are already
+     * associated did nothing — successfully — INCLUDING when the user's reason
+     * for pressing the button was to change the role. A 204 said the same thing
+     * whether one row was written or none, so the screen refreshed, showed the
+     * old role, and the user pressed again.
+     *
+     * The status stays 2xx because nothing went wrong: the archive holds what
+     * the user asked for, it just held it already. What changes is that the
+     * caller can now tell, and `alreadyLinked` names the role each existing
+     * pair carries so the sentence on screen can say „este deja asociat, ca
+     * «Titlu anterior al»" instead of „nimic nu s-a schimbat".
+     *
+     * This is the same shape as the defect #36.02 fixed on `person_document`
+     * one table over, and it is fixed the same way.
+     */
+    return Response.json(result, { status: 200 });
   } catch (err) { return unexpectedError(err, "POST /api/documents/[id]/references"); }
 }

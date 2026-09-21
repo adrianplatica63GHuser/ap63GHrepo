@@ -493,6 +493,29 @@ export const GENERIC_EXTRACT_FIELD_DESCRIPTIONS: Record<string, string> = {
 // matching the app's "admin-managed roles, never auto-guessed" convention.
 // ---------------------------------------------------------------------------
 
+/**
+ * Slice #36.03 — the instruments the deed CITES, asked for beside `parties[]`
+ * and for the same reason.
+ *
+ * ⚠️ **THIS CLOSES 36.01'S OWN HOLE, AND 36.01 NAMES IT.** 36.01 decided that
+ * the seller's title chain and the supporting certificates are ASSOCIATIONS
+ * and never template fields, because `custom_fields` is a flat
+ * `Record<string, string | null>` and a `_2` suffix is finding F5 of the #29.01
+ * import report coming back. That is right and is not reopened. But it left the
+ * reader with nowhere to put „Titlu de proprietate nr. 65106/11.06.1996 emis de
+ * CJSDPT Giurgiu": no field exists for it, and no link can be made because the
+ * instrument is usually not in the archive at all. So it landed in
+ * `unmappedRaw` and was folded into „Note extinse" — the designed behaviour,
+ * and exactly the symptom Adrian named as bad. This section stops these being
+ * leftovers.
+ *
+ * ⚠️ **ALWAYS ASKED FOR, UNLIKE `parties`.** The parties section is omitted
+ * when the type has no roles configured, because a role NAME has to come from
+ * somewhere and guessing at one is the thing that slice refuses to do. There is
+ * no equivalent here: the four purposes are a closed list this codebase owns,
+ * not per-type configuration, so there is nothing to be unconfigured. A
+ * document type nobody has set up still cites a titlu de proprietate.
+ */
 export function buildExtractSystemPrompt(
   templateFields: DocumentTemplateField[],
   partyRoleNames: string[] = [],
@@ -546,6 +569,25 @@ export function buildExtractSystemPrompt(
   ]`
     : "";
 
+  // ⚠️ **A TEMPLATE LITERAL WITH NO INTERPOLATION, ON PURPOSE.** Everything in
+  // it is fixed — the four purposes are this codebase's closed list, not a
+  // per-type configuration — so there is nothing to interpolate and nothing a
+  // caller can get wrong. It sits beside `partiesSection` rather than inside
+  // the `Shape:` string below so that the two repeating groups the model is
+  // asked for read the same way in this file.
+  const instrumentsSection = `,
+  "referencedInstruments": [               // OTHER INSTRUMENTS THIS DOCUMENT NAMES — never this document itself
+    {
+      "typeKey": string | null,            // one of the known keys above for the CITED instrument, or null
+      "typeLabel": string | null,          // the type in the document's own Romanian words — "Titlu de proprietate", "Certificat de moștenitor"
+      "nrDocument": string | null,         // the number as printed, digits only where it is only digits — "65106", "165/2754"
+      "dateDocument": string | null,       // ISO yyyy-mm-dd
+      "issuer": string | null,             // who issued it, as printed — "CJSDPT Giurgiu", "BNP Dumitrescu Florentina", "Primăria Grădinari"
+      "purpose": "TITLE_CHAIN" | "SUPPORTING" | "PARENT" | "PROMISE",
+      "rawText": string                    // the full original sentence naming this instrument, verbatim
+    }
+  ]`;
+
   // Slice #36.01: the cotă rule is its own sentence rather than three longer
   // comments in the shape above, because the two mistakes it prevents are
   // about the WHOLE list and not about one key — a deed that states shares
@@ -553,6 +595,16 @@ export function buildExtractSystemPrompt(
   const cotaRule = partyRoleNames.length > 0
     ? "\n- The cotă (\"cotaParte\" / \"cotaSuprafataMp\" / \"cotaMod\") is the share THIS party takes on THIS deed, as the deed states it — never computed, never split evenly because there are three of them, and null when the deed is silent. A single seller selling the whole is 100 only if the deed says so. Spouses who take together in comunitate legală each get the couple's share with \"cotaMod\": \"DEVALMASIE\" — the pair is one block, not two halves. A mandatar signing for somebody else takes no share of his own: give the share to the person he represents, with \"cotaMod\": \"PRIN_MANDATAR\", and null on the mandatar's own entry. A notary has no share."
     : "";
+
+  // ⚠️ **FOUR SENTENCES AND NOT ONE, BECAUSE THEY PREVENT FOUR DIFFERENT
+  // MISTAKES** — and three of the four were seen in the sample set before this
+  // rule was written. The self-reference one is first because it is the one
+  // that produces a link a person might actually confirm.
+  const instrumentsRule =
+    "\n- \"referencedInstruments\": one entry per OTHER instrument this document names — the titlu de proprietate the seller's right came from, an earlier certificat de moștenitor or contract in that chain, the certificat fiscal, the extras de carte funciară, the procură, the antecontract, the parent contract an act adițional completes. NEVER an entry for THIS document itself: its own number, date and issuer are fields above, and repeating them here would propose linking the document to itself." +
+    "\n- \"purpose\" is what the instrument is FOR ON THIS DOCUMENT, read from the sentence that names it, and it is a closed list: TITLE_CHAIN when the document says the seller's own right came from it (\"a dobândit prin\", \"în baza titlului\"); SUPPORTING when it was produced for this transaction (certificat fiscal, extras CF, certificat de sarcini, certificat de urbanism, procură, adeverință); PARENT when THIS document completes or amends it (an act adițional and the contract it supplements); PROMISE for an antecontract or a promisiune bilaterală that preceded this sale. The SAME TYPE can be any of them on different documents — a contract de vânzare is TITLE_CHAIN on a later sale and PARENT on an act adițional — so read the sentence, never the type." +
+    "\n- Give the number and the date SEPARATELY even though the page writes them as one — \"nr. 65106/11.06.1996\" is \"nrDocument\": \"65106\" and \"dateDocument\": \"1996-06-11\". Where the number itself contains a slash and BOTH halves are numbers of the instrument rather than a date (\"165/2754/31.05.2016\"), keep the whole number: \"nrDocument\": \"165/2754\", \"dateDocument\": \"2016-05-31\"." +
+    "\n- One entry per instrument, even where a sentence names several — \"adeverințele 3245 și 3247/01.07.2016\" is TWO entries sharing a date, not one entry with two numbers. Do not invent an instrument the page does not name, and do not drop one because you cannot read its number: an entry with a null number, a null date and only \"rawText\" is useful and wanted."
 
   const partiesRule = partyRoleNames.length > 0
     ? "\n- \"parties\": one entry per distinct real person or organization — if a role has several people (e.g. multiple sellers), include one entry per person, all with the same roleName. Only include a party if the document actually names a specific person/organization for that role; never invent or guess an entry. Do not also repeat this party's information under \"unmappedRaw\" — parties are captured once, here."
@@ -573,7 +625,7 @@ ${genericLines}${customLines ? "\n" + customLines : ""}
   },
   "lowConfidenceFields": string[],       // field keys (generic or type-specific) where you are not confident
   "identityPersonCount": number,         // how many DISTINCT PEOPLE's identity documents these pages show — 0 when they show none
-  "unmappedRaw": { [label: string]: string }  // ANY other printed text that does not fit a field above — never drop information${partiesSection}
+  "unmappedRaw": { [label: string]: string }  // ANY other printed text that does not fit a field above — never drop information${partiesSection}${instrumentsSection}
 }
 
 Rules:
@@ -582,7 +634,8 @@ Rules:
 - Dates must be ISO yyyy-mm-dd or null. Convert Romanian format (zi.luna.an) to ISO.
 - Numbers must be numeric strings only (digits + decimal separator), no units.
 - Do not guess. If a field is not visible or not applicable for this document, return null.
-- A field offered as "exactly one of" is a closed list. Answer with one of the listed values COPIED EXACTLY, or null when the document does not say — never a word of your own, and never a translation of one of them.${partiesRule}${cotaRule}
+- A field offered as "exactly one of" is a closed list. Answer with one of the listed values COPIED EXACTLY, or null when the document does not say — never a word of your own, and never a translation of one of them.${partiesRule}${cotaRule}${instrumentsRule}
+- An instrument captured under "referencedInstruments" is captured once, there. Do not repeat it under "unmappedRaw" — that channel is for printed text that fits no field and no list above.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 }
 

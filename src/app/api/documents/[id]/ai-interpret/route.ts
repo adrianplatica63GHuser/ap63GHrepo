@@ -51,6 +51,7 @@
  *     unmappedRaw:         Record<string, string>,
  *     parties:             ExtractedParty[],  // see type below — [] if partyRolesConfigured is false
  *     partyRolesConfigured: boolean,          // false = this document type has no roles set up yet
+ *     referencedInstruments: ReferencedInstrument[],  // Slice #36.03 — see below
  *   }
  *   The caller fills form fields (fields + customFields, appends notes) and
  *   PATCHes ai_interpreted_at separately via PATCH /api/documents/[id].
@@ -61,6 +62,27 @@
  *   AI-Interpret click be driven and inspected end-to-end via browser
  *   automation, without needing to copy anything out of the dev-server
  *   terminal.
+ *
+ * Slice #36.03 (referenced instruments) — the prompt also asks for the OTHER
+ * instruments the document's pages name: the titlu de proprietate the seller's
+ * right came from, the certificat de moștenitor before it, the certificat
+ * fiscal, the extras CF, the procură, the antecontract, the parent contract an
+ * act adițional completes. They come back as `referencedInstruments`, a
+ * structured array on exactly the `parties[]` contract: extracted, reported,
+ * and WRITTEN BY NOBODY. Each carries the type key (whitelisted through
+ * `canonicalTypeKey`), the number and date as printed, the issuer, what the
+ * instrument is FOR on this deed, and the page's own wording verbatim.
+ *
+ * This closes a hole Slice #36.01 opened deliberately and named: #36.01 decided
+ * the title chain and the supporting certificates are ASSOCIATIONS and never
+ * template fields, which left the reader with nowhere to put them — so they
+ * landed in `unmappedRaw` and were folded into „Note extinse" by the block
+ * further down this file. That block is correct and stays; what changes is that
+ * these are no longer leftovers.
+ *
+ * Unlike `parties`, this section is asked for on EVERY document, because the
+ * four purposes are a closed list this codebase owns rather than per-type
+ * configuration — there is nothing here that can be unconfigured.
  *
  * Slice #21.10.Import — this route now has TWO modes, selected by an optional
  * `{ "mode": "discover" }` request body. A bodyless POST (what every existing
@@ -103,6 +125,10 @@ import {
   GENERIC_EXTRACT_FIELD_DESCRIPTIONS,
   canonicalTypeKey,
 } from "@/lib/import/classify-prompts";
+import {
+  sanitizeExtractedInstrument,
+  type ReferencedInstrument,
+} from "@/lib/documents/referenced-instruments";
 import {
   formatDiscoverLog,
   parseDiscoverPayload,
@@ -538,6 +564,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     identityPersonCount?: unknown;
     unmappedRaw?: Record<string, string>;
     parties?: RawParty[];
+    referencedInstruments?: unknown[];
   };
 
   // Extracted party, enriched with the resolved lookup_person_role id (by
@@ -607,6 +634,22 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
    */
   let identityPersonCount: number | null = null;
   const parties: ExtractedParty[] = [];
+  /**
+   * The instruments this document's pages CITE.                 (Slice #36.03)
+   *
+   * ⚠️ **THE SAME CONTRACT `parties` HAS, AND THAT IS THE WHOLE DESIGN.** This
+   * route extracts and reports; it never writes a `document_document` row, never
+   * creates a stub, and never decides anything. A person walks these through
+   * `AiReferenceLinkerDialog` exactly as they walk `parties` through
+   * `AiPartyLinkerDialog`, and every row in the archive that results was
+   * confirmed by that person.
+   *
+   * What is NEW relative to `parties` is that these SURVIVE the call: the
+   * caller persists them on `document.referenced_instruments` through POST
+   * /api/documents/[id]/instrument-references, so reopening the dialog next
+   * month does not cost a billed vision call over every page again.
+   */
+  const referencedInstruments: ReferencedInstrument[] = [];
 
   try {
     const raw = extractJson(textBlock) as AiExtractResponse;
@@ -704,6 +747,40 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       });
     }
 
+    // ── Referenced instruments (Slice #36.03) ────────────────────────────────
+    //
+    // ⚠️ **THE TYPE KEY GOES THROUGH `canonicalTypeKey`, THE SAME DOOR
+    // `suggestedTypeKey` GOES THROUGH.** #29.07's finding F6 is what that
+    // function exists for: a key the model invented reaches the resolver, finds
+    // no seeded row, and a document is filed under a slug of a display name
+    // that no carve-out will ever match again. A reference's key has a smaller
+    // blast radius — it is a HINT for the candidate ranker, not a filing
+    // decision — but it is the same class of value arriving through the same
+    // boundary, and one whitelisted key is cheaper than a second rule about
+    // when whitelisting is optional. A key that does not survive it becomes
+    // `null`, and `typeLabel` — the model's own Romanian words — still carries
+    // what the page said, which is what the ranker actually compares on.
+    //
+    // ⚠️ **AND NOTHING HERE IS MATCHED AGAINST THE ARCHIVE.** Unlike `parties`
+    // above, which looks up a CNP, this loop performs no query at all: ranking
+    // a reference needs the whole document list and the whole read is already
+    // paying for a vision call, so it belongs on the route the dialog asks,
+    // not on the one the pages are billed to.
+    const rawInstruments = Array.isArray(raw.referencedInstruments) ? raw.referencedInstruments : [];
+    for (const entry of rawInstruments) {
+      const clean = sanitizeExtractedInstrument(entry);
+      // `null` means the entry had no wording at all — not a citation, an empty
+      // object. Everything else is kept, including an entry with no number and
+      // no date: „titlul de proprietate al autoarei" with nothing else is a
+      // real citation whose right answer is „lasă", and a person can only give
+      // that answer if the screen shows it.
+      if (clean === null) continue;
+      referencedInstruments.push({
+        ...clean,
+        typeKey: canonicalTypeKey(clean.typeKey),
+      });
+    }
+
     // ── Diagnostic log — what did the model actually extract? ────────────────
     const extractedGeneric = Object.entries(fields).filter(([, v]) => v !== null && v !== "");
     const extractedCustom  = Object.entries(customFieldsOut).filter(([, v]) => v !== null && v !== "");
@@ -736,6 +813,16 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
             ? ` — ${p.possibleMatches.length} possible name match(es), unconfirmed`
             : p.roleMissing ? " — ROLE NOT CONFIGURED" : "";
         console.log(`    [${p.roleName}] ${p.name ?? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim()}${idBit}${matchBit}`);
+      }
+    }
+    if (referencedInstruments.length) {
+      console.log(`  Referenced instruments (${referencedInstruments.length}):`);
+      for (const r of referencedInstruments) {
+        const numBit = r.nrDocument ? ` nr. ${r.nrDocument}` : " (fără număr)";
+        const dateBit = r.dateDocument ? `/${r.dateDocument}` : "";
+        console.log(
+          `    [${r.purpose ?? "?"}] ${r.typeLabel ?? r.typeKey ?? "(tip necunoscut)"}${numBit}${dateBit}${r.issuer ? ` — ${r.issuer}` : ""}`,
+        );
       }
     }
     console.log("─────────────────────────────────────────────────────\n");
@@ -889,6 +976,15 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // that case rather than a guess against unrelated roles.
     parties,
     partyRolesConfigured: partyRoles.length > 0,
+    /**
+     * Slice #36.03 — see `referencedInstruments` above. Returned and WRITTEN BY
+     * NOBODY: the caller persists the array itself (POST
+     * /api/documents/[id]/instrument-references) and a person turns entries
+     * into links one at a time. `[]` here means the pages cited nothing this
+     * read could recognise, which for an identity card or a plan parcelar is
+     * the ordinary answer.
+     */
+    referencedInstruments,
     // ⚠️ **A SIBLING KEY, NOT A MEMBER OF `fields`.** (Slice #32.07.)
     // `fields` becomes the PATCH body for the document, so a boolean added
     // there would be offered to `PATCH /api/documents/[id]` as a column.

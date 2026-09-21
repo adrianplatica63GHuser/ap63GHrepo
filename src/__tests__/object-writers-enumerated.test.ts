@@ -269,15 +269,28 @@ function foundWriters(): string[] {
 /**
  * Every write site, with the reason it is allowed to exist.
  *
- * Read this list as prose: four creates, four updates (one of them twice —
- * `updateProperty`'s patch and its corner rewrite), one bulk re-point that
- * stamps `updated_by`, one maintenance script, one SQL fixture.
+ * Read this list as prose: four creates, four updates (two of them twice —
+ * `updateProperty`'s patch and its corner rewrite, and `updateDocument`'s patch
+ * beside `saveReferencedInstruments`), one bulk re-point that stamps
+ * `updated_by`, one maintenance script, one SQL fixture.
  */
 const EXPECTED_WRITERS = [
   // ── The four create/update functions. Each owns its family end to end:
   //    the principal_object code, the row, `updated_by` and version 0.
   "src/lib/documents/queries.ts:document:INSERT:1",
-  "src/lib/documents/queries.ts:document:UPDATE:1",
+  // ⚠️ **TWO since Slice #36.03, and the second one is deliberately NOT
+  //    `updateDocument`.** `saveReferencedInstruments` writes
+  //    `document.referenced_instruments` — a READING the AI returned, which a
+  //    person then answers one entry at a time. It is operational metadata like
+  //    `ai_interpreted_at` and `import_title`, not a versioned form field:
+  //    `DocumentSnapshot` omits it, `documentUpdateSchema` refuses the key, and
+  //    routing it through `updateDocument` would append a `document_version`
+  //    row every time somebody pressed „recitește" or answered one reference —
+  //    entries in which nothing a user can see had changed. So it is a second
+  //    writer on purpose, and it writes that column and nothing else: no
+  //    `updated_by`, no `updated_at`, no version row, because it is not an edit
+  //    of the document.
+  "src/lib/documents/queries.ts:document:UPDATE:2",
   "src/lib/judicial-persons/queries.ts:judicial_person:INSERT:1",
   "src/lib/judicial-persons/queries.ts:judicial_person:UPDATE:1",
   "src/lib/persons/queries.ts:natural_person:INSERT:1",
@@ -497,7 +510,7 @@ describe("every initial-provenance write is guarded at its call site", () => {
     ).map(rel);
   }
 
-  it("finds the callers by scanning, and there are seven", () => {
+  it("finds the callers by scanning, and there are eight", () => {
     // A hand-written list cannot fail for the case that matters — a brand-new
     // caller in a brand-new file. This one can.
     expect(callers().sort()).toEqual(
@@ -508,6 +521,17 @@ describe("every initial-provenance write is guarded at its call site", () => {
         "src/app/api/judicial-persons/route.ts",
         "src/app/api/people/route.ts",
         "src/app/api/properties/route.ts",
+        // ⚠️ **The eighth, from Slice #36.03: `createInstrumentStub`.** A stub
+        // is a page-less document standing in for an instrument a deed cites
+        // and the archive does not hold, built from an AI reading of that
+        // deed's pages — so `AI_INTERPRETED` is the same answer
+        // `ai-party-linker-dialog.tsx` gives for a PERSON created the same way,
+        // through `inferProvenance("AI_EXTRACTION")`. A stub not carrying it
+        // would be the one AI-created record in the archive that does not say
+        // so. The cheaper mark — „documents with no pages" — was rejected
+        // rather than overlooked: it is a coincidence, not a mark, since a real
+        // document whose scans are not uploaded yet is page-less too.
+        "src/lib/documents/queries.ts",
         "src/lib/properties/import-property.ts",
       ].sort(),
     );

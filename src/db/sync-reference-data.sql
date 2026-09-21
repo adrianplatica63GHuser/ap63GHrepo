@@ -612,7 +612,19 @@ INSERT INTO lookup_document_document_role (name, description, sort_order) VALUES
   ('Consolidat cu',         'Documente corelate legal',                      5),
   ('Versiune anterioară a', 'Formă anterioară a unui document în vigoare',   6),
   ('Anexă la',              'Document atașat ca anexă unui document principal', 7),
-  ('Corecție a',            'Document care rectifică erori dintr-un altul',  8);
+  ('Corecție a',            'Document care rectifică erori dintr-un altul',  8),
+  -- Slice #36.03 (migration_086). The four a title chain needs: none of
+  -- migration_055's eight fits one, and the closest — „Consolidat cu" — is
+  -- deliberately neutral and therefore says nothing, which is the one thing a
+  -- deed does not do. Each reads FORWARDS with document_document.role_reads_a_to_b
+  -- set, i.e. as „A <rol> B". sort_orders 9-12 match migration_086 exactly:
+  -- scripts/verify-rebuild.ts compares reference rows as WHOLE TUPLES, so a row
+  -- present on both sides with a different sort_order is not one agreement, it
+  -- is two differences.
+  ('Titlu anterior al',        'Înscrisul din care provine dreptul transmis prin documentul asociat',  9),
+  ('Înscris doveditor pentru', 'Act depus ca dovadă la încheierea documentului asociat',               10),
+  ('Act adițional la',         'Act adițional care completează documentul asociat',                    11),
+  ('Antecontract al',          'Promisiune de vânzare care a precedat documentul asociat',             12);
 
 -- ── lookup_person_role.valid_for_person ───────────────────────────────────────
 -- Deliberately no ticks. It is a whitelist Adrian fills from the Admin UI, and

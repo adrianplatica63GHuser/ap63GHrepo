@@ -920,10 +920,23 @@ import {
   propertyDocument,
   personDocument,
   documentDocument,
+  lookupInstitution,
   lookupPersonRole,
   lookupDocTypePersonRole,
   lookupDocumentDocumentRole,
 } from "@/db/schema";
+
+// Slice #36.03 — the referenced-instrument section at the end of this file.
+// `referenced-instruments.ts` is PURE (no db, no node), which is what lets the
+// linker dialog import it too; importing it here costs nothing and is what
+// keeps the stored shape and the screen's shape one declaration.
+import { setInitialProvenance } from "@/lib/metadata/queries";
+import { foldLookupName } from "@/lib/import/lookup-name-match";
+import {
+  parseReferencedInstruments,
+  type InstrumentCandidateDoc,
+  type ReferencedInstrument,
+} from "./referenced-instruments";
 
 export type DocumentSearchItem = {
   id:             string;
@@ -1439,6 +1452,22 @@ export type DocumentRefItem = {
   associatedAt:         Date;
   relationshipRoleId:   string | null;
   relationshipRoleName: string | null;
+  /**
+   * Does the role read FROM the document being viewed TO this one?
+   *                                                            (Slice #36.03)
+   *
+   * ⚠️ **ALREADY RESOLVED FOR THE VIEWER, SO NO SCREEN EVER SEES A UUID
+   * COMPARISON.** The stored `role_reads_a_to_b` is about `document_id_a` and
+   * `document_id_b`, which are ordered BY UUID and mean nothing; this is about
+   * the two documents a person is actually looking at. Resolving it here rather
+   * than in the tab is what stops the uuid order leaking into a component,
+   * which is the whole class of defect the flag was added to close.
+   *
+   * TRUE renders „<viewed document> <rol> <this row>"; FALSE renders the other
+   * way round. On a row whose `relationshipRoleName` is null it decides
+   * nothing, and the tab shows „—" as it always did.
+   */
+  roleReadsFromViewed:  boolean;
 };
 
 export async function listDocumentReferences(documentId: string): Promise<DocumentRefItem[]> {
@@ -1449,6 +1478,7 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
       associatedAt:         documentDocument.createdAt,
       relationshipRoleId:   documentDocument.relationshipRoleId,
       relationshipRoleName: lookupDocumentDocumentRole.name,
+      roleReadsAToB:        documentDocument.roleReadsAToB,
       id:                   document.id,
       code:                 document.code,
       documentTypeId:       document.documentTypeId,
@@ -1468,35 +1498,150 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
     .where(or(eq(documentDocument.documentIdA, documentId), eq(documentDocument.documentIdB, documentId)))
     .orderBy(document.code);
 
-  return rows.map((r) => ({
-    id:                   r.id,
-    code:                 r.code,
-    documentTypeId:       r.documentTypeId,
-    typeName:             r.typeName,
-    title:                r.title,
-    associatedAt:         r.associatedAt,
-    relationshipRoleId:   r.relationshipRoleId ?? null,
-    relationshipRoleName: r.relationshipRoleName ?? null,
-  }));
+  return rows.map((r) => {
+    // The viewed document is whichever side of the pair it is on. The role
+    // reads from it when it is A and the flag is true, or when it is B and the
+    // flag is false — an XNOR, written out because „viewedIsA === roleReadsAToB"
+    // is the kind of line a later reader inverts by accident.
+    const viewedIsA = r.documentIdA === documentId;
+    const roleReadsFromViewed = viewedIsA ? r.roleReadsAToB : !r.roleReadsAToB;
+    return {
+      id:                   r.id,
+      code:                 r.code,
+      documentTypeId:       r.documentTypeId,
+      typeName:             r.typeName,
+      title:                r.title,
+      associatedAt:         r.associatedAt,
+      relationshipRoleId:   r.relationshipRoleId ?? null,
+      relationshipRoleName: r.relationshipRoleName ?? null,
+      roleReadsFromViewed,
+    };
+  });
 }
 
+/**
+ * What an associate call actually did.                          (Slice #36.03)
+ *
+ * ⚠️ **THIS TYPE EXISTS BECAUSE THE WRITE USED TO SAY NOTHING**, and the
+ * silence was the defect. `.onConflictDoNothing()` over a unique index on the
+ * PAIR means that linking two documents that are already linked did nothing —
+ * successfully, with no error and no message — INCLUDING when the user's whole
+ * reason for pressing the button was to change the role or the direction. The
+ * screen then showed the old role and the user pressed again.
+ *
+ * It is the same shape as the defect #36.02 fixed on `person_document` one
+ * table over, and it is fixed the same way: the writer reports, and the caller
+ * has a sentence for `skipped > 0` instead of an advance under it.
+ *
+ * `alreadyLinked` carries the role each skipped pair ALREADY holds, so the
+ * sentence can name it — „DOC01511 este deja asociat, ca «Titlu anterior al»"
+ * is something a person can act on; „nimic nu s-a schimbat" is not. A null
+ * `roleName` there means the pair is linked with no role at all, which is the
+ * ordinary state of every association made from the „Asociază" button.
+ */
+export type DocumentAssociationResult = {
+  inserted: number;
+  skipped:  number;
+  alreadyLinked: { documentId: string; roleName: string | null }[];
+};
+
+/**
+ * Link one or more documents to this one.
+ *
+ * ⚠️ **`roleReadsAToB` IS THE CALLER'S TO SET AND DEFAULTS TO THE COLUMN'S
+ * DEFAULT.** The „Asociază" button on the References tab passes nothing: it
+ * offers a role picker and no direction control, so its links read A to B like
+ * every row written before Slice #36.03. The reference linker passes the value
+ * `linkDirection()` computed from the instrument's PURPOSE, which is the whole
+ * point of this slice — and it may only pass it because it is linking ONE
+ * document, where the direction is a fact about that one pair.
+ *
+ * ⚠️ **WHICH IS WHY A DIRECTION AND A MULTI-ID CALL DO NOT MIX, AND THE
+ * SIGNATURE SAYS SO RATHER THAN A COMMENT.** `roleReadsAToB` is computed from
+ * `[documentId, otherId].sort()`, so one boolean cannot be correct for several
+ * `otherIds` at once — the sort lands differently per pair. A caller that
+ * passes a direction must pass exactly one other id, and this function
+ * enforces it rather than writing seven rows of which some are backwards.
+ */
 export async function associateDocumentToDocument(
   documentId:         string,
   otherIds:           string[],
   relationshipRoleId: string | null = null,
-): Promise<void> {
-  const values = otherIds
-    .filter((id) => id !== documentId)
-    .map((otherId) => {
-      const [a, b] = [documentId, otherId].sort();
-      return {
-        documentIdA:         a,
-        documentIdB:         b,
-        relationshipRoleId:  relationshipRoleId ?? undefined,
-      };
-    });
-  if (values.length === 0) return;
-  await db.insert(documentDocument).values(values).onConflictDoNothing();
+  roleReadsAToB?:     boolean,
+): Promise<DocumentAssociationResult> {
+  const targets = otherIds.filter((id) => id !== documentId);
+  if (targets.length === 0) return { inserted: 0, skipped: 0, alreadyLinked: [] };
+
+  if (roleReadsAToB !== undefined && targets.length !== 1) {
+    throw new Error(
+      "associateDocumentToDocument: a direction is a fact about ONE pair — the canonical (a, b) order is computed per pair, so one boolean cannot be correct for several targets at once.",
+    );
+  }
+
+  const values = targets.map((otherId) => {
+    const [a, b] = [documentId, otherId].sort();
+    return {
+      documentIdA:        a,
+      documentIdB:        b,
+      relationshipRoleId: relationshipRoleId ?? undefined,
+      ...(roleReadsAToB === undefined ? {} : { roleReadsAToB }),
+    };
+  });
+
+  // ⚠️ **`.returning()` IS WHAT MAKES THE ANSWER POSSIBLE, AND IT IS EXACT.**
+  // Postgres returns a row per row actually INSERTED, so the conflicts are the
+  // difference — no second query is needed to count them, and no count can
+  // drift from what the insert did. What DOES need a second query is naming the
+  // role each conflict already holds, and it runs only when there was one.
+  const written = await db
+    .insert(documentDocument)
+    .values(values)
+    .onConflictDoNothing()
+    .returning({ documentIdA: documentDocument.documentIdA, documentIdB: documentDocument.documentIdB });
+
+  const insertedPairs = new Set(written.map((r) => `${r.documentIdA}|${r.documentIdB}`));
+  const skippedIds = targets.filter((otherId) => {
+    const [a, b] = [documentId, otherId].sort();
+    return !insertedPairs.has(`${a}|${b}`);
+  });
+
+  if (skippedIds.length === 0) {
+    return { inserted: written.length, skipped: 0, alreadyLinked: [] };
+  }
+
+  const existing = await db
+    .select({
+      documentIdA: documentDocument.documentIdA,
+      documentIdB: documentDocument.documentIdB,
+      roleName:    lookupDocumentDocumentRole.name,
+    })
+    .from(documentDocument)
+    .leftJoin(
+      lookupDocumentDocumentRole,
+      eq(documentDocument.relationshipRoleId, lookupDocumentDocumentRole.id),
+    )
+    .where(
+      or(
+        and(eq(documentDocument.documentIdA, documentId), inArray(documentDocument.documentIdB, skippedIds)),
+        and(eq(documentDocument.documentIdB, documentId), inArray(documentDocument.documentIdA, skippedIds)),
+      ),
+    );
+
+  const roleByOther = new Map<string, string | null>(
+    existing.map((r) => [r.documentIdA === documentId ? r.documentIdB : r.documentIdA, r.roleName ?? null]),
+  );
+
+  return {
+    inserted: written.length,
+    skipped:  skippedIds.length,
+    alreadyLinked: skippedIds.map((documentIdOther) => ({
+      documentId: documentIdOther,
+      // `?? null` rather than `!`: a pair that vanished between the insert and
+      // this read (another session dissociating it) is not in the map, and
+      // „already linked, role unknown" is a true sentence where a crash is not.
+      roleName:   roleByOther.get(documentIdOther) ?? null,
+    })),
+  };
 }
 
 export async function dissociateDocumentFromDocument(documentId: string, otherId: string): Promise<boolean> {
@@ -1505,4 +1650,261 @@ export async function dissociateDocumentFromDocument(documentId: string, otherId
     .where(and(eq(documentDocument.documentIdA, a), eq(documentDocument.documentIdB, b)))
     .returning({ id: documentDocument.id });
   return result.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Referenced instruments  (Slice #36.03)
+// ---------------------------------------------------------------------------
+//
+// The instruments a document's own pages CITE, and everything the review
+// screen needs to turn one of them into a link, a stub, or nothing at all.
+//
+// ⚠️ **NOTHING IN THIS SECTION WRITES A LINK ON ITS OWN.** `saveReferencedInstruments`
+// stores a reading; `listInstrumentCandidateDocuments` answers a question;
+// `createInstrumentStub` runs only when a person presses a separately-labelled
+// button. The one function that writes a `document_document` row is
+// `associateDocumentToDocument` above, and the route calls it with an id a
+// person chose.
+
+/**
+ * The stored reading, or `null` because this document has never been read for
+ * references.
+ *
+ * ⚠️ **`null` AND `[]` ARE DIFFERENT AND THIS FUNCTION KEEPS THEM APART.**
+ * `null` is every document imported before this slice, and the tab offers
+ * „Citește referințele" on it. `[]` is a document that WAS read and cited
+ * nothing — an identity card, a plan parcelar — and the tab says so instead of
+ * offering a second billed read that will return `[]` again.
+ */
+export async function getReferencedInstruments(
+  documentId: string,
+): Promise<ReferencedInstrument[] | null> {
+  const [row] = await db
+    .select({ raw: document.referencedInstruments })
+    .from(document)
+    .where(eq(document.id, documentId))
+    .limit(1);
+  if (!row || row.raw === null || row.raw === undefined) return null;
+  return parseReferencedInstruments(row.raw);
+}
+
+/**
+ * Replace the stored reading.
+ *
+ * ⚠️ **NOT THROUGH `updateDocument`, AND THAT IS A DELIBERATE SEPARATION
+ * RATHER THAN A SHORTCUT.** `updateDocument` appends a `document_version` row
+ * whenever a versioned field changed, and `referenced_instruments` is not one:
+ * it is operational metadata like `ai_interpreted_at` and `import_title`.
+ * Routing it through the document PATCH would mean a version entry every time
+ * somebody pressed „recitește" or answered one reference — entries in which no
+ * field a user can see has changed. `documentUpdateSchema` therefore does not
+ * accept the key at all, so this is not merely the preferred door, it is the
+ * only one.
+ *
+ * ⚠️ **AND IT DOES NOT TOUCH `updatedBy` OR `updatedAt` EITHER**, for the same
+ * reason: this is not an edit of the document.
+ */
+export async function saveReferencedInstruments(
+  documentId:  string,
+  instruments: ReferencedInstrument[],
+): Promise<boolean> {
+  const rows = await db
+    .update(document)
+    .set({ referencedInstruments: instruments })
+    .where(eq(document.id, documentId))
+    .returning({ id: document.id });
+  return rows.length > 0;
+}
+
+/**
+ * Every document a cited instrument could be — the pool the ranker reads.
+ *
+ * ⚠️ **NARROWED BY THE FOLDED NUMBER IN SQL, NOT BY LOADING THE ARCHIVE.** The
+ * ranker requires the number to agree (its rule 2), so the pool is the rows
+ * whose `nr_document` folds to the same thing, and the fold is applied on both
+ * sides in the query. Without this, ranking one deed's five references over an
+ * archive of three hundred documents is five full-table reads per dialog open.
+ *
+ * ⚠️ **THE SQL FOLD AND `foldDocumentNumber` MUST AGREE, AND THEY ARE NOT ONE
+ * PIECE OF CODE — SO THE SQL IS DELIBERATELY THE LOOSER OF THE TWO.** It strips
+ * non-alphanumerics and leading zeros; it does NOT drop the „nr" prefix and it
+ * does not touch diacritics, because a document number holding a letter with a
+ * diacritic is not a thing this archive has. A pool that is slightly too wide
+ * costs a few rows the ranker then rejects in TypeScript, where the real rule
+ * lives; a pool that is too narrow silently loses a candidate and nothing says
+ * so. When the two must differ, they differ in that direction.
+ *
+ * ⚠️ **STUBS ARE IN THE POOL, AND THAT IS THE POINT OF THE STUB RULE.** The
+ * second deed citing the same titlu de proprietate has to be offered the FIRST
+ * deed's stub rather than minting a second one, so a page-less document is an
+ * ordinary candidate and only carries `isStub` so the screen can say what it
+ * is. The document doing the citing is excluded: a deed cannot be its own
+ * previous title.
+ */
+export async function listInstrumentCandidateDocuments(
+  citingDocumentId: string,
+  foldedNumber:     string,
+  limit = 25,
+): Promise<InstrumentCandidateDoc[]> {
+  if (foldedNumber === "") return [];
+
+  /**
+   * ⚠️ **THE SQL FOLD IS `foldDocumentNumber` TRANSCRIBED, STEP FOR STEP, AND
+   * THE STEPS ARE IN THE SAME ORDER.** An earlier draft was „close enough" —
+   * it skipped the `nr` prefix and normalised nothing — and close enough is
+   * exactly wrong here: the SQL narrows the POOL and the TypeScript makes the
+   * DECISION, so any divergence loses a candidate silently rather than
+   * offering a bad one. A stored „nr. 3264" folded to `nr3264` on this side and
+   * `3264` on the other, and the two would never have met.
+   *
+   * ⚠️ **AND THE ZERO RULE CARRIES THE BOUNDARY GROUP, FOR THE REASON WRITTEN
+   * OUT IN `foldDocumentNumber`.** A bare `0+([0-9])` matches anywhere and ate
+   * the internal zero of the real titlu number 65106, turning it into 6516.
+   *
+   * Steps: NFD, lower, drop everything but [a-z0-9/], drop a leading nr/no/
+   * numar, strip LEADING zeros per digit run, collapse and trim slashes.
+   */
+  const folded = sql<string>`regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(lower(normalize(coalesce(${document.nrDocument}, ''), NFD)), '[^a-z0-9/]', '', 'g'), '^(numar|nr|no)', ''), '(^|[^0-9])0+([0-9])', '\\1\\2', 'g'), '/+', '/', 'g'), '^/', ''), '/$', '')`;
+
+  const rows = await db
+    .select({
+      id:              document.id,
+      code:            document.code,
+      title:           document.title,
+      importTitle:     document.importTitle,
+      typeName:        lookupDocumentType.name,
+      nrDocument:      document.nrDocument,
+      dateDocument:    document.dateDocument,
+      institutionName: lookupInstitution.name,
+      pageCount:       sql<number>`(SELECT count(*) FROM document_page dp WHERE dp.document_id = ${document.id})`,
+    })
+    .from(document)
+    .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .leftJoin(lookupInstitution, eq(document.institutionId, lookupInstitution.id))
+    .where(and(sql`${folded} = ${foldedNumber}`, sql`${document.id} <> ${citingDocumentId}`))
+    .orderBy(document.code)
+    .limit(limit);
+
+  return rows.map((r) => ({
+    id:              r.id,
+    code:            r.code,
+    // `importTitle ?? title` is the archive side's own fallback rule — see the
+    // column comment on `document.importTitle`. A stub this slice created
+    // carries `importTitle` and nothing else, so reading `title` alone would
+    // show a blank row for exactly the documents this screen most needs to name.
+    title:           r.importTitle ?? r.title,
+    typeName:        r.typeName,
+    nrDocument:      r.nrDocument,
+    dateDocument:    r.dateDocument,
+    institutionName: r.institutionName,
+    isStub:          Number(r.pageCount) === 0,
+  }));
+}
+
+/**
+ * The `lookup_document_document_role` row a purpose links under, or `null`.
+ *
+ * ⚠️ **RESOLVED BY THE FOLDED NAME, BECAUSE THIS TABLE HAS NO KEY COLUMN.**
+ * `lookup_document_document_role` is `id/name/description/sort_order` — there
+ * is no immutable slug to hold on to and the ids differ between every database,
+ * so the name is the only handle there is. `foldLookupName` is what makes that
+ * safe against the ordinary drift: a row an admin retyped without its
+ * diacritics still resolves.
+ *
+ * ⚠️ **`null` IS AN ANSWER THE CALLER MUST HANDLE, NOT AN IMPOSSIBILITY.**
+ * migration_086 seeds these four, but Reference Data can rename or delete any
+ * of them afterwards. The route answers with a sentence naming the role it
+ * could not find rather than linking under no role at all — a link whose role
+ * is null is exactly the „Consolidat cu"-shaped silence this slice exists to
+ * stop producing.
+ */
+export async function findDocumentDocumentRoleByName(name: string): Promise<string | null> {
+  const wanted = foldLookupName(name);
+  if (wanted === "") return null;
+  const rows = await db
+    .select({ id: lookupDocumentDocumentRole.id, name: lookupDocumentDocumentRole.name })
+    .from(lookupDocumentDocumentRole);
+  return rows.find((r) => foldLookupName(r.name) === wanted)?.id ?? null;
+}
+
+/**
+ * A stub: a typed, numbered, dated, page-less document standing in for an
+ * instrument that is not in the archive and probably never will be.
+ *
+ * ⚠️ **AN EXPLICIT ACT WITH A VISIBLE MARK, NEVER A SIDE EFFECT.** Most
+ * instruments a 2006 deed cites do not exist here — the 1996 titlu de
+ * proprietate exists only as the citation. Thirty-two deeds citing five
+ * instruments each is a hundred and sixty ghost documents, and if two deeds
+ * each mint their own stub for the same titlu the archive now disagrees with
+ * itself about how many titles exist. Three things keep that from happening,
+ * and only the third is in this function: the button is separately labelled and
+ * pressed per reference; `listInstrumentCandidateDocuments` ranks stubs too, so
+ * the second deed is OFFERED the first's; and a stub is findable afterwards.
+ *
+ * ⚠️ **THE MARK IS `entity_metadata.provenance = 'AI_INTERPRETED'`, AND THE
+ * CHEAPER CANDIDATE WAS REJECTED RATHER THAN OVERLOOKED.** „Documents with no
+ * pages" needs no write at all and is genuinely cheaper — and it is not a mark,
+ * it is a coincidence: a real document whose scans have not been uploaded yet
+ * is page-less too, and so is one whose pages were deleted. A filter on it
+ * would name those alongside the stubs and there would be no way to tell which
+ * was which. Provenance is one call to `setInitialProvenance`, it already has a
+ * change log in `entity_provenance_log`, it is already what this archive
+ * answers „how did this get here" with — and it is already what the PARTY
+ * linker writes for a person created from an AI read
+ * (`inferProvenance("AI_EXTRACTION")` in `ai-party-linker-dialog.tsx`). A stub
+ * not carrying it would be the one AI-created record in the archive that does
+ * not say so.
+ *
+ * ⚠️ **`importTitle` IS SET AND `title` IS NOT, DELIBERATELY.** The column
+ * comment on `document.title` says in as many words that the AI read OVERWRITES
+ * it — `resolveImportedTitle` lets the model's reading of the printed heading
+ * win. A stub has no pages, so no read will ever run on it and nothing would
+ * overwrite anything; but writing the description into the column whose whole
+ * documented behaviour is „the AI rewrites this" is the wrong habit to leave
+ * behind, and `importTitle` is the column that exists precisely to hold a value
+ * the AI does not rewrite. The archive side reads `importTitle ?? title`
+ * everywhere, so the stub displays correctly.
+ */
+export async function createInstrumentStub(input: {
+  documentTypeId: string;
+  nrDocument:     string | null;
+  dateDocument:   string | null;
+  institutionId:  string | null;
+  importTitle:    string;
+  updatedBy:      string | null;
+}): Promise<DocumentFull> {
+  const row = await createDocument(
+    {
+      documentTypeId: input.documentTypeId,
+      nrDocument:     input.nrDocument,
+      dateDocument:   input.dateDocument,
+      institutionId:  input.institutionId,
+      importTitle:    input.importTitle,
+    },
+    input.updatedBy,
+  );
+
+  // ⚠️ **NOT FATAL, AND THE STUB IS NOT ROLLED BACK IF IT FAILS.** The document
+  // is the deliverable; the provenance is how it is labelled. Losing a stub a
+  // person deliberately created — and then having to create it again, under a
+  // second code — because a metadata insert lost a race is the worse of the two
+  // outcomes by a distance. The same call is non-fatal in `POST /api/people`
+  // for the same reason.
+  //
+  // ⚠️ **`.catch()` ON THE CALL, NOT A `try`/`catch` AROUND IT, AND THE SHAPE
+  // IS LOAD-BEARING RATHER THAN STYLISTIC.**
+  // `object-writers-enumerated.test.ts` §„every initial-provenance write is
+  // guarded at its call site" COUNTS `setInitialProvenance(` against
+  // `setInitialProvenance(…).catch(`, so that a second, unguarded call added to
+  // a file that already has a guarded one cannot pass. A `try`/`catch` is the
+  // same behaviour and is invisible to that count — which is a guard this
+  // slice's first draft defeated by accident, and the suite caught it. The
+  // argument for the guarantee living on the CALLER rather than inside
+  // `setInitialProvenance` is in that test.
+  await setInitialProvenance(row.principalObjectId, "AI_INTERPRETED", input.updatedBy)
+    .catch((err: unknown) => {
+      console.warn("[instrument-stub] provenance not recorded for", row.code, err);
+    });
+
+  return row;
 }

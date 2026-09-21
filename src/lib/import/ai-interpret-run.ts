@@ -104,6 +104,12 @@ type AiInterpretResponse = {
   partyRolesConfigured?: boolean;
   /** Slice #32.07 — the server's verdict on the type it resolved to. */
   documentTypeIsIdCard?: boolean | null;
+  /**
+   * Slice #36.03 — the instruments this document's pages CITE, as the read
+   * returned them. Carried through here so an import STORES them; nothing
+   * about them is written to the document's own columns and no link is made.
+   */
+  referencedInstruments?: unknown[];
 };
 
 /**
@@ -836,6 +842,49 @@ export async function runAiInterpret(
       else if (withModel !== existingNotes) notesOut = withModel;
     }
     if (notesOut !== null) patch.notes = notesOut;
+
+    /**
+     * The cited instruments, stored before the patch.           (Slice #36.03)
+     *
+     * ⚠️ **ITS OWN CALL, AND THAT DOES NOT BREAK THIS MODULE'S ONE-PATCH
+     * RULE.** The rule exists because `updateDocument` appends a
+     * `document_version` row and two writes would make two of them, or make the
+     * second silently drop the first. This write goes to a different route and
+     * a different column: `referenced_instruments` is NOT versioned,
+     * `documentUpdateSchema` does not accept it, and `updateDocument` never
+     * touches it. So it produces no version row at all, and there is nothing
+     * for the rule to protect.
+     *
+     * ⚠️ **AND IT IS NOT FATAL AND DOES NOT SET `partialWrite`.** What is lost
+     * when it fails is a READING that can be produced again by pressing
+     * „Recitește documentul" on the References tab — for the price of the same
+     * vision call the import has just paid once. `partialWrite` means „a field
+     * the model found was not written and the row should be retried", and
+     * retrying a whole document to recover a list of citations is a far worse
+     * trade than the button. It is logged rather than swallowed, per CLAUDE.md.
+     *
+     * ⚠️ **`?? []` IS DELIBERATE, NOT DEFENSIVE.** `null` and `[]` are
+     * different on that column — never read, against read and cited nothing —
+     * and a document this run DID read must not be left looking unread, or the
+     * References tab offers a second billed read that will return `[]` again.
+     */
+    if (Array.isArray(data.referencedInstruments)) {
+      const refRes = await fetchWithTimeout(
+        `/api/documents/${id}/instrument-references`,
+        RECORD_TIMEOUT_MS,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "replace", instruments: data.referencedInstruments }),
+        },
+      );
+      if (isSessionLoss(refRes) || (refRes.ok && servesHtml(refRes))) return sessionFailure();
+      if (!refRes.ok) {
+        console.warn(
+          `[ai-interpret-run] cited instruments not stored for ${id} (HTTP ${refRes.status}) — the reading can be recovered with "Recitește documentul" on the References tab.`,
+        );
+      }
+    }
 
     const patchRes = await fetchWithTimeout(`/api/documents/${id}`, RECORD_TIMEOUT_MS, {
       method: "PATCH",
