@@ -105,6 +105,42 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   where it doesn't, say plainly that only parser diagnostics were run. Adrian runs all four
   locally before anything is considered done. See `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
+## A migration is delivered TWICE, and the second one is the one that gets forgotten
+
+**Local Docker and Supabase are two databases, and a migration applied to one is not applied
+to the other.** Until Slice #36.04 the cloud half was "paste the file into the Supabase SQL
+Editor", which recorded nothing — so the only record of what the live project held was
+Adrian's memory of which tabs he had pasted, and a skipped paste stayed invisible until a
+route 500'd in production.
+
+Both halves now have a runner, and both record what they applied in that database's own
+`schema_migrations`:
+
+| | Command | Applies to |
+|---|---|---|
+| Local | `.\scripts\Apply-Migration.ps1` | the `ga40prj-postgres` container |
+| Cloud | `npm run supabase:migrate` | the project in `SUPABASE_SYNC_URL` |
+
+- **Claude ends every slice that adds or changes a migration by asking Adrian to run BOTH, as
+  two separate lines in the handover, naming the file.** Not "and apply it to Supabase too" —
+  the command, written out. This is the step that gets dropped, which is why it is a rule and
+  not a habit.
+- **Both are idempotent**: running either twice applies nothing the second time. That is a
+  property of the RUNNERS, not of the migration files — most of those are not safe to run
+  twice, which is why both refuse rather than re-run whenever they cannot prove a file is
+  pending.
+- `npm run supabase:migrate -- --status` reports without changing anything, and is the right
+  thing to ask for when the question is "is the cloud behind?"
+- **The first run against a cloud project needs a baseline**, once:
+  `npm run supabase:migrate -- --baseline 086`. It RUNS nothing — it records 008..086 as
+  already applied, because `supabase_schema_full.sql` builds that schema without writing a
+  single `schema_migrations` row. The runner refuses to guess a baseline and stops instead;
+  see `.claude/rules/database-and-migrations.md` and the header of `scripts/supabase-migrate.ts`.
+- **`npm run supabase:sync` is not this.** That drops the cloud project and rebuilds it from
+  `supabase_schema_full.sql` plus the reference tables. It is the full reset; this is the
+  incremental path, and after a sync the project needs its baseline declared again.
+
+
 ## Domain model
 
 Three core objects with many-to-many relationships, including self-referential ones:

@@ -4,6 +4,7 @@ paths:
   - "drizzle/**"
   - "drizzle.config.ts"
   - "scripts/**/*.ps1"
+  - "scripts/**/*.ts"
   - "src/lib/**/queries.ts"
   - "docker/postgres/**"
 ---
@@ -16,11 +17,58 @@ paths:
 
 - **Migration file workflow — Claude follows these steps every time:**
   1. **Claude saves** the migration file to `src/db/<filename>.sql` (never just pastes SQL into chat).
-  2. **Claude tells Adrian** to run `scripts\Apply-Migration.ps1` — that script compares `schema_migrations` against the files in `src/db/` and applies anything pending. Claude never provides manual `docker cp` + `psql -f` commands for a normal migration; just say "run `scripts\Apply-Migration.ps1`".
-  3. **Claude states the filename** (e.g. `src/db/migration_035_seed_doc_types.sql`) so Adrian knows exactly which file to open.
-  4. **Adrian pastes** that file's contents into the Supabase SQL Editor to apply it to the cloud database.
+  2. **Claude states the filename** (e.g. `src/db/migration_087_whatever.sql`) so Adrian knows exactly which file to open.
+  3. **Adrian runs `.\scripts\Apply-Migration.ps1`** — local Docker. It compares `schema_migrations` against `src/db/` and applies anything pending.
+  4. **Adrian runs `npm run supabase:migrate`** — the cloud project in `SUPABASE_SYNC_URL`. Same comparison, same recording, over `pg` instead of `docker exec psql`.
 
-  **Exception — manual apply only when the script can't help:** if `schema_migrations` already has a false entry for a migration that was never actually run (the migration_056 backfill bug, hit in Slice #19.28), the script will skip it. In that case apply the specific file(s) directly:
+  **Both lines go in the handover, every time, written out.** Step 4 is the one that gets
+  dropped — it used to be "paste the file into the Supabase SQL Editor", which recorded
+  nothing at all, so a skipped paste was invisible until a route 500'd in production.
+  Claude never provides manual `docker cp` + `psql -f` commands, or SQL to paste, for a
+  normal migration; just name the two commands.
+
+  **The cloud runner, in one paragraph.** `scripts/supabase-migrate.ts` (+ its pure half
+  `scripts/migration-state.ts`, the TypeScript twin of `MigrationState.ps1`) reads
+  `src/db/migration_*.sql`, hashes each file MD5/upper-case — the same bytes and the same
+  format `Get-FileHash` writes, so a row written by either runner is comparable by the
+  other — compares them against `schema_migrations` on Supabase, applies what is pending in
+  filename order and records each one. Re-running applies nothing. Exit codes borrow
+  `Apply-Migration.ps1`'s vocabulary: 0 fine, 1 could not finish, 2 the two sides disagree
+  and **nothing was applied**, 3 a migration ran and its row did not get written (the
+  message prints the exact `INSERT` — write it before re-running).
+
+  - `npm run supabase:migrate -- --status` — report only, changes nothing.
+  - `npm run supabase:migrate -- --baseline 086` — record 008..086 as applied, **run
+    nothing**. Needed once per cloud project, and only once.
+
+  **Why a baseline exists at all, and why the runner will not guess one.**
+  `supabase_schema_full.sql` creates `schema_migrations` EMPTY while building every table
+  through the current head — so an empty table on Supabase means "nobody has told me", not
+  "nothing has been applied". A `migration_056`-style bootstrap there would declare 008..056
+  applied by assertion and then re-run 057..086 against a schema that already has them:
+  dropped columns, re-seeded lookups, failed constraints, mid-chain. So the runner stops
+  when `schema_migrations` is empty **and the project already holds tables**, and asks for
+  the baseline. Baseline rows carry a **NULL checksum** — this codebase's word for
+  "recorded, unverified", the same thing migration_056's backfill rows say locally — so they
+  show as UNKNOWN for ever, which is honest: nothing hashed what actually ran.
+
+  **A genuinely empty project needs no baseline** — no application tables, no rows, so the
+  whole chain from 008 is the right thing to run, and that is detected rather than assumed.
+
+  **After `npm run supabase:sync` the baseline must be declared again.** That script drops
+  the project and rebuilds it from `supabase_schema_full.sql`, which takes
+  `schema_migrations` with it.
+
+  **The one difference from psql, worth knowing before it bites.** Each file is sent to `pg`
+  as one simple query, so Postgres wraps it in an implicit transaction — the same net effect
+  as `ON_ERROR_STOP=1` for the files that carry their own `BEGIN;`/`COMMIT;`, and strictly
+  safer for the ones that do not. What cannot survive that is `CREATE INDEX CONCURRENTLY`,
+  `VACUUM` and `ALTER SYSTEM`. No migration uses one today — both files that mention
+  CONCURRENTLY (080, 083) do so in a comment explaining why they did *not*. If a future one
+  does, the run stops on Postgres's own error, rolls that file back and records nothing; run
+  that statement by hand in the SQL Editor rather than working around it in the runner.
+
+  **Exception — manual apply only when a runner can't help:** if `schema_migrations` already has a false entry for a migration that was never actually run (the migration_056 backfill bug, hit in Slice #19.28), both runners will skip it. In that case apply the specific file(s) directly:
   ```powershell
   docker cp src/db/migration_NNN_name.sql ga40prj-postgres:/tmp/mNNN.sql
   docker exec ga40prj-postgres psql -U postgres -d ga40db -f /tmp/mNNN.sql
@@ -38,7 +86,7 @@ paths:
 
 - **DB migration reminders — display these at the start of any migration step:**
   - *Local Docker:* **Do NOT use `npm run db:migrate`** — it exits silently without applying the file (confirmed repeatedly). Use `scripts\Apply-Migration.ps1` instead (see above).
-  - *Supabase:* Paste the migration SQL directly into the Supabase SQL Editor. If using `db:migrate`, first set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards.
+  - *Supabase:* **`npm run supabase:migrate`** — see the workflow above. Pasting into the SQL Editor is no longer the route: it applies the SQL and records nothing, so the next run of the cloud runner reports that migration as still pending and applies it a second time. If using `db:migrate`, first set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards.
 
 - **`pg_dump` schema dump includes PostGIS `topology` schema — causes init conflict.** A schema-only `pg_dump` captures `CREATE SCHEMA topology;`. When this is used as a `docker-entrypoint-initdb.d` init script alongside `01-extensions.sql` (which creates `postgis_topology` and thus the `topology` schema first), psql hits `ERROR: schema "topology" already exists` and aborts with `ON_ERROR_STOP=on`. Fix: change `CREATE SCHEMA topology;` → `CREATE SCHEMA IF NOT EXISTS topology;` in the dump before shipping it.
 
