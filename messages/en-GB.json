@@ -1535,6 +1535,49 @@
       "linkError": "Could not link this person. Please try again.",
       "createError": "Could not create this person. Please try again."
     },
+    "aiReferenceLinker": {
+      "title": "Instruments cited in this document",
+      "subtitle": "Instrument {current} of {total}",
+      "close": "Close",
+      "rawTextLabel": "Text from the document",
+      "unnamedInstrument": "Instrument with no number or date",
+      "printedNumber": "no. {nr}",
+      "purposeUnknown": "The instrument's role could not be determined",
+      "purpose": {
+        "TITLE_CHAIN": "The seller's right comes from this instrument",
+        "SUPPORTING": "Produced as evidence for this document",
+        "PARENT": "The document this act adițional supplements",
+        "PROMISE": "The promise that preceded this sale"
+      },
+      "signal": {
+        "number": "the number",
+        "date": "the date",
+        "type": "the type",
+        "issuer": "the issuer"
+      },
+      "reasonMatched": "Agrees on: {signals}.",
+      "reasonMissing": "Cannot be compared: {signals} — blank on the archived document.",
+      "candidatesTitle": "Archived documents this instrument could be",
+      "noCandidates": "No archived document matches",
+      "noCandidatesBody": "No document carries this number. Most instruments an old deed cites are not in the archive — create a stub, or leave the reference as it is.",
+      "isStub": "stub",
+      "link": "Link",
+      "leave": "Leave",
+      "stub": "Create a stub",
+      "stubTitle": "Create a stub for this instrument",
+      "stubWarning": "This creates a new, page-less document standing in for the instrument. Only create one if it is not already in the archive: when another deed cites the same instrument it will be offered this stub rather than minting a second one.",
+      "stubType": "Document type",
+      "stubTypePlaceholder": "— choose a type —",
+      "stubConfirm": "Create the stub and link",
+      "stubCancel": "Cancel",
+      "alreadyAssociated": "These two documents are already associated. Nothing changed. Dissociate them from the References tab if you want a different relationship.",
+      "alreadyAssociatedAs": "These two documents are already associated, as “{roleName}”. Nothing changed. Dissociate them from the References tab if you want a different relationship.",
+      "roleMissing": "The relationship type “{roleName}” is not in Reference Data, so the link cannot be created with the right direction. Ask an administrator to add it, then try again.",
+      "noPurpose": "It is not known what role this instrument plays on the document, so there is no relationship type to link it under. Leave the reference and associate manually from the References tab.",
+      "referenceGone": "The list of instruments changed in the meantime. Close and reopen this dialog.",
+      "selfReference": "A document cannot be linked to itself.",
+      "saveError": "The operation failed. Please try again."
+    },
     "successionParties": {
       "sectionTitle": "Parties",
       "addButton": "Add Party",
@@ -1583,7 +1626,22 @@
       "dissociating": "Removing…",
       "view": "View",
       "loading": "Loading…",
-      "error": "Failed to load references"
+      "error": "Failed to load references",
+      "roleForward": "this document “{role}” {other}",
+      "roleBackward": "{other} “{role}” this document",
+      "instrumentsTitle": "Instruments cited in this document",
+      "instrumentsNeverRead": "This document has not yet been read for the instruments it cites.",
+      "instrumentsAllAnswered": "{total, plural, =0 {The document was read and cites no instrument.} one {One cited instrument, answered.} other {All # cited instruments have been answered.}}",
+      "instrumentsPending": "{count, plural, one {One cited instrument is waiting for an answer.} other {# cited instruments are waiting for an answer.}}",
+      "openLinker": "Review the cited instruments",
+      "reread": "Re-read the document",
+      "rereading": "Reading…",
+      "rereadCost": "Re-reading sends every page of this document to the AI model and draws on the shared per-minute allowance; several re-reads in a row will be refused for a while.",
+      "rereadConfirm": "Re-reading replaces the list of cited instruments and asks for an answer to each of them again, including the ones already settled. Associations already made are left untouched. Continue?",
+      "rereadBusy": "Too many read requests. Try again in a minute.",
+      "rereadNoPages": "This document has no uploaded pages, so it cannot be read.",
+      "rereadNotConfigured": "AI reading is not configured on the server.",
+      "rereadError": "The read failed. Please try again."
     },
     "associateReference": {
       "title": "Associate Document Reference",
@@ -1600,7 +1658,8 @@
       "associate": "Associate Selected",
       "associating": "Associating…",
       "cancel": "Cancel",
-      "noSelection": "Select at least one document"
+      "noSelection": "Select at least one document",
+      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from the References tab if you want a different relationship."
     },
     "pages": {
       "sectionTitle": "Pages",

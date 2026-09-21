@@ -90,6 +90,40 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
+      /*
+       * ⚠️ **„SUNT DEJA ASOCIATE" IS AN ANSWER NOW, AND IT DOES NOT
+       * NAVIGATE.**                                             (Slice #36.03)
+       *
+       * The POST used to reply 204 whether it wrote a row or hit
+       * `.onConflictDoNothing()`, so a user who ticked a document that was
+       * already associated — to give it a role, which is the whole reason to do
+       * it twice — was returned to the tab showing the OLD role, with nothing
+       * written and nothing said. The route now answers
+       * `{ inserted, skipped, alreadyLinked }`.
+       *
+       * It stops on the sentence rather than navigating under it, for the
+       * reason `ai-party-linker-dialog.tsx` gives one table over: a message
+       * shown while the screen is moving is a message nobody reads. „Anulează"
+       * is one click away. The sentence names the role each already-associated
+       * document carries, because „change it to X" and „it is already X" are
+       * different situations and only the role tells them apart.
+       */
+      const result = (await res.json().catch(() => null)) as {
+        inserted?: number;
+        alreadyLinked?: { documentId: string; roleName: string | null }[];
+      } | null;
+      if (result && result.inserted === 0) {
+        const named = (result.alreadyLinked ?? [])
+          .map((a) => {
+            const doc = items.find((i) => i.id === a.documentId);
+            const label = doc ? (doc.title ?? doc.code) : a.documentId;
+            return a.roleName ? `${label} — „${a.roleName}"` : label;
+          })
+          .join("; ");
+        setSubmitError(t("alreadyAssociated", { documents: named }));
+        setSubmitting(false);
+        return;
+      }
       await queryClient.invalidateQueries({ queryKey: ["document-references", documentId] });
       router.push(`/documents/${encodeURIComponent(documentId)}?tab=references`);
     } catch (err) {

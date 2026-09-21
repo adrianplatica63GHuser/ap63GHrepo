@@ -1535,6 +1535,49 @@
       "linkError": "Asocierea a eșuat. Încercați din nou.",
       "createError": "Crearea a eșuat. Încercați din nou."
     },
+    "aiReferenceLinker": {
+      "title": "Înscrisurile citate în acest document",
+      "subtitle": "Înscrisul {current} din {total}",
+      "close": "Închide",
+      "rawTextLabel": "Text din document",
+      "unnamedInstrument": "Înscris fără număr sau dată",
+      "printedNumber": "nr. {nr}",
+      "purposeUnknown": "Rolul înscrisului nu a putut fi determinat",
+      "purpose": {
+        "TITLE_CHAIN": "Din acest înscris provine dreptul vânzătorului",
+        "SUPPORTING": "Înscris depus ca dovadă la încheierea acestui document",
+        "PARENT": "Documentul pe care acest act adițional îl completează",
+        "PROMISE": "Antecontractul care a precedat această vânzare"
+      },
+      "signal": {
+        "number": "numărul",
+        "date": "data",
+        "type": "tipul",
+        "issuer": "emitentul"
+      },
+      "reasonMatched": "Se potrivesc: {signals}.",
+      "reasonMissing": "Nu se poate compara: {signals} — lipsește pe documentul din arhivă.",
+      "candidatesTitle": "Documente din arhivă care ar putea fi acest înscris",
+      "noCandidates": "Niciun document din arhivă nu se potrivește",
+      "noCandidatesBody": "Nu există niciun document cu acest număr. Cele mai multe înscrisuri citate de un act vechi nu se află în arhivă — puteți crea o schiță sau puteți lăsa referința așa cum este.",
+      "isStub": "schiță",
+      "link": "Leagă",
+      "leave": "Lasă",
+      "stub": "Creează schiță",
+      "stubTitle": "Creează o schiță pentru acest înscris",
+      "stubWarning": "Se creează un document nou, fără pagini, care ține locul acestui înscris. Creați o schiță doar dacă înscrisul nu se află deja în arhivă: dacă un alt act citează același înscris, i se va oferi această schiță în loc să creeze încă una.",
+      "stubType": "Tip document",
+      "stubTypePlaceholder": "— alegeți tipul —",
+      "stubConfirm": "Creează schița și leagă",
+      "stubCancel": "Renunță",
+      "alreadyAssociated": "Cele două documente sunt deja asociate. Nu s-a schimbat nimic. Dezasociați-le din fila Referințe dacă doriți alt tip de relație.",
+      "alreadyAssociatedAs": "Cele două documente sunt deja asociate, ca „{roleName}”. Nu s-a schimbat nimic. Dezasociați-le din fila Referințe dacă doriți alt tip de relație.",
+      "roleMissing": "Tipul de relație „{roleName}” nu există în Date de referință, deci legătura nu poate fi creată cu sensul corect. Cereți unui administrator să-l adauge, apoi încercați din nou.",
+      "noPurpose": "Nu se știe ce rol are acest înscris pe document, deci nu există un tip de relație sub care să fie legat. Lăsați referința și creați asocierea manual din fila Referințe.",
+      "referenceGone": "Lista de înscrisuri s-a schimbat între timp. Închideți și redeschideți această fereastră.",
+      "selfReference": "Un document nu poate fi legat de el însuși.",
+      "saveError": "Operația a eșuat. Încercați din nou."
+    },
     "successionParties": {
       "sectionTitle": "Părți",
       "addButton": "Adaugă parte",
@@ -1583,7 +1626,22 @@
       "dissociating": "Se elimină…",
       "view": "Vizualizează",
       "loading": "Se încarcă…",
-      "error": "Eroare la încărcarea referințelor"
+      "error": "Eroare la încărcarea referințelor",
+      "roleForward": "acest document „{role}” {other}",
+      "roleBackward": "{other} „{role}” acest document",
+      "instrumentsTitle": "Înscrisuri citate în acest document",
+      "instrumentsNeverRead": "Acest document nu a fost încă citit pentru înscrisurile pe care le citează.",
+      "instrumentsAllAnswered": "{total, plural, =0 {Documentul a fost citit și nu citează niciun înscris.} one {Un înscris citat, la care s-a răspuns.} few {Toate cele # înscrisuri citate au primit un răspuns.} other {Toate cele # de înscrisuri citate au primit un răspuns.}}",
+      "instrumentsPending": "{count, plural, one {Un înscris citat așteaptă un răspuns.} few {# înscrisuri citate așteaptă un răspuns.} other {# de înscrisuri citate așteaptă un răspuns.}}",
+      "openLinker": "Verifică înscrisurile citate",
+      "reread": "Recitește documentul",
+      "rereading": "Se citește…",
+      "rereadCost": "Recitirea trimite fiecare pagină a acestui document către modelul AI și se încadrează în limita comună de cereri pe minut; mai multe recitiri una după alta vor fi refuzate temporar.",
+      "rereadConfirm": "Recitirea înlocuiește lista de înscrisuri citate și cere din nou un răspuns pentru fiecare, inclusiv pentru cele deja rezolvate. Asocierile create până acum rămân neatinse. Continuați?",
+      "rereadBusy": "Prea multe cereri de citire. Încercați din nou peste un minut.",
+      "rereadNoPages": "Documentul nu are pagini încărcate, deci nu poate fi citit.",
+      "rereadNotConfigured": "Citirea AI nu este configurată pe server.",
+      "rereadError": "Citirea a eșuat. Încercați din nou."
     },
     "associateReference": {
       "title": "Asociază Document",
@@ -1600,7 +1658,8 @@
       "associate": "Asociază Selecția",
       "associating": "Se asociază…",
       "cancel": "Anulează",
-      "noSelection": "Selectați cel puțin un document"
+      "noSelection": "Selectați cel puțin un document",
+      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din fila Referințe dacă doriți alt tip de relație."
     },
     "pages": {
       "sectionTitle": "Pagini",
