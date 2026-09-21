@@ -556,10 +556,31 @@ describe("only an import may stamp ai_interpreted_at", () => {
       "comments only — records that the re-read re-stamps through runAiInterpret and adds no stamp of its own",
     "lib/import/import-outcome.ts":
       "comment only — records that RefillState is a queue position, NOT a second copy of the column",
+    // Slice #36.03. ⚠️ **WRITES NOTHING, AND THE MENTION IS LOAD-BEARING IN THE
+    // SAME WAY `discover-run.ts`'s IS.** `document.referenced_instruments` is a
+    // new column that had to be classified the moment it existed: versioned
+    // form field, or operational metadata? It is the second, and the way that
+    // decision is recorded — in this route's header and on the column itself —
+    // is by naming the two columns that already settled it, `ai_interpreted_at`
+    // and `import_title`. That is what keeps `referenced_instruments` OUT of
+    // `documentUpdateSchema` and out of `DocumentSnapshot`, so a re-read does
+    // not append a `document_version` row in which no field a user can see has
+    // changed. Delete the mention and the next reader's obvious tidy-up — „put
+    // it through the document PATCH like everything else" — has nothing
+    // standing in front of it.
+    "app/api/documents/[id]/instrument-references/route.ts":
+      "comment only — cites this column as the precedent for referenced_instruments being unversioned; stamps nothing",
 
     // ── Tests. ──
     "__tests__/import-ai-interpret-run.test.ts": "pins the run's PATCH",
     "__tests__/document-status.test.ts":         "pins the derivation",
+    // Slice #36.03. The same sentence, one file over: the writer list's reason
+    // line for `saveReferencedInstruments` explains why it is a SECOND
+    // `document` UPDATE rather than a call to `updateDocument`, and it explains
+    // it by naming this column. A reason that cannot name its precedent is a
+    // reason nobody can check.
+    "__tests__/object-writers-enumerated.test.ts":
+      "comment only — names this column in the reason saveReferencedInstruments is allowed to be a second writer",
   };
 
   it("has no writer, and no new mention, outside that list", () => {
