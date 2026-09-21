@@ -436,6 +436,10 @@ Rules:
 - Choose between two keys by the NAME beside them, never by the key alone. CERTIFICAT_BUNURI is stored as "Certificat de Bunuri" and CERTIFICAT_SARCINI as "Certificat de Sarcini"; AUTORIZATIE is the general "Autorizație" and AUTORIZATIE_CONSTRUIRE is a building permit.
 - ACT_PARTAJ and CONTRACT_PARTAJ both divide co-owned property and are NOT interchangeable. ACT_PARTAJ is the notarial deed that performs the division ("act de partaj", "act de partaj voluntar"); CONTRACT_PARTAJ is the contract the parties agree it under ("contract de partaj"). Read the document's own heading and use that; if the heading says only "partaj" with no other word, choose CONTRACT_PARTAJ.
 - ANTECONTRACT is a promise to sell later ("antecontract", "promisiune de vânzare"), never CONTRACT_VANZARE, which transfers ownership now.
+- ACT_ADITIONAL amends an earlier instrument; CONTRACT_VANZARE transfers ownership. Choose between them by the HEADING printed at the top of the document's FIRST page, never by the recitals: an act adițional recites the whole of the sale it completes — the parties, the land, the price, the seller's title — so its body reads exactly like a sale for most of its length.
+- A heading reading "ACT ADIȚIONAL" (also "ACT ADITIONAL", "ACT ADIȚIONAL LA CONTRACTUL DE VÂNZARE-CUMPĂRARE NR. ...") is ACT_ADITIONAL however much of the parent sale the text then repeats.
+- Two further marks of an act adițional, useful when the heading is smudged: it names a PARENT instrument by number, date and notary ("la contractul de vânzare-cumpărare autentificat sub nr. ... din ... de BNP ..."), and it states a REASON for existing — a missing certificate, a clause the land-book office would not accept, a consent to radiation and intabulation. A sale states a price and transfers possession; an act adițional usually says the price is unchanged.
+- It is normally a different notary, in a much later year, than the act it amends. That on its own decides nothing, and is never a reason to answer ACT_ADITIONAL against a heading that says otherwise.
 - PLAN_AMPLASAMENT_DELIMITARE and PLAN_PARCELAR are single drawings; DOCUMENTATIE_CADASTRALA is the whole surveyor's file that may contain one. Prefer the specific plan when the document IS the drawing.
 - ACT_ALIPIRE, ACT_DEZLIPIRE, ACT_DEZMEMBRARE and ACT_LOTIZARE are four names for two opposite operations on land, and you choose between them by the heading printed at the top of the document's FIRST page. ACT_ALIPIRE MERGES two or more immovables the same owner already holds into a single one ("act de alipire"); the other three SPLIT one immovable into numbered "loturi", each taking its own new cadastral number.
 - Among the three that split: "dezlipire" and "dezmembrare" are the SAME operation under two words, the Civil Code's and the notary's, so answer with whichever word the heading uses and do not try to tell them apart by what was split or into how many lots. ACT_LOTIZARE is the same division when the HEADING names it a lotizare ("act de lotizare") - a body that orders a lotizare under some other heading does not make the document one.
@@ -500,7 +504,23 @@ export function buildExtractSystemPrompt(
   const customLines = templateFields
     .map((f) => {
       const hint = f.aiHint?.trim() ? ` — ${f.aiHint.trim()}` : "";
-      return `    "${f.key}": string | null,  // ${templateFieldFormatHint(f.type)}${hint} (${f.labelRo})`;
+      // Slice #36.01: a `select` carries its allowed values INTO the prompt,
+      // on the same one line. `templateFieldFormatHint` only has the type, so
+      // it says "one of the allowed values below" and the list is appended
+      // here, where the field itself is in hand. Values, not labels: the value
+      // is what lands in `document.custom_fields`, and a model answering with
+      // the caption would store a string the form then shows as an unknown
+      // option — readable, but not the option.
+      //
+      // ⚠️ One line, still. `collapseWhitespace` has already been applied to
+      // every label and hint by `sanitizeTemplateField`, and option values go
+      // through it too, because a newline anywhere in this string breaks the
+      // JSON shape the model is being shown in half.
+      const choices =
+        f.type === "select" && f.options && f.options.length > 0
+          ? ` — exactly one of: ${f.options.map((o) => `"${o.value}"`).join(" | ")}, or null`
+          : "";
+      return `    "${f.key}": string | null,  // ${templateFieldFormatHint(f.type)}${hint}${choices} (${f.labelRo})`;
     })
     .join("\n");
 
@@ -518,9 +538,20 @@ export function buildExtractSystemPrompt(
       "idDocumentNumber": string | null,  // ID card series+number (natural person only)
       "idIssuingAuthority": string | null,
       "domiciliu": string | null,         // address / registered office, as printed
+      "cotaParte": string | null,         // undivided share this party takes IN THIS ROLE, as a percentage number only — "63,64" or "63.64", never "63,64%" and never a fraction. null when the deed states none
+      "cotaSuprafataMp": string | null,   // the equivalent area in square metres where the deed states one ("3.182 mp" -> "3182"), null otherwise
+      "cotaMod": string | null,           // how the share is held: exactly one of "NUME_PROPRIU" | "DEVALMASIE" | "INDIVIZIUNE" | "PRIN_MANDATAR", or null
       "rawText": string                   // the full original text describing this party, verbatim
     }
   ]`
+    : "";
+
+  // Slice #36.01: the cotă rule is its own sentence rather than three longer
+  // comments in the shape above, because the two mistakes it prevents are
+  // about the WHOLE list and not about one key — a deed that states shares
+  // once for a couple, and a deed that states them for the buyers only.
+  const cotaRule = partyRoleNames.length > 0
+    ? "\n- The cotă (\"cotaParte\" / \"cotaSuprafataMp\" / \"cotaMod\") is the share THIS party takes on THIS deed, as the deed states it — never computed, never split evenly because there are three of them, and null when the deed is silent. A single seller selling the whole is 100 only if the deed says so. Spouses who take together in comunitate legală each get the couple's share with \"cotaMod\": \"DEVALMASIE\" — the pair is one block, not two halves. A mandatar signing for somebody else takes no share of his own: give the share to the person he represents, with \"cotaMod\": \"PRIN_MANDATAR\", and null on the mandatar's own entry. A notary has no share."
     : "";
 
   const partiesRule = partyRoleNames.length > 0
@@ -550,7 +581,8 @@ Rules:
 - When the document IS an identity document, count PEOPLE and not card-shaped rectangles. Count 1 for a single person's card however many times that card appears: the FRONT AND BACK of one card, one booklet photographed spread by spread, or two photographs of the same holder are all ONE person. Count a second person ONLY on a second, DIFFERENT CNP, or a different printed name together with a different document series.
 - Dates must be ISO yyyy-mm-dd or null. Convert Romanian format (zi.luna.an) to ISO.
 - Numbers must be numeric strings only (digits + decimal separator), no units.
-- Do not guess. If a field is not visible or not applicable for this document, return null.${partiesRule}
+- Do not guess. If a field is not visible or not applicable for this document, return null.
+- A field offered as "exactly one of" is a closed list. Answer with one of the listed values COPIED EXACTLY, or null when the document does not say — never a word of your own, and never a translation of one of them.${partiesRule}${cotaRule}
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 }
 

@@ -520,6 +520,13 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     idDocumentNumber?:   string | null;
     idIssuingAuthority?: string | null;
     domiciliu?:          string | null;
+    // Slice #36.01 — the cotă-parte the deed gives this party in this role.
+    // Strings, because that is what the model is asked for and what every
+    // other key here is; the numbers they become are `person_document`'s
+    // (36.02), parsed where a row is actually written.
+    cotaParte?:          string | null;
+    cotaSuprafataMp?:    string | null;
+    cotaMod?:            string | null;
     rawText?:            string;
   };
 
@@ -552,6 +559,26 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     idDocumentNumber:   string | null;
     idIssuingAuthority: string | null;
     domiciliu:          string | null;
+    /**
+     * The share this party takes, AS THE DEED STATES IT.        (Slice #36.01)
+     *
+     * Carried out of the model's answer unparsed and unvalidated, exactly like
+     * `cnp` and `domiciliu` beside it: this route matches and reports, it never
+     * writes a `person_document` row. `cotaMod` is not narrowed to the four
+     * values `person_document_cota_mod_check` allows either — a fifth word
+     * from the model is something the linking screen has to show a human, not
+     * something this boundary should silently drop.
+     *
+     * ⚠️ **NOTHING DOWNSTREAM READS THESE YET.** The party-linking dialog does
+     * not carry the share, so today they reach the client and stop there. They
+     * are extracted rather than discarded because the pages have already been
+     * paid for: the alternative is asking the model for the cotă, throwing the
+     * answer away, and re-reading the same scan when the dialog learns to use
+     * it.
+     */
+    cotaParte:          string | null;
+    cotaSuprafataMp:    string | null;
+    cotaMod:            string | null;
     rawText:            string;
     matchCandidate:     NaturalPersonMatchCandidate | JudicialPersonMatchCandidate | null;
     // Fuzzy name-match suggestions — only populated when there's no exact
@@ -668,6 +695,9 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
         idDocumentNumber: p.idDocumentNumber ?? null,
         idIssuingAuthority: p.idIssuingAuthority ?? null,
         domiciliu: p.domiciliu ?? null,
+        cotaParte: p.cotaParte ?? null,
+        cotaSuprafataMp: p.cotaSuprafataMp ?? null,
+        cotaMod: p.cotaMod ?? null,
         rawText: p.rawText ?? "",
         matchCandidate,
         possibleMatches,
