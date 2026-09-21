@@ -8,6 +8,26 @@
 | **State** | `draft` |
 | **Last green** | — |
 
+## ⚠️ Claude cannot drive steps 2–4, and that is permanent
+
+**Typing a password into a field is outside what Claude is allowed to do**, whatever
+the account and whoever asks. So a Claude-driven run of this case starts at step 5, with
+a session somebody else established.
+
+That leaves two honest ways to run it, and the case stays at `draft` until one of them
+happens:
+
+- **Adrian logs in himself**, and Claude reads back steps 5–8. That is a fourth thing to
+  ask of him beyond the three he offered, which is why it is written here rather than
+  assumed.
+- **Promotion to Playwright**, which is the real answer. `e2e/auth.setup.ts` already
+  does exactly this login, reading `E2E_EMAIL` and `E2E_PASSWORD` from `.env` — a spec
+  has no such restriction. This case is therefore a good early candidate for `automated`
+  even though it may never reach `driven`.
+
+**Steps 5–8 were verified on 2026-09-21** against a session already live in the browser,
+and the corrections from that reading are below.
+
 ## What this proves
 
 A real account can log in through the real form and reach the application. Everything
@@ -37,8 +57,8 @@ PowerShell window.**
 | 4 | Presses „Conectare" | The button reads „Se conectează…" while it works |
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
-| 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte" |
-| 8 | Looks at the sidebar footer | „Autentificat ca", and the account's name |
+| 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte", then „Admin-Operațiuni" and „Admin-Configurare", and below them a „RECENTE" list of recently-opened documents |
+| 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
 
 **Nothing is written by this case.** A failed login shows „Utilizator sau parolă
 incorectă" under the form and stays on `/login`.
@@ -50,4 +70,19 @@ wants it.
 
 ## Notes from the runs
 
-_(filled in by the first run)_
+**2026-09-21 — steps 5–8 read against a live session. Three corrections:**
+
+1. **„Autentificat ca <name>" is at the TOP of the sidebar**, directly above the
+   „Nume, cod…" quick-search box — not in the footer, as this file first said. The
+   footer holds „Schimbă parola" and „Ieșire".
+2. **The sidebar has more in it than the case listed**: „Admin-Operațiuni" and
+   „Admin-Configurare" below the five entity sections, and a „RECENTE" list of
+   recently-opened documents below those. Step 7 now says so.
+3. Steps 1–4 cannot be driven by Claude at all. See the block at the top of this file.
+
+**One finding, not a step, recorded because it is a Romanian-primacy issue and this is
+where it was noticed.** The browser tab title is **„Sign in — GA40"** on `/login` and
+**„ga40prj"** on every other screen. Both are English, in `ro-RO`, which is the shipping
+locale. The page bodies are correctly Romanian throughout; it is the `<title>` that was
+never translated. Not fixed here — this slice adds one guard suite and touches nothing
+else — and it is in the handover.

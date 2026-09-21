@@ -31,7 +31,7 @@ Nothing.
 | 2 | Types `TC-` into „Căutare nume / cod" (placeholder „ex. Popescu sau PERS00012") | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „Se caută…", then a result count |
-| 5 | Reads the results | Three rows: `TC-PERS-01 Ion` („Tip" = „Persoană"), `TC-PROP-01 Teren de test` („Proprietate"), `TC-DOC-01 Contract de test` („Document") |
+| 5 | Reads the results | Three rows: **`Ion TC-PERS-01`** („Tip" = „Persoană" — the name renders prenume-first, see TC-PERS-01), `TC-PROP-01 Teren de test` („Proprietate"), `TC-DOC-01 Contract de test` („Document") |
 | 6 | Looks at the „Proveniență" column | All three read „Manual (Adaugă nou)" — they were typed in, not imported |
 | 7 | Sets „Tip entitate" to „Proprietate" and presses „Caută" again | One row, the property |
 | 8 | Presses „Resetează" | The filters clear |
@@ -48,4 +48,14 @@ here lists everything the run left behind, across all three kinds, in one table.
 
 ## Notes from the runs
 
-_(filled in by the first run)_
+_(not yet driven — TC-DOC-01 has to run first, and it needs the operating system's file
+dialog.)_
+
+**One correction already made from TC-PERS-01's run**, because it would have broken
+step 5: a person's name renders **prenume-first** in a list, so the row reads
+`Ion TC-PERS-01`.
+
+**And one thing to check when this case is first driven**: the „Căutare nume / cod"
+filter's placeholder is „ex. Popescu sau PERS00012", but natural-person codes on this
+database begin `PPERS` (`PPERS01621`). Either the placeholder is stale or some other
+entity carries `PERS…`. Find out before treating it as a defect.

@@ -44,15 +44,31 @@ fixed fixture where the existing one will do.
 | ID | Title | Area | Kind | Data folder | State | Last green |
 |---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `draft` | — |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `draft` | — |
-| [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `draft` | — |
-| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `draft` | — |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `driven` | 2026-09-21 |
+| [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `driven` | 2026-09-21 |
+| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `driven` | 2026-09-21 |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `draft` | — |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `draft` | — |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `draft` | — |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `draft` | — |
+
+**Three of the ten have been driven** — TC-PROP-01, TC-PROP-02 and TC-PERS-01, on
+2026-09-21 — and each one's file carries the corrections that run produced. The other
+seven are hypotheses built from the code and `messages/ro-RO.json`; read them as such.
+The corrections were not cosmetic: „Adaugă proprietate" opens a four-way chooser rather
+than the form, „Nr. tarla / sola" is a closed list rather than a text field, saving
+returns to the list rather than to the new record, and the version indicator is in the
+page header rather than beside the corners table. A spec written from the undriven
+version of any of those would have waited forever on a locator that was never going to
+appear — which is the whole argument for `driven` sitting between `draft` and a spec.
+
+**TC-AUTH-01 is a special case and will probably never reach `driven`.** Claude is not
+allowed to type a password into a field, so steps 2–4 are not Claude's to drive. Its
+post-login assertions were read against a live session and corrected; the login itself
+waits for Adrian or, better, for promotion to Playwright, where `e2e/auth.setup.ts`
+already does exactly this with credentials from `.env`.
 
 **Ten cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
