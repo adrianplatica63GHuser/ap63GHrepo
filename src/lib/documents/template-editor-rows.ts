@@ -33,6 +33,7 @@ import {
 } from "@/lib/documents/discover-to-template";
 import type {
   DocumentTemplateField,
+  DocumentTemplateFieldOption,
   DocumentTemplateFieldType,
 } from "@/lib/documents/template-fields";
 import {
@@ -69,6 +70,28 @@ export type TemplateEditorRow = {
    * actually edited.
    */
   storedGroup: { ro: string | null; en: string | null } | null;
+  /**
+   * The notebook tab this row's panel sits on.                 (Slice #36.01)
+   *
+   * One input, two stored columns — the same shape as a free-text group, and
+   * `storedTab` is here for the same reason `storedGroup` is: a row can arrive
+   * with `tabRo: "Stare juridică"` and `tabEn: "Legal status"`, and collapsing
+   * both to the single input's text on every save would rename the English tab
+   * because somebody fixed an unrelated row's AI hint.
+   */
+  tabName: string;
+  storedTab: { ro: string | null; en: string | null } | null;
+  /**
+   * The `select` option list, one option per line, as typed.    (Slice #36.01)
+   *
+   * `value | Etichetă RO | Label EN`, with everything after the value
+   * optional. Parsed by `parseOptionsText` and re-rendered by
+   * `formatOptionsText`, both below and both pure, so what the administrator
+   * sees is what is stored. Meaningful only while `type === "select"`, and
+   * carried untouched on every other type so switching a field to `select` and
+   * back does not destroy a list somebody typed.
+   */
+  optionsText: string;
 };
 
 /** Build an editor row from a stored field. */
@@ -78,6 +101,7 @@ export function rowFromStoredField(
 ): TemplateEditorRow {
   const bucket = field.groupRo || field.groupEn || "";
   const known = templateFieldGroupOf(bucket);
+  const tab = field.tabRo || field.tabEn || "";
   return {
     rowId: `stored-${index}-${field.key}`,
     key: field.key,
@@ -91,6 +115,9 @@ export function rowFromStoredField(
     groupChoice: bucket ? (known ?? GROUP_CUSTOM) : GROUP_NONE,
     groupCustom: bucket && !known ? bucket : "",
     storedGroup: bucket && !known ? { ro: field.groupRo ?? null, en: field.groupEn ?? null } : null,
+    tabName: tab,
+    storedTab: tab ? { ro: field.tabRo ?? null, en: field.tabEn ?? null } : null,
+    optionsText: formatOptionsText(field.options ?? null),
   };
 }
 
@@ -106,6 +133,9 @@ export function blankEditorRow(rowId: string): TemplateEditorRow {
     groupChoice: GROUP_NONE,
     groupCustom: "",
     storedGroup: null,
+    tabName: "",
+    storedTab: null,
+    optionsText: "",
   };
 }
 
@@ -273,6 +303,13 @@ export function fieldFromEditorRow(
       ? { ro: stored.ro, en: stored.en }
       : { ro: custom || null, en: custom || null };
 
+  // Slice #36.01: the tab is one input over two stored columns, decided by the
+  // same untouched/edited test the free-text group uses above.
+  const tab = row.tabName.trim();
+  const tabUntouched = row.storedTab !== null && tab === (row.storedTab.ro || row.storedTab.en || "");
+  const tabPair: { ro: string | null; en: string | null } =
+    tabUntouched && row.storedTab ? row.storedTab : { ro: tab || null, en: tab || null };
+
   return {
     key,
     labelRo: row.labelRo.trim() || row.labelEn.trim(),
@@ -284,7 +321,73 @@ export function fieldFromEditorRow(
     aiHint: row.aiHint.trim() || null,
     groupRo: group.ro,
     groupEn: group.en,
+    tabRo: tabPair.ro,
+    tabEn: tabPair.en,
+    // ⚠️ **Only a `select` stores options.** Leaving a list on a field the
+    // administrator has just turned back into `text` would put choices into
+    // the extraction prompt for a field that is no longer a choice — and the
+    // typed text is still on the row, so switching back restores it.
+    options: row.type === "select" ? parseOptionsText(row.optionsText) : null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// The `select` option list, as one text box            (Slice #36.01)
+// ---------------------------------------------------------------------------
+
+/** The separator between an option's stored value and its two labels. */
+const OPTION_PART = "|";
+
+/**
+ * Parse the options box: one option per line, `value | RO | EN`.
+ *
+ * ⚠️ **NEVER THROWS, AND NEVER REPORTS.** It is called on every keystroke to
+ * render a live preview and again at save time, on text somebody is halfway
+ * through typing. A half-typed line is not an error, it is a line with one
+ * part — so the value doubles as both labels until the rest arrives.
+ *
+ * Blank lines are skipped, a duplicate value keeps the FIRST spelling (two
+ * options sharing a stored value cannot both be shown as chosen), and `null`
+ * comes back for a box with nothing usable in it so the field stores no
+ * `options` key at all rather than an empty array.
+ */
+export function parseOptionsText(text: string): DocumentTemplateFieldOption[] | null {
+  const out: DocumentTemplateFieldOption[] = [];
+  const seen = new Set<string>();
+  for (const line of text.split(/\r?\n/)) {
+    const parts = line.split(OPTION_PART).map((part) => part.trim());
+    const value = parts[0] ?? "";
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    const labelRo = parts[1] || value;
+    const labelEn = parts[2] || labelRo;
+    out.push({ value, labelRo, labelEn });
+  }
+  return out.length > 0 ? out : null;
+}
+
+/**
+ * The inverse: the stored list as the box shows it.
+ *
+ * ⚠️ **Round-trips.** `parseOptionsText(formatOptionsText(list))` is `list`
+ * for every list this module can produce, which is what lets the editor open a
+ * stored field, change a label three rows down and save without rewriting the
+ * other options. The short forms are emitted where they are unambiguous — a
+ * value whose two labels are both itself prints as the bare value — so a list
+ * typed as three bare words comes back as three bare words rather than as nine
+ * repetitions of them.
+ */
+export function formatOptionsText(
+  options: readonly DocumentTemplateFieldOption[] | null,
+): string {
+  if (!options || options.length === 0) return "";
+  return options
+    .map((o) => {
+      if (o.labelRo === o.value && o.labelEn === o.value) return o.value;
+      if (o.labelEn === o.labelRo) return `${o.value} ${OPTION_PART} ${o.labelRo}`;
+      return `${o.value} ${OPTION_PART} ${o.labelRo} ${OPTION_PART} ${o.labelEn}`;
+    })
+    .join("\n");
 }
 
 /** The whole payload, in row order. */
@@ -318,7 +421,9 @@ export function editorRowsEqual(
       row.type === other.type &&
       row.aiHint === other.aiHint &&
       row.groupChoice === other.groupChoice &&
-      row.groupCustom === other.groupCustom
+      row.groupCustom === other.groupCustom &&
+      row.tabName === other.tabName &&
+      row.optionsText === other.optionsText
     );
   });
 }

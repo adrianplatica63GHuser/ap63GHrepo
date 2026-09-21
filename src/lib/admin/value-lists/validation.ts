@@ -245,13 +245,31 @@ export const documentTemplateFieldSchema = z.object({
   key:     z.string().min(1, "required"),
   labelRo: z.string().min(1, "required"),
   labelEn: z.string().min(1, "required"),
-  type:    z.enum(["text", "textarea", "date", "number"]),
+  // Slice #36.01 added "select". Appended rather than inserted: this enum is
+  // the wire shape both write doors validate, and a stored type it refuses is
+  // a field the administrator can no longer save a label on.
+  type:    z.enum(["text", "textarea", "date", "number", "select"]),
   order:   z.coerce.number().int().min(0).default(0),
   aiHint:  z.string().nullish(),
   // Optional sub-panel grouping (e.g. "Financiar" / "Financial") — see the
   // DocumentTemplateField comment for how ungrouped fields behave.
   groupRo: z.string().nullish(),
   groupEn: z.string().nullish(),
+  // Slice #36.01 — the notebook page this field's panel sits on, and the
+  // authored choices for a `select`. Both optional, both jsonb on the same
+  // row, so neither is a schema migration. A type carrying no tab at all
+  // renders exactly as it did before that slice.
+  tabRo:   z.string().nullish(),
+  tabEn:   z.string().nullish(),
+  options: z
+    .array(
+      z.object({
+        value:   z.string().min(1, "required"),
+        labelRo: z.string().min(1, "required"),
+        labelEn: z.string().min(1, "required"),
+      }),
+    )
+    .nullish(),
 });
 
 export const documentTypeSchema = z.object({

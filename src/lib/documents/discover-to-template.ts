@@ -50,6 +50,7 @@ import { GENERIC_EXTRACT_FIELD_DESCRIPTIONS } from "@/lib/import/classify-prompt
 import type { DiscoverConfidence, DiscoverPair } from "@/lib/documents/discover-log";
 import type {
   DocumentTemplateField,
+  DocumentTemplateFieldOption,
   DocumentTemplateFieldType,
 } from "@/lib/documents/template-fields";
 
@@ -303,6 +304,13 @@ function plausibleDate(year: number, month: number, day: number): boolean {
  *    guessing which one a scan meant is not this module's business.
  *
  * One sample is thin evidence, which is exactly why this is a proposal.
+ *
+ * ⚠️ **IT NEVER PROPOSES `select`** (Slice #36.01), and that is deliberate
+ * rather than an omission. An option list is AUTHORED — it is the small closed
+ * set a clause can be in, decided by reading the corpus — and one document's
+ * value is evidence of exactly one member of it. Proposing `select` from a
+ * single sample would mint a dropdown with one choice, which is a field nobody
+ * can fill correctly on the second document.
  */
 export function inferFieldType(value: string): DocumentTemplateFieldType {
   if (value.includes("\n") || value.length >= TEXTAREA_MIN_LENGTH) return "textarea";
@@ -1182,7 +1190,66 @@ export function sanitizeTemplateField(field: DocumentTemplateField): DocumentTem
     aiHint: hint || null,
     groupRo: field.groupRo ? collapseWhitespace(field.groupRo) : null,
     groupEn: field.groupEn ? collapseWhitespace(field.groupEn) : null,
+    // Slice #36.01 — the notebook tab and the `select` option list.
+    //
+    // ⚠️ **THEY HAVE TO BE NAMED HERE OR THEY ARE DELETED.** This function
+    // builds a NEW object rather than spreading the one it was given, and it
+    // is the single choke point every write into `template_fields` passes
+    // through — including the Reference Data editor's full-row replace. A
+    // property it does not mention is silently dropped, so a tab authored in
+    // the editor would survive exactly until the next unrelated label edit.
+    //
+    // Collapsed like the labels because a tab name is rendered on a button and
+    // an option label inside an `<option>`; a newline in either is a line the
+    // extraction prompt would break in half, the same hazard
+    // `collapseWhitespace` exists for.
+    tabRo: field.tabRo ? collapseWhitespace(field.tabRo) : null,
+    tabEn: field.tabEn ? collapseWhitespace(field.tabEn) : null,
+    options: sanitizeFieldOptions(field.options),
   };
+}
+
+/**
+ * Clean one field's `select` options.                           (Slice #36.01)
+ *
+ * ⚠️ **`parseFieldOptions` in `template-fields.ts` does something that looks
+ * identical, and the pair is the same deliberate split as
+ * `parseTemplateFields` / `sanitizeTemplateField` above it.** That one is the
+ * READ side — it runs on every row that comes out of the database, is
+ * framework-free, and must never throw whatever the jsonb holds. This is the
+ * WRITE side: it is the choke point between a keyboard and `template_fields`,
+ * and it is where `MAX_LABEL_LENGTH` and `collapseWhitespace` apply, neither
+ * of which the read side may impose on data somebody already stored. Merging
+ * them would mean either clipping stored labels on read or letting a typed one
+ * through unclipped.
+ *
+ * Empty-valued and duplicate-valued entries are dropped: `value` is what lands
+ * in `document.custom_fields`, so two options sharing one is two captions for
+ * one stored answer and a `<select>` that cannot show which was meant. A label
+ * emptied by collapsing falls back to the other locale and then to the value —
+ * never to "", which would render a choice with no caption. Returns null
+ * rather than [] so a non-select field stores nothing at all.
+ */
+export function sanitizeFieldOptions(
+  options: DocumentTemplateFieldOption[] | null | undefined,
+): DocumentTemplateFieldOption[] | null {
+  if (!Array.isArray(options)) return null;
+  const out: DocumentTemplateFieldOption[] = [];
+  const seen = new Set<string>();
+  for (const option of options) {
+    if (!option) continue;
+    const value = collapseWhitespace(String(option.value ?? ""));
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    const labelRo = collapseWhitespace(String(option.labelRo ?? "")).slice(0, MAX_LABEL_LENGTH).trim();
+    const labelEn = collapseWhitespace(String(option.labelEn ?? "")).slice(0, MAX_LABEL_LENGTH).trim();
+    out.push({
+      value,
+      labelRo: labelRo || labelEn || value,
+      labelEn: labelEn || labelRo || value,
+    });
+  }
+  return out.length > 0 ? out : null;
 }
 
 /**
