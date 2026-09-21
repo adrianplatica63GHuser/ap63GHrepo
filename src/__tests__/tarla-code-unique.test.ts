@@ -952,19 +952,78 @@ describe("§6 every confirm.errors reader passes an ICU values object", () => {
   });
 
   /**
-   * And the other half of the invariant: exactly one message under this
-   * namespace has a placeholder. If a second ever gains one, the assertion
-   * above is what keeps it renderable — this one is what makes the change
-   * visible.
+   * And the other half of the invariant: which messages under this namespace
+   * carry a placeholder, and whether the readers supply it.
+   *
+   * ⚠️ **THIS LIST WAS `["tarlaCodeTaken"]` AND THE TRIPWIRE EARNED ITS KEEP.**
+   * Slice #36.02 gave `roleMergeCollides` a `{collisions}` placeholder, this
+   * assertion went red, and what it turned up was not a stale list: every
+   * reader was passing `{ code }` and nothing else, so a refused role merge
+   * rendered the literal text `{collisions}` to the user — no throw, nothing
+   * logged, exactly the silent failure `value-list-modal.tsx` documents beside
+   * its own call site. The count had been on the wire since #36.02 and
+   * `throwRequestFailed` dropped it. #36.03 plumbed it through.
+   *
+   * ⚠️ **SO WIDENING THE LIST ALONE WOULD HAVE HIDDEN A LIVE BUG**, which is
+   * why the assertion below it exists: the names are now DERIVED from the
+   * messages and checked against what the readers actually pass, so the next
+   * message to gain a placeholder fails on the thing that matters rather than
+   * on a list somebody has to remember to update.
    */
+  const PLACEHOLDER_NAMES_SUPPLIED = ["code", "collisions"] as const;
+
   it.each([
     ["ro-RO", messages("ro-RO")],
     ["en-GB", messages("en-GB")],
-  ])("%s — tarlaCodeTaken is the only message here that takes an argument", (_locale, m) => {
+  ])("%s — the messages here that take an argument", (_locale, m) => {
     const errors = at(m, "valueList.confirm.errors") as Record<string, string>;
     const withArgs = Object.entries(errors)
       .filter(([, text]) => /\{[a-zA-Z]/.test(text))
       .map(([key]) => key);
-    expect(withArgs).toEqual(["tarlaCodeTaken"]);
+    expect(withArgs.sort()).toEqual(["roleMergeCollides", "tarlaCodeTaken"]);
+  });
+
+  /**
+   * The invariant the list above was standing in for: every placeholder NAME
+   * any of these messages uses is one the readers pass a value for. Derived
+   * from the messages rather than remembered, in the shape `FAILURE_CODES`
+   * itself uses — a message that gains `{rowCount}` tomorrow fails here, naming
+   * the placeholder nobody supplies, instead of rendering it to a user.
+   */
+  it.each([
+    ["ro-RO", messages("ro-RO")],
+    ["en-GB", messages("en-GB")],
+  ])("%s — every placeholder is a name the readers supply", (_locale, m) => {
+    const errors = at(m, "valueList.confirm.errors") as Record<string, string>;
+    const used = new Set<string>();
+    for (const text of Object.values(errors)) {
+      for (const match of text.matchAll(/\{\s*([a-zA-Z][a-zA-Z0-9_]*)/g)) {
+        used.add(match[1]);
+      }
+    }
+    // Asserted as a sorted sentence so a failure names the placeholder rather
+    // than printing a set difference.
+    const unsupplied = [...used]
+      .filter((n) => !(PLACEHOLDER_NAMES_SUPPLIED as readonly string[]).includes(n))
+      .sort();
+    expect(`unsupplied placeholders: ${unsupplied.join(", ") || "(none)"}`)
+      .toBe("unsupplied placeholders: (none)");
+  });
+
+  /**
+   * …and the other direction: every name the readers pass is one some message
+   * actually uses. Without this, `PLACEHOLDER_NAMES_SUPPLIED` could be padded
+   * to green the test above without anyone touching a reader.
+   */
+  it("every name the readers are credited with is passed at every call site", () => {
+    for (const [file, source] of READERS) {
+      for (const call of errorCalls(source)) {
+        for (const name of PLACEHOLDER_NAMES_SUPPLIED) {
+          expect(`${file}: ${call.slice(0, 50)} … supplies ${name}? ` +
+            `${new RegExp(`\\b${name}\\s*:`).test(call) ? "yes" : "NO"}`)
+            .toBe(`${file}: ${call.slice(0, 50)} … supplies ${name}? yes`);
+        }
+      }
+    }
   });
 });

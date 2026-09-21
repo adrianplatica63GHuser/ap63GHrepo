@@ -410,7 +410,7 @@ function EditForm({
   // that already exists. `tarlaCodeTaken` is the first sentence on this screen
   // that has something to quote, and quoting it is the point: `t3` and `T3`
   // differ by exactly what the person cannot see.
-  const [error, setError] = useState<{ code: FailureCode; detail?: string } | null>(null);
+  const [error, setError] = useState<{ code: FailureCode; detail?: string; collisions?: number } | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   const qc = useQueryClient();
@@ -424,7 +424,7 @@ function EditForm({
     onError: (err: Error) =>
       setError(
         err instanceof RequestFailedError
-          ? { code: err.code, detail: err.detail }
+          ? { code: err.code, detail: err.detail, collisions: err.collisions }
           : { code: "generic" },
       ),
   });
@@ -545,6 +545,7 @@ function EditForm({
               `tarla-code-unique.test.ts` §6 pins that every reader passes one. */}
           {t(`confirm.errors.${error.code}` as Parameters<typeof t>[0], {
             code: error.detail ?? "",
+            collisions: error.collisions ?? 0,
           })}
         </p>
       )}
@@ -1732,7 +1733,7 @@ function DeleteDialog({
   // A code and, since Slice #34.32, the one value a sentence may quote —
   // symmetric with the save form above, for `removeRow`'s reason: a shape that
   // can hold the detail cannot silently drop it.
-  const [failure, setFailure] = useState<{ code: FailureCode; detail?: string } | null>(null);
+  const [failure, setFailure] = useState<{ code: FailureCode; detail?: string; collisions?: number } | null>(null);
   const [movedTotal, setMovedTotal] = useState<number | null>(null);
   /**
    * Whitelist ticks the move granted the target.               (Slice #29.13)
@@ -1780,7 +1781,7 @@ function DeleteDialog({
     onError: (err: Error) =>
       setFailure(
         err instanceof RequestFailedError
-          ? { code: err.code, detail: err.detail }
+          ? { code: err.code, detail: err.detail, collisions: err.collisions }
           : { code: "generic" },
       ),
   });
@@ -1822,7 +1823,7 @@ function DeleteDialog({
       }
       setFailure(
         err instanceof RequestFailedError
-          ? { code: err.code, detail: err.detail }
+          ? { code: err.code, detail: err.detail, collisions: err.collisions }
           : { code: "generic" },
       );
     },
@@ -2137,13 +2138,18 @@ function DeleteDialog({
         {failure && (
           <p role="alert" className="mb-2 text-xs text-red-600 dark:text-red-400">
             {/* Values passed for the reason the save form's copy of this
-                states. This dialog's `failure` can only be a delete or a move
-                failure, neither of which takes an argument today — but it
-                carries `detail` anyway rather than hard-coding `""`, so the day
-                one does, the sentence names the row instead of quoting
-                nothing. */}
+                states. ⚠️ **"neither of which takes an argument today" stood
+                here and was made false by #36.02** — this dialog's `failure`
+                can be a delete or a MOVE failure, and a move refused as
+                `ROLE_MERGE_COLLIDES` takes `{collisions}`. The route has sent
+                the count since that slice, expressly "so the dialog can say how
+                many and where"; until #36.03 it stopped at `throwRequestFailed`
+                and this sentence rendered the literal text `{collisions}` to
+                the user. Both names go in, for the unconditional reason the
+                save form's comment gives. */}
             {t(`confirm.errors.${failure.code}` as Parameters<typeof t>[0], {
               code: failure.detail ?? "",
+              collisions: failure.collisions ?? 0,
             })}
           </p>
         )}

@@ -161,7 +161,7 @@ function AddForm({
       // nothing logged. This panel resolves its code through the same shared
       // `FailureCode` union as that one, and nothing its own route can answer
       // takes an argument today.
-      setError(tErr(err instanceof RequestFailedError ? err.code : "generic", { code: "" })),
+      setError(tErr(err instanceof RequestFailedError ? err.code : "generic", { code: "", collisions: 0 })),
   });
 
   function handleSubmit() {
@@ -462,7 +462,7 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
       setConfirmDeleteId(null);
     },
     onError: (err: Error) =>
-      setDeleteError(tErr(err instanceof RequestFailedError ? err.code : "generic", { code: "" })),
+      setDeleteError(tErr(err instanceof RequestFailedError ? err.code : "generic", { code: "", collisions: 0 })),
   });
 
   // Close on Escape

@@ -180,8 +180,8 @@ export class RequestFailedError extends Error {
    *                                                             (Slice #34.32)
    *
    * ⚠️ **NOT the server's `error` string, which is what this whole module
-   * exists to keep off the screen.** It is a VALUE the server looked up — today
-   * only `takenBy`, the tarla code that already exists — and it is rendered
+   * exists to keep off the screen.** It is a VALUE the server looked up —
+   * `takenBy`, the tarla code that already exists — and it is rendered
    * inside a Romanian sentence written on this side, never on its own. Optional
    * because every other failure has nothing to quote: none of the four readers
    * NEEDS the value, and the two that render a sentence fall back to `""`.
@@ -191,7 +191,32 @@ export class RequestFailedError extends Error {
    * `document-persons-modal.tsx` gained a values argument, in the same commit.
    * Every reader was touched; none of them needs the value.)
    */
-  constructor(readonly code: FailureCode, readonly detail?: string) {
+  /**
+   * The second quotable value: how many rows a refused role merge would have
+   * turned into duplicates.                                    (Slice #36.03)
+   *
+   * ⚠️ **A SEPARATE FIELD RATHER THAN A SECOND USE OF `detail`, AND THE
+   * MESSAGE IS WHY.** `confirm.errors.roleMergeCollides` takes `{collisions}`
+   * and `confirm.errors.tarlaCodeTaken` takes `{code}` — two placeholders with
+   * two names, so one string field cannot serve both: a reader passing
+   * `{ code: detail }` for a collision message supplies a name the sentence
+   * never mentions, and `use-intl` then returns the text VERBATIM, literal
+   * `{collisions}` and all, with no throw and nothing logged. That is the
+   * silent failure `value-list-modal.tsx` measured and documented beside its
+   * own call site, and it is what shipped: the reassign route has carried
+   * `collisions` since #36.02 ("so the dialog can say how many and where"),
+   * `throwRequestFailed` dropped it on the floor, and every reader rendered the
+   * placeholder to the user.
+   *
+   * Optional for the same reason `detail` is: no other failure has a count, and
+   * the readers fall back to `0`, which every message without the placeholder
+   * ignores.
+   */
+  constructor(
+    readonly code: FailureCode,
+    readonly detail?: string,
+    readonly collisions?: number,
+  ) {
     super(code);
     this.name = "RequestFailedError";
   }
@@ -268,6 +293,21 @@ export function takenByOf(body: unknown): string | null {
 }
 
 /**
+ * The collision count a refused role merge carries, or `null`.
+ *                                                              (Slice #36.03)
+ *
+ * Shaped exactly like `takenByOf` and exported for the same two reasons: one
+ * place decides what counts as a usable count, and the tests read the body the
+ * way `throwRequestFailed` does. A non-finite or negative number is `null`
+ * rather than `0`, because "no count" and "zero collisions" are different
+ * answers and only the first may fall back.
+ */
+export function collisionsOf(body: unknown): number | null {
+  const value = (body as { collisions?: unknown } | null)?.collisions;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+/**
  * Throw the right `RequestFailedError` for a response that is not ok.
  *
  * `formRejects400` is for the doors where a 400 means the form: the „Persoană
@@ -301,6 +341,11 @@ export async function throwRequestFailed(
   }
   // Slice #34.32: the value the sentence may quote, carried beside the code.
   // `takenByOf` answers `null` for every other failure, so this is a no-op on
-  // all of them.
-  throw new RequestFailedError(mapped, takenByOf(body) ?? undefined);
+  // all of them. Slice #36.03 adds the second one the same way — `collisionsOf`
+  // is `null` for everything except a refused role merge.
+  throw new RequestFailedError(
+    mapped,
+    takenByOf(body) ?? undefined,
+    collisionsOf(body) ?? undefined,
+  );
 }
