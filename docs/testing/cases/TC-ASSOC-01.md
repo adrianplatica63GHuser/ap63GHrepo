@@ -22,11 +22,32 @@ save**.
 
 ## What Adrian is asked for
 
-**One question of subject matter, once:** on a Contract de Vânzare, which role should a
-buyer holding half the property be given — and is `50` the cotă-parte a notary would
-write, or `1/2`? Both are accepted by the field; the case records whichever Adrian says
-is the ordinary one, and that answer then belongs in this file rather than in anybody's
-memory.
+**Nothing. The one question this case had was answered on 2026-09-21 and the answer is
+below**, which is what a case file is for — the next person to run this does not have to
+ask again.
+
+### The answer, and what it means on screen
+
+> **Inside the contract itself, keep the standard label — Purchaser / „Cumpărător" — and
+> add a short qualifier that they already own a share. A notary writes `50%`.**
+> — Adrian, 2026-09-21
+
+Two consequences for the steps:
+
+- **The role is „Cumpărător"**, not a special one. It is a seeded role
+  (`src/db/migration_013_person_roles.sql`, with the hint „(Dobânditor)"), and
+  `migration_014_doc_type_person_role.sql` offers it on a Contract de Vânzare. A buyer
+  who already holds a share is still a buyer; the deed does not rename them.
+- **The qualifier is a separate column, not a second role.** The screen's place for it is
+  **„Mod de deținere"** — the values are „în nume propriu", „devălmășie",
+  „indiviziune" and „prin mandatar" (`document.persons.cotaMod.*`). „Indiviziune" is the
+  one that records an undivided share, so that is what this case sets. Do **not** reach
+  for „Coproprietar" as the role: it exists (`migration_013`, „(în cazuri de
+  indiviziune)"), and using it here would say the person's part in the deed was
+  co-ownership rather than purchase.
+- **The cotă-parte is written `50%`**, with the percent sign, because that is what the
+  paperwork says. The field also accepts `50`, `63,64` and `1/2` — its own error message
+  offers all three shapes — but the case types what a notary types.
 
 ## Steps
 
@@ -36,18 +57,24 @@ memory.
 | 2 | Presses the tab „Asocieri", then „Persoane" | „Nicio persoană asociată acestui act" |
 | 3 | Presses „Asociază" | The heading „Asociere persoană", with fields „Nume", „Cod" and „Rol" |
 | 4 | Types `TC-PERS-01` into „Nume" | The results table fills; one row, „Tip" = „Fizică" |
-| 5 | Chooses a role in „Rol" (placeholder „— fără rol —") | The role is selected |
+| 5 | Chooses **„Cumpărător"** in „Rol" (placeholder „— fără rol —") | The role is selected |
 | 6 | Ticks the row for `TC-PERS-01 Ion` | The row is selected |
 | 7 | Presses „Asociază selecția" | The button reads „Se asociază…", then the screen returns to the document |
-| 8 | Looks at „Persoane" | A row: „Cod", „Nume" = `TC-PERS-01 Ion`, „Rol" = the role chosen |
-| 9 | Types `50` into that row's „Cotă-parte" | „Se salvează…" appears briefly |
-| 10 | Looks under the table | „Total <rol>: 50%" |
-| 11 | Reads the warning beside it | „Cotele pentru „<rol>" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." |
-| 12 | Changes the cotă-parte to `100` | The total becomes „Total <rol>: 100%" and the warning is gone |
+| 8 | Looks at „Persoane" | A row: „Cod", „Nume" = `Ion TC-PERS-01` (prenume first — see TC-PERS-01), „Rol" = „Cumpărător" |
+| 9 | Types `50%` into that row's „Cotă-parte" | „Se salvează…" appears briefly |
+| 10 | Sets „Mod de deținere" on that row to „indiviziune" | The qualifier is recorded beside the share |
+| 11 | Looks under the table | „Total Cumpărător: 50%" |
+| 12 | Reads the warning beside it | „Cotele pentru „Cumpărător" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." |
+| 13 | Changes the cotă-parte to `100%` | The total becomes „Total Cumpărător: 100%" and the warning is gone |
 
-Step 11 is the assertion that matters most: the application **warns and saves anyway**.
+Step 12 is the assertion that matters most: the application **warns and saves anyway**.
 A version that refused the save would be wrong — a deed can say whatever it says, and
 the archive records it.
+
+**If „Cumpărător" is not offered in „Rol"**, the screen says so itself — „Rolul
+„{roleName}" nu este configurat încă pentru acest tip de document." That is a finding,
+not a step to work around: the role is seeded and wired to this document type, so its
+absence means the reference data on that database has drifted.
 
 ## At the end — leaving things as they were found
 
@@ -57,4 +84,15 @@ link is removed.
 
 ## Notes from the runs
 
-_(filled in by the first run)_
+_(not yet driven — TC-DOC-01 has to run first, and it needs the operating system's file
+dialog.)_
+
+**Two things already corrected without a run**, both from TC-PERS-01's first run, because
+they would have failed step 8 on sight: a person's name renders **prenume-first**, and
+the subject-matter answer above has replaced the open question the case shipped with.
+
+**What to watch for on the first real run.** The three-part shape of step 9-10 —
+cotă-parte, „Mod de deținere", and the per-role total underneath — is read from
+`messages/ro-RO.json` and has never been seen working together. The most likely
+correction is that „Mod de deținere" is not an inline cell on the row but lives
+somewhere else on the screen.
