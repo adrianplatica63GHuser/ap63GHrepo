@@ -240,9 +240,20 @@ is a decision to state, not a permission to request.
   PowerShell 7** (`pwsh` only — they are a ParserError in 5.1) and are chained with `&&`. The ones he
   actually gets are the verification sequence, the push, and the occasional unblock. The sequence is
   ordered around the dev server — `npm run e2e` needs it **running**, and the rest need it **stopped**,
-  not merely don't need it: leaving it up makes `tsc` produce no output at all — it reads
-  `.next/types/**` while `next dev` rewrites it underneath — and makes Jest's workers OOM (see
-  `C:\dev\.claude\rules\sandbox-and-toolchain.md`). So it ships as two blocks, `npm run e2e` with the
+  not merely don't need it: leaving it up makes `tsc` read `.next/types/**` while `next dev`
+  rewrites it underneath, and makes Jest's workers OOM (see
+  `C:\dev\.claude\rules\sandbox-and-toolchain.md`). **That first one has TWO faces and this
+  file used to name only the quiet one.** Sometimes `tsc` produces no output at all. Sometimes it
+  produces a wall of syntax errors in a file nobody wrote — measured #36.04, eight of them in
+  `.next/dev/types/routes.d.ts`, the worst reading
+  `error TS1128: Declaration or statement expected.` over the line `.js App Router route handlers`,
+  which is the tail of a JSDoc comment whose opening had not been written yet. **The tell is the
+  path**: every error under `.next/` is generated code caught mid-write, never the slice. Stopping
+  the server is not enough on its own — the truncated file is still on disk and the next `tsc`
+  reads it again — so the recovery is `Remove-Item -Recurse -Force .\.next\dev` and then the
+  block, and `next dev` regenerates it at its next start. And because the block is chained with
+  `&&`, a `tsc` that dies this way means **`npx jest` never ran** — do not read the run as three
+  greens and a red. So it ships as two blocks, `npm run e2e` with the
   dev server up, then, with it stopped, `npm run lint && npx tsc --noEmit && npx jest`. **The push is
   its own line, never chained onto that.** Chaining it would gate the push on the second block while
   `npm run e2e` — which is not in the chain — could not stop it, so a green chain would push over a
