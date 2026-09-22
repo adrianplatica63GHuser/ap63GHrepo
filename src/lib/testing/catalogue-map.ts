@@ -141,6 +141,28 @@ export const CATALOGUE_OPTED_OUT: Readonly<Record<string, string>> = {
     "A bare redirect to /admin/global-search. It renders no UI, so there is nothing a person can do on it. TC-SRCH-01 covers where it lands.",
 };
 
+/**
+ * Cases that have a Playwright spec WITHOUT having reached `confirmed`, and why.
+ *                                                              (Slice #36.06)
+ *
+ * The catalogue's rule is that only a `confirmed` case is promoted: a spec is
+ * translated from a case file that has survived two hand runs, never from the
+ * application. `test-catalogue-coverage.test.ts` enforces it — a row whose
+ * `Spec` column names a file must be `confirmed` or `automated` — and this map
+ * is the only way past it.
+ *
+ * ⚠️ **ONE ENTRY, AND IT IS MEANT TO STAY ONE.** An exception written only in
+ * prose becomes a precedent the first time somebody is in a hurry; written
+ * here, adding a second one is a diff a reviewer sees, with its reason beside
+ * it. The same paragraph is in docs/testing/TEST-CATALOGUE.md.
+ */
+export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>> = {
+  "TC-AUTH-01":
+    "Claude may not type a password into a field, so the case's login steps can never be driven by hand. " +
+    "e2e/auth.setup.ts performs them on every run from E2E_EMAIL / E2E_PASSWORD in .env, and the spec asserts " +
+    "what the case asserts after login; its green run is its own proof.",
+};
+
 /** Strips a trailing slash and any query/hash, and guarantees a leading slash. */
 function normalise(pathname: string): string {
   let p = pathname.split("?")[0].split("#")[0];

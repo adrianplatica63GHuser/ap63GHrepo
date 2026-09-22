@@ -25,12 +25,33 @@ workflows, the database scripts, and what nobody tests — see
 | `draft` | Written from the code and the message file. **Never run.** Treat its steps as a hypothesis. |
 | `driven` | Claude has driven it once through the real browser and **corrected the case file against what actually happened**. Most of the value of a first run is that correction. |
 | `confirmed` | Driven a second time, unchanged, green. "Unchanged" is measured against the file as it stood when the run began: the first run after the last correction that needs none, and on which only „Notes from the runs" is written. |
-| `automated` | A Playwright spec exists under `e2e/<area>/` and the case now runs with `npm run e2e` like everything else. It costs nobody's attention again. |
+| `automated` | A Playwright spec exists under `e2e/<area>/`, **and Adrian's `npm run e2e` has run it green** — the date of that run is the row's „Last green". The case now runs with `npm run e2e` like everything else and costs nobody's attention again. |
 
 **Only a `confirmed` case may be promoted**, and the spec is written **from the corrected
 case file**, never from the application — so a spec and a case file cannot come to
 describe different things. A case at `driven` is episodic and says so; a case at
 `automated` has joined the regular basis.
+
+**A spec is a translation of a case file, not a new test.** Each step becomes a line;
+each Romanian string the case quotes becomes a locator, verbatim; nothing is asserted
+that the case does not assert, and nothing the case asserts is dropped without a comment
+in the spec saying why. The spec's header names the case and the „Last green" of the file
+it was translated from. If writing the spec needs a fact the case file does not state,
+the case file is corrected first — which sends the row back to `driven`.
+
+**Writing a spec is not the same as `automated`.** Claude cannot run `npm run e2e`, so a
+row whose spec has just been written stays at `confirmed`, with its `Spec` column filled
+in; it moves to `automated`, with the date, only once Adrian reports the run green. A row
+is never marked `automated` on the strength of a spec that has not run. If the run is
+red, fixing the spec comes before any new case.
+
+**One stated exception, and only one: TC-AUTH-01 is promoted without being driven.**
+Claude is not allowed to type a password into a field, so its login steps can never be
+driven by hand; `e2e/auth.setup.ts` performs them on every run from `.env`, and the spec
+asserts what the case asserts after login. Its green run is its own proof. The exception
+is also written, with its reason, in `PROMOTED_WITHOUT_DRIVING` in
+`src/lib/testing/catalogue-map.ts` — the guard below refuses a spec on any other row that
+is not `confirmed` — so it cannot become a precedent by accident.
 
 A promoted spec inherits what `playwright.config.ts` already decides: `fullyParallel:
 false`, `workers: 1`, and the single fixed property that `e2e/auth.setup.ts` creates.
@@ -41,35 +62,49 @@ fixed fixture where the existing one will do.
 
 ## The catalogue
 
-| ID | Title | Area | Kind | Data folder | State | Last green |
-|---|---|---|---|---|---|---|
-| [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `draft` | — |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-22 |
-| [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `confirmed` | 2026-09-22 |
-| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `confirmed` | 2026-09-22 |
-| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `confirmed` | 2026-09-22 |
-| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `driven` | 2026-09-22 |
-| [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `driven` | 2026-09-22 |
-| [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — |
-| [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — |
-| [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `driven` | 2026-09-22 |
+| ID | Title | Area | Kind | Data folder | State | Last green | Spec |
+|---|---|---|---|---|---|---|---|
+| [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `draft` | — | `e2e/auth/login-dashboard.spec.ts` |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-22 | `e2e/property/property-create.spec.ts` |
+| [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `confirmed` | 2026-09-22 | `e2e/versioning/property-versioning.spec.ts` |
+| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `confirmed` | 2026-09-22 | `e2e/person/person-create.spec.ts` |
+| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `confirmed` | 2026-09-22 | `e2e/document/document-page.spec.ts` |
+| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `confirmed` | 2026-09-22 | `e2e/association/document-person.spec.ts` |
+| [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `confirmed` | 2026-09-22 | `e2e/association/document-property.spec.ts` |
+| [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — | — |
+| [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — | — |
+| [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `confirmed` | 2026-09-22 | `e2e/search/global-search.spec.ts` |
 
-**Four are `confirmed`, three are `driven`, and three are still `draft`** — as of
-2026-09-22 (Slice #36.05).
+**Seven are `confirmed`, three are `draft`, and eight have a spec waiting for its first
+green run** — as of 2026-09-22 (Slice #36.06). None is `automated` yet: that takes
+Adrian's `npm run e2e`, and a spec that has not run proves nothing.
 
-- **`confirmed`: TC-PROP-01, TC-PROP-02, TC-PERS-01, TC-DOC-01.** The first three were
-  driven a second time on 2026-09-22 and each needed one more correction first — two to
-  a cleanup's confirmation button („Da", not „Șterge"), one to where the unsaved-changes
-  banner sits — so each was corrected, driven again, and held unchanged. TC-DOC-01 was
-  driven a second time to recreate the document TC-ASSOC-01 needed, and its corrected
-  file held line for line. They are what 36.06 promotes from, TC-PROP-02 first.
-- **`driven`: TC-ASSOC-01, TC-ASSOC-02, TC-SRCH-01**, all green and all corrected.
-  TC-ASSOC-01 first ran red: the local database had no document-type/person-role pairs
-  at all, so „Cumpărător" could not be chosen. After `migration_014` was re-run it went
-  green on every step, and it settled the case's open question — „Mod de deținere" IS
-  an inline cell on the person row.
-- **`draft`: TC-AUTH-01, TC-IMP-01, TC-AI-01** — never run, for the reasons below and in
-  36.07.
+- **`confirmed`, with a spec: TC-PROP-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01,
+  TC-ASSOC-02, TC-SRCH-01.** The last three were driven a second time on 2026-09-22 in
+  Slice #36.06 and held line for line; the first four were driven again the same day to
+  recreate the records those three needed, and held too. TC-PROP-02's spec is not a new
+  file: it is the fifth test in `e2e/versioning/property-versioning.spec.ts`, which
+  already asserted most of the case (its header says why the fifth test needs a property
+  of its own).
+- **`draft`, with a spec: TC-AUTH-01** — the stated exception above.
+- **`draft`, no spec: TC-IMP-01, TC-AI-01** — never run; both need the import wizard's
+  folder picker, which Slice 36.07 decides how to get past.
+
+**The `Spec` column is checked in both directions** by
+`src/__tests__/test-catalogue-coverage.test.ts`, reading files only, so it runs in CI:
+a row at `automated` must name a spec, a named spec must exist and name the row back in
+its header, only a `confirmed` or `automated` row (or the one exception) may name one,
+and every spec under `e2e/` other than `auth.setup.ts` must name a case that names it.
+A spec therefore cannot exist without a case, and a case cannot be `automated` without a
+spec.
+
+**A spec leaves nothing behind.** A hand run may leave a record for the next case; a spec
+may not, because `npm run e2e` runs it every time. Every spec that creates a record
+removes it in the same file — through the UI, or through the DELETE route the UI's
+„Șterge" calls, never through SQL — and every record a spec writes carries **`TC-E2E-`**
+in a visible field where a hand run writes `TC-`. On Căutare globală a search for `TC-`
+finds both, and the marker tells them apart at a glance
+(`e2e/helpers/records.ts`).
 
 TC-DOC-01's first run took seven corrections, three of which a spec would never have got
 past: there is no per-type „Acte" sub-menu, no „Titlu" field (it is „Etichetă scurtă"),
@@ -80,12 +115,6 @@ The corrections have been anything but cosmetic, on every first run so far. A sp
 written from an undriven file would have waited forever on a locator that was never
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
-
-**TC-AUTH-01 is a special case and will probably never reach `driven`.** Claude is not
-allowed to type a password into a field, so steps 2–4 are not Claude's to drive. Its
-post-login assertions were read against a live session and corrected; the login itself
-waits for Adrian or, better, for promotion to Playwright, where `e2e/auth.setup.ts`
-already does exactly this with credentials from `.env`.
 
 **Ten cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the

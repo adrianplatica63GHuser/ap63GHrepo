@@ -21,11 +21,24 @@
  *   4. Every catalogue row carries a legal state, and a `Last green` date
  *      exactly when its state says it has been run.
  *   5. The three route lists do not overlap, and no reason is blank.
+ *   6. A row and its spec point at each other  (Slice #36.06): a row whose
+ *      `Spec` column names a file names one that exists under e2e/, whose
+ *      header names that row back; a row at `automated` has a spec; and only a
+ *      `confirmed` or `automated` row — or one of PROMOTED_WITHOUT_DRIVING —
+ *      has one at all.
+ *   7. Every Playwright spec under e2e/ (auth.setup.ts is not one) names at
+ *      least one case in its header, every case it names is a real row, and
+ *      that row's `Spec` column names this file. So a spec cannot exist without
+ *      a case, and a case cannot be `automated` without a spec.
  *
  * ⚠️ NO BROWSER AND NO DATABASE ARE INVOLVED. This suite checks that the
- * catalogue and the application agree about which screens exist. It does not
- * run a single test case, and a green run here says nothing whatever about
- * whether the application works — see `docs/testing/WHAT-WE-TEST.md`.
+ * catalogue and the application agree about which screens exist, and that the
+ * catalogue and e2e/ agree about which cases are automated — by reading files,
+ * so it still runs in CI, where Playwright does not. It does not run a single
+ * test case, and a green run here says nothing whatever about whether the
+ * application works, or whether a spec passes — see
+ * `docs/testing/WHAT-WE-TEST.md`. Only Adrian's `npm run e2e` says that, and
+ * only that run moves a row to `automated`.
  */
 
 import { readdirSync, readFileSync, statSync, existsSync } from "fs";
@@ -34,12 +47,24 @@ import {
   CATALOGUE_NOT_YET,
   CATALOGUE_OPTED_OUT,
   CATALOGUE_ROUTE_CASES,
+  PROMOTED_WITHOUT_DRIVING,
 } from "@/lib/testing/catalogue-map";
 
 const ROOT = process.cwd();
 const APP = join(ROOT, "src", "app");
 const CATALOGUE = join(ROOT, "docs", "testing", "TEST-CATALOGUE.md");
 const CASES_DIR = join(ROOT, "docs", "testing", "cases");
+const E2E = join(ROOT, "e2e");
+
+/** Playwright's own default `testMatch`: `*.spec.ts`, `*.test.ts` and their js/mjs/cjs/x twins. */
+const SPEC_FILE = /\.(spec|test)\.[cm]?[jt]sx?$/;
+
+/**
+ * A case id, and only a case id. The lookbehind keeps the `TC-E2E-` marker a
+ * spec writes into its records — `TC-E2E-PROP-01` — from reading as a case:
+ * `E2E` is not `[A-Z]+`, and `PROP-01` is preceded by a hyphen.
+ */
+const CASE_ID = /(?<![A-Z0-9-])TC-[A-Z]+-\d{2}(?!\d)/g;
 
 /** The states a row may be in, in the order a case moves through them. */
 const STATES = ["draft", "driven", "confirmed", "automated"] as const;
@@ -78,7 +103,16 @@ function routeFromPageFile(file: string): string {
   return "/" + segments.join("/");
 }
 
-type Row = { id: string; title: string; area: string; kind: string; state: string; lastGreen: string };
+type Row = {
+  id: string;
+  title: string;
+  area: string;
+  kind: string;
+  state: string;
+  lastGreen: string;
+  /** Repo-relative path of the spec, `e2e/…`, or "" when the cell is `—`. */
+  spec: string;
+};
 
 /**
  * Parse the catalogue table.
@@ -107,9 +141,43 @@ function readCatalogueRows(): Row[] {
       kind: cells[2] ?? "",
       state: cells[4] ?? "",
       lastGreen: cells[5] ?? "",
+      spec: specCell(cells[6] ?? ""),
     });
   }
   return rows;
+}
+
+/**
+ * The `Spec` cell: `—`, or a repo-relative path in backticks. Anything else is
+ * returned as written, so invariant 6 reports it instead of it vanishing.
+ */
+function specCell(cell: string): string {
+  const bare = cell.replace(/`/g, "").trim();
+  return bare === "—" || bare === "" ? "" : bare;
+}
+
+/** Repo-relative, forward slashes — the way the catalogue writes a path. */
+function repoPath(file: string): string {
+  return relative(ROOT, file).split(sep).join("/");
+}
+
+type SpecHeader = { caseIds: string[]; sourceLines: string[] };
+
+/**
+ * The spec's header: the leading `/** … *\/` block. Only its `Case:` lines
+ * count as naming a case, and only its `Source:` lines as saying which case
+ * file, of which date, the spec was translated from — a case id mentioned in
+ * passing further down a comment is not a claim about coverage.
+ */
+function readSpecHeader(file: string): SpecHeader {
+  const text = readFileSync(file, "utf8");
+  const m = /^\s*\/\*\*([\s\S]*?)\*\//.exec(text);
+  const header = m ? m[1] : "";
+  const lines = header.split("\n").map((l) => l.replace(/^\s*\*\s?/, ""));
+  const caseLines = lines.filter((l) => /^Case:/.test(l.trim()));
+  const sourceLines = lines.filter((l) => /^Source:/.test(l.trim()));
+  const caseIds = [...new Set(caseLines.flatMap((l) => l.match(CASE_ID) ?? []))];
+  return { caseIds, sourceLines };
 }
 
 describe("test catalogue coverage", () => {
@@ -265,6 +333,117 @@ describe("test catalogue coverage", () => {
     it("gives every covered route at least one case", () => {
       for (const [route, ids] of Object.entries(CATALOGUE_ROUTE_CASES)) {
         expect([route, ids.length > 0]).toEqual([route, true]);
+      }
+    });
+  });
+  describe("invariant 6 — a row with a spec, and the spec it names", () => {
+    const withSpec = rows.filter((r) => r.spec !== "");
+
+    it.each(rows.map((r): [string, string, string] => [r.id, r.state, r.spec]))(
+      "%s (%s): the Spec column is consistent with the state",
+      (id, state, spec) => {
+        const bare = state.replace(/`/g, "").trim();
+        if (bare === "automated" && spec === "") {
+          throw new Error(
+            `Case "${id}" is at "automated" but its Spec column is "—".\n\n` +
+              `"automated" means a Playwright spec runs this case on every npm run e2e.\n` +
+              `Name the spec in the Spec column of docs/testing/TEST-CATALOGUE.md as\n` +
+              "`e2e/<area>/<name>.spec.ts`, or move the row back to \"confirmed\".\n",
+          );
+        }
+        if (spec !== "" && !["confirmed", "automated"].includes(bare) && !(id in PROMOTED_WITHOUT_DRIVING)) {
+          throw new Error(
+            `Case "${id}" is at "${bare}" and already names a spec (${spec}).\n\n` +
+              `Only a confirmed case is promoted: a spec is translated from a case file that has\n` +
+              `held unchanged through two hand runs, never from the application. Drive the case\n` +
+              `again until it is confirmed, or — if it can never be driven — add it, with the\n` +
+              `reason, to PROMOTED_WITHOUT_DRIVING in src/lib/testing/catalogue-map.ts.\n`,
+          );
+        }
+        expect(id).toBeTruthy();
+      },
+    );
+
+    it.each(withSpec.map((r): [string, string] => [r.id, r.spec]))("%s names %s, which exists and names it back", (id, spec) => {
+      if (!/^e2e\/.+/.test(spec) || !SPEC_FILE.test(spec)) {
+        throw new Error(
+          `Case "${id}" has Spec = "${spec}". A spec is a Playwright file under e2e/,\n` +
+            "written `e2e/<area>/<name>.spec.ts` in backticks.\n",
+        );
+      }
+      const file = join(ROOT, ...spec.split("/"));
+      if (!existsSync(file)) {
+        throw new Error(
+          `Case "${id}" names ${spec} in its Spec column, and that file does not exist.\n` +
+            `Fix the path, or put "—" back if the spec was removed.\n`,
+        );
+      }
+      const { caseIds } = readSpecHeader(file);
+      if (!caseIds.includes(id)) {
+        throw new Error(
+          `Case "${id}" names ${spec}, but that spec's header does not name "${id}".\n\n` +
+            `Add the line\n  * Case:   ${id} — <title>\nto the spec's leading /** */ comment, so the\n` +
+            `spec says which case it was translated from.\n`,
+        );
+      }
+      expect(caseIds).toContain(id);
+    });
+
+    it("names only real rows in PROMOTED_WITHOUT_DRIVING, each with a reason", () => {
+      for (const [id, reason] of Object.entries(PROMOTED_WITHOUT_DRIVING)) {
+        expect([id, rowIds.has(id)]).toEqual([id, true]);
+        expect(reason.trim().length).toBeGreaterThan(40);
+      }
+    });
+  });
+
+  describe("invariant 7 — every spec under e2e/ is a case's spec", () => {
+    const specFiles = existsSync(E2E)
+      ? walk(E2E, (f) => SPEC_FILE.test(f)).filter((f) => !f.split(sep).includes(".auth"))
+      : [];
+    const specByRow = new Map(rows.map((r) => [r.id, r.spec]));
+
+    it("finds the specs", () => {
+      // The walker returning nothing would make every assertion below vacuous.
+      // TC-PROP-02's automation predates the catalogue, so there is always one.
+      expect(specFiles.length).toBeGreaterThan(0);
+    });
+
+    it.each(specFiles.map(repoPath))("%s names its case and is named by it", (spec) => {
+      const { caseIds, sourceLines } = readSpecHeader(join(ROOT, ...spec.split("/")));
+      if (caseIds.length === 0) {
+        throw new Error(
+          `${spec} names no case in its header.\n\n` +
+            `A spec is a translation of a case file, not a new test. Start the file with\n` +
+            `  /**\n   * Case:   TC-<AREA>-<nn> — <title>\n` +
+            `   * Source: docs/testing/cases/TC-<AREA>-<nn>.md, „Last green" <YYYY-MM-DD>\n   */\n` +
+            `If no case describes what it tests, write the case first (docs/testing/cases/),\n` +
+            `and add its row to docs/testing/TEST-CATALOGUE.md.\n`,
+        );
+      }
+      for (const id of caseIds) {
+        if (!rowIds.has(id)) {
+          throw new Error(`${spec} names "${id}", which is not a row in docs/testing/TEST-CATALOGUE.md.\n`);
+        }
+        if (specByRow.get(id) !== spec) {
+          throw new Error(
+            `${spec} names "${id}", but that row's Spec column says ` +
+              `"${specByRow.get(id) || "—"}".\n\n` +
+              "Put `" + spec + "` in the Spec column of " + id + "'s row in\n" +
+              `docs/testing/TEST-CATALOGUE.md, so the catalogue names the spec that runs the case.\n`,
+          );
+        }
+        const source = sourceLines.find((l) => l.includes(`docs/testing/cases/${id}.md`));
+        const dated = source !== undefined && /\d{4}-\d{2}-\d{2}/.test(source);
+        if (!source || (!dated && !(id in PROMOTED_WITHOUT_DRIVING))) {
+          throw new Error(
+            `${spec} names "${id}" but has no line\n` +
+              `  * Source: docs/testing/cases/${id}.md, „Last green" <YYYY-MM-DD>\n` +
+              `in its header. The date is the case file's „Last green" when the spec was\n` +
+              `translated from it — what a reader checks against when the two disagree.\n`,
+          );
+        }
+        expect(rowIds.has(id)).toBe(true);
       }
     });
   });

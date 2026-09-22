@@ -110,12 +110,12 @@ server and the real local database, with nothing mocked or stubbed anywhere. It 
 through the real `/login` form as a real user, clicks real buttons labelled in Romanian,
 and checks what appears on the screen.
 
-It is also, today, **one suite and four tests**
-(`e2e/versioning/property-versioning.spec.ts`), all about property versioning.
-`e2e/README.md` describes the current state in its own words as **"a foothold, not a
-safety net"** and lists what is not covered: person and document versioning, corners
-editing, associations, the import wizard, AI interpret, maps, and every auth flow beyond
-logging in.
+Since Slice #36.06 it is **one spec per promoted catalogue case** — eight, from TC-AUTH-01
+to TC-SRCH-01, listed in `e2e/README.md` and in the catalogue's `Spec` column — plus the
+four property-versioning tests that predate the catalogue. `e2e/README.md` still
+describes the state in its own words as **"a foothold, not a safety net"**, and lists
+what is not covered: the import wizard, AI interpret, person and document versioning,
+corners editing, maps, the admin screens, and every unhappy path.
 
 Three details of how it runs matter to anything built on top of it:
 
@@ -124,9 +124,10 @@ Three details of how it runs matter to anything built on top of it:
 - `e2e/auth.setup.ts` logs in once, pins `NEXT_LOCALE=ro-RO` so every assertion matches
   Romanian, and creates or reuses a single fixed property called
   **„E2E Proprietate Test"**, caching its id in `e2e/.auth/e2e-ids.json`.
-- The suite **writes to the dev database**, on purpose, and its assertions are all
-  relative (`startVersion + 1`), never absolute, so the fixed property accumulating
-  versions across runs is harmless.
+- The suite **writes to the dev database**, on purpose. The versioning tests' assertions
+  are all relative (`startVersion + 1`), so the fixed property accumulating versions is
+  harmless; every other record a spec writes is marked `TC-E2E-` and removed by the same
+  spec before it ends (`e2e/helpers/records.ts`).
 
 - **Purpose:** a person can actually do the thing.
 - **Blind to:** the large majority of the application, which has no spec. That is the
