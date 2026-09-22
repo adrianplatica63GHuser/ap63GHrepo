@@ -47,33 +47,34 @@ fixed fixture where the existing one will do.
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-22 |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `confirmed` | 2026-09-22 |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `confirmed` | 2026-09-22 |
-| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `driven` | 2026-09-22 |
-| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `draft` | — |
+| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `confirmed` | 2026-09-22 |
+| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `driven` | 2026-09-22 |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `driven` | 2026-09-22 |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `driven` | 2026-09-22 |
 
-**Three are `confirmed`, three are `driven`, and four are still `draft`** — as of
+**Four are `confirmed`, three are `driven`, and three are still `draft`** — as of
 2026-09-22 (Slice #36.05).
 
-- **`confirmed`: TC-PROP-01, TC-PROP-02, TC-PERS-01.** Each was driven a second time on
-  2026-09-22 and each needed one more correction first — two to a cleanup's confirmation
-  button („Da", not „Șterge"), one to where the unsaved-changes banner sits — so each
-  was corrected, driven again, and held unchanged. They are what 36.06 promotes from,
-  TC-PROP-02 first.
-- **`driven`: TC-DOC-01, TC-ASSOC-02, TC-SRCH-01**, all for the first time, all green,
-  and every one of them corrected. TC-DOC-01 took seven corrections, three of which a
-  spec would never have got past: there is no per-type „Acte" sub-menu, no „Titlu"
-  field (it is „Etichetă scurtă"), and „+ Adaugă pagină" opens the application's own
-  dialog rather than the operating system's.
-- **`draft`, though driven once: TC-ASSOC-01.** It ran, but not green: on the local
-  database no document type has any person role configured, so „Cumpărător" could not be
-  chosen. Everything else was driven without a role and written down — including the
-  answer to the case's open question: „Mod de deținere" IS an inline cell on the person
-  row. It moves to `driven` on the first run after the reference data is repaired.
+- **`confirmed`: TC-PROP-01, TC-PROP-02, TC-PERS-01, TC-DOC-01.** The first three were
+  driven a second time on 2026-09-22 and each needed one more correction first — two to
+  a cleanup's confirmation button („Da", not „Șterge"), one to where the unsaved-changes
+  banner sits — so each was corrected, driven again, and held unchanged. TC-DOC-01 was
+  driven a second time to recreate the document TC-ASSOC-01 needed, and its corrected
+  file held line for line. They are what 36.06 promotes from, TC-PROP-02 first.
+- **`driven`: TC-ASSOC-01, TC-ASSOC-02, TC-SRCH-01**, all green and all corrected.
+  TC-ASSOC-01 first ran red: the local database had no document-type/person-role pairs
+  at all, so „Cumpărător" could not be chosen. After `migration_014` was re-run it went
+  green on every step, and it settled the case's open question — „Mod de deținere" IS
+  an inline cell on the person row.
 - **`draft`: TC-AUTH-01, TC-IMP-01, TC-AI-01** — never run, for the reasons below and in
   36.07.
+
+TC-DOC-01's first run took seven corrections, three of which a spec would never have got
+past: there is no per-type „Acte" sub-menu, no „Titlu" field (it is „Etichetă scurtă"),
+and „+ Adaugă pagină" opens the application's own dialog rather than the operating
+system's.
 
 The corrections have been anything but cosmetic, on every first run so far. A spec
 written from an undriven file would have waited forever on a locator that was never

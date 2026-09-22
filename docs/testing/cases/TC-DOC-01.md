@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | `C:\dev\TEST.DATA\Test.Claude\01.smoke.one.property` |
-| **State** | `driven` |
+| **State** | `confirmed` |
 | **Last green** | 2026-09-22 |
 
 ## What this proves
@@ -80,6 +80,14 @@ the document deletes its stored page file too
 back. `C:\dev\TEST.DATA\` is read-only to this catalogue.
 
 ## Notes from the runs
+
+**2026-09-22, second run — `confirmed`: the corrected file held line for line.** Driven
+again to recreate the document TC-ASSOC-01 needed. Result `DOC01628`, „15 din 105" →
+„15 din 106", badged „Nou!"; the four notebook tabs and „Financiar" on choosing the
+type; „Salvează" in the page dialog disabled until `530.jpg` was in, then enabled;
+`file_upload` on the staged copy worked again; the page opened full-window and closed on
+„✕ Restrânge"; and the cleanup as written — „Șterge", „Ștergeți actul?", „Da" — took the
+list back to 105. Only this section was written on this run.
 
 **2026-09-22 — driven for the first time, green. Result `DOC01624`, „Se afișează 15 din
 105" → „15 din 106", and a readable first page. No fallback was needed: the operating
