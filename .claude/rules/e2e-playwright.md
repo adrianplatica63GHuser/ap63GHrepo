@@ -10,6 +10,10 @@ paths:
 
 - **Keep `workers: 1` and `fullyParallel: false` in `playwright.config.ts`.** Every spec shares one fixed fixture row — the "E2E Proprietate Test" property, whose uuid is cached in the gitignored `e2e/.auth/e2e-ids.json`. Parallel workers would have several specs appending versions to the same property row at once. Any new spec inherits this constraint; do not opt a spec back into parallelism.
 
+- **A spec is a translation of a `confirmed` case file** (`docs/testing/cases/`), never a new test written from the screen. Its header starts `Case:` / `Source:`, its catalogue row's `Spec` column names it, and `src/__tests__/test-catalogue-coverage.test.ts` fails when either side is missing. Writing a spec does not make a row `automated` — Adrian's green `npm run e2e` does. (Slice #36.06)
+
+- **A spec that creates a record removes it in the same file**, in a `finally`, through the UI or the DELETE route the UI's „Șterge" calls — never SQL — and marks it `TC-E2E-<case>`, not `TC-`. Use `e2e/helpers/records.ts`; its `removeLeftovers` refuses any prefix that is not a `TC-E2E-` marker, because `TC-` would delete a hand run's records. Use the fixed property only where the assertion does not need a property without history. (Slice #36.06)
+
 - **Write RELATIVE assertions, never absolute ones.** The shared fixture row accumulates version history across every run, so assert `startVersion + 1` rather than a fixed version number. An absolute expectation passes once and then rots.
 
 - **`e2e/auth.setup.ts` is the setup project: it logs in through the real `/login` form, pins `NEXT_LOCALE=ro-RO`, and creates or reuses the fixed property.** The `chromium` project then runs every spec from that saved session. Do not add per-spec login steps; extend the setup project instead.

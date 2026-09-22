@@ -81,6 +81,17 @@ back. `C:\dev\TEST.DATA\` is read-only to this catalogue.
 
 ## Notes from the runs
 
+**2026-09-22 — promoted (Slice #36.06). The spec does not attach `530.jpg`:** it attaches
+`e2e/fixtures/tc-e2e-pagina.png`, a blank „PAGINĂ DE TEST" made for the purpose, because a
+real deed with real names does not go into git — so step 10's „CONTRACT DE
+VANZARE-CUMPARARE, first page" stays a hand-run assertion, and the spec checks only that
+the page opens and closes.
+
+**2026-09-22, third run (Slice #36.06) — held line for line, to recreate the document the
+association cases needed.** `DOC01631`, „15 din 105" → „15 din 106", `530.jpg` staged and
+set on the dialog's input, readable full-window, closed on „✕ Restrânge"; removed
+afterwards with „Șterge", „Ștergeți actul?", „Da". Only this section was written.
+
 **2026-09-22, second run — `confirmed`: the corrected file held line for line.** Driven
 again to recreate the document TC-ASSOC-01 needed. Result `DOC01628`, „15 din 105" →
 „15 din 106", badged „Nou!"; the four notebook tabs and „Financiar" on choosing the

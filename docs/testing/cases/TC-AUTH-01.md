@@ -14,8 +14,13 @@
 the account and whoever asks. So a Claude-driven run of this case starts at step 5, with
 a session somebody else established.
 
-That leaves two honest ways to run it, and the case stays at `draft` until one of them
-happens:
+**Slice #36.06 took the second way below**: `e2e/auth/login-dashboard.spec.ts` runs steps
+5–8 on the session `e2e/auth.setup.ts` logs in, and this is the one case in the catalogue
+promoted without being driven — recorded as such in `TEST-CATALOGUE.md` and in
+`PROMOTED_WITHOUT_DRIVING` (`src/lib/testing/catalogue-map.ts`). It moves straight from
+`draft` to `automated` on its first green `npm run e2e`.
+
+The two honest ways to run it:
 
 - **Adrian logs in himself**, and Claude reads back steps 5–8. That is a fourth thing to
   ask of him beyond the three he offered, which is why it is written here rather than
@@ -57,7 +62,7 @@ PowerShell window.**
 | 4 | Presses „Conectare" | The button reads „Se conectează…" while it works |
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
-| 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte", then „Admin-Operațiuni" and „Admin-Configurare", and below them a „RECENTE" list of recently-opened documents |
+| 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte", then „Admin-Operațiuni" and „Admin-Configurare" — and below them, **once anything has been opened in this browser**, a „RECENTE" list of recently-opened records. A browser that has opened nothing shows no „RECENTE" at all (the list lives in the browser's own storage) |
 | 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
 
 **Nothing is written by this case.** A failed login shows „Utilizator sau parolă
@@ -69,6 +74,15 @@ Nothing to clean up. The session cookie is the only thing created and every late
 wants it.
 
 ## Notes from the runs
+
+**2026-09-22 — promoted (Slice #36.06), without a hand run, by the stated exception.**
+Writing the spec corrected step 7: the „RECENTE" list is not always there. It renders only
+once something has been opened in that browser (`recently-viewed-panel.tsx` returns
+nothing for an empty history, kept in the browser's localStorage), and the session a spec
+starts from has opened nothing — so the spec does not assert it, and step 7 now says when
+it appears. Also noticed while writing it: the sidebar's `<nav>` is labelled „Main
+navigation", in English, for a screen reader (`components/sidebar/sidebar-nav.tsx`) — in
+the 36.06 handover.
 
 **2026-09-21 — steps 5–8 read against a live session. Three corrections:**
 

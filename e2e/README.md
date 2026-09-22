@@ -11,9 +11,25 @@ Jest (`npm test`) and Playwright (`npm run e2e`) are separate and never overlap:
 
 ## What is covered today
 
-One suite: **Property versioning** (`e2e/versioning/property-versioning.spec.ts`),
-four tests against the Property detail form — the most complex versioned entity
-(fields + address + corners).
+**One spec per catalogue case**, each translated from its case file under
+`docs/testing/cases/` and named in the `Spec` column of
+`docs/testing/TEST-CATALOGUE.md`. The catalogue is where to read what each one
+proves; this table is where to find the file.
+
+| Case | Spec | What it drives |
+|---|---|---|
+| TC-AUTH-01 | `e2e/auth/login-dashboard.spec.ts` | After login: the dashboard, the sidebar, „Autentificat ca". The login itself is `auth.setup.ts` |
+| TC-PROP-01 | `e2e/property/property-create.spec.ts` | A property typed in by hand appears at the top of the list, count + 1; deleted again |
+| TC-PROP-02 | `e2e/versioning/property-versioning.spec.ts` | One save appends one version: „v 0" → „2 versiuni", the unsaved-changes banner, the read-only previous version. Plus the four versioning tests below |
+| TC-PERS-01 | `e2e/person/person-create.spec.ts` | A natural person typed in by hand, found by the list's search; deleted again |
+| TC-DOC-01 | `e2e/document/document-page.spec.ts` | A Contract de Vânzare with one page attached through the hidden file input, opened full-window and closed |
+| TC-ASSOC-01 | `e2e/association/document-person.spec.ts` | A person on a document as „Cumpărător", 50% with the warning, „indiviziune", then 100% |
+| TC-ASSOC-02 | `e2e/association/document-property.spec.ts` | A property on a document, read from both ends |
+| TC-SRCH-01 | `e2e/search/global-search.spec.ts` | One Căutare globală finds a person, a property and a document |
+
+The four tests in `property-versioning.spec.ts` that predate the catalogue stay as
+they were — the most complex versioned entity (fields + address + corners), on the
+fixed property:
 
 | Test | What it proves |
 |---|---|
@@ -22,15 +38,17 @@ four tests against the Property detail form — the most complex versioned entit
 | `Seteaza ca actuala — creaza versiune noua din snapshot vechi` | Restoring an old snapshot creates a NEW latest version rather than rewriting history, and the form is editable again afterwards |
 | `butonul Salveaza: dezactivat → activ → dezactivat dupa salvare` | Save tracks dirty state correctly — the bug class from Slice #18.15.bugs |
 
-These are exactly the behaviours that are painful to verify by hand and easy to
-regress, because they depend on React Hook Form baselines, a React Query cache
-invalidation and a server-side transaction all agreeing with each other.
+A case's row reaches `automated` only after a run of this suite has been green on
+Adrian's machine — see the catalogue's states table.
 
 ## What is NOT covered
 
-Person and Document versioning, corners editing, associations, the import
-wizard, AI interpret, maps, auth flows beyond logging in. This is a foothold,
-not a safety net — don't read a green run as "the app works".
+Every screen whose catalogue row is `draft` or missing: the import wizard and AI
+interpret (TC-IMP-01, TC-AI-01 — the folder picker has no file input to set),
+person and document versioning, corners editing, judicial persons, the map, the
+admin screens, and every unhappy path — empty inputs, wrong shares, two tabs at
+once. `CATALOGUE_NOT_YET` in `src/lib/testing/catalogue-map.ts` is the list. This
+is a foothold, not a safety net — don't read a green run as "the app works".
 
 ---
 
@@ -110,6 +128,19 @@ harmless — every assertion is *relative* (`startVersion + 1`), never absolute 
 but don't be surprised to find it at version 200 one day. Delete it whenever you
 like; the next run just creates a fresh one.
 
+**Every other spec cleans up after itself.** A spec that creates a record
+removes it in the same file — through the UI, or through the DELETE route the
+UI's „Șterge" calls, in a `finally` so a failed assertion does not leave it —
+and every record a spec writes carries `TC-E2E-<case>` in a visible field
+(`e2e/helpers/records.ts`). If a run is killed half-way, the next run of the
+same spec removes what it left before starting; in between, Căutare globală
+finds it by `TC-E2E-`. A hand run's records say `TC-` without `E2E`, and no spec
+ever removes those.
+
+**`e2e/fixtures/` holds only files made for the purpose.** TC-DOC-01's hand run
+attaches a scan of a real contract; its spec attaches `tc-e2e-pagina.png`, a
+blank „PAGINĂ DE TEST". No real deed goes into git.
+
 **`e2e/.auth/` is gitignored, and must stay that way.** `session.json` holds a
 live Supabase session cookie for your test account. It is also excluded from the
 Docker build context via `.dockerignore` (which does *not* inherit `.gitignore`).
@@ -126,12 +157,12 @@ Read the failure in this order:
 3. **`ECONNREFUSED` / everything times out** — the dev server isn't running.
 4. **`waitForNav` times out around 15-16s, on the FIRST run after editing files or restarting the dev server** — this is very likely Next dev-mode compiling `/properties/[id]` cold, not a real bug. That page is unusually heavy (two Google-Maps `next/dynamic` imports, the corners table, four tabs), so its first compile can be slow, and editing files while `npm run dev` is running can unsettle its module cache (see the "Dev-server route table can go stale" gotcha in CLAUDE.md). Confirm by loading the property URL from the failure's `[E2E setup] Created/Reusing E2E property: <uuid>` line in a normal browser tab — if the version label eventually appears there, restart `npm run dev` and re-run `npm run e2e`. If it never appears even in a plain browser, that is a real bug — capture the `npm run dev` terminal output at that moment before investigating further.
 5. **`waitForNav` never finds the label at all, even in a plain browser, once a property has 2+ versions** — this was a real gap, fixed. Slice #20.12 added a compact "history discovery chip" (e.g. "2 versiuni") that replaces the full ◀ / "v N" / ▶ strip whenever you're viewing the latest version and it has prior history — the chip shows a total *count*, not the current version number, and the "v N" text genuinely is not on the page in that state. Fixed by adding a visually-hidden (`sr-only`) "v N" span alongside the chip in `src/components/version-nav-controls.tsx`, so the exact version number stays discoverable to both screen readers and this suite regardless of which of the two UI states is showing. If this ever regresses, it means someone touched `VersionNavControls` without preserving that span.
-4. **A locator times out** — usually a UI string changed. The helpers in
+6. **A locator times out** — usually a UI string changed. The helpers in
    `e2e/helpers/version-nav.ts` match Romanian text from `messages/ro-RO.json`
    (`property.corners.prevVersion` = "Versiunea anterioară", the version label
    format `v {n}`, and so on). **Rename a Romanian string and you break these
    tests** — that is by design, it is the tests noticing.
-5. **Cached-property errors after a DB reset** — delete `e2e/.auth/` and re-run;
+7. **Cached-property errors after a DB reset** — delete `e2e/.auth/` and re-run;
    setup will make a new property. (It already self-heals by checking the cached
    id, but deleting is the sledgehammer.)
 
@@ -157,6 +188,19 @@ being asserted.
 
 Remember the locale: assertions must use the Romanian string, because setup
 pins `NEXT_LOCALE=ro-RO`.
+
+**A new spec starts from a `confirmed` case, never from the screen.** Its header
+opens with `Case:` and `Source:` lines (copy any spec's), its row's `Spec` column
+names the file, and `src/__tests__/test-catalogue-coverage.test.ts` fails the
+build when either side is missing.
+
+**Most form fields here are wrapped in their `<label>`, and a wrapped control can
+take its current value into its accessible name** — the accessible-name rules
+fold an embedded select's chosen option into the label, and the `<label>`'s own
+text on the property form reads „Nr. tarla / sola— niciunul —404647/2" (measured
+2026-09-22). So an `exact` label match is fragile, and a plain
+`getByLabel("Nume")` also matches „Prenume". Anchor the label instead:
+`getByLabel(/^Nume(\s|$)/)`.
 
 ---
 
