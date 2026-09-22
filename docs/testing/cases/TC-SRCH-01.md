@@ -5,7 +5,7 @@
 | **Area** | search |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
+| **State** | `confirmed` |
 | **Last green** | 2026-09-22 |
 
 ## What this proves
@@ -55,6 +55,16 @@ here lists everything the run left behind, across all three kinds, in one table.
 **before** a chain of cases too: the chain expects to find exactly what it creates.
 
 ## Notes from the runs
+
+**2026-09-22, second run (Slice #36.06) — `confirmed`: the file held line for line.**
+„3 rezultate" for `TC-`, `?search=TC-` in the address: `DOC01631` `DOCUMENT`,
+`PPERS01630` `PERSON` „Fizic" `Ion TC-PERS-01`, `PROP01629` `PROPERTY`
+`40 / TC01(TC-PROP-01 Teren de test)`, all three „Manual (Adaugă nou)"; „Proprietate" left
+„1 rezultat", the property; „Resetează" cleared every filter, removed the table and took
+the address back to `/admin/global-search`. „Tip" is still untranslated. Only this
+section was written on this run. (The first „Caută" of the session found nothing because
+the page had not finished loading when the text was typed — the field was empty on the
+screenshot; typed again, it answered as above.)
 
 **2026-09-22 — driven for the first time, green. Exactly three rows — `DOC01624`,
 `PPERS01623`, `PROP01622` — after a cleanup check with the same search had found two

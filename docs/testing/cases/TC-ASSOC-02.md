@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
+| **State** | `confirmed` |
 | **Last green** | 2026-09-22 |
 
 ## What this proves
@@ -52,6 +52,14 @@ with „Nu se poate șterge de aici" — dissociate first, then open the propert
 failure of this case.
 
 ## Notes from the runs
+
+**2026-09-22, second run (Slice #36.06) — `confirmed`: the file held line for line.**
+`PROP01629` attached to `DOC01631`: „Asociere proprietate" listing every property, one
+row after `TC-PROP-01` in „Căutare", the hint gone on ticking it, back on the document's
+„Proprietăți" with the single column „Denumire", „Vizualizare" opening
+`/properties/…?readonly=true`, and the property's „Acte" reading „Contract de Vânzare",
+`TC-DOC-01 Contract de test`. Removed with the radio and „Dezasociază". Only this section
+was written on this run.
 
 **2026-09-22 — driven for the first time, green. `PROP01622` attached to `DOC01624`, and
 the link read from both ends.**

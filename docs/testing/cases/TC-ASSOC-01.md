@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
+| **State** | `confirmed` |
 | **Last green** | 2026-09-22 |
 
 ## What this proves
@@ -100,6 +100,16 @@ follows. The person and the document are left for the cases that follow; only th
 is removed.
 
 ## Notes from the runs
+
+**2026-09-22, third run (Slice #36.06) — `confirmed`: the file as it stood held line for
+line.** `PPERS01630` associated to `DOC01631` as „Cumpărător", out of the same five roles;
+`50%` stored as `50` with „Cotele pentru „Cumpărător” însumează 50%, nu 100%. …" and no
+separate total; „indiviziune" set inline; both still there after a reload; `100%` by
+click, Ctrl+A, type and Tab turned the line into „Total Cumpărător: 100%"; the link removed
+with the radio and „Dezasociază", which asks for no confirmation. Only this section was
+written on this run. One thing that was the driving tool and not the case: the first
+Ctrl+A in step 12 went to a cell reference the tool had read before the tab re-rendered,
+so nothing was typed; pressing the cell by its position on screen worked at once.
 
 **2026-09-22, second run — driven, green, every step.** After Adrian re-ran
 `migration_014` on the local database (`INSERT 0 69`: 69 of its 75 pairs; the other six

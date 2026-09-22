@@ -59,6 +59,10 @@ list instead.
 
 ## Notes from the runs
 
+**2026-09-22, third run (Slice #36.06) — held line for line, to recreate the property
+TC-ASSOC-02 and TC-SRCH-01 needed.** `PROP01629`, 13 → 14, badged „Nou!"; removed
+afterwards with „Șterge" and „Da". Only this section was written.
+
 **2026-09-22, second run of the day — `confirmed`: the corrected file, driven again end
 to end, needed no change.** Result `PROP01625`, 13 → 14, badged „Nou!"; and the cleanup,
 this time as written — „Șterge", „Da" — took the list back to 13. Only this section was

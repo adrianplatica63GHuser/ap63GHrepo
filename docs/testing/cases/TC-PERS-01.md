@@ -50,6 +50,11 @@ the form, and answer the dialog „Ștergeți persoana?" with **„Da"** — its
 
 ## Notes from the runs
 
+**2026-09-22, third run (Slice #36.06) — held line for line, to recreate the person
+TC-ASSOC-01 and TC-SRCH-01 needed.** `PPERS01630`, „Nu există persoane" → „Se afișează 1
+din 1", found again by `TC-PERS`; removed afterwards with „Șterge" and „Da". Only this
+section was written.
+
 **2026-09-22, second run of the day — `confirmed`: the corrected file needed no change.**
 Result `PPERS01626`, „Nu există persoane" → „Se afișează 1 din 1", found again by
 `TC-PERS`; removed as the cleanup now says, with „Da", back to „Se afișează 0 din 0".
