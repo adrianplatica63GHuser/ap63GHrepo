@@ -3309,7 +3309,7 @@
       "hasMetadataYes": "Are metadate",
       "hasMetadataNo": "Fără metadate",
       "search": "Căutare nume / cod",
-      "searchPlaceholder": "ex. Popescu sau PERS00012",
+      "searchPlaceholder": "ex. Popescu sau PPERS00012",
       "groupCode": "Cod grup",
       "groupCodePlaceholder": "ex. GRP-001",
       "stampCode": "Cod ștampilă",

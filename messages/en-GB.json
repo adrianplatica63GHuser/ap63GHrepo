@@ -3309,7 +3309,7 @@
       "hasMetadataYes": "Has metadata",
       "hasMetadataNo": "No metadata yet",
       "search": "Name / code search",
-      "searchPlaceholder": "e.g. Popescu or PERS00012",
+      "searchPlaceholder": "e.g. Popescu or PPERS00012",
       "groupCode": "Group code",
       "groupCodePlaceholder": "e.g. GRP-001",
       "stampCode": "Stamp code",

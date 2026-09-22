@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ga40prj",
+  title: "GA40",
   description: "People, documents, and properties",
 };
 
