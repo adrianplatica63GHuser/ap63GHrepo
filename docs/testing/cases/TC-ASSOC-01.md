@@ -51,48 +51,77 @@ Two consequences for the steps:
 
 ## Steps
 
+**Driven once, on 2026-09-22, and NOT green** — the local database has no person roles
+configured for any document type, so step 5 could not be taken (see the notes). Every
+other step was driven without a role and is written here as the screen showed it. What
+was not seen is marked **(not yet seen)**.
+
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
-| 2 | Presses the tab „Asocieri", then „Persoane" | „Nicio persoană asociată acestui act" |
-| 3 | Presses „Asociază" | The heading „Asociere persoană", with fields „Nume", „Cod" and „Rol" |
-| 4 | Types `TC-PERS-01` into „Nume" | The results table fills; one row, „Tip" = „Fizică" |
-| 5 | Chooses **„Cumpărător"** in „Rol" (placeholder „— fără rol —") | The role is selected |
-| 6 | Ticks the row for `TC-PERS-01 Ion` | The row is selected |
-| 7 | Presses „Asociază selecția" | The button reads „Se asociază…", then the screen returns to the document |
-| 8 | Looks at „Persoane" | A row: „Cod", „Nume" = `Ion TC-PERS-01` (prenume first — see TC-PERS-01), „Rol" = „Cumpărător" |
-| 9 | Types `50%` into that row's „Cotă-parte" | „Se salvează…" appears briefly |
-| 10 | Sets „Mod de deținere" on that row to „indiviziune" | The qualifier is recorded beside the share |
-| 11 | Looks under the table | „Total Cumpărător: 50%" |
-| 12 | Reads the warning beside it | „Cotele pentru „Cumpărător" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." |
-| 13 | Changes the cotă-parte to `100%` | The total becomes „Total Cumpărător: 100%" and the warning is gone |
+| 2 | Presses the tab **„Persoane"** — it sits beside „Asocieri", not inside it | „Nicio persoană asociată acestui act", with „Asociază" and „Dezasociază" |
+| 3 | Presses „Asociază" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip, and a select „Rol" with the placeholder „— fără rol —" **(not yet seen — see the notes)** |
+| 4 | Types `TC-PERS-01` into „Nume" | One row: `PPERS…`, `Ion TC-PERS-01`, „Tip" = „Fizică" |
+| 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected **(not yet seen)** |
+| 6 | Ticks the row for `Ion TC-PERS-01` | The row is selected |
+| 7 | Presses „Asociază selecția" | The screen returns to the document, on its „Persoane" tab |
+| 8 | Looks at „Persoane" | A table headed Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de deținere — there is no „Cod" column — and one row: `Ion TC-PERS-01`, „Rol" = „Cumpărător" **(seen as „—", with no role)** |
+| 9 | Types `50%` into that row's „Cotă-parte" and leaves the field | The value is saved and the cell then reads `50` — the percent sign is accepted and not kept |
+| 10 | Chooses „indiviziune" in that row's **„Mod de deținere"** — an inline select on the same row, offering „— nespecificat —", „în nume propriu", „devălmășie", „indiviziune", „prin mandatar" | The qualifier is recorded beside the share, and is still there after a reload |
+| 11 | Reads the one line under the table | „Cotele pentru „Cumpărător" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." **While the total is off there is no separate „Total Cumpărător: 50%" line** — the warning replaces it. (Seen, without a role, as „Cotele persoanelor fără rol însumează 50%, nu 100%. …") |
+| 12 | Changes the cotă-parte to `100%` and leaves the field | The warning is replaced by „Total Cumpărător: 100%" **(seen, without a role, as „Total fără rol: 100%")** |
 
-Step 12 is the assertion that matters most: the application **warns and saves anyway**.
+Step 11 is the assertion that matters most: the application **warns and saves anyway**.
 A version that refused the save would be wrong — a deed can say whatever it says, and
 the archive records it.
 
-**If „Cumpărător" is not offered in „Rol"**, the screen says so itself — „Rolul
-„{roleName}" nu este configurat încă pentru acest tip de document." That is a finding,
-not a step to work around: the role is seeded and wired to this document type, so its
-absence means the reference data on that database has drifted.
+⚠️ **Do not double-click anywhere on a person row, including inside „Cotă-parte" to
+select its text.** The row opens the person on double-click
+(`document-persons-tab.tsx`), and the editable cells stop a single click from reaching
+the row but not a double one — a triple-click to select `50` and overtype it left the
+document for `/natural-persons/[id]?readonly=true` on 2026-09-22. Clear the cell with the
+keyboard instead. Noted in the 36.05 handover as a defect.
+
+**If „Rol" is missing and the screen says „Acest tip de document nu are niciun rol de
+persoană configurat, așa că nu se poate alege un rol aici. …"**, that is the finding
+this case is designed to raise, not a step to work around: „Cumpărător" is seeded
+(`migration_013`) and wired to Contract de Vânzare (`migration_014`), so its absence
+means the reference data on that database has drifted. (This file used to quote „Rolul „{roleName}" nu este configurat încă pentru acest tip de
+document." here. That message is real, but it belongs to the flow that links a person
+read from the document by AI — `roleMissingBody` — and never appears on this screen.)
 
 ## At the end — leaving things as they were found
 
-Press „Dezasociază" on the row. „Se elimină…" appears, then „Nicio persoană asociată
-acestui act". The person and the document are left for the cases that follow; only the
-link is removed.
+**Select the row first** — its radio button at the left — and then press „Dezasociază";
+the button is disabled while no row is selected. „Nicio persoană asociată acestui act"
+follows. The person and the document are left for the cases that follow; only the link
+is removed.
 
 ## Notes from the runs
 
-_(not yet driven — TC-DOC-01 has to run first, and it needs the operating system's file
-dialog.)_
+**2026-09-22 — driven, NOT green, so the row stays at `draft`.** `PPERS01623` was
+associated to `DOC01624`, the share and the qualifier were set and read back, and the
+link was removed — all without a role, because the „Rol" control was not there. In its
+place the screen said the type has no person roles configured. `GET
+/api/documents/<id>/valid-person-roles` answered `{"items":[]}` and `GET
+/api/admin/doc-type-person-roles/distinct-roles` answered `{"items":[]}` too: on Adrian's
+local database **`lookup_doc_type_person_role` is empty for every type**, not just this
+one. The application behaved correctly for what it was given; the data is what is wrong.
+The 36.05 handover carries it.
 
-**Two things already corrected without a run**, both from TC-PERS-01's first run, because
-they would have failed step 8 on sight: a person's name renders **prenume-first**, and
-the subject-matter answer above has replaced the open question the case shipped with.
+**The question this case shipped with is settled: „Mod de deținere" IS an inline cell on
+the person row**, a select beside „Cotă-parte" and a „Suprafață echivalentă (mp)" field
+nobody had mentioned. The per-role line is not two lines but one, which is either the
+warning or the total, never both.
 
-**What to watch for on the first real run.** The three-part shape of step 9-10 —
-cotă-parte, „Mod de deținere", and the per-role total underneath — is read from
-`messages/ro-RO.json` and has never been seen working together. The most likely
-correction is that „Mod de deținere" is not an inline cell on the row but lives
-somewhere else on the screen.
+Other corrections: „Persoane" is a top-level tab, not „Asocieri" → „Persoane"; the
+table has no „Cod" column; the cotă-parte cell drops the `%`; „Dezasociază" needs the
+row's radio first.
+
+**What the next run has to see before this reaches `driven`:** step 3's „Rol" select,
+step 5, and the role name in steps 8, 11 and 12 — all of which wait on the reference
+data, and nothing else.
+
+_(Earlier, without a run: a person's name renders **prenume-first**, from TC-PERS-01's
+first run; and the subject-matter answer above replaced the open question the case
+shipped with.)_

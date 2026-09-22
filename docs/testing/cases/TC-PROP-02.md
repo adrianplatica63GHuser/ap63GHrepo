@@ -5,8 +5,8 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-21 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-22 |
 
 ## What this proves
 
@@ -51,7 +51,7 @@ that is a defect, not a step to work around.
 | 1 | Presses „Deschide" on the `TC-PROP-01 Teren de test` row in „Proprietăți — Listă" | The detail screen, headed with the property's own nickname, on the tab „DETALII" |
 | 2 | Looks at the **top right of the page header**, beside the heading | „◀ v 0 ▶" and, next to it, a button „Setează ca actuală" |
 | 3 | Scrolls to the bottom and looks at „Salvează" | It is **pale** — nothing has changed yet. „Șterge" (red) and „Anulează" sit beside it |
-| 4 | Changes „Suprafață oficială (m²)" from `1000.00` to `1100`, then leaves the field | A banner **„✏ Modificări nesalvate"** appears above the buttons, and „Salvează" turns **dark** |
+| 4 | Changes „Suprafață oficială (m²)" from `1000.00` to `1100`, then leaves the field | A banner **„✏ Modificări nesalvate"** appears **at the top of the form**, above „DATE CADASTRALE", and stays pinned to the top of the window as you scroll down. „Salvează", at the bottom, turns **dark** |
 | 5 | Presses „Salvează" | The form saves and stays on this screen |
 | 6 | Looks at the page header again | The strip has been **replaced by the chip „↺ 2 versiuni"**. The banner is gone and the field reads `1100` |
 | 7 | Presses the chip | „◀ v 0 ▶" again, „Setează ca actuală" now **dark**, the fields greyed and „Suprafață oficială" back to `1000.00` — this is the previous version, read-only |
@@ -69,6 +69,23 @@ harmless: every assertion here is relative (`N+1`), never absolute — the same 
 property itself is TC-PROP-01's to delete.
 
 ## Notes from the runs
+
+**2026-09-22, second run of the day — `confirmed`: the corrected file held line for line,
+on `PROP01625`.** „v 0" and a disabled „Salvează"; the sticky banner at the top of the
+form, ahead of „Date cadastrale", after the edit; „v 1" with „2 versiuni" after the save
+and `1100` in the field; `v 0` at `1000.00` with the fields disabled and „Setează ca
+actuală" enabled; „v 1" again on „Versiunea următoare". Only this section was written on
+this run. **This is the case to promote first in 36.06.**
+
+**2026-09-22, first run of the day — every behaviour held, on `PROP01622`; one place was
+wrong.** „← v 0 →" before the edit, the dirty banner, „↺ 2 versiuni" after the save, the
+chip leading back to `v 0` at `1000.00`, and the hidden „v 1" on returning — all as
+written. But step 4 said the banner appears *above the buttons*, and it does not: it is
+`UnsavedChangesBanner` (`src/components/unsaved-changes-banner.tsx`, mounted first in
+the form by Slice #20.13), which sits at the top of the form and is sticky, so a person
+looking just above „Salvează" sees the map. Step 4 is corrected, which makes this a
+second `driven`. A locator for the banner is unaffected — it is a string, wherever it
+sits.
 
 **2026-09-21 — driven, green, on `PROP01620`. Every behaviour this case claims held.**
 

@@ -5,8 +5,8 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-21 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-22 |
 
 ## What this proves
 
@@ -44,10 +44,22 @@ record; the form does not require one for a save.
 ## At the end — leaving things as they were found
 
 **This case leaves one person behind, on purpose** — TC-ASSOC-01 and TC-SRCH-01 use it.
-Remove it after those: open it, press „Șterge", confirm „Ștergeți persoana?" with
-„Șterge". A person already associated to a document must be dissociated first.
+Remove it after those: open it from „Persoane Fizice", press „Șterge" at the bottom of
+the form, and answer the dialog „Ștergeți persoana?" with **„Da"** — its two buttons are
+„Nu" and „Da". A person already associated to a document must be dissociated first.
 
 ## Notes from the runs
+
+**2026-09-22, second run of the day — `confirmed`: the corrected file needed no change.**
+Result `PPERS01626`, „Nu există persoane" → „Se afișează 1 din 1", found again by
+`TC-PERS`; removed as the cleanup now says, with „Da", back to „Se afișează 0 din 0".
+Only this section was written on this run.
+
+**2026-09-22, first run of the day — steps 1–7 held word for word; the cleanup did
+not.** Result `PPERS01623`, „Nu există persoane" → „Se afișează 1 din 1", badged „Nou!",
+still found after typing `TC-PERS` into the list's search. Removing the 2026-09-21
+record `PPERS01621` showed the confirmation answers **„Da"**, not „Șterge"; the cleanup
+paragraph is corrected, so this was a second `driven`.
 
 **2026-09-21 — driven, green. Result: `PPERS01621`, and the list went from
 „Nu există persoane" / „Se afișează 0 din 0" to „Se afișează 1 din 1".**

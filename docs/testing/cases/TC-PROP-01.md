@@ -5,8 +5,8 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-21 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-22 |
 
 ## What this proves
 
@@ -48,14 +48,28 @@ Properties list and can be removed by hand.
 ## At the end — leaving things as they were found
 
 **This case leaves one property behind, on purpose** — TC-PROP-02 edits it and
-TC-ASSOC-02 associates it. The 2026-09-21 run left **`PROP01620`**. Remove it after
-those, or whenever you like:
+TC-ASSOC-02 associates it. Remove it after those, or whenever you like. Searching `TC-`
+on Căutare globală (TC-SRCH-01) finds it if you have lost track of its code.
 
-Open it from „Proprietăți — Listă", press „Șterge", and confirm „Ștergeți
-proprietatea?" with „Șterge". If the button refuses with „Nu se poate șterge de aici",
-the property was opened from another record — open it from the sidebar list instead.
+Open it from „Proprietăți — Listă", press „Șterge" at the bottom of the form, and
+answer the dialog „Ștergeți proprietatea?" with **„Da"** — its two buttons are „Nu" and
+„Da". The list comes back one row shorter. If the button refuses with „Nu se poate
+șterge de aici", the property was opened from another record — open it from the sidebar
+list instead.
 
 ## Notes from the runs
+
+**2026-09-22, second run of the day — `confirmed`: the corrected file, driven again end
+to end, needed no change.** Result `PROP01625`, 13 → 14, badged „Nou!"; and the cleanup,
+this time as written — „Șterge", „Da" — took the list back to 13. Only this section was
+written on this run.
+
+**2026-09-22, first run of the day — steps 1–11 held word for word; the file still
+changed.** Result `PROP01622`, „Se afișează 13 din 13" → „14 din 14", badged „Nou!".
+What changed was the cleanup, which this run exercised on the 2026-09-21 record
+`PROP01620`: the confirmation dialog answers **„Da"**, not „Șterge" as this file said.
+That is an edit outside „Notes", so by the catalogue's own rule this run was a second
+`driven`, not a `confirmed` — the date moved and the row stayed.
 
 **2026-09-21 — driven, green. Result: `PROP01620`, and the list went from
 „Se afișează 13 din 13" to „Se afișează 14 din 14".**
