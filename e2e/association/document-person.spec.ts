@@ -54,9 +54,11 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(DOC_TITLE).first()).toBeVisible();
-      const nameFilter = page.getByPlaceholder("Nume…");
+      // `exact`: the sidebar's quick search „Nume, cod…" contains „cod…" too —
+      // the first run failed on exactly that (strict mode, two inputs).
+      const nameFilter = page.getByPlaceholder("Nume…", { exact: true });
       await expect(nameFilter).toBeVisible();
-      await expect(page.getByPlaceholder("Cod…")).toBeVisible();
+      await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
       const role = page.getByLabel(/^Rol(\s|$)/);
       await expect(role.locator("option:checked")).toHaveText("— fără rol —");
 

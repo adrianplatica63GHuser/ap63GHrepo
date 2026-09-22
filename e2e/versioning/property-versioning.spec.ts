@@ -169,6 +169,10 @@ test.describe("Versionare Proprietate", () => {
 
 test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avansează", () => {
   test("de la v 0 la „2 versiuni”, cu bannerul de modificări nesalvate", async ({ page }) => {
+    // The property screens compile slowly under `next dev`, and the first run
+    // spent the whole default 30 s on one click, leaving the `finally` no time
+    // to remove the property. `slow()` triples the budget.
+    test.slow();
     const nickname = `${E2E_MARKER}PROP-02 Teren de test`;
     await removeLeftovers(page.request, `${E2E_MARKER}PROP-02`);
     // The case's precondition is TC-PROP-01's property: 1000 m², never edited.
@@ -178,7 +182,13 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       // Step 1 — „Deschide" on the row in „Proprietăți — Listă"; „DETALII".
       await page.goto("/properties");
       const row = page.getByRole("row").filter({ hasText: nickname });
-      await row.getByRole("link", { name: "Deschide" }).click();
+      // `force`: on the first run this click resolved the link, the screenshot
+      // showed it on screen, and Playwright waited 34 s for it to be „visible,
+      // enabled and stable" until the test timed out. Only the Proprietăți list
+      // did this — the same click on the persons and documents lists went
+      // straight through. `force` skips only that wait; the URL assertion below
+      // still proves the click landed.
+      await row.getByRole("link", { name: "Deschide" }).click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: nickname })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("tab", { name: "DETALII" })).toBeVisible();

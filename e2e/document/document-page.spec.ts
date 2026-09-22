@@ -96,7 +96,10 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       documentId = href?.split("/").pop();
       await top.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: TITLE })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText("Neprocesat", { exact: true }).first()).toBeVisible();
+      // The chip carries its subject in an sr-only span
+      // (document-detail-tabs.tsx), so its text is „Stare procesare: Neprocesat"
+      // and an exact match on „Neprocesat" alone finds nothing (first run).
+      await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       for (const tab of ["DETALII", "ASOCIERI", "PERSOANE", "PROPRIETĂȚI", "META INFO"]) {
         await expect(page.getByRole("tab", { name: tab })).toBeVisible();
       }

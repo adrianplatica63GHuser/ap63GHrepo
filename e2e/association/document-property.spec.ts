@@ -49,7 +49,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-property$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(DOC_TITLE).first()).toBeVisible();
-      const search = page.getByPlaceholder("Cod sau denumire…");
+      const search = page.getByPlaceholder("Cod sau denumire…", { exact: true });
       await expect(search).toBeVisible();
       await expect(page.getByLabel(/^Rol(\s|$)/)).toHaveCount(0);
 
