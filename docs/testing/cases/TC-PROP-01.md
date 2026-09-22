@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `driven` |
 | **Last green** | 2026-09-22 |
 
 ## What this proves
@@ -33,17 +33,18 @@ Properties list and can be removed by hand.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Proprietăți — Listă" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), the filters „Importanță:" and „Relevanță:", „Câmpuri afișate", a table headed COD · PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ, and a button „Adaugă proprietate" |
-| 2 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 11 checks it |
-| 3 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering four ways in: „Introducere manuală", „Din imagine scanată", „Din fișier text", „Din folder text" |
-| 4 | Presses „Introducere manuală" („Completați detaliile proprietății manual") | The heading „Proprietate nouă" at `/properties/new`, with the sections „DATE CADASTRALE", „PUNCTE DE CONTUR", „ADRESĂ" and a map |
-| 5 | Types `TC-PROP-01 Teren de test` into „Poreclă" | The value appears |
-| 6 | **Selects** `40` in „Nr. tarla / sola" | The dropdown shows `40`. **This is a closed list, not a free-text field** — it offers „— niciunul —" and the tarla values already in the archive |
-| 7 | Types `TC01` into „Nr. parcelă" | The value appears. This one IS free text |
-| 8 | Types `1000` into „Suprafață oficială (m²)" | The value appears |
-| 9 | Scrolls to the bottom, below the map, and presses „Salvează" | **The screen returns to the Properties list**, not to the new property |
-| 10 | Looks at the top of the list | A row badged **„Nou!"**, with a new code, „Poreclă" `TC-PROP-01 Teren de test`, „Tarla/Solă" `40` and „Parcelă" `TC01` |
-| 11 | Reads the count at the foot | „Se afișează N+1 din N+1" |
+| 1 | Presses „Proprietăți — Listă" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), the filters „Importanță:" and „Relevanță:", „Câmpuri afișate 4/4", a button „Adaugă proprietate", and a table headed COD and **the four columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE |
+| 2 | Presses „Câmpuri afișate" and makes the four ticked columns „Poreclă", „Localitate", „Tarla/Solă" and „Parcelă" — **untick first** („Nr. cadastru", „Oficială (m²)", whatever else is ticked): the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed COD · PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
+| 3 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 12 checks it |
+| 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering four ways in: „Introducere manuală", „Din imagine scanată", „Din fișier text", „Din folder text" |
+| 5 | Presses „Introducere manuală" („Completați detaliile proprietății manual") | The heading „Proprietate nouă" at `/properties/new`, with the sections „DATE CADASTRALE", „PUNCTE DE CONTUR", „ADRESĂ" and a map |
+| 6 | Types `TC-PROP-01 Teren de test` into „Poreclă" | The value appears |
+| 7 | **Selects** `40` in „Nr. tarla / sola" | The dropdown shows `40`. **This is a closed list, not a free-text field** — it offers „— niciunul —" and the tarla values already in the archive |
+| 8 | Types `TC01` into „Nr. parcelă" | The value appears. This one IS free text |
+| 9 | Types `1000` into „Suprafață oficială (m²)" | The value appears |
+| 10 | Scrolls to the bottom, below the map, and presses „Salvează" | **The screen returns to the Properties list**, not to the new property |
+| 11 | Looks at the top of the list | A row badged **„Nou!"**, with a new code, „Poreclă" `TC-PROP-01 Teren de test`, „Tarla/Solă" `40` and „Parcelă" `TC01` |
+| 12 | Reads the count at the foot | „Se afișează N+1 din N+1" |
 
 ## At the end — leaving things as they were found
 
@@ -58,6 +59,20 @@ answer the dialog „Ștergeți proprietatea?" with **„Da"** — its two butto
 list instead.
 
 ## Notes from the runs
+
+**2026-09-22, after the first `npm run e2e` (Slice #36.06) — corrected, so back to
+`driven`.** The spec translated from this file failed at step 1 in a fresh browser: the
+table was headed COD · PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE, not
+· LOCALITATE · TARLA/SOLĂ · PARCELĂ. The columns are „Câmpuri afișate", at most four,
+kept per browser (`localStorage`, `ga40-col-property-v2`); the browser every hand run used
+had long since chosen tarla and parcelă, so every run held and none of them saw the
+default. Step 1 now says the columns are the browser's, and the new step 2 chooses the
+four that step 11 reads. Step 2 was driven at once in that browser after clearing its
+saved choice: the defaults as above, „Selectați până la 4 coloane opționale", every other
+box greyed at four, and the table headed COD · PORECLĂ · LOCALITATE · TARLA/SOLĂ ·
+PARCELĂ after unticking two and ticking two — which is also exactly the choice the
+browser held before. The rest of the file is as it was driven earlier the same day. Its
+spec is parked until the next unchanged run confirms the file (TEST-CATALOGUE.md).
 
 **2026-09-22, third run (Slice #36.06) — held line for line, to recreate the property
 TC-ASSOC-02 and TC-SRCH-01 needed.** `PROP01629`, 13 → 14, badged „Nou!"; removed

@@ -19,7 +19,7 @@ proves; this table is where to find the file.
 | Case | Spec | What it drives |
 |---|---|---|
 | TC-AUTH-01 | `e2e/auth/login-dashboard.spec.ts` | After login: the dashboard, the sidebar, „Autentificat ca". The login itself is `auth.setup.ts` |
-| TC-PROP-01 | `e2e/property/property-create.spec.ts` | A property typed in by hand appears at the top of the list, count + 1; deleted again |
+| TC-PROP-01 | `e2e/property/property-create.parked.ts` — **parked**, not run | A property typed in by hand appears at the top of the list, count + 1; deleted again. Parked because its case went back to `driven`; renamed to `.spec.ts` once the case is `confirmed` again |
 | TC-PROP-02 | `e2e/versioning/property-versioning.spec.ts` | One save appends one version: „v 0" → „2 versiuni", the unsaved-changes banner, the read-only previous version. Plus the four versioning tests below |
 | TC-PERS-01 | `e2e/person/person-create.spec.ts` | A natural person typed in by hand, found by the list's search; deleted again |
 | TC-DOC-01 | `e2e/document/document-page.spec.ts` | A Contract de Vânzare with one page attached through the hidden file input, opened full-window and closed |
