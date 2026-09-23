@@ -206,6 +206,7 @@ the source of truth for decisions and traps, and load automatically when relevan
 | Add version history to an entity | `.claude/skills/add-entity-versioning/` |
 | Onboard a new document type | `.claude/skills/onboard-document-type/` |
 | What a past slice actually did | `git log`, then `docs/claude/slice-log-archive.md` |
+| What was noticed and not yet fixed | `docs/claude/FOLLOW-UP-REGISTER.md` |
 | What every kind of testing here is for, and what nobody tests | `docs/testing/` |
 
 ## Starting a slice
@@ -213,3 +214,17 @@ the source of truth for decisions and traps, and load automatically when relevan
 Read, in one batch: this file, `git log --oneline -20`, and `src/db/schema/index.ts`.
 Then read whatever else the slice needs — freely, without asking. See the autonomy section
 in `C:\dev\CLAUDE.md`.
+
+## Ending a slice: file what it noticed
+
+Everything a slice notices and does not fix goes into `docs/claude/FOLLOW-UP-REGISTER.md`, in the
+slice's **last** commit — after the fix commits, because a `resolved` row names the commit that fixed
+it and a commit cannot name itself.
+
+- Every „Noticed, not fixed" item, recommendation and open question the handover makes becomes a row.
+  One the register already holds gets a new `Raised` ref instead, and the handover cites its `FU-nnn`
+  rather than describing it again.
+- An item fixed in passing that matches an open row closes it: `resolved`, with that commit.
+- Update the summary block with the table — `src/__tests__/follow-up-register.test.ts` fails when it
+  disagrees. Fields, statuses and the bar for an entry are in the register's header, not here; a
+  wording preference is never an entry.
