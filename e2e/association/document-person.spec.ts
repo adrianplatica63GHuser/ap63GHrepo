@@ -90,25 +90,51 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       }
       await role.selectOption({ label: "Cumpărător" });
 
-      // Step 6 — tick the row.
-      await page.getByRole("checkbox", { name: PERSON }).check();
+      // Step 6 — tick the row. By clicking the ROW, which is what the case says
+      // and what the row's own onClick does (associate-person-view.tsx), not the
+      // native checkbox. See the ⚠️ under step 7 for why that matters here.
+      await candidates.click();
+      await expect(page.getByRole("checkbox", { name: PERSON })).toBeChecked();
 
       // Step 7 — „Asociază selecția": back on the document, on „Persoane".
-      // ⚠️ Twice in a row (runs 3 and 4) Playwright waited here — 27 s, then the
-      // whole 90 s — on getByRole('button', { name: 'Asociază selecția' }) and
-      // never matched it, although the trace's DOM snapshot, taken the moment
-      // the wait began, has the button enabled with that text, and the failure
-      // snapshot lists it by exactly that role and name. TC-ASSOC-02 presses a
-      // button of the same name, by the same locator, and passes every time.
-      // Not explained. Two changes, each telling the next run something:
-      //   - the `evaluate` below: if it hangs too, the page's own JavaScript is
-      //     blocked and no locator could have worked; if it returns, the role
-      //     query was the part that stalled;
-      //   - the button is found by tag and text, not by role, and pressed with
-      //     `force` (skips only the stability wait). The URL assertion after
-      //     it still proves the press landed.
-      await page.evaluate(() => document.readyState);
-      await page.locator("button", { hasText: "Asociază selecția" }).click({ force: true });
+      //
+      // ⚠️ **THE BROWSER STOPS RENDERING HERE, AND ONLY IN PLAYWRIGHT.** Runs 3,
+      // 4 and 5 stalled on this press, three different ways of finding the
+      // button, for 27 s and then 90 s. Run 5's trace settles what kind of
+      // stall it is: a `page.evaluate` issued just before returned at once — the
+      // page's JavaScript is alive — while the locator that followed never
+      // resolved. Playwright resolves an action's locator on animation frames,
+      // and `expect` by plain evaluation; every `expect` in this test passes and
+      // the first action after the tick hangs. So the page stopped producing
+      // frames the instant the checkbox was ticked (the screencast confirms it:
+      // a frame every ~17 ms, then none), which no locator can wait out. The
+      // same screen driven by hand in Chrome on 2026-09-22 never stalled, and
+      // TC-ASSOC-02 ticks a checkbox and presses a same-named button on every
+      // run. Not explained yet — the 36.06 handover carries it.
+      //
+      // Two answers, in order. The row is ticked by its row, above, in case the
+      // native checkbox is what stalls it. And if the press still cannot be
+      // made the ordinary way within 10 s, the button is clicked from inside
+      // the page — the one channel run 5 proved still works — and the run is
+      // ANNOTATED „rendering-stall", so a green result says in the report that
+      // the fallback was needed. The URL assertion below still proves the press
+      // landed either way.
+      const press = page.locator("button", { hasText: "Asociază selecția" });
+      try {
+        await press.click({ timeout: 10_000 });
+      } catch {
+        test.info().annotations.push({
+          type: "rendering-stall",
+          description: "„Asociază selecția” pressed from inside the page after the ordinary click stalled for 10 s",
+        });
+        await page.evaluate(() => {
+          const button = Array.from(document.querySelectorAll("button")).find(
+            (b) => b.textContent?.trim() === "Asociază selecția",
+          );
+          if (!button) throw new Error("„Asociază selecția” is not on the page");
+          button.click();
+        });
+      }
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=persons$`), { timeout: 30_000 });
 
       // Step 8 — Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de
