@@ -44,10 +44,10 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01"],
   "/properties/new":                       ["TC-PROP-01"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04"],
   "/natural-persons":                      ["TC-PERS-01"],
   "/natural-persons/new":                  ["TC-PERS-01"],
-  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03"],
+  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04"],
   "/documents":                            ["TC-DOC-01"],
   "/documents/new":                        ["TC-DOC-01"],
   "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03"],
@@ -59,6 +59,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/judicial-persons/new":                 ["TC-PERS-02"],
   "/judicial-persons/[id]":                ["TC-PERS-02"],
   "/natural-persons/[id]/associate-document":["TC-ASSOC-03"],
+  "/properties/[id]/associate-person":     ["TC-ASSOC-04"],
+  "/natural-persons/[id]/associate-property":["TC-ASSOC-04"],
 };
 
 /**
@@ -76,14 +78,10 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "Open the map, see the property from TC-PROP-01 on it, open it from there. Needs a Google Maps key in .env, so it is not a case every machine can run.",
   "/properties/[id]/associate-document":
     "The other end of TC-ASSOC-02: attach a document from the property rather than from the document.",
-  "/properties/[id]/associate-person":
-    "Attach a person to a property under a role, and see the role on the property's Persoane tab.",
   "/properties/[id]/associate-reference":
     "Link two properties to each other and check the relationship reads correctly in both directions.",
   "/natural-persons/[id]/associate-person":
     "Link two people (mandatar, mostenitor) and check the relationship reads correctly in both directions.",
-  "/natural-persons/[id]/associate-property":
-    "The other end of /properties/[id]/associate-person.",
   "/judicial-persons/[id]/associate-document":
     "The judicial-person twin of TC-ASSOC-01.",
   "/judicial-persons/[id]/associate-person":
