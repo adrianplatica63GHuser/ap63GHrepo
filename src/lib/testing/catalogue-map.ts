@@ -47,10 +47,10 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02"],
   "/natural-persons":                      ["TC-PERS-01"],
   "/natural-persons/new":                  ["TC-PERS-01"],
-  "/natural-persons/[id]":                 ["TC-PERS-01"],
+  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03"],
   "/documents":                            ["TC-DOC-01"],
   "/documents/new":                        ["TC-DOC-01"],
-  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01"],
+  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02"],
@@ -58,6 +58,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/judicial-persons":                     ["TC-PERS-02"],
   "/judicial-persons/new":                 ["TC-PERS-02"],
   "/judicial-persons/[id]":                ["TC-PERS-02"],
+  "/natural-persons/[id]/associate-document":["TC-ASSOC-03"],
 };
 
 /**
@@ -79,8 +80,6 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "Attach a person to a property under a role, and see the role on the property's Persoane tab.",
   "/properties/[id]/associate-reference":
     "Link two properties to each other and check the relationship reads correctly in both directions.",
-  "/natural-persons/[id]/associate-document":
-    "The other end of TC-ASSOC-01: attach a document from the person's screen.",
   "/natural-persons/[id]/associate-person":
     "Link two people (mandatar, mostenitor) and check the relationship reads correctly in both directions.",
   "/natural-persons/[id]/associate-property":

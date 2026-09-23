@@ -72,6 +72,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
+| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `driven` | 2026-09-23 | — |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
