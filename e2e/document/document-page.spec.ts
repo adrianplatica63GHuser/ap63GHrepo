@@ -42,11 +42,9 @@ async function readTotal(page: Page): Promise<number> {
 
 test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", () => {
   test("act nou, o pagină atașată fără dialogul sistemului, pagina se deschide", async ({ page }) => {
-    // Room for the `finally`: twice now (TC-PROP-02 on the first run, TC-ASSOC-01
-    // on the third) the browser stopped producing frames mid-test — no new
-    // screencast frame for 27 s, Playwright waiting on a locator the snapshot
-    // shows on screen — and the default 30 s ran out with the cleanup still to
-    // do, leaving a TC-E2E- row for the next run's removeLeftovers.
+    // Room for the `finally`: an action waiting on a locator that never matches
+    // spends the whole default 30 s, and the cleanup after it then dies of the
+    // same timeout, leaving a TC-E2E- row for the next run's removeLeftovers.
     test.slow();
     await removeLeftovers(page.request, `${E2E_MARKER}DOC-01`);
 

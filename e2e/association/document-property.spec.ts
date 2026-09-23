@@ -30,11 +30,9 @@ const DOC_TITLE = `${MARK} Contract de test`;
 
 test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
   test("legătura act–proprietate se vede din ambele capete", async ({ page }) => {
-    // Room for the `finally`: twice now (TC-PROP-02 on the first run, TC-ASSOC-01
-    // on the third) the browser stopped producing frames mid-test — no new
-    // screencast frame for 27 s, Playwright waiting on a locator the snapshot
-    // shows on screen — and the default 30 s ran out with the cleanup still to
-    // do, leaving a TC-E2E- row for the next run's removeLeftovers.
+    // Room for the `finally`: an action waiting on a locator that never matches
+    // spends the whole default 30 s, and the cleanup after it then dies of the
+    // same timeout, leaving a TC-E2E- row for the next run's removeLeftovers.
     test.slow();
     await removeLeftovers(page.request, MARK);
     const propertyId = await createProperty(page.request, { nickname: PROPERTY });

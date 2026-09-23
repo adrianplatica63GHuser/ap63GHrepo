@@ -35,11 +35,9 @@ const ROW = `${PERSON} — Cumpărător`; // the accessible-name suffix of the r
 
 test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-parte", () => {
   test("rol Cumpărător, cotă 50% cu avertisment, indiviziune, apoi 100%", async ({ page }) => {
-    // Room for the `finally`: twice now (TC-PROP-02 on the first run, TC-ASSOC-01
-    // on the third) the browser stopped producing frames mid-test — no new
-    // screencast frame for 27 s, Playwright waiting on a locator the snapshot
-    // shows on screen — and the default 30 s ran out with the cleanup still to
-    // do, leaving a TC-E2E- row for the next run's removeLeftovers.
+    // Room for the `finally`: an action waiting on a locator that never matches
+    // spends the whole default 30 s, and the cleanup after it then dies of the
+    // same timeout, leaving a TC-E2E- row for the next run's removeLeftovers.
     test.slow();
     await removeLeftovers(page.request, MARK);
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
@@ -90,51 +88,15 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       }
       await role.selectOption({ label: "Cumpărător" });
 
-      // Step 6 — tick the row. By clicking the ROW, which is what the case says
-      // and what the row's own onClick does (associate-person-view.tsx), not the
-      // native checkbox. See the ⚠️ under step 7 for why that matters here.
-      await candidates.click();
-      await expect(page.getByRole("checkbox", { name: PERSON })).toBeChecked();
+      // Step 6 — tick the row.
+      await page.getByRole("checkbox", { name: PERSON }).check();
 
       // Step 7 — „Asociază selecția": back on the document, on „Persoane".
-      //
-      // ⚠️ **THE BROWSER STOPS RENDERING HERE, AND ONLY IN PLAYWRIGHT.** Runs 3,
-      // 4 and 5 stalled on this press, three different ways of finding the
-      // button, for 27 s and then 90 s. Run 5's trace settles what kind of
-      // stall it is: a `page.evaluate` issued just before returned at once — the
-      // page's JavaScript is alive — while the locator that followed never
-      // resolved. Playwright resolves an action's locator on animation frames,
-      // and `expect` by plain evaluation; every `expect` in this test passes and
-      // the first action after the tick hangs. So the page stopped producing
-      // frames the instant the checkbox was ticked (the screencast confirms it:
-      // a frame every ~17 ms, then none), which no locator can wait out. The
-      // same screen driven by hand in Chrome on 2026-09-22 never stalled, and
-      // TC-ASSOC-02 ticks a checkbox and presses a same-named button on every
-      // run. Not explained yet — the 36.06 handover carries it.
-      //
-      // Two answers, in order. The row is ticked by its row, above, in case the
-      // native checkbox is what stalls it. And if the press still cannot be
-      // made the ordinary way within 10 s, the button is clicked from inside
-      // the page — the one channel run 5 proved still works — and the run is
-      // ANNOTATED „rendering-stall", so a green result says in the report that
-      // the fallback was needed. The URL assertion below still proves the press
-      // landed either way.
-      const press = page.locator("button", { hasText: "Asociază selecția" });
-      try {
-        await press.click({ timeout: 10_000 });
-      } catch {
-        test.info().annotations.push({
-          type: "rendering-stall",
-          description: "„Asociază selecția” pressed from inside the page after the ordinary click stalled for 10 s",
-        });
-        await page.evaluate(() => {
-          const button = Array.from(document.querySelectorAll("button")).find(
-            (b) => b.textContent?.trim() === "Asociază selecția",
-          );
-          if (!button) throw new Error("„Asociază selecția” is not on the page");
-          button.click();
-        });
-      }
+      // (Runs 1–6 of this spec never found this button: the screen said
+      // „Asociează selecția", a misspelling in messages/ro-RO.json since Slice
+      // #5.4, where every other association screen says „Asociază". The case
+      // file had the right word; the message file is what was corrected.)
+      await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=persons$`), { timeout: 30_000 });
 
       // Step 8 — Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de
