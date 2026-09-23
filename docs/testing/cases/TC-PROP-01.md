@@ -5,8 +5,8 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-22 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -59,6 +59,15 @@ answer the dialog „Ștergeți proprietatea?" with **„Da"** — its two butto
 list instead.
 
 ## Notes from the runs
+
+**2026-09-23 (Slice #36.08) — `confirmed`: the corrected file held line for line.** The first
+run since the 2026-09-22 correction, made to create the property the second wave needed.
+Step 2's columns were already COD · PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ in this
+browser, as the step says a later run finds them; „Se afișează 13 din 13" → `PROP01713`, badged
+„Nou!", tarla `40`, parcelă `TC01` → „14 din 14". Removed at the end of the wave with „Șterge"
+and „Da". Only this section was written. **Its spec is still parked** as
+`e2e/property/property-create.parked.ts`: un-parking it and adding it to the `Spec` column is
+the next promotion slice's work, not this one's.
 
 **2026-09-22, after the first `npm run e2e` (Slice #36.06) — corrected, so back to
 `driven`.** The spec translated from this file failed at step 1 in a fresh browser: the

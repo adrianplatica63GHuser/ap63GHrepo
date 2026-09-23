@@ -65,7 +65,7 @@ fixed fixture where the existing one will do.
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-09-23 | `e2e/auth/login-dashboard.spec.ts` |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `driven` | 2026-09-22 | — |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-23 | — |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `driven` | 2026-09-23 | — |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
@@ -85,9 +85,23 @@ fixed fixture where the existing one will do.
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `driven` | 2026-09-23 | — |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `driven` | 2026-09-23 | — |
 
-**Seven are `automated`, four are `driven`, and none is `draft`** — as of 2026-09-23
-(Slice #36.07).
+**Seven are `automated`, one is `confirmed`, eleven are `driven`, and one is `draft`** — as
+of 2026-09-23 (Slice #36.08).
 
+- **The second wave, Slice #36.08: nine cases for the ordinary week's work.** TC-PERS-02 (a
+  company), TC-ASSOC-03 to TC-ASSOC-06 (each association reached from its other end, a
+  person and a company on a property), TC-PROP-03 (a property from a coordinate file),
+  TC-GRP-01 and TC-TAG-01 are `driven`, first run green, each corrected against the screen.
+  **TC-ASSOC-07 is `draft` because its first run was red at the assertion**: a reference made
+  by hand under „Titlu anterior al" read backwards from both documents. The manual „Asociază"
+  sends no direction, so the role reads from whichever document's uuid sorts first — the
+  case file has the measurement and the one-line fix, which changes a contract #36.03 wrote
+  down and so was not made here. The wave ran after TC-PROP-01, TC-PERS-01 and TC-DOC-01
+  recreated the records it needs, and removed everything it made: a search for `TC-` on
+  Căutare globală finds nothing after it.
+- **`confirmed`, spec parked: TC-PROP-01.** Its first unchanged run since the 2026-09-22
+  correction was the one that opened the second wave. The spec that follows it still waits as
+  `e2e/property/property-create.parked.ts`; un-parking it is a promotion slice's work.
 - **`automated`: TC-AUTH-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
   TC-SRCH-01** — green together in Adrian's `npm run e2e` on 2026-09-23 (12 passed,
   29.2 s), after six red runs. What they found: four mistakes in the specs themselves
@@ -98,13 +112,13 @@ fixed fixture where the existing one will do.
   `messages/ro-RO.json`, which four runs in a row stopped on. TC-AUTH-01 went from `draft`
   straight to `automated` by the stated exception above. TC-PROP-02's spec is the
   fifth test in `e2e/versioning/property-versioning.spec.ts`, not a file of its own.
-- **`driven`, spec parked: TC-PROP-01.** The first `npm run e2e` found its case file
+- **TC-PROP-01's history.** The first `npm run e2e` found its case file
   wrong — step 1's columns were the driving browser's saved „Câmpuri afișate", not what a
   fresh browser shows — which is precisely what this process is for: every hand run held
   because every hand run used the same browser. The case is corrected (a new step 2
   chooses the columns), which sends it back to `driven`; its spec follows the corrected
   file and waits as `e2e/property/property-create.parked.ts`, outside Playwright's match,
-  until the next unchanged run confirms it.
+  until the next unchanged run confirms it — which Slice #36.08's run did.
 - **`driven`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — first driven in Slice #36.07,
   with Adrian picking the folder (below). One import on this archive costs **4 Claude
   calls** — 2 classifications at „Scanare", 1 identity-card read, 1 document read — and
@@ -143,7 +157,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Eleven cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
+**Twenty cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
@@ -211,9 +225,9 @@ added, in a check that already runs on every push. This is the same mechanism
 rotting, and it is deliberately not a new one.
 
 **Richer data — a new numbered folder.** New scenario folders go under
-`C:\dev\TEST.DATA\Test.Claude\` beside the seven that are there
+`C:\dev\TEST.DATA\Test.Claude\` beside the eight that are there
 (`01.smoke.one.property`, `02.rerun`, `03.types.noform`, `04.mixed`, `05.big`,
-`06.two.id.cards`, `07.smoke.tc.marker`), following the same numbering, and the case that uses one names it in
+`06.two.id.cards`, `07.smoke.tc.marker`, `08.tc.coord.file`), following the same numbering, and the case that uses one names it in
 its `Data` line and in its row above. The rest of `C:\dev\TEST.DATA\` — `CLINCENI.3`
 with its twenty-odd property folders, `flotante` with the CVC and act-adițional samples,
 `Modele.Acte`, `A`, `A2.*`, `A3.CVCs` — is the **archive** these folders are cut from,
@@ -232,7 +246,11 @@ guard cannot enforce: a slice that ships a screen ships the row and the case fil
 ## Unclaimed data, and the case each folder is waiting for
 
 These four folders already exist and no case owns them yet. They are listed
-so the next person to extend the suite does not re-create what is there.
+so the next person to extend the suite does not re-create what is there. All four wait on
+import or AI cases, which wait on the cost Slice #36.07 measured; the second wave (#36.08)
+claimed none of them. It added one folder of its own, `08.tc.coord.file` — TC-PROP-03's
+coordinate file, copied out of `01.smoke.one.property` under a `TC-` name because the
+screen writes the file name into „Poreclă" — and that one is owned.
 
 | Folder | What it is | The case it is waiting for |
 |---|---|---|

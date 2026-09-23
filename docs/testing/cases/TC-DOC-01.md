@@ -81,6 +81,11 @@ back. `C:\dev\TEST.DATA\` is read-only to this catalogue.
 
 ## Notes from the runs
 
+**2026-09-23 (Slice #36.08) — steps 1–9 held, to create the document the second wave
+needed.** `DOC01715`, „Se afișează 15 din 106"; `530.jpg` in through `file_upload` exactly as
+step 8 says. Steps 10–11 („Pagini extinse") were not re-run. Removed at the end of the wave
+with „Șterge" and „Da" — back to 105 documents. Only this section was written.
+
 **2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
 12 passed; the spec is named in the catalogue's `Spec` column.
 

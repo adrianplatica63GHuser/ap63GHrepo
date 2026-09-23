@@ -37,7 +37,7 @@ export type CatalogueCaseId = string;
  * Routes a case drives, keyed by the Next.js route as the page file spells it
  * (`[id]`, not a uuid). A route may be driven by several cases, and a case may
  * appear against several routes — TC-AI-01 reads the result of TC-IMP-01 on the
- * document screen, so `/documents/[id]` carries three.
+ * document screen, so `/documents/[id]` carries several.
  */
 export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCaseId[]>> = {
   "/":                                     ["TC-AUTH-01"],
@@ -58,11 +58,11 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/judicial-persons":                     ["TC-PERS-02"],
   "/judicial-persons/new":                 ["TC-PERS-02"],
   "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06"],
-  "/natural-persons/[id]/associate-document":["TC-ASSOC-03"],
+  "/natural-persons/[id]/associate-document": ["TC-ASSOC-03"],
   "/properties/[id]/associate-person":     ["TC-ASSOC-04"],
-  "/natural-persons/[id]/associate-property":["TC-ASSOC-04"],
+  "/natural-persons/[id]/associate-property": ["TC-ASSOC-04"],
   "/properties/[id]/associate-document":   ["TC-ASSOC-05"],
-  "/judicial-persons/[id]/associate-property":["TC-ASSOC-06"],
+  "/judicial-persons/[id]/associate-property": ["TC-ASSOC-06"],
   "/documents/[id]/associate-reference":   ["TC-ASSOC-07"],
   "/admin/groups":                         ["TC-GRP-01"],
   "/admin/groups/[id]":                    ["TC-GRP-01"],
