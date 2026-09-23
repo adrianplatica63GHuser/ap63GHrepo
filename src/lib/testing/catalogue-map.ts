@@ -44,7 +44,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01"],
   "/properties/new":                       ["TC-PROP-01"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06"],
   "/natural-persons":                      ["TC-PERS-01"],
   "/natural-persons/new":                  ["TC-PERS-01"],
   "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04"],
@@ -57,11 +57,12 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/admin/global-search":                  ["TC-SRCH-01"],
   "/judicial-persons":                     ["TC-PERS-02"],
   "/judicial-persons/new":                 ["TC-PERS-02"],
-  "/judicial-persons/[id]":                ["TC-PERS-02"],
+  "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06"],
   "/natural-persons/[id]/associate-document":["TC-ASSOC-03"],
   "/properties/[id]/associate-person":     ["TC-ASSOC-04"],
   "/natural-persons/[id]/associate-property":["TC-ASSOC-04"],
   "/properties/[id]/associate-document":   ["TC-ASSOC-05"],
+  "/judicial-persons/[id]/associate-property":["TC-ASSOC-06"],
 };
 
 /**
@@ -85,8 +86,6 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "The judicial-person twin of TC-ASSOC-01.",
   "/judicial-persons/[id]/associate-person":
     "A natural person acting for a company — the representative link.",
-  "/judicial-persons/[id]/associate-property":
-    "A company owning a property.",
   "/documents/[id]/associate-party":
     "Add a party to a Certificat de Mostenitor with quality Defunct or Mostenitor. Needs a document of that type, which none of the six data folders currently holds.",
   "/documents/[id]/associate-reference":
