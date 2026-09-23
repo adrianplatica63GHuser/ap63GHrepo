@@ -55,6 +55,9 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/documents/[id]/associate-property":    ["TC-ASSOC-02"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02"],
   "/admin/global-search":                  ["TC-SRCH-01"],
+  "/judicial-persons":                     ["TC-PERS-02"],
+  "/judicial-persons/new":                 ["TC-PERS-02"],
+  "/judicial-persons/[id]":                ["TC-PERS-02"],
 };
 
 /**
@@ -82,12 +85,6 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "Link two people (mandatar, mostenitor) and check the relationship reads correctly in both directions.",
   "/natural-persons/[id]/associate-property":
     "The other end of /properties/[id]/associate-person.",
-  "/judicial-persons":
-    "The judicial-person twin of TC-PERS-01. Same shape, different form: CUI rather than CNP.",
-  "/judicial-persons/new":
-    "As above — creating one.",
-  "/judicial-persons/[id]":
-    "As above — opening and editing one.",
   "/judicial-persons/[id]/associate-document":
     "The judicial-person twin of TC-ASSOC-01.",
   "/judicial-persons/[id]/associate-person":
