@@ -59,7 +59,10 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       const nameFilter = page.getByPlaceholder("Nume…", { exact: true });
       await expect(nameFilter).toBeVisible();
       await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
-      const role = page.getByLabel(/^Rol(\s|$)/);
+      // By role, not getByLabel: the <label> wraps the <select>, so its text runs
+      // straight into the options — „Rol— fără rol —Cumpărător…", no space — and
+      // /^Rol(\s|$)/ matched nothing (second run). The accessible name is „Rol".
+      const role = page.getByRole("combobox", { name: "Rol", exact: true });
       await expect(role.locator("option:checked")).toHaveText("— fără rol —");
 
       // Step 4 — one row: `PPERS…`, „Ion TC-E2E-ASSOC-01", „Fizică".

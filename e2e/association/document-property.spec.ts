@@ -51,7 +51,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page.getByText(DOC_TITLE).first()).toBeVisible();
       const search = page.getByPlaceholder("Cod sau denumire…", { exact: true });
       await expect(search).toBeVisible();
-      await expect(page.getByLabel(/^Rol(\s|$)/)).toHaveCount(0);
+      await expect(page.getByRole("combobox", { name: "Rol", exact: true })).toHaveCount(0);
 
       // Step 4 — the table narrows to one row.
       await search.fill(MARK);

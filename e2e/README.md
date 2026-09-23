@@ -199,8 +199,11 @@ take its current value into its accessible name** — the accessible-name rules
 fold an embedded select's chosen option into the label, and the `<label>`'s own
 text on the property form reads „Nr. tarla / sola— niciunul —404647/2" (measured
 2026-09-22). So an `exact` label match is fragile, and a plain
-`getByLabel("Nume")` also matches „Prenume". Anchor the label instead:
-`getByLabel(/^Nume(\s|$)/)`.
+`getByLabel("Nume")` also matches „Prenume". For a text input, anchor the label:
+`getByLabel(/^Nume(\s|$)/)`. **For a `<select>`, use its role instead** —
+`getByRole("combobox", { name: "Rol", exact: true })` — because the label's text
+runs straight into the options with no space („Rol— fără rol —Cumpărător…"), and
+`/^Rol(\s|$)/` matched nothing on the second run.
 
 ---
 
