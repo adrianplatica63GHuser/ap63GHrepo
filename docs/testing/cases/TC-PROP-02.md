@@ -5,8 +5,8 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
-| **Last green** | 2026-09-22 |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -69,6 +69,9 @@ harmless: every assertion here is relative (`N+1`), never absolute — the same 
 property itself is TC-PROP-01's to delete.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-22, second run of the day — `confirmed`: the corrected file held line for line,
 on `PROP01625`.** „v 0" and a disabled „Salvează"; the sticky banner at the top of the

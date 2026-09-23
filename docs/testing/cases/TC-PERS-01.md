@@ -5,8 +5,8 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
-| **Last green** | 2026-09-22 |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -49,6 +49,9 @@ the form, and answer the dialog „Ștergeți persoana?" with **„Da"** — its
 „Nu" and „Da". A person already associated to a document must be dissociated first.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-22, third run (Slice #36.06) — held line for line, to recreate the person
 TC-ASSOC-01 and TC-SRCH-01 needed.** `PPERS01630`, „Nu există persoane" → „Se afișează 1

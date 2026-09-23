@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
-| **Last green** | 2026-09-22 |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -52,6 +52,9 @@ with „Nu se poate șterge de aici" — dissociate first, then open the propert
 failure of this case.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-22, second run (Slice #36.06) — `confirmed`: the file held line for line.**
 `PROP01629` attached to `DOC01631`: „Asociere proprietate" listing every property, one

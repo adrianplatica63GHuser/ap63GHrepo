@@ -5,8 +5,8 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | `C:\dev\TEST.DATA\Test.Claude\01.smoke.one.property` |
-| **State** | `confirmed` |
-| **Last green** | 2026-09-22 |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -80,6 +80,9 @@ the document deletes its stored page file too
 back. `C:\dev\TEST.DATA\` is read-only to this catalogue.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-22 — promoted (Slice #36.06). The spec does not attach `530.jpg`:** it attaches
 `e2e/fixtures/tc-e2e-pagina.png`, a blank „PAGINĂ DE TEST" made for the purpose, because a

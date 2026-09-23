@@ -64,27 +64,30 @@ fixed fixture where the existing one will do.
 
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
-| [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `draft` | — | `e2e/auth/login-dashboard.spec.ts` |
+| [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-09-23 | `e2e/auth/login-dashboard.spec.ts` |
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `driven` | 2026-09-22 | — |
-| [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `confirmed` | 2026-09-22 | `e2e/versioning/property-versioning.spec.ts` |
-| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `confirmed` | 2026-09-22 | `e2e/person/person-create.spec.ts` |
-| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `confirmed` | 2026-09-22 | `e2e/document/document-page.spec.ts` |
-| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `confirmed` | 2026-09-22 | `e2e/association/document-person.spec.ts` |
-| [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `confirmed` | 2026-09-22 | `e2e/association/document-property.spec.ts` |
+| [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
+| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
+| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
+| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
+| [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — | — |
-| [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `confirmed` | 2026-09-22 | `e2e/search/global-search.spec.ts` |
+| [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 
-**Six are `confirmed`, one is `driven`, three are `draft`, and seven have a spec
-waiting for a green run** — as of 2026-09-22 (Slice #36.06). None is `automated` yet:
-that takes Adrian's `npm run e2e`, and a spec that has not run green proves nothing.
+**Seven are `automated`, one is `driven`, and two are `draft`** — as of 2026-09-23
+(Slice #36.06).
 
-- **`confirmed`, with a spec: TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
-  TC-SRCH-01.** The last three were driven a second time on 2026-09-22 in Slice #36.06
-  and held line for line; the others were driven again the same day to recreate the
-  records those three needed, and held too. TC-PROP-02's spec is not a new file: it is
-  the fifth test in `e2e/versioning/property-versioning.spec.ts`, which already asserted
-  most of the case (its header says why the fifth test needs a property of its own).
+- **`automated`: TC-AUTH-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
+  TC-SRCH-01** — green together in Adrian's `npm run e2e` on 2026-09-23 (12 passed,
+  29.2 s), after six red runs. What they found: four mistakes in the specs themselves
+  (two over-broad locators, a label that runs into its options, a click on the
+  Proprietăți list that never settled), one case file wrong about the screen
+  (TC-PROP-01, below), and one misspelt button in the application — „Asociează
+  selecția" on the document's Asociere persoană screen, corrected in
+  `messages/ro-RO.json`, which four runs in a row stopped on. TC-AUTH-01 went from `draft`
+  straight to `automated` by the stated exception above. TC-PROP-02's spec is the
+  fifth test in `e2e/versioning/property-versioning.spec.ts`, not a file of its own.
 - **`driven`, spec parked: TC-PROP-01.** The first `npm run e2e` found its case file
   wrong — step 1's columns were the driving browser's saved „Câmpuri afișate", not what a
   fresh browser shows — which is precisely what this process is for: every hand run held
@@ -92,7 +95,6 @@ that takes Adrian's `npm run e2e`, and a spec that has not run green proves noth
   chooses the columns), which sends it back to `driven`; its spec follows the corrected
   file and waits as `e2e/property/property-create.parked.ts`, outside Playwright's match,
   until the next unchanged run confirms it.
-- **`draft`, with a spec: TC-AUTH-01** — the stated exception above.
 - **`draft`, no spec: TC-IMP-01, TC-AI-01** — never run; both need the import wizard's
   folder picker, which Slice 36.07 decides how to get past.
 

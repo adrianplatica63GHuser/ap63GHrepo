@@ -5,8 +5,8 @@
 | **Area** | search |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
-| **Last green** | 2026-09-22 |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -55,6 +55,9 @@ here lists everything the run left behind, across all three kinds, in one table.
 **before** a chain of cases too: the chain expects to find exactly what it creates.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-22, second run (Slice #36.06) — `confirmed`: the file held line for line.**
 „3 rezultate" for `TC-`, `?search=TC-` in the address: `DOC01631` `DOCUMENT`,

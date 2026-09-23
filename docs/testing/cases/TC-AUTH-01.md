@@ -5,8 +5,8 @@
 | **Area** | auth |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## ⚠️ Claude cannot drive steps 2–4, and that is permanent
 
@@ -17,8 +17,8 @@ a session somebody else established.
 **Slice #36.06 took the second way below**: `e2e/auth/login-dashboard.spec.ts` runs steps
 5–8 on the session `e2e/auth.setup.ts` logs in, and this is the one case in the catalogue
 promoted without being driven — recorded as such in `TEST-CATALOGUE.md` and in
-`PROMOTED_WITHOUT_DRIVING` (`src/lib/testing/catalogue-map.ts`). It moves straight from
-`draft` to `automated` on its first green `npm run e2e`.
+`PROMOTED_WITHOUT_DRIVING` (`src/lib/testing/catalogue-map.ts`). It moved straight from
+`draft` to `automated` on its first green `npm run e2e`, 2026-09-23.
 
 The two honest ways to run it:
 
@@ -74,6 +74,9 @@ Nothing to clean up. The session cookie is the only thing created and every late
 wants it.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-22 — promoted (Slice #36.06), without a hand run, by the stated exception.**
 Writing the spec corrected step 7: the „RECENTE" list is not always there. It renders only

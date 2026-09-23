@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
-| **Last green** | 2026-09-22 |
+| **State** | `automated` |
+| **Last green** | 2026-09-23 |
 
 ## What this proves
 
@@ -100,6 +100,9 @@ follows. The person and the document are left for the cases that follow; only th
 is removed.
 
 ## Notes from the runs
+
+**2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
+12 passed; the spec is named in the catalogue's `Spec` column.
 
 **2026-09-23 — the spec found a misspelling every hand run had read past (Slice #36.06).**
 Step 7's button said **„Asociează selecția"** on screen — `document.associatePerson.associate`
