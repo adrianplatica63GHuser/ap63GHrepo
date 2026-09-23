@@ -35,6 +35,12 @@ const ROW = `${PERSON} — Cumpărător`; // the accessible-name suffix of the r
 
 test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-parte", () => {
   test("rol Cumpărător, cotă 50% cu avertisment, indiviziune, apoi 100%", async ({ page }) => {
+    // Room for the `finally`: twice now (TC-PROP-02 on the first run, TC-ASSOC-01
+    // on the third) the browser stopped producing frames mid-test — no new
+    // screencast frame for 27 s, Playwright waiting on a locator the snapshot
+    // shows on screen — and the default 30 s ran out with the cleanup still to
+    // do, leaving a TC-E2E- row for the next run's removeLeftovers.
+    test.slow();
     await removeLeftovers(page.request, MARK);
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
     const documentId = await createSaleContract(page.request, DOC_TITLE);

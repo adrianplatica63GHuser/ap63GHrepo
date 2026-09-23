@@ -37,6 +37,12 @@ const MARK = `${E2E_MARKER}SRCH-01`;
 
 test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală", () => {
   test("o singură căutare găsește persoana, proprietatea și actul", async ({ page }) => {
+    // Room for the `finally`: twice now (TC-PROP-02 on the first run, TC-ASSOC-01
+    // on the third) the browser stopped producing frames mid-test — no new
+    // screencast frame for 27 s, Playwright waiting on a locator the snapshot
+    // shows on screen — and the default 30 s ran out with the cleanup still to
+    // do, leaving a TC-E2E- row for the next run's removeLeftovers.
+    test.slow();
     await removeLeftovers(page.request, MARK);
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
     const propertyId = await createProperty(page.request, {

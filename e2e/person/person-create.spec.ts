@@ -26,6 +26,12 @@ const LISTED_AS = `Ion ${LAST_NAME}`; // prenume first, as the list renders it
 
 test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
   test("creare manuală, rândul nou apare și se găsește, apoi ștergere", async ({ page }) => {
+    // Room for the `finally`: twice now (TC-PROP-02 on the first run, TC-ASSOC-01
+    // on the third) the browser stopped producing frames mid-test — no new
+    // screencast frame for 27 s, Playwright waiting on a locator the snapshot
+    // shows on screen — and the default 30 s ran out with the cleanup still to
+    // do, leaving a TC-E2E- row for the next run's removeLeftovers.
+    test.slow();
     await removeLeftovers(page.request, LAST_NAME);
 
     let personId: string | undefined;
