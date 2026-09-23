@@ -49,8 +49,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/natural-persons/new":                  ["TC-PERS-01"],
   "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04"],
   "/documents":                            ["TC-DOC-01"],
-  "/documents/new":                        ["TC-DOC-01"],
-  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05"],
+  "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07"],
+  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02"],
@@ -63,6 +63,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/natural-persons/[id]/associate-property":["TC-ASSOC-04"],
   "/properties/[id]/associate-document":   ["TC-ASSOC-05"],
   "/judicial-persons/[id]/associate-property":["TC-ASSOC-06"],
+  "/documents/[id]/associate-reference":   ["TC-ASSOC-07"],
 };
 
 /**
@@ -87,9 +88,7 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
   "/judicial-persons/[id]/associate-person":
     "A natural person acting for a company — the representative link.",
   "/documents/[id]/associate-party":
-    "Add a party to a Certificat de Mostenitor with quality Defunct or Mostenitor. Needs a document of that type, which none of the six data folders currently holds.",
-  "/documents/[id]/associate-reference":
-    "Link a document to the instrument it cites, by hand rather than through the AI reference linker.",
+    "Add a party to a Certificat de Mostenitor with quality Defunct or Mostenitor. No data folder holds one, and none is needed: a Certificat de Mostenitor made by hand shows „Părți” and „+ Adaugă parte” at once (seen on TC-ASSOC-07's run, Slice #36.08).",
   "/admin/value-lists":
     "Add a value to a closed list and see it offered in the form that consumes it. Writes reference data, so it needs its own cleanup rule.",
   "/admin/tags":
