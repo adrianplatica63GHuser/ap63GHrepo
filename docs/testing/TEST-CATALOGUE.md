@@ -72,11 +72,12 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — | — |
+| [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `draft` | — | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 
-**Seven are `automated`, one is `driven`, and two are `draft`** — as of 2026-09-23
-(Slice #36.06).
+**Seven are `automated`, one is `driven`, and three are `draft`** — as of 2026-09-23
+(Slice #36.07, before its runs).
 
 - **`automated`: TC-AUTH-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
   TC-SRCH-01** — green together in Adrian's `npm run e2e` on 2026-09-23 (12 passed,
@@ -95,8 +96,9 @@ fixed fixture where the existing one will do.
   chooses the columns), which sends it back to `driven`; its spec follows the corrected
   file and waits as `e2e/property/property-create.parked.ts`, outside Playwright's match,
   until the next unchanged run confirms it.
-- **`draft`, no spec: TC-IMP-01, TC-AI-01** — never run; both need the import wizard's
-  folder picker, which Slice 36.07 decides how to get past.
+- **`draft`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — never run; all three need the
+  import wizard's folder picker, which Adrian answers (below). TC-IMP-02 is new in Slice
+  #36.07 and claims `02.rerun`.
 
 **The `Spec` column is checked in both directions** by
 `src/__tests__/test-catalogue-coverage.test.ts`, reading files only, so it runs in CI:
@@ -124,7 +126,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Ten cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
+**Eleven cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
@@ -153,7 +155,29 @@ visible button whose only job is to click a hidden (`sr-only`) input next to it.
 - **The one exception is the import wizard's folder picker** (and the doc-type engine's,
   which has no case yet). It is `window.showDirectoryPicker()`, not an input element, so
   there is nothing to set files on — neither `file_upload` nor `setInputFiles` reaches
-  it. TC-IMP-01 and TC-AI-01 depend on it; Slice 36.07 decides how they get past it.
+  it. TC-IMP-01, TC-IMP-02 and TC-AI-01 depend on it. **When Claude drives them, Adrian
+  picks the folder** (Slice #36.07): Windows grants Claude's computer use only *read*
+  access to Chrome, and the native folder dialog belongs to Chrome, so it can be seen but
+  not clicked. Claude drives every screen of the wizard before and after it.
+
+### What a Playwright spec for an import case would need — named, not built
+
+A spec cannot answer the native dialog either, so an import spec would replace the
+dialog rather than drive it: `page.addInitScript` defining `window.showDirectoryPicker`
+to resolve a **scripted stand-in for `FileSystemDirectoryHandle`**. The wizard types the
+handle structurally (`FSDirectoryHandle` in `src/lib/import/folder-utils.ts`), so the
+stand-in needs only what the walk and the reads call: `name` and `kind` on every handle;
+`values()` as an async iterator on a directory; `getFile()` on a file, answering a real
+`File` whose bytes came from the data folder (passed in from Node through
+`page.exposeFunction`, since the page cannot read the disk); and `queryPermission` /
+`requestPermission` answering `"granted"`, which the re-walk asks for. Nothing is
+persisted to IndexedDB, so the stand-in never has to survive a structured clone. **Three
+decisions are the reason it is not built here**: whether a fake in the browser is an
+acceptable test of a feature whose whole risk is the real file system; how a spec that
+**pays** for classification and AI reads on every `npm run e2e` is budgeted — or whether
+it stops before „Scanare", which is then most of the value gone; and how a spec removes
+rows the import names from folder names and AI readings, which today only the hand
+cleanup in TC-IMP-01 knows how to find.
 
 ---
 
@@ -189,12 +213,11 @@ guard cannot enforce: a slice that ships a screen ships the row and the case fil
 
 ## Unclaimed data, and the case each folder is waiting for
 
-These five folders already exist and no case in the first cut owns them. They are listed
+These four folders already exist and no case owns them yet. They are listed
 so the next person to extend the suite does not re-create what is there.
 
 | Folder | What it is | The case it is waiting for |
 |---|---|---|
-| `02.rerun` | A byte-identical copy of `01.smoke.one.property` | Re-importing a folder already in the archive — the "Deja în sistem" step |
 | `03.types.noform` | Eight single-file documents of unusual types, in two property folders | Document types with no form, and „Descoperire AI" |
 | `04.mixed` | One property plus `comune` and `flotante` | The two special folders, which behave differently from a property folder |
 | `05.big` | Three property folders, 59 files, `.doc`/`.docx`/`.rtf`/`.pdf`/`.jpg` | A long import, several coordinate files, unsupported file kinds |
