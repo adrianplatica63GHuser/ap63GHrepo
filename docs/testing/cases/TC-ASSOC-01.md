@@ -101,6 +101,15 @@ is removed.
 
 ## Notes from the runs
 
+**2026-09-23 — the spec found a misspelling every hand run had read past (Slice #36.06).**
+Step 7's button said **„Asociează selecția"** on screen — `document.associatePerson.associate`
+in `messages/ro-RO.json`, misspelt since Slice #5.4 — while every other association screen,
+and this file, say „Asociază selecția". The spec, matching this file's word, never found the
+button, six runs running. The hand runs had reported the step as held: the driving tool's
+element search answers in the words it is asked for, so it „found" „Asociază". The message
+file is corrected, not this file — the case had the right word, which is why only this
+section changes and the row stays `confirmed`.
+
 **2026-09-22, third run (Slice #36.06) — `confirmed`: the file as it stood held line for
 line.** `PPERS01630` associated to `DOC01631` as „Cumpărător", out of the same five roles;
 `50%` stored as `50` with „Cotele pentru „Cumpărător” însumează 50%, nu 100%. …" and no
