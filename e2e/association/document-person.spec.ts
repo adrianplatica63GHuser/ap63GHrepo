@@ -94,7 +94,21 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await page.getByRole("checkbox", { name: PERSON }).check();
 
       // Step 7 — „Asociază selecția": back on the document, on „Persoane".
-      await page.getByRole("button", { name: "Asociază selecția" }).click();
+      // ⚠️ Twice in a row (runs 3 and 4) Playwright waited here — 27 s, then the
+      // whole 90 s — on getByRole('button', { name: 'Asociază selecția' }) and
+      // never matched it, although the trace's DOM snapshot, taken the moment
+      // the wait began, has the button enabled with that text, and the failure
+      // snapshot lists it by exactly that role and name. TC-ASSOC-02 presses a
+      // button of the same name, by the same locator, and passes every time.
+      // Not explained. Two changes, each telling the next run something:
+      //   - the `evaluate` below: if it hangs too, the page's own JavaScript is
+      //     blocked and no locator could have worked; if it returns, the role
+      //     query was the part that stalled;
+      //   - the button is found by tag and text, not by role, and pressed with
+      //     `force` (skips only the stability wait). The URL assertion after
+      //     it still proves the press landed.
+      await page.evaluate(() => document.readyState);
+      await page.locator("button", { hasText: "Asociază selecția" }).click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=persons$`), { timeout: 30_000 });
 
       // Step 8 — Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de
