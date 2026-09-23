@@ -71,13 +71,13 @@ fixed fixture where the existing one will do.
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
-| [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `01.smoke.one.property` | `draft` | — | — |
-| [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `draft` | — | — |
-| [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `01.smoke.one.property` | `draft` | — | — |
+| [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
+| [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
+| [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 
-**Seven are `automated`, one is `driven`, and three are `draft`** — as of 2026-09-23
-(Slice #36.07, before its runs).
+**Seven are `automated`, four are `driven`, and none is `draft`** — as of 2026-09-23
+(Slice #36.07).
 
 - **`automated`: TC-AUTH-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
   TC-SRCH-01** — green together in Adrian's `npm run e2e` on 2026-09-23 (12 passed,
@@ -96,9 +96,17 @@ fixed fixture where the existing one will do.
   chooses the columns), which sends it back to `driven`; its spec follows the corrected
   file and waits as `e2e/property/property-create.parked.ts`, outside Playwright's match,
   until the next unchanged run confirms it.
-- **`draft`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — never run; all three need the
-  import wizard's folder picker, which Adrian answers (below). TC-IMP-02 is new in Slice
-  #36.07 and claims `02.rerun`.
+- **`driven`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — first driven in Slice #36.07,
+  with Adrian picking the folder (below). One import on this archive costs **4 Claude
+  calls** — 2 classifications at „Scanare", 1 identity-card read, 1 document read — and
+  a re-import of documents already in the system costs **0**. Budget the four unclaimed
+  folders at one classification per image document plus one read per readable document,
+  identity cards included. TC-IMP-01's data is `07.smoke.tc.marker`, a copy of
+  `01.smoke.one.property` with `TC-IMP-01` in four file names: the archive already holds
+  the original, so only renamed files import as new — and the rename puts a `TC-` marker
+  in every document title the case creates, closing the gap its first draft recorded.
+  None of the three goes further than `driven` until an import spec exists, and that is
+  named below rather than built.
 
 **The `Spec` column is checked in both directions** by
 `src/__tests__/test-catalogue-coverage.test.ts`, reading files only, so it runs in CI:
@@ -176,8 +184,9 @@ decisions are the reason it is not built here**: whether a fake in the browser i
 acceptable test of a feature whose whole risk is the real file system; how a spec that
 **pays** for classification and AI reads on every `npm run e2e` is budgeted — or whether
 it stops before „Scanare", which is then most of the value gone; and how a spec removes
-rows the import names from folder names and AI readings, which today only the hand
-cleanup in TC-IMP-01 knows how to find.
+what an import writes — documents found by their `TC-` file names, but also links to a
+property that existed before the run (TC-IMP-02's `Dezasociază`), which no marker
+records.
 
 ---
 
@@ -193,9 +202,9 @@ added, in a check that already runs on every push. This is the same mechanism
 rotting, and it is deliberately not a new one.
 
 **Richer data — a new numbered folder.** New scenario folders go under
-`C:\dev\TEST.DATA\Test.Claude\` beside the six that are there
+`C:\dev\TEST.DATA\Test.Claude\` beside the seven that are there
 (`01.smoke.one.property`, `02.rerun`, `03.types.noform`, `04.mixed`, `05.big`,
-`06.two.id.cards`), following the same numbering, and the case that uses one names it in
+`06.two.id.cards`, `07.smoke.tc.marker`), following the same numbering, and the case that uses one names it in
 its `Data` line and in its row above. The rest of `C:\dev\TEST.DATA\` — `CLINCENI.3`
 with its twenty-odd property folders, `flotante` with the CVC and act-adițional samples,
 `Modele.Acte`, `A`, `A2.*`, `A3.CVCs` — is the **archive** these folders are cut from,
