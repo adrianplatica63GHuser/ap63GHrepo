@@ -54,7 +54,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/documents/[id]/associate-person":      ["TC-ASSOC-01"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02"],
-  "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03"],
+  "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03", "TC-GRP-01"],
   "/judicial-persons":                     ["TC-PERS-02"],
   "/judicial-persons/new":                 ["TC-PERS-02"],
   "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06"],
@@ -64,6 +64,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/properties/[id]/associate-document":   ["TC-ASSOC-05"],
   "/judicial-persons/[id]/associate-property":["TC-ASSOC-06"],
   "/documents/[id]/associate-reference":   ["TC-ASSOC-07"],
+  "/admin/groups":                         ["TC-GRP-01"],
+  "/admin/groups/[id]":                    ["TC-GRP-01"],
 };
 
 /**
@@ -93,10 +95,6 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "Add a value to a closed list and see it offered in the form that consumes it. Writes reference data, so it needs its own cleanup rule.",
   "/admin/tags":
     "Create a tag, apply it, find records by it.",
-  "/admin/groups":
-    "Create a group and put two properties in it.",
-  "/admin/groups/[id]":
-    "Open a group and see its members.",
   "/admin/stamps":
     "Create a stamp and apply it to a record.",
   "/admin/stamps/[id]":
