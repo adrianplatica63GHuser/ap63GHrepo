@@ -478,7 +478,7 @@
       "choiceTextFolderDesc": "Select a folder — every .txt file inside will be imported as a separate property",
       "uploadTextTitle": "Upload coordinate file",
       "uploadTextLabel": "Select the coordinate file",
-      "uploadTextHint": "Tab or comma-separated rows: index, X [m] (Northing), Y [m] (Easting). First 3 lines are always skipped.",
+      "uploadTextHint": "Tab or comma-separated rows: index, X [m] (Northing), Y [m] (Easting). Lines that are not coordinates are skipped.",
       "uploadFolderTitle": "Select folder",
       "uploadFolderLabel": "Select folder containing .txt files",
       "uploadFolderHint": "All .txt files in the folder will be imported as separate properties.",
@@ -769,7 +769,7 @@
       },
       "crossRef": {
         "title": "See Also",
-        "note": "Informal cross-references — use these when a connection matters but is not captured by any formal association or document. Type the other entity's code (e.g. PERS00001) and an optional short note.",
+        "note": "Informal cross-references — use these when a connection matters but is not captured by any formal association or document. Type the other entity's code (e.g. PPERS00001) and an optional short note.",
         "add": "+ Add link",
         "addConfirm": "Link",
         "adding": "Linking…",
