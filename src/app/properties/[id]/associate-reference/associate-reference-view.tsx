@@ -90,14 +90,14 @@ export function AssociateReferenceView({ propertyId, propertyName }: Props) {
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
       await queryClient.invalidateQueries({ queryKey: ["property-references", propertyId] });
-      router.push(`/properties/${encodeURIComponent(propertyId)}?tab=references`);
+      router.push(`/properties/${encodeURIComponent(propertyId)}?tab=related`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
       setSubmitting(false);
     }
   };
 
-  const handleCancel = () => router.push(`/properties/${encodeURIComponent(propertyId)}?tab=references`);
+  const handleCancel = () => router.push(`/properties/${encodeURIComponent(propertyId)}?tab=related`);
 
   return (
     <div className="flex flex-col gap-6">

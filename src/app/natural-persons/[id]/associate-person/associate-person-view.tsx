@@ -119,7 +119,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["person-references", personId] });
-      router.push(`${backBase}/${encodeURIComponent(personId)}?tab=references`);
+      router.push(`${backBase}/${encodeURIComponent(personId)}?tab=related`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
       setSubmitting(false);
@@ -127,7 +127,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
   };
 
   const handleCancel = () =>
-    router.push(`${backBase}/${encodeURIComponent(personId)}?tab=references`);
+    router.push(`${backBase}/${encodeURIComponent(personId)}?tab=related`);
 
   return (
     <div className="flex flex-col gap-6">

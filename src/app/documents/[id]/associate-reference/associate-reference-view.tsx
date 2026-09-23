@@ -125,7 +125,7 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ["document-references", documentId] });
-      router.push(`/documents/${encodeURIComponent(documentId)}?tab=references`);
+      router.push(`/documents/${encodeURIComponent(documentId)}?tab=related`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
       setSubmitting(false);
@@ -133,7 +133,7 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
   };
 
   const handleCancel = () =>
-    router.push(`/documents/${encodeURIComponent(documentId)}?tab=references`);
+    router.push(`/documents/${encodeURIComponent(documentId)}?tab=related`);
 
   return (
     <div className="flex flex-col gap-6">
