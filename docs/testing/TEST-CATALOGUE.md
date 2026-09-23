@@ -83,6 +83,7 @@ fixed fixture where the existing one will do.
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `driven` | 2026-09-23 | — |
+| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `driven` | 2026-09-23 | — |
 
 **Seven are `automated`, four are `driven`, and none is `draft`** — as of 2026-09-23
 (Slice #36.07).
