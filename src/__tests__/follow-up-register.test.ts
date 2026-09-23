@@ -19,7 +19,8 @@
  *   3. Status, kind, impact and size are each one of the header's values, and
  *      Last checked is a date.
  *   4. A `resolved` row's status note names a commit; a `duplicate` row's names
- *      another row that exists.
+ *      another row that exists. (One test per status, not `it.each` per row:
+ *      jest refuses `.each` over an empty table, and `duplicate` starts empty.)
  *   5. The summary block's status × impact counts equal the table's.
  *
  * ⚠️ It does NOT check that a named commit exists, or that an `open` row is
@@ -106,22 +107,25 @@ describe("follow-up register", () => {
     expect(r.lastChecked).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it.each(rows.filter((r) => r.status === "resolved").map((r) => [r.id, r] as const))(
-    "%s is resolved and names the commit that did it",
-    (_id, r) => {
-      expect(r.note).toMatch(/(?<![0-9a-z])[0-9a-f]{7,40}(?![0-9a-z])/);
-    },
-  );
+  it("names the commit on every resolved row", () => {
+    const offenders = rows
+      .filter((r) => r.status === "resolved")
+      .filter((r) => !/(?<![0-9a-z])[0-9a-f]{7,40}(?![0-9a-z])/.test(r.note))
+      .map((r) => r.id);
+    expect(offenders).toEqual([]);
+  });
 
-  it.each(rows.filter((r) => r.status === "duplicate").map((r) => [r.id, r] as const))(
-    "%s is a duplicate of a row that exists",
-    (id, r) => {
-      const target = r.note.match(/FU-\d{3}/)?.[0];
-      expect(target).toBeDefined();
-      expect(target).not.toBe(id);
-      expect(rows.map((x) => x.id)).toContain(target);
-    },
-  );
+  it("points every duplicate row at another row that exists", () => {
+    const ids = new Set(rows.map((r) => r.id));
+    const offenders = rows
+      .filter((r) => r.status === "duplicate")
+      .filter((r) => {
+        const target = r.note.match(/FU-\d{3}/)?.[0];
+        return target === undefined || target === r.id || !ids.has(target);
+      })
+      .map((r) => r.id);
+    expect(offenders).toEqual([]);
+  });
 
   it("keeps its summary block equal to the table", () => {
     const block = text.match(/<!-- summary:begin -->([\s\S]*?)<!-- summary:end -->/);

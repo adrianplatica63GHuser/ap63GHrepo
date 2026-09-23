@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-23, Slice #36.10 — 207 entries. Rows are status, columns are impact.
+As of 2026-09-23, Slice #36.10 — 208 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 21 | 51 | 43 | 12 | 127 |
+| open | 21 | 51 | 44 | 12 | 128 |
 | planned | 0 | 0 | 0 | 0 | 0 |
 | resolved | 19 | 34 | 11 | 3 | 67 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 44 | 90 | 56 | 17 | 207 |
+| **total** | 44 | 90 | 57 | 17 | 208 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -291,3 +291,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-205 | 2026-07-03 #20.01 slice-log-archive.md §20.01 | copy/i18n | Associations | The entity References tab shipped a 'Mentions' section that was only a work-in-progress placeholder. | ba49094 deleted src/components/entity-references-tab.tsx and the Mentions strings | user | XS | superseded | #20.04 ba49094 deleted the Mentions placeholder and the entity-references-tab component. | 2026-09-23 |
 | FU-206 | 2026-08-03 #23.07.Import slice-log-archive.md §23.07.Import | defect | Import | The import property step always offered Tarla/Parcela inputs, so a Property later typed with show_tarla_parcela off holds values its own form hides. | src/app/admin/import/_components/property-step-dialog.tsx:1-60 — rebuilt in #26.07 as plan/confirm with server-side tarla/parcela matching; no tarla/parcela inputs remain | user | S | superseded | #26.07 c5c9575 replaced the create-new branch and its inputs with the folder-parsed property plan. | 2026-09-23 |
 | FU-207 | 2026-08-04 #23.08.Import slice-log-archive.md §23.08.Import | recommendation | Documents | Richer per-field capture of ID-card data was proposed as a template_fields template for CARTE_IDENTITATE. | src/db/migration_073_id_card_types_hold_no_form.sql:1-12 — clears template_fields on every identity-card type | user | S | superseded | #32.07 ca71d49 reversed it: an identity-card type can never hold a form (privacy: no editable CNP copy). | 2026-09-23 |
+| FU-208 | 2026-09-23 #36.10 d39b68c | tooling | Tooling & CI | The jest shim that `sandbox-and-toolchain.md` describes runs `it.each` over an empty table, which real jest refuses („`.each` called with an empty Array of table data”), so a suite can be shim-green and fail `npx jest`. | d39b68c — follow-up-register.test.ts's `duplicate` it.each passed under the shim and failed Adrian's `npx jest`; fixed in the next commit | dev | XS | open | Fix: one bullet under the shim in docs/claude/shared/rules/sandbox-and-toolchain.md (throw on an empty table), then deploy. | 2026-09-23 |
