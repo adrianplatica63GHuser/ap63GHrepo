@@ -3,8 +3,9 @@
  */
 
 /**
- * Slice Propus.2 — the request/result contract between Claude and the
- * Windows-side test runner (`scripts/test-runner/`).
+ * Slices Propus.2 and Propus.3 — the request/result contract between Claude and
+ * the Windows-side test runner (`scripts/test-runner/`), and the guards on the
+ * three sequences that do more than test: push, ci and migrate-local.
  *
  * ⚠️ **EVERY REFUSAL IS PINNED, BECAUSE A REFUSAL IS THE SAFETY PROPERTY.**
  * The runner executes a fixed sequence on Adrian's laptop whenever a file
@@ -25,6 +26,8 @@ import path from "path";
 
 import {
   CHANNEL_DIR,
+  DEPENDENT_STEPS,
+  SCHEMA_CONFIRMED_TRAILER,
   MAX_ONLY_ENTRIES,
   MAX_REQUEST_BYTES,
   RUNNER_DIST_DIR,
@@ -32,8 +35,15 @@ import {
   RUNNER_PORT,
   SEQUENCES,
   SEQUENCE_NAMES,
+  ciVerdict,
   classifyDevServerOutput,
   classifyTscOutput,
+  decideMigrateLocal,
+  decidePush,
+  firstFailedStep,
+  latestRunPerWorkflow,
+  parseGithubRemote,
+  summariseCi,
   isJestWorkerCrashOnly,
   jestArgs,
   overallStatus,
@@ -44,6 +54,11 @@ import {
   refusedResult,
   resultIdForFile,
   summariseStep,
+  type CiRun,
+  type GreenRunCandidate,
+  type GuardCode,
+  type MigrateObservation,
+  type PushObservation,
   type RefusalCode,
   type RequestContext,
   type RunnerInfo,
@@ -316,5 +331,253 @@ describe("the files the runner depends on agree with the protocol", () => {
   it(`${CHANNEL_DIR}/ is ignored by git and by the Docker build context`, () => {
     expect(read(".gitignore")).toMatch(new RegExp(`^/${CHANNEL_DIR.replace(".", "\\.")}/$`, "m"));
     expect(read(".dockerignore")).toMatch(new RegExp(`^${CHANNEL_DIR.replace(".", "\\.")}$`, "m"));
+  });
+});
+
+// ---- Slice Propus.3: the guards ---------------------------------------------------
+
+const REMOTE = "fedcba9876543210fedcba9876543210fedcba98";
+
+const green = (over: Partial<GreenRunCandidate> = {}): GreenRunCandidate => ({
+  id: "20260924T170000Z-1",
+  source: "runner",
+  status: "passed",
+  sequence: "full",
+  commit: HEAD,
+  only: null,
+  dirty: [],
+  finishedAt: "2026-09-24T17:10:00.000Z",
+  ...over,
+});
+
+const pushObs = (over: Partial<PushObservation> = {}): PushObservation => ({
+  branch: "main",
+  head: HEAD,
+  results: [green()],
+  remoteMain: REMOTE,
+  remoteIsAncestor: true,
+  rangeChanges: ["M\tscripts/test-runner/runner.ts", "A\tsrc/__tests__/x.test.ts"],
+  rangeCommits: 3,
+  ...over,
+});
+
+function pushOutcome(o: PushObservation): GuardCode | "push" | "nothing-to-push" {
+  const d = decidePush(o);
+  if (!d.ok) return d.code;
+  return d.commits === 0 ? "nothing-to-push" : "push";
+}
+
+const migrateObs = (over: Partial<MigrateObservation> = {}): MigrateObservation => ({
+  pending: ["migration_087_x.sql"],
+  dirtyMigrations: [],
+  addingCommitMessage: {
+    "migration_087_x.sql": `feat(db): x\n\nBody.\n\n${SCHEMA_CONFIRMED_TRAILER}: Adrian, 2026-09-25 — „yes"\n`,
+  },
+  ...over,
+});
+
+function migrateOutcome(o: MigrateObservation): GuardCode | "apply" | "nothing-pending" {
+  const d = decideMigrateLocal(o);
+  if (!d.ok) return d.code;
+  return d.apply.length === 0 ? "nothing-pending" : "apply";
+}
+
+describe("the push guard — every condition holds the push, by name", () => {
+  it("pushes a fast-forward of main on a clean green full run, and says how much", () => {
+    expect(decidePush(pushObs())).toEqual({ ok: true, greenRun: "20260924T170000Z-1", from: REMOTE, to: HEAD, commits: 3 });
+  });
+  it("full-db licenses a push as well as full", () => {
+    expect(pushOutcome(pushObs({ results: [green({ sequence: "full-db" })] }))).toBe("push");
+  });
+  it("an untracked file in the green run's tree does not stop it — it is not what is pushed", () => {
+    expect(pushOutcome(pushObs({ results: [green({ dirty: ["?? notes.txt"] })] }))).toBe("push");
+  });
+  it("origin already at HEAD is nothing to push, not a hold", () => {
+    expect(pushOutcome(pushObs({ remoteMain: HEAD }))).toBe("nothing-to-push");
+  });
+  it("a later clean green run is found behind an earlier dirty one", () => {
+    const results = [green({ id: "a", dirty: [" M src/x.ts"], finishedAt: "2026-09-24T18:00:00Z" }), green({ id: "b", finishedAt: "2026-09-24T17:00:00Z" })];
+    const d = decidePush(pushObs({ results }));
+    expect(d.ok && d.greenRun).toBe("b");
+  });
+
+  const cases: [string, Partial<PushObservation>, GuardCode, null][] = [
+    ["a branch other than main", { branch: "feature/x" }, "not-on-main", null],
+    ["a detached HEAD", { branch: null }, "not-on-main", null],
+    ["no result at all", { results: [] }, "no-green-run", null],
+    ["a red full run", { results: [green({ status: "failed" })] }, "no-green-run", null],
+    ["a green run on another commit", { results: [green({ commit: "f".repeat(40) })] }, "no-green-run", null],
+    ["a green run narrowed by only", { results: [green({ only: ["e2e/auth/login-dashboard.spec.ts"] })] }, "no-green-run", null],
+    ["a green static run — not the whole sequence", { results: [green({ sequence: "static" })] }, "no-green-run", null],
+    ["a green e2e run alone", { results: [green({ sequence: "e2e" })] }, "no-green-run", null],
+    ["a result that is not the runner's", { results: [green({ source: "adrian" as "runner" })] }, "no-green-run", null],
+    ["a green run over uncommitted changes", { results: [green({ dirty: [" M src/lib/a.ts"] })] }, "green-run-dirty", null],
+    ["ls-remote could not answer", { remoteMain: null }, "remote-unknown", null],
+    ["origin has moved on", { remoteIsAncestor: false }, "not-fast-forward", null],
+    ["the range adds a migration", { rangeChanges: ["A\tsrc/db/migration_087_x.sql"] }, "migration-in-range", null],
+    ["the range edits a migration", { rangeChanges: ["M\tsrc/db/migration_086_document_reference_direction.sql"] }, "migration-in-range", null],
+    ["the range renames one", { rangeChanges: ["R100\tsrc/db/migration_087_a.sql\tsrc/db/migration_087_b.sql"] }, "migration-in-range", null],
+  ];
+  it.each(cases)("%s → held", (_label, over, code, _pad) => {
+    expect(pushOutcome(pushObs(over))).toBe(code);
+  });
+
+  it("a range touching src/db but no migration is pushed", () => {
+    expect(pushOutcome(pushObs({ rangeChanges: ["M\tsrc/db/supabase_schema_full.sql", "M\tsrc/db/schema/index.ts"] }))).toBe("push");
+  });
+
+  it("the order is the order of fixing: main first, then the green run, then the remote, then migrations", () => {
+    expect(pushOutcome(pushObs({ branch: "x", results: [], remoteMain: null }))).toBe("not-on-main");
+    expect(pushOutcome(pushObs({ results: [], remoteMain: null }))).toBe("no-green-run");
+    expect(pushOutcome(pushObs({ remoteIsAncestor: false, rangeChanges: ["A\tsrc/db/migration_087_x.sql"] }))).toBe("not-fast-forward");
+  });
+});
+
+describe("the migrate-local guard — only a committed, confirmed migration reaches the database", () => {
+  it("applies a committed migration whose adding commit carries the trailer", () => {
+    expect(decideMigrateLocal(migrateObs())).toEqual({ ok: true, apply: ["migration_087_x.sql"] });
+  });
+  it("nothing pending is a pass with nothing to apply", () => {
+    expect(migrateOutcome(migrateObs({ pending: [] }))).toBe("nothing-pending");
+  });
+
+  const cases: [string, Partial<MigrateObservation>, GuardCode, null][] = [
+    ["an untracked migration in the working tree", { dirtyMigrations: ["?? src/db/migration_088_y.sql"] }, "migration-dirty", null],
+    ["an edited, committed migration", { dirtyMigrations: [" M src/db/migration_087_x.sql"] }, "migration-dirty", null],
+    ["a pending file no commit added", { addingCommitMessage: { "migration_087_x.sql": null } }, "migration-uncommitted", null],
+    ["a commit with no trailer", { addingCommitMessage: { "migration_087_x.sql": "feat(db): x\n\nAdrian said yes.\n" } }, "migration-unconfirmed", null],
+    ["an empty trailer", { addingCommitMessage: { "migration_087_x.sql": `feat(db): x\n\n${SCHEMA_CONFIRMED_TRAILER}:\n` } }, "migration-unconfirmed", null],
+    ["the trailer quoted mid-line, not as a trailer", { addingCommitMessage: { "migration_087_x.sql": `feat(db): x — no ${SCHEMA_CONFIRMED_TRAILER}: yet\n` } }, "migration-unconfirmed", null],
+  ];
+  it.each(cases)("%s → held", (_label, over, code, _pad) => {
+    expect(migrateOutcome(migrateObs(over))).toBe(code);
+  });
+
+  it("an uncommitted migration holds the run even when nothing is pending — the script would apply the working tree", () => {
+    expect(migrateOutcome(migrateObs({ pending: [], dirtyMigrations: ["?? src/db/migration_088_y.sql"] }))).toBe("migration-dirty");
+  });
+
+  it("one unconfirmed file holds all of them", () => {
+    const o = migrateObs({
+      pending: ["migration_087_x.sql", "migration_088_y.sql"],
+      addingCommitMessage: { ...migrateObs().addingCommitMessage, "migration_088_y.sql": "feat(db): y\n" },
+    });
+    expect(migrateOutcome(o)).toBe("migration-unconfirmed");
+  });
+
+  it("export-schema runs only after the step before it passed", () => {
+    expect(DEPENDENT_STEPS).toEqual(["export-schema"]);
+    expect(SEQUENCES["migrate-local"]).toEqual(["apply-migration", "export-schema"]);
+  });
+});
+
+describe("every GuardCode is reached by a case above", () => {
+  it("push and migrate-local together reach the whole union", () => {
+    const src = fs.readFileSync(path.join(REPO, "scripts", "test-runner", "protocol.ts"), "utf8");
+    const union = /export type GuardCode =([\s\S]*?);/.exec(src)?.[1] ?? "";
+    const declared = [...union.matchAll(/"([a-z-]+)"/g)].map((m) => m[1]).sort();
+    const pushCodes: GuardCode[] = ["not-on-main", "no-green-run", "green-run-dirty", "remote-unknown", "not-fast-forward", "migration-in-range"];
+    const migrateCodes: GuardCode[] = ["migration-dirty", "migration-uncommitted", "migration-unconfirmed"];
+    expect([...pushCodes, ...migrateCodes].sort()).toEqual(declared);
+  });
+});
+
+describe("ci: reading GitHub Actions", () => {
+  const run = (over: Partial<CiRun> = {}): CiRun => ({
+    id: 10,
+    name: "CI",
+    run_number: 412,
+    status: "completed",
+    conclusion: "success",
+    html_url: "https://github.com/o/r/actions/runs/10",
+    head_sha: HEAD,
+    ...over,
+  });
+
+  it.each([
+    ["https://github.com/adrianplatica63GHuser/ap63GHrepo.git", { owner: "adrianplatica63GHuser", repo: "ap63GHrepo" }],
+    ["https://github.com/o/r", { owner: "o", repo: "r" }],
+    ["https://user@github.com/o/r.git", { owner: "o", repo: "r" }],
+    ["git@github.com:o/r.git", { owner: "o", repo: "r" }],
+    ["ssh://git@github.com/o/r.git", { owner: "o", repo: "r" }],
+    ["https://gitlab.com/o/r.git", null],
+    ["https://github.com.evil.example/o/r.git", null],
+  ] as const)("remote %s", (url, expected) => {
+    expect(parseGithubRemote(url)).toEqual(expected);
+  });
+
+  it("no run is none, a run in progress is pending, all green is passed, one red is failed", () => {
+    expect(ciVerdict([])).toBe("none");
+    expect(ciVerdict([run(), run({ id: 11, name: "DB rebuild", status: "in_progress", conclusion: null })])).toBe("pending");
+    expect(ciVerdict([run(), run({ id: 11, name: "DB rebuild", conclusion: "skipped" })])).toBe("passed");
+    expect(ciVerdict([run(), run({ id: 11, name: "DB rebuild", conclusion: "failure" })])).toBe("failed");
+    expect(ciVerdict([run({ conclusion: "cancelled" })])).toBe("failed");
+  });
+
+  it("keeps the newest run per workflow for this commit only", () => {
+    const runs = [run({ id: 10 }), run({ id: 12, conclusion: "failure" }), run({ id: 11, name: "DB rebuild" }), run({ id: 13, head_sha: "f".repeat(40) })];
+    expect(latestRunPerWorkflow(runs, HEAD).map((r) => r.id)).toEqual([12, 11]);
+  });
+
+  it("summarises in one line and names the step a red job died in", () => {
+    expect(summariseCi([run(), run({ id: 11, name: "DB rebuild", run_number: 88, conclusion: "failure" })])).toBe("CI #412 success · DB rebuild #88 failure");
+    expect(summariseCi([])).toBe("no workflow run for this commit");
+    const job = {
+      id: 1,
+      name: "build",
+      status: "completed",
+      conclusion: "failure",
+      steps: [
+        { name: "Run npm ci", status: "completed", conclusion: "success", number: 1 },
+        { name: "Run npm run lint", status: "completed", conclusion: "failure", number: 2 },
+        { name: "Run npm test", status: "completed", conclusion: "skipped", number: 3 },
+      ],
+    };
+    expect(firstFailedStep(job)).toBe("Run npm run lint");
+  });
+});
+
+describe("a held run", () => {
+  const s = (status: StepResult["status"]): StepResult => ({
+    name: "push",
+    status,
+    exitCode: null,
+    startedAt: null,
+    finishedAt: null,
+    seconds: null,
+    summary: "",
+    log: null,
+    notes: [],
+  });
+  it("is held — neither passed nor failed nor error", () => {
+    expect(overallStatus([s("held")])).toBe("held");
+    expect(overallStatus([s("held"), s("skipped")])).toBe("held");
+  });
+  it("a failure or an error still wins over a hold", () => {
+    expect(overallStatus([s("held"), s("failed")])).toBe("failed");
+    expect(overallStatus([s("held"), s("error")])).toBe("error");
+  });
+});
+
+describe("what the runner's code does with a push, read from its code", () => {
+  // A BEHAVIOUR guard reads only code, so comments are stripped first
+  // (C:\dev\CLAUDE.md → Design habits).
+  const code = fs
+    .readFileSync(path.join(REPO, "scripts", "test-runner", "runner.ts"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+
+  it("never forces: no --force, no -f, no +refspec anywhere in the runner", () => {
+    expect(code).not.toMatch(/--force|"-f"|"\+refs\//);
+  });
+  it("pushes exactly main:main to origin, and nothing else", () => {
+    const pushes = [...code.matchAll(/\["push",[^\]]*\]/g)].map((m) => m[0]);
+    expect(pushes).toEqual(['["push", "--porcelain", PUSH_REMOTE, `refs/heads/${PUSH_BRANCH}:refs/heads/${PUSH_BRANCH}`]']);
+  });
+  it("never reaches Supabase: no supabase script and no SUPABASE_ variable", () => {
+    expect(code).not.toMatch(/supabase-migrate|supabase:migrate|supabase-sync|SUPABASE_/);
+  });
+  it("reads GitHub with GET only", () => {
+    expect(code).not.toMatch(/method:\s*"(POST|PUT|PATCH|DELETE)"/);
   });
 });
