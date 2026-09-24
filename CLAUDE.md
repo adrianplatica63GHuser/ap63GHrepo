@@ -207,6 +207,7 @@ the source of truth for decisions and traps, and load automatically when relevan
 | Onboard a new document type | `.claude/skills/onboard-document-type/` |
 | What a past slice actually did | `git log`, then `docs/claude/slice-log-archive.md` |
 | What was noticed and not yet fixed | `docs/claude/FOLLOW-UP-REGISTER.md` |
+| How the register is reviewed each Monday, and the fix slate it proposes | `docs/claude/REGISTER-REVIEW.md` |
 | What every kind of testing here is for, and what nobody tests | `docs/testing/` |
 
 ## Starting a slice
