@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-24, register review 2026-09-24 — 208 entries. Rows are status, columns are impact.
+As of 2026-09-24, Slice #36.13 — 211 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 21 | 51 | 44 | 12 | 128 |
+| open | 21 | 51 | 47 | 12 | 131 |
 | planned | 0 | 0 | 0 | 0 | 0 |
 | resolved | 19 | 34 | 11 | 3 | 67 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 44 | 90 | 57 | 17 | 208 |
+| **total** | 44 | 90 | 60 | 17 | 211 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -292,3 +292,6 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-206 | 2026-08-03 #23.07.Import slice-log-archive.md §23.07.Import | defect | Import | The import property step always offered Tarla/Parcela inputs, so a Property later typed with show_tarla_parcela off holds values its own form hides. | src/app/admin/import/_components/property-step-dialog.tsx:1-60 — rebuilt in #26.07 as plan/confirm with server-side tarla/parcela matching; no tarla/parcela inputs remain | user | S | superseded | #26.07 c5c9575 replaced the create-new branch and its inputs with the folder-parsed property plan. | 2026-09-23 |
 | FU-207 | 2026-08-04 #23.08.Import slice-log-archive.md §23.08.Import | recommendation | Documents | Richer per-field capture of ID-card data was proposed as a template_fields template for CARTE_IDENTITATE. | src/db/migration_073_id_card_types_hold_no_form.sql:1-12 — clears template_fields on every identity-card type | user | S | superseded | #32.07 ca71d49 reversed it: an identity-card type can never hold a form (privacy: no editable CNP copy). | 2026-09-23 |
 | FU-208 | 2026-09-23 #36.10 d39b68c | tooling | Tooling & CI | The jest shim that `sandbox-and-toolchain.md` describes runs `it.each` over an empty table, which real jest refuses („`.each` called with an empty Array of table data”), so a suite can be shim-green and fail `npx jest`. | d39b68c — follow-up-register.test.ts's `duplicate` it.each passed under the shim and failed Adrian's `npx jest`; fixed in the next commit | dev | XS | open | Fix: one bullet under the shim in docs/claude/shared/rules/sandbox-and-toolchain.md (throw on an empty table), then deploy. | 2026-09-24 |
+| FU-209 | 2026-09-24 #36.13 Control.Inventory.36.13.docx §P2 | tooling | Tooling & CI | The shared rules size every bridge fallback to a 45 s per-command limit, but a 170 s command completed on 2026-09-24 (the tool now caps a call at 180 s), so checks that fit — whole-tree ESLint 112 s, full-project tsc 53 s, both exit 0 — are still handed to Adrian or narrowed. | docs/claude/shared/rules/sandbox-and-toolchain.md:27, :29, :114, :163 and docs/claude/shared/CLAUDE.md:222 at 76f0f46 — measured by #36.13's probes P2–P4 | dev | XS | open | Fix: restate the limit as measured and drop what it no longer forces; #36.13's Propus.1 covers it. | 2026-09-24 |
+| FU-210 | 2026-09-24 #36.13 Control.Inventory.36.13.docx §K4 | debt | Tooling & CI | INSTRUCTION-ARCHITECTURE.md still tells a person to run Sync-SharedClaude.ps1 after a commit and calls `-Check` useful in CI — the handover step whose omission left the rules 33 lines stale in #32.14, and which the contract made Claude's in the same turn and says cannot be a CI check; it also counts the shared tier as five files where ga40prj/CLAUDE.md says four and there are six. | docs/claude/INSTRUCTION-ARCHITECTURE.md:281, :295, :301 against docs/claude/shared/CLAUDE.md:7-15, :23 and CLAUDE.md:204, at 76f0f46 | dev | XS | open | Fix: point the deploy paragraph at the contract's banner and correct both counts. | 2026-09-24 |
+| FU-211 | 2026-09-24 #36.13 Control.Inventory.36.13.docx §K9 | tooling | Tooling & CI | The Monday register-review task's fallback — a Review.<date>.txt under C:\dev.docs\01.Slice.Inputs\Register.Reviews\<date>\ when the folders are not mounted — needs the same laptop whose absence triggers it, so a missed Monday leaves no file behind. | the scheduled task „GA40 register review (Mondays 08:00)” prompt, read 2026-09-24 (requires C:\dev and C:\dev.docs); docs/claude/REGISTER-REVIEW.md:3-6 | dev | XS | open | Fix: make the push notification the fallback, since it needs no folder, and say so in REGISTER-REVIEW.md. | 2026-09-24 |
