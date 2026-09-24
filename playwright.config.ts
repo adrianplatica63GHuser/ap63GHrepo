@@ -52,7 +52,11 @@ export default defineConfig({
   reporter: "list",
 
   use: {
-    baseURL: "http://localhost:3000",
+    // Adrian's `npm run dev` is on 3000. The test runner (scripts/test-runner/,
+    // Slice Propus.2) starts its own server on 3100 and passes E2E_BASE_URL, so
+    // a run it makes never touches his. The login cookie is host-scoped, not
+    // port-scoped, so e2e/auth.setup.ts works unchanged on either.
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
     // Keep a trace for easier debugging when a test fails
     trace: "retain-on-failure",
   },

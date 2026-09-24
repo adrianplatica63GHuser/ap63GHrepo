@@ -20,6 +20,9 @@
 
 # next.js
 /.next/
+
+# the Windows-side test runner's request/result channel (Slice Propus.2)
+/.test-runner/
 /out/
 
 # production

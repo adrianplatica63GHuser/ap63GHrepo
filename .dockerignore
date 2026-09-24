@@ -3,6 +3,8 @@
 
 node_modules
 .next
+# the test runner's request/result/log channel (Slice Propus.2)
+.test-runner
 .git
 .gitignore
 

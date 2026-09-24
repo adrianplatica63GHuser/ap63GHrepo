@@ -83,7 +83,9 @@ const config: Config = {
   // entry fails to match a pattern ending in a separator; on Linux, where jest
   // locates a POSIX `find`, it shells out to that and filters the output, so
   // there only the map shrinks.
-  modulePathIgnorePatterns: ["<rootDir>/\\.next/"],
+  // `.test-runner/` is the test runner's channel (Slice Propus.2): request,
+  // result and log files, including the output of jest's own runs.
+  modulePathIgnorePatterns: ["<rootDir>/\\.next/", "<rootDir>/\\.test-runner/"],
   // Exclude Playwright e2e tests — those run via `npx playwright test`, not Jest.
   // `/node_modules/` is belt-and-braces rather than redundancy worth removing:
   // next/jest prepends `/node_modules/` and `/.next/` here and a custom config
