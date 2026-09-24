@@ -39,6 +39,10 @@ import {
   classifyDevServerOutput,
   classifyTscOutput,
   decideMigrateLocal,
+  devServerCompiled,
+  e2eFailuresAreAllTimeouts,
+  failedE2eSpecs,
+  PLAYWRIGHT_RERUN_ARGS,
   decidePush,
   firstFailedStep,
   latestRunPerWorkflow,
@@ -579,5 +583,36 @@ describe("what the runner's code does with a push, read from its code", () => {
   });
   it("reads GitHub with GET only", () => {
     expect(code).not.toMatch(/method:\s*"(POST|PUT|PATCH|DELETE)"/);
+  });
+});
+
+describe("e2e on a cold next dev: a wait that ran out during a compile is re-run once", () => {
+  // Shaped on 20260924T164218Z-7585, the runner's first Propus.3 full run.
+  const block = (n: number, file: string, error: string): string =>
+    `  ${n}) [chromium] › ${file}:37:7 › TC — titlu › pas \n\n    Error: ${error}\n\n    Call log:\n      - waiting\n\n`;
+  const visible = "expect(locator).toBeVisible() failed\n\n    Locator: getByText('x')\n    Expected: visible\n    Timeout: 5000ms\n    Error: element(s) not found";
+  const url = "expect(page).toHaveURL(expected) failed\n\n    Expected pattern: /x/\n    Timeout: 30000ms";
+  const equal = "expect(received).toBe(expected)\n\n    Expected: 2\n    Received: 1";
+
+  it("names the failed spec files, with forward slashes", () => {
+    const out = block(1, "e2e\\association\\document-person.spec.ts", visible) + block(2, "e2e\\search\\global-search.spec.ts", url) + "  2 failed\n";
+    expect(failedE2eSpecs(out)).toEqual(["e2e/association/document-person.spec.ts", "e2e/search/global-search.spec.ts"]);
+  });
+  it("every failure a wait that ran out → re-runnable", () => {
+    expect(e2eFailuresAreAllTimeouts(block(1, "e2e\\a.spec.ts", visible) + block(2, "e2e\\b.spec.ts", url) + "  2 failed\n")).toBe(true);
+    expect(e2eFailuresAreAllTimeouts(block(1, "e2e\\a.spec.ts", "Test timeout of 90000ms exceeded."))).toBe(true);
+  });
+  it("one failure that is not a wait → not re-run: that is a defect, not a compile", () => {
+    expect(e2eFailuresAreAllTimeouts(block(1, "e2e\\a.spec.ts", visible) + block(2, "e2e\\b.spec.ts", equal))).toBe(false);
+  });
+  it("no failure blocks → nothing to re-run", () => {
+    expect(e2eFailuresAreAllTimeouts("  12 passed (3.5m)\n")).toBe(false);
+  });
+  it("the server must have compiled something during the run", () => {
+    expect(devServerCompiled("○ Compiling /admin/global-search ...\n GET /admin/global-search 200 in 43s")).toBe(true);
+    expect(devServerCompiled(" GET /api/auth/me 200 in 119ms")).toBe(false);
+  });
+  it("the re-run is Playwright's own --last-failed, never a list built from request text", () => {
+    expect(PLAYWRIGHT_RERUN_ARGS).toEqual(["test", "--last-failed"]);
   });
 });

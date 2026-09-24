@@ -317,6 +317,41 @@ export function playwrightArgs(files: string[] | null): string[] {
   return ["test", ...(files ?? []).map((f) => f.replace(/^e2e\//, ""))];
 }
 
+/**
+ * ⚠️ **A COLD `next dev` COMPILES EACH ROUTE ON ITS FIRST REQUEST, INSIDE WHATEVER
+ * SPEC ASKS FIRST.** Measured in Propus.3 (20260924T164218Z-7585): the runner's
+ * server took 5.3 s to compile `/api/documents/[id]/persons`, 6.0 s for
+ * `/properties` beside it and 43 s for `/admin/global-search`, so three specs hit
+ * their 5 s and 30 s waits on a server that was doing nothing wrong, while the
+ * same specs passed in Propus.2. The runner re-runs ONLY the failed specs, ONCE,
+ * on the now-warm server, and only when every failure is a wait that ran out
+ * AND the server compiled something during the run. A spec that is really
+ * broken fails the second time too, so the re-run cannot turn a defect green;
+ * what it absorbs is the compile, and the note on the step says it happened.
+ */
+export const PLAYWRIGHT_RERUN_ARGS = ["test", "--last-failed"] as const;
+
+/** The spec files of the numbered failure blocks in Playwright's list reporter. */
+export function failedE2eSpecs(text: string): string[] {
+  const t = stripAnsi(text);
+  const out = new Set<string>();
+  for (const m of t.matchAll(/^\s+\d+\) \[[^\]]+\] › (\S+?):\d+:\d+ ›/gm)) out.add(m[1].replace(/\\/g, "/"));
+  return [...out];
+}
+
+/** True when there are failure blocks and every one of them is a wait that ran out. */
+export function e2eFailuresAreAllTimeouts(text: string): boolean {
+  const t = stripAnsi(text);
+  const blocks = t.split(/^(?=\s+\d+\) \[[^\]]+\] › )/m).slice(1);
+  if (blocks.length === 0) return false;
+  return blocks.every((b) => /\bTimeout:? \d+ ?ms\b|Test timeout of \d+ms exceeded|Timeout \d+ms exceeded/.test(b));
+}
+
+/** Did `next dev` compile a route in this stretch of its output? */
+export function devServerCompiled(text: string): boolean {
+  return /Compiling\s+\S/.test(stripAnsi(text));
+}
+
 /** `--runTestsByPath` makes each entry an exact path rather than a regex. */
 export function jestArgs(files: string[] | null, maxWorkers: number | null = null): string[] {
   return [

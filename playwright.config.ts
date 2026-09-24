@@ -72,7 +72,10 @@ export default defineConfig({
       // demand, so the first route compile happens INSIDE this test. On this app
       // a cold start regularly exceeds 30 s, which failed the run with
       // `net::ERR_ABORTED` on a server that was doing nothing wrong. The specs
-      // keep the default: by the time they run, the routes are warm.
+      // keep the default, but only the routes this setup visits are warm by then:
+      // a spec's own first route still compiles inside it (43 s for
+      // /admin/global-search, measured in Propus.3), so the test runner re-runs
+      // specs whose every failure is such a wait once, on the warmed server.
       timeout: 180_000,
     },
 

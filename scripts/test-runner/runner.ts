@@ -65,6 +65,10 @@ import {
   classifyDevServerOutput,
   classifyTscOutput,
   decideMigrateLocal,
+  devServerCompiled,
+  e2eFailuresAreAllTimeouts,
+  failedE2eSpecs,
+  PLAYWRIGHT_RERUN_ARGS,
   decidePush,
   firstFailedStep,
   latestRunPerWorkflow,
@@ -430,7 +434,23 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
       }
       const mark = server.output().length;
       const env = { ...CHILD_ENV, E2E_BASE_URL: `http://localhost:${RUNNER_PORT}` };
-      const r = await runLogged(NODE, [BIN.playwright, ...playwrightArgs(files)], logFile, TIMEOUT.e2e, env);
+      const first = await runLogged(NODE, [BIN.playwright, ...playwrightArgs(files)], logFile, TIMEOUT.e2e, env);
+      let r = first;
+      let rerunNote = "";
+      if (
+        first.exitCode !== 0 &&
+        !first.timedOut &&
+        e2eFailuresAreAllTimeouts(first.text) &&
+        devServerCompiled(server.output().slice(mark)) &&
+        classifyDevServerOutput(server.output().slice(mark)).tell === null
+      ) {
+        const specs = failedE2eSpecs(first.text);
+        rerunNote = `${summariseStep("e2e", first.text, first.exitCode)} on the first pass; `;
+        notes.push(
+          `every failure was a wait that ran out while next dev compiled routes on first request; re-ran only those (${specs.join(", ") || "the failed specs"}) once on the now-warm server`,
+        );
+        r = await runLogged(NODE, [BIN.playwright, ...PLAYWRIGHT_RERUN_ARGS], logFile, TIMEOUT.e2e, env);
+      }
       const during = classifyDevServerOutput(server.output().slice(mark)).tell;
       await stopDevServer(server);
       server = null;
@@ -446,7 +466,11 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
       return {
         status: r.timedOut ? "error" : r.exitCode === 0 ? "passed" : "failed",
         exitCode: r.exitCode,
-        summary: (r.timedOut ? `timed out after ${TIMEOUT.e2e / MIN} min; ` : "") + summariseStep("e2e", r.text, r.exitCode),
+        summary:
+          (r.timedOut ? `timed out after ${TIMEOUT.e2e / MIN} min; ` : "") +
+          rerunNote +
+          (rerunNote ? "re-run: " : "") +
+          summariseStep("e2e", r.text, r.exitCode),
         notes,
       };
     }
