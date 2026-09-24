@@ -331,10 +331,11 @@ nothing tests it as a whole.
 **Whether anything is fast enough with ten thousand documents rather than two hundred.**
 No load test, no query-plan check, no page-weight budget.
 
-**Whether the English half of `messages/` is complete.** `help-coverage.test.ts`
-invariant 3 checks both locales for help screen and hint names, and nothing else checks
-either file for completeness. Romanian is the shipping locale, so a missing Romanian key
-renders as a raw key path at a user; nothing catches that before a person sees it.
+**Whether the English half of `messages/` is actually English.** Completeness is checked
+now: `messages-key-parity.test.ts` (Slice Propus.3.q1) fails when either file lacks a key the
+other holds, and names each one, so a missing Romanian key no longer reaches a user as a raw
+key path. Nothing checks that an English value is not a copy of the Romanian one — FU-071
+found ten that were.
 
 **Whether an import that reported success actually landed every page it was given.**
 `Check-ImportHealth.ps1` answers two known defects off the database; nobody reconciles a
