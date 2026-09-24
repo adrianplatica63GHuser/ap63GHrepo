@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-24, Slice Propus.2 — 214 entries. Rows are status, columns are impact.
+As of 2026-09-24, Slice Propus.3 — 216 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 21 | 51 | 47 | 12 | 131 |
+| open | 21 | 51 | 49 | 12 | 133 |
 | planned | 0 | 0 | 0 | 0 | 0 |
 | resolved | 19 | 34 | 14 | 3 | 70 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 44 | 90 | 63 | 17 | 214 |
+| **total** | 44 | 90 | 65 | 17 | 216 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -298,3 +298,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-212 | 2026-09-24 Propus.2 66c928d | tooling | Tests & e2e | The built-in browser pane reaches the app on 3000 and 3100 and was already signed in, but it has no file_upload, so a case step that sets a file on an <input type="file"> (TC-DOC-01 step 8) still depends on the Chrome extension being connected. | probe 2026-09-24 in Propus.2 (pane opened localhost:3000/, dashboard rendered, no login form); the pane's tool list has no file_upload; docs/testing/TEST-CATALOGUE.md:179 names Claude in Chrome's file_upload | dev | S | open | Either drive the upload step through the Playwright spec the runner runs, or set the file from the pane's javascript_tool with a DataTransfer built from a fetched staged file; decide in the slice that next drives TC-DOC-01. | 2026-09-24 |
 | FU-213 | 2026-09-24 Propus.2 1a20049 | tooling | Tooling & CI | The runner has run only against stand-in tools in the device VM: its first real run on Windows (next dev on 3100 into .next/runner, Playwright's positional filter for `only` given as a path relative to e2e/ with forward slashes, taskkill /T on the server, conhost --headless) is unobserved. | scripts/test-runner/runner.ts stepE2e / playwrightArgs; Propus.2 simulated the loop with fake next/playwright/eslint/tsc/jest binaries only | dev | XS | open | Observed 2026-09-24 after the install: ping answered; `e2e` with `only` e2e/versioning/property-versioning.spec.ts ran 6 passed on its own server on 3100; `full` ran e2e 12 passed, lint and tsc green, and found one real defect (fixed in 42aeecd). Still unobserved: a runner killed hard mid-e2e (not by -Uninstall, which takes the tree) can leave its next dev holding 3100, and the next run then errors „port 3100 is already in use” until -Uninstall and a re-install. | 2026-09-24 |
 | FU-214 | 2026-09-24 Propus.2 runner result 20260924T160926Z-12680 | test gap | Import | import-constraint-check.test.ts's quadratic guard failed inside the whole jest run (small 11 ms, large 34 ms, ratio 3.03 against the bound of 3) and passed alone a minute later on the same code, so on a loaded machine it can turn a run red with nothing wrong. | .test-runner/logs/20260924T160926Z-12680/jest.log (full run, Adrian's dev server on 3000 up, two workers) against 20260924T161526Z-9048 (the suite alone, green); src/__tests__/import-constraint-check.test.ts:596-658 | dev | XS | open | Take the best of five rather than three, or re-measure once when the first ratio lands within 10% of the bound; keep 3 as the bound. | 2026-09-24 |
+| FU-215 | 2026-09-24 Propus.3 3ddf255 | test gap | Tooling & CI | The runner's migrate-local has run only its guard paths for real — nothing pending (20260924T165940Z-30211) and migration-dirty on an untracked probe file (20260924T165953Z-9088); the Apply-Migration.ps1 and Export-SupabaseSchema.ps1 steps under the runner, and the Schema-Confirmed trailer read from a real migration commit, are unobserved because no migration was pending. | scripts/test-runner/runner.ts stepApplyMigration, stepExportSchema; decideMigrateLocal pinned in src/__tests__/test-runner-protocol.test.ts | dev | XS | open | The next slice that adds a migration quotes its migrate-local result, and closes this row with that commit. | 2026-09-24 |
+| FU-216 | 2026-09-24 Propus.3 193ab70 | tooling | Tests & e2e | The runner's own next dev on 3100 compiles a spec's first route on nearly every run despite the persistent cache in .next/runner — 5.3 s, 6.0 s and 43 s in 20260924T164218Z-7585, 12.7 s in 20260924T165108Z-7922 — so a spec meets a cold compile inside its own 5 s or 30 s waits; since 193ab70 the runner re-runs such specs once on the warm server, which absorbs it at the price of a second pass. | .test-runner/logs/20260924T164218Z-7585/dev-server.log (Compiling /admin/global-search, GET 200 in 43s); scripts/test-runner/runner.ts stepE2e | dev | S | open | Serve the runner's e2e from next build + next start into .next/runner (no on-demand compile), or warm every page route once before Playwright starts. | 2026-09-24 |
