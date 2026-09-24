@@ -130,8 +130,13 @@ describe("every refusal, by name", () => {
     ["the wrong commit", req({ commit: "f".repeat(40) }), "head-mismatch"],
   ];
 
-  it.each(cases)("%s → refused", (_label, raw, code, over) => {
-    expect(refusal(raw, ctx(over ?? {}))).toBe(code);
+  // ⚠️ Every row is padded to four cells. Jest reads a callback that declares
+  // MORE parameters than the row supplies as asking for `done`, and times the
+  // test out at 5 s — which is what 28 three-cell rows did in the runner's
+  // first `full` run (20260924T160926Z-12680) while the jest shim passed them.
+  const rows = cases.map(([label, raw, code, over]) => [label, raw, code, over ?? {}] as const);
+  it.each(rows)("%s → refused", (_label, raw, code, over) => {
+    expect(refusal(raw, ctx(over))).toBe(code);
   });
 
   it("every RefusalCode is reached by a case above", () => {
