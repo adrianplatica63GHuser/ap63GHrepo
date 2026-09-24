@@ -581,7 +581,7 @@ describe("a folder near the walk's own ceiling", () => {
     expect(checkConstraints(largeInput)[0].counts.files).toBe(LARGE);
 
     /**
-     * The best of three, interleaved, not the mean.
+     * The best of five (ten near the bound — below), interleaved, not the mean.
      *
      * Noise on a benchmark is one-sided — a GC pause, a scheduler slice or a
      * background process can only ever ADD time — so the minimum is the closest
@@ -596,15 +596,31 @@ describe("a folder near the walk's own ceiling", () => {
      */
     const smallRuns: number[] = [];
     const largeRuns: number[] = [];
-    for (let i = 0; i < 3; i++) {
-      let started = performance.now();
-      checkConstraints(smallInput);
-      smallRuns.push(performance.now() - started);
+    const measureRound = (): void => {
+      for (let i = 0; i < 5; i++) {
+        let started = performance.now();
+        checkConstraints(smallInput);
+        smallRuns.push(performance.now() - started);
 
-      started = performance.now();
-      checkConstraints(largeInput);
-      largeRuns.push(performance.now() - started);
-    }
+        started = performance.now();
+        checkConstraints(largeInput);
+        largeRuns.push(performance.now() - started);
+      }
+    };
+    /**
+     * ⚠️ **BEST OF FIVE, AND A SECOND ROUND ONLY NEAR THE BOUND.** (FU-100,
+     * FU-214, Slice Propus.3.) The best of three read 3.03 and then 3.13 inside
+     * the test runner's whole jest run — two workers, Adrian's dev server up —
+     * and passed alone a minute later on the same code. The linear version sits
+     * near 2.1–2.3 and the quadratic one at 5.5–5.7, so a first ratio within 10%
+     * of the bound is load, not code: five more interleaved pairs are taken and
+     * the minimum over all ten stands. Noise only ever ADDS time (above), so more
+     * samples can only bring a linear ratio down toward its true value; a
+     * quadratic implementation cannot get from 5.5 to under 3 that way. The bound
+     * stays 3.
+     */
+    measureRound();
+    if (Math.min(...largeRuns) / Math.min(...smallRuns) >= 2.7) measureRound();
     const small = Math.min(...smallRuns);
     const large = Math.min(...largeRuns);
     const ratio = large / small;
