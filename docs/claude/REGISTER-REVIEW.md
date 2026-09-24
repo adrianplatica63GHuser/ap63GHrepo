@@ -17,6 +17,18 @@ three:
 
 Then a push notification says the review is ready.
 
+**When the run cannot start, the notification is the whole output.** The device tools fail, the
+folders are not mounted, this file is missing, git is unreachable — usually because the laptop is
+asleep or off, and then nothing can be written on it, `C:\dev.docs` included. So the run sends
+`PushNotification`, one line — `Register review <D> did not run: <what stopped it>. Wake the laptop
+and tell any session: follow docs/claude/REGISTER-REVIEW.md.` — and ends its reply with the same
+line, so the task's own completion push carries it even when the tool reports it was not sent. A
+`Review.<D>.txt` under `Register.Reviews\<D>\` is written as well only when the folders are mounted
+and something else stopped the procedure. The scheduled task's prompt says the same (updated in
+Propus.1, 2026-09-24). A Monday with neither a review folder nor a notification means the task did
+not fire at all. What keeps the laptop awake for it is one Windows setting of Adrian's: plugged in,
+never sleep.
+
 ## What a review may and may not change
 
 | May | May not |
@@ -34,7 +46,10 @@ not one — it re-checks rows, it does not hunt for new findings.
 ## Step 0 — set up
 
 1. Read `C:\dev\CLAUDE.md`, `ga40prj\CLAUDE.md` and `C:\dev\.claude\rules\git-and-commits.md` +
-   `sandbox-and-toolchain.md` (the quarantine recipe is needed for the commit).
+   `sandbox-and-toolchain.md` (the quarantine recipe is needed for the commit). Then request delete
+   permission for `C:\dev` and `C:\dev.docs` in one call, as every session does in its first minute —
+   the task runs with automatic approval, so it is granted without a prompt, and it is what lets
+   Step 7 remove its own quarantine.
 2. `git --no-optional-locks status --short`. **If `docs/claude/FOLLOW-UP-REGISTER.md` is already
    modified in the working tree, stop editing the register**: someone is mid-slice. Still write the
    review from HEAD, say so in its first line, and skip Step 7's commit.
@@ -176,7 +191,9 @@ docs(register): review <D> — <n> re-checked, <changes in a phrase>, slate Prop
 The body lists every status change with its reason, the slate by FU ids, the ignore proposals and
 the balance numbers. Attribution lines as the session's reminder gives them. If the commit fails with
 a lock Claude did not strand, leave the edit uncommitted and put the single unblock line on the
-review page — the review itself still ships.
+review page — the review itself still ships. After the commit, delete `.git\_stranded_locks\` under
+the deletion guard in `sandbox-and-toolchain.md`; only when delete permission was not granted does
+its `Remove-Item` line go on the review page.
 
 ## Step 8 — write the review and the proposals
 

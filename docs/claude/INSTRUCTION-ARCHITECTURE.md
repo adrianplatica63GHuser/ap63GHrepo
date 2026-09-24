@@ -278,7 +278,7 @@ extract the rule *at the time*, into the rule file, and let git keep the story.
 | `ga40prj/CLAUDE.md` | ~9.9 K | **New** — 428 lines → ~150 |
 | `ga40prj/.claude/rules/` ×13 | ~64 K | 10 extracted verbatim, 3 harvested from the slice log |
 | `ga40prj/.claude/skills/` ×2 | ~21 K | Extracted verbatim, then deduplicated |
-| `ga40prj/docs/claude/shared/` | ~55 K | **Versioned source** for the five files above the repo |
+| `ga40prj/docs/claude/shared/` | ~55 K | **Versioned source** for the files above the repo — six today: `CLAUDE.md` and five rules |
 | `ga40prj/scripts/Sync-SharedClaude.ps1` | ~4 K | **New** — deploys `docs/claude/shared/` to `C:\dev\` |
 | `ga40prj/docs/claude/slice-log-archive.md` | 99.4 K | The slice log, frozen and never loaded |
 | `ga40prj/docs/claude/SLICE-HEADER-TEMPLATE.md` | 3.9 K | **New** — ~600 words → 5 lines |
@@ -292,14 +292,16 @@ every app under `C:\dev`. That also puts them outside git — nothing version-co
 and a bad edit is unrecoverable.
 
 So the versioned source of truth is `ga40prj\docs\claude\shared\`, and `C:\dev\` holds a
-deployed copy. Edit the repo copy, commit, then run:
+deployed copy. **Claude deploys it in the same turn as the commit** — the banner at the top of
+`C:\dev\CLAUDE.md` is the rule, and this paragraph only points at it. On Windows the deploy is
+`.\scripts\Sync-SharedClaude.ps1`; over the device bridge, where PowerShell cannot run, it is a plain
+UTF-8-without-BOM copy of each source file over its deployed path. It is never a handover line for
+Adrian: #32.14 found the rules 33 lines behind their source for exactly that reason.
 
-```powershell
-.\scripts\Sync-SharedClaude.ps1
-```
-
-`-Check` compares without writing and exits non-zero on drift (useful in CI, or just to
-answer "is the deployed copy current?"). `-Pull` reverses the direction, for when you edited
+`-Check` compares without writing and exits non-zero on drift — the answer to "is the deployed copy
+current?". It **cannot be a CI check**: the deployed copy exists only on Adrian's machine, and a CI
+runner has the repo and nothing above it. `npx jest` catches drift instead, through
+`src/__tests__/shared-claude-deploy.test.ts`. `-Pull` reverses the direction, for when you edited
 `C:\dev\` by mistake and want to keep those edits — review with `git diff` afterwards. The
 deployed files carry a banner saying they're copies, so the mistake is at least visible.
 
