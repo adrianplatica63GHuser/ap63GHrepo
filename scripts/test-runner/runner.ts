@@ -678,6 +678,20 @@ async function stepCi(head: string, logDir: string, logFile: string): Promise<St
   const url = git(["remote", "get-url", PUSH_REMOTE]).out;
   const gh = parseGithubRemote(url);
   if (!gh) return { status: "error", exitCode: null, summary: `${PUSH_REMOTE} is not a github.com remote`, notes };
+  // An unpushed commit has no run and never will: say so now rather than after the 5-minute wait
+  // (measured: 20260924T163344Z-23683 held the runner for 306 s on exactly that).
+  const remoteMain = remoteMainCommit();
+  const onRemote =
+    remoteMain !== null &&
+    (remoteMain === head || spawnSync("git", ["merge-base", "--is-ancestor", head, remoteMain], { cwd: REPO, windowsHide: true }).status === 0);
+  if (!onRemote) {
+    return {
+      status: "error",
+      exitCode: null,
+      summary: `${head.slice(0, 7)} is not on ${PUSH_REMOTE}/${PUSH_BRANCH} (${remoteMain ? remoteMain.slice(0, 7) : "ls-remote gave no answer"}), so no CI run exists for it — push first`,
+      notes,
+    };
+  }
   const token = githubToken();
   if (!token) notes.push("git holds no GitHub credential for the runner's account; read anonymously");
   const base = `/repos/${gh.owner}/${gh.repo}/actions`;
