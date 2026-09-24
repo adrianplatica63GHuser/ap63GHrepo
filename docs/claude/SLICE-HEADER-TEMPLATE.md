@@ -39,7 +39,7 @@ every slice.
 
 | Value | What Claude does |
 |---|---|
-| `normal` | Plan → build → `tsc` → self-review the diff → commit → hand over, with the verification sequence and the push for you to run. The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
+| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → hand over, with `npm run e2e`, `npx jest` and the push for you to run. The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
 | `deep` | Adds parallel subagents to map the affected code before planning. Use for anything touching versioning, auth, migrations, the import wizard, or more than ~10 files. |
 | `investigate` | No code at all. Claude reads, greps, fans out, and reports findings. No diff, so no adversarial round. Use when you're not yet sure a slice is the right shape. |
 
@@ -58,8 +58,16 @@ it on one that does, is ignored.
 Bug: <exactly what you saw, verbatim from the UI or the console>
 Repro: <the click path>
 Constraint: <a decision you've already made that Claude shouldn't relitigate>
-Ask first: <a specific thing you want a decision on before any code>
+Ask first: <a question you want to rule on — Claude answers it for now, see below>
 ```
+
+`Ask first:` **does not stop the session** (`C:\dev\CLAUDE.md` → „Never wait"). Claude takes the
+answer it would recommend, says so in a message that does not wait, builds, and puts that answer
+first under „Decisions taken" in the handover, so you overturn it in one line. Only the part of the
+slice that cannot be built without your answer — a domain fact only you or Ciprian know — waits;
+everything else is built meanwhile. The same goes for any question that comes up mid-slice: a slice
+header is complete requirements, so a question Claude would answer „(Recommended)" is never put to
+you.
 
 `Bug:` verbatim matters more than it looks — a paraphrased Romanian error string sends
 Claude looking in the wrong `messages/*.json` key.
@@ -80,7 +88,7 @@ drifting apart:
 | Sandbox can run `tsc` and `eslint`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
 | "Never dismiss an error as pre-existing" | `C:\dev\CLAUDE.md` → The working contract |
 | Conventional commits, PowerShell 7, chain with `&&`, Claude commits and Adrian pushes | `C:\dev\CLAUDE.md` → Delivering work / Autonomy; mechanics in `C:\dev\.claude\rules\git-and-commits.md` |
-| "Wait for my approval before writing any code" | `C:\dev\CLAUDE.md` → The working contract |
+| "Wait for my approval before writing any code" | Withdrawn — `C:\dev\CLAUDE.md` → „Never wait": Claude plans and builds without waiting; the migration stop is the one that waits (The working contract) |
 | "Existing UI code is the source of truth" | `ga40prj/CLAUDE.md` → Where the rest of the knowledge lives |
 | "Skip everything else / don't re-read" | Withdrawn — replaced by the autonomy section |
 

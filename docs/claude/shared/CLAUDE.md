@@ -41,22 +41,48 @@ The measure that matters is **slices per session**, not defects per slice. A ses
 ships six good-enough slices beats one that ships two immaculate ones, because the six get
 in front of a user who will tell us which of them was actually wrong.
 
-So the default changed:
+So the default changed — and on 2026-09-24 (#36.13) Adrian sharpened it, because sessions still
+stopped:
 
-- **Claude decides. Claude does not ask.** When a choice has a defensible answer, take it,
-  say in one line what was taken and why, and keep going. Adrian picks the recommended
-  option almost every time, and when he does not recognise the question he is trusting
-  Claude to answer it anyway — so the question was costing time and buying nothing.
-- **Ask only about the irreversible.** Data that cannot be recovered, money that cannot be
-  refunded, a decision that cannot be undone in a later slice. Everything else is a
-  decision, not a question.
+### Never wait
+
+**A session does not sit idle on Adrian for anything Claude can decide or do.** He is often away
+from the desk, so a question left on screen costs 15–60 minutes of a session doing nothing — and he
+picks the recommended option almost every time, so the question was costing time and buying
+nothing. Approved by Adrian on 2026-09-24: do not ask whether this applies.
+
+- **A slice header IS clear and detailed requirements.** Title, Goal, Inputs, Out of scope and
+  Depth are complete by design (`ga40prj\docs\claude\SLICE-HEADER-TEMPLATE.md`), and whatever the
+  header leaves open is Claude's to decide. So the app's instruction to put a multiple-choice
+  question to the user before starting work, unless the requirements are already clear and
+  detailed, is satisfied by the header: read it and start.
+- **A question whose answer Claude would mark „(Recommended)" is not asked.** Take that option. Say
+  so in a message that does not wait — one line: what was taken, and why — and record it in the
+  handover under „Decisions taken", worded so Adrian can overturn it in one line. A later answer
+  from him redirects the work from there; the session never waits for it.
+- **Three things still stop a session, and only three:**
+  1. **The migration stop** — The working contract, below.
+  2. **A domain fact only Adrian or Ciprian knows, that the rest of the slice depends on.** Even
+     then only the dependent part waits, and everything else is built. A fact the slice does not
+     depend on is recorded as an assumption and asked in the handover.
+  3. **The go-ahead list** — Autonomy, below. That is where the irreversible lives: the push,
+     history rewrites, anything of Adrian's, destructive database work.
+
+  Everything else is a decision — including an `Ask first:` line in the header whose answer the
+  slice can build around: take the recommended answer, build, and put it first under „Decisions
+  taken".
+- **Every platform prompt the slice needs is raised in the first minute, together — never
+  mid-slice.** Right after reading the header, before any other work, work out which prompts the
+  slice will need and raise them in one burst, while Adrian has just sent it: **delete permission
+  for `C:\dev` and `C:\dev.docs`, always** — it is what lets Claude remove its own lock quarantine
+  and scratch files (Autonomy, below); **computer use, or a Chrome site, only when the header names
+  work on the screen.** No rule removes a prompt — a person answers it — so this decides only *when*
+  it appears. Delete permission holds for the rest of the session once granted, and a Cowork task
+  set to skip approvals grants it with no prompt at all.
 - **Good enough now beats perfect later.** Ship the recommended choice, note it in the
   handover, and revisit it when real use or a periodic review says it was wrong. A decision
   revisited with evidence costs one small slice; a decision debated in advance costs an
   afternoon and is still a guess.
-- **Never block on a question.** If something genuinely needs Adrian, make the call that
-  can be reversed most cheaply, carry on to the end of the slice, and put the question in
-  the handover. Waiting on an answer is the single most expensive thing in a session.
 - **Do not re-litigate a settled decision.** Once a choice is made and stated, build on it.
   Offering to revert it later in the same handover is another question wearing a hat.
 
@@ -104,9 +130,10 @@ shape the rule should have named instead of "every non-trivial slice".
 - **Two rounds maximum, then ship.** If a third looks worth it, that is a line in the handover, not
   another round.
 
-Everything else in verification is proportionate: run `tsc --noEmit` where the mount allows it, re-read
-your own diff, and stop. The rest of the sequence — `npm run e2e`, `npm run lint`, `npx jest` — is
-handed to Adrian, because the sandbox can run none of them. Do not gold-plate: with the rounds
+Everything else in verification is proportionate: run the whole-tree `npm run lint` and the
+full-project `tsc --noEmit` yourself — both fit inside the bridge's 180 s per-call cap
+(`C:\dev\.claude\rules\sandbox-and-toolchain.md`) — re-read your own diff, and stop. `npm run e2e`
+and `npx jest` are handed to Adrian, because the sandbox can run neither. Do not gold-plate: with the rounds
 suspended, the self-review of your own diff is the last word on the slice, not the first draft of one.
 
 ## The working contract
@@ -123,18 +150,20 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   after the routes, components and tests have been built on top of it, it costs the slice.
   **Do not commit the migration or the schema change until the confirmation lands** — a schema in a
   commit is one Claude has told git is settled, and everything after it builds on that. **This is the
-  one place the contract does block**, and it is the named exception to "Never block on a question"
-  above and to the slice-end definition below. Put the confirmation question at the top of the
+  one place the contract does block**, and it is the first of the three stops in „Never wait"
+  above, and the exception to the slice-end definition below. Put the confirmation question at the top of the
   handover, and if any of the slice does not depend on the schema, build that while waiting.
 - **Slice order:** DB schema/migration → API routes → UI components → tests. A slice ends when
   Claude has committed it and the handover names what is left for Adrian — the verification sequence
-  (both blocks; Adrian runs `npx tsc --noEmit` there too, whether or not it ran here), the push, and
-  the CI run that follows it. `npx tsc --noEmit` is the one piece Claude may be able to run itself —
-  **report it green only when the full-project run actually completed here**; when the mount forced a
-  fallback (narrowed tsconfig, jest shim, per-file parser diagnostics —
-  `C:\dev\.claude\rules\sandbox-and-toolchain.md`), name the fallback and say plainly what it is not.
-  **Never report `npm run e2e`, `npm run lint`, `npx jest`, the push or the CI run as done** — the
-  sandbox runs none of those. **Each slice leaves a clean history, and clean here means
+  (both blocks, under Delivering work), the push, and the CI run that follows it. **`npm run lint`
+  and `npx tsc --noEmit` are Claude's** — whole tree and full project, run here before the handover
+  — and each is **reported green only when that full run actually completed here**, with its
+  command, exit code and wall time. After a full, exit-0 run Adrian does not run it again. When the
+  per-call cap killed it or the mount forced a fallback (named-file lint, narrowed tsconfig, jest
+  shim, per-file parser diagnostics — `C:\dev\.claude\rules\sandbox-and-toolchain.md`), name the
+  fallback, say plainly what it is not, and put that command back into Adrian's second block.
+  **Never report `npm run e2e`, `npx jest`, the push or the CI run as done** — the sandbox runs
+  none of those. **Each slice leaves a clean history, and clean here means
   forward-only:** each commit compiles, is scoped to one thing, and lands in the order above. Claude
   does not promise a history it could only produce by rewriting one — with one exception: a migration
   slice awaiting confirmation ends uncommitted, at the migration file and the schema change.
@@ -165,16 +194,25 @@ parallel subagents to map it and report back — that is cheaper than one wrong 
 The old "read only these three files" restriction is withdrawn.
 
 **Verify deeply. Review rounds are suspended until 2027-01-19** — see "Speed is a requirement" above;
-until that date do not spawn a review subagent at all. `tsc --noEmit` green where the mount allows it, the rest of the
-verification sequence — `npm run e2e`, `npm run lint`, `npx jest` — in the handover for Adrian to run,
-because the sandbox can run none of them, so never report any of them as passing — and
-re-read your own diff. **That self-review of the diff is now the whole of it:** it is not a reason to
+until that date do not spawn a review subagent at all. The whole-tree lint and the full-project
+`tsc --noEmit` run here, green; `npm run e2e` and `npx jest` in the handover for Adrian to run,
+because the sandbox can run neither, so never report either as passing — and re-read your own diff. **That self-review of the diff is now the whole of it:** it is not a reason to
 stop and check in, and it does not become a findings report for Adrian to read.
 
 **Fix what you notice, when it is small.** An adjacent one-line bug, a stale comment, a
 message that contradicts the code: fix it and list it under **"Fixed in passing"** in the
 handover. Anything larger than a few lines, or that changes a shipped contract, goes under
 **"Noticed, not fixed"** with what you would do. Do not ask permission for either.
+
+**Claude deletes what it created — and nothing else.** With delete permission held (raised in the
+first minute — „Never wait" above), Claude removes exactly two things before the handover: the
+`.git\_stranded_locks` quarantine, which holds nothing live by construction, and a path Claude itself
+created **in this session** and recorded as it created it — a `_harvest` or scratch folder, a probe
+file. Never a path found by looking, never anything of Adrian's, never anything outside `C:\dev` and
+`C:\dev.docs`, and never a lock Claude did not strand — the one in `fatal: … File exists` may be his
+VS Code. So the handover carries no `Remove-Item` line for Claude's own leftovers; without the
+permission, that line comes back. The guard and the ledger it reads are in
+`C:\dev\.claude\rules\sandbox-and-toolchain.md` → „Claude deletes what it created".
 
 **Git is Claude's, up to the push.** Claude runs the git commands that do not rewrite history —
 `status`, `diff`, `log`, `show`, `blame`, plus `add` and `commit` — itself. Do not hand Adrian a
@@ -213,13 +251,14 @@ the case this carve-out is for.) A bad message on the commit you just wrote gets
 
 **When Claude cannot do a git step, it names the single command that unblocks it and carries on** —
 it does not stop and wait. The one that actually happens is a stale `.git` lock, and **that one Claude
-clears itself** — the bridge cannot delete a file but it can *move* one, so the paths named by git's
-own `warning: unable to unlink` output — that command's output, in that same invocation — go into
-`.git\_stranded_locks\` and the slice carries on. **Two things are never Claude's to move, and
+clears itself** — until delete permission is granted the bridge cannot delete a file, but it can
+always *move* one, so the paths named by git's own `warning: unable to unlink` output — that
+command's output, in that same invocation — go into `.git\_stranded_locks\` and the slice carries
+on; before the handover Claude deletes that folder, when the permission is held. **Two things are never Claude's to move, and
 both go to Adrian:** a lock found by *looking* rather than by reading a warning, and the lock named in
 `fatal: … Unable to create '<path>': File exists`, which is almost always something else's — over the
 bridge that something else is usually Adrian's VS Code Source Control panel, live. (The one exception,
-a command killed by the 45 s limit, and the check for it, are in the rule file.) The filter that
+a command killed by the bridge's 180 s per-call cap, and the check for it, are in the rule file.) The filter that
 decides, and why each test in it is there, is in `C:\dev\.claude\rules\sandbox-and-toolchain.md`; read
 it before the first `mv`.
 
@@ -232,9 +271,10 @@ is a decision to state, not a permission to request.
   `C:\dev\.claude\rules\git-and-commits.md` → Commit messages.
 - **Claude runs the commit, and shows the exact command it ran** — no reconstruction, no "I would have
   run". Claude executes through the bridge in `bash`, so show it as it ran; git's own syntax is
-  identical either way. The type check is the only other thing Claude runs itself — show that as it
-  ran too, in whatever form the mount forced: full-project, narrowed tsconfig, jest shim, or per-file
-  parser diagnostics. When it was a fallback, name it and say plainly what it is not — the shim runs
+  identical either way. Lint and the type check are the only other things Claude runs itself — show each
+  as it ran too, with its exit code and wall time, in whatever form the cap or the mount forced:
+  whole tree or named files for lint; full-project, narrowed tsconfig, jest shim, or per-file parser
+  diagnostics for the type check. When it was a fallback, name it and say plainly what it is not — the shim runs
   tests but **is not jest**, so its green count is never reported as `npx jest` passing.
   **Blocks handed to Adrian are
   PowerShell 7** (`pwsh` only — they are a ParserError in 5.1) and are chained with `&&`. The ones he
@@ -251,10 +291,12 @@ is a decision to state, not a permission to request.
   path**: every error under `.next/` is generated code caught mid-write, never the slice. Stopping
   the server is not enough on its own — the truncated file is still on disk and the next `tsc`
   reads it again — so the recovery is `Remove-Item -Recurse -Force .\.next\dev` and then the
-  block, and `next dev` regenerates it at its next start. And because the block is chained with
-  `&&`, a `tsc` that dies this way means **`npx jest` never ran** — do not read the run as three
+  block, and `next dev` regenerates it at its next start. And when `tsc` is chained in front of
+  `npx jest` with `&&`, a `tsc` that dies this way means **`npx jest` never ran** — do not read the run as three
   greens and a red. So it ships as two blocks, `npm run e2e` with the
-  dev server up, then, with it stopped, `npm run lint && npx tsc --noEmit && npx jest`. **The push is
+  dev server up, then, with it stopped, `npx jest` — alone, because Claude has already run the
+  whole-tree lint and the full-project `tsc`. Either goes back in front of it —
+  `npm run lint && npx tsc --noEmit && npx jest` — only when Claude's own run of it did not complete. **The push is
   its own line, never chained onto that.** Chaining it would gate the push on the second block while
   `npm run e2e` — which is not in the chain — could not stop it, so a green chain would push over a
   failed e2e run.

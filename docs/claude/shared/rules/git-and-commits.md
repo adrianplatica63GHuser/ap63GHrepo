@@ -44,8 +44,11 @@ lock that blocks the next `add` or `commit`**. So:
 bites: it blocks your **next** commit in the same slice with `fatal: cannot lock ref 'HEAD' … File
 exists`, exit 128. **Claude clears that itself and carries on**, by moving exactly the paths git named
 in its own `warning: unable to unlink '<path>'` output into `.git/_stranded_locks/` — the bridge can
-move what it cannot delete. The test, what falls outside it, and the two different lines Adrian gets
-are all in `C:\dev\.claude\rules\sandbox-and-toolchain.md`. Read it before assuming a commit that
+move what it cannot delete. **Before the handover Claude deletes that folder itself when delete
+permission is held** (raised in the first minute of the session), so no `Remove-Item` line for it
+reaches Adrian; without the permission it is handover line #1. The test, what falls outside it, the
+deletion guard, and the two different lines Adrian may get are all in
+`C:\dev\.claude\rules\sandbox-and-toolchain.md`. Read it before assuming a commit that
 exited 0 left nothing behind.
 
 ## Stage and commit by explicit path
@@ -184,6 +187,6 @@ revert to Adrian. The measurement, and which other commands share the shape, are
 
 Conventional prefixes — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`. The subject is the
 prefix and one line. **The body is where the per-slice detail goes** — what changed and why, the
-decisions taken under "Claude decides", anything listed as "Fixed in passing". The working contract
+decisions taken under "Never wait" (`C:\dev\CLAUDE.md`), anything listed as "Fixed in passing". The working contract
 says that detail lives in git history; Claude writes that history now, so the body is the only place
 it exists.

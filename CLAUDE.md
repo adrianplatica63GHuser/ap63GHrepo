@@ -101,9 +101,11 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   "the dev server isn't running." Say so every time you ask Adrian to run it.
 - **Then stop the dev server.** `next dev` rewrites `.next/` continuously, so `tsc` reads a
   moving target, and `jest` workers OOM against it and report it as a test failure.
-- Claude runs `tsc --noEmit` in the sandbox before every handover where the mount allows it;
-  where it doesn't, say plainly that only parser diagnostics were run. Adrian runs all four
-  locally before anything is considered done. See `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
+- Claude runs `npm run lint` (whole tree) and `npx tsc --noEmit` (full project) over the bridge
+  before every handover, and shows each with its exit code and wall time; a fallback is named for
+  what it is. Adrian runs the other two — `npm run e2e`, then `npx jest` — plus whichever of
+  Claude's did not complete, before anything is considered done. See
+  `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
 ## A migration is delivered TWICE, and the second one is the one that gets forgotten
 
@@ -201,7 +203,7 @@ the source of truth for decisions and traps, and load automatically when relevan
 | Need | Location |
 |---|---|
 | Working contract, autonomy, commits, PowerShell | `C:\dev\CLAUDE.md` + `C:\dev\.claude\rules\` |
-| **Editing** any of those four shared files | `docs/claude/shared/`, then `scripts\Sync-SharedClaude.ps1` |
+| **Editing** any of those six shared files | `docs/claude/shared/`, then deploy in the same turn — the banner at the top of `C:\dev\CLAUDE.md` |
 | Traps for a file family you're editing | `.claude/rules/*.md` — auto-loads on matching paths |
 | Add version history to an entity | `.claude/skills/add-entity-versioning/` |
 | Onboard a new document type | `.claude/skills/onboard-document-type/` |
@@ -212,7 +214,10 @@ the source of truth for decisions and traps, and load automatically when relevan
 
 ## Starting a slice
 
-Read, in one batch: this file, `git log --oneline -20`, and `src/db/schema/index.ts`.
+First, before any other work, raise together the platform prompts the header will need — delete
+permission always, computer use or a Chrome site only for screen work (`C:\dev\CLAUDE.md` →
+„Never wait"). Then read, in one batch: this file, `git log --oneline -20`, and
+`src/db/schema/index.ts`.
 Then read whatever else the slice needs — freely, without asking. See the autonomy section
 in `C:\dev\CLAUDE.md`.
 
