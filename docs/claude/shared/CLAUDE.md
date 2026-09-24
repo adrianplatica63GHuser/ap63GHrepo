@@ -133,7 +133,8 @@ shape the rule should have named instead of "every non-trivial slice".
 Everything else in verification is proportionate: run the whole-tree `npm run lint` and the
 full-project `tsc --noEmit` yourself — both fit inside the bridge's 180 s per-call cap
 (`C:\dev\.claude\rules\sandbox-and-toolchain.md`) — re-read your own diff, and stop. `npm run e2e`
-and `npx jest` are handed to Adrian, because the sandbox can run neither. Do not gold-plate: with the rounds
+and `npx jest`, which the sandbox cannot run, go to **the test runner on Adrian's laptop** (Delivering
+work, below) and come back to Adrian only when it is down. Do not gold-plate: with the rounds
 suspended, the self-review of your own diff is the last word on the slice, not the first draft of one.
 
 ## The working contract
@@ -154,16 +155,18 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   above, and the exception to the slice-end definition below. Put the confirmation question at the top of the
   handover, and if any of the slice does not depend on the schema, build that while waiting.
 - **Slice order:** DB schema/migration → API routes → UI components → tests. A slice ends when
-  Claude has committed it and the handover names what is left for Adrian — the verification sequence
-  (both blocks, under Delivering work), the push, and the CI run that follows it. **`npm run lint`
+  Claude has committed it, **the test runner has run the verification sequence on that commit and
+  come back green** (Delivering work, below), and the handover names what is left for Adrian — the
+  push and the CI run that follows it, plus the two blocks only when the runner was down. **`npm run lint`
   and `npx tsc --noEmit` are Claude's** — whole tree and full project, run here before the handover
   — and each is **reported green only when that full run actually completed here**, with its
   command, exit code and wall time. After a full, exit-0 run Adrian does not run it again. When the
   per-call cap killed it or the mount forced a fallback (named-file lint, narrowed tsconfig, jest
   shim, per-file parser diagnostics — `C:\dev\.claude\rules\sandbox-and-toolchain.md`), name the
-  fallback, say plainly what it is not, and put that command back into Adrian's second block.
-  **Never report `npm run e2e`, `npx jest`, the push or the CI run as done** — the sandbox runs
-  none of those. **Each slice leaves a clean history, and clean here means
+  fallback, say plainly what it is not, and put that command back into Adrian's second block (or
+  let the runner's `full` run stand for it). **Never report `npm run e2e` or `npx jest` as passing
+  on anything but a runner result that says so, and never report the push or the CI run as done** —
+  the sandbox runs none of those, and a runner result is the runner's, never Adrian's. **Each slice leaves a clean history, and clean here means
   forward-only:** each commit compiles, is scoped to one thing, and lands in the order above. Claude
   does not promise a history it could only produce by rewriting one — with one exception: a migration
   slice awaiting confirmation ends uncommitted, at the migration file and the schema change.
@@ -195,8 +198,8 @@ The old "read only these three files" restriction is withdrawn.
 
 **Verify deeply. Review rounds are suspended until 2027-01-19** — see "Speed is a requirement" above;
 until that date do not spawn a review subagent at all. The whole-tree lint and the full-project
-`tsc --noEmit` run here, green; `npm run e2e` and `npx jest` in the handover for Adrian to run,
-because the sandbox can run neither, so never report either as passing — and re-read your own diff. **That self-review of the diff is now the whole of it:** it is not a reason to
+`tsc --noEmit` run here, green; `npm run e2e` and `npx jest` requested from the test runner, red
+fixed and re-run in the same session, the result quoted — and re-read your own diff. **That self-review of the diff is now the whole of it:** it is not a reason to
 stop and check in, and it does not become a findings report for Adrian to read.
 
 **Fix what you notice, when it is small.** An adjacent one-line bug, a stale comment, a
@@ -276,6 +279,17 @@ is a decision to state, not a permission to request.
   whole tree or named files for lint; full-project, narrowed tsconfig, jest shim, or per-file parser
   diagnostics for the type check. When it was a fallback, name it and say plainly what it is not — the shim runs
   tests but **is not jest**, so its green count is never reported as `npx jest` passing.
+- **The test runner runs `npm run e2e` and `npx jest` — Claude requests it, Adrian does not.**
+  Approved by Adrian on 2026-09-24 (#36.13): „Claude runs the test sequence when Claude needs." A
+  Scheduled Task on his laptop (`ga40prj\scripts\Install-TestRunner.ps1`) watches
+  `ga40prj\.test-runner\requests\`; Claude writes a request for a sequence from a fixed list and
+  the commit it just made, the runner runs it — e2e against **its own** `next dev` on port 3100, then
+  lint, tsc and jest with that server stopped, plus `Verify-Rebuild.ps1` for `full-db` — and writes
+  a result file Claude polls. **A red result is fixed and re-run in the same session**, never handed
+  over. The handover quotes the final result as the runner's, with its id — never as Adrian's. How to
+  request, poll and read it: `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner.
+  **The blocks below come back only when the runner is absent or down** (`claude.sh ping` gets no
+  answer): then they are handed over exactly as written, and the handover says the runner was down.
   **Blocks handed to Adrian are
   PowerShell 7** (`pwsh` only — they are a ParserError in 5.1) and are chained with `&&`. The ones he
   actually gets are the verification sequence, the push, and the occasional unblock. The sequence is

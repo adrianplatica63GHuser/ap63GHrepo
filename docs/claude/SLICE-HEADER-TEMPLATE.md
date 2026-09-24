@@ -39,7 +39,7 @@ every slice.
 
 | Value | What Claude does |
 |---|---|
-| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → hand over, with `npm run e2e`, `npx jest` and the push for you to run. The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
+| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → the test runner's `full` run, red fixed and re-run → hand over, with the push for you to run (and `npm run e2e`, `npx jest` only when the runner is down). The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
 | `deep` | Adds parallel subagents to map the affected code before planning. Use for anything touching versioning, auth, migrations, the import wizard, or more than ~10 files. |
 | `investigate` | No code at all. Claude reads, greps, fans out, and reports findings. No diff, so no adversarial round. Use when you're not yet sure a slice is the right shape. |
 

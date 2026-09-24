@@ -25,7 +25,7 @@ workflows, the database scripts, and what nobody tests — see
 | `draft` | Written from the code and the message file. **Never run.** Treat its steps as a hypothesis. |
 | `driven` | Claude has driven it once through the real browser and **corrected the case file against what actually happened**. Most of the value of a first run is that correction. |
 | `confirmed` | Driven a second time, unchanged, green. "Unchanged" is measured against the file as it stood when the run began: the first run after the last correction that needs none, and on which only „Notes from the runs" is written. |
-| `automated` | A Playwright spec exists under `e2e/<area>/`, **and Adrian's `npm run e2e` has run it green** — the date of that run is the row's „Last green". The case now runs with `npm run e2e` like everything else and costs nobody's attention again. |
+| `automated` | A Playwright spec exists under `e2e/<area>/`, **and a whole `npm run e2e` has run it green** — the test runner's (its result id recorded in the handover) or Adrian's; the date of that run is the row's „Last green". The case now runs with `npm run e2e` like everything else and costs nobody's attention again. |
 
 **Only a `confirmed` case may be promoted**, and the spec is written **from the corrected
 case file**, never from the application — so a spec and a case file cannot come to
@@ -39,9 +39,10 @@ in the spec saying why. The spec's header names the case and the „Last green" 
 it was translated from. If writing the spec needs a fact the case file does not state,
 the case file is corrected first — which sends the row back to `driven`.
 
-**Writing a spec is not the same as `automated`.** Claude cannot run `npm run e2e`, so a
-row whose spec has just been written stays at `confirmed`, with its `Spec` column filled
-in; it moves to `automated`, with the date, only once Adrian reports the run green. A row
+**Writing a spec is not the same as `automated`.** Claude cannot run `npm run e2e` itself;
+since Slice Propus.2 it asks the test runner on Adrian's laptop to. A row whose spec has
+just been written stays at `confirmed`, with its `Spec` column filled in; it moves to
+`automated`, with the date, only once a runner result (or Adrian) reports the run green. A row
 is never marked `automated` on the strength of a spec that has not run. If the run is
 red, fixing the spec comes before any new case.
 

@@ -32,6 +32,13 @@ records that leaving `next dev` up makes `tsc` produce no output at all, because
 reads `.next/types/**` while the dev server rewrites it underneath, and makes Jest's
 workers exhaust memory.
 
+**Who runs it.** Since Slice Propus.2, the test runner does (`scripts/test-runner/`,
+installed by `scripts/Install-TestRunner.ps1`). It is a Scheduled Task on Adrian's
+laptop, and Claude sends it a request file when it needs a result. It keeps that order:
+e2e against its **own** `next dev` on port 3100, then lint, tsc and jest with that
+server stopped. So Adrian's server on 3000 can stay up. Adrian runs the sequence
+himself only when the runner is down.
+
 ### `npx tsc --noEmit` — does every piece of data match the shape the code expects?
 
 This is the TypeScript compiler, told to check and to produce nothing. It reads every

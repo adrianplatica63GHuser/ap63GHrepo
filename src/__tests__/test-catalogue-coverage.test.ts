@@ -37,8 +37,9 @@
  * so it still runs in CI, where Playwright does not. It does not run a single
  * test case, and a green run here says nothing whatever about whether the
  * application works, or whether a spec passes — see
- * `docs/testing/WHAT-WE-TEST.md`. Only Adrian's `npm run e2e` says that, and
- * only that run moves a row to `automated`.
+ * `docs/testing/WHAT-WE-TEST.md`. Only a whole `npm run e2e` says that — the
+ * test runner's on Adrian's laptop (Slice Propus.2) or his own — and only that
+ * run moves a row to `automated`.
  */
 
 import { readdirSync, readFileSync, statSync, existsSync } from "fs";

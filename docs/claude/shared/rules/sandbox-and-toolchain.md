@@ -18,6 +18,70 @@
 
 Always loaded: this governs how every piece of work is verified.
 
+## The test runner — how `npm run e2e` and `npx jest` get run
+
+Claude cannot run either here (next bullets), and since Slice Propus.2 it does not hand them to
+Adrian either: **a runner on his laptop runs them when Claude asks.** Approved by Adrian on
+2026-09-24 in #36.13 — „Claude runs the test sequence when Claude needs." — as a standing grant for
+this fixed sequence. Do not ask again.
+
+- **How it works.** `ga40prj\scripts\Install-TestRunner.ps1` registers the Scheduled Task
+  `\ga40prj\Test runner`. At logon it starts `scripts\Invoke-TestRunner.ps1`, which runs
+  `scripts\test-runner\runner.ts` under tsx. The runner watches `ga40prj\.test-runner\requests\`
+  (gitignored), runs the sequence each request names, and writes `.test-runner\results\<id>.json`
+  plus a log per step under `.test-runner\logs\<id>\`. The contract, and every refusal case, is
+  `scripts\test-runner\protocol.ts`, pinned by `src\__tests__\test-runner-protocol.test.ts`.
+- **The request is data, never a command line:** `version`, `id`, `sequence`, `commit`, and an
+  optional `only` list, and nothing else. An unknown field is refused. The sequences are a fixed
+  list: `ping` (runs nothing and proves the runner is alive), `full` (e2e, lint, tsc, jest),
+  `full-db` (the same, plus `Verify-Rebuild.ps1`, which builds a throwaway Postgres on 5433),
+  `static` (lint, tsc, jest), `e2e`, `jest` and `verify-rebuild`. `only` narrows e2e and jest to
+  test files that exist, for re-running one red spec. The runner refuses a request when HEAD is not
+  the requested commit (it tests the working tree and never checks anything out), and when another
+  request is running. It deletes each request file once it has read it.
+- **Its own server.** The runner's e2e starts its own `next dev` on **port 3100**, building into
+  **`.next\runner`** (`GA40_NEXT_DIST_DIR`, read by `next.config.ts`). Next 16 locks
+  `<distDir>/dev/lock` and refuses a second `next dev` in one distDir, so this is what lets it run
+  beside Adrian's server on 3000, which it never touches. Playwright gets `E2E_BASE_URL`, and
+  `e2e/auth.setup.ts` logs in from `.env`, so Claude never sees or types the password. On `os
+  error 1450` the runner clears `.next\runner\dev` and restarts with `--webpack`, and on the
+  corrupt-cache panic it clears the same folder and restarts. On a tsc run whose errors are all
+  under `.next/` it clears the cache they are in and re-runs once — and it clears **Adrian's**
+  `.next\dev` only when nothing listens on 3000 and his lock file is gone. When jest's workers die at
+  spawn with no failed test, it re-runs once with `--maxWorkers=1`. Every recovery is a `note` on
+  its step in the result. **Every step runs, even after a red one**, so one round trip shows
+  everything.
+- **Claude's side is `scripts/test-runner/claude.sh`, run over the bridge.** Commit first, because the
+  request names HEAD:
+
+    ```bash
+    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh ping                 # alive? exit 0
+    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh request full         # prints the id
+    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh wait <id>            # timeout_ms: 180000
+    ```
+
+  `wait` polls the result FILE for 170 s, inside the 180 s cap, and prints the result. Exit 0 means
+  passed, 1 failed, 2 error (no answer: a cache-only tsc, a server that never came up), 3 refused,
+  4 still running. **On 4, call `wait` again** — a full run is several minutes, so it is polled
+  across calls. On a red result, read the step's `log`, fix, commit, and request again, in the same
+  session. `request full e2e/versioning/property-versioning.spec.ts` re-runs one spec while you
+  fix it. The final `full` (or `full-db`) request must be on the commit being handed over.
+- **The handover quotes the result as the runner's.** Give the id, the commit, and each step's
+  line as `wait` printed it, and never write it up as Adrian's run. His two blocks
+  (`C:\dev\CLAUDE.md` → Delivering work) are not handed over after a green runner result.
+- **When the runner is absent or down** — `ping` exits 5, or the request sits unread — the blocks
+  come back, exactly as written, and the handover says the runner was down and gives
+  `pwsh -NoProfile -ExecutionPolicy Bypass -File C:\dev\ga40prj\scripts\Install-TestRunner.ps1 -Check`
+  as the first line. Do not go looking for its process: the VM cannot see Windows processes.
+- **The built-in browser pane reaches the app too** (probed in Propus.2). It runs on Windows, so
+  `localhost:3000` and `localhost:3100` both answer in it. Its own profile was already signed in,
+  and the cookie is host-scoped, not port-scoped, so one sign-in covers both ports. A case driven in
+  the browser uses the pane (`mcp__remote-devices__Claude_Browser__*`) and no longer depends on
+  the Chrome extension being connected. When the pane's session has expired, signing in again is
+  Adrian's (C1.06): Claude never types a password. **One gap:** the pane has no `file_upload`, so a
+  step that sets a file on an `<input type="file">` (TC-DOC-01 step 8) still needs Claude in Chrome,
+  or the Playwright spec, which the runner runs.
+
 <!-- Started as a verbatim extract from CLAUDE.md (Slice 24.01.optimization); bullets have been added since. -->
 
 - **Write tool truncation on `$`.** When writing files containing shell-style `${VAR}` references (e.g. docker-compose), use bash heredoc with a single-quoted delimiter (`<< 'EOF'`) instead of the Write tool.
@@ -32,7 +96,7 @@ Always loaded: this governs how every piece of work is verified.
 
     Report it with its exit code and wall time. An error whose path starts with `.next/` while Adrian's dev server is up is the build cache caught mid-write (the `next dev` bullets below), not the slice: say so, and re-run once. The fallbacks that follow are for a run the cap kills. Rebuilding `node_modules` in the cloud container is not a way round it either — the sandbox's npm registry allowlist blocks several of this project's packages (`zod`, `@hookform/resolvers`). **Backgrounding does not help:** the sandbox is `bwrap --die-with-parent`, so a `setsid`/`nohup` child is killed the moment the command returns, and a `pgrep -f` liveness check run afterwards matches the *new* call's own command line and reports a false "still running". Poll a result FILE, never a process name.
 
-- **If the cap kills the full run, run a narrowed tsconfig — it is a real type check and it fits.** `tsconfig.json`'s `include` is `["**/*.ts", "**/*.tsx", ".next/types/**", ".next/dev/types/**", "**/*.mts"]` rooted at the repo, so the file-matching walk covers `.next/` — thousands of generated files — over the slow mount before a single line of `src/` is read. A temporary tsconfig that `extends` the real one and narrows `include` to `src/**`, `e2e/**`, `scripts/**` and root-level `*.ts`/`*.mts` (with `"exclude": [node_modules, .next]`, `"incremental": false`, `"plugins": []`, and ABSOLUTE paths plus an explicit `baseUrl`/`paths`/`typeRoots`, since a tsconfig outside the repo resolves relative paths against ITS own directory) completes in **33 s**, exit 0, zero diagnostics — a genuine full type check of every hand-written file, well inside the 180 s cap. What it gives up is only `.next/types/**`, Next's generated route validator, which is a statement about the build cache rather than about the code. **Prefer this to the parser fallback whenever the slice does not add or remove an API route** — and when it is what ran, say so and put `npx tsc --noEmit` back into Adrian's second block.
+- **If the cap kills the full run, run a narrowed tsconfig — it is a real type check and it fits.** `tsconfig.json`'s `include` is `["**/*.ts", "**/*.tsx", ".next/types/**", ".next/dev/types/**", ".next/runner/types/**", ".next/runner/dev/types/**", "**/*.mts"]` rooted at the repo, so the file-matching walk covers `.next/` — thousands of generated files — over the slow mount before a single line of `src/` is read. A temporary tsconfig that `extends` the real one and narrows `include` to `src/**`, `e2e/**`, `scripts/**` and root-level `*.ts`/`*.mts` (with `"exclude": [node_modules, .next]`, `"incremental": false`, `"plugins": []`, and ABSOLUTE paths plus an explicit `baseUrl`/`paths`/`typeRoots`, since a tsconfig outside the repo resolves relative paths against ITS own directory) completes in **33 s**, exit 0, zero diagnostics — a genuine full type check of every hand-written file, well inside the 180 s cap. What it gives up is only `.next/types/**`, Next's generated route validator, which is a statement about the build cache rather than about the code. **Prefer this to the parser fallback whenever the slice does not add or remove an API route** — and when it is what ran, say so and put `npx tsc --noEmit` back into Adrian's second block.
 
 - **⚠️ FASTEST OF ALL FOR PURE MODULES, AND IT RUNS THE TESTS: copy them into the container and drive them with a jest shim.** Do this FIRST when a slice is `src/lib/**` plus `src/__tests__/**`, and reach for the narrowed tsconfig only when the slice touches components or routes. `device_stage_files` the changed modules, their imports and their test files into the container, write a `tsconfig.harness.json` (`module: commonjs`, `outDir: out`, `rootDir: ./src`, `strict: true`, `types: []`, `paths: {"@/*": ["./src/*"]}`), run the globally-installed `tsc -p` on it, then `mkdir -p out/node_modules && ln -sfn .. out/node_modules/@` so `require("@/lib/...")` resolves, and run the emitted JS under a ~120-line `describe`/`it`/`expect` shim. Measured in Slice #26.02: **210 tests across five suites in under a second**, on a full-project `tsc` that had not finished after 15 minutes over the bridge. Type errors for `describe`/`it`/`expect`/`node:fs` are expected noise (no `@types/jest`/`@types/node` — the npm allowlist blocks both); grep them out and read what is left. **Two traps:** the shim's `it.each` must SPREAD array rows or every parameterised test fails identically, and `pkill -f "some/path"` kills the calling shell too because the pattern matches its own command line — use `pgrep -f "[s]ome/path"`. **It is not jest** — no module mocking, no snapshots, and `toEqual`'s asymmetric matchers are only as good as the shim — so say so at handover and have Adrian run the real thing.
 
@@ -52,7 +116,7 @@ Always loaded: this governs how every piece of work is verified.
 
 - **Last resort, where not even the narrowed run finishes: per-file parser diagnostics.** Run TypeScript's parser over each changed file (`ts.createSourceFile(..., /* setParentNodes */ true)` and read `sourceFile.parseDiagnostics`) — it costs milliseconds per file, needs no module resolution, and catches the whole structural class, including the JSX one that is easy to write and impossible to spot by eye (`{/* comment */}` is legal between JSX children and a syntax error inside an opening tag's attribute list). **It is NOT a type check: say so plainly when handing over**, and ask Adrian to run `npx tsc --noEmit` ahead of the rest of the sequence.
 
-**So: always run a full-project `tsc --noEmit` before handing work over, wherever the mount allows it** — it is a real type check across every file, not a filtered-for-noise approximation, and the fallbacks above exist only for a run the cap kills. **After a full, exit-0 run here, Adrian does not run `tsc` again**; the same goes for the whole-tree lint below. What he still runs is what the sandbox cannot: `npm run e2e` (dev server running separately), then `npx jest` with it stopped — actual test execution and real-browser behaviour remain unverifiable here. A pure module can also be spot-checked behaviourally by compiling it with `tsc --module commonjs --outDir /tmp` and driving it from a small Node harness — that is how `discover-log.ts` was validated in Slice #21.10.Import without Jest.
+**So: always run a full-project `tsc --noEmit` before handing work over, wherever the mount allows it** — it is a real type check across every file, not a filtered-for-noise approximation, and the fallbacks above exist only for a run the cap kills. **After a full, exit-0 run here, Adrian does not run `tsc` again**; the same goes for the whole-tree lint below. What the sandbox cannot run — `npm run e2e`, then `npx jest` with the server stopped — goes to the test runner (top of this file), and to Adrian only when the runner is down. Actual test execution and real-browser behaviour remain unverifiable *here*. A pure module can also be spot-checked behaviourally by compiling it with `tsc --module commonjs --outDir /tmp` and driving it from a small Node harness — that is how `discover-log.ts` was validated in Slice #21.10.Import without Jest.
 
 - **`npx tsc --noEmit` type-checks Next's GENERATED route types too — and `next dev` never prunes them, so a deleted route errors for weeks afterwards.** `tsconfig.json`'s `include` carries `.next/types/**/*.ts` and `.next/dev/types/**/*.ts` alongside `**/*.ts`, so `tsc` compiles `.next/types/validator.ts` — a Next-generated file holding one `typeof import("../../src/app/…/route.js")` per API route. **`next dev` adds entries there but does not remove them when a route file is deleted.** The result is `error TS2307: Cannot find module '../../src/app/api/…/route.js'` naming a file that is *supposed* to be gone, pointing at a path under `src/` that no longer exists, in a file nobody wrote and git does not track (`.next/` is gitignored). Hit in Slice #23.06.Import: `npx tsc --noEmit` reported exactly one error, for `api/admin/import/extract-document/route.js` — a route correctly deleted by **Slice #23.04.Import**, eight commits and two slices earlier. The `.next/types/validator.ts` holding the reference was dated a week before, and 145 of its 146 route references were fine. **The tell:** the error is in `.next/`, not in `src/`, and the module it cannot find is one you meant to delete. **Fix:** `Remove-Item -Recurse -Force .next` (safe — generated, gitignored, rebuilt by `dev`/`build`), then re-run. Note that with `.next` absent the two `.next/types` globs match nothing, so `tsc` then checks your source only; to get the route-validator coverage back, run `npm run build` once — a clean build enumerates the routes that actually exist — and then `tsc` again. **The general lesson: a `tsc` error whose path starts with `.next/` is a statement about the build cache, not about the code, and the code it accuses may be innocent precisely because it was deleted correctly.**
 
@@ -125,7 +189,7 @@ Always loaded: this governs how every piece of work is verified.
 
     runs before every handover of a slice that changed code, and is reported with its exit code and wall time; Adrian's second block then leaves `npm run lint` out. **It is two-thirds of the cap and the tree grows**, so when the cap kills it, lint the files the slice changed by name, say that the whole tree did not complete, and put `npm run lint` back in front of `npx jest` for Adrian. CI runs lint on every push, so a miss costs one fix commit.
 
-- **Sandbox file drift from Windows.** Occasionally the Linux sandbox shows files as deleted/added when Adrian's Windows side is clean. Don't react to it — re-run `git --no-optional-locks status` and `git --no-optional-locks diff HEAD` yourself and trust `HEAD` over the bridge's file view (`C:\dev\CLAUDE.md` → Delivering work; commit mechanics in `C:\dev\.claude\rules\git-and-commits.md`); only if the two still disagree does it go in the handover, and the pathspec commit contains the damage. The sandbox cannot run `jest`/`tsx` (Windows-only esbuild/SWC binaries in `node_modules`); it runs the whole-tree lint and the full-project `tsc` itself (above). Adrian runs the rest of the verification sequence, two blocks — `npm run e2e` with the dev server up, then `npx jest` with it stopped, with `npm run lint &&` and `npx tsc --noEmit &&` in front of it only for a run of Claude's that did not complete.
+- **Sandbox file drift from Windows.** Occasionally the Linux sandbox shows files as deleted/added when Adrian's Windows side is clean. Don't react to it — re-run `git --no-optional-locks status` and `git --no-optional-locks diff HEAD` yourself and trust `HEAD` over the bridge's file view (`C:\dev\CLAUDE.md` → Delivering work; commit mechanics in `C:\dev\.claude\rules\git-and-commits.md`); only if the two still disagree does it go in the handover, and the pathspec commit contains the damage. The sandbox cannot run `jest`/`tsx` (Windows-only esbuild/SWC binaries in `node_modules`); it runs the whole-tree lint and the full-project `tsc` itself (above). The rest of the verification sequence goes to the test runner (top of this file). Only when the runner is down does Adrian get it, as two blocks — `npm run e2e` with the dev server up, then `npx jest` with it stopped, with `npm run lint &&` and `npx tsc --noEmit &&` in front of it only for a run of Claude's that did not complete.
 
 - **Outputs-scratchpad sync lag (Windows-tool writes → bash reads), one-directional.** When editing a large file in the temporary outputs scratchpad (e.g. a docx `document.xml` during an unpack → edit → pack cycle), edits made via the Read/Edit/Write tools can take a long time (confirmed 40+ minutes, not resolved by `sleep`/`sync` retries) to become visible to bash `cat`/`wc` on the same nominal path — bash sees a stale, truncated snapshot. The reverse direction is reliable: anything written via bash is visible to the Windows-side tools immediately. Symptom: `pack.py` (which runs in bash) reports a premature/truncated XML error even though the Windows-side `Read` tool shows the file as complete and well-formed — this is the scratchpad lag, not a real XML mistake. Workaround: pull the correct content via `Read` (in chunks if the file is long) and write it into the bash-mounted path using a bash-native command (e.g. `cat >> file << 'EOF' ... EOF`) instead of the Edit/Write tools, then re-run the bash-side step. NOTE: a similar stale/truncated read has also been seen for freshly Edit-written files under the `ga40prj` mount (e.g. `messages/*.json` showing an "Unterminated string"); when in doubt, trust the Windows-side `Read` tool, not bash, for files just edited.
 

@@ -81,6 +81,13 @@ run and re-run one test at a time. This is the one to use when something fails:
 npm run e2e:ui
 ```
 
+**Claude does not ask you to run this any more** (Slice Propus.2): the test runner on your
+laptop runs `npm run e2e` against its own `next dev` on port 3100 when Claude requests it, with
+`E2E_BASE_URL=http://localhost:3100` — `playwright.config.ts` reads that variable and falls back
+to 3000. Installed once with
+`pwsh -NoProfile -ExecutionPolicy Bypass -File C:\dev\ga40prj\scripts\Install-TestRunner.ps1`;
+`-Check` says whether it is alive. The commands here are for running it yourself.
+
 Run a single spec, or a single test by name:
 
 ```powershell

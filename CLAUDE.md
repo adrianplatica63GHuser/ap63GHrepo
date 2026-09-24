@@ -96,6 +96,12 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   successful import, and producing three documents where one was meant. A validator that
   disagrees with the executor is worse than no validator, because it is believed.
 
+- **The test runner runs this sequence, not Adrian** (Slice Propus.2). Claude requests `full` —
+  `full-db` when the slice touches the database — through `scripts/test-runner/claude.sh`, fixes a
+  red result and re-runs it in the same session, and quotes the runner's result in the handover.
+  The runner starts its own `next dev` on 3100 (`.next/runner`), so Adrian's server on 3000 is
+  never touched. How: `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner. The
+  bullets below are for when the runner is down and the blocks go back to Adrian.
 - **`npm run e2e` needs `npm run dev` already running in a separate terminal.** When it isn't,
   every test times out waiting for a page load — a failure mode that looks nothing like
   "the dev server isn't running." Say so every time you ask Adrian to run it.
@@ -103,8 +109,8 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   moving target, and `jest` workers OOM against it and report it as a test failure.
 - Claude runs `npm run lint` (whole tree) and `npx tsc --noEmit` (full project) over the bridge
   before every handover, and shows each with its exit code and wall time; a fallback is named for
-  what it is. Adrian runs the other two — `npm run e2e`, then `npx jest` — plus whichever of
-  Claude's did not complete, before anything is considered done. See
+  what it is. The test runner runs the other two — `npm run e2e`, then `npx jest` — and Adrian
+  runs them, plus whichever of Claude's did not complete, only when the runner is down. See
   `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
 ## A migration is delivered TWICE, and the second one is the one that gets forgotten
