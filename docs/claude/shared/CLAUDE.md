@@ -61,12 +61,14 @@ nothing. Approved by Adrian on 2026-09-24: do not ask whether this applies.
   handover under „Decisions taken", worded so Adrian can overturn it in one line. A later answer
   from him redirects the work from there; the session never waits for it.
 - **Three things still stop a session, and only three:**
-  1. **The migration stop** — The working contract, below.
+  1. **The migration stop** — The working contract, below. Since Propus.3 it holds the
+     **commit**, not the session: the question goes out in a message that does not wait, and the
+     work that depends on the schema carries on, uncommitted.
   2. **A domain fact only Adrian or Ciprian knows, that the rest of the slice depends on.** Even
      then only the dependent part waits, and everything else is built. A fact the slice does not
      depend on is recorded as an assumption and asked in the handover.
-  3. **The go-ahead list** — Autonomy, below. That is where the irreversible lives: the push,
-     history rewrites, anything of Adrian's, destructive database work.
+  3. **The go-ahead list** — Autonomy, below. That is where the irreversible lives: a push outside
+     the runner's guard, history rewrites, anything of Adrian's, destructive database work.
 
   Everything else is a decision — including an `Ask first:` line in the header whose answer the
   slice can build around: take the recommended answer, build, and put it first under „Decisions
@@ -145,19 +147,30 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   wait for a go-ahead unless the slice destroys data or changes a migration — a plan Adrian
   disagrees with costs one message to redirect, and a plan he never had time to read costs
   the whole session. Do not stop for per-file approval.
-- **One exception: migrations.** When a slice adds or changes a migration, stop after the
-  migration file and the matching `schema/index.ts` change, and wait for confirmation before
-  writing anything against them. A wrong schema decision caught here costs one file; caught
-  after the routes, components and tests have been built on top of it, it costs the slice.
-  **Do not commit the migration or the schema change until the confirmation lands** — a schema in a
-  commit is one Claude has told git is settled, and everything after it builds on that. **This is the
-  one place the contract does block**, and it is the first of the three stops in „Never wait"
-  above, and the exception to the slice-end definition below. Put the confirmation question at the top of the
-  handover, and if any of the slice does not depend on the schema, build that while waiting.
+- **One exception: migrations — the confirmation stays Adrian's, and the session does not idle on
+  it.** (Propus.3, 2026-09-24.) When a slice adds or changes a migration, write the migration file
+  and the matching `schema/index.ts` change, then **ask the schema question in a message that does
+  not wait** — the file, what it changes, the recommended answer — and keep building on the
+  proposed schema **in the working tree**. A wrong schema caught at the confirmation costs the
+  rework built on it; Adrian picks the recommended option almost every time, so that price is paid
+  rarely, and an idle session was paying its own price every time.
+  **Nothing that depends on the schema is committed, pushed or applied before the confirmation
+  lands** — a schema in a commit is one Claude has told git is settled. Commit what does not depend
+  on it as usual. When the confirmation lands, commit the migration first, with a trailer quoting
+  him — `Schema-Confirmed: Adrian, <date> — „<his words>"` (`C:\dev\.claudeules\git-and-commits.md`)
+  — then what was built on it; then request the runner's `migrate-local`, which applies the
+  migration to the local database and regenerates `src\db\supabase_schema_full.sql` only for a
+  migration whose adding commit carries that trailer, and commit the regenerated file. **This is the
+  one place the contract still holds work back**, and it is the first of the three stops in „Never
+  wait" above, and the exception to the slice-end definition below. A slice whose confirmation has
+  not landed by the handover ends with the dependent work uncommitted, and the question at the top.
+  `npm run supabase:migrate` stays Adrian's, always: the handover names it, as its own line.
 - **Slice order:** DB schema/migration → API routes → UI components → tests. A slice ends when
   Claude has committed it, **the test runner has run the verification sequence on that commit and
-  come back green** (Delivering work, below), and the handover names what is left for Adrian — the
-  push and the CI run that follows it, plus the two blocks only when the runner was down. **`npm run lint`
+  come back green** (Delivering work, below), **the runner has pushed it and CI on it has been read
+  green** — a red CI run is fixed, committed and taken round again in the same session — and the
+  handover names what is left for Adrian: `npm run supabase:migrate` when there is a migration, a
+  push the guard held (its reason by name), and the two blocks only when the runner was down. **`npm run lint`
   and `npx tsc --noEmit` are Claude's** — whole tree and full project, run here before the handover
   — and each is **reported green only when that full run actually completed here**, with its
   command, exit code and wall time. After a full, exit-0 run Adrian does not run it again. When the
@@ -165,11 +178,22 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   shim, per-file parser diagnostics — `C:\dev\.claude\rules\sandbox-and-toolchain.md`), name the
   fallback, say plainly what it is not, and put that command back into Adrian's second block (or
   let the runner's `full` run stand for it). **Never report `npm run e2e` or `npx jest` as passing
-  on anything but a runner result that says so, and never report the push or the CI run as done** —
-  the sandbox runs none of those, and a runner result is the runner's, never Adrian's. **Each slice leaves a clean history, and clean here means
+  on anything but a runner result that says so, and never report the push or the CI run as done on
+  anything but the runner's `push` and `ci` results** — the sandbox runs none of those, and a runner
+  result is the runner's, never Adrian's. **Each slice leaves a clean history, and clean here means
   forward-only:** each commit compiles, is scoped to one thing, and lands in the order above. Claude
   does not promise a history it could only produce by rewriting one — with one exception: a migration
-  slice awaiting confirmation ends uncommitted, at the migration file and the schema change.
+  slice awaiting confirmation ends with the migration, the schema change and everything built on
+  them uncommitted.
+- **A slice queue: the session takes the next header itself.** (Propus.3.) When a slice has ended
+  — handover written — and `C:\dev.docs.Slice.Inputs\Queue\` holds a header, the same session
+  starts it. **One header per file** (`.md`, `.txt` or `.docx`; a name starting with `_` is not a
+  header), **taken in file-name order.** Starting it means moving the file, in that first minute,
+  into the folder its `Inputs:` line names — or, when it names none, into `Queue\_started\` — so it
+  runs once and the queue shows what is left. Each slice keeps its own commits, its own runner
+  results and its own handover. **The queue never picks work by itself**: an empty queue ends the
+  session as before, and Claude never writes a header into it. A queued slice that meets one of
+  the three stops above holds only its own dependent work; the next header waits behind it.
 - **Complete, ready-to-copy code.** No stubs or placeholders unless explicitly asked. Types,
   error handling, loading states and accessibility on every component.
 - **Minimise human effort — always.** Compute and storage are cheap; Adrian's time is not.
@@ -228,7 +252,12 @@ Read it before the first git command of a slice — the read flag is needed befo
 **Still requires an explicit go-ahead, every time — this list, as narrowed by the one carve-out named
 under it, is the whole list:**
 
-- Pushing. Adrian pushes; Claude commits.
+- Pushing — **except through the runner's `push` sequence** (Propus.3, 2026-09-24). Claude never
+  runs `git push` and never pushes any other way. The runner pushes `main`, fast-forward only,
+  never forced, with Adrian's own git credentials, and only when its guard holds: a green, whole
+  `full`/`full-db` result on HEAD over a clean tree, `origin/main` an ancestor of HEAD, and no commit
+  in the range touching a `src\db\migration_*.sql` — Supabase has not had it, so that push is
+  Adrian's, after `npm run supabase:migrate`. Every other push, of any branch, is his.
 - **Any git command that changes the working tree, `HEAD` or a ref by something other than adding a
   commit** — `reset --hard`, `rebase`, `commit --amend`, `clean`, `branch -D`, `checkout`/`switch` to
   another branch, any force-push, and four that read as harmless and are not: `stash`, `pull`,
@@ -242,7 +271,10 @@ under it, is the whole list:**
   work, they are a generated copy of committed content, every byte of them is recoverable by
   re-running the deploy, and leaving them to a handover line is what let them go stale in the
   first place. Nothing else above the repo is covered.
-- Any destructive database operation, and any command against a UAT or production box.
+- Any destructive database operation, and any command against a UAT or production box — Supabase
+  included, so `npm run supabase:migrate` is always Adrian's. **The one exception is the runner's
+  `migrate-local`**: `Apply-Migration.ps1` and `Export-SupabaseSchema.ps1` against the local
+  container only, and only for migrations committed with a `Schema-Confirmed:` trailer.
 
 **The one carve-out on that list:** `commit --amend` on the **tip** commit, when Claude made it this
 session and no remote ref holds it yet — test with `git branch -r --contains HEAD`, which prints
@@ -288,6 +320,12 @@ is a decision to state, not a permission to request.
   a result file Claude polls. **A red result is fixed and re-run in the same session**, never handed
   over. The handover quotes the final result as the runner's, with its id — never as Adrian's. How to
   request, poll and read it: `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner.
+  **The runner also pushes and reads CI** (Propus.3): after a green `full` on the commit being
+  handed over, Claude requests `push`, then `ci`, and quotes both results. `ci` reads GitHub
+  Actions with GET requests and saves each failed job's log beside the result; a red run is read,
+  fixed, committed and taken round `full` → `push` → `ci` again in the same session. A push the
+  guard **held** (exit 6) is not an error: the handover names the reason and the push goes back to
+  Adrian as its own line.
   **The blocks below come back only when the runner is absent or down** (`claude.sh ping` gets no
   answer): then they are handed over exactly as written, and the handover says the runner was down.
   **Blocks handed to Adrian are

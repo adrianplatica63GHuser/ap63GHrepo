@@ -39,7 +39,7 @@ every slice.
 
 | Value | What Claude does |
 |---|---|
-| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → the test runner's `full` run, red fixed and re-run → hand over, with the push for you to run (and `npm run e2e`, `npx jest` only when the runner is down). The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
+| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → the test runner's `full` run, red fixed and re-run → the runner's `push`, then `ci`, red CI fixed and taken round again → hand over, with a push for you to run only when the guard held it (and `npm run e2e`, `npx jest` only when the runner is down). The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
 | `deep` | Adds parallel subagents to map the affected code before planning. Use for anything touching versioning, auth, migrations, the import wizard, or more than ~10 files. |
 | `investigate` | No code at all. Claude reads, greps, fans out, and reports findings. No diff, so no adversarial round. Use when you're not yet sure a slice is the right shape. |
 
@@ -87,8 +87,8 @@ drifting apart:
 | Verification order + dev-server warning | `ga40prj/CLAUDE.md` → Verification order |
 | Sandbox can run `tsc` and `eslint`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
 | "Never dismiss an error as pre-existing" | `C:\dev\CLAUDE.md` → The working contract |
-| Conventional commits, PowerShell 7, chain with `&&`, Claude commits and Adrian pushes | `C:\dev\CLAUDE.md` → Delivering work / Autonomy; mechanics in `C:\dev\.claude\rules\git-and-commits.md` |
-| "Wait for my approval before writing any code" | Withdrawn — `C:\dev\CLAUDE.md` → „Never wait": Claude plans and builds without waiting; the migration stop is the one that waits (The working contract) |
+| Conventional commits, PowerShell 7, chain with `&&`, Claude commits and the runner pushes behind its guard (Adrian pushes what the guard holds) | `C:\dev\CLAUDE.md` → Delivering work / Autonomy; mechanics in `C:\dev\.claude\rules\git-and-commits.md` |
+| "Wait for my approval before writing any code" | Withdrawn — `C:\dev\CLAUDE.md` → „Never wait": Claude plans and builds without waiting; the migration stop holds the commit, never the session (The working contract) |
 | "Existing UI code is the source of truth" | `ga40prj/CLAUDE.md` → Where the rest of the knowledge lives |
 | "Skip everything else / don't re-read" | Withdrawn — replaced by the autonomy section |
 

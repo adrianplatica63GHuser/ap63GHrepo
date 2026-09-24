@@ -35,7 +35,8 @@ this fixed sequence. Do not ask again.
   optional `only` list, and nothing else. An unknown field is refused. The sequences are a fixed
   list: `ping` (runs nothing and proves the runner is alive), `full` (e2e, lint, tsc, jest),
   `full-db` (the same, plus `Verify-Rebuild.ps1`, which builds a throwaway Postgres on 5433),
-  `static` (lint, tsc, jest), `e2e`, `jest` and `verify-rebuild`. `only` narrows e2e and jest to
+  `static` (lint, tsc, jest), `e2e`, `jest` and `verify-rebuild` — and since Propus.3 `push`, `ci`
+  and `migrate-local` (next bullet but two). `only` narrows e2e and jest to
   test files that exist, for re-running one red spec. The runner refuses a request when HEAD is not
   the requested commit (it tests the working tree and never checks anything out), and when another
   request is running. It deletes each request file once it has read it.
@@ -62,12 +63,43 @@ this fixed sequence. Do not ask again.
 
   `wait` polls the result FILE for 170 s, inside the 180 s cap, and prints the result. Exit 0 means
   passed, 1 failed, 2 error (no answer: a cache-only tsc, a server that never came up), 3 refused,
-  4 still running. **On 4, call `wait` again** — a full run is several minutes, so it is polled
+  4 still running, 6 held. **On 4, call `wait` again** — a full run is several minutes, so it is polled
   across calls. On a red result, read the step's `log`, fix, commit, and request again, in the same
   session. `request full e2e/versioning/property-versioning.spec.ts` re-runs one spec while you
   fix it. The final `full` (or `full-db`) request must be on the commit being handed over.
+- **Push, CI and the local migration are runner sequences too, each behind a guard** (Propus.3;
+  `decidePush`, `ciVerdict`, `decideMigrateLocal` in `protocol.ts`). A guard that says no **holds**
+  the step — status `held`, exit 6, the reason as a `GuardCode` in the summary — which means „this
+  waits for Adrian", not „this is broken". After the final green `full`:
+
+    ```bash
+    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh request push   # then wait <id>
+    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh request ci     # then wait <id>, again on 4
+    ```
+
+  `push` pushes `main` to origin, fast-forward only, never forced, with Adrian's own git credential,
+  when all of these hold, in this order: HEAD is `main` (`not-on-main`); a passed, unnarrowed
+  `full`/`full-db` result names HEAD (`no-green-run`) over a tree with no tracked change
+  (`green-run-dirty` — an untracked file is tolerated); `git ls-remote` answers (`remote-unknown`);
+  `origin/main` is an ancestor of HEAD (`not-fast-forward`); and no commit in the range adds, edits
+  or renames a `src/db/migration_*.sql` (`migration-in-range` — Supabase is Adrian's, so that push
+  is his, after `npm run supabase:migrate`). `ci` reads the Actions runs for HEAD with GET requests
+  (waiting up to 5 min for GitHub to create them and 30 min for them to finish), keeps the newest
+  run per workflow, and saves each failed job's log as `.test-runner\logs\<id>\ci-<job>.log`; the
+  step's notes name the job, the step it died in and the run's URL. A red CI is read there, fixed,
+  committed, and taken round `full` → `push` → `ci` again. `migrate-local` runs `Apply-Migration.ps1`
+  and then `Export-SupabaseSchema.ps1` against the local container, and holds while any migration
+  file differs from HEAD (`migration-dirty` — the script would apply the working tree, where an
+  unconfirmed migration lives), while a pending one was added by no commit
+  (`migration-uncommitted`), and while its adding commit lacks the `Schema-Confirmed:` trailer
+  (`migration-unconfirmed`). Export runs only when the apply step applied something; its summary
+  says whether `src\db\supabase_schema_full.sql` changed, and Claude commits it.
+  **Git on that side runs with `GIT_TERMINAL_PROMPT=0` and `GCM_INTERACTIVE=never`**, so a
+  credential that needs a sign-in fails the step instead of opening a window nobody is watching.
+  The credential is read with `git credential fill` for one step and never written anywhere.
 - **The handover quotes the result as the runner's.** Give the id, the commit, and each step's
-  line as `wait` printed it, and never write it up as Adrian's run. His two blocks
+  line as `wait` printed it, and never write it up as Adrian's run — the push and the CI read
+  included. His two blocks
   (`C:\dev\CLAUDE.md` → Delivering work) are not handed over after a green runner result.
 - **When the runner is absent or down** — `ping` exits 5, or the request sits unread — the blocks
   come back, exactly as written, and the handover says the runner was down and gives

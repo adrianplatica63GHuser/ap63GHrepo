@@ -37,7 +37,7 @@ never sleep.
 | Mark a row `duplicate` of another, `resolved` with the commit that fixed it, `superseded`, or `ignored` under the closing rule below | Mark anything `resolved` without a commit hash — the guard test refuses it, and so does the register's header |
 | Add `FU-nnn` to „Referință registru" on a defect-log row that matches a register row | Change a defect-log row's **Stare** or any other column — those are Adrian's and Ciprian's |
 | Write the files under `Register.Reviews\<date>\` | Any file in the repo other than the register. No code, no test, no rule file — a fault in this procedure is written on the review page for Adrian, not fixed by the run |
-| Commit the register (`add`/`commit` only, by pathspec) | Push, or anything on the go-ahead list in `C:\dev\CLAUDE.md` → Autonomy |
+| Commit the register (`add`/`commit` only, by pathspec) | Push — the runner's `push` sequence included — or anything on the go-ahead list in `C:\dev\CLAUDE.md` → Autonomy |
 
 The run is unattended. **It never asks.** Where something needs Adrian it writes it in the review's
 first lines and carries on. Adversarial review rounds are suspended until 2027-01-19 and a review is

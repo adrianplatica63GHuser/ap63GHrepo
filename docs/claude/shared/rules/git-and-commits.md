@@ -100,9 +100,10 @@ staged did not go in. If the file list is wrong, say so immediately.
 ## Amending
 
 **Every amend is allowed only under the carve-out in `C:\dev\CLAUDE.md` → Autonomy:** run
-`git branch -r --contains HEAD` first, and if it prints anything the commit is already pushed — do not
+`git branch -r --contains HEAD` first, and if it prints anything the commit is already pushed — by
+Adrian or by the runner's `push` — do not
 amend, fix it forward in the next commit and say so in the handover. Claude having made the commit
-this session does not mean it is unpushed; Adrian pushes, and he can push between the commit and the
+this session does not mean it is unpushed; Adrian or the runner can push between the commit and the
 amend.
 
 **Always `--no-edit`.** A bare `git commit --amend` re-opens the message in an editor, and the bridge
@@ -190,3 +191,18 @@ prefix and one line. **The body is where the per-slice detail goes** — what ch
 decisions taken under "Never wait" (`C:\dev\CLAUDE.md`), anything listed as "Fixed in passing". The working contract
 says that detail lives in git history; Claude writes that history now, so the body is the only place
 it exists.
+
+**A commit that adds a migration carries Adrian's confirmation as a trailer**, the last paragraph of
+the body, before the attribution lines:
+
+```
+Schema-Confirmed: Adrian, 2026-09-25 — „yes, the nullable column"
+```
+
+It is written only once he has confirmed, and it quotes him. The runner's `migrate-local` reads it
+from the commit that ADDED the file and holds without it (`C:\dev\CLAUDE.md` → The working
+contract; `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner). A migration
+committed without it is not a bypass: it is a local apply that waits for Adrian.
+
+**A commit the runner has pushed is pushed.** The amend carve-out's test, `git branch -r --contains
+HEAD`, prints `origin/main` from then on, and the fix goes forward in a new commit.

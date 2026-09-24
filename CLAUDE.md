@@ -129,10 +129,14 @@ Both halves now have a runner, and both record what they applied in that databas
 | Local | `.\scripts\Apply-Migration.ps1` | the `ga40prj-postgres` container |
 | Cloud | `npm run supabase:migrate` | the project in `SUPABASE_SYNC_URL` |
 
-- **Claude ends every slice that adds or changes a migration by asking Adrian to run BOTH, as
-  two separate lines in the handover, naming the file.** Not "and apply it to Supabase too" —
-  the command, written out. This is the step that gets dropped, which is why it is a rule and
-  not a habit.
+- **The local half is the runner's; the cloud half is Adrian's, always.** (Propus.3.) Once the
+  migration is committed with its `Schema-Confirmed:` trailer, Claude requests the runner's
+  `migrate-local`, which runs `Apply-Migration.ps1` and then `Export-SupabaseSchema.ps1`, and
+  commits the regenerated `supabase_schema_full.sql`. The handover then names
+  `npm run supabase:migrate` as its own line, naming the file — not "and apply it to Supabase
+  too", the command, written out. This is the step that gets dropped, which is why it is a rule
+  and not a habit, and why the runner will not push a range that adds a migration until he has
+  run it and pushed himself. When the runner is down, the local line comes back too.
 - **Both are idempotent**: running either twice applies nothing the second time. That is a
   property of the RUNNERS, not of the migration files — most of those are not safe to run
   twice, which is why both refuse rather than re-run whenever they cannot prove a file is
