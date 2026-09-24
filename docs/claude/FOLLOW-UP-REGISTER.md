@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-24, Slice Propus.1 — 211 entries. Rows are status, columns are impact.
+As of 2026-09-24, Slice Propus.2 — 213 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 21 | 51 | 44 | 12 | 128 |
+| open | 21 | 51 | 46 | 12 | 130 |
 | planned | 0 | 0 | 0 | 0 | 0 |
 | resolved | 19 | 34 | 14 | 3 | 70 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 44 | 90 | 60 | 17 | 211 |
+| **total** | 44 | 90 | 62 | 17 | 213 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -295,3 +295,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-209 | 2026-09-24 #36.13 Control.Inventory.36.13.docx §P2 | tooling | Tooling & CI | The shared rules size every bridge fallback to a 45 s per-command limit, but a 170 s command completed on 2026-09-24 (the tool now caps a call at 180 s), so checks that fit — whole-tree ESLint 112 s, full-project tsc 53 s, both exit 0 — are still handed to Adrian or narrowed. | docs/claude/shared/rules/sandbox-and-toolchain.md:27, :29, :114, :163 and docs/claude/shared/CLAUDE.md:222 at 76f0f46 — measured by #36.13's probes P2–P4 | dev | XS | resolved | Slice Propus.1 bf8dd80 — the 45 s limit is replaced by the measured 180 s cap everywhere it was cited, and the whole-tree lint and full-project tsc it no longer forces are now Claude's (re-measured 121 s and 56 s, exit 0). | 2026-09-24 |
 | FU-210 | 2026-09-24 #36.13 Control.Inventory.36.13.docx §K4 | debt | Tooling & CI | INSTRUCTION-ARCHITECTURE.md still tells a person to run Sync-SharedClaude.ps1 after a commit and calls `-Check` useful in CI — the handover step whose omission left the rules 33 lines stale in #32.14, and which the contract made Claude's in the same turn and says cannot be a CI check; it also counts the shared tier as five files where ga40prj/CLAUDE.md says four and there are six. | docs/claude/INSTRUCTION-ARCHITECTURE.md:281, :295, :301 against docs/claude/shared/CLAUDE.md:7-15, :23 and CLAUDE.md:204, at 76f0f46 | dev | XS | resolved | Slice Propus.1 8e464af — the deploy paragraph points at the contract's banner (Claude deploys in the same turn; -Check cannot be a CI check, npx jest catches drift); the shared tier is counted as six in INSTRUCTION-ARCHITECTURE.md and in ga40prj/CLAUDE.md (bf8dd80). | 2026-09-24 |
 | FU-211 | 2026-09-24 #36.13 Control.Inventory.36.13.docx §K9 | tooling | Tooling & CI | The Monday register-review task's fallback — a Review.<date>.txt under C:\dev.docs\01.Slice.Inputs\Register.Reviews\<date>\ when the folders are not mounted — needs the same laptop whose absence triggers it, so a missed Monday leaves no file behind. | the scheduled task „GA40 register review (Mondays 08:00)” prompt, read 2026-09-24 (requires C:\dev and C:\dev.docs); docs/claude/REGISTER-REVIEW.md:3-6 | dev | XS | resolved | Slice Propus.1 8e464af — the push notification is the fallback when the run cannot start, in REGISTER-REVIEW.md and in the scheduled task's prompt (updated 2026-09-24); a Review.<date>.txt only when the folders are mounted. | 2026-09-24 |
+| FU-212 | 2026-09-24 Propus.2 66c928d | tooling | Tests & e2e | The built-in browser pane reaches the app on 3000 and 3100 and was already signed in, but it has no file_upload, so a case step that sets a file on an <input type="file"> (TC-DOC-01 step 8) still depends on the Chrome extension being connected. | probe 2026-09-24 in Propus.2 (pane opened localhost:3000/, dashboard rendered, no login form); the pane's tool list has no file_upload; docs/testing/TEST-CATALOGUE.md:179 names Claude in Chrome's file_upload | dev | S | open | Either drive the upload step through the Playwright spec the runner runs, or set the file from the pane's javascript_tool with a DataTransfer built from a fetched staged file; decide in the slice that next drives TC-DOC-01. | 2026-09-24 |
+| FU-213 | 2026-09-24 Propus.2 1a20049 | tooling | Tooling & CI | The runner has run only against stand-in tools in the device VM: its first real run on Windows (next dev on 3100 into .next/runner, Playwright's positional filter for `only` given as a path relative to e2e/ with forward slashes, taskkill /T on the server, conhost --headless) is unobserved. | scripts/test-runner/runner.ts stepE2e / playwrightArgs; Propus.2 simulated the loop with fake next/playwright/eslint/tsc/jest binaries only | dev | XS | open | The first slice after the install requests `ping`, then `full`, and records what the result shows here; if an `only` e2e filter finds no tests, pass the absolute path instead. Also unobserved: a runner killed hard mid-e2e (not by -Uninstall, which takes the tree) can leave its next dev holding 3100, and the next run then errors „port 3100 is already in use” until -Uninstall and a re-install. | 2026-09-24 |
