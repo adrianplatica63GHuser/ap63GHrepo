@@ -12,13 +12,13 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-24, Slice Propus.3 — 216 entries. Rows are status, columns are impact.
+As of 2026-09-24, Slice Propus.3.q1 — 216 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 21 | 51 | 47 | 12 | 131 |
+| open | 21 | 51 | 46 | 12 | 130 |
 | planned | 0 | 0 | 0 | 0 | 0 |
-| resolved | 19 | 34 | 16 | 3 | 72 |
+| resolved | 19 | 34 | 17 | 3 | 73 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
@@ -198,7 +198,7 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-112 | 2026-09-21 #36.01 e076c1a | tooling | Tooling & CI | verify-rebuild's REFDATA comparison prints lookup_document_type.template_fields inline, so every SQL edit to the CVC template forces a re-baseline; proposal is to print a digest instead. | src/db/rebuild-known-differences.txt:172,193 — the two CVC lines carry the whole 53-field JSON; scripts/verify-rebuild.ts:1089-1092 compares full rows | dev | XS | open | Have referenceRows() emit md5(template_fields::text) instead of the column. | 2026-09-24 |
 | FU-113 | 2026-07-29 #19.28.e2e e2e/README.md | test gap | Versioning | Natural-person and document version history (save, navigate back, make current) have no case or spec; only property versioning is automated. | e2e/README.md:48; e2e/versioning/ holds only property-versioning.spec.ts; TC-PERS-02 reaches a company's v1 but is only `driven` | dev | M | open |  | 2026-09-24 |
 | FU-114 | 2026-09-13 #34.29 Handover.34.29.md | debt | Versioning | properties/_components/form-schema.ts keeps private copies of `normVal`/`fieldFrame` instead of importing `field-diff.ts`, a fourth hand-written copy of one rule. | src/app/properties/_components/form-schema.ts:315 `function normVal`, :322 `function fieldFrame`; no field-diff import there (field-diff.ts:5 still claims Property uses it) | dev | XS | open | point properties form-schema at field-diff.ts and delete the copies; version-diff-registry-bound.test.ts pins behaviour | 2026-09-24 |
-| FU-115 | 2026-09-21 #36.04 41225fa | test gap | i18n | No test checks messages/ro-RO.json and en-GB.json for completeness, so a missing Romanian key would render as a raw key path in the shipping locale. | docs/testing/WHAT-WE-TEST.md:327-330; no parity suite in src/__tests__ (measured today: 2915 leaf keys in each file, in parity) | dev | XS | open | Fix: one jest suite asserting identical leaf-key sets; it would pass today. | 2026-09-24 |
+| FU-115 | 2026-09-21 #36.04 41225fa | test gap | i18n | No test checks messages/ro-RO.json and en-GB.json for completeness, so a missing Romanian key would render as a raw key path in the shipping locale. | docs/testing/WHAT-WE-TEST.md:327-330; no parity suite in src/__tests__ (measured today: 2915 leaf keys in each file, in parity) | dev | XS | resolved | Propus.3.q1 3271987: src/__tests__/messages-key-parity.test.ts compares the two files' leaf keys whole and names every missing key on each side; also requires every value to be a string. 2 915 keys in parity. | 2026-09-24 |
 | FU-116 | 2026-08-15 4958231 | defect | Import | The green/red „Corect:”/„Greșit:” colouring of rule examples on screen is not carried into the saved take-away HTML page. | src/lib/import/report-html.ts:533 — `<p class="eg">${esc(rule.example)}</p>`, rule-example-split.ts not used | cosmetic | XS | open | Use splitRuleExample in report-html.ts and add two CSS classes. | 2026-09-24 |
 | FU-117 | 2026-08-15 4958231 | defect | Import | An import folder holding both „comune” and legacy „common” counts both but the property step names one, and the result table groups them under two headings. | src/lib/import/structure-rules.ts:582-595 — 'KNOWN AND ACCEPTED: BOTH SPELLINGS AT ONCE IS LEGAL AND LABELS BADLY' | cosmetic | S | open | Left on purpose; becomes a new STR rule if it happens in practice. | 2026-09-24 |
 | FU-118 | 2026-09-12 #34.23 87e6e5d; 2026-09-12 #34.23 Handover.34.23.md | copy/i18n | Properties | The add-property choice card copy still types „.txt” by hand instead of deriving it from picker-accept, so it can drift from what the picker actually offers. | messages/ro-RO.json:476 — property.addDialog.choiceTextFileDesc „Încărcați un fișier .txt cu coloane index, X (Northing), Y (Easting)” | cosmetic | XS | open | Same treatment #34.23 gave uploadTextLabel: interpolate offeredExtensions from lib/files/picker-accept.ts. | 2026-09-24 |
