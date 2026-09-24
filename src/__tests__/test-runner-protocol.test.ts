@@ -605,6 +605,9 @@ describe("e2e on a cold next dev: a wait that ran out during a compile is re-run
   it("one failure that is not a wait → not re-run: that is a defect, not a compile", () => {
     expect(e2eFailuresAreAllTimeouts(block(1, "e2e\\a.spec.ts", visible) + block(2, "e2e\\b.spec.ts", equal))).toBe(false);
   });
+  it("the first block counts even when it starts the text — the one a slice(1) would drop", () => {
+    expect(e2eFailuresAreAllTimeouts(block(1, "e2e\\a.spec.ts", equal) + block(2, "e2e\\b.spec.ts", visible))).toBe(false);
+  });
   it("no failure blocks → nothing to re-run", () => {
     expect(e2eFailuresAreAllTimeouts("  12 passed (3.5m)\n")).toBe(false);
   });

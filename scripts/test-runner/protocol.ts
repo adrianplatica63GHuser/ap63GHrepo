@@ -335,14 +335,17 @@ export const PLAYWRIGHT_RERUN_ARGS = ["test", "--last-failed"] as const;
 export function failedE2eSpecs(text: string): string[] {
   const t = stripAnsi(text);
   const out = new Set<string>();
-  for (const m of t.matchAll(/^\s+\d+\) \[[^\]]+\] › (\S+?):\d+:\d+ ›/gm)) out.add(m[1].replace(/\\/g, "/"));
+  for (const m of t.matchAll(/^[ \t]+\d+\) \[[^\]]+\] › (\S+?):\d+:\d+ ›/gm)) out.add(m[1].replace(/\\/g, "/"));
   return [...out];
 }
 
 /** True when there are failure blocks and every one of them is a wait that ran out. */
 export function e2eFailuresAreAllTimeouts(text: string): boolean {
   const t = stripAnsi(text);
-  const blocks = t.split(/^(?=\s+\d+\) \[[^\]]+\] › )/m).slice(1);
+  // `[ \t]`, not `\s`: with /m a `\s+` also eats the blank line above a block, and the
+  // split then cuts twice around it, leaving a sliver with no Timeout in it.
+  // And a filter, not `.slice(1)`: split drops the empty piece when a block starts the text.
+  const blocks = t.split(/^(?=[ \t]+\d+\) \[[^\]]+\] › )/m).filter((b) => /^[ \t]+\d+\) \[/.test(b));
   if (blocks.length === 0) return false;
   return blocks.every((b) => /\bTimeout:? \d+ ?ms\b|Test timeout of \d+ms exceeded|Timeout \d+ms exceeded/.test(b));
 }
