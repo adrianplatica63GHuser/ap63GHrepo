@@ -1,5 +1,5 @@
 /**
- * scripts/test-runner/runner.ts                                (Slice Propus.2)
+ * scripts/test-runner/runner.ts                     (Slices Propus.2, Propus.3)
  *
  * The Windows-side half of the test runner: watches `.test-runner/requests/`,
  * runs the fixed sequence a request names, and writes `.test-runner/results/`.
@@ -27,7 +27,17 @@
  *
  * ⚠️ **EVERY STEP RUNS, EVEN AFTER A RED ONE.** The point of the runner is
  * fewer round trips; a run that stopped at the first red step would hand back
- * one failure per round trip, which is the cost it exists to remove.
+ * one failure per round trip, which is the cost it exists to remove. The one
+ * exception is a step in `DEPENDENT_STEPS` (export-schema), which is only
+ * meaningful after the step before it passed.
+ *
+ * ⚠️ **PUSH, CI AND MIGRATE-LOCAL ARE GUARDED IN `protocol.ts`, NOT HERE.**
+ * (Slice Propus.3.) This file observes — the branch, `ls-remote`, the result
+ * files, `schema_migrations`, the commit that added a migration — and the
+ * guard decides. The push is fast-forward only and never forced; CI is read
+ * with GET requests only; nothing here reaches Supabase or UAT. The GitHub
+ * credential is Adrian's own, taken from `git credential fill` for the length
+ * of one step, and is never written to a log, a result or a note.
  */
 
 import { spawn, spawnSync } from "child_process";
@@ -44,8 +54,22 @@ import {
   RUNNER_DIST_DIR,
   RUNNER_DIST_ENV,
   RUNNER_PORT,
+  CI_FINISH_WAIT_MS,
+  CI_FIRST_RUN_WAIT_MS,
+  CI_POLL_MS,
+  DEPENDENT_STEPS,
+  MIGRATION_PATH_RE,
+  PUSH_BRANCH,
+  PUSH_REMOTE,
+  ciVerdict,
   classifyDevServerOutput,
   classifyTscOutput,
+  decideMigrateLocal,
+  decidePush,
+  firstFailedStep,
+  latestRunPerWorkflow,
+  parseGithubRemote,
+  summariseCi,
   isJestWorkerCrashOnly,
   jestArgs,
   overallStatus,
@@ -57,7 +81,11 @@ import {
   resultIdForFile,
   stripAnsi,
   summariseStep,
+  type CiJob,
+  type CiRun,
   type DevServerTell,
+  type GreenRunCandidate,
+  type GuardCode,
   type PlannedStep,
   type RunRequest,
   type RunResult,
@@ -85,6 +113,11 @@ const BIN = {
   jest: path.join(REPO, "node_modules", "jest", "bin", "jest.js"),
 };
 const VERIFY_REBUILD = path.join(REPO, "scripts", "Verify-Rebuild.ps1");
+const APPLY_MIGRATION = path.join(REPO, "scripts", "Apply-Migration.ps1");
+const EXPORT_SCHEMA = path.join(REPO, "scripts", "Export-SupabaseSchema.ps1");
+const SCHEMA_FILE = "src/db/supabase_schema_full.sql";
+/** The same defaults Apply-Migration.ps1 and Export-SupabaseSchema.ps1 use. */
+const DB = { container: "ga40prj-postgres", database: "ga40db", user: "postgres" };
 /** The runner's own source. When either changes while idle, it exits 75 and the wrapper restarts it. */
 const OWN_SOURCE = [path.join(__dirname, "runner.ts"), path.join(__dirname, "protocol.ts")];
 const RELOAD_EXIT_CODE = 75;
@@ -100,12 +133,22 @@ const TIMEOUT = {
   tsc: 10 * MIN,
   jest: 20 * MIN,
   rebuild: 20 * MIN,
+  push: 3 * MIN,
+  gitNet: MIN,
+  migrate: 15 * MIN,
+  exportSchema: 10 * MIN,
 };
 /** Captured output kept in memory per process for classification; the full text is in the log file. */
 const MAX_CAPTURE = 4 * 1024 * 1024;
 
 const CHILD_ENV: NodeJS.ProcessEnv = { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" };
 delete CHILD_ENV.CI; // `forbidOnly: !!process.env.CI` — the runner is not CI
+/**
+ * For every git command that talks to GitHub: it must fail rather than wait for
+ * a person. Git Credential Manager would otherwise open a sign-in window on a
+ * desktop nobody is watching, and the step would hang until its timeout.
+ */
+const NET_ENV: NodeJS.ProcessEnv = { ...CHILD_ENV, GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: "never" };
 
 function argValue(name: string): string | null {
   const i = process.argv.indexOf(name);
@@ -337,7 +380,7 @@ function restore(snap: Map<string, string | null>, notes: string[]): void {
 
 // ---- the steps ------------------------------------------------------------------
 
-type StepOutcome = Pick<StepResult, "status" | "exitCode" | "summary" | "notes">;
+type StepOutcome = Pick<StepResult, "status" | "exitCode" | "summary" | "notes"> & { held?: GuardCode; applied?: number };
 
 async function stepE2e(files: string[] | null, logFile: string): Promise<StepOutcome> {
   const notes: string[] = [];
@@ -496,6 +539,265 @@ async function stepVerifyRebuild(logFile: string): Promise<StepOutcome> {
   return { status, exitCode: r.exitCode, summary: (r.timedOut ? "timed out; " : "") + summariseStep("verify-rebuild", r.text, r.exitCode), notes: [] };
 }
 
+// ---- push, ci, migrate-local (Slice Propus.3) --------------------------------------
+
+function appendLog(logFile: string, text: string): void {
+  try {
+    fs.appendFileSync(logFile, text.endsWith("\n") ? text : `${text}\n`, "utf8");
+  } catch {
+    /* the log is a convenience */
+  }
+}
+
+function held(code: GuardCode, message: string, notes: string[] = []): StepOutcome {
+  return { status: "held", exitCode: null, summary: `held: ${code} — ${message}`, notes, held: code };
+}
+
+/** A git command that talks to origin: bounded, and never waiting on a prompt. */
+function gitNet(args: string[]): { ok: boolean; out: string; err: string } {
+  const r = spawnSync("git", args, { cwd: REPO, env: NET_ENV, encoding: "utf8", windowsHide: true, timeout: TIMEOUT.gitNet });
+  return { ok: r.status === 0, out: (r.stdout ?? "").trim(), err: (r.stderr ?? "").trim() };
+}
+
+function remoteMainCommit(): string | null {
+  const r = gitNet(["ls-remote", "--heads", PUSH_REMOTE, `refs/heads/${PUSH_BRANCH}`]);
+  const m = r.ok ? /^([0-9a-f]{40})\s+refs\/heads\//im.exec(r.out) : null;
+  return m ? m[1].toLowerCase() : null;
+}
+
+function readResults(): GreenRunCandidate[] {
+  const out: GreenRunCandidate[] = [];
+  let files: string[] = [];
+  try {
+    files = fs.readdirSync(RES_DIR).filter((f) => f.endsWith(".json"));
+  } catch {
+    return out;
+  }
+  for (const f of files) {
+    try {
+      out.push(JSON.parse(fs.readFileSync(path.join(RES_DIR, f), "utf8")) as GreenRunCandidate);
+    } catch {
+      /* a half-written or foreign file is not evidence */
+    }
+  }
+  return out;
+}
+
+async function stepPush(logFile: string): Promise<StepOutcome> {
+  const notes: string[] = [];
+  const head = headCommit();
+  if (!head) return { status: "error", exitCode: null, summary: "git rev-parse HEAD failed", notes };
+  const br = git(["symbolic-ref", "--short", "-q", "HEAD"]);
+  const remoteMain = remoteMainCommit();
+  let remoteIsAncestor = false;
+  let rangeChanges: string[] = [];
+  let rangeCommits = 0;
+  if (remoteMain && remoteMain !== head) {
+    const a = spawnSync("git", ["merge-base", "--is-ancestor", remoteMain, head], { cwd: REPO, windowsHide: true });
+    remoteIsAncestor = a.status === 0;
+    if (remoteIsAncestor) {
+      rangeChanges = git(["diff", "--name-status", remoteMain, head]).out.split(/\r?\n/).filter(Boolean);
+      rangeCommits = Number(git(["rev-list", "--count", `${remoteMain}..${head}`]).out) || 0;
+    }
+  }
+  const decision = decidePush({
+    branch: br.ok && br.out ? br.out : null,
+    head,
+    results: readResults(),
+    remoteMain,
+    remoteIsAncestor,
+    rangeChanges,
+    rangeCommits,
+  });
+  appendLog(
+    logFile,
+    `# push guard on ${head}: branch=${br.out || "(detached)"} origin/${PUSH_BRANCH}=${remoteMain ?? "(unknown)"} ` +
+      `ancestor=${remoteIsAncestor} commits=${rangeCommits}\n${rangeChanges.map((l) => `#   ${l}`).join("\n")}\n# decision: ${JSON.stringify(decision)}`,
+  );
+  if (!decision.ok) return held(decision.code, decision.message, notes);
+  if (decision.commits === 0) {
+    return { status: "passed", exitCode: 0, summary: `${PUSH_REMOTE}/${PUSH_BRANCH} is already ${head.slice(0, 7)}; nothing to push`, notes };
+  }
+  // Never --force, never a refspec but main:main. git itself refuses a non-fast-forward as well.
+  const r = await runLogged("git", ["push", "--porcelain", PUSH_REMOTE, `refs/heads/${PUSH_BRANCH}:refs/heads/${PUSH_BRANCH}`], logFile, TIMEOUT.push, NET_ENV);
+  if (r.exitCode !== 0 || r.timedOut) {
+    const last = stripAnsi(r.text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(-2).join(" / ");
+    return { status: "error", exitCode: r.exitCode, summary: `git push did not complete${r.timedOut ? " (timed out)" : ""}: ${last}`, notes };
+  }
+  const after = remoteMainCommit();
+  notes.push(after === head ? `${PUSH_REMOTE}/${PUSH_BRANCH} now reads ${head.slice(0, 7)} (ls-remote)` : `ls-remote after the push reads ${after ?? "nothing"}, not ${head.slice(0, 7)}`);
+  return {
+    status: after === head ? "passed" : "error",
+    exitCode: 0,
+    summary: `pushed ${decision.from.slice(0, 7)}..${decision.to.slice(0, 7)} (${decision.commits} commit${decision.commits === 1 ? "" : "s"}) to ${PUSH_REMOTE}/${PUSH_BRANCH}, licensed by green run ${decision.greenRun}`,
+    notes,
+  };
+}
+
+/**
+ * Adrian's GitHub credential as git on this machine already holds it — the one
+ * `git push` uses. Kept in memory for one step. Null when none is stored; the
+ * step then reads anonymously, which works only for a public repository.
+ */
+function githubToken(): string | null {
+  const r = spawnSync("git", ["credential", "fill"], {
+    cwd: REPO,
+    env: NET_ENV,
+    input: "protocol=https\nhost=github.com\n\n",
+    encoding: "utf8",
+    windowsHide: true,
+    timeout: TIMEOUT.gitNet,
+  });
+  if (r.status !== 0) return null;
+  const m = /^password=(.+)$/m.exec(r.stdout ?? "");
+  return m ? m[1].trim() : null;
+}
+
+async function githubGet(pathname: string, token: string | null): Promise<{ status: number; body: unknown; text: string }> {
+  const res = await fetch(`https://api.github.com${pathname}`, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "ga40prj-test-runner",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    signal: AbortSignal.timeout(60_000),
+  });
+  const text = await res.text();
+  let body: unknown = null;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    /* a job log is plain text */
+  }
+  return { status: res.status, body, text };
+}
+
+async function stepCi(head: string, logDir: string, logFile: string): Promise<StepOutcome> {
+  const notes: string[] = [];
+  const url = git(["remote", "get-url", PUSH_REMOTE]).out;
+  const gh = parseGithubRemote(url);
+  if (!gh) return { status: "error", exitCode: null, summary: `${PUSH_REMOTE} is not a github.com remote`, notes };
+  const token = githubToken();
+  if (!token) notes.push("git holds no GitHub credential for the runner's account; read anonymously");
+  const base = `/repos/${gh.owner}/${gh.repo}/actions`;
+  const t0 = Date.now();
+  let runs: CiRun[] = [];
+  for (;;) {
+    let r: Awaited<ReturnType<typeof githubGet>>;
+    try {
+      r = await githubGet(`${base}/runs?head_sha=${head}&per_page=100`, token);
+    } catch (e) {
+      appendLog(logFile, `# GET runs failed: ${(e as Error).message}`);
+      if (Date.now() - t0 > CI_FINISH_WAIT_MS) return { status: "error", exitCode: null, summary: `GitHub did not answer: ${(e as Error).message}`, notes };
+      await sleep(CI_POLL_MS);
+      continue;
+    }
+    if (r.status !== 200) {
+      return { status: "error", exitCode: null, summary: `GitHub answered ${r.status} for ${gh.owner}/${gh.repo}'s runs`, notes };
+    }
+    runs = latestRunPerWorkflow(((r.body as { workflow_runs?: CiRun[] }).workflow_runs ?? []), head);
+    const verdict = ciVerdict(runs);
+    appendLog(logFile, `# ${now()} ${verdict}: ${summariseCi(runs)}`);
+    if (verdict === "passed" || verdict === "failed") break;
+    const waited = Date.now() - t0;
+    if (verdict === "none" && waited > CI_FIRST_RUN_WAIT_MS) {
+      return { status: "error", exitCode: null, summary: `no workflow run for ${head.slice(0, 7)} after ${CI_FIRST_RUN_WAIT_MS / MIN} min — was it pushed?`, notes };
+    }
+    if (waited > CI_FINISH_WAIT_MS) {
+      return { status: "error", exitCode: null, summary: `still running after ${CI_FINISH_WAIT_MS / MIN} min: ${summariseCi(runs)}`, notes };
+    }
+    await sleep(CI_POLL_MS);
+  }
+  for (const run of runs) {
+    notes.push(`${run.name} #${run.run_number}: ${run.conclusion} — ${run.html_url}`);
+    if (run.conclusion === "success" || run.conclusion === "skipped" || run.conclusion === "neutral") continue;
+    const jr = await githubGet(`${base}/runs/${run.id}/jobs?per_page=100&filter=latest`, token);
+    const jobs = jr.status === 200 ? ((jr.body as { jobs?: CiJob[] }).jobs ?? []) : [];
+    for (const job of jobs) {
+      if (job.conclusion === "success" || job.conclusion === "skipped" || job.conclusion === "neutral") continue;
+      const file = path.join(logDir, `ci-${job.id}.log`);
+      let saved = false;
+      try {
+        const lr = await githubGet(`${base}/jobs/${job.id}/logs`, token);
+        if (lr.status === 200) {
+          fs.writeFileSync(file, lr.text, "utf8");
+          saved = true;
+        }
+      } catch {
+        /* reported below */
+      }
+      notes.push(
+        `  job "${job.name}" ${job.conclusion ?? job.status}${firstFailedStep(job) ? ` at step "${firstFailedStep(job)}"` : ""} — ${saved ? `log ${rel(file)}` : "log not available"}`,
+      );
+    }
+  }
+  const verdict = ciVerdict(runs);
+  return { status: verdict === "passed" ? "passed" : "failed", exitCode: null, summary: summariseCi(runs), notes };
+}
+
+/** `schema_migrations` in Adrian's local container: read-only, one SELECT. */
+function appliedMigrations(): string[] | null {
+  const r = spawnSync(
+    "docker",
+    ["exec", DB.container, "psql", "-U", DB.user, "-d", DB.database, "-t", "-A", "-c", "SELECT filename FROM schema_migrations;"],
+    { cwd: REPO, encoding: "utf8", windowsHide: true, timeout: TIMEOUT.gitNet },
+  );
+  if (r.status !== 0) return null;
+  return (r.stdout ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+}
+
+function porcelainPath(line: string): string[] {
+  return line.slice(3).split(" -> ").map((p) => p.replace(/^"|"$/g, ""));
+}
+
+async function stepApplyMigration(logFile: string): Promise<StepOutcome> {
+  const notes: string[] = [];
+  const dirtyMigrations = dirtyPaths().filter((l) => porcelainPath(l).some((p) => MIGRATION_PATH_RE.test(p)));
+  const applied = appliedMigrations();
+  if (applied === null) {
+    return { status: "error", exitCode: null, summary: `could not read schema_migrations in ${DB.container} (is Docker running?)`, notes };
+  }
+  const appliedSet = new Set(applied);
+  const onDisk = fs.readdirSync(path.join(REPO, "src", "db")).filter((f) => MIGRATION_PATH_RE.test(`src/db/${f}`));
+  const pending = onDisk.filter((f) => !appliedSet.has(f)).sort();
+  const addingCommitMessage: Record<string, string | null> = {};
+  for (const f of pending) {
+    const r = git(["log", "-1", "--diff-filter=A", "--format=%B", "--", `src/db/${f}`]);
+    addingCommitMessage[f] = r.ok && r.out ? r.out : null;
+  }
+  const decision = decideMigrateLocal({ pending, dirtyMigrations, addingCommitMessage });
+  appendLog(logFile, `# migrate-local guard: pending=${pending.join(",") || "(none)"} dirty=${dirtyMigrations.join(" · ") || "(none)"}\n# decision: ${JSON.stringify(decision)}`);
+  if (!decision.ok) return held(decision.code, decision.message, notes);
+  if (decision.apply.length === 0) {
+    return { status: "passed", exitCode: 0, summary: `nothing pending: ${DB.container} records every migration in src/db`, notes, applied: 0 };
+  }
+  // Fixed argv: the script's own defaults are the container this guard just read.
+  const r = await runLogged(PWSH, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", APPLY_MIGRATION], logFile, TIMEOUT.migrate);
+  const tally = stripAnsi(r.text).split(/\r?\n/).map((l) => l.trim()).filter((l) => /^(Applied|Failed)\s*:/.test(l)).join(", ");
+  // Apply-Migration.ps1: 0 applied/nothing pending, 1 could not proceed, 2 disagreement (nothing applied), 3 applied but not recorded.
+  if (r.exitCode === 3) notes.push("a migration APPLIED but its schema_migrations row was not written — do not re-run until it exists; the log prints the INSERT");
+  if (r.exitCode === 2) notes.push("schema_migrations and src\\db disagree about a recorded migration; nothing was applied");
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : "failed",
+    exitCode: r.exitCode,
+    summary: `${r.timedOut ? "timed out; " : ""}${decision.apply.join(", ")}${tally ? ` — ${tally}` : ""} (exit ${r.exitCode ?? "none"})`,
+    notes,
+    applied: r.exitCode === 0 ? decision.apply.length : 0,
+  };
+}
+
+async function stepExportSchema(logFile: string): Promise<StepOutcome> {
+  const r = await runLogged(PWSH, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", EXPORT_SCHEMA], logFile, TIMEOUT.exportSchema);
+  const changed = git(["status", "--porcelain", "--", SCHEMA_FILE]).out !== "";
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : "failed",
+    exitCode: r.exitCode,
+    summary: `${r.timedOut ? "timed out; " : ""}${SCHEMA_FILE} ${r.exitCode === 0 ? (changed ? "regenerated — commit it" : "regenerated, unchanged") : "not regenerated"} (exit ${r.exitCode ?? "none"})`,
+    notes: [],
+  };
+}
+
 // ---- one request ------------------------------------------------------------------
 
 let runnerInfo: RunnerInfo;
@@ -529,10 +831,18 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
   save();
   logLine(`run ${req.id}: ${req.sequence}${req.only ? ` only=${req.only.join(",")}` : ""}`);
 
+  let previous: { status: StepResult["status"]; applied: number } | null = null;
   for (let i = 0; i < plan.length; i++) {
     const p = plan[i];
     const s = result.steps[i];
     if (p.skipReason) continue;
+    if (DEPENDENT_STEPS.includes(p.name) && (previous?.status !== "passed" || previous.applied === 0)) {
+      s.status = "skipped";
+      s.summary = previous?.status === "passed" ? "nothing was applied, so there is nothing to regenerate" : `the step before it ended ${previous?.status ?? "unrun"}`;
+      save();
+      previous = { status: "skipped", applied: 0 };
+      continue;
+    }
     const logFile = path.join(logDir, `${p.name}.log`);
     s.status = "running";
     s.startedAt = now();
@@ -557,11 +867,25 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
         case "verify-rebuild":
           out = await stepVerifyRebuild(logFile);
           break;
+        case "push":
+          out = await stepPush(logFile);
+          break;
+        case "ci":
+          out = await stepCi(req.commit, logDir, logFile);
+          break;
+        case "apply-migration":
+          out = await stepApplyMigration(logFile);
+          break;
+        case "export-schema":
+          out = await stepExportSchema(logFile);
+          break;
       }
     } catch (e) {
       out = { status: "error", exitCode: null, summary: `runner fault: ${(e as Error).message}`, notes: [] };
     }
-    Object.assign(s, out, { finishedAt: now(), seconds: Math.round((Date.now() - t0) / 100) / 10 });
+    const { applied, held: heldCode, ...stepFields } = out;
+    Object.assign(s, stepFields, heldCode ? { held: heldCode } : {}, { finishedAt: now(), seconds: Math.round((Date.now() - t0) / 100) / 10 });
+    previous = { status: s.status, applied: applied ?? 0 };
     save();
     logLine(`run ${req.id}: ${p.name} ${s.status} — ${s.summary}`);
   }
@@ -750,6 +1074,9 @@ async function selfTest(): Promise<number> {
   };
   for (const [name, p] of Object.entries(BIN)) say(fs.existsSync(p), `${name}: ${rel(p)}`);
   say(fs.existsSync(VERIFY_REBUILD), `Verify-Rebuild.ps1: ${rel(VERIFY_REBUILD)}`);
+  say(fs.existsSync(APPLY_MIGRATION), `Apply-Migration.ps1: ${rel(APPLY_MIGRATION)}`);
+  say(fs.existsSync(EXPORT_SCHEMA), `Export-SupabaseSchema.ps1: ${rel(EXPORT_SCHEMA)}`);
+  say(parseGithubRemote(git(["remote", "get-url", PUSH_REMOTE]).out) !== null, `${PUSH_REMOTE} is a github.com remote (push, ci)`);
   say(headCommit() !== null, "git rev-parse HEAD answers");
   const envFile = path.join(REPO, ".env");
   const envText = fs.existsSync(envFile) ? fs.readFileSync(envFile, "utf8") : "";

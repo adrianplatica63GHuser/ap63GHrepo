@@ -1,5 +1,5 @@
 /**
- * scripts/test-runner/protocol.ts                              (Slice Propus.2)
+ * scripts/test-runner/protocol.ts                   (Slices Propus.2, Propus.3)
  *
  * The contract between Claude and the Windows-side test runner, and every
  * decision the runner takes that can be made without touching a disk, a clock
@@ -27,6 +27,21 @@
  * exist) and gets back a decision. That is what lets
  * `src/__tests__/test-runner-protocol.test.ts` pin every refusal case without a
  * Windows box, a git repository or a dev server.
+ *
+ * Propus.3 added three sequences that do more than test, and each one has a
+ * GUARD here — a pure decision over what the runner observed — that can HOLD it:
+ *
+ *   push           pushes `main` to origin, fast-forward only, and only on a
+ *                  green `full`/`full-db` result for HEAD (`decidePush`).
+ *   ci             reads the GitHub Actions runs for HEAD, read-only, and saves
+ *                  the log of every failed job (`ciVerdict`).
+ *   migrate-local  Apply-Migration.ps1, then Export-SupabaseSchema.ps1, and only
+ *                  for migrations whose adding commit records Adrian's
+ *                  confirmation (`decideMigrateLocal`).
+ *
+ * A held step is not a failure and not an error: it is the runner saying „this
+ * waits for Adrian", with the reason by name. None of the three ever touches
+ * Supabase or UAT — `npm run supabase:migrate` stays Adrian's.
  */
 
 export const PROTOCOL_VERSION = 1 as const;
@@ -52,7 +67,17 @@ export const CHANNEL_DIR = ".test-runner";
 export const MAX_REQUEST_BYTES = 4096;
 export const MAX_ONLY_ENTRIES = 50;
 
-export const STEPS = ["e2e", "lint", "tsc", "jest", "verify-rebuild"] as const;
+export const STEPS = [
+  "e2e",
+  "lint",
+  "tsc",
+  "jest",
+  "verify-rebuild",
+  "push",
+  "ci",
+  "apply-migration",
+  "export-schema",
+] as const;
 export type StepName = (typeof STEPS)[number];
 
 /**
@@ -70,6 +95,9 @@ export const SEQUENCES = {
   e2e: ["e2e"],
   jest: ["jest"],
   "verify-rebuild": ["verify-rebuild"],
+  push: ["push"],
+  ci: ["ci"],
+  "migrate-local": ["apply-migration", "export-schema"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -448,8 +476,8 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
 
 // ---- the result file -----------------------------------------------------------
 
-export type StepStatus = "pending" | "running" | "passed" | "failed" | "cache-only" | "error" | "skipped";
-export type RunStatus = "refused" | "running" | "passed" | "failed" | "error";
+export type StepStatus = "pending" | "running" | "passed" | "failed" | "cache-only" | "error" | "skipped" | "held";
+export type RunStatus = "refused" | "running" | "passed" | "failed" | "error" | "held";
 
 export interface StepResult {
   name: StepName;
@@ -463,6 +491,8 @@ export interface StepResult {
   log: string | null;
   /** Every recovery the runner made on its own, in the order it made them. */
   notes: string[];
+  /** Set when a guard held the step: why, by name (`GuardCode`). */
+  held?: GuardCode;
 }
 
 export interface RunnerInfo {
@@ -512,12 +542,14 @@ export function pendingSteps(plan: PlannedStep[]): StepResult[] {
  * `passed` only when every step that ran passed. A step that failed makes the
  * run `failed` — the code is wrong. Otherwise any `error` or `cache-only` step
  * makes it `error` — the runner could not give an answer, which is neither.
+ * Otherwise a `held` step makes it `held` — a guard said this waits for Adrian.
  */
 export function overallStatus(steps: StepResult[]): Exclude<RunStatus, "refused" | "running"> {
   if (steps.some((s) => s.status === "failed")) return "failed";
   if (steps.some((s) => s.status === "error" || s.status === "cache-only" || s.status === "pending" || s.status === "running")) {
     return "error";
   }
+  if (steps.some((s) => s.status === "held")) return "held";
   return "passed";
 }
 
@@ -547,4 +579,290 @@ export function refusedResult(
     steps: [],
     runner,
   };
+}
+
+// ---- guards: the sequences that do more than test (Slice Propus.3) ---------------
+
+/**
+ * Why a guard HELD a step. A held step is the runner saying „this waits for
+ * Adrian", never „this is broken", so it gets its own status and its own exit
+ * code in `claude.sh` (6), and the handover names the code.
+ */
+export type GuardCode =
+  | "not-on-main"
+  | "no-green-run"
+  | "green-run-dirty"
+  | "remote-unknown"
+  | "not-fast-forward"
+  | "migration-in-range"
+  | "migration-dirty"
+  | "migration-uncommitted"
+  | "migration-unconfirmed";
+
+export type GuardDecision<T> = ({ ok: true } & T) | { ok: false; code: GuardCode; message: string };
+
+/** A step that runs only when the step before it in its sequence passed. */
+export const DEPENDENT_STEPS: readonly StepName[] = ["export-schema"];
+
+/** The only branch the runner ever pushes, and the only remote. */
+export const PUSH_BRANCH = "main";
+export const PUSH_REMOTE = "origin";
+/** Sequences whose green result on HEAD licenses a push: the whole verification sequence, unnarrowed. */
+export const PUSH_LICENSING_SEQUENCES: readonly SequenceName[] = ["full", "full-db"];
+
+/** `src/db/migration_087_x.sql` — the same shape `scripts/migration-state.ts` reads. */
+export const MIGRATION_PATH_RE = /^src\/db\/migration_\d{3}_[^/]+\.sql$/;
+
+export type GreenRunCandidate = Pick<RunResult, "id" | "source" | "status" | "sequence" | "commit" | "only" | "dirty" | "finishedAt">;
+
+export interface PushObservation {
+  /** `git symbolic-ref --short -q HEAD`, or null when HEAD is detached. */
+  branch: string | null;
+  /** HEAD, lower-case. */
+  head: string;
+  /** Every result file the runner holds, as read. */
+  results: readonly GreenRunCandidate[];
+  /** `git ls-remote --heads origin main`, or null when it failed or origin has no main. */
+  remoteMain: string | null;
+  /** `git merge-base --is-ancestor <remoteMain> HEAD` exited 0. False when the object is not even local. */
+  remoteIsAncestor: boolean;
+  /** `git diff --name-status <remoteMain> HEAD`, one line per path: `A\tsrc/db/migration_087_x.sql`. */
+  rangeChanges: readonly string[];
+  /** `git rev-list --count <remoteMain>..HEAD`. */
+  rangeCommits: number;
+}
+
+/** A `git status --porcelain` line that is not `?? path` is a tracked change. */
+function trackedChanges(dirty: readonly string[]): string[] {
+  return dirty.filter((d) => !d.startsWith("?? "));
+}
+
+/**
+ * The green run that licenses pushing HEAD: a whole `full`/`full-db` run by the
+ * runner on exactly this commit, passed, and taken on a tree with no TRACKED
+ * change beyond HEAD. A narrowed run (`only`) is not the verification sequence.
+ * An untracked file is tolerated — the runner's own channel is gitignored, but
+ * Adrian's scratch files are not, and they are not what is being pushed.
+ */
+export function licensingRun(results: readonly GreenRunCandidate[], head: string): {
+  clean: GreenRunCandidate | null;
+  dirtyOnly: GreenRunCandidate | null;
+} {
+  const green = results
+    .filter(
+      (r) =>
+        r.source === "runner" &&
+        r.status === "passed" &&
+        r.sequence !== null &&
+        PUSH_LICENSING_SEQUENCES.includes(r.sequence) &&
+        r.commit === head &&
+        (r.only === null || r.only === undefined),
+    )
+    .sort((a, b) => String(b.finishedAt ?? "").localeCompare(String(a.finishedAt ?? "")));
+  return {
+    clean: green.find((r) => trackedChanges(r.dirty ?? []).length === 0) ?? null,
+    dirtyOnly: green[0] ?? null,
+  };
+}
+
+/**
+ * ⚠️ **THE PUSH GUARD. EVERY CONDITION HOLDS THE PUSH; NONE OF THEM IS WORKED
+ * AROUND.** The runner pushes `main` to origin with Adrian's own git
+ * credentials only when all of these hold (Slice Propus.3's header):
+ *
+ *   1. HEAD is `main` — never another branch, never a detached HEAD.
+ *   2. A green, unnarrowed `full`/`full-db` result names HEAD, on a clean tree.
+ *   3. origin's `main` is known and is an ancestor of HEAD — a fast-forward.
+ *      There is no force anywhere in the runner, and git itself would refuse a
+ *      non-fast-forward, but the guard says so by name first.
+ *   4. No commit in the range adds, changes or removes a `src/db/migration_*.sql`.
+ *      Supabase is migrated by Adrian (`npm run supabase:migrate`), and af3d664
+ *      is what happens when code reaches production ahead of the cloud schema.
+ *      Such a range waits for him: migrate Supabase, then push.
+ *
+ * Checked in that order, so the reason given is the first thing to fix.
+ */
+export function decidePush(o: PushObservation): GuardDecision<{ greenRun: string; from: string; to: string; commits: number }> {
+  if (o.branch !== PUSH_BRANCH) {
+    return {
+      ok: false,
+      code: "not-on-main",
+      message: `HEAD is ${o.branch === null ? "detached" : `on ${o.branch}`}; the runner pushes ${PUSH_BRANCH} and nothing else.`,
+    };
+  }
+  const lic = licensingRun(o.results, o.head);
+  if (!lic.clean) {
+    if (lic.dirtyOnly) {
+      const tracked = trackedChanges(lic.dirtyOnly.dirty ?? []);
+      return {
+        ok: false,
+        code: "green-run-dirty",
+        message: `The green run ${lic.dirtyOnly.id} tested uncommitted changes beyond HEAD (${tracked.join(" · ")}), so it is not evidence about HEAD. Run full again on a clean tree.`,
+      };
+    }
+    return {
+      ok: false,
+      code: "no-green-run",
+      message: `No passed, unnarrowed ${PUSH_LICENSING_SEQUENCES.join("/")} result by the runner names ${o.head.slice(0, 7)}. Request full first.`,
+    };
+  }
+  if (o.remoteMain === null) {
+    return {
+      ok: false,
+      code: "remote-unknown",
+      message: `git ls-remote could not tell where ${PUSH_REMOTE}/${PUSH_BRANCH} is, so a fast-forward cannot be proven.`,
+    };
+  }
+  const remote = o.remoteMain.toLowerCase();
+  if (remote === o.head) {
+    return { ok: true, greenRun: lic.clean.id, from: remote, to: o.head, commits: 0 };
+  }
+  if (!o.remoteIsAncestor) {
+    return {
+      ok: false,
+      code: "not-fast-forward",
+      message: `${PUSH_REMOTE}/${PUSH_BRANCH} is ${remote.slice(0, 7)}, which is not an ancestor of HEAD ${o.head.slice(0, 7)}. Something was pushed that this checkout does not have; that is Adrian's to reconcile.`,
+    };
+  }
+  const migrations = o.rangeChanges
+    .map((l) => l.split("\t"))
+    .filter((cols) => cols.slice(1).some((p) => MIGRATION_PATH_RE.test(p.replace(/\\/g, "/"))))
+    .map((cols) => cols.join(" "));
+  if (migrations.length > 0) {
+    return {
+      ok: false,
+      code: "migration-in-range",
+      message: `The range ${remote.slice(0, 7)}..${o.head.slice(0, 7)} touches ${migrations.join(", ")}. Supabase has not had it: Adrian runs npm run supabase:migrate, then pushes.`,
+    };
+  }
+  return { ok: true, greenRun: lic.clean.id, from: remote, to: o.head, commits: o.rangeCommits };
+}
+
+// ---- ci: reading GitHub Actions, read-only -----------------------------------------
+
+/** The fields of a workflow run the runner reads. Everything else in the API's answer is ignored. */
+export interface CiRun {
+  id: number;
+  name: string;
+  run_number: number;
+  status: string;
+  conclusion: string | null;
+  html_url: string;
+  head_sha: string;
+}
+
+export interface CiJob {
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  steps?: { name: string; status: string; conclusion: string | null; number: number }[];
+}
+
+export type CiVerdict = "none" | "pending" | "passed" | "failed";
+
+/** A completed run with one of these conclusions is green; any other conclusion is red. */
+export const CI_GREEN_CONCLUSIONS: readonly string[] = ["success", "skipped", "neutral"];
+/** How long `ci` waits for GitHub to create a run for the commit, then for every run to finish. */
+export const CI_FIRST_RUN_WAIT_MS = 5 * 60_000;
+export const CI_FINISH_WAIT_MS = 30 * 60_000;
+export const CI_POLL_MS = 20_000;
+
+/** `owner/repo` from origin's URL, https or ssh; null for anything that is not github.com. */
+export function parseGithubRemote(url: string): { owner: string; repo: string } | null {
+  const m =
+    /^https:\/\/(?:[^@/]+@)?github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(url.trim()) ??
+    /^(?:ssh:\/\/)?git@github\.com[:/]([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(url.trim());
+  return m ? { owner: m[1], repo: m[2] } : null;
+}
+
+/** The newest run of each workflow for this commit — a re-run supersedes the run it repeats. */
+export function latestRunPerWorkflow(runs: readonly CiRun[], head: string): CiRun[] {
+  const byName = new Map<string, CiRun>();
+  for (const r of runs) {
+    if (r.head_sha.toLowerCase() !== head) continue;
+    const seen = byName.get(r.name);
+    if (!seen || r.id > seen.id) byName.set(r.name, r);
+  }
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function ciVerdict(runs: readonly CiRun[]): CiVerdict {
+  if (runs.length === 0) return "none";
+  if (runs.some((r) => r.status !== "completed")) return "pending";
+  return runs.every((r) => CI_GREEN_CONCLUSIONS.includes(r.conclusion ?? "")) ? "passed" : "failed";
+}
+
+/** `CI #412 success · DB rebuild #88 failure` — one line for the result and the handover. */
+export function summariseCi(runs: readonly CiRun[]): string {
+  if (runs.length === 0) return "no workflow run for this commit";
+  return runs.map((r) => `${r.name} #${r.run_number} ${r.status === "completed" ? r.conclusion ?? "no conclusion" : r.status}`).join(" · ");
+}
+
+/** The step a red job died in, for the note that points at its log. */
+export function firstFailedStep(job: CiJob): string | null {
+  const s = (job.steps ?? []).find((x) => x.conclusion !== null && !CI_GREEN_CONCLUSIONS.includes(x.conclusion));
+  return s ? s.name : null;
+}
+
+// ---- migrate-local: Apply-Migration.ps1 and Export-SupabaseSchema.ps1 ----------------
+
+/**
+ * ⚠️ **THE CONFIRMATION IS RECORDED IN GIT, AND THE RUNNER READS IT THERE.**
+ * `C:\dev\CLAUDE.md` → The working contract: a migration is committed only
+ * after Adrian confirms it, and the commit that adds it carries a trailer
+ * quoting him:
+ *
+ *     Schema-Confirmed: Adrian, 2026-09-25 — „yes, go with the nullable column"
+ *
+ * So „a recorded confirmation" is a fact the runner can check without trusting
+ * anybody's word, and it stays in the history beside the file it confirms.
+ */
+export const SCHEMA_CONFIRMED_TRAILER = "Schema-Confirmed";
+export const SCHEMA_CONFIRMED_RE = /^Schema-Confirmed:[ \t]*\S.*$/m;
+
+export interface MigrateObservation {
+  /** Migration file names in `src/db` that the local `schema_migrations` does not record. */
+  pending: readonly string[];
+  /** `git status --porcelain` lines that touch a `src/db/migration_*.sql`. */
+  dirtyMigrations: readonly string[];
+  /** Per pending file: the full message of the commit that added it, or null when HEAD's history never added it. */
+  addingCommitMessage: Readonly<Record<string, string | null>>;
+}
+
+/**
+ * ⚠️ **ONLY WHAT IS COMMITTED AND CONFIRMED REACHES THE DATABASE.**
+ * `Apply-Migration.ps1` applies every file in `src\db` that the database has not
+ * recorded — including one that exists only in the working tree. Under Propus.3
+ * the working tree is exactly where an UNCONFIRMED migration lives while Claude
+ * builds on it, so the runner refuses the whole run while any migration file is
+ * uncommitted or changed, and while any pending one lacks the trailer.
+ */
+export function decideMigrateLocal(o: MigrateObservation): GuardDecision<{ apply: string[] }> {
+  if (o.dirtyMigrations.length > 0) {
+    return {
+      ok: false,
+      code: "migration-dirty",
+      message: `Migration files differ from HEAD (${o.dirtyMigrations.join(" · ")}). Apply-Migration.ps1 would apply the working tree, and an unconfirmed migration lives there. Commit it with its ${SCHEMA_CONFIRMED_TRAILER} trailer once Adrian confirms.`,
+    };
+  }
+  const pending = [...o.pending].sort();
+  if (pending.length === 0) return { ok: true, apply: [] };
+  const notInHistory = pending.filter((f) => (o.addingCommitMessage[f] ?? null) === null);
+  if (notInHistory.length > 0) {
+    return {
+      ok: false,
+      code: "migration-uncommitted",
+      message: `No commit in HEAD's history adds ${notInHistory.join(", ")}.`,
+    };
+  }
+  const unconfirmed = pending.filter((f) => !SCHEMA_CONFIRMED_RE.test(o.addingCommitMessage[f] ?? ""));
+  if (unconfirmed.length > 0) {
+    return {
+      ok: false,
+      code: "migration-unconfirmed",
+      message: `The commit that adds ${unconfirmed.join(", ")} carries no ${SCHEMA_CONFIRMED_TRAILER}: trailer, so Adrian's confirmation is not recorded.`,
+    };
+  }
+  return { ok: true, apply: pending };
 }
