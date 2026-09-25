@@ -88,6 +88,8 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `driven` | 2026-09-25 | — |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
+| [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `draft` | — | — |
+| [TC-IMP-04](cases/TC-IMP-04.md) | Folderele speciale „comune” și „flotante” | import | happy | `11.mixed.tc.marker` | `draft` | — | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
@@ -98,9 +100,16 @@ fixed fixture where the existing one will do.
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `driven` | 2026-09-25 | — |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
 
-**Eighteen are `automated`, eleven are `driven`, and three are `draft`** — as of 2026-09-25 (Slice
-#36.21). Nothing is `confirmed`. What stays below `automated` is the third wave (below), the
-import/AI trio, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
+**Eighteen are `automated`, eleven are `driven`, and five are `draft`** — as of 2026-09-25 (Slice
+#36.22). Nothing is `confirmed`. What stays below `automated` is the third wave (below), the
+import cases, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
+
+- **Every import case ends with the reconciliation check, Slice #36.22.** After the import, and
+  again after the cleanup, `claude.sh request reconcile <folder>` accounts for every file of the
+  data folder — landed (document, page, property), set aside (by which rule), or missing, the
+  one answer that is a defect (`docs/testing/WHAT-WE-TEST.md` §3). TC-IMP-03 (a marked copy of
+  `05.big`) and TC-IMP-04 (of `04.mixed`) are written and wait at `draft` for their first drive,
+  which needs Adrian to pick the folder.
 
 - **The third wave, Slice #36.21: nine new cases, eight at `driven` and one at `draft`.** They
   took nine routes out of `CATALOGUE_NOT_YET`, which now holds six: the four that need a cleanup
@@ -199,7 +208,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Thirty-two cases, all `happy` but TC-AUTH-02, and that is a scope rule rather than a taste.** A case in the
+**Thirty-four cases, all `happy` but TC-AUTH-02, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
@@ -289,18 +298,18 @@ guard cannot enforce: a slice that ships a screen ships the row and the case fil
 
 ## Unclaimed data, and the case each folder is waiting for
 
-These four folders already exist and no case owns them yet. They are listed
-so the next person to extend the suite does not re-create what is there. All four wait on
+These two folders already exist and no case owns them yet. They are listed
+so the next person to extend the suite does not re-create what is there. Both wait on
 import or AI cases, which wait on the cost Slice #36.07 measured; the second wave (#36.08)
 claimed none of them. It added one folder of its own, `08.tc.coord.file` — TC-PROP-03's
 coordinate file, copied out of `01.smoke.one.property` under a `TC-` name because the
 screen writes the file name into „Poreclă" — and that one is owned. The third wave (#36.21)
 added `09.tc.calc.file`, TC-CALC-01's five-section division file built on the same four corners,
-and that one is owned too.
+and that one is owned too. Slice #36.22 claimed `04.mixed` and `05.big` through marked copies,
+`11.mixed.tc.marker` (TC-IMP-04) and `10.big.tc.marker` (TC-IMP-03) — `05.big` holds five
+property folders, not the three this table used to say — and those copies are owned.
 
 | Folder | What it is | The case it is waiting for |
 |---|---|---|
 | `03.types.noform` | Eight single-file documents of unusual types, in two property folders | Document types with no form, and „Descoperire AI" |
-| `04.mixed` | One property plus `comune` and `flotante` | The two special folders, which behave differently from a property folder |
-| `05.big` | Three property folders, 59 files, `.doc`/`.docx`/`.rtf`/`.pdf`/`.jpg` | A long import, several coordinate files, unsupported file kinds |
 | `06.two.id.cards` | `01.smoke.one.property` with a second identity card added | Refusing an AI read on a page carrying two people's identity documents |

@@ -211,6 +211,32 @@ two different titles. Its third query is labelled as **evidence, not proof**, fo
 same reason: two genuinely different scans off one machine can share a name and a byte
 count.
 
+**The import reconciliation check (Slice #36.22, FU-012)** — whether an import that reported
+success landed every file it was given. It is run through the test runner, by Claude, and
+answers file by file:
+`bash scripts/test-runner/claude.sh request reconcile <folder>`, where `<folder>` is a folder
+name under `C:\dev\TEST.DATA\Test.Claude\`. The runner runs
+`scripts/testing/reconcile-import.ts` on it, and the step's log lists every file of the folder
+as one of:
+
+- **landed** — the document and page it became, the properties the document is linked to, and
+  for the coordinate file the property whose corners it was read into;
+- **set aside** — the rule of the wizard's walk that dropped it (`desktop.ini`: a system file);
+- **in archive** — the file is only in documents this import did not make: „Deja în sistem"
+  linked it instead, or an earlier run holds it;
+- **ambiguous** — two documents qualify, and the check does not guess;
+- **missing** — no page holds it. **The only answer that is a defect.**
+
+Pages of documents tagged with the folder that no file accounts for are listed as **extra**
+(usually an earlier run that was not cleaned up). The rules are the wizard's own, imported
+rather than restated (`src/lib/import/reconcile.ts`): its walk, its grouping into property
+folders, `comune` and `flotante`, its titles and its tags. A file is found again by its name
+and byte size, as `Check-ImportHealth.ps1` does, then told apart from older copies by the
+document's import title and the folder's tags. It only reads — a SELECT in a read-only
+session — and it runs before an import too: the same request then shows the wizard's own
+Structure verdict on the folder and that nothing from it is in the database yet. Every import
+case ends with it, and again after its cleanup.
+
 **`scripts/decision-checks.sql`** and **`scripts/closed-list-review.sql`** — read-only
 worksheets that answer questions the source code cannot, for decisions taken with
 Ciprian. Every statement is a `SELECT`; they decide nothing and change nothing. They are
@@ -350,13 +376,6 @@ key path. Nothing checks that an English value is not a copy of the Romanian one
 ten that were.
 → **Mostly closed.** What remains, FU-071, is a copy item for the Monday review's sweep, not a
 test slice.
-
-**Whether an import that reported success actually landed every page it was given.**
-`Check-ImportHealth.ps1` answers two known defects off the database; nobody reconciles a
-finished import against the folder it came from, file by file.
-→ **Slice 36.22** (FU-012). It adds a reconciliation check, then uses it on a long import
-(`05.big`, FU-089) and on the two special folders (`04.mixed`, FU-090). That slice replaces
-this paragraph with a short section on the check.
 
 **Negative, boundary, stress, load, concurrency and performance testing.** Deliberately
 out of scope for Slice #36.04, each one line here so it is a backlog. None is scheduled; the
