@@ -86,10 +86,10 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `driven` | 2026-09-25 | — |
 | [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `driven` | 2026-09-25 | — |
 | [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `driven` | 2026-09-25 | — |
-| [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
+| [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
-| [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `draft` | — | — |
-| [TC-IMP-04](cases/TC-IMP-04.md) | Folderele speciale „comune” și „flotante” | import | happy | `11.mixed.tc.marker` | `draft` | — | — |
+| [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
+| [TC-IMP-04](cases/TC-IMP-04.md) | Folderele speciale „comune” și „flotante” | import | happy | `11.mixed.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
@@ -100,16 +100,18 @@ fixed fixture where the existing one will do.
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `driven` | 2026-09-25 | — |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
 
-**Eighteen are `automated`, eleven are `driven`, and five are `draft`** — as of 2026-09-25 (Slice
+**Eighteen are `automated`, thirteen are `driven`, and three are `draft`** — as of 2026-09-25 (Slice
 #36.22). Nothing is `confirmed`. What stays below `automated` is the third wave (below), the
 import cases, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
 
 - **Every import case ends with the reconciliation check, Slice #36.22.** After the import, and
   again after the cleanup, `claude.sh request reconcile <folder>` accounts for every file of the
   data folder — landed (document, page, property), set aside (by which rule), or missing, the
-  one answer that is a defect (`docs/testing/WHAT-WE-TEST.md` §3). TC-IMP-03 (a marked copy of
-  `05.big`) and TC-IMP-04 (of `04.mixed`) are written and wait at `draft` for their first drive,
-  which needs Adrian to pick the folder.
+  one answer that is a defect (`docs/testing/WHAT-WE-TEST.md` §3). TC-IMP-01 was re-driven with
+  it, and TC-IMP-03 (a marked copy of `05.big`: 59 files, 48 documents) and TC-IMP-04 (of
+  `04.mixed`: `comune` and `flotante`) were driven for the first time — **every file landed or
+  was set aside, none missing**, and after each cleanup the check found nothing left. The three
+  cost **4, about 25 and 8 calls** — 37 of the 60 the slice was allowed.
 
 - **The third wave, Slice #36.21: nine new cases, eight at `driven` and one at `draft`.** They
   took nine routes out of `CATALOGUE_NOT_YET`, which now holds six: the four that need a cleanup
@@ -173,9 +175,11 @@ import cases, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written her
 - **`driven`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — first driven in Slice #36.07,
   with Adrian picking the folder (below). One import on this archive costs **4 Claude
   calls** — 2 classifications at „Scanare", 1 identity-card read, 1 document read — and
-  a re-import of documents already in the system costs **0**. Budget the four unclaimed
-  folders at one classification per image document plus one read per readable document,
-  identity cards included. TC-IMP-01's data is `07.smoke.tc.marker`, a copy of
+  a re-import of documents already in the system costs **0**. **Measured again on three
+  imports in Slice #36.22** (TC-IMP-01 4, TC-IMP-03 about 25, TC-IMP-04 8), the rule holds with
+  one correction: **PDFs count as images**. Budget an import at one classification per JPEG,
+  PNG, GIF, WebP or PDF document (a page folder sends only its first page) plus one read per
+  such document, identity cards included; Word, `.rtf` and `.txt` files cost nothing. TC-IMP-01's data is `07.smoke.tc.marker`, a copy of
   `01.smoke.one.property` with `TC-IMP-01` in four file names: the archive already holds
   the original, so only renamed files import as new — and the rename puts a `TC-` marker
   in every document title the case creates, closing the gap its first draft recorded.

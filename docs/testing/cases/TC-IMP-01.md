@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | `C:\dev\TEST.DATA\Test.Claude\07.smoke.tc.marker` |
 | **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -71,8 +71,9 @@ folder that still has every ingredient in it.
 | 14 | Reads the dialog „3 documente importate." and presses „Închide" | The step „Rezultat": „Importul s-a încheiat" |
 | 15 | Reads „Pe scurt" | „Documente create" 3 · „Proprietăți create sau confirmate pentru acest import" 1 · „Fișiere de coordonate folosite pentru colțuri" 1 · „Documente citite de AI (inclusiv cărțile de identitate)" 1 · „Câmpuri completate de AI" 47 · „Persoane găsite de AI și neconfirmate" 5 · „Cărți de identitate fără răspuns" 1 |
 | 16 | Presses „Închide și vezi proprietățile", opens PROP01503 | Its „Puncte de contur" still hold the 4 corners it had, and its „Acte" tab (Tip · Titlu) lists the three new documents at the bottom. **Write their codes down** |
+| 17 | Runs the reconciliation check: `claude.sh request reconcile 07.smoke.tc.marker` (Slice #36.22) | **6 files: 5 landed, 1 set aside, 0 in archive, 0 ambiguous, 0 missing; 0 extra pages; structure clean.** The card and the coordinate file each land as their document's only page, the CVC's `530.jpg`, `531.jpg`, `532.jpg` as pages 1–3 of one document, all linked to PROP01503; the coordinate file is named as PROP01503's corner source; `desktop.ini` is set aside as a system file |
 
-**The numbers in step 15 are the assertion.** „Documente create" = 3, not 2: the
+**The numbers in step 15, and step 17's „0 missing", are the assertion.** „Documente create" = 3, not 2: the
 coordinate file is a document in its own right. The Evaluation screen says so, and so
 does PEX-04. The page group is **one** document of three pages. The count „Câmpuri completate
 de AI" (47) belongs to the CVC alone. It changes when the extraction changes, so it is
@@ -107,6 +108,11 @@ not this case's. Only what the run created is removed:
 Nothing else is left: no person was created (step 13), the tags are strings on the
 documents and go with them, and the property was only linked.
 
+3. Run `claude.sh request reconcile 07.smoke.tc.marker` again: **„nothing from this folder is
+   in the database"** — 0 landed, 1 set aside, 3 in archive (the CVC's pages, which the original
+   `01.smoke.one.property` import holds as DOC01505), 2 missing (the two renamed files, now gone
+   as they should be).
+
 ## Notes from the runs
 
 - **2026-09-23, Slice #36.07 — first run, driven by Claude; the folder was picked by
@@ -134,3 +140,15 @@ documents and go with them, and the property was only linked.
   promises more than the count gives.
 - **State `driven`, no spec.** A spec would need the stand-in for the folder dialog the
   catalogue describes, and it would pay 4 calls on every `npm run e2e`.
+- **2026-09-25, Slice #36.22 — re-driven with the reconciliation check as its last step, green.
+  The folder was picked by Adrian.** Every step held as written; „Pe scurt" gave the same seven
+  numbers as the first run. Created DOC02223 (coordinate file), DOC02224 (card), DOC02225 (CVC,
+  3 pages); the check found all five kept files where the wizard put them and none missing.
+  **Spend: 4 calls**, as measured before — 2 classifications, 1 card read, 1 document read.
+  Removed with the documents' own delete, and the check after the cleanup found nothing from
+  the folder in the database. Two things seen on the way, in the wizard, not fixed here (the
+  wizard is out of scope): „Structură" reports „Fișiere ignorate automat 0" while its own walk
+  drops `desktop.ini` — the check lists it as set aside, so the two disagree about the same
+  file; and the property dialog says the existing corners „rămân neschimbate" while the result
+  row for the coordinate file says „a fost aplicat proprietății PROP01503 — 4 colțuri" (the
+  claim row is written; the corners were identical, so nothing visible changed).
