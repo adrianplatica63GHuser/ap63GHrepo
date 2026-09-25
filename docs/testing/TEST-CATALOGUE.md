@@ -70,6 +70,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
+| [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `driven` | 2026-09-25 | — |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-09-25 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
@@ -82,16 +83,38 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `automated` | 2026-09-25 | `e2e/association/document-reference.spec.ts` |
 | [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `draft` | — | — |
 | [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite la fel din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-person.spec.ts` |
+| [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `driven` | 2026-09-25 | — |
+| [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `driven` | 2026-09-25 | — |
+| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `driven` | 2026-09-25 | — |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
+| [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `driven` | 2026-09-25 | — |
+| [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `driven` | 2026-09-25 | — |
+| [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `driven` | 2026-09-25 | — |
+| [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `driven` | 2026-09-25 | — |
+| [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
 
-**Eighteen are `automated`, three are `driven`, and two are `draft`** — as of 2026-09-25 (Slice
-#36.20). Nothing is `confirmed`. What stays below `automated` is the import/AI trio (below),
-TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
+**Eighteen are `automated`, eleven are `driven`, and three are `draft`** — as of 2026-09-25 (Slice
+#36.21). Nothing is `confirmed`. What stays below `automated` is the third wave (below), the
+import/AI trio, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
+
+- **The third wave, Slice #36.21: nine new cases, eight at `driven` and one at `draft`.** They
+  took nine routes out of `CATALOGUE_NOT_YET`, which now holds six: the four that need a cleanup
+  rule first (`/admin/users`, `/admin/settings`, `/admin/value-lists`,
+  `/account/change-password`), the map (a Maps key) and `/admin/doc-type-engine` (AI budget).
+  TC-ASSOC-10 to TC-ASSOC-12 finish the association screens — a company on a document, a person
+  beside a company (no role can be chosen yet, FU-221), a certificate's two parties (whose
+  quality shows only on the certificate, FU-224). TC-STAMP-01 and TC-HELP-01 write shared state
+  and give it back — the stamp is deleted, the help text restored byte for byte. TC-VER-01 and
+  TC-VER-02 close FU-113; TC-PROP-04 closes FU-094. **TC-CALC-01 stays `draft`** until Adrian's
+  hand figure arrives: a calculation case is worth only the figure it is checked against, and
+  the one it has is the application's own. Each was driven once, by hand, with records created
+  under `TC-` names and deleted afterwards; none has a spec, and the next promotion wave takes
+  them the way #36.18 took the second.
 
 - **`draft`: TC-AUTH-02, the first `authz` case (Slice #36.20).** Signed in as an account whose
   role is `user`, it checks what that role is shown, turned away from and refused. It waits for
@@ -176,7 +199,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Twenty-three cases, all `happy` but TC-AUTH-02, and that is a scope rule rather than a taste.** A case in the
+**Thirty-two cases, all `happy` but TC-AUTH-02, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
@@ -244,9 +267,9 @@ added, in a check that already runs on every push. This is the same mechanism
 rotting, and it is deliberately not a new one.
 
 **Richer data — a new numbered folder.** New scenario folders go under
-`C:\dev\TEST.DATA\Test.Claude\` beside the eight that are there
+`C:\dev\TEST.DATA\Test.Claude\` beside the nine that are there
 (`01.smoke.one.property`, `02.rerun`, `03.types.noform`, `04.mixed`, `05.big`,
-`06.two.id.cards`, `07.smoke.tc.marker`, `08.tc.coord.file`), following the same numbering, and the case that uses one names it in
+`06.two.id.cards`, `07.smoke.tc.marker`, `08.tc.coord.file`, `09.tc.calc.file`), following the same numbering, and the case that uses one names it in
 its `Data` line and in its row above. The rest of `C:\dev\TEST.DATA\` — `CLINCENI.3`
 with its twenty-odd property folders, `flotante` with the CVC and act-adițional samples,
 `Modele.Acte`, `A`, `A2.*`, `A3.CVCs` — is the **archive** these folders are cut from,
@@ -271,7 +294,9 @@ so the next person to extend the suite does not re-create what is there. All fou
 import or AI cases, which wait on the cost Slice #36.07 measured; the second wave (#36.08)
 claimed none of them. It added one folder of its own, `08.tc.coord.file` — TC-PROP-03's
 coordinate file, copied out of `01.smoke.one.property` under a `TC-` name because the
-screen writes the file name into „Poreclă" — and that one is owned.
+screen writes the file name into „Poreclă" — and that one is owned. The third wave (#36.21)
+added `09.tc.calc.file`, TC-CALC-01's five-section division file built on the same four corners,
+and that one is owned too.
 
 | Folder | What it is | The case it is waiting for |
 |---|---|---|

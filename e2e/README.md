@@ -55,10 +55,12 @@ the test runner's, whose result id is quoted, or Adrian's — see the catalogue'
 
 Every screen whose catalogue row is below `automated` or missing: the import wizard and AI
 interpret (TC-IMP-01, TC-IMP-02, TC-AI-01 — the folder picker has no file input to set, and each
-run spends AI budget), a directional role between two properties (TC-ASSOC-08, `draft` — FU-220), person and
-document versioning, corners editing, the map, the admin screens other than groups and tags, and
-every unhappy path — empty inputs, wrong shares, two tabs at once. `CATALOGUE_NOT_YET` in
-`src/lib/testing/catalogue-map.ts` is the list. Eighteen happy paths is a floor under the ordinary
+run spends AI budget), a directional role between two properties (TC-ASSOC-08, `draft` — FU-220), the
+third wave's nine cases (Slice #36.21: a company on a document and beside a person, a certificate's
+parties, a stamp, person and document versioning, corners editing, help text, the lateral-road
+calculation — `driven` by hand, no spec until a promotion wave confirms them), the map, users,
+settings, reference data, and every unhappy path — empty inputs, wrong shares, two tabs at once.
+`CATALOGUE_NOT_YET` in `src/lib/testing/catalogue-map.ts` lists the routes with no case at all. Eighteen happy paths is a floor under the ordinary
 week's work, not a safety net: a green run says those eighteen still hold, not that the app works.
 
 ---

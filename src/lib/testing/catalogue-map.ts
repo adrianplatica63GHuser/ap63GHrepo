@@ -44,31 +44,41 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-AUTH-02"],
   "/properties/new":                       ["TC-PROP-01"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08"],
-  "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02"],
-  "/natural-persons/new":                  ["TC-PERS-01"],
-  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09"],
-  "/documents":                            ["TC-DOC-01", "TC-AUTH-02"],
-  "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07"],
-  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01"],
+  "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02", "TC-VER-01"],
+  "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01"],
+  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01"],
+  "/documents":                            ["TC-DOC-01", "TC-AUTH-02", "TC-VER-02"],
+  "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02"],
+  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02"],
   "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03", "TC-GRP-01", "TC-TAG-01", "TC-AUTH-02"],
   "/judicial-persons":                     ["TC-PERS-02"],
-  "/judicial-persons/new":                 ["TC-PERS-02"],
-  "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06"],
+  "/judicial-persons/new":                 ["TC-PERS-02", "TC-ASSOC-10", "TC-ASSOC-11"],
+  "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06", "TC-ASSOC-10", "TC-ASSOC-11"],
   "/natural-persons/[id]/associate-document": ["TC-ASSOC-03"],
   "/properties/[id]/associate-person":     ["TC-ASSOC-04"],
   "/natural-persons/[id]/associate-property": ["TC-ASSOC-04"],
   "/properties/[id]/associate-document":   ["TC-ASSOC-05"],
   "/judicial-persons/[id]/associate-property": ["TC-ASSOC-06"],
   "/documents/[id]/associate-reference":   ["TC-ASSOC-07"],
-  "/admin/groups":                         ["TC-GRP-01"],
+  "/admin/groups":                         ["TC-GRP-01", "TC-CALC-01"],
   "/admin/groups/[id]":                    ["TC-GRP-01"],
-  "/admin/tags":                           ["TC-TAG-01"],
+  "/admin/tags":                           ["TC-TAG-01", "TC-HELP-01"],
   "/properties/[id]/associate-reference":  ["TC-ASSOC-08"],
   "/natural-persons/[id]/associate-person": ["TC-ASSOC-09"],
+  // Slice #36.21 — the third wave: nine routes out of CATALOGUE_NOT_YET.
+  "/judicial-persons/[id]/associate-document": ["TC-ASSOC-10"],
+  "/judicial-persons/[id]/associate-person": ["TC-ASSOC-11"],
+  "/documents/[id]/associate-party":       ["TC-ASSOC-12"],
+  "/admin/stamps":                         ["TC-STAMP-01"],
+  "/admin/stamps/[id]":                    ["TC-STAMP-01"],
+  "/admin/help-content":                   ["TC-HELP-01"],
+  "/admin/calculation":                    ["TC-CALC-01"],
+  "/admin/calculation/history":            ["TC-CALC-01"],
+  "/admin/calculation/history/[id]":       ["TC-CALC-01"],
 };
 
 /**
@@ -84,30 +94,12 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "Change a password and log back in with the new one. Needs a throwaway account, because it leaves the tester locked out of the old one.",
   "/properties/map":
     "Open the map, see the property from TC-PROP-01 on it, open it from there. Needs a Google Maps key in .env, so it is not a case every machine can run.",
-  "/judicial-persons/[id]/associate-document":
-    "The judicial-person twin of TC-ASSOC-01.",
-  "/judicial-persons/[id]/associate-person":
-    "A natural person acting for a company — the representative link.",
-  "/documents/[id]/associate-party":
-    "Add a party to a Certificat de Mostenitor with quality Defunct or Mostenitor. No data folder holds one, and none is needed: a Certificat de Mostenitor made by hand shows „Părți” and „+ Adaugă parte” at once (seen on TC-ASSOC-07's run, Slice #36.08).",
   "/admin/value-lists":
     "Add a value to a closed list and see it offered in the form that consumes it. Writes reference data, so it needs its own cleanup rule.",
-  "/admin/stamps":
-    "Create a stamp and apply it to a record.",
-  "/admin/stamps/[id]":
-    "Open a stamp and see what carries it.",
   "/admin/users":
     "Approve a pending account. Creates a real user, so it needs a decision about cleanup first.",
   "/admin/settings":
     "Change a setting and see it take effect. Global state, so it cannot run beside another case.",
-  "/admin/help-content":
-    "Author help for a screen and see the ? button show it. Pairs with the help-coverage guard.",
-  "/admin/calculation":
-    "Run a lateral-road calculation over a known property and check the result against a figure a person computed.",
-  "/admin/calculation/history":
-    "See the run from the case above in the history list.",
-  "/admin/calculation/history/[id]":
-    "Open that run and read what it did.",
   "/admin/doc-type-engine":
     "Distil a document type from samples. Spends AI budget, so it needs the same cost note TC-IMP-01 carries.",
 };
