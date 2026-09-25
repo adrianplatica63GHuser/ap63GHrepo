@@ -34,6 +34,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // a cached "already in the archive" is a lie
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 
@@ -79,6 +80,10 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   let raw: unknown;
   try {
     raw = await request.json();

@@ -4,6 +4,7 @@
  * DELETE — remove an association by its UUID
  */
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
 import { deleteDocTypePersonRole } from "@/lib/admin/doc-type-person-roles/queries";
@@ -16,6 +17,10 @@ export async function DELETE(
   _req: NextRequest,
   ctx: Ctx,
 ): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
 
   try {

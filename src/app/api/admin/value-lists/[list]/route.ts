@@ -9,6 +9,7 @@
  * POST — insert a new row; validates body against the per-list Zod schema
  */
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +68,10 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { list } = await ctx.params;
 
   if (!isValidListKey(list)) {

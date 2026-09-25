@@ -5,6 +5,7 @@
  * POST — create a new association; body: { documentTypeId, personRoleId }
  */
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse, pgErrorCode } from "@/lib/api/errors";
@@ -21,6 +22,10 @@ const createSchema = z.object({
 });
 
 export async function GET(): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   try {
     const items = await listDocTypePersonRoles();
     return Response.json({ items, total: items.length });
@@ -30,6 +35,10 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();

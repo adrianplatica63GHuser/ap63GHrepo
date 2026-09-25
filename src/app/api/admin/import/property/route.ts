@@ -20,6 +20,7 @@
  * ordinary case in the error branch.
  */
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 import { dbErrorToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
@@ -77,6 +78,10 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   let raw: unknown;
   try {
     raw = await request.json();

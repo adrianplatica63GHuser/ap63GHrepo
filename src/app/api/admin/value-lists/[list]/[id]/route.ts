@@ -17,6 +17,7 @@
  *          those objects onto another value of the same list (POST ./reassign).
  */
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import {
   dbErrorToResponse,
@@ -55,6 +56,10 @@ export async function PUT(
   request: NextRequest,
   ctx: Ctx,
 ): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { list, id } = await ctx.params;
 
   if (!isValidListKey(list)) {
@@ -232,6 +237,10 @@ export async function PUT(
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { list, id } = await ctx.params;
 
   if (!isValidListKey(list)) {

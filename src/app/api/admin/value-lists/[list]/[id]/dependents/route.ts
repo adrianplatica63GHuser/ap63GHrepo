@@ -18,6 +18,7 @@
  * database cascades away and which never blocks a delete.
  */
 
+import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,10 @@ import { countDependents } from "@/lib/admin/value-lists/queries";
 type Ctx = { params: Promise<{ list: string; id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { list, id } = await ctx.params;
 
   if (!isValidListKey(list)) {

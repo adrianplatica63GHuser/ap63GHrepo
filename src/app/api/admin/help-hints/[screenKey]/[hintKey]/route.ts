@@ -1,3 +1,4 @@
+import { requireSuperuser } from "@/lib/auth/current-role";
 import { NextResponse } from "next/server";
 import { helpHintUpsertSchema } from "@/lib/help/validation";
 import { isHelpHint } from "@/lib/help/registry";
@@ -15,6 +16,10 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ screenKey: string; hintKey: string }> },
 ) {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   try {
     const { screenKey, hintKey } = await params;
     const row = await getHelpHint(screenKey, hintKey);
@@ -29,6 +34,10 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ screenKey: string; hintKey: string }> },
 ) {
+  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   try {
     const { screenKey, hintKey } = await params;
     if (!isHelpHint(screenKey, hintKey)) {

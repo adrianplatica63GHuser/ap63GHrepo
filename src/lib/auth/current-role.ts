@@ -233,3 +233,45 @@ export async function getCurrentUserIdAndRole(): Promise<{
     return { userId: user.id, role: "user", degraded: true };
   }
 }
+
+/**
+ * The first line of every mutating handler under `src/app/api/admin`, and of
+ * every GET there that no ordinary screen reads.                (Slice #36.20)
+ *
+ * Returns `null` when the caller is a superuser — carry on — and otherwise the
+ * `Response` to return as it stands:
+ *
+ *   503 + `Retry-After` when nobody could read the caller's role (`degraded`,
+ *       or the auth API blipping between the middleware and this line), for
+ *       the reason `read-sample`'s handler gives at length: a 403 there would
+ *       tell a superuser they are not one, and nothing retries a 403;
+ *   403 when the role was read and is not `superuser`.
+ *
+ * ⚠️ **A ROUTE HANDLER IS NOT GUARDED BY BEING UNDER /admin.** `admin/layout.tsx`
+ * is a page layout and never runs for `/api/admin/*`, so before this slice 19 of
+ * the 26 handlers there answered any signed-in account (FU-002). This helper is
+ * the one way in, and `src/__tests__/admin-api-role-guard.test.ts` fails the
+ * push when a mutating handler does not call it — or when a GET neither calls it
+ * nor is listed, with the screen that needs it, in `ADMIN_API_OPEN_READS`
+ * (`src/lib/auth/admin-api-access.ts`).
+ *
+ * The UAT box reports as a superuser (`withRole`), so it is let through, as the
+ * admin pages already let it through. The account screens stay on the stricter
+ * `canManageAccounts()`.
+ */
+export async function requireSuperuser(): Promise<Response | null> {
+  const { userId, role, degraded } = await getCurrentUserIdAndRole();
+  if (degraded || userId === ANONYMOUS_USER_ID) {
+    return Response.json(
+      { error: "Nu am putut verifica drepturile contului. Încercați din nou în curând.", code: "role_unavailable" },
+      { status: 503, headers: { "Retry-After": "5" } },
+    );
+  }
+  if (role !== "superuser") {
+    return Response.json(
+      { error: "Nu aveți dreptul să folosiți această funcție.", code: "forbidden" },
+      { status: 403 },
+    );
+  }
+  return null;
+}
