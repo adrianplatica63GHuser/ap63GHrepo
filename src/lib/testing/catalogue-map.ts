@@ -44,10 +44,10 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03"],
   "/properties/new":                       ["TC-PROP-01"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08"],
   "/natural-persons":                      ["TC-PERS-01"],
   "/natural-persons/new":                  ["TC-PERS-01"],
-  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04"],
+  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09"],
   "/documents":                            ["TC-DOC-01"],
   "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07"],
   "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07"],
@@ -67,6 +67,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/admin/groups":                         ["TC-GRP-01"],
   "/admin/groups/[id]":                    ["TC-GRP-01"],
   "/admin/tags":                           ["TC-TAG-01"],
+  "/properties/[id]/associate-reference":  ["TC-ASSOC-08"],
+  "/natural-persons/[id]/associate-person": ["TC-ASSOC-09"],
 };
 
 /**
@@ -82,10 +84,6 @@ export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
     "Change a password and log back in with the new one. Needs a throwaway account, because it leaves the tester locked out of the old one.",
   "/properties/map":
     "Open the map, see the property from TC-PROP-01 on it, open it from there. Needs a Google Maps key in .env, so it is not a case every machine can run.",
-  "/properties/[id]/associate-reference":
-    "Link two properties to each other and check the relationship reads correctly in both directions.",
-  "/natural-persons/[id]/associate-person":
-    "Link two people (mandatar, mostenitor) and check the relationship reads correctly in both directions.",
   "/judicial-persons/[id]/associate-document":
     "The judicial-person twin of TC-ASSOC-01.",
   "/judicial-persons/[id]/associate-person":

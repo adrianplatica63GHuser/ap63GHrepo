@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -64,6 +64,28 @@ document asociat". Then open `TC-ASSOC-07 Titlu anterior`, press „Șterge" at 
 form and answer „Ștergeți actul?" with **„Da"**. TC-DOC-01's own cleanup handles the contract.
 
 ## Notes from the runs
+
+**2026-09-25, second run (Slice #36.19) — `confirmed`: the file held line for line, and this
+time the pair sorted the way that was red.** The certificate `DOC01976` (`e2a4…`) sorted AFTER
+the contract `DOC01974` (`adec…`), the order #36.08 measured backwards. Step 7 read **acest
+document „Titlu anterior al” DOC01974**, step 8 **DOC01976 „Titlu anterior al” acest document**.
+Removed with the radio and „Dezasociază", then „Șterge" and „Da" on the certificate. Only this
+section was written.
+
+**2026-09-25, first run after the fix (Slice #36.19) — green.** `associateDocumentToDocument`
+now stores, when its caller passes no direction, that the role reads from the document whose
+screen it was chosen on — per pair (`manualLinkDirection`, FU-001). TC-DOC-01's contract
+`DOC01974` was made by hand for it (steps 1–5 of that case, no page). Steps 1–8 held as written:
+the certificate `DOC01975` read **acest document „Titlu anterior al” DOC01974**, the contract
+**DOC01975 „Titlu anterior al” acest document**. On this run the certificate (`77fd…`) sorted
+BEFORE the contract — the order the old default already got right — which is why the second
+run above had to be the other one. The certificate was deleted with „Șterge" and „Da"; its link
+went with it.
+
+Two things the runs saw that the steps do not assert: the button on each row reads
+„Vizualizează", not „Vizualizare" as on every other association tab; and „Tip relație" on this
+screen was a <label> tied to nothing, so the select had no accessible name (FU-219's shape) —
+tied to it in this slice, here and on the property twin, so the spec can name it.
 
 **2026-09-23 — driven for the first time, and RED at the assertion, so the row stays at
 `draft` (Slice #36.08).** The precedent is TC-ASSOC-01's first run: a run that cannot reach
