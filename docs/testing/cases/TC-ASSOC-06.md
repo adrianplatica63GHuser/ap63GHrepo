@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-25 |
 
 ## What this proves
@@ -47,6 +47,9 @@ On the company's „Proprietăți" tab, select the row's radio and press „Deza
 „Nicio proprietate asociată" follows.
 
 ## Notes from the runs
+
+**2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
+result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.
 
 **2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `JPERS01899` made
 owner of `PROP01896`; read from the property's „Persoane"; „Vizualizare" opened

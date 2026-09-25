@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-25 |
 
 ## What this proves
@@ -59,6 +59,9 @@ answer the dialog „Ștergeți proprietatea?" with **„Da"** — its two butto
 list instead.
 
 ## Notes from the runs
+
+**2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
+result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.
 
 **2026-09-25 (Slice #36.18) — held line for line, to create the property the second runs
 needed.** `PROP01896`, „Se afișează 13 din 13" → „14 din 14", badged „Nou!", tarla `40`,

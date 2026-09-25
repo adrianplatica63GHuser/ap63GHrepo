@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-25 |
 
 ## What this proves
@@ -44,6 +44,9 @@ On the document's „Proprietăți" tab — or the property's „Acte" — selec
 and press „Dezasociază". „Nicio proprietate asociată" follows on the document.
 
 ## Notes from the runs
+
+**2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
+result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.
 
 **2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `DOC01898`
 attached to `PROP01896` from the property; the property's „Acte" read Tip · Titlu; read back

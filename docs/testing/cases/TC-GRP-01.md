@@ -5,7 +5,7 @@
 | **Area** | group |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-25 |
 
 ## What this proves
@@ -55,6 +55,9 @@ nu poate fi anulată." and „Șterge" / „Anulează"; **„Șterge"**. The cou
 both properties are still there — a group's members exist independently.
 
 ## Notes from the runs
+
+**2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
+result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.
 
 **2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line. Result `GRP-014`**,
 12 → 13 groups, `PROP01896` and `PROP01900` staged as „[nou]" under „Modificări nesalvate", then

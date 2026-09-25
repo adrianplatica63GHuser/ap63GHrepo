@@ -66,60 +66,61 @@ fixed fixture where the existing one will do.
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-09-23 | `e2e/auth/login-dashboard.spec.ts` |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
-| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `confirmed` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
+| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
-| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `confirmed` | 2026-09-25 | `e2e/person/company-create-edit.spec.ts` |
+| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-09-25 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
-| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `confirmed` | 2026-09-25 | `e2e/association/person-document.spec.ts` |
-| [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `confirmed` | 2026-09-25 | `e2e/association/property-person.spec.ts` |
-| [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `confirmed` | 2026-09-25 | `e2e/association/property-document.spec.ts` |
-| [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `confirmed` | 2026-09-25 | `e2e/association/company-property.spec.ts` |
+| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-document.spec.ts` |
+| [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-person.spec.ts` |
+| [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-document.spec.ts` |
+| [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `automated` | 2026-09-25 | `e2e/association/company-property.spec.ts` |
 | [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `draft` | — | — |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
-| [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `confirmed` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
-| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `confirmed` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
+| [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
+| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
 
-**Seven are `automated`, nine are `confirmed`, three are `driven`, and one is `draft`** — as
-of 2026-09-25 (Slice #36.18, before its specs ran).
+**Sixteen are `automated`, three are `driven`, and one is `draft`** — as of 2026-09-25 (Slice
+#36.18). Nothing is `confirmed`: every row that reached it has its spec, and every spec has run
+green. What stays below `automated` is exactly the import/AI trio (below) and TC-ASSOC-07, and
+the reason for each is written here, not implied.
 
-- **The second wave, Slice #36.08: nine cases for the ordinary week's work.** TC-PERS-02 (a
-  company), TC-ASSOC-03 to TC-ASSOC-06 (each association reached from its other end, a
-  person and a company on a property), TC-PROP-03 (a property from a coordinate file),
-  TC-GRP-01 and TC-TAG-01 are `driven`, first run green, each corrected against the screen.
-  **TC-ASSOC-07 is `draft` because its first run was red at the assertion**: a reference made
-  by hand under „Titlu anterior al" read backwards from both documents. The manual „Asociază"
-  sends no direction, so the role reads from whichever document's uuid sorts first — the
-  case file has the measurement and the one-line fix, which changes a contract #36.03 wrote
-  down and so was not made here. The wave ran after TC-PROP-01, TC-PERS-01 and TC-DOC-01
-  recreated the records it needs, and removed everything it made: a search for `TC-` on
-  Căutare globală finds nothing after it.
-- **`confirmed`, spec parked: TC-PROP-01.** Its first unchanged run since the 2026-09-22
-  correction was the one that opened the second wave. The spec that follows it still waits as
-  `e2e/property/property-create.parked.ts`; un-parking it is a promotion slice's work.
-- **`automated`: TC-AUTH-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
-  TC-SRCH-01** — green together in Adrian's `npm run e2e` on 2026-09-23 (12 passed,
-  29.2 s), after six red runs. What they found: four mistakes in the specs themselves
-  (two over-broad locators, a label that runs into its options, a click on the
-  Proprietăți list that never settled), one case file wrong about the screen
-  (TC-PROP-01, below), and one misspelt button in the application — „Asociează
-  selecția" on the document's Asociere persoană screen, corrected in
-  `messages/ro-RO.json`, which four runs in a row stopped on. TC-AUTH-01 went from `draft`
-  straight to `automated` by the stated exception above. TC-PROP-02's spec is the
-  fifth test in `e2e/versioning/property-versioning.spec.ts`, not a file of its own.
-- **TC-PROP-01's history.** The first `npm run e2e` found its case file
-  wrong — step 1's columns were the driving browser's saved „Câmpuri afișate", not what a
-  fresh browser shows — which is precisely what this process is for: every hand run held
-  because every hand run used the same browser. The case is corrected (a new step 2
-  chooses the columns), which sends it back to `driven`; its spec follows the corrected
-  file and waits as `e2e/property/property-create.parked.ts`, outside Playwright's match,
-  until the next unchanged run confirms it — which Slice #36.08's run did.
+- **The promotion wave, Slice #36.18: nine rows to `automated` in one session.** The eight the
+  second wave (#36.08) drove once — TC-PROP-03, TC-PERS-02, TC-ASSOC-03 to TC-ASSOC-06,
+  TC-GRP-01, TC-TAG-01 — were driven a second time in one Chrome session, after TC-PROP-01,
+  TC-PERS-01 and TC-DOC-01 recreated the records they need; all eight held with no edit, so all
+  eight were confirmed, and a spec was written from each case file. TC-PROP-01's spec, parked
+  since 2026-09-22, was renamed into the `*.spec.ts` match unchanged. The test runner's `full`
+  run `20260925T201927Z-23319` on `1493c18` ran all nine green in the whole suite (21 tests); the
+  run before it (`20260925T200631Z-22963`) found two mistakes in the new specs, none in the
+  application — a „nowhere on the page" check that also matched the sidebar's RECENTE list, and a
+  5 s wait on a route that compiles cold. A search for `TC-` on Căutare globală found nothing
+  before the hand runs and nothing after them.
+- **TC-PROP-03's spec reads a synthetic file.** The case reads `08.tc.coord.file`, cut from a real
+  parcel; the spec reads `e2e/fixtures/TC-E2E-PROP-03 Teren din fisier.txt`, four corners made for
+  the purpose (600.00 m²), as TC-DOC-01's spec attaches a blank page instead of a real deed.
+- **TC-GRP-01 and TC-TAG-01 write shared state** — a group every picker lists, a tag in every
+  cloud. Both specs remove it even when an assertion fails: the group through
+  `removeGroupLeftovers`, the tag with the property that carries it.
+- **Earlier `automated`: TC-AUTH-01, TC-PROP-02, TC-PERS-01, TC-DOC-01, TC-ASSOC-01, TC-ASSOC-02,
+  TC-SRCH-01** — green together in Adrian's `npm run e2e` on 2026-09-23 (12 passed, 29.2 s),
+  after six red runs. What they found: four mistakes in the specs themselves (two over-broad
+  locators, a label that runs into its options, a click on the Proprietăți list that never
+  settled), one case file wrong about the screen (TC-PROP-01, whose step 1 had quoted the driving
+  browser's saved „Câmpuri afișate"), and one misspelt button in the application — „Asociează
+  selecția" on the document's Asociere persoană screen, corrected in `messages/ro-RO.json`.
+  TC-AUTH-01 went from `draft` straight to `automated` by the stated exception above.
+  TC-PROP-02's spec is the fifth test in `e2e/versioning/property-versioning.spec.ts`.
+- **`draft`: TC-ASSOC-07**, because its first run was red at the assertion (#36.08): a reference
+  made by hand under „Titlu anterior al" read backwards from both documents. The case file has the
+  measurement and the one-line fix, which changes a contract #36.03 wrote down; Slice 36.19 is
+  where it is decided.
 - **`driven`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — first driven in Slice #36.07,
   with Adrian picking the folder (below). One import on this archive costs **4 Claude
   calls** — 2 classifications at „Scanare", 1 identity-card read, 1 document read — and

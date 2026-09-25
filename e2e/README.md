@@ -46,17 +46,18 @@ fixed property:
 | `Seteaza ca actuala — creaza versiune noua din snapshot vechi` | Restoring an old snapshot creates a NEW latest version rather than rewriting history, and the form is editable again afterwards |
 | `butonul Salveaza: dezactivat → activ → dezactivat dupa salvare` | Save tracks dirty state correctly — the bug class from Slice #18.15.bugs |
 
-A case's row reaches `automated` only after a run of this suite has been green on
-Adrian's machine — see the catalogue's states table.
+A case's row reaches `automated` only after a whole run of this suite has been green —
+the test runner's, whose result id is quoted, or Adrian's — see the catalogue's states table.
 
 ## What is NOT covered
 
-Every screen whose catalogue row is `draft` or missing: the import wizard and AI
-interpret (TC-IMP-01, TC-AI-01 — the folder picker has no file input to set),
-person and document versioning, corners editing, judicial persons, the map, the
-admin screens, and every unhappy path — empty inputs, wrong shares, two tabs at
-once. `CATALOGUE_NOT_YET` in `src/lib/testing/catalogue-map.ts` is the list. This
-is a foothold, not a safety net — don't read a green run as "the app works".
+Every screen whose catalogue row is below `automated` or missing: the import wizard and AI
+interpret (TC-IMP-01, TC-IMP-02, TC-AI-01 — the folder picker has no file input to set, and each
+run spends AI budget), the manual document-to-document reference (TC-ASSOC-07, `draft`), person and
+document versioning, corners editing, the map, the admin screens other than groups and tags, and
+every unhappy path — empty inputs, wrong shares, two tabs at once. `CATALOGUE_NOT_YET` in
+`src/lib/testing/catalogue-map.ts` is the list. Sixteen happy paths is a floor under the ordinary
+week's work, not a safety net: a green run says those sixteen still hold, not that the app works.
 
 ---
 
@@ -150,11 +151,15 @@ and every record a spec writes carries `TC-E2E-<case>` in a visible field
 (`e2e/helpers/records.ts`). If a run is killed half-way, the next run of the
 same spec removes what it left before starting; in between, Căutare globală
 finds it by `TC-E2E-`. A hand run's records say `TC-` without `E2E`, and no spec
-ever removes those.
+ever removes those. TC-GRP-01 and TC-TAG-01 write state every user
+sees — a group, a tag — and remove it even when an assertion fails.
 
 **`e2e/fixtures/` holds only files made for the purpose.** TC-DOC-01's hand run
 attaches a scan of a real contract; its spec attaches `tc-e2e-pagina.png`, a
-blank „PAGINĂ DE TEST". No real deed goes into git.
+blank „PAGINĂ DE TEST". TC-PROP-03's hand run reads a coordinate file cut from a
+real parcel; its spec reads `TC-E2E-PROP-03 Teren din fisier.txt`, four made-up
+corners — named with the marker because the screen writes the file name into
+„Poreclă". No real deed and no real parcel goes into git.
 
 **`e2e/.auth/` is gitignored, and must stay that way.** `session.json` holds a
 live Supabase session cookie for your test account. It is also excluded from the
