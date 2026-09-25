@@ -432,11 +432,14 @@ export function HelpContentHub() {
                   ].join(" ")}
                 >
                   <span className="truncate">{t(helpScreenLabelKey(s.key))}</span>
-                  <StatusBadge
+                  {/* Slice #36.21 (TC-HELP-01): no badge until the list has
+                      loaded — before, every screen read „Lipsă" for a few
+                      seconds, including the thirty that have content. */}
+                  {contentQuery.isSuccess && <StatusBadge
                     complete={complete}
                     completeLabel={t("statusComplete")}
                     missingLabel={t("statusMissing")}
-                  />
+                  />}
                 </button>
               );
             })}
@@ -464,11 +467,11 @@ export function HelpContentHub() {
                   ].join(" ")}
                 >
                   <span className="truncate">{t(helpHintLabelKey(h.hintKey))}</span>
-                  <StatusBadge
+                  {hintsQuery.isSuccess && <StatusBadge
                     complete={complete}
                     completeLabel={t("statusComplete")}
                     missingLabel={t("statusMissing")}
-                  />
+                  />}
                 </button>
               );
             })}
@@ -478,7 +481,11 @@ export function HelpContentHub() {
           {tab === "screens" &&
             (selectedScreen ? (
               <ScreenEditor
-                key={selectedScreen}
+                // Slice #36.21: the editor seeds its fields once, on mount. Keyed
+                // on the load state too, so a screen picked before the list
+                // arrived is re-seeded with its stored text rather than left
+                // empty — where „Salvează" would have written blanks over it.
+                key={`${selectedScreen}:${contentQuery.isSuccess}`}
                 screenKey={selectedScreen}
                 row={contentByKey.get(selectedScreen)}
               />
@@ -489,7 +496,7 @@ export function HelpContentHub() {
           {tab === "hints" &&
             (selectedHintEntry ? (
               <HintEditor
-                key={selectedHintEntry.hintKey}
+                key={`${selectedHintEntry.hintKey}:${hintsQuery.isSuccess}`}
                 hintKey={selectedHintEntry.hintKey}
                 screens={selectedHintEntry.screens}
                 // Seed the editor from the first screen's row: the fan-out
