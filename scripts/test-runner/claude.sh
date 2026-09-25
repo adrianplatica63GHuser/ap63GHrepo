@@ -3,6 +3,8 @@
 # the device VM, over the bridge; the runner itself runs on Windows (runner.ts).
 #
 #   claude.sh request <sequence> [only-path ...]   write a request for HEAD; prints its id
+#   claude.sh request reconcile <folder>           the one sequence with an argument: a folder
+#                                                  NAME under C:\dev\TEST.DATA\Test.Claude\ (#36.22)
 #   claude.sh wait <id> [seconds]                  poll its result (default 170 s, inside the 180 s cap)
 #   claude.sh show <id>                            print a result as it stands
 #   claude.sh ping [seconds]                       request + wait for the sequence that runs nothing
@@ -10,6 +12,7 @@
 # Sequences: ping · full · full-db · static · e2e · jest · verify-rebuild
 #            push (main, fast-forward, on a green full) · ci (read Actions for HEAD)
 #            migrate-local (Apply-Migration + Export-SupabaseSchema, confirmed migrations only)
+#            reconcile <folder> (what became of every file of that folder after an import; read-only)
 #
 # wait/ping exit: 0 passed · 1 failed · 2 error · 3 refused · 4 still running · 5 no result yet
 #                 6 held — a guard said this waits for Adrian; the step's summary names why
@@ -26,7 +29,7 @@ show() {
     const fs = require("fs");
     const r = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
     const out = [];
-    out.push(`runner result ${r.id}: ${String(r.status).toUpperCase()} — sequence ${r.sequence ?? "?"} on ${r.commit ? r.commit.slice(0, 7) : "?"}${r.only ? ` (only ${r.only.join(", ")})` : ""}`);
+    out.push(`runner result ${r.id}: ${String(r.status).toUpperCase()} — sequence ${r.sequence ?? "?"} on ${r.commit ? r.commit.slice(0, 7) : "?"}${r.only ? ` (only ${r.only.join(", ")})` : ""}${r.folder ? ` (folder ${r.folder})` : ""}`);
     if (r.refusal) out.push(`  refused: ${r.refusal.code} — ${r.refusal.message}`);
     for (const s of r.steps || []) {
       out.push(`  ${s.name.padEnd(15)} ${s.status.padEnd(10)} ${s.seconds === null ? "" : s.seconds + " s  "}${s.summary}`);
@@ -45,13 +48,19 @@ request() {
   local seq="$1"; shift
   local head; head="$(git -C "$repo" rev-parse HEAD)" || { echo "git rev-parse HEAD failed" >&2; return 2; }
   local id; id="$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
+  local folder=""
+  if [ "$seq" = "reconcile" ]; then
+    [ $# -ge 1 ] || { echo "usage: claude.sh request reconcile <folder>" >&2; return 2; }
+    folder="$1"; shift
+  fi
   mkdir -p "$ch/requests"
   node -e '
-    const [id, seq, commit, ...only] = process.argv.slice(1);
+    const [id, seq, commit, folder, ...only] = process.argv.slice(1);
     const r = { version: 1, id, sequence: seq, commit };
     if (only.length) r.only = only;
+    if (folder) r.folder = folder;
     process.stdout.write(JSON.stringify(r));
-  ' "$id" "$seq" "$head" "$@" > "$ch/requests/$id.json.tmp" || return 2
+  ' "$id" "$seq" "$head" "$folder" "$@" > "$ch/requests/$id.json.tmp" || return 2
   mv -f "$ch/requests/$id.json.tmp" "$ch/requests/$id.json"   # the runner reads only *.json: rename is the commit point
   echo "$id"
 }

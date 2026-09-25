@@ -26,7 +26,9 @@ import path from "path";
 
 import {
   CHANNEL_DIR,
+  DATA_ROOT_SEGMENTS,
   DEPENDENT_STEPS,
+  FOLDER_SEQUENCES,
   SCHEMA_CONFIRMED_TRAILER,
   MAX_ONLY_ENTRIES,
   MAX_REQUEST_BYTES,
@@ -79,6 +81,7 @@ const ctx = (over: Partial<RequestContext> = {}): RequestContext => ({
   busyWith: null,
   knownE2eSpecs: ["e2e/versioning/property-versioning.spec.ts", "e2e/auth/login-dashboard.spec.ts"],
   knownJestSuites: ["src/__tests__/test-runner-protocol.test.ts"],
+  knownDataFolders: ["07.smoke.tc.marker", "10.big.tc.marker"],
   ...over,
 });
 
@@ -97,7 +100,18 @@ describe("a request that asks for exactly what it may", () => {
   });
 
   it.each(SEQUENCE_NAMES.map((s) => [s]))("sequence %s is on the fixed list", (sequence) => {
-    expect(refusal(req({ sequence }))).toBe("accepted");
+    const folder = FOLDER_SEQUENCES.includes(sequence) ? { folder: "07.smoke.tc.marker" } : {};
+    expect(refusal(req({ sequence, ...folder }))).toBe("accepted");
+  });
+
+  it("reconcile carries its folder through, and only a folder the runner listed (Slice #36.22)", () => {
+    const r = parseRequest(req({ sequence: "reconcile", folder: "10.big.tc.marker" }), ctx());
+    expect(r).toEqual({
+      ok: true,
+      request: { version: 1, id: ID, sequence: "reconcile", commit: HEAD, folder: "10.big.tc.marker" },
+    });
+    expect(FOLDER_SEQUENCES).toEqual(["reconcile"]);
+    expect(DATA_ROOT_SEGMENTS).toEqual(["..", "TEST.DATA", "Test.Claude"]);
   });
 
   it("tolerates a UTF-8 byte-order mark (a PowerShell 5.1 Set-Content habit)", () => {
@@ -144,6 +158,14 @@ describe("every refusal, by name", () => {
     ["only naming a non-test file", req({ only: ["src/lib/x.ts"] }), "bad-only"],
     ["only narrowing a step the sequence lacks", req({ sequence: "jest", only: ["e2e/auth/login-dashboard.spec.ts"] }), "only-not-applicable"],
     ["only on a ping", req({ sequence: "ping", only: ["src/__tests__/test-runner-protocol.test.ts"] }), "only-not-applicable"],
+    ["reconcile with no folder", req({ sequence: "reconcile" }), "bad-folder"],
+    ["a folder that is a path", req({ sequence: "reconcile", folder: "..\\..\\Windows" }), "bad-folder"],
+    ["a folder with a slash", req({ sequence: "reconcile", folder: "07.smoke.tc.marker/x" }), "bad-folder"],
+    ["a folder climbing out", req({ sequence: "reconcile", folder: "a..b" }), "bad-folder"],
+    ["a hidden folder", req({ sequence: "reconcile", folder: ".git" }), "bad-folder"],
+    ["a folder as a number", req({ sequence: "reconcile", folder: 7 }), "bad-folder"],
+    ["a folder the runner did not list", req({ sequence: "reconcile", folder: "CLINCENI.3" }), "bad-folder"],
+    ["a folder on a sequence that takes none", req({ sequence: "full", folder: "07.smoke.tc.marker" }), "folder-not-applicable"],
     ["busy", req(), "busy", { busyWith: "20260924T150000Z-1" }],
     ["git could not answer", req(), "head-unknown", { headCommit: null }],
     ["the wrong commit", req({ commit: "f".repeat(40) }), "head-mismatch"],
@@ -283,6 +305,12 @@ describe("one-line summaries", () => {
     ["tsc", "src/a.ts(1,1): error TS2322: x\n", 2, "1 error in 1 file (exit 2)"],
     ["verify-rebuild", "step 1\nPASS — rebuild matches\n", 0, "PASS — rebuild matches (exit 0)"],
     ["e2e", "", null, "no exit code"],
+    [
+      "reconcile",
+      "LANDED     a.jpg → DOC00001 its only page\n\nRECONCILE: 10.big.tc.marker — 1 file: 1 landed, 0 missing; 0 extra pages; structure clean\n",
+      0,
+      "10.big.tc.marker — 1 file: 1 landed, 0 missing; 0 extra pages; structure clean (exit 0)",
+    ],
   ] as const)("%s", (step, text, code, expected) => {
     expect(summariseStep(step, text, code)).toBe(expected);
   });
@@ -472,6 +500,7 @@ describe("the migrate-local guard — only a committed, confirmed migration reac
   it("export-schema runs only after the step before it passed", () => {
     expect(DEPENDENT_STEPS).toEqual(["export-schema"]);
     expect(SEQUENCES["migrate-local"]).toEqual(["apply-migration", "export-schema"]);
+    expect(SEQUENCES.reconcile).toEqual(["reconcile"]);
   });
 });
 

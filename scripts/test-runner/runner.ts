@@ -49,6 +49,7 @@ import path from "path";
 import {
   ADRIAN_DEV_PORT,
   CHANNEL_DIR,
+  DATA_ROOT_SEGMENTS,
   MAX_REQUEST_BYTES,
   PROTOCOL_VERSION,
   RUNNER_DIST_DIR,
@@ -115,7 +116,11 @@ const BIN = {
   eslint: path.join(REPO, "node_modules", "eslint", "bin", "eslint.js"),
   tsc: path.join(REPO, "node_modules", "typescript", "bin", "tsc"),
   jest: path.join(REPO, "node_modules", "jest", "bin", "jest.js"),
+  tsx: path.join(REPO, "node_modules", "tsx", "dist", "cli.mjs"),
 };
+/** The folder a `reconcile` request names one child of (Slice #36.22). Never taken from a request. */
+const DATA_ROOT = path.resolve(REPO, ...DATA_ROOT_SEGMENTS);
+const RECONCILE_SCRIPT = path.join(REPO, "scripts", "testing", "reconcile-import.ts");
 const VERIFY_REBUILD = path.join(REPO, "scripts", "Verify-Rebuild.ps1");
 const APPLY_MIGRATION = path.join(REPO, "scripts", "Apply-Migration.ps1");
 const EXPORT_SCHEMA = path.join(REPO, "scripts", "Export-SupabaseSchema.ps1");
@@ -141,6 +146,7 @@ const TIMEOUT = {
   gitNet: MIN,
   migrate: 15 * MIN,
   exportSchema: 10 * MIN,
+  reconcile: 10 * MIN,
 };
 /** Captured output kept in memory per process for classification; the full text is in the log file. */
 const MAX_CAPTURE = 4 * 1024 * 1024;
@@ -845,6 +851,50 @@ function resultFile(id: string): string {
   return path.join(RES_DIR, `${id}.json`);
 }
 
+/**
+ * The data folders a `reconcile` request may name: the directories directly
+ * under DATA_ROOT, as this runner lists them. (Slice #36.22)
+ */
+function dataFolders(): string[] {
+  try {
+    return fs
+      .readdirSync(DATA_ROOT, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * `scripts/testing/reconcile-import.ts` on one data folder.   (Slice #36.22)
+ *
+ * Fixed argv: the script, and a path the runner built from DATA_ROOT and a name
+ * `parseRequest` has already checked against `dataFolders()`. Re-resolved here so
+ * a link inside the data root cannot point the check anywhere else.
+ */
+async function stepReconcile(folder: string | undefined, logFile: string): Promise<StepOutcome> {
+  if (folder === undefined) return { status: "error", exitCode: null, summary: "no folder on the request", notes: [] };
+  const target = path.join(DATA_ROOT, folder);
+  let real = "";
+  try {
+    real = fs.realpathSync(target);
+  } catch {
+    return { status: "error", exitCode: null, summary: `${folder} is not there any more`, notes: [] };
+  }
+  if (path.dirname(real).toLowerCase() !== fs.realpathSync(DATA_ROOT).toLowerCase()) {
+    return { status: "error", exitCode: null, summary: `${folder} resolves outside ${rel(DATA_ROOT)}`, notes: [] };
+  }
+  const r = await runLogged(NODE, [BIN.tsx, RECONCILE_SCRIPT, real], logFile, TIMEOUT.reconcile);
+  // reconcile-import.ts: 0 nothing wrong, 1 part of the folder landed and part is missing, 2 could not run.
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : r.exitCode === 1 ? "failed" : "error",
+    exitCode: r.exitCode,
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep("reconcile", r.text, r.exitCode),
+    notes: [`the full report is the step's log: ${rel(logFile)}`],
+  };
+}
+
 async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
   const plan: PlannedStep[] = planSteps(req);
   const logDir = path.join(LOG_DIR, req.id);
@@ -856,6 +906,7 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
     sequence: req.sequence,
     commit: req.commit,
     only: req.only ?? null,
+    ...(req.folder ? { folder: req.folder } : {}),
     status: "running",
     refusal: null,
     receivedAt,
@@ -867,7 +918,7 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
   };
   const save = (): void => writeJsonAtomic(resultFile(req.id), result);
   save();
-  logLine(`run ${req.id}: ${req.sequence}${req.only ? ` only=${req.only.join(",")}` : ""}`);
+  logLine(`run ${req.id}: ${req.sequence}${req.only ? ` only=${req.only.join(",")}` : ""}${req.folder ? ` folder=${req.folder}` : ""}`);
 
   let previous: { status: StepResult["status"]; applied: number } | null = null;
   for (let i = 0; i < plan.length; i++) {
@@ -916,6 +967,9 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
           break;
         case "export-schema":
           out = await stepExportSchema(logFile);
+          break;
+        case "reconcile":
+          out = await stepReconcile(req.folder, logFile);
           break;
       }
     } catch (e) {
@@ -985,7 +1039,14 @@ function scan(): void {
         continue; // vanished between readdir and read
       }
       fs.rmSync(full, { force: true });
-      const outcome = parseRequest(raw, { fileName, headCommit: head, busyWith: current, knownE2eSpecs, knownJestSuites });
+      const outcome = parseRequest(raw, {
+        fileName,
+        headCommit: head,
+        busyWith: current,
+        knownE2eSpecs,
+        knownJestSuites,
+        knownDataFolders: dataFolders(),
+      });
       if (!outcome.ok) {
         const id = outcome.id ?? resultIdForFile(fileName, `invalid-${Date.now()}`);
         let partial: { sequence?: unknown; commit?: unknown } = {};
@@ -1114,6 +1175,8 @@ async function selfTest(): Promise<number> {
   say(fs.existsSync(VERIFY_REBUILD), `Verify-Rebuild.ps1: ${rel(VERIFY_REBUILD)}`);
   say(fs.existsSync(APPLY_MIGRATION), `Apply-Migration.ps1: ${rel(APPLY_MIGRATION)}`);
   say(fs.existsSync(EXPORT_SCHEMA), `Export-SupabaseSchema.ps1: ${rel(EXPORT_SCHEMA)}`);
+  say(fs.existsSync(RECONCILE_SCRIPT), `reconcile-import.ts: ${rel(RECONCILE_SCRIPT)}`);
+  say(fs.existsSync(DATA_ROOT), `data root for reconcile: ${DATA_ROOT} (${dataFolders().length} folders)`);
   say(parseGithubRemote(git(["remote", "get-url", PUSH_REMOTE]).out) !== null, `${PUSH_REMOTE} is a github.com remote (push, ci)`);
   say(headCommit() !== null, "git rev-parse HEAD answers");
   const envFile = path.join(REPO, ".env");

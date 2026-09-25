@@ -39,6 +39,12 @@
  *                  for migrations whose adding commit records Adrian's
  *                  confirmation (`decideMigrateLocal`).
  *
+ * Slice #36.22 added `reconcile`, the one sequence that takes an argument: a
+ * `folder` NAME, which must be one of the folders the runner itself found
+ * directly under `C:\dev\TEST.DATA\Test.Claude\` (`dataFolderRefusal`). It
+ * runs `scripts/testing/reconcile-import.ts` on that folder — a SELECT-only
+ * read of the local database, in a read-only session — and nothing else.
+ *
  * A held step is not a failure and not an error: it is the runner saying „this
  * waits for Adrian", with the reason by name. None of the three ever touches
  * Supabase or UAT — `npm run supabase:migrate` stays Adrian's.
@@ -77,6 +83,7 @@ export const STEPS = [
   "ci",
   "apply-migration",
   "export-schema",
+  "reconcile",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -98,6 +105,7 @@ export const SEQUENCES = {
   push: ["push"],
   ci: ["ci"],
   "migrate-local": ["apply-migration", "export-schema"],
+  reconcile: ["reconcile"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -109,7 +117,21 @@ export const COMMIT_RE = /^[0-9a-f]{40}$/;
 export const ONLY_RE =
   /^(?:e2e\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.spec\.ts|src\/__tests__\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.test\.tsx?)$/;
 
-const ALLOWED_FIELDS = ["version", "id", "sequence", "commit", "only"] as const;
+const ALLOWED_FIELDS = ["version", "id", "sequence", "commit", "only", "folder"] as const;
+
+/**
+ * The sequences that take a `folder`, and the only ones that may.   (Slice #36.22)
+ *
+ * ⚠️ A folder is a NAME, not a path: no separator, no `..`, no leading dot, so
+ * it can only ever mean a direct child of the data root — and on top of the
+ * shape, it must be one of the names the runner listed in that root itself
+ * (`RequestContext.knownDataFolders`). The runner joins it to the root; the
+ * request never supplies the root.
+ */
+export const FOLDER_SEQUENCES: readonly SequenceName[] = ["reconcile"];
+export const DATA_FOLDER_RE = /^[0-9A-Za-z][0-9A-Za-z._ -]{0,99}$/;
+/** The data root, relative to the repository: `C:\dev\TEST.DATA\Test.Claude`. */
+export const DATA_ROOT_SEGMENTS = ["..", "TEST.DATA", "Test.Claude"] as const;
 const REQUIRED_FIELDS = ["version", "id", "sequence", "commit"] as const;
 
 export interface RunRequest {
@@ -119,6 +141,8 @@ export interface RunRequest {
   commit: string;
   /** Repo-relative, forward slashes. e2e specs narrow the e2e step, jest suites the jest step. */
   only?: string[];
+  /** For `reconcile` only: a folder name directly under the data root. */
+  folder?: string;
 }
 
 export type RefusalCode =
@@ -134,6 +158,8 @@ export type RefusalCode =
   | "bad-commit"
   | "bad-only"
   | "only-not-applicable"
+  | "bad-folder"
+  | "folder-not-applicable"
   | "busy"
   | "head-unknown"
   | "head-mismatch";
@@ -154,6 +180,8 @@ export interface RequestContext {
   knownE2eSpecs: readonly string[];
   /** Repo-relative, forward slashes: every `src/__tests__/**\/*.test.ts(x)` that exists. */
   knownJestSuites: readonly string[];
+  /** The folder names directly under the data root (`DATA_ROOT_SEGMENTS`), as the runner listed them. */
+  knownDataFolders: readonly string[];
 }
 
 export type ParseOutcome =
@@ -271,6 +299,32 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
     only = [...new Set(entries)];
   }
 
+  let folder: string | undefined;
+  const takesFolder = FOLDER_SEQUENCES.includes(sequence);
+  if ("folder" in obj) {
+    if (!takesFolder) {
+      return refuse(
+        "folder-not-applicable",
+        `Only ${FOLDER_SEQUENCES.join(", ")} takes a folder; ${sequence} does not.`,
+        rawId,
+      );
+    }
+    const f = obj.folder;
+    if (typeof f !== "string" || !DATA_FOLDER_RE.test(f) || f.includes("..")) {
+      return refuse(
+        "bad-folder",
+        `folder is one folder NAME directly under ${DATA_ROOT_SEGMENTS.slice(1).join("\\")} — letters, digits, dot, dash, underscore, space; got ${JSON.stringify(f)}.`,
+        rawId,
+      );
+    }
+    if (!ctx.knownDataFolders.includes(f)) {
+      return refuse("bad-folder", `No folder named ${JSON.stringify(f)} under ${DATA_ROOT_SEGMENTS.slice(1).join("\\")}.`, rawId);
+    }
+    folder = f;
+  } else if (takesFolder) {
+    return refuse("bad-folder", `${sequence} needs a folder: the name of one folder under ${DATA_ROOT_SEGMENTS.slice(1).join("\\")}.`, rawId);
+  }
+
   if (ctx.busyWith !== null) {
     return refuse("busy", `The runner is running ${ctx.busyWith}. Wait for its result, then ask again.`, rawId);
   }
@@ -284,7 +338,10 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
       rawId,
     );
   }
-  return { ok: true, request: { version: PROTOCOL_VERSION, id: rawId, sequence, commit, ...(only ? { only } : {}) } };
+  return {
+    ok: true,
+    request: { version: PROTOCOL_VERSION, id: rawId, sequence, commit, ...(only ? { only } : {}), ...(folder ? { folder } : {}) },
+  };
 }
 
 // ---- the plan for one request -------------------------------------------------
@@ -508,6 +565,11 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
       body = lines.filter((l) => /\b(PASS|FAIL|PARTIAL)\b/.test(l)).pop() ?? "";
       break;
     }
+    case "reconcile": {
+      // `scripts/testing/reconcile-import.ts` ends with one `RECONCILE:` line.
+      body = (lines.filter((l) => l.startsWith("RECONCILE:")).pop() ?? "").replace(/^RECONCILE:\s*/, "");
+      break;
+    }
   }
   return body ? `${body} (${exit})` : exit;
 }
@@ -551,6 +613,8 @@ export interface RunResult {
   sequence: SequenceName | null;
   commit: string | null;
   only: string[] | null;
+  /** `reconcile` only: the data folder it read. Absent on every other result. */
+  folder?: string;
   status: RunStatus;
   refusal: Refusal | null;
   receivedAt: string;
