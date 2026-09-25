@@ -78,9 +78,9 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-person.spec.ts` |
 | [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-document.spec.ts` |
 | [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `automated` | 2026-09-25 | `e2e/association/company-property.spec.ts` |
-| [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `confirmed` | 2026-09-25 | `e2e/association/document-reference.spec.ts` |
+| [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `automated` | 2026-09-25 | `e2e/association/document-reference.spec.ts` |
 | [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `draft` | — | — |
-| [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite la fel din ambele capete | association | happy | — | `confirmed` | 2026-09-25 | `e2e/association/person-person.spec.ts` |
+| [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite la fel din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-person.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
@@ -88,11 +88,19 @@ fixed fixture where the existing one will do.
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
 
-**Sixteen are `automated`, three are `driven`, and one is `draft`** — as of 2026-09-25 (Slice
-#36.18). Nothing is `confirmed`: every row that reached it has its spec, and every spec has run
-green. What stays below `automated` is exactly the import/AI trio (below) and TC-ASSOC-07, and
-the reason for each is written here, not implied.
+**Eighteen are `automated`, three are `driven`, and one is `draft`** — as of 2026-09-25 (Slice
+#36.19). Nothing is `confirmed`. What stays below `automated` is the import/AI trio (below) and
+TC-ASSOC-08, and the reason for each is written here, not implied.
 
+- **Every relationship read from both ends, Slice #36.19.** TC-ASSOC-07, `draft` since #36.08
+  because a reference made by hand read backwards on half the pairs, went green once the manual
+  path stored the direction per pair (FU-001, `2aec9cc9`) — driven twice, the second time on the
+  sort order that had been red — and is `automated` on the runner's `20260925T205914Z-28808`.
+  The two families that still had no case got one: **TC-ASSOC-09** (person ↔ person) is
+  `automated` and asserts symmetric reading, because no person role is offered today;
+  **TC-ASSOC-08** (property ↔ property) is `draft`, red at the assertion — its table stores no
+  direction at all, so „Inclus în" reads the same from the part and from the whole (FU-220; the
+  fix needs a column).
 - **The promotion wave, Slice #36.18: nine rows to `automated` in one session.** The eight the
   second wave (#36.08) drove once — TC-PROP-03, TC-PERS-02, TC-ASSOC-03 to TC-ASSOC-06,
   TC-GRP-01, TC-TAG-01 — were driven a second time in one Chrome session, after TC-PROP-01,
@@ -119,10 +127,9 @@ the reason for each is written here, not implied.
   selecția" on the document's Asociere persoană screen, corrected in `messages/ro-RO.json`.
   TC-AUTH-01 went from `draft` straight to `automated` by the stated exception above.
   TC-PROP-02's spec is the fifth test in `e2e/versioning/property-versioning.spec.ts`.
-- **`draft`: TC-ASSOC-07**, because its first run was red at the assertion (#36.08): a reference
-  made by hand under „Titlu anterior al" read backwards from both documents. The case file has the
-  measurement and the one-line fix, which changes a contract #36.03 wrote down; Slice 36.19 is
-  where it is decided.
+- **`draft`: TC-ASSOC-08**, because its first run was red at the assertion (#36.19): a
+  property linked as „Inclus în" another reads „Inclus în" from both, so the whole claims to be
+  inside its own part. It stays a case so it goes green when FU-220's column lands.
 - **`driven`, no spec: TC-IMP-01, TC-AI-01, TC-IMP-02** — first driven in Slice #36.07,
   with Adrian picking the folder (below). One import on this archive costs **4 Claude
   calls** — 2 classifications at „Scanare", 1 identity-card read, 1 document read — and

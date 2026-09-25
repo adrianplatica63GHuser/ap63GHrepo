@@ -93,7 +93,7 @@ The catalogue's pipeline is `draft` → `driven` → `confirmed` → `automated`
 
 **Why they take turns.** Taking turns keeps the number of `driven` rows, which cost a person's
 attention every time they run, from running far ahead of the number kept green by one command.
-Since #36.18, sixteen rows are `automated`, three are `driven` and one is `draft`
+Since #36.19, eighteen rows are `automated`, three are `driven` and one is `draft`
 (the catalogue's count line). *Proposal:* after a widening wave, the next test slice is a
 promotion wave, unless a gap slice (§4) is more urgent.
 

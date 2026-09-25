@@ -30,6 +30,8 @@ proves; this table is where to find the file.
 | TC-ASSOC-04 | `e2e/association/property-person.spec.ts` | A person on a property with a role, made from each end in turn and read from the other |
 | TC-ASSOC-05 | `e2e/association/property-document.spec.ts` | A document on a property, made from the property's screen, read from the document |
 | TC-ASSOC-06 | `e2e/association/company-property.spec.ts` | A company as a property's owner; „Vizualizare" on the property opens the company |
+| TC-ASSOC-07 | `e2e/association/document-reference.spec.ts` | A certificate linked by hand as „Titlu anterior al" a contract, read that way from the certificate and as the converse from the contract |
+| TC-ASSOC-09 | `e2e/association/person-person.spec.ts` | Two people linked to each other, with no role on offer, read the same from both ends |
 | TC-PROP-03 | `e2e/property/property-from-coord-file.spec.ts` | A property from a synthetic coordinate file: corners in file order, the area, „Fișier de coordonate (.txt)"; deleted again |
 | TC-SRCH-01 | `e2e/search/global-search.spec.ts` | One Căutare globală finds a person, a property and a document |
 | TC-GRP-01 | `e2e/group/group-two-properties.spec.ts` | A group, two properties saved into it, found by the group's code; the group deleted, even on a failure |
@@ -53,11 +55,11 @@ the test runner's, whose result id is quoted, or Adrian's — see the catalogue'
 
 Every screen whose catalogue row is below `automated` or missing: the import wizard and AI
 interpret (TC-IMP-01, TC-IMP-02, TC-AI-01 — the folder picker has no file input to set, and each
-run spends AI budget), the manual document-to-document reference (TC-ASSOC-07, `draft`), person and
+run spends AI budget), a directional role between two properties (TC-ASSOC-08, `draft` — FU-220), person and
 document versioning, corners editing, the map, the admin screens other than groups and tags, and
 every unhappy path — empty inputs, wrong shares, two tabs at once. `CATALOGUE_NOT_YET` in
-`src/lib/testing/catalogue-map.ts` is the list. Sixteen happy paths is a floor under the ordinary
-week's work, not a safety net: a green run says those sixteen still hold, not that the app works.
+`src/lib/testing/catalogue-map.ts` is the list. Eighteen happy paths is a floor under the ordinary
+week's work, not a safety net: a green run says those eighteen still hold, not that the app works.
 
 ---
 

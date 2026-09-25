@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-25 |
 
 ## What this proves
@@ -54,6 +54,9 @@ On either person's „Asocieri", select the row's radio and press „Dezasociaz�
 corelată". Then delete both people: open each, „Șterge" at the bottom of the form, „Da".
 
 ## Notes from the runs
+
+**2026-09-25 — `automated` (Slice #36.19).** Green in the test runner's whole `npm run e2e`,
+result `20260925T205914Z-28808` on `7195b77` (23 tests); the spec is named in the catalogue's `Spec` column.
 
 **2026-09-25, second run (Slice #36.19) — `confirmed`: the file held line for line.**
 `PPERS01981` (Ana) and `PPERS01982` (Mihai), both typed in; Ana's „Asociere persoană corelată"

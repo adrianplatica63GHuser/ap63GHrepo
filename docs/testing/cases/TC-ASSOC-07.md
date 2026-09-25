@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-25 |
 
 ## What this proves
@@ -64,6 +64,9 @@ document asociat". Then open `TC-ASSOC-07 Titlu anterior`, press „Șterge" at 
 form and answer „Ștergeți actul?" with **„Da"**. TC-DOC-01's own cleanup handles the contract.
 
 ## Notes from the runs
+
+**2026-09-25 — `automated` (Slice #36.19).** Green in the test runner's whole `npm run e2e`,
+result `20260925T205914Z-28808` on `7195b77` (23 tests); the spec is named in the catalogue's `Spec` column.
 
 **2026-09-25, second run (Slice #36.19) — `confirmed`: the file held line for line, and this
 time the pair sorted the way that was red.** The certificate `DOC01976` (`e2a4…`) sorted AFTER
