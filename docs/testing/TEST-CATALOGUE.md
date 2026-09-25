@@ -66,28 +66,28 @@ fixed fixture where the existing one will do.
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-09-23 | `e2e/auth/login-dashboard.spec.ts` |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-23 | — |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `confirmed` | 2026-09-25 | — |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
-| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `driven` | 2026-09-23 | — |
+| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `confirmed` | 2026-09-25 | — |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
-| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `driven` | 2026-09-23 | — |
+| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `confirmed` | 2026-09-25 | — |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
-| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `driven` | 2026-09-23 | — |
-| [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `driven` | 2026-09-23 | — |
-| [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `driven` | 2026-09-23 | — |
-| [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `driven` | 2026-09-23 | — |
+| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `confirmed` | 2026-09-25 | — |
+| [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `confirmed` | 2026-09-25 | — |
+| [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `confirmed` | 2026-09-25 | — |
+| [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `confirmed` | 2026-09-25 | — |
 | [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `draft` | — | — |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
-| [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `driven` | 2026-09-23 | — |
-| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `driven` | 2026-09-23 | — |
+| [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `confirmed` | 2026-09-25 | — |
+| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `confirmed` | 2026-09-25 | — |
 
-**Seven are `automated`, one is `confirmed`, eleven are `driven`, and one is `draft`** — as
-of 2026-09-23 (Slice #36.08).
+**Seven are `automated`, nine are `confirmed`, three are `driven`, and one is `draft`** — as
+of 2026-09-25 (Slice #36.18, before its specs ran).
 
 - **The second wave, Slice #36.08: nine cases for the ordinary week's work.** TC-PERS-02 (a
   company), TC-ASSOC-03 to TC-ASSOC-06 (each association reached from its other end, a

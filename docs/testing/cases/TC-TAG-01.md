@@ -5,8 +5,8 @@
 | **Area** | tag |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -46,6 +46,11 @@ it.
 | 7 | Returns to „Etichete" | „N etichete distincte" again, and `tc-tag-01` nowhere on the page |
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** 66 → 67 → 66
+distinct tags; `tc-tag-01` in the cloud as „tc-tag-01 ×1" and in the table with 1; the chip
+survived a reload; „Etichetă" `tc-tag-01` on Căutare globală found `PROP01896` alone. Only this
+section was written; the spec is `e2e/tag/tag-property.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08).** 66 → 67 → 66 distinct tags;
 `tc-tag-01` counted 1; Căutare globală with „Etichetă" `tc-tag-01` found `PROP01713` alone.

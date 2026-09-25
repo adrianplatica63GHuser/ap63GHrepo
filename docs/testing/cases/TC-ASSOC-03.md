@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -54,6 +54,11 @@ asks for no confirmation). „Niciun act asociat" follows. The person and the do
 for the cases that follow.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `PPERS01897` and
+`DOC01898`; ticking the row first narrowed „Rol" to the six the case lists; „Cumpărător" read
+back from the document's „Persoane"; removed with the radio and „Dezasociază". Only this
+section was written; the spec is `e2e/association/person-document.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08).** `PPERS01714` and
 `DOC01715`; the link read „Cumpărător" from the person's „Acte" and from the document's

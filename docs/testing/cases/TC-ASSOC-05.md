@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -44,6 +44,11 @@ On the document's „Proprietăți" tab — or the property's „Acte" — selec
 and press „Dezasociază". „Nicio proprietate asociată" follows on the document.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `DOC01898`
+attached to `PROP01896` from the property; the property's „Acte" read Tip · Titlu; read back
+from the document's „Proprietăți"; removed there with the radio and „Dezasociază". Only this
+section was written; the spec is `e2e/association/property-document.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08).** `PROP01713` attached to
 `DOC01715` from the property; read back from the document's „Proprietăți"; removed from there

@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `confirmed` |
-| **Last green** | 2026-09-23 |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -59,6 +59,14 @@ answer the dialog „Ștergeți proprietatea?" with **„Da"** — its two butto
 list instead.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — held line for line, to create the property the second runs
+needed.** `PROP01896`, „Se afișează 13 din 13" → „14 din 14", badged „Nou!", tarla `40`,
+parcelă `TC01`; the columns were already this browser's choice, as step 2 says a later run
+finds them. One thing that was the dev server, not the case: step 5's „Introducere manuală" was
+pressed while `/properties/new` compiled cold, nothing arrived within 28 s, and the form was
+reached by its address. Removed at the end with „Șterge" and „Da", back to 13. Only this
+section was written. The spec is un-parked in the same slice (`property-create.spec.ts`).
 
 **2026-09-23 (Slice #36.08) — `confirmed`: the corrected file held line for line.** The first
 run since the 2026-09-22 correction, made to create the property the second wave needed.

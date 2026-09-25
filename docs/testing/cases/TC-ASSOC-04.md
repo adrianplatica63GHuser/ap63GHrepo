@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -62,6 +62,12 @@ On the property's „Persoane" tab (read-only or not — „Dezasociază" works 
 row's radio and press „Dezasociază". „Nicio persoană asociată acestei proprietăți" follows.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `PROP01896` and
+`PPERS01897`, linked from the property's end and read from the person's, undone, linked from the
+person's end and read — read-only — from the property's; removed with the radio and
+„Dezasociază". Only this section was written; the spec is
+`e2e/association/property-person.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08).** `PROP01713` and
 `PPERS01714`, linked from each end in turn, each time read from the other; removed with the

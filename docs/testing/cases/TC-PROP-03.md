@@ -5,8 +5,8 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | `08.tc.coord.file` |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -53,6 +53,14 @@ that: open it, press „Șterge" at the bottom of the form and answer „Șterge
 with **„Da"**. The list comes back to N.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line, step 7 included.**
+`PROP01900`, the list 14 → 15, „611.87", corners 16–19 in file order as step 6 lists them, and a
+search for `TC-PROP-03` on Căutare globală gave one row with „Fișier de coordonate (.txt)". Left
+for TC-GRP-01, then removed with „Șterge" and „Da". Only this section was written; the spec is
+`e2e/property/property-from-coord-file.spec.ts`, and **it does not read this file's data**: it
+reads a synthetic four-corner file committed as `e2e/fixtures/TC-E2E-PROP-03 Teren din
+fisier.txt` (600.00 m²), because the coordinates here are cut from a real parcel.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08). Result `PROP01718`**, the list
 14 → 15, four corners as above. Step 7's „Proveniență" was read on the same row in TC-GRP-01's

@@ -5,8 +5,8 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -55,6 +55,12 @@ the dialog „Ștergeți persoana juridică?" with **„Da"**. The list comes ba
 persoane juridice". A company still linked to a property must be dissociated first.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `JPERS01899`,
+„Nu există persoane juridice" → „Se afișează 1 din 1"; `0000000002` found it and `0000000003`
+emptied the list; „Deschide" showed „v 0" and the CUI hint; the edit stayed on the company at
+„v 1" / „2 versiuni". Left for TC-ASSOC-06, then removed with „Șterge" and „Da". Only this
+section was written; the spec is `e2e/person/company-create-edit.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08). Result `JPERS01716`**, and the
 list went from „Nu există persoane juridice" / „Se afișează 0 din 0" to „Se afișează 1 din 1";

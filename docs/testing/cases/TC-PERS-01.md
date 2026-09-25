@@ -50,6 +50,10 @@ the form, and answer the dialog „Ștergeți persoana?" with **„Da"** — its
 
 ## Notes from the runs
 
+**2026-09-25 (Slice #36.18) — held line for line, to create the person the second runs
+needed.** `PPERS01897`, „Nu există persoane" → „Se afișează 1 din 1", found again by `TC-PERS`;
+removed at the end with „Șterge" and „Da". Only this section was written.
+
 **2026-09-23 (Slice #36.08) — held line for line, to create the person the second wave
 needed.** `PPERS01714`, „Nu există persoane" → „Se afișează 1 din 1"; removed at the end of the
 wave with „Șterge" and „Da". One thing that was the driving tool, not the case: typing into

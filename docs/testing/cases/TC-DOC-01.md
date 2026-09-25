@@ -81,6 +81,12 @@ back. `C:\dev\TEST.DATA\` is read-only to this catalogue.
 
 ## Notes from the runs
 
+**2026-09-25 (Slice #36.18) — steps 1–9 held, to create the document the second runs
+needed.** `DOC01898`, „Se afișează 15 din 105" → „15 din 106"; `530.jpg` in through
+`file_upload` exactly as step 8 says; „Pagini" showed it with „Vizualizare", „Tipărire",
+„Șterge". Steps 10–11 were not re-run. The list was reached by its address rather than the
+sidebar. Removed at the end with „Șterge" and „Da", back to 105. Only this section was written.
+
 **2026-09-23 (Slice #36.08) — steps 1–9 held, to create the document the second wave
 needed.** `DOC01715`, „Se afișează 15 din 106"; `530.jpg` in through `file_upload` exactly as
 step 8 says. Steps 10–11 („Pagini extinse") were not re-run. Removed at the end of the wave

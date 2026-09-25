@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -47,6 +47,12 @@ On the company's „Proprietăți" tab, select the row's radio and press „Deza
 „Nicio proprietate asociată" follows.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line.** `JPERS01899` made
+owner of `PROP01896`; read from the property's „Persoane"; „Vizualizare" opened
+`/judicial-persons/<id>?readonly=true` with „Înapoi la listă" and „Modifică"; removed with the
+radio and „Dezasociază". Only this section was written; the spec is
+`e2e/association/company-property.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08).** `JPERS01716` made owner of
 `PROP01713`; read from the property's „Persoane"; „Vizualizare" opened

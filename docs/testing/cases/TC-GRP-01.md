@@ -5,8 +5,8 @@
 | **Area** | group |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-23 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-25 |
 
 ## What this proves
 
@@ -55,6 +55,12 @@ nu poate fi anulată." and „Șterge" / „Anulează"; **„Șterge"**. The cou
 both properties are still there — a group's members exist independently.
 
 ## Notes from the runs
+
+**2026-09-25 (Slice #36.18) — `confirmed`: the file held line for line. Result `GRP-014`**,
+12 → 13 groups, `PROP01896` and `PROP01900` staged as „[nou]" under „Modificări nesalvate", then
+„[01]" and „[02]"; „(2)" on the list; „Cod grup" `GRP-014` gave „2 rezultate" with the positions;
+deleted with „Șterge" / „Șterge", back to 12, both properties untouched. Only this section was
+written; the spec is `e2e/group/group-two-properties.spec.ts`.
 
 **2026-09-23 — driven for the first time, green (Slice #36.08). Result `GRP-013`**, 12 → 13
 groups, members `PROP01713` and `PROP01718` at 01 and 02, found by „Cod grup" `GRP-013`; deleted
