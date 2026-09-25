@@ -113,7 +113,10 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       // Step 7 — „Etichete": N again, and the tag nowhere on the page.
       await page.goto("/admin/tags");
       expect(await readDistinct(page)).toBe(before);
-      await expect(page.getByText(STORED)).toHaveCount(0);
+      // A RegExp, so case-SENSITIVE: the sidebar's „RECENTE" lists the property
+      // „TC-E2E-TAG-01 Teren de test", which a string match — case-insensitive —
+      // counted as the tag (first runner run, 20260925T200631Z-22963).
+      await expect(page.getByText(new RegExp(STORED))).toHaveCount(0);
     } finally {
       await removeRecord(page.request, "property", propertyId);
     }

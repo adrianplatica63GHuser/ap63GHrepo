@@ -96,7 +96,9 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
 
       // Step 5 — „Introducere manuală" („Completați detaliile proprietății manual").
       await chooser.getByRole("link", { name: "Introducere manuală" }).click();
-      await expect(page).toHaveURL(/\/properties\/new$/);
+      // 30 s, as every other navigation here: /properties/new compiles cold on
+      // its first request (the hand run of 2026-09-25 met the same wait).
+      await expect(page).toHaveURL(/\/properties\/new$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Proprietate nouă" })).toBeVisible({ timeout: 30_000 });
       for (const section of ["DATE CADASTRALE", "PUNCTE DE CONTUR", "ADRESĂ"]) {
         // Upper-case on screen by CSS; non-exact text matching ignores case.
