@@ -89,10 +89,17 @@ fixed fixture where the existing one will do.
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
 
-**Eighteen are `automated`, three are `driven`, and one is `draft`** — as of 2026-09-25 (Slice
-#36.19). Nothing is `confirmed`. What stays below `automated` is the import/AI trio (below) and
-TC-ASSOC-08, and the reason for each is written here, not implied.
+**Eighteen are `automated`, three are `driven`, and two are `draft`** — as of 2026-09-25 (Slice
+#36.20). Nothing is `confirmed`. What stays below `automated` is the import/AI trio (below),
+TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
 
+- **`draft`: TC-AUTH-02, the first `authz` case (Slice #36.20).** Signed in as an account whose
+  role is `user`, it checks what that role is shown, turned away from and refused. It waits for
+  that account, which is Adrian's to create in Supabase Auth, and for Adrian to sign in as it on
+  each hand run. Its spec is written and parked as `e2e/auth/user-role.parked.ts`. The API half
+  it will prove is already enforced and guarded: every writing `/api/admin` handler requires a
+  superuser, and `src/__tests__/admin-api-role-guard.test.ts` fails the push when one does not
+  (FU-002).
 - **Every relationship read from both ends, Slice #36.19.** TC-ASSOC-07, `draft` since #36.08
   because a reference made by hand read backwards on half the pairs, went green once the manual
   path stored the direction per pair (FU-001, `2aec9cc9`) — driven twice, the second time on the
