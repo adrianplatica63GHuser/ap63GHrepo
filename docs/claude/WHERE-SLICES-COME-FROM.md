@@ -68,7 +68,8 @@ what you notice, when it is small"), and otherwise leaves it to the review.
 
 **Where it stands.** On 2026-09-25, before this slice, the register held 216 rows, 130 of them
 open: 21 data, 51 user, 46 dev and 12 cosmetic (the summary block at `42b8e85`). This slice moved
-eleven of those rows to `planned` and filed one (§7), leaving 217 rows, 120 open and 11 planned.
+eleven of those rows to `planned` and filed two new ones: FU-217, from the decisions table (§8),
+and FU-218, about the test runner. That leaves 218 rows: 121 open and 11 planned.
 The defect log holds only its two `EXEMPLU-n` rows, and the review ignores those
 (`REGISTER-REVIEW.md` → Step 3). So the review works from the register alone until Ciprian
 records his first real row.
