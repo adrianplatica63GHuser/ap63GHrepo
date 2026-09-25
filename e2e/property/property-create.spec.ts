@@ -1,17 +1,11 @@
 /**
  * Case:   TC-PROP-01 — Proprietate creată manual, vizibilă în listă
- * Source: docs/testing/cases/TC-PROP-01.md, „Last green" 2026-09-22
+ * Source: docs/testing/cases/TC-PROP-01.md, „Last green" 2026-09-25
  *
- * ⚠️ **PARKED — THIS FILE IS NOT RUN, AND THAT IS THE CATALOGUE'S RULE, NOT AN
- * ACCIDENT.** (Slice #36.06) Its first `npm run e2e` showed the case file was
- * wrong: step 1's columns were the driving browser's saved „Câmpuri afișate",
- * not what a fresh browser shows. The case was corrected, which sends it back
- * to `driven`, and a spec may only run for a `confirmed` case. The name
- * `.parked.ts` keeps it out of Playwright's `*.spec.ts` match and out of the
- * coverage guard, and inside `tsc`. It already follows the corrected file.
- * TO PROMOTE AGAIN: drive TC-PROP-01 unchanged once more (→ `confirmed`),
- * `git mv` this back to `property-create.spec.ts`, put the path in the
- * catalogue's `Spec` column, and update the `Source:` date above.
+ * Un-parked in Slice #36.18, unchanged in its steps: it was written in #36.06
+ * from the corrected case file, parked as `property-create.parked.ts` while
+ * the case went back to `driven`, and the case has been driven unchanged
+ * since (#36.08, #36.18) — so the file it translates is the file it follows.
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

@@ -8,9 +8,10 @@
  * same file, and this module is the one place that knows how.
  *
  * ⚠️ **REMOVAL GOES THROUGH THE ROUTE THE UI'S „Șterge" BUTTON CALLS, NEVER
- * THROUGH SQL.** `DELETE /api/properties/[id]`, `/api/people/[id]` and
- * `/api/documents/[id]` are exactly what `property-form.tsx`,
- * `natural-person-form.tsx` and `document-form.tsx` send from their delete
+ * THROUGH SQL.** `DELETE /api/properties/[id]`, `/api/people/[id]`,
+ * `/api/judicial-persons/[id]` and `/api/documents/[id]` are exactly what
+ * `property-form.tsx`, `natural-person-form.tsx`, `judicial-person-form.tsx`
+ * and `document-form.tsx` send from their delete
  * dialogs, so what a spec leaves behind is what a person pressing „Da" would
  * have left behind — including the stored page file, which the document route
  * deletes with the row (Slice #29.04). The links between records are
@@ -37,11 +38,14 @@ import { expect, type APIRequestContext } from "@playwright/test";
 /** The prefix every record written by a spec carries. See the header. */
 export const E2E_MARKER = "TC-E2E-";
 
-export type RecordKind = "property" | "person" | "document";
+export type RecordKind = "property" | "person" | "company" | "document";
 
 const ROUTE: Record<RecordKind, string> = {
   property: "/api/properties",
   person:   "/api/people",
+  // A judicial person (Slice #36.18). The route „Șterge" → „Da" calls on
+  // judicial-person-form.tsx; `/api/people/[id]` is the natural person's.
+  company:  "/api/judicial-persons",
   document: "/api/documents",
 };
 
@@ -101,6 +105,15 @@ export async function createNaturalPerson(
   return body.person.id;
 }
 
+/** A company with this „Denumire", the shape TC-PERS-02 creates.  (Slice #36.18) */
+export async function createCompany(request: APIRequestContext, fields: { name: string }): Promise<string> {
+  const body = await postJson<{ person: { id: string } }>(request, ROUTE.company, {
+    ...fields,
+    provenance: "MANUAL",
+  });
+  return body.person.id;
+}
+
 /** A Contract de Vânzare with this „Etichetă scurtă", the shape TC-DOC-01 creates. */
 export async function createSaleContract(request: APIRequestContext, title: string): Promise<string> {
   const documentTypeId = await documentTypeIdFor(request, "CONTRACT_VANZARE");
@@ -146,13 +159,42 @@ export async function removeLeftovers(request: APIRequestContext, prefix: string
   }
   const res = await request.get(`/api/admin/global-search?search=${encodeURIComponent(prefix)}`);
   expect(res.ok(), `GET /api/admin/global-search failed (${res.status()})`).toBeTruthy();
-  const body = (await res.json()) as { results: { entityType: string; entityId: string }[] };
+  const body = (await res.json()) as {
+    results: { entityType: string; entityId: string; personType: string | null }[];
+  };
   // Every row the search returns matched `prefix` somewhere, and `prefix` is a
   // marker no person types. (Not filtered on `displayName`: a property's is
   // „tarla / parcelă" without the nickname — measured 2026-09-22, „40 / TC01" —
   // so that filter would skip exactly the property rows.)
   for (const row of body.results) {
-    const kind = KIND_OF[row.entityType];
+    // Căutare globală answers a company as entityType PERSON with personType
+    // JUDICIAL; its DELETE is /api/judicial-persons, and /api/people would
+    // answer 404 — which removeRecord reads as success. (Slice #36.18)
+    const kind = row.entityType === "PERSON" && row.personType === "JUDICIAL" ? "company" : KIND_OF[row.entityType];
     if (kind) await removeRecord(request, kind, row.entityId);
+  }
+}
+
+/**
+ * Remove every group whose „Descriere" starts with `prefix` — the net under a
+ * spec that creates a group through the UI.  (Slice #36.18)
+ *
+ * A group is shared state: every user's group pickers list it. Removal goes
+ * through DELETE /api/groups/[id], the route „Șterge" → „Șterge" on „Grupuri"
+ * calls; a group's members are properties that exist independently, so
+ * removing it removes only the group. Same marker rule as removeLeftovers.
+ */
+export async function removeGroupLeftovers(request: APIRequestContext, prefix: string): Promise<void> {
+  if (!prefix.startsWith(E2E_MARKER) || prefix.length <= E2E_MARKER.length) {
+    throw new Error(`removeGroupLeftovers only removes groups marked ${E2E_MARKER}<case>; refused "${prefix}".`);
+  }
+  const groups = await getItems<{ id: string; description: string | null }>(request, "/api/groups");
+  for (const g of groups) {
+    if (!(g.description ?? "").startsWith(prefix)) continue;
+    const res = await request.delete(`/api/groups/${encodeURIComponent(g.id)}`);
+    expect(
+      res.ok() || res.status() === 404,
+      `DELETE /api/groups/${g.id} failed (${res.status()}) — remove the group „${g.description}" on „Grupuri" by hand.`,
+    ).toBeTruthy();
   }
 }

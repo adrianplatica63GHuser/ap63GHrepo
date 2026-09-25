@@ -19,13 +19,21 @@ proves; this table is where to find the file.
 | Case | Spec | What it drives |
 |---|---|---|
 | TC-AUTH-01 | `e2e/auth/login-dashboard.spec.ts` | After login: the dashboard, the sidebar, „Autentificat ca". The login itself is `auth.setup.ts` |
-| TC-PROP-01 | `e2e/property/property-create.parked.ts` — **parked**, not run | A property typed in by hand appears at the top of the list, count + 1; deleted again. Parked because its case went back to `driven`; renamed to `.spec.ts` once the case is `confirmed` again |
+| TC-PROP-01 | `e2e/property/property-create.spec.ts` | A property typed in by hand appears at the top of the list, count + 1; deleted again |
 | TC-PROP-02 | `e2e/versioning/property-versioning.spec.ts` | One save appends one version: „v 0" → „2 versiuni", the unsaved-changes banner, the read-only previous version. Plus the four versioning tests below |
 | TC-PERS-01 | `e2e/person/person-create.spec.ts` | A natural person typed in by hand, found by the list's search; deleted again |
+| TC-PERS-02 | `e2e/person/company-create-edit.spec.ts` | A company typed in by hand, found by name and by CUI, edited to „v 1"; deleted again |
 | TC-DOC-01 | `e2e/document/document-page.spec.ts` | A Contract de Vânzare with one page attached through the hidden file input, opened full-window and closed |
 | TC-ASSOC-01 | `e2e/association/document-person.spec.ts` | A person on a document as „Cumpărător", 50% with the warning, „indiviziune", then 100% |
 | TC-ASSOC-02 | `e2e/association/document-property.spec.ts` | A property on a document, read from both ends |
+| TC-ASSOC-03 | `e2e/association/person-document.spec.ts` | A document on a person as „Cumpărător", made from the person's screen, read from the document |
+| TC-ASSOC-04 | `e2e/association/property-person.spec.ts` | A person on a property with a role, made from each end in turn and read from the other |
+| TC-ASSOC-05 | `e2e/association/property-document.spec.ts` | A document on a property, made from the property's screen, read from the document |
+| TC-ASSOC-06 | `e2e/association/company-property.spec.ts` | A company as a property's owner; „Vizualizare" on the property opens the company |
+| TC-PROP-03 | `e2e/property/property-from-coord-file.spec.ts` | A property from a synthetic coordinate file: corners in file order, the area, „Fișier de coordonate (.txt)"; deleted again |
 | TC-SRCH-01 | `e2e/search/global-search.spec.ts` | One Căutare globală finds a person, a property and a document |
+| TC-GRP-01 | `e2e/group/group-two-properties.spec.ts` | A group, two properties saved into it, found by the group's code; the group deleted, even on a failure |
+| TC-TAG-01 | `e2e/tag/tag-property.spec.ts` | A tag on a property, counted on „Etichete", found by Căutare globală, gone with its last use |
 
 The four tests in `property-versioning.spec.ts` that predate the catalogue stay as
 they were — the most complex versioned entity (fields + address + corners), on the
