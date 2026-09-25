@@ -15,9 +15,16 @@
  * Required .env entries (see .env.example):
  *   E2E_EMAIL     — email address of the test user account
  *   E2E_PASSWORD  — password for the test user account
+ *
+ * Optional (Slice #36.20), for the specs that act as a `user`:
+ *   E2E_USER_EMAIL, E2E_USER_PASSWORD — an approved account whose role is
+ *   `user`. A second setup logs it in and saves e2e/.auth/user-session.json
+ *   (`USER_STATE`, e2e/helpers/auth-state.ts). Without the pair it is skipped,
+ *   and so is every spec that needs it.
  */
 
-import { test as setup, expect } from "@playwright/test";
+import { test as setup, expect, type Page } from "@playwright/test";
+import { USER_STATE } from "./helpers/auth-state";
 import fs from "fs";
 import net from "net";
 import path from "path";
@@ -215,4 +222,47 @@ setup("autentificare si pregatire fixture E2E", async ({ page, baseURL }) => {
   }
 
   fs.writeFileSync(IDS_FILE, JSON.stringify({ propertyId }, null, 2));
+});
+
+/**
+ * The second account: role `user`.                             (Slice #36.20)
+ *
+ * The same real form as above — `#identity`, `#password`, „Conectare" — so the
+ * password is typed by the runner from `.env`, never by Claude and never into
+ * a case. It then ASKS the application what the account is, because a spec
+ * that proves a `user` is refused is worthless run as a superuser: it would
+ * fail for the wrong reason, or pass for none.
+ */
+async function loginAs(page: Page, email: string, password: string): Promise<void> {
+  await page.goto("/login");
+  await page.fill("#identity", email);
+  await page.fill("#password", password);
+  await page.click('button[type="submit"]');
+  await page.waitForURL("/", { timeout: 20_000, waitUntil: "commit" });
+  await page.waitForTimeout(1_500);
+  if (page.url().includes("/login")) {
+    throw new Error(`Login failed for E2E_USER_EMAIL (${email}) — redirected back to /login. Check the pair in .env.`);
+  }
+}
+
+setup("autentificare cont cu rol user (TC-AUTH-02)", async ({ page }) => {
+  const email = process.env.E2E_USER_EMAIL;
+  const password = process.env.E2E_USER_PASSWORD;
+  setup.skip(!email || !password, "E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env — the `user` specs are skipped.");
+  fs.mkdirSync(AUTH_DIR, { recursive: true });
+
+  await loginAs(page, email!, password!);
+  await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", domain: "localhost", path: "/" }]);
+
+  const me = await page.request.get("/api/auth/me");
+  expect(me.ok(), `GET /api/auth/me failed (${me.status()})`).toBeTruthy();
+  const { role } = (await me.json()) as { role?: string };
+  if (role !== "user") {
+    throw new Error(
+      `E2E_USER_EMAIL (${email}) signs in as role "${role}", not "user". ` +
+        "The TC-AUTH-02 spec proves what a `user` is refused; run as anything else it proves nothing. " +
+        "Point E2E_USER_EMAIL at an account whose role is user.",
+    );
+  }
+  await page.context().storageState({ path: USER_STATE });
 });

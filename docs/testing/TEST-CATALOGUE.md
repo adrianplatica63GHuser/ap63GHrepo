@@ -66,6 +66,7 @@ fixed fixture where the existing one will do.
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-09-23 | `e2e/auth/login-dashboard.spec.ts` |
+| [TC-AUTH-02](cases/TC-AUTH-02.md) | Un cont „user" lucrează zilnic și nu poate administra | auth | authz | — | `draft` | — | — |
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
@@ -168,7 +169,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Twenty cases, all `happy`, and that is a scope rule rather than a taste.** A case in the
+**Twenty-three cases, all `happy` but TC-AUTH-02, and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
@@ -244,10 +245,12 @@ with its twenty-odd property folders, `flotante` with the CVC and act-adițional
 `Modele.Acte`, `A`, `A2.*`, `A3.CVCs` — is the **archive** these folders are cut from,
 and it is **read-only**: copy out of it, never write into it and never reorganise it.
 
-**Deeper testing — the `kind` column.** Its only value today is `happy`. Boundary,
-negative, stress and concurrency cases are added later by giving them another value in
-that column; nothing else has to be restructured, and the happy-path rows are not
-disturbed.
+**Deeper testing — the `kind` column.** Two values today. `happy` is the ordinary person
+doing the ordinary thing. **`authz`** (Slice #36.20) is who may do what: a case that signs in
+as one role and checks what that role is shown, turned away from and refused — TC-AUTH-02 is
+the first. Boundary, negative, stress and concurrency cases are added later by giving them
+another value in that column; nothing else has to be restructured, and the happy-path rows
+are not disturbed.
 
 **A slice that builds something adds its case.** The ordinary practice, and the thing the
 guard cannot enforce: a slice that ships a screen ships the row and the case file for it.
