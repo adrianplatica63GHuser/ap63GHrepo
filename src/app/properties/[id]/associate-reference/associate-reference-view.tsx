@@ -161,10 +161,11 @@ export function AssociateReferenceView({ propertyId, propertyName }: Props) {
       {/* Role selector — only shown when roles are configured in Reference Data */}
       {roles && roles.length > 0 && (
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-ink dark:text-zinc-300">
+          <label htmlFor="relationship-role-select" className="text-sm font-medium text-ink dark:text-zinc-300">
             {t("labelRole")}
           </label>
           <select
+            id="relationship-role-select"
             value={selectedRoleId}
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"

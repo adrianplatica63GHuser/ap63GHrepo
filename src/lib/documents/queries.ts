@@ -933,7 +933,9 @@ import {
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { foldLookupName } from "@/lib/import/lookup-name-match";
 import {
+  manualLinkDirection,
   parseReferencedInstruments,
+  roleReadsFromDocument,
   type InstrumentCandidateDoc,
   type ReferencedInstrument,
 } from "./referenced-instruments";
@@ -1499,12 +1501,10 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
     .orderBy(document.code);
 
   return rows.map((r) => {
-    // The viewed document is whichever side of the pair it is on. The role
-    // reads from it when it is A and the flag is true, or when it is B and the
-    // flag is false — an XNOR, written out because „viewedIsA === roleReadsAToB"
-    // is the kind of line a later reader inverts by accident.
-    const viewedIsA = r.documentIdA === documentId;
-    const roleReadsFromViewed = viewedIsA ? r.roleReadsAToB : !r.roleReadsAToB;
+    // The viewed document is whichever side of the pair it is on; the XNOR
+    // lives in `roleReadsFromDocument` (referenced-instruments.ts), beside the
+    // two writers, where jest pins it for both sort orders.  (Slice #36.19)
+    const roleReadsFromViewed = roleReadsFromDocument(documentId, r.documentIdA, r.roleReadsAToB);
     return {
       id:                   r.id,
       code:                 r.code,
@@ -1548,13 +1548,18 @@ export type DocumentAssociationResult = {
 /**
  * Link one or more documents to this one.
  *
- * ⚠️ **`roleReadsAToB` IS THE CALLER'S TO SET AND DEFAULTS TO THE COLUMN'S
- * DEFAULT.** The „Asociază" button on the References tab passes nothing: it
- * offers a role picker and no direction control, so its links read A to B like
- * every row written before Slice #36.03. The reference linker passes the value
- * `linkDirection()` computed from the instrument's PURPOSE, which is the whole
- * point of this slice — and it may only pass it because it is linking ONE
- * document, where the direction is a fact about that one pair.
+ * ⚠️ **WITH NO `roleReadsAToB`, THE ROLE READS FROM `documentId`, PER PAIR.**
+ *                                                              (Slice #36.19)
+ * The „Asociază" button on the References tab passes nothing: its role picker
+ * is phrased from the document whose screen it is on („this document <role>
+ * the one you tick"), so the role always reads FROM `documentId`, and each
+ * pair's flag is `manualLinkDirection()`'s — true where `documentId` sorted to
+ * side A, false where it sorted to B. Until #36.19 this path stored the
+ * column's default instead, so the role read from whichever uuid sorted first:
+ * a coin toss per pair, and the reason TC-ASSOC-07's first run was red
+ * (FU-001). The reference linker passes the value `linkDirection()` computed
+ * from the instrument's PURPOSE — and it may only pass it because it is
+ * linking ONE document, where the direction is a fact about that one pair.
  *
  * ⚠️ **WHICH IS WHY A DIRECTION AND A MULTI-ID CALL DO NOT MIX, AND THE
  * SIGNATURE SAYS SO RATHER THAN A COMMENT.** `roleReadsAToB` is computed from
@@ -1579,12 +1584,14 @@ export async function associateDocumentToDocument(
   }
 
   const values = targets.map((otherId) => {
-    const [a, b] = [documentId, otherId].sort();
+    const manual = manualLinkDirection(documentId, otherId);
     return {
-      documentIdA:        a,
-      documentIdB:        b,
+      documentIdA:        manual.documentIdA,
+      documentIdB:        manual.documentIdB,
       relationshipRoleId: relationshipRoleId ?? undefined,
-      ...(roleReadsAToB === undefined ? {} : { roleReadsAToB }),
+      // The caller's direction when it has one (the linker, one pair only);
+      // otherwise the role reads from the screen it was chosen on.
+      roleReadsAToB:      roleReadsAToB ?? manual.roleReadsAToB,
     };
   });
 

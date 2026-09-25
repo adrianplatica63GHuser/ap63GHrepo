@@ -161,6 +161,47 @@ export function linkDirection(
   return { documentIdA, documentIdB, roleReadsAToB: from === documentIdA };
 }
 
+/**
+ * The same triple for a link made BY HAND, on the „Asociază" screen of one
+ * document.                                                     (Slice #36.19)
+ *
+ * On that screen the role picker is phrased from the document whose screen it
+ * is — „this document <role> the one you tick" — so the role always reads FROM
+ * the viewed document, and the flag is simply whether the viewed document
+ * landed on side A of the sort. Per pair, so it is right for several ticked
+ * documents at once, whichever way each pair's uuids happen to sort.
+ *
+ * ⚠️ **BEFORE THIS FUNCTION THE MANUAL PATH STORED THE COLUMN DEFAULT, TRUE,**
+ * which made the role read from whichever document's uuid sorted first — a
+ * coin toss per pair. TC-ASSOC-07's first run (#36.08) was red for exactly
+ * that reason, on a pair that sorted the other way; FU-001.
+ */
+export function manualLinkDirection(
+  viewedDocumentId: string,
+  otherDocumentId: string,
+): { documentIdA: string; documentIdB: string; roleReadsAToB: boolean } {
+  const [documentIdA, documentIdB] = [viewedDocumentId, otherDocumentId].sort();
+  return { documentIdA, documentIdB, roleReadsAToB: viewedDocumentId === documentIdA };
+}
+
+/**
+ * Whether a stored pair's role reads FROM `viewedDocumentId` — the reader's
+ * half of the two functions above.                             (Slice #36.19)
+ *
+ * It reads from the viewed document when that document is A and the flag is
+ * true, or when it is B and the flag is false — an XNOR, written out because
+ * „viewedIsA === roleReadsAToB" is the kind of line a later reader inverts by
+ * accident.
+ */
+export function roleReadsFromDocument(
+  viewedDocumentId: string,
+  documentIdA: string,
+  roleReadsAToB: boolean,
+): boolean {
+  const viewedIsA = documentIdA === viewedDocumentId;
+  return viewedIsA ? roleReadsAToB : !roleReadsAToB;
+}
+
 // ---------------------------------------------------------------------------
 // The stored entry
 // ---------------------------------------------------------------------------
