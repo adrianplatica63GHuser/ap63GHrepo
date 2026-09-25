@@ -157,7 +157,7 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   **Nothing that depends on the schema is committed, pushed or applied before the confirmation
   lands** — a schema in a commit is one Claude has told git is settled. Commit what does not depend
   on it as usual. When the confirmation lands, commit the migration first, with a trailer quoting
-  him — `Schema-Confirmed: Adrian, <date> — „<his words>"` (`C:\dev\.claudeules\git-and-commits.md`)
+  him — `Schema-Confirmed: Adrian, <date> — „<his words>"` (`C:\dev\.claude\rules\git-and-commits.md`)
   — then what was built on it; then request the runner's `migrate-local`, which applies the
   migration to the local database and regenerates `src\db\supabase_schema_full.sql` only for a
   migration whose adding commit carries that trailer, and commit the regenerated file. **This is the
@@ -186,7 +186,7 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   slice awaiting confirmation ends with the migration, the schema change and everything built on
   them uncommitted.
 - **A slice queue: the session takes the next header itself.** (Propus.3.) When a slice has ended
-  — handover written — and `C:\dev.docs.Slice.Inputs\Queue\` holds a header, the same session
+  — handover written — and `C:\dev.docs\01.Slice.Inputs\Queue\` holds a header, the same session
   starts it. **One header per file** (`.md`, `.txt` or `.docx`; a name starting with `_` is not a
   header), **taken in file-name order.** Starting it means moving the file, in that first minute,
   into the folder its `Inputs:` line names — or, when it names none, into `Queue\_started\` — so it
