@@ -11,9 +11,11 @@ three:
 
 1. **The register, re-checked**, committed as one `docs(register):` commit.
 2. **A one-page review** — `C:\dev.docs\01.Slice.Inputs\Register.Reviews\<date>\Review.<date>.docx`.
-3. **At most three proposed fix slices**, one `.docx` each beside it, named `Propus.1.docx`,
-   `Propus.2.docx`, `Propus.3.docx` — proposals, because the next free slice number is only known
-   when Adrian picks one. When he does, he gives it that number; the proposal needs no other edit.
+3. **At most three proposed fix slices**, one `.docx` each beside it, named `Propus.<D>.1.docx`,
+   `Propus.<D>.2.docx`, `Propus.<D>.3.docx`. They are dated because on 2026-09-24 two different
+   sets of „Propus.1–3" were written on the same day (Slice #36.17). They are proposals because
+   the next free slice number is only known when Adrian picks one. When he does, he gives it that
+   number; the proposal needs no other edit.
 
 Then a push notification says the review is ready.
 
@@ -147,7 +149,7 @@ from `git log --since=<D−7> --until=<D> --format=%s`:
   slate is **not** widened. That is a signal for Adrian about how much is being noticed, not a
   licence to fix more.
 
-Each slated row gets `Slated <D> Propus.<n>` appended to its Status note (once — a row already
+Each slated row gets `Slated <D> Propus.<D>.<n>` appended to its Status note (once — a row already
 carrying a `Slated` marker keeps its first one). It stays `open`: a proposal is not a plan. The slice
 that takes it marks it `planned`/`resolved`, as `ga40prj/CLAUDE.md` → „Ending a slice" says.
 
@@ -174,7 +176,7 @@ Edit with the helper so every mechanical change is exact:
 ```bash
 python3 "$HOME/rr.py" touch --date "$D" --all-open          # Last checked on every open/planned row
 python3 "$HOME/rr.py" set FU-nnn --status resolved --note "Slice #nn.nn <hash> — <what>" --date "$D"
-python3 "$HOME/rr.py" set FU-nnn --append-note "Slated $D Propus.1"
+python3 "$HOME/rr.py" set FU-nnn --append-note "Slated $D Propus.$D.1"
 python3 "$HOME/rr.py" summary --date "$D" --label "register review $D"
 ```
 
@@ -185,7 +187,7 @@ row, IDs contiguous, vocabulary, a hash on every `resolved`, summary equal to th
 quarantine recipe of `sandbox-and-toolchain.md`:
 
 ```
-docs(register): review <D> — <n> re-checked, <changes in a phrase>, slate Propus.1–<k>
+docs(register): review <D> — <n> re-checked, <changes in a phrase>, slate Propus.<D>.1–<k>
 ```
 
 The body lists every status change with its reason, the slate by FU ids, the ignore proposals and
@@ -211,7 +213,7 @@ Check each `.docx` by converting it back (`pandoc -t plain`) before finishing.
    „Open <before> → <after>; <k> fix slices proposed; nothing needs you but the pick."
 3. **What changed since last week** — resolved / superseded / duplicate / ignored, each `FU-nnn`
    with its reason in a line; „nothing" when nothing did.
-4. **The slate** — per proposal: `Propus.n — <title>`, the FU ids (and D-ids), why it ranks there, in
+4. **The slate** — per proposal: `Propus.<D>.<n> — <title>`, the FU ids (and D-ids), why it ranks there, in
    two lines.
 5. **Balance** — the numbers from Step 6 and the rule's result, in two lines.
 6. **Closing** — rows proposed for `ignored` today with their reasons; rows withheld, and why; rows ignored today.
@@ -224,8 +226,8 @@ Check each `.docx` by converting it back (`pandoc -t plain`) before finishing.
 it, and the `write-slice-description` skill if the session has it:
 
 ```
-Slice Propus.<n> — <register review D>
-## Propus.<n> — <title>
+Slice Propus.<D>.<n> — <register review D>
+## Propus.<D>.<n> — <title>
 Goal: <what is true when it is done — an outcome, naming the FU ids it closes>
 Inputs: 01.Slice.Inputs\Register.Reviews\<D>
 Out of scope: <the neighbouring rows it deliberately leaves, by FU id>

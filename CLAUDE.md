@@ -220,6 +220,7 @@ the source of truth for decisions and traps, and load automatically when relevan
 | What a past slice actually did | `git log`, then `docs/claude/slice-log-archive.md` |
 | What was noticed and not yet fixed | `docs/claude/FOLLOW-UP-REGISTER.md` |
 | How the register is reviewed each Monday, and the fix slate it proposes | `docs/claude/REGISTER-REVIEW.md` |
+| Where the next slices come from — the four streams, who fills the queue, what became of each #36.04 gap and of D-01 … D-22 | `docs/claude/WHERE-SLICES-COME-FROM.md` |
 | What every kind of testing here is for, and what nobody tests | `docs/testing/` |
 
 ## Starting a slice

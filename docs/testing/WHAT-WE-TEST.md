@@ -303,46 +303,64 @@ for the whole suite, forever.
 
 ## 6. What nobody here tests
 
-A gap that is written down is a backlog. A gap that is not is a surprise. Each of these
-is **not started**.
+A gap that is written down is a backlog. A gap that is not is a surprise. None of these is
+tested today. Since Slice #36.17 each one also says which slice takes it or why it waits. The
+whole plan, and the order, is in `docs/claude/WHERE-SLICES-COME-FROM.md` → §7.
 
 **Whether a role that should not see a screen actually cannot reach it.** There are two
 roles, `superuser` and `user` (`src/lib/auth/roles.ts`). Nothing anywhere asserts that
 the second cannot reach an administration screen. This is the most valuable item on this
 list. It is also not a happy path, so it is a slice of its own with its own number, and
 `docs/testing/TEST-CATALOGUE.md` carries a `kind` column ready for it.
+→ **Slice 36.20** (FU-076). It is paired with the live defect behind the gap, FU-002: 19 of 26
+`/api/admin` routes check no role. It adds `authz` as the second `kind`.
 
 **Whether the AI reading of a deed got better or worse between two slices.** This is the
 single largest hole in this project's testing. There is no labelled corpus and no score,
 so every improvement to the extraction prompts is an **opinion**. What it would take:
 twenty or thirty deeds with their correct field values recorded by a person, and a
 harness that reports one number per run. `scripts/testing/measure-title-loss.ts` shows
-the shape of the harness; it is the corpus that does not exist. Building it is a slice of
-its own and this one does not start it.
+the shape of the harness; it is the corpus that does not exist.
+→ **Slice 36.23** (FU-073). It starts with ten Contracts de Vânzare, whose field values Adrian
+confirms against the paper, and records a baseline score in `docs/testing/ai-score/cvc.md`.
 
 **Whether a restore from backup produces a working archive.** The rebuild path is tested
-(`db-rebuild.yml`); a restore of real data is not.
+(`db-rebuild.yml`); a restore of real data is not. So today a backup is a hope, not a guarantee.
+→ **Waits** (FU-006). Two choices are Adrian's first: which backup to test (a `pg_dump` of
+the local container, Supabase's own, the storage bucket too), and where a restored copy may be
+stood up without touching anything live. Proposed as the next gap slice after 36.23, starting
+with an investigation.
 
 **Whether the application is usable by keyboard alone, or by a screen reader.** Some
 individual components have been built with it in mind — `version-nav-controls.tsx`
 carries an `sr-only` span specifically so the version number stays discoverable — but
 nothing tests it as a whole.
+→ **Waits** (FU-104). The keyboard and screen-reader defects already filed (FU-039, FU-062,
+FU-065, FU-066, FU-126) go to the Monday review. A systematic test waits until the happy path
+is `automated` end to end.
 
 **Whether anything is fast enough with ten thousand documents rather than two hundred.**
 No load test, no query-plan check, no page-weight budget.
+→ **Last** (FU-106). It needs a volume of data the archive does not have yet.
 
-**Whether the English half of `messages/` is actually English.** Completeness is checked
-now: `messages-key-parity.test.ts` (Slice Propus.3.q1) fails when either file lacks a key the
-other holds, and names each one, so a missing Romanian key no longer reaches a user as a raw
-key path. Nothing checks that an English value is not a copy of the Romanian one — FU-071
-found ten that were.
+**Whether the English half of `messages/` is actually English.** Completeness has been checked
+since Propus.3.q1 (`3271987`): `messages-key-parity.test.ts` fails when either file lacks a key
+the other holds, and names each one. So a missing Romanian key no longer reaches a user as a raw
+key path. Nothing checks that an English value is not a copy of the Romanian one; FU-071 found
+ten that were.
+→ **Mostly closed.** What remains, FU-071, is a copy item for the Monday review's sweep, not a
+test slice.
 
 **Whether an import that reported success actually landed every page it was given.**
 `Check-ImportHealth.ps1` answers two known defects off the database; nobody reconciles a
 finished import against the folder it came from, file by file.
+→ **Slice 36.22** (FU-012). It adds a reconciliation check, then uses it on a long import
+(`05.big`, FU-089) and on the two special folders (`04.mixed`, FU-090). That slice replaces
+this paragraph with a short section on the check.
 
 **Negative, boundary, stress, load, concurrency and performance testing.** Deliberately
-out of scope for Slice #36.04, each one line here so it is a backlog:
+out of scope for Slice #36.04, each one line here so it is a backlog. None is scheduled; the
+register holds negative and boundary as FU-099 and concurrency as FU-014:
 
 - *Negative* — what happens on an empty required field, a malformed cotă-parte, a
   rejected file type. Would take: the same case-file format, a `kind` of `negative`, and
