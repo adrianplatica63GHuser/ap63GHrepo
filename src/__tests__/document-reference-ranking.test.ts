@@ -661,6 +661,9 @@ describe("migration_086 and the code that has to match it", () => {
 describe("the extraction prompt and the route", () => {
   const prompts = read("src/lib/import/classify-prompts.ts");
   const route = read("src/app/api/documents/[id]/ai-interpret/route.ts");
+  // Slice #36.23: the answer is read by `interpretExtractText`, in the module
+  // the route and the AI-score harness share; the route calls it.
+  const extract = read("src/lib/documents/ai-extract.ts");
 
   it("asks for referencedInstruments with all four purposes", () => {
     expect(prompts).toContain('"referencedInstruments"');
@@ -672,7 +675,8 @@ describe("the extraction prompt and the route", () => {
   });
 
   it("whitelists the returned type key through the same door as suggestedTypeKey", () => {
-    expect(route).toMatch(/typeKey: canonicalTypeKey\(clean\.typeKey\)/);
+    expect(extract).toMatch(/typeKey: canonicalTypeKey\(clean\.typeKey\)/);
+    expect(route).toContain("interpretExtractText(textBlock, templateFields)");
   });
 
   /**
@@ -683,8 +687,10 @@ describe("the extraction prompt and the route", () => {
    * checks it.
    */
   it("never writes an association from the reading itself", () => {
-    expect(route).not.toContain("associateDocumentToDocument");
-    expect(route).not.toContain("createInstrumentStub");
+    for (const code of [route, extract]) {
+      expect(code).not.toContain("associateDocumentToDocument");
+      expect(code).not.toContain("createInstrumentStub");
+    }
   });
 });
 

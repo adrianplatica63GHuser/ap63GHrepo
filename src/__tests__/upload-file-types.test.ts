@@ -412,8 +412,14 @@ describe("the model-readable set is narrower than the image kind, and says so", 
     // MIME lists by design, so re-typing `["image/jpeg", …]` in any of these
     // three files is invisible to every other test in the repo. That is how it
     // came to be written three times in the first place.
+    //
+    // Slice #36.23 moved ai-interpret's page dispatch, unchanged, into
+    // `lib/documents/ai-extract.ts`, which the route and the AI-score harness
+    // both call — so that module is where the list is read now, and the route
+    // must reach it through there (asserted beside it).
+    expect(codeOf("app/api/documents/[id]/ai-interpret/route.ts")).toContain('from "@/lib/documents/ai-extract"');
     for (const rel of [
-      "app/api/documents/[id]/ai-interpret/route.ts",
+      "lib/documents/ai-extract.ts",
       "app/api/admin/doc-type-engine/read-sample/route.ts",
       "app/api/admin/import/scan-folder/route.ts",
       "app/api/admin/import/extract-id-card/route.ts",
@@ -440,7 +446,8 @@ describe("the model-readable set is narrower than the image kind, and says so", 
         "contentTypeOf(file.name) ?? (file.type || OCTET_STREAM)",
       ],
       [
-        "app/api/documents/[id]/ai-interpret/route.ts",
+        // ai-interpret's dispatch, since Slice #36.23 in the module it and the harness share.
+        "lib/documents/ai-extract.ts",
         "contentTypeOf(page.fileName) ?? (page.mimeType || OCTET_STREAM)",
       ],
       [
@@ -472,7 +479,7 @@ describe("the model-readable set is narrower than the image kind, and says so", 
     // …and reports the derived type beside a reason computed from it, so one
     // page cannot be described two ways on one screen.
     for (const [rel, field] of [
-      ["app/api/documents/[id]/ai-interpret/route.ts", "mimeType: pageMimeType,"],
+      ["lib/documents/ai-extract.ts", "mimeType: pageMimeType,"],
       ["app/api/admin/doc-type-engine/read-sample/route.ts", "mimeType: mime,"],
     ]) {
       const code = codeOf(rel);
