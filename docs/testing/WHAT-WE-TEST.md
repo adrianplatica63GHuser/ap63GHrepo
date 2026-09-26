@@ -237,6 +237,22 @@ session — and it runs before an import too: the same request then shows the wi
 Structure verdict on the folder and that nothing from it is in the database yet. Every import
 case ends with it, and again after its cleanup.
 
+**The AI reading score (Slice #36.23, FU-073)** — how well the AI reads a Contract de Vânzare,
+as one number. `bash scripts/test-runner/claude.sh request ai-score cvc 10` runs
+`scripts/testing/ai-score.ts`, which sends each of the ten contracts under
+`C:\dev\TEST.DATA\Test.Claude\ai-corpus\cvc\` through **the application's own extraction** —
+the prompt `buildExtractSystemPrompt` builds, sent and read back by `@/lib/documents/ai-extract`,
+which `ai-interpret` calls too — and scores every field against that contract's `expected.json`,
+an answer key Claude proposed and Adrian confirms against the paper. **It costs money: ten reads a
+run**, so it is never part of `full` and never runs in CI; `request ai-rescore cvc` scores the
+saved answers again for nothing, which is how the score follows a confirmation. The comparison
+rules are written once at the top of `src/lib/ai-score/score.ts` and pinned by
+`ai-score.test.ts`. The corpus and the answer keys hold real people's names and stay outside git;
+the score history — date, commit, prompt fingerprint, per-field accuracy, the one number, and the
+run-to-run spread below which a change is noise — is `docs/testing/ai-score/cvc.md`. A slice that
+changes an extraction prompt or the CVC form quotes the score before and after
+(`ga40prj/CLAUDE.md` → Verification order).
+
 **`scripts/decision-checks.sql`** and **`scripts/closed-list-review.sql`** — read-only
 worksheets that answer questions the source code cannot, for decisions taken with
 Ciprian. Every statement is a `SELECT`; they decide nothing and change nothing. They are
@@ -341,14 +357,13 @@ list. It is also not a happy path, so it is a slice of its own with its own numb
 → **Slice 36.20** (FU-076). It is paired with the live defect behind the gap, FU-002: 19 of 26
 `/api/admin` routes check no role. It adds `authz` as the second `kind`.
 
-**Whether the AI reading of a deed got better or worse between two slices.** This is the
-single largest hole in this project's testing. There is no labelled corpus and no score,
-so every improvement to the extraction prompts is an **opinion**. What it would take:
-twenty or thirty deeds with their correct field values recorded by a person, and a
-harness that reports one number per run. `scripts/testing/measure-title-loss.ts` shows
-the shape of the harness; it is the corpus that does not exist.
-→ **Slice 36.23** (FU-073). It starts with ten Contracts de Vânzare, whose field values Adrian
-confirms against the paper, and records a baseline score in `docs/testing/ai-score/cvc.md`.
+**Whether the AI reading of a deed got better or worse between two slices** — no longer a
+hole for the Contract de Vânzare: Slice 36.23 (FU-073) built a ten-contract corpus, a harness that
+scores the application's own extraction against it, and a baseline in
+`docs/testing/ai-score/cvc.md` (section 3 above). What is left: every other document type, which
+is a corpus folder and one line each; growing the CVC corpus towards the twenty or thirty FU-073
+proposed; and the two shapes the archive did not yield for the first ten — a born-digital PDF and a
+contract with a separate act adițional (FU-235).
 
 **Whether a restore from backup produces a working archive.** The rebuild path is tested
 (`db-rebuild.yml`); a restore of real data is not. So today a backup is a hope, not a guarantee.

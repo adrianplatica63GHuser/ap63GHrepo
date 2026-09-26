@@ -102,6 +102,15 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   The runner starts its own `next dev` on 3100 (`.next/runner`), so Adrian's server on 3000 is
   never touched. How: `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner. The
   bullets below are for when the runner is down and the blocks go back to Adrian.
+- **A slice that changes an extraction prompt or the CVC form runs `ai-score` before and after,
+  and quotes both numbers in its handover** (Slice #36.23). „An extraction prompt" is anything that
+  changes what `buildExtractSystemPrompt` returns or what `@/lib/documents/ai-extract` sends; „the
+  CVC form" is the `CONTRACT_VANZARE` template. `bash scripts/test-runner/claude.sh request ai-score
+  cvc 10` is ten paid reads, never part of `full`; `request ai-rescore cvc` scores the saved
+  answers again for free. The „before" may be the last row of `docs/testing/ai-score/cvc.md` when
+  its prompt fingerprint is the one on `HEAD` — then only the „after" is paid for. **A difference
+  smaller than the spread recorded in that file is noise**, and the handover says so rather than
+  claiming an improvement. Each run's row goes into that file, with no value read from a deed.
 - **`npm run e2e` needs `npm run dev` already running in a separate terminal.** When it isn't,
   every test times out waiting for a page load — a failure mode that looks nothing like
   "the dev server isn't running." Say so every time you ask Adrian to run it.
