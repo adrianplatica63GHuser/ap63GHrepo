@@ -8,15 +8,18 @@
  *  2. If input looks like a username (no "@"), POST /api/auth/lookup-email to
  *     get the associated email from app_users.
  *  3. Call Supabase signInWithPassword with the email + password.
- *  4. On success, hard-navigate to "/" so the server layout picks up the new
- *     session cookie.
+ *  4. On success, empty the query cache (Slice #37.01 — nothing an earlier
+ *     session in this tab fetched may reach this account; `@/lib/auth/me-query`)
+ *     and navigate to "/" so the server layout picks up the new session cookie.
  *
  * All translation strings are passed as props from the server page component
  * to avoid SSR/client locale hydration mismatches.
  */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { clearSessionCache } from "@/lib/auth/me-query";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 interface LoginFormProps {
@@ -39,6 +42,7 @@ export function LoginForm({
   errorGeneric,
 }: LoginFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [identity, setIdentity] = useState(""); // username or email
   const [password, setPassword] = useState("");
   const [error, setError]       = useState<string | null>(null);
@@ -78,6 +82,10 @@ export function LoginForm({
         setError(errorInvalidCredentials);
         return;
       }
+
+      // A new session starts from an empty cache: no role, list or record an
+      // earlier session in this tab fetched survives into this one.
+      clearSessionCache(queryClient);
 
       // Hard navigation so the server middleware sees the new session cookie
       router.push("/");

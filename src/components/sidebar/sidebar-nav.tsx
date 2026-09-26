@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, type MouseEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { LocaleToggle } from "@/components/locale-toggle";
@@ -12,6 +12,12 @@ import { DevOnly } from "@/components/dev-only";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
+import {
+  AUTH_ME_QUERY_KEY,
+  AUTH_ME_STALE_TIME_MS,
+  clearSessionCache,
+  fetchMe,
+} from "@/lib/auth/me-query";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
   getActiveHref,
@@ -36,16 +42,6 @@ function isPlainLeftClick(e: MouseEvent<HTMLAnchorElement>): boolean {
     !e.shiftKey &&
     !e.altKey
   );
-}
-
-// ---------------------------------------------------------------------------
-// Auth helpers
-// ---------------------------------------------------------------------------
-
-async function fetchMe(): Promise<{ username: string; role: string; uatMode?: boolean }> {
-  const res = await fetch("/api/auth/me");
-  if (!res.ok) return { username: "", role: "user" };
-  return res.json();
 }
 
 // ---------------------------------------------------------------------------
@@ -232,10 +228,14 @@ export function SidebarNav() {
   const { guardedAction, guardedNavigate } = useUnsavedChanges();
 
   // ── Auth — username + role for sidebar display ────────────────────────────
+  // Slice #37.01: `fetchMe` throws on an answer that is not ok, so a 401 or a
+  // 500 is a failed, retried query with no role — never a cached `user`. While
+  // the role is unknown `isSuperuser` is false. `@/lib/auth/me-query` says why.
+  const queryClient = useQueryClient();
   const { data: me } = useQuery({
-    queryKey: ["auth-me"],
+    queryKey: AUTH_ME_QUERY_KEY,
     queryFn: fetchMe,
-    staleTime: 5 * 60 * 1000, // 5 min — re-fetch in background
+    staleTime: AUTH_ME_STALE_TIME_MS, // re-fetch in background
   });
   const isSuperuser = me?.role === "superuser";
   // UAT mode (Ciprian's local box) has no real Supabase session — hide the
@@ -258,6 +258,9 @@ export function SidebarNav() {
       const supabase = createClient();
       await supabase.auth.signOut();
       clearRecentlyViewed();
+      // Slice #37.01: nothing this account's session fetched — its role, its
+      // lists, its records — may be shown to whoever signs in next.
+      clearSessionCache(queryClient);
       router.push("/login");
       router.refresh();
     });

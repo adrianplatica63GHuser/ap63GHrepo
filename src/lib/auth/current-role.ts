@@ -49,13 +49,13 @@
  *   So `getCurrentAppUser()` throws, and every guard behaves exactly as it did
  *   before this slice.
  *
- *   (A second round asked what `/api/auth/me` throwing actually gets the USER,
- *   and the answer is nothing: `sidebar-nav.tsx` maps any non-ok answer to
- *   `role: "user"` and caches it for five minutes, so the sidebar loses its
- *   administration section either way. What throwing buys is a server-side
- *   error instead of a fabricated 200. Telling the person at the screen apart
- *   from a real demotion needs a distinct state in `fetchMe`, which is a
- *   separate slice, not a change here.)
+ *   (A second round asked what `/api/auth/me` throwing actually gets the USER.
+ *   Then, nothing: the sidebar mapped any non-ok answer to `role: "user"` and
+ *   cached it for five minutes. Since Slice #37.01 it gets the distinct state
+ *   that paragraph asked for — `fetchMe` in `@/lib/auth/me-query` throws on a
+ *   non-ok answer, so the query is in error, holds no role and is retried —
+ *   and what throwing here buys is a server-side error instead of a fabricated
+ *   200, as before.)
  *
  *   The rate limiter is the one caller that must not fail loudly: refusing an
  *   OCR request because the role lookup blipped would turn a database hiccup
