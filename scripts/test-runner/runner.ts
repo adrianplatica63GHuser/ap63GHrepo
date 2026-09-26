@@ -903,8 +903,9 @@ function aiCorpora(): Record<string, number> {
  * touches it.
  */
 async function stepAiScore(folder: string | undefined, readCap: number | undefined, logFile: string): Promise<StepOutcome> {
-  if (folder === undefined || readCap === undefined) {
-    return { status: "error", exitCode: null, summary: "no folder or read cap on the request", notes: [] };
+  // `readCap` undefined is `ai-rescore`: no read, the saved answers scored again.
+  if (folder === undefined) {
+    return { status: "error", exitCode: null, summary: "no corpus on the request", notes: [] };
   }
   let real = "";
   try {
@@ -915,12 +916,13 @@ async function stepAiScore(folder: string | undefined, readCap: number | undefin
   if (path.dirname(real).toLowerCase() !== fs.realpathSync(AI_CORPUS_ROOT).toLowerCase()) {
     return { status: "error", exitCode: null, summary: `${folder} resolves outside ${rel(AI_CORPUS_ROOT)}`, notes: [] };
   }
-  const r = await runLogged(NODE, [BIN.tsx, AI_SCORE_SCRIPT, real, "--read-cap", String(readCap)], logFile, TIMEOUT.aiScore);
+  const mode = readCap === undefined ? ["--rescore"] : ["--read-cap", String(readCap)];
+  const r = await runLogged(NODE, [BIN.tsx, AI_SCORE_SCRIPT, real, ...mode], logFile, TIMEOUT.aiScore);
   // ai-score.ts: 0 every contract read and scored, 2 could not run or a read failed. A score is never "failed".
   return {
     status: r.timedOut || r.exitCode !== 0 ? "error" : "passed",
     exitCode: r.exitCode,
-    summary: (r.timedOut ? "timed out; " : "") + summariseStep("ai-score", r.text, r.exitCode),
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep(readCap === undefined ? "ai-rescore" : "ai-score", r.text, r.exitCode),
     notes: [`per-field accuracy is the step's log: ${rel(logFile)}; values stay in the corpus's _runs folder`],
   };
 }
@@ -1033,6 +1035,9 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
           break;
         case "ai-score":
           out = await stepAiScore(req.folder, req.readCap, logFile);
+          break;
+        case "ai-rescore":
+          out = await stepAiScore(req.folder, undefined, logFile);
           break;
       }
     } catch (e) {

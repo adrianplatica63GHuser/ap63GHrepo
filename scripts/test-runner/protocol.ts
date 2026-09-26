@@ -52,7 +52,8 @@
  * `C:\dev\TEST.DATA\Test.Claude\ai-corpus\` (`folder`, checked against the
  * corpora the runner listed itself) and a `readCap` — the most reads the request
  * approves — which must be at least the corpus's size, so a run is the whole
- * corpus or nothing.
+ * corpus or nothing. `ai-rescore` names a corpus too and reads nothing: it
+ * scores the answers earlier runs saved against the answer keys as they stand.
  *
  * A held step is not a failure and not an error: it is the runner saying „this
  * waits for Adrian", with the reason by name. None of the three ever touches
@@ -94,6 +95,7 @@ export const STEPS = [
   "export-schema",
   "reconcile",
   "ai-score",
+  "ai-rescore",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -117,6 +119,7 @@ export const SEQUENCES = {
   "migrate-local": ["apply-migration", "export-schema"],
   reconcile: ["reconcile"],
   "ai-score": ["ai-score"],
+  "ai-rescore": ["ai-rescore"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -139,7 +142,9 @@ const ALLOWED_FIELDS = ["version", "id", "sequence", "commit", "only", "folder",
  * (`RequestContext.knownDataFolders`). The runner joins it to the root; the
  * request never supplies the root.
  */
-export const FOLDER_SEQUENCES: readonly SequenceName[] = ["reconcile", "ai-score"];
+export const FOLDER_SEQUENCES: readonly SequenceName[] = ["reconcile", "ai-score", "ai-rescore"];
+/** The sequences whose folder is a corpus under `AI_CORPUS_ROOT_SEGMENTS`. (Slice #36.23) */
+export const CORPUS_SEQUENCES: readonly SequenceName[] = ["ai-score", "ai-rescore"];
 export const DATA_FOLDER_RE = /^[0-9A-Za-z][0-9A-Za-z._ -]{0,99}$/;
 /** The data root, relative to the repository: `C:\dev\TEST.DATA\Test.Claude`. */
 export const DATA_ROOT_SEGMENTS = ["..", "TEST.DATA", "Test.Claude"] as const;
@@ -330,9 +335,10 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
   // `reconcile` names a data folder; `ai-score` names a corpus. Each is checked
   // against the list the runner made of ITS OWN root, never the other's.
   const isScore = sequence === "ai-score";
-  const root: readonly string[] = isScore ? AI_CORPUS_ROOT_SEGMENTS : DATA_ROOT_SEGMENTS;
+  const isCorpus = CORPUS_SEQUENCES.includes(sequence);
+  const root: readonly string[] = isCorpus ? AI_CORPUS_ROOT_SEGMENTS : DATA_ROOT_SEGMENTS;
   const rootName = root.slice(1).join("\\");
-  const known: readonly string[] = isScore ? Object.keys(ctx.knownCorpora) : ctx.knownDataFolders;
+  const known: readonly string[] = isCorpus ? Object.keys(ctx.knownCorpora) : ctx.knownDataFolders;
   if ("folder" in obj) {
     if (!takesFolder) {
       return refuse(
@@ -372,12 +378,12 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
   } else if (isScore) {
     return refuse("bad-read-cap", "ai-score needs a readCap: the most paid reads this request approves.", rawId);
   }
-  if (isScore && folder !== undefined && readCap !== undefined) {
+  if (isCorpus && folder !== undefined) {
     const size = ctx.knownCorpora[folder] ?? 0;
     if (size === 0) {
       return refuse("bad-folder", `${folder} holds no contract with an expected.json.`, rawId);
     }
-    if (readCap < size) {
+    if (readCap !== undefined && readCap < size) {
       return refuse(
         "read-cap-below-corpus",
         `${folder} holds ${size} contracts and each is one read; a readCap of ${readCap} would stop part-way. Ask for at least ${size}.`,
@@ -639,7 +645,8 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
       body = (lines.filter((l) => l.startsWith("RECONCILE:")).pop() ?? "").replace(/^RECONCILE:\s*/, "");
       break;
     }
-    case "ai-score": {
+    case "ai-score":
+    case "ai-rescore": {
       // `scripts/testing/ai-score.ts` ends with one `AI-SCORE:` line — counts and percentages only.
       body = (lines.filter((l) => l.startsWith("AI-SCORE:")).pop() ?? "").replace(/^AI-SCORE:\s*/, "");
       break;
@@ -687,7 +694,7 @@ export interface RunResult {
   sequence: SequenceName | null;
   commit: string | null;
   only: string[] | null;
-  /** `reconcile` and `ai-score` only: the folder it read. Absent on every other result. */
+  /** `reconcile`, `ai-score` and `ai-rescore` only: the folder it read. Absent on every other result. */
   folder?: string;
   /** `ai-score` only: the read cap the request approved. */
   readCap?: number;

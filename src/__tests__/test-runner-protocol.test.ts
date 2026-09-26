@@ -106,9 +106,11 @@ describe("a request that asks for exactly what it may", () => {
     const args =
       sequence === "ai-score"
         ? { folder: "cvc", readCap: 10 }
-        : FOLDER_SEQUENCES.includes(sequence)
-          ? { folder: "07.smoke.tc.marker" }
-          : {};
+        : sequence === "ai-rescore"
+          ? { folder: "cvc" }
+          : FOLDER_SEQUENCES.includes(sequence)
+            ? { folder: "07.smoke.tc.marker" }
+            : {};
     expect(refusal(req({ sequence, ...args }))).toBe("accepted");
   });
 
@@ -118,7 +120,7 @@ describe("a request that asks for exactly what it may", () => {
       ok: true,
       request: { version: 1, id: ID, sequence: "reconcile", commit: HEAD, folder: "10.big.tc.marker" },
     });
-    expect(FOLDER_SEQUENCES).toEqual(["reconcile", "ai-score"]);
+    expect(FOLDER_SEQUENCES).toEqual(["reconcile", "ai-score", "ai-rescore"]);
     expect(DATA_ROOT_SEGMENTS).toEqual(["..", "TEST.DATA", "Test.Claude"]);
   });
 
@@ -130,6 +132,11 @@ describe("a request that asks for exactly what it may", () => {
     });
     expect(AI_CORPUS_ROOT_SEGMENTS).toEqual(["..", "TEST.DATA", "Test.Claude", "ai-corpus"]);
     expect(refusal(req({ sequence: "ai-score", folder: "cvc", readCap: 10 }))).toBe("accepted");
+  });
+
+  it("ai-rescore names a corpus and no read cap: it reads nothing", () => {
+    const r = parseRequest(req({ sequence: "ai-rescore", folder: "cvc" }), ctx());
+    expect(r).toEqual({ ok: true, request: { version: 1, id: ID, sequence: "ai-rescore", commit: HEAD, folder: "cvc" } });
   });
 
   it("ai-score is a sequence of its own: nothing else pays for a read", () => {
@@ -202,6 +209,9 @@ describe("every refusal, by name", () => {
     ["a read cap over the most", req({ sequence: "ai-score", folder: "cvc", readCap: MAX_READ_CAP + 1 }), "bad-read-cap"],
     ["a read cap below the corpus", req({ sequence: "ai-score", folder: "cvc", readCap: 9 }), "read-cap-below-corpus"],
     ["a read cap on a sequence that spends nothing", req({ sequence: "full", readCap: 10 }), "read-cap-not-applicable"],
+    ["a read cap on a rescore", req({ sequence: "ai-rescore", folder: "cvc", readCap: 10 }), "read-cap-not-applicable"],
+    ["a rescore with no corpus", req({ sequence: "ai-rescore" }), "bad-folder"],
+    ["a rescore of a corpus with no answer keys", req({ sequence: "ai-rescore", folder: "empty" }), "bad-folder"],
     ["busy", req(), "busy", { busyWith: "20260924T150000Z-1" }],
     ["git could not answer", req(), "head-unknown", { headCommit: null }],
     ["the wrong commit", req({ commit: "f".repeat(40) }), "head-mismatch"],
@@ -352,6 +362,12 @@ describe("one-line summaries", () => {
       "  cvc-01 [proposed]: 3 page(s), 41 s — 14/17\n\nAI-SCORE: 81.0% over 4 confirmed · all 10: 79.2% · prompt 0a1b2c3d4e5f · 10 reads of cap 10\n",
       0,
       "81.0% over 4 confirmed · all 10: 79.2% · prompt 0a1b2c3d4e5f · 10 reads of cap 10 (exit 0)",
+    ],
+    [
+      "ai-rescore",
+      "rescored run 20260926T002734Z\n\nAI-SCORE: rescored 1 run, no reads — 20260926T002734Z 81.0% over 4 confirmed, all 79.2%\n",
+      0,
+      "rescored 1 run, no reads — 20260926T002734Z 81.0% over 4 confirmed, all 79.2% (exit 0)",
     ],
   ] as const)("%s", (step, text, code, expected) => {
     expect(summariseStep(step, text, code)).toBe(expected);

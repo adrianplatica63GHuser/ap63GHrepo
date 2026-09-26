@@ -8,6 +8,7 @@
 #   claude.sh request ai-score <corpus> <readCap>  score the AI's reading of a corpus under
 #                                                  Test.Claude\ai-corpus\ — SPENDS one read per
 #                                                  contract; readCap >= the corpus's size (#36.23)
+#   claude.sh request ai-rescore <corpus>          score earlier runs' saved answers again; no reads
 #   claude.sh wait <id> [seconds]                  poll its result (default 170 s, inside the 180 s cap)
 #   claude.sh show <id>                            print a result as it stands
 #   claude.sh ping [seconds]                       request + wait for the sequence that runs nothing
@@ -17,6 +18,7 @@
 #            migrate-local (Apply-Migration + Export-SupabaseSchema, confirmed migrations only)
 #            reconcile <folder> (what became of every file of that folder after an import; read-only)
 #            ai-score <corpus> <readCap> (paid: the app's own extraction over a labelled corpus, scored)
+#            ai-rescore <corpus> (free: the saved answers of every earlier run, scored again)
 #
 # wait/ping exit: 0 passed · 1 failed · 2 error · 3 refused · 4 still running · 5 no result yet
 #                 6 held — a guard said this waits for Adrian; the step's summary names why
@@ -53,8 +55,8 @@ request() {
   local head; head="$(git -C "$repo" rev-parse HEAD)" || { echo "git rev-parse HEAD failed" >&2; return 2; }
   local id; id="$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
   local folder="" cap=""
-  if [ "$seq" = "reconcile" ]; then
-    [ $# -ge 1 ] || { echo "usage: claude.sh request reconcile <folder>" >&2; return 2; }
+  if [ "$seq" = "reconcile" ] || [ "$seq" = "ai-rescore" ]; then
+    [ $# -ge 1 ] || { echo "usage: claude.sh request $seq <folder>" >&2; return 2; }
     folder="$1"; shift
   fi
   if [ "$seq" = "ai-score" ]; then
@@ -97,5 +99,5 @@ case "$cmd" in
   wait)    [ $# -ge 1 ] || { echo "usage: claude.sh wait <id> [seconds]" >&2; exit 2; }; wait_for "$@" ;;
   show)    [ -f "$ch/results/${1:-}.json" ] || { echo "no result for ${1:-}" >&2; exit 5; }; show "$ch/results/$1.json" ;;
   ping)    id="$(request ping)" || exit 2; wait_for "$id" "${1:-20}" ;;
-  *)       sed -n '2,21p' "$0"; exit 2 ;;
+  *)       sed -n '2,23p' "$0"; exit 2 ;;
 esac
