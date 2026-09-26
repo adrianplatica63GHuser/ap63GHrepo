@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-09-23 |
+| **Last green** | 2026-09-26 |
 
 ## ⚠️ Claude cannot drive steps 2–4, and that is permanent
 
@@ -91,6 +91,8 @@ answers could reach the next. Both fixed (`src/lib/auth/me-query.ts`). The spec'
 `describe` runs steps 1–11 in a context of its own, and answers Supabase's logout request
 itself: the app's „Ieșire" signs the account out everywhere (Supabase's default, global
 scope), which would end the session every later spec — and Adrian's own browser — runs on.
+Green in the test runner's e2e run `20260926T234436Z-27588` on `165c9fb` (3 passed; the
+`user` reverse skipped, because no `user` account signs in yet — TC-AUTH-02).
 
 **2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
 12 passed; the spec is named in the catalogue's `Spec` column.

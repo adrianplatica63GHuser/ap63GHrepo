@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-26, Slice #36.23 — 236 entries. Rows are status, columns are impact.
+As of 2026-09-26, Slice #37.01 — 239 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 22 | 61 | 42 | 14 | 139 |
+| open | 22 | 62 | 43 | 14 | 141 |
 | planned | 0 | 0 | 1 | 0 | 1 |
-| resolved | 23 | 34 | 23 | 3 | 83 |
+| resolved | 23 | 35 | 23 | 3 | 84 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 49 | 100 | 68 | 19 | 236 |
+| **total** | 49 | 102 | 69 | 19 | 239 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -320,3 +320,6 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-234 | 2026-09-26 #36.23 ai-score run 20260926T002734Z | defect | AI | The model's extraction answer can be invalid JSON — an unescaped quote inside a value (a notary's name in quotes) — and `extractJson` parses it strictly, so ai-interpret answers 502 and the user gets no field at all from a paid read. | 1 of 30 reads in Slice #36.23's three ai-score runs (cvc-01, run 1: „Expected ',' or '}' after property value … line 67 column 46"); src/lib/documents/ai-extract.ts extractJson | user | S | open | Ask for the answer through tool use / structured output so the API guarantees JSON, or repair unescaped inner quotes before parsing; measure with ai-score before and after (ga40prj/CLAUDE.md → Verification order). | 2026-09-26 |
 | FU-235 | 2026-09-26 #36.23 docs/testing/ai-score/cvc.md | test gap | AI | The AI-score corpus is ten CVC scans; the archive's CVC folders yielded no born-digital PDF and no contract with a separate act adițional, which the slice header asked for, and FU-073 proposed 20–30 contracts. | docs/testing/ai-score/cvc.md → What is scored; ai-corpus\cvc has cvc-01…cvc-10, all JPEG scans | dev | S | open | Add contracts as cvc-11… when such documents are found (this corpus came from flotante and CLINCENI.3; A3.CVCs is the next place to look), and other types as sibling corpora with one CORPUS_TYPES line each. | 2026-09-26 |
 | FU-236 | 2026-09-26 #36.23 ai-score runs 2–3 | recommendation | AI | The next extraction-prompt slice should start from the three weakest CVC fields in the baseline: shares given in m² (`cotaSuprafataMp`, 11/16 with the % ones), `marcajCarteFunciara` (6–7/10) and the land-book number in unmappedRaw (3–4/5) — after Adrian's key confirmations settle which misses are the model's and which are the key's. | docs/testing/ai-score/cvc.md → Per field | dev | M | open | One slice: confirm the keys, `ai-rescore`, then change the prompt for those fields only and quote ai-score before and after. | 2026-09-26 |
+| FU-237 | 2026-09-26 #37.01 Adrian's report | defect | Auth | After „Ieșire" and a sign-in in the same tab an administrator lost „Admin-Operațiuni" and „Admin-Configurare": the sidebar cached any non-ok `/api/auth/me` answer as the role `user` for five minutes, and neither sign-out nor sign-in cleared the query cache, so one account's answers could reach the next. | src/components/sidebar/sidebar-nav.tsx:45-49, :235-239, :256-263 and src/app/login/login-form.tsx:83-84 at f0ca5bb; src/__tests__/auth-session-cache.test.tsx red at d0d5b1c (runner 20260926T232837Z-23237) | user | S | resolved | #37.01 34a79b4 — `@/lib/auth/me-query`: a non-ok answer throws (no role, retried); the whole cache is cleared on sign-out and after sign-in. TC-AUTH-01 steps 9–11 (165c9fb). | 2026-09-26 |
+| FU-238 | 2026-09-26 #37.01 165c9fb | defect | Auth | „Ieșire" calls `supabase.auth.signOut()` with Supabase's default GLOBAL scope, so signing out in one browser ends the account's sessions in every other — another device, Adrian's other browser, and the test runner's e2e session when it runs as the same account. | src/components/sidebar/sidebar-nav.tsx `handleLogout` → `supabase.auth.signOut()` with no scope; the TC-AUTH-01 spec answers `/auth/v1/logout` itself for this reason | user | XS | open | `signOut({ scope: "local" })` if one browser's „Ieșire" should end only that browser's session — Adrian's call which is meant. | 2026-09-26 |
+| FU-239 | 2026-09-26 #37.01 handover | debt | Auth | `getCurrentUser()` turns every failure of `supabase.auth.getUser()` — thrown, or returned in its `error` — into null with no log line, so a network or token blip is answered as „not signed in" (401) and nobody can see it happened — the likeliest reason `/api/auth/me` failed right after Adrian's sign-in on 2026-09-26. | src/lib/auth/current-user.ts:86-91 — `if (!user) return null` ignores `error`; `catch {}` returns null | dev | XS | open | Unverified: the failing answer itself was not captured. Log a returned `error` that is not a missing session, and the caught one, server side; keep the null. | 2026-09-26 |
