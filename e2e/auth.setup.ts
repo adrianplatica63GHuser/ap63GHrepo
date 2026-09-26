@@ -20,7 +20,9 @@
  *   E2E_USER_EMAIL, E2E_USER_PASSWORD — an approved account whose role is
  *   `user`. A second setup logs it in and saves e2e/.auth/user-session.json
  *   (`USER_STATE`, e2e/helpers/auth-state.ts). Without the pair it is skipped,
- *   and so is every spec that needs it.
+ *   and so is every spec that needs it — and so it is when the pair does not
+ *   sign in, or signs in as another role (Slice #36.23): the reason is in the
+ *   skip, and the superuser's specs run regardless.
  */
 
 import { test as setup, expect, type Page } from "@playwright/test";
@@ -250,19 +252,31 @@ setup("autentificare cont cu rol user (TC-AUTH-02)", async ({ page }) => {
   const password = process.env.E2E_USER_PASSWORD;
   setup.skip(!email || !password, "E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env — the `user` specs are skipped.");
   fs.mkdirSync(AUTH_DIR, { recursive: true });
+  // A session from an earlier run must not stand in for this one's answer.
+  fs.rmSync(USER_STATE, { force: true });
 
-  await loginAs(page, email!, password!);
+  // ⚠️ **A `user` ACCOUNT THAT DOES NOT WORK SKIPS, IT DOES NOT FAIL.** (Slice #36.23)
+  // This test is in the `setup` project every spec depends on, so a throw here
+  // stopped all of them: measured in runner result 20260926T011606Z-6699, where
+  // the two keys were in `.env` before the account existed — „22 did not run"
+  // for one account only a parked spec needs. The `user` specs skip themselves
+  // when USER_STATE is absent (removed above), and the reason is this test's
+  // skip annotation, in the run's own output.
+  try {
+    await loginAs(page, email!, password!);
+  } catch (e) {
+    setup.skip(true, `E2E_USER_EMAIL is set but does not sign in (${(e as Error).message.split("\n")[0]}) — the \`user\` specs are skipped. Create and approve the account, or remove the pair from .env.`);
+  }
   await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", domain: "localhost", path: "/" }]);
 
   const me = await page.request.get("/api/auth/me");
   expect(me.ok(), `GET /api/auth/me failed (${me.status()})`).toBeTruthy();
   const { role } = (await me.json()) as { role?: string };
-  if (role !== "user") {
-    throw new Error(
-      `E2E_USER_EMAIL (${email}) signs in as role "${role}", not "user". ` +
-        "The TC-AUTH-02 spec proves what a `user` is refused; run as anything else it proves nothing. " +
-        "Point E2E_USER_EMAIL at an account whose role is user.",
-    );
-  }
+  // The TC-AUTH-02 spec proves what a `user` is refused; run as anything else
+  // it proves nothing — so no state is saved, and it skips.
+  setup.skip(
+    role !== "user",
+    `E2E_USER_EMAIL (${email}) signs in as role "${role}", not "user" — the \`user\` specs are skipped. Point E2E_USER_EMAIL at an account whose role is user.`,
+  );
   await page.context().storageState({ path: USER_STATE });
 });
