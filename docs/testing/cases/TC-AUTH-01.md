@@ -64,6 +64,14 @@ PowerShell window.**
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
 | 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte", then „Admin-Operațiuni" and „Admin-Configurare" — and below them, **once anything has been opened in this browser**, a „RECENTE" list of recently-opened records. A browser that has opened nothing shows no „RECENTE" at all (the list lives in the browser's own storage) |
 | 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
+| 9 | Presses „Ieșire" at the bottom of the sidebar | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
+| 10 | In the same tab, without reloading, signs in again with the same account (steps 2–4) | The address becomes `http://localhost:3000/` and „Tablou de bord" is back |
+| 11 | Looks at the left sidebar | „Admin-Operațiuni" and „Admin-Configurare" are there, as in step 7, and „Autentificat ca" still names the account — no reload needed |
+
+**When a `user` account exists** (TC-AUTH-02's), steps 9–11 are also run the other way
+round: the administrator signs out and the `user` signs in, in the same tab — and then the
+sidebar shows the five daily sections and **neither** „Admin-Operațiuni" nor
+„Admin-Configurare".
 
 **Nothing is written by this case.** A failed login shows „Utilizator sau parolă
 incorectă" under the form and stays on `/login`.
@@ -74,6 +82,15 @@ Nothing to clean up. The session cookie is the only thing created and every late
 wants it.
 
 ## Notes from the runs
+
+**2026-09-26 — steps 9–11 added (Slice #37.01).** Adrian signed out and back in, in one
+tab, and both administration sections were gone until a reload. Two defects in the browser:
+an answer from `/api/auth/me` that was not ok was cached as the role `user` for five
+minutes, and neither „Ieșire" nor the login form emptied the query cache, so one account's
+answers could reach the next. Both fixed (`src/lib/auth/me-query.ts`). The spec's second
+`describe` runs steps 1–11 in a context of its own, and answers Supabase's logout request
+itself: the app's „Ieșire" signs the account out everywhere (Supabase's default, global
+scope), which would end the session every later spec — and Adrian's own browser — runs on.
 
 **2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
 12 passed; the spec is named in the catalogue's `Spec` column.
