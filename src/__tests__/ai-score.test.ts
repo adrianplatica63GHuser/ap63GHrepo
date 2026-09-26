@@ -16,10 +16,12 @@ import {
   foldText,
   nameKey,
   percent,
+  personName,
   readDate,
   readNumber,
   scoreContract,
   summarise,
+  unreadable,
   type ExpectedContract,
   type ReadContract,
 } from "@/lib/ai-score/score";
@@ -117,6 +119,11 @@ describe("land, from what the model could not put in a field", () => {
     expect(findLand(["Tarla 46", "Parcela 222/13/1"], "tarla", "46").ok).toBe(true);
     expect(findLand(["Tarla 46", "Parcela 222/13/1"], "parcela", "222/13/1").ok).toBe(true);
     expect(findLand(["Amplasament: tarlaua 58, parcela 253/1"], "parcela", "253/1").ok).toBe(true);
+  });
+
+  it("„solă” is the older word for tarla", () => {
+    expect(findLand(["Amplasament: sola 3, parcela 59"], "tarla", "3").ok).toBe(true);
+    expect(findLand(["Amplasament: sola 3, parcela 59"], "parcela", "59").ok).toBe(true);
   });
 
   it("one label naming two things still gives each a window", () => {
@@ -218,6 +225,25 @@ describe("one contract", () => {
   it("a missing person makes the role wrong", () => {
     const fewer = scoreContract(expected, { ...read, parties: read.parties.slice(0, 2) }, kinds);
     expect(fewer.find((i) => i.field === "parties.Cumpărător")?.ok).toBe(false);
+  });
+
+  it("an answer that could not be parsed misses every item, the null-expected ones too", () => {
+    const zero = unreadable(expected, kinds);
+    expect(zero.length).toBe(items.length);
+    expect(zero.every((i) => !i.ok && i.read === null)).toBe(true);
+  });
+
+  it("a natural person read as last and first name, with name null, is that person", () => {
+    const split = scoreContract(
+      expected,
+      {
+        ...read,
+        parties: [{ roleName: "Vânzător", name: null, firstName: "Ion", lastName: "Popescu", cotaParte: null, cotaSuprafataMp: null }],
+      },
+      kinds,
+    );
+    expect(split.find((i) => i.field === "parties.Vânzător")?.ok).toBe(true);
+    expect(personName({ roleName: "x", name: null, firstName: null, lastName: null, cotaParte: null, cotaSuprafataMp: null })).toBe("");
   });
 
   it("an extra person makes the role wrong too", () => {

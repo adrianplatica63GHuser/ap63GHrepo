@@ -17,9 +17,14 @@
  * | date     | `dateDocument`, any template `date` field     | the same calendar day; `yyyy-mm-dd` and `dd.mm.yyyy` both read |
  * | number   | template `number` fields                      | within 0.5 of the expected value; Romanian notation read („1.785,50", „44.320.000") |
  * | select   | template `select` fields                      | the same option value; an expected `null` is also met by „NEMENTIONAT" or nothing, and vice versa |
- * | people   | one item per role („Vânzător", „Cumpărător")  | the same SET of people, order ignored; two names are one person when their folded words are the same words in any order |
+ * | people   | one item per role („Vânzător", „Cumpărător")  | the same SET of people, order ignored; two names are one person when their folded words are the same words in any order. A party read as `lastName` + `firstName` with `name` null — how the model returns a natural person — is that name |
  * | shares   | one item per person whose share is expected   | that person was found, and each share the key gives (`cotaParte` %, `cotaSuprafataMp` m²) is read within 0.5; „1/3" reads as 33.33 |
- * | land     | `tarla`, `parcela`, `carteFunciara`, `suprafataMp` | the CVC form has no field for these (#36.01 put the parcel on the property, not the deed), so the model can only put them in `unmappedRaw` or `subject`. Correct when one of those entries names the thing („tarla…", „parcel…", „carte funciară"/„CF", „suprafaț…") and the expected value follows it — the same words for identifiers, a number within 0.5 for the area |
+ * | land     | `tarla`, `parcela`, `carteFunciara`, `suprafataMp` | the CVC form has no field for these (#36.01 put the parcel on the property, not the deed), so the model can only put them in `unmappedRaw` or `subject`. Correct when one of those entries names the thing („tarla…"/„solă", „parcel…", „carte funciară"/„CF", „suprafaț…") and the expected value follows it — the same words for identifiers, a number within 0.5 for the area |
+ *
+ * **An answer that is not JSON scores zero on every item** (`unreadable`): the
+ * route answers it with a 502 and the user gets no field at all, so for the
+ * user every field was missed. A read that never happened (an HTTP error) is
+ * not scored — that is the network, not the reading.
  *
  * An expected `null` is scored for form fields — reading a value the deed does
  * not state is a mistake too — but NOT for land: nothing in `unmappedRaw` can
@@ -59,9 +64,22 @@ export type ExpectedContract = {
 export type ReadPerson = {
   roleName: string;
   name: string | null;
+  /** A natural person usually comes back as these two, with `name` null. */
+  firstName?: string | null;
+  lastName?: string | null;
   cotaParte: string | null;
   cotaSuprafataMp: string | null;
 };
+
+/**
+ * The name a party was read as: `name`, or else last and first name together —
+ * the prompt asks for a natural person's name in those two, and the model
+ * leaves `name` null for them.
+ */
+export function personName(p: ReadPerson): string {
+  if (!blank(p.name)) return p.name;
+  return [p.lastName, p.firstName].filter((x): x is string => !blank(x)).join(" ");
+}
 
 /** What `interpretExtractText` returned, narrowed to what is scored. */
 export type ReadContract = {
@@ -174,7 +192,8 @@ function afterKeyword(words: string[], key: LandKey): number[] {
   const at: number[] = [];
   for (let i = 0; i < words.length; i++) {
     const w = words[i];
-    if (key === "tarla" && w.startsWith("tarla")) at.push(i + 1);
+    // „Solă" is the older word for the same thing, and deeds still use it.
+    if (key === "tarla" && (w.startsWith("tarla") || w === "sola" || w === "sole")) at.push(i + 1);
     else if (key === "parcela" && w.startsWith("parcel")) at.push(i + 1);
     else if (key === "suprafataMp" && w.startsWith("suprafat")) at.push(i + 1);
     else if (key === "carteFunciara") {
@@ -186,7 +205,7 @@ function afterKeyword(words: string[], key: LandKey): number[] {
 }
 
 function isAnyLandWord(w: string): boolean {
-  return w.startsWith("tarla") || w.startsWith("parcel") || w.startsWith("suprafat") || w === "cf" || w.startsWith("funciar");
+  return w.startsWith("tarla") || w === "sola" || w === "sole" || w.startsWith("parcel") || w.startsWith("suprafat") || w === "cf" || w.startsWith("funciar");
 }
 
 /**
@@ -272,18 +291,18 @@ export function scoreContract(
     const roleKey = foldText(role);
     const got = read.parties.filter((p) => foldText(p.roleName) === roleKey);
     const want = [...new Set(people.map((p) => nameKey(p.name)))].sort();
-    const have = [...new Set(got.map((p) => nameKey(p.name)).filter(Boolean))].sort();
+    const have = [...new Set(got.map((p) => nameKey(personName(p))).filter(Boolean))].sort();
     push(
       `parties.${role}`,
       want.length === have.length && want.every((w, i) => w === have[i]),
       people.map((p) => p.name).join("; "),
-      got.map((p) => p.name ?? "").join("; "),
+      got.map((p) => personName(p)).join("; "),
     );
 
     for (const person of people) {
       const hasShare = !blank(person.cotaParte) || !blank(person.cotaSuprafataMp);
       if (!hasShare) continue;
-      const match = got.find((p) => nameKey(p.name) === nameKey(person.name));
+      const match = got.find((p) => nameKey(personName(p)) === nameKey(person.name));
       const okParte = blank(person.cotaParte) || compareField("number", person.cotaParte ?? null, match?.cotaParte ?? null);
       const okMp =
         blank(person.cotaSuprafataMp) || compareField("number", person.cotaSuprafataMp ?? null, match?.cotaSuprafataMp ?? null);
@@ -304,6 +323,16 @@ export function scoreContract(
     push(`land.${key}`, found.ok, e, found.read);
   }
   return items;
+}
+
+/**
+ * A contract whose answer could not be parsed: every item it would have had,
+ * each wrong. Built from an empty read so the item list is the same shape as a
+ * parsed contract's.
+ */
+export function unreadable(expected: ExpectedContract, templateKinds: Readonly<Record<string, FieldKind>>): ItemResult[] {
+  const empty: ReadContract = { fields: {}, customFields: {}, unmappedRaw: {}, parties: [] };
+  return scoreContract(expected, empty, templateKinds).map((i) => ({ ...i, ok: false, read: null }));
 }
 
 // ---------------------------------------------------------------------------

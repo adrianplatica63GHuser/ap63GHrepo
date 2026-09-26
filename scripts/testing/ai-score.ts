@@ -2,9 +2,15 @@
  * How well the AI reads a document type, as one number.        (Slice #36.23, FU-073)
  *
  *   npx tsx scripts/testing/ai-score.ts "C:\dev\TEST.DATA\Test.Claude\ai-corpus\cvc" --read-cap 10
+ *   npx tsx scripts/testing/ai-score.ts "C:\dev\TEST.DATA\Test.Claude\ai-corpus\cvc" --rescore
+ *
+ * `--rescore` reads nothing and costs nothing: it scores every earlier run's
+ * saved answers again, against the answer keys as they stand now — so a
+ * baseline follows Adrian's confirmations without paying for the reads twice.
  *
  * Normally run by the test runner's `ai-score` sequence
- * (`bash scripts/test-runner/claude.sh request ai-score cvc 10`), which accepts only
+ * (`bash scripts/test-runner/claude.sh request ai-score cvc 10`), or `ai-rescore`
+ * (`… request ai-rescore cvc`) for the free one. `ai-score` accepts only
  * a corpus folder directly under `C:\dev\TEST.DATA\Test.Claude\ai-corpus\` and a
  * read cap no smaller than the corpus. It is never part of `full` and never runs
  * in CI: every contract is one paid read.
@@ -25,7 +31,8 @@
  * as `reconcile-import.ts` does) and `.env` for three keys only:
  * `ANTHROPIC_API_KEY` (never printed), `POSTGRES_DB`, `POSTGRES_USER`.
  *
- * Exit: 0 every contract read and scored · 2 the run could not start, or a read failed.
+ * Exit: 0 every contract read and scored (an answer that is not JSON is scored,
+ * as zero) · 2 the run could not start, or a read failed and was not scored.
  */
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -47,6 +54,7 @@ import {
   percent,
   scoreContract,
   summarise,
+  unreadable,
   type ExpectedContract,
   type FieldKind,
   type ItemResult,
@@ -180,47 +188,77 @@ function table(title: string, s: ScoreSummary): string[] {
   return lines;
 }
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const capAt = args.indexOf("--read-cap");
-  const readCap = capAt >= 0 ? Number(args[capAt + 1]) : NaN;
-  const corpusArg = args.find((a, i) => !a.startsWith("--") && i !== capAt + 1);
-  if (!corpusArg || !Number.isInteger(readCap) || readCap < 1) {
-    fail('usage: npx tsx scripts/testing/ai-score.ts "<corpus folder>" --read-cap <n>');
+type Setup = {
+  corpus: string;
+  corpusName: string;
+  repo: string;
+  env: ReturnType<typeof readEnv>;
+  contracts: Contract[];
+};
+
+/** What a run was asked with — saved beside it, so a rescore reads answers the way the run did. */
+type RunTemplate = { key: string; name: string; templateFields: DocumentTemplateField[]; roles: string[] };
+
+function kindsOf(templateFields: readonly DocumentTemplateField[]): Record<string, FieldKind> {
+  return Object.fromEntries(templateFields.map((f) => [f.key, f.type === "textarea" ? "text" : (f.type as FieldKind)]));
+}
+
+/** One answer → its items, or every item missed when the answer is not JSON. */
+function scoreAnswer(
+  c: Contract,
+  text: string,
+  t: RunTemplate,
+  notes: string[],
+): { items: ItemResult[]; unreadableError: string | null } {
+  const kinds = kindsOf(t.templateFields);
+  try {
+    return { items: scoreContract(c.expected, interpretExtractText(text, t.templateFields), kinds), unreadableError: null };
+  } catch (e) {
+    // The route answers this with a 502 and the user gets nothing: every item is missed.
+    const zero = unreadable(c.expected, kinds);
+    notes.push(`${c.id}: the answer was not JSON (${(e as Error).message}) — scored 0/${zero.length}`);
+    return { items: zero, unreadableError: (e as Error).message };
   }
-  const corpus = path.resolve(corpusArg);
-  if (!fs.existsSync(corpus) || !fs.statSync(corpus).isDirectory()) fail(`not a folder: ${corpus}`);
-  const corpusName = path.basename(corpus);
-  const typeKey = CORPUS_TYPES[corpusName.toLowerCase()];
-  if (!typeKey) fail(`no document type is known for corpus ${corpusName} — add it to CORPUS_TYPES`);
+}
 
-  const repo = path.resolve(__dirname, "..", "..");
-  const env = readEnv(repo);
+function report(contracts: Contract[], items: ItemResult[]): { confirmedIds: Set<string>; all: ScoreSummary; confirmed: ScoreSummary; lines: string[] } {
+  const confirmedIds = new Set(contracts.filter((c) => c.expected.status === "confirmed").map((c) => c.id));
+  const all = summarise(items);
+  const confirmed = summarise(items.filter((i) => confirmedIds.has(i.contract)));
+  const lines = [
+    "",
+    ...table(`confirmed only (${confirmedIds.size} of ${contracts.length})`, confirmed),
+    "",
+    ...table(`all contracts, confirmed or proposed (${contracts.length})`, all),
+  ];
+  return { confirmedIds, all, confirmed, lines };
+}
+
+/** A paid run: every contract read once, scored, and its answer kept for rescoring. */
+async function run(setup: Setup, readCap: number): Promise<number> {
+  const { corpus, corpusName, repo, env, contracts } = setup;
   if (!env.apiKey) fail("ANTHROPIC_API_KEY is not set in .env");
-
-  const contracts = listContracts(corpus);
-  if (contracts.length === 0) fail(`no contract folder with an expected.json under ${corpus}`);
   // ⚠️ Before any money is spent: the whole corpus, or nothing.
   if (contracts.length > readCap) {
     fail(`the corpus holds ${contracts.length} contracts and the read cap is ${readCap}; nothing was read`);
   }
 
+  const typeKey = CORPUS_TYPES[corpusName.toLowerCase()];
   const type = readType(typeKey, env.database, env.user);
-  const templateFields: DocumentTemplateField[] = parseTemplateFields(type.templateFields);
-  const kinds: Record<string, FieldKind> = Object.fromEntries(
-    templateFields.map((f) => [f.key, f.type === "textarea" ? "text" : (f.type as FieldKind)]),
-  );
-  const systemPrompt = buildExtractSystemPrompt(templateFields, type.roles);
-  const typeHintText = typeHintTextFor({ name: type.name, key: type.key });
+  const t: RunTemplate = { key: type.key, name: type.name, templateFields: parseTemplateFields(type.templateFields), roles: type.roles };
+  const systemPrompt = buildExtractSystemPrompt(t.templateFields, t.roles);
+  const typeHintText = typeHintTextFor({ name: t.name, key: t.key });
   const fingerprint = promptFingerprint(systemPrompt, typeHintText);
   const commit = gitHead(repo);
 
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
   const outDir = path.join(corpus, "_runs", stamp);
   fs.mkdirSync(path.join(outDir, "raw"), { recursive: true });
+  // The template as asked — no personal data — so a later rescore reads the answers the same way.
+  fs.writeFileSync(path.join(outDir, "template.json"), JSON.stringify(t, null, 2) + "\n", "utf8");
 
   console.log(`ai-score ${corpusName}: ${contracts.length} contracts, read cap ${readCap}, commit ${commit.slice(0, 7)}, model ${EXTRACT_MODEL}, prompt ${fingerprint}`);
-  console.log(`  template ${type.key}: ${templateFields.length} fields; roles: ${type.roles.length}`);
+  console.log(`  template ${t.key}: ${t.templateFields.length} fields; roles: ${t.roles.length}`);
 
   const items: ItemResult[] = [];
   const failed: string[] = [];
@@ -248,27 +286,18 @@ async function main(): Promise<void> {
     }
     fs.writeFileSync(path.join(outDir, "raw", `${c.id}.txt`), answer.textBlock, "utf8");
     if (answer.hitOutputLimit) notes.push(`${c.id}: the answer hit the output-token limit`);
-    let interpreted: ReturnType<typeof interpretExtractText>;
-    try {
-      interpreted = interpretExtractText(answer.textBlock, templateFields);
-    } catch (e) {
-      failed.push(`${c.id}: the answer was not JSON (${(e as Error).message})`);
-      console.log(`  ${c.id}: ${blocks.fileBlocks.length} page(s), ${secs} s — ANSWER NOT JSON`);
-      continue;
-    }
-    const scored = scoreContract(c.expected, interpreted, kinds);
-    items.push(...scored);
-    const ok = scored.filter((i) => i.ok).length;
-    console.log(`  ${c.id} [${c.expected.status}]: ${blocks.fileBlocks.length} page(s), ${secs} s — ${ok}/${scored.length}`);
+    const scored = scoreAnswer(c, answer.textBlock, t, notes);
+    items.push(...scored.items);
+    const ok = scored.items.filter((i) => i.ok).length;
+    console.log(
+      `  ${c.id} [${c.expected.status}]: ${blocks.fileBlocks.length} page(s), ${secs} s — ${scored.unreadableError ? "ANSWER NOT JSON, " : ""}${ok}/${scored.items.length}`,
+    );
   }
 
-  const confirmedIds = new Set(contracts.filter((c) => c.expected.status === "confirmed").map((c) => c.id));
-  const all = summarise(items);
-  const confirmed = summarise(items.filter((i) => confirmedIds.has(i.contract)));
-
+  const r = report(contracts, items);
   const summary = {
     corpus: corpusName,
-    documentType: type.key,
+    documentType: t.key,
     date: new Date().toISOString(),
     commit,
     model: EXTRACT_MODEL,
@@ -276,28 +305,113 @@ async function main(): Promise<void> {
     reads,
     readCap,
     contracts: contracts.length,
-    confirmedContracts: confirmedIds.size,
+    confirmedContracts: r.confirmedIds.size,
     failed,
     notes,
-    confirmed,
-    all,
+    confirmed: r.confirmed,
+    all: r.all,
   };
   // Counts only — the same no-personal-data shape as the printed report.
   fs.writeFileSync(path.join(outDir, "summary.json"), JSON.stringify(summary, null, 2) + "\n", "utf8");
   // The values: outside git, beside the corpus, never printed.
   fs.writeFileSync(path.join(outDir, "detail.json"), JSON.stringify(items, null, 2) + "\n", "utf8");
 
-  console.log("");
-  for (const l of table(`confirmed only (${confirmedIds.size} of ${contracts.length})`, confirmed)) console.log(l);
-  console.log("");
-  for (const l of table(`all contracts, confirmed or proposed (${contracts.length})`, all)) console.log(l);
+  for (const l of r.lines) console.log(l);
   for (const f of failed) console.log(`  not scored: ${f}`);
   for (const n of notes) console.log(`  note: ${n}`);
   console.log(`  run files (outside git): ${outDir}`);
   console.log(
-    `AI-SCORE: ${percent(confirmed.score)} over ${confirmedIds.size} confirmed · all ${contracts.length}: ${percent(all.score)} · prompt ${fingerprint} · ${reads} reads of cap ${readCap}${failed.length ? ` · ${failed.length} not scored` : ""}`,
+    `AI-SCORE: ${percent(r.confirmed.score)} over ${r.confirmedIds.size} confirmed · all ${contracts.length}: ${percent(r.all.score)} · prompt ${fingerprint} · ${reads} reads of cap ${readCap}${failed.length ? ` · ${failed.length} not scored` : ""}`,
   );
-  process.exit(failed.length > 0 ? 2 : 0);
+  return failed.length > 0 ? 2 : 0;
+}
+
+/**
+ * Free: every earlier run's saved answers, scored again against the answer keys
+ * as they stand now — which is how a baseline follows Adrian's confirmations
+ * without buying the same reads twice. Each run keeps its own commit and prompt
+ * fingerprint; only the keys and the scoring are today's.
+ */
+function rescore(setup: Setup): number {
+  const { corpus, corpusName, env, contracts } = setup;
+  const runsDir = path.join(corpus, "_runs");
+  const runs = fs.existsSync(runsDir)
+    ? fs
+        .readdirSync(runsDir, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && fs.existsSync(path.join(runsDir, e.name, "raw")))
+        .map((e) => e.name)
+        .sort()
+    : [];
+  if (runs.length === 0) fail(`no earlier run with saved answers under ${runsDir}`);
+
+  let fallback: RunTemplate | null = null;
+  const lines: string[] = [];
+  for (const stamp of runs) {
+    const dir = path.join(runsDir, stamp);
+    const notes: string[] = [];
+    const prior = fs.existsSync(path.join(dir, "summary.json"))
+      ? (JSON.parse(fs.readFileSync(path.join(dir, "summary.json"), "utf8")) as { commit?: string; promptFingerprint?: string; reads?: number })
+      : {};
+    let t: RunTemplate;
+    if (fs.existsSync(path.join(dir, "template.json"))) {
+      const saved = JSON.parse(fs.readFileSync(path.join(dir, "template.json"), "utf8")) as RunTemplate;
+      t = { ...saved, templateFields: parseTemplateFields(saved.templateFields) };
+    } else {
+      if (fallback === null) {
+        const type = readType(CORPUS_TYPES[corpusName.toLowerCase()], env.database, env.user);
+        fallback = { key: type.key, name: type.name, templateFields: parseTemplateFields(type.templateFields), roles: type.roles };
+      }
+      t = fallback;
+      notes.push("this run saved no template.json; the template was read from the database now");
+    }
+    const items: ItemResult[] = [];
+    const missing: string[] = [];
+    for (const c of contracts) {
+      const raw = path.join(dir, "raw", `${c.id}.txt`);
+      if (!fs.existsSync(raw)) {
+        missing.push(c.id);
+        continue;
+      }
+      items.push(...scoreAnswer(c, fs.readFileSync(raw, "utf8"), t, notes).items);
+    }
+    const r = report(contracts, items);
+    fs.writeFileSync(
+      path.join(dir, "rescore.json"),
+      JSON.stringify({ rescoredAt: new Date().toISOString(), ...prior, confirmedContracts: r.confirmedIds.size, missing, notes, confirmed: r.confirmed, all: r.all }, null, 2) + "\n",
+      "utf8",
+    );
+    fs.writeFileSync(path.join(dir, "detail.rescored.json"), JSON.stringify(items, null, 2) + "\n", "utf8");
+    console.log(`rescored run ${stamp} (commit ${(prior.commit ?? "?").slice(0, 7)}, prompt ${prior.promptFingerprint ?? "?"}, ${prior.reads ?? "?"} reads)`);
+    for (const l of r.lines) console.log(l);
+    for (const m of missing) console.log(`  no saved answer: ${m}`);
+    for (const n of notes) console.log(`  note: ${n}`);
+    console.log("");
+    lines.push(`${stamp} ${percent(r.confirmed.score)} over ${r.confirmedIds.size} confirmed, all ${percent(r.all.score)}`);
+  }
+  console.log(`AI-SCORE: rescored ${runs.length} run${runs.length === 1 ? "" : "s"}, no reads — ${lines.join(" · ")}`);
+  return 0;
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const capAt = args.indexOf("--read-cap");
+  const readCap = capAt >= 0 ? Number(args[capAt + 1]) : NaN;
+  const isRescore = args.includes("--rescore");
+  const corpusArg = args.find((a, i) => !a.startsWith("--") && !(capAt >= 0 && i === capAt + 1));
+  if (!corpusArg || (!isRescore && (!Number.isInteger(readCap) || readCap < 1)) || (isRescore && capAt >= 0)) {
+    fail('usage: npx tsx scripts/testing/ai-score.ts "<corpus folder>" (--read-cap <n> | --rescore)');
+  }
+  const corpus = path.resolve(corpusArg);
+  if (!fs.existsSync(corpus) || !fs.statSync(corpus).isDirectory()) fail(`not a folder: ${corpus}`);
+  const corpusName = path.basename(corpus);
+  if (!CORPUS_TYPES[corpusName.toLowerCase()]) fail(`no document type is known for corpus ${corpusName} — add it to CORPUS_TYPES`);
+
+  const repo = path.resolve(__dirname, "..", "..");
+  const env = readEnv(repo);
+  const contracts = listContracts(corpus);
+  if (contracts.length === 0) fail(`no contract folder with an expected.json under ${corpus}`);
+  const setup: Setup = { corpus, corpusName, repo, env, contracts };
+  process.exit(isRescore ? rescore(setup) : await run(setup, readCap));
 }
 
 main().catch((e: unknown) => fail((e as Error).stack ?? String(e)));
