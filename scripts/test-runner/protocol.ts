@@ -45,6 +45,15 @@
  * runs `scripts/testing/reconcile-import.ts` on that folder — a SELECT-only
  * read of the local database, in a read-only session — and nothing else.
  *
+ * Slice #36.23 added `ai-score`, the one sequence that SPENDS MONEY: it runs
+ * `scripts/testing/ai-score.ts`, which sends every contract of an AI-reading
+ * corpus to the model once and scores the answers. It is in no other sequence,
+ * so `full` never pays for it. Its request names a corpus folder directly under
+ * `C:\dev\TEST.DATA\Test.Claude\ai-corpus\` (`folder`, checked against the
+ * corpora the runner listed itself) and a `readCap` — the most reads the request
+ * approves — which must be at least the corpus's size, so a run is the whole
+ * corpus or nothing.
+ *
  * A held step is not a failure and not an error: it is the runner saying „this
  * waits for Adrian", with the reason by name. None of the three ever touches
  * Supabase or UAT — `npm run supabase:migrate` stays Adrian's.
@@ -84,6 +93,7 @@ export const STEPS = [
   "apply-migration",
   "export-schema",
   "reconcile",
+  "ai-score",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -106,6 +116,7 @@ export const SEQUENCES = {
   ci: ["ci"],
   "migrate-local": ["apply-migration", "export-schema"],
   reconcile: ["reconcile"],
+  "ai-score": ["ai-score"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -117,7 +128,7 @@ export const COMMIT_RE = /^[0-9a-f]{40}$/;
 export const ONLY_RE =
   /^(?:e2e\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.spec\.ts|src\/__tests__\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.test\.tsx?)$/;
 
-const ALLOWED_FIELDS = ["version", "id", "sequence", "commit", "only", "folder"] as const;
+const ALLOWED_FIELDS = ["version", "id", "sequence", "commit", "only", "folder", "readCap"] as const;
 
 /**
  * The sequences that take a `folder`, and the only ones that may.   (Slice #36.22)
@@ -128,10 +139,14 @@ const ALLOWED_FIELDS = ["version", "id", "sequence", "commit", "only", "folder"]
  * (`RequestContext.knownDataFolders`). The runner joins it to the root; the
  * request never supplies the root.
  */
-export const FOLDER_SEQUENCES: readonly SequenceName[] = ["reconcile"];
+export const FOLDER_SEQUENCES: readonly SequenceName[] = ["reconcile", "ai-score"];
 export const DATA_FOLDER_RE = /^[0-9A-Za-z][0-9A-Za-z._ -]{0,99}$/;
 /** The data root, relative to the repository: `C:\dev\TEST.DATA\Test.Claude`. */
 export const DATA_ROOT_SEGMENTS = ["..", "TEST.DATA", "Test.Claude"] as const;
+/** Where `ai-score`'s corpora live: `C:\dev\TEST.DATA\Test.Claude\ai-corpus`. (Slice #36.23) */
+export const AI_CORPUS_ROOT_SEGMENTS = [...DATA_ROOT_SEGMENTS, "ai-corpus"] as const;
+/** The most reads one `ai-score` request may approve. Three runs of ten were the first slice's cap. */
+export const MAX_READ_CAP = 100;
 const REQUIRED_FIELDS = ["version", "id", "sequence", "commit"] as const;
 
 export interface RunRequest {
@@ -141,8 +156,10 @@ export interface RunRequest {
   commit: string;
   /** Repo-relative, forward slashes. e2e specs narrow the e2e step, jest suites the jest step. */
   only?: string[];
-  /** For `reconcile` only: a folder name directly under the data root. */
+  /** For `reconcile`: a folder name directly under the data root. For `ai-score`: a corpus under `ai-corpus`. */
   folder?: string;
+  /** For `ai-score` only: the most paid reads this request approves. (Slice #36.23) */
+  readCap?: number;
 }
 
 export type RefusalCode =
@@ -160,6 +177,9 @@ export type RefusalCode =
   | "only-not-applicable"
   | "bad-folder"
   | "folder-not-applicable"
+  | "bad-read-cap"
+  | "read-cap-not-applicable"
+  | "read-cap-below-corpus"
   | "busy"
   | "head-unknown"
   | "head-mismatch";
@@ -182,6 +202,12 @@ export interface RequestContext {
   knownJestSuites: readonly string[];
   /** The folder names directly under the data root (`DATA_ROOT_SEGMENTS`), as the runner listed them. */
   knownDataFolders: readonly string[];
+  /**
+   * The corpora directly under `AI_CORPUS_ROOT_SEGMENTS`, each with how many
+   * contracts it holds (sub-folders with an `expected.json`), as the runner
+   * counted them. (Slice #36.23)
+   */
+  knownCorpora: Readonly<Record<string, number>>;
 }
 
 export type ParseOutcome =
@@ -301,6 +327,12 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
 
   let folder: string | undefined;
   const takesFolder = FOLDER_SEQUENCES.includes(sequence);
+  // `reconcile` names a data folder; `ai-score` names a corpus. Each is checked
+  // against the list the runner made of ITS OWN root, never the other's.
+  const isScore = sequence === "ai-score";
+  const root: readonly string[] = isScore ? AI_CORPUS_ROOT_SEGMENTS : DATA_ROOT_SEGMENTS;
+  const rootName = root.slice(1).join("\\");
+  const known: readonly string[] = isScore ? Object.keys(ctx.knownCorpora) : ctx.knownDataFolders;
   if ("folder" in obj) {
     if (!takesFolder) {
       return refuse(
@@ -313,16 +345,45 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
     if (typeof f !== "string" || !DATA_FOLDER_RE.test(f) || f.includes("..")) {
       return refuse(
         "bad-folder",
-        `folder is one folder NAME directly under ${DATA_ROOT_SEGMENTS.slice(1).join("\\")} — letters, digits, dot, dash, underscore, space; got ${JSON.stringify(f)}.`,
+        `folder is one folder NAME directly under ${rootName} — letters, digits, dot, dash, underscore, space; got ${JSON.stringify(f)}.`,
         rawId,
       );
     }
-    if (!ctx.knownDataFolders.includes(f)) {
-      return refuse("bad-folder", `No folder named ${JSON.stringify(f)} under ${DATA_ROOT_SEGMENTS.slice(1).join("\\")}.`, rawId);
+    if (!known.includes(f)) {
+      return refuse("bad-folder", `No folder named ${JSON.stringify(f)} under ${rootName}.`, rawId);
     }
     folder = f;
   } else if (takesFolder) {
-    return refuse("bad-folder", `${sequence} needs a folder: the name of one folder under ${DATA_ROOT_SEGMENTS.slice(1).join("\\")}.`, rawId);
+    return refuse("bad-folder", `${sequence} needs a folder: the name of one folder under ${rootName}.`, rawId);
+  }
+
+  // `readCap` — ai-score only, required there, and never smaller than the corpus:
+  // a run is the whole corpus or nothing, and the cap is what the request approves.
+  let readCap: number | undefined;
+  if ("readCap" in obj) {
+    if (!isScore) {
+      return refuse("read-cap-not-applicable", `Only ai-score takes a readCap; ${sequence} spends nothing.`, rawId);
+    }
+    const c = obj.readCap;
+    if (typeof c !== "number" || !Number.isInteger(c) || c < 1 || c > MAX_READ_CAP) {
+      return refuse("bad-read-cap", `readCap is a whole number from 1 to ${MAX_READ_CAP}; got ${JSON.stringify(c)}.`, rawId);
+    }
+    readCap = c;
+  } else if (isScore) {
+    return refuse("bad-read-cap", "ai-score needs a readCap: the most paid reads this request approves.", rawId);
+  }
+  if (isScore && folder !== undefined && readCap !== undefined) {
+    const size = ctx.knownCorpora[folder] ?? 0;
+    if (size === 0) {
+      return refuse("bad-folder", `${folder} holds no contract with an expected.json.`, rawId);
+    }
+    if (readCap < size) {
+      return refuse(
+        "read-cap-below-corpus",
+        `${folder} holds ${size} contracts and each is one read; a readCap of ${readCap} would stop part-way. Ask for at least ${size}.`,
+        rawId,
+      );
+    }
   }
 
   if (ctx.busyWith !== null) {
@@ -340,7 +401,15 @@ export function parseRequest(raw: string, ctx: RequestContext): ParseOutcome {
   }
   return {
     ok: true,
-    request: { version: PROTOCOL_VERSION, id: rawId, sequence, commit, ...(only ? { only } : {}), ...(folder ? { folder } : {}) },
+    request: {
+      version: PROTOCOL_VERSION,
+      id: rawId,
+      sequence,
+      commit,
+      ...(only ? { only } : {}),
+      ...(folder ? { folder } : {}),
+      ...(readCap !== undefined ? { readCap } : {}),
+    },
   };
 }
 
@@ -570,6 +639,11 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
       body = (lines.filter((l) => l.startsWith("RECONCILE:")).pop() ?? "").replace(/^RECONCILE:\s*/, "");
       break;
     }
+    case "ai-score": {
+      // `scripts/testing/ai-score.ts` ends with one `AI-SCORE:` line — counts and percentages only.
+      body = (lines.filter((l) => l.startsWith("AI-SCORE:")).pop() ?? "").replace(/^AI-SCORE:\s*/, "");
+      break;
+    }
   }
   return body ? `${body} (${exit})` : exit;
 }
@@ -613,8 +687,10 @@ export interface RunResult {
   sequence: SequenceName | null;
   commit: string | null;
   only: string[] | null;
-  /** `reconcile` only: the data folder it read. Absent on every other result. */
+  /** `reconcile` and `ai-score` only: the folder it read. Absent on every other result. */
   folder?: string;
+  /** `ai-score` only: the read cap the request approved. */
+  readCap?: number;
   status: RunStatus;
   refusal: Refusal | null;
   receivedAt: string;

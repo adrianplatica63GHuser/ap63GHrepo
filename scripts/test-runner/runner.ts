@@ -49,6 +49,7 @@ import path from "path";
 import {
   ADRIAN_DEV_PORT,
   CHANNEL_DIR,
+  AI_CORPUS_ROOT_SEGMENTS,
   DATA_ROOT_SEGMENTS,
   MAX_REQUEST_BYTES,
   PROTOCOL_VERSION,
@@ -121,6 +122,9 @@ const BIN = {
 /** The folder a `reconcile` request names one child of (Slice #36.22). Never taken from a request. */
 const DATA_ROOT = path.resolve(REPO, ...DATA_ROOT_SEGMENTS);
 const RECONCILE_SCRIPT = path.join(REPO, "scripts", "testing", "reconcile-import.ts");
+/** The folder an `ai-score` request names one child of (Slice #36.23). Never taken from a request. */
+const AI_CORPUS_ROOT = path.resolve(REPO, ...AI_CORPUS_ROOT_SEGMENTS);
+const AI_SCORE_SCRIPT = path.join(REPO, "scripts", "testing", "ai-score.ts");
 const VERIFY_REBUILD = path.join(REPO, "scripts", "Verify-Rebuild.ps1");
 const APPLY_MIGRATION = path.join(REPO, "scripts", "Apply-Migration.ps1");
 const EXPORT_SCHEMA = path.join(REPO, "scripts", "Export-SupabaseSchema.ps1");
@@ -147,6 +151,8 @@ const TIMEOUT = {
   migrate: 15 * MIN,
   exportSchema: 10 * MIN,
   reconcile: 10 * MIN,
+  // Ten contracts at up to a minute or two each, one after another.
+  aiScore: 40 * MIN,
 };
 /** Captured output kept in memory per process for classification; the full text is in the log file. */
 const MAX_CAPTURE = 4 * 1024 * 1024;
@@ -867,6 +873,59 @@ function dataFolders(): string[] {
 }
 
 /**
+ * The corpora an `ai-score` request may name, with how many contracts each
+ * holds: the directories directly under AI_CORPUS_ROOT, counting their
+ * sub-folders that carry an `expected.json`. (Slice #36.23)
+ */
+function aiCorpora(): Record<string, number> {
+  const out: Record<string, number> = {};
+  try {
+    for (const e of fs.readdirSync(AI_CORPUS_ROOT, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const dir = path.join(AI_CORPUS_ROOT, e.name);
+      out[e.name] = fs
+        .readdirSync(dir, { withFileTypes: true })
+        .filter((c) => c.isDirectory() && !c.name.startsWith("_") && fs.existsSync(path.join(dir, c.name, "expected.json"))).length;
+    }
+  } catch {
+    /* no corpus root yet: nothing to name */
+  }
+  return out;
+}
+
+/**
+ * `scripts/testing/ai-score.ts` on one corpus.   (Slice #36.23)
+ *
+ * The one step that spends money. Fixed argv: the script, a path the runner
+ * built from AI_CORPUS_ROOT and a name `parseRequest` checked against
+ * `aiCorpora()`, and the read cap `parseRequest` checked against the corpus's
+ * size. The script reads the API key from `.env` itself; the runner never
+ * touches it.
+ */
+async function stepAiScore(folder: string | undefined, readCap: number | undefined, logFile: string): Promise<StepOutcome> {
+  if (folder === undefined || readCap === undefined) {
+    return { status: "error", exitCode: null, summary: "no folder or read cap on the request", notes: [] };
+  }
+  let real = "";
+  try {
+    real = fs.realpathSync(path.join(AI_CORPUS_ROOT, folder));
+  } catch {
+    return { status: "error", exitCode: null, summary: `${folder} is not there any more`, notes: [] };
+  }
+  if (path.dirname(real).toLowerCase() !== fs.realpathSync(AI_CORPUS_ROOT).toLowerCase()) {
+    return { status: "error", exitCode: null, summary: `${folder} resolves outside ${rel(AI_CORPUS_ROOT)}`, notes: [] };
+  }
+  const r = await runLogged(NODE, [BIN.tsx, AI_SCORE_SCRIPT, real, "--read-cap", String(readCap)], logFile, TIMEOUT.aiScore);
+  // ai-score.ts: 0 every contract read and scored, 2 could not run or a read failed. A score is never "failed".
+  return {
+    status: r.timedOut || r.exitCode !== 0 ? "error" : "passed",
+    exitCode: r.exitCode,
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep("ai-score", r.text, r.exitCode),
+    notes: [`per-field accuracy is the step's log: ${rel(logFile)}; values stay in the corpus's _runs folder`],
+  };
+}
+
+/**
  * `scripts/testing/reconcile-import.ts` on one data folder.   (Slice #36.22)
  *
  * Fixed argv: the script, and a path the runner built from DATA_ROOT and a name
@@ -907,6 +966,7 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
     commit: req.commit,
     only: req.only ?? null,
     ...(req.folder ? { folder: req.folder } : {}),
+    ...(req.readCap !== undefined ? { readCap: req.readCap } : {}),
     status: "running",
     refusal: null,
     receivedAt,
@@ -918,7 +978,7 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
   };
   const save = (): void => writeJsonAtomic(resultFile(req.id), result);
   save();
-  logLine(`run ${req.id}: ${req.sequence}${req.only ? ` only=${req.only.join(",")}` : ""}${req.folder ? ` folder=${req.folder}` : ""}`);
+  logLine(`run ${req.id}: ${req.sequence}${req.only ? ` only=${req.only.join(",")}` : ""}${req.folder ? ` folder=${req.folder}` : ""}${req.readCap !== undefined ? ` readCap=${req.readCap}` : ""}`);
 
   let previous: { status: StepResult["status"]; applied: number } | null = null;
   for (let i = 0; i < plan.length; i++) {
@@ -970,6 +1030,9 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
           break;
         case "reconcile":
           out = await stepReconcile(req.folder, logFile);
+          break;
+        case "ai-score":
+          out = await stepAiScore(req.folder, req.readCap, logFile);
           break;
       }
     } catch (e) {
@@ -1046,6 +1109,7 @@ function scan(): void {
         knownE2eSpecs,
         knownJestSuites,
         knownDataFolders: dataFolders(),
+        knownCorpora: aiCorpora(),
       });
       if (!outcome.ok) {
         const id = outcome.id ?? resultIdForFile(fileName, `invalid-${Date.now()}`);
@@ -1177,11 +1241,16 @@ async function selfTest(): Promise<number> {
   say(fs.existsSync(EXPORT_SCHEMA), `Export-SupabaseSchema.ps1: ${rel(EXPORT_SCHEMA)}`);
   say(fs.existsSync(RECONCILE_SCRIPT), `reconcile-import.ts: ${rel(RECONCILE_SCRIPT)}`);
   say(fs.existsSync(DATA_ROOT), `data root for reconcile: ${DATA_ROOT} (${dataFolders().length} folders)`);
+  say(fs.existsSync(AI_SCORE_SCRIPT), `ai-score.ts: ${rel(AI_SCORE_SCRIPT)}`);
+  say(
+    fs.existsSync(AI_CORPUS_ROOT),
+    `corpus root for ai-score: ${AI_CORPUS_ROOT} (${Object.entries(aiCorpora()).map(([k, n]) => `${k}: ${n}`).join(", ") || "none"})`,
+  );
   say(parseGithubRemote(git(["remote", "get-url", PUSH_REMOTE]).out) !== null, `${PUSH_REMOTE} is a github.com remote (push, ci)`);
   say(headCommit() !== null, "git rev-parse HEAD answers");
   const envFile = path.join(REPO, ".env");
   const envText = fs.existsSync(envFile) ? fs.readFileSync(envFile, "utf8") : "";
-  for (const key of ["E2E_EMAIL", "E2E_PASSWORD"]) {
+  for (const key of ["E2E_EMAIL", "E2E_PASSWORD", "ANTHROPIC_API_KEY"]) {
     say(new RegExp(`^\\s*${key}\\s*=\\s*\\S`, "m").test(envText), `.env sets ${key} (value not read)`);
   }
   say(!(await portIsOpen(RUNNER_PORT)), `port ${RUNNER_PORT} is free`);

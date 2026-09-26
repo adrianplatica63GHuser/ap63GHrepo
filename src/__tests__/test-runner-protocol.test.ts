@@ -25,12 +25,14 @@ import fs from "fs";
 import path from "path";
 
 import {
+  AI_CORPUS_ROOT_SEGMENTS,
   CHANNEL_DIR,
   DATA_ROOT_SEGMENTS,
   DEPENDENT_STEPS,
   FOLDER_SEQUENCES,
   SCHEMA_CONFIRMED_TRAILER,
   MAX_ONLY_ENTRIES,
+  MAX_READ_CAP,
   MAX_REQUEST_BYTES,
   RUNNER_DIST_DIR,
   RUNNER_DIST_ENV,
@@ -82,6 +84,7 @@ const ctx = (over: Partial<RequestContext> = {}): RequestContext => ({
   knownE2eSpecs: ["e2e/versioning/property-versioning.spec.ts", "e2e/auth/login-dashboard.spec.ts"],
   knownJestSuites: ["src/__tests__/test-runner-protocol.test.ts"],
   knownDataFolders: ["07.smoke.tc.marker", "10.big.tc.marker"],
+  knownCorpora: { cvc: 10, empty: 0 },
   ...over,
 });
 
@@ -100,8 +103,13 @@ describe("a request that asks for exactly what it may", () => {
   });
 
   it.each(SEQUENCE_NAMES.map((s) => [s]))("sequence %s is on the fixed list", (sequence) => {
-    const folder = FOLDER_SEQUENCES.includes(sequence) ? { folder: "07.smoke.tc.marker" } : {};
-    expect(refusal(req({ sequence, ...folder }))).toBe("accepted");
+    const args =
+      sequence === "ai-score"
+        ? { folder: "cvc", readCap: 10 }
+        : FOLDER_SEQUENCES.includes(sequence)
+          ? { folder: "07.smoke.tc.marker" }
+          : {};
+    expect(refusal(req({ sequence, ...args }))).toBe("accepted");
   });
 
   it("reconcile carries its folder through, and only a folder the runner listed (Slice #36.22)", () => {
@@ -110,8 +118,25 @@ describe("a request that asks for exactly what it may", () => {
       ok: true,
       request: { version: 1, id: ID, sequence: "reconcile", commit: HEAD, folder: "10.big.tc.marker" },
     });
-    expect(FOLDER_SEQUENCES).toEqual(["reconcile"]);
+    expect(FOLDER_SEQUENCES).toEqual(["reconcile", "ai-score"]);
     expect(DATA_ROOT_SEGMENTS).toEqual(["..", "TEST.DATA", "Test.Claude"]);
+  });
+
+  it("ai-score carries its corpus and read cap through (Slice #36.23)", () => {
+    const r = parseRequest(req({ sequence: "ai-score", folder: "cvc", readCap: 30 }), ctx());
+    expect(r).toEqual({
+      ok: true,
+      request: { version: 1, id: ID, sequence: "ai-score", commit: HEAD, folder: "cvc", readCap: 30 },
+    });
+    expect(AI_CORPUS_ROOT_SEGMENTS).toEqual(["..", "TEST.DATA", "Test.Claude", "ai-corpus"]);
+    expect(refusal(req({ sequence: "ai-score", folder: "cvc", readCap: 10 }))).toBe("accepted");
+  });
+
+  it("ai-score is a sequence of its own: nothing else pays for a read", () => {
+    expect(SEQUENCES["ai-score"]).toEqual(["ai-score"]);
+    for (const name of SEQUENCE_NAMES.filter((n) => n !== "ai-score")) {
+      expect(SEQUENCES[name] as readonly string[]).not.toContain("ai-score");
+    }
   });
 
   it("tolerates a UTF-8 byte-order mark (a PowerShell 5.1 Set-Content habit)", () => {
@@ -166,6 +191,17 @@ describe("every refusal, by name", () => {
     ["a folder as a number", req({ sequence: "reconcile", folder: 7 }), "bad-folder"],
     ["a folder the runner did not list", req({ sequence: "reconcile", folder: "CLINCENI.3" }), "bad-folder"],
     ["a folder on a sequence that takes none", req({ sequence: "full", folder: "07.smoke.tc.marker" }), "folder-not-applicable"],
+    ["ai-score with no corpus", req({ sequence: "ai-score", readCap: 10 }), "bad-folder"],
+    ["ai-score naming a data folder, not a corpus", req({ sequence: "ai-score", folder: "07.smoke.tc.marker", readCap: 10 }), "bad-folder"],
+    ["reconcile naming a corpus", req({ sequence: "reconcile", folder: "cvc" }), "bad-folder"],
+    ["a corpus with no answer keys", req({ sequence: "ai-score", folder: "empty", readCap: 10 }), "bad-folder"],
+    ["ai-score with no read cap", req({ sequence: "ai-score", folder: "cvc" }), "bad-read-cap"],
+    ["a read cap as a string", req({ sequence: "ai-score", folder: "cvc", readCap: "10" }), "bad-read-cap"],
+    ["a read cap of zero", req({ sequence: "ai-score", folder: "cvc", readCap: 0 }), "bad-read-cap"],
+    ["a fractional read cap", req({ sequence: "ai-score", folder: "cvc", readCap: 10.5 }), "bad-read-cap"],
+    ["a read cap over the most", req({ sequence: "ai-score", folder: "cvc", readCap: MAX_READ_CAP + 1 }), "bad-read-cap"],
+    ["a read cap below the corpus", req({ sequence: "ai-score", folder: "cvc", readCap: 9 }), "read-cap-below-corpus"],
+    ["a read cap on a sequence that spends nothing", req({ sequence: "full", readCap: 10 }), "read-cap-not-applicable"],
     ["busy", req(), "busy", { busyWith: "20260924T150000Z-1" }],
     ["git could not answer", req(), "head-unknown", { headCommit: null }],
     ["the wrong commit", req({ commit: "f".repeat(40) }), "head-mismatch"],
@@ -310,6 +346,12 @@ describe("one-line summaries", () => {
       "LANDED     a.jpg → DOC00001 its only page\n\nRECONCILE: 10.big.tc.marker — 1 file: 1 landed, 0 missing; 0 extra pages; structure clean\n",
       0,
       "10.big.tc.marker — 1 file: 1 landed, 0 missing; 0 extra pages; structure clean (exit 0)",
+    ],
+    [
+      "ai-score",
+      "  cvc-01 [proposed]: 3 page(s), 41 s — 14/17\n\nAI-SCORE: 81.0% over 4 confirmed · all 10: 79.2% · prompt 0a1b2c3d4e5f · 10 reads of cap 10\n",
+      0,
+      "81.0% over 4 confirmed · all 10: 79.2% · prompt 0a1b2c3d4e5f · 10 reads of cap 10 (exit 0)",
     ],
   ] as const)("%s", (step, text, code, expected) => {
     expect(summariseStep(step, text, code)).toBe(expected);
