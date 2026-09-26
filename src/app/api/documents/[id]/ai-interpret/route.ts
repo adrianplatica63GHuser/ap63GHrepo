@@ -122,22 +122,25 @@ import { unexpectedError } from "@/lib/api/errors";
 import {
   buildDiscoverSystemPrompt,
   buildExtractSystemPrompt,
-  GENERIC_EXTRACT_FIELD_DESCRIPTIONS,
-  canonicalTypeKey,
 } from "@/lib/import/classify-prompts";
-import {
-  sanitizeExtractedInstrument,
-  type ReferencedInstrument,
-} from "@/lib/documents/referenced-instruments";
+import type { ReferencedInstrument } from "@/lib/documents/referenced-instruments";
 import {
   formatDiscoverLog,
   parseDiscoverPayload,
   type DiscoverPayload,
-  type SkippedPage,
 } from "@/lib/documents/discover-log";
+import {
+  buildExtractRequestBody,
+  buildPageBlocks,
+  callAnthropic,
+  extractJson,
+  interpretExtractText,
+  isTextFile,
+  typeHintTextFor,
+  type PageBlocks,
+} from "@/lib/documents/ai-extract";
 import { resolveClassifiedDocumentType } from "@/lib/documents/resolve-document-type";
 import {
-  identityPersonCountOf,
   MULTI_IDENTITY_CODE,
   showsMoreThanOnePerson,
 } from "@/lib/import/multi-card-gate";
@@ -150,12 +153,6 @@ import { listDocumentPages } from "@/lib/documents/pages-queries";
 import { readFileContent } from "@/lib/storage";
 import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
-import {
-  MODEL_IMAGE_MIME_TYPES,
-  OCTET_STREAM,
-  contentTypeOf,
-  type ModelImageMimeType,
-} from "@/lib/files/file-mime";
 import {
   findNaturalPersonByCnp,
   searchPersonsAll,
@@ -170,15 +167,11 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const EXTRACT_MODEL = "claude-sonnet-4-6";
+// The model id, the endpoint, the request body, the call and the reading of
+// the answer live in `@/lib/documents/ai-extract` since Slice #36.23, so the AI
+// score harness runs exactly this extraction without an HTTP request.
 
 type Ctx = { params: Promise<{ id: string }> };
-
-function extractJson(text: string): unknown {
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
-  return JSON.parse(cleaned);
-}
 
 export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
@@ -282,9 +275,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   const partyRoles = await listPersonRolesForDocumentType(docMeta.documentTypeId);
   const partyRoleNames = partyRoles.map((r) => r.name);
 
-  const typeHintText = typeTemplate
-    ? ` Known document type: ${typeTemplate.name} (${typeTemplate.key}).`
-    : "";
+  const typeHintText = typeHintTextFor(typeTemplate);
 
   // Discover mode deliberately does NOT pass typeHintText: naming the
   // registered type would anchor the model back onto that type's expected
@@ -296,98 +287,15 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
 
   // ── Read all pages from storage, building one Anthropic content block per
   // supported page (Slice #21.03.Import multi-page) ─────────────────────────
-  // The four image types the model accepts live in src/lib/files/file-mime.ts
-  // (Slice #34.06). Declared inside this function body until then, which made
-  // it the least findable of the five copies of "what may be read".
-  const SUPPORTED_IMAGES = MODEL_IMAGE_MIME_TYPES;
-  type SupportedImage = ModelImageMimeType;
-
-  type ContentBlock =
-    | { type: "image";    source: { type: "base64"; media_type: SupportedImage; data: string } }
-    | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
-    | { type: "text";     text: string };
-
-  const isTextFile = (p: { mimeType: string | null; fileName: string }) =>
-    p.mimeType === "text/plain" || p.fileName.toLowerCase().endsWith(".txt");
-
-  const fileBlocks: ContentBlock[] = [];
-  const skippedPages: SkippedPage[] = [];
-  let sawPdf = false;
-
-  /**
-   * Why a page could not be sent — Slice #21.10.Import.
-   *
-   * Previously an unsupported page was skipped with only a code comment to
-   * explain it, which made two very different failures indistinguishable from
-   * the outside: "the model found nothing" and "the model never saw this page".
-   * The unrecognised-extension case is the one worth calling out by name.
-   * Until Slice #34.06 that case was `application/octet-stream` — the browser
-   * had recorded no MIME type at upload (the File System Access API leaves
-   * File.type empty for some files on Windows) and a perfectly readable scan
-   * was skipped on a bookkeeping gap. The type is now taken from the file
-   * name, here and at upload, so what remains is the honest case: a stored
-   * page whose extension this system has never heard of.
-   */
-  function skipReason(page: { mimeType: string | null; fileName: string }): string {
-    if (isTextFile(page)) {
-      return "plain-text file (cadastral coordinates or notes) — the model is sent JPEG, PNG, GIF or WebP images and PDFs only";
-    }
-    if (!contentTypeOf(page.fileName)) {
-      return "this system does not recognise the page's format from its name";
-    }
-    return "unsupported format — only JPEG/PNG/GIF/WebP images and PDF can be sent";
+  // Which pages can be sent, and why a page cannot, is `buildPageBlocks` in
+  // `@/lib/documents/ai-extract` (Slice #36.23); the bytes come from storage.
+  let pageBlocks: PageBlocks;
+  try {
+    pageBlocks = await buildPageBlocks(pages, (page) => readFileContent(page.filePath));
+  } catch (err) {
+    return unexpectedError(err, "ai-interpret:read-file");
   }
-
-  for (const page of pages) {
-    // ⚠️ EXTENSION FIRST (Slice #34.06), for the same reason the upload route
-    // now records the extension's type: every page stored before that change
-    // could carry `application/octet-stream` because `File.type` was empty at
-    // upload on Windows, and dispatching on the recorded value alone made a
-    // perfectly readable scan unreadable for ever on a bookkeeping gap.
-    const pageMimeType =
-      contentTypeOf(page.fileName) ?? (page.mimeType || OCTET_STREAM);
-
-    if ((SUPPORTED_IMAGES as readonly string[]).includes(pageMimeType)) {
-      let buf: Buffer;
-      try {
-        buf = await readFileContent(page.filePath);
-      } catch (err) {
-        return unexpectedError(err, "ai-interpret:read-file");
-      }
-      fileBlocks.push({
-        type: "image",
-        source: { type: "base64", media_type: pageMimeType as SupportedImage, data: buf.toString("base64") },
-      });
-    } else if (pageMimeType === "application/pdf") {
-      let buf: Buffer;
-      try {
-        buf = await readFileContent(page.filePath);
-      } catch (err) {
-        return unexpectedError(err, "ai-interpret:read-file");
-      }
-      fileBlocks.push({
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: buf.toString("base64") },
-      });
-      sawPdf = true;
-    } else {
-      // Unsupported page (e.g. .txt coordinate files, .docx, .rtf) — skipped
-      // individually rather than failing the whole request, but recorded so
-      // discover mode can report it instead of leaving a silent gap.
-      skippedPages.push({
-        fileName: page.fileName,
-        // The DERIVED type, not the recorded one (Slice #34.06) — the same
-        // change `read-sample` makes at its own push sites, and for the same
-        // reason: `skipReason` is computed from the extension, so reporting a
-        // stored `application/octet-stream` beside it puts "no MIME type" back
-        // on the one screen this slice took it off.
-        mimeType: pageMimeType,
-        reason: skipReason(page),
-      });
-    }
-  }
-
-  const extraHeaders: Record<string, string> = sawPdf ? { "anthropic-beta": "pdfs-2024-09-25" } : {};
+  const { fileBlocks, skippedPages, extraHeaders } = pageBlocks;
 
   if (fileBlocks.length === 0) {
     // None of this document's pages are in a supported format — return a
@@ -409,82 +317,27 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   }
 
   // ── Call Anthropic ─────────────────────────────────────────────────────────
-  let anthropicRes: globalThis.Response;
+  // Token ceilings, prompt text and error mapping: `@/lib/documents/ai-extract`.
+  const body = buildExtractRequestBody({ isDiscover, systemPrompt, fileBlocks, typeHintText });
+  let called: Awaited<ReturnType<typeof callAnthropic>>;
   try {
-    anthropicRes = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        ...extraHeaders,
-      },
-      body: JSON.stringify({
-        model: EXTRACT_MODEL,
-        // Slice #21.04.Import: raised from 2048 — with party extraction
-        // (multiple people per role, ~10 fields each) plus unmappedRaw plus
-        // template fields, output for a document with several parties can
-        // exceed 2048 tokens and get truncated mid-JSON (observed on the
-        // real Contract de Vânzare sample, 4 sellers + buyer + mandatar +
-        // notary). 8192 leaves generous headroom.
-        // Slice #21.10.Import: discover mode asks for the document's content
-        // VERBATIM, so its output is bounded by the document's length rather
-        // than by a fixed field count — a long contract can easily exceed the
-        // 8192 that suffices for schema-driven extraction. Truncation here is
-        // not a degraded answer but a wrong one (silently missing pages of
-        // content), so the ceiling is raised and a stop_reason check below
-        // reports it loudly if it is still hit.
-        max_tokens: isDiscover ? 16384 : 8192,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: [
-              ...fileBlocks,
-              {
-                type: "text",
-                text: isDiscover
-                  ? `Read this Romanian document (${fileBlocks.length} page(s), in order — treat them as one document) and report everything printed on it, exactly as instructed. Do not omit anything.`
-                  : `Extract fields from this Romanian document (${fileBlocks.length} page(s), in order — treat them as one document; the closing/authentication block is often on the last page).${typeHintText}`,
-              },
-            ],
-          },
-        ],
-      }),
-    });
+    called = await callAnthropic(apiKey, body, extraHeaders);
   } catch (err) {
     return unexpectedError(err, "ai-interpret:fetch");
   }
 
-  if (!anthropicRes.ok) {
-    const detail = await anthropicRes.text().catch(() => "");
-    let code = "unknown";
-    let message = `Anthropic API error (HTTP ${anthropicRes.status})`;
-    try {
-      const parsed = JSON.parse(detail) as { error?: { type?: string; message?: string } };
-      const t = parsed.error?.type ?? "";
-      const m = parsed.error?.message ?? "";
-      if (/credit balance is too low/i.test(m)) { code = "insufficient_credits"; message = m; }
-      else if (anthropicRes.status === 401 || t === "authentication_error") { code = "invalid_api_key"; message = m || message; }
-      else if (anthropicRes.status === 429 || t === "rate_limit_error") { code = "rate_limited"; message = m || message; }
-      else if (anthropicRes.status === 529 || t === "overloaded_error") { code = "overloaded"; message = m || message; }
-    } catch { /* non-JSON body */ }
-    console.error("[ai-interpret] Anthropic error:", anthropicRes.status, detail);
+  if (!called.ok && called.kind === "http") {
+    console.error("[ai-interpret] Anthropic error:", called.status, called.detail);
     return Response.json(
-      { error: message, code },
-      { status: anthropicRes.status >= 500 ? 502 : anthropicRes.status },
+      { error: called.message, code: called.code },
+      { status: called.status >= 500 ? 502 : called.status },
     );
   }
-
-  const anthropicJson = (await anthropicRes.json()) as {
-    content?: { type: string; text?: string }[];
-    stop_reason?: string;
-  };
-  const textBlock = anthropicJson.content?.find((b) => b.type === "text")?.text;
-  if (!textBlock) {
+  if (!called.ok) {
     return Response.json({ error: "Anthropic API returned no text" }, { status: 502 });
   }
-  const hitOutputLimit = anthropicJson.stop_reason === "max_tokens";
+  const textBlock = called.textBlock;
+  const hitOutputLimit = called.hitOutputLimit;
 
   // ── Discover mode (Slice #21.10.Import) ────────────────────────────────────
   //
@@ -534,38 +387,6 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       partyRoleNames,
     });
   }
-
-  type RawParty = {
-    roleName?:           string;
-    personType?:         "NATURAL" | "JUDICIAL";
-    name?:               string | null;
-    firstName?:          string | null;
-    lastName?:           string | null;
-    cnp?:                string | null;
-    cuiNumber?:          string | null;
-    idDocumentNumber?:   string | null;
-    idIssuingAuthority?: string | null;
-    domiciliu?:          string | null;
-    // Slice #36.01 — the cotă-parte the deed gives this party in this role.
-    // Strings, because that is what the model is asked for and what every
-    // other key here is; the numbers they become are `person_document`'s
-    // (36.02), parsed where a row is actually written.
-    cotaParte?:          string | null;
-    cotaSuprafataMp?:    string | null;
-    cotaMod?:            string | null;
-    rawText?:            string;
-  };
-
-  type AiExtractResponse = {
-    fields?: Record<string, string | null>;
-    suggestedTypeKey?: string | null;
-    classifiedLabel?: string | null;
-    lowConfidenceFields?: string[];
-    identityPersonCount?: unknown;
-    unmappedRaw?: Record<string, string>;
-    parties?: RawParty[];
-    referencedInstruments?: unknown[];
-  };
 
   // Extracted party, enriched with the resolved lookup_person_role id (by
   // exact name match — see listPersonRolesForDocumentType) and, when a
@@ -617,12 +438,12 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     possibleMatches:    PersonSearchItem[];
   };
 
-  // Split by known-key membership: generic baseline keys → `fields`;
-  // template-defined keys for the active type → `customFieldsOut`. Any other
-  // stray key the model might invent is ignored — unmappedRaw is the
-  // sanctioned channel for "doesn't fit a known field".
-  const fields: Record<string, string | null> = {};
-  const customFieldsOut: Record<string, string | null> = {};
+  // The model's answer → fields, template fields, notes, parties and cited
+  // instruments: `interpretExtractText` in `@/lib/documents/ai-extract`
+  // (Slice #36.23). What stays here is what needs the database — matching each
+  // party to a Person — and the diagnostic log.
+  let fields: Record<string, string | null> = {};
+  let customFieldsOut: Record<string, string | null> = {};
   let suggestedTypeKey: string | null = null;
   let classifiedLabel: string | null = null;
   let lowConfidenceFields: string[] = [];
@@ -635,54 +456,25 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   let identityPersonCount: number | null = null;
   const parties: ExtractedParty[] = [];
   /**
-   * The instruments this document's pages CITE.                 (Slice #36.03)
-   *
-   * ⚠️ **THE SAME CONTRACT `parties` HAS, AND THAT IS THE WHOLE DESIGN.** This
-   * route extracts and reports; it never writes a `document_document` row, never
-   * creates a stub, and never decides anything. A person walks these through
-   * `AiReferenceLinkerDialog` exactly as they walk `parties` through
-   * `AiPartyLinkerDialog`, and every row in the archive that results was
-   * confirmed by that person.
-   *
-   * What is NEW relative to `parties` is that these SURVIVE the call: the
-   * caller persists them on `document.referenced_instruments` through POST
-   * /api/documents/[id]/instrument-references, so reopening the dialog next
-   * month does not cost a billed vision call over every page again.
+   * The instruments this document's pages CITE (Slice #36.03). The same
+   * contract `parties` has: extracted and reported, never written here; the
+   * caller persists them on `document.referenced_instruments`.
    */
-  const referencedInstruments: ReferencedInstrument[] = [];
+  let referencedInstruments: ReferencedInstrument[] = [];
 
   try {
-    const raw = extractJson(textBlock) as AiExtractResponse;
-    const allFields = raw.fields ?? {};
-    const templateKeys = new Set(templateFields.map((f) => f.key));
+    const interpreted = interpretExtractText(textBlock, templateFields);
+    fields = interpreted.fields;
+    customFieldsOut = interpreted.customFields;
+    suggestedTypeKey = interpreted.suggestedTypeKey;
+    classifiedLabel = interpreted.classifiedLabel;
+    lowConfidenceFields = interpreted.lowConfidenceFields;
+    identityPersonCount = interpreted.identityPersonCount;
+    unmappedRaw = interpreted.unmappedRaw;
+    enhancedNotes = interpreted.enhancedNotes;
+    referencedInstruments = interpreted.referencedInstruments;
 
-    for (const [k, v] of Object.entries(allFields)) {
-      if (k in GENERIC_EXTRACT_FIELD_DESCRIPTIONS) fields[k] = v;
-      else if (templateKeys.has(k)) customFieldsOut[k] = v;
-    }
-
-    // Slice #29.07: the same three tests this expression spelled out — a
-    // string, on the whitelist, not UNCLASSIFIED — now live in one function
-    // that the scan route and the resolver ask too.
-    suggestedTypeKey = canonicalTypeKey(raw.suggestedTypeKey);
-    classifiedLabel = raw.classifiedLabel?.trim() || null;
-    lowConfidenceFields = Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [];
-    // Sanitised by the multi-card gate's own function, so this boundary, the
-    // classification's and the identity-card step's cannot come to disagree
-    // about what a usable count is.                            (Slice #32.08)
-    identityPersonCount = identityPersonCountOf(raw.identityPersonCount);
-    unmappedRaw = raw.unmappedRaw && typeof raw.unmappedRaw === "object" ? raw.unmappedRaw : {};
-
-    // ── Enhanced Notes (Slice #21.03.Import Phase 2) — fold anything the
-    // model couldn't map to a field into readable text instead of silently
-    // dropping it. The client appends this to the document's existing notes;
-    // it never overwrites them.
-    if (Object.keys(unmappedRaw).length > 0) {
-      const lines = Object.entries(unmappedRaw).map(([label, val]) => `${label}: ${val}`);
-      enhancedNotes = `[AI] Text neasociat unui câmp:\n${lines.join("\n")}`;
-    }
-
-    // ── Party extraction + matching (Slice #21.04.Import) ─────────────────────
+    // ── Party matching (Slice #21.04.Import) ─────────────────────────────────
     // Resolve each extracted party's roleName to a real lookup_person_role.id
     // by exact name match (case/whitespace-insensitive) against the roles we
     // actually gave the model — never a fuzzy guess. If a role somehow
@@ -690,21 +482,16 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // roleMissing=true tells the caller to surface it rather than link
     // against the wrong role or silently drop the party.
     const roleByName = new Map<string, string>(partyRoles.map((r) => [r.name.trim().toLowerCase(), r.id]));
-    const rawParties = Array.isArray(raw.parties) ? raw.parties : [];
 
-    for (const p of rawParties) {
-      const roleName = p.roleName?.trim();
-      if (!roleName) continue; // no role named — nothing to link this party to, skip
-
-      const personRoleId = roleByName.get(roleName.toLowerCase()) ?? null;
-      const personType: "NATURAL" | "JUDICIAL" = p.personType === "JUDICIAL" ? "JUDICIAL" : "NATURAL";
+    for (const p of interpreted.parties) {
+      const personRoleId = roleByName.get(p.roleName.toLowerCase()) ?? null;
 
       let matchCandidate: NaturalPersonMatchCandidate | JudicialPersonMatchCandidate | null = null;
       let possibleMatches: PersonSearchItem[] = [];
       try {
-        if (personType === "NATURAL" && p.cnp?.trim()) {
+        if (p.personType === "NATURAL" && p.cnp?.trim()) {
           matchCandidate = await findNaturalPersonByCnp(p.cnp);
-        } else if (personType === "JUDICIAL" && p.cuiNumber?.trim()) {
+        } else if (p.personType === "JUDICIAL" && p.cuiNumber?.trim()) {
           matchCandidate = await findJudicialPersonByCui(p.cuiNumber);
         }
 
@@ -715,7 +502,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
         if (!matchCandidate) {
           const fullName = (p.name ?? `${p.firstName ?? ""} ${p.lastName ?? ""}`).trim();
           if (fullName) {
-            const { items } = await searchPersonsAll({ name: fullName, type: personType, limit: 5, offset: 0 });
+            const { items } = await searchPersonsAll({ name: fullName, type: p.personType, limit: 5, offset: 0 });
             possibleMatches = items;
           }
         }
@@ -725,60 +512,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
         console.warn("[ai-interpret] party match lookup failed:", err);
       }
 
-      parties.push({
-        roleName,
-        personRoleId,
-        roleMissing: personRoleId === null,
-        personType,
-        name: p.name ?? null,
-        firstName: p.firstName ?? null,
-        lastName: p.lastName ?? null,
-        cnp: p.cnp ?? null,
-        cuiNumber: p.cuiNumber ?? null,
-        idDocumentNumber: p.idDocumentNumber ?? null,
-        idIssuingAuthority: p.idIssuingAuthority ?? null,
-        domiciliu: p.domiciliu ?? null,
-        cotaParte: p.cotaParte ?? null,
-        cotaSuprafataMp: p.cotaSuprafataMp ?? null,
-        cotaMod: p.cotaMod ?? null,
-        rawText: p.rawText ?? "",
-        matchCandidate,
-        possibleMatches,
-      });
-    }
-
-    // ── Referenced instruments (Slice #36.03) ────────────────────────────────
-    //
-    // ⚠️ **THE TYPE KEY GOES THROUGH `canonicalTypeKey`, THE SAME DOOR
-    // `suggestedTypeKey` GOES THROUGH.** #29.07's finding F6 is what that
-    // function exists for: a key the model invented reaches the resolver, finds
-    // no seeded row, and a document is filed under a slug of a display name
-    // that no carve-out will ever match again. A reference's key has a smaller
-    // blast radius — it is a HINT for the candidate ranker, not a filing
-    // decision — but it is the same class of value arriving through the same
-    // boundary, and one whitelisted key is cheaper than a second rule about
-    // when whitelisting is optional. A key that does not survive it becomes
-    // `null`, and `typeLabel` — the model's own Romanian words — still carries
-    // what the page said, which is what the ranker actually compares on.
-    //
-    // ⚠️ **AND NOTHING HERE IS MATCHED AGAINST THE ARCHIVE.** Unlike `parties`
-    // above, which looks up a CNP, this loop performs no query at all: ranking
-    // a reference needs the whole document list and the whole read is already
-    // paying for a vision call, so it belongs on the route the dialog asks,
-    // not on the one the pages are billed to.
-    const rawInstruments = Array.isArray(raw.referencedInstruments) ? raw.referencedInstruments : [];
-    for (const entry of rawInstruments) {
-      const clean = sanitizeExtractedInstrument(entry);
-      // `null` means the entry had no wording at all — not a citation, an empty
-      // object. Everything else is kept, including an entry with no number and
-      // no date: „titlul de proprietate al autoarei" with nothing else is a
-      // real citation whose right answer is „lasă", and a person can only give
-      // that answer if the screen shows it.
-      if (clean === null) continue;
-      referencedInstruments.push({
-        ...clean,
-        typeKey: canonicalTypeKey(clean.typeKey),
-      });
+      parties.push({ ...p, personRoleId, roleMissing: personRoleId === null, matchCandidate, possibleMatches });
     }
 
     // ── Diagnostic log — what did the model actually extract? ────────────────
