@@ -47,6 +47,31 @@ A five-section file made for this case, in the shape `src/lib/calculation/parse.
 The corners are cut from a real parcel (as TC-PROP-03 says); no name is in the file. The folder
 is `09.tc.calc.file`, beside `08.tc.coord.file`.
 
+## The split, in words — what the hand figure is of
+
+Written after Adrian asked (2026-09-25) which way the parcel is cut; the rules are
+`src/lib/calculation/geometry.ts`'s header.
+
+- **The parcel** is TC-PROP-03's: a near-rectangle about 29.85 m × 20.5 m (611.87 m²), turned
+  about 53° from north, so its long sides run roughly west-south-west → east-north-east.
+  „Orizontal" means only that the long sides lie closer to east–west than to north–south.
+  Corners (North, East), three decimals, as in the file:
+  16 = (318693.706, 573578.558) · 17 = (318675.770, 573554.698) ·
+  18 = (318659.521, 573567.196) · 19 = (318677.456, 573591.056).
+  The **south long side is 18→19**, the north one 17→16; the short sides are 17–18 (west end)
+  and 16–19 (east end).
+- **The road** is a strip 3 m wide inside the parcel, along the south long side, starting at
+  the **SW corner, corner 18**, running towards 19 — and stopping at the owners' dividing line.
+- **The divider** is one straight line across the parcel, **perpendicular to the long sides**,
+  from the south side to the north side, parallel to the two short ends. **Owner A** has the
+  west piece (the corner-18 end, where the road starts), less the road strip in it; **owner B**
+  has the whole east piece, full depth, with no road through it.
+- **The shares**: each owner is 50 % of the whole; each carries half the road's area; so each
+  final area is half of (total − road). The divider sits where A's piece, road excluded, equals
+  that final area — which is also what fixes the road's length.
+- **The figures asked for**: the road's length and area, and each owner's area before and after
+  the road.
+
 ## The records this case creates — removed in the case
 
 The run creates **three properties and a group** — `TC-CALC-01 A`, `TC-CALC-01 B`, the road —
