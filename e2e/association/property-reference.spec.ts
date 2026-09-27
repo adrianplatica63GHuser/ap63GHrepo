@@ -106,7 +106,10 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
 
 test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele capete", () => {
   test("„Inclus în” ales din parte se citește așa din parte și invers din întreg, pe ambele ordini de uuid", async ({ page }) => {
-    test.slow();
+    // Two pairs, each driven through three screens, and on a cold server the
+    // roles and dissociate routes compile on first request (the waits below):
+    // more than test.slow()'s tripled default.
+    test.setTimeout(300_000);
     await removeLeftovers(page.request, MARK);
     // Ask for the roles once before any screen does. „Tip relație" renders only
     // after GET /api/admin/property-property-roles answers, and on a cold server
@@ -139,7 +142,14 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
       // ── At the end — radio, „Dezasociază", on the whole's „Asocieri" ─────
       for (const part of [before!, after!]) {
         await page.getByRole("radio", { name: part.name }).check();
+        // The DELETE route compiles on its first request on a cold server
+        // (full 20260927T120014Z-6234 ran out of 15 s there): wait for its answer.
+        const dissociated = page.waitForResponse(
+          (r) => r.request().method() === "DELETE" && /\/api\/properties\/[^/]+\/references\//.test(r.url()),
+          { timeout: 120_000 },
+        );
         await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
+        expect((await dissociated).ok()).toBeTruthy();
         await expect(page.getByRole("radio", { name: part.name })).toHaveCount(0, { timeout: 15_000 });
       }
       await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 15_000 });
