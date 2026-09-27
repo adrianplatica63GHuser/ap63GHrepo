@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-21 10:57
+-- Generated : 2026-09-27 06:59
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -1018,8 +1018,16 @@ CREATE TABLE public.property_property (
     property_id_b uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     relationship_role_id uuid,
+    role_reads_a_to_b boolean DEFAULT true NOT NULL,
     CONSTRAINT property_property_order CHECK ((property_id_a < property_id_b))
 );
+
+
+--
+-- Name: COLUMN property_property.role_reads_a_to_b; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.property_property.role_reads_a_to_b IS 'Which way relationship_role_id reads. TRUE (the default) means the role reads A to B - "property_id_a <role> property_id_b". FALSE means it reads B to A. The pair order is canonicalised by UUID (CHECK property_property_order) only so one pair cannot be stored twice, and carries no meaning; three seeded roles ("Inclus în", "Subdiviziune a", "Acces prin") are directional, so without this a pair whose uuids sorted the other way read backwards (FU-220, Slice #37.10). Rows written from #37.10 on set it from the screen the link was made on; rows that predate it took the default, and migration_087 prints how many. Same column and reasoning as document_document.role_reads_a_to_b (migration_086).';
 
 
 --
