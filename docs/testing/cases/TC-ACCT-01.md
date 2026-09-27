@@ -53,5 +53,12 @@ Steps 5–6 are the cleanup, and step 6 proves it.
 
 ## Notes from the runs
 
-(none yet — `draft`: it needs Adrian at the desk to type passwords, and `test-user` to sign in from
+**2026-09-27 — attempted with Adrian at the desk (Slice #37.10), stopped at step 1.** Claude typed
+„test-user" in „Utilizator sau Email" (it resolves, through `/api/auth/lookup-email`, to the same
+email as `E2E_USER_EMAIL` — compared by hash, the value not read); Adrian typed the `.env` password,
+then the account's old one. Both answered „Utilizator sau parolă incorectă", so the account's
+password is neither. The app has no way back in — no „forgot password" link and no admin reset
+(FU-252) — so it is reset in the Supabase dashboard, which is Adrian's. The case stays `draft`.
+
+(Before that: none — `draft`: it needs Adrian at the desk to type passwords, and `test-user` to sign in from
 `.env` first; see TC-AUTH-02.)

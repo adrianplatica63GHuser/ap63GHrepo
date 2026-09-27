@@ -82,7 +82,7 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-document.spec.ts` |
 | [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `automated` | 2026-09-25 | `e2e/association/company-property.spec.ts` |
 | [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `automated` | 2026-09-25 | `e2e/association/document-reference.spec.ts` |
-| [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `draft` | — | — |
+| [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `automated` | 2026-09-27 | `e2e/association/property-reference.spec.ts` |
 | [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite la fel din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-person.spec.ts` |
 | [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `automated` | 2026-09-26 | `e2e/association/company-document.spec.ts` |
 | [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-09-26 | `e2e/association/company-person.spec.ts` |
@@ -105,9 +105,9 @@ fixed fixture where the existing one will do.
 | [TC-VL-01](cases/TC-VL-01.md) | O valoare adăugată în „Date de referință”, redenumită și ștearsă | reference-data | happy | — | `driven` | 2026-09-27 | — |
 | [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `draft` | — | — |
 
-**Twenty-six are `automated`, nine are `driven`, and four are `draft`** — as of 2026-09-27 (Slice
-#37.08). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
-runs of #37.04 and #37.08, TC-CALC-01, TC-ASSOC-08, TC-AUTH-02 and TC-ACCT-01, and the reason for
+**Twenty-seven are `automated`, nine are `driven`, and three are `draft`** — as of 2026-09-27 (Slice
+#37.10). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+runs of #37.04 and #37.08, TC-CALC-01, TC-AUTH-02 and TC-ACCT-01, and the reason for
 each is written here, not implied:
 
 - **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-AI-01** —
@@ -116,9 +116,13 @@ each is written here, not implied:
   **TC-USERS-01, TC-SET-01, TC-VL-01** (Slice #37.08) — a second run unchanged confirms each, and
   a promotion wave takes them. Each carries its cleanup rule: a refused request stays in „Istoric”,
   a setting is put back exactly, a `TC-` value is deleted.
-- **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-ASSOC-08** (FU-220's column),
-  **TC-AUTH-02** (the `user` account) and **TC-ACCT-01** (Adrian types every password, and
-  `test-user` must sign in from `.env` first) — each paragraph below or in its file.
+- **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-AUTH-02** (the `user` account) and
+  **TC-ACCT-01** (Adrian types every password, and `test-user` must sign in from `.env` first — on
+  2026-09-27 neither its old password nor the `.env` one signed in, FU-252) — each paragraph below
+  or in its file.
+- **TC-ASSOC-08 to `automated`, Slice #37.10.** migration_087 gave `property_property` its
+  direction (FU-220); the case was driven twice on 2026-09-27, each run on both uuid sort orders,
+  and its spec creates parts until it holds one of each order, so every run tests both.
 
 - **The fourth promotion wave, Slice #37.02: the third wave's eight `driven` rows to
   `automated`.** TC-VER-01, TC-VER-02, TC-PROP-04, TC-ASSOC-10, TC-ASSOC-11, TC-STAMP-01,

@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `automated` |
+| **Last green** | 2026-09-27 |
 
 ## What this proves
 
@@ -58,6 +58,26 @@ On either property's „Asocieri", select the row's radio and press „Dezasocia
 properties: open each, „Șterge" at the bottom of the form, „Da".
 
 ## Notes from the runs
+
+**2026-09-27 — driven twice, GREEN on both sort orders each time (Slice #37.10), after
+migration_087 was confirmed and applied locally.** Both runs created the properties through
+`POST /api/properties` (the route „Introducere manuală" calls) instead of the form: a whole, then
+parts until one part's uuid sorted before the whole's and one after it — steps 1 and 7 in one go.
+Steps 2–6 were then driven on the screens for each part.
+- **Run 1:** whole `PROP02917`; parts `PROP02918` (uuid after the whole's) and `PROP02920` (before);
+  `PROP02919` was a third part that sorted the same way as `PROP02918` and went unused. Each part
+  read „această proprietate „Inclus în” PROP02917"; the whole read „PROP02918 „Inclus în” această
+  proprietate" and „PROP02920 „Inclus în” această proprietate".
+- **Run 2:** whole `PROP02921`; parts `PROP02922` (before) and `PROP02923` (after). The same
+  sentences, with those codes.
+- Steps 2–4 held as written: „Nicio proprietate corelată"; „Asociere proprietate corelată" with
+  „Căutare", Cod · Denumire and the eight options of „Tip relație" in the order the case gives.
+  The „Asocieri" table's columns are Denumire · Tip relație.
+- Both runs' records were removed: „Dezasociază" on the whole's „Asocieri" (the tab then read
+  „Nicio proprietate corelată"), then every property through `DELETE /api/properties/[id]` (204).
+
+The spec is `e2e/association/property-reference.spec.ts`; it covers both orders in every run the
+same way.
 
 **2026-09-27 — rewritten for the fix (Slice #37.10), not yet driven.** migration_087 waits on
 Adrian's confirmation; until it is applied to the local database the new read path cannot run, so
