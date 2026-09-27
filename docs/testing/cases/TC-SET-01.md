@@ -5,8 +5,8 @@
 | **Area** | settings |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-09-27 |
 
 ## What this proves
 
@@ -30,8 +30,8 @@ Nothing.
 - Its value, which the case puts back: **`90`** zile (read on 2026-09-27).
 - The case sets it to **`91`**, then back to **`90`**.
 
-What cannot be given back: the settings row's `updated_at` moves to the day of the run (the other
-nine settings too, if „Salvează” writes them all — the run notes say which).
+What cannot be given back: that one setting's `updated_at` moves to the time of the run. „Salvează”
+sends only the settings that changed, so the other nine keep theirs (seen on 2026-09-27).
 
 **If a run is abandoned:** open „Setări”, type `90` into „Prag CI expiră curând”, press „Salvează”.
 If `90` ever stops being the stored value, this file is updated first.
@@ -42,7 +42,7 @@ If `90` ever stops being the stored value, this file is updated first.
 |---|---|---|
 | 1 | Opens „Admin-Configurare” → „Setări” | „Setări”, then „Altele” (Grupuri · Ștampile · Etichete), „Intervale de timp” with ten settings, each a label, a sentence and a number with its unit, and „Salvează” |
 | 2 | Reads „Prag CI expiră curând” | `90` zile — the value above |
-| 3 | Types `91` and presses „Salvează” | „Salvat cu succes.” |
+| 3 | Types `91` — „Anulează” appears beside „Salvează” — and presses „Salvează” | „Salvat cu succes.” |
 | 4 | Reloads the page | `91` |
 | 5 | Types `90` and presses „Salvează” | „Salvat cu succes.” |
 | 6 | Reloads the page | `90` — and every other setting as it was before step 3 |
@@ -53,4 +53,14 @@ Steps 5–6 are the cleanup, and step 6 asserts it.
 
 ## Notes from the runs
 
-(none yet)
+**2026-09-27 — driven for the first time, green (Slice #37.08).** `90` read, `91` saved and read back
+after a reload, `90` saved and read back; the ten values after the run were the ten before it
+(7 · 60 · 90 · 14 · 30 · 90 · 90 · 5 · 15 · 30). Each „Salvează” sent one setting
+(`PATCH /api/time-frames` with `id_card_expiring_soon` alone), and only its `updated_at` moved.
+
+Corrections to the file: „Anulează” appears once a value changes; the `updated_at` sentence, now
+that the run showed only the changed setting is written.
+
+**One finding, not a step (FU-249):** the ten number boxes have no accessible name — each label is
+beside its box, not tied to it — so a screen reader announces ten unnamed numbers. The run found
+the box by its position under „Prag CI expiră curând”.

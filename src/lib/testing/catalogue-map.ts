@@ -79,6 +79,12 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/admin/calculation":                    ["TC-CALC-01"],
   "/admin/calculation/history":            ["TC-CALC-01"],
   "/admin/calculation/history/[id]":       ["TC-CALC-01"],
+  // Slice #37.08 — the last four that need a cleanup rule, each written into
+  // its case file before the run.
+  "/admin/users":                          ["TC-USERS-01"],
+  "/admin/settings":                       ["TC-SET-01"],
+  "/admin/value-lists":                    ["TC-VL-01"],
+  "/account/change-password":              ["TC-ACCT-01"],
 };
 
 /**
@@ -90,16 +96,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
  * CATALOGUE_ROUTE_CASES is the visible shape of the suite growing.
  */
 export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
-  "/account/change-password":
-    "Change a password and log back in with the new one. Needs a throwaway account, because it leaves the tester locked out of the old one.",
   "/properties/map":
     "Open the map, see the property from TC-PROP-01 on it, open it from there. Needs a Google Maps key in .env, so it is not a case every machine can run.",
-  "/admin/value-lists":
-    "Add a value to a closed list and see it offered in the form that consumes it. Writes reference data, so it needs its own cleanup rule.",
-  "/admin/users":
-    "Approve a pending account. Creates a real user, so it needs a decision about cleanup first.",
-  "/admin/settings":
-    "Change a setting and see it take effect. Global state, so it cannot run beside another case.",
   "/admin/doc-type-engine":
     "Distil a document type from samples. Spends AI budget, so it needs the same cost note TC-IMP-01 carries.",
 };

@@ -100,17 +100,25 @@ fixed fixture where the existing one will do.
 | [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-09-26 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
+| [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
+| [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |
+| [TC-VL-01](cases/TC-VL-01.md) | O valoare adăugată în „Date de referință”, redenumită și ștearsă | reference-data | happy | — | `driven` | 2026-09-27 | — |
+| [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `draft` | — | — |
 
-**Twenty-six are `automated`, six are `driven`, and three are `draft`** — as of 2026-09-27 (Slice
-#37.04). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, TC-CALC-01,
-TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied:
+**Twenty-six are `automated`, nine are `driven`, and four are `draft`** — as of 2026-09-27 (Slice
+#37.08). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+runs of #37.04 and #37.08, TC-CALC-01, TC-ASSOC-08, TC-AUTH-02 and TC-ACCT-01, and the reason for
+each is written here, not implied:
 
 - **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-AI-01** —
   „What a Playwright spec for an import case would need", below.
-- **`driven`, first run: TC-PROP-05**, the first `negative` case (Slice #37.04) — a second
-  run unchanged confirms it, and a promotion wave takes it.
-- **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-ASSOC-08** (FU-220's column) and
-  **TC-AUTH-02** (the `user` account) — each paragraph below.
+- **`driven`, first run: TC-PROP-05**, the first `negative` case (Slice #37.04), and
+  **TC-USERS-01, TC-SET-01, TC-VL-01** (Slice #37.08) — a second run unchanged confirms each, and
+  a promotion wave takes them. Each carries its cleanup rule: a refused request stays in „Istoric”,
+  a setting is put back exactly, a `TC-` value is deleted.
+- **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-ASSOC-08** (FU-220's column),
+  **TC-AUTH-02** (the `user` account) and **TC-ACCT-01** (Adrian types every password, and
+  `test-user` must sign in from `.env` first) — each paragraph below or in its file.
 
 - **The fourth promotion wave, Slice #37.02: the third wave's eight `driven` rows to
   `automated`.** TC-VER-01, TC-VER-02, TC-PROP-04, TC-ASSOC-10, TC-ASSOC-11, TC-STAMP-01,
@@ -137,6 +145,16 @@ TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied
   `04.mixed`: `comune` and `flotante`) were driven for the first time — **every file landed or
   was set aside, none missing**, and after each cleanup the check found nothing left. The three
   cost **4, about 25 and 8 calls** — 37 of the 60 the slice was allowed.
+
+- **The fifth wave, Slice #37.08: the last four screens that needed a cleanup rule.**
+  TC-USERS-01 refuses a `TC-` access request and reads it in „Istoric” — never „Aprobă”, which
+  creates an account and an email no screen can take back (the approve path was exercised once, by
+  `test-user`). TC-SET-01 moves one setting no case reads, 90 → 91 → 90, and asserts the ten values
+  after equal the ten before. TC-VL-01 adds, renames and deletes a `TC-` value on „Cetățenie”, a
+  list no case selects. TC-ACCT-01 is written and stays `draft`: Claude never types a password, so
+  it runs only with Adrian at the desk, and `test-user` must first sign in from `.env`. The rule
+  came first in each file, before its run. `CATALOGUE_NOT_YET` now holds two: the map (a Maps key)
+  and `/admin/doc-type-engine` (AI budget).
 
 - **The third wave, Slice #36.21: nine new cases, eight at `driven` and one at `draft`** (the
   eight are `automated` since #37.02, above). They
@@ -238,7 +256,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Thirty-five cases, all `happy` but TC-AUTH-02 (`authz`) and TC-PROP-05 (`negative`), and that is a scope rule rather than a taste.** A case in the
+**Thirty-nine cases, all `happy` but TC-AUTH-02 (`authz`) and TC-PROP-05 (`negative`), and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
