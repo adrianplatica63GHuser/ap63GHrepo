@@ -262,9 +262,13 @@ describe("resultIdForFile", () => {
 });
 
 describe("the plan for a request", () => {
-  it("full is e2e, then lint, tsc and jest — the order in C:\\dev\\CLAUDE.md", () => {
-    expect(SEQUENCES.full).toEqual(["e2e", "lint", "tsc", "jest"]);
-    expect(SEQUENCES["full-db"]).toEqual(["e2e", "lint", "tsc", "jest", "verify-rebuild"]);
+  it("full is e2e, then lint, tsc and jest — the order in C:\\dev\\CLAUDE.md — and ends with the forms drift line", () => {
+    // Slice #37.05: `forms-drift` is a REPORT, last, after every check that can
+    // fail. The runner passes it when the check ran and skips it when it could
+    // not, so it never turns a run red or holds a push (runner.ts, stepForms).
+    expect(SEQUENCES.full).toEqual(["e2e", "lint", "tsc", "jest", "forms-drift"]);
+    expect(SEQUENCES["full-db"]).toEqual(["e2e", "lint", "tsc", "jest", "verify-rebuild", "forms-drift"]);
+    expect(SEQUENCES["forms-export"]).toEqual(["forms-export"]);
     expect(SEQUENCES.ping).toEqual([]);
   });
 
@@ -275,8 +279,9 @@ describe("the plan for a request", () => {
       { name: "lint", files: null, skipReason: null },
       { name: "tsc", files: null, skipReason: null },
       { name: "jest", files: ["src/__tests__/test-runner-protocol.test.ts"], skipReason: null },
+      { name: "forms-drift", files: null, skipReason: null },
     ]);
-    expect(pendingSteps(plan).map((s) => s.status)).toEqual(["skipped", "pending", "pending", "pending"]);
+    expect(pendingSteps(plan).map((s) => s.status)).toEqual(["skipped", "pending", "pending", "pending", "pending"]);
   });
 
   it("argv carries only enumerated paths, never request text", () => {
@@ -368,6 +373,18 @@ describe("one-line summaries", () => {
       "rescored run 20260926T002734Z\n\nAI-SCORE: rescored 1 run, no reads — 20260926T002734Z 81.0% over 4 confirmed, all 79.2%\n",
       0,
       "rescored 1 run, no reads — 20260926T002734Z 81.0% over 4 confirmed, all 79.2% (exit 0)",
+    ],
+    [
+      "forms-export",
+      "FORMS: exported 12 form(s), 240 field(s), to src/db/document-type-forms.json (unchanged)\n",
+      0,
+      "exported 12 form(s), 240 field(s), to src/db/document-type-forms.json (unchanged) (exit 0)",
+    ],
+    [
+      "forms-drift",
+      "FORMS: drift — 1 changed (CONTRACT_VANZARE); request forms-export to catch the file up\n",
+      0,
+      "drift — 1 changed (CONTRACT_VANZARE); request forms-export to catch the file up (exit 0)",
     ],
   ] as const)("%s", (step, text, code, expected) => {
     expect(summariseStep(step, text, code)).toBe(expected);

@@ -19,6 +19,8 @@
 #            reconcile <folder> (what became of every file of that folder after an import; read-only)
 #            ai-score <corpus> <readCap> (paid: the app's own extraction over a labelled corpus, scored)
 #            ai-rescore <corpus> (free: the saved answers of every earlier run, scored again)
+#            forms-export (every document type's form, read from the local database, written
+#                          to src/db/document-type-forms.json; full ends with forms-drift) (#37.05)
 #
 # wait/ping exit: 0 passed · 1 failed · 2 error · 3 refused · 4 still running · 5 no result yet
 #                 6 held — a guard said this waits for Adrian; the step's summary names why
@@ -99,5 +101,5 @@ case "$cmd" in
   wait)    [ $# -ge 1 ] || { echo "usage: claude.sh wait <id> [seconds]" >&2; exit 2; }; wait_for "$@" ;;
   show)    [ -f "$ch/results/${1:-}.json" ] || { echo "no result for ${1:-}" >&2; exit 5; }; show "$ch/results/$1.json" ;;
   ping)    id="$(request ping)" || exit 2; wait_for "$id" "${1:-20}" ;;
-  *)       sed -n '2,23p' "$0"; exit 2 ;;
+  *)       sed -n '2,25p' "$0"; exit 2 ;;
 esac

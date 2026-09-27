@@ -125,6 +125,8 @@ const RECONCILE_SCRIPT = path.join(REPO, "scripts", "testing", "reconcile-import
 /** The folder an `ai-score` request names one child of (Slice #36.23). Never taken from a request. */
 const AI_CORPUS_ROOT = path.resolve(REPO, ...AI_CORPUS_ROOT_SEGMENTS);
 const AI_SCORE_SCRIPT = path.join(REPO, "scripts", "testing", "ai-score.ts");
+/** `forms-export` and `forms-drift` (Slice #37.05): one read-only SELECT, and for the export one file written. */
+const FORMS_SCRIPT = path.join(REPO, "scripts", "document-type-forms.ts");
 const VERIFY_REBUILD = path.join(REPO, "scripts", "Verify-Rebuild.ps1");
 const APPLY_MIGRATION = path.join(REPO, "scripts", "Apply-Migration.ps1");
 const EXPORT_SCHEMA = path.join(REPO, "scripts", "Export-SupabaseSchema.ps1");
@@ -151,6 +153,7 @@ const TIMEOUT = {
   migrate: 15 * MIN,
   exportSchema: 10 * MIN,
   reconcile: 10 * MIN,
+  forms: 3 * MIN,
   // Ten contracts at up to a minute or two each, one after another.
   aiScore: 40 * MIN,
 };
@@ -956,6 +959,40 @@ async function stepReconcile(folder: string | undefined, logFile: string): Promi
   };
 }
 
+/**
+ * `scripts/document-type-forms.ts export` or `check`.        (Slice #37.05, FU-019)
+ *
+ * Fixed argv: the script and a constant mode. The export writes exactly one
+ * file, `src/db/document-type-forms.json`, and the database is read in a
+ * read-only session either way (the script's header).
+ *
+ * ⚠️ **`forms-drift` CANNOT MAKE A RUN RED.** It is the last step of `full`,
+ * and drift between the file and the database is the normal state between an
+ * edit on a screen and the next export — so the check reports it as its
+ * summary and passes. When the check cannot run at all (Docker down, say) the
+ * step is SKIPPED with the reason, never failed or errored, because an error
+ * would stop `push` over a report.
+ */
+async function stepForms(mode: "export" | "check", logFile: string): Promise<StepOutcome> {
+  const r = await runLogged(NODE, [BIN.tsx, FORMS_SCRIPT, mode], logFile, TIMEOUT.forms);
+  const step = mode === "export" ? "forms-export" : "forms-drift";
+  const summary = (r.timedOut ? "timed out; " : "") + summariseStep(step, r.text, r.exitCode);
+  if (mode === "check") {
+    return {
+      status: !r.timedOut && r.exitCode === 0 ? "passed" : "skipped",
+      exitCode: r.exitCode,
+      summary,
+      notes: [],
+    };
+  }
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : "error",
+    exitCode: r.exitCode,
+    summary,
+    notes: r.exitCode === 0 ? ["the file is in the working tree; commit it"] : [],
+  };
+}
+
 async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
   const plan: PlannedStep[] = planSteps(req);
   const logDir = path.join(LOG_DIR, req.id);
@@ -1038,6 +1075,12 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
           break;
         case "ai-rescore":
           out = await stepAiScore(req.folder, undefined, logFile);
+          break;
+        case "forms-export":
+          out = await stepForms("export", logFile);
+          break;
+        case "forms-drift":
+          out = await stepForms("check", logFile);
           break;
       }
     } catch (e) {
@@ -1247,6 +1290,7 @@ async function selfTest(): Promise<number> {
   say(fs.existsSync(RECONCILE_SCRIPT), `reconcile-import.ts: ${rel(RECONCILE_SCRIPT)}`);
   say(fs.existsSync(DATA_ROOT), `data root for reconcile: ${DATA_ROOT} (${dataFolders().length} folders)`);
   say(fs.existsSync(AI_SCORE_SCRIPT), `ai-score.ts: ${rel(AI_SCORE_SCRIPT)}`);
+  say(fs.existsSync(FORMS_SCRIPT), `document-type-forms.ts: ${rel(FORMS_SCRIPT)}`);
   say(
     fs.existsSync(AI_CORPUS_ROOT),
     `corpus root for ai-score: ${AI_CORPUS_ROOT} (${Object.entries(aiCorpora()).map(([k, n]) => `${k}: ${n}`).join(", ") || "none"})`,

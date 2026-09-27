@@ -55,6 +55,15 @@
  * corpus or nothing. `ai-rescore` names a corpus too and reads nothing: it
  * scores the answers earlier runs saved against the answer keys as they stand.
  *
+ * Slice #37.05 added `forms-export` and a step at the end of `full`. The
+ * export runs `scripts/document-type-forms.ts export`: one SELECT of every
+ * document type's form, in a read-only session of the local database, written
+ * into ONE file, `src/db/document-type-forms.json` (FU-019). `full` and
+ * `full-db` now end with `forms-drift`, the same script's `check`, which says in
+ * one line whether the database has moved on since the last export. Drift is
+ * that line and never a red: `forms-drift` passes when the check ran and is
+ * SKIPPED when it could not, so it can neither fail a run nor hold a push.
+ *
  * A held step is not a failure and not an error: it is the runner saying „this
  * waits for Adrian", with the reason by name. None of the three ever touches
  * Supabase or UAT — `npm run supabase:migrate` stays Adrian's.
@@ -96,6 +105,8 @@ export const STEPS = [
   "reconcile",
   "ai-score",
   "ai-rescore",
+  "forms-export",
+  "forms-drift",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -108,8 +119,8 @@ export type StepName = (typeof STEPS)[number];
  */
 export const SEQUENCES = {
   ping: [],
-  full: ["e2e", "lint", "tsc", "jest"],
-  "full-db": ["e2e", "lint", "tsc", "jest", "verify-rebuild"],
+  full: ["e2e", "lint", "tsc", "jest", "forms-drift"],
+  "full-db": ["e2e", "lint", "tsc", "jest", "verify-rebuild", "forms-drift"],
   static: ["lint", "tsc", "jest"],
   e2e: ["e2e"],
   jest: ["jest"],
@@ -120,6 +131,7 @@ export const SEQUENCES = {
   reconcile: ["reconcile"],
   "ai-score": ["ai-score"],
   "ai-rescore": ["ai-rescore"],
+  "forms-export": ["forms-export"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -649,6 +661,12 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
     case "ai-rescore": {
       // `scripts/testing/ai-score.ts` ends with one `AI-SCORE:` line — counts and percentages only.
       body = (lines.filter((l) => l.startsWith("AI-SCORE:")).pop() ?? "").replace(/^AI-SCORE:\s*/, "");
+      break;
+    }
+    case "forms-export":
+    case "forms-drift": {
+      // `scripts/document-type-forms.ts` ends with one `FORMS:` line — counts and type keys only.
+      body = (lines.filter((l) => l.startsWith("FORMS:")).pop() ?? "").replace(/^FORMS:\s*/, "");
       break;
     }
   }
