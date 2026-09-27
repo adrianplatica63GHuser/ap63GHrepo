@@ -30,7 +30,7 @@ import fs from "fs";
 import { randomUUID } from "crypto";
 import { test, expect, request as playwrightRequest, type APIRequestContext } from "@playwright/test";
 import { SUPERUSER_STATE, USER_STATE } from "../helpers/auth-state";
-import { E2E_MARKER } from "../helpers/records";
+import { E2E_MARKER, removeGroupLeftovers, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}AUTH-02`;
 
@@ -135,4 +135,65 @@ test.describe("TC-AUTH-02 — Un cont „user\" lucrează zilnic și nu poate ad
       await admin.dispose();
     }
   });
+
+  // ── Slice #37.03 — the admin-only families OUTSIDE /api/admin (FU-222), and FU-223 ──
+  test("scrierile ecranelor de administrare din afara /api/admin răspund 403; „Descoperire AI” rămâne deschisă", async ({ page, baseURL }) => {
+    test.slow();
+    const admin: APIRequestContext = await playwrightRequest.newContext({ baseURL, storageState: SUPERUSER_STATE });
+    const groupName = `${MARK} Grup`;
+    const stampName = `${MARK} Ștampilă`;
+    const tagFrom = `${MARK}-eticheta-care-nu-exista`;
+    const timeFramesBefore = (await (await admin.get("/api/time-frames")).json()) as { items: { key: string; value: number }[] };
+
+    try {
+      // A group — „Grupuri".
+      const group = await page.request.post("/api/groups", {
+        data: { targetType: "PROPERTY", description: groupName },
+      });
+      expect(group.status()).toBe(403);
+
+      // A stamp — „Ștampile".
+      const stamp = await page.request.post("/api/stamps", {
+        data: { shortDescription: stampName, notes: MARK },
+      });
+      expect(stamp.status()).toBe(403);
+
+      // A tag renamed across every record — „Etichete". From a tag that exists nowhere,
+      // so even a wrong success renames nothing.
+      const tag = await page.request.patch("/api/tags", { data: { from: tagFrom, to: `${MARK}-tinta` } });
+      expect(tag.status()).toBe(403);
+
+      // A time-frame setting — „Setări". Its own current value, so a wrong success changes nothing.
+      const first = timeFramesBefore.items[0] ?? { key: "dashboard_recent_days", value: 7 };
+      const frames = await page.request.patch("/api/time-frames", {
+        data: { settings: [{ key: first.key, value: first.value }] },
+      });
+      expect(frames.status()).toBe(403);
+
+      // A calculation commit — „Calcul". No text, so a wrong success could not commit anything either.
+      const commit = await page.request.post("/api/calculation/commit", { data: { groupDescription: groupName } });
+      expect(commit.status()).toBe(403);
+
+      // FU-223, decided open: accepting „Descoperire AI"'s fields is a `user`'s to do. A type id that
+      // exists nowhere and an empty body — the answer is a validation or not-found, never 403.
+      const accept = await page.request.put(`/api/document-types/${randomUUID()}/template-fields`, { data: {} });
+      expect(accept.status()).not.toBe(403);
+      const resolve = await page.request.post("/api/document-types/resolve", { data: {} });
+      expect(resolve.status()).not.toBe(403);
+
+      // …and nothing changed.
+      const groups = (await (await admin.get("/api/groups")).json()) as { items: { description: string | null }[] };
+      expect(groups.items.filter((g) => (g.description ?? "").startsWith(MARK))).toHaveLength(0);
+      const stamps = (await (await admin.get("/api/stamps")).json()) as { items: { shortDescription: string }[] };
+      expect(stamps.items.filter((st) => st.shortDescription.startsWith(MARK))).toHaveLength(0);
+      const after = (await (await admin.get("/api/time-frames")).json()) as { items: unknown };
+      expect(after.items).toEqual(timeFramesBefore.items);
+    } finally {
+      // The undo for a write that wrongly succeeded, as the superuser.
+      await removeGroupLeftovers(admin, MARK);
+      await removeStampLeftovers(admin, MARK);
+      await admin.dispose();
+    }
+  });
 });
+

@@ -51,6 +51,19 @@ browser Claude drives: Claude never types a password. Claude does every other st
 | A value in a closed list — `POST /api/admin/value-lists/property-property-roles` | **403** | the spec removes it as the superuser |
 | A role pair — `POST /api/admin/doc-type-person-roles` (ids that exist nowhere) | **403** | nothing to remove: no such ids |
 | Help text — `PUT /api/admin/help-content/dashboard` | **403** | the spec puts back what it read first |
+| A group — `POST /api/groups` („Grupuri", FU-222) | **403** | the spec removes it as the superuser |
+| A stamp — `POST /api/stamps` („Ștampile", FU-222) | **403** | the spec removes it as the superuser |
+| A tag renamed across every record — `PATCH /api/tags` („Etichete", FU-222), from a tag that exists nowhere | **403** | nothing to rename |
+| A time-frame setting — `PATCH /api/time-frames` („Setări", FU-222), to its own current value | **403** | nothing changed; the spec compares every setting |
+| A calculation commit — `POST /api/calculation/commit` („Calcul", FU-222), with no text | **403** | nothing to commit |
+
+**Allowed by decision (FU-223, Slice #37.03):** accepting the fields „Descoperire AI" finds on a
+document — `PUT /api/document-types/[id]/template-fields`, and `POST /api/document-types/resolve`
+beside it — stays open to a `user`, because the feature lives on the document screen a `user`
+works on every day. It extends that document type's form for every document of the type. The spec
+checks that neither answers 403 (with an id that exists nowhere, so nothing is written). Adrian can
+overturn this in one line; then both routes require a superuser and the accept step is hidden for
+a `user`.
 
 ## Steps
 
@@ -68,6 +81,14 @@ browser Claude drives: Claude never types a password. Claude does every other st
 Nothing is created by the hand run. Adrian signs out („Ieșire") and signs back in as himself.
 
 ## Notes from the runs
+
+**2026-09-26 — the matrix grows, still not driven (Slice #37.03).** The five admin-only families
+outside `/api/admin` (FU-222) now require a superuser, and the spec's third test sends one write
+per family as the `user`. FU-223 is decided and written above. **Not driven yet:** the `test-user`
+account is approved (2026-09-26, 23:13) but `auth.setup.ts` still cannot sign in with the
+`E2E_USER_*` pair in `.env` — the temporary password is still the account's, as far as the run
+can tell — so the hand runs wait for Adrian's sign-in, and the spec stays parked: the catalogue's
+coverage guard lets only a `confirmed` row name a spec.
 
 **2026-09-25 — written, not yet driven (Slice #36.20).** It waits for the `user` account,
 which is Adrian's to create. Step 6 describes the screen after #36.20: until then the quick
