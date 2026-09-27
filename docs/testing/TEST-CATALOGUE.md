@@ -116,10 +116,11 @@ each is written here, not implied:
   **TC-USERS-01, TC-SET-01, TC-VL-01** (Slice #37.08) — a second run unchanged confirms each, and
   a promotion wave takes them. Each carries its cleanup rule: a refused request stays in „Istoric”,
   a setting is put back exactly, a `TC-` value is deleted.
-- **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-AUTH-02** (the `user` account) and
-  **TC-ACCT-01** (Adrian types every password, and `test-user` must sign in from `.env` first — on
-  2026-09-27 neither its old password nor the `.env` one signed in, FU-252) — each paragraph below
-  or in its file.
+- **`draft`: TC-CALC-01** (Adrian's hand figure) and **TC-AUTH-02** (the `user` account) — each
+  paragraph below or in its file.
+- **`draft`, driven once: TC-ACCT-01** (Slice #37.10), with Adrian typing every password: steps
+  1–5 held, and step 6 — `.env` signing in again — did not (its file has the run). It never
+  becomes a spec: a spec would change the password the whole e2e suite signs in with.
 - **TC-ASSOC-08 to `automated`, Slice #37.10.** migration_087 gave `property_property` its
   direction (FU-220); the case was driven twice on 2026-09-27, each run on both uuid sort orders,
   and its spec creates parts until it holds one of each order, so every run tests both.

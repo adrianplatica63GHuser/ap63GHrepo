@@ -53,6 +53,36 @@ Steps 5–6 are the cleanup, and step 6 proves it.
 
 ## Notes from the runs
 
+**2026-09-27, 10:14–16:32 — driven once; steps 1–5 held, step 6 RED (Slice #37.10), Adrian typing every password.**
+After Adrian reset test-user in the Supabase dashboard (FU-252), the runner's e2e
+`20260927T134015Z-25279` signed in with the `.env` pair (the `user` setup no longer skipped).
+- Step 1 held. Claude typed „test-user", Adrian typed the `.env` password: the dashboard. It reads
+  „Autentificat ca" followed by the account's **email**, not „test-user" as the step says. The
+  sidebar shows the email for this account, so the step's expectation is corrected here, not in
+  the app.
+- Step 2 held word for word: the heading, „Introdu o parolă nouă pentru contul tău.", „Parola
+  nouă" with „Minimum 8 caractere.", „Confirmă parola", both buttons, the tab „Schimbă parola —
+  GA40" and the breadcrumb „Acasă › Schimbă parola". The first open compiled the route cold and
+  took about 30 s; the address went there directly.
+- Step 3: Adrian pressed „Schimbă parola" himself, rather than Claude, and the screen went back to
+  the dashboard. „Parola a fost schimbată!" was not read: it shows only briefly before the
+  redirect.
+- Step 4 held: „Ieșire", then test-user with the temporary password, the dashboard.
+- Step 5 held: the `.env` password in both fields, „Schimbă parola", the dashboard.
+- Step 6: Claude pressed „Ieșire". The sign-in with the `.env` password was then asked of the
+  runner's e2e, which signs in from `.env`: `20260927T204619Z-27712` (`e2e/auth/login-dashboard.spec.ts`)
+  passed 3 and **skipped** the `user` setup — the pair no longer signs in (or no longer as role
+  `user`), where `20260927T134015Z-25279` that morning had signed in. `.env` was last saved at
+  11:03 local, between the two. So `.env` and the account disagree again, which is what this case
+  exists to catch; the case stays `draft` until one of them is set to the other and a run of the
+  setup signs in. (An earlier request, `20260927T203321Z-2320`, lost its setup to a cold compile.)
+  The screen changes the password in Supabase directly; nothing else needs updating there.
+
+Seen on the way: „RECENTE" in the sidebar is kept in the browser, not per account. Signed in as
+test-user, it listed the admin's recently opened properties, including the TC-ASSOC-08 properties
+deleted this morning through the API (FU-228 forgets a record only when it is deleted from the
+screen). Filed as FU-253.
+
 **2026-09-27 — attempted with Adrian at the desk (Slice #37.10), stopped at step 1.** Claude typed
 „test-user" in „Utilizator sau Email" (it resolves, through `/api/auth/lookup-email`, to the same
 email as `E2E_USER_EMAIL` — compared by hash, the value not read); Adrian typed the `.env` password,
