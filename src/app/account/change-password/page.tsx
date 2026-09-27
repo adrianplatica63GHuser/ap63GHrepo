@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ChangePasswordForm } from "./change-password-form";
 
-export const metadata = { title: "Change Password — GA40" };
+// FU-072 (Slice #37.07): the browser tab in the user's language.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.changePassword");
+  return { title: t("pageTitle") };
+}
 
 export default function ChangePasswordPage() {
   return (

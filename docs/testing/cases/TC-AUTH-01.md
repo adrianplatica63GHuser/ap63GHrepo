@@ -121,4 +121,5 @@ where it was noticed.** The browser tab title is **„Sign in — GA40"** on `/l
 **„ga40prj"** on every other screen. Both are English, in `ro-RO`, which is the shipping
 locale. The page bodies are correctly Romanian throughout; it is the `<title>` that was
 never translated. Not fixed here — this slice adds one guard suite and touches nothing
-else — and it is in the handover.
+else — and it is in the handover. **Fixed in Slice #37.07 (FU-072):** the tab reads
+„Conectare — GA40" on `/login` (the root title had become „GA40" in #36.05).

@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { DevOnly } from "@/components/dev-only";
 import { LoginForm } from "./login-form";
 
-export const metadata = { title: "Sign in — GA40" };
+// FU-072 (Slice #37.07): the browser tab says the page's name in the user's
+// language, from messages/*.json, like every other string on the screen.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.login");
+  return { title: t("pageTitle") };
+}
 
 export default async function LoginPage() {
   const t = await getTranslations("auth");

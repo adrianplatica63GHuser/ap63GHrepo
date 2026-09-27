@@ -3143,7 +3143,8 @@
       "noAccount": "Don't have an account?",
       "requestAccess": "Request access",
       "errorInvalidCredentials": "Invalid username or password",
-      "errorGeneric": "Something went wrong. Please try again."
+      "errorGeneric": "Something went wrong. Please try again.",
+      "pageTitle": "Sign in — GA40"
     },
     "signup": {
       "heading": "Request Access",
@@ -3158,7 +3159,11 @@
       "errorGeneric": "Could not submit request. Please try again.",
       "errorUnexpected": "Something went wrong. Please try again.",
       "successTitle": "Request submitted!",
-      "successMessage": "An administrator will review your request. You will receive an email once your account is approved."
+      "successMessage": "An administrator will review your request. You will receive an email once your account is approved.",
+      "pageTitle": "Request access — GA40"
+    },
+    "changePassword": {
+      "pageTitle": "Change password — GA40"
     }
   },
   "stamp": {

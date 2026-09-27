@@ -3143,7 +3143,8 @@
       "noAccount": "Nu ai cont?",
       "requestAccess": "Solicită acces",
       "errorInvalidCredentials": "Utilizator sau parolă incorectă",
-      "errorGeneric": "A apărut o eroare. Te rugăm să încerci din nou."
+      "errorGeneric": "A apărut o eroare. Te rugăm să încerci din nou.",
+      "pageTitle": "Conectare — GA40"
     },
     "signup": {
       "heading": "Solicitare acces",
@@ -3158,7 +3159,11 @@
       "errorGeneric": "Nu s-a putut trimite cererea. Te rugăm să încerci din nou.",
       "errorUnexpected": "A apărut o eroare. Te rugăm să încerci din nou.",
       "successTitle": "Cerere trimisă!",
-      "successMessage": "Un administrator va analiza cererea ta. Vei primi un email când contul tău este aprobat."
+      "successMessage": "Un administrator va analiza cererea ta. Vei primi un email când contul tău este aprobat.",
+      "pageTitle": "Solicitare acces — GA40"
+    },
+    "changePassword": {
+      "pageTitle": "Schimbă parola — GA40"
     }
   },
   "stamp": {
