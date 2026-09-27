@@ -157,11 +157,12 @@ setup("autentificare si pregatire fixture E2E", async ({ page, baseURL }) => {
   // pushState navigation, so the default waitUntil:"load" would time out.
   // Use waitUntil:"commit" which resolves as soon as the URL changes.
   //
-  // ⚠️ 60 s, not 20: the navigation is also the first request for „/", which a
+  // ⚠️ 150 s, not 20: the navigation is also the first request for „/", which a
   // cold runner server compiles on demand — measured 20.2 s in runner full
-  // 20260927T031106Z-2654, which lost the whole run by 0.2 s. The setup
-  // project's own timeout is 180 s (playwright.config.ts).
-  await page.waitForURL("/", { timeout: 60_000, waitUntil: "commit" });
+  // 20260927T031106Z-2654, which lost the whole run by 0.2 s, and more than
+  // 60 s in 20260927T041745Z-22250. The setup project's own timeout is 360 s
+  // (playwright.config.ts).
+  await page.waitForURL("/", { timeout: 150_000, waitUntil: "commit" });
 
   // Brief stabilisation — ensure the middleware doesn't redirect us back to
   // /login (can happen if the Supabase auth cookie was not written before the
@@ -245,7 +246,7 @@ async function loginAs(page: Page, email: string, password: string): Promise<voi
   await page.goto("/login");
   await fillLoginForm(page, email, password);
   await page.click('button[type="submit"]');
-  await page.waitForURL("/", { timeout: 60_000, waitUntil: "commit" });
+  await page.waitForURL("/", { timeout: 150_000, waitUntil: "commit" });
   await page.waitForTimeout(1_500);
   if (page.url().includes("/login")) {
     throw new Error(`Login failed for E2E_USER_EMAIL (${email}) — redirected back to /login. Check the pair in .env.`);

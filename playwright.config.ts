@@ -76,7 +76,11 @@ export default defineConfig({
       // a spec's own first route still compiles inside it (43 s for
       // /admin/global-search, measured in Propus.3), so the test runner re-runs
       // specs whose every failure is such a wait once, on the warmed server.
-      timeout: 180_000,
+      //
+      // ⚠️ 360 s since Slice #37.04: a cold runner server was measured at 46 s
+      // for /login and more than 60 s for / in one run (20260927T041745Z-22250),
+      // and this project makes both first requests. Specs keep the default.
+      timeout: 360_000,
     },
 
     // ── 2. All E2E specs ─────────────────────────────────────────────────────
