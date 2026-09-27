@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-27, Slice #37.10 — 252 entries. Rows are status, columns are impact.
+As of 2026-09-27, Slice #37.10 — 253 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
 | open | 14 | 50 | 48 | 14 | 126 |
 | planned | 2 | 0 | 1 | 0 | 3 |
-| resolved | 32 | 51 | 24 | 3 | 110 |
+| resolved | 32 | 52 | 24 | 3 | 111 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 52 | 106 | 75 | 19 | 252 |
+| **total** | 52 | 107 | 75 | 19 | 253 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -335,4 +335,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-249 | 2026-09-27 #37.08 TC-SET-01 | defect | UI shell | The ten number boxes under „Setări” → „Intervale de timp” have no accessible name — each label sits beside its box, not tied to it — so a screen reader reads ten unnamed numbers and a case can only find one by position. | TC-SET-01's run 2026-09-27; src/app/admin/settings/_components/settings-view.tsx | user | XS | open | useId per row: the label's htmlFor and the input's id, and the description as aria-describedby. | 2026-09-27 |
 | FU-250 | 2026-09-27 #37.09; 2026-09-27 #37.10 | debt | Tooling & CI | `.env` defines DATABASE_URL twice, and which one a process gets depends on its loader (Next's @next/env, node --env-file, dotenv), so two tools on one machine could talk to two databases. | .env key names read 2026-09-27 (values not read): DATABASE_URL on two lines | dev | XS | resolved | Adrian removed the second line himself, 2026-09-27; recorded in 73347be. .env now defines DATABASE_URL once (key names counted, values not read). | 2026-09-27 |
 | FU-251 | 2026-09-27 #37.09 | data risk | DB & migrations | Nothing backs up the archive: no script dumps the local database's domain rows, and uploads\ (every page file) is gitignored and copied nowhere — so losing the laptop or Docker's disk image loses every person, property, document and page. | #37.09 investigation: no pg_dump of domain data in scripts/, local-ops/, docker/ or the workflows; build-ciprian-image.ps1 dumps reference tables only; supabase-sync.ts copies no domain data; /uploads/ in .gitignore. Windows-level backup of Docker's disk or C:\dev unverified | data | M | planned | Adrian took all four recommendations, 2026-09-27: the laptop is the system of record; backups to OneDrive, last 14 days; daily plus before every migrate-local; the drill once, then monthly. The build slice's header, with the decisions written in, is Slices.37.nn\37.09.restore-drill\11.Slice.37.11.backup.md — his to put in the Queue. | 2026-09-27 |
-| FU-252 | 2026-09-27 #37.10 TC-ACCT-01 | test gap | Auth | test-user does not sign in with the .env password nor its old one („Utilizator sau parolă incorectă" for both, Adrian typing), and the app has no way back in — no „forgot password" link and no admin password reset — so TC-ACCT-01 cannot start, and TC-AUTH-02 and the user e2e specs stay skipped. | /login (login-form.tsx: username → /api/auth/lookup-email → signInWithPassword); no reset route under src/app/api/admin; auth is the cloud Supabase project | dev | S | open | Adrian sets test-user's password to the .env one in the Supabase dashboard (Authentication → Users); then TC-ACCT-01 runs with him at the desk. Whether the admin screen should offer a password reset is a product question for later. | 2026-09-27 |
+| FU-252 | 2026-09-27 #37.10 TC-ACCT-01; 2026-09-27 #37.10 TC-ACCT-01 run | test gap | Auth | test-user does not sign in with the .env password nor its old one („Utilizator sau parolă incorectă" for both, Adrian typing), and the app has no way back in — no „forgot password" link and no admin password reset — so TC-ACCT-01 cannot start, and TC-AUTH-02 and the user e2e specs stay skipped. | /login (login-form.tsx: username → /api/auth/lookup-email → signInWithPassword); no reset route under src/app/api/admin; auth is the cloud Supabase project | dev | S | open | Adrian reset test-user in the Supabase dashboard (09:39) and the runner's e2e 20260927T134015Z-25279 signed in from .env as role user. TC-ACCT-01 was then driven (steps 1–5 held), but its step 6 check, e2e 20260927T204619Z-27712, skipped the user setup again: .env was saved at 11:03 local, between the two runs. Set E2E_USER_PASSWORD and test-user's password to the same value (either way round), then one e2e of login-dashboard.spec.ts shows the setup signing in. The missing in-app reset stays a product question. | 2026-09-27 |
+| FU-253 | 2026-09-27 #37.10 TC-ACCT-01 | defect | UI shell | „RECENTE" survived sign-out: clearRecentlyViewed() removed the storage key but the provider, still mounted across the client-side redirect to /login, kept the list in state, so the next account saw the previous one's visits (and its first visit wrote them back) — including records deleted through the API. | src/components/providers/navigation-history-provider.tsx clearRecentlyViewed; src/components/sidebar/sidebar-nav.tsx:260 | user | XS | resolved | Fixed in c8d3059: clearRecentlyViewed() dispatches RECENTLY_VIEWED_CHANGED like forgetRecentlyViewed(); recently-viewed-forget.test.tsx red first, then green. | 2026-09-27 |
