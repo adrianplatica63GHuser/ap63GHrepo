@@ -108,6 +108,13 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
   test("„Inclus în” ales din parte se citește așa din parte și invers din întreg, pe ambele ordini de uuid", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
+    // Ask for the roles once before any screen does. „Tip relație" renders only
+    // after GET /api/admin/property-property-roles answers, and on a cold server
+    // that route compiles on its first request — in a full run (20260927T113050Z-1886)
+    // the compile outlasted the screen's wait. A request waits it out; the
+    // screen then finds the route warm.
+    const roles = await page.request.get("/api/admin/property-property-roles", { timeout: 120_000 });
+    expect(roles.ok(), `GET /api/admin/property-property-roles failed (${roles.status()})`).toBeTruthy();
     const created: string[] = [];
 
     try {
