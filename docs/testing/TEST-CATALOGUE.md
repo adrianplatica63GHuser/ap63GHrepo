@@ -70,7 +70,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
-| [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `confirmed` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
+| [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-09-25 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
@@ -83,9 +83,9 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `automated` | 2026-09-25 | `e2e/association/document-reference.spec.ts` |
 | [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `draft` | — | — |
 | [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite la fel din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-person.spec.ts` |
-| [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `confirmed` | 2026-09-26 | `e2e/association/company-document.spec.ts` |
-| [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `confirmed` | 2026-09-26 | `e2e/association/company-person.spec.ts` |
-| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `confirmed` | 2026-09-26 | `e2e/association/certificate-parties.spec.ts` |
+| [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `automated` | 2026-09-26 | `e2e/association/company-document.spec.ts` |
+| [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-09-26 | `e2e/association/company-person.spec.ts` |
+| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-09-26 | `e2e/association/certificate-parties.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
@@ -94,15 +94,37 @@ fixed fixture where the existing one will do.
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
-| [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `confirmed` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
-| [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `confirmed` | 2026-09-26 | `e2e/versioning/person-versioning.spec.ts` |
-| [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `confirmed` | 2026-09-26 | `e2e/versioning/document-versioning.spec.ts` |
-| [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `confirmed` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
+| [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `automated` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
+| [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-09-26 | `e2e/versioning/person-versioning.spec.ts` |
+| [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-09-26 | `e2e/versioning/document-versioning.spec.ts` |
+| [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
 
-**Eighteen are `automated`, thirteen are `driven`, and three are `draft`** — as of 2026-09-25 (Slice
-#36.22). Nothing is `confirmed`. What stays below `automated` is the third wave (below), the
-import cases, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied.
+**Twenty-six are `automated`, five are `driven`, and three are `draft`** — as of 2026-09-26 (Slice
+#37.02). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, TC-CALC-01,
+TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied:
+
+- **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-AI-01** —
+  „What a Playwright spec for an import case would need", below.
+- **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-ASSOC-08** (FU-220's column) and
+  **TC-AUTH-02** (the `user` account) — each paragraph below.
+
+- **The fourth promotion wave, Slice #37.02: the third wave's eight `driven` rows to
+  `automated`.** TC-VER-01, TC-VER-02, TC-PROP-04, TC-ASSOC-10, TC-ASSOC-11, TC-STAMP-01,
+  TC-ASSOC-12 and TC-HELP-01 were driven a second time in Adrian's Chrome on 2026-09-26, in #36.21's
+  order. Seven held with no change; TC-ASSOC-10's step 7 had written „—" for two empty fields that
+  read „— fără cotă —" and „— fără suprafață —", was corrected, and held on a third run. A spec was
+  then written from each case file. Known defects are asserted as they are, with the row beside the
+  assertion — TC-ASSOC-11's link without a role (FU-221), TC-ASSOC-12's quality seen only on the
+  certificate (FU-224) — so the fix that closes the row changes the assertion in the same commit.
+  TC-STAMP-01's and TC-HELP-01's specs give their shared state back in `finally`, TC-HELP-01's
+  comparing all four help fields with what it read first. TC-PROP-04's spec reads the case's own
+  corner file from `TEST.DATA` at run time rather than a fixture, because the figures it asserts
+  (611.87 → 614.42 m²) come from the file's three decimals (`e2e/README.md`). The runner's first
+  run of the eight found four mistakes in the specs, none in the application; its second pass and
+  the slice's `full` run are quoted in the #37.02 handover. The second hand run of TC-PROP-04 found
+  one defect, FU-240: a corner row opened with „Editează" and saved unchanged loses the file's third
+  decimal, and the area moves.
 
 - **Every import case ends with the reconciliation check, Slice #36.22.** After the import, and
   again after the cleanup, `claude.sh request reconcile <folder>` accounts for every file of the
@@ -113,7 +135,8 @@ import cases, TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written her
   was set aside, none missing**, and after each cleanup the check found nothing left. The three
   cost **4, about 25 and 8 calls** — 37 of the 60 the slice was allowed.
 
-- **The third wave, Slice #36.21: nine new cases, eight at `driven` and one at `draft`.** They
+- **The third wave, Slice #36.21: nine new cases, eight at `driven` and one at `draft`** (the
+  eight are `automated` since #37.02, above). They
   took nine routes out of `CATALOGUE_NOT_YET`, which now holds six: the four that need a cleanup
   rule first (`/admin/users`, `/admin/settings`, `/admin/value-lists`,
   `/account/change-password`), the map (a Maps key) and `/admin/doc-type-engine` (AI budget).

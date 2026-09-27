@@ -5,7 +5,7 @@
 | **Area** | versioning |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-26 |
 
 ## What this proves
@@ -48,6 +48,8 @@ because it is the title the list shows. Deleted at the end.
 „Șterge" at the bottom of the form, **„Da"** to „Ștergeți actul?".
 
 ## Notes from the runs
+
+**2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 
 **2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** `DOC02366`, v0 → v3 as above, „Stare procesare: Neprocesat" throughout; deleted.
 

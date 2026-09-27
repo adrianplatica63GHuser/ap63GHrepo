@@ -5,7 +5,7 @@
 | **Area** | versioning |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-26 |
 
 ## What this proves
@@ -53,6 +53,8 @@ replaced one is still in the history, and the list agrees with the record.
 „Șterge" and **„Da"** („Ștergeți persoana?").
 
 ## Notes from the runs
+
+**2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 
 **2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** `PPERS02365`, v0 → v3 exactly as the steps say, the dialog word for word, the list row `Unu TC-VER-01`; deleted. What was typed into the new form the moment it appeared was lost (the form was not interactive yet — the note below); typed again, it saved.
 

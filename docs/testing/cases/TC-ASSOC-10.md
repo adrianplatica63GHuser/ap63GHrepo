@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-26 |
 
 ## What this proves
@@ -57,6 +57,8 @@ bottom and answer „Ștergeți actul?" with **„Da"**; open the company, press
 „Ștergeți persoana juridică?" with **„Da"**.
 
 ## Notes from the runs
+
+**2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 
 **2026-09-26 — driven a second time (Slice #37.02): one correction, then a third time, unchanged, green → `confirmed`.** Step 7 said „—" for „Cotă-parte"; the screen shows two empty fields reading „— fără cotă —" and „— fără suprafață —", now written into the step. The third run (`JPERS02376`, `DOC02377`) held against the corrected file; everything removed. The records were made through the POST routes the „Adaugă" forms send, not the forms.
 

@@ -5,7 +5,7 @@
 | **Area** | stamp |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-26 |
 
 ## What this proves
@@ -63,6 +63,8 @@ The count is N again, and `Ion TC-STAMP-01`'s „Ștampile" reads „Nicio ștam
 „Șterge" and **„Da"** on the person.
 
 ## Notes from the runs
+
+**2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 
 **2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`. Result `STMP-AAJ`** (`STMP-AAI` had been spent in between), 7 → 8 → 7, applied to `Ion TC-STAMP-01`, counted 1, read from „META INFO", gone after the stamp was deleted; the person deleted.
 

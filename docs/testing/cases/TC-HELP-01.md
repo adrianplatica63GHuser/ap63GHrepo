@@ -5,7 +5,7 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-09-26 |
 
 ## What this proves
@@ -66,6 +66,8 @@ folosește (Română)", empty line included, and press „Salvează". On „Etic
 original sentence again.
 
 ## Notes from the runs
+
+**2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 
 **2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** Every screen „Complet" once loaded, none „Lipsă"; the sentence written, read behind „?" on „Etichete", the text put back through the screen, and all four stored fields compared with the ones read before the run: identical.
 

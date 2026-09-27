@@ -36,6 +36,14 @@ proves; this table is where to find the file.
 | TC-SRCH-01 | `e2e/search/global-search.spec.ts` | One Căutare globală finds a person, a property and a document |
 | TC-GRP-01 | `e2e/group/group-two-properties.spec.ts` | A group, two properties saved into it, found by the group's code; the group deleted, even on a failure |
 | TC-TAG-01 | `e2e/tag/tag-property.spec.ts` | A tag on a property, counted on „Etichete", found by Căutare globală, gone with its last use |
+| TC-PROP-04 | `e2e/property/property-corner-edit.spec.ts` | One corner moved 3 m east in „Puncte de contur": 611.87 → 614.42 m², „v 1" after a reload, „v 0" still 611.87. Reads the case's own corner file from `TEST.DATA` at run time (below) |
+| TC-ASSOC-10 | `e2e/association/company-document.spec.ts` | A contract on a company as „Cumpărător", made from the company's screen, read from the contract; „Vizualizare" opens the company |
+| TC-ASSOC-11 | `e2e/association/company-person.spec.ts` | A person beside a company, with no role on offer (FU-221), read from both ends |
+| TC-ASSOC-12 | `e2e/association/certificate-parties.spec.ts` | A certificate's „Părți": the deceased and the heir with their quality; „—" from the other ends (FU-224) |
+| TC-STAMP-01 | `e2e/stamp/stamp-person.spec.ts` | A stamp created, applied to a person, counted, read on the person; deleted, even on a failure |
+| TC-VER-01 | `e2e/versioning/person-versioning.spec.ts` | A person's versions: three saves, back to „v 0", „Fă curentă" copies it into „v 3" and keeps „v 2" |
+| TC-VER-02 | `e2e/versioning/document-versioning.spec.ts` | The same for a document |
+| TC-HELP-01 | `e2e/help/help-screen.spec.ts` | Help written for „Etichete" is what its „?" shows; all four fields put back byte for byte, even on a failure |
 
 The four tests in `property-versioning.spec.ts` that predate the catalogue stay as
 they were — the most complex versioned entity (fields + address + corners), on the
@@ -56,12 +64,10 @@ the test runner's, whose result id is quoted, or Adrian's — see the catalogue'
 Every screen whose catalogue row is below `automated` or missing: the import wizard and AI
 interpret (TC-IMP-01, TC-IMP-02, TC-AI-01 — the folder picker has no file input to set, and each
 run spends AI budget), a directional role between two properties (TC-ASSOC-08, `draft` — FU-220), the
-third wave's nine cases (Slice #36.21: a company on a document and beside a person, a certificate's
-parties, a stamp, person and document versioning, corners editing, help text, the lateral-road
-calculation — `driven` by hand, no spec until a promotion wave confirms them), the map, users,
+lateral-road calculation (TC-CALC-01, `draft` until Adrian's hand figure arrives), the map, users,
 settings, reference data, and every unhappy path — empty inputs, wrong shares, two tabs at once.
-`CATALOGUE_NOT_YET` in `src/lib/testing/catalogue-map.ts` lists the routes with no case at all. Eighteen happy paths is a floor under the ordinary
-week's work, not a safety net: a green run says those eighteen still hold, not that the app works.
+`CATALOGUE_NOT_YET` in `src/lib/testing/catalogue-map.ts` lists the routes with no case at all. Twenty-six happy paths is a floor under the ordinary
+week's work, not a safety net: a green run says those twenty-six still hold, not that the app works.
 
 ---
 
@@ -155,15 +161,22 @@ and every record a spec writes carries `TC-E2E-<case>` in a visible field
 (`e2e/helpers/records.ts`). If a run is killed half-way, the next run of the
 same spec removes what it left before starting; in between, Căutare globală
 finds it by `TC-E2E-`. A hand run's records say `TC-` without `E2E`, and no spec
-ever removes those. TC-GRP-01 and TC-TAG-01 write state every user
-sees — a group, a tag — and remove it even when an assertion fails.
+ever removes those. TC-GRP-01, TC-TAG-01, TC-STAMP-01 and TC-HELP-01 write state
+every user sees — a group, a tag, a stamp, a screen's help — and give it back even
+when an assertion fails; TC-HELP-01's spec then compares all four help fields with
+what it read before touching them.
 
 **`e2e/fixtures/` holds only files made for the purpose.** TC-DOC-01's hand run
 attaches a scan of a real contract; its spec attaches `tc-e2e-pagina.png`, a
 blank „PAGINĂ DE TEST". TC-PROP-03's hand run reads a coordinate file cut from a
 real parcel; its spec reads `TC-E2E-PROP-03 Teren din fisier.txt`, four made-up
 corners — named with the marker because the screen writes the file name into
-„Poreclă". No real deed and no real parcel goes into git.
+„Poreclă". No real deed and no real parcel goes into git. **TC-PROP-04's spec is
+the one that reads real corners** — its case asserts the application's own figures,
+611.87 and 614.42 m², which only the file's three decimals give — so it reads
+`C:\dev\TEST.DATA\Test.Claude\08.tc.coord.file\` at run time, beside the repo
+and outside git, uploads a `TC-E2E-PROP-04` named copy from the temp folder, and
+skips with the path in its reason where that folder is absent (Slice #37.02).
 
 **`e2e/.auth/` is gitignored, and must stay that way.** `session.json` holds a
 live Supabase session cookie for your test account. It is also excluded from the
