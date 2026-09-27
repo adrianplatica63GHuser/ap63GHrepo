@@ -92,3 +92,22 @@ describe("FU-018: the editor sends the keys it opened with", () => {
     expect(build?.("T", [FIELD], ["x"])).toEqual({ name: "T", templateFields: [FIELD], knownKeys: ["x"] });
   });
 });
+
+describe("FU-018: after a 409 the editor can be reopened on the stored form", () => {
+  it("refetches the list the dialog reopens from, in the 409 branch itself", () => {
+    // Driven on 2026-09-27: without it, „close and reopen" — what the message
+    // tells the administrator to do — reopened the editor on the same cached
+    // form, and every Save met the same 409. Read as code, comments stripped.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("node:fs") as typeof import("node:fs");
+    const src = fs.readFileSync(
+      `${process.cwd()}/src/app/admin/value-lists/_components/document-type-form-editor.tsx`,
+      "utf8",
+    );
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+    const at = code.indexOf("code === TEMPLATE_CHANGED_CODE");
+    expect(at).toBeGreaterThan(-1);
+    const branch = code.slice(at, code.indexOf("throw new Error", at));
+    expect(branch).toContain('qc.invalidateQueries({ queryKey: ["value-list", "document-types"] });');
+  });
+});

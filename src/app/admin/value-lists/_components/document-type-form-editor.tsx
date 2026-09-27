@@ -300,7 +300,18 @@ export function DocumentTypeFormEditor({
         // Slice #37.05, FU-018: the server's half of the check below — the
         // form changed after this dialog opened. Nothing was written; the copy
         // already says what to do (close, reopen) and why.
+        //
+        // ⚠️ **AND THE LIST IS REFETCHED, OR „REOPEN" CANNOT WORK.** The copy
+        // tells the administrator to close and reopen; the dialog reopens from
+        // the list query's cached row, which is the same stale copy this save
+        // was built on — driven on 2026-09-27, the reopened editor showed the
+        // old form and would have met the same 409 for ever. Invalidating here
+        // refetches it, so the reopened editor starts from the stored form (and
+        // the live `templateFields` prop lets the client-side check below
+        // answer a second Save in this same dialog).
         if (res.status === 409 && code === TEMPLATE_CHANGED_CODE) {
+          qc.invalidateQueries({ queryKey: ["value-list", "document-types"] });
+          qc.invalidateQueries({ queryKey: ["document-types"] });
           throw new Error(t("errorChangedElsewhere"));
         }
         throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
