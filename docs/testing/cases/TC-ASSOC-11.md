@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -60,6 +60,8 @@ asked, and „Nicio persoană corelată" follows. Then „Șterge" and **„Da"*
 („Ștergeți persoana juridică?") and on the person („Ștergeți persoana?").
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** `PPERS02371` linked from the company, „—" at both ends (FU-221 still stands), each „Vizualizare" the right kind of record; unlinked and deleted. The records were made through the POST routes the forms send.
 
 **2026-09-25 — driven for the first time, green (Slice #36.21).** `JPERS02153` and `PPERS02154`,
 linked from the company, read from both ends, unlinked and deleted. Corrections to what the

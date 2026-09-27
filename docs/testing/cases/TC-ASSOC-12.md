@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -59,6 +59,8 @@ no „Salvează" (still gone after a reload) — until „Nicio parte adăugată
 **„Da"** on the certificate („Ștergeți actul?") and on each person („Ștergeți persoana?").
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** `PPERS02373` as Defunct and `PPERS02374` as Moștenitor on `DOC02375`, the newest first; „—" under „Rol" from both other ends (FU-224 still stands); both removed with „Elimină", still gone after a reload, then all three deleted.
 
 **2026-09-25 — driven for the first time, green (Slice #36.21).** `PPERS02155` as Defunct and
 `PPERS02156` as Moștenitor on `DOC02157`; both removed with „Elimină", checked after a reload,

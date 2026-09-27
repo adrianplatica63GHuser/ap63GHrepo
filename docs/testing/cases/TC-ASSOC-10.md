@@ -5,8 +5,8 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -44,7 +44,7 @@ Both are deleted at the end.
 | 4 | Types `TC-ASSOC-10` into „Căutare" and ticks the one row | The row is selected, and „Rol" **narrows to the roles a Contract de Vânzare offers**: „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 5 | Chooses **„Cumpărător"** and presses „Asociază selecția" | Back on the company's „Acte" (`?tab=document`): Tip · Titlu · Rol — „Contract de Vânzare", `TC-ASSOC-10 Contract de test`, „Cumpărător", and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The document, read-only (`/documents/[id]?readonly=true`) |
-| 7 | Presses its tab **„Persoane"** | Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de deținere, one row: `TC-ASSOC-10 Firmă de test SRL`, „Cumpărător", „—", „— nespecificat —" |
+| 7 | Presses its tab **„Persoane"** | Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de deținere, one row: `TC-ASSOC-10 Firmă de test SRL`, „Cumpărător", an empty „Cotă-parte" reading „— fără cotă —", an empty „Suprafață echivalentă (mp)" reading „— fără suprafață —", and „Mod de deținere" „— nespecificat —" |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen at `/judicial-persons/[id]?readonly=true` |
 
 Step 7 is the other end; step 8 checks that the document knows what kind of person it holds.
@@ -57,6 +57,8 @@ bottom and answer „Ștergeți actul?" with **„Da"**; open the company, press
 „Ștergeți persoana juridică?" with **„Da"**.
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time (Slice #37.02): one correction, then a third time, unchanged, green → `confirmed`.** Step 7 said „—" for „Cotă-parte"; the screen shows two empty fields reading „— fără cotă —" and „— fără suprafață —", now written into the step. The third run (`JPERS02376`, `DOC02377`) held against the corrected file; everything removed. The records were made through the POST routes the „Adaugă" forms send, not the forms.
 
 **2026-09-25 — driven twice in Slice #36.21, green both times; `driven`, because the first run's
 notes were lost before the case file was written and the second run is the one this file was

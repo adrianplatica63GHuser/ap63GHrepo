@@ -5,8 +5,8 @@
 | **Area** | versioning |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -48,6 +48,8 @@ because it is the title the list shows. Deleted at the end.
 „Șterge" at the bottom of the form, **„Da"** to „Ștergeți actul?".
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** `DOC02366`, v0 → v3 as above, „Stare procesare: Neprocesat" throughout; deleted.
 
 **2026-09-25 — driven for the first time, green (Slice #36.21).** `DOC02160`, v0 → v3 as above,
 deleted afterwards. Held exactly as TC-VER-01 did; the one difference worth writing down is that

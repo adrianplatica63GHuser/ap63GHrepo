@@ -5,8 +5,8 @@
 | **Area** | stamp |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -63,6 +63,8 @@ The count is N again, and `Ion TC-STAMP-01`'s „Ștampile" reads „Nicio ștam
 „Șterge" and **„Da"** on the person.
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`. Result `STMP-AAJ`** (`STMP-AAI` had been spent in between), 7 → 8 → 7, applied to `Ion TC-STAMP-01`, counted 1, read from „META INFO", gone after the stamp was deleted; the person deleted.
 
 **2026-09-25 — driven for the first time, green (Slice #36.21). Result `STMP-AAH`**, 7 → 8 → 7
 stamps, applied to `PPERS02158`, counted 1, read from the person's „META INFO", gone from it after

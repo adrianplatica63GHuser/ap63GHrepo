@@ -5,8 +5,8 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -66,6 +66,8 @@ folosește (Română)", empty line included, and press „Salvează". On „Etic
 original sentence again.
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** Every screen „Complet" once loaded, none „Lipsă"; the sentence written, read behind „?" on „Etichete", the text put back through the screen, and all four stored fields compared with the ones read before the run: identical.
 
 **2026-09-25 — driven for the first time, green (Slice #36.21).** The text was restored through
 the screen, and all four stored fields were then compared with the ones read before the run:

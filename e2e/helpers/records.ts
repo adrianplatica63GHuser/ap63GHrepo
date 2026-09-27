@@ -116,7 +116,16 @@ export async function createCompany(request: APIRequestContext, fields: { name: 
 
 /** A Contract de Vânzare with this „Etichetă scurtă", the shape TC-DOC-01 creates. */
 export async function createSaleContract(request: APIRequestContext, title: string): Promise<string> {
-  const documentTypeId = await documentTypeIdFor(request, "CONTRACT_VANZARE");
+  return createDocumentOfType(request, "CONTRACT_VANZARE", title);
+}
+
+/**
+ * A document of the type with this stable `key`, and this „Etichetă scurtă" —
+ * what „Acte" → „Adaugă act" sends with only those two fields filled.
+ * (Slice #37.02, for TC-ASSOC-12's CERTIFICAT_MOSTENITOR.)
+ */
+export async function createDocumentOfType(request: APIRequestContext, key: string, title: string): Promise<string> {
+  const documentTypeId = await documentTypeIdFor(request, key);
   const body = await postJson<{ id: string }>(request, ROUTE.document, {
     documentTypeId,
     title,
@@ -197,4 +206,65 @@ export async function removeGroupLeftovers(request: APIRequestContext, prefix: s
       `DELETE /api/groups/${g.id} failed (${res.status()}) — remove the group „${g.description}" on „Grupuri" by hand.`,
     ).toBeTruthy();
   }
+}
+
+/**
+ * Remove every stamp whose „Descriere scurtă" starts with `prefix` — the net
+ * under a spec that creates a stamp through the UI.  (Slice #37.02)
+ *
+ * A stamp is shared state: every „+ Aplică ștampilă" picker lists it.
+ * Removal goes through DELETE /api/stamps/[id], the route „Șterge" → „Șterge"
+ * on „Ștampile" calls, which takes the stamp off every record with it. Its
+ * code is not given back — stamp codes are never reused (TC-STAMP-01's case
+ * file says so). Same marker rule as removeLeftovers.
+ */
+export async function removeStampLeftovers(request: APIRequestContext, prefix: string): Promise<void> {
+  if (!prefix.startsWith(E2E_MARKER) || prefix.length <= E2E_MARKER.length) {
+    throw new Error(`removeStampLeftovers only removes stamps marked ${E2E_MARKER}<case>; refused "${prefix}".`);
+  }
+  const stamps = await getItems<{ id: string; shortDescription: string }>(request, "/api/stamps");
+  for (const st of stamps) {
+    if (!st.shortDescription.startsWith(prefix)) continue;
+    const res = await request.delete(`/api/stamps/${encodeURIComponent(st.id)}`);
+    expect(
+      res.ok() || res.status() === 404,
+      `DELETE /api/stamps/${st.id} failed (${res.status()}) — remove „${st.shortDescription}" on „Ștampile" by hand.`,
+    ).toBeTruthy();
+  }
+}
+
+/** The four help fields of one screen, as `/api/admin/help-content/[screenKey]` stores them. */
+export type HelpFields = {
+  backgroundEn: string | null;
+  backgroundRo: string | null;
+  howToEn: string | null;
+  howToRo: string | null;
+};
+
+/** Read one screen's help, exactly as stored.  (Slice #37.02) */
+export async function readHelp(request: APIRequestContext, screenKey: string): Promise<HelpFields> {
+  const res = await request.get(`/api/admin/help-content/${encodeURIComponent(screenKey)}`);
+  expect(res.ok(), `GET /api/admin/help-content/${screenKey} failed (${res.status()})`).toBeTruthy();
+  const { item } = (await res.json()) as { item: HelpFields | null };
+  if (!item) throw new Error(`Screen „${screenKey}" has no help row on this database.`);
+  return {
+    backgroundEn: item.backgroundEn,
+    backgroundRo: item.backgroundRo,
+    howToEn: item.howToEn,
+    howToRo: item.howToRo,
+  };
+}
+
+/**
+ * Write one screen's four help fields back, through the PUT the help screen's
+ * „Salvează" sends — the net under TC-HELP-01's spec, which changes shared
+ * text every user reads.  (Slice #37.02)
+ */
+export async function writeHelp(request: APIRequestContext, screenKey: string, fields: HelpFields): Promise<void> {
+  const res = await request.put(`/api/admin/help-content/${encodeURIComponent(screenKey)}`, { data: fields });
+  expect(
+    res.ok(),
+    `PUT /api/admin/help-content/${screenKey} failed (${res.status()}) — restore its help by hand ` +
+      "(docs/testing/cases/TC-HELP-01.md holds the text).",
+  ).toBeTruthy();
 }

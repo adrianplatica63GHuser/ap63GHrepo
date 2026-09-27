@@ -5,8 +5,8 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | `08.tc.coord.file` |
-| **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **State** | `confirmed` |
+| **Last green** | 2026-09-26 |
 
 ## What this proves
 
@@ -53,6 +53,8 @@ If it belongs to a run of TC-PROP-03 or TC-GRP-01 still in progress, make v0 cur
 („Setează ca actuală" on „v 0") before handing it on.
 
 ## Notes from the runs
+
+**2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** The property made the TC-PROP-03 way (`PROP02367`, 13 → 14 → 13 on the list), 611.87 → 614.42, „v 1" after a reload, „v 0" still 611.87; deleted. **One finding (FU-240):** pressing „Editează" and then the row's „Salvează" WITHOUT changing anything moves the area — 611.87 became 611.89 — because the row's inputs hold the two decimals the screen shows and saving them writes them over the file's three. Nothing is written until the form's „Salvează", so the run discarded it by reloading; the case's own edit is unaffected (614.42 is the figure with row 18 at two decimals, which is what the case always measured).
 
 **2026-09-25 — driven for the first time, green (Slice #36.21).** The property was made for the
 run the TC-PROP-03 way — `PROP02161`, on a list of 13 — edited as above, and deleted; the list read
