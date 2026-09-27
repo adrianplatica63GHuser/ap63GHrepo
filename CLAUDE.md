@@ -111,6 +111,14 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   its prompt fingerprint is the one on `HEAD` — then only the „after" is paid for. **A difference
   smaller than the spread recorded in that file is noise**, and the handover says so rather than
   claiming an improvement. Each run's row goes into that file, with no value read from a deed.
+- **Document-type forms live in `src/db/document-type-forms.json`, and the runner keeps it**
+  (Slice #37.05, FU-019). A form is edited on a screen, so the database is ahead of the file until
+  `bash scripts/test-runner/claude.sh request forms-export` rewrites it (read-only against the local
+  database; commit the file it leaves). `full` ends with a `forms-drift` line — „in step" or the
+  type keys that moved; it never fails a run. The file is what a rebuild and Ciprian's package load,
+  so a slice that changes a form on purpose exports and commits before its `full`. A type with a
+  form that no seed creates turns `document-type-forms-file.test.ts` red until it is named, with a
+  reason, in `FORMS_OF_UNSEEDED_TYPES`.
 - **`npm run e2e` needs `npm run dev` already running in a separate terminal.** When it isn't,
   every test times out waiting for a page load — a failure mode that looks nothing like
   "the dev server isn't running." Say so every time you ask Adrian to run it.
