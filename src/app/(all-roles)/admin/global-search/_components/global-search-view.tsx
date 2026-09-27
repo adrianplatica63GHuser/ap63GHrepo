@@ -634,7 +634,11 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                 </td>
                 <td className="px-4 py-2">
                   <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${badgeClass(row.entityType)}`}>
-                    {row.entityType}
+                    {/* FU-061 (Slice #37.07): the same Romanian words the „Tip
+                        entitate" filter above says, not the raw enum. */}
+                    {(ENTITY_TYPES as readonly string[]).includes(row.entityType)
+                      ? t(`entityTypes.${row.entityType as (typeof ENTITY_TYPES)[number]}`)
+                      : row.entityType}
                   </span>
                   {row.entityType === "PERSON" && (
                     <span className="ml-1">

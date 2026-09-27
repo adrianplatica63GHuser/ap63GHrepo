@@ -31,7 +31,7 @@ Nothing.
 | 2 | Types `TC-` into „Căutare nume / cod" (placeholder „ex. Popescu sau PPERS00012") | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „3 rezultate", and the address bar carries `?search=TC-` |
-| 5 | Reads the results — columns Cod · Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows. `DOC…` — „Tip" **`DOCUMENT`**, „Nume" `TC-DOC-01 Contract de test`. `PPERS…` — „Tip" **`PERSON`** with the badge „Fizic", „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). `PROP…` — „Tip" **`PROPERTY`**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |
+| 5 | Reads the results — columns Cod · Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows. `DOC…` — „Tip" **„Document"**, „Nume" `TC-DOC-01 Contract de test`. `PPERS…` — „Tip" **„Persoană"** with the badge „Fizic", „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). `PROP…` — „Tip" **„Proprietate"**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |
 | 6 | Looks at the „Proveniență" column | All three read „Manual (Adaugă nou)" — they were typed in, not imported |
 | 7 | Sets „Tip entitate" to „Proprietate" and presses „Caută" again | One row, the property |
 | 8 | Presses „Resetează" | Every filter clears, the results table goes, and the address bar is back to `/admin/global-search` |
@@ -39,12 +39,10 @@ Nothing.
 Step 6 is worth keeping: it is the one column that distinguishes a record a case typed
 in from one an import created, and it is how a cleanup tells the two apart.
 
-⚠️ **The „Tip" column shows the raw English values `DOCUMENT`, `PERSON` and `PROPERTY`**,
-while the filter above it says „Document", „Persoană" and „Proprietate" and
-`globalSearch.entityTypes` in `messages/ro-RO.json` holds exactly those words.
-`global-search-view.tsx` renders `{row.entityType}` untranslated. The step above quotes
-the screen as it is; when the defect is fixed (36.05 handover, „Noticed, not fixed"),
-step 5 changes to the Romanian words and this case is driven again.
+**The „Tip" column says „Document", „Persoană" and „Proprietate"** since Slice #37.07
+(FU-061) — the filter's own words from `globalSearch.entityTypes`. Until then it showed
+the raw `DOCUMENT` / `PERSON` / `PROPERTY`, and step 5 quoted that; the spec now asserts
+the Romanian words and that the raw values are gone.
 
 ## At the end — leaving things as they were found
 
