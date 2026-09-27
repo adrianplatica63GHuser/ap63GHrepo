@@ -618,9 +618,18 @@ describe("a folder near the walk's own ceiling", () => {
      * samples can only bring a linear ratio down toward its true value; a
      * quadratic implementation cannot get from 5.5 to under 3 that way. The bound
      * stays 3.
+     *
+     * ⚠️ **UP TO FOUR ROUNDS, NOT TWO.** (FU-242, Slice #37.02.) Best of ten
+     * still read 3.08 (small 14 ms, large 43 ms) in the runner's `full`
+     * 20260927T013422Z-25380 — whole jest run, Adrian's dev server up — so a
+     * ratio still near the bound after a round earns another, to at most twenty
+     * pairs. The argument above is unchanged: more samples only bring a linear
+     * ratio down, and cannot bring a quadratic 5.5 under 3.
      */
     measureRound();
-    if (Math.min(...largeRuns) / Math.min(...smallRuns) >= 2.7) measureRound();
+    for (let round = 1; round < 4 && Math.min(...largeRuns) / Math.min(...smallRuns) >= 2.7; round++) {
+      measureRound();
+    }
     const small = Math.min(...smallRuns);
     const large = Math.min(...largeRuns);
     const ratio = large / small;
