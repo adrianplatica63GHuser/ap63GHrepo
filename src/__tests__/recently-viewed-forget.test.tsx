@@ -73,3 +73,37 @@ describe("FU-228: a deleted record leaves „RECENTE”", () => {
     expect(body.indexOf("if (!res.ok)")).toBeLessThan(body.indexOf("forgetRecentlyViewed("));
   });
 });
+
+/**
+ * FU-247 — the first page opened after a reload keeps the earlier visits.
+ *                                                              (Slice #37.07)
+ *
+ * Found driving FU-228: a detail page registers itself in a CHILD effect, which
+ * runs before the provider's hydration effect, so it built on the provider's
+ * empty initial state — and wrote a one-entry list over the stored ones, while
+ * the screen went on showing the old list without the new visit.
+ */
+function Visit({ id }: { id: string }) {
+  const { registerPage } = useNavigationHistory();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useEffect } = require("react") as typeof import("react");
+  useEffect(() => {
+    registerPage(`/properties/${id}`, "Teren C", "PROP00003", "PROPERTY");
+  }, [id, registerPage]);
+  return null;
+}
+
+describe("FU-247: a visit on the first page after a reload keeps the list", () => {
+  it("adds the visit to the stored entries, on the screen and in the storage", () => {
+    const C = "33333333-3333-4333-8333-333333333333";
+    render(
+      <NavigationHistoryProvider>
+        <Visit id={C} />
+        <Codes />
+      </NavigationHistoryProvider>,
+    );
+    expect(screen.getByTestId("codes").textContent).toBe("PROP00003,PROP00001,DOC00002");
+    const stored = JSON.parse(localStorage.getItem(KEY) ?? "[]") as { code: string }[];
+    expect(stored.map((e) => e.code)).toEqual(["PROP00003", "PROP00001", "DOC00002"]);
+  });
+});

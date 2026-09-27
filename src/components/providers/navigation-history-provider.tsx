@@ -101,7 +101,11 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
-    setRecentlyViewed(readStorage());
+    // FU-247 (Slice #37.07): a detail page's registerPage runs in a CHILD
+    // effect, i.e. BEFORE this one, on the very first page after a load — so a
+    // plain set here would overwrite that visit with the stored list. Keep what
+    // the child already put together (it read the storage itself, below).
+    setRecentlyViewed((prev) => (prev.length > 0 ? prev : readStorage()));
   }, []);
 
   // FU-228 (Slice #37.07): a record deleted anywhere leaves the list at once —
@@ -128,8 +132,13 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
       if (!code || !entityType) return;
 
       setRecentlyViewed((prev) => {
+        // FU-247 (Slice #37.07): before the provider has hydrated, `prev` is the
+        // empty initial state, and building on it wrote a one-entry list over
+        // the stored eight — every earlier visit lost on the first page opened
+        // after a reload. Build on the storage instead.
+        const base = prev.length > 0 ? prev : readStorage();
         // Dedupe by href: remove existing entry for this path then prepend
-        const filtered = prev.filter((e) => e.href !== pathname);
+        const filtered = base.filter((e) => e.href !== pathname);
         const next: RecentlyViewedEntry[] = [
           {
             href:       pathname,
