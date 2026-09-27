@@ -449,7 +449,9 @@
       "dissociating": "Se elimină…",
       "view": "Vizualizare",
       "loading": "Se încarcă…",
-      "error": "Eroare la încărcarea referințelor"
+      "error": "Eroare la încărcarea referințelor",
+      "roleForward": "această proprietate „{role}” {other}",
+      "roleBackward": "{other} „{role}” această proprietate"
     },
     "associateReference": {
       "title": "Asociere proprietate corelată",

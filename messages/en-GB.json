@@ -449,7 +449,9 @@
       "dissociating": "Removing…",
       "view": "View",
       "loading": "Loading…",
-      "error": "Failed to load references"
+      "error": "Failed to load references",
+      "roleForward": "this property “{role}” {other}",
+      "roleBackward": "{other} “{role}” this property"
     },
     "associateReference": {
       "title": "Associate Related Property",

@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { propertyRoleChip } from "@/lib/properties/relation-roles";
 
 type AssociatedProperty = {
   id:                  string;
@@ -13,6 +14,8 @@ type AssociatedProperty = {
   associatedAt:        string;
   relationshipRoleId:  string | null;
   relationshipRoleName: string | null;
+  /** FU-220 (Slice #37.10): whether the role reads from THIS property. */
+  roleReadsFromViewed: boolean;
 };
 
 type Props = { propertyId: string };
@@ -105,13 +108,31 @@ export function PropertyReferencesTab({ propertyId }: Props) {
                   </td>
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.label}</td>
                   <td className="px-3 py-2">
-                    {item.relationshipRoleName ? (
-                      <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
-                        {item.relationshipRoleName}
-                      </span>
-                    ) : (
-                      <span className="text-fade dark:text-zinc-500">—</span>
-                    )}
+                    {(() => {
+                      /*
+                       * ⚠️ **A DIRECTIONAL ROLE IS A SENTENCE, NOT A LABEL.**
+                       * (FU-220, Slice #37.10.) „Inclus în" between this
+                       * property and that one says one thing read forwards and
+                       * the opposite read backwards, and the pair is stored in
+                       * uuid order, so a bare chip said the same words on both
+                       * properties — the opposite of what was chosen on one of
+                       * them. A directional role now reads „această proprietate
+                       * «rol» PROP…" or „PROP… «rol» această proprietate", as
+                       * documents have since #36.03; the four symmetric roles
+                       * keep their bare chip (`propertyRoleChip`).
+                       */
+                      const chip = propertyRoleChip(item.relationshipRoleName, item.roleReadsFromViewed, item.code);
+                      if (chip.kind === "none") return <span className="text-fade dark:text-zinc-500">—</span>;
+                      return (
+                        <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
+                          {chip.kind === "bare"
+                            ? chip.role
+                            : chip.kind === "forward"
+                              ? t("roleForward", { role: chip.role, other: chip.other })
+                              : t("roleBackward", { role: chip.role, other: chip.other })}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-2">
                     <button

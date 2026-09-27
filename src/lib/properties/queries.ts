@@ -40,6 +40,7 @@ import type {
   PropertySnapshot,
   PropertyUpdate,
 } from "./validation";
+import { manualPairDirection, roleReadsFrom } from "@/lib/associations/pair-direction";
 
 /**
  * Re-exported so a caller that already imports from this module does not need a
@@ -1505,6 +1506,11 @@ export type PropertyRefItem = {
   associatedAt:     Date;
   relationshipRoleId:   string | null;
   relationshipRoleName: string | null;
+  /**
+   * Whether the role reads FROM the property whose list this is (FU-220,
+   * Slice #37.10) — resolved from the stored pair by `roleReadsFrom`.
+   */
+  roleReadsFromViewed:  boolean;
 };
 
 export async function listPropertyReferences(propertyId: string): Promise<PropertyRefItem[]> {
@@ -1512,6 +1518,7 @@ export async function listPropertyReferences(propertyId: string): Promise<Proper
     .select({
       propertyIdA:          propertyProperty.propertyIdA,
       propertyIdB:          propertyProperty.propertyIdB,
+      roleReadsAToB:        propertyProperty.roleReadsAToB,
       associatedAt:         propertyProperty.createdAt,
       relationshipRoleId:   propertyProperty.relationshipRoleId,
       relationshipRoleName: lookupPropertyPropertyRole.name,
@@ -1542,9 +1549,21 @@ export async function listPropertyReferences(propertyId: string): Promise<Proper
     associatedAt:         r.associatedAt,
     relationshipRoleId:   r.relationshipRoleId ?? null,
     relationshipRoleName: r.relationshipRoleName ?? null,
+    roleReadsFromViewed:  roleReadsFrom(propertyId, r.propertyIdA, r.roleReadsAToB),
   }));
 }
 
+/**
+ * Link `propertyId` to each of `otherIds`, from `propertyId`'s screen.
+ *
+ * ⚠️ **THE DIRECTION IS STORED PER PAIR, FROM THE SCREEN THE LINK WAS MADE ON.**
+ * (FU-220, Slice #37.10.) The pair is stored in uuid order, which means
+ * nothing; the „Asociază" picker is phrased from `propertyId` („this property
+ * <role> the one you tick"), so each row's `roleReadsAToB` is whether
+ * `propertyId` sorted to side A — `manualPairDirection`, the property family's
+ * copy of what #36.19 did for documents (FU-001). Before this the column did not
+ * exist, and both ends read the same bare role.
+ */
 export async function associatePropertiesToProperty(
   propertyId:         string,
   otherIds:           string[],
@@ -1553,11 +1572,12 @@ export async function associatePropertiesToProperty(
   const values = otherIds
     .filter((id) => id !== propertyId)
     .map((otherId) => {
-      const [a, b] = [propertyId, otherId].sort();
+      const pair = manualPairDirection(propertyId, otherId);
       return {
-        propertyIdA:         a,
-        propertyIdB:         b,
+        propertyIdA:         pair.idA,
+        propertyIdB:         pair.idB,
         relationshipRoleId:  relationshipRoleId ?? undefined,
+        roleReadsAToB:       pair.roleReadsAToB,
       };
     });
   if (values.length === 0) return;
