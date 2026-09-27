@@ -246,7 +246,14 @@ async function loginAs(page: Page, email: string, password: string): Promise<voi
   await page.goto("/login");
   await fillLoginForm(page, email, password);
   await page.click('button[type="submit"]');
-  await page.waitForURL("/", { timeout: 150_000, waitUntil: "commit" });
+  try {
+    await page.waitForURL("/", { timeout: 150_000, waitUntil: "commit" });
+  } catch (e) {
+    // Say what the login screen said, so a skip is readable in e2e.log (FU-252).
+    const shown = await page.locator("form").innerText().catch(() => "");
+    const said = shown.split("\n").map((l) => l.trim()).filter((l) => l && !/^(Conectare|Utilizator sau Email|Parolă|Sign in|Username or email|Password)$/i.test(l));
+    throw new Error(`${(e as Error).message.split("\n")[0]} — the login screen said: ${said.join(" / ") || "(nothing)"}`);
+  }
   await page.waitForTimeout(1_500);
   if (page.url().includes("/login")) {
     throw new Error(`Login failed for E2E_USER_EMAIL (${email}) — redirected back to /login. Check the pair in .env.`);
@@ -257,6 +264,11 @@ setup("autentificare cont cu rol user (TC-AUTH-02)", async ({ page }) => {
   const email = process.env.E2E_USER_EMAIL;
   const password = process.env.E2E_USER_PASSWORD;
   setup.skip(!email || !password, "E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env — the `user` specs are skipped.");
+  // playwright.config.ts never overrides a variable already in the process's
+  // environment, so a stale E2E_USER_PASSWORD there wins over .env. Say which
+  // one this run has — as a yes/no, never the value (FU-252).
+  const fromFile = /^E2E_USER_PASSWORD=(.*)$/m.exec(fs.readFileSync(path.join(process.cwd(), ".env"), "utf-8"))?.[1]?.trim();
+  console.log(`[E2E setup] user account: E2E_USER_PASSWORD ${fromFile === password ? "is" : "is NOT"} the value in .env`);
   fs.mkdirSync(AUTH_DIR, { recursive: true });
   // A session from an earlier run must not stand in for this one's answer.
   fs.rmSync(USER_STATE, { force: true });
@@ -268,10 +280,18 @@ setup("autentificare cont cu rol user (TC-AUTH-02)", async ({ page }) => {
   // for one account only a parked spec needs. The `user` specs skip themselves
   // when USER_STATE is absent (removed above), and the reason is this test's
   // skip annotation, in the run's own output.
+  // The skip's reason is an annotation, which the runner's list reporter does
+  // not print — so a skip said nothing about WHY in e2e.log (FU-252: .env and
+  // the account agreed by hand and the setup still skipped). Each reason is
+  // also logged; the password never is.
+  const skipBecause = (why: string): void => {
+    console.log(`[E2E setup] user account skipped: ${why}`);
+    setup.skip(true, why);
+  };
   try {
     await loginAs(page, email!, password!);
   } catch (e) {
-    setup.skip(true, `E2E_USER_EMAIL is set but does not sign in (${(e as Error).message.split("\n")[0]}) — the \`user\` specs are skipped. Create and approve the account, or remove the pair from .env.`);
+    skipBecause(`E2E_USER_EMAIL is set but does not sign in (${(e as Error).message.split("\n")[0]}) — the \`user\` specs are skipped. Create and approve the account, or remove the pair from .env.`);
   }
   await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", domain: "localhost", path: "/" }]);
 
@@ -280,9 +300,8 @@ setup("autentificare cont cu rol user (TC-AUTH-02)", async ({ page }) => {
   const { role } = (await me.json()) as { role?: string };
   // The TC-AUTH-02 spec proves what a `user` is refused; run as anything else
   // it proves nothing — so no state is saved, and it skips.
-  setup.skip(
-    role !== "user",
-    `E2E_USER_EMAIL (${email}) signs in as role "${role}", not "user" — the \`user\` specs are skipped. Point E2E_USER_EMAIL at an account whose role is user.`,
-  );
+  if (role !== "user") {
+    skipBecause(`E2E_USER_EMAIL (${email}) signs in as role "${role}", not "user" — the \`user\` specs are skipped. Point E2E_USER_EMAIL at an account whose role is user.`);
+  }
   await page.context().storageState({ path: USER_STATE });
 });
