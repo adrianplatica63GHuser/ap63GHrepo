@@ -42,7 +42,7 @@ interface Segment {
   href:  string;
 }
 
-function buildSegments(
+export function buildSegments(
   pathname:   string,
   t:          (key: string) => string,
   pageLabels: Record<string, string>,
@@ -109,6 +109,10 @@ function buildSegments(
     // for the screen itself. Nothing is passed by the page — every crumb in
     // this app is derived from the pathname — so this line IS the fix.
     if (part === "doc-type-engine") { segments.push({ label: t("docTypeEngine"),      href: accumulated }); continue; }
+    // FU-064 (Slice #37.07): /account/change-password had no case, so its crumb
+    // read „Acasă" alone. `account` has no page of its own and stays skipped by
+    // the tail below; the screen itself gets its name.
+    if (part === "change-password") { segments.push({ label: t("changePassword"),    href: accumulated }); continue; }
     if (part === "history" && parts[i - 1] === "calculation") {
       segments.push({ label: t("calculationHistory"), href: accumulated });
       continue;
