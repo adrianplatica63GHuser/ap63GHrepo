@@ -222,4 +222,9 @@ export function clearRecentlyViewed(): void {
   } catch {
     // ignore
   }
+  // FU-253 (Slice #37.10): the provider stays mounted across sign-out's
+  // client-side redirect, so emptying the storage alone left the list in its
+  // state — the next account saw it, and its first visit wrote it back. Tell
+  // the provider, as `forgetRecentlyViewed` does; it re-reads an empty list.
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(RECENTLY_VIEWED_CHANGED));
 }

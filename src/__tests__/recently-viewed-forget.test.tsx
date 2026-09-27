@@ -14,6 +14,7 @@ import { act, render, screen } from "@testing-library/react";
 
 import {
   NavigationHistoryProvider,
+  clearRecentlyViewed,
   forgetRecentlyViewed,
   useNavigationHistory,
 } from "@/components/providers/navigation-history-provider";
@@ -105,5 +106,40 @@ describe("FU-247: a visit on the first page after a reload keeps the list", () =
     expect(screen.getByTestId("codes").textContent).toBe("PROP00003,PROP00001,DOC00002");
     const stored = JSON.parse(localStorage.getItem(KEY) ?? "[]") as { code: string }[];
     expect(stored.map((e) => e.code)).toEqual(["PROP00003", "PROP00001", "DOC00002"]);
+  });
+});
+
+/**
+ * FU-253 — „RECENTE" empties on sign-out, on the screen and not only in the
+ * storage.                                                     (Slice #37.10)
+ *
+ * Found driving TC-ACCT-01: the admin signed out, test-user signed in in the
+ * same tab, and test-user's sidebar listed the admin's visits. Sign-out called
+ * `clearRecentlyViewed()`, which removed the storage key, but the provider
+ * stays mounted across the client-side redirect to /login and kept its list in
+ * state — and the next visit wrote that list back.
+ */
+describe("FU-253: sign-out empties „RECENTE” for the next account", () => {
+  it("clears the list on the screen at once, and the next visit starts from nothing", () => {
+    const C = "33333333-3333-4333-8333-333333333333";
+    const { rerender } = render(
+      <NavigationHistoryProvider>
+        <Codes />
+      </NavigationHistoryProvider>,
+    );
+    expect(screen.getByTestId("codes").textContent).toBe("PROP00001,DOC00002");
+    act(() => {
+      clearRecentlyViewed();
+    });
+    expect(screen.getByTestId("codes").textContent).toBe("");
+    rerender(
+      <NavigationHistoryProvider>
+        <Visit id={C} />
+        <Codes />
+      </NavigationHistoryProvider>,
+    );
+    expect(screen.getByTestId("codes").textContent).toBe("PROP00003");
+    const stored = JSON.parse(localStorage.getItem(KEY) ?? "[]") as { code: string }[];
+    expect(stored.map((e) => e.code)).toEqual(["PROP00003"]);
   });
 });
