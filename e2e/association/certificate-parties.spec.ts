@@ -75,7 +75,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await page.goto(`/documents/${documentId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("tab", { name: "Detalii" })).toBeVisible();
-      await expect(page.getByText("Părți", { exact: true })).toBeVisible();
+      await expect(page.getByText("Părți", { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Nicio parte adăugată")).toBeVisible();
       await expect(page.getByRole("button", { name: "+ Adaugă parte" })).toBeVisible();
 

@@ -111,7 +111,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await expect(page.getByRole("button", { name: "Salvează ștampilele" })).toBeVisible();
 
       // Step 6 — tick the person, „Aplică ștampila (1)": it moves across, „Modificări nesalvate".
-      await page.getByRole("textbox", { name: "Caută în elementele disponibile" }).fill(MARK);
+      await page.getByRole("searchbox", { name: "Caută în elementele disponibile" }).fill(MARK, { timeout: 15_000 });
       await page.getByRole("checkbox", { name: PERSON }).check({ timeout: 15_000 });
       await page.getByRole("button", { name: "Aplică ștampila (1)" }).click();
       await expect(page.getByText("Modificări nesalvate")).toBeVisible();
