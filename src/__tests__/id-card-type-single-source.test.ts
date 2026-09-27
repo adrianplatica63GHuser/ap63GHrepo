@@ -413,6 +413,8 @@ const DOC_QUERIES = "src/lib/documents/queries.ts";
 const TEMPLATE_FIELDS_ROUTE = "src/app/api/document-types/[id]/template-fields/route.ts";
 const VL_PUT_ROUTE = "src/app/api/admin/value-lists/[list]/[id]/route.ts";
 const VL_POST_ROUTE = "src/app/api/admin/value-lists/[list]/route.ts";
+/** Slice #37.05: the forms file's SQL generator. Its guard is on the file itself. */
+const FORMS_FILE_WRITER = "src/lib/documents/document-type-forms-file.ts";
 
 /**
  * Every path that can put a row into `lookup_document_type.template_fields`,
@@ -548,8 +550,16 @@ describe("every server door that writes template_fields consults the predicate",
         return WRITES.some((re) => re.test(code));
       })
       .map((file) => join("src", relative(SRC, file)));
+    // ⚠️ **A THIRD, AND IT IS ARGUED FOR RATHER THAN WAVED IN.** (Slice #37.05.)
+    // `document-type-forms-file.ts` generates the SQL a rebuild and Ciprian's
+    // package run: an UPDATE of `template_fields` per type in
+    // `src/db/document-type-forms.json`. Its values are not a request's — they
+    // are the file's — so the predicate this file pins is applied to the FILE,
+    // in `document-type-forms-file.test.ts` („is not a form on a type that may
+    // never hold one"), which is red the moment an identity-card or catch-all
+    // key holds a form there.
     expect(writers.sort()).toEqual(
-      [DOC_QUERIES, VL_QUERIES].map((p) => p.split("/").join(sep)).sort(),
+      [DOC_QUERIES, VL_QUERIES, FORMS_FILE_WRITER].map((p) => p.split("/").join(sep)).sort(),
     );
   });
 
