@@ -104,6 +104,14 @@ export function NavigationHistoryProvider({ children }: { children: ReactNode })
     setRecentlyViewed(readStorage());
   }, []);
 
+  // FU-228 (Slice #37.07): a record deleted anywhere leaves the list at once —
+  // `forgetRecentlyViewed` writes the storage and says so with this event.
+  useEffect(() => {
+    const reread = () => setRecentlyViewed(readStorage());
+    window.addEventListener(RECENTLY_VIEWED_CHANGED, reread);
+    return () => window.removeEventListener(RECENTLY_VIEWED_CHANGED, reread);
+  }, []);
+
   const registerPage = useCallback(
     (
       pathname:   string,
@@ -160,6 +168,39 @@ export function useNavigationHistory(): NavigationHistoryContextValue {
     );
   }
   return ctx;
+}
+
+// ---------------------------------------------------------------------------
+// forgetRecentlyViewed — called when a record is deleted      (FU-228, #37.07)
+// ---------------------------------------------------------------------------
+
+/** The event the provider re-reads the list on. */
+export const RECENTLY_VIEWED_CHANGED = "ga40:recently-viewed-changed";
+
+/**
+ * Drop every „RECENTE" entry for the record with this id, and tell the
+ * provider.
+ *
+ * ⚠️ **BY ID, NOT BY HREF.** The list holds whatever path the detail page
+ * registered (`/properties/<id>`, `/natural-persons/<id>`, …); a record's id is a
+ * UUID and appears as one whole path segment in exactly its own entries, so the
+ * caller — each form's delete — needs only what it already has. A standalone
+ * function rather than a context method, so a delete handler works the same
+ * inside and outside the provider (a test, a dialog portal).
+ *
+ * Returns how many entries it removed.
+ */
+export function forgetRecentlyViewed(entityId: string): number {
+  const before = readStorage();
+  const after = before.filter((e) => !e.href.split(/[/?#]/).includes(entityId));
+  if (after.length === before.length) return 0;
+  writeStorage(after);
+  try {
+    window.dispatchEvent(new Event(RECENTLY_VIEWED_CHANGED));
+  } catch {
+    // no window (server) — nothing is listening either
+  }
+  return before.length - after.length;
 }
 
 // ---------------------------------------------------------------------------

@@ -62,6 +62,7 @@ import {
   type DiscoverReviewPair,
   type NewTypeProgress,
 } from "./discover-review-dialog";
+import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -1144,6 +1145,8 @@ export function DocumentForm({
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `${t("deleteError")} (HTTP ${res.status})`);
       }
+      // FU-228 (Slice #37.07): the record is gone, so „RECENTE" forgets it.
+      forgetRecentlyViewed(documentId!);
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
       router.push("/documents");
       router.refresh();

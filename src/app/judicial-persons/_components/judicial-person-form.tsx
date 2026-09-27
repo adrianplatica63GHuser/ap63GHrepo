@@ -50,6 +50,7 @@ import {
   versionLabelColor,
 } from "./form-schema";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 
 type Props = {
   mode: "create" | "edit" | "view";
@@ -468,6 +469,8 @@ export function JudicialPersonForm({
       // The unified /persons list (Slice #15.09) caches under ["persons"];
       // invalidate it too so a created/edited/deleted person shows without a
       // manual browser refresh (Slice #18.13).
+      // FU-228 (Slice #37.07): the record is gone, so „RECENTE" forgets it.
+      forgetRecentlyViewed(personId!);
       await queryClient.invalidateQueries({ queryKey: ["persons"] });
       router.push("/judicial-persons");
       router.refresh();

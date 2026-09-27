@@ -72,6 +72,7 @@ import { SafeMutateError, safeMutate } from "@/lib/api/safe-mutate";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { tabTrapMove } from "@/lib/ui/dialog-focus";
+import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -904,6 +905,8 @@ export function PropertyForm({
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `${t("deleteError")} (HTTP ${res.status})`);
       }
+      // FU-228 (Slice #37.07): the record is gone, so „RECENTE" forgets it.
+      forgetRecentlyViewed(propertyId!);
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
       router.push("/properties");
       router.refresh();
