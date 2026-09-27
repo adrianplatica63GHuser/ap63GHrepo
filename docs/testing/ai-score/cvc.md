@@ -54,7 +54,11 @@ every item of that contract as missed. That is what put run 1 at 83.0 %.
 - At this rate, **a run can drop by up to about 9 points because of one contract**, for a reason
   unrelated to how well the model reads.
 - When a run's notes say „the answer was not JSON", compare it on the contracts that did parse.
-- FU-234 is the fix.
+- **Fixed in Slice #37.06 (FU-234).** The application now repairs this one defect — it escapes a
+  quote inside a value that JSON does not allow there — instead of answering 502, so the scorer
+  scores the answer as the user now gets it. A run's notes say „the answer was not valid JSON and
+  was repaired", with the count, so a repaired answer is never read as a clean one. The rescore
+  below puts run 1 at 91.8 %, inside the spread of runs 2 and 3.
 
 ## History
 
@@ -66,6 +70,7 @@ baseline. „All" also counts the keys that are still only proposed.
 | 2026-09-26 | `3a5d77c` | `8792170fe289` | 0 | — | 83.0 % | 10 | Run 1, the proving run. Its first scoring was wrong (0 % on both party roles) and was fixed in `46d24a6`; this row is the rescore. cvc-01 was not JSON and counts as zero. |
 | 2026-09-26 | `f0a24e2` | `8792170fe289` | 0 | — | **90.1 %** | 10 | Run 2, the provisional baseline |
 | 2026-09-26 | `f0a24e2` | `8792170fe289` | 0 | — | 90.1 % | 10 | Run 3, the repeat. It has the same total as run 2, but 6 items differ. |
+| 2026-09-27 | `1cfa97c` | `8792170fe289` | 0 | — | 91.8 % | 0 | Slice #37.06, `ai-rescore` of run 1 after the FU-234 repair: cvc-01 was repaired (2 quotes) and scored, 157/171. Runs 2 and 3 rescored unchanged at 90.1 %. Before the repair the same rescore gave 83.0 / 90.1 / 90.1 (runner `20260927T053532Z-30663`). |
 
 **The baseline is provisional.** No answer key had been confirmed when these runs were made. Once
 Adrian confirms keys, `ai-rescore` re-scores all three runs without new reads. Its numbers go in a
