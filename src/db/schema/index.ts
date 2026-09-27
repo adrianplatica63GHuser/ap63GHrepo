@@ -1401,6 +1401,10 @@ export const propertyProperty = pgTable(
     // existing associations; it just clears the role tag.
     relationshipRoleId: uuid("relationship_role_id")
       .references(() => lookupPropertyPropertyRole.id, { onDelete: "set null" }),
+    // Slice #37.10 (FU-220, migration_087): which way the role reads. The pair
+    // order above is by uuid and means nothing; TRUE = „A <role> B", FALSE =
+    // „B <role> A". Same column and default as document_document's (migration_086).
+    roleReadsAToB: boolean("role_reads_a_to_b").notNull().default(true),
     createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
