@@ -622,7 +622,10 @@ export function DocumentForm({
           // re-saves a HISTORICAL snapshot — including that snapshot's
           // `documentTypeId`, which is by definition the old type. Blocked for
           // as long as nobody can say which type this document is on.
-          canMakeCurrent: !isOnLatest && !typeMoveUnresolved,
+          // FU-067 (Slice #37.07): not in a read-only view opened from an
+          // association tab — „Fă curentă" writes, and „Modifică" is how that
+          // view is turned into one that may.
+          canMakeCurrent: !isOnLatest && !typeMoveUnresolved && (mode !== "view" || associatedEditing),
           onMakeCurrent: () => setConfirmMakeCurrent(true),
         }
       : null;

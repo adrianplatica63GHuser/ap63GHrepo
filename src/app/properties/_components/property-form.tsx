@@ -740,7 +740,10 @@ export function PropertyForm({
           onPrev: () => goToVersion(effectiveVersion - 1),
           onNext: () => goToVersion(effectiveVersion + 1),
           // Enabled only while viewing a past version (disabled on the latest).
-          canMakeCurrent: !isOnLatest,
+          // FU-067 (Slice #37.07): not in a read-only view opened from an
+          // association tab — „Fă curentă" writes, and „Modifică" is how that
+          // view is turned into one that may.
+          canMakeCurrent: !isOnLatest && (mode !== "view" || associatedEditing),
           // Slice #34.17: a version that cannot be written back says so, in a
           // dialog. The button stays enabled on purpose — see
           // `showCannotRestore` above for why a disabled one would not do.

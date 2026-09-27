@@ -333,7 +333,10 @@ export function JudicialPersonForm({
             latestVersion !== null && effectiveVersion < latestVersion && !navLocked,
           onPrev: () => goToVersion(effectiveVersion - 1),
           onNext: () => goToVersion(effectiveVersion + 1),
-          canMakeCurrent: !isOnLatest,
+          // FU-067 (Slice #37.07): not in a read-only view opened from an
+          // association tab — „Fă curentă" writes, and „Modifică" is how that
+          // view is turned into one that may.
+          canMakeCurrent: !isOnLatest && (mode !== "view" || associatedEditing),
           // Slice #34.27: a version that cannot be written back says so, in a
           // dialog. The button stays enabled on purpose — a disabled one puts
           // its reason in a `title`, on a control out of the tab order.
