@@ -78,8 +78,8 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   COTA_MOD_VALUES,
-  formatCotaParte,
-  formatCotaSuprafataMp,
+  cotaModFromAi,
+  cotaTextFromAi,
   parseCotaParte,
   parseCotaSuprafataMp,
   type CotaMod,
@@ -137,15 +137,15 @@ export type AiExtractedParty = {
   /**
    * The cotă-parte the reader found on the page, if it found one (#36.02).
    *
-   * ⚠️ **OPTIONAL, BECAUSE `ai-interpret` DOES NOT FILL THEM YET.** Teaching the
-   * reader to look for a share is 36.01; this slice gives the dialog the three
-   * boxes and the wire, so a share that is on the page can be typed once here
-   * rather than retyped on the Persons tab afterwards. When 36.01 lands they
-   * arrive pre-filled and nothing here changes.
+   * ⚠️ **AS THE MODEL WROTE IT — A STRING — SINCE #36.01 TAUGHT THE READER TO
+   * LOOK (FU-023, Slice #37.06).** `ai-interpret` passes „63,64", „1/2",
+   * „2.500 mp" through untouched, and `cotaMod` unnarrowed; a number is still
+   * accepted. `cotaTextFromAi` / `cotaModFromAi` turn them into the boxes'
+   * text, so nothing here may treat them as already parsed.
    */
-  cotaParte?: number | null;
-  cotaSuprafataMp?: number | null;
-  cotaMod?: CotaMod | null;
+  cotaParte?: number | string | null;
+  cotaSuprafataMp?: number | string | null;
+  cotaMod?: string | null;
 };
 
 export type AiPartyLinkerSummary = {
@@ -253,8 +253,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
    * `forceCreate`, because the next party's share is not this one's.
    *
    * ⚠️ **UNDEFINED MEANS „NOT TOUCHED", SO THE READER'S OWN VALUE SHOWS.** The
-   * boxes fall back to whatever `party.cotaParte` holds, which is null today
-   * and pre-filled once 36.01 teaches the reader to look.
+   * boxes fall back to what the reader found in `party.cotaParte`, read through
+   * `cotaTextFromAi` (FU-023, Slice #37.06).
    */
   const [cotaDraft, setCotaDraft] = useState<{ parte?: string; mp?: string }>({});
   const [cotaModDraft, setCotaModDraft] = useState<CotaMod | null | undefined>(undefined);
@@ -325,9 +325,13 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
     }
   };
 
-  const cotaParteText = cotaDraft.parte ?? formatCotaParte(party?.cotaParte ?? null);
-  const cotaMpText    = cotaDraft.mp    ?? formatCotaSuprafataMp(party?.cotaSuprafataMp ?? null);
-  const cotaMod       = cotaModDraft !== undefined ? cotaModDraft : (party?.cotaMod ?? null);
+  // FU-023 (Slice #37.06): the reader's share arrives as the model's STRING,
+  // so it is read through the box's own parser rather than formatted as a
+  // number (which gave ""), and `cotaMod` is narrowed to the four values
+  // before it can reach the POST that refuses anything else.
+  const cotaParteText = cotaDraft.parte ?? cotaTextFromAi(party?.cotaParte, "parte");
+  const cotaMpText    = cotaDraft.mp    ?? cotaTextFromAi(party?.cotaSuprafataMp, "mp");
+  const cotaMod       = cotaModDraft !== undefined ? cotaModDraft : cotaModFromAi(party?.cotaMod);
 
   /**
    * The three values as the POST wants them, or the reason one of them cannot

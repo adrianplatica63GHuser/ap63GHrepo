@@ -3588,5 +3588,48 @@
       "whatNext": "From now on every document of this type fills these fields in by itself, during the import, without stopping to ask. An import that stopped for this type can be started again from the beginning.",
       "toImport": "Go to Import to the System"
     }
+  },
+  "aiNotes": {
+    "unmappedLabels": {
+      "birouNotarial": "Notary's office",
+      "notarBirou": "Notary's office",
+      "biroulNotarial": "The notary's office",
+      "notarPublic": "Notary public",
+      "notarSediu": "Notary's address",
+      "notarLicenta": "Notary's licence",
+      "suprafata": "Area",
+      "suprafataTotala": "Total area",
+      "suprafataVanduta": "Area sold",
+      "suprafataCadastru": "Area in the cadastre",
+      "suprafataMasuratori": "Measured area",
+      "carteFunciara": "Land book",
+      "carteaFunciara": "The land book",
+      "nrCadastral": "Cadastral no.",
+      "tarla": "Tarla",
+      "parcela": "Parcel",
+      "localizare": "Location",
+      "echivalentPretRon": "Price equivalent (RON)",
+      "echivalentLei": "Equivalent in lei",
+      "echivalentLeiTotal": "Total equivalent in lei",
+      "pretEchivalentLei": "Price equivalent in lei",
+      "pretEuroMp": "Price in euro per m²",
+      "onorariuDetaliu": "Fee — detail",
+      "onorariuChitanta": "Fee — receipt",
+      "bonFiscalOnorariu": "Fee receipt",
+      "chitantaOnorariu": "Fee receipt",
+      "taxaTimbruDetaliu": "Stamp duty — detail",
+      "taxaChitanta": "Duty — receipt",
+      "impozitTransferDetaliu": "Transfer tax — detail",
+      "tarifIntabulareOcpi": "OCPI registration fee",
+      "obligatieCf": "Duty to register in the land book",
+      "obligatieIntabulare": "Duty to register",
+      "operatorDatePersonale": "Personal data controller",
+      "rectificareTarla": "Tarla correction",
+      "scutireCertificatSarcini": "Encumbrance certificate exemption",
+      "timbruJudiciarMentiune": "Judicial stamp — note",
+      "scopComasare": "Purpose of the merger",
+      "impozitRepartizare": "Tax apportionment",
+      "chitantaTaxaAutentificare": "Authentication fee receipt"
+    }
   }
 }

@@ -276,3 +276,40 @@ export function cotaToDb(value: number | null | undefined): string | null {
   if (value === null || value === undefined || !Number.isFinite(value)) return null;
   return String(value);
 }
+
+/**
+ * A share as the AI read it → the text the party linker's box starts with.
+ *                                                          (Slice #37.06, FU-023)
+ *
+ * `ai-interpret` passes the model's cotă through as it wrote it — a STRING
+ * („63,64", „1/2", „2.500", „114,86 mp") — and the linker used to format it as
+ * a number, which gave "" for every string, so the share the reader found
+ * never reached the box. This reads it the way the box itself will:
+ *
+ *   - a number is formatted, as before;
+ *   - a string goes through `parseCotaParte` / `parseCotaSuprafataMp` (an
+ *     area's trailing „mp"/„m²"/„m2" dropped first — the deeds write it, the
+ *     parser does not accept it) and comes back in the box's own format;
+ *   - a string the parser refuses is kept AS WRITTEN, so the user sees what
+ *     the AI read and the box's own error says why it cannot be stored — the
+ *     same rule as a value the user typed;
+ *   - anything else is "".
+ */
+export function cotaTextFromAi(value: unknown, kind: "parte" | "mp"): string {
+  if (typeof value === "number") {
+    return kind === "parte" ? formatCotaParte(value) : formatCotaSuprafataMp(value);
+  }
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (text === "") return "";
+  const bare = kind === "mp" ? text.replace(/\s*(mp|m²|m2|m\.p\.)\s*$/i, "").trim() : text;
+  const parsed = kind === "parte" ? parseCotaParte(bare) : parseCotaSuprafataMp(bare);
+  if (!parsed.ok) return text;
+  if (parsed.value === null) return "";
+  return kind === "parte" ? formatCotaParte(parsed.value) : formatCotaSuprafataMp(parsed.value);
+}
+
+/** The model's `cotaMod`, narrowed to the four stored values; anything else is null. (FU-023) */
+export function cotaModFromAi(value: unknown): CotaMod | null {
+  return isCotaMod(value) ? value : null;
+}

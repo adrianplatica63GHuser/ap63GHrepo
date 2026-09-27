@@ -473,6 +473,14 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     unmappedRaw = interpreted.unmappedRaw;
     enhancedNotes = interpreted.enhancedNotes;
     referencedInstruments = interpreted.referencedInstruments;
+    // FU-234 (Slice #37.06): the answer was almost-JSON and was repaired rather
+    // than refused with a 502. Said in the log, with the count and nothing of
+    // the text, so a repaired read is never mistaken for a clean one.
+    if (interpreted.jsonRepair !== null) {
+      console.warn(
+        `[ai-interpret] the model's answer was not valid JSON; repaired by escaping ${interpreted.jsonRepair.quotesEscaped} quote(s) inside values`,
+      );
+    }
 
     // ── Party matching (Slice #21.04.Import) ─────────────────────────────────
     // Resolve each extracted party's roleName to a real lookup_person_role.id

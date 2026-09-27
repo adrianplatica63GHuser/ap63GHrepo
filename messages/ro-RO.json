@@ -3588,5 +3588,48 @@
       "whatNext": "De acum, fiecare document de acest tip completează aceste câmpuri singur, la import, fără să mai întrebe. Un import care s-a oprit pentru acest tip poate fi pornit din nou de la început.",
       "toImport": "Mergi la Import în sistem"
     }
+  },
+  "aiNotes": {
+    "unmappedLabels": {
+      "birouNotarial": "Birou notarial",
+      "notarBirou": "Birou notarial",
+      "biroulNotarial": "Biroul notarial",
+      "notarPublic": "Notar public",
+      "notarSediu": "Sediul notarului",
+      "notarLicenta": "Licența notarului",
+      "suprafata": "Suprafață",
+      "suprafataTotala": "Suprafață totală",
+      "suprafataVanduta": "Suprafață vândută",
+      "suprafataCadastru": "Suprafață din cadastru",
+      "suprafataMasuratori": "Suprafață din măsurători",
+      "carteFunciara": "Carte funciară",
+      "carteaFunciara": "Cartea funciară",
+      "nrCadastral": "Nr. cadastral",
+      "tarla": "Tarla",
+      "parcela": "Parcelă",
+      "localizare": "Localizare",
+      "echivalentPretRon": "Echivalent preț (RON)",
+      "echivalentLei": "Echivalent în lei",
+      "echivalentLeiTotal": "Echivalent total în lei",
+      "pretEchivalentLei": "Preț echivalent în lei",
+      "pretEuroMp": "Preț euro pe mp",
+      "onorariuDetaliu": "Onorariu — detaliu",
+      "onorariuChitanta": "Onorariu — chitanță",
+      "bonFiscalOnorariu": "Bon fiscal onorariu",
+      "chitantaOnorariu": "Chitanță onorariu",
+      "taxaTimbruDetaliu": "Taxă de timbru — detaliu",
+      "taxaChitanta": "Taxă — chitanță",
+      "impozitTransferDetaliu": "Impozit pe transfer — detaliu",
+      "tarifIntabulareOcpi": "Tarif intabulare OCPI",
+      "obligatieCf": "Obligație de înscriere în CF",
+      "obligatieIntabulare": "Obligație de intabulare",
+      "operatorDatePersonale": "Operator de date personale",
+      "rectificareTarla": "Rectificare tarla",
+      "scutireCertificatSarcini": "Scutire certificat de sarcini",
+      "timbruJudiciarMentiune": "Timbru judiciar — mențiune",
+      "scopComasare": "Scopul comasării",
+      "impozitRepartizare": "Repartizarea impozitului",
+      "chitantaTaxaAutentificare": "Chitanță taxă de autentificare"
+    }
   }
 }

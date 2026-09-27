@@ -82,6 +82,7 @@ import {
   resolveImportedTitle,
 } from "@/lib/import/document-title";
 import { hasReadablePage, type FSEntry } from "@/lib/import/folder-utils";
+import { notesWithAiBlock } from "@/lib/import/ai-notes-block";
 import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
 
 // ---------------------------------------------------------------------------
@@ -834,8 +835,11 @@ export async function runAiInterpret(
      */
     let notesOut: string | null = null;
     if (currentReadable) {
+      // FU-022 (Slice #37.06): a re-read's „[AI] Text neasociat" block takes the
+      // place of the earlier one rather than being appended after it; a
+      // person's notes are untouched (`ai-notes-block.ts`).
       const withModel = filled(data.notes)
-        ? (filled(existingNotes) ? `${existingNotes}\n\n${data.notes}` : data.notes)
+        ? notesWithAiBlock(existingNotes, data.notes)
         : existingNotes;
       const withHeading = notesWithPrintedHeading(withModel, titleDecision.keepReading);
       if (withHeading !== null) notesOut = withHeading;

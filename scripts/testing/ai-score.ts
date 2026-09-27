@@ -212,7 +212,14 @@ function scoreAnswer(
 ): { items: ItemResult[]; unreadableError: string | null } {
   const kinds = kindsOf(t.templateFields);
   try {
-    return { items: scoreContract(c.expected, interpretExtractText(text, t.templateFields), kinds), unreadableError: null };
+    const read = interpretExtractText(text, t.templateFields);
+    // FU-234 (Slice #37.06): the application now repairs an almost-JSON answer
+    // instead of answering 502, so it is scored as the user would get it — and
+    // named, so a repaired read is never mistaken for a clean one.
+    if (read.jsonRepair !== null) {
+      notes.push(`${c.id}: the answer was not valid JSON and was repaired (${read.jsonRepair.quotesEscaped} quote(s) escaped)`);
+    }
+    return { items: scoreContract(c.expected, read, kinds), unreadableError: null };
   } catch (e) {
     // The route answers this with a 502 and the user gets nothing: every item is missed.
     const zero = unreadable(c.expected, kinds);

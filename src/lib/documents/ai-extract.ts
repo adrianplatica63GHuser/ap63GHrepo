@@ -50,15 +50,114 @@ import {
   type ModelImageMimeType,
 } from "@/lib/files/file-mime";
 import type { DocumentTemplateField } from "@/lib/documents/template-fields";
+import { unmappedLabel } from "@/lib/documents/unmapped-labels";
 
 export const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 export const EXTRACT_MODEL = "claude-sonnet-4-6";
 export const ANTHROPIC_VERSION = "2023-06-01";
 export const PDF_BETA_HEADER = "pdfs-2024-09-25";
 
-export function extractJson(text: string): unknown {
+/**
+ * What a repair of the model's answer changed.            (Slice #37.06, FU-234)
+ * `null` beside a value means the answer was valid JSON and nothing was touched.
+ */
+export type JsonRepair = { quotesEscaped: number };
+
+/**
+ * Escape the `"` characters inside JSON strings that the model left unescaped.
+ *                                                          (Slice #37.06, FU-234)
+ *
+ * The one defect seen in #36.23's thirty CVC reads: a value holding a quoted
+ * name — `"Birou Notarial "X", sediul: …"` — which strict `JSON.parse` refuses,
+ * so the route answered 502 and a paid read gave the user nothing.
+ *
+ * A single pass that tracks whether it is inside a string. Inside one, a `"`
+ * ENDS the string only when what follows it (after whitespace) is what JSON
+ * allows after a string: `:` (it was a key), `}` or `]`, the end of the text,
+ * or a `,` that is itself followed by the start of a JSON token — another
+ * string, an object, an array, a number, `true`/`false`/`null`, or a closing
+ * bracket. Any other `"` is text, and gets a backslash. So the quote after
+ * „X" above, followed by `, sediul`, stays text; the quote closing the value,
+ * followed by `,\n  "next"`, ends it.
+ *
+ * ⚠️ **ONLY ON FAILURE, AND ONLY THIS DEFECT.** `parseModelJson` parses
+ * strictly first; a valid answer never comes here. What the pass cannot fix —
+ * a truncated answer, prose instead of JSON — is still refused, with the
+ * strict parser's own error.
+ */
+export function escapeInnerQuotes(json: string): { text: string; escaped: number } {
+  let out = "";
+  let inString = false;
+  let escaped = 0;
+  const n = json.length;
+  const nextNonSpace = (from: number): number => {
+    let j = from;
+    while (j < n && /\s/.test(json[j])) j++;
+    return j;
+  };
+  const startsToken = (j: number): boolean => {
+    if (j >= n) return false;
+    const c = json[j];
+    if (c === '"' || c === "{" || c === "[" || c === "]" || c === "}" || c === "-" || (c >= "0" && c <= "9")) return true;
+    return /^(true|false|null)\b/.test(json.slice(j, j + 5));
+  };
+  for (let i = 0; i < n; i++) {
+    const c = json[i];
+    if (!inString) {
+      out += c;
+      if (c === '"') inString = true;
+      continue;
+    }
+    if (c === "\\") {
+      out += c + (json[i + 1] ?? "");
+      i++;
+      continue;
+    }
+    if (c !== '"') {
+      out += c;
+      continue;
+    }
+    const j = nextNonSpace(i + 1);
+    const after = json[j];
+    const ends =
+      j >= n ||
+      after === ":" ||
+      after === "}" ||
+      after === "]" ||
+      (after === "," && startsToken(nextNonSpace(j + 1)));
+    if (ends) {
+      out += c;
+      inString = false;
+    } else {
+      out += '\\"';
+      escaped++;
+    }
+  }
+  return { text: out, escaped };
+}
+
+/**
+ * The model's answer, parsed: strictly, and — only when that fails — once more
+ * after `escapeInnerQuotes`. Throws the STRICT parse's error when the repair
+ * does not help, so a failure reads the way it always has.
+ */
+export function parseModelJson(text: string): { value: unknown; repair: JsonRepair | null } {
   const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
-  return JSON.parse(cleaned);
+  try {
+    return { value: JSON.parse(cleaned), repair: null };
+  } catch (strictError) {
+    const fixed = escapeInnerQuotes(cleaned);
+    if (fixed.escaped === 0) throw strictError;
+    try {
+      return { value: JSON.parse(fixed.text), repair: { quotesEscaped: fixed.escaped } };
+    } catch {
+      throw strictError;
+    }
+  }
+}
+
+export function extractJson(text: string): unknown {
+  return parseModelJson(text).value;
 }
 
 // ---------------------------------------------------------------------------
@@ -340,6 +439,12 @@ export type InterpretedExtraction = {
   /** Parties with a role, in the model's order. A party with no role is dropped. */
   parties: InterpretedParty[];
   referencedInstruments: ReferencedInstrument[];
+  /**
+   * Set when the answer was almost-JSON and `parseModelJson` repaired it
+   * (FU-234); `null` when it was valid as sent. The route logs it and the
+   * ai-score notes name it, so a repaired read is never mistaken for a clean one.
+   */
+  jsonRepair: JsonRepair | null;
 };
 
 /**
@@ -350,7 +455,8 @@ export function interpretExtractText(
   textBlock: string,
   templateFields: readonly DocumentTemplateField[],
 ): InterpretedExtraction {
-  const raw = extractJson(textBlock) as AiExtractResponse;
+  const parsed = parseModelJson(textBlock);
+  const raw = parsed.value as AiExtractResponse;
   const allFields = raw.fields ?? {};
   const templateKeys = new Set(templateFields.map((f) => f.key));
 
@@ -378,7 +484,13 @@ export function interpretExtractText(
   // couldn't map to a field into readable text instead of silently dropping it.
   let enhancedNotes: string | null = null;
   if (Object.keys(unmappedRaw).length > 0) {
-    const lines = Object.entries(unmappedRaw).map(([label, val]) => `${label}: ${val}`);
+    // FU-024 (Slice #37.06): the model's KEYS are identifiers it invents
+    // (`echivalent_pret_ron`, `notarBirou`); a person reads these notes, so
+    // each goes through `unmappedLabel` — a Romanian label from
+    // messages/ro-RO.json when there is one, the identifier spelled out as
+    // words when there is not, and a label already written as words left alone.
+    // `unmappedRaw` itself is untouched: ai-score reads the model's own keys.
+    const lines = Object.entries(unmappedRaw).map(([label, val]) => `${unmappedLabel(label)}: ${val}`);
     enhancedNotes = `[AI] Text neasociat unui câmp:\n${lines.join("\n")}`;
   }
 
@@ -428,5 +540,6 @@ export function interpretExtractText(
     enhancedNotes,
     parties,
     referencedInstruments,
+    jsonRepair: parsed.repair,
   };
 }
