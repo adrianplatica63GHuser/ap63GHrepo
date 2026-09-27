@@ -63,9 +63,9 @@ export const FORMS_FILE_ABOUT: readonly string[] = [
  * file.
  */
 export const FORMS_OF_UNSEEDED_TYPES: Readonly<Record<string, string>> = {
-  ANUNT_VANZARE_TEREN_POSTARE_FACEBOOK:
-    "Created in Adrian's database, not by the seed, and given a 3-field form there (first export, Slice #37.05). " +
-    "Whether it joins the catalogue or goes is Adrian's call (FU-244).",
+  // Empty since Slice #37.10: ANUNT_VANZARE_TEREN_POSTARE_FACEBOOK, the one
+  // entry the first export found, was deleted from Adrian's database on his
+  // word (FU-244, 2026-09-27) rather than added to the catalogue.
 };
 
 /** One stored form: the type's key and its `template_fields` array, as stored. */
@@ -152,7 +152,10 @@ export const TYPE_KEY_RE = /^[A-Z0-9_]{1,64}$/;
  * other UPDATE matched no row — a form that silently went nowhere is FU-019
  * again, one file later.
  */
-export function formsFileToSql(file: FormsFile): string {
+export function formsFileToSql(
+  file: FormsFile,
+  unseededTypes: Readonly<Record<string, string>> = FORMS_OF_UNSEEDED_TYPES,
+): string {
   const out: string[] = [
     `-- Generated from ${FORMS_FILE_REL} by src/lib/documents/document-type-forms-file.ts. Do not edit.`,
     "-- Every document type's form (lookup_document_type.template_fields), by key.",
@@ -166,9 +169,9 @@ export function formsFileToSql(file: FormsFile): string {
     while (json.includes(`$${tag}$`)) tag += "_";
     out.push(`UPDATE lookup_document_type SET template_fields = $${tag}$${json}$${tag}$::jsonb WHERE key = '${form.key}';`);
   }
-  const checked = sorted.filter((f) => !(f.key in FORMS_OF_UNSEEDED_TYPES));
+  const checked = sorted.filter((f) => !(f.key in unseededTypes));
   const keys = checked.map((f) => `'${f.key}'`).join(", ");
-  for (const f of sorted.filter((x) => x.key in FORMS_OF_UNSEEDED_TYPES)) {
+  for (const f of sorted.filter((x) => x.key in unseededTypes)) {
     out.push(
       `DO $note$ BEGIN IF NOT EXISTS (SELECT 1 FROM lookup_document_type WHERE key = '${f.key}') THEN ` +
         `RAISE NOTICE 'document-type forms: % is not seeded; its form is kept in the file only', '${f.key}'; END IF; END $note$;`,

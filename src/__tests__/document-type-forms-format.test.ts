@@ -7,7 +7,6 @@
  */
 import {
   FORMS_FILE_ABOUT,
-  FORMS_OF_UNSEEDED_TYPES,
   canonicalJson,
   formsDrift,
   formsDriftLine,
@@ -81,8 +80,13 @@ describe("the SQL a rebuild runs", () => {
   });
 
   it("writes an unseeded type's form, and only NOTES it when the type is missing", () => {
-    const [unseeded] = Object.keys(FORMS_OF_UNSEEDED_TYPES);
-    const out = formsFileToSql({ about: [], forms: [A, { key: unseeded, fields: [] }] });
+    // The real list is empty since FU-244 was settled (Slice #37.10), so the
+    // path is exercised with a stand-in list of one.
+    const unseeded = "ACT_UNSEEDED";
+    const out = formsFileToSql(
+      { about: [], forms: [A, { key: unseeded, fields: [] }] },
+      { [unseeded]: "a stand-in for a type no seed creates, kept for its form" },
+    );
     expect(out).toContain(`WHERE key = '${unseeded}';`);
     expect(out).toContain(`RAISE NOTICE 'document-type forms: % is not seeded; its form is kept in the file only', '${unseeded}'`);
     expect(out).toContain("ARRAY['ACT_B']");

@@ -44,11 +44,6 @@
       {"key":"luna","type":"text","order":12,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"luna","labelRo":"luna"},
       {"key":"s_a_perceput_onorariul_de","type":"text","order":13,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"S-a perceput onorariul de","labelRo":"S-a perceput onorariul de"}
     ],
-    "ANUNT_VANZARE_TEREN_POSTARE_FACEBOOK": [
-      {"key":"teren_1","type":"text","order":0,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Teren 1","labelRo":"Teren 1"},
-      {"key":"teren_2","type":"text","order":1,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Teren 2","labelRo":"Teren 2"},
-      {"key":"tel","type":"text","order":2,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Tel","labelRo":"Tel"}
-    ],
     "CONTRACT_VANZARE": [
       {"key":"pretTotal","type":"number","order":0,"tabEn":"Instrument","tabRo":"Instrument","aiHint":"suma, doar cifre și separator zecimal, fără moneda și fără punct de mie","groupEn":"Financial","groupRo":"Financiar","labelEn":"Total price","labelRo":"Preț total","options":null},
       {"key":"monedaPret","type":"select","order":1,"tabEn":"Instrument","tabRo":"Instrument","aiHint":null,"groupEn":"Financial","groupRo":"Financiar","labelEn":"Currency","labelRo":"Monedă","options":[{"value":"RON","labelEn":"Lei (RON)","labelRo":"Lei (RON)"},{"value":"EUR","labelEn":"Euro (EUR)","labelRo":"Euro (EUR)"},{"value":"USD","labelEn":"Dollars (USD)","labelRo":"Dolari (USD)"}]},
