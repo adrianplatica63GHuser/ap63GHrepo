@@ -8,13 +8,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("pageTitle") };
 }
 
-export default function ChangePasswordPage() {
+// FU-246 (Slice #37.07): the whole screen was English; every string is now
+// from messages/*.json → auth.changePassword.
+export default async function ChangePasswordPage() {
+  const t = await getTranslations("auth.changePassword");
   return (
     <div className="p-6 max-w-sm mx-auto">
-      <h1 className="text-2xl font-bold text-ink mb-1">Change Password</h1>
-      <p className="text-sm text-fade mb-6">
-        Enter a new password for your account.
-      </p>
+      <h1 className="text-2xl font-bold text-ink mb-1">{t("heading")}</h1>
+      <p className="text-sm text-fade mb-6">{t("intro")}</p>
       <div className="bg-surface rounded-xl border border-wire shadow-sm p-6">
         <ChangePasswordForm />
       </div>

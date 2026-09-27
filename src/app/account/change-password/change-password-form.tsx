@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { buttonClass } from "@/lib/ui/button-styles";
 
@@ -9,6 +10,8 @@ type State = "idle" | "saving" | "success" | "error";
 
 export function ChangePasswordForm() {
   const router         = useRouter();
+  // FU-246 (Slice #37.07): every string from auth.changePassword.
+  const t              = useTranslations("auth.changePassword");
   const [newPwd, setNewPwd]         = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [state, setState]           = useState<State>("idle");
@@ -19,11 +22,11 @@ export function ChangePasswordForm() {
     setErrorMsg(null);
 
     if (newPwd.length < 8) {
-      setErrorMsg("Password must be at least 8 characters.");
+      setErrorMsg(t("errorTooShort"));
       return;
     }
     if (newPwd !== confirmPwd) {
-      setErrorMsg("Passwords do not match.");
+      setErrorMsg(t("errorMismatch"));
       return;
     }
 
@@ -32,14 +35,17 @@ export function ChangePasswordForm() {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password: newPwd });
       if (error) {
-        setErrorMsg(error.message);
+        // The auth service's own sentence is English; the user gets a Romanian
+        // one, and the service's goes to the console for whoever debugs it.
+        console.warn("[change-password] updateUser refused:", error.message);
+        setErrorMsg(t("errorRejected"));
         setState("error");
         return;
       }
       setState("success");
       setTimeout(() => router.push("/"), 2000);
     } catch {
-      setErrorMsg("Something went wrong. Please try again.");
+      setErrorMsg(t("errorGeneric"));
       setState("error");
     }
   }
@@ -48,8 +54,8 @@ export function ChangePasswordForm() {
     return (
       <div className="text-center py-4">
         <div className="text-3xl mb-2">✓</div>
-        <p className="font-semibold text-ink">Password updated!</p>
-        <p className="text-sm text-fade mt-1">Redirecting…</p>
+        <p className="font-semibold text-ink">{t("successTitle")}</p>
+        <p className="text-sm text-fade mt-1">{t("successRedirect")}</p>
       </div>
     );
   }
@@ -58,7 +64,7 @@ export function ChangePasswordForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="new-pwd" className="text-sm font-medium text-ink">
-          New Password
+          {t("labelNew")}
         </label>
         <input
           id="new-pwd"
@@ -71,12 +77,12 @@ export function ChangePasswordForm() {
           className="rounded-md border border-wire bg-base px-3 py-2 text-sm text-ink outline-none focus:border-cta focus:ring-1 focus:ring-cta transition"
           disabled={state === "saving"}
         />
-        <p className="text-xs text-fade">Minimum 8 characters.</p>
+        <p className="text-xs text-fade">{t("hintMin")}</p>
       </div>
 
       <div className="flex flex-col gap-1">
         <label htmlFor="confirm-pwd" className="text-sm font-medium text-ink">
-          Confirm Password
+          {t("labelConfirm")}
         </label>
         <input
           id="confirm-pwd"
@@ -102,14 +108,14 @@ export function ChangePasswordForm() {
           disabled={state === "saving"}
           className={buttonClass({ variant: "primary", size: "lg", className: "flex-1" })}
         >
-          {state === "saving" ? "Saving…" : "Update Password"}
+          {state === "saving" ? t("buttonSaving") : t("buttonSave")}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
           className={buttonClass({ variant: "secondary", size: "lg" })}
         >
-          Cancel
+          {t("buttonCancel")}
         </button>
       </div>
     </form>

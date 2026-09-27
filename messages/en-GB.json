@@ -3163,7 +3163,21 @@
       "pageTitle": "Request access — GA40"
     },
     "changePassword": {
-      "pageTitle": "Change password — GA40"
+      "pageTitle": "Change password — GA40",
+      "heading": "Change password",
+      "intro": "Enter a new password for your account.",
+      "labelNew": "New password",
+      "hintMin": "Minimum 8 characters.",
+      "labelConfirm": "Confirm password",
+      "errorTooShort": "The password must be at least 8 characters.",
+      "errorMismatch": "The passwords do not match.",
+      "errorRejected": "The password could not be changed. Try another password or try again later.",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "successTitle": "Password changed!",
+      "successRedirect": "Taking you to the home page…",
+      "buttonSave": "Change password",
+      "buttonSaving": "Saving…",
+      "buttonCancel": "Cancel"
     }
   },
   "stamp": {

@@ -3163,7 +3163,21 @@
       "pageTitle": "Solicitare acces — GA40"
     },
     "changePassword": {
-      "pageTitle": "Schimbă parola — GA40"
+      "pageTitle": "Schimbă parola — GA40",
+      "heading": "Schimbă parola",
+      "intro": "Introdu o parolă nouă pentru contul tău.",
+      "labelNew": "Parola nouă",
+      "hintMin": "Minimum 8 caractere.",
+      "labelConfirm": "Confirmă parola",
+      "errorTooShort": "Parola trebuie să aibă cel puțin 8 caractere.",
+      "errorMismatch": "Parolele nu coincid.",
+      "errorRejected": "Parola nu a putut fi schimbată. Încearcă o altă parolă sau reîncearcă mai târziu.",
+      "errorGeneric": "A apărut o eroare. Te rugăm să încerci din nou.",
+      "successTitle": "Parola a fost schimbată!",
+      "successRedirect": "Te ducem la pagina principală…",
+      "buttonSave": "Schimbă parola",
+      "buttonSaving": "Se salvează…",
+      "buttonCancel": "Anulează"
     }
   },
   "stamp": {
