@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 
 /**
  * ⚠️ **`linkId` IS THE ROW AND `id` IS THE DOCUMENT.**          (Slice #36.02)
@@ -25,6 +26,8 @@ type AssociatedDocument = {
   typeName:     string | null;
   title:        string | null;
   roleName:     string | null;
+  /** FU-224: a certificate party's quality, shown where the role would be. */
+  quality?:     "DEFUNCT" | "MOSTENITOR" | null;
   associatedAt: string;
 };
 
@@ -43,6 +46,8 @@ async function fetchPersonDocuments(personId: string): Promise<AssociatedDocumen
 
 export function PersonDocumentTab({ personId, backBase }: Props) {
   const t           = useTranslations("shared.document");
+  // FU-224 (Slice #37.07): the role, else a certificate party's quality.
+  const qualityWords = { DEFUNCT: t("qualityDefunct"), MOSTENITOR: t("qualityMostenitor") };
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -123,13 +128,15 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
                       checked={item.linkId === selectedId}
                       onChange={() => setSelectedId(item.linkId)}
                       onClick={(e) => e.stopPropagation()}
-                      aria-label={`${item.title ?? item.code} — ${item.roleName ?? "\u2014"}`}
+                      aria-label={`${item.title ?? item.code} — ${roleOrQualityLabel(item.roleName, item.quality, qualityWords)}`}
                       className="accent-cta"
                     />
                   </td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.typeName ?? "—"}</td>
                   <td className="px-3 py-2 text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
-                  <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.roleName ?? "—"}</td>
+                  <td className="px-3 py-2 text-fade dark:text-zinc-400">
+                    {roleOrQualityLabel(item.roleName, item.quality, qualityWords)}
+                  </td>
                   <td className="px-3 py-2">
                     <button
                       type="button"

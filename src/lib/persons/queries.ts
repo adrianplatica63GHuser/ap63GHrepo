@@ -1110,6 +1110,11 @@ export type PersonDocumentItem = {
   title:           string | null;
   personRoleId:    string | null;
   roleName:        string | null;
+  /**
+   * A party's quality on a Certificat de Moștenitor — „Defunct" /
+   * „Moștenitor" — which such a link carries INSTEAD of a role. (FU-224, #37.07)
+   */
+  quality:         "DEFUNCT" | "MOSTENITOR" | null;
   cotaParte:       number | null;
   cotaSuprafataMp: number | null;
   cotaMod:         CotaMod | null;
@@ -1127,6 +1132,7 @@ export async function listPersonDocuments(personId: string): Promise<PersonDocum
       title:           document.title,
       personRoleId:    personDocument.personRoleId,
       roleName:        lookupPersonRole.name,
+      quality:         personDocument.quality,
       cotaParte:       personDocument.cotaParte,
       cotaSuprafataMp: personDocument.cotaSuprafataMp,
       cotaMod:         personDocument.cotaMod,
@@ -1143,6 +1149,7 @@ export async function listPersonDocuments(personId: string): Promise<PersonDocum
 
   return rows.map((r) => ({
     ...r,
+    quality:         r.quality === "DEFUNCT" || r.quality === "MOSTENITOR" ? r.quality : null,
     cotaParte:       cotaFromDb(r.cotaParte),
     cotaSuprafataMp: cotaFromDb(r.cotaSuprafataMp),
     cotaMod:         isCotaMod(r.cotaMod) ? r.cotaMod : null,

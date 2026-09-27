@@ -46,11 +46,12 @@ All three are deleted at the end.
 | 4 | Chooses `Vasile TC-ASSOC-12 Defunct` | The hint becomes „Selectați calitatea (Defunct sau Moștenitor)" |
 | 5 | Presses „Defunct", then „Adaugă parte" | Back on the certificate's „Detalii". „Părți" is a table Nume · Calitate with one row — `Vasile TC-ASSOC-12 Defunct`, „Defunct", „Elimină" |
 | 6 | Presses „+ Adaugă parte" again, chooses `Maria TC-ASSOC-12 Mostenitor`, presses „Moștenitor", then „Adaugă parte" | Two rows, the newest first: `Maria TC-ASSOC-12 Mostenitor` „Moștenitor", `Vasile TC-ASSOC-12 Defunct` „Defunct" |
-| 7 | Presses the certificate's tab **„Persoane"** | Both people, under Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de deținere; „Rol" reads „—" for both — **the quality is not shown here** |
-| 8 | Opens `Maria TC-ASSOC-12 Mostenitor`, tab **„Acte"** | Tip · Titlu · Rol: „Certificat de Moștenitor", `TC-ASSOC-12 Certificat de test`, „—". The same on `Vasile TC-ASSOC-12 Defunct` |
+| 7 | Presses the certificate's tab **„Persoane"** | Both people, under Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de deținere; „Rol" reads „Defunct" for Vasile and „Moștenitor" for Maria — the quality, where a role would be (FU-224, fixed in #37.07) |
+| 8 | Opens `Maria TC-ASSOC-12 Mostenitor`, tab **„Acte"** | Tip · Titlu · Rol: „Certificat de Moștenitor", `TC-ASSOC-12 Certificat de test`, „Moștenitor". On `Vasile TC-ASSOC-12 Defunct` the same, with „Defunct" |
 
 Steps 5 and 6 are the assertion that the qualities are recorded; steps 7 and 8 are the other
-end, and they show the link but not the quality (FU-224).
+end, and since Slice #37.07 they show the quality too, under „Rol" (FU-224). The spec asserts
+it; the next hand run confirms it on the screen.
 
 ## At the end — leaving things as they were found
 

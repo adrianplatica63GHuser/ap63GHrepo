@@ -582,7 +582,9 @@
       "dissociating": "Se elimină…",
       "view": "Vizualizare",
       "loading": "Se încarcă…",
-      "error": "Eroare la încărcarea actelor"
+      "error": "Eroare la încărcarea actelor",
+      "qualityDefunct": "Defunct",
+      "qualityMostenitor": "Moștenitor"
     },
     "associateDocument": {
       "title": "Asociere act",
@@ -1484,7 +1486,9 @@
       "cotaTotalOffNoRole": "Cotele persoanelor fără rol însumează {total}%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.",
       "cotaSaving": "Se salvează…",
       "cotaSaveError": "Nu am putut salva cota-parte. Încercați din nou.",
-      "alreadyAttached": "Această persoană este deja atașată acestui act cu acest rol — nu s-a adăugat nimic."
+      "alreadyAttached": "Această persoană este deja atașată acestui act cu acest rol — nu s-a adăugat nimic.",
+      "qualityDefunct": "Defunct",
+      "qualityMostenitor": "Moștenitor"
     },
     "associatePerson": {
       "title": "Asociere persoană",

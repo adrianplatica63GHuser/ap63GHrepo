@@ -15,6 +15,7 @@ import {
   type CotaParseError,
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
+import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 
 /**
  * ⚠️ **`linkId` IS THE ROW AND `id` IS THE PERSON.**            (Slice #36.02)
@@ -37,6 +38,8 @@ type AssociatedPerson = {
   displayName:     string;
   personRoleId:    string | null;
   roleName:        string | null;
+  /** FU-224: a certificate party's quality, shown where the role would be. */
+  quality?:        "DEFUNCT" | "MOSTENITOR" | null;
   cotaParte:       number | null;
   cotaSuprafataMp: number | null;
   cotaMod:         CotaMod | null;
@@ -293,7 +296,11 @@ export function DocumentPersonsTab({ documentId }: Props) {
               {items.map((item) => {
                 const errors   = cellErrors[item.linkId] ?? {};
                 const selected = item.linkId === selectedId;
-                const roleLabel = item.roleName ?? "—";
+                // FU-224 (Slice #37.07): the role, else a certificate party's quality.
+                const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
+                  DEFUNCT:    t("qualityDefunct"),
+                  MOSTENITOR: t("qualityMostenitor"),
+                });
                 return (
                   <tr
                     key={item.linkId}

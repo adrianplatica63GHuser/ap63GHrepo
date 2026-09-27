@@ -582,7 +582,9 @@
       "dissociating": "Removing…",
       "view": "View",
       "loading": "Loading…",
-      "error": "Failed to load documents"
+      "error": "Failed to load documents",
+      "qualityDefunct": "Deceased",
+      "qualityMostenitor": "Heir"
     },
     "associateDocument": {
       "title": "Associate Document",
@@ -1484,7 +1486,9 @@
       "cotaTotalOffNoRole": "The shares for the persons with no role add up to {total}%, not 100%. The document saves anyway — check what the deed says.",
       "cotaSaving": "Saving…",
       "cotaSaveError": "The share could not be saved. Try again.",
-      "alreadyAttached": "This person is already attached to this document with this role — nothing was added."
+      "alreadyAttached": "This person is already attached to this document with this role — nothing was added.",
+      "qualityDefunct": "Deceased",
+      "qualityMostenitor": "Heir"
     },
     "associatePerson": {
       "title": "Associate Person",

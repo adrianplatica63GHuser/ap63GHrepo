@@ -5,10 +5,9 @@
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
  *
- * ⚠️ **FU-224 IS ASSERTED AS IT IS.** The quality — „Defunct", „Moștenitor" —
- * shows only in the certificate's own „Părți"; its „Persoane" and each
- * person's „Acte" read „—" under „Rol". The day FU-224 is fixed, the commit
- * that closes it changes the assertions marked FU-224 below.
+ * FU-224 (fixed in Slice #37.07): the quality — „Defunct", „Moștenitor" — is
+ * shown in the certificate's „Persoane" and in each person's „Acte", under
+ * „Rol", where it read „—" before. The assertions marked FU-224 say so.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The two people and the certificate are made through the POST routes the
@@ -114,27 +113,27 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(parties.locator("tbody tr").nth(1)).toContainText(DECEASED);
       await expect(parties.locator("tbody tr").nth(1)).toContainText("Defunct");
 
-      // Step 7 — „Persoane": both people, „Rol" „—" for both — the quality is not shown here (FU-224).
+      // Step 7 — „Persoane": both people, „Rol" says each one's quality (FU-224).
       await page.getByRole("tab", { name: "Persoane" }).click();
-      for (const person of [DECEASED, HEIR]) {
+      for (const [person, quality] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"]] as const) {
         const r = page.getByRole("row").filter({ hasText: person });
         await expect(r).toHaveCount(1, { timeout: 15_000 });
-        await expect(r.getByRole("cell", { name: "—", exact: true })).toHaveCount(1); // FU-224
+        await expect(r.getByRole("cell", { name: quality, exact: true })).toHaveCount(1); // FU-224
       }
       const persons = page.getByRole("table").filter({ has: page.getByRole("row").filter({ hasText: HEIR }) });
       for (const col of ["Nume", "Rol", "Cotă-parte", "Suprafață echivalentă (mp)", "Mod de deținere"]) {
         await expect(persons.getByText(col, { exact: true })).toBeVisible();
       }
 
-      // Step 8 — each person's „Acte": „Certificat de Moștenitor", the title, „—" (FU-224).
-      for (const [id, person] of [[heirId, HEIR], [deceasedId, DECEASED]] as const) {
+      // Step 8 — each person's „Acte": „Certificat de Moștenitor", the title, the quality (FU-224).
+      for (const [id, person, quality] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
         await page.goto(`/natural-persons/${id}`);
         await expect(page.getByRole("heading", { name: person })).toBeVisible({ timeout: 30_000 });
         await page.getByRole("tab", { name: "Acte" }).click();
         const r = page.getByRole("row").filter({ hasText: CERTIFICATE });
         await expect(r).toHaveCount(1, { timeout: 15_000 });
         await expect(r).toContainText("Certificat de Moștenitor");
-        await expect(r.getByRole("cell", { name: "—", exact: true })).toHaveCount(1); // FU-224
+        await expect(r.getByRole("cell", { name: quality, exact: true })).toHaveCount(1); // FU-224
       }
 
       // ── At the end — „Elimină" on each row, no question, no „Salvează"; still gone after a reload ──
