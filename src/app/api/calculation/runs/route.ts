@@ -9,8 +9,13 @@ export const runtime = "nodejs";
 
 import { unexpectedError } from "@/lib/api/errors";
 import { listCalculationRuns } from "@/lib/calculation/runs";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 export async function GET(): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is the calculation history (/admin/calculation/history).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   try {
     const items = await listCalculationRuns();
     return Response.json({ items });

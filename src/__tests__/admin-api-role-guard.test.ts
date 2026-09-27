@@ -22,12 +22,27 @@
  * `getCurrentUserIdAndRole()` (read-sample, cluster, extract-id-card), which
  * need the role anyway to size their bucket. `import/preflight` answers its own
  * question about the role and is named below with its reason.
+ *
+ * ⚠️ **AND THE ADMIN-ONLY ROUTES OUTSIDE /api/admin, SINCE #37.03 (FU-222).**
+ * Five admin screens wrote through routes that were never moved under
+ * `/api/admin`, so this suite never walked them and none checked the role. The
+ * second half below holds them to the same rule, by name
+ * (`ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API`), and a sweep finds the next one: any
+ * route outside `/api/admin` whose every `/api/…` caller in `src/` is under
+ * `src/app/admin/` must be on that list. Red once, on a scratch copy with
+ * `requireSuperuser()` taken out of `groups/[id]`'s DELETE — quoted in the
+ * #37.03 handover.
  */
 
 import { readdirSync, readFileSync, statSync } from "fs";
 import ts from "typescript";
 import { join, relative, sep } from "path";
-import { ADMIN_API_OPEN_READS } from "@/lib/auth/admin-api-access";
+import {
+  ADMIN_API_OPEN_READS,
+  ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API,
+  OUTSIDE_ADMIN_OPEN_READS,
+  OUTSIDE_ADMIN_OPEN_WRITES,
+} from "@/lib/auth/admin-api-access";
 
 const ROOT = join(__dirname, "..", "..");
 const ADMIN_API = join(ROOT, "src", "app", "api", "admin");
@@ -157,5 +172,134 @@ describe("the /api/admin role guard", () => {
     expect(checksRole(body('export async function POST() {\n  const m = "image/*";\n  const denied = await requireSuperuser();\n}'))).toBe(true);
     expect(checksRole(body("export async function POST() {\n  const r = await getCurrentUserIdAndRole();\n  return r;\n}"))).toBe(false);
     expect(handlerBody("async function POST() {}", "POST")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The admin-only routes outside /api/admin  (Slice #37.03, FU-222)
+// ---------------------------------------------------------------------------
+
+const API = join(ROOT, "src", "app", "api");
+
+/** `groups/[id]` → `src/app/api/groups/[id]/route.ts`. */
+const routeFile = (key: string) => join(API, ...key.split("/"), "route.ts");
+
+const outsideHandlers = Object.keys(ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API).flatMap((key) => {
+  const file = routeFile(key);
+  const code = readFileSync(file, "utf8");
+  return ["GET", ...MUTATING].flatMap((method) => {
+    const body = handlerBody(code, method);
+    return body ? [{ key, file: relative(ROOT, file).split(sep).join("/"), method, body }] : [];
+  });
+});
+
+/**
+ * Every route outside /api/admin, with the source files that name its URL.
+ * A dynamic segment matches `${…}` or a literal; the URL must end at a quote,
+ * a backtick, a `?` or a `${`, so `/api/groups` is not `/api/groups/${id}`.
+ */
+function callersByRoute(): Map<string, string[]> {
+  const sources = (function walkSrc(dir: string): string[] {
+    return readdirSync(dir).flatMap((name) => {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) return p === API || name === "__tests__" ? [] : walkSrc(p);
+      return /\.(ts|tsx)$/.test(name) ? [p] : [];
+    });
+  })(join(ROOT, "src")).map((p) => [relative(ROOT, p).split(sep).join("/"), readFileSync(p, "utf8")] as const);
+  const escape = (seg: string) => seg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const out = new Map<string, string[]>();
+  for (const file of walk(API)) {
+    const key = relative(API, file).split(sep).slice(0, -1).join("/");
+    if (key === "admin" || key.startsWith("admin/")) continue;
+    const pattern = key
+      .split("/")
+      .map((seg) => (/^\[.+\]$/.test(seg) ? "(?:\\$\\{[^}]+\\}|[A-Za-z0-9_-]+)" : escape(seg)))
+      .join("/");
+    const re = new RegExp(`/api/${pattern}(?=["'\`?]|\\$\\{)`);
+    out.set(key, sources.filter(([, text]) => re.test(text)).map(([name]) => name));
+  }
+  return out;
+}
+
+describe("the admin-only routes outside /api/admin (FU-222)", () => {
+  it("names only route files that exist, each with its screen", () => {
+    for (const [key, screen] of Object.entries(ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API)) {
+      expect(statSync(routeFile(key)).isFile()).toBe(true);
+      expect(screen.length).toBeGreaterThan(20);
+    }
+  });
+
+  it("finds their handlers", () => {
+    // Guards the lookup: returning nothing would make every case below vacuous.
+    expect(outsideHandlers.filter((h) => h.method !== "GET").length).toBeGreaterThanOrEqual(10);
+  });
+
+  it.each(outsideHandlers.filter((h) => h.method !== "GET").map((h) => [`${h.method} ${h.key}`, h] as const))(
+    "%s checks the role",
+    (_name, h) => {
+      if (!checksRole(h.body)) {
+        throw new Error(
+          `${h.file}: ${h.method} writes, its only screen is an admin screen ` +
+            `(${ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API[h.key]}), and it checks no role.\n\n` +
+            `Start the handler with\n\n` +
+            `  const denied = await requireSuperuser();\n  if (denied) return denied;\n\n` +
+            `and import it from "@/lib/auth/current-role".\n`,
+        );
+      }
+    },
+  );
+
+  it.each(outsideHandlers.filter((h) => h.method === "GET").map((h) => [`GET ${h.key}`, h] as const))(
+    "%s is guarded or listed as an open read",
+    (_name, h) => {
+      const guarded = checksRole(h.body);
+      const listed = h.key in OUTSIDE_ADMIN_OPEN_READS;
+      if (!guarded && !listed) {
+        throw new Error(
+          `${h.file}: GET checks no role, and is not in OUTSIDE_ADMIN_OPEN_READS.\n\n` +
+            `If only admin screens read it, guard it with requireSuperuser(); if a screen a \`user\` ` +
+            `works on reads it, add "${h.key}" to OUTSIDE_ADMIN_OPEN_READS in src/lib/auth/admin-api-access.ts.\n`,
+        );
+      }
+      expect(guarded && listed).toBe(false);
+    },
+  );
+
+  it.each(Object.keys(OUTSIDE_ADMIN_OPEN_READS).map((k) => [k] as const))(
+    "OUTSIDE_ADMIN_OPEN_READS names a listed route's GET: %s",
+    (key) => {
+      expect(outsideHandlers.some((h) => h.key === key && h.method === "GET")).toBe(true);
+      expect(OUTSIDE_ADMIN_OPEN_READS[key].length).toBeGreaterThan(20);
+    },
+  );
+
+  it.each(Object.keys(OUTSIDE_ADMIN_OPEN_WRITES).map((k) => [k] as const))(
+    "FU-223's open write is open, and says why: %s",
+    (key) => {
+      // The decision and the code must agree: listed as open means no role check.
+      expect(key in ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API).toBe(false);
+      expect(OUTSIDE_ADMIN_OPEN_WRITES[key].length).toBeGreaterThan(20);
+      const code = readFileSync(routeFile(key), "utf8");
+      const writes = MUTATING.map((m) => handlerBody(code, m)).filter((b): b is string => b !== null);
+      expect(writes.length).toBeGreaterThan(0);
+      for (const body of writes) expect(checksRole(body)).toBe(false);
+    },
+  );
+
+  it("lists every route outside /api/admin that only admin screens call", () => {
+    const callers = callersByRoute();
+    // Guards the sweep itself: it must see the routes it is meant to catch.
+    expect(callers.get("stamps/[id]")?.length ?? 0).toBeGreaterThan(0);
+    const missing = [...callers.entries()]
+      .filter(([, files]) => files.length > 0 && files.every((f) => f.startsWith("src/app/admin/")))
+      .map(([key]) => key)
+      .filter((key) => !(key in ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API) && !(key in OUTSIDE_ADMIN_OPEN_WRITES));
+    if (missing.length > 0) {
+      throw new Error(
+        `Only admin screens call these routes, but they are not in ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API ` +
+          `(src/lib/auth/admin-api-access.ts), so nothing makes them check the role:\n  ${missing.join("\n  ")}\n\n` +
+          `Add each with its screen — then this suite requires the role on its writes — or move it under /api/admin.\n`,
+      );
+    }
   });
 });

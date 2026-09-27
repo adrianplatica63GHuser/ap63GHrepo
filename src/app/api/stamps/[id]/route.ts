@@ -22,6 +22,7 @@ import {
   updateStamp,
 } from "@/lib/stamps/queries";
 import { stampUpdateSchema, type StampTargetType } from "@/lib/stamps/validation";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -38,6 +39,10 @@ function resolveTargetType(raw: string | null): StampTargetType {
 }
 
 export async function GET(request: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
   const url = new URL(request.url);
   const targetType = resolveTargetType(url.searchParams.get("targetType"));
@@ -54,6 +59,10 @@ export async function GET(request: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
 
   let body: unknown;
@@ -85,6 +94,10 @@ export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
   try {
     const ok = await deleteStamp(id);

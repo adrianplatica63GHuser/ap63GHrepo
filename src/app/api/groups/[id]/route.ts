@@ -21,10 +21,15 @@ import {
   updateGroup,
 } from "@/lib/groups/queries";
 import { groupUpdateSchema } from "@/lib/groups/validation";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is the group editor (/admin/groups/[id]) and „Grupuri".
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
   try {
     const result = await getGroupDetail(id);
@@ -38,6 +43,10 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is the group editor (/admin/groups/[id]) and „Grupuri".
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
 
   let body: unknown;
@@ -69,6 +78,10 @@ export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is the group editor (/admin/groups/[id]) and „Grupuri".
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const { id } = await ctx.params;
   try {
     const ok = await deleteGroup(id);

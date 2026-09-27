@@ -37,12 +37,17 @@ import { createProperty } from "@/lib/properties/queries";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Calcul" (/admin/calculation).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();

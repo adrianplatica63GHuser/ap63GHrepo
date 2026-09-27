@@ -11,6 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { listAllTags, renameTag } from "@/lib/metadata/queries";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 export async function GET() {
   const tags = await listAllTags();
@@ -18,6 +19,10 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Etichete" (/admin/tags), which renames and merges.
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   const body = (await req.json()) as { from?: string; to?: string };
   const from = body.from?.trim();
   const to   = body.to?.trim();

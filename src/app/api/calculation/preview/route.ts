@@ -17,8 +17,13 @@ import { unexpectedError } from "@/lib/api/errors";
 import { computeDivisionFromFile } from "@/lib/calculation/compute";
 import { DivisionError } from "@/lib/calculation/geometry";
 import { ParseError } from "@/lib/calculation/parse";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Calcul" (/admin/calculation).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();

@@ -13,8 +13,13 @@ import {
 } from "@/lib/api/errors";
 import { createStamp, listStamps } from "@/lib/stamps/queries";
 import { stampCreateSchema } from "@/lib/stamps/validation";
+import { requireSuperuser } from "@/lib/auth/current-role";
 
 export async function GET(): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Ștampile" (/admin/stamps).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   try {
     const items = await listStamps();
     return Response.json({ items });
@@ -24,6 +29,10 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // Superuser only — FU-222, Slice #37.03: its only screen is „Ștampile" (/admin/stamps).
+  const denied = await requireSuperuser();
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();
