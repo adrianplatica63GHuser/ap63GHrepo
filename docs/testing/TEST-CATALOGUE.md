@@ -71,6 +71,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
 | [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
+| [TC-PROP-05](cases/TC-PROP-05.md) | A doua proprietate pentru aceeași parcelă este refuzată | property | negative | — | `driven` | 2026-09-27 | — |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-09-25 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
@@ -100,12 +101,14 @@ fixed fixture where the existing one will do.
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
 
-**Twenty-six are `automated`, five are `driven`, and three are `draft`** — as of 2026-09-26 (Slice
-#37.02). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, TC-CALC-01,
+**Twenty-six are `automated`, six are `driven`, and three are `draft`** — as of 2026-09-27 (Slice
+#37.04). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, TC-CALC-01,
 TC-ASSOC-08 and TC-AUTH-02, and the reason for each is written here, not implied:
 
 - **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-AI-01** —
   „What a Playwright spec for an import case would need", below.
+- **`driven`, first run: TC-PROP-05**, the first `negative` case (Slice #37.04) — a second
+  run unchanged confirms it, and a promotion wave takes it.
 - **`draft`: TC-CALC-01** (Adrian's hand figure), **TC-ASSOC-08** (FU-220's column) and
   **TC-AUTH-02** (the `user` account) — each paragraph below.
 
@@ -235,7 +238,7 @@ written from an undriven file would have waited forever on a locator that was ne
 going to appear — which is the whole argument for `driven` sitting between `draft` and
 a spec.
 
-**Thirty-four cases, all `happy` but TC-AUTH-02, and that is a scope rule rather than a taste.** A case in the
+**Thirty-five cases, all `happy` but TC-AUTH-02 (`authz`) and TC-PROP-05 (`negative`), and that is a scope rule rather than a taste.** A case in the
 first cut describes a person doing the ordinary thing with ordinary data and getting the
 ordinary result. No empty inputs, no 300-character names, no two tabs at once, no
 deliberately malformed cotă-parte. Those are worth doing and they are a later slice.
@@ -311,10 +314,12 @@ with its twenty-odd property folders, `flotante` with the CVC and act-adițional
 `Modele.Acte`, `A`, `A2.*`, `A3.CVCs` — is the **archive** these folders are cut from,
 and it is **read-only**: copy out of it, never write into it and never reorganise it.
 
-**Deeper testing — the `kind` column.** Two values today. `happy` is the ordinary person
+**Deeper testing — the `kind` column.** Three values today. `happy` is the ordinary person
 doing the ordinary thing. **`authz`** (Slice #36.20) is who may do what: a case that signs in
 as one role and checks what that role is shown, turned away from and refused — TC-AUTH-02 is
-the first. Boundary, negative, stress and concurrency cases are added later by giving them
+the first. **`negative`** (Slice #37.04) is a case where the application must refuse or
+protect, and the assertion is the refusal — TC-PROP-05, a second property for a parcel that
+has one, is the first. Boundary, stress and concurrency cases are added later by giving them
 another value in that column; nothing else has to be restructured, and the happy-path rows
 are not disturbed.
 
