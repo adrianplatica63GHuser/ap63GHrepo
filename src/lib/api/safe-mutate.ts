@@ -23,6 +23,24 @@
  * `saveErrorForeignKey` and `saveError` must exist in that namespace (all four
  * form namespaces already have them).
  */
+/**
+ * What `safeMutate` throws for an answer that is not ok: the message it has
+ * always thrown, plus the status and the parsed body, so a caller that has
+ * something better to say about ONE answer can recognise it by `code` rather
+ * than by its prose.                                         (Slice #37.04)
+ * Every other caller still reads `.message`, as before.
+ */
+export class SafeMutateError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body: unknown,
+  ) {
+    super(message);
+    this.name = "SafeMutateError";
+  }
+}
+
 export async function safeMutate(
   url: string,
   options: RequestInit,
@@ -72,7 +90,7 @@ export async function safeMutate(
     if ((body as { code?: unknown } | null)?.code === "FOREIGN_KEY_VIOLATION") {
       throw new Error(t("saveErrorForeignKey"));
     }
-    throw new Error(body?.error ?? `${t("saveError")} (HTTP ${res.status})`);
+    throw new SafeMutateError(body?.error ?? `${t("saveError")} (HTTP ${res.status})`, res.status, body);
   }
 
   return res;

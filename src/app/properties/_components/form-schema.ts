@@ -214,11 +214,28 @@ export function hasFormData(values: FormValues, corners: Corner[]): boolean {
   return ADDRESS_TEXT_FIELDS.some((key) => blank(values.address[key]) !== null);
 }
 
+/**
+ * „Țară" when the form leaves it blank beside a filled address. (Slice #37.04)
+ *
+ * ⚠️ **A BLANK „Țară" USED TO THROW THE WHOLE ADDRESS AWAY** (FU-013).
+ * `property_address.country` is NOT NULL, so `toApiPayload` sent `address: null`
+ * whenever „Țară" was blank — and a street, a locality and the Street View line
+ * typed by hand vanished on „Salvează", with nothing on screen saying so. Every
+ * property in this archive is in Romania, so the blank becomes „România", the
+ * form says so under the field (`property.address.countryDefault`), and an
+ * address with nothing in it at all is still no address. No migration: the
+ * column stays NOT NULL.
+ */
+export const DEFAULT_ADDRESS_COUNTRY = "România";
+
 export function toApiPayload(
   values: FormValues,
   corners: Corner[],
 ): PropertyCreate & PropertyUpdate {
-  const addrCountry = blank(values.address.country);
+  const a = values.address;
+  const hasAddress = [a.streetLine, a.postalCode, a.locality, a.county, a.country, a.notes, a.streetViewStreetLine]
+    .some((v) => blank(v) != null);
+  const addrCountry = hasAddress ? (blank(a.country) ?? DEFAULT_ADDRESS_COUNTRY) : null;
 
   return {
     propertyTypeId:  blank(values.propertyTypeId),

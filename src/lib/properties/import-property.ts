@@ -56,9 +56,11 @@ import { eq, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { lookupTarla, property, propertyCorner } from "@/db/schema";
 import {
+  createProperty,
   createPropertyIn,
   findPropertiesByCadastralIdentity,
   updatePropertyIn,
+  type PropertyFull,
 } from "./queries";
 import { cornersEqual } from "@/lib/import/coordinate-file";
 import {
@@ -73,7 +75,7 @@ import {
   cadastralValue,
   hasCadastralIdentity,
 } from "./cadastral-identity";
-import type { CornerInput } from "./validation";
+import type { CornerInput, PropertyCreate } from "./validation";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 
@@ -159,6 +161,77 @@ type Decision =
       cornersAdded: number;
       cornersMatchOffered: boolean;
     };
+
+// ---------------------------------------------------------------------------
+// „Adaugă nou": the same lock and the same lookup, for a person's create
+// ---------------------------------------------------------------------------
+
+export type CreateUnlessParcelExistsResult =
+  /** Written. Either no parcel identity was given, or none of the archive's properties carries it. */
+  | { outcome: "created"; full: PropertyFull }
+  /** The parcel already has a property — every one found. NOTHING was written. */
+  | { outcome: "exists"; matches: CadastralMatch[] };
+
+/**
+ * The Property form's create, under the import's rule: one property per
+ * parcel.                                              (Slice #37.04, FU-016)
+ *
+ * ⚠️ **NOT A SECOND IMPLEMENTATION.** `POST /api/properties` called a bare
+ * `createProperty`, so a tarla and parcelă that already belonged to a property
+ * got a second one, silently — the gap this module's header named on purpose in
+ * #26.07. It now takes the SAME advisory lock `ensurePropertyForFolder` takes,
+ * keyed the same way (`cadastralIdentityKey` over `cadastralValue`), and asks the
+ * SAME `findPropertiesByCadastralIdentity` under it — so an import and a person
+ * creating the same parcel at the same moment are serialised against each
+ * other, and the one that comes second finds the first.
+ *
+ * What differs is only the answer to a match. The import asks the user to
+ * confirm a LINK; a person at „Adaugă nou" wanted a NEW property, so the answer
+ * is the property that exists — the route turns it into a 409 the form shows,
+ * with a way to open it. Nothing is written.
+ *
+ * The tarla half is the code the person picked (`lookup_tarla.indicativ` for
+ * `tarlaId`), because the identity is compared through `cadastralKey` on codes,
+ * never on ids — `findPropertiesByCadastralIdentity` says why. A create with no
+ * tarla or no parcelă has no identity to look for (FU-217's three paths collect
+ * neither) and is written as it always was, outside any lock.
+ */
+export async function createPropertyUnlessParcelExists(
+  input: PropertyCreate,
+  updatedBy: string | null = null,
+): Promise<CreateUnlessParcelExistsResult> {
+  const parcelaRaw = input.parcela?.trim() ?? "";
+  const hasTarla = Boolean(input.tarlaId) || Boolean(input.tarlaCode?.trim());
+  if (!hasTarla || parcelaRaw === "") {
+    return { outcome: "created", full: await createProperty(input, updatedBy) };
+  }
+
+  return await db.transaction(async (tx): Promise<CreateUnlessParcelExistsResult> => {
+    const tarlaCode = input.tarlaId
+      ? (
+          await tx
+            .select({ indicativ: lookupTarla.indicativ })
+            .from(lookupTarla)
+            .where(eq(lookupTarla.id, input.tarlaId))
+            .limit(1)
+        )[0]?.indicativ ?? ""
+      : (input.tarlaCode ?? "");
+
+    if (!hasCadastralIdentity(tarlaCode, parcelaRaw)) {
+      return { outcome: "created", full: await createPropertyIn(tx, input, updatedBy) };
+    }
+
+    const tarlaSola = cadastralValue(tarlaCode);
+    const parcela = cadastralValue(parcelaRaw);
+    const [lockA, lockB] = advisoryLockKeys(cadastralIdentityKey(tarlaSola, parcela));
+    await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
+
+    const matches = await findPropertiesByCadastralIdentity(tx, tarlaSola, parcela);
+    if (matches.length > 0) return { outcome: "exists", matches };
+
+    return { outcome: "created", full: await createPropertyIn(tx, input, updatedBy) };
+  });
+}
 
 // ---------------------------------------------------------------------------
 // The one entry point

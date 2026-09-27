@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -67,7 +68,7 @@ import {
 } from "@/lib/versioning/snapshot-lookup";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
-import { safeMutate } from "@/lib/api/safe-mutate";
+import { SafeMutateError, safeMutate } from "@/lib/api/safe-mutate";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { tabTrapMove } from "@/lib/ui/dialog-focus";
@@ -158,6 +159,22 @@ type Props = {
 // Component
 // ---------------------------------------------------------------------------
 
+/** One property the create route found on the parcel (Slice #37.04, FU-016). */
+type ParcelMatch = { id: string; code: string; nickname: string | null; tarla: string | null; parcela: string | null };
+
+/**
+ * The properties a 409 `PARCEL_EXISTS` names, or null for any other failure.
+ * Recognised by `code`, never by the message — `safe-mutate.ts` says why. The
+ * literal is written out, as `FOREIGN_KEY_VIOLATION` is there, so the route
+ * module stays out of this bundle.
+ */
+function parcelMatchesOf(err: unknown): ParcelMatch[] | null {
+  if (!(err instanceof SafeMutateError) || err.status !== 409) return null;
+  const body = err.body as { code?: unknown; matches?: unknown } | null;
+  if (body?.code !== "PARCEL_EXISTS" || !Array.isArray(body.matches)) return null;
+  return body.matches as ParcelMatch[];
+}
+
 export function PropertyForm({
   mode,
   propertyId,
@@ -232,6 +249,10 @@ export function PropertyForm({
   const [hoveredCornerIdx, setHoveredCornerIdx] = useState<number | null>(null);
   const [submitting,       setSubmitting]       = useState(false);
   const [submitError,      setSubmitError]      = useState<string | null>(null);
+  // Slice #37.04 (FU-016): „Adaugă nou" named a parcel that already has a
+  // property. The route wrote nothing and answered with what it found; the form
+  // offers to open it instead of reporting a failure.
+  const [parcelExists,     setParcelExists]     = useState<ParcelMatch[] | null>(null);
   const [confirmDelete,    setConfirmDelete]    = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
   // Slice #21.04.Import: an associated record (opened via ?readonly=true from
@@ -779,12 +800,13 @@ export function PropertyForm({
   const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
+    setParcelExists(null);
     try {
       const rawPayload = toApiPayload(values, corners);
       // Slice #19.02: when the selected type hides the address section, force
       // address: null regardless of any stale form-state from a prior type
-      // selection (toApiPayload already does this when country is blank; this
-      // catches the edge case where country WAS filled in before the type changed).
+      // selection (toApiPayload already does this when the address is empty; this
+      // catches the edge case where an address WAS filled in before the type changed).
       const selectedTypeForSave =
         (propertyTypes ?? []).find((o) => o.id === (values.propertyTypeId ?? "")) ?? null;
       const hideAddressForSave = selectedTypeForSave ? !selectedTypeForSave.showAddress : false;
@@ -813,6 +835,11 @@ export function PropertyForm({
       await queryClient.invalidateQueries({ queryKey: ["property-versions"] });
       return true;
     } catch (err) {
+      const matches = parcelMatchesOf(err);
+      if (matches) {
+        setParcelExists(matches);
+        return false;
+      }
       setSubmitError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
@@ -1229,13 +1256,17 @@ export function PropertyForm({
                       error={errors.address?.county?.message}
                       highlight={displayHighlights?.address.county}
                     />
-                    <Field
-                      label={t("address.country")}
-                      name="address.country"
-                      register={register}
-                      error={errors.address?.country?.message}
-                      highlight={displayHighlights?.address.country}
-                    />
+                    <div className="flex flex-col gap-1">
+                      <Field
+                        label={t("address.country")}
+                        name="address.country"
+                        register={register}
+                        error={errors.address?.country?.message}
+                        highlight={displayHighlights?.address.country}
+                      />
+                      {/* Slice #37.04 (FU-013): a blank „Țară" is saved as „România". */}
+                      <p className="text-xs text-fade">{t("address.countryDefault")}</p>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -1331,6 +1362,30 @@ export function PropertyForm({
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {submitError}
         </p>
+      )}
+
+      {parcelExists && parcelExists.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200"
+        >
+          <p className="font-medium">{t("parcelExists.title")}</p>
+          <p className="mt-1">
+            {t("parcelExists.body", {
+              tarla: parcelExists[0].tarla ?? "—",
+              parcela: parcelExists[0].parcela ?? "—",
+            })}
+          </p>
+          <ul className="mt-1 flex flex-col gap-0.5">
+            {parcelExists.map((m) => (
+              <li key={m.id}>
+                <Link href={`/properties/${m.id}`} className="font-medium underline">
+                  {t("parcelExists.open", { code: m.code, nickname: m.nickname ?? "" })}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {/* Action buttons. In true read-only view (opened via ?readonly=true from

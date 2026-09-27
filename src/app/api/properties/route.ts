@@ -11,7 +11,8 @@ import {
   unexpectedError,
   zodErrorToResponse,
 } from "@/lib/api/errors";
-import { createProperty, listProperties } from "@/lib/properties/queries";
+import { listProperties } from "@/lib/properties/queries";
+import { createPropertyUnlessParcelExists } from "@/lib/properties/import-property";
 import {
   propertyCreateSchema,
   propertyListQuerySchema,
@@ -19,6 +20,14 @@ import {
 import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
+
+/**
+ * The 409's `code` when „Adaugă nou" names a parcel that already has a
+ * property (Slice #37.04). Written out again in `property-form.tsx` rather than
+ * imported, the way `FOREIGN_KEY_VIOLATION` is — a route module in the client
+ * bundle to carry one string is the wrong trade.
+ */
+const PARCEL_EXISTS = "PARCEL_EXISTS";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -83,7 +92,27 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Resolved once and reused below — setInitialProvenance needs the same
     // identity, and getCurrentUserEmail() hits the Supabase session each call.
     const updatedBy = await getCurrentUserEmail();
-    const result = await createProperty(parsed.data, updatedBy);
+
+    // Slice #37.04 (FU-016): one property per parcel, under the import's lock
+    // and lookup. A match is answered, not written: the form offers to open it.
+    const outcome = await createPropertyUnlessParcelExists(parsed.data, updatedBy);
+    if (outcome.outcome === "exists") {
+      return Response.json(
+        {
+          error: "Parcela are deja o proprietate. Nu s-a creat o proprietate nouă.",
+          code: PARCEL_EXISTS,
+          matches: outcome.matches.map((m) => ({
+            id: m.id,
+            code: m.code,
+            nickname: m.nickname,
+            tarla: m.tarla,
+            parcela: m.parcela,
+          })),
+        },
+        { status: 409 },
+      );
+    }
+    const result = outcome.full;
 
     // Slice #21.07.Import — record how this entity entered the system.
     // Import paths pass the value their provenance rule inferred (or the one

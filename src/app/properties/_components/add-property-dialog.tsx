@@ -147,6 +147,14 @@ async function createProperty(
   return data.property.id;
 }
 
+/**
+ * The same photograph, as far as a browser can tell: name, size and last
+ * modification. What `scanSavedForRef` is keyed on (Slice #37.04, FU-017).
+ */
+function imageKey(file: File): string {
+  return `${file.name}\u0000${file.size}\u0000${file.lastModified}`;
+}
+
 /** Strip the file extension from a filename to use as a nickname. */
 function nicknameFromFilename(filename: string): string {
   return filename.replace(/\.[^.]+$/, "");
@@ -339,6 +347,19 @@ export function AddPropertyDialog({ onClose }: Props) {
   const [importing, setImporting] = useState(false);
   // Ids already written by an interrupted handleScanSave — see its docblock.
   const scanSavedIdsRef = useRef<string[]>([]);
+  /**
+   * WHICH image those ids were saved from.                (Slice #37.04, FU-017)
+   *
+   * ⚠️ **A RE-SCAN OF THE SAME PHOTOGRAPH IS NOT A NEW SET OF BOUNDARIES.**
+   * `handleProcess` used to clear the saved ids on every scan, so „Înapoi" from
+   * the count step and „Procesează" again on the same file wrote the properties
+   * already saved a second time — the exact duplicate #32.20's resume was built
+   * to prevent, reached by the Back button instead of the Save button. Now the
+   * ids belong to the image they came from: the same file (name, size, last
+   * modified) resumes where the last save stopped, and the count step says how
+   * many are already saved; a different file starts from nothing.
+   */
+  const scanSavedForRef = useRef<string | null>(null);
   const markImporting = (v: boolean) => { isImportingRef.current = v; setImporting(v); };
 
   // ── Navigation helpers ────────────────────────────────────────────────────
@@ -481,10 +502,15 @@ export function AddPropertyDialog({ onClose }: Props) {
   const handleProcess = async () => {
     if (!selectedFile) return;
     setError(null);
-    // A new scan is a new set of boundaries — nothing saved from a previous one
-    // may be resumed against it. See handleScanSave's docblock.
-    scanSavedIdsRef.current = [];
-    setScanSavedCount(0);
+    // A new IMAGE is a new set of boundaries — nothing saved from another one
+    // may be resumed against it. The SAME image scanned again keeps what it
+    // already saved (FU-017; see scanSavedForRef). See handleScanSave's docblock.
+    const key = imageKey(selectedFile);
+    if (scanSavedForRef.current !== key) {
+      scanSavedIdsRef.current = [];
+      setScanSavedCount(0);
+      scanSavedForRef.current = key;
+    }
     setStep("processing");
 
     const controller = new AbortController();
@@ -749,6 +775,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     setFolderHadFiles(false);
     setFolderSavedCount(0);
     scanSavedIdsRef.current = [];
+    scanSavedForRef.current = null;
     setScanSavedCount(0);
   };
 
@@ -1048,6 +1075,13 @@ export function AddPropertyDialog({ onClose }: Props) {
                 render is what `react-hooks/refs` refuses, and it is right — the
                 paragraph would not re-render when the ref changed.)
               */}
+              {/* Slice #37.04 (FU-017): the same photograph scanned again resumes. */}
+              {scanSavedCount > 0 && (
+                <p className="rounded-md bg-cta-pale px-3 py-2 text-xs text-ink dark:bg-cta/10" role="note">
+                  {t("alreadySavedFromImage", { count: scanSavedCount })}
+                </p>
+              )}
+
               <p className={NO_IDENTITY_BOX} role="note">
                 {Math.max(saveCount, scanSavedCount) === 1
                   ? t("noCadastralIdentityResult")
