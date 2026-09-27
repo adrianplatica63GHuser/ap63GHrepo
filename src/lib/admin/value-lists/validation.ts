@@ -7,7 +7,6 @@
 
 import { z } from "zod/v4";
 import type { ListKey } from "./config";
-import { DOCUMENT_TYPE_ORIGINS } from "@/lib/documents/status";
 import {
   MAX_TEMPLATE_FIELDS,
   mergeAcceptedFields,
@@ -306,23 +305,23 @@ export const documentTypeSchema = z.object({
   // outright rather than suffixed. See the ⚠️ on `createDocumentTypeRow`, which
   // this slice had to rewrite rather than leave standing.
   key: optionalDocumentTypeKey,
-  // Slice #26.12 — how this type came to exist. CREATE ONLY: see
-  // documentTypeUpdateSchema below, which omits it, and updateValue, which
-  // strips it twice over since Slice #34.14 — once for every list above its
-  // switch (`stripLookupOrigin`) and once again in the `document-types` branch.
-  // ⚠️ This field is why `createValue`'s strip has one named exception: on this
-  // ONE list a POST may legitimately state an origin.
-  //
-  // ⚠️ **No `.default()`, and that is the point.** A default would make the
-  // field present-and-MANUAL on every parse, so a payload that never mentioned
-  // origin would still arrive at the query layer carrying one. Left optional,
-  // an absent origin stays absent and `createValue` supplies MANUAL itself —
-  // one place decides the fallback instead of two.
-  origin: z.enum(DOCUMENT_TYPE_ORIGINS).optional(),
+  // ⚠️ **NO `origin`, SINCE SLICE #37.05 (FU-020).** Slice #26.12 put it here
+  // as a create-only field, which made this the one list whose POST a client
+  // could use to claim a type was AI-scanned. `origin` says who CHOSE the name,
+  // and a request is by construction a person — so the server decides it at
+  // the write site, as the tarla seed always has: `createDocumentTypeRow`
+  // writes IMPORT only for its one server-side caller that passes it
+  // (`resolveClassifiedDocumentType`), and MANUAL for everything else. zod
+  // drops an `origin` a body still sends, and `createValue` strips it again for
+  // every list (`document-type-origin-server-decides.test.ts`).
 });
 
 /**
- * The same list, minus `origin`.   (Slice #26.12)
+ * The same list, minus `key`, plus `knownKeys`.   (Slices #26.12, #34.09, #37.05)
+ *
+ * ⚠️ Since Slice #37.05 the create schema has no `origin` either (FU-020), so
+ * neither verb can name the column; the paragraph below is why the UPDATE
+ * never could, and it still holds.
  *
  * ⚠️ **Origin is write-once, and a rename is what would have broken it.** The
  * admin edit form sends only the fields in LIST_META that the EDIT verb
@@ -353,8 +352,29 @@ export const documentTypeUpdateSchema = documentTypeSchema
   // rather than incidental. (The form does not send it either: `startEdit`
   // skips `createOnly` fields. Two independent reasons, which is the shape
   // `stripDocumentTypeOrigin` argues for one field over.)
-  .omit({ origin: true, key: true })
-  .extend({ sortOrder: sortOrderOnUpdate });
+  .omit({ key: true })
+  .extend({
+    sortOrder: sortOrderOnUpdate,
+    // Slice #37.05, FU-018 — the ordered key list the writer's view of the form
+    // had when it started editing. The PUT is a FULL replace of the form, so a
+    // field another writer added meanwhile (an AI-Discovery review, another
+    // tab) would be deleted by it; `updateValue` compares this against the
+    // stored form under a row lock and throws `TemplateChangedError`, which the
+    // route answers 409 `template_changed` — the contract
+    // `PUT /api/document-types/[id]/template-fields` has always had.
+    knownKeys: z.array(z.string()).max(MAX_TEMPLATE_FIELDS).optional(),
+  })
+  .superRefine((v, ctx) => {
+    // A write of the form (an array, or null to clear it) must say what it
+    // replaces. A rename leaves `templateFields` out and needs no keys.
+    if (v.templateFields !== undefined && v.knownKeys === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["knownKeys"],
+        message: "required when templateFields is sent",
+      });
+    }
+  });
 
 export const judicialPersonTypeSchema = z.object({
   name:      z.string().min(1, "required"),

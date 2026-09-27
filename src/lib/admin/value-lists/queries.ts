@@ -109,6 +109,7 @@ import {
   catchAllFormRefusal,
 } from "@/lib/documents/catch-all-form-guard";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
+import { TemplateChangedError, sameTemplateKeys } from "@/lib/documents/template-concurrency";
 
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
@@ -489,8 +490,16 @@ export async function createValue(
   // decides and no payload may state." Zod is on the other side of this
   // function too.
   //
-  // ⚠️ **AND `document-types` IS THE ONE EXCEPTION, BECAUSE ON THAT LIST THE
-  // ORIGIN REALLY DOES COME OFF THE BODY.** `documentTypeSchema` carries
+  // ⚠️ **SLICE #37.05 CLOSED THE EXCEPTION BELOW (FU-020): `document-types`
+  // IS STRIPPED TOO NOW, AND ITS CREATE SCHEMA NO LONGER NAMES `origin`.** A
+  // request is a person, so its origin is MANUAL, decided here rather than
+  // believed. The one IMPORT writer, `resolveClassifiedDocumentType`, never
+  // came through this function (last paragraph), so it is untouched. What
+  // follows is the argument as it stood, kept because it says why the hole
+  // existed.
+  //
+  // ⚠️ **AND `document-types` WAS THE ONE EXCEPTION, BECAUSE ON THAT LIST THE
+  // ORIGIN REALLY DID COME OFF THE BODY.** `documentTypeSchema` carries
   // `origin` as a CREATE-ONLY field (validation.ts) — the one list whose POST
   // schema names the column — and `createDocumentTypeRow` honours what it is
   // given, `isDocumentTypeOrigin(data.origin) ? data.origin : "MANUAL"`, pinned
@@ -511,7 +520,7 @@ export async function createValue(
   // own advisory lock — so the exception is not protecting the import; the
   // import would be unaffected either way.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any = key === "document-types" ? payload : stripLookupOrigin(payload);
+  const data: any = stripLookupOrigin(payload);
   switch (key) {
     case "property-types": {
       // Slice #34.03: no generated `key` — see the note above
@@ -922,6 +931,14 @@ export async function updateValue(
       // named rather than inlined so each can be asserted on behaviour
       // without opening a database connection.
       const values = sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data));
+      // ── FU-018 (Slice #37.05): the keys the writer's view of the form had.
+      // Lifted out of `values` so it is never handed to `.set()`; compared
+      // under the row lock at the write below. A copy, so the caller's payload
+      // is not touched (`stripLookupOrigin` already returned a new object).
+      const knownKeys: string[] | undefined = Array.isArray(values.knownKeys)
+        ? (values.knownKeys as string[])
+        : undefined;
+      delete (values as { knownKeys?: unknown }).knownKeys;
       // ── A third guard, and it is the one that reads the ROW. (#32.07) ────
       //
       // ⚠️ **THIS IS THE DOOR THE BAD ROW MOST LIKELY CAME THROUGH, AND BOTH
@@ -1082,12 +1099,36 @@ export async function updateValue(
           if (takenBy !== null) throw new DocumentTypeNameTakenError(takenBy.name);
         }
       }
-      const [row] = await db
-        .update(lookupDocumentType)
-        .set(values)
-        .where(eq(lookupDocumentType.id, id))
-        .returning();
-      return (row as LookupRow) ?? null;
+      // ⚠️ **THE COMPARE AND THE WRITE ARE ONE TRANSACTION, THE ROW LOCKED
+      // BETWEEN THEM.** (Slice #37.05, FU-018.) This door REPLACES the form, so
+      // a field another writer added after this one opened its editor would be
+      // deleted by the save. `knownKeys` is the ordered key list the writer saw;
+      // under `FOR UPDATE` the stored form either still has it — and the write
+      // lands — or it does not, and nothing is written: `TemplateChangedError`
+      // carries the stored fields and the route answers 409 `template_changed`,
+      // the contract the other door (template-fields/route.ts) has always had.
+      // A lockless read-then-write would leave the same gap one statement wide.
+      // A PUT that does not send the form (a rename) sends no keys and is not
+      // judged; the update schema refuses a form without them.
+      return db.transaction(async (tx) => {
+        if (knownKeys !== undefined) {
+          const [locked] = await tx
+            .select({ templateFields: lookupDocumentType.templateFields })
+            .from(lookupDocumentType)
+            .where(eq(lookupDocumentType.id, id))
+            .for("update");
+          if (!locked) return null;
+          if (!sameTemplateKeys(locked.templateFields, knownKeys)) {
+            throw new TemplateChangedError(parseTemplateFields(locked.templateFields));
+          }
+        }
+        const [row] = await tx
+          .update(lookupDocumentType)
+          .set(values)
+          .where(eq(lookupDocumentType.id, id))
+          .returning();
+        return (row as LookupRow) ?? null;
+      });
     }
     case "institutions": {
       const [row] = await db.update(lookupInstitution).set(data).where(eq(lookupInstitution.id, id)).returning();

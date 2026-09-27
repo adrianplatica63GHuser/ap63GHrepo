@@ -183,8 +183,9 @@ describe("only the import claims an IMPORT origin", () => {
    *                                           STRONGER than the first, because
    *                                           it takes no origin parameter and
    *                                           reads no payload, where the
-   *                                           document-type path accepts
-   *                                           `origin` from the request body.
+   *                                           document-type path accepted
+   *                                           `origin` from the request body
+   *                                           until #37.05 closed it (FU-020).
    *
    * ⚠️ **`MENTIONS_ALLOWED` is deliberately NOT the list used here.** That map
    * is about the document-type column and keeps its own two-writer assertion
@@ -364,9 +365,11 @@ describe("only the import claims an IMPORT origin", () => {
 });
 
 describe("a rename cannot re-originate a document type", () => {
-  it("keeps origin out of the update schema entirely", () => {
+  it("keeps origin out of the update schema entirely — and, since #37.05, the create schema too", () => {
+    // FU-020: a request is a person; the server decides origin at the write
+    // site. The create schema used to keep it; it now drops it like the update.
     const created = documentTypeSchema.parse({ name: "Contract", origin: "IMPORT" });
-    expect(created.origin).toBe("IMPORT");
+    expect(created).not.toHaveProperty("origin");
 
     const updated = documentTypeUpdateSchema.parse({ name: "Contract", origin: "IMPORT" });
     expect(updated).not.toHaveProperty("origin");
@@ -473,8 +476,10 @@ describe("a rename cannot re-originate a document type", () => {
    * tests in `document-type-template-editor.test.ts`.)
    */
   it("is the only list whose update schema drops a create-only column", () => {
-    expect(documentTypeSchema.parse({ name: "Contract", origin: "IMPORT" }).origin)
-      .toBe("IMPORT");
+    // Since #37.05 neither document-types schema keeps `origin` (FU-020); what
+    // the update schema still drops that the create keeps is `key`, and that
+    // is asserted where it is argued (`document-type-template-editor.test.ts`).
+    expect(documentTypeSchema.parse({ name: "Contract", origin: "IMPORT" })).not.toHaveProperty("origin");
     expect(LIST_UPDATE_SCHEMAS["document-types"]).toBe(documentTypeUpdateSchema);
 
     for (const key of VALID_LIST_KEYS) {

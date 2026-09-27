@@ -70,6 +70,13 @@
  * that lands between the check and the write — and it is what this door allows
  * without a new route, which this slice's constraint rules out.
  *
+ * ⚠️ **SINCE SLICE #37.05 THE DOOR HAS THE 409 TOO (FU-018).** The save sends
+ * `knownKeys` — the key list read at mount — and `updateValue` compares it with
+ * the stored form under a row lock, answering 409 `template_changed` when it
+ * moved; this screen shows that as the same „changed elsewhere" message. The
+ * client-side check stays as the early answer for a change the list query has
+ * already seen; the server's is the one that cannot be raced.
+ *
  * ORDER IS ARRAY POSITION, not a number anyone types. The server renumbers
  * `order` 0..n-1 from the array it receives, so ↑/↓ moving a row IS the edit.
  */
@@ -93,12 +100,14 @@ import {
   CATCH_ALL_RENAME_CODE,
 } from "@/lib/documents/catch-all-form-guard";
 import { DOCUMENT_TYPE_NAME_TAKEN_CODE } from "@/lib/documents/document-type-name-guard";
+import { TEMPLATE_CHANGED_CODE } from "@/lib/documents/template-concurrency";
 import {
   GROUP_CUSTOM,
   GROUP_NONE,
   blankEditorRow,
   editorRowsEqual,
   fieldsFromEditorRows,
+  documentTypeFormPutBody,
   keysForRows,
   rowFromStoredField,
   sameKeyList,
@@ -240,7 +249,11 @@ export function DocumentTypeFormEditor({
         // `sortOrder` is deliberately NOT sent: since #27.03 the update schema
         // leaves the column alone when the payload does not name it, and this
         // screen has no business reordering the admin list.
-        body: JSON.stringify({ name: typeName, templateFields: fields }),
+        // `knownKeys` (Slice #37.05, FU-018): the keys this dialog OPENED with.
+        // The server compares them with the stored form under a row lock — the
+        // check below against the cached prop cannot see a change the cache
+        // has not heard of, which is the overwrite FU-018 was.
+        body: JSON.stringify(documentTypeFormPutBody(typeName, fields, loadedKeys.current)),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -283,6 +296,12 @@ export function DocumentTypeFormEditor({
         // not expect with an English server string is the thing being fixed.
         if (code === DOCUMENT_TYPE_NAME_TAKEN_CODE) {
           throw new Error(t("errorTypeNameTaken"));
+        }
+        // Slice #37.05, FU-018: the server's half of the check below — the
+        // form changed after this dialog opened. Nothing was written; the copy
+        // already says what to do (close, reopen) and why.
+        if (res.status === 409 && code === TEMPLATE_CHANGED_CODE) {
+          throw new Error(t("errorChangedElsewhere"));
         }
         throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
       }

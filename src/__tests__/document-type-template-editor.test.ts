@@ -301,12 +301,15 @@ describe("template fields go through the one sanitiser", () => {
   });
 });
 
+// `knownKeys: []` on the UPDATE parses: since Slice #37.05 (FU-018) a form
+// written through the update schema must say what it replaces, and these tests
+// are about the ceiling, not that.
 describe("the ceiling holds on this door too", () => {
   it("accepts a template exactly at the limit", () => {
     const fields = Array.from({ length: MAX_TEMPLATE_FIELDS }, (_, i) =>
       field({ key: `k${i}` }),
     );
-    expect(documentTypeUpdateSchema.safeParse({ name: "Contract", templateFields: fields }).success)
+    expect(documentTypeUpdateSchema.safeParse({ name: "Contract", templateFields: fields, knownKeys: [] }).success)
       .toBe(true);
   });
 
@@ -316,7 +319,7 @@ describe("the ceiling holds on this door too", () => {
     );
     expect(documentTypeSchema.safeParse({ name: "Contract", templateFields: fields }).success)
       .toBe(false);
-    expect(documentTypeUpdateSchema.safeParse({ name: "Contract", templateFields: fields }).success)
+    expect(documentTypeUpdateSchema.safeParse({ name: "Contract", templateFields: fields, knownKeys: [] }).success)
       .toBe(false);
   });
 });

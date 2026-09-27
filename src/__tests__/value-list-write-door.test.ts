@@ -238,7 +238,7 @@ describe("§2 updateValue writes nothing the strip has not been through", () => 
 // `lookupTarla.origin`'s header forbids in as many words: „This is the ONE
 // column on this table the server decides and no payload may state."
 
-describe("§2b createValue strips it too, on every list but document-types", () => {
+describe("§2b createValue strips it too, on every list — document-types included since #37.05", () => {
   it("takes its payload under a name the switch does not use", () => {
     expect(CREATE_VALUE.length > 0 ? "found" : "createValue not found").toBe("found");
     expect(CREATE_VALUE).toContain("payload: any,");
@@ -246,18 +246,17 @@ describe("§2b createValue strips it too, on every list but document-types", () 
   });
 
   /**
-   * ⚠️ **`document-types` IS EXEMPT AND THAT IS NOT AN OVERSIGHT.** Its branch
-   * hands `data` to `createDocumentTypeRow`, whose contract is to HONOUR a
-   * caller's origin — the classifier's resolver mints types mid-import and has
-   * to be able to say so. `document-type-origin-single-source.test.ts` pins
-   * that conditional as an expression. So the exception is asserted here, in
-   * the shape it is written, rather than left to be re-derived by whoever next
-   * wonders why the strip is not unconditional on this door.
+   * ⚠️ **`document-types` WAS EXEMPT UNTIL SLICE #37.05, AND FU-020 IS WHY IT
+   * IS NOT.** Its branch hands `data` to `createDocumentTypeRow`, whose contract
+   * is to HONOUR a caller's origin — and the exemption let a REQUEST be such a
+   * caller, so any client could claim a type was AI-scanned. The one caller that
+   * legitimately states IMPORT, the classifier's resolver, calls
+   * `createDocumentTypeRow` directly and never came through here, so the strip
+   * is now unconditional on this door as it is on the update door.
+   * `document-type-origin-server-decides.test.ts` asserts it on behaviour.
    */
-  it("strips once, with document-types named as the one exception", () => {
-    expect(CREATE_VALUE).toContain(
-      'const data: any = key === "document-types" ? payload : stripLookupOrigin(payload);',
-    );
+  it("strips once, for every list", () => {
+    expect(CREATE_VALUE).toContain("const data: any = stripLookupOrigin(payload);");
     const calls = CREATE_VALUE.match(/stripLookupOrigin\(/g) ?? [];
     expect(`stripLookupOrigin called ${calls.length} time(s)`).toBe(
       "stripLookupOrigin called 1 time(s)",

@@ -44,6 +44,7 @@ import {
   DOCUMENT_TYPE_NAME_TAKEN_CODE,
   DOCUMENT_TYPE_NAME_UNIQUE_INDEX,
 } from "@/lib/documents/document-type-name-guard";
+import { TEMPLATE_CHANGED_CODE, asTemplateChanged } from "@/lib/documents/template-concurrency";
 import {
   asTarlaCodeTaken,
   TARLA_CODE_TAKEN_CODE,
@@ -109,6 +110,20 @@ export async function PUT(
     // sentence rather than that one. A 409 would have avoided the collision
     // and would have been wrong: nothing is racing, and nothing about
     // retrying helps.
+    // FU-018 (Slice #37.05): the form changed between the editor opening and
+    // this save. The same 409 body the template-fields PUT sends, stored fields
+    // included, so a screen can say what arrived.
+    const changed = asTemplateChanged(err);
+    if (changed !== null) {
+      return Response.json(
+        {
+          error: "The form for this document type changed while it was being edited.",
+          code:  TEMPLATE_CHANGED_CODE,
+          fields: changed.fields,
+        },
+        { status: 409 },
+      );
+    }
     const idCard = asIdCardFormRefusal(err);
     if (idCard !== null) {
       return Response.json(

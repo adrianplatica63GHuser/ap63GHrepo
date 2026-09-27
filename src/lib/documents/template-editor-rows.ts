@@ -440,3 +440,23 @@ export function editorRowsEqual(
 export function sameKeyList(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((k, i) => k === b[i]);
 }
+
+/**
+ * The body of the form editor's save.                      (Slice #37.05, FU-018)
+ *
+ * `name` because the PUT is a full-row replace whose schema requires it;
+ * `templateFields`, the whole form; and `knownKeys`, the ordered key list the
+ * editor OPENED with — which the server compares against the stored form under
+ * a row lock, answering 409 `template_changed` when another writer changed it
+ * meanwhile. Without it the update schema refuses the form: a full replace
+ * that cannot say what it replaces is exactly the silent overwrite FU-018 was.
+ * `sortOrder` is deliberately absent (the screen has no business reordering
+ * the admin list; see the editor's mutation).
+ */
+export function documentTypeFormPutBody<F>(
+  name: string,
+  templateFields: F[],
+  knownKeys: readonly string[],
+): { name: string; templateFields: F[]; knownKeys: string[] } {
+  return { name, templateFields, knownKeys: [...knownKeys] };
+}
