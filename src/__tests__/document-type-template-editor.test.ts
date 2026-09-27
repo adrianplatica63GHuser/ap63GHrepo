@@ -93,10 +93,15 @@ function field(over: Partial<DocumentTemplateField> = {}): DocumentTemplateField
 const LISTS_WITH_SORT_ORDER = VALID_LIST_KEYS.filter((k) => k !== "person-roles");
 
 describe("a rename cannot reset a sort order", () => {
-  it("defaults sortOrder to 0 on a create, for every list that has one", () => {
+  // Slice #37.07 (FU-056): a create no longer defaults to 0 — that put every
+  // added row above the seeded ones. Absent stays absent, and createValue
+  // appends the row after the list's largest sort_order
+  // (value-list-append-order.test.ts). A stated number is still kept.
+  it("leaves sortOrder absent on a create that does not state one, for every list that has one", () => {
     for (const key of LISTS_WITH_SORT_ORDER) {
       const parsed = LIST_SCHEMAS[key].parse(MINIMAL);
-      expect([key, parsed.sortOrder]).toEqual([key, 0]);
+      expect([key, "sortOrder" in parsed]).toEqual([key, false]);
+      expect([key, LIST_SCHEMAS[key].parse({ ...MINIMAL, sortOrder: 7 }).sortOrder]).toEqual([key, 7]);
     }
   });
 

@@ -677,7 +677,10 @@ describe("§6 person-roles does not write sort_order", () => {
 
   it("the identical relationship-role lists DO still write one — their lists read it", () => {
     for (const key of ["property-property-roles", "document-document-roles"] as const) {
-      expect(LIST_SCHEMAS[key].parse({ name: "Anexă" }).sortOrder).toBe(0);
+      // Absent since #37.07 (FU-056): createValue appends it after the list's
+      // largest sort_order. What makes these lists „write one" is that their
+      // schema carries the field at all, which a stated number proves.
+      expect(LIST_SCHEMAS[key].parse({ name: "Anexă" })).not.toHaveProperty("sortOrder");
       expect(LIST_SCHEMAS[key].parse({ name: "Anexă", sortOrder: 7 }).sortOrder).toBe(7);
     }
   });
