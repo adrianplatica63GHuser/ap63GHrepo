@@ -47,6 +47,27 @@ export const FORMS_FILE_ABOUT: readonly string[] = [
   "Types whose template_fields is NULL are not listed.",
 ];
 
+/**
+ * Types that hold a form in the database but are NOT seeded by
+ * `src/db/sync-reference-data.sql` — so a rebuilt database has no row for the
+ * form to land on. Each is argued for by name, and the jest guard holds this
+ * list to exactly the file's unseeded keys: a NEW unseeded type with a form
+ * turns the guard red until somebody decides what it is.
+ *
+ * ⚠️ **THE FORM IS KEPT, THE TYPE IS NOT RECREATED.** The SQL below still
+ * writes an UPDATE for each of these (it matches no row on a rebuild and a row
+ * on a database that has the type), and its load check skips them with a
+ * NOTICE instead of failing. Seeding one means adding it to the classifier's
+ * catalogue (`KNOWN_DOCUMENT_TYPES` and both prompts, which the catalogue test
+ * binds to the seed), which is a decision about the archive, not about this
+ * file.
+ */
+export const FORMS_OF_UNSEEDED_TYPES: Readonly<Record<string, string>> = {
+  ANUNT_VANZARE_TEREN_POSTARE_FACEBOOK:
+    "Created in Adrian's database, not by the seed, and given a 3-field form there (first export, Slice #37.05). " +
+    "Whether it joins the catalogue or goes is Adrian's call (FU-244).",
+};
+
 /** One stored form: the type's key and its `template_fields` array, as stored. */
 export interface StoredForm {
   key: string;
@@ -126,9 +147,10 @@ export const TYPE_KEY_RE = /^[A-Z0-9_]{1,64}$/;
  * `build-ciprian-image.ps1` appends to Ciprian's package.
  *
  * ⚠️ **UPDATE, never INSERT.** The file holds forms, not types: a type the seed
- * does not create is refused by the jest guard before this runs, and the
- * trailing DO block fails the load if any UPDATE matched no row — a form that
- * silently went nowhere is FU-019 again, one file later.
+ * does not create is refused by the jest guard unless it is named in
+ * `FORMS_OF_UNSEEDED_TYPES`, and the trailing DO block fails the load if any
+ * other UPDATE matched no row — a form that silently went nowhere is FU-019
+ * again, one file later.
  */
 export function formsFileToSql(file: FormsFile): string {
   const out: string[] = [
@@ -144,8 +166,15 @@ export function formsFileToSql(file: FormsFile): string {
     while (json.includes(`$${tag}$`)) tag += "_";
     out.push(`UPDATE lookup_document_type SET template_fields = $${tag}$${json}$${tag}$::jsonb WHERE key = '${form.key}';`);
   }
-  const keys = sorted.map((f) => `'${f.key}'`).join(", ");
-  if (sorted.length > 0) {
+  const checked = sorted.filter((f) => !(f.key in FORMS_OF_UNSEEDED_TYPES));
+  const keys = checked.map((f) => `'${f.key}'`).join(", ");
+  for (const f of sorted.filter((x) => x.key in FORMS_OF_UNSEEDED_TYPES)) {
+    out.push(
+      `DO $note$ BEGIN IF NOT EXISTS (SELECT 1 FROM lookup_document_type WHERE key = '${f.key}') THEN ` +
+        `RAISE NOTICE 'document-type forms: % is not seeded; its form is kept in the file only', '${f.key}'; END IF; END $note$;`,
+    );
+  }
+  if (checked.length > 0) {
     out.push(
       "DO $check$",
       "DECLARE missing text;",

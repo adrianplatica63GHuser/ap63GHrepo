@@ -7,6 +7,7 @@
  */
 import {
   FORMS_FILE_ABOUT,
+  FORMS_OF_UNSEEDED_TYPES,
   canonicalJson,
   formsDrift,
   formsDriftLine,
@@ -77,6 +78,14 @@ describe("the SQL a rebuild runs", () => {
   it("fails the load when a key names no type, rather than dropping the form", () => {
     expect(sql).toMatch(/RAISE EXCEPTION 'document-type forms: no type with key %/);
     expect(sql).toContain("ARRAY['ACT_A', 'ACT_B']");
+  });
+
+  it("writes an unseeded type's form, and only NOTES it when the type is missing", () => {
+    const [unseeded] = Object.keys(FORMS_OF_UNSEEDED_TYPES);
+    const out = formsFileToSql({ about: [], forms: [A, { key: unseeded, fields: [] }] });
+    expect(out).toContain(`WHERE key = '${unseeded}';`);
+    expect(out).toContain(`RAISE NOTICE 'document-type forms: % is not seeded; its form is kept in the file only', '${unseeded}'`);
+    expect(out).toContain("ARRAY['ACT_B']");
   });
 
   it("picks a different quote tag when a form contains the default one", () => {

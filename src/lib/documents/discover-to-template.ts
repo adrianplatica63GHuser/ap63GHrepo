@@ -181,7 +181,7 @@ function rawFieldSlug(label: string): string {
  * that already has data under it must survive untouched, and the codebase's
  * own hand-written templates are camelCase.
  */
-const SAFE_KEY = /^[^\s"\\]{1,64}$/;
+export const SAFE_KEY = /^[^\s"\\]{1,64}$/;
 
 /**
  * The form two keys are compared in when asking "are these the same field?".

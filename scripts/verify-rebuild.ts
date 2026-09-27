@@ -35,6 +35,11 @@
  *      lookup table empty or keyless without saying why, and seeds the same ROWS
  *      the migrations seed -- also against the baseline, because today it does
  *      not.
+ *      Then src/db/document-type-forms.json loads onto BOTH rebuilt databases
+ *      and every seeded type reads its form back identical (Slice #37.05,
+ *      FU-019) -- the forms are data typed on screens, and that file is the
+ *      only copy outside Adrian's database. Loaded before the rows are
+ *      compared, onto both sides, so it moves no line of the baseline.
  *   6. supabase_reset.sql leaves nothing behind AND the full schema applies
  *      again on top of it -- which is the sequence the file exists for, and
  *      which "nothing left behind" alone does not prove.
@@ -103,6 +108,14 @@
 import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
+
+import {
+  FORMS_FILE_REL,
+  FORMS_OF_UNSEEDED_TYPES,
+  canonicalJson,
+  formsFileToSql,
+  parseFormsFile,
+} from "../src/lib/documents/document-type-forms-file";
 
 // ---------------------------------------------------------------------------
 // Objects this check cannot verify when PostGIS is stubbed.
@@ -1064,6 +1077,7 @@ function main(): void {
     bad(`src/db/sync-reference-data.sql exited ${refRun.status}:\n${indent(refRun.err)}`);
   } else {
     ok("applied cleanly");
+    loadDocumentTypeForms();
     const lookupTables = rows(
       DB_FULL,
       "SELECT table_name FROM information_schema.tables WHERE table_schema='public' " +
@@ -1375,6 +1389,65 @@ function main(): void {
  * sync regenerates, with foreign keys resolved to the referenced row's `name`
  * so two databases that do not share UUIDs can still be compared.
  */
+/**
+ * The document-type forms file, onto both rebuilt databases.   (Slice #37.05, FU-019)
+ *
+ * A form is `template_fields` on a `lookup_document_type` row, typed on a
+ * screen; no migration and no seed holds it (migration_085's two are history).
+ * So a rebuild that stops at sync-reference-data.sql is a project without its
+ * forms, and this step is where "the rebuild reads the file" is proven rather
+ * than claimed: the file's own SQL (the same `formsFileToSql` that
+ * `scripts/document-type-forms.ts sql` prints) is applied to BOTH databases —
+ * both, so the reference-row comparison after it sees the same forms on each
+ * side and the baseline does not move — and every seeded type's form is read
+ * back and compared as jsonb.
+ */
+function loadDocumentTypeForms(): void {
+  const abs = path.join(REPO, ...FORMS_FILE_REL.split("/"));
+  if (!fs.existsSync(abs)) {
+    bad(`${FORMS_FILE_REL} is missing - a rebuilt project would have no document-type forms`);
+    return;
+  }
+  let sql: string;
+  let forms: { key: string; fields: unknown[] }[];
+  try {
+    forms = parseFormsFile(fs.readFileSync(abs, "utf-8")).forms;
+    sql = formsFileToSql({ about: [], forms });
+  } catch (e) {
+    bad(`${FORMS_FILE_REL}: ${(e as Error).message}`);
+    return;
+  }
+  for (const db of [DB_MIGRATIONS, DB_FULL]) {
+    try {
+      applyText(db, sql);
+    } catch (e) {
+      bad(`${FORMS_FILE_REL} did not load onto ${db}:\n${indent((e as Error).message)}`);
+      return;
+    }
+  }
+  const seeded = forms.filter((f) => !(f.key in FORMS_OF_UNSEEDED_TYPES));
+  const wrong: string[] = [];
+  for (const db of [DB_MIGRATIONS, DB_FULL]) {
+    for (const f of seeded) {
+      const got = query(db, `SELECT template_fields::text FROM public.lookup_document_type WHERE key = '${f.key}'`);
+      let value: unknown = null;
+      try {
+        value = got === "" ? null : JSON.parse(got);
+      } catch {
+        value = got;
+      }
+      if (canonicalJson(value) !== canonicalJson(f.fields)) wrong.push(`${db}: ${f.key}`);
+    }
+  }
+  if (wrong.length > 0) {
+    bad(`${FORMS_FILE_REL} loaded, but these forms did not read back identical: ${wrong.join(", ")}`);
+    return;
+  }
+  ok(`${seeded.length} form(s) from ${FORMS_FILE_REL} loaded onto both rebuilt databases and read back identical`);
+  const unseeded = forms.filter((f) => f.key in FORMS_OF_UNSEEDED_TYPES).map((f) => f.key);
+  if (unseeded.length > 0) info(`kept in the file only, because no seed creates the type: ${unseeded.join(", ")}`);
+}
+
 function referenceRows(db: string, table: string): string[] {
   const cols = rows(
     db,

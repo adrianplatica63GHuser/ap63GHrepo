@@ -6,7 +6,7 @@
  *   npx tsx scripts/document-type-forms.ts check    one line: does the database still
  *                                                   match the file? (the runner's
  *                                                   `forms-drift` step in `full`)
- *   npx tsx scripts/document-type-forms.ts sql      print the file as SQL, for a rebuild:
+ *   npx tsx scripts/document-type-forms.ts sql [out] print the file as SQL (or write it to out), for a rebuild:
  *                                                   ... sql | docker exec -i ga40prj-postgres psql -U postgres -d ga40db -v ON_ERROR_STOP=1
  *
  * `export` and `check` are normally run by the test runner
@@ -117,7 +117,13 @@ function main(): void {
   const mode = process.argv[2];
   if (mode === "sql") {
     if (!fs.existsSync(FILE)) fail(`${FORMS_FILE_REL} does not exist`);
-    process.stdout.write(formsFileToSql(parseFormsFile(fs.readFileSync(FILE, "utf8"))));
+    const sql = formsFileToSql(parseFormsFile(fs.readFileSync(FILE, "utf8")));
+    // An output path, for a caller that cannot read UTF-8 off a pipe
+    // (build-ciprian-image.ps1: Windows PowerShell decodes native output in the
+    // console code page). Otherwise stdout, for `| docker exec -i … psql`.
+    const out = process.argv[3];
+    if (out) fs.writeFileSync(out, sql, "utf8");
+    else process.stdout.write(sql);
     return;
   }
   if (mode === "export") {

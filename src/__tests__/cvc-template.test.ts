@@ -3,14 +3,18 @@
  *
  * WHAT THIS FILE IS FOR
  * ---------------------
- * The two templates are DATA — JSON arrays on two `lookup_document_type` rows
- * — and they ship in two files at once: `migration_085_seed_cvc_templates.sql`
- * for a database migrated forward, `src/db/sync-reference-data.sql` for one
- * rebuilt from scratch. That duplication is deliberate (a template typed into
- * Reference Data exists only in Adrian's database, and `Verify-Rebuild.ps1`
- * would never see it) and it is exactly the shape this project has been caught
- * by before: one list written twice, drifting quietly. So the first thing
- * asserted here is that the two copies are identical.
+ * The two templates are DATA — JSON arrays on two `lookup_document_type` rows.
+ * Slice #36.01 shipped them twice, in `migration_085_seed_cvc_templates.sql`
+ * and in `src/db/sync-reference-data.sql`, and asserted the two identical.
+ *
+ * ⚠️ **SINCE SLICE #37.05 THEY LIVE IN ONE FILE, AND IT IS NOT EITHER OF
+ * THOSE.** `src/db/document-type-forms.json` holds every type's form, exported
+ * from the local database by the test runner (FU-019), and it is the source of
+ * truth: both rebuild paths load it last (`scripts/verify-rebuild.ts`), and the
+ * copy in `sync-reference-data.sql` is gone. migration_085 stays, because a
+ * migration that ran is never edited — it is history. So the rules below are
+ * asserted on the FILE's two forms, which is what a rebuilt database gets and
+ * what the export keeps in step with the screens.
  *
  * The rest are the rules #36.01 was written to enforce, and every one of them
  * is a rule some earlier attempt broke:
@@ -27,8 +31,8 @@
  *    the type forever, and the notebook solves page height, not prompt cost.
  *    The two are not interchangeable.
  *
- * Both SQL files are parsed rather than a shared fixture being imported,
- * because the files ARE the deliverable: a test that read a TypeScript copy of
+ * The JSON file is parsed rather than a shared fixture being imported,
+ * because the file IS the deliverable: a test that read a TypeScript copy of
  * the template would stay green while the thing that actually reaches the
  * database drifted.
  */
@@ -47,49 +51,44 @@ import {
 import { isFeesGroup, isFinancialGroup } from "@/lib/documents/template-groups";
 import { templateTabsOf } from "@/lib/documents/template-tabs";
 import { documentTypeSchema } from "@/lib/admin/value-lists/validation";
+import { FORMS_FILE_REL, parseFormsFile } from "@/lib/documents/document-type-forms-file";
 
 const DB = join(process.cwd(), "src", "db");
-
-/**
- * Pull one dollar-quoted JSON array out of a .sql file.
- *
- * Both files write the templates as `$cvc$ … $cvc$::jsonb` / `$act$ … $act$`,
- * which is what keeps Romanian quotation marks and apostrophes out of the
- * escaping business entirely.
- */
-function templateFromSql(file: string, tag: "cvc" | "act"): unknown {
-  const sql = readFileSync(join(DB, file), "utf8");
-  const open = `$${tag}$`;
-  const from = sql.indexOf(open);
-  expect(from).toBeGreaterThan(-1);
-  const to = sql.indexOf(open, from + open.length);
-  expect(to).toBeGreaterThan(from);
-  return JSON.parse(sql.slice(from + open.length, to));
-}
 
 const MIGRATION = "migration_085_seed_cvc_templates.sql";
 const SEED = "sync-reference-data.sql";
 
-const cvcRaw = templateFromSql(MIGRATION, "cvc");
-const actRaw = templateFromSql(MIGRATION, "act");
+const FORMS = parseFormsFile(readFileSync(join(process.cwd(), FORMS_FILE_REL), "utf8")).forms;
+function formOf(key: string): unknown {
+  const form = FORMS.find((f) => f.key === key);
+  expect(form ? key : `no form for ${key}`).toBe(key);
+  return form?.fields;
+}
+
+const cvcRaw = formOf("CONTRACT_VANZARE");
+const actRaw = formOf("ACT_ADITIONAL");
 const cvc = parseTemplateFields(cvcRaw);
 const act = parseTemplateFields(actRaw);
 
-describe("the migration and the rebuild seed carry the same two forms", () => {
-  it("writes CONTRACT_VANZARE identically in both files", () => {
-    expect(templateFromSql(SEED, "cvc")).toEqual(cvcRaw);
+/** Strip `-- …` comment lines, so a comment about the forms is not read as a form. */
+const withoutComments = (sql: string) =>
+  sql.split("\n").filter((l) => !/^\s*--/.test(l)).join("\n");
+
+describe("the two forms have one source, and it is the forms file", () => {
+  it("holds CONTRACT_VANZARE and ACT_ADITIONAL in the forms file", () => {
+    expect(Array.isArray(cvcRaw) && cvcRaw.length).toBeGreaterThan(0);
+    expect(Array.isArray(actRaw) && actRaw.length).toBeGreaterThan(0);
   });
 
-  it("writes ACT_ADITIONAL identically in both files", () => {
-    expect(templateFromSql(SEED, "act")).toEqual(actRaw);
+  it("no longer writes any form in the rebuild seed — a second copy is how they drifted", () => {
+    const sql = withoutComments(readFileSync(join(DB, SEED), "utf8"));
+    expect(sql).not.toMatch(/template_fields/);
   });
 
-  it("targets the two type keys by key, in both files", () => {
-    for (const file of [MIGRATION, SEED]) {
-      const sql = readFileSync(join(DB, file), "utf8");
-      expect(sql).toContain("WHERE key = 'CONTRACT_VANZARE'");
-      expect(sql).toContain("WHERE key = 'ACT_ADITIONAL'");
-    }
+  it("keeps migration_085 as history: it still targets the two keys by key", () => {
+    const sql = readFileSync(join(DB, MIGRATION), "utf8");
+    expect(sql).toContain("WHERE key = 'CONTRACT_VANZARE'");
+    expect(sql).toContain("WHERE key = 'ACT_ADITIONAL'");
   });
 });
 
