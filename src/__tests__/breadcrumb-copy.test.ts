@@ -6,6 +6,13 @@
  */
 import ro from "../../messages/ro-RO.json";
 
+// breadcrumb-bar.tsx is a client component; only its pure `buildSegments` is
+// under test, so what it imports for rendering is stood in for.
+jest.mock("next-intl", () => ({ useTranslations: () => (k: string) => k }));
+jest.mock("next/navigation", () => ({ usePathname: () => "/", useSearchParams: () => new URLSearchParams() }));
+jest.mock("@/components/providers/navigation-history-provider", () => ({ useNavigationHistory: () => ({}) }));
+jest.mock("@/components/help/screen-help-button", () => ({ ScreenHelpButton: () => null }));
+
 describe("the breadcrumb's words", () => {
   it("FU-070: calls the documents list „Acte”, as its title does", () => {
     expect(ro.navigation.breadcrumb.documents).toBe(ro.document.listTitle);
