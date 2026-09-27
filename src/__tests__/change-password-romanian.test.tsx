@@ -31,7 +31,9 @@ jest.mock("@/lib/supabase/client", () => ({
 import { ChangePasswordForm } from "@/app/account/change-password/change-password-form";
 
 const c = ro.auth.changePassword;
-const ENGLISH = /Password|Confirm|Cancel|Minimum 8 characters|Something went wrong|Redirecting|Update/;
+// Whole words: „Confirmă" begins with „Confirm", and `\b` does not see „ă" as a
+// letter (.claude/rules/i18n-and-romanian.md), hence the Unicode lookahead.
+const ENGLISH = /(?<![\p{L}])(Password|Confirm|Cancel|Update|Redirecting)(?![\p{L}])|Minimum 8 characters|Something went wrong/u;
 
 describe("FU-246: the change-password form speaks Romanian", () => {
   it("labels, hint and buttons come from the messages", () => {
