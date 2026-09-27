@@ -33,6 +33,21 @@ const DECEASED = `Vasile ${MARK} Defunct`;
 const HEIR = `Maria ${MARK} Mostenitor`;
 const CERTIFICATE = `${MARK} Certificat de test`;
 
+/**
+ * „+ Adaugă parte" is a button that navigates once the page is interactive; a
+ * press the moment the certificate renders can do nothing, and the screen it
+ * opens compiles on first request under `next dev` (the first runner run,
+ * 20260927T004011Z-17430, sat 30 s on the certificate). So it is pressed until
+ * the screen changes, for up to 90 s.
+ */
+async function openAddParty(page: Page, documentId: string) {
+  await expect(async () => {
+    if (/associate-party$/.test(page.url())) return;
+    await page.getByRole("button", { name: "+ Adaugă parte" }).click({ timeout: 5_000 });
+    await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-party$`), { timeout: 15_000 });
+  }).toPass({ timeout: 90_000 });
+}
+
 /** On „Adaugă parte la certificat": pick the person, the quality, „Adaugă parte". */
 async function pickParty(page: Page, documentId: string, person: string, quality: "Defunct" | "Moștenitor") {
   await page.getByPlaceholder("Nume…", { exact: true }).fill(MARK);
@@ -47,7 +62,8 @@ async function pickParty(page: Page, documentId: string, person: string, quality
 
 test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor", () => {
   test("două părți cu calitatea lor în „Părți”; legătura văzută din ambele capete", async ({ page }) => {
-    test.slow();
+    // Room for a first-request compile of the screen it opens (below) and for the `finally`.
+    test.setTimeout(240_000);
     await removeLeftovers(page.request, MARK);
     const deceasedId = await createNaturalPerson(page.request, { lastName: `${MARK} Defunct`, firstName: "Vasile" });
     const heirId = await createNaturalPerson(page.request, { lastName: `${MARK} Mostenitor`, firstName: "Maria" });
@@ -61,11 +77,11 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(page.getByRole("tab", { name: "Detalii" })).toBeVisible();
       await expect(page.getByText("Părți", { exact: true })).toBeVisible();
       await expect(page.getByText("Nicio parte adăugată")).toBeVisible();
+      await expect(page.getByRole("button", { name: "+ Adaugă parte" })).toBeVisible();
 
       // Step 3 — „+ Adaugă parte": the screen, the title, „Nume" / „Cod", Cod · Nume · Tip with a
       // radio per row, a pager, „Calitate" with „Defunct" / „Moștenitor", „Selectați o persoană".
-      await page.getByText("+ Adaugă parte", { exact: true }).click();
-      await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-party$`), { timeout: 30_000 });
+      await openAddParty(page, documentId);
       await expect(page.getByRole("heading", { name: "Adaugă parte la certificat" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(CERTIFICATE).first()).toBeVisible();
       await expect(page.getByPlaceholder("Nume…", { exact: true })).toBeVisible();
@@ -90,8 +106,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(parties.getByRole("button", { name: "Elimină" })).toHaveCount(1);
 
       // Step 6 — „+ Adaugă parte" again, the heir, „Moștenitor": two rows, the newest first.
-      await page.getByText("+ Adaugă parte", { exact: true }).click();
-      await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-party$`), { timeout: 30_000 });
+      await openAddParty(page, documentId);
       await pickParty(page, documentId, HEIR, "Moștenitor");
       await expect(parties.locator("tbody tr")).toHaveCount(2, { timeout: 15_000 });
       await expect(parties.locator("tbody tr").nth(0)).toContainText(HEIR);

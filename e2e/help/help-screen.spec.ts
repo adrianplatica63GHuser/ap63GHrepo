@@ -74,7 +74,8 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
 
       // Step 4 — the new sentence; „Previzualizare" follows.
       await howToRo.fill(TC_TEXT);
-      await expect(page.getByText(TC_TEXT, { exact: true })).toBeVisible();
+      // The preview's paragraph — the text area holds the same words.
+      await expect(page.locator("main p").filter({ hasText: TC_TEXT })).toBeVisible();
 
       // Step 5 — „Salvează": „Salvat".
       await save.click();

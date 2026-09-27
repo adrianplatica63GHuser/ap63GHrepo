@@ -49,8 +49,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       // Step 2 — headed with the title, „Stare procesare: Neprocesat", „v 0", „Fă curentă" disabled.
       await row.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: titled("Unu") })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText("Stare procesare:")).toBeVisible();
-      await expect(page.getByText("Neprocesat", { exact: true })).toBeVisible();
+      await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Fă curentă" })).toBeDisabled();
 

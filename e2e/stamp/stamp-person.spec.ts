@@ -42,7 +42,8 @@ const PERSON = `Ion ${MARK}`;
 
 test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și găsită din ambele capete", () => {
   test("ștampilă nouă, aplicată unei persoane, numărată și văzută pe persoană; apoi ștearsă", async ({ page }) => {
-    test.slow();
+    // Room for a first-request compile of the screen it opens (below) and for the `finally`.
+    test.setTimeout(240_000);
     await removeStampLeftovers(page.request, MARK);
     await removeLeftovers(page.request, MARK);
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
@@ -87,8 +88,14 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await expect(first.locator("td").nth(1)).toHaveText("0");
 
       // Step 5 — „Aplică": the stamp's own screen.
-      await first.getByRole("link", { name: "Aplică", exact: true }).click();
-      await expect(page).toHaveURL(/\/admin\/stamps\/[0-9a-f-]+$/, { timeout: 30_000 });
+      // Pressed until the screen changes, for up to 90 s: the first runner run
+      // (20260927T004011Z-17430) sat 30 s on „Ștampile" after pressing it — a
+      // press during the list's re-render, or a first-request compile.
+      await expect(async () => {
+        if (/\/admin\/stamps\/[0-9a-f-]+$/.test(page.url())) return;
+        await first.getByRole("link", { name: "Aplică", exact: true }).click({ timeout: 5_000 });
+        await expect(page).toHaveURL(/\/admin\/stamps\/[0-9a-f-]+$/, { timeout: 15_000 });
+      }).toPass({ timeout: 90_000 });
       await expect(page.getByRole("heading", { name: new RegExp(`^Aplică ștampila: STMP-[A-Z]{3} - ${DESCRIPTION}$`) }))
         .toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Cod", { exact: true }).first()).toBeVisible();
