@@ -19,9 +19,9 @@
  *     `TC-PROP`, and the two names sort in the case's order, 01 then 02.
  *   - „Descriere" is `TC-E2E-GRP-01 Grup de test`, 26 characters, so step 4's
  *     counter reads „26/500 caractere" where the case's reads „22/500".
- *   - The add-group form's „Descriere" has no accessible name (its <label> is
- *     not tied to the <textarea>), so it is found inside the form headed
- *     „Adaugă grup nou". Noted in the #36.18 handover, not changed here.
+ *   - Since Slice #37.07 (FU-219) the form's controls are found by their
+ *     labels and the editor's panels as named regions, which is how a screen
+ *     reader reaches them; before, neither had an accessible name.
  */
 
 import { test, expect } from "@playwright/test";
@@ -71,10 +71,10 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
       await page.getByRole("button", { name: "+ Adaugă" }).click();
       const form = page.getByRole("heading", { name: "Adaugă grup nou" }).locator("..");
       await expect(form).toBeVisible();
-      await expect(form.getByRole("combobox").locator("option:checked")).toHaveText("Proprietate");
+      await expect(form.getByLabel("Țintă").locator("option:checked")).toHaveText("Proprietate");
 
       // Step 3 — „Descriere", „Salvează": stays on the list, a new row „(0)", N+1.
-      await form.locator("textarea").fill(DESCRIPTION);
+      await form.getByLabel("Descriere").fill(DESCRIPTION);
       await form.getByRole("button", { name: "Salvează", exact: true }).click();
       const row = page.getByRole("row").filter({ hasText: DESCRIPTION });
       await expect(row).toHaveCount(1, { timeout: 15_000 });
@@ -89,10 +89,9 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
       await expect(page).toHaveURL(/\/admin\/groups\/[0-9a-f-]+$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: `Grup ${code}` })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(`${DESCRIPTION.length}/500 caractere`)).toBeVisible();
-      // Each panel is a <section> with no accessible name (group-editor.tsx),
-      // so it is found by the title it shows, not by role.
-      const available = page.locator("section").filter({ has: page.getByText("Disponibile", { exact: true }) });
-      const inGroup = page.locator("section").filter({ has: page.getByText("În grup", { exact: true }) });
+      // Each panel is a region named by its title (FU-219).
+      const available = page.getByRole("region", { name: "Disponibile", exact: true });
+      const inGroup = page.getByRole("region", { name: "În grup", exact: true });
       await expect(inGroup.getByText("Niciun element în acest grup încă")).toBeVisible();
 
       // Step 5 — „Caută…" over „Disponibile": two rows, by nickname only.

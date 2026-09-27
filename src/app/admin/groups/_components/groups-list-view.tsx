@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   GROUP_TARGET_TYPES,
   type GroupTargetType,
@@ -65,6 +65,10 @@ function AddForm({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const firstRef = useRef<HTMLSelectElement>(null);
+  // FU-219 (Slice #37.07): each <label> names its control, so a screen reader
+  // announces „Țintă" and „Descriere" rather than an unnamed list and text area.
+  const targetId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     firstRef.current?.focus();
@@ -91,11 +95,12 @@ function AddForm({ onClose }: { onClose: () => void }) {
       <div className="flex flex-col gap-3">
         {/* Target type */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-ink dark:text-zinc-400">
+          <label htmlFor={targetId} className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("fields.target")}
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <select
+            id={targetId}
             ref={firstRef}
             value={targetType}
             onChange={(e) => setTargetType(e.target.value as GroupTargetType)}
@@ -111,11 +116,12 @@ function AddForm({ onClose }: { onClose: () => void }) {
 
         {/* Description */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-ink dark:text-zinc-400">
+          <label htmlFor={descriptionId} className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("fields.description")}
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <textarea
+            id={descriptionId}
             rows={3}
             maxLength={DESCRIPTION_MAX}
             value={description}

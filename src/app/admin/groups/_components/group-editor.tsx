@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -74,6 +74,8 @@ export function GroupEditor({
 }) {
   const t = useTranslations("group");
   const qc = useQueryClient();
+  // FU-219 (Slice #37.07): the description's caption is its label.
+  const descriptionId = useId();
 
   const { data: detail } = useQuery<GroupDetail>({
     queryKey: ["group", groupId],
@@ -243,11 +245,12 @@ export function GroupEditor({
 
           {/* Description (editable) */}
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-fade dark:text-zinc-400">
+            <label htmlFor={descriptionId} className="text-xs font-medium text-fade dark:text-zinc-400">
               {t("fields.description")}
               <span className="ml-0.5 text-red-500">*</span>
-            </span>
+            </label>
             <textarea
+              id={descriptionId}
               rows={2}
               maxLength={DESCRIPTION_MAX}
               value={description}
@@ -394,10 +397,16 @@ function Panel({
   toolbar?: React.ReactNode;
   footer: React.ReactNode;
 }) {
+  // FU-219 (Slice #37.07): the panel is a region named by its own title, so
+  // „Disponibile" and „În grup" can be reached as landmarks.
+  const titleId = useId();
   return (
-    <section className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section
+      aria-labelledby={titleId}
+      className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+    >
       <div className="flex items-center justify-between border-b border-card-rim px-4 py-2 dark:border-zinc-800">
-        <span className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
+        <span id={titleId} className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
         <span className="text-xs text-fade dark:text-zinc-400">{rows.length}</span>
       </div>
       {toolbar && <div className="border-b border-card-rim p-3 dark:border-zinc-800">{toolbar}</div>}
