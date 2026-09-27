@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-26, Slice #37.02 — 241 entries. Rows are status, columns are impact.
+As of 2026-09-26, Slice #37.02 — 242 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
 | open | 23 | 62 | 44 | 14 | 143 |
 | planned | 0 | 0 | 1 | 0 | 1 |
-| resolved | 23 | 35 | 23 | 3 | 84 |
+| resolved | 23 | 35 | 24 | 3 | 85 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 50 | 102 | 70 | 19 | 241 |
+| **total** | 50 | 102 | 71 | 19 | 242 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -325,3 +325,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-239 | 2026-09-26 #37.01 handover | debt | Auth | `getCurrentUser()` turns every failure of `supabase.auth.getUser()` — thrown, or returned in its `error` — into null with no log line, so a network or token blip is answered as „not signed in" (401) and nobody can see it happened — the likeliest reason `/api/auth/me` failed right after Adrian's sign-in on 2026-09-26. | src/lib/auth/current-user.ts:86-91 — `if (!user) return null` ignores `error`; `catch {}` returns null | dev | XS | open | Unverified: the failing answer itself was not captured. Log a returned `error` that is not a missing session, and the caught one, server side; keep the null. | 2026-09-26 |
 | FU-240 | 2026-09-26 #37.02 TC-PROP-04 | defect | Properties | A corner row opened with „Editează" in „Puncte de contur" and saved with the row's „Salvează" WITHOUT any change writes back the two decimals the screen shows over the three the corner holds, so the area moves (611.87 → 611.89 m² on TC-PROP-04's parcel) and, once the form is saved, the stored corner has lost precision nobody asked to lose. | Seen 2026-09-26 on PROP02367 (TC-PROP-04's second hand run): „Editează" on Nr. orig. 18 shows 318659.52 / 573567.20 for a stored 318659.521 / 573567.196; the row's „Salvează" alone turned the area from 611.87 to 611.89 with „Modificări nesalvate" | data | S | open | Seed the row's inputs with the stored value (all decimals) and write back only a field the user changed. | 2026-09-26 |
 | FU-241 | 2026-09-26 #37.02 20260927T012711Z-6756 | tooling | Tests & e2e | When the setup's login fails, Playwright's `error-context.md` under `test-results/` records the page snapshot — including the „Parolă" field's value, so the E2E account's password is written in plain text to a file on disk (gitignored, never committed, but readable by anything that reads that folder, a bridge session included). | test-results/auth.setup.ts-autentificare-si-pregatire-fixture-E2E-setup/error-context.md after runner 20260927T012711Z-6756 | dev | XS | open | Clear `#password` in the setup's failure path before the snapshot is taken (or set `type=password` fields to be masked in the snapshot), and delete that file after a green run. | 2026-09-26 |
+| FU-242 | 2026-09-26 #37.02 20260927T013422Z-25380 | test gap | Import | import-constraint-check.test.ts's quadratic guard failed again inside the whole jest run after FU-214's fix — best of ten read 3.08 (small 14 ms, large 43 ms) against the bound of 3 — so two rounds near the bound were not enough on a loaded machine. | .test-runner/logs/20260927T013422Z-25380/jest.log; src/__tests__/import-constraint-check.test.ts measureRound | dev | XS | resolved | #37.02 58346c0: up to four rounds (twenty pairs) while the ratio stays >= 2.7; the bound stays 3. | 2026-09-26 |
