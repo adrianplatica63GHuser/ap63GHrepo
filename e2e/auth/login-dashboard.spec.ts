@@ -39,6 +39,7 @@ import fs from "fs";
 import { test, expect, type Page } from "@playwright/test";
 import { sidebar } from "../helpers/sidebar";
 import { USER_STATE } from "../helpers/auth-state";
+import { fillLoginForm } from "../helpers/login-form";
 
 test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
   test("după conectare: tabloul de bord, bara laterală și numele contului", async ({ page }) => {
@@ -87,8 +88,7 @@ function mainNav(page: Page) {
 
 /** Fill the real form on the page that is already open, and wait for „/". */
 async function signInHere(page: Page, email: string, password: string): Promise<void> {
-  await page.fill("#identity", email);
-  await page.fill("#password", password);
+  await fillLoginForm(page, email, password);
   await page.click('button[type="submit"]');
   // router.push("/") is a pushState navigation: no "load" event (auth.setup.ts).
   await page.waitForURL(/\/$/, { timeout: 20_000, waitUntil: "commit" });

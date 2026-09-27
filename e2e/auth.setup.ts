@@ -27,6 +27,7 @@
 
 import { test as setup, expect, type Page } from "@playwright/test";
 import { USER_STATE } from "./helpers/auth-state";
+import { fillLoginForm } from "./helpers/login-form";
 import fs from "fs";
 import net from "net";
 import path from "path";
@@ -147,8 +148,8 @@ setup("autentificare si pregatire fixture E2E", async ({ page, baseURL }) => {
 
   await page.goto("/login");
 
-  await page.fill("#identity", email);
-  await page.fill("#password", password);
+  // Both fields must still hold their values at the click (helpers/login-form.ts).
+  await fillLoginForm(page, email, password);
   await page.click('button[type="submit"]');
 
   // The login form calls router.push("/") — a Next.js App Router client-side
@@ -237,8 +238,7 @@ setup("autentificare si pregatire fixture E2E", async ({ page, baseURL }) => {
  */
 async function loginAs(page: Page, email: string, password: string): Promise<void> {
   await page.goto("/login");
-  await page.fill("#identity", email);
-  await page.fill("#password", password);
+  await fillLoginForm(page, email, password);
   await page.click('button[type="submit"]');
   await page.waitForURL("/", { timeout: 20_000, waitUntil: "commit" });
   await page.waitForTimeout(1_500);
