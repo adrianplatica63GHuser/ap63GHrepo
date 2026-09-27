@@ -15,7 +15,16 @@ import type { DocumentTemplateField } from "@/lib/documents/template-fields";
 
 // ── Leaf schemas ─────────────────────────────────────────────────────────────
 
-const sortOrder = z.coerce.number().int().min(0).default(0);
+/**
+ * `sortOrder` on a CREATE: optional, and **no longer `.default(0)`**.   (FU-056, #37.07)
+ *
+ * No admin form sets it, so the default made every row added through Date de
+ * referință `0` — above every seeded row on each list ordered by the column.
+ * Absent now means „after the others": `createValue` gives it the list's
+ * largest `sort_order` plus 10 (`nextSortOrder`). A caller that states a number
+ * still gets that number.
+ */
+const sortOrder = z.coerce.number().int().min(0).optional();
 
 /**
  * The same field on a PUT: optional, and **with no `.default()`**.

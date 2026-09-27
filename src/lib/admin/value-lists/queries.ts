@@ -81,6 +81,7 @@ import {
   sanitizeDocumentTypeTemplateFields,
   stripDocumentTypeOrigin,
   stripLookupOrigin,
+  LIST_SCHEMAS,
 } from "./validation";
 import {
   documentTypeHasForm,
@@ -473,6 +474,35 @@ async function writeTarlaRow<T>(
 
 // ── Create ───────────────────────────────────────────────────────────────────
 
+/**
+ * Where a new row of this list goes: after every row it already has.
+ *                                                          (FU-056, Slice #37.07)
+ *
+ * `max(sort_order) + 10` — the gap of ten is the seeds' own spacing habit, and
+ * leaves room to put something between two rows by hand. `null` for a list
+ * whose table has no `sort_order` (person-roles since #34.01), which then
+ * writes no position at all, as before. Two creates racing get the same
+ * number, and the lists' tie-break (the required field, then id) orders them;
+ * nothing here needs a lock.
+ */
+export async function nextSortOrder(key: ListKey): Promise<number | null> {
+  // ⚠️ **ASKED OF THE LIST'S CREATE SCHEMA, NOT OF THE TABLE.** person-roles'
+  // table still has the column, and #34.01 stopped writing it on purpose (no
+  // screen orders by it); a list whose schema has no position gets none here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const shape = (LIST_SCHEMAS[key] as any)?.shape;
+  if (!shape || !("sortOrder" in shape)) return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const table = LIST_DEPENDENCIES[key].table as any;
+  const column = table?.sortOrder;
+  if (!column) return null;
+  const [row] = await db
+    .select({ max: sql<number | string | null>`max(${column})` })
+    .from(table);
+  const max = row?.max === null || row?.max === undefined ? 0 : Number(row.max);
+  return (Number.isFinite(max) ? max : 0) + 10;
+}
+
 export async function createValue(
   key: ListKey,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -521,6 +551,12 @@ export async function createValue(
   // import would be unaffected either way.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = stripLookupOrigin(payload);
+  // FU-056 (Slice #37.07): a row added without a position goes AFTER the
+  // seeded ones, not above them — see `nextSortOrder`.
+  if (data.sortOrder === undefined) {
+    const next = await nextSortOrder(key);
+    if (next !== null) data.sortOrder = next;
+  }
   switch (key) {
     case "property-types": {
       // Slice #34.03: no generated `key` — see the note above

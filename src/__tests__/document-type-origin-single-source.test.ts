@@ -496,8 +496,12 @@ describe("a rename cannot re-originate a document type", () => {
       // as a per-key
       // expectation rather than an exemption, so that a list which loses the
       // field by accident still fails here.
+      // Slice #37.07 (FU-056): the CREATE schema's `sortOrder` lost its
+      // `.default(0)` too — absent now means „after the seeded rows", decided
+      // by createValue — so neither side carries it when the payload does not,
+      // and nothing at all may go missing between the two.
       const dropped = createKeys.filter((k) => !updateKeys.includes(k)).sort();
-      expect([key, dropped]).toEqual([key, key === "person-roles" ? [] : ["sortOrder"]]);
+      expect([key, dropped]).toEqual([key, []]);
       expect([key, updateKeys.includes("origin")]).toEqual([key, false]);
     }
   });
