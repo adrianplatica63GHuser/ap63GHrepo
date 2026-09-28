@@ -574,7 +574,8 @@ describe("the migrate-local guard — only a committed, confirmed migration reac
 
   it("export-schema runs only after the step before it passed", () => {
     expect(DEPENDENT_STEPS).toEqual(["export-schema"]);
-    expect(SEQUENCES["migrate-local"]).toEqual(["apply-migration", "export-schema"]);
+    // Slice #37.11: a backup first, and nothing applied without one (archive-backup.test.ts).
+    expect(SEQUENCES["migrate-local"]).toEqual(["backup", "apply-migration", "export-schema"]);
     expect(SEQUENCES.reconcile).toEqual(["reconcile"]);
   });
 });

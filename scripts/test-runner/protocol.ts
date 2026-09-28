@@ -64,6 +64,17 @@
  * that line and never a red: `forms-drift` passes when the check ran and is
  * SKIPPED when it could not, so it can neither fail a run nor hold a push.
  *
+ * Slice #37.11 added `backup` and `restore-drill` (FU-006, FU-251), both run by
+ * `scripts/backup/archive.ts`. `backup` reads the live database — pg_dump and
+ * SELECTs, nothing else — and writes a dated folder under OneDrive: the dump,
+ * every page file, and a manifest. `restore-drill` restores the newest backup
+ * into a throwaway container on 5434 and a scratch folder, reconciles every row
+ * and file against the manifest, asks the restored app on 3200 for each entity
+ * list once, and tears everything down. `migrate-local` now takes a backup
+ * first, and applies nothing when that backup did not pass (`skipReasonFor`).
+ * The runner also starts both on its own when idle (`scripts/backup/rules.ts`
+ * → `nextAutoRun`): a backup daily, the drill monthly and after a migration.
+ *
  * A held step is not a failure and not an error: it is the runner saying „this
  * waits for Adrian", with the reason by name. None of the three ever touches
  * Supabase or UAT — `npm run supabase:migrate` stays Adrian's.
@@ -107,6 +118,8 @@ export const STEPS = [
   "ai-rescore",
   "forms-export",
   "forms-drift",
+  "backup",
+  "restore-drill",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -127,11 +140,13 @@ export const SEQUENCES = {
   "verify-rebuild": ["verify-rebuild"],
   push: ["push"],
   ci: ["ci"],
-  "migrate-local": ["apply-migration", "export-schema"],
+  "migrate-local": ["backup", "apply-migration", "export-schema"],
   reconcile: ["reconcile"],
   "ai-score": ["ai-score"],
   "ai-rescore": ["ai-rescore"],
   "forms-export": ["forms-export"],
+  backup: ["backup"],
+  "restore-drill": ["restore-drill"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -669,6 +684,16 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
       body = (lines.filter((l) => l.startsWith("FORMS:")).pop() ?? "").replace(/^FORMS:\s*/, "");
       break;
     }
+    case "backup": {
+      // `scripts/backup/archive.ts backup` ends with one `BACKUP:` line. (Slice #37.11)
+      body = (lines.filter((l) => l.startsWith("BACKUP:")).pop() ?? "").replace(/^BACKUP:\s*/, "");
+      break;
+    }
+    case "restore-drill": {
+      // `scripts/backup/archive.ts drill` ends with one `DRILL:` line. (Slice #37.11)
+      body = (lines.filter((l) => l.startsWith("DRILL:")).pop() ?? "").replace(/^DRILL:\s*/, "");
+      break;
+    }
   }
   return body ? `${body} (${exit})` : exit;
 }
@@ -804,8 +829,32 @@ export type GuardCode =
 
 export type GuardDecision<T> = ({ ok: true } & T) | { ok: false; code: GuardCode; message: string };
 
-/** A step that runs only when the step before it in its sequence passed. */
+/** A step that runs only when the step before it in its sequence passed AND applied something. */
 export const DEPENDENT_STEPS: readonly StepName[] = ["export-schema"];
+
+/**
+ * A step that runs only when the backup before it passed.   (Slice #37.11)
+ * Decision 3 of #37.09: a backup before every migrate-local — so a migration is
+ * never applied to an archive that has no copy from the minute before.
+ */
+export const BACKUP_FIRST_STEPS: readonly StepName[] = ["apply-migration"];
+
+/**
+ * Why the runner skips this step, given how the step before it in its sequence
+ * ended — or null to run it. `previous` is null for the first step.
+ */
+export function skipReasonFor(
+  step: StepName,
+  previous: { status: StepStatus; applied: number } | null,
+): string | null {
+  if (BACKUP_FIRST_STEPS.includes(step) && previous?.status !== "passed") {
+    return `the backup before it ended ${previous?.status ?? "unrun"}, so nothing is applied without one`;
+  }
+  if (DEPENDENT_STEPS.includes(step) && (previous?.status !== "passed" || previous.applied === 0)) {
+    return previous?.status === "passed" ? "nothing was applied, so there is nothing to regenerate" : `the step before it ended ${previous?.status ?? "unrun"}`;
+  }
+  return null;
+}
 
 /** The only branch the runner ever pushes, and the only remote. */
 export const PUSH_BRANCH = "main";

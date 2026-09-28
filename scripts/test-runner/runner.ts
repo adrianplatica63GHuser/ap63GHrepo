@@ -27,9 +27,10 @@
  *
  * ⚠️ **EVERY STEP RUNS, EVEN AFTER A RED ONE.** The point of the runner is
  * fewer round trips; a run that stopped at the first red step would hand back
- * one failure per round trip, which is the cost it exists to remove. The one
- * exception is a step in `DEPENDENT_STEPS` (export-schema), which is only
- * meaningful after the step before it passed.
+ * one failure per round trip, which is the cost it exists to remove. The
+ * exceptions are the steps `skipReasonFor` names: export-schema, which is only
+ * meaningful after the step before it passed, and — since #37.11 —
+ * apply-migration, which never runs without a backup that passed.
  *
  * ⚠️ **PUSH, CI AND MIGRATE-LOCAL ARE GUARDED IN `protocol.ts`, NOT HERE.**
  * (Slice Propus.3.) This file observes — the branch, `ls-remote`, the result
@@ -38,6 +39,15 @@
  * with GET requests only; nothing here reaches Supabase or UAT. The GitHub
  * credential is Adrian's own, taken from `git credential fill` for the length
  * of one step, and is never written to a log, a result or a note.
+ *
+ * ⚠️ **THE RUNNER BACKS THE ARCHIVE UP ON ITS OWN.** (Slice #37.11, FU-006.)
+ * Besides the `backup` and `restore-drill` sequences Claude can request, the
+ * runner starts them itself when it is idle and no request is waiting: a
+ * backup when the newest is a day old, the drill monthly and after a
+ * migration (`scripts/backup/rules.ts` → `nextAutoRun`). Such a run writes an
+ * ordinary result file, id `auto-<time>-<sequence>`, so it is visible exactly
+ * like a requested one. Both steps are `scripts/backup/archive.ts` with a fixed
+ * argv; the live database is only read.
  */
 
 import { spawn, spawnSync } from "child_process";
@@ -59,7 +69,6 @@ import {
   CI_FINISH_WAIT_MS,
   CI_FIRST_RUN_WAIT_MS,
   CI_POLL_MS,
-  DEPENDENT_STEPS,
   MIGRATION_PATH_RE,
   PUSH_BRANCH,
   PUSH_REMOTE,
@@ -85,6 +94,7 @@ import {
   playwrightArgs,
   refusedResult,
   resultIdForFile,
+  skipReasonFor,
   stripAnsi,
   summariseStep,
   type CiJob,
@@ -98,6 +108,8 @@ import {
   type RunnerInfo,
   type StepResult,
 } from "./protocol";
+import { nextAutoRun, type AutoRun } from "../backup/rules";
+import { backupRoot, listBackups, readDrillLog } from "../backup/state";
 
 // ---- paths and constants -------------------------------------------------------
 
@@ -131,10 +143,18 @@ const VERIFY_REBUILD = path.join(REPO, "scripts", "Verify-Rebuild.ps1");
 const APPLY_MIGRATION = path.join(REPO, "scripts", "Apply-Migration.ps1");
 const EXPORT_SCHEMA = path.join(REPO, "scripts", "Export-SupabaseSchema.ps1");
 const SCHEMA_FILE = "src/db/supabase_schema_full.sql";
+/** `backup` and `restore-drill` (Slice #37.11): the archive's backup, and the drill that restores it beside live. */
+const ARCHIVE_SCRIPT = path.join(REPO, "scripts", "backup", "archive.ts");
 /** The same defaults Apply-Migration.ps1 and Export-SupabaseSchema.ps1 use. */
 const DB = { container: "ga40prj-postgres", database: "ga40db", user: "postgres" };
 /** The runner's own source. When either changes while idle, it exits 75 and the wrapper restarts it. */
-const OWN_SOURCE = [path.join(__dirname, "runner.ts"), path.join(__dirname, "protocol.ts")];
+const OWN_SOURCE = [
+  path.join(__dirname, "runner.ts"),
+  path.join(__dirname, "protocol.ts"),
+  // imported by the idle check (Slice #37.11); archive.ts is spawned fresh per run and needs no reload
+  path.join(__dirname, "..", "backup", "rules.ts"),
+  path.join(__dirname, "..", "backup", "state.ts"),
+];
 const RELOAD_EXIT_CODE = 75;
 
 const SCAN_MS = 2_000;
@@ -156,7 +176,15 @@ const TIMEOUT = {
   forms: 3 * MIN,
   // Ten contracts at up to a minute or two each, one after another.
   aiScore: 40 * MIN,
+  // A dump, 65 MB of pages hashed twice, into OneDrive (Slice #37.11).
+  backup: 15 * MIN,
+  // A throwaway postgis, a restore, the pages, and a cold next dev for four lists.
+  drill: 30 * MIN,
 };
+/** How often the idle runner asks whether a backup or a drill is due. (Slice #37.11) */
+const AUTO_CHECK_MS = 10 * MIN;
+/** Not in the first minutes after a start: a logon is busy enough. */
+const AUTO_FIRST_CHECK_MS = 5 * MIN;
 /** Captured output kept in memory per process for classification; the full text is in the log file. */
 const MAX_CAPTURE = 4 * 1024 * 1024;
 
@@ -851,6 +879,41 @@ async function stepExportSchema(logFile: string): Promise<StepOutcome> {
   };
 }
 
+// ---- the archive: backup and restore drill (Slice #37.11) ---------------------------
+
+/**
+ * `scripts/backup/archive.ts backup` — the live database read, the dump and
+ * every page file copied into a dated folder under OneDrive, the manifest
+ * written, the folder pruned to fourteen days. Fixed argv. Exit 0 written,
+ * anything else failed: a backup that did not land is red, and `migrate-local`
+ * applies nothing after one.
+ */
+async function stepBackup(logFile: string): Promise<StepOutcome> {
+  const r = await runLogged(NODE, [BIN.tsx, ARCHIVE_SCRIPT, "backup"], logFile, TIMEOUT.backup);
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : "failed",
+    exitCode: r.exitCode,
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep("backup", r.text, r.exitCode),
+    notes: [],
+  };
+}
+
+/**
+ * `scripts/backup/archive.ts drill` — the newest backup restored beside live
+ * (postgis on 5434, pages in `.test-runner/drill/`, the app on 3200), every row
+ * and file reconciled, everything torn down. Fixed argv; the id is the runner's
+ * own. Exit 0 passed, 1 the copy is not the archive, 2 could not run.
+ */
+async function stepRestoreDrill(id: string, logFile: string): Promise<StepOutcome> {
+  const r = await runLogged(NODE, [BIN.tsx, ARCHIVE_SCRIPT, "drill", "--result-id", id], logFile, TIMEOUT.drill);
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : r.exitCode === 1 ? "failed" : "error",
+    exitCode: r.exitCode,
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep("restore-drill", r.text, r.exitCode),
+    notes: [`the full reconciliation is the step's log: ${rel(logFile)}`],
+  };
+}
+
 // ---- one request ------------------------------------------------------------------
 
 let runnerInfo: RunnerInfo;
@@ -1024,9 +1087,10 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
     const p = plan[i];
     const s = result.steps[i];
     if (p.skipReason) continue;
-    if (DEPENDENT_STEPS.includes(p.name) && (previous?.status !== "passed" || previous.applied === 0)) {
+    const skip = skipReasonFor(p.name, previous);
+    if (skip !== null) {
       s.status = "skipped";
-      s.summary = previous?.status === "passed" ? "nothing was applied, so there is nothing to regenerate" : `the step before it ended ${previous?.status ?? "unrun"}`;
+      s.summary = skip;
       save();
       previous = { status: "skipped", applied: 0 };
       continue;
@@ -1082,6 +1146,12 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
         case "forms-drift":
           out = await stepForms("check", logFile);
           break;
+        case "backup":
+          out = await stepBackup(logFile);
+          break;
+        case "restore-drill":
+          out = await stepRestoreDrill(req.id, logFile);
+          break;
       }
     } catch (e) {
       out = { status: "error", exitCode: null, summary: `runner fault: ${(e as Error).message}`, notes: [] };
@@ -1116,6 +1186,54 @@ function prune(): void {
   }
 }
 
+// ---- the runner's own schedule: backup daily, drill monthly (Slice #37.11) --------
+
+const startedAtMs = Date.now();
+let lastAutoCheck = 0;
+const lastAutoAttempt: Partial<Record<AutoRun, Date>> = {};
+
+/**
+ * Called from `scan` only when the runner is idle and no request is waiting.
+ * Reads the backup folder and live's newest migration, asks `nextAutoRun`, and
+ * starts what it names as an ordinary run with an `auto-` id. Never throws: a
+ * schedule that cannot be read is a line in runner.log, not a dead runner.
+ */
+function maybeAutoRun(): void {
+  const t = Date.now();
+  if (t - startedAtMs < AUTO_FIRST_CHECK_MS || t - lastAutoCheck < AUTO_CHECK_MS) return;
+  lastAutoCheck = t;
+  try {
+    const { root, why } = backupRoot();
+    const backups = root ? listBackups(root) : [];
+    const passed = root ? readDrillLog(root).filter((d) => d.verdict === "passed") : [];
+    const lastDrill = passed[passed.length - 1];
+    const applied = appliedMigrations();
+    const live = applied && applied.length > 0 ? [...applied].sort().pop() ?? null : null;
+    const kind = nextAutoRun({
+      now: new Date(t),
+      newestBackup: backups[0] ? { at: backups[0].at, latestMigration: backups[0].latestMigration } : null,
+      lastDrill: lastDrill ? { at: new Date(lastDrill.at), latestMigration: lastDrill.latestMigration } : null,
+      liveLatestMigration: live,
+      lastAttempt: lastAutoAttempt,
+    });
+    if (kind === null) return;
+    const head = headCommit();
+    if (!head) return;
+    lastAutoAttempt[kind] = new Date(t);
+    const stamp = new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+    const req: RunRequest = { version: PROTOCOL_VERSION, id: `auto-${stamp}-${kind}`, sequence: kind, commit: head };
+    logLine(`auto: ${kind} is due (${root ? `backups in ${root}` : why}); starting ${req.id}`);
+    current = req.id;
+    void runRequest(req, now())
+      .catch((e: unknown) => logLine(`run ${req.id}: runner fault ${(e as Error).message}`))
+      .finally(() => {
+        current = null;
+      });
+  } catch (e) {
+    logLine(`auto: ${(e as Error).message}`);
+  }
+}
+
 // ---- the watch loop -------------------------------------------------------------
 
 let scanning = false;
@@ -1135,7 +1253,10 @@ function scan(): void {
       return;
     }
     const files = fs.readdirSync(REQ_DIR).filter((f) => f.toLowerCase().endsWith(".json")).sort();
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      if (current === null) maybeAutoRun();
+      return;
+    }
     const knownE2eSpecs = walk(path.join(REPO, "e2e"), (n) => n.endsWith(".spec.ts"));
     const knownJestSuites = walk(path.join(REPO, "src", "__tests__"), (n) => /\.test\.tsx?$/.test(n));
     const head = headCommit();
@@ -1291,6 +1412,9 @@ async function selfTest(): Promise<number> {
   say(fs.existsSync(DATA_ROOT), `data root for reconcile: ${DATA_ROOT} (${dataFolders().length} folders)`);
   say(fs.existsSync(AI_SCORE_SCRIPT), `ai-score.ts: ${rel(AI_SCORE_SCRIPT)}`);
   say(fs.existsSync(FORMS_SCRIPT), `document-type-forms.ts: ${rel(FORMS_SCRIPT)}`);
+  say(fs.existsSync(ARCHIVE_SCRIPT), `archive.ts: ${rel(ARCHIVE_SCRIPT)}`);
+  const br = backupRoot();
+  say(br.root !== null, `backup folder: ${br.root ?? "none"} (${br.why})`);
   say(
     fs.existsSync(AI_CORPUS_ROOT),
     `corpus root for ai-score: ${AI_CORPUS_ROOT} (${Object.entries(aiCorpora()).map(([k, n]) => `${k}: ${n}`).join(", ") || "none"})`,

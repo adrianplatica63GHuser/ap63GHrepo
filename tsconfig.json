@@ -30,6 +30,8 @@
     ".next/dev/types/**/*.ts",
     ".next/runner/types/**/*.ts",
     ".next/runner/dev/types/**/*.ts",
+    ".next/drill/types/**/*.ts",
+    ".next/drill/dev/types/**/*.ts",
     "**/*.mts"
   ],
   "exclude": ["node_modules", "_to_delete"]
