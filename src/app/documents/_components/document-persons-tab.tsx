@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import type { ColumnName } from "@/lib/ui/field-widths";
+import { boxStyle, type ColumnName } from "@/lib/ui/field-widths";
 import {
   COTA_MOD_VALUES,
   formatCotaParte,
@@ -21,6 +21,8 @@ import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
 const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "open"];
+/** The three cotă boxes fill their L column, so „— fără suprafață —" shows whole. */
+const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "fixed" });
 
 /**
  * ⚠️ **`linkId` IS THE ROW AND `id` IS THE PERSON.**            (Slice #36.02)
@@ -274,7 +276,7 @@ export function DocumentPersonsTab({ documentId }: Props) {
 
   const inputClass = (invalid: boolean) =>
     [
-      "w-24 rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none",
+      "rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none",
       "dark:bg-zinc-950 dark:text-zinc-100",
       invalid
         ? "border-red-500 focus:border-red-600"
@@ -355,6 +357,7 @@ export function DocumentPersonsTab({ documentId }: Props) {
                             }
                           }}
                           className={inputClass(Boolean(errors.parte))}
+                          style={COTA_BOX_STYLE}
                         />
                         {errors.parte && (
                           <span className="text-xs text-red-600 dark:text-red-400" role="alert">
@@ -384,6 +387,7 @@ export function DocumentPersonsTab({ documentId }: Props) {
                             }
                           }}
                           className={inputClass(Boolean(errors.mp))}
+                          style={COTA_BOX_STYLE}
                         />
                         {errors.mp && (
                           <span className="text-xs text-red-600 dark:text-red-400" role="alert">
@@ -400,6 +404,7 @@ export function DocumentPersonsTab({ documentId }: Props) {
                         aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
                         onChange={(e) => void commitMod(item, e.target.value)}
                         className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                        style={COTA_BOX_STYLE}
                       >
                         <option value="">{t("cotaModPlaceholder")}</option>
                         {COTA_MOD_VALUES.map((v) => (
