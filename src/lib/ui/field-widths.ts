@@ -54,8 +54,14 @@ export const SCALE = {
   XL: 17,
   /** 24rem · 384 px — about 52 mixed. Streets, Denumire, Etichetă scurtă. */
   XXL: 24,
-  /** The panel's whole inner width beside the label: 30.5 − 5.5 − 0.5 = 24.5rem. Notes. */
-  TILE: 24.5,
+  /**
+   * The panel's whole inner width beside the label: 30.375 − 5.5 − 0.5 = 24.375rem
+   * (390 px). Notes. It was 24.5, which forgot the panel's 1-px borders: a TILE
+   * row was 2 px wider than its panel — invisible in a `<section>`, but enough to
+   * widen a `<fieldset>` panel (its min-content wins) past a third panel's room,
+   * so #37.14's pictures showed the Property two panels a row at 1920 px, not three.
+   */
+  TILE: 24.375,
 } as const;
 export type Step = keyof typeof SCALE;
 
@@ -69,9 +75,10 @@ export const LABEL_GAP_REM = 0.5;
 /** A panel — a small tile in Field.Widths.v02 — and the gap between two. */
 export const PANEL_REM = 32;
 export const PANEL_GAP_REM = 1;
-/** A panel's padding (p-3) on each side: 32 − 2 × 0.75 = 30.5rem inside. */
+/** A panel's padding (p-3) and its 1-px border on each side: 32 − 2 × 0.75 − 2 × 0.0625 = 30.375rem inside. */
 export const PANEL_PADDING_REM = 0.75;
-export const PANEL_INNER_REM = PANEL_REM - 2 * PANEL_PADDING_REM;
+export const PANEL_BORDER_REM = 1 / 16;
+export const PANEL_INNER_REM = PANEL_REM - 2 * PANEL_PADDING_REM - 2 * PANEL_BORDER_REM;
 
 export type FieldKind = "fixed" | "select" | "grows" | "lines";
 

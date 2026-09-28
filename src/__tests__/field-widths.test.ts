@@ -206,7 +206,8 @@ describe("the scale", () => {
   });
 
   it("TILE is the panel's whole inner width beside the label", () => {
-    expect(PANEL_INNER_REM).toBe(30.5);
+    // Padding AND the 1-px border: at 30.5 a TILE row overflowed its panel by 2 px (#37.14's pictures).
+    expect(PANEL_INNER_REM).toBe(30.375);
     expect(SCALE.TILE).toBe(PANEL_INNER_REM - LABEL_REM - LABEL_GAP_REM);
     expect(PANEL_REM).toBe(32);
   });
