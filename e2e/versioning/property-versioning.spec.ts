@@ -15,7 +15,9 @@
  * case's own steps are the fifth test, at the bottom, on a property of its
  * own — marked `TC-E2E-PROP-02`, created through POST /api/properties and
  * removed through the DELETE route „Șterge" calls. The four tests are
- * unchanged.
+ * unchanged, but for one thing: since Slice #37.14 „Poreclă" is a box that
+ * grows downward (a `<textarea>`), so they find it by `[name="nickname"]`, not
+ * as an `input`.
  *
  * Covers the full save → version-append → nav ◀/▶ → make-current cycle on
  * the Property detail form — the most complex versioned entity (fields +
@@ -79,7 +81,7 @@ test.describe("Versionare Proprietate", () => {
 
   test("salvarea adauga o versiune noua", async ({ page }) => {
     // Edit the nickname field
-    await page.locator("input[name=\"nickname\"]").fill("E2E Edit 1");
+    await page.locator("[name=\"nickname\"]").fill("E2E Edit 1");
 
     // Click Save
     await page.getByRole("button", { name: "Salvează", exact: true }).click();
@@ -94,7 +96,7 @@ test.describe("Versionare Proprietate", () => {
 
   test("navigare inapoi — formularul devine read-only", async ({ page }) => {
     // Save once first to ensure a fresh "latest + 1" version exists to navigate back from
-    await page.locator("input[name=\"nickname\"]").fill("E2E Navigare");
+    await page.locator("[name=\"nickname\"]").fill("E2E Navigare");
     await page.getByRole("button", { name: "Salvează", exact: true }).click();
     await expect(
       page.getByText(`v ${startVersion + 1}`, { exact: true }),
@@ -109,7 +111,7 @@ test.describe("Versionare Proprietate", () => {
 
     // Form must be read-only — fieldset[disabled] wraps editable inputs
     expect(await nav.isFormReadOnly(page)).toBe(true);
-    await expect(page.locator("input[name=\"nickname\"]")).toBeDisabled();
+    await expect(page.locator("[name=\"nickname\"]")).toBeDisabled();
 
     // "Setează ca actuală" must be enabled when viewing a past version
     await expect(
@@ -121,7 +123,7 @@ test.describe("Versionare Proprietate", () => {
 
   test("Seteaza ca actuala — creaza versiune noua din snapshot vechi", async ({ page }) => {
     // Save a modification to push the latest version forward
-    await page.locator("input[name=\"nickname\"]").fill("E2E Modificare");
+    await page.locator("[name=\"nickname\"]").fill("E2E Modificare");
     await page.getByRole("button", { name: "Salvează", exact: true }).click();
 
     const afterSave = startVersion + 1;
@@ -138,7 +140,7 @@ test.describe("Versionare Proprietate", () => {
 
     // After Make Current the form must be editable (we follow the new latest)
     expect(await nav.isFormReadOnly(page)).toBe(false);
-    await expect(page.locator("input[name=\"nickname\"]")).toBeEnabled();
+    await expect(page.locator("[name=\"nickname\"]")).toBeEnabled();
   });
 
   // ── Test 4: Save button tracks dirty state ────────────────────────────────
@@ -150,7 +152,7 @@ test.describe("Versionare Proprietate", () => {
     await expect(saveBtn).toBeDisabled();
 
     // Edit a field — Save must enable
-    await page.locator("input[name=\"nickname\"]").fill("E2E Dirty");
+    await page.locator("[name=\"nickname\"]").fill("E2E Dirty");
     await expect(saveBtn).toBeEnabled();
 
     // Save — wait for the new version to appear, then Save must disable again
