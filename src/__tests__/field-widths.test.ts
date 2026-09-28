@@ -179,7 +179,9 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     const panels = region(NP_FORM, "<fieldset disabled", "</fieldset>");
     expect(panels.match(/<section style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(3);
     expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths/g) ?? []).toHaveLength(2);
-    expect(NP_FORM).toMatch(/<form[\s\S]{0,300}?style=\{panelRowStyle\(\)\}/);
+    // Slice #37.17: as tiles, the page's tile row carries the snap and the form is `contents`.
+    expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : panelRowStyle\(\)\}/);
+    expect(code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{panelRowStyle\(\)\}/);
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{PANEL_STYLE\}/);
   });
 

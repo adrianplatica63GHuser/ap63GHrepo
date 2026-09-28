@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPersonById, getPersonIdCardLink } from "@/lib/persons/queries";
-import { PersonDetailTabs } from "../_components/person-detail-tabs";
+import { PersonDetailTiles } from "../_components/person-detail-tiles";
 import { fromApiPayload } from "../_components/form-schema";
-
-type Tab = "details" | "related" | "properties" | "document" | "metadata";
-const VALID_TABS: Tab[] = ["details", "related", "properties", "document", "metadata"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
@@ -23,9 +20,6 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
     notes:     data.person.notes,
   });
 
-  const initialTab: Tab =
-    tab && VALID_TABS.includes(tab as Tab) ? (tab as Tab) : "details";
-
   const linkedIdCard = await getPersonIdCardLink(data.person.id);
 
   return (
@@ -35,13 +29,15 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
           Property detail page, which is already uncapped. This widens every
           tab on this page, not only Details — intended. */}
       <main className="w-full px-6 py-4 flex flex-col gap-4">
-        <PersonDetailTabs
+        <PersonDetailTiles
           personId={data.person.id}
           personCode={data.person.code}
           personName={data.person.displayName}
           initialValues={initialValues}
           readonly={readonly === "true"}
-          initialTab={initialTab}
+          // Slice #37.17: a `?tab=` adds its tile for this visit
+          // (NP_TILE_OF_TAB); `details`, or anything unknown, adds nothing.
+          initialTab={tab}
           linkedIdCard={linkedIdCard}
         />
       </main>

@@ -12,6 +12,7 @@ import {
   Controller,
   type Control,
   type FieldPath,
+  type FieldErrors,
   type UseFormRegister,
   useForm,
   useWatch,
@@ -61,6 +62,8 @@ import {
   versionLabelColor,
 } from "./form-schema";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { npTileOfField, type NpTile } from "./person-tiles";
+import { firstErrorPath } from "@/lib/ui/tiles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 
 type IdCardLink = { id: string; code: string } | null;
@@ -91,6 +94,28 @@ type Props = {
   /** Slice #18.05 — header DOM node to portal the version-nav controls into,
    *  so they render on the person-name line. */
   versionNavSlot?: HTMLElement | null;
+  /**
+   * Slice #37.17: the screen's tiles, when the form is drawn as tiles (the
+   * saved person's page). Absent on „Adaugă persoană", which keeps its plain
+   * panel row.
+   *
+   * ⚠️ **A FORM TILE THAT IS NOT SHOWN IS HIDDEN, NEVER UNMOUNTED** — the
+   * document notebook's rule (#36.01), for the same reasons: react-hook-form's
+   * values, `editDirty`, the version-diff highlights and the field pulses are
+   * all computed over inputs that are on the page. An unsaved change in a tile
+   * then unticked is still saved by „Salvează", and the banner still guards it.
+   *
+   * In tile mode the form, its fieldset and its panel row are `display:
+   * contents`, so every panel is an item of the page's tile row and the list
+   * tiles flow beside them; the action bar is `order-last basis-full`, the
+   * row's last line.
+   */
+  tiles?: {
+    shown: readonly NpTile[];
+    labels: Readonly<Record<NpTile, string>>;
+    /** Show a hidden tile for this visit — an error has been found in it. */
+    onRevealTile: (tile: NpTile) => void;
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -117,8 +142,19 @@ export function NaturalPersonForm({
   initialValues,
   linkedIdCard,
   versionNavSlot,
+  tiles,
 }: Props) {
   const t = useTranslations("naturalPerson");
+  // Slice #37.17 — tile mode. `tileProps` marks a form tile for the specs and
+  // hides it when unticked; `hidden` alone would lose to any display class, so
+  // the class goes with it (the notebook's note in document-form.tsx).
+  const tiled = tiles !== undefined;
+  const tileShown = (tile: NpTile): boolean => !tiles || tiles.shown.includes(tile);
+  const tileProps = (tile: NpTile) =>
+    tiles
+      ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile], hidden: !tileShown(tile) }
+      : {};
+  const hiddenClass = (tile: NpTile): string => (tileShown(tile) ? "" : " hidden");
   // Shared read-only-view copy (Back to list button + edit hint) — reused
   // identically across all four entity forms.
   const tShared = useTranslations("shared.readonlyView");
@@ -420,6 +456,28 @@ export function NaturalPersonForm({
     }
   };
 
+  // Slice #37.17 — an error in a hidden tile: show the tile (for this visit),
+  // scroll to the field, focus it and pulse it. react-hook-form's own focus
+  // cannot reach an input inside a `display: none` tile, which is why this
+  // waits two frames for the tile to be drawn first.
+  const onInvalid = (errs: FieldErrors<FormValues>) => {
+    if (!tiles) return;
+    const path = firstErrorPath(errs);
+    if (!path) return;
+    const tile = npTileOfField(path);
+    if (!tiles.shown.includes(tile)) tiles.onRevealTile(tile);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const el = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+        if (!el) return;
+        el.scrollIntoView({ block: "center" });
+        el.focus({ preventScroll: true });
+        el.classList.add("ga-vpulse-red");
+        window.setTimeout(() => el.classList.remove("ga-vpulse-red"), 3300);
+      }),
+    );
+  };
+
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
     if (!ok) return;
@@ -551,16 +609,18 @@ export function NaturalPersonForm({
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
+      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       // Slice #37.12: a whole number of panels wide, so the action bar below
-      // them is as wide as they are and not as wide as the window.
-      style={panelRowStyle()}
+      // them is as wide as they are and not as wide as the window. Slice
+      // #37.17: in tile mode the page's tile row carries that width and the
+      // form itself is `contents` (see `tiles`).
+      className={tiled ? "contents" : "flex flex-col gap-4"}
+      style={tiled ? undefined : panelRowStyle()}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner — visible whenever
           the form has unsaved edits, even when Save is below the fold. */}
-      <UnsavedChangesBanner show={editDirty} />
+      <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
 
       {/* Slice #18.05: version controls portalled into the detail-tabs header
           so they sit on the person-name line. Only for an existing person once
@@ -584,7 +644,7 @@ export function NaturalPersonForm({
       {/* Wrap all fields in a disabled fieldset when read-only (view mode or a
           historical version). The version nav lives in the header (portalled),
           outside this fieldset, so its buttons stay clickable. */}
-      <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
+      <fieldset disabled={effectiveMode === "view"} className={tiled ? "contents" : "flex flex-col gap-4 border-0 m-0 p-0 min-w-0"}>
 
       {/* Slice #37.12: five panels of one fixed width (`PANEL_STYLE`, 32rem),
           left-aligned, flowing left to right and wrapping onto the next row.
@@ -594,10 +654,14 @@ export function NaturalPersonForm({
           so the action bar is as wide as the panels above it. This replaced the
           two `flex-1 min-w-[720px]` stacks of Slice #21.08.misc, which grew
           with the window and took every field with them. */}
-      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
+      <div
+        className={tiled ? "contents" : "flex flex-wrap items-start"}
+        style={tiled ? undefined : { gap: PANEL_GAP }}
+        data-panel-row
+      >
 
       {/* Identity — core biographical data */}
-      <section style={PANEL_STYLE} data-panel="identity" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
           {mode !== "create" && personCode && (
@@ -706,7 +770,7 @@ export function NaturalPersonForm({
       </section>
 
       {/* ID Card — official document data; populated manually or via scanner */}
-      <section style={PANEL_STYLE} data-panel="id-card" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="id-card" {...tileProps("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("idCard")}`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.idCard")}
         </h2>
@@ -836,7 +900,7 @@ export function NaturalPersonForm({
       </section>
 
       {/* Contact — phones and emails */}
-      <section style={PANEL_STYLE} data-panel="contact" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="contact" {...tileProps("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contact")}`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.contact")}
         </h2>
@@ -894,6 +958,9 @@ export function NaturalPersonForm({
         </div>
       </section>
 
+      {/* Slice #37.17: „Adrese" is one tile of two panels — the home address
+          and the correspondence panel — so they show and hide together. */}
+      <div {...tileProps("addresses")} className={tileShown("addresses") ? "contents" : "hidden"}>
       <AddressBlock<FormValues>
         title={t("sections.homeAddress")}
         prefix="addresses.HOME"
@@ -954,10 +1021,15 @@ export function NaturalPersonForm({
         />
       )}
       </div>{/* end correspondence panel */}
+      </div>{/* end „Adrese" tile */}
 
       </div>{/* end panel row */}
 
       </fieldset>{/* end disabled fieldset */}
+
+      {/* Slice #37.17: in tile mode the error and the action bar are the tile
+          row's last line (`order-last`), after the list tiles. */}
+      <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -1112,6 +1184,7 @@ export function NaturalPersonForm({
           busy={false}
         />
       )}
+      </div>{/* end the action bar's line */}
     </form>
     </FieldPulseContext.Provider>
   );
