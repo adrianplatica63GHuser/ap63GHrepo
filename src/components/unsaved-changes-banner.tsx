@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 
 interface Props {
   show: boolean;
+  /** Slice #37.17: layout-only classes from the caller (a tile row gives it `basis-full`). */
+  className?: string;
 }
 
 /**
@@ -13,7 +15,7 @@ interface Props {
  * Uses sticky top-0 so it remains visible as the user scrolls down a long
  * form. Renders nothing when show is false (no DOM node, no layout shift).
  */
-export function UnsavedChangesBanner({ show }: Props) {
+export function UnsavedChangesBanner({ show, className }: Props) {
   const t = useTranslations("shared.unsavedChanges");
   if (!show) return null;
 
@@ -21,7 +23,7 @@ export function UnsavedChangesBanner({ show }: Props) {
     <div
       role="status"
       aria-live="polite"
-      className="sticky top-0 z-10 flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 shadow-sm dark:border-amber-700/60 dark:bg-amber-900/25 dark:text-amber-300"
+      className={`sticky top-0 z-10 flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 shadow-sm dark:border-amber-700/60 dark:bg-amber-900/25 dark:text-amber-300${className ? ` ${className}` : ""}`}
     >
       {/* Pencil / edit icon */}
       <svg

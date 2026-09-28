@@ -662,6 +662,12 @@
       "saving": "Saving…",
       "saveFailed": "Could not save changes"
     },
+    "tiles": {
+      "groupLabel": "Parts shown",
+      "all": "All",
+      "defaults": "Default",
+      "lastOne": "At least one part stays shown."
+    },
     "bulkDelete": {
       "selectAll": "Select all on this page",
       "deleteSelected": "Delete Selected ({count})",
@@ -983,6 +989,16 @@
       "properties": "Properties",
       "document": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
+    },
+    "tiles": {
+      "identity": "Identity",
+      "idCard": "ID Card",
+      "contact": "Contact",
+      "addresses": "Addresses",
+      "associations": "Related",
+      "properties": "Properties",
+      "documents": "Documents",
+      "metadata": "METADATA"
     }
   },
   "judicialPerson": {

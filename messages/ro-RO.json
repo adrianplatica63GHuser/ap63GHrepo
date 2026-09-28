@@ -662,6 +662,12 @@
       "saving": "Se salvează…",
       "saveFailed": "Salvarea modificărilor a eșuat"
     },
+    "tiles": {
+      "groupLabel": "Părți afișate",
+      "all": "Toate",
+      "defaults": "Implicit",
+      "lastOne": "Cel puțin o parte rămâne afișată."
+    },
     "bulkDelete": {
       "selectAll": "Selectează tot pe această pagină",
       "deleteSelected": "Șterge selecția ({count})",
@@ -983,6 +989,16 @@
       "properties": "Proprietăți",
       "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
+    },
+    "tiles": {
+      "identity": "Identitate",
+      "idCard": "Carte de identitate",
+      "contact": "Contact",
+      "addresses": "Adrese",
+      "associations": "Asocieri",
+      "properties": "Proprietăți",
+      "documents": "Acte",
+      "metadata": "META INFO"
     }
   },
   "judicialPerson": {

@@ -503,3 +503,15 @@ export function columnsStyle(names: readonly ColumnName[]): CSSProperties {
 export function columnRem(name: ColumnName): number {
   return colRem(COLUMN[name]);
 }
+
+// ---- tiles (#37.17) -------------------------------------------------------------------------
+
+/**
+ * Tiles on a small scale (Field.Widths.v02: a 1366-pixel laptop fits two small
+ * tiles, a 1920-pixel monitor three, a 2560-pixel one four). A small tile IS a
+ * panel; a wide one is two panels and the gap between them, for a tile whose
+ * content is not a table of fixed columns (META INFO). An association list's
+ * tile is as wide as its table, which #37.16 fixed.
+ */
+export const TILE_REM = { small: PANEL_REM, wide: 2 * PANEL_REM + PANEL_GAP_REM } as const;
+export const WIDE_TILE_STYLE: CSSProperties = { width: rem(TILE_REM.wide) };
