@@ -407,3 +407,99 @@ export function templateFieldWidth(
 export function isStep(value: unknown): value is Step {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(SCALE, value);
 }
+
+// ---- table columns (#37.16) ------------------------------------------------------------
+
+/**
+ * TABLES FOLLOW THE SAME RULE: THE WINDOW DECIDES HOW MANY COLUMNS ARE VISIBLE
+ * BEFORE THE TABLE SCROLLS SIDEWAYS, NEVER HOW WIDE A COLUMN IS.  (Slice #37.16)
+ *
+ * Every list and association tab lays its table out `table-fixed`, with a
+ * `<colgroup>` from here (`<FixedColumns>`, `src/components/table/fixed-columns.tsx`)
+ * and the table exactly as wide as its columns (`columnsStyle`). So a column is
+ * the same width at 1366 and at 2560 px, and ticking a column in „Câmpuri
+ * afișate" makes the table WIDER instead of squeezing the others. A window
+ * narrower than the table scrolls it sideways.
+ *
+ * A column is a step of the field scale for its CONTENT plus the cells' padding
+ * (`px-4` on each side in the lists; an association tab's `px-3` leaves its
+ * content half a rem more). One name, one width: Cod is `COLUMN.code` in a list,
+ * in an association tab and in global search.
+ *
+ * Two kinds, as for fields: `fixed` (codes, dates, numbers, chips, buttons) is
+ * as wide as its longest value; `wraps` (names, titles, places) wraps onto more
+ * lines inside its width and the row grows downward.
+ *
+ * `m:` quotes `measure-fields`: the field's own row where #37.12 measured it,
+ * and the LIST rows this slice added for what the lists show that no field is
+ * (a person's display name, a role, a group or stamp code, who last wrote).
+ */
+export const CELL_PADDING_REM = 2;
+
+export interface ColumnWidth {
+  /** The content's width, a step of the scale — or, for the two tiny controls, rem. */
+  content: Step | number;
+  kind: "fixed" | "wraps";
+}
+
+const colRem = (c: ColumnWidth): number =>
+  (typeof c.content === "number" ? c.content : SCALE[c.content]) + CELL_PADDING_REM;
+
+export const COLUMN = {
+  // Controls
+  select: { content: 1, kind: "fixed" }, //                 a checkbox or radio
+  selectNew: { content: "XS", kind: "fixed" }, //           a list's checkbox and its „Nou!" badge
+  selectBadges: { content: "S", kind: "wraps" }, //         the property list's: „Nou!", and „Încrucișat" on a line of its own
+  open: { content: "S", kind: "fixed" }, //                 „Deschide" / „Vizualizare", an xs button
+  // Every entity
+  code: { content: "S", kind: "fixed" }, //                 „JPERS03542", 10 mono characters at 12 px
+  importance: { content: "M", kind: "fixed" }, //           „Ridicată"
+  relevance: { content: "M", kind: "fixed" }, //            „De perspectivă" (14)
+  provenance: { content: "M", kind: "fixed" }, //           „Import AI"
+  // People
+  personName: { content: "XL", kind: "wraps" }, //          LIST.personDisplayName
+  personNickname: { content: "L", kind: "wraps" }, //       NP.nickname, JP.nickname
+  personType: { content: "S", kind: "fixed" }, //           „Fizică" / „Juridică"
+  role: { content: "L", kind: "wraps" }, //                 LIST.role* — a role chip, or a certificate party's quality
+  cota: { content: "L", kind: "fixed" }, //                 an input showing „— fără cotă —" when empty
+  cotaMp: { content: "L", kind: "fixed" }, //               „— fără suprafață —"
+  cotaMod: { content: "L", kind: "fixed" }, //              a dropdown, „— nespecificat —"
+  // Documents
+  documentType: { content: "XL", kind: "wraps" }, //        DOC.documentTypeId: longest 41 — wraps to two lines
+  documentTitle: { content: "XXL", kind: "wraps" }, //      DOC.title: 105 · 151 · 73 — wraps
+  nrDocument: { content: "M", kind: "fixed" }, //           DOC.nrDocument: 24 · 13 · 6
+  dateDocument: { content: "M", kind: "fixed" }, //         dd.mm.yyyy
+  // Properties
+  propertyLabel: { content: "XL", kind: "wraps" }, //       „tarla / parcelă (poreclă)" or the nickname
+  propertyNickname: { content: "XL", kind: "wraps" }, //    PROP.nickname: 8 · 38 · 38
+  parcela: { content: "M", kind: "fixed" }, //              PROP.parcela
+  tarlaSola: { content: "M", kind: "fixed" }, //            PROP.tarlaId
+  cadastralNumber: { content: "M", kind: "fixed" }, //      PROP.cadastralNumber: 13
+  carteFunciara: { content: "M", kind: "fixed" }, //        PROP.carteFunciara
+  surfaceAreaMp: { content: "M", kind: "fixed" }, //        „1234567.89"
+  calculatedAreaMp: { content: "M", kind: "fixed" }, //     „1234567.89"
+  locality: { content: "L", kind: "wraps" }, //             ADDR.propertyLocality
+  // Global search
+  entityType: { content: "L", kind: "fixed" }, //           „Proprietate", or „Persoană" and „Juridic"
+  searchName: { content: "XL", kind: "wraps" }, //          a name, a title or a property label
+  groups: { content: "M", kind: "wraps" }, //               „AA 01" chips
+  stamps: { content: "M", kind: "wraps" }, //               stamp code chips
+  updatedBy: { content: "L", kind: "wraps" }, //            LIST.updatedBy
+  metadataUpdated: { content: "M", kind: "fixed" }, //      a date
+} as const satisfies Record<string, ColumnWidth>;
+export type ColumnName = keyof typeof COLUMN;
+
+/** One column's width. */
+export function columnStyle(name: ColumnName): CSSProperties {
+  return { width: rem(colRem(COLUMN[name])) };
+}
+
+/** A fixed table, exactly as wide as the columns it shows. */
+export function columnsStyle(names: readonly ColumnName[]): CSSProperties {
+  return { width: rem(names.reduce((sum, n) => sum + colRem(COLUMN[n]), 0)) };
+}
+
+/** A column's width in rem (tests, and the e2e check). */
+export function columnRem(name: ColumnName): number {
+  return colRem(COLUMN[name]);
+}

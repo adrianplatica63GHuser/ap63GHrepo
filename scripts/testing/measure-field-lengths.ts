@@ -103,6 +103,10 @@ const COLUMNS: MeasureTarget[] = [
   { screen: "DOC", field: "notes", table: "document", column: "notes" },
   { screen: "DOC", field: "bazaLegala", table: "document", column: "baza_legala" },
   { screen: "DOC", field: "suprafata", table: "document", column: "suprafata" },
+  // Lists and association tabs (#37.16): what a column shows that no field is.
+  { screen: "LIST", field: "personDisplayName", table: "person", column: "display_name" },
+  { screen: "LIST", field: "stampCode", table: "stamps", column: "code" },
+  { screen: "LIST", field: "updatedBy", table: "entity_metadata", column: "updated_by" },
 ];
 
 /** Every dropdown whose options live in a lookup table. */
@@ -116,6 +120,10 @@ const LOOKUPS: LookupTarget[] = [
   { screen: "PROP", field: "tarlaId.descriere", table: "lookup_tarla", column: "descriere" },
   { screen: "DOC", field: "documentTypeId", table: "lookup_document_type", column: "name" },
   { screen: "DOC", field: "institutionId", table: "lookup_institution", column: "name" },
+  // The role chips in the association tabs (#37.16).
+  { screen: "LIST", field: "rolePerson", table: "lookup_person_role", column: "name" },
+  { screen: "LIST", field: "rolePropertyProperty", table: "lookup_property_property_role", column: "name" },
+  { screen: "LIST", field: "roleDocumentDocument", table: "lookup_document_document_role", column: "name" },
 ];
 
 function fail(message: string): never {

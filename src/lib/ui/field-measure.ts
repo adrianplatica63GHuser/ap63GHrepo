@@ -21,7 +21,7 @@
 /** A column whose values a field on some screen shows. */
 export interface MeasureTarget {
   /** Where the field is: `NP` natural person, `JP` judicial, `PROP`, `DOC`, `ADDR` the shared address block. */
-  screen: "NP" | "JP" | "PROP" | "DOC" | "ADDR";
+  screen: "NP" | "JP" | "PROP" | "DOC" | "ADDR" | "LIST";
   /** The field's key in `field-widths.ts`. */
   field: string;
   table: string;

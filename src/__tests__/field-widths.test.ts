@@ -28,6 +28,8 @@ import { fieldFromEditorRow, rowFromStoredField } from "@/lib/documents/template
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
   ADDRESS,
+  CELL_PADDING_REM,
+  COLUMN,
   DOCUMENT,
   HOLDS,
   CORNER_COLUMNS,
@@ -43,6 +45,8 @@ import {
   SELECT_CHROME_PX,
   TEMPLATE_FIELD,
   boxStyle,
+  columnRem,
+  columnsStyle,
   documentRowStyle,
   fieldsBesidePagesStyle,
   isStep,
@@ -427,5 +431,65 @@ describe("a template field's optional `width` (#37.15)", () => {
     const [withWidth, without] = parseTemplateFields([{ ...stored, width: "M" }, { ...stored, key: "j", order: 1 }]);
     expect(fieldFromEditorRow(rowFromStoredField(withWidth, 0), "k", 0).width).toBe("M");
     expect(fieldFromEditorRow(rowFromStoredField(without, 1), "j", 1)).not.toHaveProperty("width");
+  });
+});
+
+describe("tables at fixed column widths (#37.16)", () => {
+  const APP = (...p: string[]) => code(read("src", "app", ...p));
+  const TABLES: [string, string][] = [
+    ["Persoane fizice", APP("natural-persons", "list-view.tsx")],
+    ["Persoane juridice", APP("judicial-persons", "list-view.tsx")],
+    ["Acte", APP("documents", "list-view.tsx")],
+    ["Proprietăți", APP("properties", "list-view.tsx")],
+    ["Căutare globală", APP("(all-roles)", "admin", "global-search", "_components", "global-search-view.tsx")],
+    ["a person's Asocieri", APP("natural-persons", "_components", "person-references-tab.tsx")],
+    ["a person's Acte", APP("documents", "_components", "person-document-tab.tsx")],
+    ["a person's Proprietăți", APP("properties", "_components", "person-properties-tab.tsx")],
+    ["a document's Persoane", APP("documents", "_components", "document-persons-tab.tsx")],
+    ["a document's Proprietăți", APP("documents", "_components", "document-properties-tab.tsx")],
+    ["a document's Asocieri", APP("documents", "_components", "document-references-tab.tsx")],
+    ["a property's Persoane", APP("properties", "_components", "property-persons-tab.tsx")],
+    ["a property's Acte", APP("properties", "_components", "property-document-tab.tsx")],
+    ["a property's Asocieri", APP("properties", "_components", "property-references-tab.tsx")],
+  ];
+
+  it.each(TABLES)("%s: a fixed table from COLUMN, as wide as its columns, every header marked", (_what, src) => {
+    const table = region(src, "<table", "</table>");
+    expect(table).toMatch(/^<table \{\.\.\.fixedTable\(/);
+    expect(table).toContain("<FixedColumns columns={");
+    expect(table).not.toMatch(STRETCH);
+    expect(table).not.toMatch(/whitespace-nowrap/);
+    const head = region(table, "<thead", "</thead>");
+    const ths = head.match(/<th\b/g) ?? [];
+    expect(ths.length).toBeGreaterThan(1);
+    expect(head.match(/<th\b[^>]*\{\.\.\.columnHead\(/g) ?? []).toHaveLength(ths.length);
+    // Its frame is as wide as the table, scrolling past the window.
+    expect(src).toMatch(/TABLE_FRAME/);
+  });
+
+  it("no list page caps or centres the list", () => {
+    for (const p of [["natural-persons"], ["judicial-persons"], ["documents"], ["properties"], ["(all-roles)", "admin", "global-search"]]) {
+      expect(APP(...p, "page.tsx")).not.toMatch(/mx-auto|max-w-(5|6)xl/);
+    }
+  });
+
+  it("A STORED COLUMN CHOICE SURVIVES: the „Câmpuri afișate” keys are the ones stored before this slice", () => {
+    expect(APP("natural-persons", "list-view.tsx")).toContain('"ga40-col-person-v2"');
+    expect(APP("properties", "list-view.tsx")).toContain('"ga40-col-property-v2"');
+    expect(APP("documents", "list-view.tsx")).toContain('"ga40-col-document-v2"');
+    // The property list's optional keys are still the stored ones, "nickname" and "tarlaSola" included.
+    for (const key of ["nickname", "parcela", "tarlaSola", "cadastralNumber", "carteFunciara", "surfaceAreaMp", "calculatedAreaMp", "locality"]) {
+      expect(APP("properties", "list-view.tsx")).toContain(`key: "${key}"`);
+    }
+  });
+
+  it("a column is a step of the scale plus the cells' padding, and one name has one width", () => {
+    expect(columnRem("code")).toBe(SCALE.S + CELL_PADDING_REM);
+    expect(columnRem("documentTitle")).toBe(SCALE.XXL + CELL_PADDING_REM);
+    expect(String(columnsStyle(["select", "code", "open"]).width)).toBe(`${columnRem("select") + columnRem("code") + columnRem("open")}rem`);
+    for (const c of Object.values(COLUMN)) {
+      const content = typeof c.content === "number" ? c.content : SCALE[c.content];
+      expect(content).toBeLessThanOrEqual(SCALE.XXL);
+    }
   });
 });
