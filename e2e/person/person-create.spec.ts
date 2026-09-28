@@ -21,7 +21,7 @@
  *     FIXED box holds its widest value, and „Locul nașterii" grows downward,
  *     never sideways, and turns a pasted line break into a space. The saved
  *     person is photographed at 1366, 1920 and 2560 px into
- *     `test-results/layout/` for the handover — a synthetic record, so no
+ *     `playwright-report/layout/` (gitignored) for the handover — a synthetic record, so no
  *     redaction is needed (capture-and-personal-data.md).
  */
 
@@ -111,7 +111,9 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       const viewport = page.viewportSize();
       for (const width of [1366, 1920, 2560]) {
         await page.setViewportSize({ width, height: 1000 });
-        await page.screenshot({ path: `test-results/layout/natural-person-${width}.png`, fullPage: true });
+        // playwright-report/, not test-results/: Playwright empties test-results/ at the start of
+        // every run, including the runner's re-run of a failed spec, which would take these with it.
+        await page.screenshot({ path: `playwright-report/layout/natural-person-${width}.png`, fullPage: true });
       }
       if (viewport) await page.setViewportSize(viewport);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
