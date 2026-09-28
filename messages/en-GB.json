@@ -371,6 +371,17 @@
       "relevance": "Relevance",
       "provenance": "Provenance"
     },
+    "tiles": {
+      "cadastral": "Cadastral Data",
+      "corners": "Corners",
+      "address": "Address",
+      "map": "Map",
+      "streetView": "Street View",
+      "associations": "Related",
+      "persons": "Persons",
+      "documents": "Documents",
+      "metadata": "METADATA"
+    },
     "tabs": {
       "details": "Details",
       "related": "Related",

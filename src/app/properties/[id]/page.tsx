@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPropertyById } from "@/lib/properties/queries";
-import { PropertyDetailTabs } from "../_components/property-detail-tabs";
+import { PropertyDetailTiles } from "../_components/property-detail-tiles";
 import { fromApiPayload } from "../_components/form-schema";
-
-type Tab = "details" | "related" | "persons" | "document" | "metadata";
-const VALID_TABS: Tab[] = ["details", "related", "persons", "document", "metadata"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
@@ -31,21 +28,19 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
 
   const label = data.property.nickname ?? data.property.code;
 
-  // Only accept known tab names; fall back to "details" for anything else.
-  const initialTab: Tab =
-    tab && VALID_TABS.includes(tab as Tab) ? (tab as Tab) : "details";
-
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="w-full px-6 py-4 flex flex-col gap-4">
-        <PropertyDetailTabs
+        <PropertyDetailTiles
           propertyId={data.property.id}
           propertyCode={data.property.code}
           propertyName={label}
           initialValues={initialValues}
           initialCorners={initialCorners}
           readonly={readonly === "true"}
-          initialTab={initialTab}
+          // Slice #37.19: a `?tab=` adds its tile for this visit
+          // (PROP_TILE_OF_TAB); `details`, or anything unknown, adds nothing.
+          initialTab={tab}
         />
       </main>
     </div>

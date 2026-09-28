@@ -1,6 +1,7 @@
 /**
  * Tiles — the rules, and the Natural Person's use of them.     (Slice #37.17)
  * The Judicial Person's, declared on the same pieces.          (Slice #37.18)
+ * The Property's, with the map and Street View as tiles.       (Slice #37.19)
  *
  * The browser half — ticking, „Toate", „Implicit", a reload that keeps the
  * choice, an error in a hidden tile — is TC-TILES-01, a case driven by hand;
@@ -32,6 +33,13 @@ import {
   JP_TILE_REGISTRY,
   jpTileOfField,
 } from "@/app/judicial-persons/_components/person-tiles";
+import {
+  PROP_FORM_TILES,
+  PROP_TILES,
+  PROP_TILE_OF_TAB,
+  PROP_TILE_REGISTRY,
+  propTileOfField,
+} from "@/app/properties/_components/property-tiles";
 import { TILE_REM, PANEL_REM, PANEL_GAP_REM } from "@/lib/ui/field-widths";
 
 const ROOT = process.cwd();
@@ -203,6 +211,80 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { judicialPerson: { tiles: Record<string, string> } };
     expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
       "Persoană juridică", "Persoane de contact", "Adrese", "Asocieri", "Proprietăți", "Acte", "META INFO",
+    ]);
+  });
+});
+
+describe("the Property's tiles (Slice #37.19)", () => {
+  const FORM = code(read("src", "app", "properties", "_components", "property-form.tsx"));
+  const PAGE = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
+
+  it("are the nine the header names, and nothing stored shows exactly the old Detalii tab", () => {
+    expect([...PROP_TILES]).toEqual([
+      "cadastral", "corners", "address", "map", "streetView", "associations", "persons", "documents", "metadata",
+    ]);
+    // Detalii showed the four panels; Street View was a button, off on open.
+    expect([...PROP_TILE_REGISTRY.defaults]).toEqual(["cadastral", "corners", "address", "map"]);
+    expect([...PROP_TILE_REGISTRY.form]).toEqual(["cadastral", "corners", "address"]);
+    expect(PROP_TILE_REGISTRY.form).toBe(PROP_FORM_TILES);
+  });
+
+  it("are remembered apart from the other screens", () => {
+    expect(tileStorageKey(PROP_TILE_REGISTRY.entity)).toBe("ga40-tiles-property-v1");
+    expect(new Set([PROP_TILE_REGISTRY, NP_TILE_REGISTRY, JP_TILE_REGISTRY].map((r) => tileStorageKey(r.entity))).size).toBe(3);
+  });
+
+  it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
+    expect(PROP_TILE_OF_TAB).toEqual({ related: "associations", persons: "persons", document: "documents", metadata: "metadata" });
+    expect(PROP_TILE_OF_TAB.details).toBeUndefined();
+  });
+
+  it("put every field of the form on the tile its panel is", () => {
+    const panel = (start: string, end: string): string[] => {
+      const i = FORM.indexOf(start);
+      const j = FORM.indexOf(end, i + start.length);
+      expect([start, i >= 0 && j > i]).toEqual([start, true]);
+      return [...FORM.slice(i, j).matchAll(/name="([a-zA-Z0-9.]+)"/g)].map((m) => m[1]);
+    };
+    const cadastral = panel('data-panel="cadastral"', 'data-panel="corners"');
+    const address = panel('data-panel="address"', 'data-panel="map"');
+    expect(cadastral.length).toBeGreaterThan(6);
+    expect(address.length).toBeGreaterThan(4);
+    for (const f of cadastral) expect([f, propTileOfField(f)]).toEqual([f, "cadastral"]);
+    for (const f of address) expect([f, propTileOfField(f)]).toEqual([f, "address"]);
+  });
+
+  it("HIDING A FORM TILE NEVER LOSES A VALUE: the cadastral data, the corners and the address are hidden, never unmounted", () => {
+    for (const tile of PROP_FORM_TILES) expect(FORM).toContain(`tileProps("${tile}")`);
+    for (const tile of PROP_FORM_TILES) expect(FORM).not.toContain(`tileShown("${tile}") &&`);
+    expect(FORM).toMatch(/form\.handleSubmit\(onSubmit, onInvalid\)/);
+    expect(FORM).toMatch(/onRevealTile\(tile\)/);
+    expect(FORM).toMatch(/\(!tiled && !form\.formState\.isValid\)/);
+  });
+
+  it("AN UNTICKED MAP COSTS NOTHING: Hartă and Street View are mounted only while shown", () => {
+    expect(FORM).toMatch(/\{tileShown\("map"\) && \(\s*<section[^>]*data-panel="map"/);
+    expect(FORM).toMatch(/\{streetViewOpen && !typeConfig\.hideStreetView && \(\s*<section[^>]*data-panel="street-view"/);
+    // As tiles, the Street View button ticks the tile; the create form keeps its own state.
+    expect(FORM).toMatch(/tiles \? tiles\.onToggleTile\("streetView"\) : setShowStreetView/);
+    expect(FORM).toMatch(/streetViewOpen = tiles \? tiles\.shown\.includes\("streetView"\) : showStreetView/);
+    // The map draws the form's own corners, so a remount shows the edited polygon.
+    expect(FORM).toMatch(/<PropertyMiniMap\s+corners=\{corners\}/);
+  });
+
+  it("list tiles may unmount, and the page has no tab row", () => {
+    for (const tile of ["associations", "persons", "documents", "metadata"]) {
+      expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
+    }
+    expect(PAGE).not.toMatch(/role="tab/);
+    expect(code(read("src", "app", "properties", "[id]", "page.tsx"))).toContain("<PropertyDetailTiles");
+    expect(fs.existsSync(path.join(ROOT, "src", "app", "properties", "_components", "property-detail-tabs.tsx"))).toBe(false);
+  });
+
+  it("are named in Romanian exactly as the specs tick them", () => {
+    const ro = JSON.parse(read("messages", "ro-RO.json")) as { property: { tiles: Record<string, string> } };
+    expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
+      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Asocieri", "Persoane", "Acte", "META INFO",
     ]);
   });
 });

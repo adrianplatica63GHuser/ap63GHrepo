@@ -371,6 +371,17 @@
       "relevance": "Relevanță",
       "provenance": "Proveniență"
     },
+    "tiles": {
+      "cadastral": "Date cadastrale",
+      "corners": "Puncte de contur",
+      "address": "Adresă",
+      "map": "Hartă",
+      "streetView": "Street View",
+      "associations": "Asocieri",
+      "persons": "Persoane",
+      "documents": "Acte",
+      "metadata": "META INFO"
+    },
     "tabs": {
       "details": "Detalii",
       "related": "Asocieri",

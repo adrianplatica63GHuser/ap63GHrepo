@@ -98,7 +98,7 @@ const CONVERTED: [string, string][] = [
   ["the Judicial Person's ReadOnlyField", region(JP_FORM, "function ReadOnlyField(", "\nfunction ")],
   ["the Judicial Person's contact-person row", region(JP_FORM, "function ContactPersonRow(", "\nfunction ")],
   // Slice #37.14
-  ["the Property's panels", region(PROP_FORM, "data-panel-row>", "{bigMap && createPortal(")],
+  ["the Property's panels", region(PROP_FORM, "data-panel-row", "{bigMap && createPortal(")],
   ["the Property's Field", region(PROP_FORM, "function Field(", "\nfunction ")],
   ["the Property's SelectField", region(PROP_FORM, "function SelectField(", "\nfunction ")],
   ["the Property's ReadOnlyField", region(PROP_FORM, "function ReadOnlyField(", "\nfunction ")],
@@ -139,14 +139,16 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
   });
 
   it("every field on the Property form names its width in the file, the map has a fixed size, and no page caps it", () => {
-    const panels = region(PROP_FORM, "data-panel-row>", "{bigMap && createPortal(");
+    const panels = region(PROP_FORM, "data-panel-row", "{bigMap && createPortal(");
     const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
     expect(uses.length).toBe(17);
     expect(panels.match(/width=\{(PROP|ADDRESS)\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
     expect(panels.match(/style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(5);
     expect(panels.match(/style=\{MAP_BOX_STYLE\}/g) ?? []).toHaveLength(2);
-    expect(PROP_FORM).toMatch(/<form[\s\S]{0,300}?style=\{panelRowStyle\(\)\}/);
-    for (const f of ["property-detail-tabs.tsx", "new-property-shell.tsx"]) {
+    // Slice #37.19: as tiles, the page's tile row carries the snap and the form is `contents`.
+    expect(PROP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : panelRowStyle\(\)\}/);
+    expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/style=\{panelRowStyle\(\)\}/);
+    for (const f of ["property-detail-tiles.tsx", "new-property-shell.tsx"]) {
       expect(code(read("src", "app", "properties", "_components", f))).not.toMatch(/max-w-\[1040px\]|mx-auto/);
     }
     // The corners table fills its fixed panel; its COLUMNS are what the file fixes.

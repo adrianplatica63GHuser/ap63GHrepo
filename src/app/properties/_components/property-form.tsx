@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import {
   type Control,
   type FieldPath,
+  type FieldErrors,
   type UseFormRegister,
   useForm,
   useWatch,
@@ -87,6 +88,8 @@ import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { tabTrapMove } from "@/lib/ui/dialog-focus";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
+import { propTileOfField, type PropTile } from "./property-tiles";
+import { firstErrorPath } from "@/lib/ui/tiles";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -168,6 +171,36 @@ type Props = {
   // Slice #18.UX.04 — DOM node in the page header to portal the version-nav
   // controls into, so they render centered on the property-title line.
   versionNavSlot?:   HTMLElement | null;
+  /**
+   * Slice #37.19: the screen's tiles, when the form is drawn as tiles (the
+   * saved property's page). Absent on „Adaugă proprietate", which keeps its
+   * plain panel row. The Natural Person's rules (#37.17), plus one of this
+   * screen's own:
+   *
+   * ⚠️ **A FORM TILE THAT IS NOT SHOWN IS HIDDEN, NEVER UNMOUNTED** — the
+   * cadastral data, the corners and the address hold the form's inputs (and
+   * the corners table its row being edited). An unsaved change in a tile then
+   * unticked is still saved by „Salvează", and the banner still guards it.
+   *
+   * ⚠️ **AN UNTICKED MAP COSTS NOTHING.** Hartă and Street View are NOT form
+   * tiles: unticked, they are not mounted, so they make no Google Maps request
+   * of their own. The map draws the `corners` it is given, so ticking it after
+   * an edit shows the edited polygon, not the saved one. The corners table's
+   * „Street View" button ticks the Street View tile.
+   *
+   * In tile mode the form, its panel row and the panels' fieldsets are
+   * `display: contents` or tile items, so every panel is an item of the page's
+   * tile row and the list tiles flow beside them; the action bar is
+   * `order-last basis-full`, the row's last line.
+   */
+  tiles?: {
+    shown: readonly PropTile[];
+    labels: Readonly<Record<PropTile, string>>;
+    /** Show a hidden tile for this visit — an error has been found in it. */
+    onRevealTile: (tile: PropTile) => void;
+    /** Tick or untick a tile, as its checkbox does (the Street View button). */
+    onToggleTile: (tile: PropTile) => void;
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -198,8 +231,20 @@ export function PropertyForm({
   initialCorners = [],
   onBigMapChange,
   versionNavSlot,
+  tiles,
 }: Props) {
   const t       = useTranslations("property");
+  // Slice #37.19 — tile mode, as the Natural Person's (#37.17). `tileProps`
+  // marks a tile for the specs and hides a FORM tile when unticked; `hidden`
+  // alone would lose to any display class, so the class goes with it. The
+  // map tiles are mounted only while shown (`tileShown`).
+  const tiled = tiles !== undefined;
+  const tileShown = (tile: PropTile): boolean => !tiles || tiles.shown.includes(tile);
+  const tileProps = (tile: PropTile) =>
+    tiles
+      ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile], hidden: !tileShown(tile) }
+      : {};
+  const hiddenClass = (tile: PropTile): string => (tileShown(tile) ? "" : " hidden");
   const tShared = useTranslations("shared");
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -307,7 +352,11 @@ export function PropertyForm({
     return () => window.removeEventListener("keydown", onKey);
   }, [bigMap, onBigMapChange]);
 
-  const handleToggleStreetView = () => setShowStreetView((v) => !v);
+  // Slice #37.19: as tiles, Street View is a tile of its own, and the corners
+  // table's button ticks it; „Adaugă proprietate" keeps the panel's own state.
+  const handleToggleStreetView = () =>
+    tiles ? tiles.onToggleTile("streetView") : setShowStreetView((v) => !v);
+  const streetViewOpen = tiles ? tiles.shown.includes("streetView") : showStreetView;
 
   // Slice #18.03b: arithmetic-mean centroid of the displayed corners, used to
   // position the Street View panel. Recomputed only when corners change.
@@ -805,9 +854,15 @@ export function PropertyForm({
     router.refresh();
   };
 
+  // ⚠️ **Slice #37.19: as tiles, an invalid form does NOT disable „Salvează"**
+  // (the Natural Person's rule, #37.17). The error may sit in a tile that is
+  // not shown, and a disabled button says nothing about where. Pressing it runs
+  // the validation (`onInvalid`), which shows that tile, scrolls to the field,
+  // focuses it and pulses it; nothing is saved. „Adaugă proprietate" (no
+  // tiles) keeps the old rule.
   const saveDisabled =
     submitting ||
-    !form.formState.isValid ||
+    (!tiled && !form.formState.isValid) ||
     (isCreate && !createHasData) ||
     (!isCreate && isOnLatest && !editDirty);
 
@@ -863,6 +918,29 @@ export function PropertyForm({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Slice #37.19 — an error in a hidden tile: show the tile (for this visit),
+  // scroll to the field, focus it and pulse it (the Natural Person's
+  // `onInvalid`, #37.17). A timeout rather than an animation frame, which a
+  // browser does not run in a tab that is not in front.
+  const onInvalid = (errs: FieldErrors<FormValues>) => {
+    if (!tiles) return;
+    const path = firstErrorPath(errs);
+    if (!path) return;
+    const tile = propTileOfField(path);
+    if (!tiles.shown.includes(tile)) tiles.onRevealTile(tile);
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "center" });
+      el.focus({ preventScroll: true });
+      // The pulse goes on the field's row, not the box: the error re-renders
+      // the box's className (its red border) and would wipe a class added here.
+      const row = el.closest("label") ?? el.parentElement ?? el;
+      row.classList.add("ga-vpulse-red");
+      window.setTimeout(() => row.classList.remove("ga-vpulse-red"), 3300);
+    }, 60);
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -940,15 +1018,17 @@ export function PropertyForm({
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
+      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       // Slice #37.14: a whole number of panels wide, so the action bar below
-      // them is as wide as they are (#37.12's rule).
-      style={panelRowStyle()}
+      // them is as wide as they are (#37.12's rule). Slice #37.19: in tile
+      // mode the page's tile row carries that width and the form itself is
+      // `contents` (see `tiles`).
+      className={tiled ? "contents" : "flex flex-col gap-4"}
+      style={tiled ? undefined : panelRowStyle()}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
-      <UnsavedChangesBanner show={editDirty} />
+      <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
 
       {/* Version controls (Slice #18.UX.04) — portalled into the page header so
           they sit centered on the property-title line. Only rendered for an
@@ -977,12 +1057,16 @@ export function PropertyForm({
           full-width map of Slice #21.05.misc, all inside a centred 1040-pixel
           cap. The form itself is snapped to whole panels, so the action bar
           is as wide as they are. */}
-      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
+      <div
+        className={tiled ? "contents" : "flex flex-wrap items-start"}
+        style={tiled ? undefined : { gap: PANEL_GAP }}
+        data-panel-row
+      >
 
         {/* Cadastral data. Tarla / sola (M) and Nr. parcelă (L) are Adrian's
             widths (Field.Widths.v02); at M and L they do not share a row, so
             each has its own. Hidden for urban types (Slice #19.02). */}
-        <fieldset disabled={effectiveMode === "view"} className="m-0 border-0 p-0" style={PANEL_STYLE}>
+        <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_STYLE} {...tileProps("cadastral")}>
           <section data-panel="cadastral" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.cadastral")}
@@ -1135,9 +1219,11 @@ export function PropertyForm({
         <section
           style={PANEL_STYLE}
           data-panel="corners"
+          {...tileProps("corners")}
           className={[
             "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
             cornersPulse ? "ga-vpulse-red" : "",
+            tileShown("corners") ? "" : "hidden",
           ].join(" ")}
         >
           <div className="mb-2 flex items-center justify-between gap-2">
@@ -1153,7 +1239,7 @@ export function PropertyForm({
             onCornerHover={setHoveredCornerIdx}
             bigMap={bigMap}
             onToggleBigMap={handleToggleBigMap}
-            streetView={showStreetView && !typeConfig.hideStreetView}
+            streetView={streetViewOpen && !typeConfig.hideStreetView}
             onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
             showAngles={showAngles}
             onToggleAngles={() => setShowAngles((v) => !v)}
@@ -1163,7 +1249,7 @@ export function PropertyForm({
 
         {/* Address — Slice #19.02: hidden for agricultural / forest types. */}
         {!typeConfig.hideAddress && (
-          <fieldset disabled={effectiveMode === "view"} className="m-0 border-0 p-0" style={PANEL_STYLE}>
+          <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("address")}`} style={PANEL_STYLE} {...tileProps("address")}>
             <section data-panel="address" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
                 {t("sections.address")}
@@ -1287,9 +1373,13 @@ export function PropertyForm({
             fitBounds (property-mini-map-inner.tsx), so a parcel of any size
             fits at the default zoom. „Hartă extinsă" still opens the
             full-screen theater overlay. */}
+        {/* Slice #37.19: as tiles, the map is mounted only while „Hartă" is
+            ticked — an unticked map makes no Google Maps request of its own. */}
+        {tileShown("map") && (
         <section
           style={PANEL_STYLE}
           data-panel="map"
+          {...tileProps("map")}
           className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
         >
           <div
@@ -1312,14 +1402,16 @@ export function PropertyForm({
             </div>
           </div>
         </section>
+        )}
 
         {/* Slice #18.03b: Street View panel — mounted only while open so the
             (billed) panorama and Street View library never load on property
             open. The same fixed size as the map, beside it. */}
-        {showStreetView && !typeConfig.hideStreetView && (
+        {streetViewOpen && !typeConfig.hideStreetView && (
           <section
             style={PANEL_STYLE}
             data-panel="street-view"
+            {...tileProps("streetView")}
             className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
           >
             <div
@@ -1336,6 +1428,10 @@ export function PropertyForm({
         )}
 
       </div>{/* end Slice #37.14 panel row */}
+
+      {/* Slice #37.19: in tile mode the error and the action bar are the tile
+          row's last line (`order-last`), after the list tiles. */}
+      <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
 
       {/* Slice #20.16: Theater overlay — full-screen map portal. Rendered above
           everything via document.body so no layout shift occurs. Dismiss via
@@ -1607,6 +1703,7 @@ export function PropertyForm({
           busy={false}
         />
       )}
+      </div>{/* end the action bar's line */}
     </form>
     </FieldPulseContext.Provider>
   );
