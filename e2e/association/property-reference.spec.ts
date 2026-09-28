@@ -8,17 +8,17 @@
  * ⚠️ **BOTH SORT ORDERS IN EVERY RUN, NOT BY CHANCE.** `property_property`
  * stores a pair in uuid order, and the defect this guards (FU-220) was
  * invisible on exactly the pairs whose uuids sorted one way. So, where the
- * TC-ASSOC-07 spec meets one order per run, this one creates one whole and
- * then parts until it holds a part whose uuid sorts BEFORE the whole's and a
- * part whose uuid sorts AFTER it (the case's step 7), and drives steps 2–6 for
- * each. The order itself is also pinned in jest,
+ * TC-ASSOC-07 spec meets one order per run, this one makes three properties
+ * and names them by where their uuids sort: the whole in the middle, a part
+ * that sorts BEFORE it and a part that sorts AFTER it (the case's step 7, and
+ * POOL below), and drives steps 2–6 for each. The order itself is also pinned in jest,
  * `src/__tests__/property-relation-direction.test.ts`.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - Step 1's properties are created through the POST route the „Introducere
  *     manuală" form calls (`createProperty`), not through the form: TC-PROP-01's
- *     spec drives that form, and here the records are prerequisites, and their
- *     number is not known in advance.
+ *     spec drives that form, and here the records are prerequisites, named
+ *     only once their uuids are known (a PATCH of „Poreclă", one version each).
  *   - The names carry `TC-E2E-ASSOC-08` where the case's carry `TC-ASSOC-08`.
  *   - The cleanup's „Dezasociază" runs on the last pair; every property is
  *     removed in `finally` through DELETE /api/properties/[id], the route
@@ -44,8 +44,17 @@ const ROLES = [
   "Acces prin",
   "Alipit de",
 ];
-/** Parts created while looking for one of each sort order; far more than chance needs. */
-const MAX_PARTS = 16;
+/**
+ * ⚠️ **THREE PROPERTIES, NAMED AFTER THEIR UUIDS SORT — NOT PARTS UNTIL CHANCE
+ * OBLIGES.** (Slice #37.19) Until then this spec created the whole first and
+ * then up to 16 parts until one sorted before it and one after. A whole whose
+ * uuid falls near either end makes that fail: over a uniformly placed whole the
+ * chance is 2/17, about one run in eight, and full 20260928T233256Z-25761 met
+ * it („no part of each sort order in 16 tries"). Now three properties are made
+ * under throwaway names, sorted by uuid, and named for their place: the middle
+ * one is the whole, the first and last the two parts. Both orders, every run.
+ */
+const POOL = 3;
 
 /**
  * The property's code (`PROP…`), read from GET /api/properties/[id] — the
@@ -124,28 +133,25 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
     const created: string[] = [];
 
     try {
-      // Step 1 — the whole, then parts until both sort orders are in hand (step 7).
-      const wholeId = await createProperty(page.request, { nickname: WHOLE });
-      created.push(wholeId);
-      let before: { id: string; name: string } | undefined;
-      let after: { id: string; name: string } | undefined;
-      for (let n = 1; n <= MAX_PARTS && !(before && after); n++) {
-        // Found by `exact: true` below: when both sort orders take ten tries,
-        // „… inclusă 1" is also the start of „… inclusă 10" (full 20260928T205807Z-5800).
-        const name = `${MARK} Parcelă inclusă ${n}`;
-        const id = await createProperty(page.request, { nickname: name });
-        created.push(id);
-        if (id < wholeId) before ??= { id, name };
-        else after ??= { id, name };
+      // Step 1 — three properties, sorted by uuid: the middle one is the whole,
+      // the first sorts before it and the last after it (step 7). See POOL.
+      for (let n = 1; n <= POOL; n++) created.push(await createProperty(page.request, { nickname: `${MARK} în lucru ${n}` }));
+      const [firstId, wholeId, lastId] = [...created].sort();
+      // Found by `exact: true` below, as since full 20260928T205807Z-5800.
+      const before = { id: firstId, name: `${MARK} Parcelă inclusă 1` };
+      const after = { id: lastId, name: `${MARK} Parcelă inclusă 2` };
+      for (const [id, nickname] of [[wholeId, WHOLE], [before.id, before.name], [after.id, after.name]] as const) {
+        const res = await page.request.patch(`/api/properties/${id}`, { data: { nickname } });
+        expect(res.ok(), `PATCH /api/properties/${id} failed (${res.status()})`).toBeTruthy();
       }
-      expect(before && after, `no part of each sort order in ${MAX_PARTS} tries`).toBeTruthy();
+      expect(before.id < wholeId && wholeId < after.id).toBe(true);
 
       const whole = { id: wholeId, code: await codeOf(page, wholeId) };
-      await linkAndRead(page, before!, whole);
-      await linkAndRead(page, after!, whole);
+      await linkAndRead(page, before, whole);
+      await linkAndRead(page, after, whole);
 
       // ── At the end — radio, „Dezasociază", on the whole's „Asocieri" ─────
-      for (const part of [before!, after!]) {
+      for (const part of [before, after]) {
         await page.getByRole("radio", { name: part.name, exact: true }).check();
         // The DELETE route compiles on its first request on a cold server
         // (full 20260927T120014Z-6234 ran out of 15 s there): wait for its answer.

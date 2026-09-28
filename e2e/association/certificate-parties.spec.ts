@@ -79,7 +79,9 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("tab", { name: "Detalii" })).toBeVisible();
       await expect(page.getByText("Părți", { exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText("Nicio parte adăugată")).toBeVisible();
+      // The panel draws its title before its list answers; under load (full
+      // 20260928T233256Z-25761) the list took longer than the default 5 s.
+      await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "+ Adaugă parte" })).toBeVisible();
 
       // Step 3 — „+ Adaugă parte": the screen, the title, „Nume" / „Cod", Cod · Nume · Tip with a
