@@ -14,8 +14,10 @@ import path from "path";
 
 import { oneLine } from "@/components/forms/growing-text";
 import {
+  MAX_PAIRS,
   OVER_AT,
   buildColumnSql,
+  buildObjectSql,
   buildLookupSql,
   buildTemplateSql,
   cell,
@@ -491,5 +493,16 @@ describe("tables at fixed column widths (#37.16)", () => {
       const content = typeof c.content === "number" ? c.content : SCALE[c.content];
       expect(content).toBeLessThanOrEqual(SCALE.XXL);
     }
+  });
+});
+
+describe("the measurement stays one SELECT past 50 columns (#37.16)", () => {
+  it("splits more than 50 pairs across jsonb_build_object calls joined by ||", () => {
+    const pairs = Array.from({ length: 120 }, (_, i) => `'k${i}', ${i}`);
+    const sql = buildObjectSql(pairs);
+    expect(sql.match(/jsonb_build_object\(/g) ?? []).toHaveLength(3);
+    expect(sql.match(/\|\|/g) ?? []).toHaveLength(2);
+    expect(buildObjectSql(pairs.slice(0, MAX_PAIRS))).toMatch(/^json_build_object\(/);
+    expect(MAX_PAIRS * 2).toBeLessThanOrEqual(100);
   });
 });

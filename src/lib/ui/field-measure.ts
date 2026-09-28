@@ -68,10 +68,30 @@ function columnSource(t: MeasureTarget): string {
   return `SELECT ${col} AS v, char_length(${col}) AS len FROM ${ident(t.table)} WHERE ${ident(t.column)} IS NOT NULL AND ${col} <> ''${t.where ? ` AND (${t.where})` : ""}`;
 }
 
+/**
+ * One JSON object from `'key', value` pairs.                  (Slice #37.16)
+ *
+ * ⚠️ **Postgres takes at most 100 arguments to a function, so at most 50 pairs
+ * to one `json_build_object`.** #37.16's LIST rows took the columns past 50 and
+ * the sequence stopped with „cannot pass more than 100 arguments to a
+ * function". Past 50 the pairs go into several `jsonb_build_object`s joined
+ * with `||` (jsonb orders the keys its own way; the report does not depend on
+ * their order).
+ */
+export const MAX_PAIRS = 50;
+export function buildObjectSql(pairs: readonly string[]): string {
+  if (pairs.length <= MAX_PAIRS) return `json_build_object(${pairs.join(",\n  ")})`;
+  const chunks: string[] = [];
+  for (let i = 0; i < pairs.length; i += MAX_PAIRS) {
+    chunks.push(`jsonb_build_object(${pairs.slice(i, i + MAX_PAIRS).join(",\n  ")})`);
+  }
+  return `(${chunks.join("\n  || ")})`;
+}
+
 /** One SELECT returning `{"<screen>.<field>": stats, …}` for every target. */
 export function buildColumnSql(targets: readonly MeasureTarget[]): string {
   const parts = targets.map((t) => `'${t.screen}.${t.field}', ${statsFrom(columnSource(t))}`);
-  return `SELECT json_build_object(${parts.join(",\n  ")});`;
+  return `SELECT ${buildObjectSql(parts)};`;
 }
 
 /** One SELECT returning `{"<screen>.<field>": {"n": options, "max": longest, "longest": label}, …}`. */
@@ -80,7 +100,7 @@ export function buildLookupSql(targets: readonly LookupTarget[]): string {
     const col = `btrim(${ident(t.column)}::text)`;
     return `'${t.screen}.${t.field}', (SELECT json_build_object('n', count(*), 'max', coalesce(max(char_length(${col})), 0), 'longest', (SELECT ${col} FROM ${ident(t.table)} ORDER BY char_length(${col}) DESC LIMIT 1)) FROM ${ident(t.table)})`;
   });
-  return `SELECT json_build_object(${parts.join(",\n  ")});`;
+  return `SELECT ${buildObjectSql(parts)};`;
 }
 
 /**

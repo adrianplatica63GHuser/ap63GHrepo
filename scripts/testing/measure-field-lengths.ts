@@ -167,8 +167,18 @@ function query<T>(sql: string): T {
   }
 }
 
-const columns = query<Record<string, ColumnStats>>(buildColumnSql(COLUMNS));
-const lookups = query<Record<string, LookupStats>>(buildLookupSql(LOOKUPS));
+/** The answer in the targets' own order — past 50 columns it comes back as jsonb, which sorts its keys. */
+function inOrder<T>(answer: Record<string, T>, targets: readonly { screen: string; field: string }[]): Record<string, T> {
+  const out: Record<string, T> = {};
+  for (const t of targets) {
+    const k = `${t.screen}.${t.field}`;
+    if (k in answer) out[k] = answer[k];
+  }
+  return out;
+}
+
+const columns = inOrder(query<Record<string, ColumnStats>>(buildColumnSql(COLUMNS)), COLUMNS);
+const lookups = inOrder(query<Record<string, LookupStats>>(buildLookupSql(LOOKUPS)), LOOKUPS);
 const templates = query<TemplateStats[]>(buildTemplateSql());
 for (const line of formatReport(columns, lookups, templates)) console.log(line);
 console.log(
