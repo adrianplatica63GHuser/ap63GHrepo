@@ -87,7 +87,8 @@ this fixed sequence. Do not ask again.
   (waiting up to 5 min for GitHub to create them and 30 min for them to finish), keeps the newest
   run per workflow, and saves each failed job's log as `.test-runner\logs\<id>\ci-<job>.log`; the
   step's notes name the job, the step it died in and the run's URL. A red CI is read there, fixed,
-  committed, and taken round `full` → `push` → `ci` again. `migrate-local` runs `Apply-Migration.ps1`
+  committed, and taken round `full` → `push` → `ci` again. `migrate-local` takes a `backup` first
+  (next bullet) and applies nothing when it did not pass, then runs `Apply-Migration.ps1`
   and then `Export-SupabaseSchema.ps1` against the local container, and holds while any migration
   file differs from HEAD (`migration-dirty` — the script would apply the working tree, where an
   unconfirmed migration lives), while a pending one was added by no commit
@@ -97,6 +98,17 @@ this fixed sequence. Do not ask again.
   **Git on that side runs with `GIT_TERMINAL_PROMPT=0` and `GCM_INTERACTIVE=never`**, so a
   credential that needs a sign-in fails the step instead of opening a window nobody is watching.
   The credential is read with `git credential fill` for one step and never written anywhere.
+- **The archive's backup and restore drill are runner sequences too** (Slice #37.11, FU-006).
+  `request backup` reads the live database — `pg_dump` and SELECTs in read-only sessions — and
+  writes `%OneDrive%\ga40prj-backups\<UTC time>\` (`ga40db.dump`, `uploads\`, `manifest.json`),
+  keeping 14 days. `request restore-drill` restores the newest backup into a throwaway postgis on
+  127.0.0.1:5434 with no volume and a scratch folder, reconciles every table's rows and every
+  page file (row without file, file without row, hash) against the manifest, asks the restored
+  app on 3200 for each entity list once, and removes all of it; its one line is the answer. **The
+  runner also starts both on its own** when idle — a backup when the newest is a day old, the
+  drill monthly and after a migration — as ordinary results with `auto-` ids, so a request can
+  meet `busy` for a minute. The logic is `scripts/backup/`; by hand, `scripts\Backup-Archive.ps1`
+  (`-Drill`, `-Where`).
 - **The handover quotes the result as the runner's.** Give the id, the commit, and each step's
   line as `wait` printed it, and never write it up as Adrian's run — the push and the CI read
   included. His two blocks

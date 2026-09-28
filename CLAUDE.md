@@ -149,7 +149,8 @@ Both halves now have a runner, and both record what they applied in that databas
 - **The local half is the runner's; the cloud half is Adrian's, always.** (Propus.3.) Once the
   migration is committed with its `Schema-Confirmed:` trailer, Claude requests the runner's
   `migrate-local`, which runs `Apply-Migration.ps1` and then `Export-SupabaseSchema.ps1`, and
-  commits the regenerated `supabase_schema_full.sql`. The handover then names
+  commits the regenerated `supabase_schema_full.sql`. Since #37.11 `migrate-local` takes a
+  backup of the archive first and applies nothing when that backup did not pass. The handover then names
   `npm run supabase:migrate` as its own line, naming the file — not "and apply it to Supabase
   too", the command, written out. This is the step that gets dropped, which is why it is a rule
   and not a habit, and why the runner will not push a range that adds a migration until he has

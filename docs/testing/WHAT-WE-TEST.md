@@ -365,12 +365,14 @@ is a corpus folder and one line each; growing the CVC corpus towards the twenty 
 proposed; and the two shapes the archive did not yield for the first ten — a born-digital PDF and a
 contract with a separate act adițional (FU-235).
 
-**Whether a restore from backup produces a working archive.** The rebuild path is tested
-(`db-rebuild.yml`); a restore of real data is not. So today a backup is a hope, not a guarantee.
-→ **Waits** (FU-006). Two choices are Adrian's first: which backup to test (a `pg_dump` of
-the local container, Supabase's own, the storage bucket too), and where a restored copy may be
-stood up without touching anything live. Proposed as the next gap slice after 36.23, starting
-with an investigation.
+**Whether a restore from backup produces a working archive** — no longer a hole: Slice 37.11
+(FU-006, FU-251) backs the archive up daily into `%OneDrive%\ga40prj-backups` (the dump, every
+page file, a manifest; 14 days kept; also before every `migrate-local`), and the runner's
+`restore-drill` restores the newest backup beside live — postgis on 5434 with no volume, the
+app on 3200 — and fails on any table whose rows differ from the backup, any `document_page` row
+without its file, any file without its row, and any hash that differs. The runner runs it once a
+month and after a migration on its own; the first run was `20260928T164325Z-27313`, passed.
+What is left: Supabase's own backups and a production deployment, if one ever holds real data.
 
 **Whether the application is usable by keyboard alone, or by a screen reader.** Some
 individual components have been built with it in mind — `version-nav-controls.tsx`
