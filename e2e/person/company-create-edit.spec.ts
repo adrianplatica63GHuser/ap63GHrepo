@@ -21,12 +21,15 @@
  *     width at both, every FIXED box holding its widest value, and a long
  *     „Denumire" growing downward, never sideways. It is photographed at 1366,
  *     1920 and 2560 px into `playwright-report/layout/` — a synthetic record.
+ *   - Slice #37.16 checks the list's fixed column widths here: every column the
+ *     same width at 1400 and 2400 px, the table no wider than its columns, and
+ *     no fixed column's cell wider than the column. Not a step of the case.
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths } from "../helpers/field-widths";
 import { ADDRESS, JUDICIAL_PERSON } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
@@ -95,6 +98,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(top).toContainText("—");
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       companyId = href?.split("/").pop();
+      await expectStableColumns(page);
 
       // Step 8 — the search matches the CUI; `0000000003` empties the list.
       await search.fill(CUI);

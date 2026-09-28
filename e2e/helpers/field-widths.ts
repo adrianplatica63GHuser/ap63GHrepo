@@ -112,3 +112,88 @@ export async function expectFixedFieldsHold(page: Page, samples: Readonly<Record
   }, samples);
   expect(misfits, "fixed boxes that do not hold their value").toEqual([]);
 }
+
+/**
+ * Tables at fixed column widths (Slice #37.16).
+ *
+ * Every header cell of a converted table carries `data-width-column` (the
+ * column's name in `COLUMN`) and `data-width-kind`. This resizes the window to
+ * each width and asserts every such column is exactly as wide at all of them,
+ * and that a table is no wider than its columns. Then, at the first width, no
+ * FIXED column's cell is wider inside than out (a code, a date, a button that
+ * does not fit), while a WRAPS column's cell may grow downward. Returns the
+ * widths by column name, for the caller to compare with `columnRem`.
+ */
+export async function expectStableColumns(page: Page, widths: readonly number[] = [1400, 2400], height = 900): Promise<Record<string, number>> {
+  const read = () =>
+    page.evaluate(() => {
+      const cols: Record<string, number> = {};
+      const tables: string[] = [];
+      document.querySelectorAll<HTMLTableElement>("table[data-width-table]").forEach((table, t) => {
+        let sum = 0;
+        table.querySelectorAll<HTMLElement>("thead th[data-width-column]").forEach((th) => {
+          const w = th.getBoundingClientRect().width;
+          sum += w;
+          cols[`${t}:${th.dataset.widthColumn}`] = Math.round(w * 10) / 10;
+        });
+        const tw = table.getBoundingClientRect().width;
+        if (Math.abs(tw - sum) > 2) tables.push(`table ${t} (${table.dataset.widthTable}) is ${tw.toFixed(1)} px for ${sum.toFixed(1)} px of columns`);
+      });
+      return { cols, tables };
+    });
+  const before = page.viewportSize();
+  const snaps: { cols: Record<string, number>; tables: string[] }[] = [];
+  try {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+      snaps.push(await read());
+    }
+  } finally {
+    if (before) await page.setViewportSize(before);
+  }
+  const [first, ...rest] = snaps;
+  expect(Object.keys(first.cols).length, "no table header carries data-width-column").toBeGreaterThan(0);
+  expect(first.tables, "tables wider than their columns").toEqual([]);
+  for (const [i, s] of rest.entries()) {
+    expect(s.cols, `column widths at ${widths[i + 1]} px differ from ${widths[0]} px`).toEqual(first.cols);
+  }
+  const misfits = await page.evaluate(() => {
+    const out: string[] = [];
+    document.querySelectorAll<HTMLTableElement>("table[data-width-table]").forEach((table) => {
+      const heads = [...table.querySelectorAll<HTMLElement>("thead th")];
+      table.querySelectorAll<HTMLTableRowElement>("tbody tr").forEach((tr) => {
+        if (tr.cells.length !== heads.length) return; // a loading or empty row spanning the table
+        [...tr.cells].forEach((td, i) => {
+          const th = heads[i];
+          if (th?.dataset.widthKind !== "fixed") return;
+          if (td.scrollWidth > td.clientWidth + 1) out.push(`${th.dataset.widthColumn}: „${td.textContent?.trim()}" needs ${td.scrollWidth} px in ${td.clientWidth}`);
+        });
+      });
+    });
+    return out;
+  });
+  expect(misfits, "fixed columns whose cells do not hold their value").toEqual([]);
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(first.cols)) out[k.split(":")[1]] = v;
+  return out;
+}
+
+/**
+ * Full-page pictures at 1366, 1920 and 2560 px into `playwright-report/layout/`
+ * (`<name>-<width>.png`), for a slice's handover. Playwright empties
+ * `test-results/` on every run; this folder survives it. Puts the window back.
+ * (Slice #37.16; the earlier specs inline the same loop.)
+ */
+export async function photograph(page: Page, name: string, widths: readonly number[] = [1366, 1920, 2560], height = 1000): Promise<void> {
+  const before = page.viewportSize();
+  try {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+      await page.screenshot({ path: `playwright-report/layout/${name}-${width}.png`, fullPage: true });
+    }
+  } finally {
+    if (before) await page.setViewportSize(before);
+  }
+}

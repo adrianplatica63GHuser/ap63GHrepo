@@ -34,6 +34,11 @@
  *     created through POST /api/documents with the TC-E2E- marker and removed
  *     in `finally`. Every box and panel must be the same width at 1400 and at
  *     2400 px, on every notebook page, and every fixed box must hold its value.
+ *   - Slice #37.16 checks „Acte"'s fixed column widths after step 5 — every
+ *     column the same width at 1400 and 2400 px, the table no wider than its
+ *     columns, no fixed cell wider than its column — and photographs the list
+ *     at 1366, 1920 and 2560 px, searched down to this spec's own row first so
+ *     no real document's title is in the picture.
  */
 
 import fs from "fs";
@@ -41,7 +46,7 @@ import path from "path";
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, photograph } from "../helpers/field-widths";
 import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD } from "../../src/lib/ui/field-widths";
 
 /** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
@@ -180,6 +185,16 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(top).toContainText(/DOC\d+/);
       await expect(top).toContainText("Contract de Vânzare");
       await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${totalBefore + 1}$`))).toBeVisible();
+      // Slice #37.16: the list's fixed columns, on the archive's real rows; then
+      // its pictures, narrowed to this spec's own row first — the other rows
+      // are real documents, and no real title goes into a picture.
+      await expectStableColumns(page);
+      const listSearch = page.getByRole("searchbox", { name: "SAU caută după cod, titlu sau nr. document" });
+      await listSearch.fill(TITLE);
+      await expect(page.getByRole("row")).toHaveCount(2, { timeout: 15_000 });
+      await photograph(page, "list-documents");
+      await listSearch.fill("");
+      await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${totalBefore + 1}$`))).toBeVisible({ timeout: 15_000 });
 
       // Step 6 — „Deschide": headed with the title, „Neprocesat", five tabs,
       // and „Pagini" reading „Nicio pagină adăugată".

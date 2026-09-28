@@ -15,6 +15,10 @@
  *     lists are TC-PROP-01's and TC-PERS-01's to drive.
  *   - Both are removed in `finally` through the DELETE routes „Șterge" calls,
  *     after the case's own cleanup (radio, „Dezasociază") has run.
+ *   - Slice #37.16 checks the association tab's fixed column widths here:
+ *     every column the same width at 1400 and 2400 px, the table no wider than
+ *     its columns, no fixed column's cell wider than the column. Not a step of
+ *     the case.
  */
 
 import { test, expect } from "@playwright/test";
@@ -25,6 +29,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
+import { expectStableColumns } from "../helpers/field-widths";
 
 const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -91,6 +96,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
         await expect(personsTable.getByText(col, { exact: true })).toBeVisible();
       }
       await expect(personsTable.getByText("Cotă-parte", { exact: true })).toHaveCount(0);
+      await expectStableColumns(page);
 
       // Step 7 — the other end: the person's „Proprietăți", Denumire · Rol.
       await page.goto(`/natural-persons/${personId}`);

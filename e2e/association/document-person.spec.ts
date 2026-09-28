@@ -17,6 +17,11 @@
  *   - Step 11's warning is matched as its two halves around the role name,
  *     because the message file closes „Cumpărător" with a typographic quote
  *     the case file does not reproduce; the words are the case's, verbatim.
+ *   - Slice #37.16 checks the association tab's fixed column widths here:
+ *     every column the same width at 1400 and 2400 px, the table no wider than
+ *     its columns, no fixed column's cell wider than the column. It also photographs the tab at
+ *     1366, 1920 and 2560 px into `playwright-report/layout/`. Not a step of
+ *     the case.
  */
 
 import { test, expect } from "@playwright/test";
@@ -27,6 +32,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
+import { expectStableColumns, photograph } from "../helpers/field-widths";
 
 const MARK = `${E2E_MARKER}ASSOC-01`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -107,6 +113,8 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
         await expect(linked.getByText(col, { exact: true }).first()).toBeVisible();
       }
       await expect(linked.getByText("Cod", { exact: true })).toHaveCount(0);
+      await expectStableColumns(page);
+      await photograph(page, "association-tab");
 
       // Step 9 — `50%`, leave the field: stored, and the cell reads `50`.
       const cota = page.getByRole("textbox", { name: `Cotă-parte — ${ROW}` });

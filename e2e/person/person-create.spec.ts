@@ -23,12 +23,15 @@
  *     person is photographed at 1366, 1920 and 2560 px into
  *     `playwright-report/layout/` (gitignored) for the handover — a synthetic record, so no
  *     redaction is needed (capture-and-personal-data.md).
+ *   - Slice #37.16 checks the list's fixed column widths here: every column the
+ *     same width at 1400 and 2400 px, the table no wider than its columns, and
+ *     no fixed column's cell wider than the column. Not a step of the case.
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths } from "../helpers/field-widths";
 import { ADDRESS, NATURAL_PERSON } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
@@ -96,6 +99,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expect(top).toContainText("—");
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       personId = href?.split("/").pop();
+      await expectStableColumns(page);
 
       // Step 7 — the list's search finds it by the prefix.
       await page.getByPlaceholder("caută după cod, nume, email sau telefon").fill(`${E2E_MARKER}PERS`);

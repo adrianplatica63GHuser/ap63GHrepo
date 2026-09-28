@@ -15,6 +15,10 @@
  *     Fizice": the list is TC-PERS-01's to drive, and its spec does.
  *   - Both are removed in `finally` through the DELETE routes „Șterge" calls,
  *     after the case's own cleanup (radio, „Dezasociază") has run.
+ *   - Slice #37.16 checks the association tab's fixed column widths here:
+ *     every column the same width at 1400 and 2400 px, the table no wider than
+ *     its columns, no fixed column's cell wider than the column. Not a step of
+ *     the case.
  */
 
 import { test, expect } from "@playwright/test";
@@ -25,6 +29,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
+import { expectStableColumns } from "../helpers/field-widths";
 
 const MARK = `${E2E_MARKER}ASSOC-03`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -92,6 +97,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       for (const col of ["Tip", "Titlu", "Rol"]) {
         await expect(table.getByText(col, { exact: true })).toBeVisible();
       }
+      await expectStableColumns(page);
 
       // Step 8 — „Vizualizare": the document, READ-ONLY.
       await linked.getByRole("button", { name: "Vizualizare" }).click();

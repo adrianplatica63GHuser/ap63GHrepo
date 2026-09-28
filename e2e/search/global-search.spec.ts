@@ -19,6 +19,9 @@
  *     fixtures are the spec's to remove.
  *   - Step 1 goes through the sidebar group „Admin-Operațiuni" → „Căutare
  *     globală", as the case does, expanding the group first if it is closed.
+ *   - Slice #37.16 checks the results' fixed column widths here: every column the
+ *     same width at 1400 and 2400 px, the table no wider than its columns, and
+ *     no fixed column's cell wider than the column. Not a step of the case.
  */
 
 import { test, expect } from "@playwright/test";
@@ -32,6 +35,7 @@ import {
   tarlaIdFor,
 } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
+import { expectStableColumns } from "../helpers/field-widths";
 
 const MARK = `${E2E_MARKER}SRCH-01`;
 
@@ -104,6 +108,7 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
       await expect(property).toContainText(/PROP\d+/);
       await expect(property).toContainText("Proprietate");
       await expect(property).not.toContainText("PROPERTY");
+      await expectStableColumns(page);
 
       // Step 6 — „Proveniență": all three „Manual (Adaugă nou)".
       for (const row of [doc, person, property]) {

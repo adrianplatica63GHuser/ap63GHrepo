@@ -24,11 +24,15 @@
  *     row moves, and the same click on the persons and documents lists went
  *     through at once. Not explained yet; `force` skips only the stability
  *     wait, and the URL assertion after each click still proves it landed.
+ *   - Slice #37.16 checks the list's fixed column widths here: every column the
+ *     same width at 1400 and 2400 px, the table no wider than its columns, and
+ *     no fixed column's cell wider than the column. Not a step of the case.
  */
 
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
+import { expectStableColumns } from "../helpers/field-widths";
 
 const NICKNAME = `${E2E_MARKER}PROP-01 Teren de test`;
 
@@ -129,6 +133,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await expect(top).toContainText("TC01");
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       propertyId = href?.split("/").pop();
+      await expectStableColumns(page);
 
       // Step 12 — „Se afișează N+1 din N+1". The list pages at 15, so the
       // first number equals the second only while the list fits on one page —
