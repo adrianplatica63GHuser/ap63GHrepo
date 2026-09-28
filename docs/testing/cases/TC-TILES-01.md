@@ -5,8 +5,8 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-09-28 |
 
 ## What this proves
 
@@ -37,6 +37,16 @@ Nothing.
 - The tile choice in this browser's localStorage, put back to the defaults by „Implicit" in
   step 9.
 
+## The first run, 2026-09-28 (Slice #37.17)
+
+Driven in Adrian's Chrome, with the interface in English, so the names read Identity · ID Card ·
+Contact · Addresses · Related · Properties · Documents · METADATA, „All" and „Default". Every step
+held as written below, after two corrections the run itself made:
+- **Step 7 was unreachable as first written.** „Salvează" was disabled while the form was
+  invalid, so an error in a hidden tile could not be pressed into view. As tiles it now stays
+  enabled.
+- **The pulse was lost** to the box's own re-render (its red border). It now pulses the field's row.
+
 ## Steps
 
 | # | A person does | And sees |
@@ -47,7 +57,7 @@ Nothing.
 | 4 | Reloads the page | The same arrangement: „Acte" shown, „Contact" not ticked and not shown |
 | 5 | Types `TC` into „Poreclă" (Identitate), then unticks „Identitate" | The Identitate panel goes; „Modificări nesalvate" stays at the top; „Salvează" is enabled |
 | 6 | Presses „Salvează" | The page stays; „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Identitate": „Poreclă" reads `TC` |
-| 7 | Clears „Nume" and „Prenume", unticks „Identitate", presses „Salvează" | „Identitate" is ticked and shown again; the page has scrolled to „Nume", the box has the focus and pulses red, with its error beneath it; nothing is saved (still „v 1") |
+| 7 | Clears „Nume" and „Prenume", unticks „Identitate". „Salvează" stays enabled — as tiles, an invalid form does not disable it. Presses „Salvează" | „Identitate" is ticked and shown again, for this visit only (the stored choice is unchanged); the page has scrolled to „Nume", the box has the focus, its row pulses red, and beneath it „At least one of First Name or Last Name is required" (English in either language — FU-261); nothing is saved (still „v 1") |
 | 8 | „Toate" | All eight boxes ticked; „Asocieri", „Proprietăți", „Acte" and „META INFO" shown after the panels. Unticking seven of them leaves the last box greyed out: it cannot be unticked („Cel puțin o parte rămâne afișată.") |
 | 9 | „Implicit" | Back to the four form tiles, „Acte" gone |
 | — | At the end: „Anulează" (the cleared names are dropped), opens the person again, „Șterge" → „Da" | Back on „Persoane Fizice"; the person is gone |
