@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import type {
   Control,
   FieldPath,
@@ -66,6 +67,12 @@ type AsyncSelectProps<T extends FieldValues> = {
   className: string;
   "aria-describedby"?: string;
   "aria-invalid"?: true;
+  /** Slice #37.12: the box's width, from `src/lib/ui/field-widths.ts`. */
+  style?: CSSProperties;
+  /** Slice #37.12: the chosen option's full text, shown on hover when the box is narrower than it. */
+  title?: string;
+  /** Slice #37.12: the field's name for the width checks (`data-width-field`). */
+  widthField?: string;
 };
 
 /**
@@ -131,6 +138,9 @@ export function AsyncSelect<T extends FieldValues>({
   className,
   "aria-describedby": describedBy,
   "aria-invalid": invalid,
+  style,
+  title,
+  widthField,
 }: AsyncSelectProps<T>) {
   // Slice #34.03: `useWatch` and the once-captured `openedWith` went with
   // `allowUnlistedValue` - nothing reads the current value any more, because
@@ -143,6 +153,10 @@ export function AsyncSelect<T extends FieldValues>({
       aria-describedby={describedBy}
       aria-invalid={invalid}
       className={className}
+      style={style}
+      title={title}
+      data-width-field={widthField}
+      data-width-kind={widthField ? "select" : undefined}
       // Last on purpose: `register` can itself return `disabled` (from
       // `useForm({ disabled })` or `register(name, { disabled })`), and nothing
       // this component accepts may quietly override what the form said.

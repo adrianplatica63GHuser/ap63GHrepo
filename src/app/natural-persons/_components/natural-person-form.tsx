@@ -14,8 +14,19 @@ import {
   type FieldPath,
   type UseFormRegister,
   useForm,
+  useWatch,
 } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
+import { GrowingText } from "@/components/forms/growing-text";
+import {
+  LABEL_STYLE,
+  NATURAL_PERSON as NP,
+  PANEL_GAP,
+  PANEL_STYLE,
+  boxStyle,
+  panelRowStyle,
+  type FieldWidth,
+} from "@/lib/ui/field-widths";
 import { AddressBlock } from "@/components/address/address-block";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { NavArrowIcon } from "@/components/back-arrow";
@@ -542,6 +553,9 @@ export function NaturalPersonForm({
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
+      // Slice #37.12: a whole number of panels wide, so the action bar below
+      // them is as wide as they are and not as wide as the window.
+      style={panelRowStyle()}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner — visible whenever
@@ -572,21 +586,18 @@ export function NaturalPersonForm({
           outside this fieldset, so its buttons stay clickable. */}
       <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
 
-      {/* Slice #21.08.misc: the five panels sit in two side-by-side stacks.
-          flex-wrap (NOT an md:/lg:/xl: chain) so the pair collapses to a
-          single column by itself when the viewport cannot fit both at their
-          min width — see the 4-column-grid gotcha in CLAUDE.md. items-start
-          stops the shorter stack stretching to the taller one. min-w-[720px]
-          is the panels' pre-slice width, kept as a floor; flex-1 lets each
-          stack grow past it on a wide window. Same pattern as the Property
-          form Corners/Address row (Slice #21.05.misc). */}
-      <div className="flex flex-row flex-wrap gap-4 items-start">
-
-      {/* ── LEFT STACK — Identity + ID Card ── */}
-      <div className="flex-1 min-w-[720px] flex flex-col gap-4">
+      {/* Slice #37.12: five panels of one fixed width (`PANEL_STYLE`, 32rem),
+          left-aligned, flowing left to right and wrapping onto the next row.
+          The window decides how many sit side by side, never how wide anything
+          is: every box below takes its width from `field-widths.ts`, and the
+          form itself is snapped to a whole number of panels (`panelRowStyle`),
+          so the action bar is as wide as the panels above it. This replaced the
+          two `flex-1 min-w-[720px]` stacks of Slice #21.08.misc, which grew
+          with the window and took every field with them. */}
+      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
 
       {/* Identity — core biographical data */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="identity" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
           {mode !== "create" && personCode && (
@@ -596,36 +607,31 @@ export function NaturalPersonForm({
           )}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1 (3-col): Last Name | First Name | Nickname */}
-          <div className="grid grid-cols-3 gap-2">
-            <Field
-              label={t("fields.lastName")}
-              name="lastName"
-              register={register}
-              error={errors.lastName?.message}
-              highlight={displayHighlights?.fields.lastName}
-            />
-            <Field
-              label={t("fields.firstName")}
-              name="firstName"
-              register={register}
-              error={errors.firstName?.message}
-              highlight={displayHighlights?.fields.firstName}
-            />
-            <Field
-              label={t("fields.nickname")}
-              name="nickname"
-              register={register}
-              error={errors.nickname?.message}
-              highlight={displayHighlights?.fields.nickname}
-            />
-          </div>
-          {/* Row 2 (3-col): Age (calc) | CNP | Professional Type */}
-          <div className="grid grid-cols-3 gap-2">
-            <ReadOnlyField
-              label={t("fields.age")}
-              value={calculatedAge !== null ? String(calculatedAge) : "—"}
-            />
+          <Field
+            label={t("fields.lastName")}
+            name="lastName"
+            register={register}
+            error={errors.lastName?.message}
+            highlight={displayHighlights?.fields.lastName}
+            width={NP.lastName}
+          />
+          <Field
+            label={t("fields.firstName")}
+            name="firstName"
+            register={register}
+            error={errors.firstName?.message}
+            highlight={displayHighlights?.fields.firstName}
+            width={NP.firstName}
+          />
+          <Field
+            label={t("fields.nickname")}
+            name="nickname"
+            register={register}
+            error={errors.nickname?.message}
+            highlight={displayHighlights?.fields.nickname}
+            width={NP.nickname}
+          />
+          <div className="flex flex-wrap gap-2">
             <Field
               label={t("fields.cnp")}
               name="cnp"
@@ -633,21 +639,8 @@ export function NaturalPersonForm({
               error={errors.cnp?.message}
               hint={cnpIsLocked ? t("hints.cnpLocked") : undefined}
               highlight={displayHighlights?.fields.cnp}
+              width={NP.cnp}
             />
-            <SelectField
-              label={t("fields.physicalPersonTypeId")}
-              name="physicalPersonTypeId"
-              register={register}
-              control={control}
-              error={errors.physicalPersonTypeId?.message}
-              hint={personTypeListState === "failed" ? t("hints.personTypeListFailed") : undefined}
-              options={[{ value: "", label: "—" }, ...personTypeOptions]}
-              highlight={displayHighlights?.fields.physicalPersonTypeId}
-              snapshot={snapshotLookups.physicalPersonTypeId}
-            />
-          </div>
-          {/* Row 3 (3-col): Gender | Place of Birth | Date of Birth */}
-          <div className="grid grid-cols-3 gap-2">
             <SelectField
               label={t("fields.gender")}
               name="gender"
@@ -660,14 +653,11 @@ export function NaturalPersonForm({
                 { value: "FEMALE", label: t("options.gender.FEMALE") },
               ]}
               highlight={displayHighlights?.fields.gender}
+              width={NP.gender}
             />
-            <Field
-              label={t("fields.placeOfBirth")}
-              name="placeOfBirth"
-              register={register}
-              error={errors.placeOfBirth?.message}
-              highlight={displayHighlights?.fields.placeOfBirth}
-            />
+          </div>
+          {/* The age beside the date it is worked out from. */}
+          <div className="flex flex-wrap gap-2">
             <Field
               label={t("fields.dateOfBirth")}
               name="dateOfBirth"
@@ -675,67 +665,74 @@ export function NaturalPersonForm({
               register={register}
               error={errors.dateOfBirth?.message}
               highlight={displayHighlights?.fields.dateOfBirth}
+              width={NP.dateOfBirth}
+            />
+            <ReadOnlyField
+              label={t("fields.age")}
+              value={calculatedAge !== null ? String(calculatedAge) : "—"}
+              width={NP.age}
+              field="age"
             />
           </div>
-          {/* Row 4: Notes — full width */}
+          <SelectField
+            label={t("fields.physicalPersonTypeId")}
+            name="physicalPersonTypeId"
+            register={register}
+            control={control}
+            error={errors.physicalPersonTypeId?.message}
+            hint={personTypeListState === "failed" ? t("hints.personTypeListFailed") : undefined}
+            options={[{ value: "", label: "—" }, ...personTypeOptions]}
+            highlight={displayHighlights?.fields.physicalPersonTypeId}
+            snapshot={snapshotLookups.physicalPersonTypeId}
+            width={NP.physicalPersonTypeId}
+          />
+          <Field
+            label={t("fields.placeOfBirth")}
+            name="placeOfBirth"
+            register={register}
+            error={errors.placeOfBirth?.message}
+            highlight={displayHighlights?.fields.placeOfBirth}
+            width={NP.placeOfBirth}
+          />
           <Field
             label={t("fields.notes")}
             name="notes"
             register={register}
             error={errors.notes?.message}
             highlight={displayHighlights?.fields.notes}
+            width={NP.notes}
           />
         </div>
       </section>
 
       {/* ID Card — official document data; populated manually or via scanner */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="id-card" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.idCard")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1 (3-col): ID Doc Type | ID Doc Number | Citizenship */}
-          <div className="grid grid-cols-3 gap-2">
-            <SelectField
-              label={t("fields.idDocumentType")}
-              name="idDocumentType"
-              register={register}
-              control={control}
-              error={errors.idDocumentType?.message}
-              options={[
-                { value: "", label: "—" },
-                { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
-                { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
-              ]}
-              highlight={displayHighlights?.fields.idDocumentType}
-            />
+          <SelectField
+            label={t("fields.idDocumentType")}
+            name="idDocumentType"
+            register={register}
+            control={control}
+            error={errors.idDocumentType?.message}
+            options={[
+              { value: "", label: "—" },
+              { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
+              { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
+            ]}
+            highlight={displayHighlights?.fields.idDocumentType}
+            width={NP.idDocumentType}
+          />
+          <div className="flex flex-wrap gap-2">
             <Field
               label={t("fields.idDocumentNumber")}
               name="idDocumentNumber"
               register={register}
               error={errors.idDocumentNumber?.message}
               highlight={displayHighlights?.fields.idDocumentNumber}
-            />
-            <SelectField
-              label={t("fields.citizenship")}
-              name="citizenshipId"
-              register={register}
-              control={control}
-              error={errors.citizenshipId?.message}
-              hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
-              options={[{ value: "", label: "—" }, ...citizenshipOptions]}
-              highlight={displayHighlights?.fields.citizenshipId}
-              snapshot={snapshotLookups.citizenshipId}
-            />
-          </div>
-          {/* Row 2 (3-col): ID Issuer | ID Card Number | (empty) */}
-          <div className="grid grid-cols-3 gap-2">
-            <Field
-              label={t("fields.idIssuingAuthority")}
-              name="idIssuingAuthority"
-              register={register}
-              error={errors.idIssuingAuthority?.message}
-              highlight={displayHighlights?.fields.idIssuingAuthority}
+              width={NP.idDocumentNumber}
             />
             <Field
               label={t("fields.idCardNumber")}
@@ -743,10 +740,10 @@ export function NaturalPersonForm({
               register={register}
               error={errors.idCardNumber?.message}
               highlight={displayHighlights?.fields.idCardNumber}
+              width={NP.idCardNumber}
             />
           </div>
-          {/* Row 3 (3-col): Valid From | Until (coloured border) | status annotation */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-wrap gap-2">
             <Field
               label={t("fields.idValidFrom")}
               name="idValidFrom"
@@ -754,6 +751,7 @@ export function NaturalPersonForm({
               register={register}
               error={errors.idValidFrom?.message}
               highlight={displayHighlights?.fields.idValidFrom}
+              width={NP.idValidFrom}
             />
             <Field
               label={t("fields.idValidUntil")}
@@ -764,9 +762,13 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.idValidUntil}
               expired={idValidUntilExpired}
               expiringSoon={idValidUntilExpiringSoon}
+              width={NP.idValidUntil}
             />
-            {/* Third cell: validity status label shown to the right of the Until field */}
-            <div className="flex items-center">
+          </div>
+          {/* The validity status, under the two dates and in line with their boxes. */}
+          {(idValidUntilExpired || idValidUntilExpiringSoon || idValidUntilDate !== null) && (
+            <div className="flex items-center gap-2">
+              <span aria-hidden="true" className="shrink-0" style={LABEL_STYLE} />
               {idValidUntilExpired && (
                 <span className="text-xs font-bold uppercase text-red-600 dark:text-red-400">
                   {t("hints.idExpired")}
@@ -783,18 +785,39 @@ export function NaturalPersonForm({
                 </span>
               )}
             </div>
-          </div>
-          {/* MRZ Raw — full width */}
-          <TextAreaField
+          )}
+          <SelectField
+            label={t("fields.citizenship")}
+            name="citizenshipId"
+            register={register}
+            control={control}
+            error={errors.citizenshipId?.message}
+            hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
+            options={[{ value: "", label: "—" }, ...citizenshipOptions]}
+            highlight={displayHighlights?.fields.citizenshipId}
+            snapshot={snapshotLookups.citizenshipId}
+            width={NP.citizenshipId}
+          />
+          <Field
+            label={t("fields.idIssuingAuthority")}
+            name="idIssuingAuthority"
+            register={register}
+            error={errors.idIssuingAuthority?.message}
+            highlight={displayHighlights?.fields.idIssuingAuthority}
+            width={NP.idIssuingAuthority}
+          />
+          <Field
             label={t("fields.idMrzRaw")}
             name="idMrzRaw"
             register={register}
             error={errors.idMrzRaw?.message}
             highlight={displayHighlights?.fields.idMrzRaw}
+            width={NP.idMrzRaw}
+            mono
           />
           {mode !== "create" && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">
+              <span className="shrink-0 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
                 {t("fields.idLink")}
               </span>
               {linkedIdCard ? (
@@ -812,25 +835,20 @@ export function NaturalPersonForm({
         </div>
       </section>
 
-      </div>{/* end LEFT STACK */}
-
-      {/* ── RIGHT STACK — Contact + Home Address + Correspondence ── */}
-      <div className="flex-1 min-w-[720px] flex flex-col gap-4">
-
       {/* Contact — phones and emails */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="contact" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.contact")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1 (3-col): Personal Phone 1 | Personal Phone 2 | Work Phone */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-wrap gap-2">
             <Field
               label={t("fields.personalPhone1")}
               name="personalPhone1"
               register={register}
               error={errors.personalPhone1?.message}
               highlight={displayHighlights?.fields.personalPhone1}
+              width={NP.personalPhone1}
             />
             <Field
               label={t("fields.personalPhone2")}
@@ -838,39 +856,41 @@ export function NaturalPersonForm({
               register={register}
               error={errors.personalPhone2?.message}
               highlight={displayHighlights?.fields.personalPhone2}
-            />
-            <Field
-              label={t("fields.workPhone")}
-              name="workPhone"
-              register={register}
-              error={errors.workPhone?.message}
-              highlight={displayHighlights?.fields.workPhone}
+              width={NP.personalPhone2}
             />
           </div>
-          {/* Row 2 (3-col): Personal Email 1 | Personal Email 2 | Work Email */}
-          <div className="grid grid-cols-3 gap-2">
-            <Field
-              label={t("fields.personalEmail1")}
-              name="personalEmail1"
-              register={register}
-              error={errors.personalEmail1?.message}
-              highlight={displayHighlights?.fields.personalEmail1}
-            />
-            <Field
-              label={t("fields.personalEmail2")}
-              name="personalEmail2"
-              register={register}
-              error={errors.personalEmail2?.message}
-              highlight={displayHighlights?.fields.personalEmail2}
-            />
-            <Field
-              label={t("fields.workEmail")}
-              name="workEmail"
-              register={register}
-              error={errors.workEmail?.message}
-              highlight={displayHighlights?.fields.workEmail}
-            />
-          </div>
+          <Field
+            label={t("fields.workPhone")}
+            name="workPhone"
+            register={register}
+            error={errors.workPhone?.message}
+            highlight={displayHighlights?.fields.workPhone}
+            width={NP.workPhone}
+          />
+          <Field
+            label={t("fields.personalEmail1")}
+            name="personalEmail1"
+            register={register}
+            error={errors.personalEmail1?.message}
+            highlight={displayHighlights?.fields.personalEmail1}
+            width={NP.personalEmail1}
+          />
+          <Field
+            label={t("fields.personalEmail2")}
+            name="personalEmail2"
+            register={register}
+            error={errors.personalEmail2?.message}
+            highlight={displayHighlights?.fields.personalEmail2}
+            width={NP.personalEmail2}
+          />
+          <Field
+            label={t("fields.workEmail")}
+            name="workEmail"
+            register={register}
+            error={errors.workEmail?.message}
+            highlight={displayHighlights?.fields.workEmail}
+            width={NP.workEmail}
+          />
         </div>
       </section>
 
@@ -880,9 +900,13 @@ export function NaturalPersonForm({
         register={register}
         errors={errors.addresses?.HOME}
         highlights={displayHighlights?.addresses.HOME}
+        fixedWidths
       />
 
-      {/* ── Same-as-home checkbox — between the two address blocks ── */}
+      {/* The correspondence panel: the same-as-home checkbox, and the address
+          itself only when it differs. One panel wide either way, so the
+          checkbox never lands on a row of its own. */}
+      <div className="flex flex-col gap-2" style={PANEL_STYLE} data-panel="correspondence">
       <div className="flex items-center gap-2 px-1">
         <Controller
           control={form.control}
@@ -926,12 +950,12 @@ export function NaturalPersonForm({
           register={register}
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
+          fixedWidths
         />
       )}
+      </div>{/* end correspondence panel */}
 
-      </div>{/* end RIGHT STACK */}
-
-      </div>{/* end two-stack row */}
+      </div>{/* end panel row */}
 
       </fieldset>{/* end disabled fieldset */}
 
@@ -1109,65 +1133,63 @@ type FieldProps = {
   expired?: boolean;
   /** Adds an orange border — used for dates expiring within 3 months. */
   expiringSoon?: boolean;
+  /**
+   * Slice #37.12: the box's width and kind, from `src/lib/ui/field-widths.ts`.
+   * A GROWING kind (`grows`, `lines`) renders `<GrowingText>`: fixed width,
+   * height grows to show the whole value. Every other kind is an `<input>` as
+   * wide as its step and no wider.
+   */
+  width: FieldWidth;
+  /** Monospace text — the MRZ, whose columns line up. */
+  mono?: boolean;
 };
 
-function Field({ label, name, type = "text", register, error, hint, highlight, expired, expiringSoon }: FieldProps) {
+/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
+const BOX_CLASS =
+  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
+
+function Field({ label, name, type = "text", register, error, hint, highlight, expired, expiringSoon, width, mono }: FieldProps) {
   const ring = usePulseRing(highlight);
+  const className = [
+    BOX_CLASS,
+    error || expired
+      ? "border-red-500 focus:border-red-600"
+      : expiringSoon
+        ? "border-orange-500 focus:border-orange-600"
+        : "border-wire focus:border-focus dark:border-zinc-700",
+    mono ? "font-mono" : "",
+    ring,
+  ].join(" ");
+  const grows = width.kind === "grows" || width.kind === "lines";
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <input
-          type={type}
-          {...register(name)}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error || expired
-              ? "border-red-500 focus:border-red-600"
-              : expiringSoon
-                ? "border-orange-500 focus:border-orange-600"
-                : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
+        {grows ? (
+          <GrowingText
+            registration={register(name)}
+            width={String(boxStyle(width).width)}
+            lines={width.kind === "lines"}
+            minRows={width.rows ?? 1}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        ) : (
+          <input
+            type={type}
+            {...register(name)}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            style={boxStyle(width)}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        )}
         {hint && !error && (
           <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
         )}
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-        )}
-      </div>
-    </label>
-  );
-}
-
-function TextAreaField({
-  label,
-  name,
-  register,
-  error,
-  maxLength,
-  highlight,
-}: FieldProps & { maxLength?: number }) {
-  const ring = usePulseRing(highlight);
-  return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <textarea
-          {...register(name)}
-          maxLength={maxLength}
-          rows={3}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}
@@ -1186,6 +1208,7 @@ function SelectField({
   options,
   highlight,
   snapshot,
+  width,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
@@ -1222,6 +1245,10 @@ function SelectField({
   // for something else, so the label gets its own.
   const tSnapshot = useTranslations("shared");
   const ring = usePulseRing(highlight);
+  // Slice #37.12: NOTHING IS CUT OFF WITHOUT A WAY TO READ IT. The box is as
+  // wide as its step; an option longer than that shows in full on hover.
+  const current = useWatch({ control, name });
+  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
 
   // A version whose lookup row an admin deleted PRINTS what the snapshot holds
   // instead of offering a picker that has no option for it — which is the empty
@@ -1240,9 +1267,9 @@ function SelectField({
     // read leaves this field in `pending`, which takes the picker branch below.
     const labelId = `${name}-version-label`;
     return (
-      <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
-        <span id={labelId} className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
+        <span id={labelId} className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+        <div className="flex flex-col gap-0.5" style={boxStyle(width)} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
             state={snapshot}
             deletedLabel={tSnapshot("snapshotValue.deleted")}
@@ -1254,9 +1281,9 @@ function SelectField({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         {/* Slice #32.13: this select had no remount key at all, so a stored
             Professional Type or Citizenship — both fed by fetches that resolve
             after mount — showed as "—" however long you waited. <AsyncSelect>
@@ -1269,12 +1296,15 @@ function SelectField({
           options={options}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+            BOX_CLASS,
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
+          style={boxStyle(width)}
+          title={chosenLabel}
+          widthField={name}
         />
         {/* Slice #34.04: `hint` was already on `FieldProps` and rendered by
             `Field`; this component took the prop's type and dropped it on the
@@ -1294,11 +1324,16 @@ function SelectField({
   );
 }
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
+function ReadOnlyField({ label, value, width, field }: { label: string; value: string; width: FieldWidth; field: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+    <div className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div
+        className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
+        style={boxStyle(width)}
+        data-width-field={field}
+        data-width-kind={width.kind}
+      >
         {value}
       </div>
     </div>
