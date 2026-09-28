@@ -245,6 +245,16 @@ setup("autentificare si pregatire fixture E2E", async ({ page, baseURL }) => {
 async function loginAs(page: Page, email: string, password: string): Promise<void> {
   await page.goto("/login");
   await fillLoginForm(page, email, password);
+  // The login form shows one sentence for every refusal the auth service
+  // gives; the service's own answer (status and error code — never the body
+  // sent) goes to e2e.log, so a skip can tell a wrong password from a rate
+  // limit or an unconfirmed email (FU-252).
+  page.on("response", async (r) => {
+    if (!r.url().includes("/auth/v1/token")) return;
+    const body = (await r.json().catch(() => ({}))) as { error_code?: string; code?: string | number; msg?: string; error?: string };
+    if (r.ok()) console.log(`[E2E setup] user account: the auth service answered ${r.status()}`);
+    else console.log(`[E2E setup] user account: the auth service answered ${r.status()} ${body.error_code ?? body.code ?? ""} ${body.msg ?? body.error ?? ""}`.trim());
+  });
   await page.click('button[type="submit"]');
   try {
     await page.waitForURL("/", { timeout: 150_000, waitUntil: "commit" });
