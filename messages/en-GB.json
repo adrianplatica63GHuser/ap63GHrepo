@@ -1101,6 +1101,15 @@
       "countryRequiredIfAddressFilled": "Required if any other address field is filled",
       "contactPersonNotInSystem": "If the person is not in the system, they must be entered first using the Natural Person functionality."
     },
+    "tiles": {
+      "identity": "Judicial Person",
+      "contactPersons": "Contact Persons",
+      "addresses": "Addresses",
+      "associations": "Related",
+      "properties": "Properties",
+      "documents": "Documents",
+      "metadata": "METADATA"
+    },
     "tabs": {
       "details": "Details",
       "related": "Related",

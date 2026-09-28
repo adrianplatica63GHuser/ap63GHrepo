@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import {
   type Control,
   type FieldPath,
+  type FieldErrors,
   type UseFormRegister,
   useForm,
   useWatch,
@@ -62,6 +63,8 @@ import {
 } from "./form-schema";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
+import { jpTileOfField, type JpTile } from "./person-tiles";
+import { firstErrorPath } from "@/lib/ui/tiles";
 
 type Props = {
   mode: "create" | "edit" | "view";
@@ -70,6 +73,28 @@ type Props = {
   initialValues?: FormValues;
   /** Slice #18.05 — header DOM node to portal the version-nav controls into. */
   versionNavSlot?: HTMLElement | null;
+  /**
+   * Slice #37.18: the screen's tiles, when the form is drawn as tiles (the
+   * saved company's page). Absent on „Adaugă persoană juridică", which keeps
+   * its plain panel row. The Natural Person's rules (#37.17), unchanged:
+   *
+   * ⚠️ **A FORM TILE THAT IS NOT SHOWN IS HIDDEN, NEVER UNMOUNTED** — the
+   * document notebook's rule (#36.01): react-hook-form's values, `editDirty`,
+   * the version-diff highlights and the field pulses are all computed over
+   * inputs that are on the page. An unsaved change in a tile then unticked is
+   * still saved by „Salvează", and the banner still guards it.
+   *
+   * In tile mode the form, its fieldset and its panel row are `display:
+   * contents`, so every panel is an item of the page's tile row and the list
+   * tiles flow beside them; the action bar is `order-last basis-full`, the
+   * row's last line.
+   */
+  tiles?: {
+    shown: readonly JpTile[];
+    labels: Readonly<Record<JpTile, string>>;
+    /** Show a hidden tile for this visit — an error has been found in it. */
+    onRevealTile: (tile: JpTile) => void;
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -128,8 +153,19 @@ export function JudicialPersonForm({
   personCode,
   initialValues,
   versionNavSlot,
+  tiles,
 }: Props) {
   const t = useTranslations("judicialPerson");
+  // Slice #37.18 — tile mode, as the Natural Person's (#37.17). `tileProps`
+  // marks a form tile for the specs and hides it when unticked; `hidden` alone
+  // would lose to any display class, so the class goes with it.
+  const tiled = tiles !== undefined;
+  const tileShown = (tile: JpTile): boolean => !tiles || tiles.shown.includes(tile);
+  const tileProps = (tile: JpTile) =>
+    tiles
+      ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile], hidden: !tileShown(tile) }
+      : {};
+  const hiddenClass = (tile: JpTile): string => (tileShown(tile) ? "" : " hidden");
   // Shared read-only-view copy (Back to list button + edit hint) — reused
   // identically across all four entity forms.
   const tShared = useTranslations("shared.readonlyView");
@@ -359,9 +395,15 @@ export function JudicialPersonForm({
 
   const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
 
+  // ⚠️ **Slice #37.18: as tiles, an invalid form does NOT disable „Salvează"**
+  // (the Natural Person's rule, #37.17). The error may sit in a tile that is
+  // not shown, and a disabled button says nothing about where. Pressing it runs
+  // the validation (`onInvalid`), which shows that tile, scrolls to the field,
+  // focuses it and pulses it; nothing is saved. „Adaugă persoană juridică" (no
+  // tiles) keeps the old rule.
   const saveDisabled =
     submitting ||
-    !form.formState.isValid ||
+    (!tiled && !form.formState.isValid) ||
     ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
   const doSave = async (values: FormValues): Promise<boolean> => {
@@ -401,6 +443,31 @@ export function JudicialPersonForm({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Slice #37.18 — an error in a hidden tile: show the tile (for this visit),
+  // scroll to the field, focus it and pulse it (the Natural Person's
+  // `onInvalid`, #37.17). react-hook-form's own focus cannot reach an input
+  // inside a `display: none` tile, which is why this waits for the tile to be
+  // drawn first — a timeout rather than an animation frame, which a browser
+  // does not run in a tab that is not in front.
+  const onInvalid = (errs: FieldErrors<FormValues>) => {
+    if (!tiles) return;
+    const path = firstErrorPath(errs);
+    if (!path) return;
+    const tile = jpTileOfField(path);
+    if (!tiles.shown.includes(tile)) tiles.onRevealTile(tile);
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "center" });
+      el.focus({ preventScroll: true });
+      // The pulse goes on the field's row, not the box: the error re-renders
+      // the box's className (its red border) and would wipe a class added here.
+      const row = el.closest("label") ?? el.parentElement ?? el;
+      row.classList.add("ga-vpulse-red");
+      window.setTimeout(() => row.classList.remove("ga-vpulse-red"), 3300);
+    }, 60);
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -532,15 +599,17 @@ export function JudicialPersonForm({
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
+      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       // Slice #37.13: a whole number of panels wide, so the action bar below
-      // them is as wide as they are (#37.12's rule).
-      style={panelRowStyle()}
+      // them is as wide as they are (#37.12's rule). Slice #37.18: in tile
+      // mode the page's tile row carries that width and the form itself is
+      // `contents` (see `tiles`).
+      className={tiled ? "contents" : "flex flex-col gap-4"}
+      style={tiled ? undefined : panelRowStyle()}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
-      <UnsavedChangesBanner show={editDirty} />
+      <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
 
       {/* Slice #18.05: version controls portalled onto the person-name line. */}
       {versionNavSlot && versionNav &&
@@ -559,17 +628,21 @@ export function JudicialPersonForm({
           versionNavSlot,
         )}
 
-      <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
+      <fieldset disabled={effectiveMode === "view"} className={tiled ? "contents" : "flex flex-col gap-4 border-0 m-0 p-0 min-w-0"}>
 
       {/* Slice #37.13: four panels of one fixed width, left-aligned, flowing and
           wrapping — the rule #37.12 set for the Natural Person
           (`src/lib/ui/field-widths.ts`, `.claude/rules/styling-and-buttons.md`).
           This replaced a stack of full-width sections inside the page's
           centred 768-pixel cap. */}
-      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
+      <div
+        className={tiled ? "contents" : "flex flex-wrap items-start"}
+        style={tiled ? undefined : { gap: PANEL_GAP }}
+        data-panel-row
+      >
 
       {/* Judicial Person identity section */}
-      <section style={PANEL_STYLE} data-panel="identity" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
         </h2>
@@ -635,7 +708,7 @@ export function JudicialPersonForm({
       </section>
 
       {/* ── Contact Persons ──────────────────────────────────────────────── */}
-      <section style={PANEL_STYLE} data-panel="contact-persons" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.contactPersons")}
         </h2>
@@ -669,6 +742,9 @@ export function JudicialPersonForm({
         </div>
       </section>
 
+      {/* Slice #37.18: „Adrese" is one tile of two panels — the registered
+          address and the correspondence panel — so they show and hide together. */}
+      <div {...tileProps("addresses")} className={tileShown("addresses") ? "contents" : "hidden"}>
       {/* ── Registered Address — the shared block, at its fixed widths (#37.12) ── */}
       <AddressBlock<FormValues>
         title={t("sections.registeredAddress")}
@@ -732,10 +808,15 @@ export function JudicialPersonForm({
         />
       )}
       </div>{/* end correspondence panel */}
+      </div>{/* end „Adrese" tile */}
 
       </div>{/* end panel row */}
 
       </fieldset>{/* end disabled fieldset */}
+
+      {/* Slice #37.18: in tile mode the error and the action bar are the tile
+          row's last line (`order-last`), after the list tiles. */}
+      <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -900,6 +981,7 @@ export function JudicialPersonForm({
           t={pickerT}
         />
       )}
+      </div>{/* end the action bar's line */}
     </form>
     </FieldPulseContext.Provider>
   );

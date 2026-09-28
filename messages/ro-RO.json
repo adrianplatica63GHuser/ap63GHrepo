@@ -1101,6 +1101,15 @@
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
       "contactPersonNotInSystem": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
     },
+    "tiles": {
+      "identity": "Persoană juridică",
+      "contactPersons": "Persoane de contact",
+      "addresses": "Adrese",
+      "associations": "Asocieri",
+      "properties": "Proprietăți",
+      "documents": "Acte",
+      "metadata": "META INFO"
+    },
     "tabs": {
       "details": "Detalii",
       "related": "Asocieri",

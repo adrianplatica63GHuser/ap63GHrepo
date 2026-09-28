@@ -1,5 +1,6 @@
 /**
  * Tiles — the rules, and the Natural Person's use of them.     (Slice #37.17)
+ * The Judicial Person's, declared on the same pieces.          (Slice #37.18)
  *
  * The browser half — ticking, „Toate", „Implicit", a reload that keeps the
  * choice, an error in a hidden tile — is TC-TILES-01, a case driven by hand;
@@ -24,6 +25,13 @@ import {
   NP_TILE_REGISTRY,
   npTileOfField,
 } from "@/app/natural-persons/_components/person-tiles";
+import {
+  JP_FORM_TILES,
+  JP_TILES,
+  JP_TILE_OF_TAB,
+  JP_TILE_REGISTRY,
+  jpTileOfField,
+} from "@/app/judicial-persons/_components/person-tiles";
 import { TILE_REM, PANEL_REM, PANEL_GAP_REM } from "@/lib/ui/field-widths";
 
 const ROOT = process.cwd();
@@ -137,5 +145,64 @@ describe("the Natural Person's tiles", () => {
   it("sit on the small scale: a small tile is a panel, a wide one two and the gap", () => {
     expect(TILE_REM.small).toBe(PANEL_REM);
     expect(TILE_REM.wide).toBe(2 * PANEL_REM + PANEL_GAP_REM);
+  });
+});
+
+describe("the Judicial Person's tiles (Slice #37.18)", () => {
+  const FORM = code(read("src", "app", "judicial-persons", "_components", "judicial-person-form.tsx"));
+  const PAGE = code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"));
+
+  it("are the seven the header names, and nothing stored shows exactly the old Detalii tab", () => {
+    expect([...JP_TILES]).toEqual(["identity", "contactPersons", "addresses", "associations", "properties", "documents", "metadata"]);
+    expect([...JP_TILE_REGISTRY.defaults]).toEqual(["identity", "contactPersons", "addresses"]);
+    expect(JP_TILE_REGISTRY.form).toBe(JP_FORM_TILES);
+  });
+
+  it("are remembered apart from the Natural Person's: ticking „Acte” on a company changes nothing on a person", () => {
+    expect(tileStorageKey(JP_TILE_REGISTRY.entity)).toBe("ga40-tiles-judicial-person-v1");
+    expect(tileStorageKey(JP_TILE_REGISTRY.entity)).not.toBe(tileStorageKey(NP_TILE_REGISTRY.entity));
+  });
+
+  it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
+    expect(JP_TILE_OF_TAB).toEqual({ related: "associations", properties: "properties", document: "documents", metadata: "metadata" });
+    expect(JP_TILE_OF_TAB.details).toBeUndefined();
+  });
+
+  it("put every field of the form on the tile its panel is", () => {
+    const i = FORM.indexOf('data-panel="identity"');
+    const j = FORM.indexOf('data-panel="contact-persons"', i);
+    expect(i >= 0 && j > i).toBe(true);
+    const identity = [...FORM.slice(i, j).matchAll(/name="([a-zA-Z0-9.]+)"/g)].map((m) => m[1]);
+    expect(identity.length).toBeGreaterThan(4);
+    for (const f of identity) expect([f, jpTileOfField(f)]).toEqual([f, "identity"]);
+    for (const f of ["contactPerson1Id", "contactPerson2Name"]) expect(jpTileOfField(f)).toBe("contactPersons");
+    expect(jpTileOfField("addresses.HEADQUARTERS.country")).toBe("addresses");
+    expect(jpTileOfField("addresses.CORRESPONDENCE.streetLine")).toBe("addresses");
+    expect(jpTileOfField("correspondenceSameAsHq")).toBe("addresses");
+  });
+
+  it("HIDING A TILE NEVER LOSES A VALUE: every form tile is hidden, never unmounted", () => {
+    for (const tile of JP_FORM_TILES) expect(FORM).toContain(`tileProps("${tile}")`);
+    expect(FORM).not.toMatch(/tileShown\([^)]*\)\s*&&/);
+    expect(FORM).toMatch(/form\.handleSubmit\(onSubmit, onInvalid\)/);
+    expect(FORM).toMatch(/onRevealTile\(tile\)/);
+    expect(FORM).toMatch(/\(!tiled && !form\.formState\.isValid\)/);
+  });
+
+  it("list tiles may unmount, and the page has no tab row", () => {
+    for (const tile of ["associations", "properties", "documents", "metadata"]) {
+      expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
+    }
+    expect(PAGE).not.toMatch(/role="tab/);
+    expect(PAGE).toMatch(/useTileChoice<JpTile>\(JP_TILE_REGISTRY/);
+    expect(code(read("src", "app", "judicial-persons", "[id]", "page.tsx"))).toContain("<JudicialPersonDetailTiles");
+    expect(fs.existsSync(path.join(ROOT, "src", "app", "judicial-persons", "_components", "person-detail-tabs.tsx"))).toBe(false);
+  });
+
+  it("are named in Romanian exactly as the specs tick them", () => {
+    const ro = JSON.parse(read("messages", "ro-RO.json")) as { judicialPerson: { tiles: Record<string, string> } };
+    expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
+      "Persoană juridică", "Persoane de contact", "Adrese", "Asocieri", "Proprietăți", "Acte", "META INFO",
+    ]);
   });
 });
