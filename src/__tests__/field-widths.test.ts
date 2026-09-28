@@ -94,8 +94,8 @@ const CONVERTED: [string, string][] = [
   // Slice #37.14
   ["the Property's panels", region(PROP_FORM, "data-panel-row>", "{bigMap && createPortal(")],
   ["the Property's Field", region(PROP_FORM, "function Field(", "\nfunction ")],
-  ["the Property's SelectField", region(PROP_FORM, "function SelectField(", "\n/**")],
-  ["the Property's ReadOnlyField", region(PROP_FORM, "function ReadOnlyField(", "\n/**")],
+  ["the Property's SelectField", region(PROP_FORM, "function SelectField(", "\nfunction ")],
+  ["the Property's ReadOnlyField", region(PROP_FORM, "function ReadOnlyField(", "\nfunction ")],
   // Slice #37.15
   ["the Document's panels", region(DOC_FORM, "const renderCustomField = (", "const formElement = (")],
   ["the Document's form and its row", region(DOC_FORM, "const formElement = (", "{bigPage && mode !== \"create\"")],
