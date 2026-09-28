@@ -12,6 +12,9 @@
  *     names them `TC-E2E-ASSOC-10 …`.
  *   - The case's cleanup runs at the end; a `finally` removes both records
  *     through the DELETE routes „Șterge" calls, which also drop the link.
+ *   - Slice #37.18: the company has no tab row; its „Acte" (step 2) is a tile,
+ *     ticked with `showTile` (e2e/helpers/tiles.ts). The document keeps its
+ *     tabs until #37.19.
  */
 
 import { test, expect } from "@playwright/test";
@@ -22,6 +25,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-10`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -38,7 +42,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       // Step 2 — the company's „Acte": empty, „Asociază", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Acte" }).click();
+      await showTile(page, "Acte");
       await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 

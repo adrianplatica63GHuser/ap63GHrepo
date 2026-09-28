@@ -14,6 +14,9 @@
  *   - Steps 1 and 7 open each record by its address, not from its list.
  *   - Both are removed in `finally` through the DELETE routes „Șterge" calls,
  *     after the case's own cleanup (radio, „Dezasociază") has run.
+ *   - Slice #37.18: the company has no tab row; its „Proprietăți" (step 2) is
+ *     a tile, ticked with `showTile` (e2e/helpers/tiles.ts). The property keeps
+ *     its tabs until #37.20.
  */
 
 import { test, expect } from "@playwright/test";
@@ -24,6 +27,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-06`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -44,7 +48,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Proprietăți": empty, „Asociază", „Dezasociază".
-      await page.getByRole("tab", { name: "Proprietăți" }).click();
+      await showTile(page, "Proprietăți");
       await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 

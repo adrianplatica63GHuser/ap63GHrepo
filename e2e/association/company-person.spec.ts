@@ -15,9 +15,9 @@
  *     sends (e2e/helpers/records.ts), named `TC-E2E-ASSOC-11 …`.
  *   - The case's cleanup runs at the end; a `finally` removes both records
  *     through the DELETE routes „Șterge" calls, which also drop the link.
- *   - Slice #37.17: a Natural Person has no tab row; the person's „Asocieri"
- *     (step 7) is a tile, ticked with `showTile` (e2e/helpers/tiles.ts). The
- *     company keeps its tabs until #37.18.
+ *   - Slices #37.17 and #37.18: neither the person nor the company has a tab
+ *     row; each one's „Asocieri" (steps 2 and 7) is a tile, ticked with
+ *     `showTile` (e2e/helpers/tiles.ts).
  */
 
 import { test, expect } from "@playwright/test";
@@ -45,7 +45,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       // Step 2 — the company's „Asocieri": „Nicio persoană corelată", „Asociază", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Asocieri" }).click();
+      await showTile(page, "Asocieri");
       await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 

@@ -24,12 +24,18 @@
  *   - Slice #37.16 checks the list's fixed column widths here: every column the
  *     same width at 1400 and 2400 px, the table no wider than its columns, and
  *     no fixed column's cell wider than the column. Not a step of the case.
+ *   - Slice #37.18: the company has no tab row. Step 9 reads the tile row
+ *     instead — seven checkboxes, the three form tiles ticked, „Toate" and
+ *     „Implicit" — where the case reads five tabs. Before the cleanup, „Toate"
+ *     shows every tile; their widths are held at 1400 and 2400 px and
+ *     photographed at 1920 and 2560 px, then „Implicit" puts the default back.
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, photograph } from "../helpers/field-widths";
+import { TILE_GROUP, tileBox } from "../helpers/tiles";
 import { ADDRESS, JUDICIAL_PERSON } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
@@ -106,7 +112,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await search.fill("0000000003");
       await expect(page.getByText("Nu există persoane juridice")).toBeVisible({ timeout: 15_000 });
 
-      // Step 9 — `TC-E2E-PERS`, „Deschide": „v 0", five tabs, no „Persoane",
+      // Step 9 — `TC-E2E-PERS`, „Deschide": „v 0", the tile row (no tabs — #37.18),
       // „ID" read-only, and the CUI hint.
       await search.fill(`${E2E_MARKER}PERS`);
       const row = page.getByRole("row").filter({ hasText: NAME });
@@ -115,10 +121,17 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
-      for (const tab of ["DETALII", "ASOCIERI", "PROPRIETĂȚI", "ACTE", "META INFO"]) {
-        await expect(page.getByRole("tab", { name: tab })).toBeVisible();
+      const tiles = page.getByRole("group", { name: TILE_GROUP });
+      await expect(tiles.getByRole("checkbox")).toHaveCount(7, { timeout: 30_000 });
+      for (const tile of ["Persoană juridică", "Persoane de contact", "Adrese"]) {
+        await expect(tileBox(page, tile)).toBeChecked();
       }
-      await expect(page.getByRole("tab", { name: "Persoane" })).toHaveCount(0);
+      for (const tile of ["Asocieri", "Proprietăți", "Acte", "META INFO"]) {
+        await expect(tileBox(page, tile)).not.toBeChecked();
+      }
+      await expect(tiles.getByRole("button", { name: "Toate", exact: true })).toBeVisible();
+      await expect(tiles.getByRole("button", { name: "Implicit", exact: true })).toBeVisible();
+      await expect(page.getByRole("tab")).toHaveCount(0);
       await expect(page.getByText(/^JPERS\d+$/).first()).toBeVisible();
       await expect(
         page.getByText("CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba"),
@@ -150,6 +163,14 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}$`));
       await expect(nickname).toHaveValue(`${MARK} editat`);
+
+      // Slice #37.18 — every tile at once („Toate"), its widths held, and its pictures; then „Implicit".
+      await tiles.getByRole("button", { name: "Toate", exact: true }).click();
+      await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expectStableWidths(page);
+      await photograph(page, "judicial-person-all-tiles", [1920, 2560]);
+      await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
+      await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
 
       // ── At the end — the case's cleanup, through the UI ──────────────────
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
