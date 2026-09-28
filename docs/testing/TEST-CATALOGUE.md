@@ -103,11 +103,11 @@ fixed fixture where the existing one will do.
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |
 | [TC-VL-01](cases/TC-VL-01.md) | O valoare adăugată în „Date de referință”, redenumită și ștearsă | reference-data | happy | — | `driven` | 2026-09-27 | — |
-| [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `draft` | — | — |
+| [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `driven` | 2026-09-28 | — |
 
-**Twenty-seven are `automated`, nine are `driven`, and three are `draft`** — as of 2026-09-27 (Slice
+**Twenty-seven are `automated`, ten are `driven`, and two are `draft`** — as of 2026-09-27 (Slice
 #37.10). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
-runs of #37.04 and #37.08, TC-CALC-01, TC-AUTH-02 and TC-ACCT-01, and the reason for
+runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
 - **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-AI-01** —
@@ -118,8 +118,8 @@ each is written here, not implied:
   a setting is put back exactly, a `TC-` value is deleted.
 - **`draft`: TC-CALC-01** (Adrian's hand figure) and **TC-AUTH-02** (the `user` account) — each
   paragraph below or in its file.
-- **`draft`, driven once: TC-ACCT-01** (Slice #37.10), with Adrian typing every password: steps
-  1–5 held, and step 6 — `.env` signing in again — did not (its file has the run). It never
+- **`driven`: TC-ACCT-01** (Slice #37.10), with Adrian typing every password; step 6 went green
+  on 2026-09-28 once `.env` and the account held the same bytes (its file has the story). It never
   becomes a spec: a spec would change the password the whole e2e suite signs in with.
 - **TC-ASSOC-08 to `automated`, Slice #37.10.** migration_087 gave `property_property` its
   direction (FU-220); the case was driven twice on 2026-09-27, each run on both uuid sort orders,

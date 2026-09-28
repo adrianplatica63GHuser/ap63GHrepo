@@ -5,8 +5,8 @@
 | **Area** | account |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-09-28 |
 
 ## What this proves
 
@@ -52,6 +52,19 @@ parola” and set the one in `.env`.
 Steps 5–6 are the cleanup, and step 6 proves it.
 
 ## Notes from the runs
+
+**2026-09-28 — step 6 GREEN; the case is `driven` (Slice #37.10).** Why step 6 had stayed red: the
+runner's setup now logs its reason, and the auth service answered its `.env` pair `400
+invalid_credentials` — the password Adrian set on the screen and the one in `.env` were not the
+same bytes (`.env` had last been saved before the screen's change). Adrian set a new password of
+letters and digits only on „Schimbă parola" and saved the same text in `C:\dev\ga40prj\.env`; the
+runner's e2e `20260928T132319Z-27024` then logged „the auth service answered 200" and the `user`
+setup (TC-AUTH-02) passed. `.env` and the account agree. (That request's admin setup lost a cold
+compile, FU-105; the user half is what this step asks.)
+
+**The lesson for the next run, written into the steps' spirit:** whatever password goes into the
+two fields of step 5 is **copied from `.env`, or typed into `.env` in the same breath** — the case
+exists because the two drift apart silently.
 
 **2026-09-27, 10:14–16:32 — driven once; steps 1–5 held, step 6 RED (Slice #37.10), Adrian typing every password.**
 After Adrian reset test-user in the Supabase dashboard (FU-252), the runner's e2e
