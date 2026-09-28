@@ -102,6 +102,8 @@ async function recordPagesPanel(page: Page, pages: Locator): Promise<void> {
   const widths: Record<string, number | null> = {};
   try {
     fs.mkdirSync("playwright-report/layout", { recursive: true });
+    // The earlier steps scrolled the page; the picture starts at the heading.
+    await page.getByRole("heading", { level: 1 }).first().scrollIntoViewIfNeeded();
     for (const width of [1366, 1920, 2560]) {
       await page.setViewportSize({ width, height: 1080 });
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
