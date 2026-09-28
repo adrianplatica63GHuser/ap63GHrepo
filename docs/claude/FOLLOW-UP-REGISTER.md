@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-28, Slice #37.18 — 264 entries. Rows are status, columns are impact.
+As of 2026-09-28, Slice #37.19 — 266 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 15 | 54 | 51 | 15 | 135 |
+| open | 15 | 55 | 52 | 15 | 137 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 34 | 52 | 25 | 3 | 114 |
 | ignored | 4 | 2 | 3 | 2 | 11 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 53 | 111 | 80 | 20 | 264 |
+| **total** | 53 | 112 | 81 | 20 | 266 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -348,3 +348,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-262 | 2026-09-28 #37.17 | recommendation | UI shell | The tile choice is remembered per browser (localStorage), so it does not follow Adrian from one machine to another; remembering it per user in the database would, at the cost of a migration. | src/components/tiles/use-tile-choice.ts; header 37.17 Ask first | user | M | open | Adrian's ruling: keep per browser (each screen its own arrangement), or a user_preferences row per entity kind. | 2026-09-28 |
 | FU-263 | 2026-09-28 #37.17 | next-slice idea | UI shell | Tiles cannot be reordered: they show in the registry's fixed order. Dragging a tile to a new place, remembered with the choice, was out of #37.17's scope. | src/lib/ui/tiles.ts inRegistryOrder; src/components/tiles/tile-selector.tsx | user | M | open | A stored order beside the stored choice, and drag handles on the checkboxes or the tiles. | 2026-09-28 |
 | FU-264 | 2026-09-28 #37.18 TC-TILES-02 | defect | UI shell | In a window about 800 px wide the version controls („v 1", the arrows, „Fă curentă", „2 versiuni") sit over the end of the record's name: they are absolutely placed at the right of the header line, and nothing keeps the name clear of them. Seen on a Judicial Person and a Natural Person in the desktop app's browser pane. | src/app/judicial-persons/_components/person-detail-tiles.tsx and natural-persons/_components/person-detail-tiles.tsx `<header>` (the navSlot div is `absolute inset-y-0 right-0`, since #19.07) | cosmetic | XS | open | Make the header a flex row with the slot as a non-shrinking item after the name, or pad the name by the slot's width. | 2026-09-28 |
+| FU-265 | 2026-09-28 #37.19 TC-TILES-03 step 3; e2e 20260928T232151Z-23723 | recommendation | Map | With „Hartă" unticked, a property page still makes 7 Google requests: the Maps JavaScript library, not a map. That is maps/api/js, main/common/map/util/geocoder.js and a gen_204 ping. The root layout's APIProvider loads the library on every page of the app, and property-form asks for the geocoder library on open. The #37.19 header expected zero. | src/app/layout.tsx MapsProvider; src/components/providers/maps-provider.tsx; property-form.tsx useMapsLibrary("geocoding"); TC-ASSOC-04 spec log line „unticked, every Google request" | dev | S | open | Move MapsProvider from the root layout to the routes that draw a map, and load the geocoder only when „Preia din Street View" is pressed. The map-load count is already zero, so this is only the library download. | 2026-09-28 |
+| FU-266 | 2026-09-28 #37.19 | defect | Properties | The Property's tile row always offers „Adresă" and „Street View", but a property type can hide both (Slice #19.02: agricultural and forest types have no address, some types no Street View). Ticking either on such a property shows nothing and says nothing. | src/app/properties/_components/property-form.tsx typeConfig.hideAddress / hideStreetView; src/components/tiles/tile-selector.tsx draws every registry tile | user | S | open | Let a screen pass the tiles its record does not have to TileSelector, drawn disabled with a title that says why. That is a shared-frame change, so it is a slice of its own. | 2026-09-28 |

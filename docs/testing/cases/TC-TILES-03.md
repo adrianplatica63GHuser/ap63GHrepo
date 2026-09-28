@@ -5,8 +5,8 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-09-28 |
 
 ## What this proves
 
@@ -24,8 +24,8 @@ A sibling of TC-TILES-01 and TC-TILES-02 rather than a step in either.
 ## Before you start
 
 - TC-PROP-01 and TC-TILES-01 are green.
-- A property „TC-TILES-03 Teren de test" exists, with four synthetic corners (a small square in a
-  field, nobody's parcel). It is made through `POST /api/properties`, which is what „Adaugă" →
+- A property „TC-TILES-03 Teren de test" exists, with four synthetic corners: a square of about
+  55 × 55 m from 44.5000 N, 26.2000 E to 44.5005 N, 26.2007 E. It has no owner and no document. It is made through `POST /api/properties`, which is what „Adaugă" →
   „Salvează" sends, and removed at the end.
 - The browser has no stored choice for this screen: no `ga40-tiles-property-v1` in localStorage.
   „Implicit" (step 9) removes it again.
@@ -42,6 +42,21 @@ Nothing.
 - The tile choice in this browser's localStorage, put back to the defaults by „Implicit" in
   step 9.
 
+## The first run, 2026-09-28 (Slice #37.19)
+
+Driven in the desktop app's browser pane, on localhost:3000 with the interface in Romanian, in a
+window about 800 px wide. Every step held. The run made one correction to step 4: it first read
+„latitude +0.001". On a 55-metre square that moves the corner past the opposite side, and the
+polygon crosses itself. It now moves the corner 100 m south, outward.
+
+What the run measured:
+- **Step 3**, with „Hartă" unticked and the page reloaded: 8 Google requests (7 distinct paths),
+  none of them a map. They are the Maps library itself: `maps/api/js`, `main.js`, `common.js`,
+  `map.js`, `util.js`, `geocoder.js` and one `gen_204` ping. The root layout's `APIProvider` loads
+  the library on every page, and the form asks for the geocoder. FU-265 has the details.
+- **Step 4:** the map, unmounted and mounted again, drew the edited corner.
+- **Step 6:** the saved property held it (read back through `GET /api/properties/[id]`).
+
 ## Steps
 
 | # | A person does | And sees |
@@ -49,7 +64,7 @@ Nothing.
 | 1 | Opens „TC-TILES-03 Teren de test" | Under the name, no tab row. Instead, nine checkboxes: „Date cadastrale", „Puncte de contur", „Adresă", „Hartă", „Street View", „Asocieri", „Persoane", „Acte", „META INFO". The first four are ticked. Then come „Toate" and „Implicit". Below: the panels Date cadastrale, Puncte de contur (four rows), Adresă and the map with the square on it. There is no Street View panel |
 | 2 | Unticks „Hartă" | The map goes; the other panels stay where they are |
 | 3 | Clears the network log, reloads the page | „Hartă" is still unticked and no map is drawn. The log holds no map request: no `/maps/vt` tiles, and no `AuthenticationService`, `QuotaService` or `ViewportInfoService` call. The Maps script the whole app loads may appear; it is not a map |
-| 4 | In „Puncte de contur", edits the first corner's latitude by +0.001 and confirms the row; then ticks „Hartă" | The map comes back, and its first corner is where the table now says: the square has one corner pulled out. It is the edited polygon, not the saved one. „Modificări nesalvate" is at the top |
+| 4 | In „Puncte de contur" (Stereo 70), „Editează" on the first corner, „Nord (m)" 100 m less, the row's „Salvează"; then ticks „Hartă" | The map comes back, and its first corner is where the table now says: the square has one corner pulled out. It is the edited polygon, not the saved one. „Modificări nesalvate" is at the top |
 | 5 | Presses „Arată Street View" under the corners | „Street View" is ticked in the row and a Street View tile appears beside the map. The button now reads „Ascunde Street View"; pressing it unticks the tile again |
 | 6 | Unticks „Puncte de contur", presses „Salvează" | The page stays: „v 1" and „2 versiuni" in the header, and the banner goes. Ticks „Puncte de contur": the first corner holds the edited latitude |
 | 7 | Types `-5` into „Suprafață oficială (m²)", unticks „Date cadastrale". „Salvează" stays enabled. Presses „Salvează" | „Date cadastrale" is ticked and shown again, for this visit only. The page has scrolled to „Suprafață oficială (m²)"; the box has the focus, its row pulses red, and beneath it is „Surface area must be a positive number". Nothing is saved (still „v 1"). Then „Anulează": back on the list |
