@@ -25,6 +25,8 @@
 #            restore-drill (the newest backup restored beside live on 5434 + the app on 3200,
 #                           every row and file reconciled, torn down) (#37.11)
 #            migrate-local backs up first. The runner also backs up daily and drills monthly on its own.
+#            measure-fields (how long the archive's values are, per field on the detail screens;
+#                            read-only, longest values masked; the table is the log) (#37.12)
 #
 # wait/ping exit: 0 passed · 1 failed · 2 error · 3 refused · 4 still running · 5 no result yet
 #                 6 held — a guard said this waits for Adrian; the step's summary names why
@@ -105,5 +107,5 @@ case "$cmd" in
   wait)    [ $# -ge 1 ] || { echo "usage: claude.sh wait <id> [seconds]" >&2; exit 2; }; wait_for "$@" ;;
   show)    [ -f "$ch/results/${1:-}.json" ] || { echo "no result for ${1:-}" >&2; exit 5; }; show "$ch/results/$1.json" ;;
   ping)    id="$(request ping)" || exit 2; wait_for "$id" "${1:-20}" ;;
-  *)       sed -n '2,29p' "$0"; exit 2 ;;
+  *)       sed -n '2,31p' "$0"; exit 2 ;;
 esac

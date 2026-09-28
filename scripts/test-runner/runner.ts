@@ -145,6 +145,8 @@ const EXPORT_SCHEMA = path.join(REPO, "scripts", "Export-SupabaseSchema.ps1");
 const SCHEMA_FILE = "src/db/supabase_schema_full.sql";
 /** `backup` and `restore-drill` (Slice #37.11): the archive's backup, and the drill that restores it beside live. */
 const ARCHIVE_SCRIPT = path.join(REPO, "scripts", "backup", "archive.ts");
+/** `measure-fields` (Slice #37.12): how long the archive's values are, read-only, masked. */
+const MEASURE_SCRIPT = path.join(REPO, "scripts", "testing", "measure-field-lengths.ts");
 /** The same defaults Apply-Migration.ps1 and Export-SupabaseSchema.ps1 use. */
 const DB = { container: "ga40prj-postgres", database: "ga40db", user: "postgres" };
 /** The runner's own source. When either changes while idle, it exits 75 and the wrapper restarts it. */
@@ -180,6 +182,7 @@ const TIMEOUT = {
   backup: 15 * MIN,
   // A throwaway postgis, a restore, the pages, and a cold next dev for four lists.
   drill: 30 * MIN,
+  measure: 5 * MIN,
 };
 /** How often the idle runner asks whether a backup or a drill is due. (Slice #37.11) */
 const AUTO_CHECK_MS = 10 * MIN;
@@ -914,6 +917,20 @@ async function stepRestoreDrill(id: string, logFile: string): Promise<StepOutcom
   };
 }
 
+/**
+ * `scripts/testing/measure-field-lengths.ts` — three read-only SELECTs, the
+ * table printed to the step's log. Fixed argv. Exit 0 measured, 2 could not run.
+ */
+async function stepMeasureFields(logFile: string): Promise<StepOutcome> {
+  const r = await runLogged(NODE, [BIN.tsx, MEASURE_SCRIPT], logFile, TIMEOUT.measure);
+  return {
+    status: r.timedOut || r.exitCode !== 0 ? "error" : "passed",
+    exitCode: r.exitCode,
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep("measure-fields", r.text, r.exitCode),
+    notes: [`the table is the step's log: ${rel(logFile)}`],
+  };
+}
+
 // ---- one request ------------------------------------------------------------------
 
 let runnerInfo: RunnerInfo;
@@ -1151,6 +1168,9 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
           break;
         case "restore-drill":
           out = await stepRestoreDrill(req.id, logFile);
+          break;
+        case "measure-fields":
+          out = await stepMeasureFields(logFile);
           break;
       }
     } catch (e) {

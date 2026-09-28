@@ -75,6 +75,12 @@
  * The runner also starts both on its own when idle (`scripts/backup/rules.ts`
  * → `nextAutoRun`): a backup daily, the drill monthly and after a migration.
  *
+ * Slice #37.12 added `measure-fields`: `scripts/testing/measure-field-lengths.ts`,
+ * three SELECTs in a read-only session that measure how long the values behind
+ * every field on the detail screens really are, and print the table
+ * `src/lib/ui/field-widths.ts` quotes. The longest free-text value is masked
+ * inside Postgres (`src/lib/ui/field-measure.ts`), so no real value is printed.
+ *
  * A held step is not a failure and not an error: it is the runner saying „this
  * waits for Adrian", with the reason by name. None of the three ever touches
  * Supabase or UAT — `npm run supabase:migrate` stays Adrian's.
@@ -120,6 +126,7 @@ export const STEPS = [
   "forms-drift",
   "backup",
   "restore-drill",
+  "measure-fields",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -147,6 +154,7 @@ export const SEQUENCES = {
   "forms-export": ["forms-export"],
   backup: ["backup"],
   "restore-drill": ["restore-drill"],
+  "measure-fields": ["measure-fields"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -692,6 +700,11 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
     case "restore-drill": {
       // `scripts/backup/archive.ts drill` ends with one `DRILL:` line. (Slice #37.11)
       body = (lines.filter((l) => l.startsWith("DRILL:")).pop() ?? "").replace(/^DRILL:\s*/, "");
+      break;
+    }
+    case "measure-fields": {
+      // `scripts/testing/measure-field-lengths.ts` ends with one `MEASURE:` line; the table is the log. (Slice #37.12)
+      body = (lines.filter((l) => l.startsWith("MEASURE:")).pop() ?? "").replace(/^MEASURE:\s*/, "");
       break;
     }
   }
