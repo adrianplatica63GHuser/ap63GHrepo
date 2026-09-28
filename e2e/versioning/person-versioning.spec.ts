@@ -60,7 +60,7 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       await expect(page.getByRole("button", { name: "Anulează", exact: true })).toBeVisible();
 
       // Step 3 — „Prenume" `Doi`, „Salvează": stays, `Doi …`, „v 1", chip „2 versiuni", no arrows.
-      const firstName = page.locator('input[name="firstName"]');
+      const firstName = page.locator('[name="firstName"]');
       await firstName.fill("Doi");
       await save.click();
       await expect(page.getByRole("heading", { name: named("Doi") })).toBeVisible({ timeout: 30_000 });

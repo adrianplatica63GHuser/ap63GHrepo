@@ -15,11 +15,28 @@
  *     stopped before that.
  *   - No CNP, exactly as the case: a synthetic record carries no real
  *     identifier.
+ *   - Slice #37.12 — fixed widths. The form of step 2 and the saved person
+ *     opened for the cleanup are both checked at 1400 and 2400 px: every box
+ *     and panel is the same width at both (`e2e/helpers/field-widths.ts`), every
+ *     FIXED box holds its widest value, and „Locul nașterii" grows downward,
+ *     never sideways, and turns a pasted line break into a space. The saved
+ *     person is photographed at 1366, 1920 and 2560 px into
+ *     `test-results/layout/` for the handover — a synthetic record, so no
+ *     redaction is needed (capture-and-personal-data.md).
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
+import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { ADDRESS, NATURAL_PERSON } from "../../src/lib/ui/field-widths";
+
+/** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
+const SAMPLES: Record<string, string> = {};
+for (const [k, w] of Object.entries(NATURAL_PERSON)) if ("sample" in w) SAMPLES[k] = w.sample;
+for (const [k, w] of Object.entries(ADDRESS)) {
+  if ("sample" in w) for (const kind of ["HOME", "CORRESPONDENCE"]) SAMPLES[`addresses.${kind}.${k}`] = w.sample;
+}
 
 const LAST_NAME = `${E2E_MARKER}PERS-01`;
 const LISTED_AS = `Ion ${LAST_NAME}`; // prenume first, as the list renders it
@@ -50,6 +67,19 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
         await expect(page.getByText(section).first()).toBeVisible();
       }
 
+      // Slice #37.12 — the same widths at 1400 and 2400 px; every FIXED box holds its value.
+      await expectStableWidths(page);
+      await expectFixedFieldsHold(page, SAMPLES);
+      // „Locul nașterii" grows downward: taller with a long value, never wider;
+      // a pasted line break becomes a space, because it is one value.
+      const place = page.locator('[data-width-field="placeOfBirth"]');
+      const oneLine = await place.boundingBox();
+      await place.fill(`Localitatea ${"Foarte ".repeat(8)}Lungă\nJudețul Exemplu`);
+      await expect(place).toHaveValue(/^Localitatea (Foarte ){8}Lungă Județul Exemplu$/);
+      const grown = await place.boundingBox();
+      expect(grown?.width).toBe(oneLine?.width);
+      expect(grown?.height ?? 0).toBeGreaterThan((oneLine?.height ?? 0) + 10);
+
       // Steps 3–4 — „Nume" and „Prenume".
       await page.getByLabel(/^Nume(\s|$)/).fill(LAST_NAME);
       await page.getByLabel(/^Prenume(\s|$)/).fill("Ion");
@@ -73,6 +103,17 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
 
       // ── At the end — the case's cleanup, through the UI ──────────────────
       await page.getByRole("row").filter({ hasText: LISTED_AS }).getByRole("link", { name: "Deschide" }).click();
+
+      // Slice #37.12 — the saved person at fixed widths, and its pictures for the handover.
+      await expect(page.locator('[data-panel="identity"]')).toBeVisible({ timeout: 30_000 });
+      await expectStableWidths(page);
+      await expectFixedFieldsHold(page, SAMPLES);
+      const viewport = page.viewportSize();
+      for (const width of [1366, 1920, 2560]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.screenshot({ path: `test-results/layout/natural-person-${width}.png`, fullPage: true });
+      }
+      if (viewport) await page.setViewportSize(viewport);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți persoana?" });
       await expect(confirm.getByRole("button", { name: "Nu", exact: true })).toBeVisible();
