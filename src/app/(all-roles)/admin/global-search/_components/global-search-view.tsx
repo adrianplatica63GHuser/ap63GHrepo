@@ -15,6 +15,14 @@ import {
   pageSlice,
   type SearchEntityType,
 } from "@/lib/search/interleave";
+import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
+
+/** Slice #37.16: the results' columns, each a fixed width from `COLUMN`. */
+const RESULT_COLUMNS: ColumnName[] = [
+  "code", "entityType", "searchName", "groups", "stamps",
+  "importance", "relevance", "provenance", "updatedBy", "metadataUpdated",
+];
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -572,7 +580,8 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    // Slice #37.16: the card is as wide as the table, up to the window.
+    <div className="w-fit max-w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3 dark:border-zinc-700">
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
           {t("resultsCount", { count: results.length })}
@@ -581,28 +590,29 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
 
       <TruncationNotice types={truncatedTypes} />
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className={TABLE_FRAME}>
+        <table {...fixedTable(RESULT_COLUMNS)}>
+          <FixedColumns columns={RESULT_COLUMNS} />
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.code")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.type")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.name")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("code")}>{t("table.code")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("entityType")}>{t("table.type")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("searchName")}>{t("table.name")}</th>
               {/* Slice #23.11.search — Grup / Stampile are NOT dev-only: they
                   exist so the group and stamp filters, which any user can set,
                   show which group or stamp actually matched. A filter with no
                   corresponding column is a filter you cannot check. */}
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.groups")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.stamps")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("groups")}>{t("table.groups")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("stamps")}>{t("table.stamps")}</th>
               {/* Slice #23.10.dev wrapped these five headers and their five
                   cells below in two separate <DevOnly>s driven by one
                   predicate, so a row could never disagree with its header about
                   how many columns there are. Slice #32.19 removed both
                   wrappers together, which keeps that property for the same
                   reason: neither side is conditional any more. */}
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.importance")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.relevance")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.provenance")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("importance")}>{t("table.importance")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("relevance")}>{t("table.relevance")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("provenance")}>{t("table.provenance")}</th>
               {/* These two are metadata columns as well, which is not obvious
                   from their labels: BOTH are selected off entity_metadata in
                   /api/admin/global-search — updatedBy is
@@ -614,15 +624,15 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                   would have been two permanently-empty columns. Slice #32.19
                   leaves no such build — every user reaches the Metadata tab — so
                   they are shown and they fill in as soon as anybody uses it. */}
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.updatedBy")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.metadataUpdated")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("updatedBy")}>{t("table.updatedBy")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("metadataUpdated")}>{t("table.metadataUpdated")}</th>
             </tr>
           </thead>
           <tbody>
             {visible.map((row) => (
               <tr
                 key={row.principalObjectId}
-                className="border-b border-zinc-50 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/30"
+                className="border-b border-zinc-50 align-top transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/30"
               >
                 <td className="px-4 py-2">
                   <Link
@@ -646,7 +656,7 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-2 text-zinc-700 dark:text-zinc-300">
+                <td className={`px-4 py-2 text-zinc-700 dark:text-zinc-300 ${wrapsIf("searchName")}`}>
                   {row.entityType === "PROPERTY"
                     ? propertyLabel(row)
                     : (row.displayName || <span className="text-zinc-400 italic">—</span>)
@@ -662,7 +672,7 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                     : EMPTY_CELL
                   }
                 </td>
-                <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <td className={`px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 ${wrapsIf("updatedBy")}`}>
                   {row.updatedBy ?? EMPTY_CELL}
                 </td>
                 <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">

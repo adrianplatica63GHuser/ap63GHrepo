@@ -5,6 +5,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
+
+/** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
+const COLUMNS: ColumnName[] = ["select", "propertyLabel", "open"];
 
 type AssociatedProperty = {
   id:           string;
@@ -67,14 +72,15 @@ export function DocumentPropertiesTab({ documentId }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {items && items.length > 0 ? (
-          <table className="w-full text-sm">
+          <table {...fixedTable(COLUMNS)}>
+            <FixedColumns columns={COLUMNS} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colLabel")}</th>
-                <th className="w-16 px-3 py-2" aria-label="view" />
+                <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("propertyLabel")}>{t("colLabel")}</th>
+                <th className="px-3 py-2" {...columnHead("open")} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -100,7 +106,7 @@ export function DocumentPropertiesTab({ documentId }: Props) {
                       aria-label={item.label}
                     />
                   </td>
-                  <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.label}</td>
+                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.label}</td>
                   <td className="px-3 py-2">
                     <button
                       type="button"

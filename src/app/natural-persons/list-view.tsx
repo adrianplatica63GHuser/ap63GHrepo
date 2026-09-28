@@ -9,6 +9,8 @@ import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-person-v2";
@@ -287,10 +289,10 @@ export function NaturalPersonListView() {
   // The `optionalCols.length > 0` guard on the "Câmpuri afișate" button below
   // is now always true and is kept anyway: it is a statement about a list with
   // no optional columns, which is a shape this file should still survive.
-  const optionalCols = [
-    { key: "importance", label: t("table.importance") },
-    { key: "relevance",  label: t("table.relevance") },
-    { key: "provenance", label: t("table.provenance") },
+  const optionalCols: { key: string; label: string; column: ColumnName }[] = [
+    { key: "importance", label: t("table.importance"), column: "importance" },
+    { key: "relevance",  label: t("table.relevance"),  column: "relevance" },
+    { key: "provenance", label: t("table.provenance"), column: "provenance" },
   ];
 
   function cellValue(item: NaturalPersonListItem, key: string): React.ReactNode {
@@ -306,7 +308,14 @@ export function NaturalPersonListView() {
     }
   }
 
-  const colCount = 4 + visibleCols.length; // checkbox + code + name + nickname + optionals + open
+
+  // Slice #37.16: the columns shown, in order — each a fixed width from
+  // `COLUMN`, so an optional column ticked in „Câmpuri afișate" widens the
+  // table rather than squeezing the others.
+  // A stored key this build has no column for stays in storage and is not drawn.
+  const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
+  const columns: ColumnName[] = ["selectNew", "code", "personName", "personNickname", ...shownCols.map((c) => c.column), "open"];
+  const colCount = columns.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -424,11 +433,12 @@ export function NaturalPersonListView() {
       )}
 
       {/* Results table */}
-      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-sm">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <table {...fixedTable(columns)}>
+          <FixedColumns columns={columns} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="w-10 px-4 py-2">
+              <th className="px-4 py-2" {...columnHead("selectNew")}>
                 <input
                   ref={headerCheckboxRef}
                   type="checkbox"
@@ -439,15 +449,15 @@ export function NaturalPersonListView() {
                   className="h-4 w-4 rounded border-wire accent-cta"
                 />
               </th>
-              <th className="px-4 py-2">{t("table.code")}</th>
-              <th className="px-4 py-2">{t("table.name")}</th>
-              <th className="px-4 py-2">{t("table.nickname")}</th>
-              {visibleCols.map((key) => (
-                <th key={key} className="px-4 py-2">
-                  {optionalCols.find((c) => c.key === key)?.label ?? key}
+              <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
+              <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
+              <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
+              {shownCols.map((col) => (
+                <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                  {col.label}
                 </th>
               ))}
-              <th className="px-4 py-2 w-24" />
+              <th className="px-4 py-2" {...columnHead("open")} />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -476,7 +486,7 @@ export function NaturalPersonListView() {
               <tr
                 key={item.id}
                 onClick={() => router.push(`/natural-persons/${item.id}`)}
-                className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="inline-flex items-center">
@@ -493,17 +503,17 @@ export function NaturalPersonListView() {
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}
                 </td>
-                <td className="px-4 py-2 font-medium">
+                <td className={`px-4 py-2 font-medium ${WRAPS}`}>
                   {item.displayName || (
                     <span className="text-fade italic">—</span>
                   )}
                 </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
+                <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
                   {item.nickname || <span className="italic">—</span>}
                 </td>
-                {visibleCols.map((key) => (
-                  <td key={key} className="px-4 py-2 text-fade dark:text-zinc-400">
-                    {cellValue(item, key)}
+                {shownCols.map((col) => (
+                  <td key={col.key} className="px-4 py-2 text-fade dark:text-zinc-400">
+                    {cellValue(item, col.key)}
                   </td>
                 ))}
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>

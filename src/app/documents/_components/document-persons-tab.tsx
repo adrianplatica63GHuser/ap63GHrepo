@@ -5,6 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
 import {
   COTA_MOD_VALUES,
   formatCotaParte,
@@ -16,6 +18,9 @@ import {
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
+
+/** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
+const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "open"];
 
 /**
  * ⚠️ **`linkId` IS THE ROW AND `id` IS THE PERSON.**            (Slice #36.02)
@@ -278,18 +283,19 @@ export function DocumentPersonsTab({ documentId }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {items && items.length > 0 ? (
-          <table className="w-full text-sm">
+          <table {...fixedTable(COLUMNS)}>
+            <FixedColumns columns={COLUMNS} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colRole")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCota")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCotaMp")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCotaMod")}</th>
-                <th className="w-16 px-3 py-2" aria-label="view" />
+                <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personName")}>{t("colName")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cota")}>{t("colCota")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMp")}>{t("colCotaMp")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMod")}>{t("colCotaMod")}</th>
+                <th className="px-3 py-2" {...columnHead("open")} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -326,8 +332,8 @@ export function DocumentPersonsTab({ documentId }: Props) {
                         aria-label={`${item.displayName} — ${roleLabel}`}
                       />
                     </td>
-                    <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
-                    <td className="px-3 py-2 text-fade dark:text-zinc-400">{roleLabel}</td>
+                    <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.displayName}</td>
+                    <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{roleLabel}</td>
 
                     <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col gap-0.5">

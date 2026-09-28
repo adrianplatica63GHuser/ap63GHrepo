@@ -9,8 +9,12 @@ import { GroupsFilter, GroupsFilterDropdown } from "@/components/groups-filter-d
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
+/** Slice #37.16: the list's columns, each a fixed width from `COLUMN`. */
+const COLUMNS: ColumnName[] = ["selectNew", "code", "personName", "personNickname", "open"];
 
 type JudicialPersonListItem = {
   id:          string;
@@ -266,12 +270,14 @@ export function JudicialPersonListView() {
         </p>
       )}
 
-      {/* Results table */}
-      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-sm">
+      {/* Results table — Slice #37.16: fixed columns from `COLUMN`, the table
+          as wide as they are. */}
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <table {...fixedTable(COLUMNS)}>
+          <FixedColumns columns={COLUMNS} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="w-10 px-4 py-2">
+              <th className="px-4 py-2" {...columnHead("selectNew")}>
                 <input
                   ref={headerCheckboxRef}
                   type="checkbox"
@@ -282,10 +288,10 @@ export function JudicialPersonListView() {
                   className="h-4 w-4 rounded border-wire accent-cta"
                 />
               </th>
-              <th className="px-4 py-2">{t("table.code")}</th>
-              <th className="px-4 py-2">{t("table.name")}</th>
-              <th className="px-4 py-2">{t("table.nickname")}</th>
-              <th className="px-4 py-2 w-24" />
+              <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
+              <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
+              <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
+              <th className="px-4 py-2" {...columnHead("open")} />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -314,7 +320,7 @@ export function JudicialPersonListView() {
               <tr
                 key={item.id}
                 onClick={() => router.push(`/judicial-persons/${item.id}`)}
-                className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="inline-flex items-center">
@@ -331,12 +337,12 @@ export function JudicialPersonListView() {
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}
                 </td>
-                <td className="px-4 py-2 font-medium">
+                <td className={`px-4 py-2 font-medium ${WRAPS}`}>
                   {item.displayName || (
                     <span className="text-fade italic">—</span>
                   )}
                 </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
+                <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
                   {item.nickname || <span className="italic">—</span>}
                 </td>
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>

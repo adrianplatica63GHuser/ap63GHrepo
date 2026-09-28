@@ -10,6 +10,8 @@ import { RecencyBadge } from "@/components/recency-badge";
 import { BowTieBadge } from "@/components/bow-tie-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 
 const PAGE_SIZE = 15;
@@ -307,29 +309,33 @@ export function PropertyListView() {
   }
 
   // Optional column definitions (ordered)
-  const optionalCols = [
-    { key: "nickname",         label: t("table.nickname") },
-    { key: "parcela",          label: t("table.parcela") },
+  //
+  // Slice #37.16: each carries the `COLUMN` that gives its width. The KEY is
+  // what localStorage stores and stays as it was — "nickname" is drawn in the
+  // `propertyNickname` column, which is the only one whose name differs.
+  const optionalCols: { key: string; label: string; column: ColumnName }[] = [
+    { key: "nickname",         label: t("table.nickname"),         column: "propertyNickname" },
+    { key: "parcela",          label: t("table.parcela"),          column: "parcela" },
     // ⚠️ The column KEY stays "tarlaSola" while the field beside it is now
     // `tarla`, and that is deliberate rather than an oversight: these keys are
     // persisted per user in localStorage (`LS_KEY` above), so renaming one
     // silently drops that column from the saved choices of anyone who had it
     // on. The key is a UI identifier; the field is the data.  (Slice #34.03)
-    { key: "tarlaSola",        label: t("table.tarlaSola") },
-    { key: "cadastralNumber",  label: t("table.cadastralNumber") },
-    { key: "carteFunciara",    label: t("table.carteFunciara") },
-    { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp") },
-    { key: "calculatedAreaMp", label: t("table.calculatedAreaMp") },
-    { key: "locality",         label: t("table.locality") },
+    { key: "tarlaSola",        label: t("table.tarlaSola"),        column: "tarlaSola" },
+    { key: "cadastralNumber",  label: t("table.cadastralNumber"),  column: "cadastralNumber" },
+    { key: "carteFunciara",    label: t("table.carteFunciara"),    column: "carteFunciara" },
+    { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp"),    column: "surfaceAreaMp" },
+    { key: "calculatedAreaMp", label: t("table.calculatedAreaMp"), column: "calculatedAreaMp" },
+    { key: "locality",         label: t("table.locality"),         column: "locality" },
     // Slice #23.10.dev hid these three behind the developer-tools flag because
     // the Metadata tab that feeds them was a developer surface. Slice #32.19
     // revealed both: the tab and the columns move together, so a value a user
     // can now set is a value they can now see in the list beside the filter
     // that selects on it. (See, not sort — none of these lists sorts by a
     // column, and saying so here would be a claim the next reader believes.)
-    { key: "importance",       label: t("table.importance") },
-    { key: "relevance",        label: t("table.relevance") },
-    { key: "provenance",       label: t("table.provenance") },
+    { key: "importance",       label: t("table.importance"),       column: "importance" },
+    { key: "relevance",        label: t("table.relevance"),        column: "relevance" },
+    { key: "provenance",       label: t("table.provenance"),       column: "provenance" },
   ];
 
   function cellValue(item: PropertyListItem, key: string): React.ReactNode {
@@ -353,8 +359,12 @@ export function PropertyListView() {
     }
   }
 
-  // Total <td> count = checkbox + code + visible optionals + open = 3 + visibleCols.length
-  const colCount = 3 + visibleCols.length;
+  // Slice #37.16: the columns shown, in order — checkbox, code, the ticked
+  // optionals, open — each a fixed width, so ticking one widens the table. A
+  // stored key this build has no column for stays in storage and is not drawn.
+  const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
+  const columns: ColumnName[] = ["selectBadges", "code", ...shownCols.map((c) => c.column), "open"];
+  const colCount = columns.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -486,11 +496,12 @@ export function PropertyListView() {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-sm">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <table {...fixedTable(columns)}>
+          <FixedColumns columns={columns} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="w-10 px-4 py-2">
+              <th className="px-4 py-2" {...columnHead("selectBadges")}>
                 <input
                   ref={headerCheckboxRef}
                   type="checkbox"
@@ -501,13 +512,13 @@ export function PropertyListView() {
                   className="h-4 w-4 rounded border-wire accent-cta"
                 />
               </th>
-              <th className="px-4 py-2">{t("table.code")}</th>
-              {visibleCols.map((key) => (
-                <th key={key} className="px-4 py-2">
-                  {optionalCols.find((c) => c.key === key)?.label ?? key}
+              <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
+              {shownCols.map((col) => (
+                <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                  {col.label}
                 </th>
               ))}
-              <th className="px-4 py-2 w-24" />
+              <th className="px-4 py-2" {...columnHead("open")} />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -536,10 +547,12 @@ export function PropertyListView() {
               <tr
                 key={item.id}
                 onClick={() => router.push(`/properties/${item.id}`)}
-                className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                  <span className="inline-flex items-center">
+                  {/* Slice #37.16: the badges wrap — „Încrucișat" takes a line
+                      of its own rather than widening the column. */}
+                  <span className="inline-flex flex-wrap items-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(item.id)}
@@ -554,9 +567,12 @@ export function PropertyListView() {
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}
                 </td>
-                {visibleCols.map((key) => (
-                  <td key={key} className="px-4 py-2 text-fade dark:text-zinc-400">
-                    {cellValue(item, key)}
+                {shownCols.map((col) => (
+                  <td
+                    key={col.key}
+                    className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf(col.column)}`}
+                  >
+                    {cellValue(item, col.key)}
                   </td>
                 ))}
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>

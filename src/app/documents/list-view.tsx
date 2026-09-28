@@ -9,6 +9,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 
 const PAGE_SIZE   = 15;
@@ -655,18 +657,18 @@ export function DocumentListView({
   }
 
   // Optional column definitions (ordered)
-  const optionalCols = [
-    { key: "nrDocument",   label: t("table.nrDocument") },
-    { key: "dateDocument", label: t("table.dateDocument") },
+  const optionalCols: { key: string; label: string; column: ColumnName }[] = [
+    { key: "nrDocument",   label: t("table.nrDocument"),   column: "nrDocument" },
+    { key: "dateDocument", label: t("table.dateDocument"), column: "dateDocument" },
     // Slice #23.10.dev hid these three behind the developer-tools flag because
     // the Metadata tab that feeds them was a developer surface. Slice #32.19
     // revealed both: the tab and the columns move together, so a value a user
     // can now set is a value they can now see in the list beside the filter
     // that selects on it. (See, not sort — none of these lists sorts by a
     // column, and saying so here would be a claim the next reader believes.)
-    { key: "importance",   label: t("table.importance") },
-    { key: "relevance",    label: t("table.relevance") },
-    { key: "provenance",   label: t("table.provenance") },
+    { key: "importance",   label: t("table.importance"), column: "importance" },
+    { key: "relevance",    label: t("table.relevance"),  column: "relevance" },
+    { key: "provenance",   label: t("table.provenance"), column: "provenance" },
   ];
 
   function cellValue(item: DocumentListItem, key: string): React.ReactNode {
@@ -685,7 +687,13 @@ export function DocumentListView({
   }
 
   // Total columns = checkbox + code + type + title + visible optionals + open
-  const colCount = 5 + visibleCols.length;
+  //
+  // Slice #37.16: the columns shown, in order, each a fixed width from
+  // `COLUMN` — a ticked optional column widens the table. A stored key this
+  // build has no column for stays in storage and is not drawn.
+  const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
+  const columns: ColumnName[] = ["selectNew", "code", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "open"];
+  const colCount = columns.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -913,11 +921,12 @@ export function DocumentListView({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <table className="w-full text-sm">
+          <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+            <table {...fixedTable(columns)}>
+              <FixedColumns columns={columns} />
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                 <tr>
-                  <th className="w-10 px-4 py-2">
+                  <th className="px-4 py-2" {...columnHead("selectNew")}>
                     <input
                       ref={headerCheckboxRef}
                       type="checkbox"
@@ -928,15 +937,15 @@ export function DocumentListView({
                       className="h-4 w-4 rounded border-wire accent-cta"
                     />
                   </th>
-                  <th className="px-4 py-2">{t("table.code")}</th>
-                  <th className="px-4 py-2">{t("table.type")}</th>
-                  <th className="px-4 py-2">{t("table.title")}</th>
-                  {visibleCols.map((key) => (
-                    <th key={key} className="px-4 py-2">
-                      {optionalCols.find((c) => c.key === key)?.label ?? key}
+                  <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
+                  <th className="px-4 py-2" {...columnHead("documentType")}>{t("table.type")}</th>
+                  <th className="px-4 py-2" {...columnHead("documentTitle")}>{t("table.title")}</th>
+                  {shownCols.map((col) => (
+                    <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                      {col.label}
                     </th>
                   ))}
-                  <th className="px-4 py-2 w-24" />
+                  <th className="px-4 py-2" {...columnHead("open")} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -965,7 +974,7 @@ export function DocumentListView({
                   <tr
                     key={item.id}
                     onClick={() => router.push(`/documents/${item.id}`)}
-                    className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                    className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                   >
                     <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                       <span className="inline-flex items-center">
@@ -982,17 +991,17 @@ export function DocumentListView({
                     <td className="px-4 py-2 font-mono text-xs text-fade">
                       {item.code}
                     </td>
-                    <td className="px-4 py-2 text-fade dark:text-zinc-400">
+                    <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
                       {item.documentTypeName ?? "—"}
                     </td>
-                    <td className="px-4 py-2 font-medium">
+                    <td className={`px-4 py-2 font-medium ${WRAPS}`}>
                       {item.title ?? (
                         <span className="text-fade italic">—</span>
                       )}
                     </td>
-                    {visibleCols.map((key) => (
-                      <td key={key} className="px-4 py-2 text-fade dark:text-zinc-400">
-                        {cellValue(item, key)}
+                    {shownCols.map((col) => (
+                      <td key={col.key} className="px-4 py-2 text-fade dark:text-zinc-400">
+                        {cellValue(item, col.key)}
                       </td>
                     ))}
                     <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
