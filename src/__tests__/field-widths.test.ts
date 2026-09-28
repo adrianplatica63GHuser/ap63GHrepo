@@ -108,9 +108,10 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{PANEL_STYLE\}/);
   });
 
-  it("every box on a converted screen is marked for the e2e width check", () => {
-    for (const [, src] of CONVERTED.slice(1)) {
-      if (/<input|<GrowingText|<AsyncSelect/.test(src)) expect(src).toMatch(/data-width-field=|widthField=/);
+  it("every box a field helper draws is marked for the e2e width check", () => {
+    // The helpers, not the panels: a panel also holds checkboxes, which are not fields.
+    for (const [what, src] of CONVERTED.filter(([w]) => !/panels/.test(w))) {
+      if (/<input|<GrowingText|<AsyncSelect/.test(src)) expect([what, /data-width-field=|widthField=/.test(src)]).toEqual([what, true]);
     }
   });
 
