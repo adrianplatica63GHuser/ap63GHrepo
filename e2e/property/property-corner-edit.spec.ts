@@ -22,6 +22,13 @@
  *     own, made the TC-PROP-03 way from the copy above, and deleted at the end.
  *   - Clicks on a corner are scoped to its row by „Nr. orig." (the case file's
  *     note: both arrows, „Editează" and „Șterge" sit on every row).
+ *   - Slice #37.14 — fixed widths. After step 1 the property is checked at 1400
+ *     and 2400 px (`e2e/helpers/field-widths.ts`): every box and panel —
+ *     the mini-map included — the same width at both, every FIXED box holding
+ *     its widest value. This parcel, a real one's shape read from the case's
+ *     file, is drawn in the fixed-size mini-map; it is photographed at 1366,
+ *     1920 and 2560 px into `playwright-report/layout/`. Its nickname is the
+ *     spec's marker and it has no owner, so nothing needs redacting.
  */
 
 import fs from "fs";
@@ -29,6 +36,13 @@ import os from "os";
 import path from "path";
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
+import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { ADDRESS, MAP_BOX_STYLE, PROPERTY } from "../../src/lib/ui/field-widths";
+
+/** Each FIXED box's widest value, by the name its box carries (Slice #37.14). */
+const SAMPLES: Record<string, string> = {};
+for (const [k, w] of Object.entries(PROPERTY)) if ("sample" in w) SAMPLES[k] = w.sample;
+for (const [k, w] of Object.entries(ADDRESS)) if ("sample" in w) SAMPLES[`address.${k}`] = w.sample;
 
 const MARK = `${E2E_MARKER}PROP-04`;
 const NICKNAME = `${MARK} Teren din fisier`;
@@ -89,6 +103,22 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
         }
       }
       await expect(page.getByRole("button", { name: "+ Adaugă punct" })).toBeVisible();
+
+      // Slice #37.14 — the same widths at 1400 and 2400 px, the map at its fixed size, the pictures.
+      const widths = await expectStableWidths(page);
+      expect(widths.fields.map).toBe(parseFloat(String(MAP_BOX_STYLE.width)) * 16);
+      await expectFixedFieldsHold(page, SAMPLES);
+      // The widest real X and Y, and the point labels, fit their fixed columns.
+      const cut = await page.locator('[data-width-field="corners"] td').evaluateAll((cells) =>
+        cells.filter((c) => c.scrollWidth > c.clientWidth + 1 && !c.querySelector("button")).map((c) => c.textContent ?? ""),
+      );
+      expect(cut, "corner cells wider than their column").toEqual([]);
+      const viewport = page.viewportSize();
+      for (const width of [1366, 1920, 2560]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.screenshot({ path: `playwright-report/layout/property-${width}.png`, fullPage: true });
+      }
+      if (viewport) await page.setViewportSize(viewport);
 
       // Step 2 — „Editează" on row 3 (Nr. orig. 18): two inputs holding its values, „Salvează" / „Anulează".
       const row18 = cornerRow(page, "18");
