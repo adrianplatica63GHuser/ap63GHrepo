@@ -99,7 +99,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   await page.goto(`/properties/${whole.id}`);
   await expect(page.getByRole("heading", { name: WHOLE })).toBeVisible({ timeout: 30_000 });
   await page.getByRole("tab", { name: "Asocieri" }).click();
-  const fromWhole = page.getByRole("row").filter({ has: page.getByRole("radio", { name: part.name }) });
+  const fromWhole = page.getByRole("row").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
   await expect(fromWhole).toHaveCount(1, { timeout: 30_000 });
   await expect(fromWhole).toContainText(`${partCode} „${ROLE}” această proprietate`);
 }
@@ -127,6 +127,8 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
       let before: { id: string; name: string } | undefined;
       let after: { id: string; name: string } | undefined;
       for (let n = 1; n <= MAX_PARTS && !(before && after); n++) {
+        // Found by `exact: true` below: when both sort orders take ten tries,
+        // „… inclusă 1" is also the start of „… inclusă 10" (full 20260928T205807Z-5800).
         const name = `${MARK} Parcelă inclusă ${n}`;
         const id = await createProperty(page.request, { nickname: name });
         created.push(id);
@@ -141,7 +143,7 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
 
       // ── At the end — radio, „Dezasociază", on the whole's „Asocieri" ─────
       for (const part of [before!, after!]) {
-        await page.getByRole("radio", { name: part.name }).check();
+        await page.getByRole("radio", { name: part.name, exact: true }).check();
         // The DELETE route compiles on its first request on a cold server
         // (full 20260927T120014Z-6234 ran out of 15 s there): wait for its answer.
         const dissociated = page.waitForResponse(
@@ -150,7 +152,7 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
         );
         await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
         expect((await dissociated).ok()).toBeTruthy();
-        await expect(page.getByRole("radio", { name: part.name })).toHaveCount(0, { timeout: 15_000 });
+        await expect(page.getByRole("radio", { name: part.name, exact: true })).toHaveCount(0, { timeout: 15_000 });
       }
       await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 15_000 });
     } finally {
