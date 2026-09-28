@@ -278,6 +278,10 @@ export const documentTemplateFieldSchema = z.object({
       }),
     )
     .nullish(),
+  // Slice #37.15 — an optional step of the width scale. Without it here zod
+  // would strip the key, and a width written through either door would be
+  // gone on the next read with nothing said.
+  width:   z.enum(["XS", "S", "M", "L", "XL", "XXL", "TILE"]).nullish(),
 });
 
 export const documentTypeSchema = z.object({

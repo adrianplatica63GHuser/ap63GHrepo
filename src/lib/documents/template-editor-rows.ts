@@ -40,6 +40,7 @@ import {
   templateFieldGroupById,
   templateFieldGroupOf,
 } from "@/lib/documents/template-groups";
+import type { Step } from "@/lib/ui/field-widths";
 
 /** The group `<select>`'s two non-group options. */
 export const GROUP_NONE = "";
@@ -92,6 +93,12 @@ export type TemplateEditorRow = {
    * back does not destroy a list somebody typed.
    */
   optionsText: string;
+  /**
+   * A stored `width` (Slice #37.15), carried through a save untouched. The
+   * editor has no control for it yet; without this, fixing a label would drop
+   * a width somebody set on the field.
+   */
+  storedWidth?: Step;
 };
 
 /** Build an editor row from a stored field. */
@@ -118,6 +125,7 @@ export function rowFromStoredField(
     tabName: tab,
     storedTab: tab ? { ro: field.tabRo ?? null, en: field.tabEn ?? null } : null,
     optionsText: formatOptionsText(field.options ?? null),
+    ...(field.width ? { storedWidth: field.width } : {}),
   };
 }
 
@@ -328,6 +336,7 @@ export function fieldFromEditorRow(
     // the extraction prompt for a field that is no longer a choice — and the
     // typed text is still on the row, so switching back restores it.
     options: row.type === "select" ? parseOptionsText(row.optionsText) : null,
+    ...(row.storedWidth ? { width: row.storedWidth } : {}),
   };
 }
 

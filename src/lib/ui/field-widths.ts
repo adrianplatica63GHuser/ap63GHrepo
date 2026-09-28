@@ -252,3 +252,151 @@ export const CORNER_COLUMNS = {
   north: rem(6.5),
   east: rem(6.5),
 } as const;
+
+// ---- the Document (#37.15) -------------------------------------------------------------
+
+/**
+ * The Document's general and fee fields — „Date generale" and „Taxe și
+ * onorarii". `measure-fields` 20260928T185247Z-3109 on the local archive's 105
+ * documents: `m:` is `rows · longest · p95`.
+ *
+ * Etichetă scurtă and Subiect are v02's XXL moved up a step: their p95 (73 and
+ * 301) is past what XXL holds (52), and the #37.12 rule is that such a field
+ * moves up. TILE is the widest a box beside its label can be; past it they wrap.
+ */
+export const DOCUMENT = {
+  documentTypeId: { step: "XXL", kind: "select" }, //   m: 47 options, longest „Tabel/Lista - Nu este un document oficial" (41)
+  title: { step: "TILE", kind: "grows" }, //             Etichetă scurtă; m: 105 · 151 · 73
+  subject: { step: "TILE", kind: "grows" }, //           m: 48 · 428 · 301
+  notes: { step: "TILE", kind: "lines", rows: 1 }, //    Note extinse; m: 50 · 2504 · 2283, at most 4000
+  institutionId: { step: "L", kind: "select" }, //       m: 7 options, longest „Primăria Municipiului" (21)
+  nrDocument: { step: "M", kind: "fixed", sample: "00/00.00.0000" }, // m: 24 · 13 · 6
+  dateDocument: { step: "M", kind: "fixed" }, //         dd.mm.yyyy and the calendar button
+} as const satisfies Record<string, FieldWidth>;
+
+/**
+ * The page image beside the Document's fields.               (Slice #37.15)
+ *
+ * ⚠️ **NOT NARROWER THAN IT WAS.** Before this slice the „Pagini" panel was
+ * two-fifths of a centred 93rem block, which TC-DOC-01's spec measured in a
+ * 1920 × 1080 window (see the #37.15 handover). 40rem is 640 px, wider than
+ * that, and it no longer depends on the window. `src/__tests__/field-widths.test.ts`
+ * holds it at no less than 36rem (576 px, the arithmetic's figure).
+ */
+export const PAGES_PANEL_REM = 40;
+export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
+
+/**
+ * The Document screen's row when the page image is beside the fields: whole
+ * panels, then the gap, then the page panel — snapped the way `panelRowStyle`
+ * snaps a row of panels, so the action bar under it is exactly as wide. Where
+ * one panel and the page image do not fit side by side, the row is the page
+ * panel's width and the page panel wraps under the fields.
+ */
+export function documentRowStyle(): CSSProperties {
+  const step = PANEL_REM + PANEL_GAP_REM;
+  return {
+    width: `max(${rem(PAGES_PANEL_REM)}, calc(round(down, 100% - ${rem(PAGES_PANEL_REM)}, ${rem(step)}) + ${rem(PAGES_PANEL_REM)}))`,
+  };
+}
+
+/** The fields' column inside `documentRowStyle`: all of it but the gap and the page panel, never less than a panel. */
+export function fieldsBesidePagesStyle(): CSSProperties {
+  return { width: `max(${rem(PANEL_REM)}, calc(100% - ${rem(PANEL_GAP_REM + PAGES_PANEL_REM)}))` };
+}
+
+// ---- a document type's own fields (#37.15) ------------------------------------------------
+
+/**
+ * TEMPLATE FIELDS ARE SIZED BY RULE, NOT ONE BY ONE.          (Slice #37.15)
+ *
+ * A document type's own fields are data (`lookup_document_type.template_fields`),
+ * so a new type must look right with no width work. The width follows from the
+ * field's `type`:
+ *   text      the default text width, growing downward (one value, no breaks);
+ *   textarea  the panel's whole width, growing, line breaks kept;
+ *   number    a fixed M;   date   a fixed M;
+ *   select    as wide as its longest option, from S up to XXL — past XXL it
+ *             stays XXL and shows the chosen option in full on hover.
+ * A field whose JSON carries `width` (one of the scale's steps) takes that step
+ * instead; its KIND still follows from its type. No form sets `width` today.
+ *
+ * `m:` is `measure-fields` on the 116 template fields of the six seeded types:
+ * text runs from 3 characters to 267, most under 45 — XL holds 37, and longer
+ * wraps; the widest option is 37 characters (CONTRACT_VANZARE · categorieInterna).
+ */
+export const TEMPLATE_FIELD = {
+  text: { step: "XL", kind: "grows" },
+  textarea: { step: "TILE", kind: "lines", rows: 1 },
+  number: { step: "M", kind: "fixed", sample: "0000000.00" }, // m: at most 5 digits
+  date: { step: "M", kind: "fixed" },
+} as const satisfies Record<string, FieldWidth>;
+
+/** The steps a select may take, narrowest first; the last is its cap. */
+export const SELECT_STEPS: readonly Step[] = ["S", "M", "L", "XL", "XXL"];
+
+/** Padding and border (18 px) and the arrow (24 px) a dropdown adds to its text. */
+export const SELECT_CHROME_PX = 42;
+
+/**
+ * Arial's advance widths, in thousandths of the font size — the font the app
+ * renders (FU-123). Enough to size a dropdown before it is drawn; the e2e check
+ * measures the real thing in the browser.
+ */
+const ARIAL: Record<string, number> = {
+  a: 556, b: 556, c: 500, d: 556, e: 556, f: 278, g: 556, h: 556, i: 222, j: 222, k: 500, l: 222, m: 833,
+  n: 556, o: 556, p: 556, q: 556, r: 333, s: 500, t: 278, u: 556, v: 500, w: 722, x: 500, y: 500, z: 500,
+  A: 667, B: 667, C: 722, D: 722, E: 667, F: 611, G: 778, H: 722, I: 278, J: 500, K: 667, L: 556, M: 833,
+  N: 722, O: 778, P: 667, Q: 778, R: 722, S: 667, T: 611, U: 722, V: 667, W: 944, X: 667, Y: 667, Z: 611,
+  " ": 278, ".": 278, ",": 278, ":": 278, ";": 278, "/": 278, "-": 333, "(": 333, ")": 333, "'": 191,
+  "„": 333, "”": 333, "\"": 355, "–": 556, "—": 1000, "%": 889, "&": 667,
+};
+
+/** About how wide `text` draws in 14 px Arial, in px. Diacritics count as their base letter. */
+export function textPx(text: string, fontPx = 14): number {
+  let units = 0;
+  for (const ch of text) {
+    const base = ch.normalize("NFD")[0] ?? ch;
+    units += ARIAL[ch] ?? ARIAL[base] ?? 556; // digits are 556 too
+  }
+  return (units * fontPx) / 1000;
+}
+
+/** The narrowest step whose dropdown shows every one of `labels` whole, capped at XXL. */
+export function selectStepFor(labels: readonly string[]): { step: Step; capped: boolean } {
+  const need = Math.max(0, ...labels.map((l) => textPx(l))) * 1.05 + SELECT_CHROME_PX;
+  for (const step of SELECT_STEPS) if (SCALE[step] * 16 >= need) return { step, capped: false };
+  return { step: SELECT_STEPS[SELECT_STEPS.length - 1], capped: true };
+}
+
+/** What a template field needs to be sized: its type, its optional `width`, and a select's labels. */
+export interface TemplateFieldShape {
+  type: "text" | "textarea" | "date" | "number" | "select";
+  width?: Step | null;
+}
+
+/**
+ * A template field's width by the rule above. `labels` are a select's option
+ * captions as they will be drawn (the blank choice's included); `forceLines` is
+ * Certificate și referințe's treatment — every field there grows at the panel's
+ * width with its line breaks, whatever its type.
+ */
+export function templateFieldWidth(
+  field: TemplateFieldShape,
+  labels: readonly string[] = [],
+  forceLines = false,
+): FieldWidth & { capped?: boolean } {
+  if (field.type === "select") {
+    if (field.width) return { step: field.width, kind: "select" };
+    const { step, capped } = selectStepFor(labels);
+    return capped ? { step, kind: "select", capped } : { step, kind: "select" };
+  }
+  if (forceLines) return { ...TEMPLATE_FIELD.textarea, ...(field.width ? { step: field.width } : {}) };
+  const base: FieldWidth = TEMPLATE_FIELD[field.type];
+  return field.width ? { ...base, step: field.width } : base;
+}
+
+/** Whether `value` names one of the scale's steps — what a template field's `width` may hold. */
+export function isStep(value: unknown): value is Step {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(SCALE, value);
+}

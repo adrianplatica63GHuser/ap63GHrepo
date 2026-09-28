@@ -16,6 +16,8 @@
  * form rendering).
  */
 
+import { isStep, type Step } from "@/lib/ui/field-widths";
+
 export type DocumentTemplateFieldType = "text" | "textarea" | "date" | "number" | "select";
 
 /**
@@ -95,6 +97,19 @@ export type DocumentTemplateField = {
    * as a plain text input rather than as a dropdown of nothing.
    */
   options?: DocumentTemplateFieldOption[] | null;
+  /**
+   * Optional WIDTH, naming one of the scale's steps in `src/lib/ui/field-widths.ts`
+   * („XS" … „TILE").                                              (Slice #37.15)
+   *
+   * Absent on every field today, and absent is the normal case: the document
+   * form sizes a template field BY RULE from its `type` (`templateFieldWidth`),
+   * so a new type needs no width work. The key is for the one field the rule
+   * gets wrong. Only the step changes; whether the box grows still follows from
+   * the type. Anything that is not a step is dropped on read, like every other
+   * malformed key here. The Form editor does not offer it yet (register row)
+   * and carries a stored one through a save untouched.
+   */
+  width?: Step;
 };
 
 const VALID_TYPES: readonly DocumentTemplateFieldType[] = ["text", "textarea", "date", "number", "select"];
@@ -150,6 +165,9 @@ export function parseTemplateFields(raw: unknown): DocumentTemplateField[] {
       tabRo:   typeof f.tabRo === "string" ? f.tabRo : null,
       tabEn:   typeof f.tabEn === "string" ? f.tabEn : null,
       options: parseFieldOptions(f.options),
+      // Slice #37.15: present only when it names a step, so a field without one
+      // reads back exactly as it did before the key existed.
+      ...(isStep(f.width) ? { width: f.width } : {}),
     }))
     .filter((f) => f.key.length > 0)
     .sort((a, b) => a.order - b.order);
