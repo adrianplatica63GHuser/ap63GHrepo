@@ -262,6 +262,13 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
         await expect(page.getByRole("heading", { name: title })).toBeVisible({ timeout: 30_000 });
         await expect(page.locator('[data-panel="general"]')).toBeVisible({ timeout: 30_000 });
         await expect(page.locator('[data-panel="pages"]')).toBeVisible();
+        // The type's own fields arrive with the type list, after the general
+        // ones: measured before they are drawn, the 1400-px read has fewer boxes
+        // than the 2400-px one (first run). The Certificat has none of its own;
+        // its parties panel is what it adds.
+        await expect(
+          page.locator(key === "CERTIFICAT_MOSTENITOR" ? '[data-panel="succession-parties"]' : '[data-width-field^="customFields."]').first(),
+        ).toBeAttached({ timeout: 30_000 });
         await expectDocumentWidths(page);
       }
     } finally {

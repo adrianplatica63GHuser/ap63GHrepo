@@ -269,7 +269,7 @@ export const DOCUMENT = {
   title: { step: "TILE", kind: "grows" }, //             Etichetă scurtă; m: 105 · 151 · 73
   subject: { step: "TILE", kind: "grows" }, //           m: 48 · 428 · 301
   notes: { step: "TILE", kind: "lines", rows: 1 }, //    Note extinse; m: 50 · 2504 · 2283, at most 4000
-  institutionId: { step: "L", kind: "select" }, //       m: 7 options, longest „Primăria Municipiului" (21)
+  institutionId: { step: "XXL", kind: "select" }, //     m: 7 options; the dropdown shows „name (type)", longest „Primăria Municipiului (Administrație Locală)" (44)
   nrDocument: { step: "M", kind: "fixed", sample: "00/00.00.0000" }, // m: 24 · 13 · 6
   dateDocument: { step: "M", kind: "fixed" }, //         dd.mm.yyyy and the calendar button
 } as const satisfies Record<string, FieldWidth>;
