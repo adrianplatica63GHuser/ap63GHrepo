@@ -25,12 +25,14 @@ import {
 import {
   ADDRESS,
   HOLDS,
+  CORNER_COLUMNS,
   JUDICIAL_PERSON,
   LABEL_GAP_REM,
   LABEL_REM,
   NATURAL_PERSON,
   PANEL_INNER_REM,
   PANEL_REM,
+  PROPERTY,
   SCALE,
   boxStyle,
   panelRowStyle,
@@ -57,6 +59,8 @@ function region(src: string, start: string, end: string): string {
 const NP_FORM = code(read("src", "app", "natural-persons", "_components", "natural-person-form.tsx"));
 const ADDRESS_BLOCK = code(read("src", "components", "address", "address-block.tsx"));
 const JP_FORM = code(read("src", "app", "judicial-persons", "_components", "judicial-person-form.tsx"));
+const PROP_FORM = code(read("src", "app", "properties", "_components", "property-form.tsx"));
+const CORNERS = code(read("src", "app", "properties", "_components", "corners-manager.tsx"));
 
 /** The converted screens: every region that lays out fields at fixed widths. */
 const CONVERTED: [string, string][] = [
@@ -72,6 +76,11 @@ const CONVERTED: [string, string][] = [
   ["the Judicial Person's SelectField", region(JP_FORM, "function SelectField(", "\nfunction ")],
   ["the Judicial Person's ReadOnlyField", region(JP_FORM, "function ReadOnlyField(", "\nfunction ")],
   ["the Judicial Person's contact-person row", region(JP_FORM, "function ContactPersonRow(", "\nfunction ")],
+  // Slice #37.14
+  ["the Property's panels", region(PROP_FORM, "data-panel-row>", "{bigMap && createPortal(")],
+  ["the Property's Field", region(PROP_FORM, "function Field(", "\nfunction ")],
+  ["the Property's SelectField", region(PROP_FORM, "function SelectField(", "\n/**")],
+  ["the Property's ReadOnlyField", region(PROP_FORM, "function ReadOnlyField(", "\n/**")],
 ];
 
 describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", () => {
@@ -98,6 +107,22 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     for (const page of [["[id]", "page.tsx"], ["new", "page.tsx"]]) {
       expect(code(read("src", "app", "judicial-persons", ...page))).not.toMatch(/max-w-3xl|mx-auto/);
     }
+  });
+
+  it("every field on the Property form names its width in the file, the map has a fixed size, and no page caps it", () => {
+    const panels = region(PROP_FORM, "data-panel-row>", "{bigMap && createPortal(");
+    const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
+    expect(uses.length).toBe(17);
+    expect(panels.match(/width=\{(PROP|ADDRESS)\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
+    expect(panels.match(/style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(5);
+    expect(panels.match(/style=\{MAP_BOX_STYLE\}/g) ?? []).toHaveLength(2);
+    expect(PROP_FORM).toMatch(/<form[\s\S]{0,300}?style=\{panelRowStyle\(\)\}/);
+    for (const f of ["property-detail-tabs.tsx", "new-property-shell.tsx"]) {
+      expect(code(read("src", "app", "properties", "_components", f))).not.toMatch(/max-w-\[1040px\]|mx-auto/);
+    }
+    // The corners table fills its fixed panel; its COLUMNS are what the file fixes.
+    expect(region(CORNERS, "<table", "</colgroup>")).toMatch(/table-fixed[\s\S]*CORNER_COLUMNS\.seq[\s\S]*CORNER_COLUMNS\.originalIndex[\s\S]*CORNER_COLUMNS\.north[\s\S]*CORNER_COLUMNS\.east/);
+    expect(Object.values(CORNER_COLUMNS).every((w) => /^\d+(\.\d+)?rem$/.test(w))).toBe(true);
   });
 
   it("the panels, the address block and the form itself take their widths from the file", () => {
@@ -131,6 +156,11 @@ describe("the scale", () => {
     for (const s of steps) expect(HOLDS[s] * 7 + 18).toBeLessThanOrEqual(SCALE[s] * 16 + 8);
   });
 
+  it("Adrian's two cadastral widths are never narrowed: Nr. tarla / sola at least M, Nr. parcelă at least L", () => {
+    expect(SCALE[PROPERTY.tarlaId.step]).toBeGreaterThanOrEqual(SCALE.M);
+    expect(SCALE[PROPERTY.parcela.step]).toBeGreaterThanOrEqual(SCALE.L);
+  });
+
   it("TILE is the panel's whole inner width beside the label", () => {
     expect(PANEL_INNER_REM).toBe(30.5);
     expect(SCALE.TILE).toBe(PANEL_INNER_REM - LABEL_REM - LABEL_GAP_REM);
@@ -138,7 +168,12 @@ describe("the scale", () => {
   });
 
   it("no field is wider than a panel's inner width beside its label", () => {
-    const all: FieldWidth[] = [...Object.values(NATURAL_PERSON), ...Object.values(ADDRESS), ...Object.values(JUDICIAL_PERSON)];
+    const all: FieldWidth[] = [
+      ...Object.values(NATURAL_PERSON),
+      ...Object.values(ADDRESS),
+      ...Object.values(JUDICIAL_PERSON),
+      ...Object.values(PROPERTY),
+    ];
     for (const w of all) expect(LABEL_REM + LABEL_GAP_REM + SCALE[w.step]).toBeLessThanOrEqual(PANEL_INNER_REM);
   });
 
@@ -154,6 +189,8 @@ describe("the scale", () => {
       [ADDRESS.postalCode, ADDRESS.locality],
       [ADDRESS.county, ADDRESS.country],
       [JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber],
+      [PROPERTY.surfaceAreaMp, PROPERTY.calculatedAreaMp],
+      [PROPERTY.carteFunciara, PROPERTY.cadastralNumber],
     ] as const) {
       expect(pair(a, b)).toBeLessThanOrEqual(PANEL_INNER_REM);
     }
@@ -161,7 +198,12 @@ describe("the scale", () => {
 
   it("a FIXED field that names a sample holds it at about 7.8 px a digit and 9.3 px a capital", () => {
     const px = (s: string): number => [...s].reduce((n, c) => n + (/[0-9]/.test(c) ? 7.8 : /[A-ZĂÂÎȘȚH]/.test(c) ? 9.3 : /[a-zăâîșț]/.test(c) ? 6.5 : 4), 0);
-    for (const w of [...Object.values(NATURAL_PERSON), ...Object.values(ADDRESS), ...Object.values(JUDICIAL_PERSON)] as FieldWidth[]) {
+    for (const w of [
+      ...Object.values(NATURAL_PERSON),
+      ...Object.values(ADDRESS),
+      ...Object.values(JUDICIAL_PERSON),
+      ...Object.values(PROPERTY),
+    ] as FieldWidth[]) {
       if (w.sample) expect(px(w.sample) + 18).toBeLessThanOrEqual(SCALE[w.step] * 16);
     }
   });

@@ -201,3 +201,54 @@ export const JUDICIAL_PERSON = {
   notes: { step: "TILE", kind: "lines", rows: 1 }, //       m: 0
   contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
 } as const satisfies Record<string, FieldWidth>;
+
+// ---- the Property (#37.14) --------------------------------------------------------------
+
+/** The width a label and its gap take — where a line that belongs to a box, not to a label, starts. */
+export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
+
+/**
+ * The Property's fields. `measure-fields` 20260928T185247Z-3109 on the local
+ * archive's 8 properties: `m:` is `rows · longest · p95`.
+ *
+ * Nr. tarla / sola at M and Nr. parcelă at L are Adrian's decisions
+ * (Field.Widths.v02): a measurement may widen them, never narrow them. At M and
+ * L they do not share a panel row, so each has its own.
+ */
+export const PROPERTY = {
+  code: { step: "M", kind: "fixed", sample: "HHHH00000" }, //   „PROP00012"
+  tarlaId: { step: "M", kind: "select" }, //                    Adrian's M; m: 3 options, longest „47/2"
+  parcela: { step: "L", kind: "fixed", sample: "000/00/00" }, // Adrian's L; m: 3 · 6 · 6
+  nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
+  surfaceAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, //  the box shows 1234567.89, no separators; m: 3 · 6
+  calculatedAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, // toFixed(2), in the mono font; m: 3 · 6
+  carteFunciara: { step: "M", kind: "fixed", sample: "000000" }, //       m: 0
+  cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
+  useCategoryId: { step: "M", kind: "select" }, //              m: 8 options, longest „Neproductiv" (11) — v02 guessed L
+  propertyTypeId: { step: "L", kind: "select" }, //             m: 14 options, longest „Vegetație Forestieră" (20)
+  notes: { step: "TILE", kind: "lines", rows: 1 }, //           m: 1 · 72, at most 300
+  /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */
+  streetViewStreetLine: { step: "TILE", kind: "grows" },
+  streetViewStreetLineBox: { step: "L", kind: "grows" }, //     m: 0
+} as const satisfies Record<string, FieldWidth>;
+
+/**
+ * The mini-map and Street View: each fills a small tile (Field.Widths.v02,
+ * ≈ 30rem × 22rem) — the panel's whole inner width, 22rem tall. The polygon is
+ * fitted with `fitBounds` (40 px padding), so any parcel fits at the default
+ * zoom; a property with no corners keeps the same box, so nothing jumps.
+ */
+export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_INNER_REM), height: rem(22) };
+
+/**
+ * „Puncte de contur" columns: Nr., Nr. inițial, then N and E (Stereo 70,
+ * „512345.67" — six digits and two decimals in the mono font; latitude and
+ * longitude in decimal degrees, „44.4123456", fit too), and the row's buttons
+ * take the rest of the panel.
+ */
+export const CORNER_COLUMNS = {
+  seq: rem(2.5),
+  originalIndex: rem(3.5),
+  north: rem(6.5),
+  east: rem(6.5),
+} as const;

@@ -12,6 +12,7 @@ import {
 import type { Corner, CornerDiffEntry } from "./form-schema";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { CORNER_COLUMNS } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -306,8 +307,9 @@ function CornerInputRow({
         </div>
       </td>
 
-      <td className="px-3 py-2 whitespace-nowrap">
-        <div className="flex gap-2">
+      {/* Slice #37.14: may wrap under the fixed columns — the row grows downward. */}
+      <td className="px-3 py-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleSave}
@@ -510,14 +512,25 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
       </div>
 
       <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-sm">
+        {/* Slice #37.14: fixed column widths from `src/lib/ui/field-widths.ts`
+            (CORNER_COLUMNS) — the table is laid out from its first row, so a
+            long value can never widen a column, and the buttons take what is
+            left of the panel. */}
+        <table className="w-full table-fixed text-sm" data-width-field="corners" data-width-kind="fixed">
+          <colgroup>
+            <col style={{ width: CORNER_COLUMNS.seq }} />
+            <col style={{ width: CORNER_COLUMNS.originalIndex }} />
+            <col style={{ width: CORNER_COLUMNS.north }} />
+            <col style={{ width: CORNER_COLUMNS.east }} />
+            {!readOnly && <col />}
+          </colgroup>
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="px-3 py-2 w-10">{t("seq")}</th>
-              <th className="px-3 py-2 w-14">{t("originalIndex")}</th>
+              <th className="px-3 py-2">{t("seq")}</th>
+              <th className="px-3 py-2">{t("originalIndex")}</th>
               <th className="px-3 py-2">{col1Label}</th>
               <th className="px-3 py-2">{col2Label}</th>
-              {!readOnly && <th className="px-3 py-2 w-40" />}
+              {!readOnly && <th className="px-3 py-2" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -567,8 +580,10 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   <td className={cellCls + " " + monoLight}>{col1Values[idx]}</td>
                   <td className={cellCls + " " + monoLight}>{col2Values[idx]}</td>
                   {!readOnly && (
-                  <td className={cellCls + " whitespace-nowrap"}>
-                    <div className="flex gap-1 items-center">
+                  // Slice #37.14: the buttons wrap onto a second line when the fixed
+                  // columns leave them too little room — the row grows downward.
+                  <td className={cellCls}>
+                    <div className="flex flex-wrap gap-1 items-center">
                       <button
                         type="button"
                         onClick={() => moveUp(idx)}

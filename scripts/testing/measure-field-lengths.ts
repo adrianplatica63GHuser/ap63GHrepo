@@ -92,6 +92,9 @@ const COLUMNS: MeasureTarget[] = [
   { screen: "PROP", field: "surfaceAreaMp", table: "property", column: "surface_area_mp" },
   { screen: "PROP", field: "calculatedAreaMp", table: "property", column: "calculated_area_mp" },
   { screen: "PROP", field: "notes", table: "property", column: "notes" },
+  // A corner's point label, „Nr. orig." (#37.14). X and Y are worked out from
+  // lat/lon by the convert API, not stored — the e2e check measures those cells.
+  { screen: "PROP", field: "cornerOriginalIndex", table: "property_corner", column: "original_index" },
   // Document — the general fields
   { screen: "DOC", field: "title", table: "document", column: "title" },
   { screen: "DOC", field: "nrDocument", table: "document", column: "nr_document" },

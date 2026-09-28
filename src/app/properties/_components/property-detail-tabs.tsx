@@ -61,7 +61,9 @@ export function PropertyDetailTabs({
 
   return (
     // Slice #20.16: Theater overlay handles big-map — no container width change needed.
-    <div className="max-w-[1040px] mx-auto w-full flex flex-col gap-4">
+    // Slice #37.14: no centred 1040-pixel cap any more — the panels have fixed
+    // widths of their own and sit left-aligned beside the sidebar (#37.12).
+    <div className="w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center">

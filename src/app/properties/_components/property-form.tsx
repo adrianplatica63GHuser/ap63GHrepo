@@ -12,6 +12,7 @@ import {
   type FieldPath,
   type UseFormRegister,
   useForm,
+  useWatch,
 } from "react-hook-form";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { PropertySnapshot } from "@/lib/properties/validation";
@@ -61,6 +62,19 @@ import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { AsyncSelect } from "@/components/forms/async-select";
+import { GrowingText } from "@/components/forms/growing-text";
+import {
+  ADDRESS,
+  LABEL_INDENT,
+  LABEL_STYLE,
+  MAP_BOX_STYLE,
+  PANEL_GAP,
+  PANEL_STYLE,
+  PROPERTY as PROP,
+  boxStyle,
+  panelRowStyle,
+  type FieldWidth,
+} from "@/lib/ui/field-widths";
 import { SnapshotValue } from "@/components/versioning/snapshot-value";
 import {
   snapshotReplacesPicker,
@@ -928,6 +942,9 @@ export function PropertyForm({
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
+      // Slice #37.14: a whole number of panels wide, so the action bar below
+      // them is as wide as they are (#37.12's rule).
+      style={panelRowStyle()}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
@@ -953,78 +970,67 @@ export function PropertyForm({
           versionNavSlot,
         )}
 
-      {/* Slice #21.05.misc: full-width Cadastral panel on top, Corners +
-          Address side by side (50/50) underneath, and the map (+ Street View)
-          full width at the bottom. The Big/Small Map toggle only changes the
-          page shell's width cap (full vs ~1040px) — never this structure. */}
-      <div className="flex flex-col gap-4">
+      {/* Slice #37.14: fixed-width panels — Date cadastrale, Puncte de contur,
+          Adresă, Hartă and Street View — left-aligned, flowing and wrapping
+          (#37.12's rule; `src/lib/ui/field-widths.ts`). This replaced the
+          full-width cadastral grid, the 50/50 corners + address row and the
+          full-width map of Slice #21.05.misc, all inside a centred 1040-pixel
+          cap. The form itself is snapped to whole panels, so the action bar
+          is as wide as they are. */}
+      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
 
-        {/* Cadastral data — full width, explicit 4-column / 3-row grid. Every
-            field is pinned with row-start/col-start (rather than relying on
-            grid auto-placement) so hidden fields (Tarla/Sola + Parcela on
-            urban types) leave a visible gap instead of shifting later fields
-            into the wrong cell. */}
-        <fieldset disabled={effectiveMode === "view"}>
-          <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        {/* Cadastral data. Tarla / sola (M) and Nr. parcelă (L) are Adrian's
+            widths (Field.Widths.v02); at M and L they do not share a row, so
+            each has its own. Hidden for urban types (Slice #19.02). */}
+        <fieldset disabled={effectiveMode === "view"} className="m-0 border-0 p-0" style={PANEL_STYLE}>
+          <section data-panel="cadastral" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.cadastral")}
             </h2>
-            <div className="grid grid-cols-4 gap-2">
-              {/* Row 1: Code · Parcela · Tarla/Sola · Nickname */}
+            <div className="flex flex-col gap-2">
               {propertyCode && (
-                <div className="row-start-1 col-start-1">
-                  <ReadOnlyField label={t("fields.code")} value={propertyCode} />
-                </div>
+                <ReadOnlyField label={t("fields.code")} value={propertyCode} width={PROP.code} field="code" />
               )}
-              {/* Slice #19.02: Tarla/Parcela hidden for urban property types —
-                  Code and Nickname stay pinned to columns 1 and 4, leaving a
-                  visible gap in columns 2-3 rather than collapsing together. */}
               {!typeConfig.hideTarlaParcela && (
                 <>
-                  <div className="row-start-1 col-start-2">
-                    <Field
-                      label={t("fields.parcela")}
-                      name="parcela"
-                      register={register}
-                      error={errors.parcela?.message}
-                      highlight={displayHighlights?.property.parcela}
-                    />
-                  </div>
-                  {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
-                  <div className="row-start-1 col-start-3">
-                    {/* Slice #34.03: an ORDINARY id-valued select, like the two
-                        beside it. `allowUnlistedValue` was here from #32.13,
-                        because a property could hold a tarla `lookup_tarla` had
-                        never had and blanking it would have lost the value.
-                        `property.tarla_id` is a foreign key now, so an unlisted
-                        value cannot exist — and `optionsWithUnlistedValues`,
-                        whose only job was inventing the missing entry, is gone
-                        from the codebase with it. */}
-                    <SelectField
-                      label={t("fields.tarlaSola")}
-                      name="tarlaId"
-                      register={register}
-                      control={control}
-                      error={errors.tarlaId?.message}
-                      options={tarlaOptions}
-                      highlight={displayHighlights?.property.tarlaId}
-                      snapshot={snapshotLookups.tarlaId}
-                    />
-                  </div>
+                  {/* Slice #34.03: an ORDINARY id-valued select, like the two
+                      below. `allowUnlistedValue` was here from #32.13, because a
+                      property could hold a tarla `lookup_tarla` had never had
+                      and blanking it would have lost the value.
+                      `property.tarla_id` is a foreign key now, so an unlisted
+                      value cannot exist — and `optionsWithUnlistedValues`,
+                      whose only job was inventing the missing entry, is gone
+                      from the codebase with it. */}
+                  <SelectField
+                    label={t("fields.tarlaSola")}
+                    name="tarlaId"
+                    register={register}
+                    control={control}
+                    error={errors.tarlaId?.message}
+                    options={tarlaOptions}
+                    highlight={displayHighlights?.property.tarlaId}
+                    snapshot={snapshotLookups.tarlaId}
+                    width={PROP.tarlaId}
+                  />
+                  <Field
+                    label={t("fields.parcela")}
+                    name="parcela"
+                    register={register}
+                    error={errors.parcela?.message}
+                    highlight={displayHighlights?.property.parcela}
+                    width={PROP.parcela}
+                  />
                 </>
               )}
-              <div className="row-start-1 col-start-4">
-                <Field
-                  label={t("fields.nickname")}
-                  name="nickname"
-                  register={register}
-                  error={errors.nickname?.message}
-                  highlight={displayHighlights?.property.nickname}
-                />
-              </div>
-
-              {/* Row 2: Official Surface Area · Calculated Area · Carte Funciara · Cadastral No. */}
-              <div className="row-start-2 col-start-1">
+              <Field
+                label={t("fields.nickname")}
+                name="nickname"
+                register={register}
+                error={errors.nickname?.message}
+                highlight={displayHighlights?.property.nickname}
+                width={PROP.nickname}
+              />
+              <div className="flex flex-wrap gap-2">
                 <Field
                   label={t("fields.surfaceAreaMp")}
                   name="surfaceAreaMp"
@@ -1032,287 +1038,304 @@ export function PropertyForm({
                   register={register}
                   error={errors.surfaceAreaMp?.message}
                   highlight={displayHighlights?.property.surfaceAreaMp}
+                  width={PROP.surfaceAreaMp}
                 />
-              </div>
-              {/* Slice #18.09: system-computed area from the corners — read-only,
-                  live (not registered with RHF). Blank until 3+ corners exist. */}
-              <div className="row-start-2 col-start-2">
+                {/* Slice #18.09: system-computed area from the corners — read-only,
+                    live (not registered with RHF). Blank until 3+ corners exist. */}
                 <ReadOnlyField
                   label={t("fields.calculatedAreaMp")}
                   value={calculatedAreaDisplay}
                   hint={<HelpHint hintKey="calculated-area-auto" />}
+                  width={PROP.calculatedAreaMp}
+                  field="calculatedAreaMp"
                 />
-                {/* Slice #32.14: the marker sits under the number it explains,
-                    because the number is the only symptom the user ever saw. */}
-                {cornersSelfIntersect && (
-                  <div className="mt-1 flex flex-wrap items-center gap-2 pl-[6.5rem]">
-                    <span
-                      className="text-xs font-semibold text-amber-600 dark:text-amber-500"
-                      title={t("bowTie.markerHint")}
-                    >
-                      {t("bowTie.marker")}
-                    </span>
-                    {effectiveMode !== "view" && (
-                      <button
-                        type="button"
-                        onClick={handleStraighten}
-                        className={buttonClass({ variant: "secondary", size: "sm" })}
-                      >
-                        {t("bowTie.straighten")}
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
-              <div className="row-start-2 col-start-3">
+              {/* Slice #32.14: the marker sits under the number it explains,
+                  because the number is the only symptom the user ever saw. */}
+              {cornersSelfIntersect && (
+                <div className="flex flex-wrap items-center gap-2" style={{ paddingLeft: LABEL_INDENT }}>
+                  <span
+                    className="text-xs font-semibold text-amber-600 dark:text-amber-500"
+                    title={t("bowTie.markerHint")}
+                  >
+                    {t("bowTie.marker")}
+                  </span>
+                  {effectiveMode !== "view" && (
+                    <button
+                      type="button"
+                      onClick={handleStraighten}
+                      className={buttonClass({ variant: "secondary", size: "sm" })}
+                    >
+                      {t("bowTie.straighten")}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
                 <Field
                   label={t("fields.carteFunciara")}
                   name="carteFunciara"
                   register={register}
                   error={errors.carteFunciara?.message}
                   highlight={displayHighlights?.property.carteFunciara}
+                  width={PROP.carteFunciara}
                 />
-              </div>
-              <div className="row-start-2 col-start-4">
                 <Field
                   label={t("fields.cadastralNumber")}
                   name="cadastralNumber"
                   register={register}
                   error={errors.cadastralNumber?.message}
                   highlight={displayHighlights?.property.cadastralNumber}
+                  width={PROP.cadastralNumber}
                 />
               </div>
-
-              {/* Row 3: Use Category · Property Type · Notes (double width) */}
-              <div className="row-start-3 col-start-1">
-                <SelectField
-                  label={t("fields.useCategory")}
-                  name="useCategoryId"
-                  register={register}
-                  control={control}
-                  error={errors.useCategoryId?.message}
-                  options={useCategoryOptions}
-                  highlight={displayHighlights?.property.useCategoryId}
-                  snapshot={snapshotLookups.useCategoryId}
-                />
-              </div>
-              <div className="row-start-3 col-start-2">
-                <SelectField
-                  label={t("fields.propertyType")}
-                  name="propertyTypeId"
-                  register={register}
-                  control={control}
-                  error={errors.propertyTypeId?.message}
-                  options={propertyTypeOptions}
-                  highlight={displayHighlights?.property.propertyTypeId}
-                  snapshot={snapshotLookups.propertyTypeId}
-                />
-              </div>
-              <div className="row-start-3 col-start-3 col-span-2">
-                <TextAreaField
-                  label={t("fields.notes")}
-                  name="notes"
-                  register={register}
-                  error={errors.notes?.message}
-                  maxLength={300}
-                  highlight={displayHighlights?.property.notes}
-                />
-              </div>
+              <SelectField
+                label={t("fields.useCategory")}
+                name="useCategoryId"
+                register={register}
+                control={control}
+                error={errors.useCategoryId?.message}
+                options={useCategoryOptions}
+                highlight={displayHighlights?.property.useCategoryId}
+                snapshot={snapshotLookups.useCategoryId}
+                width={PROP.useCategoryId}
+              />
+              <SelectField
+                label={t("fields.propertyType")}
+                name="propertyTypeId"
+                register={register}
+                control={control}
+                error={errors.propertyTypeId?.message}
+                options={propertyTypeOptions}
+                highlight={displayHighlights?.property.propertyTypeId}
+                snapshot={snapshotLookups.propertyTypeId}
+                width={PROP.propertyTypeId}
+              />
+              <Field
+                label={t("fields.notes")}
+                name="notes"
+                register={register}
+                error={errors.notes?.message}
+                maxLength={300}
+                highlight={displayHighlights?.property.notes}
+                width={PROP.notes}
+              />
             </div>
           </section>
         </fieldset>
 
-        {/* Corners (left) + Address (right) — 50/50 under Cadastral. Corners
-            stays OUTSIDE any disabled <fieldset> (a disabled fieldset disables
-            EVERY descendant control, including the version ◀/▶ nav buttons
-            that live inside CornersManager's toolbar — Slice #18.02 pitfall
-            #4); it enforces its own read-only state via the readOnly prop
-            instead. Address keeps its own fieldset so it still locks in
-            read-only historical versions. When Address is hidden (Slice
-            #19.02, agricultural/forest types), Corners stays at its normal
-            half-width slot rather than expanding into the gap. */}
-        <div className="flex flex-row flex-wrap gap-4 items-start">
-
-          {/* Corners table. Bug 1: a red pulse ring on the whole card flags a
-              corner change in the just-navigated-to latest version (the
-              interactive table can't show the historical per-row diff). */}
-          <div className="flex-1 min-w-[320px]">
-            <section
-              className={[
-                "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
-                cornersPulse ? "ga-vpulse-red" : "",
-              ].join(" ")}
-            >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-                  {t("sections.corners")}
-                </h2>
-              </div>
-              <CornersManager
-                corners={corners}
-                onChange={setCorners}
-                readOnly={effectiveMode === "view"}
-                hoveredCornerIdx={hoveredCornerIdx}
-                onCornerHover={setHoveredCornerIdx}
-                bigMap={bigMap}
-                onToggleBigMap={handleToggleBigMap}
-                streetView={showStreetView && !typeConfig.hideStreetView}
-                onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
-                showAngles={showAngles}
-                onToggleAngles={() => setShowAngles((v) => !v)}
-                cornerDiff={cornerDiff ?? undefined}
-              />
-            </section>
-          </div>
-
-          {/* Address — Slice #19.02: hidden for agricultural / forest types. */}
-          {!typeConfig.hideAddress && (
-            <fieldset disabled={effectiveMode === "view"} className="flex-1 min-w-[320px]">
-              <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-                  {t("sections.address")}
-                </h2>
-                {/* Stacked within the half-width column: street + notes
-                    full-width, then postal/city and county/country in 2-col pairs. */}
-                <div className="flex flex-col gap-2">
-                  <Field
-                    label={t("address.streetLine")}
-                    name="address.streetLine"
-                    register={register}
-                    error={errors.address?.streetLine?.message}
-                    highlight={displayHighlights?.address.streetLine}
-                  />
-                  {/* Slice #18.12: Street View address — only the street line may
-                      differ from the document-derived one above; the shared
-                      postal/locality/county/country fields below apply to both.
-                      The Fetch button reverse-geocodes the corners' centroid. In a
-                      read-only historical version the whole address fieldset is
-                      disabled, which also disables this button. */}
-                  <label className="flex items-start gap-2 text-sm">
-                    <span className="w-24 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">
-                      {t("streetViewAddress.label")}
-                    </span>
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          {...register("address.streetViewStreetLine")}
-                          className={[
-                            "min-w-0 flex-1 rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-                            "border-wire focus:border-focus dark:border-zinc-700",
-                            highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
-                          ].join(" ")}
-                        />
-                        <button
-                          type="button"
-                          onClick={handleFetchStreetViewAddress}
-                          disabled={
-                            fetchingStreetView || !streetViewCentroid || !geocodingLib
-                          }
-                          title={
-                            !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
-                          }
-                          className={buttonClass({ variant: "secondary", size: "xs" })}
-                        >
-                          {fetchingStreetView
-                            ? t("streetViewAddress.fetching")
-                            : t("streetViewAddress.fetch")}
-                        </button>
-                        <HelpHint hintKey="street-view-fetch-address" />
-                      </div>
-                      {streetViewFetchError ? (
-                        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                          {streetViewFetchError}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-fade dark:text-zinc-400">
-                          {t("streetViewAddress.hint")}
-                        </span>
-                      )}
-                    </div>
-                  </label>
-                  <Field
-                    label={t("address.notes")}
-                    name="address.notes"
-                    register={register}
-                    error={errors.address?.notes?.message}
-                    highlight={displayHighlights?.address.notes}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field
-                      label={t("address.postalCode")}
-                      name="address.postalCode"
-                      register={register}
-                      error={errors.address?.postalCode?.message}
-                      highlight={displayHighlights?.address.postalCode}
-                    />
-                    <Field
-                      label={t("address.locality")}
-                      name="address.locality"
-                      register={register}
-                      error={errors.address?.locality?.message}
-                      highlight={displayHighlights?.address.locality}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field
-                      label={t("address.county")}
-                      name="address.county"
-                      register={register}
-                      error={errors.address?.county?.message}
-                      highlight={displayHighlights?.address.county}
-                    />
-                    <div className="flex flex-col gap-1">
-                      <Field
-                        label={t("address.country")}
-                        name="address.country"
-                        register={register}
-                        error={errors.address?.country?.message}
-                        highlight={displayHighlights?.address.country}
-                      />
-                      {/* Slice #37.04 (FU-013): a blank „Țară" is saved as „România". */}
-                      <p className="text-xs text-fade">{t("address.countryDefault")}</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </fieldset>
-          )}
-
-        </div>{/* end Corners + Address row */}
-
-        {/* Map — full width. Always 440px tall; the "Hartă extinsă" button
-            opens a full-screen theater overlay instead of changing this
-            layout. */}
-        <div
-          className="relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800"
-          style={{ height: "440px" }}
+        {/* Corners table. Bug 1: a red pulse ring on the whole card flags a
+            corner change in the just-navigated-to latest version (the
+            interactive table can't show the historical per-row diff). It
+            stays OUTSIDE any disabled <fieldset> (a disabled fieldset
+            disables EVERY descendant control, including the version ◀/▶ nav
+            buttons that live inside CornersManager's toolbar — Slice #18.02
+            pitfall #4); it enforces its own read-only state via the readOnly
+            prop instead. Its columns take their widths from the file. */}
+        <section
+          style={PANEL_STYLE}
+          data-panel="corners"
+          className={[
+            "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+            cornersPulse ? "ga-vpulse-red" : "",
+          ].join(" ")}
         >
-          <div className="absolute inset-0">
-            <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
-              <PropertyMiniMap
-                corners={corners}
-                onChange={setCorners}
-                readOnly={effectiveMode === "view"}
-                hoveredCornerIdx={hoveredCornerIdx}
-                onCornerHover={setHoveredCornerIdx}
-                showAngles={showAngles}
-              />
-            </ErrorBoundary>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+              {t("sections.corners")}
+            </h2>
           </div>
-        </div>
-        {/* Slice #18.03b: Street View panel — mounted only while open so the
-            (billed) panorama and Street View library never load on property
-            open. Full width, directly under the map. */}
-        {showStreetView && !typeConfig.hideStreetView && (
-          <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-            <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.streetView")}</PanelError>}>
-              <StreetViewPanel centroid={streetViewCentroid} />
-            </ErrorBoundary>
-          </div>
+          <CornersManager
+            corners={corners}
+            onChange={setCorners}
+            readOnly={effectiveMode === "view"}
+            hoveredCornerIdx={hoveredCornerIdx}
+            onCornerHover={setHoveredCornerIdx}
+            bigMap={bigMap}
+            onToggleBigMap={handleToggleBigMap}
+            streetView={showStreetView && !typeConfig.hideStreetView}
+            onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
+            showAngles={showAngles}
+            onToggleAngles={() => setShowAngles((v) => !v)}
+            cornerDiff={cornerDiff ?? undefined}
+          />
+        </section>
+
+        {/* Address — Slice #19.02: hidden for agricultural / forest types. */}
+        {!typeConfig.hideAddress && (
+          <fieldset disabled={effectiveMode === "view"} className="m-0 border-0 p-0" style={PANEL_STYLE}>
+            <section data-panel="address" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+                {t("sections.address")}
+              </h2>
+              <div className="flex flex-col gap-2">
+                <Field
+                  label={t("address.streetLine")}
+                  name="address.streetLine"
+                  register={register}
+                  error={errors.address?.streetLine?.message}
+                  highlight={displayHighlights?.address.streetLine}
+                  width={ADDRESS.streetLine}
+                />
+                {/* Slice #18.12: Street View address — only the street line may
+                    differ from the document-derived one above; the shared
+                    postal/locality/county/country fields below apply to both.
+                    The Fetch button reverse-geocodes the corners' centroid. In a
+                    read-only historical version the whole address fieldset is
+                    disabled, which also disables this button. */}
+                <label className="flex items-start gap-2 text-sm">
+                  <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
+                    {t("streetViewAddress.label")}
+                  </span>
+                  <div className="flex flex-col gap-0.5" style={boxStyle(PROP.streetViewStreetLine)}>
+                    <div className="flex items-start gap-2">
+                      <GrowingText
+                        registration={register("address.streetViewStreetLine")}
+                        width={String(boxStyle(PROP.streetViewStreetLineBox).width)}
+                        className={[
+                          BOX_CLASS,
+                          "border-wire focus:border-focus dark:border-zinc-700",
+                          highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
+                        ].join(" ")}
+                        data-width-field="address.streetViewStreetLine"
+                        data-width-kind={PROP.streetViewStreetLineBox.kind}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleFetchStreetViewAddress}
+                        disabled={
+                          fetchingStreetView || !streetViewCentroid || !geocodingLib
+                        }
+                        title={
+                          !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
+                        }
+                        className={buttonClass({ variant: "secondary", size: "xs", className: "mt-1 shrink-0" })}
+                      >
+                        {fetchingStreetView
+                          ? t("streetViewAddress.fetching")
+                          : t("streetViewAddress.fetch")}
+                      </button>
+                      <span className="mt-1 shrink-0">
+                        <HelpHint hintKey="street-view-fetch-address" />
+                      </span>
+                    </div>
+                    {streetViewFetchError ? (
+                      <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                        {streetViewFetchError}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-fade dark:text-zinc-400">
+                        {t("streetViewAddress.hint")}
+                      </span>
+                    )}
+                  </div>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <Field
+                    label={t("address.postalCode")}
+                    name="address.postalCode"
+                    register={register}
+                    error={errors.address?.postalCode?.message}
+                    highlight={displayHighlights?.address.postalCode}
+                    width={ADDRESS.postalCode}
+                  />
+                  <Field
+                    label={t("address.locality")}
+                    name="address.locality"
+                    register={register}
+                    error={errors.address?.locality?.message}
+                    highlight={displayHighlights?.address.locality}
+                    width={ADDRESS.locality}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Field
+                    label={t("address.county")}
+                    name="address.county"
+                    register={register}
+                    error={errors.address?.county?.message}
+                    highlight={displayHighlights?.address.county}
+                    width={ADDRESS.county}
+                  />
+                  <Field
+                    label={t("address.country")}
+                    name="address.country"
+                    register={register}
+                    error={errors.address?.country?.message}
+                    highlight={displayHighlights?.address.country}
+                    width={ADDRESS.country}
+                  />
+                </div>
+                {/* Slice #37.04 (FU-013): a blank „Țară" is saved as „România". */}
+                <p className="text-xs text-fade" style={{ paddingLeft: LABEL_INDENT }}>{t("address.countryDefault")}</p>
+                <Field
+                  label={t("address.notes")}
+                  name="address.notes"
+                  register={register}
+                  error={errors.address?.notes?.message}
+                  highlight={displayHighlights?.address.notes}
+                  width={ADDRESS.notes}
+                />
+              </div>
+            </section>
+          </fieldset>
         )}
 
-      </div>{/* end Slice #21.05.misc layout */}
+        {/* The mini-map — a panel of its own at a fixed size (Field.Widths.v02:
+            it fills a small tile), with or without a polygon, so nothing jumps
+            when the first corner is added. The polygon is fitted into it with
+            fitBounds (property-mini-map-inner.tsx), so a parcel of any size
+            fits at the default zoom. „Hartă extinsă" still opens the
+            full-screen theater overlay. */}
+        <section
+          style={PANEL_STYLE}
+          data-panel="map"
+          className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+        >
+          <div
+            className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
+            style={MAP_BOX_STYLE}
+            data-width-field="map"
+            data-width-kind="fixed"
+          >
+            <div className="absolute inset-0">
+              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
+                <PropertyMiniMap
+                  corners={corners}
+                  onChange={setCorners}
+                  readOnly={effectiveMode === "view"}
+                  hoveredCornerIdx={hoveredCornerIdx}
+                  onCornerHover={setHoveredCornerIdx}
+                  showAngles={showAngles}
+                />
+              </ErrorBoundary>
+            </div>
+          </div>
+        </section>
+
+        {/* Slice #18.03b: Street View panel — mounted only while open so the
+            (billed) panorama and Street View library never load on property
+            open. The same fixed size as the map, beside it. */}
+        {showStreetView && !typeConfig.hideStreetView && (
+          <section
+            style={PANEL_STYLE}
+            data-panel="street-view"
+            className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <div
+              className="overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
+              style={MAP_BOX_STYLE}
+              data-width-field="streetView"
+              data-width-kind="fixed"
+            >
+              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.streetView")}</PanelError>}>
+                <StreetViewPanel centroid={streetViewCentroid} />
+              </ErrorBoundary>
+            </div>
+          </section>
+        )}
+
+      </div>{/* end Slice #37.14 panel row */}
 
       {/* Slice #20.16: Theater overlay — full-screen map portal. Rendered above
           everything via document.body so no layout shift occurs. Dismiss via
@@ -1601,63 +1624,61 @@ type FieldProps = {
   error?:     string;
   hint?:      string;
   highlight?: HighlightColor;
+  /**
+   * Slice #37.14: the box's width and kind, from `src/lib/ui/field-widths.ts`
+   * — a GROWING kind renders `<GrowingText>`, every other an `<input>` as wide
+   * as its step (#37.12's helper shape).
+   */
+  width:      FieldWidth;
+  /** The most characters the box takes — the notes' 300. */
+  maxLength?: number;
 };
 
-function Field({ label, name, type = "text", register, error, hint, highlight }: FieldProps) {
+/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
+const BOX_CLASS =
+  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
+
+function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength }: FieldProps) {
   const ring = usePulseRing(highlight);
+  const className = [
+    BOX_CLASS,
+    error
+      ? "border-red-500 focus:border-red-600"
+      : "border-wire focus:border-focus dark:border-zinc-700",
+    ring,
+  ].join(" ");
+  const grows = width.kind === "grows" || width.kind === "lines";
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <input
-          type={type}
-          {...register(name)}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
+        {grows ? (
+          <GrowingText
+            registration={register(name)}
+            width={String(boxStyle(width).width)}
+            lines={width.kind === "lines"}
+            minRows={width.rows ?? 1}
+            maxLength={maxLength}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        ) : (
+          <input
+            type={type}
+            {...register(name)}
+            maxLength={maxLength}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            style={boxStyle(width)}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        )}
         {hint && !error && (
           <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
         )}
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-        )}
-      </div>
-    </label>
-  );
-}
-
-function TextAreaField({
-  label,
-  name,
-  register,
-  error,
-  maxLength,
-  highlight,
-}: FieldProps & { maxLength?: number }) {
-  const ring = usePulseRing(highlight);
-  return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="w-24 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <textarea
-          {...register(name)}
-          maxLength={maxLength}
-          rows={3}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}
@@ -1675,6 +1696,7 @@ function SelectField({
   options,
   highlight,
   snapshot,
+  width,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
@@ -1691,6 +1713,9 @@ function SelectField({
 }) {
   const tShared = useTranslations("shared");
   const ring = usePulseRing(highlight);
+  // Slice #37.14: the chosen option in full on hover when the box is narrower (#37.12).
+  const current = useWatch({ control, name });
+  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
 
   // A version whose lookup row an admin deleted, or whose tarla was recorded as
   // text before the column had an id, PRINTS what the snapshot holds instead of
@@ -1708,9 +1733,9 @@ function SelectField({
     // There is no `hint` here, which is why this one can name the span itself.
     const labelId = `${name}-version-label`;
     return (
-      <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
-        <span id={labelId} className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
+        <span id={labelId} className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+        <div className="flex flex-col gap-0.5" style={boxStyle(width)} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
             state={snapshot}
             deletedLabel={tShared("snapshotValue.deleted")}
@@ -1722,9 +1747,9 @@ function SelectField({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         {/* Slice #32.13: the async-options idiom lives in <AsyncSelect> now.
             The key that used to be here was inert — `noneOption` is prepended
             unconditionally above, so `options.length` was never 0 and the
@@ -1740,12 +1765,15 @@ function SelectField({
           options={options}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+            BOX_CLASS,
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
+          style={boxStyle(width)}
+          title={chosenLabel}
+          widthField={name}
         />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
@@ -1783,20 +1811,31 @@ function ReadOnlyField({
   label,
   value,
   hint,
+  width,
+  field,
 }: {
   label: string;
   value: string;
   /** Optional <HelpHint> — most callers have no hidden behaviour to explain. */
   hint?: React.ReactNode;
+  /** Slice #37.14: the box's width, from `field-widths.ts`. */
+  width: FieldWidth;
+  /** Slice #37.14: its name for the e2e width check. */
+  field: string;
 }) {
   const labelId = useId();
   return (
-    <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
-      <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300 flex items-center gap-1">
+    <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
+      <span className="shrink-0 pt-1 font-medium text-ink dark:text-zinc-300 flex items-center justify-center gap-1" style={LABEL_STYLE}>
         <span id={labelId}>{label}</span>
         {hint}
       </span>
-      <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+      <div
+        className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
+        style={boxStyle(width)}
+        data-width-field={field}
+        data-width-kind={width.kind}
+      >
         {value}
       </div>
     </div>
