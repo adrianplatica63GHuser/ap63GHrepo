@@ -16,6 +16,9 @@
  *     row: the case picks by name and so does this.
  *   - The case's cleanup runs at the end; a `finally` removes all three records
  *     through the DELETE routes „Șterge" calls, which also drop the parties.
+ *   - Slice #37.17: a Natural Person has no tab row; the person's „Acte"
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
+ *     run clicks the tile's checkbox.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -26,6 +29,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-12`;
 const DECEASED = `Vasile ${MARK} Defunct`;
@@ -129,7 +133,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       for (const [id, person, quality] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
         await page.goto(`/natural-persons/${id}`);
         await expect(page.getByRole("heading", { name: person })).toBeVisible({ timeout: 30_000 });
-        await page.getByRole("tab", { name: "Acte" }).click();
+        await showTile(page, "Acte");
         const r = page.getByRole("row").filter({ hasText: CERTIFICATE });
         await expect(r).toHaveCount(1, { timeout: 15_000 });
         await expect(r).toContainText("Certificat de Moștenitor");

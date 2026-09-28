@@ -23,6 +23,9 @@
  *     are found by position on the page. Not changed here.
  *   - „Disponibile" is narrowed with its „Caută…" to this spec's person, so the
  *     tick lands on the right row on a database with many people.
+ *   - Slice #37.17: a Natural Person has no tab row; the person's „META INFO"
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
+ *     run clicks the tile's checkbox.
  */
 
 import { test, expect } from "@playwright/test";
@@ -34,6 +37,7 @@ import {
   removeStampLeftovers,
 } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}STAMP-01`;
 const DESCRIPTION = `${MARK} Ștampilă de test`;
@@ -131,7 +135,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       // Step 9 — the person's „META INFO": „Ștampile", „+ Aplică ștampilă", the chip with „×".
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "META INFO" }).click();
+      await showTile(page, "META INFO");
       await expect(page.getByText("Conexiuni", { exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(page.getByRole("button", { name: "+ Aplică ștampilă" })).toBeVisible();
       await expect(page.getByText(code, { exact: true })).toBeVisible();
@@ -149,7 +153,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await confirm.getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.getByText(`${before} ștampile`, { exact: true })).toBeVisible({ timeout: 15_000 });
       await page.goto(`/natural-persons/${personId}`);
-      await page.getByRole("tab", { name: "META INFO" }).click({ timeout: 30_000 });
+      await showTile(page, "META INFO");
       await expect(page.getByText("Nicio ștampilă aplicată")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeStampLeftovers(page.request, MARK);

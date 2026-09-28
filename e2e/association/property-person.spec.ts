@@ -19,6 +19,9 @@
  *     every column the same width at 1400 and 2400 px, the table no wider than
  *     its columns, no fixed column's cell wider than the column. Not a step of
  *     the case.
+ *   - Slice #37.17: a Natural Person has no tab row; the person's „Proprietăți"
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
+ *     run clicks the tile's checkbox.
  */
 
 import { test, expect } from "@playwright/test";
@@ -30,6 +33,7 @@ import {
   removeRecord,
 } from "../helpers/records";
 import { expectStableColumns } from "../helpers/field-widths";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -101,7 +105,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // Step 7 — the other end: the person's „Proprietăți", Denumire · Rol.
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Proprietăți" }).click();
+      await showTile(page, "Proprietăți");
       const onPerson = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
       await expect(onPerson).toContainText(ROLE);

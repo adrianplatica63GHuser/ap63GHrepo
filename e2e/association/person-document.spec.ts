@@ -19,6 +19,9 @@
  *     every column the same width at 1400 and 2400 px, the table no wider than
  *     its columns, no fixed column's cell wider than the column. Not a step of
  *     the case.
+ *   - Slice #37.17: a Natural Person has no tab row; the person's „Acte"
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
+ *     run clicks the tile's checkbox.
  */
 
 import { test, expect } from "@playwright/test";
@@ -30,6 +33,7 @@ import {
   removeRecord,
 } from "../helpers/records";
 import { expectStableColumns } from "../helpers/field-widths";
+import { showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-03`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -44,15 +48,15 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
     const documentId = await createSaleContract(page.request, DOC_TITLE);
 
     try {
-      // Step 1 — the person's screen: five tabs.
+      // Step 1 — the person's screen: the eight tile checkboxes (Slice #37.17).
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      for (const tab of ["DETALII", "ASOCIERI", "PROPRIETĂȚI", "ACTE", "META INFO"]) {
-        await expect(page.getByRole("tab", { name: tab })).toBeVisible();
+      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Asocieri", "Proprietăți", "Acte", "META INFO"]) {
+        await expect(tileBox(page, tile)).toBeVisible();
       }
 
       // Step 2 — „Acte": empty, „Asociază", „Dezasociază".
-      await page.getByRole("tab", { name: "Acte" }).click();
+      await showTile(page, "Acte");
       await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 

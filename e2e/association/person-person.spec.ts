@@ -21,10 +21,14 @@
  *   - Step 6 opens Mihai by his address.
  *   - Both are removed in `finally` through DELETE /api/people/[id], after the
  *     case's own cleanup (radio, „Dezasociază") has run.
+ *   - Slice #37.17: a Natural Person has no tab row; the person's „Asocieri"
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
+ *     run clicks the tile's checkbox.
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-09`;
 const ANA = `Ana ${MARK}`;
@@ -42,7 +46,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite la fel din ambele
       // Step 2 — Ana's „Asocieri": empty, „Asociază", „Dezasociază".
       await page.goto(`/natural-persons/${anaId}`);
       await expect(page.getByRole("heading", { name: ANA })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Asocieri" }).click();
+      await showTile(page, "Asocieri");
       await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -83,7 +87,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite la fel din ambele
       // Step 6 — the other end: Mihai's „Asocieri" reads Ana, the same way.
       await page.goto(`/natural-persons/${mihaiId}`);
       await expect(page.getByRole("heading", { name: MIHAI })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Asocieri" }).click();
+      await showTile(page, "Asocieri");
       const onMihai = page.getByRole("row").filter({ hasText: ANA });
       await expect(onMihai).toHaveCount(1, { timeout: 30_000 });
       await expect(onMihai).toContainText("Fizică");
