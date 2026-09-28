@@ -409,9 +409,15 @@ export function NaturalPersonForm({
 
   // Save button disabled if: form invalid, currently submitting, or (edit mode,
   // on the latest) the form hasn't diverged from the baseline.
+  //
+  // ⚠️ **Slice #37.17: as tiles, an invalid form does NOT disable „Salvează".**
+  // The error may sit in a tile that is not shown, and a disabled button says
+  // nothing about where. Pressing it runs the validation (`onInvalid`), which
+  // shows that tile, scrolls to the field, focuses it and pulses it; nothing is
+  // saved. „Adaugă persoană" (no tiles) keeps the old rule.
   const saveDisabled =
     submitting ||
-    !form.formState.isValid ||
+    (!tiled && !form.formState.isValid) ||
     ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
   // doSave performs the API call only (no navigation) so it can be reused by
@@ -459,23 +465,25 @@ export function NaturalPersonForm({
   // Slice #37.17 — an error in a hidden tile: show the tile (for this visit),
   // scroll to the field, focus it and pulse it. react-hook-form's own focus
   // cannot reach an input inside a `display: none` tile, which is why this
-  // waits two frames for the tile to be drawn first.
+  // waits for the tile to be drawn first — a timeout rather than an animation
+  // frame, which a browser does not run in a tab that is not in front.
   const onInvalid = (errs: FieldErrors<FormValues>) => {
     if (!tiles) return;
     const path = firstErrorPath(errs);
     if (!path) return;
     const tile = npTileOfField(path);
     if (!tiles.shown.includes(tile)) tiles.onRevealTile(tile);
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        const el = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
-        if (!el) return;
-        el.scrollIntoView({ block: "center" });
-        el.focus({ preventScroll: true });
-        el.classList.add("ga-vpulse-red");
-        window.setTimeout(() => el.classList.remove("ga-vpulse-red"), 3300);
-      }),
-    );
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "center" });
+      el.focus({ preventScroll: true });
+      // The pulse goes on the field's row, not the box: the error re-renders
+      // the box's className (its red border) and would wipe a class added here.
+      const row = el.closest("label") ?? el.parentElement ?? el;
+      row.classList.add("ga-vpulse-red");
+      window.setTimeout(() => row.classList.remove("ga-vpulse-red"), 3300);
+    }, 60);
   };
 
   const onSubmit = async (values: FormValues) => {

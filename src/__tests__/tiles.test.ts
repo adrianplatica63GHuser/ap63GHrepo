@@ -109,6 +109,8 @@ describe("the Natural Person's tiles", () => {
     // An error in a hidden tile brings it back.
     expect(FORM).toMatch(/form\.handleSubmit\(onSubmit, onInvalid\)/);
     expect(FORM).toMatch(/onRevealTile\(tile\)/);
+    // …which a disabled „Salvează" would make unreachable: as tiles, an invalid form leaves it enabled.
+    expect(FORM).toMatch(/\(!tiled && !form\.formState\.isValid\)/);
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
