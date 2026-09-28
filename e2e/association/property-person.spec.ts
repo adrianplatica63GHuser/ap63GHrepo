@@ -22,9 +22,18 @@
  *   - Slice #37.17: a Natural Person has no tab row; the person's „Proprietăți"
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
  *     run clicks the tile's checkbox.
+ *   - Slice #37.19: nor has the property. Step 1 reads its tile row where the
+ *     case reads five tabs, and its „Persoane" (steps 2 and 12) is a tile.
+ *     After step 12, not a step of the case, two #37.19 checks:
+ *       · the cadastral data, the owners and the map side by side, photographed
+ *         at 1920 and 2560 px into `playwright-report/layout/` (synthetic
+ *         records);
+ *       · AN UNTICKED MAP COSTS NOTHING — the Google requests of a reload with
+ *         „Hartă" ticked and of one with it unticked, counted and printed to
+ *         the log (host and path only: a query string carries the API key).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Request } from "@playwright/test";
 import {
   E2E_MARKER,
   createNaturalPerson,
@@ -32,8 +41,8 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { expectStableColumns } from "../helpers/field-widths";
-import { showTile } from "../helpers/tiles";
+import { expectStableColumns, photograph } from "../helpers/field-widths";
+import { TILE_GROUP, hideTile, showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -51,15 +60,16 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
 
     try {
       // ── From the property's end ──────────────────────────────────────────
-      // Step 1 — the property's screen: five tabs.
+      // Step 1 — the property's screen: its tile row (no tabs — #37.19).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      for (const tab of ["DETALII", "ASOCIERI", "PERSOANE", "ACTE", "META INFO"]) {
-        await expect(page.getByRole("tab", { name: tab })).toBeVisible();
-      }
+      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 });
+      for (const tile of ["Date cadastrale", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
+      for (const tile of ["Street View", "Asocieri", "Persoane", "Acte", "META INFO"]) await expect(tileBox(page, tile)).not.toBeChecked();
+      await expect(page.getByRole("tab")).toHaveCount(0);
 
       // Step 2 — „Persoane": empty, „Asociază", „Dezasociază".
-      await page.getByRole("tab", { name: "Persoane" }).click();
+      await showTile(page, "Persoane");
       await expect(page.getByText("Nicio persoană asociată acestei proprietăți")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -148,15 +158,55 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await again.getByRole("button", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Persoane" }).click();
+      await showTile(page, "Persoane");
       const readBack = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PERSON }) });
       await expect(readBack).toHaveCount(1, { timeout: 30_000 });
       await expect(readBack).toContainText(ROLE);
+
+      // Slice #37.19 — the cadastral data, the owners and the map side by side.
+      await hideTile(page, "Puncte de contur");
+      await hideTile(page, "Adresă");
+      await expect(page.getByRole("region", { name: "Hartă", exact: true })).toBeVisible();
+      await photograph(page, "property-cadastral-owners-map", [1920, 2560]);
+
+      // Slice #37.19 — AN UNTICKED MAP COSTS NOTHING. A reload with „Hartă" ticked
+      // (the control: the counter sees a map), then one with it unticked.
+      const MAP_LOAD = /\/maps\/vt|\/maps\/api\/js\/(AuthenticationService|QuotaService|ViewportInfoService)|\/cbk|photometa|streetviewpixels/;
+      const seen = async (): Promise<string[]> => {
+        const urls: string[] = [];
+        const onRequest = (r: Request): void => {
+          const u = new URL(r.url());
+          if (/(^|\.)(googleapis|gstatic|google)\.com$/.test(u.hostname)) urls.push(`${u.hostname}${u.pathname}`);
+        };
+        page.on("request", onRequest);
+        try {
+          await page.reload();
+          await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
+          await expect(tileBox(page, "Date cadastrale")).toBeChecked({ timeout: 30_000 });
+          await page.waitForTimeout(8_000);
+        } finally {
+          page.off("request", onRequest);
+        }
+        return urls;
+      };
+      const withMap = await seen();
+      await hideTile(page, "Hartă");
+      const withoutMap = await seen();
+      await expect(page.getByRole("region", { name: "Hartă", exact: true })).toHaveCount(0);
+      const tally = (urls: string[]) => ({ all: urls.length, mapLoads: urls.filter((u) => MAP_LOAD.test(u)).length });
+      // Printed for the handover: host and path only, never a query string (the API key).
+      console.log(`[TC-ASSOC-04 #37.19] Google requests, Hartă ticked: ${JSON.stringify(tally(withMap))}; unticked: ${JSON.stringify(tally(withoutMap))}`);
+      console.log(`[TC-ASSOC-04 #37.19] unticked, every Google request: ${JSON.stringify([...new Set(withoutMap)])}`);
+      expect(tally(withMap).mapLoads, "the control: a ticked map makes map requests").toBeGreaterThan(0);
+      expect(withoutMap.filter((u) => MAP_LOAD.test(u)), "an unticked map makes no map request").toEqual([]);
+      await showTile(page, "Persoane");
 
       // ── At the end — on the property's „Persoane": radio, „Dezasociază" ──
       await page.getByRole("radio", { name: PERSON }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
       await expect(page.getByText("Nicio persoană asociată acestei proprietăți")).toBeVisible({ timeout: 15_000 });
+      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
+      await expect(tileBox(page, "Hartă")).toBeChecked();
     } finally {
       await removeRecord(page.request, "person", personId);
       await removeRecord(page.request, "property", propertyId);

@@ -18,11 +18,14 @@
  *   - The tag typed is `TC-E2E-TAG-01`, stored lower-case as `tc-e2e-tag-01`,
  *     where the case types `TC-TAG-01` and reads `tc-tag-01`.
  *   - Step 2 opens the property by its address, not from its list.
+ *   - Slice #37.19: a property has no tab row; its „META INFO" is a tile,
+ *     ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TAG-01`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -38,7 +41,7 @@ async function readDistinct(page: Page): Promise<number> {
 async function openMetaInfo(page: Page, propertyId: string): Promise<void> {
   await page.goto(`/properties/${propertyId}`);
   await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole("tab", { name: "Meta info" }).click();
+  await showTile(page, "META INFO");
   await expect(page.getByPlaceholder("Introduceți o etichetă…")).toBeVisible({ timeout: 30_000 });
 }
 

@@ -41,6 +41,7 @@ import fs from "fs";
 import path from "path";
 import * as nav from "../helpers/version-nav";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { tileBox } from "../helpers/tiles";
 
 const IDS_FILE = path.join(__dirname, "../.auth/e2e-ids.json");
 
@@ -193,7 +194,8 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       await row.getByRole("link", { name: "Deschide" }).click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: nickname })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("tab", { name: "DETALII" })).toBeVisible();
+      // Slice #37.19: no tab row — the property opens on its tile row.
+      await expect(tileBox(page, "Date cadastrale")).toBeChecked({ timeout: 30_000 });
 
       // Step 2 — top right of the header: „◀ v 0 ▶" and „Setează ca actuală".
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 30_000 });

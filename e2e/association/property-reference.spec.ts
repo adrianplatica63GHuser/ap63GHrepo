@@ -23,10 +23,13 @@
  *   - The cleanup's „Dezasociază" runs on the last pair; every property is
  *     removed in `finally` through DELETE /api/properties/[id], the route
  *     „Șterge" → „Da" calls (the link is ON DELETE CASCADE).
+ *   - Slice #37.19: a property has no tab row; its „Asocieri" (steps 2 and 6)
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-08`;
 const WHOLE = `${MARK} Teren întreg`;
@@ -62,7 +65,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   // Step 2 — the part's „Asocieri": empty, „Asociază", „Dezasociază".
   await page.goto(`/properties/${part.id}`);
   await expect(page.getByRole("heading", { name: part.name })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole("tab", { name: "Asocieri" }).click();
+  await showTile(page, "Asocieri");
   await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -98,7 +101,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   const partCode = await codeOf(page, part.id);
   await page.goto(`/properties/${whole.id}`);
   await expect(page.getByRole("heading", { name: WHOLE })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole("tab", { name: "Asocieri" }).click();
+  await showTile(page, "Asocieri");
   const fromWhole = page.getByRole("row").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
   await expect(fromWhole).toHaveCount(1, { timeout: 30_000 });
   await expect(fromWhole).toContainText(`${partCode} „${ROLE}” această proprietate`);
