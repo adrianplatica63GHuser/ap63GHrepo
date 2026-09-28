@@ -16,11 +16,25 @@
  *     case's own cleanup — „Șterge", „Ștergeți persoana juridică?", „Da" —
  *     runs at the end, and a `finally` removes the row through the same
  *     DELETE route if the test stopped before that.
+ *   - Slice #37.13 — fixed widths. The saved company is checked at 1400 and
+ *     2400 px (`e2e/helpers/field-widths.ts`): every box and panel the same
+ *     width at both, every FIXED box holding its widest value, and a long
+ *     „Denumire" growing downward, never sideways. It is photographed at 1366,
+ *     1920 and 2560 px into `playwright-report/layout/` — a synthetic record.
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
+import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { ADDRESS, JUDICIAL_PERSON } from "../../src/lib/ui/field-widths";
+
+/** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
+const SAMPLES: Record<string, string> = {};
+for (const [k, w] of Object.entries(JUDICIAL_PERSON)) if ("sample" in w) SAMPLES[k] = w.sample;
+for (const [k, w] of Object.entries(ADDRESS)) {
+  if ("sample" in w) for (const kind of ["HEADQUARTERS", "CORRESPONDENCE"]) SAMPLES[`addresses.${kind}.${k}`] = w.sample;
+}
 
 const MARK = `${E2E_MARKER}PERS-02`;
 const NAME = `${MARK} Firmă de test SRL`;
@@ -105,6 +119,24 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(
         page.getByText("CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba"),
       ).toBeVisible();
+
+      // Slice #37.13 — the same widths at 1400 and 2400 px; FIXED boxes hold their values;
+      // „Denumire" grows downward with a long value (typed, never saved); the pictures.
+      await expectStableWidths(page);
+      await expectFixedFieldsHold(page, SAMPLES);
+      const denumire = page.locator('[data-width-field="name"]');
+      const before = await denumire.boundingBox();
+      await denumire.fill(`${NAME} ${"SOCIETATEA AGRICOLĂ ".repeat(4)}`);
+      const grown = await denumire.boundingBox();
+      expect(grown?.width).toBe(before?.width);
+      expect(grown?.height ?? 0).toBeGreaterThan((before?.height ?? 0) + 10);
+      await denumire.fill(NAME);
+      const viewport = page.viewportSize();
+      for (const width of [1366, 1920, 2560]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.screenshot({ path: `playwright-report/layout/judicial-person-${width}.png`, fullPage: true });
+      }
+      if (viewport) await page.setViewportSize(viewport);
 
       // Step 10 — „Poreclă", „Salvează": STAYS on the company, „v 1", „2 versiuni".
       const nickname = page.getByLabel(/^Poreclă/);
