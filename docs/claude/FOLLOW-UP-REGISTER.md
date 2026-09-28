@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-28, Slice #37.11 — 255 entries. Rows are status, columns are impact.
+As of 2026-09-28, Slice #37.12 — 258 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 15 | 50 | 48 | 14 | 127 |
+| open | 15 | 51 | 50 | 14 | 130 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 34 | 52 | 25 | 3 | 114 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 53 | 107 | 76 | 19 | 255 |
+| **total** | 53 | 108 | 78 | 19 | 258 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -339,3 +339,6 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-253 | 2026-09-27 #37.10 TC-ACCT-01 | defect | UI shell | „RECENTE" survived sign-out: clearRecentlyViewed() removed the storage key but the provider, still mounted across the client-side redirect to /login, kept the list in state, so the next account saw the previous one's visits (and its first visit wrote them back) — including records deleted through the API. | src/components/providers/navigation-history-provider.tsx clearRecentlyViewed; src/components/sidebar/sidebar-nav.tsx:260 | user | XS | resolved | Fixed in c8d3059: clearRecentlyViewed() dispatches RECENTLY_VIEWED_CHANGED like forgetRecentlyViewed(); recently-viewed-forget.test.tsx red first, then green. | 2026-09-27 |
 | FU-254 | 2026-09-28 #37.11 | recommendation | Tooling & CI | An unattended backup or drill that fails is recorded only in its runner result, runner.log and OneDrive's ga40prj-backups\LAST-RESULT.txt — nobody is told, so backups could stop for weeks unseen. | scripts/test-runner/runner.ts maybeAutoRun; scripts/backup/archive.ts writeLastResult (d13b3bd) | data | S | open | Fix: a Windows notification on a red auto- run, or claude.sh ping printing the newest auto- result so every session sees it. | 2026-09-28 |
 | FU-255 | 2026-09-28 #37.11 | recommendation | Tooling & CI | Every backup copies every page file again (64.3 MB today), so 14 days hold about 0.9 GB in OneDrive and it grows with the archive; storing pages once by hash across backups would keep one copy plus the changes. | auto-20260928T164226Z-backup: 139 files, 64.3 MB; scripts/backup/rules.ts KEEP_DAYS (d13b3bd) | dev | S | open | Unverified: Adrian's OneDrive plan and free space. | 2026-09-28 |
+| FU-256 | 2026-09-28 #37.11 full 20260928T181746Z-13873 | tooling | Tooling & CI | The runner re-runs failed e2e specs with `playwright test --last-failed`, and when the one failure is the setup project (`e2e/auth.setup.ts`) that finds „No tests found", so a single slow cold start keeps the whole run red. | scripts/test-runner/runner.ts stepE2e (PLAYWRIGHT_RERUN_ARGS); result 20260928T181746Z-13873: „re-run: No tests found (exit 1)" | dev | XS | open | Fix: when the failed set is only the setup, re-run the whole suite once instead of --last-failed. | 2026-09-28 |
+| FU-257 | 2026-09-28 #37.12 | debt | UI shell | A dropdown whose chosen option is longer than its box shows it in full on hover (`title`) but does not wrap it in view mode, which Field.Widths.v02 asks for. No Natural Person dropdown is cut today (every option fits its step, measured); „Tip document" on the Document (#37.15, 41 characters against the XL cap) will be. | src/app/natural-persons/_components/natural-person-form.tsx SelectField (33a1345); measure-fields 20260928T185247Z-3109 DOC.documentTypeId longest 41 | user | S | open | Fix in #37.15: in view mode render the chosen label as wrapping text instead of the disabled select. | 2026-09-28 |
+| FU-258 | 2026-09-28 #37.12 | recommendation | People | The local archive holds one natural person, no judicial person and no address, so the person and address widths could only be checked against value formats, not real values. | measure-fields 20260928T185247Z-3109: NP.* and ADDR.* 0–1 rows; src/lib/ui/field-widths.ts NATURAL_PERSON, ADDRESS (33a1345) | dev | XS | open | Re-run `claude.sh request measure-fields` once people are imported; a column whose p95 passes its step moves up one step in field-widths.ts. | 2026-09-28 |
