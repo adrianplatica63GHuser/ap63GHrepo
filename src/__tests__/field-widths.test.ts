@@ -225,23 +225,24 @@ describe("the scale", () => {
   });
 
   it("the pairs the Natural Person form puts on one row fit a panel", () => {
-    const pair = (a: FieldWidth, b: FieldWidth): number => 2 * (LABEL_REM + LABEL_GAP_REM) + SCALE[a.step] + SCALE[b.step] + 0.5;
+    // The gap between the two is gap-2 (0.5rem), or gap-x-1 (0.25rem) where a pair needs it.
+    const pair = (a: FieldWidth, b: FieldWidth, gap = 0.5): number => 2 * (LABEL_REM + LABEL_GAP_REM) + SCALE[a.step] + SCALE[b.step] + gap;
     const NP = NATURAL_PERSON;
-    for (const [a, b] of [
+    for (const [a, b, gap] of [
       [NP.cnp, NP.gender],
       [NP.dateOfBirth, NP.age],
       [NP.idDocumentNumber, NP.idCardNumber],
       [NP.idValidFrom, NP.idValidUntil],
       [NP.personalPhone1, NP.personalPhone2],
-      [ADDRESS.postalCode, ADDRESS.locality],
+      [ADDRESS.postalCode, ADDRESS.locality, 0.25],
       [ADDRESS.county, ADDRESS.country],
       [JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber],
       [PROPERTY.surfaceAreaMp, PROPERTY.calculatedAreaMp],
       [PROPERTY.carteFunciara, PROPERTY.cadastralNumber],
       [DOCUMENT.nrDocument, DOCUMENT.dateDocument],
       [TEMPLATE_FIELD.number, TEMPLATE_FIELD.date],
-    ] as const) {
-      expect(pair(a, b)).toBeLessThanOrEqual(PANEL_INNER_REM);
+    ] as [FieldWidth, FieldWidth, number?][]) {
+      expect(pair(a, b, gap)).toBeLessThanOrEqual(PANEL_INNER_REM);
     }
   });
 

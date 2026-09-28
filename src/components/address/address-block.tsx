@@ -117,7 +117,10 @@ export function AddressBlock<TFormValues extends FieldValues>({
         </h2>
         <div className="flex flex-col gap-2">
           {field("streetLine", t("streetLine"), errors?.streetLine?.message)}
-          <div className="flex flex-wrap gap-2">
+          {/* Cod poștal (S) and Localitate (L) share a row only with a 0.25rem
+              gap: with gap-2 they need 30.5rem and a panel has 30.375 inside,
+              so Localitate wrapped onto a line of its own (field-widths.test.ts). */}
+          <div className="flex flex-wrap gap-x-1 gap-y-2">
             {field("postalCode", t("postalCode"), errors?.postalCode?.message)}
             {field("locality", t("locality"), errors?.locality?.message)}
           </div>
