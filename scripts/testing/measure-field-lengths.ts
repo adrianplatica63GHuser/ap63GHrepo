@@ -82,6 +82,8 @@ const COLUMNS: MeasureTarget[] = [
   { screen: "JP", field: "cuiNumber", table: "judicial_person", column: "cui_number" },
   { screen: "JP", field: "tradeRegisterNumber", table: "judicial_person", column: "trade_register_number" },
   { screen: "JP", field: "notes", table: "person", column: "notes", where: "type = 'JUDICIAL'" },
+  // What a chosen contact person shows: a natural person's display name (#37.13)
+  { screen: "JP", field: "contactPersonName", table: "person", column: "display_name", where: "type = 'NATURAL'" },
   // Property
   { screen: "PROP", field: "nickname", table: "property", column: "nickname" },
   { screen: "PROP", field: "parcela", table: "property", column: "parcela" },

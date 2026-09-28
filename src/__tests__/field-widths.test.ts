@@ -25,6 +25,7 @@ import {
 import {
   ADDRESS,
   HOLDS,
+  JUDICIAL_PERSON,
   LABEL_GAP_REM,
   LABEL_REM,
   NATURAL_PERSON,
@@ -55,6 +56,7 @@ function region(src: string, start: string, end: string): string {
 
 const NP_FORM = code(read("src", "app", "natural-persons", "_components", "natural-person-form.tsx"));
 const ADDRESS_BLOCK = code(read("src", "components", "address", "address-block.tsx"));
+const JP_FORM = code(read("src", "app", "judicial-persons", "_components", "judicial-person-form.tsx"));
 
 /** The converted screens: every region that lays out fields at fixed widths. */
 const CONVERTED: [string, string][] = [
@@ -64,6 +66,12 @@ const CONVERTED: [string, string][] = [
   ["the Natural Person's ReadOnlyField", region(NP_FORM, "function ReadOnlyField(", "\nfunction ")],
   ["the address block, fixed", region(ADDRESS_BLOCK, "if (fixedWidths) {", "\n  return (")],
   ["the address block's Field, fixed", region(ADDRESS_BLOCK, "if (width) {", "\n  return (")],
+  // Slice #37.13
+  ["the Judicial Person's panels", region(JP_FORM, "<fieldset disabled", "</fieldset>")],
+  ["the Judicial Person's Field", region(JP_FORM, "function Field(", "\nfunction ")],
+  ["the Judicial Person's SelectField", region(JP_FORM, "function SelectField(", "\nfunction ")],
+  ["the Judicial Person's ReadOnlyField", region(JP_FORM, "function ReadOnlyField(", "\nfunction ")],
+  ["the Judicial Person's contact-person row", region(JP_FORM, "function ContactPersonRow(", "\nfunction ")],
 ];
 
 describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", () => {
@@ -77,6 +85,19 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     const widths = panels.match(/width=\{NP\.[A-Za-z0-9]+\}/g) ?? [];
     expect(uses.length).toBeGreaterThan(20);
     expect(widths).toHaveLength(uses.length);
+  });
+
+  it("every field on the Judicial Person form names its width in the file, and its page has no centred cap", () => {
+    const panels = region(JP_FORM, "<fieldset disabled", "</fieldset>");
+    const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
+    expect(uses.length).toBe(7);
+    expect(panels.match(/width=\{JP\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
+    expect(panels.match(/<section style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(2);
+    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths/g) ?? []).toHaveLength(2);
+    expect(JP_FORM).toMatch(/<form[\s\S]{0,300}?style=\{panelRowStyle\(\)\}/);
+    for (const page of [["[id]", "page.tsx"], ["new", "page.tsx"]]) {
+      expect(code(read("src", "app", "judicial-persons", ...page))).not.toMatch(/max-w-3xl|mx-auto/);
+    }
   });
 
   it("the panels, the address block and the form itself take their widths from the file", () => {
@@ -116,7 +137,7 @@ describe("the scale", () => {
   });
 
   it("no field is wider than a panel's inner width beside its label", () => {
-    const all: FieldWidth[] = [...Object.values(NATURAL_PERSON), ...Object.values(ADDRESS)];
+    const all: FieldWidth[] = [...Object.values(NATURAL_PERSON), ...Object.values(ADDRESS), ...Object.values(JUDICIAL_PERSON)];
     for (const w of all) expect(LABEL_REM + LABEL_GAP_REM + SCALE[w.step]).toBeLessThanOrEqual(PANEL_INNER_REM);
   });
 
@@ -131,6 +152,7 @@ describe("the scale", () => {
       [NP.personalPhone1, NP.personalPhone2],
       [ADDRESS.postalCode, ADDRESS.locality],
       [ADDRESS.county, ADDRESS.country],
+      [JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber],
     ] as const) {
       expect(pair(a, b)).toBeLessThanOrEqual(PANEL_INNER_REM);
     }
@@ -138,7 +160,7 @@ describe("the scale", () => {
 
   it("a FIXED field that names a sample holds it at about 7.8 px a digit and 9.3 px a capital", () => {
     const px = (s: string): number => [...s].reduce((n, c) => n + (/[0-9]/.test(c) ? 7.8 : /[A-ZĂÂÎȘȚH]/.test(c) ? 9.3 : /[a-zăâîșț]/.test(c) ? 6.5 : 4), 0);
-    for (const w of [...Object.values(NATURAL_PERSON), ...Object.values(ADDRESS)] as FieldWidth[]) {
+    for (const w of [...Object.values(NATURAL_PERSON), ...Object.values(ADDRESS), ...Object.values(JUDICIAL_PERSON)] as FieldWidth[]) {
       if (w.sample) expect(px(w.sample) + 18).toBeLessThanOrEqual(SCALE[w.step] * 16);
     }
   });

@@ -16,6 +16,17 @@ import {
   Controller,
 } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
+import { AddressBlock } from "@/components/address/address-block";
+import { GrowingText } from "@/components/forms/growing-text";
+import {
+  JUDICIAL_PERSON as JP,
+  LABEL_STYLE,
+  PANEL_GAP,
+  PANEL_STYLE,
+  boxStyle,
+  panelRowStyle,
+  type FieldWidth,
+} from "@/lib/ui/field-widths";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -125,7 +136,6 @@ export function JudicialPersonForm({
   const router = useRouter();
   const queryClient = useQueryClient();
   // Hoist here so they aren't called inside JSX (Rules of Hooks).
-  const addressT = useAddressTranslations();
   const pickerT  = useContactPickerTranslations();
 
   const form = useForm<FormValues>({
@@ -524,6 +534,9 @@ export function JudicialPersonForm({
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
+      // Slice #37.13: a whole number of panels wide, so the action bar below
+      // them is as wide as they are (#37.12's rule).
+      style={panelRowStyle()}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
@@ -548,47 +561,50 @@ export function JudicialPersonForm({
 
       <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
 
+      {/* Slice #37.13: four panels of one fixed width, left-aligned, flowing and
+          wrapping — the rule #37.12 set for the Natural Person
+          (`src/lib/ui/field-widths.ts`, `.claude/rules/styling-and-buttons.md`).
+          This replaced a stack of full-width sections inside the page's
+          centred 768-pixel cap. */}
+      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
+
       {/* Judicial Person identity section */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="identity" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1: Name | Nickname */}
-          <div className="grid grid-cols-2 gap-2">
-            <Field
-              label={t("fields.name")}
-              name="name"
-              register={register}
-              error={errors.name?.message}
-              highlight={displayHighlights?.fields.name}
-            />
-            <Field
-              label={t("fields.nickname")}
-              name="nickname"
-              register={register}
-              error={errors.nickname?.message}
-              highlight={displayHighlights?.fields.nickname}
-            />
-          </div>
-          {/* Row 2: ID (edit/view) | Type */}
-          <div className="grid grid-cols-2 gap-2">
-            {mode !== "create" && personCode && (
-              <ReadOnlyField label={t("fields.code")} value={personCode} />
-            )}
-            <SelectField
-              label={t("fields.judicialType")}
-              name="judicialPersonTypeId"
-              register={register}
-              control={control}
-              error={errors.judicialPersonTypeId?.message}
-              options={judicialPersonTypeSelectOptions}
-              highlight={displayHighlights?.fields.judicialPersonTypeId}
-              snapshot={snapshotLookups.judicialPersonTypeId}
-            />
-          </div>
-          {/* Row 3: CUI | Trade Register No. */}
-          <div className="grid grid-cols-2 gap-2">
+          <Field
+            label={t("fields.name")}
+            name="name"
+            register={register}
+            error={errors.name?.message}
+            highlight={displayHighlights?.fields.name}
+            width={JP.name}
+          />
+          <Field
+            label={t("fields.nickname")}
+            name="nickname"
+            register={register}
+            error={errors.nickname?.message}
+            highlight={displayHighlights?.fields.nickname}
+            width={JP.nickname}
+          />
+          {mode !== "create" && personCode && (
+            <ReadOnlyField label={t("fields.code")} value={personCode} width={JP.code} field="code" />
+          )}
+          <SelectField
+            label={t("fields.judicialType")}
+            name="judicialPersonTypeId"
+            register={register}
+            control={control}
+            error={errors.judicialPersonTypeId?.message}
+            options={judicialPersonTypeSelectOptions}
+            highlight={displayHighlights?.fields.judicialPersonTypeId}
+            snapshot={snapshotLookups.judicialPersonTypeId}
+            width={JP.judicialPersonTypeId}
+          />
+          <div className="flex flex-wrap gap-2">
             <Field
               label={t("fields.cuiNumber")}
               name="cuiNumber"
@@ -596,6 +612,7 @@ export function JudicialPersonForm({
               error={errors.cuiNumber?.message}
               hint={cuiIsLocked ? t("hints.cuiLocked") : undefined}
               highlight={displayHighlights?.fields.cuiNumber}
+              width={JP.cuiNumber}
             />
             <Field
               label={t("fields.tradeRegisterNumber")}
@@ -603,23 +620,22 @@ export function JudicialPersonForm({
               register={register}
               error={errors.tradeRegisterNumber?.message}
               highlight={displayHighlights?.fields.tradeRegisterNumber}
+              width={JP.tradeRegisterNumber}
             />
           </div>
-          {/* Row 4: Notes */}
-          <div className="grid grid-cols-2 gap-2">
-            <Field
-              label={t("fields.notes")}
-              name="notes"
-              register={register}
-              error={errors.notes?.message}
-              highlight={displayHighlights?.fields.notes}
-            />
-          </div>
+          <Field
+            label={t("fields.notes")}
+            name="notes"
+            register={register}
+            error={errors.notes?.message}
+            highlight={displayHighlights?.fields.notes}
+            width={JP.notes}
+          />
         </div>
       </section>
 
       {/* ── Contact Persons ──────────────────────────────────────────────── */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section style={PANEL_STYLE} data-panel="contact-persons" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.contactPersons")}
         </h2>
@@ -653,21 +669,19 @@ export function JudicialPersonForm({
         </div>
       </section>
 
-      {/* ── Registered Address ──────────────────────────────────────────────── */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.registeredAddress")}
-        </h2>
-        <AddressFields
-          prefix="addresses.HEADQUARTERS"
-          register={register}
-          errors={errors.addresses?.HEADQUARTERS}
-          t={addressT}
-          highlights={displayHighlights?.addresses.HEADQUARTERS}
-        />
-      </section>
+      {/* ── Registered Address — the shared block, at its fixed widths (#37.12) ── */}
+      <AddressBlock<FormValues>
+        title={t("sections.registeredAddress")}
+        prefix="addresses.HEADQUARTERS"
+        register={register}
+        errors={errors.addresses?.HEADQUARTERS}
+        highlights={displayHighlights?.addresses.HEADQUARTERS}
+        fixedWidths
+      />
 
-      {/* "Same as registered address" checkbox — between the two address cards */}
+      {/* The correspondence panel: the same-as-registered checkbox, and the
+          address itself only when it differs. One panel wide either way. */}
+      <div className="flex flex-col gap-2" style={PANEL_STYLE} data-panel="correspondence">
       <div className="flex items-center gap-2 px-1">
         <Controller
           control={control}
@@ -708,19 +722,18 @@ export function JudicialPersonForm({
 
       {/* ── Correspondence Address — only when not same as registered ──────── */}
       {!correspondenceSameAsHq && (
-        <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-            {t("sections.correspondenceAddress")}
-          </h2>
-          <AddressFields
-            prefix="addresses.CORRESPONDENCE"
-            register={register}
-            errors={errors.addresses?.CORRESPONDENCE}
-            t={addressT}
-            highlights={displayHighlights?.addresses.CORRESPONDENCE}
-          />
-        </section>
+        <AddressBlock<FormValues>
+          title={t("sections.correspondenceAddress")}
+          prefix="addresses.CORRESPONDENCE"
+          register={register}
+          errors={errors.addresses?.CORRESPONDENCE}
+          highlights={displayHighlights?.addresses.CORRESPONDENCE}
+          fixedWidths
+        />
       )}
+      </div>{/* end correspondence panel */}
+
+      </div>{/* end panel row */}
 
       </fieldset>{/* end disabled fieldset */}
 
@@ -927,22 +940,27 @@ function ContactPersonRow({
   // Static ring on a historical version; animated pulse on the latest (Bug 1).
   const ring = usePulseRing(highlight);
 
+  // Slice #37.13: the chosen person's name is a GROWING value — the box is
+  // `JP.contactPerson` wide and a long name wraps onto more lines, never cut.
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+    <div className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
         {label}
       </span>
       <div
         className={[
-          "flex flex-1 items-center gap-2 min-w-0 rounded-md",
-          highlight ? "px-1 py-0.5 " + ring : "",
+          "flex items-start gap-2 rounded-md py-1",
+          highlight ? "px-1 " + ring : "",
         ].join(" ")}
+        style={boxStyle(JP.contactPerson)}
+        data-width-field={`contactPerson${slot}`}
+        data-width-kind={JP.contactPerson.kind}
       >
         {hasLink ? (
           <>
             <Link
               href={`/natural-persons/${encodeURIComponent(personId as string)}?readonly=true`}
-              className="text-cta underline hover:text-cta-d truncate"
+              className="min-w-0 break-words text-cta underline hover:text-cta-d"
             >
               {(personName as string) || personId}
             </Link>
@@ -1163,82 +1181,8 @@ function ContactPersonPickerDialog({
 }
 
 // ---------------------------------------------------------------------------
-// AddressFields — inline address fields (replaces AddressBlock for this form)
-// ---------------------------------------------------------------------------
-//
-// We can't use the shared AddressBlock component here because this form needs
-// the two address blocks to live inside a single section card (Office Address)
-// rather than being separate cards. So we inline the fields directly.
-
-type AddressT = {
-  streetLine: string;
-  postalCode: string;
-  locality: string;
-  county: string;
-  country: string;
-  notes: string;
-};
-
-type AddressHighlights =
-  | Partial<Record<"streetLine" | "postalCode" | "locality" | "county" | "country" | "notes", HighlightColor>>
-  | undefined;
-
-function AddressFields({
-  prefix,
-  register,
-  errors,
-  t,
-  highlights,
-}: {
-  prefix: string;
-  register: UseFormRegister<FormValues>;
-  errors?: {
-    streetLine?: { message?: string };
-    postalCode?: { message?: string };
-    locality?: { message?: string };
-    county?: { message?: string };
-    country?: { message?: string };
-    notes?: { message?: string };
-  };
-  t: AddressT;
-  highlights?: AddressHighlights;
-}) {
-  const f = (sub: string) =>
-    `${prefix}.${sub}` as FieldPath<FormValues>;
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-2 gap-2">
-        <Field label={t.streetLine} name={f("streetLine")} register={register} error={errors?.streetLine?.message} highlight={highlights?.streetLine} />
-        <Field label={t.notes}      name={f("notes")}      register={register} error={errors?.notes?.message}      highlight={highlights?.notes} />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label={t.postalCode} name={f("postalCode")} register={register} error={errors?.postalCode?.message} highlight={highlights?.postalCode} />
-        <Field label={t.locality}   name={f("locality")}   register={register} error={errors?.locality?.message}   highlight={highlights?.locality} />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label={t.county}  name={f("county")}  register={register} error={errors?.county?.message}  highlight={highlights?.county} />
-        <Field label={t.country} name={f("country")} register={register} error={errors?.country?.message} highlight={highlights?.country} />
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Hooks to get translation objects in a stable shape for sub-components
 // ---------------------------------------------------------------------------
-
-function useAddressTranslations(): AddressT {
-  const ta = useTranslations("address");
-  return {
-    streetLine: ta("streetLine"),
-    postalCode: ta("postalCode"),
-    locality:   ta("locality"),
-    county:     ta("county"),
-    country:    ta("country"),
-    notes:      ta("notes"),
-  };
-}
 
 function useContactPickerTranslations(): PickerT {
   const t = useTranslations("judicialPerson.contactPersonPicker");
@@ -1271,7 +1215,17 @@ type FieldProps = {
   error?: string;
   hint?: string;
   highlight?: HighlightColor;
+  /**
+   * Slice #37.13: the box's width and kind, from `src/lib/ui/field-widths.ts`
+   * — a GROWING kind renders `<GrowingText>`, every other an `<input>` as wide
+   * as its step. The same helper shape as the Natural Person's (#37.12).
+   */
+  width: FieldWidth;
 };
+
+/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
+const BOX_CLASS =
+  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
 function Field({
   label,
@@ -1281,26 +1235,45 @@ function Field({
   error,
   hint,
   highlight,
+  width,
 }: FieldProps) {
   const ring = usePulseRing(highlight);
+  const className = [
+    BOX_CLASS,
+    error
+      ? "border-red-500 focus:border-red-600"
+      : "border-wire focus:border-focus dark:border-zinc-700",
+    ring,
+  ].join(" ");
+  const grows = width.kind === "grows" || width.kind === "lines";
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
         {label}
       </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <input
-          type={type}
-          {...register(name)}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
+        {grows ? (
+          <GrowingText
+            registration={register(name)}
+            width={String(boxStyle(width).width)}
+            lines={width.kind === "lines"}
+            minRows={width.rows ?? 1}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        ) : (
+          <input
+            type={type}
+            {...register(name)}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            style={boxStyle(width)}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        )}
         {hint && !error && (
           <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
         )}
@@ -1323,6 +1296,7 @@ function SelectField({
   options,
   highlight,
   snapshot,
+  width,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
@@ -1358,6 +1332,9 @@ function SelectField({
   // for something else, so the label gets its own.
   const tSnapshot = useTranslations("shared");
   const ring = usePulseRing(highlight);
+  // Slice #37.13: the chosen option in full on hover when the box is narrower (#37.12).
+  const current = useWatch({ control, name });
+  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
 
   // A version whose lookup row an admin deleted PRINTS what the snapshot holds
   // instead of offering a picker that has no option for it — which is the empty
@@ -1374,11 +1351,11 @@ function SelectField({
     // nothing to a screen reader.
     const labelId = `${name}-version-label`;
     return (
-      <div className="flex items-center gap-2 text-sm" role="group" aria-labelledby={labelId}>
-        <span id={labelId} className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+      <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
+        <span id={labelId} className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
           {label}
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5" style={boxStyle(width)} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
             state={snapshot}
             deletedLabel={tSnapshot("snapshotValue.deleted")}
@@ -1390,11 +1367,11 @@ function SelectField({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
         {label}
       </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         {/* Slice #32.13: this select had no remount key at all, so a stored
             Judicial Person Type — the options come from a useQuery that
             resolves after mount — showed as "—" however long you waited.
@@ -1407,12 +1384,15 @@ function SelectField({
           options={options}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+            BOX_CLASS,
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
+          style={boxStyle(width)}
+          title={chosenLabel}
+          widthField={name}
         />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">
@@ -1424,13 +1404,18 @@ function SelectField({
   );
 }
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
+function ReadOnlyField({ label, value, width, field }: { label: string; value: string; width: FieldWidth; field: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+    <div className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
         {label}
       </span>
-      <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+      <div
+        className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
+        style={boxStyle(width)}
+        data-width-field={field}
+        data-width-kind={width.kind}
+      >
         {value}
       </div>
     </div>

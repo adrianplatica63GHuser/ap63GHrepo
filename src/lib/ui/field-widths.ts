@@ -180,3 +180,24 @@ export const ADDRESS = {
   country: { step: "M", kind: "fixed", sample: "Hnnnnnn" }, //      „România"; m: 0
   notes: { step: "TILE", kind: "lines", rows: 1 }, //       m: 0
 } as const satisfies Record<string, FieldWidth>;
+
+// ---- the Judicial Person (#37.13) -----------------------------------------------------
+
+/**
+ * The Judicial Person's fields: Persoană juridică and Persoane de contact (its two
+ * addresses are `ADDRESS`, through the same block as the Natural Person's).
+ *
+ * `measure-fields` 20260928T190616Z-15660 found no judicial person in the local
+ * archive and one natural person to choose as a contact, so — as for the Natural
+ * Person — the widths are v02's, checked against formats. `m:` is `rows · longest`.
+ */
+export const JUDICIAL_PERSON = {
+  name: { step: "XXL", kind: "grows" }, //                  „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; m: 0
+  nickname: { step: "L", kind: "grows" }, //                m: 0
+  code: { step: "M", kind: "fixed", sample: "HHHHH00000" }, // „JPERS00012"
+  judicialPersonTypeId: { step: "L", kind: "select" }, //   m: 10 options, longest „Consiliu Local" (14) — one character past M
+  cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
+  tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
+  notes: { step: "TILE", kind: "lines", rows: 1 }, //       m: 0
+  contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
+} as const satisfies Record<string, FieldWidth>;
