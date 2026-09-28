@@ -24,14 +24,37 @@
  *     cleanup paragraph exists to tell a PERSON which is which.
  */
 
+import fs from "fs";
 import path from "path";
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 
 const TITLE = `${E2E_MARKER}DOC-01 Contract de test`;
 const FIXTURE = path.join(__dirname, "../fixtures/tc-e2e-pagina.png");
 const FIXTURE_NAME = "tc-e2e-pagina.png";
+
+/**
+ * The „Pagini" panel's width at 1920 × 1080, and a full-page picture, into
+ * `playwright-report/layout/` (Slice #37.15). The document is this spec's own
+ * synthetic one, so the picture holds nothing of anybody's.
+ */
+async function recordPagesPanel(page: Page, pages: Locator): Promise<void> {
+  const viewport = page.viewportSize();
+  try {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+    const box = await pages.boundingBox();
+    fs.mkdirSync("playwright-report/layout", { recursive: true });
+    fs.writeFileSync(
+      "playwright-report/layout/document-pages-panel.json",
+      JSON.stringify({ viewport: 1920, pagesPanelPx: box ? Math.round(box.width * 10) / 10 : null }, null, 2),
+    );
+    await page.screenshot({ path: "playwright-report/layout/document-page-1920.png", fullPage: true });
+  } finally {
+    if (viewport) await page.setViewportSize(viewport);
+  }
+}
 
 async function readTotal(page: Page): Promise<number> {
   const text = await page.getByText(/^Se afișează \d+ din \d+$/).textContent();
@@ -136,6 +159,11 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
         await expect(pages.getByRole("button", { name: action, exact: true })).toBeVisible();
       }
       await expect(pages.getByText("1 / 1")).toHaveCount(0);
+
+      // Slice #37.15 — the page panel's width in a maximised 1920-pixel window,
+      // written beside the layout screenshots for the handover. Recorded, not
+      // asserted: #37.15 reads it once before its layout change and once after.
+      await recordPagesPanel(page, pages);
 
       // Step 10 — „Pagini extinse": the full-window view headed „Pagini".
       // (That the page is readable is the hand run's to judge — see the header.)
