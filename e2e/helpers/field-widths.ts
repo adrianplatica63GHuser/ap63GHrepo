@@ -10,6 +10,11 @@
  *
  * #37.12 uses it on the Natural Person (TC-PERS-01's spec); #37.13–#37.15 call
  * the same three functions on their screens.
+ *
+ * Slice #37.15: a box that is not drawn — on a notebook page that is not open —
+ * is skipped by the "holds its value" check (it is 0 px wide, and says nothing),
+ * and so is a dropdown marked `data-width-capped`: the rule stopped it at XXL on
+ * purpose, and its chosen option shows in full on hover.
  */
 
 import { expect, type Page } from "@playwright/test";
@@ -79,6 +84,7 @@ export async function expectFixedFieldsHold(page: Page, samples: Readonly<Record
       const cs = getComputedStyle(el);
       return el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     };
+    const drawn = (el: HTMLElement): boolean => el.getClientRects().length > 0;
     const textWidth = (el: HTMLElement, text: string): number => {
       const cs = getComputedStyle(el);
       ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
@@ -87,17 +93,19 @@ export async function expectFixedFieldsHold(page: Page, samples: Readonly<Record
     document.querySelectorAll<HTMLElement>('[data-width-kind="fixed"]').forEach((el) => {
       const name = el.dataset.widthField ?? "?";
       const sample = s[name];
-      if (!sample || !(el instanceof HTMLInputElement) || el.type === "date") return;
+      if (!sample || !(el instanceof HTMLInputElement) || el.type === "date" || !drawn(el)) return;
       const need = textWidth(el, sample);
       if (need > inner(el)) out.push(`${name}: „${sample}" needs ${need.toFixed(1)} px, the box has ${inner(el).toFixed(1)}`);
     });
     document.querySelectorAll<HTMLSelectElement>('select[data-width-kind="select"]').forEach((el) => {
+      if (!drawn(el) || el.dataset.widthCapped === "true") return;
       const name = el.dataset.widthField ?? "?";
       const longest = [...el.options].map((o) => o.text).sort((a, b) => b.length - a.length)[0] ?? "";
       const need = textWidth(el, longest) + 24; // the arrow
       if (need > inner(el)) out.push(`${name}: its longest option „${longest}" needs ${need.toFixed(1)} px, the box has ${inner(el).toFixed(1)}`);
     });
     document.querySelectorAll<HTMLElement>("[data-panel]").forEach((el) => {
+      if (!drawn(el)) return;
       if (el.scrollWidth > el.clientWidth + 1) out.push(`panel ${el.dataset.panel}: content ${el.scrollWidth} px in ${el.clientWidth} px`);
     });
     return out;

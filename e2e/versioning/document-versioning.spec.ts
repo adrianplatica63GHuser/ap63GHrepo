@@ -12,7 +12,9 @@
  *     through the same DELETE route if the test stopped before that.
  *   - On the document's own screen the „Etichetă scurtă" input is found by its
  *     `name`, `title`: the saved screen's label is not tied to it, so it has no
- *     accessible name of its own (seen while driving it, 2026-09-26).
+ *     accessible name of its own (seen while driving it, 2026-09-26). Since
+ *     Slice #37.15 it is a box that grows downward — a `<textarea>` — so the
+ *     locator names no element.
  */
 
 import { test, expect } from "@playwright/test";
@@ -54,7 +56,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       await expect(page.getByRole("button", { name: "Fă curentă" })).toBeDisabled();
 
       // Step 3 — `Doi`, „Salvează": stays, „v 1", „2 versiuni".
-      const title = page.locator('input[name="title"]');
+      const title = page.locator('[name="title"]');
       const save = page.getByRole("button", { name: "Salvează", exact: true });
       await title.fill(titled("Doi"));
       await save.click();

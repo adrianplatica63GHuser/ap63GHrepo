@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { PANEL_STYLE } from "@/lib/ui/field-widths";
 
 /**
  * `linkId` is `person_document.id` (#36.02). This panel reads the same endpoint
@@ -114,7 +115,13 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
   };
 
   return (
-    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    // Slice #37.15: one fixed panel, like every panel on the Document — a
+    // name that does not fit wraps inside its cell.
+    <section
+      style={PANEL_STYLE}
+      data-panel="succession-parties"
+      className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+    >
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {t("sectionTitle")}
       </h2>

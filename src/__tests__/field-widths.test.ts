@@ -22,20 +22,34 @@ import {
   formatReport,
   maskSql,
 } from "@/lib/ui/field-measure";
+import { documentTemplateFieldSchema } from "@/lib/admin/value-lists/validation";
+import { FORMS_FILE_REL, parseFormsFile } from "@/lib/documents/document-type-forms-file";
+import { fieldFromEditorRow, rowFromStoredField } from "@/lib/documents/template-editor-rows";
+import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
   ADDRESS,
+  DOCUMENT,
   HOLDS,
   CORNER_COLUMNS,
   JUDICIAL_PERSON,
   LABEL_GAP_REM,
   LABEL_REM,
   NATURAL_PERSON,
+  PAGES_PANEL_REM,
   PANEL_INNER_REM,
   PANEL_REM,
   PROPERTY,
   SCALE,
+  SELECT_CHROME_PX,
+  TEMPLATE_FIELD,
   boxStyle,
+  documentRowStyle,
+  fieldsBesidePagesStyle,
+  isStep,
   panelRowStyle,
+  selectStepFor,
+  templateFieldWidth,
+  textPx,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 
@@ -61,6 +75,7 @@ const ADDRESS_BLOCK = code(read("src", "components", "address", "address-block.t
 const JP_FORM = code(read("src", "app", "judicial-persons", "_components", "judicial-person-form.tsx"));
 const PROP_FORM = code(read("src", "app", "properties", "_components", "property-form.tsx"));
 const CORNERS = code(read("src", "app", "properties", "_components", "corners-manager.tsx"));
+const DOC_FORM = code(read("src", "app", "documents", "_components", "document-form.tsx"));
 
 /** The converted screens: every region that lays out fields at fixed widths. */
 const CONVERTED: [string, string][] = [
@@ -81,6 +96,12 @@ const CONVERTED: [string, string][] = [
   ["the Property's Field", region(PROP_FORM, "function Field(", "\nfunction ")],
   ["the Property's SelectField", region(PROP_FORM, "function SelectField(", "\n/**")],
   ["the Property's ReadOnlyField", region(PROP_FORM, "function ReadOnlyField(", "\n/**")],
+  // Slice #37.15
+  ["the Document's panels", region(DOC_FORM, "const renderCustomField = (", "const formElement = (")],
+  ["the Document's form and its row", region(DOC_FORM, "const formElement = (", "{bigPage && mode !== \"create\"")],
+  ["the Document's Section", region(DOC_FORM, "function Section(", "\ntype FieldProps")],
+  ["the Document's Field", region(DOC_FORM, "function Field(", "\nfunction ")],
+  ["the Document's SelectField", region(DOC_FORM, "function SelectField(", "\ntype TFunc")],
 ];
 
 describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", () => {
@@ -123,6 +144,29 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // The corners table fills its fixed panel; its COLUMNS are what the file fixes.
     expect(region(CORNERS, "<table", "</colgroup>")).toMatch(/table-fixed[\s\S]*CORNER_COLUMNS\.seq[\s\S]*CORNER_COLUMNS\.originalIndex[\s\S]*CORNER_COLUMNS\.north[\s\S]*CORNER_COLUMNS\.east/);
     expect(Object.values(CORNER_COLUMNS).every((w) => /^\d+(\.\d+)?rem$/.test(w))).toBe(true);
+  });
+
+  it("every field on the Document names its width, a type's own fields take the rule's, the page image is a fixed panel, and no page caps it", () => {
+    const general = region(DOC_FORM, "const feesSection = (", "const formElement = (");
+    const uses = general.match(/<(Field|SelectField)\b/g) ?? [];
+    expect(uses.length).toBe(7);
+    expect(general.match(/width=\{DOC\.[A-Za-z]+\}/g) ?? []).toHaveLength(uses.length);
+    // Every panel is a named Section, and a Section is a fixed panel.
+    const panels = region(DOC_FORM, "const renderCustomField = (", "const formElement = (");
+    expect((panels.match(/<Section\b/g) ?? []).length).toBe((panels.match(/<Section\b[^>]*?\bpanel=/g) ?? []).length);
+    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/style=\{PANEL_STYLE\}[\s\S]*data-panel=\{panel\}/);
+    // A type's own fields: the rule, never a width of their own in the form.
+    const custom = region(DOC_FORM, "const renderCustomField = (", "const feesSection = (");
+    expect(custom.match(/templateFieldWidth\(/g) ?? []).toHaveLength(2);
+    expect(custom).not.toMatch(/width=\{(DOC|SCALE)\./);
+    // The row: whole panels and the page panel, the action bar under it at that width.
+    expect(DOC_FORM).toMatch(/style=\{showPagesPanel \? documentRowStyle\(\) : panelRowStyle\(\)\}/);
+    expect(DOC_FORM).toMatch(/style=\{fieldsBesidePagesStyle\(\)\}/);
+    expect(DOC_FORM).toMatch(/style=\{PAGES_PANEL_STYLE\} data-panel="pages"/);
+    expect(DOC_FORM).not.toMatch(/lg:grid-cols-5|lg:col-span-[23]/);
+    expect(code(read("src", "app", "documents", "_components", "document-detail-tabs.tsx"))).not.toMatch(/max-w-\[93rem\]|mx-auto/);
+    expect(code(read("src", "app", "documents", "new", "page.tsx"))).not.toMatch(/max-w-4xl|mx-auto/);
+    expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_STYLE\}/);
   });
 
   it("the panels, the address block and the form itself take their widths from the file", () => {
@@ -173,6 +217,8 @@ describe("the scale", () => {
       ...Object.values(ADDRESS),
       ...Object.values(JUDICIAL_PERSON),
       ...Object.values(PROPERTY),
+      ...Object.values(DOCUMENT),
+      ...Object.values(TEMPLATE_FIELD),
     ];
     for (const w of all) expect(LABEL_REM + LABEL_GAP_REM + SCALE[w.step]).toBeLessThanOrEqual(PANEL_INNER_REM);
   });
@@ -191,6 +237,8 @@ describe("the scale", () => {
       [JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber],
       [PROPERTY.surfaceAreaMp, PROPERTY.calculatedAreaMp],
       [PROPERTY.carteFunciara, PROPERTY.cadastralNumber],
+      [DOCUMENT.nrDocument, DOCUMENT.dateDocument],
+      [TEMPLATE_FIELD.number, TEMPLATE_FIELD.date],
     ] as const) {
       expect(pair(a, b)).toBeLessThanOrEqual(PANEL_INNER_REM);
     }
@@ -203,6 +251,8 @@ describe("the scale", () => {
       ...Object.values(ADDRESS),
       ...Object.values(JUDICIAL_PERSON),
       ...Object.values(PROPERTY),
+      ...Object.values(DOCUMENT),
+      ...Object.values(TEMPLATE_FIELD),
     ] as FieldWidth[]) {
       if (w.sample) expect(px(w.sample) + 18).toBeLessThanOrEqual(SCALE[w.step] * 16);
     }
@@ -268,5 +318,112 @@ describe("the measurement — read-only, and no real value leaves the database",
     expect(lines[0]).toBe(`| field | rows | longest | p95 | > ${OVER_AT.join(" | > ")} | longest, masked |`);
     expect(lines).toContain("| NP.lastName | 40 | 21 | 12 | 40 | 30 | 2 | 0 | 0 | 0 | HHHHH-HHHHHH |");
     expect(lines).toContain("| NP.citizenshipId | 3 | 8 | Română |");
+  });
+});
+
+describe("the Document's page image and row (#37.15)", () => {
+  it("the page panel is not narrower than the two-fifths it was in a 1920-pixel window", () => {
+    // (1920 − 224 sidebar − 15 scrollbar − 48 padding) capped at 93rem = 1488 px,
+    // less the tab frame's 36, split 3:2 with a 16 px gap: 2/5 × (1452 − 64) + 16 ≈ 571 px.
+    expect(PAGES_PANEL_REM * 16).toBeGreaterThanOrEqual(576);
+  });
+
+  it("the row is whole panels and the page panel, never less than the page panel; the fields take the rest", () => {
+    expect(String(documentRowStyle().width)).toBe("max(40rem, calc(round(down, 100% - 40rem, 33rem) + 40rem))");
+    expect(String(fieldsBesidePagesStyle().width)).toBe("max(32rem, calc(100% - 41rem))");
+    // What the snap gives, by the same arithmetic in rem.
+    const row = (w: number): number => Math.max(PAGES_PANEL_REM, Math.floor((w - PAGES_PANEL_REM) / 33) * 33 + PAGES_PANEL_REM);
+    const fields = (r: number): number => Math.max(PANEL_REM, r - 41);
+    expect(row(99.8)).toBe(73); //   1920 px: one panel and the page image
+    expect(fields(row(99.8))).toBe(32);
+    expect(row(139.8)).toBe(139); // 2560 px: three panels and the page image
+    expect(fields(row(139.8))).toBe(98);
+    expect(row(65.2)).toBe(40); //   1366 px: the page image wraps under one panel
+  });
+});
+
+describe("a document type's own fields are sized by rule (#37.15)", () => {
+  it("by type: text grows at XL, a textarea at the panel's width with its breaks, a date or number is a fixed M", () => {
+    expect(templateFieldWidth({ type: "text" })).toEqual({ step: "XL", kind: "grows" });
+    expect(templateFieldWidth({ type: "textarea" })).toEqual({ step: "TILE", kind: "lines", rows: 1 });
+    expect(templateFieldWidth({ type: "date" })).toEqual({ step: "M", kind: "fixed" });
+    expect(templateFieldWidth({ type: "number" })).toMatchObject({ step: "M", kind: "fixed" });
+  });
+
+  it("under Certificate și referințe everything grows at the panel's width — except a dropdown", () => {
+    for (const type of ["text", "date", "number", "textarea"] as const) {
+      expect(templateFieldWidth({ type }, [], true)).toEqual({ step: "TILE", kind: "lines", rows: 1 });
+    }
+    expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"], true).kind).toBe("select");
+  });
+
+  it("a dropdown is as wide as its longest option, from S up, and stops at XXL", () => {
+    expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"])).toEqual({ step: "S", kind: "select" });
+    expect(selectStepFor(["— fără valoare —", "Da", "Nu"]).step).toBe("L");
+    const long = "O opțiune foarte lungă, mult peste ce încape într-o casetă";
+    expect(templateFieldWidth({ type: "select" }, [long])).toEqual({ step: "XXL", kind: "select", capped: true });
+    // The chosen step shows every label whole, with the arrow and the padding.
+    for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"]]) {
+      const { step, capped } = selectStepFor(labels);
+      expect(capped).toBe(false);
+      expect(textPx(labels[0]) + SELECT_CHROME_PX).toBeLessThanOrEqual(SCALE[step] * 16);
+    }
+  });
+
+  it("a field's own `width` names the step; its kind still follows from its type", () => {
+    expect(templateFieldWidth({ type: "text", width: "L" })).toEqual({ step: "L", kind: "grows" });
+    expect(templateFieldWidth({ type: "select", width: "XS" }, ["Opțiune lungă"])).toEqual({ step: "XS", kind: "select" });
+    expect(templateFieldWidth({ type: "date", width: "L" }).kind).toBe("fixed");
+  });
+
+  it("measures text in Arial: diacritics as their letter, an em dash wide, a capital wider than a small letter", () => {
+    expect(textPx("ăîșț")).toBe(textPx("aist"));
+    expect(textPx("—")).toBeGreaterThan(textPx("-") * 2);
+    expect(textPx("H")).toBeGreaterThan(textPx("n"));
+    expect(textPx("0000")).toBeCloseTo(4 * 7.784, 2);
+  });
+
+  it("every dropdown on every seeded form fits without the cap, its blank choice included", () => {
+    const file = parseFormsFile(read(FORMS_FILE_REL));
+    let selects = 0;
+    for (const form of file.forms) {
+      for (const f of parseTemplateFields(form.fields)) {
+        if (f.type !== "select" || !f.options?.length) continue;
+        selects++;
+        const w = templateFieldWidth(f, ["— fără valoare —", ...f.options.map((o) => o.labelRo)]);
+        expect([form.key, f.key, w.capped ?? false]).toEqual([form.key, f.key, false]);
+      }
+    }
+    expect(selects).toBeGreaterThan(40);
+  });
+
+  it("no seeded form sets `width` — the rule sizes all of them", () => {
+    const file = parseFormsFile(read(FORMS_FILE_REL));
+    for (const form of file.forms) for (const f of form.fields as Record<string, unknown>[]) expect("width" in f).toBe(false);
+  });
+});
+
+describe("a template field's optional `width` (#37.15)", () => {
+  const stored = { key: "k", labelRo: "Etichetă", labelEn: "Label", type: "text", order: 0 };
+
+  it("is read when it names a step, dropped when it does not, and absent when absent", () => {
+    expect(parseTemplateFields([{ ...stored, width: "L" }])[0].width).toBe("L");
+    expect(parseTemplateFields([{ ...stored, width: "huge" }])[0]).not.toHaveProperty("width");
+    expect(parseTemplateFields([{ ...stored, width: 13 }])[0]).not.toHaveProperty("width");
+    expect(parseTemplateFields([stored])[0]).not.toHaveProperty("width");
+    expect(isStep("TILE")).toBe(true);
+    expect(isStep("toString")).toBe(false);
+  });
+
+  it("survives both write doors, which would otherwise strip it", () => {
+    expect(documentTemplateFieldSchema.parse({ ...stored, width: "XL" }).width).toBe("XL");
+    expect(documentTemplateFieldSchema.safeParse({ ...stored, width: "huge" }).success).toBe(false);
+    expect(documentTemplateFieldSchema.parse(stored).width).toBeUndefined();
+  });
+
+  it("is carried through a Form-editor save untouched, and not invented for a field without one", () => {
+    const [withWidth, without] = parseTemplateFields([{ ...stored, width: "M" }, { ...stored, key: "j", order: 1 }]);
+    expect(fieldFromEditorRow(rowFromStoredField(withWidth, 0), "k", 0).width).toBe("M");
+    expect(fieldFromEditorRow(rowFromStoredField(without, 1), "j", 1)).not.toHaveProperty("width");
   });
 });

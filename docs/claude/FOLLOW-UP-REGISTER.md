@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-28, Slice #37.12 — 258 entries. Rows are status, columns are impact.
+As of 2026-09-28, Slice #37.15 — 259 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 15 | 51 | 50 | 14 | 130 |
+| open | 15 | 51 | 51 | 14 | 131 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 34 | 52 | 25 | 3 | 114 |
 | ignored | 4 | 2 | 2 | 2 | 10 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 53 | 108 | 78 | 19 | 258 |
+| **total** | 53 | 108 | 79 | 19 | 259 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -342,3 +342,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-256 | 2026-09-28 #37.11 full 20260928T181746Z-13873 | tooling | Tooling & CI | The runner re-runs failed e2e specs with `playwright test --last-failed`, and when the one failure is the setup project (`e2e/auth.setup.ts`) that finds „No tests found", so a single slow cold start keeps the whole run red. | scripts/test-runner/runner.ts stepE2e (PLAYWRIGHT_RERUN_ARGS); result 20260928T181746Z-13873: „re-run: No tests found (exit 1)" | dev | XS | open | Fix: when the failed set is only the setup, re-run the whole suite once instead of --last-failed. | 2026-09-28 |
 | FU-257 | 2026-09-28 #37.12 | debt | UI shell | A dropdown whose chosen option is longer than its box shows it in full on hover (`title`) but does not wrap it in view mode, which Field.Widths.v02 asks for. No Natural Person dropdown is cut today (every option fits its step, measured); „Tip document" on the Document (#37.15, 41 characters against the XL cap) will be. | src/app/natural-persons/_components/natural-person-form.tsx SelectField (33a1345); measure-fields 20260928T185247Z-3109 DOC.documentTypeId longest 41 | user | S | open | Fix in #37.15: in view mode render the chosen label as wrapping text instead of the disabled select. | 2026-09-28 |
 | FU-258 | 2026-09-28 #37.12 | recommendation | People | The local archive holds one natural person, no judicial person and no address, so the person and address widths could only be checked against value formats, not real values. | measure-fields 20260928T185247Z-3109: NP.* and ADDR.* 0–1 rows; src/lib/ui/field-widths.ts NATURAL_PERSON, ADDRESS (33a1345) | dev | XS | open | Re-run `claude.sh request measure-fields` once people are imported; a column whose p95 passes its step moves up one step in field-widths.ts. | 2026-09-28 |
+| FU-259 | 2026-09-28 #37.15 | next-slice idea | Reference data | A document-type field can now carry its own `width` (a step of the width scale), but the Form editor under Reference Data → Document Types has no control for it, so only the admin API can set one. | src/lib/documents/template-fields.ts DocumentTemplateField.width; src/lib/documents/template-editor-rows.ts storedWidth (carried, not editable) | dev | S | open | A „Lățime" dropdown per row in the Form editor, blank meaning „by rule". | 2026-09-28 |

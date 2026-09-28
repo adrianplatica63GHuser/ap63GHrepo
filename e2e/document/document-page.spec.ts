@@ -22,13 +22,71 @@
  *     the form's „Șterge" → „Da" calls. Not through the button itself: this
  *     screen has two „Șterge" — the page row's and the form's — and the case's
  *     cleanup paragraph exists to tell a PERSON which is which.
+ *   - After step 9 the window is set to 1366, 1920 and 2560 px for a moment
+ *     and the „Pagini" panel's width is written, with a picture at each, to
+ *     `playwright-report/layout/` (Slice #37.15: the page image must stay at
+ *     least as wide as it was before the fixed-width layout). Not a step of
+ *     the case; it asserts nothing but the fixed widths below.
+ *   - Slice #37.15 checks the Document's fixed widths here, as TC-PERS-01's
+ *     spec does the person's: on this spec's own Contract de Vânzare, and — a
+ *     second test — on one document of each seeded type that has fields of its
+ *     own (and the Certificat de Moștenitor, for its parties panel), each
+ *     created through POST /api/documents with the TC-E2E- marker and removed
+ *     in `finally`. Every box and panel must be the same width at 1400 and at
+ *     2400 px, on every notebook page, and every fixed box must hold its value.
  */
 
 import fs from "fs";
 import path from "path";
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
+import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
+import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD } from "../../src/lib/ui/field-widths";
+
+/** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
+const SAMPLES: Record<string, string> = { nrDocument: DOCUMENT.nrDocument.sample };
+
+/**
+ * The seeded types with fields of their own (the six `measure-fields` read),
+ * and the Certificat de Moștenitor for its parties panel. (Slice #37.15)
+ */
+const TYPES_WITH_FIELDS = [
+  "ACT_ADITIONAL",
+  "ANTECONTRACT",
+  "CONTRACT_VANZARE",
+  "FISA_CORPULUI_PROPRIETATE",
+  "PLAN_AMPLASAMENT_DELIMITARE",
+  "PLAN_PARCELAR",
+  "CERTIFICAT_MOSTENITOR",
+] as const;
+
+/**
+ * The fixed-width checks on the open document: same widths at 1400 and 2400
+ * px, then — on each notebook page in turn, when there is a notebook — every
+ * number box holds its sample, every dropdown its longest option, and no panel
+ * is wider inside than out.
+ */
+async function expectDocumentWidths(page: Page): Promise<void> {
+  await expectStableWidths(page);
+  const numbers = await page.locator('input[type="number"][data-width-field]').evaluateAll((els) =>
+    els.map((e) => (e as HTMLElement).dataset.widthField ?? ""),
+  );
+  const samples: Record<string, string> = { ...SAMPLES };
+  for (const n of numbers) samples[n] = TEMPLATE_FIELD.number.sample;
+  const tabs = page.getByRole("tablist", { name: "Secțiunile formularului" }).getByRole("tab");
+  const count = await tabs.count();
+  if (count === 0) {
+    await expectFixedFieldsHold(page, samples);
+    return;
+  }
+  for (let i = 0; i < count; i++) {
+    await tabs.nth(i).click();
+    await expect(tabs.nth(i)).toHaveAttribute("aria-selected", "true");
+    await expectFixedFieldsHold(page, samples);
+  }
+  await tabs.first().click();
+}
 
 const TITLE = `${E2E_MARKER}DOC-01 Contract de test`;
 const FIXTURE = path.join(__dirname, "../fixtures/tc-e2e-pagina.png");
@@ -41,16 +99,20 @@ const FIXTURE_NAME = "tc-e2e-pagina.png";
  */
 async function recordPagesPanel(page: Page, pages: Locator): Promise<void> {
   const viewport = page.viewportSize();
+  const widths: Record<string, number | null> = {};
   try {
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
-    const box = await pages.boundingBox();
     fs.mkdirSync("playwright-report/layout", { recursive: true });
+    for (const width of [1366, 1920, 2560]) {
+      await page.setViewportSize({ width, height: 1080 });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+      const box = await pages.boundingBox();
+      widths[String(width)] = box ? Math.round(box.width * 10) / 10 : null;
+      await page.screenshot({ path: `playwright-report/layout/document-${width}.png`, fullPage: true });
+    }
     fs.writeFileSync(
       "playwright-report/layout/document-pages-panel.json",
-      JSON.stringify({ viewport: 1920, pagesPanelPx: box ? Math.round(box.width * 10) / 10 : null }, null, 2),
+      JSON.stringify({ pagesPanelPx: widths, fixedRem: PAGES_PANEL_REM }, null, 2),
     );
-    await page.screenshot({ path: "playwright-report/layout/document-page-1920.png", fullPage: true });
   } finally {
     if (viewport) await page.setViewportSize(viewport);
   }
@@ -164,6 +226,10 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // written beside the layout screenshots for the handover. Recorded, not
       // asserted: #37.15 reads it once before its layout change and once after.
       await recordPagesPanel(page, pages);
+      await expectDocumentWidths(page);
+      // The page image is its fixed width wherever the window puts it.
+      const pagesBox = await pages.boundingBox();
+      expect(Math.round(pagesBox?.width ?? 0)).toBe(PAGES_PANEL_REM * 16);
 
       // Step 10 — „Pagini extinse": the full-window view headed „Pagini".
       // (That the page is readable is the hand run's to judge — see the header.)
@@ -178,6 +244,28 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(pages.getByRole("button", { name: "Pagini extinse" })).toBeVisible();
     } finally {
       if (documentId) await removeRecord(page.request, "document", documentId);
+    }
+  });
+
+  test("lățimile fixe, pe câte un act din fiecare tip cu câmpuri proprii", async ({ page }) => {
+    // Slice #37.15 — not a step of the case; see the header.
+    test.setTimeout(TYPES_WITH_FIELDS.length * 90_000);
+    const mark = `${E2E_MARKER}DOC-01-W`;
+    await removeLeftovers(page.request, mark);
+    const made: string[] = [];
+    try {
+      for (const key of TYPES_WITH_FIELDS) {
+        const title = `${mark} ${key}`;
+        const id = await createDocumentOfType(page.request, key, title);
+        made.push(id);
+        await page.goto(`/documents/${id}`);
+        await expect(page.getByRole("heading", { name: title })).toBeVisible({ timeout: 30_000 });
+        await expect(page.locator('[data-panel="general"]')).toBeVisible({ timeout: 30_000 });
+        await expect(page.locator('[data-panel="pages"]')).toBeVisible();
+        await expectDocumentWidths(page);
+      }
+    } finally {
+      for (const id of made) await removeRecord(page.request, "document", id);
     }
   });
 });

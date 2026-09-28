@@ -81,11 +81,11 @@ export function DocumentDetailTabs({
   ];
 
   return (
-    // Slice #21.06.misc: widened from max-w-4xl (56rem) so the Details tab's
-    // left-column panels can be ~50% wider and the Pages panel ~100% wider
-    // than before (left:right went from 2:1 to 3:2 in document-form.tsx) —
-    // 56rem * 5/3 ≈ 93rem preserves that same math on the outer container.
-    <div className="max-w-[93rem] mx-auto w-full flex flex-col gap-4">
+    // Slice #37.15: no centred cap. #21.06.misc had widened it from 56rem to
+    // 93rem for a 3:2 split; the form now lays out whole fixed panels and a
+    // fixed page panel (document-form.tsx), left-aligned, and the window
+    // decides only how many fit.
+    <div className="w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
       {/* ⚠️ **`navSlot` is IN FLOW, and two adversarial rounds on #26.12 are why.**

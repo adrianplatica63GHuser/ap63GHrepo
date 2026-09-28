@@ -57,6 +57,20 @@ import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { GrowingText } from "@/components/forms/growing-text";
+import {
+  DOCUMENT as DOC,
+  LABEL_STYLE,
+  PAGES_PANEL_STYLE,
+  PANEL_GAP,
+  PANEL_STYLE,
+  boxStyle,
+  documentRowStyle,
+  fieldsBesidePagesStyle,
+  panelRowStyle,
+  templateFieldWidth,
+  type FieldWidth,
+} from "@/lib/ui/field-widths";
 import {
   DiscoverReviewDialog,
   type DiscoverReviewPair,
@@ -1267,6 +1281,7 @@ export function DocumentForm({
     // words does not grow, and a full-width one reads as a broken text box.
     if (f.type === "select" && f.options && f.options.length > 0) {
       const options = selectOptionsForValue(f.options, watchedValues.customFields?.[f.key]);
+      const emptyLabel = t("fields.customSelectEmpty");
       return (
         <SelectField
           key={f.key}
@@ -1274,11 +1289,15 @@ export function DocumentForm({
           name={name}
           register={register}
           options={options}
+          // Slice #37.15: as wide as its longest option — the blank one too —
+          // from S to XXL, by rule (`templateFieldWidth`).
+          width={templateFieldWidth(f, [emptyLabel, ...options.map((o) => o.label)])}
+          watchValue={watchedValues.customFields?.[f.key]}
           // The blank choice is SELECTABLE here, unlike the type picker's
           // hidden placeholder: a clause ticked by mistake has to be
           // untickable, and "" is what `customFieldsEqual` already treats as
           // unset.
-          emptyOptionLabel={t("fields.customSelectEmpty")}
+          emptyOptionLabel={emptyLabel}
           disabled={typeMoveUnresolved}
         />
       );
@@ -1286,24 +1305,25 @@ export function DocumentForm({
 
     // Slice #27.04: the type-specific inputs are the second half of what a
     // `moveUnresolved` ending cannot save — see `typeMoveUnresolved`.
-    return f.type === "textarea" || forceFullWidthTextarea ? (
-      <TextAreaField
-        key={f.key}
-        label={fieldLabel}
-        name={name}
-        register={register}
-        rows={1}
-        watchValue={watchedValues.customFields?.[f.key]}
-        fullWidth
-        disabled={typeMoveUnresolved}
-      />
-    ) : (
+    //
+    // Slice #37.15: the width is the RULE's (`templateFieldWidth`) — text grows
+    // at XL, a textarea and every field under Certificate și referințe at the
+    // panel's width with its line breaks, a date or number is a fixed M — or
+    // the step the field's own `width` names. A `select` with no options is a
+    // text box here, so it is sized as one.
+    const width = templateFieldWidth(
+      { type: f.type === "select" ? "text" : f.type, width: f.width },
+      [],
+      forceFullWidthTextarea,
+    );
+    return (
       <Field
         key={f.key}
         label={fieldLabel}
         name={name}
         type={f.type === "date" ? "date" : f.type === "number" ? "number" : "text"}
         register={register}
+        width={width}
         disabled={typeMoveUnresolved}
       />
     );
@@ -1321,7 +1341,7 @@ export function DocumentForm({
   // the admin's exact wording); falls back to the generic i18n title for
   // types with no such template group.
   const feesSection = (
-    <Section key="fees" title={feesGroup?.label || t("sections.fees")} columns={1}>
+    <Section key="fees" panel="fees" title={feesGroup?.label || t("sections.fees")}>
       <SelectField
         label={t(cfg.labels.institution)}
         name="institutionId"
@@ -1329,6 +1349,8 @@ export function DocumentForm({
         error={errors.institutionId?.message}
         options={institutionOptions}
         highlight={displayHighlights?.institutionId}
+        width={DOC.institutionId}
+        watchValue={watchedValues.institutionId}
       />
       <Field
         label={t(cfg.labels.nrDocument)}
@@ -1336,6 +1358,7 @@ export function DocumentForm({
         register={register}
         error={errors.nrDocument?.message}
         highlight={displayHighlights?.nrDocument}
+        width={DOC.nrDocument}
       />
       <Field
         label={t(cfg.labels.dateDocument)}
@@ -1344,16 +1367,16 @@ export function DocumentForm({
         register={register}
         error={errors.dateDocument?.message}
         highlight={displayHighlights?.dateDocument}
+        width={DOC.dateDocument}
       />
       {feesGroup?.fields.map((f) => renderCustomField(f))}
     </Section>
   );
 
-  // When the type also defines a "Financiar" group, the two panels pair up
-  // side by side at half width each — the horizontal gap (gap-4) is the
-  // same token as the vertical gap between stacked panels, so together they
-  // align exactly with a regular full-width panel. Otherwise Taxe și
-  // onorarii simply renders alone at full width.
+  // When the type also defines a "Financiar" group, the two panels sit next
+  // to each other, Financiar first. Slice #37.15: they are two ordinary fixed
+  // panels in the flow now, not two halves of a full-width row — side by side
+  // where two panels fit, one under the other where one does.
   //
   // ⚠️ **Slice #36.01 made the test `feesPaired`, not `financialGroup`, and
   // that is a correctness fix rather than a tidy-up.** With a notebook, a
@@ -1365,12 +1388,12 @@ export function DocumentForm({
   // returns true whenever `tabs` is empty), so nothing about the pre-#36.01
   // rendering changes.
   const feesOrPairedSection = feesPaired && financialGroup ? (
-    <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
-      <Section title={financialGroup.label} columns={1}>
+    <>
+      <Section panel="financial" title={financialGroup.label}>
         {financialGroup.fields.map((f) => renderCustomField(f))}
       </Section>
       {feesSection}
-    </div>
+    </>
   ) : (
     feesSection
   );
@@ -1388,9 +1411,9 @@ export function DocumentForm({
   // contradict itself.
   const generalSection = (
       <Section
+        panel="general"
         title={t("sections.general")}
         code={mode !== "create" ? documentCode : undefined}
-        columns={1}
       >
         <SelectField
           label={t("fields.type")}
@@ -1438,6 +1461,8 @@ export function DocumentForm({
             ),
           }))}
           highlight={displayHighlights?.documentTypeId}
+          width={DOC.documentTypeId}
+          watchValue={watchedValues.documentTypeId}
           // Slice #27.02: shown for a type with no custom form, wherever the
           // feature is reachable — see `showNoFormHint` for the line that draws.
           // In create mode the Descoperire AI button is not on the page yet, and
@@ -1452,6 +1477,7 @@ export function DocumentForm({
           register={register}
           error={errors.subject?.message}
           highlight={displayHighlights?.subject}
+          width={DOC.subject}
         />
         <Field
           label={t("fields.title")}
@@ -1459,16 +1485,16 @@ export function DocumentForm({
           register={register}
           error={errors.title?.message}
           highlight={displayHighlights?.title}
+          width={DOC.title}
         />
-        <TextAreaField
+        <Field
           label={t("fields.notes")}
           name="notes"
           register={register}
           error={errors.notes?.message}
           maxLength={4000}
-          rows={1}
           highlight={displayHighlights?.notes}
-          watchValue={watchedValues.notes}
+          width={DOC.notes}
         />
       </Section>
   );
@@ -1492,7 +1518,7 @@ export function DocumentForm({
           from the fees panel's cannot pair with it — half a pair drawn on each
           page would be the same panel twice. It renders alone there instead. */}
       {!feesPaired && financialGroup && financialSoloTab === tab && (
-        <Section title={financialGroup.label} columns={1}>
+        <Section panel="financial" title={financialGroup.label}>
           {financialGroup.fields.map((f) => renderCustomField(f))}
         </Section>
       )}
@@ -1501,17 +1527,18 @@ export function DocumentForm({
           auto-grow (Vecinătăți's exact treatment), whatever `type` is
           configured on it in Reference Data. ──────────────────────────── */}
       {certificatesGroup && certificatesTab === tab && (
-        <Section title={certificatesGroup.label} columns={1}>
+        <Section panel="certificates" title={certificatesGroup.label}>
           {certificatesGroup.fields.map((f) => renderCustomField(f, true))}
         </Section>
       )}
 
-      {/* ── Any other template groups — unchanged generic 2-column
-          rendering, same as before this slice. ─────────────────────────── */}
+      {/* ── Any other template groups — one fixed panel each (Slice #37.15:
+          the fields flow two to a row where their widths fit, one where they
+          do not, instead of a 2-column grid). ───────────────────────────── */}
       {otherGroups
         .filter(({ fields }) => tabIndexOfPanel(fields, tabs) === tab)
         .map(({ label, fields }) => (
-          <Section key={label || "_ungrouped"} title={label || t("sections.customFields")} columns={2}>
+          <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} title={label || t("sections.customFields")}>
             {fields.map((f) => renderCustomField(f))}
           </Section>
         ))}
@@ -1525,6 +1552,9 @@ export function DocumentForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      {/* Slice #37.15: the panels FLOW — each a fixed 32rem, as many to a row
+          as the form's width holds (see the row this form sits in, below),
+          left-aligned, wrapping. */}
       {/* Slice #18.06: the disabled fieldset wraps ONLY the editable input
           sections; the version nav lives in the header (portalled), outside
           this fieldset, so its ◀/▶ buttons stay clickable on read-only
@@ -1588,14 +1618,17 @@ export function DocumentForm({
               //     once. The attribute stays because it is what assistive
               //     technology and find-in-page read.
               hidden={i !== activeTab}
-              className={i === activeTab ? "flex flex-col gap-4" : "hidden"}
+              className={i === activeTab ? "flex flex-wrap items-start" : "hidden"}
+              style={{ gap: PANEL_GAP }}
             >
               {panelsOf(i)}
             </div>
           ))}
         </>
       ) : (
-        panelsOf(0)
+        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }}>
+          {panelsOf(0)}
+        </div>
       )}
 
       </fieldset>
@@ -1610,7 +1643,14 @@ export function DocumentForm({
 
   return (
     <FieldPulseContext.Provider value={pulsing}>
-    <div className="flex flex-col gap-4">
+    {/* Slice #37.15: THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE
+        ANYTHING IS. This column is snapped to whole panels — and, once there
+        are pages, to whole panels plus the page panel — so the action bar at
+        its foot is exactly as wide as what sits above it. */}
+    <div
+      className="flex flex-col gap-4"
+      style={showPagesPanel ? documentRowStyle() : panelRowStyle()}
+    >
     {/* Slice #18.06: version controls portalled into the detail-tabs header so
         they sit on the document-name line. Only for an existing document once
         its versions have loaded, and only when the header provided a slot. */}
@@ -1640,14 +1680,16 @@ export function DocumentForm({
         (portal) below — unchanged by this layout. id is used by the submit
         button's form="document-form" attribute, which lets the button live
         outside the <form> element while still submitting this form. */}
-    {/* Slice #21.06.misc: left:right went from 2:1 to 3:2 (grid-cols-5,
-        col-span-3/2) — combined with the wider outer container in
-        document-detail-tabs.tsx, the left panels are ~50% wider and the
-        Pages panel ~100% wider than before this change. */}
+    {/* Slice #37.15: the 3:2 grid of a centred 93rem block (#21.06.misc) is
+        gone. The fields take whole panels; the page image is a fixed
+        PAGES_PANEL_STYLE (40rem) beside them — not narrower than the
+        two-fifths it was in a 1920-pixel window — stretched to their height.
+        Where one panel and the page image do not fit side by side, the page
+        panel wraps under the fields. */}
     {showPagesPanel ? (
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3">{formElement}</div>
-        <div className="flex flex-col lg:col-span-2">
+      <div className="flex flex-wrap items-stretch" style={{ gap: PANEL_GAP }}>
+        <div style={fieldsBesidePagesStyle()}>{formElement}</div>
+        <div className="flex flex-col" style={PAGES_PANEL_STYLE} data-panel="pages">
           <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
             <PagesPanel
               documentId={documentId}
@@ -2099,17 +2141,18 @@ export function DocumentForm({
 // Shared presentational helpers (same pattern as PropertyForm)
 // ---------------------------------------------------------------------------
 
-const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
-  1: "grid grid-cols-1 gap-2",
-  2: "grid grid-cols-1 gap-2 sm:grid-cols-2",
-  3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
-  4: "grid grid-cols-2 gap-2 md:grid-cols-4",
-};
-
+/**
+ * A titled panel: one fixed PANEL_STYLE (32rem) tile.        (Slice #37.15)
+ *
+ * The fields inside FLOW — each is its label and a box as wide as its step in
+ * `src/lib/ui/field-widths.ts`, two to a row where the two fit the panel, one
+ * where they do not. No grid column decides a width here any more; the
+ * 1/2/3/4-column `columns` prop went with the grid.
+ */
 function Section({
   title,
   code,
-  columns = 2,
+  panel,
   children,
 }: {
   title:    string;
@@ -2117,11 +2160,16 @@ function Section({
    *  Person's Identity section shows its personCode — used by General to
    *  show documentCode instead of as its own field row. */
   code?:    string | null;
-  columns?: 1 | 2 | 3 | 4;
+  /** Slice #37.15: the panel's name for the e2e width check (`data-panel`). */
+  panel:    string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section
+      style={PANEL_STYLE}
+      data-panel={panel}
+      className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+    >
       <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
         {code && (
@@ -2130,7 +2178,7 @@ function Section({
           </span>
         )}
       </h2>
-      <div className={COLUMNS_CLASS[columns]}>
+      <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
         {children}
       </div>
     </section>
@@ -2152,132 +2200,74 @@ type FieldProps = {
    * edit afterwards. Every control here already carries `disabled:` styling.
    */
   disabled?:  boolean;
+  /**
+   * Slice #37.15: the box's width and kind, from `src/lib/ui/field-widths.ts`
+   * — `DOCUMENT` for the general and fee fields, `templateFieldWidth` for a
+   * type's own. A GROWING kind renders `<GrowingText>` (its height follows the
+   * value; `lines` keeps line breaks), every other an `<input>` as wide as its
+   * step. This replaces the old TextAreaField and its auto-grow effect.
+   */
+  width:      FieldWidth;
 };
 
-function Field({ label, name, type = "text", register, error, highlight, disabled }: FieldProps) {
-  const ring = usePulseRing(highlight);
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <input
-          type={type}
-          {...register(name)}
-          disabled={disabled}
-          // All content here is Romanian legal/notarial text — the browser's
-          // spell-checker (English by default) flags most of it as errors.
-          spellCheck={false}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-        )}
-      </div>
-    </label>
-  );
-}
+/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
+const BOX_CLASS =
+  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
-function TextAreaField({
+function Field({
   label,
   name,
+  type = "text",
   register,
   error,
-  maxLength,
-  // Slice #21.06.misc: default dropped from 3 to 1 — `rows` is a hard
-  // *minimum* height (the auto-grow effect can only grow scrollHeight
-  // beyond it, never shrink below it), so a 3-row floor made every short
-  // field look identically tall regardless of how little content it held.
-  // 1 row lets a field genuinely shrink to fit a single short line too.
-  rows = 1,
   highlight,
-  watchValue,
-  fullWidth,
   disabled,
-}: FieldProps & { maxLength?: number; rows?: number; watchValue?: string | null; fullWidth?: boolean }) {
+  width,
+  maxLength,
+}: FieldProps & { maxLength?: number }) {
   const ring = usePulseRing(highlight);
-  const registered = register(name);
-  const elRef = useRef<HTMLTextAreaElement | null>(null);
-
-  // Auto-grow to fit content instead of a fixed `rows` box with internal
-  // scroll — full paragraphs (e.g. a boundary/vecinătăți description, or
-  // Enhanced Notes after AI Interpret appends text) are fully visible
-  // without scrolling inside a tiny box. Keyed on `watchValue` (passed by
-  // the caller from form.watch()) rather than a native 'input' listener so
-  // this also resizes when a field is filled programmatically via
-  // form.setValue (AI Interpret), which doesn't dispatch a DOM input event.
-  //
-  // Slice #21.06.misc: a single mount-time measurement could come out wrong
-  // (too small) and then stick forever, since this effect only re-runs when
-  // `watchValue` changes again — not on its own. Two known causes: the
-  // browser may still be showing a fallback font when this first runs (web
-  // fonts load asynchronously; the real font can wrap text differently once
-  // it swaps in), and the element's layout may not have fully settled yet
-  // right after mount. Re-measuring once more on the next animation frame
-  // and again once fonts finish loading fixes both without needing the user
-  // to type something first to trigger a resize.
-  useEffect(() => {
-    const el = elRef.current;
-    if (!el) return;
-    const resize = () => {
-      el.style.height = "auto";
-      el.style.height = `${el.scrollHeight}px`;
-    };
-    resize();
-    let cancelled = false;
-    const raf = requestAnimationFrame(() => {
-      if (!cancelled) resize();
-    });
-    if (typeof document !== "undefined" && document.fonts) {
-      document.fonts.ready.then(() => {
-        if (!cancelled) resize();
-      });
-    }
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf);
-    };
-  }, [watchValue]);
-
+  const className = [
+    BOX_CLASS,
+    error
+      ? "border-red-500 focus:border-red-600"
+      : "border-wire focus:border-focus dark:border-zinc-700",
+    ring,
+  ].join(" ");
+  const grows = width.kind === "grows" || width.kind === "lines";
   return (
-    <label
-      className={[
-        "flex items-start gap-2 text-sm",
-        // Span both columns of the enclosing 2-column grouped Section, so this
-        // field renders at full section width instead of a half-width cell —
-        // used for longer free-text fields (e.g. vecinătăți) that read better
-        // as wide as Enhanced Notes rather than squeezed into one column.
-        fullWidth ? "sm:col-span-2" : "",
-      ].join(" ")}
-    >
-      <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <textarea
-          {...registered}
-          ref={(el) => {
-            registered.ref(el);
-            elRef.current = el;
-          }}
-          maxLength={maxLength}
-          rows={rows}
-          disabled={disabled}
-          // Same rationale as Field above — Romanian text, English spell-checker.
-          spellCheck={false}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full resize-none overflow-hidden rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
-        />
+    <label className="flex items-start gap-2 text-sm">
+      <span className="shrink-0 pt-1 font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
+        {grows ? (
+          <GrowingText
+            registration={register(name)}
+            width={String(boxStyle(width).width)}
+            lines={width.kind === "lines"}
+            minRows={width.rows ?? 1}
+            maxLength={maxLength}
+            disabled={disabled}
+            // All content here is Romanian legal/notarial text — the browser's
+            // spell-checker (English by default) flags most of it as errors.
+            spellCheck={false}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        ) : (
+          <input
+            type={type}
+            {...register(name)}
+            maxLength={maxLength}
+            disabled={disabled}
+            spellCheck={false}
+            aria-invalid={error ? true : undefined}
+            className={className}
+            style={boxStyle(width)}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        )}
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}
@@ -2296,7 +2286,13 @@ function SelectField({
   hint,
   disabled,
   emptyOptionLabel,
-}: FieldProps & {
+  width,
+  watchValue,
+}: Omit<FieldProps, "width"> & {
+  /** Slice #37.15: `capped` — the rule stopped at XXL and the option shows in full on hover only. */
+  width: FieldWidth & { capped?: boolean };
+  /** The chosen value, so the box can show that option in full on hover (#37.12). */
+  watchValue?: string | null;
   options: { value: string; label: string }[];
   /**
    * Slice #36.01: when set, the blank choice is a REAL, selectable option
@@ -2332,18 +2328,21 @@ function SelectField({
   const describedBy = [hint ? hintId : null, error ? errorId : null]
     .filter(Boolean)
     .join(" ");
+  const chosenLabel = options.find((o) => o.value === (watchValue ?? ""))?.label;
   return (
-    // `items-start` once a hint is present, so the label sits on the select's
-    // line instead of drifting to the middle of a two-line block — the same
-    // treatment TextAreaField above gives its own taller control.
-    <div className={`flex gap-2 text-sm ${hint ? "items-start" : "items-center"}`}>
+    // `items-start`, so the label sits on the select's line instead of
+    // drifting to the middle of a two-line block when a hint is present.
+    // Slice #37.15 made it unconditional, with the label's pt-1 — the line
+    // every Field on this form now keeps, since any of them may grow.
+    <div className="flex items-start gap-2 text-sm">
       <label
         htmlFor={fieldId}
-        className={`w-36 shrink-0 font-medium text-ink dark:text-zinc-300${hint ? " pt-1" : ""}`}
+        className="shrink-0 pt-1 font-medium text-ink dark:text-zinc-300"
+        style={LABEL_STYLE}
       >
         {label}
       </label>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         <select
           // Bug fix: `options` loads asynchronously (useQuery). This <select>
           // is uncontrolled — react-hook-form's `register` assigns the DOM
@@ -2379,8 +2378,13 @@ function SelectField({
           // dropped it, which is how an accessibility fix becomes a regression.
           aria-describedby={describedBy || undefined}
           aria-invalid={error ? true : undefined}
+          title={chosenLabel}
+          style={boxStyle(width)}
+          data-width-field={name}
+          data-width-kind="select"
+          data-width-capped={width.capped ? "true" : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+            BOX_CLASS,
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
