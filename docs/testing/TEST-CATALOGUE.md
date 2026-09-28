@@ -105,9 +105,9 @@ fixed fixture where the existing one will do.
 | [TC-VL-01](cases/TC-VL-01.md) | O valoare adăugată în „Date de referință”, redenumită și ștearsă | reference-data | happy | — | `driven` | 2026-09-27 | — |
 | [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
-| [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `draft` | — | — |
+| [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 
-**Twenty-seven are `automated`, eleven are `driven`, and three are `draft`** — as of 2026-09-28 (Slice
+**Twenty-seven are `automated`, twelve are `driven`, and two are `draft`** — as of 2026-09-28 (Slice
 #37.18). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
@@ -123,7 +123,8 @@ each is written here, not implied:
 - **`driven`, first run: TC-TILES-01** (Slice #37.17), the Natural Person's tiles, driven once in
   Adrian's Chrome on 2026-09-28. A second run unchanged confirms it, and a spec is then a
   translation of it. **TC-TILES-02** (Slice #37.18) is its sibling for the Judicial Person, and
-  proves the two screens' choices apart.
+  proves the two screens' choices apart. It was driven once on 2026-09-28 in the desktop app's
+  browser pane; the same holds for it.
 - **`driven`: TC-ACCT-01** (Slice #37.10), with Adrian typing every password; step 6 went green
   on 2026-09-28 once `.env` and the account held the same bytes (its file has the story). It never
   becomes a spec: a spec would change the password the whole e2e suite signs in with.

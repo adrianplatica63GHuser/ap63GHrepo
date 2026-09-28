@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-28, Slice #37.17 — 263 entries. Rows are status, columns are impact.
+As of 2026-09-28, Slice #37.18 — 264 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 15 | 54 | 51 | 14 | 134 |
+| open | 15 | 54 | 51 | 15 | 135 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 34 | 52 | 25 | 3 | 114 |
 | ignored | 4 | 2 | 3 | 2 | 11 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 53 | 111 | 80 | 19 | 263 |
+| **total** | 53 | 111 | 80 | 20 | 264 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -344,6 +344,7 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-258 | 2026-09-28 #37.12 | recommendation | People | The local archive holds one natural person, no judicial person and no address, so the person and address widths could only be checked against value formats, not real values. | measure-fields 20260928T185247Z-3109: NP.* and ADDR.* 0–1 rows; src/lib/ui/field-widths.ts NATURAL_PERSON, ADDRESS (33a1345) | dev | XS | open | Re-run `claude.sh request measure-fields` once people are imported; a column whose p95 passes its step moves up one step in field-widths.ts. | 2026-09-28 |
 | FU-259 | 2026-09-28 #37.15 | next-slice idea | Reference data | A document-type field can now carry its own `width` (a step of the width scale), but the Form editor under Reference Data → Document Types has no control for it, so only the admin API can set one. | src/lib/documents/template-fields.ts DocumentTemplateField.width; src/lib/documents/template-editor-rows.ts storedWidth (carried, not editable) | dev | S | open | A „Lățime" dropdown per row in the Form editor, blank meaning „by rule". | 2026-09-28 |
 | FU-260 | 2026-09-28 #37.16 | test gap | Properties | In every e2e picture of a Property (TC-PROP-04, since #37.14) Next's dev overlay shows „1 Issue". | e2e 20260928T215451Z-26137 with the console read: twice „Attempted to load a Vector Map, but failed. Falling back to Raster." — Google Maps, because headless Chromium has no WebGL | dev | XS | ignored | The e2e browser has no GPU; a real Chrome loads the vector map, and the raster fallback draws the same parcel. Nothing in the app to fix. | 2026-09-28 |
-| FU-261 | 2026-09-28 #37.17 TC-TILES-01 step 7 | copy/i18n | People | The Natural Person form's validation messages are English strings in form-schema.ts („At least one of First Name or Last Name is required", „Country is required for the Home address"), and the Romanian interface shows them in English. | src/app/natural-persons/_components/form-schema.ts refine messages; natural-person-form.tsx renders errors.*.message as it is | user | S | open | Give each message a key under naturalPerson.validation and translate it where it is shown, as the other forms do. | 2026-09-28 |
+| FU-261 | 2026-09-28 #37.17 TC-TILES-01 step 7; 2026-09-28 #37.18 TC-TILES-02 step 6 | copy/i18n | People | The Natural Person's and the Judicial Person's validation messages are English strings in their form-schema.ts („At least one of First Name or Last Name is required", „Name is required", „Country is required for the Registered Office address"), and the Romanian interface shows them in English. | src/app/natural-persons/_components/form-schema.ts and src/app/judicial-persons/_components/form-schema.ts refine messages; both forms render errors.*.message as it is | user | S | open | Give each message a key under naturalPerson.validation and translate it where it is shown, as the other forms do. | 2026-09-28 |
 | FU-262 | 2026-09-28 #37.17 | recommendation | UI shell | The tile choice is remembered per browser (localStorage), so it does not follow Adrian from one machine to another; remembering it per user in the database would, at the cost of a migration. | src/components/tiles/use-tile-choice.ts; header 37.17 Ask first | user | M | open | Adrian's ruling: keep per browser (each screen its own arrangement), or a user_preferences row per entity kind. | 2026-09-28 |
 | FU-263 | 2026-09-28 #37.17 | next-slice idea | UI shell | Tiles cannot be reordered: they show in the registry's fixed order. Dragging a tile to a new place, remembered with the choice, was out of #37.17's scope. | src/lib/ui/tiles.ts inRegistryOrder; src/components/tiles/tile-selector.tsx | user | M | open | A stored order beside the stored choice, and drag handles on the checkboxes or the tiles. | 2026-09-28 |
+| FU-264 | 2026-09-28 #37.18 TC-TILES-02 | defect | UI shell | In a window about 800 px wide the version controls („v 1", the arrows, „Fă curentă", „2 versiuni") sit over the end of the record's name: they are absolutely placed at the right of the header line, and nothing keeps the name clear of them. Seen on a Judicial Person and a Natural Person in the desktop app's browser pane. | src/app/judicial-persons/_components/person-detail-tiles.tsx and natural-persons/_components/person-detail-tiles.tsx `<header>` (the navSlot div is `absolute inset-y-0 right-0`, since #19.07) | cosmetic | XS | open | Make the header a flex row with the slot as a non-shrinking item after the name, or pad the name by the slot's width. | 2026-09-28 |
