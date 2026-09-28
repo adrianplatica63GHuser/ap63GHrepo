@@ -2236,7 +2236,7 @@ function Field({
   const grows = width.kind === "grows" || width.kind === "lines";
   return (
     <label className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
       <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         {grows ? (
           <GrowingText
@@ -2337,7 +2337,7 @@ function SelectField({
     <div className="flex items-start gap-2 text-sm">
       <label
         htmlFor={fieldId}
-        className="shrink-0 pt-1 font-medium text-ink dark:text-zinc-300"
+        className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300"
         style={LABEL_STYLE}
       >
         {label}
