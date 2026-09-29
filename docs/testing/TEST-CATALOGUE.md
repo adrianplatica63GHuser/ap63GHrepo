@@ -108,9 +108,10 @@ fixed fixture where the existing one will do.
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-03](cases/TC-TILES-03.md) | Părțile unei proprietăți, cu harta și Street View ca părți proprii | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `driven` | 2026-09-28 | — |
+| [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
 
-**Twenty-seven are `automated`, fourteen are `driven`, and two are `draft`** — as of 2026-09-28 (Slice
-#37.20). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Twenty-eight are `automated`, fourteen are `driven`, and two are `draft`** — as of 2026-09-28 (Slice
+#37.21). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
@@ -129,6 +130,10 @@ each is written here, not implied:
   map and Street View as tiles, and **TC-TILES-04** (Slice #37.20) the Document's, with every
   notebook tab a tile and the choice kept per type. All three were driven once on 2026-09-28 in the
   desktop app's browser pane; the same holds for them.
+- **TC-TABS-01 to `automated`, Slice #37.21.** One contract in two windows of one browser. It was
+  driven twice in two tabs of the desktop app's browser pane, and the second run changed nothing, so
+  it was confirmed. Its spec, `e2e/sync/two-windows.spec.ts`, uses two pages of one Playwright
+  context, which are two windows of one browser.
 - **`driven`: TC-ACCT-01** (Slice #37.10), with Adrian typing every password; step 6 went green
   on 2026-09-28 once `.env` and the account held the same bytes (its file has the story). It never
   becomes a spec: a spec would change the password the whole e2e suite signs in with.
