@@ -25,12 +25,23 @@ export function tileBox(page: Page, name: string): Locator {
   return page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox", { name, exact: true });
 }
 
-/** Tick tile `name` if it is not showing, and return it once it is on the page. */
+/**
+ * Tick tile `name` if it is not showing, and return it once it is on the page.
+ *
+ * ⚠️ **A TICK BEFORE THE PAGE IS INTERACTIVE CAN BE UNDONE.** Measured in full
+ * 20260928T235308Z-29109 (TC-STAMP-01): on a loaded machine the box was clicked
+ * while the page was still hydrating, React then drew the checkbox from its own
+ * state, and Playwright reported „Clicking the checkbox did not change its
+ * state". The same race the login form has (helpers/login-form.ts). So the tick
+ * is repeated until it holds.
+ */
 export async function showTile(page: Page, name: string): Promise<Locator> {
   const box = tileBox(page, name);
   await expect(box).toBeVisible({ timeout: 30_000 });
-  if (!(await box.isChecked())) await box.check();
-  await expect(box).toBeChecked();
+  await expect(async () => {
+    if (!(await box.isChecked())) await box.click();
+    await expect(box).toBeChecked({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
   const tile = page.getByRole("region", { name, exact: true });
   await expect(tile).toBeVisible({ timeout: 30_000 });
   return tile;
@@ -39,7 +50,10 @@ export async function showTile(page: Page, name: string): Promise<Locator> {
 /** Untick tile `name` if it is showing; the tile leaves the page (a form tile is hidden, a list tile unmounted). */
 export async function hideTile(page: Page, name: string): Promise<void> {
   const box = tileBox(page, name);
-  if (await box.isChecked()) await box.uncheck();
-  await expect(box).not.toBeChecked();
+  // Repeated until it holds, for the reason `showTile` gives.
+  await expect(async () => {
+    if (await box.isChecked()) await box.click();
+    await expect(box).not.toBeChecked({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
   await expect(page.getByRole("region", { name, exact: true })).toBeHidden();
 }
