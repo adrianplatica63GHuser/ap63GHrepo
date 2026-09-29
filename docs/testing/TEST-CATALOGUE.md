@@ -107,9 +107,9 @@ fixed fixture where the existing one will do.
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-03](cases/TC-TILES-03.md) | Părțile unei proprietăți, cu harta și Street View ca părți proprii | tiles | happy | — | `driven` | 2026-09-28 | — |
-| [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `draft` | — | — |
+| [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `driven` | 2026-09-28 | — |
 
-**Twenty-seven are `automated`, thirteen are `driven`, and three are `draft`** — as of 2026-09-28 (Slice
+**Twenty-seven are `automated`, fourteen are `driven`, and two are `draft`** — as of 2026-09-28 (Slice
 #37.20). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
@@ -126,8 +126,9 @@ each is written here, not implied:
   Adrian's Chrome on 2026-09-28. A second run unchanged confirms it, and a spec is then a
   translation of it. **TC-TILES-02** (Slice #37.18) is its sibling for the Judicial Person, and
   proves the two screens' choices apart. **TC-TILES-03** (Slice #37.19) is the Property's, with the
-  map and Street View as tiles. Both were driven once on 2026-09-28 in the desktop app's browser
-  pane; the same holds for them.
+  map and Street View as tiles, and **TC-TILES-04** (Slice #37.20) the Document's, with every
+  notebook tab a tile and the choice kept per type. All three were driven once on 2026-09-28 in the
+  desktop app's browser pane; the same holds for them.
 - **`driven`: TC-ACCT-01** (Slice #37.10), with Adrian typing every password; step 6 went green
   on 2026-09-28 once `.env` and the account held the same bytes (its file has the story). It never
   becomes a spec: a spec would change the password the whole e2e suite signs in with.

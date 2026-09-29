@@ -5,8 +5,8 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-09-28 |
 
 ## What this proves
 
@@ -43,17 +43,34 @@ Nothing.
   „Implicit" in step 9.
 - The Plan parcelar's choice is only read, never written.
 
+## The first run, 2026-09-28 (Slice #37.20)
+
+Driven in the desktop app's browser pane, on localhost:3000 with the interface in Romanian, in a
+window about 800 px wide, so every tile stood in one column. Every step held. The pane stopped
+drawing for a while, and some ticks and buttons were pressed from the page's own script rather
+than by a click; each press was the element's own `click()`.
+
+The run made two corrections to the case text:
+- **Step 1:** Instrument holds Financiar and Taxe și onorarii. „Antet instrument” is on Cadastru in
+  the type's form.
+- **Step 7:** the banner goes when the type is changed back, because nothing differs any more.
+
+What the run measured:
+- **Step 6:** on v 2, the dot sat on „Instrument” only. Its title was „Are câmpuri evidențiate —
+  bifați pentru a le vedea”. Ticking the tile showed „Nr. act autentic” with its green frame.
+- **Step 7:** the Plan parcelar's choice was never written.
+
 ## Steps
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Instrument", „Cadastru", „Stare juridică", „Conformitate", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale, the page panel, and the Instrument panels (Taxe și onorarii, Financiar, Antet instrument) |
+| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Instrument", „Cadastru", „Stare juridică", „Conformitate", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale, the page panel, and Instrument's panels, Financiar and Taxe și onorarii. The type's form puts „Antet instrument” on Cadastru |
 | 2 | Ticks „Cadastru", „Stare juridică" and „Conformitate" | Their panels appear, in that order, after Instrument's. All four notebook tabs' panels and the page image are on one screen |
 | 3 | Reloads the page | The same arrangement |
 | 4 | Types `TC` into a field of „Conformitate", unticks „Conformitate" | The panels go; „Modificări nesalvate" stays at the top |
 | 5 | Presses „Salvează" | „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Conformitate": the field reads `TC` |
 | 6 | In „Instrument", types `TC-1` into „Nr. act autentic", „Salvează" (v 2). In „Date generale", types `TC` into „Notițe", „Salvează" (v 3). Unticks „Instrument", then presses „◀" to v 2 | On the read-only v 2, „Instrument" has a small dot beside its checkbox, with the title „Are câmpuri evidențiate — bifați pentru a le vedea": v 2 changed a field on that tile. „Date generale" has none, because v 2 changed nothing there. Ticks „Instrument": „Nr. act autentic" is framed, as it was on the tab. Presses „▶" back to v 3 |
-| 7 | In „Date generale", changes the type to „Plan parcelar" (does not save) | The checkboxes become that type's: „Date generale", „Pagini", „Câmpuri specifice", then the lists. What is ticked is the Plan parcelar's own choice (the defaults, since none is stored); the Contract's four notebook tiles are gone. „Modificări nesalvate" shows. Changes the type back to „Contract de Vânzare": the Contract's stored arrangement returns, and `TC` is still in its field |
+| 7 | In „Date generale", changes the type to „Plan parcelar" (does not save) | The checkboxes become that type's: „Date generale", „Pagini", „Câmpuri specifice", then the lists. What is ticked is the Plan parcelar's own choice (the defaults, since none is stored); the Contract's four notebook tiles are gone. „Modificări nesalvate" shows. Changes the type back to „Contract de Vânzare": the Contract's stored arrangement returns, `TC` is still in its field, and the banner goes, because nothing differs from the saved document any more |
 | 8 | „Anulează" | Back on the list, nothing saved from step 7 |
 | 9 | Opens the document again: „Toate", then „Implicit" | „Toate": every box ticked. „Implicit": Date generale, Pagini, Instrument |
 | — | At the end: „Șterge" → „Da" | Back on the documents list; the document is gone |
