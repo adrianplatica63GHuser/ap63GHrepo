@@ -15,6 +15,7 @@
  */
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
+import { photograph } from "../helpers/field-widths";
 
 const MARK = `${E2E_MARKER}TABS-01`;
 const TITLE = `${MARK} Contract de test`;
@@ -62,6 +63,8 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
       await expect(saved).toContainText("Această înregistrare a fost salvată în altă fereastră.");
       await expect(saved.getByRole("button", { name: "Reîncarcă" })).toBeVisible();
       await expect(subjectB).toHaveValue("TC-B");
+      // Slice #37.23 — the User Guide's picture of this notice.
+      await photograph(second, "sync-saved-elsewhere", [1920]);
 
       // Step 7 — the second window saves anyway: refused, nothing written, `TC-B` still on screen.
       await second.getByRole("button", { name: "Salvează", exact: true }).click();
@@ -69,6 +72,7 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
       await expect(stale).toBeVisible({ timeout: 30_000 });
       await expect(stale).toContainText("Nu s-a salvat nimic");
       await expect(subjectB).toHaveValue("TC-B");
+      await photograph(second, "sync-save-refused", [1920]);
 
       // Step 8 — the history holds exactly the two accepted saves: v 0, v 1, v 2, the last `TC-A2`.
       const res = await page.request.get(`/api/documents/${documentId}/versions`);

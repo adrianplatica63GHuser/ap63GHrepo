@@ -26,6 +26,24 @@ import { expect, type Locator, type Page } from "@playwright/test";
  */
 export const THREE_WIDTHS = [1366, 1920, 2560] as const;
 
+/**
+ * Wait until the screen stops adding marked boxes, panels and columns: a tile
+ * whose data arrives late (META INFO's tag box) must be on the screen at the
+ * FIRST width too, or the widths compare two different screens. (Slice #37.23)
+ */
+export async function settled(page: Page): Promise<void> {
+  const marks = () => page.locator("[data-width-field], [data-panel], th[data-width-column]").count();
+  // Unchanged over two readings 1.5 s apart, up to half a minute.
+  let last = -1;
+  let same = 0;
+  for (let i = 0; i < 20 && same < 2; i++) {
+    const now = await marks();
+    same = now === last ? same + 1 : 0;
+    last = now;
+    if (same < 2) await page.waitForTimeout(1500);
+  }
+}
+
 /** How many small tiles fit on one row at each width — #37.17's target. */
 export const SMALL_TILES_PER_ROW: Readonly<Record<number, number>> = { 1366: 2, 1920: 3, 2560: 4 };
 
@@ -56,6 +74,7 @@ export async function readWidths(page: Page): Promise<WidthSnapshot> {
  * every panel is exactly as wide at all of them. Puts the window back as it was.
  */
 export async function expectStableWidths(page: Page, widths: readonly number[] = THREE_WIDTHS, height = 900): Promise<WidthSnapshot> {
+  await settled(page);
   const before = page.viewportSize();
   const snaps: WidthSnapshot[] = [];
   try {
@@ -135,6 +154,7 @@ export async function expectFixedFieldsHold(page: Page, samples: Readonly<Record
  * widths by column name, for the caller to compare with `columnRem`.
  */
 export async function expectStableColumns(page: Page, widths: readonly number[] = THREE_WIDTHS, height = 900): Promise<Record<string, number>> {
+  await settled(page);
   const read = () =>
     page.evaluate(() => {
       const cols: Record<string, number> = {};
@@ -290,36 +310,43 @@ export async function expectStableScreen(
 }
 
 /**
- * At each width, the most small tiles (`[data-tile]` a panel wide, 32rem) that
- * share one row equals #37.17's target: two at 1366 px, three at 1920, four
- * at 2560. Call it with every tile shown („Toate"), so each row is as full as
- * the window allows.                                              (Slice #37.23)
+ * At each width, the tile row holds #37.17's target of small tiles (32rem, a
+ * panel): two at 1366 px, three at 1920, four at 2560. Measured, not assumed:
+ * the row's own width in the browser, in whole panels and the gaps between
+ * them — and every small tile on the screen is exactly a panel wide at each.
+ * Which tiles share a row depends on which are ticked and how wide the
+ * association tables are; how many FIT does not.                 (Slice #37.23)
  */
 export async function expectTilesPerRow(
   page: Page,
   expected: Readonly<Record<number, number>> = SMALL_TILES_PER_ROW,
   height = 1000,
 ): Promise<void> {
+  await settled(page);
   const before = page.viewportSize();
   const got: Record<number, number> = {};
+  const odd: string[] = [];
   try {
     for (const width of Object.keys(expected).map(Number)) {
       await page.setViewportSize({ width, height });
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
-      got[width] = await page.evaluate(() => {
-        const panel = parseFloat(getComputedStyle(document.documentElement).fontSize) * 32;
-        const rows = new Map<number, number>();
-        document.querySelectorAll<HTMLElement>("[data-tile]").forEach((el) => {
-          const r = el.getBoundingClientRect();
-          if (r.width === 0 || Math.abs(r.width - panel) > 1) return;
-          const top = Math.round(r.top);
-          rows.set(top, (rows.get(top) ?? 0) + 1);
-        });
-        return Math.max(0, ...rows.values());
+      const m = await page.evaluate(() => {
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const panel = 32 * rem;
+        const gap = 1 * rem;
+        const row = document.querySelector<HTMLElement>("[data-tile-row]");
+        const w = row ? row.getBoundingClientRect().width : 0;
+        const small = [...document.querySelectorAll<HTMLElement>("[data-tile]")]
+          .map((el) => el.getBoundingClientRect().width)
+          .filter((x) => x > 0 && x < panel + gap);
+        return { fit: Math.floor((w + gap) / (panel + gap)), off: small.filter((x) => Math.abs(x - panel) > 1).map((x) => Math.round(x)) };
       });
+      got[width] = m.fit;
+      if (m.off.length) odd.push(`${width}: ${m.off.join(", ")} px`);
     }
   } finally {
     if (before) await page.setViewportSize(before);
   }
-  expect(got, "small tiles on the fullest row, by window width").toEqual(expected);
+  expect(got, "small tiles that fit on one row, by window width").toEqual(expected);
+  expect(odd, "small tiles that are not exactly a panel wide").toEqual([]);
 }
