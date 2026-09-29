@@ -14,6 +14,7 @@ import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/co
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-property-v2";
@@ -364,7 +365,7 @@ export function PropertyListView() {
   // optionals, open — each a fixed width, so ticking one widens the table. A
   // stored key this build has no column for stays in storage and is not drawn.
   const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const columns: ColumnName[] = ["selectBadges", "code", ...shownCols.map((c) => c.column), "open"];
+  const columns: ColumnName[] = ["selectBadges", "code", ...shownCols.map((c) => c.column), "openPreview"];
   const colCount = columns.length;
 
   return (
@@ -497,103 +498,108 @@ export function PropertyListView() {
       )}
 
       {/* Table */}
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        <table {...fixedTable(columns)}>
-          <FixedColumns columns={columns} />
-          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
-            <tr>
-              <th className="px-4 py-2" {...columnHead("selectBadges")}>
-                <input
-                  ref={headerCheckboxRef}
-                  type="checkbox"
-                  checked={allOnPageSelected}
-                  onChange={toggleAllOnPage}
-                  disabled={items.length === 0}
-                  aria-label={tBulk("selectAll")}
-                  className="h-4 w-4 rounded border-wire accent-cta"
-                />
-              </th>
-              <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
-              {shownCols.map((col) => (
-                <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                  {col.label}
+      <ListPreviews>
+        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+          <table {...fixedTable(columns)}>
+            <FixedColumns columns={columns} />
+            <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+              <tr>
+                <th className="px-4 py-2" {...columnHead("selectBadges")}>
+                  <input
+                    ref={headerCheckboxRef}
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    onChange={toggleAllOnPage}
+                    disabled={items.length === 0}
+                    aria-label={tBulk("selectAll")}
+                    className="h-4 w-4 rounded border-wire accent-cta"
+                  />
                 </th>
-              ))}
-              <th className="px-4 py-2" {...columnHead("open")} />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-crease dark:divide-zinc-800">
-            {query.isLoading && (
-              <tr>
-                <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
-                  {t("loading")}
-                </td>
-              </tr>
-            )}
-            {query.isError && (
-              <tr>
-                <td colSpan={colCount} className="px-4 py-6 text-center text-red-600">
-                  {t("error")}
-                </td>
-              </tr>
-            )}
-            {query.data && query.data.items.length === 0 && (
-              <tr>
-                <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
-                  {t("empty")}
-                </td>
-              </tr>
-            )}
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                onClick={(e) => {
-                  if (newTabIfAsked(e, `/properties/${item.id}`)) return;
-                  router.push(`/properties/${item.id}`);
-                }}
-                onAuxClick={(e) => newTabIfAsked(e, `/properties/${item.id}`)}
-                className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
-              >
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                  {/* Slice #37.16: the badges wrap — „Încrucișat" takes a line
-                      of its own rather than widening the column. */}
-                  <span className="inline-flex flex-wrap items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(item.id)}
-                      onChange={() => toggleOne(item.id)}
-                      aria-label={item.nickname ?? item.code}
-                      className="h-4 w-4 rounded border-wire accent-cta"
-                    />
-                    <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                    <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
-                  </span>
-                </td>
-                <td className="px-4 py-2 font-mono text-xs text-fade">
-                  {item.code}
-                </td>
+                <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
                 {shownCols.map((col) => (
-                  <td
-                    key={col.key}
-                    className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf(col.column)}`}
-                  >
-                    {cellValue(item, col.key)}
-                  </td>
+                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                    {col.label}
+                  </th>
                 ))}
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                  <Link
-                    href={`/properties/${item.id}`}
-                    className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                  >
-                    {t("open")}
-                  </Link>
-                </td>
+                <th className="px-4 py-2" {...columnHead("openPreview")} />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-crease dark:divide-zinc-800">
+              {query.isLoading && (
+                <tr>
+                  <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
+                    {t("loading")}
+                  </td>
+                </tr>
+              )}
+              {query.isError && (
+                <tr>
+                  <td colSpan={colCount} className="px-4 py-6 text-center text-red-600">
+                    {t("error")}
+                  </td>
+                </tr>
+              )}
+              {query.data && query.data.items.length === 0 && (
+                <tr>
+                  <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
+                    {t("empty")}
+                  </td>
+                </tr>
+              )}
+              {items.map((item) => (
+                <tr
+                  key={item.id}
+                  // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                  onClick={(e) => {
+                    if (newTabIfAsked(e, `/properties/${item.id}`)) return;
+                    router.push(`/properties/${item.id}`);
+                  }}
+                  onAuxClick={(e) => newTabIfAsked(e, `/properties/${item.id}`)}
+                  className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                >
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    {/* Slice #37.16: the badges wrap — „Încrucișat" takes a line
+                        of its own rather than widening the column. */}
+                    <span className="inline-flex flex-wrap items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(item.id)}
+                        onChange={() => toggleOne(item.id)}
+                        aria-label={item.nickname ?? item.code}
+                        className="h-4 w-4 rounded border-wire accent-cta"
+                      />
+                      <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                      <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 font-mono text-xs text-fade">
+                    {item.code}
+                  </td>
+                  {shownCols.map((col) => (
+                    <td
+                      key={col.key}
+                      className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf(col.column)}`}
+                    >
+                      {cellValue(item, col.key)}
+                    </td>
+                  ))}
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    <span className="flex gap-2">
+                      <Link
+                        href={`/properties/${item.id}`}
+                        className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                      >
+                        {t("open")}
+                      </Link>
+                      <PreviewButton target={{ kind: "property", id: item.id }} />
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ListPreviews>
 
       {/* Pagination */}
       <div className="flex items-center justify-between gap-4">

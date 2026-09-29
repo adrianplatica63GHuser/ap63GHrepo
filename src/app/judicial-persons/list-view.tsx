@@ -11,11 +11,12 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN`. */
-const COLUMNS: ColumnName[] = ["selectNew", "code", "personName", "personNickname", "open"];
+const COLUMNS: ColumnName[] = ["selectNew", "code", "personName", "personNickname", "openPreview"];
 
 type JudicialPersonListItem = {
   id:          string;
@@ -274,97 +275,102 @@ export function JudicialPersonListView() {
 
       {/* Results table — Slice #37.16: fixed columns from `COLUMN`, the table
           as wide as they are. */}
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        <table {...fixedTable(COLUMNS)}>
-          <FixedColumns columns={COLUMNS} />
-          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
-            <tr>
-              <th className="px-4 py-2" {...columnHead("selectNew")}>
-                <input
-                  ref={headerCheckboxRef}
-                  type="checkbox"
-                  checked={allOnPageSelected}
-                  onChange={toggleAllOnPage}
-                  disabled={items.length === 0}
-                  aria-label={tBulk("selectAll")}
-                  className="h-4 w-4 rounded border-wire accent-cta"
-                />
-              </th>
-              <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
-              <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
-              <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
-              <th className="px-4 py-2" {...columnHead("open")} />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-crease dark:divide-zinc-800">
-            {query.isLoading && (
+      <ListPreviews>
+        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+          <table {...fixedTable(COLUMNS)}>
+            <FixedColumns columns={COLUMNS} />
+            <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-fade">
-                  {t("loading")}
-                </td>
+                <th className="px-4 py-2" {...columnHead("selectNew")}>
+                  <input
+                    ref={headerCheckboxRef}
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    onChange={toggleAllOnPage}
+                    disabled={items.length === 0}
+                    aria-label={tBulk("selectAll")}
+                    className="h-4 w-4 rounded border-wire accent-cta"
+                  />
+                </th>
+                <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
+                <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
+                <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
+                <th className="px-4 py-2" {...columnHead("openPreview")} />
               </tr>
-            )}
-            {query.isError && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-red-600">
-                  {t("error")}
-                </td>
-              </tr>
-            )}
-            {query.data && query.data.items.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-fade">
-                  {t("empty")}
-                </td>
-              </tr>
-            )}
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                onClick={(e) => {
-                  if (newTabIfAsked(e, `/judicial-persons/${item.id}`)) return;
-                  router.push(`/judicial-persons/${item.id}`);
-                }}
-                onAuxClick={(e) => newTabIfAsked(e, `/judicial-persons/${item.id}`)}
-                className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
-              >
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                  <span className="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(item.id)}
-                      onChange={() => toggleOne(item.id)}
-                      aria-label={item.displayName || item.code}
-                      className="h-4 w-4 rounded border-wire accent-cta"
-                    />
-                    <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                  </span>
-                </td>
-                <td className="px-4 py-2 font-mono text-xs text-fade">
-                  {item.code}
-                </td>
-                <td className={`px-4 py-2 font-medium ${WRAPS}`}>
-                  {item.displayName || (
-                    <span className="text-fade italic">—</span>
-                  )}
-                </td>
-                <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
-                  {item.nickname || <span className="italic">—</span>}
-                </td>
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                  <Link
-                    href={`/judicial-persons/${item.id}`}
-                    className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                  >
-                    {t("open")}
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-crease dark:divide-zinc-800">
+              {query.isLoading && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-fade">
+                    {t("loading")}
+                  </td>
+                </tr>
+              )}
+              {query.isError && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-red-600">
+                    {t("error")}
+                  </td>
+                </tr>
+              )}
+              {query.data && query.data.items.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-fade">
+                    {t("empty")}
+                  </td>
+                </tr>
+              )}
+              {items.map((item) => (
+                <tr
+                  key={item.id}
+                  // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                  onClick={(e) => {
+                    if (newTabIfAsked(e, `/judicial-persons/${item.id}`)) return;
+                    router.push(`/judicial-persons/${item.id}`);
+                  }}
+                  onAuxClick={(e) => newTabIfAsked(e, `/judicial-persons/${item.id}`)}
+                  className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                >
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    <span className="inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(item.id)}
+                        onChange={() => toggleOne(item.id)}
+                        aria-label={item.displayName || item.code}
+                        className="h-4 w-4 rounded border-wire accent-cta"
+                      />
+                      <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 font-mono text-xs text-fade">
+                    {item.code}
+                  </td>
+                  <td className={`px-4 py-2 font-medium ${WRAPS}`}>
+                    {item.displayName || (
+                      <span className="text-fade italic">—</span>
+                    )}
+                  </td>
+                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
+                    {item.nickname || <span className="italic">—</span>}
+                  </td>
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    <span className="flex gap-2">
+                      <Link
+                        href={`/judicial-persons/${item.id}`}
+                        className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                      >
+                        {t("open")}
+                      </Link>
+                      <PreviewButton target={{ kind: "company", id: item.id }} />
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ListPreviews>
 
       {/* Counts + pagination */}
       {query.data && (

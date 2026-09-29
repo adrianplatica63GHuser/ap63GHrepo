@@ -13,6 +13,7 @@ import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/comp
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 
 const PAGE_SIZE   = 15;
 const LS_KEY      = "ga40-col-document-v2";
@@ -693,7 +694,7 @@ export function DocumentListView({
   // `COLUMN` — a ticked optional column widens the table. A stored key this
   // build has no column for stays in storage and is not drawn.
   const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const columns: ColumnName[] = ["selectNew", "code", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "open"];
+  const columns: ColumnName[] = ["selectNew", "code", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "openPreview"];
   const colCount = columns.length;
 
   return (
@@ -922,107 +923,112 @@ export function DocumentListView({
         </div>
       ) : (
         <>
-          <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-            <table {...fixedTable(columns)}>
-              <FixedColumns columns={columns} />
-              <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
-                <tr>
-                  <th className="px-4 py-2" {...columnHead("selectNew")}>
-                    <input
-                      ref={headerCheckboxRef}
-                      type="checkbox"
-                      checked={allOnPageSelected}
-                      onChange={toggleAllOnPage}
-                      disabled={items.length === 0}
-                      aria-label={tBulk("selectAll")}
-                      className="h-4 w-4 rounded border-wire accent-cta"
-                    />
-                  </th>
-                  <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
-                  <th className="px-4 py-2" {...columnHead("documentType")}>{t("table.type")}</th>
-                  <th className="px-4 py-2" {...columnHead("documentTitle")}>{t("table.title")}</th>
-                  {shownCols.map((col) => (
-                    <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                      {col.label}
+          <ListPreviews>
+            <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+              <table {...fixedTable(columns)}>
+                <FixedColumns columns={columns} />
+                <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+                  <tr>
+                    <th className="px-4 py-2" {...columnHead("selectNew")}>
+                      <input
+                        ref={headerCheckboxRef}
+                        type="checkbox"
+                        checked={allOnPageSelected}
+                        onChange={toggleAllOnPage}
+                        disabled={items.length === 0}
+                        aria-label={tBulk("selectAll")}
+                        className="h-4 w-4 rounded border-wire accent-cta"
+                      />
                     </th>
-                  ))}
-                  <th className="px-4 py-2" {...columnHead("open")} />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-crease dark:divide-zinc-800">
-                {query.isLoading && (
-                  <tr>
-                    <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
-                      {t("loading")}
-                    </td>
-                  </tr>
-                )}
-                {query.isError && (
-                  <tr>
-                    <td colSpan={colCount} className="px-4 py-6 text-center text-red-600">
-                      {t("error")}
-                    </td>
-                  </tr>
-                )}
-                {query.data && query.data.items.length === 0 && (
-                  <tr>
-                    <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
-                      {t("empty")}
-                    </td>
-                  </tr>
-                )}
-                {items.map((item) => (
-                  <tr
-                    key={item.id}
-                    // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                    onClick={(e) => {
-                      if (newTabIfAsked(e, `/documents/${item.id}`)) return;
-                      router.push(`/documents/${item.id}`);
-                    }}
-                    onAuxClick={(e) => newTabIfAsked(e, `/documents/${item.id}`)}
-                    className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
-                  >
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <span className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(item.id)}
-                          onChange={() => toggleOne(item.id)}
-                          aria-label={item.title ?? item.code}
-                          className="h-4 w-4 rounded border-wire accent-cta"
-                        />
-                        <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 font-mono text-xs text-fade">
-                      {item.code}
-                    </td>
-                    <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
-                      {item.documentTypeName ?? "—"}
-                    </td>
-                    <td className={`px-4 py-2 font-medium ${WRAPS}`}>
-                      {item.title ?? (
-                        <span className="text-fade italic">—</span>
-                      )}
-                    </td>
+                    <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
+                    <th className="px-4 py-2" {...columnHead("documentType")}>{t("table.type")}</th>
+                    <th className="px-4 py-2" {...columnHead("documentTitle")}>{t("table.title")}</th>
                     {shownCols.map((col) => (
-                      <td key={col.key} className="px-4 py-2 text-fade dark:text-zinc-400">
-                        {cellValue(item, col.key)}
-                      </td>
+                      <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                        {col.label}
+                      </th>
                     ))}
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <Link
-                        href={`/documents/${item.id}`}
-                        className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                      >
-                        {t("open")}
-                      </Link>
-                    </td>
+                    <th className="px-4 py-2" {...columnHead("openPreview")} />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-crease dark:divide-zinc-800">
+                  {query.isLoading && (
+                    <tr>
+                      <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
+                        {t("loading")}
+                      </td>
+                    </tr>
+                  )}
+                  {query.isError && (
+                    <tr>
+                      <td colSpan={colCount} className="px-4 py-6 text-center text-red-600">
+                        {t("error")}
+                      </td>
+                    </tr>
+                  )}
+                  {query.data && query.data.items.length === 0 && (
+                    <tr>
+                      <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
+                        {t("empty")}
+                      </td>
+                    </tr>
+                  )}
+                  {items.map((item) => (
+                    <tr
+                      key={item.id}
+                      // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                      onClick={(e) => {
+                        if (newTabIfAsked(e, `/documents/${item.id}`)) return;
+                        router.push(`/documents/${item.id}`);
+                      }}
+                      onAuxClick={(e) => newTabIfAsked(e, `/documents/${item.id}`)}
+                      className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                    >
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <span className="inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleOne(item.id)}
+                            aria-label={item.title ?? item.code}
+                            className="h-4 w-4 rounded border-wire accent-cta"
+                          />
+                          <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 font-mono text-xs text-fade">
+                        {item.code}
+                      </td>
+                      <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
+                        {item.documentTypeName ?? "—"}
+                      </td>
+                      <td className={`px-4 py-2 font-medium ${WRAPS}`}>
+                        {item.title ?? (
+                          <span className="text-fade italic">—</span>
+                        )}
+                      </td>
+                      {shownCols.map((col) => (
+                        <td key={col.key} className="px-4 py-2 text-fade dark:text-zinc-400">
+                          {cellValue(item, col.key)}
+                        </td>
+                      ))}
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <span className="flex gap-2">
+                          <Link
+                            href={`/documents/${item.id}`}
+                            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                          >
+                            {t("open")}
+                          </Link>
+                          <PreviewButton target={{ kind: "document", id: item.id }} />
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ListPreviews>
 
           {/* Pagination */}
           <div className="flex items-center justify-between gap-4">

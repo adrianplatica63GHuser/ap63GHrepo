@@ -58,8 +58,9 @@ export function PreviewOpenerProvider({ previews, children }: { previews: Previe
 }
 
 /**
- * „Previzualizare" on an association row. Drawn only inside a detail screen
- * that shows previews; anywhere else (a screen with no tile row) it is absent.
+ * „Previzualizare" on an association row or a list row. Drawn only inside a
+ * detail screen or a list that shows previews (`ListPreviews`, #37.25);
+ * anywhere else it is absent.
  */
 export function PreviewButton({ target }: { target: PreviewTarget }) {
   const open = useContext(OpenerContext);
@@ -77,6 +78,30 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
     >
       {t("openPreview")}
     </button>
+  );
+}
+
+/**
+ * A list with previews beside it.                                 (Slice #37.25)
+ *
+ * The four entity lists (Persoane fizice, Persoane juridice, Proprietăți,
+ * Acte) have no tile row, so the list's table and its open previews share one
+ * wrapping row: the table first, then at most two previews, each at its fixed
+ * width, dropping below the table when the window is narrower than both.
+ * „Previzualizare" on a row opens one there. The same body, the same
+ * two-at-most rule and the same read-only guarantee as on a detail screen; a
+ * list has no „Părți afișate", so „Închide" is how one is closed. Changing the
+ * page, the search or the filter leaves them open.
+ */
+export function ListPreviews({ children }: { children: ReactNode }) {
+  const previews = usePreviews();
+  return (
+    <PreviewOpenerProvider previews={previews}>
+      <div data-list-previews className="flex flex-wrap items-start gap-4">
+        {children}
+        <PreviewTiles previews={previews} />
+      </div>
+    </PreviewOpenerProvider>
   );
 }
 

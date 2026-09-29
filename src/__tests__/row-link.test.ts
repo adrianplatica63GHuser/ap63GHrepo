@@ -59,6 +59,24 @@ describe("a list row", () => {
   });
 });
 
+describe('a list row\'s „Previzualizare" (#37.25)', () => {
+  const KIND: Record<string, string> = {
+    "natural-persons": "person",
+    "judicial-persons": "company",
+    properties: "property",
+    documents: "document",
+  };
+  it.each(LISTS.map((f) => [f.join("/"), f]))("%s: opens the record in a tile beside the list", (_n, f) => {
+    const src = read("src", "app", ...(f as string[]));
+    const kind = KIND[(f as string[])[0]];
+    expect(src).toMatch(new RegExp(`<PreviewButton target=\\{\\{ kind: "${kind}", id: item\\.id \\}\\} />`));
+    expect(src).toMatch(/\bcolumnHead\("openPreview"\)/);
+    expect(src).not.toMatch(/\bcolumnHead\("open"\)/);
+    // The table and the previews share one wrapping row, inside the opener.
+    expect(src).toMatch(/<ListPreviews>\s*<div className=\{`\$\{TABLE_FRAME\}/);
+  });
+});
+
 describe("a person's address", () => {
   it("goes by the person's type", () => {
     expect(personPath("NATURAL", "a b")).toBe("/natural-persons/a%20b");
