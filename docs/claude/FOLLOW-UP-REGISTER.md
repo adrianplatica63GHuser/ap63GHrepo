@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-09-28, Slice #37.23 — 269 entries. Rows are status, columns are impact.
+As of 2026-09-29, Slice #37.24 — 270 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 14 | 57 | 52 | 15 | 138 |
+| open | 14 | 58 | 52 | 15 | 139 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 35 | 52 | 25 | 3 | 115 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 53 | 115 | 81 | 20 | 269 |
+| **total** | 53 | 116 | 81 | 20 | 270 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -353,3 +353,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-267 | 2026-09-28 #37.20 | recommendation | AI | An AI read's doubts never reach the document screen. `ai-interpret` returns `lowConfidenceFields` and logs them to the server console, and the form frames nothing from them. #37.20's „AI highlights are not lost in a hidden tile” therefore rests on the frames the form does draw: the version-diff frames and the save pulse on the general and fees fields. There are no frames at all on a type's own fields. | src/app/api/documents/[id]/ai-interpret/route.ts lowConfidenceFields; src/lib/documents/ai-extract.ts; document-form.tsx renderCustomField (no `highlight`) | user | M | open | Store the read's low-confidence keys with the import, frame those fields on the form, and report them through `onLayout`'s highlighted tiles. The dot on the tile checkbox then carries them with no change of its own. | 2026-09-28 |
 | FU-268 | 2026-09-28 #37.21 | next-slice idea | UI shell | A window follows another window's saves only in the same browser (a BroadcastChannel). A second user, or Adrian on another machine, is protected by the save's version check but not refreshed: the screen changes only when they reload or save. | src/lib/sync/record-sync.ts (same-browser by design); header 37.21 „Out of scope" | user | L | open | Server push of record changes (Supabase Realtime on the four entity tables, or SSE from a route) into the same `RecordSyncProvider` listeners. Adrian to say whether he wants it. | 2026-09-28 |
 | FU-269 | 2026-09-28 #37.22 | next-slice idea | Import | The import wizard (`/admin/import`) is the one screen still on the old layout, left out of #37.22 on purpose (its own rule file, its own risks). Its page is a centred `max-w-6xl` column; its stages lay out with `w-full` (18), `flex-1` (11) and `grid-cols-2` (8); and its tables — the scan table's three, the bulk-import dialog's two, the summary's and the resumed session's — take the browser's column widths, so a wider window stretches file names and statuses apart. | src/app/admin/import/page.tsx; src/app/admin/import/_components/*.tsx; .claude/rules/import-wizard.md | user | M | open | What it would need: the page left-aligned; each stage card a panel or a wide panel (`screenPanel`); its boxes on `SCREEN` steps; the tables on `COLUMN` widths — a file name and a folder path would be the one new column (`XXL`, wraps), the rest (`description`, `count`, `date`, `runStatus`) exist; the forecast's and constraints' `grid-cols-2` as `stepGridStyle`; then TC-IMP-01..04 run again, since their specs' locators sit on these stages. | 2026-09-28 |
+| FU-270 | 2026-09-29 #37.24 | next-slice idea | UI shell | A Previzualizare tile opens only from an association tile on a detail screen. From the four entity lists (Persoane fizice, Persoane juridice, Proprietăți, Acte) a record still opens only in place, or in a new tab (#37.21). The header left list previews out, to be filed if Adrian wants them. | src/components/tiles/preview-tiles.tsx (PreviewOpenerProvider on the four detail screens only); header 37.24 „Out of scope" | user | M | open | Adrian to say whether he wants them. If yes: a „Previzualizare" row action on the lists, and a preview column beside the list (a list has no tile row), with the same body, the same two-at-most rule, and the same read-only guarantee. | 2026-09-29 |
