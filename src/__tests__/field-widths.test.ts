@@ -44,6 +44,8 @@ import {
   PANEL_REM,
   PROPERTY,
   SCALE,
+  SCREEN,
+  SCREEN_COLUMN,
   SELECT_CHROME_PX,
   TEMPLATE_FIELD,
   boxStyle,
@@ -513,5 +515,111 @@ describe("the measurement stays one SELECT past 50 columns (#37.16)", () => {
     expect(sql.match(/\|\|/g) ?? []).toHaveLength(2);
     expect(buildObjectSql(pairs.slice(0, MAX_PAIRS))).toMatch(/^json_build_object\(/);
     expect(MAX_PAIRS * 2).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
+  const APP = (...p: string[]) => code(read("src", "app", ...p));
+  /** The part of a source outside its dialogs: a dialog's card is fixed by design and stays. */
+  const outsideDialogs = (src: string, from?: string) => (from ? src.slice(src.indexOf(from)) : src);
+
+  const ASSOCIATE = [
+    ["documents", "associate-party"], ["documents", "associate-person"], ["documents", "associate-property"], ["documents", "associate-reference"],
+    ["natural-persons", "associate-document"], ["natural-persons", "associate-person"], ["natural-persons", "associate-property"],
+    ["judicial-persons", "associate-document"], ["judicial-persons", "associate-person"], ["judicial-persons", "associate-property"],
+    ["properties", "associate-document"], ["properties", "associate-person"], ["properties", "associate-reference"],
+  ] as const;
+
+  /** Every page of the slice: none caps or centres what it shows. */
+  const PAGES: [string, string][] = [
+    ["the home page", APP("page.tsx") + APP("_components", "dashboard-client.tsx")],
+    ...ASSOCIATE.map(([e, r]): [string, string] => [`/${e}/[id]/${r}`, APP(e, "[id]", r, "page.tsx")]),
+    ...(["settings", "value-lists", "groups", "stamps", "tags", "help-content", "calculation", "doc-type-engine"] as const).map(
+      (r): [string, string] => [`/admin/${r}`, APP("admin", r, "page.tsx")],
+    ),
+    ["/admin/users", APP("admin", "users", "page.tsx")],
+    ["/admin/groups/[id]", APP("admin", "groups", "[id]", "page.tsx")],
+    ["/admin/stamps/[id]", APP("admin", "stamps", "[id]", "page.tsx")],
+    ["/admin/calculation/history", APP("admin", "calculation", "history", "page.tsx")],
+    ["/admin/calculation/history/[id]", APP("admin", "calculation", "history", "[id]", "page.tsx")],
+    ["/account/change-password", APP("account", "change-password", "page.tsx")],
+  ];
+
+  it.each(PAGES)("%s sits left-aligned beside the sidebar: no mx-auto, no max-w cap", (_what, src) => {
+    expect(src.match(/mx-auto|max-w-(xs|sm|md|lg|xl|[2-7]xl)\b/g) ?? []).toEqual([]);
+  });
+
+  /** Every view of the slice, outside its dialogs. */
+  const VIEWS: [string, string][] = [
+    ["the dashboard", APP("_components", "dashboard-client.tsx")],
+    ...ASSOCIATE.map(([e, r]): [string, string] => [`/${e}/[id]/${r}`, APP(e, "[id]", r, `${r}-view.tsx`)]),
+    ["Setări", APP("admin", "settings", "_components", "settings-view.tsx")],
+    ["Liste de valori", APP("admin", "value-lists", "_components", "value-list-hub.tsx")],
+    ["Utilizatori & Acces", APP("admin", "users", "users-access-client.tsx")],
+    ["Grupuri", APP("admin", "groups", "_components", "groups-list-view.tsx")],
+    ["a group", APP("admin", "groups", "_components", "group-editor.tsx")],
+    ["Ștampile", APP("admin", "stamps", "_components", "stamps-list-view.tsx")],
+    ["a stamp", APP("admin", "stamps", "_components", "stamp-applicator.tsx")],
+    ["Etichete", outsideDialogs(APP("admin", "tags", "_components", "tag-manager.tsx"), "export function TagManager(")],
+    ["Texte de ajutor", APP("admin", "help-content", "_components", "help-content-hub.tsx")],
+    ["Calcul", APP("admin", "calculation", "_components", "calculation-view.tsx")],
+    ["Calcul — the map", APP("admin", "calculation", "_components", "preview-map.tsx")],
+    ["Istoricul calculelor", APP("admin", "calculation", "history", "_components", "calculation-history-list.tsx")],
+    ["one calculation", APP("admin", "calculation", "history", "[id]", "_components", "calculation-run-detail.tsx")],
+    ["Motorul de tipuri", APP("admin", "doc-type-engine", "_components", "doc-type-engine.tsx")],
+    ["Schimbă parola", APP("account", "change-password", "change-password-form.tsx")],
+  ];
+
+  it.each(VIEWS)("%s: every box names its step in the file, and no box or card takes the window's width", (_what, src) => {
+    const unsized: string[] = [];
+    for (const m of src.matchAll(/<(input|select|textarea)\b/g)) {
+      const rest = src.slice(m.index);
+      const end = rest.search(/\/>|\n\s*>|"\s*>|\}\s*>/);
+      const tag = end < 0 ? rest.slice(0, 900) : rest.slice(0, end + 2);
+      if (/type="(checkbox|radio|file|hidden)"/.test(tag)) continue;
+      if (!tag.includes("screenBox(")) unsized.push(tag.split("\n").slice(0, 3).join(" ").slice(0, 120));
+    }
+    expect(unsized).toEqual([]);
+    // No Tailwind width on a box, and no cap or centring outside a dialog's card.
+    const outsideCards = src.split("\n").filter((l) => !/fixed inset-/.test(l)).join("\n");
+    expect(outsideCards.match(/mx-auto|max-w-(xs|sm|md|lg|xl|[2-7]xl|\[[^\]]+\])/g) ?? []).toEqual([]);
+    expect(outsideCards).not.toMatch(/grid-cols-\d|md:grid-cols|lg:grid-cols/);
+  });
+
+  it.each(VIEWS.filter(([, src]) => /<table\b/.test(src)))("%s: every table is #37.16's — fixed, from COLUMN, every header marked", (_what, src) => {
+    for (const m of src.matchAll(/<table\b/g)) {
+      const table = region(src.slice(m.index), "<table", "</table>");
+      expect(table).toMatch(/^<table \{\.\.\.fixedTable\(/);
+      expect(table).toContain("<FixedColumns columns={");
+      expect(table).not.toMatch(/\bw-full\b|whitespace-nowrap/);
+      const head = region(table, "<thead", "</thead>");
+      const ths = head.match(/<th\b/g) ?? [];
+      expect(head.match(/<th\b[^>]*\{\.\.\.columnHead\(/g) ?? []).toHaveLength(ths.length);
+    }
+    expect(src).toMatch(/TABLE_FRAME/);
+  });
+
+  it("a view is a column as wide as its widest fixed piece, whose prose wraps inside it", () => {
+    expect(SCREEN_COLUMN).toMatch(/\bw-fit\b/);
+    expect(SCREEN_COLUMN).toMatch(/\bmax-w-full\b/);
+    for (const child of ["p", "header", "[role=status]", "[role=alert]"]) {
+      expect(SCREEN_COLUMN).toContain(`[&>${child}]:w-0`);
+      expect(SCREEN_COLUMN).toContain(`[&>${child}]:min-w-full`);
+    }
+    for (const [what, src] of VIEWS.filter(([w]) => w.startsWith("/") || ["Grupuri", "a group", "Ștampile", "a stamp", "Utilizatori & Acces", "Texte de ajutor", "Calcul", "one calculation"].includes(w))) {
+      expect([what, /\$\{SCREEN_COLUMN\}|\{SCREEN_COLUMN\}/.test(src)]).toEqual([what, true]);
+    }
+  });
+
+  it("THE SCALE DID NOT GROW: every box on these screens takes a step that already existed", () => {
+    expect(Object.keys(SCALE)).toEqual(["XS", "S", "M", "L", "XL", "XXL", "TILE"]);
+    for (const w of Object.values(SCREEN)) expect(Object.keys(SCALE)).toContain(w.step);
+    // Nothing wider than a panel's inside, as on the four detail screens.
+    for (const w of Object.values(SCREEN)) expect(SCALE[w.step]).toBeLessThanOrEqual(PANEL_INNER_REM);
+  });
+
+  it("the import wizard is not on the list: it has its own rule file, and FU-269 says what it would need", () => {
+    const register = read("docs", "claude", "FOLLOW-UP-REGISTER.md");
+    expect(register).toMatch(/\| FU-269 \|[^\n]*import/i);
   });
 });
