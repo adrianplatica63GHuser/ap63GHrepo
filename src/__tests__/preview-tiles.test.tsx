@@ -17,7 +17,7 @@
  */
 import { readFileSync } from "fs";
 import { join } from "path";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PreviewTileBody } from "@/components/tiles/preview-tile-body";
 import { MAX_PREVIEWS, nextPreviews, previewKey, type PreviewTarget } from "@/lib/ui/previews";
 
@@ -74,6 +74,22 @@ describe("a preview never changes data (#37.24)", () => {
     for (const banned of [/-form"/, /version-nav/i, /-tab"/, /entity-metadata-tab/, /method:\s*"(POST|PATCH|PUT|DELETE)"/]) {
       expect(src).not.toMatch(banned);
     }
+  });
+});
+
+describe("„Deschide” asks about unsaved work first (#37.24, TC-TILES-05 step 9)", () => {
+  it("a plain click goes through the screen's guarded navigation, not straight to the link", () => {
+    const opened: string[] = [];
+    render(
+      <PreviewTileBody title="Ion" code="PPERS1" fields={[]} openHref="/natural-persons/1?readonly=true" labels={LABELS} onClose={() => {}} onOpen={(h) => opened.push(h)} width="panel" />,
+    );
+    const link = screen.getByRole("link", { name: "Deschide" });
+    const plain = fireEvent.click(link);
+    expect(plain).toBe(false); // default prevented: the guard decides
+    expect(opened).toEqual(["/natural-persons/1?readonly=true"]);
+    // Ctrl+click is left to the browser: a new tab, nothing to ask.
+    expect(fireEvent.click(link, { ctrlKey: true })).toBe(true);
+    expect(opened).toHaveLength(1);
   });
 });
 

@@ -18,6 +18,7 @@ export function PreviewTileBody({
   openHref,
   labels,
   onClose,
+  onOpen,
   image,
   width,
   tile,
@@ -29,6 +30,12 @@ export function PreviewTileBody({
   openHref: string;
   labels: { open: string; close: string; readonly: string; firstPage: string; noPage: string };
   onClose: () => void;
+  /**
+   * „Deschide" on a plain click: the screen's guarded navigation, so an unsaved
+   * edit beside the preview is asked about first (TC-TILES-05 step 9). A
+   * Ctrl/⌘-click or a middle-click still opens the link in a new tab.
+   */
+  onOpen?: (href: string) => void;
   image?: { url: string; mimeType: string | null } | null;
   width: "panel" | "pages";
   tile?: string;
@@ -47,7 +54,15 @@ export function PreviewTileBody({
         {code && <span className="font-mono text-xs text-fade dark:text-zinc-400">{code}</span>}
         <span className="rounded-full bg-cap px-2 py-0.5 text-xs text-fade dark:bg-zinc-800 dark:text-zinc-400">{labels.readonly}</span>
         <span className="ml-auto flex gap-2">
-          <Link href={openHref} className={buttonClass({ variant: "secondary", size: "xs" })}>
+          <Link
+            href={openHref}
+            onClick={(e) => {
+              if (!onOpen || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              onOpen(openHref);
+            }}
+            className={buttonClass({ variant: "secondary", size: "xs" })}
+          >
             {labels.open}
           </Link>
           <button type="button" onClick={onClose} className={buttonClass({ variant: "secondary", size: "xs" })}>

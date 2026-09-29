@@ -29,6 +29,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { PreviewTileBody } from "./preview-tile-body";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
@@ -229,6 +230,9 @@ export function PreviewTiles({ previews, order }: { previews: Previews; order?: 
 function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClose: () => void; style?: CSSProperties }) {
   const t = useTranslations("shared.preview");
   const q = usePreviewData(target);
+  // „Deschide" leaves the screen: through the guard, like the sidebar, so an
+  // unsaved edit beside the preview is asked about first.
+  const { guardedNavigate } = useUnsavedChanges();
   const labels = { open: t("open"), close: t("close"), readonly: t("readonly"), firstPage: t("firstPage"), noPage: t("noPage") };
   const width = target.kind === "document" ? "pages" : "panel";
   if (!q.data) {
@@ -240,6 +244,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
         openHref={previewHref(target)}
         labels={labels}
         onClose={onClose}
+        onOpen={guardedNavigate}
         width={width}
         tile={previewKey(target)}
         style={style}
@@ -254,6 +259,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
       openHref={previewHref(target)}
       labels={labels}
       onClose={onClose}
+      onOpen={guardedNavigate}
       image={q.data.image}
       width={width}
       tile={previewKey(target)}
