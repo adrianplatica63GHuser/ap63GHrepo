@@ -229,6 +229,15 @@ export const HELP_HINTS = [
     screens: ["admin-stamp-applicator"],
   },
 
+  // ── Tiles, on the four detail screens (Slice #37.23) ─────────────────────
+  // Invisible state: the choice of tiles is kept in THIS browser, per screen
+  // (per type on a Document), and another browser or computer shows the
+  // default set. Its text is Adrian's; the #37.23 handover proposes it.
+  {
+    hintKey: "tile-selector",
+    screens: ["natural-person-detail", "judicial-person-detail", "property-detail", "document-detail"],
+  },
+
   // ── Calculation ─────────────────────────────────────────────────────────
   {
     hintKey: "calc-file-format",

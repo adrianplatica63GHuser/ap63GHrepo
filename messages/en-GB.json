@@ -1278,6 +1278,7 @@
         "group-pending-position": "Groups — '[new]' means the position is not assigned yet",
         "stamp-staged-changes": "Stamps — + / - are staged until Save stamps",
         "stamp-type-switch-keeps-changes": "Stamps — switching type keeps pending changes",
+        "tile-selector": "Shown parts — what the ticks do and where the choice is kept",
         "calc-file-format": "Calculation — the five sections the file must contain",
         "calc-preview-not-saved": "Calculation — nothing is created until you confirm",
         "calc-group-description-autofill": "Calculation — loading a file overwrites the description",

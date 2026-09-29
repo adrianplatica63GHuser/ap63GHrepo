@@ -14,6 +14,7 @@
  * exactly its tile's name — the name `showTile` ticks it by.
  */
 import { useTranslations } from "next-intl";
+import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import type { TileChoice } from "./use-tile-choice";
 
@@ -62,6 +63,9 @@ export function TileSelector<K extends string>({
         );
       })}
       <span className="flex items-center gap-2">
+        {/* Slice #37.23 — what the choice does and where it is kept. The text is
+            Adrian's, in Texte de ajutor; until he writes it the hint draws nothing. */}
+        <HelpHint hintKey="tile-selector" />
         <button type="button" onClick={choice.showAll} className={buttonClass({ variant: "secondary", size: "sm" })}>
           {t("all")}
         </button>

@@ -1278,6 +1278,7 @@
         "group-pending-position": "Grupuri — „[nou]” înseamnă că poziția nu este încă atribuită",
         "stamp-staged-changes": "Ștampile — + / - sunt în așteptare până la Salvează ștampilele",
         "stamp-type-switch-keeps-changes": "Ștampile — schimbarea tipului păstrează modificările în așteptare",
+        "tile-selector": "Părți afișate — ce arată bifele și unde se păstrează alegerea",
         "calc-file-format": "Calcul — cele cinci secțiuni pe care fișierul trebuie să le conțină",
         "calc-preview-not-saved": "Calcul — nu se creează nimic până la confirmare",
         "calc-group-description-autofill": "Calcul — încărcarea unui fișier suprascrie descrierea",
