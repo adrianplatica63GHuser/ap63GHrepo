@@ -22,6 +22,7 @@
  *   - Slice #37.17: a Natural Person has no tab row; the person's „Acte"
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
  *     run clicks the tile's checkbox.
+ *   - Slice #37.20: nor has the document; its „Persoane" is a tile too.
  */
 
 import { test, expect } from "@playwright/test";
@@ -109,7 +110,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 9 — the other end: „Persoane" reads the person as „Cumpărător".
-      await page.getByRole("tab", { name: "Persoane" }).click();
+      await showTile(page, "Persoane");
       const back = page.getByRole("row").filter({ has: page.getByRole("radio", { name: `${PERSON} — Cumpărător` }) });
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       const persons = page.getByRole("table").filter({ has: back });

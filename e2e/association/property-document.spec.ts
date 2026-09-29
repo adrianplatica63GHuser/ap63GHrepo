@@ -14,9 +14,9 @@
  *   - Step 1 opens the property by its address, not from its list.
  *   - Both are removed in `finally` through the DELETE routes „Șterge" calls,
  *     after the case's own cleanup (radio, „Dezasociază") has run.
- *   - Slice #37.19: the property has no tab row; its „Acte" (step 2) is a
- *     tile, ticked with `showTile` (e2e/helpers/tiles.ts). The document keeps
- *     its tabs until #37.20.
+ *   - Slices #37.19 and #37.20: neither the property nor the document has a
+ *     tab row; the property's „Acte" (step 2) and the document's
+ *     „Proprietăți" are tiles, ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
 import { test, expect } from "@playwright/test";
@@ -93,7 +93,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 8 — the other end: „Proprietăți", one column „Denumire", one row.
-      await page.getByRole("tab", { name: "Proprietăți" }).click();
+      await showTile(page, "Proprietăți");
       const back = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
       await expect(back).toHaveCount(1, { timeout: 30_000 });
       await expect(back.getByRole("button", { name: "Vizualizare" })).toBeVisible();

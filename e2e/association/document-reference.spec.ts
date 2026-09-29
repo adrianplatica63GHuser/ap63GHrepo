@@ -24,11 +24,15 @@
  *   - Both documents are removed in `finally` through DELETE
  *     /api/documents/[id], after the case's own cleanup (radio, „Dezasociază",
  *     then „Șterge" / „Da" on the certificate) has run.
+ *   - Slice #37.20: a document has no tab row; its „Asocieri" (steps 3 and 8)
+ *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts). Step 1's
+ *     „no notebook" check is on „Adaugă act", which keeps its notebook.
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-07`;
 const CERTIFICATE = `${MARK} Titlu anterior`;
@@ -84,7 +88,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 3 — open it, „Asocieri": empty, the two buttons, „Înscrisuri citate…".
       await top.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Asocieri" }).click();
+      await showTile(page, "Asocieri");
       await expect(page.getByText("Niciun document asociat")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
       await expect(page.getByText("Înscrisuri citate în acest document")).toBeVisible();
@@ -125,7 +129,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 8 — the contract's „Asocieri": the converse.
       await page.goto(`/documents/${contractId}`);
       await expect(page.getByRole("heading", { name: CONTRACT })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("tab", { name: "Asocieri" }).click();
+      await showTile(page, "Asocieri");
       const fromContract = page.getByRole("row").filter({ hasText: CERTIFICATE });
       await expect(fromContract).toHaveCount(1, { timeout: 30_000 });
       await expect(fromContract).toContainText("Certificat de Moștenitor");

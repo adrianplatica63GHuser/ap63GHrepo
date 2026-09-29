@@ -19,6 +19,11 @@
  *   - Slice #37.17: a Natural Person has no tab row; the person's „Acte"
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
  *     run clicks the tile's checkbox.
+ *   - Slice #37.20: nor has the certificate. Step 2 reads its tile row („Date
+ *     generale" ticked, and „Părți" — the parties panel, offered on a
+ *     Certificat de Moștenitor only — ticked by default, as the panel was
+ *     shown); its „Persoane" is a tile, ticked with `showTile`. „Părți" is
+ *     found as the panel's heading, since the checkbox carries the same word.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -29,7 +34,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-12`;
 const DECEASED = `Vasile ${MARK} Defunct`;
@@ -77,8 +82,9 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       // „Nicio parte adăugată" and „+ Adaugă parte".
       await page.goto(`/documents/${documentId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("tab", { name: "Detalii" })).toBeVisible();
-      await expect(page.getByText("Părți", { exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(tileBox(page, "Date generale")).toBeChecked({ timeout: 30_000 });
+      await expect(tileBox(page, "Părți")).toBeChecked({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "Părți", exact: true })).toBeVisible({ timeout: 30_000 });
       // The panel draws its title before its list answers; under load (full
       // 20260928T233256Z-25761) the list took longer than the default 5 s.
       await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 30_000 });
@@ -120,13 +126,15 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(parties.locator("tbody tr").nth(1)).toContainText("Defunct");
 
       // Step 7 — „Persoane": both people, „Rol" says each one's quality (FU-224).
-      await page.getByRole("tab", { name: "Persoane" }).click();
+      // Slice #37.20: „Părți" stays on screen beside the „Persoane" tile, and
+      // both list the two people — so the rows are looked for in the tile.
+      const personsTile = await showTile(page, "Persoane");
       for (const [person, quality] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"]] as const) {
-        const r = page.getByRole("row").filter({ hasText: person });
+        const r = personsTile.getByRole("row").filter({ hasText: person });
         await expect(r).toHaveCount(1, { timeout: 15_000 });
         await expect(r.getByRole("cell", { name: quality, exact: true })).toHaveCount(1); // FU-224
       }
-      const persons = page.getByRole("table").filter({ has: page.getByRole("row").filter({ hasText: HEIR }) });
+      const persons = personsTile.getByRole("table").filter({ has: page.getByRole("row").filter({ hasText: HEIR }) });
       for (const col of ["Nume", "Rol", "Cotă-parte", "Suprafață echivalentă (mp)", "Mod de deținere"]) {
         await expect(persons.getByText(col, { exact: true })).toBeVisible();
       }

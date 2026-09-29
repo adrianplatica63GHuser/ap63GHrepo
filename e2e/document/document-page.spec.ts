@@ -39,6 +39,13 @@
  *     columns, no fixed cell wider than its column — and photographs the list
  *     at 1366, 1920 and 2560 px, searched down to this spec's own row first so
  *     no real document's title is in the picture.
+ *   - Slice #37.20: the document has no tab row, and its notebook tabs are
+ *     tiles. Step 6 reads the tile row — „Date generale", „Pagini" and
+ *     „Instrument" ticked — where the case reads five tabs. The width checks
+ *     show every tile at once („Toate") where they turned the notebook's pages
+ *     one by one. After the widths, „Cadastru", „Stare juridică" and
+ *     „Conformitate" are ticked beside the page image and photographed at 1920
+ *     and 2560 px (a synthetic record), then „Implicit" puts the default back.
  */
 
 import fs from "fs";
@@ -47,6 +54,7 @@ import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, photograph } from "../helpers/field-widths";
+import { TILE_GROUP, showTile, tileBox } from "../helpers/tiles";
 import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD } from "../../src/lib/ui/field-widths";
 
 /** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
@@ -68,29 +76,25 @@ const TYPES_WITH_FIELDS = [
 
 /**
  * The fixed-width checks on the open document: same widths at 1400 and 2400
- * px, then — on each notebook page in turn, when there is a notebook — every
- * number box holds its sample, every dropdown its longest option, and no panel
- * is wider inside than out.
+ * px, then — with every tile shown at once („Toate", Slice #37.20: the notebook's
+ * pages are tiles now) — the same again, every number box holds its sample,
+ * every dropdown its longest option, and no panel is wider inside than out.
+ * „Implicit" puts the default back.
  */
 async function expectDocumentWidths(page: Page): Promise<void> {
+  await expectStableWidths(page);
+  const group = page.getByRole("group", { name: TILE_GROUP });
+  await group.getByRole("button", { name: "Toate", exact: true }).click();
+  await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
   await expectStableWidths(page);
   const numbers = await page.locator('input[type="number"][data-width-field]').evaluateAll((els) =>
     els.map((e) => (e as HTMLElement).dataset.widthField ?? ""),
   );
   const samples: Record<string, string> = { ...SAMPLES };
   for (const n of numbers) samples[n] = TEMPLATE_FIELD.number.sample;
-  const tabs = page.getByRole("tablist", { name: "Secțiunile formularului" }).getByRole("tab");
-  const count = await tabs.count();
-  if (count === 0) {
-    await expectFixedFieldsHold(page, samples);
-    return;
-  }
-  for (let i = 0; i < count; i++) {
-    await tabs.nth(i).click();
-    await expect(tabs.nth(i)).toHaveAttribute("aria-selected", "true");
-    await expectFixedFieldsHold(page, samples);
-  }
-  await tabs.first().click();
+  await expectFixedFieldsHold(page, samples);
+  await group.getByRole("button", { name: "Implicit", exact: true }).click();
+  await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
 }
 
 const TITLE = `${E2E_MARKER}DOC-01 Contract de test`;
@@ -196,19 +200,22 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await listSearch.fill("");
       await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${totalBefore + 1}$`))).toBeVisible({ timeout: 15_000 });
 
-      // Step 6 — „Deschide": headed with the title, „Neprocesat", five tabs,
-      // and „Pagini" reading „Nicio pagină adăugată".
+      // Step 6 — „Deschide": headed with the title, „Neprocesat", the tile row
+      // (no tabs — #37.20), and „Pagini" reading „Nicio pagină adăugată".
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       documentId = href?.split("/").pop();
       await top.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: TITLE })).toBeVisible({ timeout: 30_000 });
       // The chip carries its subject in an sr-only span
-      // (document-detail-tabs.tsx), so its text is „Stare procesare: Neprocesat"
+      // (document-detail-tiles.tsx), so its text is „Stare procesare: Neprocesat"
       // and an exact match on „Neprocesat" alone finds nothing (first run).
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
-      for (const tab of ["DETALII", "ASOCIERI", "PERSOANE", "PROPRIETĂȚI", "META INFO"]) {
-        await expect(page.getByRole("tab", { name: tab })).toBeVisible();
+      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(10, { timeout: 30_000 });
+      for (const tile of ["Date generale", "Pagini", "Instrument"]) await expect(tileBox(page, tile)).toBeChecked();
+      for (const tile of ["Cadastru", "Stare juridică", "Conformitate", "Persoane", "Proprietăți", "Asocieri", "META INFO"]) {
+        await expect(tileBox(page, tile)).not.toBeChecked();
       }
+      await expect(page.getByRole("tab")).toHaveCount(0);
       const pages = page.getByRole("region", { name: "Pagini" });
       await expect(pages.getByText("Nicio pagină adăugată")).toBeVisible();
       await expect(pages.getByRole("button", { name: "Pagini extinse" })).toBeVisible();
@@ -247,6 +254,12 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // The page image is its fixed width wherever the window puts it.
       const pagesBox = await pages.boundingBox();
       expect(Math.round(pagesBox?.width ?? 0)).toBe(PAGES_PANEL_REM * 16);
+      // Slice #37.20 — the page image and all four notebook tiles on one screen.
+      for (const tile of ["Cadastru", "Stare juridică", "Conformitate"]) await showTile(page, tile);
+      // 1440 px high: the four notebook tiles run to a second and third row.
+      await photograph(page, "document-cvc-notebook-tiles", [1920, 2560], 1440);
+      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
+      await expect(tileBox(page, "Cadastru")).not.toBeChecked();
 
       // Step 10 — „Pagini extinse": the full-window view headed „Pagini".
       // (That the page is readable is the hand run's to judge — see the header.)

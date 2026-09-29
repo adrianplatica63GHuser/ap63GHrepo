@@ -12,9 +12,9 @@
  *     names them `TC-E2E-ASSOC-10 …`.
  *   - The case's cleanup runs at the end; a `finally` removes both records
  *     through the DELETE routes „Șterge" calls, which also drop the link.
- *   - Slice #37.18: the company has no tab row; its „Acte" (step 2) is a tile,
- *     ticked with `showTile` (e2e/helpers/tiles.ts). The document keeps its
- *     tabs until #37.19.
+ *   - Slices #37.18 and #37.20: neither the company nor the document has a
+ *     tab row; the company's „Acte" (step 2) and the document's „Persoane"
+ *     (step 7) are tiles, ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
 import { test, expect } from "@playwright/test";
@@ -96,7 +96,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
 
       // Step 7 — its „Persoane": one row — the company, „Cumpărător", the two empty fields
       // reading „— fără cotă —" and „— fără suprafață —", „Mod de deținere" „— nespecificat —".
-      await page.getByRole("tab", { name: "Persoane" }).click();
+      await showTile(page, "Persoane");
       const back = page.getByRole("row").filter({ hasText: COMPANY });
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       const persons = page.getByRole("table").filter({ has: back });

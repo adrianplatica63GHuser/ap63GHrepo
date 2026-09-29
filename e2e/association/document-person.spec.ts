@@ -22,6 +22,8 @@
  *     its columns, no fixed column's cell wider than the column. It also photographs the tab at
  *     1366, 1920 and 2560 px into `playwright-report/layout/`. Not a step of
  *     the case.
+ *   - Slice #37.20: the document has no tab row; its „Persoane" is a tile,
+ *     ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
 import { test, expect } from "@playwright/test";
@@ -33,6 +35,7 @@ import {
   removeRecord,
 } from "../helpers/records";
 import { expectStableColumns, photograph } from "../helpers/field-widths";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-01`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -55,7 +58,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Persoane", beside „Asocieri": empty, „Asociază", „Dezasociază".
-      await page.getByRole("tab", { name: "Persoane" }).click();
+      await showTile(page, "Persoane");
       await expect(page.getByText("Nicio persoană asociată acestui act")).toBeVisible();
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 

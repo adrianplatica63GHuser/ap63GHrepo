@@ -1,5 +1,5 @@
 /**
- * Tiles, as a spec reaches them.            (Slices #37.17, #37.18, #37.19)
+ * Tiles, as a spec reaches them.                     (Slices #37.17–#37.20)
  *
  * A Natural Person has no tab row any more: a row of checkboxes named after the
  * tiles picks what shows (`src/components/tiles/tile-selector.tsx`). A spec
@@ -11,8 +11,9 @@
  * to it when two tiles show the same buttons. Ticking is idempotent: a tile
  * already showing (the defaults, or a `?tab=` visit) is left as it is.
  *
- * The Judicial Person has tiles too since #37.18, the Property since #37.19.
- * The Document keeps its tabs until #37.20; its specs stay on getByRole("tab").
+ * The Judicial Person has tiles too since #37.18, the Property since #37.19,
+ * the Document since #37.20 — where every notebook tab of the type is a tile,
+ * named as the tab is („Instrument", „Cadastru" …).
  */
 
 import { expect, type Locator, type Page } from "@playwright/test";
