@@ -111,9 +111,10 @@ fixed fixture where the existing one will do.
 | [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-09-29 | `e2e/layout/other-screens.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-09-29 | — |
+| [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 
-**Twenty-nine are `automated`, fifteen are `driven`, and two are `draft`** — as of 2026-09-29 (Slice
-#37.24). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Twenty-nine are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-09-29 (Slice
+#37.25). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
@@ -126,6 +127,9 @@ each is written here, not implied:
 - **`driven`, first run: TC-TILES-05** (Slice #37.24), the Previzualizare tile, driven once in the
   desktop app's browser pane on 2026-09-29. Its step 9 found a defect („Deschide" left an unsaved
   edit without asking), which was fixed and re-run in the same slice. Its header named it TC-TILES-02, an id already taken.
+- **`driven`, first run: TC-TILES-06** (Slice #37.25), the same preview opened from the four
+  entity lists, beside the list's table. Driven once in the desktop app's browser pane on
+  2026-09-29.
 - **`draft`: TC-CALC-01** (Adrian's hand figure) and **TC-AUTH-02** (the `user` account) — each
   paragraph below or in its file.
 - **`driven`, first run: TC-TILES-01** (Slice #37.17), the Natural Person's tiles, driven once in
