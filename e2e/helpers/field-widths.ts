@@ -19,6 +19,16 @@
 
 import { expect, type Locator, type Page } from "@playwright/test";
 
+/**
+ * THREE WINDOW WIDTHS, ONE ANSWER (Slice #37.23): a 1366-pixel laptop, a
+ * 1920-pixel monitor and a 2560-pixel one. Every check in this file compares
+ * them by default; #37.12–#37.22 compared 1400 and 2400.
+ */
+export const THREE_WIDTHS = [1366, 1920, 2560] as const;
+
+/** How many small tiles fit on one row at each width — #37.17's target. */
+export const SMALL_TILES_PER_ROW: Readonly<Record<number, number>> = { 1366: 2, 1920: 3, 2560: 4 };
+
 export interface WidthSnapshot {
   /** Box width in px, by `data-width-field`. */
   fields: Record<string, number>;
@@ -45,7 +55,7 @@ export async function readWidths(page: Page): Promise<WidthSnapshot> {
  * Resize the window to each width in turn and assert that every marked box and
  * every panel is exactly as wide at all of them. Puts the window back as it was.
  */
-export async function expectStableWidths(page: Page, widths: readonly number[] = [1400, 2400], height = 900): Promise<WidthSnapshot> {
+export async function expectStableWidths(page: Page, widths: readonly number[] = THREE_WIDTHS, height = 900): Promise<WidthSnapshot> {
   const before = page.viewportSize();
   const snaps: WidthSnapshot[] = [];
   try {
@@ -124,7 +134,7 @@ export async function expectFixedFieldsHold(page: Page, samples: Readonly<Record
  * does not fit), while a WRAPS column's cell may grow downward. Returns the
  * widths by column name, for the caller to compare with `columnRem`.
  */
-export async function expectStableColumns(page: Page, widths: readonly number[] = [1400, 2400], height = 900): Promise<Record<string, number>> {
+export async function expectStableColumns(page: Page, widths: readonly number[] = THREE_WIDTHS, height = 900): Promise<Record<string, number>> {
   const read = () =>
     page.evaluate(() => {
       const cols: Record<string, number> = {};
@@ -217,7 +227,7 @@ export async function photograph(
  */
 export async function expectStableScreen(
   page: Page,
-  widths: readonly number[] = [1400, 2400],
+  widths: readonly number[] = THREE_WIDTHS,
   height = 900,
   /** False for a screen that may legitimately show nothing marked — an empty list of requests. */
   requireMarks = true,
@@ -277,4 +287,39 @@ export async function expectStableScreen(
   });
   expect(misfits, "fixed columns whose cells do not hold their value").toEqual([]);
   return Object.keys(first).length;
+}
+
+/**
+ * At each width, the most small tiles (`[data-tile]` a panel wide, 32rem) that
+ * share one row equals #37.17's target: two at 1366 px, three at 1920, four
+ * at 2560. Call it with every tile shown („Toate"), so each row is as full as
+ * the window allows.                                              (Slice #37.23)
+ */
+export async function expectTilesPerRow(
+  page: Page,
+  expected: Readonly<Record<number, number>> = SMALL_TILES_PER_ROW,
+  height = 1000,
+): Promise<void> {
+  const before = page.viewportSize();
+  const got: Record<number, number> = {};
+  try {
+    for (const width of Object.keys(expected).map(Number)) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+      got[width] = await page.evaluate(() => {
+        const panel = parseFloat(getComputedStyle(document.documentElement).fontSize) * 32;
+        const rows = new Map<number, number>();
+        document.querySelectorAll<HTMLElement>("[data-tile]").forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || Math.abs(r.width - panel) > 1) return;
+          const top = Math.round(r.top);
+          rows.set(top, (rows.get(top) ?? 0) + 1);
+        });
+        return Math.max(0, ...rows.values());
+      });
+    }
+  } finally {
+    if (before) await page.setViewportSize(before);
+  }
+  expect(got, "small tiles on the fullest row, by window width").toEqual(expected);
 }

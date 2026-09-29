@@ -34,7 +34,7 @@
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, photograph } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectTilesPerRow, photograph } from "../helpers/field-widths";
 import { TILE_GROUP, tileBox } from "../helpers/tiles";
 import { ADDRESS, JUDICIAL_PERSON } from "../../src/lib/ui/field-widths";
 
@@ -168,6 +168,8 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await tiles.getByRole("button", { name: "Toate", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
+      // Slice #37.23 — two small tiles to a row at 1366 px, three at 1920, four at 2560.
+      await expectTilesPerRow(page);
       await photograph(page, "judicial-person-all-tiles", [1920, 2560]);
       await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
