@@ -35,12 +35,19 @@ const LISTS = [
 describe("an association row", () => {
   it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Vizualizare\" is a link to the record read-only, and the row opens a new tab on request", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
-    expect(src).toMatch(/<Link\s+href=\{`[^`]*\?readonly=true`\}[\s\S]{0,200}?\{t\("view"\)\}\s*<\/Link>/);
+    // 300, not 200: since #37.24 the link sits one level deeper, beside „Previzualizare".
+    expect(src).toMatch(/<Link\s+href=\{`[^`]*\?readonly=true`\}[\s\S]{0,300}?\{t\("view"\)\}\s*<\/Link>/);
     expect(src).not.toMatch(/<button[^>]*>\s*\{t\("view"\)\}/);
     expect(src).toMatch(/onClick=\{\(e\) => \{\s*if \(newTabIfAsked\(e, `[^`]*\?readonly=true`\)\) return;/);
     expect(src).toMatch(/onAuxClick=\{\(e\) => newTabIfAsked\(e, `[^`]*\?readonly=true`\)\}/);
     // A plain double-click still opens the record here.
     expect(src).toMatch(/onDoubleClick=/);
+  });
+
+  it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Previzualizare\" opens the record beside this one (#37.24)", (_n, f) => {
+    const src = read("src", "app", ...(f as string[]));
+    expect(src).toMatch(/<PreviewButton target=\{/);
+    expect(src).toMatch(/\bcolumnHead\("openPreview"\)/);
   });
 });
 
