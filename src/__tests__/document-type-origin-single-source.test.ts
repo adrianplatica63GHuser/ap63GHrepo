@@ -118,7 +118,7 @@ describe("the status colours have one home", () => {
   // derives it server-side). One component, named.
   it("lets only the badge index the document class map", () => {
     expect(productionFilesContaining("DOCUMENT_STATUS_CLASS[")).toEqual([
-      "app/documents/_components/document-detail-tabs.tsx",
+      "app/documents/_components/document-detail-tiles.tsx", // Slice #37.20: the tabs became tiles
     ]);
   });
 
@@ -140,7 +140,7 @@ describe("the status colours have one home", () => {
     expect(modal).toContain("documentTypeAwaitsForm({");
 
     const tabs = fs.readFileSync(
-      path.join(SRC, "app/documents/_components/document-detail-tabs.tsx"), "utf8");
+      path.join(SRC, "app/documents/_components/document-detail-tiles.tsx"), "utf8");
     expect(tabs).toContain("DOCUMENT_STATUS_CLASS[status]");
 
     const page = fs.readFileSync(path.join(SRC, "app/documents/[id]/page.tsx"), "utf8");
@@ -537,7 +537,7 @@ describe("only an import may stamp ai_interpreted_at", () => {
     "lib/documents/queries.ts":                          "the generic PATCH builder",
     "lib/documents/status.ts":                           "the derivation — reads",
     "app/documents/[id]/page.tsx":                       "reads it into the badge",
-    "app/documents/_components/document-detail-tabs.tsx": "prop type, forwards it",
+    "app/documents/_components/document-detail-tiles.tsx": "prop type, forwards it", // #37.20: was document-detail-tabs.tsx
     "app/documents/_components/document-form.tsx":       "prop type + the comments explaining the removed button",
     "lib/import/id-card.ts":                             "comment only — records that the WHEN lives on the column",
     // Slice #27.05. ⚠️ **WRITES NOTHING, and the mention is the point:** discover

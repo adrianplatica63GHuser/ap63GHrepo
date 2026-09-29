@@ -4,11 +4,8 @@ import {
   getDocumentWithSurveyor,
 } from "@/lib/documents/queries";
 import { documentStatus } from "@/lib/documents/status";
-import { DocumentDetailTabs } from "../_components/document-detail-tabs";
+import { DocumentDetailTiles } from "../_components/document-detail-tiles";
 import { fromApiRecord } from "../_components/form-schema";
-
-type Tab = "details" | "related" | "persons" | "properties" | "metadata";
-const VALID_TABS: Tab[] = ["details", "related", "persons", "properties", "metadata"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
@@ -47,13 +44,11 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
     aiInterpretedAt:    record.aiInterpretedAt,
     typeTemplateFields: typeTemplate?.fields ?? null,
   });
-  const initialTab: Tab =
-    tab && VALID_TABS.includes(tab as Tab) ? (tab as Tab) : "details";
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="w-full px-6 py-4 flex flex-col gap-4">
-        <DocumentDetailTabs
+        <DocumentDetailTiles
           documentId={record.id}
           documentCode={record.code}
           documentName={label}
@@ -61,7 +56,9 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           aiInterpretedAt={record.aiInterpretedAt ? record.aiInterpretedAt.toISOString() : null}
           status={status}
           readonly={readonly === "true"}
-          initialTab={initialTab}
+          // Slice #37.20: a `?tab=` adds its tile for this visit
+          // (DOC_TILE_OF_TAB); `details`, or anything unknown, adds nothing.
+          initialTab={tab}
         />
       </main>
     </div>

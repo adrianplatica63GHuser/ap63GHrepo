@@ -677,7 +677,8 @@
       "groupLabel": "Părți afișate",
       "all": "Toate",
       "defaults": "Implicit",
-      "lastOne": "Cel puțin o parte rămâne afișată."
+      "lastOne": "Cel puțin o parte rămâne afișată.",
+      "marked": "Are câmpuri evidențiate — bifați pentru a le vedea"
     },
     "bulkDelete": {
       "selectAll": "Selectează tot pe această pagină",
@@ -1480,6 +1481,16 @@
       "title": "Nu se poate șterge de aici",
       "body": "Acest act nu poate fi șters din acest ecran. Trebuie mai întâi să îl disociați de înregistrarea din care a fost deschis, apoi să îl deschideți din panoul de navigare din stânga și să îl ștergeți de acolo.",
       "ok": "OK"
+    },
+    "tiles": {
+      "general": "Date generale",
+      "pages": "Pagini",
+      "fields": "Câmpuri specifice",
+      "succession": "Părți",
+      "persons": "Persoane",
+      "properties": "Proprietăți",
+      "associations": "Asocieri",
+      "metadata": "META INFO"
     },
     "tabs": {
       "details": "Detalii",

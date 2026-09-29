@@ -164,17 +164,20 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Every panel is a named Section, and a Section is a fixed panel.
     const panels = region(DOC_FORM, "const renderCustomField = (", "const formElement = (");
     expect((panels.match(/<Section\b/g) ?? []).length).toBe((panels.match(/<Section\b[^>]*?\bpanel=/g) ?? []).length);
-    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/style=\{PANEL_STYLE\}[\s\S]*data-panel=\{panel\}/);
+    // Slice #37.20: as tiles a panel also takes its tile's `order` — still PANEL_STYLE's width.
+    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/style=\{order === undefined \? PANEL_STYLE : \{ \.\.\.PANEL_STYLE, order \}\}[\s\S]*data-panel=\{panel\}/);
     // A type's own fields: the rule, never a width of their own in the form.
     const custom = region(DOC_FORM, "const renderCustomField = (", "const feesSection = (");
     expect(custom.match(/templateFieldWidth\(/g) ?? []).toHaveLength(2);
     expect(custom).not.toMatch(/width=\{(DOC|SCALE)\./);
     // The row: whole panels and the page panel, the action bar under it at that width.
-    expect(DOC_FORM).toMatch(/style=\{showPagesPanel \? documentRowStyle\(\) : panelRowStyle\(\)\}/);
+    expect(DOC_FORM).toMatch(/style=\{tiled \? undefined : showPagesPanel \? documentRowStyle\(\) : panelRowStyle\(\)\}/);
+    // Slice #37.20: as tiles, the page's tile row carries the snap — with the page image when it is shown.
+    expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).toMatch(/choice\.isShown\("pages"\) \? documentRowStyle\(\) : panelRowStyle\(\)/);
     expect(DOC_FORM).toMatch(/style=\{fieldsBesidePagesStyle\(\)\}/);
     expect(DOC_FORM).toMatch(/style=\{PAGES_PANEL_STYLE\} data-panel="pages"/);
     expect(DOC_FORM).not.toMatch(/lg:grid-cols-5|lg:col-span-[23]/);
-    expect(code(read("src", "app", "documents", "_components", "document-detail-tabs.tsx"))).not.toMatch(/max-w-\[93rem\]|mx-auto/);
+    expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).not.toMatch(/max-w-\[93rem\]|mx-auto/);
     expect(code(read("src", "app", "documents", "new", "page.tsx"))).not.toMatch(/max-w-4xl|mx-auto/);
     expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_STYLE\}/);
   });

@@ -7,6 +7,11 @@
  * specs' `showTile(page, name)` ticks — then „Toate" (every tile) and
  * „Implicit" (the default set, the one-click way back from any arrangement).
  * The last ticked box is disabled: at least one tile always shows.
+ *
+ * Slice #37.20: `marked` names tiles that are NOT shown but hold something to
+ * look at (a highlighted field on a Document). Their box gets a dot and a
+ * title saying so. The dot sits OUTSIDE the <label>, so a marked checkbox keeps
+ * exactly its tile's name — the name `showTile` ticks it by.
  */
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -16,10 +21,13 @@ export function TileSelector<K extends string>({
   all,
   labels,
   choice,
+  marked = [],
 }: {
   all: readonly K[];
   labels: Readonly<Record<K, string>>;
   choice: TileChoice<K>;
+  /** Tiles not on screen that hold something to look at (Slice #37.20). */
+  marked?: readonly K[];
 }) {
   const t = useTranslations("shared.tiles");
   const lastOne = choice.shown.length === 1;
@@ -27,8 +35,10 @@ export function TileSelector<K extends string>({
     <div role="group" aria-label={t("groupLabel")} className="flex flex-wrap items-center gap-x-4 gap-y-2" data-tile-selector>
       {all.map((key) => {
         const checked = choice.isShown(key);
+        const isMarked = !checked && marked.includes(key);
         return (
-          <label key={key} className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-ink dark:text-zinc-200">
+          <span key={key} className="flex items-center gap-1">
+          <label className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-ink dark:text-zinc-200">
             <input
               type="checkbox"
               checked={checked}
@@ -39,6 +49,16 @@ export function TileSelector<K extends string>({
             />
             {labels[key]}
           </label>
+          {isMarked && (
+            <span
+              role="img"
+              aria-label={t("marked")}
+              title={t("marked")}
+              data-tile-marked={key}
+              className="inline-block h-2 w-2 rounded-full bg-amber-500"
+            />
+          )}
+          </span>
         );
       })}
       <span className="flex items-center gap-2">

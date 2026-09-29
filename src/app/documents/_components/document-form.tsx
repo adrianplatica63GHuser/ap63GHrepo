@@ -4,10 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
+  type FieldErrors,
   type UseFormRegister,
   useForm,
   useWatch,
@@ -77,6 +78,19 @@ import {
   type NewTypeProgress,
 } from "./discover-review-dialog";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
+import { firstErrorPath } from "@/lib/ui/tiles";
+import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
+
+/**
+ * Slice #37.20 — the `order` a panel takes in the page's tile row. A notebook
+ * tile is `display: contents` around its panels, so the tile itself cannot
+ * carry an order: each of its panels does, read from here. Undefined outside
+ * tile mode, where nothing is reordered.
+ */
+const PanelOrderContext = createContext<number | undefined>(undefined);
+
+/** The fees panel's own fields — where a highlight or an error on them is shown. */
+const FEES_FIELDS: ReadonlySet<string> = new Set(["institutionId", "nrDocument", "dateDocument"]);
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -189,12 +203,41 @@ type Props = {
    */
   aiInterpretedAt?: string | null;
   /** Notified whenever the "Show Big Page" toggle changes, so the parent
-   *  (DocumentDetailTabs) can widen the page's outer container — mirrors
+   *  (DocumentDetailTiles) can widen the page's outer container — mirrors
    *  PropertyForm's onBigMapChange. */
   onBigPageChange?: (bigPage: boolean) => void;
   /** Slice #18.06 — header DOM node to portal the version-nav controls into,
    *  so they render on the document-name line. */
   versionNavSlot?:  HTMLElement | null;
+  /**
+   * Slice #37.20: the screen's tiles, when the form is drawn as tiles (the
+   * saved document's page, `document-detail-tiles.tsx`). Absent on „Adaugă
+   * act", which keeps its notebook.
+   *
+   * As tiles there is no notebook strip: the general data is one tile, each
+   * notebook tab another (a type with none: one tile for its own fields), the
+   * page image and — on a Certificat de Moștenitor — the parties one each. The
+   * notebook's own rules (`templateTabsOf`, the fees pair) still decide which
+   * tile a panel is on: a tile is a tab drawn beside the others.
+   *
+   * ⚠️ **A TILE THAT IS NOT SHOWN IS HIDDEN, NEVER UNMOUNTED** — the
+   * notebook's rule since #36.01, for its reasons: react-hook-form values,
+   * `editDirty`, the version-diff highlights and the field pulses are computed
+   * over inputs that are on the page.
+   *
+   * The form reports what only it knows — the type on screen and which tiles
+   * hold a framed field — through `onLayout`; the page builds the tile row from
+   * that.
+   */
+  tiles?: {
+    shown: readonly string[];
+    labels: Readonly<Record<string, string>>;
+    /** A tile's place in the row (its `order`). */
+    order: (tile: string) => number;
+    /** Show a hidden tile for this visit — an error has been found in it. */
+    onRevealTile: (tile: string) => void;
+    onLayout: (layout: DocumentLayout, highlightedTiles: string[]) => void;
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -208,8 +251,18 @@ export function DocumentForm({
   initialValues,
   onBigPageChange,
   versionNavSlot,
+  tiles,
 }: Props) {
   const t       = useTranslations("document");
+  // Slice #37.20 — tile mode. `tileProps` marks a tile for the specs and hides
+  // it when unticked; `hidden` alone would lose to a display class, so the
+  // class goes with it (`tileClass`).
+  const tiled = tiles !== undefined;
+  const tileShown = (tile: string): boolean => !tiles || tiles.shown.includes(tile);
+  const tileProps = (tile: string) =>
+    tiles
+      ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile] ?? tile, hidden: !tileShown(tile) }
+      : {};
   const tShared = useTranslations("shared");
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -1255,6 +1308,70 @@ export function DocumentForm({
   const financialSoloTab = tabIndexOfPanel(financialFields, tabs);
   const certificatesTab = tabIndexOfPanel(certificatesGroup?.fields ?? [], tabs);
 
+  // ── Slice #37.20: the tiles ─────────────────────────────────────────────
+  // The tile a field is on is the tile of its notebook page, by the notebook's
+  // own rules above — nothing here decides a place of its own.
+  const tabOfCustomField = (key: string): number => {
+    const group = customFieldGroups.find((g) => g.fields.some((f) => f.key === key));
+    if (!group) return 0;
+    if (group === feesGroup) return feesUnitTab;
+    if (group === financialGroup) return feesPaired ? feesUnitTab : financialSoloTab;
+    if (group === certificatesGroup) return certificatesTab;
+    return tabIndexOfPanel(group.fields, tabs);
+  };
+  const tileOfPath = (path: string): string => {
+    const [root, key] = path.split(".");
+    if (root === "customFields") return tileOfTabIndex(tabs, tabOfCustomField(key ?? ""));
+    if (FEES_FIELDS.has(root)) return tileOfTabIndex(tabs, feesUnitTab);
+    return "general";
+  };
+  // What the page needs to build the row: the type on screen, and the tiles
+  // holding a framed field (HIGHLIGHTS ARE NOT LOST IN A HIDDEN TILE — the page
+  // marks a hidden one). Sent as one signature so an unchanged render sends
+  // nothing.
+  const onTileLayout = tiles?.onLayout;
+  const tileLayoutSig = JSON.stringify({
+    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel },
+    highlighted: Object.entries(displayHighlights ?? {})
+      .filter(([, colour]) => !!colour)
+      .map(([field]) => tileOfPath(field)),
+  });
+  useEffect(() => {
+    if (!onTileLayout) return;
+    const { layout, highlighted } = JSON.parse(tileLayoutSig) as { layout: DocumentLayout; highlighted: string[] };
+    onTileLayout(layout, highlighted);
+  }, [onTileLayout, tileLayoutSig]);
+  // Wraps one tile's panels: `display: contents` while shown, so each fixed
+  // panel flows in the row by itself, and every panel takes the tile's order.
+  const tileBlock = (tile: string, children: React.ReactNode) => (
+    <PanelOrderContext.Provider value={tiles?.order(tile)}>
+      <div {...tileProps(tile)} className={tileShown(tile) ? "contents" : "hidden"}>
+        {children}
+      </div>
+    </PanelOrderContext.Provider>
+  );
+
+  // An error in a hidden tile: show the tile (for this visit), scroll to the
+  // field, focus it and pulse it — the Natural Person's `onInvalid` (#37.17).
+  // A timeout rather than an animation frame, which a browser does not run in
+  // a tab that is not in front.
+  const onInvalid = (errs: FieldErrors<FormValues>) => {
+    if (!tiles) return;
+    const path = firstErrorPath(errs);
+    if (!path) return;
+    const tile = tileOfPath(path);
+    if (!tiles.shown.includes(tile)) tiles.onRevealTile(tile);
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "center" });
+      el.focus({ preventScroll: true });
+      const row = el.closest("label") ?? el.parentElement ?? el;
+      row.classList.add("ga-vpulse-red");
+      window.setTimeout(() => row.classList.remove("ga-vpulse-red"), 3300);
+    }, 60);
+  };
+
   // Renders one custom field's input — shared by every group below.
   // `forceFullWidthTextarea` is set for Certificate și referințe so every
   // field there gets Vecinătăți's exact full-width/auto-grow treatment,
@@ -1509,7 +1626,8 @@ export function DocumentForm({
    */
   const panelsOf = (tab: number) => (
     <>
-      {tab === 0 && generalSection}
+      {/* Slice #37.20: as tiles, the general data is a tile of its own. */}
+      {tab === 0 && !tiled && generalSection}
 
       {/* ── Taxe și onorarii (alone or paired with Financiar) ──────────── */}
       {feesUnitTab === tab && feesOrPairedSection}
@@ -1548,8 +1666,10 @@ export function DocumentForm({
   const formElement = (
     <form
       id="document-form"
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
+      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      // Slice #37.20: as tiles the form is `contents`, its panels items of the
+      // page's tile row.
+      className={tiled ? "contents" : "flex flex-col gap-4"}
       noValidate
     >
       {/* Slice #37.15: the panels FLOW — each a fixed 32rem, as many to a row
@@ -1566,7 +1686,20 @@ export function DocumentForm({
           `tabs` empty, and every `=== tab` test below is `0 === 0` — which is
           how the no-tab rendering stays what it was rather than becoming a
           special case of the new one. ──────────────────────────────────── */}
-      {notebook ? (
+      {tiled ? (
+        <>
+          {/* Slice #37.20: every notebook page is a tile, drawn beside the
+              others; a type with none has one tile for its own fields. */}
+          {tileBlock("general", generalSection)}
+          {notebook
+            ? tabs.map((label, i) => (
+                <div key={label} className="contents">
+                  {tileBlock(tileOfTabIndex(tabs, i), panelsOf(i))}
+                </div>
+              ))
+            : tileBlock(tileOfTabIndex(tabs, 0), panelsOf(0))}
+        </>
+      ) : notebook ? (
         <>
           {/* A real tablist: roving arrow keys, one stop in the tab order,
               `aria-controls` onto the page each button opens. */}
@@ -1634,7 +1767,7 @@ export function DocumentForm({
       </fieldset>
 
       {submitError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className={`text-sm text-red-600 dark:text-red-400${tiled ? " order-last basis-full" : ""}`} role="alert">
           {submitError}
         </p>
       )}
@@ -1648,8 +1781,9 @@ export function DocumentForm({
         are pages, to whole panels plus the page panel — so the action bar at
         its foot is exactly as wide as what sits above it. */}
     <div
-      className="flex flex-col gap-4"
-      style={showPagesPanel ? documentRowStyle() : panelRowStyle()}
+      // Slice #37.20: as tiles the page's tile row carries the snap.
+      className={tiled ? "contents" : "flex flex-col gap-4"}
+      style={tiled ? undefined : showPagesPanel ? documentRowStyle() : panelRowStyle()}
     >
     {/* Slice #18.06: version controls portalled into the detail-tabs header so
         they sit on the document-name line. Only for an existing document once
@@ -1671,7 +1805,7 @@ export function DocumentForm({
       )}
 
     {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
-    <UnsavedChangesBanner show={editDirty} />
+    <UnsavedChangesBanner show={editDirty} className={tiled ? "order-first basis-full" : undefined} />
 
     {/* Slice #21.06.misc: the document's own fields sit in the left column;
         once there's a document to show pages for, the Pages panel sits in a
@@ -1686,7 +1820,34 @@ export function DocumentForm({
         two-fifths it was in a 1920-pixel window — stretched to their height.
         Where one panel and the page image do not fit side by side, the page
         panel wraps under the fields. */}
-    {showPagesPanel ? (
+    {tiled ? (
+      <>
+        {formElement}
+        {/* Slice #37.20: the page image is a tile — hidden, not unmounted, so
+            an upload in progress survives unticking it. */}
+        {showPagesPanel && (
+          // No `role="region"` here: PagesPanel is itself the region „Pagini",
+          // and two regions of one name are one too many for a screen reader.
+          <div
+            data-tile="pages"
+            hidden={!tileShown("pages")}
+            className={tileShown("pages") ? "flex flex-col" : "hidden"}
+            style={{ ...PAGES_PANEL_STYLE, order: tiles?.order("pages") }}
+            data-panel="pages"
+          >
+            <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
+              <PagesPanel
+                documentId={documentId}
+                mode={effectiveMode === "view" ? "view" : "edit"}
+                state={pagesState}
+                onToggleBigPage={handleToggleBigPage}
+                sidebar
+              />
+            </ErrorBoundary>
+          </div>
+        )}
+      </>
+    ) : showPagesPanel ? (
       <div className="flex flex-wrap items-stretch" style={{ gap: PANEL_GAP }}>
         <div style={fieldsBesidePagesStyle()}>{formElement}</div>
         <div className="flex flex-col" style={PAGES_PANEL_STYLE} data-panel="pages">
@@ -1709,10 +1870,18 @@ export function DocumentForm({
          Outside <form> + fieldset so TanStack Query state stays separate
          from React Hook Form. Only rendered once the document is saved. ── */}
     {mode !== "create" && documentId && isMostenitor && (
-      <SuccessionPartiesPanel
-        documentId={documentId}
-        mode={effectiveMode === "view" ? "view" : "edit"}
-      />
+      // Slice #37.20: as tiles, „Părți" is a tile, offered only here — hidden,
+      // not unmounted, like the panel it was.
+      <div
+        {...tileProps("succession")}
+        className={tileShown("succession") ? "" : "hidden"}
+        style={tiles ? { order: tiles.order("succession") } : undefined}
+      >
+        <SuccessionPartiesPanel
+          documentId={documentId}
+          mode={effectiveMode === "view" ? "view" : "edit"}
+        />
+      </div>
     )}
 
     {/* Slice #20.16: Theater overlay — full-screen pages viewer portal.
@@ -1769,6 +1938,8 @@ export function DocumentForm({
          (mode is still "edit"), nothing renders here — the version nav arrows
          are the way back, matching the person/property forms. The submit
          button uses form="document-form" to target the <form> above. ── */}
+    {/* Slice #37.20: as tiles, the action bar is the tile row's last line. */}
+    <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
     {effectiveMode === "view" ? (
       mode === "view" && (
         <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
@@ -2077,6 +2248,7 @@ export function DocumentForm({
         )}
       </div>
     )}
+    </div>
 
     {confirmDelete && (
       <ConfirmDialog
@@ -2164,9 +2336,11 @@ function Section({
   panel:    string;
   children: React.ReactNode;
 }) {
+  // Slice #37.20: as tiles, a panel takes its tile's place in the row.
+  const order = useContext(PanelOrderContext);
   return (
     <section
-      style={PANEL_STYLE}
+      style={order === undefined ? PANEL_STYLE : { ...PANEL_STYLE, order }}
       data-panel={panel}
       className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
