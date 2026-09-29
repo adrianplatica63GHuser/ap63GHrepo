@@ -69,7 +69,7 @@ type Props = {
 };
 
 /** Until the form has loaded the types, the row knows no type: general data and the page image. */
-const NO_TYPE_YET: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: true };
+const NO_TYPE_YET: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: true, ready: false };
 
 export function DocumentDetailTiles({
   documentId,
@@ -164,7 +164,11 @@ export function DocumentDetailTiles({
         className="flex flex-col gap-4"
         style={choice.isShown("pages") ? documentRowStyle() : panelRowStyle()}
       >
-        <TileSelector all={reg.all} labels={labels} choice={choice} marked={marked} />
+        {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
+            made before would be stored under a key the type then replaces. */}
+        {layout.ready !== false && (
+          <TileSelector all={reg.all} labels={labels} choice={choice} marked={marked} />
+        )}
 
         <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
           <DocumentForm

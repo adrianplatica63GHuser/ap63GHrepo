@@ -39,6 +39,17 @@ export interface DocumentLayout {
   succession: boolean;
   /** A saved document: the page image is offered as a tile. */
   pages: boolean;
+  /**
+   * The types have loaded, so `typeKey` is the type's and not a placeholder.
+   *
+   * ⚠️ **NO TICK BEFORE THIS.** Measured in full 20260929T004229Z-10537
+   * (TC-ASSOC-01): a box ticked while the types were still loading was stored
+   * under the placeholder's key; then the type arrived, the registry and its
+   * key changed, the choice was read again from the type's own key — nothing
+   * there — and the tick was gone. The page draws the checkboxes only once this
+   * is true. Absent means true (a layout built by hand, as the tests do).
+   */
+  ready?: boolean;
 }
 
 /** The tile of notebook tab `label`. The label is the key: exact text, as `templateTabsOf` keeps it. */

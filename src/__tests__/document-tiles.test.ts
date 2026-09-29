@@ -121,6 +121,9 @@ describe("the page and the form use the declaration", () => {
     expect(page()).toMatch(/markedTiles\(/);
     expect(page()).toMatch(/documentTileRegistry\(/);
     expect(page()).toMatch(/<TileSelector[\s\S]*?marked=/);
+    // No tick before the types have loaded: it would be stored under a key the type then replaces.
+    expect(page()).toMatch(/layout\.ready !== false && \(\s*<TileSelector/);
+    expect(form()).toMatch(/ready: documentTypesFetched/);
     expect(page()).not.toMatch(/role="tab/);
     expect(code(read("src", "app", "documents", "[id]", "page.tsx"))).toContain("<DocumentDetailTiles");
     expect(fs.existsSync(path.join(ROOT, "src", "app", "documents", "_components", "document-detail-tabs.tsx"))).toBe(false);

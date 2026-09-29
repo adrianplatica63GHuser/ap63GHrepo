@@ -289,7 +289,7 @@ export function DocumentForm({
     return () => window.removeEventListener("keydown", onKey);
   }, [bigPage, onBigPageChange]);
 
-  const { data: documentTypes } = useQuery({
+  const { data: documentTypes, isFetched: documentTypesFetched } = useQuery({
     queryKey: ["document-types"],
     queryFn:  fetchDocumentTypes,
     staleTime: 5 * 60 * 1000,
@@ -1331,7 +1331,7 @@ export function DocumentForm({
   // nothing.
   const onTileLayout = tiles?.onLayout;
   const tileLayoutSig = JSON.stringify({
-    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel },
+    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched },
     highlighted: Object.entries(displayHighlights ?? {})
       .filter(([, colour]) => !!colour)
       .map(([field]) => tileOfPath(field)),
