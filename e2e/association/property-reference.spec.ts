@@ -104,7 +104,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   const fromPart = page.getByRole("row").filter({ has: page.getByRole("radio", { name: WHOLE }) });
   await expect(fromPart).toHaveCount(1, { timeout: 15_000 });
   await expect(fromPart).toContainText(`această proprietate „${ROLE}” ${whole.code}`);
-  await expect(fromPart.getByRole("button", { name: "Vizualizare" })).toBeVisible();
+  await expect(fromPart.getByRole("link", { name: "Vizualizare" })).toBeVisible();
 
   // Step 6 — the whole's „Asocieri": the converse, with the part's code.
   const partCode = await codeOf(page, part.id);

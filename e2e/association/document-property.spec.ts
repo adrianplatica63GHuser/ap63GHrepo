@@ -83,7 +83,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(linked.getByText("Cod", { exact: true })).toHaveCount(0);
 
       // Step 8 — „Vizualizare": the property's own screen, READ-ONLY.
-      await linkedRow.getByRole("button", { name: "Vizualizare" }).click();
+      await linkedRow.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
 

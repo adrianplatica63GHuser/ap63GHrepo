@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
+import Link from "next/link";
+import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
 const COLUMNS: ColumnName[] = ["select", "personName", "personType", "role", "open"];
@@ -96,7 +98,12 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
+                  // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                  onClick={(e) => {
+                    if (newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)) return;
+                    setSelectedId(item.id === selectedId ? null : item.id);
+                  }}
+                  onAuxClick={(e) => newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)}
                   onDoubleClick={() => {
                     const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
                     router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
@@ -132,17 +139,13 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
-                        router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
-                      }}
+                    <Link
+                      href={`${personPath(item.type, item.id)}?readonly=true`}
+                      onClick={(e) => e.stopPropagation()}
                       className={buttonClass({ variant: "secondary", size: "xs" })}
                     >
                       {t("view")}
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))}

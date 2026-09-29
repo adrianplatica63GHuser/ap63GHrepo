@@ -78,7 +78,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite la fel din ambele
       await expect(onAna).toHaveCount(1, { timeout: 15_000 });
       await expect(onAna).toContainText("Fizică");
       await expect(onAna.getByRole("cell", { name: "—", exact: true })).toHaveCount(1);
-      await expect(onAna.getByRole("button", { name: "Vizualizare" })).toBeVisible();
+      await expect(onAna.getByRole("link", { name: "Vizualizare" })).toBeVisible();
       const table = page.getByRole("table").filter({ has: onAna });
       for (const col of ["Nume", "Tip", "Tip relație"]) {
         await expect(table.getByText(col, { exact: true })).toBeVisible();

@@ -18,6 +18,8 @@ import {
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
+import Link from "next/link";
+import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
 const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "open"];
@@ -312,7 +314,12 @@ export function DocumentPersonsTab({ documentId }: Props) {
                 return (
                   <tr
                     key={item.linkId}
-                    onClick={() => setSelectedId(selected ? null : item.linkId)}
+                    // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                    onClick={(e) => {
+                      if (newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)) return;
+                      setSelectedId(selected ? null : item.linkId);
+                    }}
+                    onAuxClick={(e) => newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)}
                     onDoubleClick={() => {
                       const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
                       router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
@@ -414,17 +421,13 @@ export function DocumentPersonsTab({ documentId }: Props) {
                     </td>
 
                     <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
-                          router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
-                        }}
+                      <Link
+                        href={`${personPath(item.type, item.id)}?readonly=true`}
+                        onClick={(e) => e.stopPropagation()}
                         className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         {t("view")}
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 );

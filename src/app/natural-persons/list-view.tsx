@@ -11,6 +11,7 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
+import { newTabIfAsked } from "@/lib/ui/row-link";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-person-v2";
@@ -485,7 +486,12 @@ export function NaturalPersonListView() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                onClick={() => router.push(`/natural-persons/${item.id}`)}
+                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                onClick={(e) => {
+                  if (newTabIfAsked(e, `/natural-persons/${item.id}`)) return;
+                  router.push(`/natural-persons/${item.id}`);
+                }}
+                onAuxClick={(e) => newTabIfAsked(e, `/natural-persons/${item.id}`)}
                 className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>

@@ -85,7 +85,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       const onCompany = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
       await expect(onCompany).toContainText(ROLE);
-      await expect(onCompany.getByRole("button", { name: "Vizualizare" })).toBeVisible();
+      await expect(onCompany.getByRole("link", { name: "Vizualizare" })).toBeVisible();
       const table = page.getByRole("table").filter({ has: onCompany });
       for (const col of ["Denumire", "Rol"]) {
         await expect(table.getByText(col, { exact: true })).toBeVisible();
@@ -100,7 +100,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       await expect(onProperty).toContainText(ROLE);
 
       // Step 8 — „Vizualizare" opens the COMPANY, read-only, „Înapoi la listă" and „Modifică".
-      await onProperty.getByRole("button", { name: "Vizualizare" }).click();
+      await onProperty.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Înapoi la listă" }).or(page.getByRole("link", { name: "Înapoi la listă" }))).toBeVisible();

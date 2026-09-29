@@ -151,7 +151,8 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
                   <a
                     href={personHref(item)}
                     className="text-cta hover:underline dark:text-cta"
-                    onClick={(e) => { e.preventDefault(); router.push(personHref(item)); }}
+                    // Slice #37.21: Ctrl/⌘+click or a middle-click is the browser's own — a new tab.
+                    onClick={(e) => { if (e.ctrlKey || e.metaKey || e.button !== 0) return; e.preventDefault(); router.push(personHref(item)); }}
                   >
                     {item.displayName}
                   </a>

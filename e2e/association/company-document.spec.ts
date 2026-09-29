@@ -90,7 +90,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       }
 
       // Step 6 — „Vizualizare": the document, read-only.
-      await linked.getByRole("button", { name: "Vizualizare" }).click();
+      await linked.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
@@ -113,7 +113,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(back.locator("select option:checked")).toHaveText("— nespecificat —");
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.
-      await back.getByRole("button", { name: "Vizualizare" }).click();
+      await back.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 

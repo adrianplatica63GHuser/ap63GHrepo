@@ -105,7 +105,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expectStableColumns(page);
 
       // Step 8 — „Vizualizare": the document, READ-ONLY.
-      await linked.getByRole("button", { name: "Vizualizare" }).click();
+      await linked.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 

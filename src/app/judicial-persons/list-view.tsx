@@ -11,6 +11,7 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
+import { newTabIfAsked } from "@/lib/ui/row-link";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN`. */
@@ -319,7 +320,12 @@ export function JudicialPersonListView() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                onClick={() => router.push(`/judicial-persons/${item.id}`)}
+                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                onClick={(e) => {
+                  if (newTabIfAsked(e, `/judicial-persons/${item.id}`)) return;
+                  router.push(`/judicial-persons/${item.id}`);
+                }}
+                onAuxClick={(e) => newTabIfAsked(e, `/judicial-persons/${item.id}`)}
                 className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>

@@ -104,7 +104,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       const onProperty = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PERSON }) });
       await expect(onProperty).toHaveCount(1, { timeout: 15_000 });
       await expect(onProperty).toContainText(ROLE);
-      await expect(onProperty.getByRole("button", { name: "Vizualizare" })).toBeVisible();
+      await expect(onProperty.getByRole("link", { name: "Vizualizare" })).toBeVisible();
       const personsTable = page.getByRole("table").filter({ has: onProperty });
       for (const col of ["Nume", "Rol"]) {
         await expect(personsTable.getByText(col, { exact: true })).toBeVisible();
@@ -155,7 +155,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(again).toContainText(ROLE);
 
       // Step 12 — „Vizualizare": the property READ-ONLY, its „Persoane" reads the person.
-      await again.getByRole("button", { name: "Vizualizare" }).click();
+      await again.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
       await showTile(page, "Persoane");

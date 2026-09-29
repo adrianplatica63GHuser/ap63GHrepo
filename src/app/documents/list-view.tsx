@@ -12,6 +12,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
+import { newTabIfAsked } from "@/lib/ui/row-link";
 
 const PAGE_SIZE   = 15;
 const LS_KEY      = "ga40-col-document-v2";
@@ -973,7 +974,12 @@ export function DocumentListView({
                 {items.map((item) => (
                   <tr
                     key={item.id}
-                    onClick={() => router.push(`/documents/${item.id}`)}
+                    // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                    onClick={(e) => {
+                      if (newTabIfAsked(e, `/documents/${item.id}`)) return;
+                      router.push(`/documents/${item.id}`);
+                    }}
+                    onAuxClick={(e) => newTabIfAsked(e, `/documents/${item.id}`)}
                     className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                   >
                     <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
