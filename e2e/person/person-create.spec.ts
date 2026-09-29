@@ -39,7 +39,7 @@ import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectTilesPerRow, photograph } from "../helpers/field-widths";
 import { TILE_GROUP } from "../helpers/tiles";
-import { ADDRESS, NATURAL_PERSON, NP_PANEL_INNER_REM, panelRem } from "../../src/lib/ui/field-widths";
+import { ADDRESS, NATURAL_PERSON, NP_PANEL_INNER_REM, PANEL_REM, panelRem } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
 const SAMPLES: Record<string, string> = {};
@@ -133,8 +133,9 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
       // Slice #37.23 — two small tiles to a row at 1366 px, three at 1920, four at 2560.
-      // Slice #37.26 — the person's form tiles are each as wide as their widest row, not a panel.
-      await expectTilesPerRow(page, undefined, undefined, Object.values(NP_PANEL_INNER_REM).map(panelRem));
+      // Slice #37.26 — the person's form tiles are each as wide as their widest row; a list tile
+      // narrower than a panel is still a panel wide (ListTile), so 32rem stays allowed.
+      await expectTilesPerRow(page, undefined, undefined, [PANEL_REM, ...Object.values(NP_PANEL_INNER_REM).map(panelRem)]);
       await photograph(page, "natural-person-all-tiles", [1920, 2560], 1400);
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);

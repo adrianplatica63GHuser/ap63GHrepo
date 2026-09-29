@@ -301,12 +301,13 @@ describe("the Natural Person: every label above its box, every panel as wide as 
   /**
    * The form's rows, read from its source: each `<div className="flex gap-2">`
    * is one row of the names in it, and a field outside one is a row alone.
+   * `field="…"` is the read-only Vârstă, which has no form name.
    */
   function rowsOf(src: string): string[][] {
     const rows: string[][] = [];
-    const re = /<div className="flex gap-2">([\s\S]*?)\n {10}<\/div>|name="([a-zA-Z0-9.]+)"/g;
+    const re = /<div className="flex gap-2">([\s\S]*?)\n {10}<\/div>|(?:name|field)="([a-zA-Z0-9.]+)"/g;
     for (const m of src.matchAll(re)) {
-      if (m[1] !== undefined) rows.push([...m[1].matchAll(/name="([a-zA-Z0-9.]+)"/g)].map((n) => n[1]));
+      if (m[1] !== undefined) rows.push([...m[1].matchAll(/(?:name|field)="([a-zA-Z0-9.]+)"/g)].map((n) => n[1]));
       else rows.push([m[2]]);
     }
     return rows;
