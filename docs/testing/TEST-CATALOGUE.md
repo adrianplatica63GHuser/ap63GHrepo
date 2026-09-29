@@ -109,9 +109,10 @@ fixed fixture where the existing one will do.
 | [TC-TILES-03](cases/TC-TILES-03.md) | Părțile unei proprietăți, cu harta și Street View ca părți proprii | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
-| [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `draft` | — | — |
+| [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-09-29 | `e2e/layout/other-screens.spec.ts` |
+| [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-09-29 | — |
 
-**Twenty-eight are `automated`, fourteen are `driven`, and three are `draft`** — as of 2026-09-29 (Slice
+**Twenty-nine are `automated`, fifteen are `driven`, and two are `draft`** — as of 2026-09-29 (Slice
 #37.24). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
@@ -122,9 +123,9 @@ each is written here, not implied:
   **TC-USERS-01, TC-SET-01, TC-VL-01** (Slice #37.08) — a second run unchanged confirms each, and
   a promotion wave takes them. Each carries its cleanup rule: a refused request stays in „Istoric”,
   a setting is put back exactly, a `TC-` value is deleted.
-- **`draft`: TC-TILES-05** (Slice #37.24), the Previzualizare tile. The header asked for one run to
-  `driven`; the desktop pane has been at the login page since #37.21, and Claude does not type a
-  password, so it waits for a signed-in pane. Its header named it TC-TILES-02, an id already taken.
+- **`driven`, first run: TC-TILES-05** (Slice #37.24), the Previzualizare tile, driven once in the
+  desktop app's browser pane on 2026-09-29. Its step 9 found a defect („Deschide" left an unsaved
+  edit without asking), which was fixed and re-run in the same slice. Its header named it TC-TILES-02, an id already taken.
 - **`draft`: TC-CALC-01** (Adrian's hand figure) and **TC-AUTH-02** (the `user` account) — each
   paragraph below or in its file.
 - **`driven`, first run: TC-TILES-01** (Slice #37.17), the Natural Person's tiles, driven once in
@@ -134,6 +135,10 @@ each is written here, not implied:
   map and Street View as tiles, and **TC-TILES-04** (Slice #37.20) the Document's, with every
   notebook tab a tile and the choice kept per type. All three were driven once on 2026-09-28 in the
   desktop app's browser pane; the same holds for them.
+- **TC-LAYOUT-01 to `automated`, Slices #37.22 and #37.24.** Every screen #37.22 put on the
+  fixed-width rule, measured at 1400 and 2400 px. It was driven twice in the desktop app's browser
+  pane on 2026-09-29, unchanged between the runs; its spec was written in #37.22 and went in once
+  the case was confirmed.
 - **TC-TABS-01 to `automated`, Slice #37.21.** One contract in two windows of one browser. It was
   driven twice in two tabs of the desktop app's browser pane, and the second run changed nothing, so
   it was confirmed. Its spec, `e2e/sync/two-windows.spec.ts`, uses two pages of one Playwright

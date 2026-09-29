@@ -5,8 +5,8 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-09-29 |
 
 ## What this proves
 
@@ -60,3 +60,27 @@ step 7 is never saved.
 each of the three persons.
 
 ## Notes from the runs
+
+**2026-09-29 — `driven` (Slice #37.24), in the Claude desktop app's browser pane, signed in as
+admin.** The contract and the three persons were made, and associated, through the API routes the screens'
+„Adaugă" and „Asociază" call, not by hand. At the end they were removed through the DELETE route
+„Șterge" calls: 204 for all four, and Căutare globală then found nothing for `TC-TILES-05`.
+- Steps 1–8 as written. One detail: in the preview, the ONLY controls were the link „Deschide"
+  and the button „Închide". It was 512 px wide, one panel, with a dashed border, and Nume,
+  Prenume, CNP, Data nașterii and Locul nașterii were shown with „—" for the empty ones. The boxes
+  were „Previzualizare: PPERS04499" and so on. The third preview replaced the first, and
+  reopening an open one changed nothing.
+- **Step 9 failed on the first run, and that was a defect.** „Deschide" left the contract
+  WITHOUT asking, and the unsaved `TC-NESALVAT` was lost (never stored; the contract's subject was
+  still empty). The link went straight to the record, and only the sidebar's navigation goes
+  through the unsaved-changes guard. Fixed in the same slice: a plain click on „Deschide" now
+  calls the guard's `guardedNavigate`, and Ctrl/⌘ or middle click still opens a new tab.
+  `preview-tiles.test.tsx` holds it (jest 20260929T113704Z-9356).
+  Re-run: „Modificări nesalvate — Aveți modificări nesalvate. Doriți să le salvați înainte de a
+  continua?" with „Anulează / Renunță / Salvează". „Anulează" left the screen as it was, with
+  `TC-NESALVAT` and the banner.
+- Step 10, at a 2560 × 1440 viewport: the preview sat on the same row as the contract's
+  „Persoane" tile.
+- The same gap sits outside the preview: an association tile's „Vizualizare" and a row's
+  double-click also leave the screen without asking. That is FU-271.
+
