@@ -119,6 +119,17 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await expectStableColumns(page);
       await photograph(page, "association-tab");
 
+      // Slice #37.24 — the buyer in a Previzualizare tile beside the contract, for the
+      // handover's picture at 2560 px; then „Închide", and the case goes on.
+      await linked.getByRole("button", { name: "Previzualizare", exact: true }).click();
+      const preview = page.locator("[data-preview]");
+      await expect(preview).toBeVisible({ timeout: 30_000 });
+      await expect(preview.getByRole("link", { name: "Deschide", exact: true })).toBeVisible();
+      await expect(preview).toContainText(MARK, { timeout: 30_000 });
+      await photograph(page, "cvc-buyer-preview", [2560], 1440);
+      await preview.getByRole("button", { name: "Închide", exact: true }).click();
+      await expect(preview).toHaveCount(0);
+
       // Step 9 — `50%`, leave the field: stored, and the cell reads `50`.
       const cota = page.getByRole("textbox", { name: `Cotă-parte — ${ROW}` });
       await cota.click();
