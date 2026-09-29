@@ -286,7 +286,7 @@ export function CalculationView() {
   // ---- Main ----------------------------------------------------------------
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-5`} style={WIDE_COLUMN_STYLE}>
+    <div className={`${SCREEN_COLUMN} gap-5`} style={WIDE_COLUMN_STYLE} data-panel="calculation">
       {/* Intro / reasoning */}
       <p className="text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
 

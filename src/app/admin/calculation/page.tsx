@@ -17,7 +17,8 @@ export default async function CalculationPage() {
             a second, duplicate "?" on this screen alone.
           */}
           <h1 className="text-2xl font-semibold tracking-tight">{t("pageTitle")}</h1>
-          <div className="ml-auto">
+          {/* Beside the heading (Slice #37.22), not at the window's far edge. */}
+          <div className="ml-4">
             <Link
               href="/admin/calculation/history"
               className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"

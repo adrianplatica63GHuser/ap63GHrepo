@@ -567,11 +567,17 @@ export const WIDE_TILE_STYLE: CSSProperties = { width: rem(TILE_REM.wide) };
  * out of the column's width and then fills it, so a long sentence — a
  * document's title under the heading, an error — wraps inside the column
  * instead of stretching it to the window.
+ *
+ * ⚠️ **NOT AN `sr-only` ONE.** A live region kept for screen readers is
+ * `position: absolute`, so `min-w-full` would size it by the page, not by the
+ * column, and push the page sideways by the sidebar's width — measured on
+ * the „Asociază persoană" screen, 247 px at 1920. `:not(.sr-only)` leaves it be.
  */
 export const SCREEN_COLUMN =
   "flex w-fit max-w-full flex-col " +
   "[&>p]:w-0 [&>p]:min-w-full [&>header]:w-0 [&>header]:min-w-full " +
-  "[&>[role=status]]:w-0 [&>[role=status]]:min-w-full [&>[role=alert]]:w-0 [&>[role=alert]]:min-w-full";
+  "[&>[role=status]:not(.sr-only)]:w-0 [&>[role=status]:not(.sr-only)]:min-w-full " +
+  "[&>[role=alert]:not(.sr-only)]:w-0 [&>[role=alert]:not(.sr-only)]:min-w-full";
 
 /**
  * A column is never narrower than a panel, so a screen whose only fixed piece

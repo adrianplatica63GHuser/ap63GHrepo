@@ -602,7 +602,7 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
   it("a view is a column as wide as its widest fixed piece, whose prose wraps inside it", () => {
     expect(SCREEN_COLUMN).toMatch(/\bw-fit\b/);
     expect(SCREEN_COLUMN).toMatch(/\bmax-w-full\b/);
-    for (const child of ["p", "header", "[role=status]", "[role=alert]"]) {
+    for (const child of ["p", "header", "[role=status]:not(.sr-only)", "[role=alert]:not(.sr-only)"]) {
       expect(SCREEN_COLUMN).toContain(`[&>${child}]:w-0`);
       expect(SCREEN_COLUMN).toContain(`[&>${child}]:min-w-full`);
     }
