@@ -6,6 +6,11 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { LABEL_STYLE, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, type ColumnName } from "@/lib/ui/field-widths";
+
+/** The results table, at #37.16's column widths (Slice #37.22). */
+const COLUMNS: readonly ColumnName[] = ["select", "code", "propertyLabel"];
 
 const PAGE_SIZE = 15;
 
@@ -78,7 +83,7 @@ export function AssociatePropertyView({ documentId, documentName }: Props) {
     router.push(`/documents/${encodeURIComponent(documentId)}?tab=properties`);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`${SCREEN_COLUMN} gap-6`} style={SCREEN_COLUMN_STYLE}>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-fade dark:text-zinc-400">{documentName}</p>
@@ -86,18 +91,18 @@ export function AssociatePropertyView({ documentId, documentName }: Props) {
 
       <div className="flex flex-wrap gap-3">
         <label className="flex items-center gap-2 text-sm">
-          <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelSearch")}</span>
-          <input
+          <span style={LABEL_STYLE} className="shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelSearch")}</span>
+          <input {...screenBox("searchText")}
             type="text"
             value={searchInput}
             onChange={(e) => { setSearchInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("searchPlaceholder")}
-            className="w-64 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
       </div>
 
-      <div className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {isLoading ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
         ) : isError ? (
@@ -105,12 +110,13 @@ export function AssociatePropertyView({ documentId, documentName }: Props) {
         ) : items.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
-          <table className="w-full text-sm">
+          <table {...fixedTable(COLUMNS)}>
+            <FixedColumns columns={COLUMNS} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colLabel")}</th>
+                <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("code")}>{t("colCode")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("propertyLabel")}>{t("colLabel")}</th>
               </tr>
             </thead>
             <tbody>
@@ -128,7 +134,7 @@ export function AssociatePropertyView({ documentId, documentName }: Props) {
                       onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.label} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
-                  <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.label}</td>
+                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.label}</td>
                 </tr>
               ))}
             </tbody>

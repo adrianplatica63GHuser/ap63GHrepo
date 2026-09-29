@@ -11,7 +11,7 @@ export default async function AssociatePartyPage({ params }: PageParams) {
   const label = record.title ?? record.code;
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-4xl px-6 py-4">
+      <main className="w-full px-6 py-4">
         <AssociatePartyView
           documentId={record.id}
           documentName={label}

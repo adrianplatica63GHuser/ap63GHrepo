@@ -10,7 +10,7 @@ export default async function AssociatePropertyPage({ params }: PageParams) {
   if (!data) notFound();
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-4xl px-6 py-4">
+      <main className="w-full px-6 py-4">
         <AssociatePropertyView
           personId={data.person.id}
           personName={data.person.displayName}

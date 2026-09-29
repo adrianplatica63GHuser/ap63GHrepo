@@ -23,7 +23,7 @@ export default async function AssociatePersonPage({ params }: PageParams) {
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-4xl px-6 py-4">
+      <main className="w-full px-6 py-4">
         <AssociatePersonView
           documentId={record.id}
           documentName={label}

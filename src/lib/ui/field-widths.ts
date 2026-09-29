@@ -486,6 +486,25 @@ export const COLUMN = {
   stamps: { content: "M", kind: "wraps" }, //               stamp code chips
   updatedBy: { content: "L", kind: "wraps" }, //            LIST.updatedBy
   metadataUpdated: { content: "M", kind: "fixed" }, //      a date
+  // The other screens (#37.22) — the admin lists, the dashboard, the calculation
+  date: { content: "M", kind: "fixed" }, //                 dd.mm.yyyy — a run's, an expiry
+  dateTime: { content: "L", kind: "fixed" }, //             „28.09.2026, 14:05" — when an access request came, and was answered
+  count: { content: "S", kind: "fixed" }, //                a group's or stamp's members, a tag's uses, a run's parcels
+  rowActions: { content: "M", kind: "fixed" }, //           „Editează" and „Șterge" — two xs buttons, which wrap rather than overflow
+  groupCode: { content: "M", kind: "fixed" }, //            „AA 01 (12)", and the group's target under it
+  description: { content: "XXL", kind: "wraps" }, //        a group's description; a stamp's code, short description and notes
+  tag: { content: "L", kind: "wraps" }, //                  a tag, in mono
+  username: { content: "L", kind: "wraps" }, //             who asked for access
+  email: { content: "XL", kind: "wraps" }, //               their email; NP.personalEmail1 is XL too
+  requestStatus: { content: "M", kind: "fixed" }, //        „În așteptare", with its icon
+  decision: { content: "L", kind: "fixed" }, //             „Aprobă" and „Respinge", two sm buttons with icons
+  expiryStatus: { content: "L", kind: "fixed" }, //         „Expiră în 30 de zile"
+  algorithm: { content: "M", kind: "fixed" }, //            „Divizare parcelă"
+  runStatus: { content: "S", kind: "fixed" }, //            „Activ" / „Depășit"
+  outputRole: { content: "L", kind: "fixed" }, //           „Parcelă proprietar"
+  viewLink: { content: "L", kind: "fixed" }, //             „Vezi proprietatea →", or „șters"
+  percent: { content: "S", kind: "fixed" }, //              „33.333%"
+  area: { content: "M", kind: "fixed" }, //                 „1234567.89", as surfaceAreaMp
 } as const satisfies Record<string, ColumnWidth>;
 export type ColumnName = keyof typeof COLUMN;
 
@@ -515,3 +534,113 @@ export function columnRem(name: ColumnName): number {
  */
 export const TILE_REM = { small: PANEL_REM, wide: 2 * PANEL_REM + PANEL_GAP_REM } as const;
 export const WIDE_TILE_STYLE: CSSProperties = { width: rem(TILE_REM.wide) };
+
+// ---- every other screen (#37.22) ------------------------------------------------------------
+
+/**
+ * EVERY OTHER SCREEN FOLLOWS THE SAME RULE.                    (Slice #37.22)
+ *
+ * The home page, the „Asociază …" screens, and the administration screens —
+ * Setări, Liste de valori, Utilizatori & Acces, Grupuri, Ștampile, Etichete,
+ * Texte de ajutor, Calcul and its history, Motorul de tipuri, Schimbă parola —
+ * on #37.12's rule. After this slice no screen gets a wider field because the
+ * window got wider:
+ *   - a page sits left-aligned beside the sidebar: no `mx-auto`, no `max-w-*xl`;
+ *   - its view is a `SCREEN_COLUMN`: as wide as its widest fixed piece — a
+ *     panel, a table, a row of boxes — and never as wide as the window; its
+ *     prose wraps inside it;
+ *   - a section card is a panel (`PANEL_STYLE`), a wide panel
+ *     (`WIDE_TILE_STYLE`), or as wide as the table it holds;
+ *   - a sentence of prose stops at `PROSE_STYLE` and grows downward, so a
+ *     long one cannot stretch the column it sits in;
+ *   - every box names a step below, and every table is #37.16's.
+ *
+ * Dialogs keep their card (`max-w-sm`, `-md`, `-lg`, and the value lists'
+ * wider editors): fixed by design, and out of this slice. So is the import
+ * wizard, which has its own rule file (FU-269).
+ *
+ * THE SCALE DID NOT GROW. Every box here takes a step that already existed.
+ */
+/**
+ * The view's column: as wide as its widest FIXED child. A paragraph, the
+ * header, a status line or an alert does not count: `w-0 min-w-full` takes it
+ * out of the column's width and then fills it, so a long sentence — a
+ * document's title under the heading, an error — wraps inside the column
+ * instead of stretching it to the window.
+ */
+export const SCREEN_COLUMN =
+  "flex w-fit max-w-full flex-col " +
+  "[&>p]:w-0 [&>p]:min-w-full [&>header]:w-0 [&>header]:min-w-full " +
+  "[&>[role=status]]:w-0 [&>[role=status]]:min-w-full [&>[role=alert]]:w-0 [&>[role=alert]]:min-w-full";
+
+/**
+ * A column is never narrower than a panel, so a screen whose only fixed piece
+ * is a button still gives its prose a panel's width to wrap in; the
+ * calculation, which opens on a paragraph, takes two panels.
+ */
+export const SCREEN_COLUMN_STYLE: CSSProperties = { minWidth: rem(PANEL_REM) };
+export const WIDE_COLUMN_STYLE: CSSProperties = { minWidth: rem(TILE_REM.wide) };
+
+/** Prose stops at two panels and the gap, and wraps. */
+export const PROSE_STYLE: CSSProperties = { maxWidth: rem(TILE_REM.wide) };
+
+/** A caption under one box stops at a panel's width (`max-w-lg` before). */
+export const CAPTION_STYLE: CSSProperties = { maxWidth: rem(PANEL_REM) };
+
+/** A grid of `columns` boxes, each one step wide — the calculation's figures, the help editor's texts. */
+export function stepGridStyle(step: Step, columns: number, gapRem = 0.75): CSSProperties {
+  return { display: "grid", gridTemplateColumns: `repeat(${columns}, ${rem(SCALE[step])})`, gap: rem(gapRem) };
+}
+
+/** The calculation's preview map: two panels wide, as tall as it was (420 px). */
+export const CALC_MAP_STYLE: CSSProperties = { width: rem(TILE_REM.wide), height: rem(26.25) };
+
+/** The list of screens and hints beside the help editor (18rem before; XL now). */
+export const HELP_NAV_STYLE: CSSProperties = { width: rem(SCALE.XL) };
+
+export const SCREEN = {
+  // The „Asociază …" screens: the search boxes and the role
+  searchName: { step: "L", kind: "fixed" }, //         a person's name, typed to find them (w-48 before)
+  searchCode: { step: "M", kind: "fixed", sample: "HHHHH00000" }, // a code (w-32 and w-36 before)
+  searchText: { step: "XL", kind: "fixed" }, //        one box over code, title and more (w-64 before)
+  role: { step: "XL", kind: "select" }, //             a role — „Moștenitor testamentar"; longer ones show on hover
+  // Grupuri and Ștampile: the add form and the editor
+  groupTarget: { step: "L", kind: "select" }, //       „Persoane fizice" — also the read-only box (200 px before)
+  groupCode: { step: "M", kind: "fixed", sample: "HH 00" }, // „AA 01" (140 px before)
+  groupDescription: { step: "XXL", kind: "lines", rows: 2 }, // at most 500 characters
+  stampShortDescription: { step: "XXL", kind: "fixed" }, // a stamp's short description (max-w-sm before)
+  stampNotes: { step: "XXL", kind: "lines", rows: 3 },
+  groupCodePending: { step: "XL", kind: "fixed" }, //  „Codul se atribuie la salvare", before there is a code
+  memberSearch: { step: "XXL", kind: "fixed" }, //     the search above the candidates
+  // Setări
+  timeFrameDays: { step: "S", kind: "fixed", sample: "0000" }, // 1–3650, with the spinner (w-20 before)
+  // Schimbă parola
+  password: { step: "XL", kind: "fixed" },
+  // Texte de ajutor
+  helpText: { step: "XXL", kind: "lines", rows: 4 },
+  // Calcul
+  calcGroupDescription: { step: "XXL", kind: "fixed" }, // at most 500, one line
+  calcRoadNickname: { step: "XL", kind: "fixed" }, //  a property's nickname, as PROPERTY.nickname
+  // Motorul de tipuri
+  documentType: { step: "XXL", kind: "select" }, //    the type to distil, as DOCUMENT.documentTypeId (max-w-lg before)
+  matchPercent: { step: "M", kind: "select" }, //      „Matching %" (10rem and 8rem before)
+  proposedLabel: { step: "XL", kind: "fixed" }, //     a proposed field's label, as TEMPLATE_FIELD.text
+  proposedType: { step: "M", kind: "select" }, //      „Text lung"
+  proposedHint: { step: "XXL", kind: "fixed" }, //     the wordings the samples used
+} as const satisfies Record<string, FieldWidth>;
+export type ScreenField = keyof typeof SCREEN;
+
+/**
+ * A box on one of these screens: its width from `SCREEN`, and the marks the e2e
+ * width check reads (`data-width-field`, `data-width-kind`). Spread it on the
+ * `<input>`, `<select>` or `<textarea>` — no Tailwind width beside it.
+ */
+export function screenBox(name: ScreenField, extra?: CSSProperties) {
+  const w: FieldWidth = SCREEN[name];
+  return { style: { ...boxStyle(w), ...extra }, "data-width-field": name, "data-width-kind": w.kind };
+}
+
+/** A section card at a fixed width, marked for the e2e check (`data-panel`). */
+export function screenPanel(name: string, wide = false) {
+  return { style: wide ? WIDE_TILE_STYLE : PANEL_STYLE, "data-panel": name };
+}

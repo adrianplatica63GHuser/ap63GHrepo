@@ -6,8 +6,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { LABEL_STYLE, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, type ColumnName } from "@/lib/ui/field-widths";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
+
+/** The results table, at #37.16's column widths (Slice #37.22). */
+const COLUMNS: readonly ColumnName[] = ["select", "code", "personName", "personType"];
 
 const PAGE_SIZE = 15;
 
@@ -130,7 +135,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
     router.push(`${backBase}/${encodeURIComponent(personId)}?tab=related`);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`${SCREEN_COLUMN} gap-6`} style={SCREEN_COLUMN_STYLE}>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-fade dark:text-zinc-400">{personName}</p>
@@ -138,28 +143,28 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
 
       <div className="flex flex-wrap gap-3">
         <label className="flex items-center gap-2 text-sm">
-          <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelName")}</span>
-          <input
+          <span style={LABEL_STYLE} className="shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelName")}</span>
+          <input {...screenBox("searchName")}
             type="text"
             value={nameInput}
             onChange={(e) => { setNameInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("namePlaceholder")}
-            className="w-48 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelCode")}</span>
-          <input
+          <span style={LABEL_STYLE} className="shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelCode")}</span>
+          <input {...screenBox("searchCode")}
             type="text"
             value={codeInput}
             onChange={(e) => { setCodeInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("codePlaceholder")}
-            className="w-32 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
       </div>
 
-      <div className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {isLoading ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
         ) : isError ? (
@@ -167,13 +172,14 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         ) : displayList.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
-          <table className="w-full text-sm">
+          <table {...fixedTable(COLUMNS)}>
+            <FixedColumns columns={COLUMNS} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colType")}</th>
+                <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("code")}>{t("colCode")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personName")}>{t("colName")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personType")}>{t("colType")}</th>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +197,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
                       onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.displayName} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
-                  <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
+                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
                   </td>
@@ -226,7 +232,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           <label htmlFor="role-select" className="text-sm font-medium text-ink dark:text-zinc-300">
             {t("labelRole")}
           </label>
-          <select
+          <select {...screenBox("role")}
             id="role-select"
             value={selectedRoleId}
             onChange={(e) => setSelectedRoleId(e.target.value)}
