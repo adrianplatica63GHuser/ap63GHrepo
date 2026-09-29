@@ -19,6 +19,7 @@
 // (e.g. "addresses.HOME") — the call site is responsible for matching it
 // against the form schema.
 
+import { Fragment } from "react";
 import { useTranslations } from "next-intl";
 import {
   type FieldPath,
@@ -28,7 +29,18 @@ import {
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import { usePulseRing } from "@/components/versioning/field-pulse";
 import { GrowingText } from "@/components/forms/growing-text";
-import { ADDRESS, LABEL_STYLE, PANEL_STYLE, boxStyle, type FieldWidth } from "@/lib/ui/field-widths";
+import {
+  ADDRESS,
+  ADDRESS_ROWS,
+  LABEL_STYLE,
+  NP_PANEL_INNER_REM,
+  NP_PANEL_STYLE,
+  PANEL_STYLE,
+  boxRem,
+  boxStyle,
+  stackedBoxStyle,
+  type FieldWidth,
+} from "@/lib/ui/field-widths";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -82,6 +94,13 @@ type Props<TFormValues extends FieldValues> = {
    * touch — the block keeps its two-column grid and fills its container.
    */
   fixedWidths?: boolean;
+  /**
+   * Slice #37.26: with `fixedWidths`, every label sits ABOVE its box, the rows
+   * are `ADDRESS_ROWS`, Note takes the panel's whole width, and the panel is as
+   * wide as its widest row (Stradă) rather than 32rem. The Natural Person asks
+   * for it; the Judicial Person and the Property keep their labels beside.
+   */
+  stacked?: boolean;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -92,6 +111,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   warnFields,
   highlights,
   fixedWidths = false,
+  stacked = false,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
@@ -108,8 +128,36 @@ export function AddressBlock<TFormValues extends FieldValues>({
         warn={warnable && warn(sub)}
         highlight={hl(sub)}
         width={ADDRESS[sub]}
+        stacked={stacked}
+        fillRem={NP_PANEL_INNER_REM.address}
       />
     );
+    if (stacked) {
+      const labels: Record<keyof typeof ADDRESS, string> = {
+        streetLine: t("streetLine"),
+        postalCode: t("postalCode"),
+        locality: t("locality"),
+        county: t("county"),
+        country: t("country"),
+        notes: t("notes"),
+      };
+      return (
+        <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+            {title}
+          </h2>
+          <div className="flex flex-col gap-2">
+            {ADDRESS_ROWS.map((row) => (
+              <div key={row.join("|")} className="flex gap-2">
+                {row.map((sub) => (
+                  <Fragment key={sub}>{field(sub, labels[sub], errors?.[sub]?.message, sub !== "notes")}</Fragment>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
     return (
       <section style={PANEL_STYLE} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
@@ -213,6 +261,8 @@ function Field<TFormValues extends FieldValues>({
   warn,
   highlight,
   width,
+  stacked = false,
+  fillRem,
 }: {
   label: string;
   name: FieldPath<TFormValues>;
@@ -222,6 +272,10 @@ function Field<TFormValues extends FieldValues>({
   highlight?: HighlightColor;
   /** Slice #37.12: set on a fixed-width block; absent, the box fills its grid cell as before. */
   width?: FieldWidth;
+  /** Slice #37.26: the label above the box (with `width` only). */
+  stacked?: boolean;
+  /** Slice #37.26: a stacked panel's inner width, for the box that `fill`s it (Note). */
+  fillRem?: number;
 }) {
   // Static ring on a historical version; animated pulse on the freshly-
   // navigated-to latest (Bug 1). The pulsing flag comes from FieldPulseContext,
@@ -235,6 +289,46 @@ function Field<TFormValues extends FieldValues>({
       : "border-wire focus:border-focus dark:border-zinc-700",
     ring,
   ].join(" ");
+  if (width && stacked) {
+    // Slice #37.26: the label above the box, the pair exactly as wide as the box.
+    const grows = width.kind === "grows" || width.kind === "lines";
+    const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+    return (
+      <label className="flex shrink-0 flex-col gap-0.5 text-sm" style={box}>
+        <span className="font-medium text-ink dark:text-zinc-300">
+          {label}
+          {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
+        </span>
+        {grows ? (
+          <GrowingText
+            registration={register(name)}
+            width={String(box.width)}
+            lines={width.kind === "lines"}
+            minRows={width.rows ?? 1}
+            aria-invalid={error ? true : undefined}
+            className={boxClass}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        ) : (
+          <input
+            type="text"
+            {...register(name)}
+            aria-invalid={error ? true : undefined}
+            className={boxClass}
+            style={box}
+            data-width-field={name}
+            data-width-kind={width.kind}
+          />
+        )}
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {error}
+          </span>
+        )}
+      </label>
+    );
+  }
   if (width) {
     const grows = width.kind === "grows" || width.kind === "lines";
     return (

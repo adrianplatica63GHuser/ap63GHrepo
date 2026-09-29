@@ -30,6 +30,7 @@ import { fieldFromEditorRow, rowFromStoredField } from "@/lib/documents/template
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
   ADDRESS,
+  ADDRESS_ROWS,
   CELL_PADDING_REM,
   COLUMN,
   DOCUMENT,
@@ -39,6 +40,9 @@ import {
   LABEL_GAP_REM,
   LABEL_REM,
   NATURAL_PERSON,
+  NP_PANEL_INNER_REM,
+  NP_ROWS,
+  NP_VALIDITY_REM,
   PAGES_PANEL_REM,
   PANEL_INNER_REM,
   PANEL_REM,
@@ -47,14 +51,19 @@ import {
   SCREEN,
   SCREEN_COLUMN,
   SELECT_CHROME_PX,
+  STACK_GAP_REM,
   TEMPLATE_FIELD,
+  boxRem,
   boxStyle,
   columnRem,
   columnsStyle,
   documentRowStyle,
   fieldsBesidePagesStyle,
   isStep,
+  npRowStyle,
+  panelRem,
   panelRowStyle,
+  rowRem,
   selectStepFor,
   templateFieldWidth,
   textPx,
@@ -93,6 +102,8 @@ const CONVERTED: [string, string][] = [
   ["the Natural Person's ReadOnlyField", region(NP_FORM, "function ReadOnlyField(", "\nfunction ")],
   ["the address block, fixed", region(ADDRESS_BLOCK, "if (fixedWidths) {", "\n  return (")],
   ["the address block's Field, fixed", region(ADDRESS_BLOCK, "if (width) {", "\n  return (")],
+  // Slice #37.26
+  ["the address block's Field, stacked", region(ADDRESS_BLOCK, "if (width && stacked) {", "\n  if (width) {")],
   // Slice #37.13
   ["the Judicial Person's panels", region(JP_FORM, "<fieldset disabled", "</fieldset>")],
   ["the Judicial Person's Field", region(JP_FORM, "function Field(", "\nfunction ")],
@@ -186,12 +197,17 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
 
   it("the panels, the address block and the form itself take their widths from the file", () => {
     const panels = region(NP_FORM, "<fieldset disabled", "</fieldset>");
-    expect(panels.match(/<section style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(3);
-    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths/g) ?? []).toHaveLength(2);
-    // Slice #37.17: as tiles, the page's tile row carries the snap and the form is `contents`.
-    expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : panelRowStyle\(\)\}/);
-    expect(code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{panelRowStyle\(\)\}/);
+    // Slice #37.26: each panel its own width, from its widest row.
+    for (const p of ["identity", "idCard", "contact"]) expect(panels).toContain(`<section style={NP_PANEL_STYLE.${p}}`);
+    expect(panels).not.toMatch(/PANEL_STYLE\}/);
+    expect(panels).toMatch(/style=\{NP_PANEL_STYLE\.address\} data-panel="correspondence"/);
+    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths\s+stacked/g) ?? []).toHaveLength(2);
+    // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
+    expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : npRowStyle\(\)\}/);
+    expect(code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{npRowStyle\(\)\}/);
+    // Beside a label for the Judicial Person and the Property; stacked only when asked.
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{PANEL_STYLE\}/);
+    expect(ADDRESS_BLOCK).toMatch(/<section style=\{NP_PANEL_STYLE\.address\}/);
   });
 
   it("every box a field helper draws is marked for the e2e width check", () => {
@@ -241,16 +257,11 @@ describe("the scale", () => {
     for (const w of all) expect(LABEL_REM + LABEL_GAP_REM + SCALE[w.step]).toBeLessThanOrEqual(PANEL_INNER_REM);
   });
 
-  it("the pairs the Natural Person form puts on one row fit a panel", () => {
+  it("the pairs a form puts on one row, each beside its label, fit a panel", () => {
     // The gap between the two is gap-2 (0.5rem), or gap-x-1 (0.25rem) where a pair needs it.
+    // Slice #37.26: the Natural Person's rows are stacked now, and checked in their own describe below.
     const pair = (a: FieldWidth, b: FieldWidth, gap = 0.5): number => 2 * (LABEL_REM + LABEL_GAP_REM) + SCALE[a.step] + SCALE[b.step] + gap;
-    const NP = NATURAL_PERSON;
     for (const [a, b, gap] of [
-      [NP.cnp, NP.gender],
-      [NP.dateOfBirth, NP.age],
-      [NP.idDocumentNumber, NP.idCardNumber],
-      [NP.idValidFrom, NP.idValidUntil],
-      [NP.personalPhone1, NP.personalPhone2],
       [ADDRESS.postalCode, ADDRESS.locality, 0.25],
       [ADDRESS.county, ADDRESS.country],
       [JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber],
@@ -273,13 +284,100 @@ describe("the scale", () => {
       ...Object.values(DOCUMENT),
       ...Object.values(TEMPLATE_FIELD),
     ] as FieldWidth[]) {
-      if (w.sample) expect(px(w.sample) + 18).toBeLessThanOrEqual(SCALE[w.step] * 16);
+      if (w.sample) expect(px(w.sample) + 18).toBeLessThanOrEqual(boxRem(w) * 16);
     }
   });
 
   it("a box's width is an inline style in rem, and the form snaps to whole panels", () => {
     expect(boxStyle({ step: "M", kind: "fixed" })).toEqual({ width: "8.5rem" });
     expect(String(panelRowStyle().width)).toBe("max(32rem, calc(round(down, 100% + 1rem, 33rem) - 1rem))");
+  });
+});
+
+describe("the Natural Person: every label above its box, every panel as wide as its widest row (Slice #37.26)", () => {
+  const NP = NATURAL_PERSON;
+  const panels = region(NP_FORM, "<fieldset disabled", "</fieldset>");
+
+  /**
+   * The form's rows, read from its source: each `<div className="flex gap-2">`
+   * is one row of the names in it, and a field outside one is a row alone.
+   */
+  function rowsOf(src: string): string[][] {
+    const rows: string[][] = [];
+    const re = /<div className="flex gap-2">([\s\S]*?)\n {10}<\/div>|name="([a-zA-Z0-9.]+)"/g;
+    for (const m of src.matchAll(re)) {
+      if (m[1] !== undefined) rows.push([...m[1].matchAll(/name="([a-zA-Z0-9.]+)"/g)].map((n) => n[1]));
+      else rows.push([m[2]]);
+    }
+    return rows;
+  }
+
+  it("every field is in exactly one row", () => {
+    const listed = Object.values(NP_ROWS).flat(2);
+    expect([...listed].sort()).toEqual(Object.keys(NP).sort());
+    expect(new Set(listed).size).toBe(listed.length);
+    expect([...ADDRESS_ROWS.flat()].sort()).toEqual(Object.keys(ADDRESS).sort());
+  });
+
+  it("the form draws exactly the rows the file names, panel by panel, in order", () => {
+    const identity = region(panels, 'data-panel="identity"', 'data-panel="id-card"');
+    const idCard = region(panels, 'data-panel="id-card"', 'data-panel="contact"');
+    const contact = region(panels, 'data-panel="contact"', "<AddressBlock");
+    expect(rowsOf(identity)).toEqual(NP_ROWS.identity.map((r) => [...r]));
+    expect(rowsOf(idCard)).toEqual(NP_ROWS.idCard.map((r) => [...r]));
+    expect(rowsOf(contact)).toEqual(NP_ROWS.contact.map((r) => [...r]));
+    // The address block draws ADDRESS_ROWS itself when stacked.
+    expect(region(ADDRESS_BLOCK, "if (stacked) {", "\n    return (")).toMatch(/ADDRESS_ROWS\.map\(/);
+  });
+
+  it("Adrian's rows: Nume | Prenume, Poreclă | CNP, Data nașterii | Vârstă | Gen, Locul nașterii | Tip profesional, then Note", () => {
+    expect(NP_ROWS.identity).toEqual([
+      ["lastName", "firstName"],
+      ["nickname", "cnp"],
+      ["dateOfBirth", "age", "gender"],
+      ["placeOfBirth", "physicalPersonTypeId"],
+      ["notes"],
+    ]);
+    expect(NP_ROWS.idCard).toEqual([
+      ["idDocumentType", "idDocumentNumber", "idCardNumber"],
+      ["idValidFrom", "idValidUntil"],
+      ["citizenshipId", "idIssuingAuthority"],
+      ["idMrzRaw"],
+    ]);
+    // The validity status sits in the dates' row, after them.
+    expect(region(panels, 'name="idValidUntil"', 'name="citizenshipId"')).toMatch(/data-validity-status/);
+    expect(NP_VALIDITY_REM).toBe(8);
+  });
+
+  it("the ID card's first row is about 75% of what it was, and still holds its values", () => {
+    expect(boxRem(NP.idDocumentNumber)).toBe(0.75 * SCALE.M);
+    expect(boxRem(NP.idCardNumber)).toBe(0.75 * SCALE.M);
+    // Tip document: the nearest to 75% of L that still shows „Carte de identitate" whole.
+    expect(boxRem(NP.idDocumentType) / SCALE.L).toBeGreaterThanOrEqual(0.75);
+    expect(boxRem(NP.idDocumentType) / SCALE.L).toBeLessThan(0.8);
+    expect(textPx("Carte de identitate") + SELECT_CHROME_PX).toBeLessThanOrEqual(boxRem(NP.idDocumentType) * 16);
+    expect(textPx("Carte de identitate") + SELECT_CHROME_PX).toBeGreaterThan(0.75 * SCALE.L * 16);
+  });
+
+  it("each panel is as wide as its widest row — no wider — and Note and the MRZ fill it", () => {
+    const widest = (rows: readonly (readonly string[])[], widths: Record<string, FieldWidth>): number =>
+      Math.max(...rows.map((r) => rowRem(r.map((k) => widths[k]))));
+    expect(NP_PANEL_INNER_REM).toEqual({ identity: 26.5, idCard: 26, contact: 17.5, address: 24 });
+    expect(NP_PANEL_INNER_REM.identity).toBe(widest(NP_ROWS.identity, NP));
+    expect(NP_PANEL_INNER_REM.idCard).toBe(widest(NP_ROWS.idCard, NP));
+    expect(NP_PANEL_INNER_REM.contact).toBe(widest(NP_ROWS.contact, NP));
+    expect(NP_PANEL_INNER_REM.address).toBe(widest(ADDRESS_ROWS, ADDRESS));
+    for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThan(PANEL_REM);
+    expect(rowRem([NP.idValidFrom, NP.idValidUntil]) + STACK_GAP_REM + NP_VALIDITY_REM).toBe(NP_PANEL_INNER_REM.idCard);
+    expect([NP.notes.fill, NP.idMrzRaw.fill, ADDRESS.notes.fill]).toEqual([true, true, true]);
+    expect(panels).toMatch(/width=\{NP\.notes\}\s+fillRem=\{NP_PANEL_INNER_REM\.identity\}/);
+    expect(panels).toMatch(/width=\{NP\.idMrzRaw\}\s+fillRem=\{NP_PANEL_INNER_REM\.idCard\}/);
+  });
+
+  it("no label beside a box is left on the form, and the row is as wide as its panels", () => {
+    expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
+    expect(region(ADDRESS_BLOCK, "if (width && stacked) {", "\n  if (width) {")).not.toMatch(/LABEL_STYLE/);
+    expect(npRowStyle()).toEqual({ width: "fit-content", maxWidth: "100%", minWidth: `${panelRem(26.5)}rem` });
   });
 });
 

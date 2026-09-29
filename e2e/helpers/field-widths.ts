@@ -316,11 +316,16 @@ export async function expectStableScreen(
  * them — and every small tile on the screen is exactly a panel wide at each.
  * Which tiles share a row depends on which are ticked and how wide the
  * association tables are; how many FIT does not.                 (Slice #37.23)
+ *
+ * `smallRem` (Slice #37.26): the widths, in rem, a small tile may be. A panel
+ * by default; the Natural Person's panels are each as wide as their widest row
+ * (`NP_PANEL_INNER_REM`), so its spec passes those.
  */
 export async function expectTilesPerRow(
   page: Page,
   expected: Readonly<Record<number, number>> = SMALL_TILES_PER_ROW,
   height = 1000,
+  smallRem: readonly number[] = [32],
 ): Promise<void> {
   await settled(page);
   const before = page.viewportSize();
@@ -330,7 +335,7 @@ export async function expectTilesPerRow(
     for (const width of Object.keys(expected).map(Number)) {
       await page.setViewportSize({ width, height });
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
-      const m = await page.evaluate(() => {
+      const m = await page.evaluate((allowed) => {
         const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
         const panel = 32 * rem;
         const gap = 1 * rem;
@@ -339,8 +344,9 @@ export async function expectTilesPerRow(
         const small = [...document.querySelectorAll<HTMLElement>("[data-tile]")]
           .map((el) => el.getBoundingClientRect().width)
           .filter((x) => x > 0 && x < panel + gap);
-        return { fit: Math.floor((w + gap) / (panel + gap)), off: small.filter((x) => Math.abs(x - panel) > 1).map((x) => Math.round(x)) };
-      });
+        const fits = (x: number) => allowed.some((r) => Math.abs(x - r * rem) <= 1);
+        return { fit: Math.floor((w + gap) / (panel + gap)), off: small.filter((x) => !fits(x)).map((x) => Math.round(x)) };
+      }, [...smallRem]);
       got[width] = m.fit;
       if (m.off.length) odd.push(`${width}: ${m.off.join(", ")} px`);
     }
@@ -348,5 +354,5 @@ export async function expectTilesPerRow(
     if (before) await page.setViewportSize(before);
   }
   expect(got, "small tiles that fit on one row, by window width").toEqual(expected);
-  expect(odd, "small tiles that are not exactly a panel wide").toEqual([]);
+  expect(odd, `small tiles that are not exactly ${smallRem.join(" / ")} rem wide`).toEqual([]);
 }

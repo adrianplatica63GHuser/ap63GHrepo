@@ -40,7 +40,7 @@ import {
   PROP_TILE_REGISTRY,
   propTileOfField,
 } from "@/app/properties/_components/property-tiles";
-import { TILE_REM, PANEL_REM, PANEL_GAP_REM } from "@/lib/ui/field-widths";
+import { NP_PANEL_INNER_REM, TILE_REM, PANEL_REM, PANEL_GAP_REM, panelRem } from "@/lib/ui/field-widths";
 
 const ROOT = process.cwd();
 const read = (...p: string[]): string => fs.readFileSync(path.join(ROOT, ...p), "utf8");
@@ -153,6 +153,11 @@ describe("the Natural Person's tiles", () => {
   it("sit on the small scale: a small tile is a panel, a wide one two and the gap", () => {
     expect(TILE_REM.small).toBe(PANEL_REM);
     expect(TILE_REM.wide).toBe(2 * PANEL_REM + PANEL_GAP_REM);
+  });
+
+  it("form tiles are each as wide as their widest row since #37.26 — never wider than a small tile", () => {
+    for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThan(TILE_REM.small);
+    expect(FORM).toMatch(/NP_PANEL_STYLE\.identity[\s\S]*NP_PANEL_STYLE\.idCard[\s\S]*NP_PANEL_STYLE\.contact/);
   });
 });
 

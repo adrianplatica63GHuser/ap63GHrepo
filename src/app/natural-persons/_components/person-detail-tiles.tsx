@@ -10,9 +10,11 @@
  * (`useTileChoice`); with nothing stored the screen shows the four form tiles,
  * which is exactly what the Detalii tab showed.
  *
- * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). The
- * tile row is snapped to whole panels; each form tile is one panel (Adrese is
- * two), each list tile as wide as its table of fixed columns (#37.16). They
+ * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). Each
+ * form tile is one panel (Adrese is two), as wide as its widest row since
+ * #37.26 (`NP_PANEL_STYLE`), and the tile row is as wide as they need, up to the
+ * window (`npRowStyle`); each list tile is as wide as its table of fixed
+ * columns (#37.16). They
  * flow left to right and wrap. The form is still ONE form: its panels are
  * items of this row (the form is `display: contents`, see `tiles` in
  * natural-person-form.tsx), and „Salvează" saves every form tile, shown or
@@ -32,7 +34,7 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { PANEL_GAP, panelRowStyle } from "@/lib/ui/field-widths";
+import { PANEL_GAP, npRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -107,7 +109,7 @@ export function PersonDetailTiles({
         />
       </header>
 
-      <div className="flex flex-col gap-4" style={panelRowStyle()}>
+      <div className="flex flex-col gap-4" style={npRowStyle()}>
         <TileSelector all={NP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>

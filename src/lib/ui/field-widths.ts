@@ -93,15 +93,32 @@ export interface FieldWidth {
    * lower-case letter, `0` a digit). The e2e check draws it in the box.
    */
   sample?: string;
+  /**
+   * A width off the scale, in rem — only where Adrian asked for one by size
+   * (#37.26: the ID card's first row „about 75%" of what it was). The step
+   * still says what the box is, and the scale stays a handful of steps.
+   */
+  rem?: number;
+  /**
+   * On a panel whose labels sit ABOVE their boxes (#37.26): the box takes the
+   * panel's whole inner width, whatever that is — Note, the MRZ. Beside a label
+   * the step decides, as before.
+   */
+  fill?: true;
 }
 
 // ---- styles -----------------------------------------------------------------------
 
 export const rem = (n: number): string => `${n}rem`;
 
+/** The box's width in rem: its own `rem` where it names one, else its step. */
+export function boxRem(w: FieldWidth): number {
+  return w.rem ?? SCALE[w.step];
+}
+
 /** The box's width. Every field on a fixed-width screen takes its width from here. */
 export function boxStyle(w: FieldWidth): CSSProperties {
-  return { width: rem(SCALE[w.step]) };
+  return { width: rem(boxRem(w)) };
 }
 
 export const LABEL_STYLE: CSSProperties = { width: rem(LABEL_REM) };
@@ -155,16 +172,17 @@ export const NATURAL_PERSON = {
   age: { step: "XS", kind: "fixed", sample: "000" }, //     beside the date it is worked out from
   physicalPersonTypeId: { step: "M", kind: "select" }, //   m: 2 options, longest „Expert" (6); longer ones show on hover
   placeOfBirth: { step: "XL", kind: "grows" }, //           m: 0
-  notes: { step: "TILE", kind: "lines", rows: 1 }, //       m: 0
-  // Carte de identitate
-  idDocumentType: { step: "L", kind: "select" }, //         „Carte de identitate" (19)
-  idDocumentNumber: { step: "M", kind: "fixed", sample: "HH000000" }, // series and number; m: 0
-  idCardNumber: { step: "M", kind: "fixed", sample: "000000000" }, //    m: 0
+  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
+  // Carte de identitate — the first row „about 75%" of L, M and M (Adrian, #37.26). Tip document
+  // is 10rem, not 9.75: „Carte de identitate" needs 156.4 px with the arrow, and 9.75rem is 156.
+  idDocumentType: { step: "L", kind: "select", rem: 10 }, // „Carte de identitate" (19)
+  idDocumentNumber: { step: "M", kind: "fixed", sample: "HH000000", rem: 6.375 }, // series and number; m: 0
+  idCardNumber: { step: "M", kind: "fixed", sample: "000000000", rem: 6.375 }, //    m: 0
   idValidFrom: { step: "M", kind: "fixed" },
   idValidUntil: { step: "M", kind: "fixed" },
   citizenshipId: { step: "M", kind: "select" }, //          m: 8 options, longest „Moldoveană" (10)
   idIssuingAuthority: { step: "XL", kind: "grows" }, //     „SPCLEP Sector 3 București"; m: 0
-  idMrzRaw: { step: "XL", kind: "lines", rows: 3 }, //      3 × 30 monospace; m: 1 · 1507 — free text pasted into it, which grows
+  idMrzRaw: { step: "XL", kind: "lines", rows: 3, fill: true }, // 3 × 30 monospace; m: 1 · 1507 — free text pasted into it, which grows; the panel's whole width (#37.26)
   // Contact
   personalPhone1: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0
   personalPhone2: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0
@@ -185,8 +203,124 @@ export const ADDRESS = {
   locality: { step: "L", kind: "grows" }, //                m: 0
   county: { step: "M", kind: "fixed", sample: "Hnnnn-Hnnnnnn" }, // „Caraș-Severin", the longest county; m: 0
   country: { step: "M", kind: "fixed", sample: "Hnnnnnn" }, //      „România"; m: 0
-  notes: { step: "TILE", kind: "lines", rows: 1 }, //       m: 0
+  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 0; on a stacked panel, its whole width (#37.26)
 } as const satisfies Record<string, FieldWidth>;
+
+// ---- the Natural Person, labels above their boxes (#37.26) ----------------------------
+
+/**
+ * LABELS ABOVE THEIR BOXES, AND EACH PANEL AS WIDE AS ITS WIDEST ROW.  (Slice #37.26)
+ *
+ * Adrian, 2026-09-29, after the stacked-labels preview: on the Natural Person
+ * every label sits on top of the box it names, the fields are regrouped into
+ * the rows below, and the panels are narrowed to fit them. Only the Natural
+ * Person: the Judicial Person, the Property and the Document keep their labels
+ * beside the box (`LABEL_STYLE`), and the address block stacks only when a
+ * form asks it to (`stacked`).
+ *
+ * The rows ARE the layout: the form draws exactly these, in this order
+ * (`field-widths.test.ts` reads the form to check it). A panel's inner width is
+ * its widest row — the boxes on it and the gaps between them — so a panel is
+ * never wider than what it holds. A `fill` box (Note, the MRZ) takes whatever
+ * that width is and does not count towards it.
+ */
+
+/** The gap between two boxes on one row (`gap-2`), and between two rows. */
+export const STACK_GAP_REM = 0.5;
+
+type NpField = keyof typeof NATURAL_PERSON;
+type AddressField = keyof typeof ADDRESS;
+
+export const NP_ROWS = {
+  identity: [
+    ["lastName", "firstName"],
+    ["nickname", "cnp"],
+    ["dateOfBirth", "age", "gender"],
+    ["placeOfBirth", "physicalPersonTypeId"],
+    ["notes"],
+  ],
+  idCard: [
+    ["idDocumentType", "idDocumentNumber", "idCardNumber"],
+    // …and the validity status („VALABIL", „EXPIRAT") in the rest of this row: `NP_VALIDITY_REM`.
+    ["idValidFrom", "idValidUntil"],
+    ["citizenshipId", "idIssuingAuthority"],
+    ["idMrzRaw"],
+  ],
+  contact: [
+    ["personalPhone1", "personalPhone2"],
+    ["workPhone"],
+    ["personalEmail1"],
+    ["personalEmail2"],
+    ["workEmail"],
+  ],
+} as const satisfies Record<string, readonly (readonly NpField[])[]>;
+
+export const ADDRESS_ROWS = [
+  ["streetLine"],
+  ["postalCode", "locality"],
+  ["county", "country"],
+  ["notes"],
+] as const satisfies readonly (readonly AddressField[])[];
+
+/** A row's width: its boxes and the gaps between them. A `fill` box counts as nothing. */
+export function rowRem(widths: readonly FieldWidth[]): number {
+  const sized = widths.filter((w) => !w.fill);
+  if (sized.length === 0) return 0;
+  return sized.reduce((sum, w) => sum + boxRem(w), 0) + (sized.length - 1) * STACK_GAP_REM;
+}
+
+function widestRow<K extends string>(rows: readonly (readonly K[])[], widths: Readonly<Record<K, FieldWidth>>): number {
+  return Math.max(...rows.map((row) => rowRem(row.map((k) => widths[k]))));
+}
+
+/** A panel's width from its inner width: the padding (p-3) and the 1-px border on each side. */
+export function panelRem(inner: number): number {
+  return inner + 2 * PANEL_PADDING_REM + 2 * PANEL_BORDER_REM;
+}
+
+/** Each Natural Person panel's inner width — its widest row. */
+export const NP_PANEL_INNER_REM = {
+  identity: widestRow(NP_ROWS.identity, NATURAL_PERSON), //  26.5 — Nume | Prenume
+  idCard: widestRow(NP_ROWS.idCard, NATURAL_PERSON), //      26   — Cetățenie | Emisă de
+  contact: widestRow(NP_ROWS.contact, NATURAL_PERSON), //    17.5 — the two personal phones
+  address: widestRow(ADDRESS_ROWS, ADDRESS), //              24   — Stradă
+} as const;
+export type NpPanel = keyof typeof NP_PANEL_INNER_REM;
+
+/** Each Natural Person panel's style — its own width, not `PANEL_STYLE`'s 32rem. */
+export const NP_PANEL_STYLE: Readonly<Record<NpPanel, CSSProperties>> = {
+  identity: { width: rem(panelRem(NP_PANEL_INNER_REM.identity)) },
+  idCard: { width: rem(panelRem(NP_PANEL_INNER_REM.idCard)) },
+  contact: { width: rem(panelRem(NP_PANEL_INNER_REM.contact)) },
+  address: { width: rem(panelRem(NP_PANEL_INNER_REM.address)) },
+};
+
+/** A box on a stacked panel: its own width, or the panel's whole inner width when it `fill`s. */
+export function stackedBoxStyle(w: FieldWidth, panelInner: number): CSSProperties {
+  return { width: rem(w.fill ? panelInner : boxRem(w)) };
+}
+
+/** Beside Valabil de la | Până la: the rest of that row, for „VALABIL", „EXPIRAT" or „EXPIRĂ ÎN n ZILE" (which wraps). */
+export const NP_VALIDITY_REM =
+  NP_PANEL_INNER_REM.idCard - rowRem([NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil]) - STACK_GAP_REM;
+
+/**
+ * The Natural Person's row of panels: as wide as the panels need, up to the
+ * window, and never narrower than its widest panel (a narrower window scrolls).
+ *
+ * The panels are no longer one width, so `panelRowStyle`'s snap to whole 32rem
+ * panels no longer describes them. `fit-content` does the same job: while the
+ * panels fit on one line the row is exactly as wide as they are; once they wrap
+ * it is the window's width. The action bar under the row takes that width, so
+ * „Salvează" stays under the form.
+ */
+export function npRowStyle(): CSSProperties {
+  return {
+    width: "fit-content",
+    maxWidth: "100%",
+    minWidth: rem(panelRem(Math.max(...Object.values(NP_PANEL_INNER_REM)))),
+  };
+}
 
 // ---- the Judicial Person (#37.13) -----------------------------------------------------
 

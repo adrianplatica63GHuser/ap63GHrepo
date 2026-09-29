@@ -29,6 +29,9 @@
  *   - Slice #37.17: before the cleanup, „Toate" shows every tile of the saved
  *     person; their widths are held at 1400 and 2400 px and photographed at
  *     1920 and 2560 px, then „Implicit" puts the default back.
+ *   - Slice #37.26: every label sits above its box and each form tile is as
+ *     wide as its widest row, so the tile check is given those widths; the
+ *     pictures are 1400 px high, the stacked form being taller than 1000.
  */
 
 import { test, expect } from "@playwright/test";
@@ -36,7 +39,7 @@ import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectTilesPerRow, photograph } from "../helpers/field-widths";
 import { TILE_GROUP } from "../helpers/tiles";
-import { ADDRESS, NATURAL_PERSON } from "../../src/lib/ui/field-widths";
+import { ADDRESS, NATURAL_PERSON, NP_PANEL_INNER_REM, panelRem } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
 const SAMPLES: Record<string, string> = {};
@@ -118,7 +121,8 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expectFixedFieldsHold(page, SAMPLES);
       const viewport = page.viewportSize();
       for (const width of [1366, 1920, 2560]) {
-        await page.setViewportSize({ width, height: 1000 });
+        // 1400 px high since #37.26: with every label above its box the form is taller than 1000.
+        await page.setViewportSize({ width, height: 1400 });
         // playwright-report/, not test-results/: Playwright empties test-results/ at the start of
         // every run, including the runner's re-run of a failed spec, which would take these with it.
         await page.screenshot({ path: `playwright-report/layout/natural-person-${width}.png`, fullPage: true });
@@ -129,8 +133,9 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
       // Slice #37.23 — two small tiles to a row at 1366 px, three at 1920, four at 2560.
-      await expectTilesPerRow(page);
-      await photograph(page, "natural-person-all-tiles", [1920, 2560]);
+      // Slice #37.26 — the person's form tiles are each as wide as their widest row, not a panel.
+      await expectTilesPerRow(page, undefined, undefined, Object.values(NP_PANEL_INNER_REM).map(panelRem));
+      await photograph(page, "natural-person-all-tiles", [1920, 2560], 1400);
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
