@@ -17,7 +17,7 @@
  * purpose, and its chosen option shows in full on hover.
  */
 
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 export interface WidthSnapshot {
   /** Box width in px, by `data-width-field`. */
@@ -184,16 +184,97 @@ export async function expectStableColumns(page: Page, widths: readonly number[] 
  * (`<name>-<width>.png`), for a slice's handover. Playwright empties
  * `test-results/` on every run; this folder survives it. Puts the window back.
  * (Slice #37.16; the earlier specs inline the same loop.)
+ *
+ * `mask` (Slice #37.22) paints over what a picture must not carry: on a screen
+ * that lists the archive's own records — the dashboard, the users, a group's
+ * candidates — the rows are covered and the layout is what the picture shows.
  */
-export async function photograph(page: Page, name: string, widths: readonly number[] = [1366, 1920, 2560], height = 1000): Promise<void> {
+export async function photograph(
+  page: Page,
+  name: string,
+  widths: readonly number[] = [1366, 1920, 2560],
+  height = 1000,
+  mask: readonly Locator[] = [],
+): Promise<void> {
   const before = page.viewportSize();
   try {
     for (const width of widths) {
       await page.setViewportSize({ width, height });
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
-      await page.screenshot({ path: `playwright-report/layout/${name}-${width}.png`, fullPage: true });
+      await page.screenshot({ path: `playwright-report/layout/${name}-${width}.png`, fullPage: true, mask: [...mask] });
     }
   } finally {
     if (before) await page.setViewportSize(before);
   }
+}
+
+/**
+ * One screen of #37.22's, whole: every marked box, panel and table column is
+ * exactly as wide at each width, and no fixed column's cell overflows. A screen
+ * of these may have no box at all (the dashboard, Utilizatori & Acces) — so,
+ * unlike `expectStableWidths`, it asks only that SOMETHING on it is marked.
+ * Returns the marks it compared, for the caller's message.        (Slice #37.22)
+ */
+export async function expectStableScreen(
+  page: Page,
+  widths: readonly number[] = [1400, 2400],
+  height = 900,
+  /** False for a screen that may legitimately show nothing marked — an empty list of requests. */
+  requireMarks = true,
+): Promise<number> {
+  const read = () =>
+    page.evaluate(() => {
+      const out: Record<string, number> = {};
+      const px = (el: Element) => Math.round(el.getBoundingClientRect().width * 10) / 10;
+      document.querySelectorAll<HTMLElement>("[data-width-field]").forEach((el) => {
+        if (el.getBoundingClientRect().width > 0) out[`box ${el.dataset.widthField}`] = px(el);
+      });
+      document.querySelectorAll<HTMLElement>("[data-panel]").forEach((el) => {
+        if (el.getBoundingClientRect().width > 0) out[`panel ${el.dataset.panel}`] = px(el);
+      });
+      document.querySelectorAll<HTMLTableElement>("table[data-width-table]").forEach((table, t) => {
+        table.querySelectorAll<HTMLElement>("thead th[data-width-column]").forEach((th, i) => {
+          out[`table ${t} column ${i} ${th.dataset.widthColumn}`] = px(th);
+        });
+      });
+      return out;
+    });
+  const before = page.viewportSize();
+  const snaps: Record<string, number>[] = [];
+  const overflows: string[] = [];
+  try {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+      snaps.push(await read());
+      // Nothing pushes the page sideways at a width the screen fits in.
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      if (over > 0) overflows.push(`${over} px too wide at ${width}`);
+    }
+  } finally {
+    if (before) await page.setViewportSize(before);
+  }
+  expect(overflows, "the page is wider than the window").toEqual([]);
+  const [first, ...rest] = snaps;
+  if (requireMarks) expect(Object.keys(first).length, "nothing on this screen carries a width mark").toBeGreaterThan(0);
+  for (const [i, s] of rest.entries()) {
+    expect(s, `widths at ${widths[i + 1]} px differ from ${widths[0]} px`).toEqual(first);
+  }
+  const misfits = await page.evaluate(() => {
+    const out: string[] = [];
+    document.querySelectorAll<HTMLTableElement>("table[data-width-table]").forEach((table) => {
+      const heads = [...table.querySelectorAll<HTMLElement>("thead th")];
+      table.querySelectorAll<HTMLTableRowElement>("tbody tr").forEach((tr) => {
+        if (tr.cells.length !== heads.length) return;
+        [...tr.cells].forEach((td, i) => {
+          const th = heads[i];
+          if (th?.dataset.widthKind !== "fixed") return;
+          if (td.scrollWidth > td.clientWidth + 1) out.push(`${th.dataset.widthColumn} needs ${td.scrollWidth} px in ${td.clientWidth}`);
+        });
+      });
+    });
+    return out;
+  });
+  expect(misfits, "fixed columns whose cells do not hold their value").toEqual([]);
+  return Object.keys(first).length;
 }
