@@ -3,6 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import type { ColumnName } from "@/lib/ui/field-widths";
+
+/** The runs, at #37.16's column widths (Slice #37.22). */
+const COLUMNS: readonly ColumnName[] = ["code", "algorithm", "count", "groupCode", "runStatus", "updatedBy", "date", "open"];
 
 type CalcRunListItem = {
   id:              string;
@@ -73,18 +78,19 @@ export function CalculationHistoryList() {
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <table className="w-full text-sm">
+    <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+      <table {...fixedTable(COLUMNS)}>
+        <FixedColumns columns={COLUMNS} />
         <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
           <tr>
-            <th className="px-3 py-2">{t("col.code")}</th>
-            <th className="px-3 py-2">{t("col.algorithm")}</th>
-            <th className="px-3 py-2 text-center">{t("col.parcels")}</th>
-            <th className="px-3 py-2">{t("col.group")}</th>
-            <th className="px-3 py-2">{t("col.status")}</th>
-            <th className="px-3 py-2">{t("col.createdBy")}</th>
-            <th className="px-3 py-2">{t("col.date")}</th>
-            <th className="px-3 py-2" />
+            <th className="px-3 py-2" {...columnHead("code")}>{t("col.code")}</th>
+            <th className="px-3 py-2" {...columnHead("algorithm")}>{t("col.algorithm")}</th>
+            <th className="px-3 py-2 text-center" {...columnHead("count")}>{t("col.parcels")}</th>
+            <th className="px-3 py-2" {...columnHead("groupCode")}>{t("col.group")}</th>
+            <th className="px-3 py-2" {...columnHead("runStatus")}>{t("col.status")}</th>
+            <th className="px-3 py-2" {...columnHead("updatedBy")}>{t("col.createdBy")}</th>
+            <th className="px-3 py-2" {...columnHead("date")}>{t("col.date")}</th>
+            <th className="px-3 py-2" {...columnHead("open")} />
           </tr>
         </thead>
         <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -114,7 +120,7 @@ export function CalculationHistoryList() {
               <td className="px-3 py-2">
                 <StatusBadge status={run.status} />
               </td>
-              <td className="px-3 py-2 text-xs text-fade dark:text-zinc-400">
+              <td className={`px-3 py-2 text-xs text-fade dark:text-zinc-400 ${WRAPS}`}>
                 {run.createdBy ?? "—"}
               </td>
               <td className="px-3 py-2 text-xs tabular-nums text-fade dark:text-zinc-400">

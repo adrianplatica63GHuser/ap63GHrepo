@@ -4,7 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { PANEL_GAP, PANEL_REM, rem, screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
+
+/** The expiring documents, at #37.16's column widths (Slice #37.22). */
+const EXPIRING_COLUMNS: readonly ColumnName[] = ["code", "documentType", "documentTitle", "date", "expiryStatus"];
 
 // ---------------------------------------------------------------------------
 // API response types — mirror src/lib/dashboard/queries.ts
@@ -181,15 +186,31 @@ function Skeleton({ className }: { className?: string }) {
 // Section card wrapper
 // ---------------------------------------------------------------------------
 
+/**
+ * A section of the dashboard (Slice #37.22): a panel, a wide panel, or — for the
+ * table of expiring documents — exactly as wide as its table. Never as wide as
+ * the window: a wider window fits more sections on a row instead.
+ */
 function SectionCard({
   title,
   children,
+  panel,
+  size = "panel",
 }: {
   title: string;
   children: React.ReactNode;
+  /** Its name for the e2e width check (`data-panel`). */
+  panel: string;
+  size?: "panel" | "wide" | "table";
 }) {
+  // A table's section is as wide as the table, and never narrower than a panel —
+  // while it loads, or when nothing expires, it still reads as a section.
+  const fixed = size === "table" ? { "data-panel": panel, style: { minWidth: rem(PANEL_REM) } } : screenPanel(panel, size === "wide");
   return (
-    <section className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+    <section
+      {...fixed}
+      className={`rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden${size === "table" ? " w-fit max-w-full" : ""}`}
+    >
       <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60">
         <h2 className="text-sm font-semibold tracking-wide text-zinc-500 dark:text-zinc-400 uppercase">
           {title}
@@ -249,8 +270,8 @@ export function RecentCountsSection({
   ] as const;
 
   return (
-    <SectionCard title={t("recentCounts.title", { days: recentDays })}>
-      <div className="grid grid-cols-3 gap-4">
+    <SectionCard panel="recent-counts" title={t("recentCounts.title", { days: recentDays })}>
+      <div style={stepGridStyle("M", 3, 1)}>
         {cards.map((c) => (
           <Link
             key={c.href}
@@ -309,7 +330,7 @@ export function ExpiringDocumentsSection({
   }
 
   return (
-    <SectionCard title={t("expiringDocuments.title")}>
+    <SectionCard panel="expiring-documents" size="table" title={t("expiringDocuments.title")}>
       {data === undefined ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
@@ -321,15 +342,16 @@ export function ExpiringDocumentsSection({
           {t("expiringDocuments.empty", { days: expiringDays })}
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className={TABLE_FRAME}>
+          <table {...fixedTable(EXPIRING_COLUMNS)}>
+            <FixedColumns columns={EXPIRING_COLUMNS} />
             <thead>
               <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                <th className="pb-2 pr-3 font-medium">{t("expiringDocuments.colCode")}</th>
-                <th className="pb-2 pr-3 font-medium">{t("expiringDocuments.colType")}</th>
-                <th className="pb-2 pr-3 font-medium">{t("expiringDocuments.colTitle")}</th>
-                <th className="pb-2 pr-3 font-medium">{t("expiringDocuments.colDate")}</th>
-                <th className="pb-2 font-medium">{t("expiringDocuments.colStatus")}</th>
+                <th className="px-4 pb-2 font-medium" {...columnHead("code")}>{t("expiringDocuments.colCode")}</th>
+                <th className="px-4 pb-2 font-medium" {...columnHead("documentType")}>{t("expiringDocuments.colType")}</th>
+                <th className="px-4 pb-2 font-medium" {...columnHead("documentTitle")}>{t("expiringDocuments.colTitle")}</th>
+                <th className="px-4 pb-2 font-medium" {...columnHead("date")}>{t("expiringDocuments.colDate")}</th>
+                <th className="px-4 pb-2 font-medium" {...columnHead("expiryStatus")}>{t("expiringDocuments.colStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -338,7 +360,7 @@ export function ExpiringDocumentsSection({
                   key={doc.id}
                   className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0"
                 >
-                  <td className="py-2 pr-3">
+                  <td className="px-4 py-2">
                     <Link
                       href={`/documents/${doc.id}`}
                       className="font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline"
@@ -346,16 +368,16 @@ export function ExpiringDocumentsSection({
                       {doc.code}
                     </Link>
                   </td>
-                  <td className="py-2 pr-3 text-zinc-600 dark:text-zinc-300 max-w-[120px] truncate">
+                  <td className={`px-4 py-2 text-zinc-600 dark:text-zinc-300 ${WRAPS}`}>
                     {doc.documentTypeName ?? "—"}
                   </td>
-                  <td className="py-2 pr-3 text-zinc-600 dark:text-zinc-300 max-w-[160px] truncate">
+                  <td className={`px-4 py-2 text-zinc-600 dark:text-zinc-300 ${WRAPS}`}>
                     {doc.title ?? "—"}
                   </td>
-                  <td className="py-2 pr-3 font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-2 font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
                     {formatDMY(doc.dateValidUntil)}
                   </td>
-                  <td className="py-2">
+                  <td className="px-4 py-2">
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${rowColor(doc.dateValidUntil)}`}
                     >
@@ -387,7 +409,7 @@ export function StaleMetadataSection({
   staleDays: number;
 }) {
   return (
-    <SectionCard title={t("staleMetadata.title")}>
+    <SectionCard panel="stale-metadata" title={t("staleMetadata.title")}>
       {data === undefined ? (
         <Skeleton className="h-14 w-full" />
       ) : data.total === 0 ? (
@@ -455,7 +477,7 @@ function RecentActivitySection({
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
-    <SectionCard title={t("recentActivity.title")}>
+    <SectionCard panel="recent-activity" size="wide" title={t("recentActivity.title")}>
       {data === undefined ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -514,7 +536,7 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-8 flex flex-col gap-6">
+    <div className="px-6 py-8 flex flex-col gap-6">
       <header>
         {/*
           The dashboard mounts its own help button because <BreadcrumbBar>
@@ -538,8 +560,11 @@ export function DashboardClient() {
         </p>
       </header>
 
-      {/* Top row: recent counts + stale metadata side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Slice #37.22 — one row of fixed sections that wraps: the window decides
+          how many sit side by side, never how wide one is. A 1920-pixel window
+          shows the counts and the stale records together, the table of expiring
+          documents and the activity under them. */}
+      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
         <RecentCountsSection
           data={data?.recentCounts}
           t={t}
@@ -550,18 +575,14 @@ export function DashboardClient() {
           t={t}
           staleDays={tfDays(tf, "dashboard_stale_metadata")}
         />
+        <ExpiringDocumentsSection
+          data={data?.expiringDocuments}
+          t={t}
+          amberDays={tfDays(tf, "dashboard_expiring_amber")}
+          expiringDays={tfDays(tf, "dashboard_expiring_docs")}
+        />
+        <RecentActivitySection data={data?.recentActivity} t={t} />
       </div>
-
-      {/* Expiring documents — full width */}
-      <ExpiringDocumentsSection
-        data={data?.expiringDocuments}
-        t={t}
-        amberDays={tfDays(tf, "dashboard_expiring_amber")}
-        expiringDays={tfDays(tf, "dashboard_expiring_docs")}
-      />
-
-      {/* Recent activity — full width */}
-      <RecentActivitySection data={data?.recentActivity} t={t} />
     </div>
   );
 }

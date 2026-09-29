@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { screenBox } from "@/lib/ui/field-widths";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 type State = "idle" | "saving" | "success" | "error";
@@ -67,6 +68,7 @@ export function ChangePasswordForm() {
           {t("labelNew")}
         </label>
         <input
+          {...screenBox("password")}
           id="new-pwd"
           type="password"
           autoComplete="new-password"
@@ -85,6 +87,7 @@ export function ChangePasswordForm() {
           {t("labelConfirm")}
         </label>
         <input
+          {...screenBox("password")}
           id="confirm-pwd"
           type="password"
           autoComplete="new-password"

@@ -9,6 +9,7 @@ import {
 } from "@/lib/stamps/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { PANEL_GAP, SCREEN, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -305,12 +306,12 @@ export function StampApplicator({
     (stagedForType?.toRemove.size ?? 0) > 0;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`${SCREEN_COLUMN} gap-4`} style={SCREEN_COLUMN_STYLE}>
       {/* Area A — code (read-only), short description (read-only), notes (editable) */}
       <section className="rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto_1fr]">
+        <div className="flex flex-wrap items-start gap-4">
           {/* Code + short description */}
-          <div className="flex flex-col gap-1 md:max-w-[220px]">
+          <div className="flex flex-col gap-1" style={boxStyle(SCREEN.groupTarget)}>
             <span className="text-xs font-medium text-fade dark:text-zinc-400">
               {t("fields.code")}
             </span>
@@ -328,11 +329,12 @@ export function StampApplicator({
               {t("fields.notes")}
             </span>
             <textarea
+              {...screenBox("groupDescription")}
               rows={2}
               maxLength={NOTES_MAX}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
             />
           </div>
         </div>
@@ -345,6 +347,7 @@ export function StampApplicator({
             {t("applicator.targetTypeLabel")}
           </label>
           <select
+            {...screenBox("groupTarget")}
             value={selectedType}
             onChange={(e) => switchType(e.target.value as StampTargetType)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
@@ -379,9 +382,10 @@ export function StampApplicator({
       )}
 
       {!isLoading && !isError && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
           {/* Panel C — Available */}
           <Panel
+            name="available"
             title={t("applicator.available")}
             count={availableRows.length}
             toolbar={
@@ -391,7 +395,8 @@ export function StampApplicator({
                 onChange={(e) => setSearchAvailable(e.target.value)}
                 placeholder={t("applicator.searchPlaceholder")}
                 aria-label={t("applicator.searchAvailable")}
-                className="w-full rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                {...screenBox("memberSearch")}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             }
             rows={availableRows}
@@ -419,6 +424,7 @@ export function StampApplicator({
 
           {/* Panel D — Stamped */}
           <Panel
+            name="stamped"
             title={t("applicator.stamped")}
             count={stampedRows.length}
             toolbar={
@@ -428,7 +434,8 @@ export function StampApplicator({
                 onChange={(e) => setSearchStamped(e.target.value)}
                 placeholder={t("applicator.searchPlaceholder")}
                 aria-label={t("applicator.searchStamped")}
-                className="w-full rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                {...screenBox("memberSearch")}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             }
             rows={stampedRows}
@@ -486,6 +493,7 @@ export function StampApplicator({
 // ── Presentational helpers ────────────────────────────────────────────────────
 
 function Panel({
+  name,
   title,
   count,
   toolbar,
@@ -494,6 +502,8 @@ function Panel({
   empty,
   footer,
 }: {
+  /** Its name for the e2e width check (`data-panel`). */
+  name:       string;
   title:      string;
   count:      number;
   toolbar?:   React.ReactNode;
@@ -503,7 +513,7 @@ function Panel({
   footer:     React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section {...screenPanel(name)} className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center justify-between border-b border-card-rim px-4 py-2 dark:border-zinc-800">
         <span className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
         <span className="text-xs text-fade dark:text-zinc-400">{count}</span>

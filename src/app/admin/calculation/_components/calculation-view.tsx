@@ -13,6 +13,11 @@ import { buttonClass } from "@/lib/ui/button-styles";
 // Slice #34.23 — and the list the sentence beside it names, derived from that
 // same value so the copy cannot outlive it.
 import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, WIDE_COLUMN_STYLE, screenBox, screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+
+/** The owners' shares, at #37.16's column widths (Slice #37.22). */
+const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
 
 // ---------------------------------------------------------------------------
 // Types (mirror src/lib/calculation/compute.ts — redeclared so this client
@@ -233,8 +238,8 @@ export function CalculationView() {
 
   if (committed) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
+      <div className={`${SCREEN_COLUMN} gap-4`} style={SCREEN_COLUMN_STYLE}>
+        <div {...screenPanel("committed", true)} className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
           <p className="font-semibold text-green-800 dark:text-green-300">
             {t("success.title", { code: committed.groupCode })}
           </p>
@@ -281,7 +286,7 @@ export function CalculationView() {
   // ---- Main ----------------------------------------------------------------
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className={`${SCREEN_COLUMN} gap-5`} style={WIDE_COLUMN_STYLE}>
       {/* Intro / reasoning */}
       <p className="text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
 
@@ -352,7 +357,7 @@ export function CalculationView() {
       {computation && (
         <>
           {/* Summary */}
-          <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+          <div className="text-sm" style={stepGridStyle("L", 4)}>
             <Stat label={t("summary.orientation")} value={t(`orientation.${computation.orientation}`)} />
             <Stat label={t("summary.totalArea")} value={`${fmtArea(computation.totalArea)} m²`} />
             <Stat label={t("summary.roadCorner")} value={computation.roadCorner} />
@@ -374,22 +379,23 @@ export function CalculationView() {
           )}
 
           {/* Owners table */}
-          <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <table className="w-full text-sm">
+          <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+            <table {...fixedTable(OWNER_COLUMNS)}>
+              <FixedColumns columns={OWNER_COLUMNS} />
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                 <tr>
-                  <th className="px-3 py-2">{t("table.owner")}</th>
-                  <th className="px-3 py-2 text-right">{t("table.percent")}</th>
-                  <th className="px-3 py-2 text-right">{t("table.originalArea")}</th>
-                  <th className="px-3 py-2 text-right">{t("table.roadParticipation")}</th>
-                  <th className="px-3 py-2 text-right">{t("table.finalArea")}</th>
-                  <th className="px-3 py-2 text-right">{t("table.computedArea")}</th>
+                  <th className="px-3 py-2" {...columnHead("personName")}>{t("table.owner")}</th>
+                  <th className="px-3 py-2 text-right" {...columnHead("percent")}>{t("table.percent")}</th>
+                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.originalArea")}</th>
+                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.roadParticipation")}</th>
+                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.finalArea")}</th>
+                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.computedArea")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-crease dark:divide-zinc-800">
                 {computation.owners.map((o, i) => (
                   <tr key={i}>
-                    <td className="px-3 py-2 text-ink dark:text-zinc-200">
+                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
                       {o.name}
                       {o.rawLabel !== o.name && (
                         <span className="ml-1 text-xs text-fade dark:text-zinc-500">
@@ -416,7 +422,7 @@ export function CalculationView() {
           />
 
           {/* Commit form */}
-          <div className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+          <div {...screenPanel("commit")} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
             <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
               {t("commit.title", { count: computation.owners.length })}
             </h3>
@@ -457,6 +463,7 @@ export function CalculationView() {
                 <HelpHint hintKey="calc-group-description-autofill" />
               </label>
               <input
+                {...screenBox("calcGroupDescription")}
                 type="text"
                 value={groupDescription}
                 onChange={(e) => setGroupDescription(e.target.value)}
@@ -481,10 +488,11 @@ export function CalculationView() {
                   {t("commit.roadNickname")}
                 </label>
                 <input
+                  {...screenBox("calcRoadNickname")}
                   type="text"
                   value={roadNickname}
                   onChange={(e) => setRoadNickname(e.target.value)}
-                  className="max-w-xs rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
                 />
               </div>
             )}

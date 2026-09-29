@@ -6,6 +6,7 @@ import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { PANEL_GAP, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, screenPanel } from "@/lib/ui/field-widths";
 
 // ── Types (mirror GroupDetail from src/lib/groups/queries.ts) ────────────────
 // Normalised shapes: memberId is the FK id for the group's target type.
@@ -219,16 +220,16 @@ export function GroupEditor({
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`${SCREEN_COLUMN} gap-4`} style={SCREEN_COLUMN_STYLE}>
       {/* Area A — read-only target + code, editable description, Add items */}
       <section className="rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[200px_140px_1fr_auto] md:items-start">
+        <div className="flex flex-wrap items-start gap-4">
           {/* Target (read-only) */}
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-fade dark:text-zinc-400">
               {t("fields.target")}
             </span>
-            <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <div {...screenBox("groupTarget")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
               {t(`targets.${detail.targetType}`)}
             </div>
           </div>
@@ -238,7 +239,7 @@ export function GroupEditor({
             <span className="text-xs font-medium text-fade dark:text-zinc-400">
               {t("fields.code")}
             </span>
-            <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+            <div {...screenBox("groupCode")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
               {detail.code}
             </div>
           </div>
@@ -250,12 +251,13 @@ export function GroupEditor({
               <span className="ml-0.5 text-red-500">*</span>
             </label>
             <textarea
+              {...screenBox("groupDescription")}
               id={descriptionId}
               rows={2}
               maxLength={DESCRIPTION_MAX}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
             />
             <span className="text-xs text-fade dark:text-zinc-500">
               {t("descriptionCount", {
@@ -281,9 +283,10 @@ export function GroupEditor({
 
       {/* Areas B + C — member editor */}
       {showItems && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
           {/* Panel B — available */}
           <Panel
+            name="available"
             title={t("panels.available")}
             rows={availableRows}
             renderRow={(id) => (
@@ -302,7 +305,8 @@ export function GroupEditor({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchPlaceholder")}
                 aria-label={t("searchPlaceholder")}
-                className="w-full rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                {...screenBox("memberSearch")}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             }
             footer={
@@ -319,6 +323,7 @@ export function GroupEditor({
 
           {/* Panel C — in group */}
           <Panel
+            name="in-group"
             title={
               <span className="flex items-center gap-1">
                 {t("panels.inGroup")}
@@ -383,6 +388,7 @@ export function GroupEditor({
 // ── Presentational helpers ────────────────────────────────────────────────────
 
 function Panel({
+  name,
   title,
   rows,
   renderRow,
@@ -390,6 +396,8 @@ function Panel({
   toolbar,
   footer,
 }: {
+  /** Its name for the e2e width check (`data-panel`). */
+  name: string;
   title: React.ReactNode;
   rows: string[];
   renderRow: (id: string) => React.ReactNode;
@@ -403,6 +411,7 @@ function Panel({
   return (
     <section
       aria-labelledby={titleId}
+      {...screenPanel(name)}
       className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="flex items-center justify-between border-b border-card-rim px-4 py-2 dark:border-zinc-800">

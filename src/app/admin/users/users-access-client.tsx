@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations, useLocale } from "next-intl";
 import { CheckCircle, XCircle, Clock, UserCheck, UserX } from "lucide-react";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, type ColumnName } from "@/lib/ui/field-widths";
 
 type RequestStatus = "pending" | "approved" | "rejected";
 
@@ -164,15 +166,15 @@ export function UsersAccessClient() {
   const isBusy = approveMutation.isPending || rejectMutation.isPending;
 
   return (
-    <div>
+    <div className={SCREEN_COLUMN} style={SCREEN_COLUMN_STYLE}>
       {actionSuccess && (
-        <div className="mb-4 rounded-md bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm flex items-center gap-2">
+        <div className="mb-4 w-0 min-w-full rounded-md bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm flex items-center gap-2">
           <CheckCircle size={14} className="shrink-0" />
           {actionSuccess}
         </div>
       )}
       {actionError && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-800 px-4 py-2 text-sm flex items-center gap-2">
+        <div className="mb-4 w-0 min-w-full rounded-md bg-red-50 border border-red-200 text-red-800 px-4 py-2 text-sm flex items-center gap-2">
           <XCircle size={14} className="shrink-0" />
           {actionError}
         </div>
@@ -259,6 +261,11 @@ function RequestTable({
   t: TFunc;
   locale: string;
 }) {
+  // Slice #37.22: #37.16's column widths — a request's table is as wide as its
+  // columns, whichever tab it is on.
+  const columns: readonly ColumnName[] = showActions
+    ? ["username", "email", "dateTime", "decision"]
+    : ["username", "email", "dateTime", "requestStatus", "dateTime", "updatedBy"];
   if (query.isPending) {
     return <p className="text-sm text-fade py-8 text-center">{t("table.loading")}</p>;
   }
@@ -277,31 +284,32 @@ function RequestTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-wire">
-      <table className="w-full text-sm">
+    <div className={`${TABLE_FRAME} rounded-lg border border-wire`}>
+      <table {...fixedTable(columns)}>
+        <FixedColumns columns={columns} />
         <thead className="bg-surface border-b border-wire">
           <tr>
-            <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.username")}</th>
-            <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.email")}</th>
-            <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.submitted")}</th>
+            <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("username")}>{t("table.username")}</th>
+            <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("email")}>{t("table.email")}</th>
+            <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("dateTime")}>{t("table.submitted")}</th>
             {!showActions && (
               <>
-                <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.status")}</th>
-                <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.processed")}</th>
-                <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.by")}</th>
+                <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("requestStatus")}>{t("table.status")}</th>
+                <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("dateTime")}>{t("table.processed")}</th>
+                <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("updatedBy")}>{t("table.by")}</th>
               </>
             )}
             {showActions && (
-              <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.actions")}</th>
+              <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("decision")}>{t("table.actions")}</th>
             )}
           </tr>
         </thead>
         <tbody className="divide-y divide-wire">
           {rows.map((row) => (
             <tr key={row.id} className="hover:bg-surface transition-colors">
-              <td className="px-4 py-2.5 font-medium text-ink">{row.username}</td>
-              <td className="px-4 py-2.5 text-fade">{row.email}</td>
-              <td className="px-4 py-2.5 text-fade whitespace-nowrap">
+              <td className={`px-4 py-2.5 font-medium text-ink ${WRAPS}`}>{row.username}</td>
+              <td className={`px-4 py-2.5 text-fade ${WRAPS}`}>{row.email}</td>
+              <td className="px-4 py-2.5 text-fade">
                 {formatDate(row.requestedAt, locale)}
               </td>
               {!showActions && (
@@ -309,15 +317,15 @@ function RequestTable({
                   <td className="px-4 py-2.5">
                     <StatusBadge status={row.status} t={t} />
                   </td>
-                  <td className="px-4 py-2.5 text-fade whitespace-nowrap">
+                  <td className="px-4 py-2.5 text-fade">
                     {row.processedAt ? formatDate(row.processedAt, locale) : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-fade">{row.processedBy ?? "—"}</td>
+                  <td className={`px-4 py-2.5 text-fade ${WRAPS}`}>{row.processedBy ?? "—"}</td>
                 </>
               )}
               {showActions && (
                 <td className="px-4 py-2.5">
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => onApprove(row.id)}

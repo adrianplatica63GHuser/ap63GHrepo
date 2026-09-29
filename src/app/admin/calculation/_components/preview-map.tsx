@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Map, Polygon, AdvancedMarker, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { CALC_MAP_STYLE } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -87,7 +88,7 @@ export function PreviewMap({ bigPolygon, owners, road }: Props) {
   ];
 
   return (
-    <div className="relative h-[420px] w-full overflow-hidden rounded-md border border-card-rim dark:border-zinc-700">
+    <div style={CALC_MAP_STYLE} data-panel="preview-map" className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-700">
       <div className="absolute inset-0">
         <Map
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}

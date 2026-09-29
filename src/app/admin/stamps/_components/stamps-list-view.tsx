@@ -5,6 +5,11 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+
+/** The stamps, at #37.16's column widths (Slice #37.22). */
+const COLUMNS: readonly ColumnName[] = ["description", "count", "rowActions"];
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,7 +88,7 @@ function CreateForm({ onClose }: { onClose: () => void }) {
   const canSave = shortDescription.trim().length > 0 && !mutation.isPending;
 
   return (
-    <div className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+    <div {...screenPanel("add-stamp")} className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
       <h3 className="mb-1 text-sm font-semibold text-ink dark:text-zinc-100">
         {t("createTitle")}
       </h3>
@@ -101,12 +106,13 @@ function CreateForm({ onClose }: { onClose: () => void }) {
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <input
+            {...screenBox("stampShortDescription")}
             ref={firstRef}
             type="text"
             maxLength={SHORT_DESC_MAX}
             value={shortDescription}
             onChange={(e) => setShortDescription(e.target.value)}
-            className="max-w-sm rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
           />
           <span className="text-xs text-fade dark:text-zinc-500">
             {t("shortDescCount", {
@@ -122,6 +128,7 @@ function CreateForm({ onClose }: { onClose: () => void }) {
             {t("fields.notes")}
           </label>
           <textarea
+            {...screenBox("stampNotes")}
             rows={3}
             maxLength={NOTES_MAX}
             value={notes}
@@ -135,7 +142,7 @@ function CreateForm({ onClose }: { onClose: () => void }) {
           <label className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("fields.code")}
           </label>
-          <div className="max-w-xs rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm italic text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
+          <div {...screenBox("groupCodePending")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm italic text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
             {t("codeAssignedOnSave")}
           </div>
         </div>
@@ -187,7 +194,7 @@ export function StampsListView() {
   });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`${SCREEN_COLUMN} gap-3`} style={SCREEN_COLUMN_STYLE}>
       {creating && <CreateForm onClose={() => setCreating(false)} />}
 
       {/* Toolbar */}
@@ -207,13 +214,14 @@ export function StampsListView() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-sm">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <table {...fixedTable(COLUMNS)}>
+          <FixedColumns columns={COLUMNS} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="px-4 py-2">{t("table.stamp")}</th>
-              <th className="px-4 py-2">{t("table.members")}</th>
-              <th className="w-32 px-4 py-2" />
+              <th className="px-4 py-2" {...columnHead("description")}>{t("table.stamp")}</th>
+              <th className="px-4 py-2" {...columnHead("count")}>{t("table.members")}</th>
+              <th className="px-4 py-2" {...columnHead("rowActions")} />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -240,7 +248,7 @@ export function StampsListView() {
             )}
             {query.data?.map((s) => (
               <tr key={s.id} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
-                <td className="px-4 py-2">
+                <td className={`px-4 py-2 ${WRAPS}`}>
                   <span className="font-mono font-semibold text-ink dark:text-zinc-100">
                     {s.code}
                   </span>
@@ -257,7 +265,7 @@ export function StampsListView() {
                   {s.memberCount}
                 </td>
                 <td className="px-4 py-2">
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Link
                       href={`/admin/stamps/${s.id}`}
                       className="rounded border border-wire bg-white px-2 py-0.5 text-xs text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"

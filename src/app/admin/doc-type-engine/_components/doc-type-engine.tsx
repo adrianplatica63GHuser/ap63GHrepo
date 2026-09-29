@@ -104,6 +104,7 @@ import {
   uniqueFieldKey,
 } from "@/lib/documents/discover-to-template";
 import { isSessionLoss, servesHtml } from "@/lib/import/ai-interpret-run";
+import { CAPTION_STYLE, screenBox, screenPanel } from "@/lib/ui/field-widths";
 
 /*
  * ⚠️ **THERE IS DELIBERATELY NO MODULE-LEVEL `_dirHandle` HERE, AND THE FIRST
@@ -785,7 +786,7 @@ export function DocTypeEngine({
           : "";
 
   const inputClass =
-    "w-full rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink " +
+    "rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink " +
     "shadow-sm focus:border-focus focus:outline-none " +
     "disabled:bg-cap disabled:text-fade " +
     "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
@@ -806,7 +807,7 @@ export function DocTypeEngine({
     !!selectedType && refusalFor(selectedType) === null && samples.length > 0;
 
   return (
-    <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+    <section {...screenPanel("doc-type-engine", true)} className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
       {/* ⚠️ **MOUNTED ONCE, FOR THE WHOLE SCREEN, AND `import-types-blocked-stage.tsx`
           RECORDS WHY.** "A live region inserted into the DOM together with its
           text is not reliably announced — the region has to exist before its
@@ -849,11 +850,12 @@ export function DocTypeEngine({
               {t("types.label")}
             </label>
             <select
+              {...screenBox("documentType")}
               id="dte-type"
               value={typeId}
               disabled={types === null}
               onChange={(e) => setTypeId(e.target.value)}
-              className={`${inputClass} mt-1 max-w-lg`}
+              className={`${inputClass} mt-1`}
             >
               <option value="">{t("types.placeholder")}</option>
               {(types ?? []).map((row) => {
@@ -873,7 +875,7 @@ export function DocTypeEngine({
               })}
             </select>
             {selectedType && documentTypeHasForm(selectedType.templateFields) && (
-              <p className="mt-1.5 max-w-lg text-xs text-fade dark:text-zinc-400">
+              <p className="mt-1.5 text-xs text-fade dark:text-zinc-400" style={CAPTION_STYLE}>
                 {t("types.additiveNote", { count: existingFields.length })}
               </p>
             )}
@@ -918,13 +920,14 @@ export function DocTypeEngine({
               {t("matching.label")}
             </label>
             <select
+              {...screenBox("matchPercent")}
               id="dte-percent"
               value={percent}
               onChange={(e) => {
                 const next = Number(e.target.value);
                 if (isMatchingPercent(next)) setPercent(next);
               }}
-              className={`${inputClass} mt-1 max-w-[10rem]`}
+              className={`${inputClass} mt-1`}
             >
               {MATCHING_PERCENTS.map((p) => (
                 <option key={p} value={p}>
@@ -932,7 +935,7 @@ export function DocTypeEngine({
                 </option>
               ))}
             </select>
-            <p className="mt-1.5 max-w-lg text-xs text-fade dark:text-zinc-400">
+            <p className="mt-1.5 text-xs text-fade dark:text-zinc-400" style={CAPTION_STYLE}>
               {t("matching.hint")}
             </p>
           </div>
@@ -1069,13 +1072,14 @@ export function DocTypeEngine({
               {t("matching.label")}
             </label>
             <select
+              {...screenBox("matchPercent")}
               id="dte-percent-review"
               value={percent}
               onChange={(e) => {
                 const next = Number(e.target.value);
                 if (isMatchingPercent(next)) setPercent(next);
               }}
-              className={`${inputClass} max-w-[8rem]`}
+              className={inputClass}
             >
               {MATCHING_PERCENTS.map((p) => (
                 <option key={p} value={p}>
@@ -1138,11 +1142,12 @@ export function DocTypeEngine({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-end gap-3">
-                        <div className="min-w-0 flex-1">
+                        <div>
                           <label className="block text-xs font-medium text-fade dark:text-zinc-400">
                             {t("review.label")}
                           </label>
                           <input
+                            {...screenBox("proposedLabel")}
                             type="text"
                             value={row.labelRo}
                             aria-label={t("review.labelAria", {
@@ -1162,6 +1167,7 @@ export function DocTypeEngine({
                             {t("review.type")}
                           </label>
                           <select
+                            {...screenBox("proposedType")}
                             value={row.type}
                             aria-label={t("review.typeAria", {
                               label: row.labelRo.trim() || field.clusterId,
@@ -1215,6 +1221,7 @@ export function DocTypeEngine({
                           {t("review.hint")}
                         </label>
                         <input
+                          {...screenBox("proposedHint")}
                           type="text"
                           value={row.aiHint}
                           aria-label={t("review.hintAria", {

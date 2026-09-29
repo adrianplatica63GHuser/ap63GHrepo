@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { canManageAccounts, getCurrentAppUser } from "@/lib/auth/current-role";
 import { UsersAccessClient } from "./users-access-client";
+import { PROSE_STYLE } from "@/lib/ui/field-widths";
 
 /**
  * Server component — verifies the caller is a superuser, then hands off to
@@ -21,9 +22,9 @@ export default async function UsersAccessPage() {
   const t = await getTranslations("usersAccess");
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6">
       <h1 className="text-2xl font-bold text-ink mb-1">{t("title")}</h1>
-      <p className="text-sm text-fade mb-6">{t("description")}</p>
+      <p className="text-sm text-fade mb-6" style={PROSE_STYLE}>{t("description")}</p>
       <UsersAccessClient />
     </div>
   );

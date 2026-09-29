@@ -9,6 +9,11 @@ import {
   type GroupTargetType,
 } from "@/lib/groups/validation";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+
+/** The groups, at #37.16's column widths (Slice #37.22). */
+const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"];
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -87,7 +92,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
   const canSave = description.trim().length > 0 && !mutation.isPending;
 
   return (
-    <div className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+    <div {...screenPanel("add-group")} className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
       <h3 className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100">
         {t("addTitle")}
       </h3>
@@ -100,11 +105,12 @@ function AddForm({ onClose }: { onClose: () => void }) {
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <select
+            {...screenBox("groupTarget")}
             id={targetId}
             ref={firstRef}
             value={targetType}
             onChange={(e) => setTargetType(e.target.value as GroupTargetType)}
-            className="max-w-xs rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
           >
             {GROUP_TARGET_TYPES.map((tt) => (
               <option key={tt} value={tt}>
@@ -121,6 +127,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <textarea
+            {...screenBox("groupDescription")}
             id={descriptionId}
             rows={3}
             maxLength={DESCRIPTION_MAX}
@@ -141,7 +148,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
           <label className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("fields.code")}
           </label>
-          <div className="max-w-xs rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm italic text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
+          <div {...screenBox("groupCodePending")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm italic text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
             {t("codeAssignedOnSave")}
           </div>
         </div>
@@ -193,7 +200,7 @@ export function GroupsListView() {
   });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`${SCREEN_COLUMN} gap-3`} style={SCREEN_COLUMN_STYLE}>
       {adding && <AddForm onClose={() => setAdding(false)} />}
 
       {/* Toolbar */}
@@ -213,13 +220,14 @@ export function GroupsListView() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-sm">
+      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <table {...fixedTable(COLUMNS)}>
+          <FixedColumns columns={COLUMNS} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="px-4 py-2">{t("table.code")}</th>
-              <th className="px-4 py-2">{t("table.description")}</th>
-              <th className="w-28 px-4 py-2" />
+              <th className="px-4 py-2" {...columnHead("groupCode")}>{t("table.code")}</th>
+              <th className="px-4 py-2" {...columnHead("description")}>{t("table.description")}</th>
+              <th className="px-4 py-2" {...columnHead("rowActions")} />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -257,11 +265,11 @@ export function GroupsListView() {
                     {t(`targets.${g.targetType}`)}
                   </div>
                 </td>
-                <td className="px-4 py-2 text-ink dark:text-zinc-300">
+                <td className={`px-4 py-2 text-ink dark:text-zinc-300 ${WRAPS}`}>
                   {g.description}
                 </td>
                 <td className="px-4 py-2">
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Link
                       href={`/admin/groups/${g.id}`}
                       className="rounded border border-wire bg-white px-2 py-0.5 text-xs text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"

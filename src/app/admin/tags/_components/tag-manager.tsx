@@ -4,6 +4,11 @@ import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+
+/** The tags, at #37.16's column widths (Slice #37.22). */
+const COLUMNS: readonly ColumnName[] = ["tag", "count", "rowActions"];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -401,7 +406,9 @@ export function TagManager() {
   return (
     <>
       {/* ── Tag Cloud ──────────────────────────────────────────────────────── */}
-      <section className="mb-8">
+      {/* Slice #37.22: the cloud is two panels wide and wraps downward; the
+          table under it is as wide as its columns. */}
+      <section {...screenPanel("tag-cloud", true)} className="mb-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
             {t("cloud.title")}
@@ -433,7 +440,7 @@ export function TagManager() {
       </section>
 
       {/* ── Management table ───────────────────────────────────────────────── */}
-      <section>
+      <section className="w-fit max-w-full">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
             {t("list.title")}
@@ -447,13 +454,14 @@ export function TagManager() {
           </button>
         </div>
 
-        <div className="rounded-lg border border-card-rim overflow-hidden dark:border-zinc-800">
-          <table className="w-full text-sm">
+        <div className={`${TABLE_FRAME} rounded-lg border border-card-rim dark:border-zinc-800`}>
+          <table {...fixedTable(COLUMNS)}>
+            <FixedColumns columns={COLUMNS} />
             <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-fade dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-2 text-left font-semibold">{t("list.colTag")}</th>
-                <th className="px-4 py-2 text-right font-semibold w-24">{t("list.colUsage")}</th>
-                <th className="px-4 py-2 text-right font-semibold w-32">{t("list.colActions")}</th>
+                <th className="px-4 py-2 text-left font-semibold" {...columnHead("tag")}>{t("list.colTag")}</th>
+                <th className="px-4 py-2 text-right font-semibold" {...columnHead("count")}>{t("list.colUsage")}</th>
+                <th className="px-4 py-2 text-right font-semibold" {...columnHead("rowActions")}>{t("list.colActions")}</th>
               </tr>
             </thead>
             <tbody
@@ -466,7 +474,7 @@ export function TagManager() {
                   data-tag={row.tag}
                   className="transition-colors"
                 >
-                  <td className="px-4 py-2 font-mono text-ink dark:text-zinc-100">
+                  <td className={`px-4 py-2 font-mono text-ink dark:text-zinc-100 ${WRAPS}`}>
                     {row.tag}
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">

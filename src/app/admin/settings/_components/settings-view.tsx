@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { PANEL_GAP, screenBox, screenPanel } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // Locale helper — read the current cookie locale so we can pick _en vs _ro
@@ -133,7 +134,7 @@ function TimeFramesPanel() {
   }
 
   return (
-    <section className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("time-frames")} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionTimeFrames")}</h2>
 
       {isLoading && (
@@ -162,13 +163,14 @@ function TimeFramesPanel() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <input
+                      {...screenBox("timeFrameDays")}
                       type="number"
                       min={1}
                       max={3650}
                       value={val}
                       onChange={(e) => handleChange(row.key, e.target.value)}
                       className={[
-                        "w-20 rounded-md border px-2 py-1 text-sm text-right tabular-nums",
+                        "rounded-md border px-2 py-1 text-sm text-right tabular-nums",
                         "bg-white dark:bg-zinc-800 text-ink",
                         isChanged
                           ? "border-amber-400 ring-1 ring-amber-400"
@@ -248,7 +250,7 @@ function DeveloperPanel() {
   const [showDevNotes, setShowDevNotes] = useState(false);
 
   return (
-    <section className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("developer")} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionDeveloper")}</h2>
 
       <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -288,9 +290,11 @@ export function SettingsView() {
   const t = useTranslations("settings");
 
   return (
-    <div className="flex flex-col gap-6">
+    // Slice #37.22: three panels in a row that wraps — the window decides how
+    // many sit side by side, never how wide one is.
+    <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
       {/* ── Others ── */}
-      <section className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+      <section {...screenPanel("others")} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-ink">{t("sectionOthers")}</h2>
         <div className="flex flex-wrap gap-3">
           <Link

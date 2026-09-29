@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { GroupsListView } from "./_components/groups-list-view";
+import { screenPanel } from "@/lib/ui/field-widths";
 
 // Slice #20.17: BackLink removed — BreadcrumbBar shows "Admin > Grupuri"
 // with "Admin" linking to /admin/value-lists.
@@ -9,7 +10,7 @@ export default async function GroupsPage() {
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-4xl px-6 py-8 flex flex-col gap-6">
+      <main className="w-full px-6 py-8 flex flex-col gap-6">
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("pageTitle")}
@@ -17,7 +18,7 @@ export default async function GroupsPage() {
         </header>
 
         {/* Info panel — what is a Group and when to use it */}
-        <section className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
+        <section {...screenPanel("about-groups", true)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
           <h2 className="mb-3 text-base font-semibold text-blue-900 dark:text-blue-200">
             {t("infoPanel.title")}
           </h2>

@@ -5,6 +5,12 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PreviewMap } from "@/app/admin/calculation/_components/preview-map";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { SCREEN_COLUMN, WIDE_COLUMN_STYLE, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+
+/** The run's two tables, at #37.16's column widths (Slice #37.22). */
+const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
+const PARCEL_COLUMNS: readonly ColumnName[] = ["code", "propertyNickname", "outputRole", "viewLink"];
 
 // ---------------------------------------------------------------------------
 // Types  (mirror src/lib/calculation/runs.ts — no server import in client)
@@ -160,7 +166,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`${SCREEN_COLUMN} gap-6`} style={WIDE_COLUMN_STYLE}>
 
       {/* ── Header info bar ────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-4">
@@ -191,7 +197,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
 
       {/* ── Input parameters ───────────────────────────────────────── */}
       <SectionCard title={t("detail.paramsTitle")}>
-        <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+        <div className="text-sm" style={stepGridStyle("L", 4)}>
           <Stat label={t("detail.orientation")} value={
             comp.orientation === "HORIZONTAL" ? "Orizontal" : "Vertical"
           } />
@@ -212,22 +218,23 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
 
       {/* ── Steps log — owner breakdown ────────────────────────────── */}
       <SectionCard title={t("detail.stepsTitle")}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className={TABLE_FRAME}>
+          <table {...fixedTable(OWNER_COLUMNS)}>
+            <FixedColumns columns={OWNER_COLUMNS} />
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
               <tr>
-                <th className="px-3 py-2">{t("detail.stepsCol.owner")}</th>
-                <th className="px-3 py-2 text-right">{t("detail.stepsCol.percent")}</th>
-                <th className="px-3 py-2 text-right">{t("detail.stepsCol.originalArea")}</th>
-                <th className="px-3 py-2 text-right">{t("detail.stepsCol.roadParticipation")}</th>
-                <th className="px-3 py-2 text-right">{t("detail.stepsCol.finalArea")}</th>
-                <th className="px-3 py-2 text-right">{t("detail.stepsCol.computedArea")}</th>
+                <th className="px-3 py-2" {...columnHead("personName")}>{t("detail.stepsCol.owner")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("percent")}>{t("detail.stepsCol.percent")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("detail.stepsCol.originalArea")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("detail.stepsCol.roadParticipation")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("detail.stepsCol.finalArea")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("detail.stepsCol.computedArea")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-crease dark:divide-zinc-800">
               {comp.owners.map((o, i) => (
                 <tr key={i}>
-                  <td className="px-3 py-2 text-ink dark:text-zinc-200">
+                  <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
                     {o.name}
                     {o.rawLabel !== o.name && (
                       <span className="ml-1 text-xs text-fade dark:text-zinc-500">({o.rawLabel})</span>
@@ -263,14 +270,15 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
         {run.outputs.length === 0 ? (
           <p className="text-sm text-fade dark:text-zinc-400">{t("detail.parcelsEmpty")}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className={TABLE_FRAME}>
+            <table {...fixedTable(PARCEL_COLUMNS)}>
+              <FixedColumns columns={PARCEL_COLUMNS} />
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
                 <tr>
-                  <th className="px-3 py-2">{t("detail.parcelsCol.code")}</th>
-                  <th className="px-3 py-2">{t("detail.parcelsCol.nickname")}</th>
-                  <th className="px-3 py-2">{t("detail.parcelsCol.role")}</th>
-                  <th className="px-3 py-2" />
+                  <th className="px-3 py-2" {...columnHead("code")}>{t("detail.parcelsCol.code")}</th>
+                  <th className="px-3 py-2" {...columnHead("propertyNickname")}>{t("detail.parcelsCol.nickname")}</th>
+                  <th className="px-3 py-2" {...columnHead("outputRole")}>{t("detail.parcelsCol.role")}</th>
+                  <th className="px-3 py-2" {...columnHead("viewLink")} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -279,7 +287,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
                     <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">
                       {o.propertyCode ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-ink dark:text-zinc-200">
+                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
                       {o.propertyNickname ?? "—"}
                     </td>
                     <td className="px-3 py-2">

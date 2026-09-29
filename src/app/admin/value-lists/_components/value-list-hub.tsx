@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
+import { screenPanel } from "@/lib/ui/field-widths";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -25,7 +26,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900">
+    // Slice #37.22: a section is two panels wide; its buttons wrap inside it.
+    <div {...screenPanel(`value-lists-${label}`, true)} className="rounded-lg border border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900">
       <div className="border-b border-card-rim px-4 py-2 dark:border-zinc-800">
         <span className="text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
           {label}
