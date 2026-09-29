@@ -451,6 +451,7 @@ export const COLUMN = {
   selectNew: { content: "XS", kind: "fixed" }, //           a list's checkbox and its „Nou!" badge
   selectBadges: { content: "S", kind: "wraps" }, //         the property list's: „Nou!", and „Încrucișat" on a line of its own
   open: { content: "S", kind: "fixed" }, //                 „Deschide" / „Vizualizare", an xs button
+  openPreview: { content: "L", kind: "fixed" }, //          „Vizualizare" and „Previzualizare" (#37.24), two xs buttons on an association tile
   // Every entity
   code: { content: "S", kind: "fixed" }, //                 „JPERS03542", 10 mono characters at 12 px
   importance: { content: "M", kind: "fixed" }, //           „Ridicată"

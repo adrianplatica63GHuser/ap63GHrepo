@@ -548,6 +548,39 @@
     "notes": "Notes"
   },
   "shared": {
+    "preview": {
+      "title": "Preview",
+      "openPreview": "Preview",
+      "open": "Open",
+      "close": "Close",
+      "readonly": "Read-only",
+      "loading": "Loading…",
+      "error": "The record could not be read.",
+      "firstPage": "First page",
+      "noPage": "No page attached",
+      "fields": {
+        "code": "Code",
+        "lastName": "Last name",
+        "firstName": "First name",
+        "cnp": "CNP",
+        "dateOfBirth": "Date of birth",
+        "placeOfBirth": "Place of birth",
+        "name": "Name",
+        "companyType": "Type",
+        "cui": "CUI",
+        "tradeRegister": "Trade reg. no.",
+        "nickname": "Nickname",
+        "parcela": "Parcel no.",
+        "cadastralNumber": "Cadastral no.",
+        "carteFunciara": "Land book",
+        "surfaceAreaMp": "Area (sqm)",
+        "documentType": "Document type",
+        "title": "Short label",
+        "subject": "Subject",
+        "nrDocument": "Document no.",
+        "dateDocument": "Date"
+      }
+    },
     "recordSync": {
       "stale": "Nothing was saved: this record was saved in another window or by another user since you opened it. What you typed is still on screen.",
       "saved": "This record was saved in another window. Your changes here are not saved, and saving them will be refused.",

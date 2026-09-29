@@ -23,12 +23,18 @@ export function TileSelector<K extends string>({
   labels,
   choice,
   marked = [],
+  extra = [],
 }: {
   all: readonly K[];
   labels: Readonly<Record<K, string>>;
   choice: TileChoice<K>;
   /** Tiles not on screen that hold something to look at (Slice #37.20). */
   marked?: readonly K[];
+  /**
+   * Tiles that exist only while open — the Previzualizare tiles (Slice #37.24).
+   * Each is a ticked box after the screen's own; unticking it closes the tile.
+   */
+  extra?: readonly { key: string; label: string; onRemove: () => void }[];
 }) {
   const t = useTranslations("shared.tiles");
   const lastOne = choice.shown.length === 1;
@@ -62,6 +68,12 @@ export function TileSelector<K extends string>({
           </span>
         );
       })}
+      {extra.map((x) => (
+        <label key={x.key} className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-ink dark:text-zinc-200" data-tile-extra={x.key}>
+          <input type="checkbox" checked onChange={x.onRemove} className="h-4 w-4 rounded border-wire accent-cta" />
+          {x.label}
+        </label>
+      ))}
       <span className="flex items-center gap-2">
         {/* Slice #37.23 — what the choice does and where it is kept. The text is
             Adrian's, in Texte de ajutor; until he writes it the hint draws nothing. */}

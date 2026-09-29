@@ -10,9 +10,10 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import Link from "next/link";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { PreviewButton } from "@/components/tiles/preview-tiles";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "documentType", "documentTitle", "role", "open"];
+const COLUMNS: ColumnName[] = ["select", "documentType", "documentTitle", "role", "openPreview"];
 
 /**
  * ⚠️ **`linkId` IS THE ROW AND `id` IS THE DOCUMENT.**          (Slice #36.02)
@@ -114,7 +115,7 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("documentType")}>{t("colType")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("documentTitle")}>{t("colTitle")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
-                <th className="px-3 py-2" {...columnHead("open")} aria-label="view" />
+                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -151,13 +152,16 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
                     {roleOrQualityLabel(item.roleName, item.quality, qualityWords)}
                   </td>
                   <td className="px-3 py-2">
-                    <Link
-                      href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
-                      onClick={(e) => e.stopPropagation()}
-                      className={buttonClass({ variant: "secondary", size: "xs" })}
-                    >
-                      {t("view")}
-                    </Link>
+                    <div className="flex gap-1">
+                      <Link
+                        href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={buttonClass({ variant: "secondary", size: "xs" })}
+                      >
+                        {t("view")}
+                      </Link>
+                      <PreviewButton target={{ kind: "document", id: item.id }} />
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -35,6 +35,7 @@ import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { PANEL_GAP, panelRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
+import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type Props = {
   personId:      string;
@@ -59,6 +60,9 @@ export function JudicialPersonDetailTiles({
 
   const urlTile = initialTab ? JP_TILE_OF_TAB[initialTab] : undefined;
   const choice = useTileChoice<JpTile>(JP_TILE_REGISTRY, urlTile ? [urlTile] : []);
+  // Slice #37.24 — related records open beside this one, read-only.
+  const previews = usePreviews();
+  const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -98,8 +102,9 @@ export function JudicialPersonDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={panelRowStyle()}>
-        <TileSelector all={JP_TILES} labels={labels} choice={choice} />
+        <TileSelector all={JP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
+        <PreviewOpenerProvider previews={previews}>
         <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
           <JudicialPersonForm
             mode={readonly ? "view" : "edit"}
@@ -134,7 +139,9 @@ export function JudicialPersonDetailTiles({
               />
             </ListTile>
           )}
+          <PreviewTiles previews={previews} />
         </div>
+        </PreviewOpenerProvider>
       </div>
     </>
   );

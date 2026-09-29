@@ -9,9 +9,11 @@ import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/comp
 import type { ColumnName } from "@/lib/ui/field-widths";
 import Link from "next/link";
 import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
+import { PreviewButton } from "@/components/tiles/preview-tiles";
+import { personPreview } from "@/lib/ui/previews";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "personName", "role", "open"];
+const COLUMNS: ColumnName[] = ["select", "personName", "role", "openPreview"];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -113,7 +115,7 @@ export function PropertyPersonsTab({ propertyId }: Props) {
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>
                   {t("colRole")}
                 </th>
-                <th className="px-3 py-2" {...columnHead("open")} aria-label="view" />
+                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -154,13 +156,16 @@ export function PropertyPersonsTab({ propertyId }: Props) {
                     {p.roleName ?? "—"}
                   </td>
                   <td className="px-3 py-2">
-                    <Link
-                      href={`${personPath(p.type, p.id)}?readonly=true`}
-                      onClick={(e) => e.stopPropagation()}
-                      className={buttonClass({ variant: "secondary", size: "xs" })}
-                    >
-                      {t("view")}
-                    </Link>
+                    <div className="flex gap-1">
+                      <Link
+                        href={`${personPath(p.type, p.id)}?readonly=true`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={buttonClass({ variant: "secondary", size: "xs" })}
+                      >
+                        {t("view")}
+                      </Link>
+                      <PreviewButton target={personPreview(p.type, p.id)} />
+                    </div>
                   </td>
                 </tr>
               ))}

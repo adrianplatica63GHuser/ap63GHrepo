@@ -53,6 +53,7 @@ import {
   markedTiles,
   type DocumentLayout,
 } from "./document-tiles";
+import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type Props = {
   documentId:        string;
@@ -94,6 +95,9 @@ export function DocumentDetailTiles({
 
   const urlTile = initialTab ? DOC_TILE_OF_TAB[initialTab] : undefined;
   const choice = useTileChoice<string>(reg, urlTile ? [urlTile] : []);
+  // Slice #37.24 — related records open beside this one, read-only.
+  const previews = usePreviews();
+  const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.06: the details form portals its version-nav controls into this
   // header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -167,9 +171,10 @@ export function DocumentDetailTiles({
         {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
             made before would be stored under a key the type then replaces. */}
         {layout.ready !== false && (
-          <TileSelector all={reg.all} labels={labels} choice={choice} marked={marked} />
+          <TileSelector all={reg.all} labels={labels} choice={choice} marked={marked} extra={previewEntries} />
         )}
 
+        <PreviewOpenerProvider previews={previews}>
         <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
           <DocumentForm
             mode={readonly ? "view" : "edit"}
@@ -219,7 +224,9 @@ export function DocumentDetailTiles({
               </ListTile>
             </div>
           )}
+          <PreviewTiles previews={previews} order={reg.all.length} />
         </div>
+        </PreviewOpenerProvider>
 
         {/* Slice #23.06.Import: what Detalii showed under the form. It is not a
             part of the document but a step on it (a Property from its corner

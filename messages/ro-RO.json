@@ -548,6 +548,39 @@
     "notes": "Note"
   },
   "shared": {
+    "preview": {
+      "title": "Previzualizare",
+      "openPreview": "Previzualizare",
+      "open": "Deschide",
+      "close": "Închide",
+      "readonly": "Numai citire",
+      "loading": "Se încarcă…",
+      "error": "Înregistrarea nu a putut fi citită.",
+      "firstPage": "Prima pagină",
+      "noPage": "Nicio pagină atașată",
+      "fields": {
+        "code": "Cod",
+        "lastName": "Nume",
+        "firstName": "Prenume",
+        "cnp": "CNP",
+        "dateOfBirth": "Data nașterii",
+        "placeOfBirth": "Locul nașterii",
+        "name": "Denumire",
+        "companyType": "Tip",
+        "cui": "CUI",
+        "tradeRegister": "Nr. Reg. Com.",
+        "nickname": "Poreclă",
+        "parcela": "Nr. parcelă",
+        "cadastralNumber": "Nr. cadastral",
+        "carteFunciara": "Carte funciară",
+        "surfaceAreaMp": "Suprafață (mp)",
+        "documentType": "Tip document",
+        "title": "Etichetă scurtă",
+        "subject": "Subiect",
+        "nrDocument": "Nr. document",
+        "dateDocument": "Data"
+      }
+    },
     "recordSync": {
       "stale": "Nu s-a salvat nimic: înregistrarea a fost salvată între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.",
       "saved": "Această înregistrare a fost salvată în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.",

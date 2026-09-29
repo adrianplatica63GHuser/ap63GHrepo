@@ -35,6 +35,7 @@ import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { PANEL_GAP, panelRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
+import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type IdCardLink = { id: string; code: string } | null;
 
@@ -63,6 +64,9 @@ export function PersonDetailTiles({
 
   const urlTile = initialTab ? NP_TILE_OF_TAB[initialTab] : undefined;
   const choice = useTileChoice<NpTile>(NP_TILE_REGISTRY, urlTile ? [urlTile] : []);
+  // Slice #37.24 — related records open beside this one, read-only.
+  const previews = usePreviews();
+  const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot. A ref-callback into state so the portal target is available
   // once mounted (and re-renders the form when it lands).
@@ -104,8 +108,9 @@ export function PersonDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={panelRowStyle()}>
-        <TileSelector all={NP_TILES} labels={labels} choice={choice} />
+        <TileSelector all={NP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
+        <PreviewOpenerProvider previews={previews}>
         <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
           <NaturalPersonForm
             mode={readonly ? "view" : "edit"}
@@ -141,7 +146,9 @@ export function PersonDetailTiles({
               />
             </ListTile>
           )}
+          <PreviewTiles previews={previews} />
         </div>
+        </PreviewOpenerProvider>
       </div>
     </>
   );

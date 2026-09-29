@@ -20,9 +20,11 @@ import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import Link from "next/link";
 import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
+import { PreviewButton } from "@/components/tiles/preview-tiles";
+import { personPreview } from "@/lib/ui/previews";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "open"];
+const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "openPreview"];
 /** The three cotă boxes fill their L column, so „— fără suprafață —" shows whole. */
 const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "fixed" });
 
@@ -299,7 +301,7 @@ export function DocumentPersonsTab({ documentId }: Props) {
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cota")}>{t("colCota")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMp")}>{t("colCotaMp")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMod")}>{t("colCotaMod")}</th>
-                <th className="px-3 py-2" {...columnHead("open")} aria-label="view" />
+                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -421,13 +423,16 @@ export function DocumentPersonsTab({ documentId }: Props) {
                     </td>
 
                     <td className="px-3 py-2">
-                      <Link
-                        href={`${personPath(item.type, item.id)}?readonly=true`}
-                        onClick={(e) => e.stopPropagation()}
-                        className={buttonClass({ variant: "secondary", size: "xs" })}
-                      >
-                        {t("view")}
-                      </Link>
+                      <div className="flex gap-1">
+                        <Link
+                          href={`${personPath(item.type, item.id)}?readonly=true`}
+                          onClick={(e) => e.stopPropagation()}
+                          className={buttonClass({ variant: "secondary", size: "xs" })}
+                        >
+                          {t("view")}
+                        </Link>
+                        <PreviewButton target={personPreview(item.type, item.id)} />
+                      </div>
                     </td>
                   </tr>
                 );

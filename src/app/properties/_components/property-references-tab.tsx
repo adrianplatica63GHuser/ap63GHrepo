@@ -10,9 +10,10 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 import { propertyRoleChip } from "@/lib/properties/relation-roles";
 import Link from "next/link";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { PreviewButton } from "@/components/tiles/preview-tiles";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "propertyLabel", "role", "open"];
+const COLUMNS: ColumnName[] = ["select", "propertyLabel", "role", "openPreview"];
 
 type AssociatedProperty = {
   id:                  string;
@@ -88,7 +89,7 @@ export function PropertyReferencesTab({ propertyId }: Props) {
                 <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("propertyLabel")}>{t("colLabel")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
-                <th className="px-3 py-2" {...columnHead("open")} aria-label="view" />
+                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -148,13 +149,16 @@ export function PropertyReferencesTab({ propertyId }: Props) {
                     })()}
                   </td>
                   <td className="px-3 py-2">
-                    <Link
-                      href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
-                      onClick={(e) => e.stopPropagation()}
-                      className={buttonClass({ variant: "secondary", size: "xs" })}
-                    >
-                      {t("view")}
-                    </Link>
+                    <div className="flex gap-1">
+                      <Link
+                        href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={buttonClass({ variant: "secondary", size: "xs" })}
+                      >
+                        {t("view")}
+                      </Link>
+                      <PreviewButton target={{ kind: "property", id: item.id }} />
+                    </div>
                   </td>
                 </tr>
               ))}
