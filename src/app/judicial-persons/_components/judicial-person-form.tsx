@@ -65,6 +65,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { jpTileOfField, type JpTile } from "./person-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
+import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
 type Props = {
   mode: "create" | "edit" | "view";
@@ -406,6 +407,14 @@ export function JudicialPersonForm({
     (!tiled && !form.formState.isValid) ||
     ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
+  // Slice #37.21: the version a save starts from, the refusal of a stale one,
+  // and the notices from this browser's other windows (record-save-sync.tsx).
+  const recordSync = useRecordSaveSync({
+    recordPath: mode === "create" || !personId ? null : `/api/judicial-persons/${encodeURIComponent(personId)}`,
+    dirty: editDirty,
+    latestVersion,
+  });
+
   const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
@@ -424,11 +433,17 @@ export function JudicialPersonForm({
         mode === "create"
           ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
           : payload;
-      await safeMutate(
+      // Slice #37.21: an edit says which version it started from; a stale one is refused 409.
+      const saved = await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mode === "create" ? requestBody : { ...requestBody, baseVersion: recordSync.baseVersion() }),
+        },
         t,
       );
+      await recordSync.remember(saved);
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
       // The unified /persons list (Slice #15.09) caches under ["persons"];
       // invalidate it too so a created/edited/deleted person shows without a
@@ -438,6 +453,8 @@ export function JudicialPersonForm({
       await queryClient.invalidateQueries({ queryKey: ["person-versions"] });
       return true;
     } catch (err) {
+      // Slice #37.21: a save refused as stale writes nothing; the notice says so.
+      if (recordSync.refused(err)) return false;
       setSubmitError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
@@ -610,6 +627,7 @@ export function JudicialPersonForm({
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
       <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
+      <RecordSyncNotice sync={recordSync} dirty={editDirty} listHref="/judicial-persons" className={tiled ? "basis-full" : undefined} />
 
       {/* Slice #18.05: version controls portalled onto the person-name line. */}
       {versionNavSlot && versionNav &&

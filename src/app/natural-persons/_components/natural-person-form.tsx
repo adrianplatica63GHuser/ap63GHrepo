@@ -65,6 +65,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { npTileOfField, type NpTile } from "./person-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
+import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
 type IdCardLink = { id: string; code: string } | null;
 
@@ -420,6 +421,14 @@ export function NaturalPersonForm({
     (!tiled && !form.formState.isValid) ||
     ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
+  // Slice #37.21: the version a save starts from, the refusal of a stale one,
+  // and the notices from this browser's other windows (record-save-sync.tsx).
+  const recordSync = useRecordSaveSync({
+    recordPath: mode === "create" || !personId ? null : `/api/people/${encodeURIComponent(personId)}`,
+    dirty: editDirty,
+    latestVersion,
+  });
+
   // doSave performs the API call only (no navigation) so it can be reused by
   // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
   const doSave = async (values: FormValues): Promise<boolean> => {
@@ -440,11 +449,17 @@ export function NaturalPersonForm({
         mode === "create"
           ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
           : payload;
-      await safeMutate(
+      // Slice #37.21: an edit says which version it started from; a stale one is refused 409.
+      const saved = await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mode === "create" ? requestBody : { ...requestBody, baseVersion: recordSync.baseVersion() }),
+        },
         t,
       );
+      await recordSync.remember(saved);
       await queryClient.invalidateQueries({ queryKey: ["people"] });
       // The unified /persons list (Slice #15.09) caches under ["persons"];
       // invalidate it too so a created/edited/deleted person shows without a
@@ -455,6 +470,8 @@ export function NaturalPersonForm({
       await queryClient.invalidateQueries({ queryKey: ["person-versions"] });
       return true;
     } catch (err) {
+      // Slice #37.21: a save refused as stale writes nothing; the notice says so.
+      if (recordSync.refused(err)) return false;
       setSubmitError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
@@ -629,6 +646,7 @@ export function NaturalPersonForm({
       {/* Slice #20.13: sticky "Modificări nesalvate" banner — visible whenever
           the form has unsaved edits, even when Save is below the fold. */}
       <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
+      <RecordSyncNotice sync={recordSync} dirty={editDirty} listHref="/natural-persons" className={tiled ? "basis-full" : undefined} />
 
       {/* Slice #18.05: version controls portalled into the detail-tabs header
           so they sit on the person-name line. Only for an existing person once

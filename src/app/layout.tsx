@@ -8,6 +8,7 @@ import { NavigationHistoryProvider } from "@/components/providers/navigation-his
 import { QueryProvider } from "@/components/providers/query-provider";
 import { UnsavedChangesProvider } from "@/components/providers/unsaved-changes-provider";
 import "./globals.css";
+import { RecordSyncProvider } from "@/components/providers/record-sync-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,11 +42,13 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <MapsProvider>
             <QueryProvider>
+              <RecordSyncProvider>
               <UnsavedChangesProvider>
                 <NavigationHistoryProvider>
                   <ConditionalAppShell>{children}</ConditionalAppShell>
                 </NavigationHistoryProvider>
               </UnsavedChangesProvider>
+              </RecordSyncProvider>
             </QueryProvider>
           </MapsProvider>
         </NextIntlClientProvider>

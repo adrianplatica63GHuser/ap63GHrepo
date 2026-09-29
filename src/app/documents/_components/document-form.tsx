@@ -80,6 +80,7 @@ import {
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
+import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
 /**
  * Slice #37.20 — the `order` a panel takes in the page's tile row. A notebook
@@ -787,6 +788,14 @@ export function DocumentForm({
     };
   };
 
+  // Slice #37.21: the version a save starts from, the refusal of a stale one,
+  // and the notices from this browser's other windows (record-save-sync.tsx).
+  const recordSync = useRecordSaveSync({
+    recordPath: mode === "create" || !documentId ? null : `/api/documents/${encodeURIComponent(documentId)}`,
+    dirty: editDirty,
+    latestVersion,
+  });
+
   // doSave performs the API call only (no navigation) so it can be reused by
   // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
   //
@@ -855,11 +864,17 @@ export function DocumentForm({
         mode === "create"
           ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
           : payload;
-      await safeMutate(
+      // Slice #37.21: an edit says which version it started from; a stale one is refused 409.
+      const saved = await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mode === "create" ? requestBody : { ...requestBody, baseVersion: recordSync.baseVersion() }),
+        },
         t,
       );
+      await recordSync.remember(saved);
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
       // Slice #18.06: a save appended a new version — drop the cached list so
       // reopening shows it (and the ◀/▶ nav enables / advances).
@@ -900,6 +915,8 @@ export function DocumentForm({
           }
         : valuesToSave;
     } catch (err) {
+      // Slice #37.21: a save refused as stale writes nothing; the notice says so.
+      if (recordSync.refused(err)) return null;
       setSubmitError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
@@ -1806,6 +1823,7 @@ export function DocumentForm({
 
     {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
     <UnsavedChangesBanner show={editDirty} className={tiled ? "order-first basis-full" : undefined} />
+      <RecordSyncNotice sync={recordSync} dirty={editDirty} listHref="/documents" className={tiled ? "order-first basis-full" : undefined} />
 
     {/* Slice #21.06.misc: the document's own fields sit in the left column;
         once there's a document to show pages for, the Pages panel sits in a

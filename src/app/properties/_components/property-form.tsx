@@ -90,6 +90,7 @@ import { tabTrapMove } from "@/lib/ui/dialog-focus";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { propTileOfField, type PropTile } from "./property-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
+import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -866,6 +867,14 @@ export function PropertyForm({
     (isCreate && !createHasData) ||
     (!isCreate && isOnLatest && !editDirty);
 
+  // Slice #37.21: the version a save starts from, the refusal of a stale one,
+  // and the notices from this browser's other windows (record-save-sync.tsx).
+  const recordSync = useRecordSaveSync({
+    recordPath: mode === "create" || !propertyId ? null : `/api/properties/${encodeURIComponent(propertyId)}`,
+    dirty: editDirty,
+    latestVersion,
+  });
+
   // doSave performs the API call only (no navigation) so it can be reused
   // both by the form's own Save button (onSubmit, which navigates after a
   // successful save) and by the unsaved-changes guard's onSave (which must
@@ -897,17 +906,25 @@ export function PropertyForm({
         mode === "create"
           ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
           : payload;
-      await safeMutate(
+      // Slice #37.21: an edit says which version it started from; a stale one is refused 409.
+      const saved = await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mode === "create" ? requestBody : { ...requestBody, baseVersion: recordSync.baseVersion() }),
+        },
         t,
       );
+      await recordSync.remember(saved);
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
       // Slice #18.02: a save appended a new version — drop the cached list so
       // reopening the property shows it (and the ◀/▶ nav enables).
       await queryClient.invalidateQueries({ queryKey: ["property-versions"] });
       return true;
     } catch (err) {
+      // Slice #37.21: a save refused as stale writes nothing; the notice says so.
+      if (recordSync.refused(err)) return false;
       const matches = parcelMatchesOf(err);
       if (matches) {
         setParcelExists(matches);
@@ -1029,6 +1046,7 @@ export function PropertyForm({
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
       <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
+      <RecordSyncNotice sync={recordSync} dirty={editDirty} listHref="/properties" className={tiled ? "basis-full" : undefined} />
 
       {/* Version controls (Slice #18.UX.04) — portalled into the page header so
           they sit centered on the property-title line. Only rendered for an

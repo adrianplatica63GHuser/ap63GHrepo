@@ -548,6 +548,17 @@
     "notes": "Note"
   },
   "shared": {
+    "recordSync": {
+      "stale": "Nu s-a salvat nimic: înregistrarea a fost salvată între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.",
+      "saved": "Această înregistrare a fost salvată în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.",
+      "deleted": "Această înregistrare a fost ștearsă în altă fereastră.",
+      "reload": "Reîncarcă",
+      "backToList": "Înapoi la listă",
+      "confirmTitle": "Reîncărcați înregistrarea?",
+      "confirmBody": "Valorile introduse și nesalvate se pierd; se încarcă versiunea curentă.",
+      "confirmYes": "Reîncarcă",
+      "confirmNo": "Anulează"
+    },
     "roleListUnavailable": "Lista de roluri nu a putut fi citită, așa că nu se poate alege un rol acum. Rolul este oricum opțional.",
     "roleNotOffered": "Rolul ales nu mai este valid pentru această asociere — probabil a fost dezactivat între timp în Date de referință. Reîncărcați pagina și alegeți din nou; rolul este oricum opțional.",
     "roleNoLongerOffered": "{role} (nu mai este disponibil)",

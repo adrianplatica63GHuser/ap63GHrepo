@@ -548,6 +548,17 @@
     "notes": "Notes"
   },
   "shared": {
+    "recordSync": {
+      "stale": "Nothing was saved: this record was saved in another window or by another user since you opened it. What you typed is still on screen.",
+      "saved": "This record was saved in another window. Your changes here are not saved, and saving them will be refused.",
+      "deleted": "This record was deleted in another window.",
+      "reload": "Reload",
+      "backToList": "Back to list",
+      "confirmTitle": "Reload the record?",
+      "confirmBody": "The values you typed and did not save are lost; the current version is loaded.",
+      "confirmYes": "Reload",
+      "confirmNo": "Cancel"
+    },
     "roleListUnavailable": "The role list could not be read, so no role can be chosen right now. The role is optional in any case.",
     "roleNotOffered": "The selected role is no longer valid for this association — it has probably been switched off in Reference Data in the meantime. Reload the page and choose again; the role is optional in any case.",
     "roleNoLongerOffered": "{role} (no longer available)",
