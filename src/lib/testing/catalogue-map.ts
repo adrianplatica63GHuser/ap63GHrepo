@@ -40,7 +40,7 @@ export type CatalogueCaseId = string;
  * document screen, so `/documents/[id]` carries several.
  */
 export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCaseId[]>> = {
-  "/":                                     ["TC-AUTH-01", "TC-AUTH-02"],
+  "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01"],
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-AUTH-02"],
   "/properties/new":                       ["TC-PROP-01", "TC-PROP-05"],
@@ -51,40 +51,40 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/documents":                            ["TC-DOC-01", "TC-AUTH-02", "TC-VER-02"],
   "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02"],
   "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05"],
-  "/documents/[id]/associate-person":      ["TC-ASSOC-01"],
-  "/documents/[id]/associate-property":    ["TC-ASSOC-02"],
+  "/documents/[id]/associate-person":      ["TC-ASSOC-01", "TC-LAYOUT-01"],
+  "/documents/[id]/associate-property":    ["TC-ASSOC-02", "TC-LAYOUT-01"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04"],
   "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03", "TC-GRP-01", "TC-TAG-01", "TC-AUTH-02"],
   "/judicial-persons":                     ["TC-PERS-02"],
   "/judicial-persons/new":                 ["TC-PERS-02", "TC-ASSOC-10", "TC-ASSOC-11"],
   "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06", "TC-ASSOC-10", "TC-ASSOC-11", "TC-TILES-02"],
-  "/natural-persons/[id]/associate-document": ["TC-ASSOC-03"],
-  "/properties/[id]/associate-person":     ["TC-ASSOC-04"],
-  "/natural-persons/[id]/associate-property": ["TC-ASSOC-04"],
-  "/properties/[id]/associate-document":   ["TC-ASSOC-05"],
-  "/judicial-persons/[id]/associate-property": ["TC-ASSOC-06"],
-  "/documents/[id]/associate-reference":   ["TC-ASSOC-07"],
-  "/admin/groups":                         ["TC-GRP-01", "TC-CALC-01"],
-  "/admin/groups/[id]":                    ["TC-GRP-01"],
-  "/admin/tags":                           ["TC-TAG-01", "TC-HELP-01"],
-  "/properties/[id]/associate-reference":  ["TC-ASSOC-08"],
-  "/natural-persons/[id]/associate-person": ["TC-ASSOC-09"],
+  "/natural-persons/[id]/associate-document": ["TC-ASSOC-03", "TC-LAYOUT-01"],
+  "/properties/[id]/associate-person":     ["TC-ASSOC-04", "TC-LAYOUT-01"],
+  "/natural-persons/[id]/associate-property": ["TC-ASSOC-04", "TC-LAYOUT-01"],
+  "/properties/[id]/associate-document":   ["TC-ASSOC-05", "TC-LAYOUT-01"],
+  "/judicial-persons/[id]/associate-property": ["TC-ASSOC-06", "TC-LAYOUT-01"],
+  "/documents/[id]/associate-reference":   ["TC-ASSOC-07", "TC-LAYOUT-01"],
+  "/admin/groups":                         ["TC-GRP-01", "TC-CALC-01", "TC-LAYOUT-01"],
+  "/admin/groups/[id]":                    ["TC-GRP-01", "TC-LAYOUT-01"],
+  "/admin/tags":                           ["TC-TAG-01", "TC-HELP-01", "TC-LAYOUT-01"],
+  "/properties/[id]/associate-reference":  ["TC-ASSOC-08", "TC-LAYOUT-01"],
+  "/natural-persons/[id]/associate-person": ["TC-ASSOC-09", "TC-LAYOUT-01"],
   // Slice #36.21 — the third wave: nine routes out of CATALOGUE_NOT_YET.
-  "/judicial-persons/[id]/associate-document": ["TC-ASSOC-10"],
-  "/judicial-persons/[id]/associate-person": ["TC-ASSOC-11"],
-  "/documents/[id]/associate-party":       ["TC-ASSOC-12"],
-  "/admin/stamps":                         ["TC-STAMP-01"],
-  "/admin/stamps/[id]":                    ["TC-STAMP-01"],
-  "/admin/help-content":                   ["TC-HELP-01"],
-  "/admin/calculation":                    ["TC-CALC-01"],
-  "/admin/calculation/history":            ["TC-CALC-01"],
-  "/admin/calculation/history/[id]":       ["TC-CALC-01"],
+  "/judicial-persons/[id]/associate-document": ["TC-ASSOC-10", "TC-LAYOUT-01"],
+  "/judicial-persons/[id]/associate-person": ["TC-ASSOC-11", "TC-LAYOUT-01"],
+  "/documents/[id]/associate-party":       ["TC-ASSOC-12", "TC-LAYOUT-01"],
+  "/admin/stamps":                         ["TC-STAMP-01", "TC-LAYOUT-01"],
+  "/admin/stamps/[id]":                    ["TC-STAMP-01", "TC-LAYOUT-01"],
+  "/admin/help-content":                   ["TC-HELP-01", "TC-LAYOUT-01"],
+  "/admin/calculation":                    ["TC-CALC-01", "TC-LAYOUT-01"],
+  "/admin/calculation/history":            ["TC-CALC-01", "TC-LAYOUT-01"],
+  "/admin/calculation/history/[id]":       ["TC-CALC-01", "TC-LAYOUT-01"],
   // Slice #37.08 — the last four that need a cleanup rule, each written into
   // its case file before the run.
-  "/admin/users":                          ["TC-USERS-01"],
-  "/admin/settings":                       ["TC-SET-01"],
-  "/admin/value-lists":                    ["TC-VL-01"],
-  "/account/change-password":              ["TC-ACCT-01"],
+  "/admin/users":                          ["TC-USERS-01", "TC-LAYOUT-01"],
+  "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01"],
+  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01"],
+  "/account/change-password":              ["TC-ACCT-01", "TC-LAYOUT-01"],
 };
 
 /**
@@ -98,6 +98,9 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
 export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
   "/properties/map":
     "Open the map, see the property from TC-PROP-01 on it, open it from there. Needs a Google Maps key in .env, so it is not a case every machine can run.",
+  // TC-LAYOUT-01 (Slice #37.22) opens this route too, but only to measure its
+  // widths; what the screen is FOR — distilling a type — still has no case,
+  // so the route stays here rather than moving to CATALOGUE_ROUTE_CASES.
   "/admin/doc-type-engine":
     "Distil a document type from samples. Spends AI budget, so it needs the same cost note TC-IMP-01 carries.",
 };
