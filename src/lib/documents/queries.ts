@@ -576,16 +576,22 @@ export async function updateDocument(
   id:    string,
   input: DocumentUpdate,
   updatedBy: string | null = null,
-): Promise<DocumentFull | null> {
+  /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
+  baseVersion?: number,
+): Promise<(DocumentFull & { version: number | null }) | null> {
   return await db.transaction(async (tx) => {
     // Verify exists and not deleted.
     const existing = await tx
       .select({ id: document.id })
       .from(document)
       .where(eq(document.id, id))
-      .limit(1);
+      .limit(1)
+      .for("update");
 
     if (existing.length === 0) return null;
+    // Slice #37.21: locked, then checked — a save from an older version than the
+    // latest is refused before it writes (`@/lib/versioning/base-version`).
+    await assertBaseVersion(tx, "document", id, baseVersion);
 
     // Always include updatedBy so the audit trail is always current.
     const patch: Partial<typeof document.$inferInsert> = { updatedBy };
@@ -654,7 +660,7 @@ export async function updateDocument(
       new Map([[id, snapshotFromFull(updated)]]),
     );
 
-    return updated;
+    return { ...updated, version: await latestVersionIn(tx, "document", id) };
   });
 }
 
@@ -939,6 +945,7 @@ import {
   type InstrumentCandidateDoc,
   type ReferencedInstrument,
 } from "./referenced-instruments";
+import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
 
 export type DocumentSearchItem = {
   id:             string;

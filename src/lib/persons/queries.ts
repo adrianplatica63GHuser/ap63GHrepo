@@ -18,6 +18,7 @@
 import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
+import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
 import {
   NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS,
   PERSON_ADDRESS_SNAPSHOT_KEYS,
@@ -777,7 +778,9 @@ export async function updateNaturalPerson(
   id: string,
   input: NaturalPersonUpdate,
   updatedBy: string | null = null,
-): Promise<PersonFull | null> {
+  /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
+  baseVersion?: number,
+): Promise<(PersonFull & { version: number | null }) | null> {
   const { addresses: addressList, notes, ...natUpdate } = input;
 
   return await db.transaction(async (tx) => {
@@ -786,8 +789,12 @@ export async function updateNaturalPerson(
       .select()
       .from(person)
       .where(eq(person.id, id))
-      .limit(1);
+      .limit(1)
+      .for("update");
     if (personRows.length === 0) return null;
+    // Slice #37.21: locked, then checked — a save from an older version than the
+    // latest is refused before it writes (`@/lib/versioning/base-version`).
+    await assertBaseVersion(tx, "person", id, baseVersion);
 
     // Update natural_person fields if any were provided.
     const hasNatUpdate = Object.values(natUpdate).some((v) => v !== undefined);
@@ -881,7 +888,7 @@ export async function updateNaturalPerson(
       new Map([[id, naturalSnapshotFromFull(full)]]),
     );
 
-    return full;
+    return { ...full, version: await latestVersionIn(tx, "person", id) };
   });
 }
 

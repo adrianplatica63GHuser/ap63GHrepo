@@ -45,6 +45,7 @@ import type {
 } from "./validation";
 import type { PersonAddressSnapshot } from "@/lib/persons/validation";
 import { latestPersonVersionsIn } from "@/lib/persons/queries";
+import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
 
 // ---------------------------------------------------------------------------
 // List
@@ -625,7 +626,9 @@ export async function updateJudicialPerson(
   id: string,
   input: JudicialPersonUpdate,
   updatedBy: string | null = null,
-): Promise<JudicialPersonFull | null> {
+  /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
+  baseVersion?: number,
+): Promise<(JudicialPersonFull & { version: number | null }) | null> {
   const {
     addresses: addressList,
     notes,
@@ -646,8 +649,12 @@ export async function updateJudicialPerson(
           eq(person.type, "JUDICIAL"),
         ),
       )
-      .limit(1);
+      .limit(1)
+      .for("update");
     if (personRows.length === 0) return null;
+    // Slice #37.21: locked, then checked — a save from an older version than the
+    // latest is refused before it writes (`@/lib/versioning/base-version`).
+    await assertBaseVersion(tx, "person", id, baseVersion);
 
     // Build the judicial_person patch, including new FK + flag fields.
     const judicialPatch: Record<string, unknown> = { ...judUpdate };
@@ -713,6 +720,7 @@ export async function updateJudicialPerson(
     await recordJudicialPersonVersionsIfChanged(tx, [id], updatedBy);
 
     // Re-fetch full record (includes contact person name resolution).
-    return getJudicialPersonById(id);
+    const full = await getJudicialPersonById(id);
+    return full ? { ...full, version: await latestVersionIn(tx, "person", id) } : null;
   });
 }

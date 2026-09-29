@@ -1165,8 +1165,10 @@ export async function updateProperty(
   id:    string,
   input: PropertyUpdate,
   updatedBy: string | null = null,
-): Promise<PropertyFull | null> {
-  return await db.transaction((tx) => updatePropertyIn(tx, id, input, updatedBy));
+  /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
+  baseVersion?: number,
+): Promise<(PropertyFull & { version: number | null }) | null> {
+  return await db.transaction((tx) => updatePropertyIn(tx, id, input, updatedBy, baseVersion));
 }
 
 /**
@@ -1194,7 +1196,9 @@ export async function updatePropertyIn(
   id:    string,
   input: PropertyUpdate,
   updatedBy: string | null = null,
-): Promise<PropertyFull | null> {
+  /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
+  baseVersion?: number,
+): Promise<(PropertyFull & { version: number | null }) | null> {
   const { address: addrInput, corners: cornerList, ...propFields } = input;
 
   {
@@ -1203,8 +1207,12 @@ export async function updatePropertyIn(
       .select()
       .from(property)
       .where(eq(property.id, id))
-      .limit(1);
+      .limit(1)
+      .for("update");
     if (existing.length === 0) return null;
+    // Slice #37.21: locked, then checked — a save from an older version than the
+    // latest is refused before it writes (`@/lib/versioning/base-version`).
+    await assertBaseVersion(tx, "property", id, baseVersion);
 
     // Build property patch from only explicitly-provided fields.
     // Always include updatedBy so the audit trail is always current.
@@ -1325,7 +1333,7 @@ export async function updatePropertyIn(
       new Map([[id, snapshotFromFull(full)]]),
     );
 
-    return full;
+    return { ...full, version: await latestVersionIn(tx, "property", id) };
   }
 }
 
@@ -1452,6 +1460,7 @@ export async function deleteProperty(id: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 import { document, lookupDocumentType, lookupPropertyPropertyRole, propertyDocument, propertyProperty } from "@/db/schema";
+import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
 
 export type PropertyDocumentItem = {
   id:             string;

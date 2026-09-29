@@ -22,6 +22,7 @@ import {
 } from "@/lib/persons/queries";
 import { naturalPersonUpdateSchema } from "@/lib/persons/validation";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
+import { StaleVersionError, splitBaseVersion, staleVersionResponse } from "@/lib/versioning/base-version";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -51,18 +52,25 @@ export async function PATCH(
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = naturalPersonUpdateSchema.safeParse(body);
+  // Slice #37.21: the version the form was loaded at travels beside the fields
+  // and is checked inside the save's transaction; the entity's schema never sees it.
+  const split = splitBaseVersion(body);
+  if (!split.ok) {
+    return Response.json({ error: "baseVersion must be a version number" }, { status: 400 });
+  }
+  const parsed = naturalPersonUpdateSchema.safeParse(split.rest);
   if (!parsed.success) {
     return zodErrorToResponse(parsed.error);
   }
 
   try {
-    const result = await updateNaturalPerson(id, parsed.data, await getCurrentUserEmail());
+    const result = await updateNaturalPerson(id, parsed.data, await getCurrentUserEmail(), split.baseVersion);
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
     return Response.json(result);
   } catch (err) {
+    if (err instanceof StaleVersionError) return staleVersionResponse(err);
     const dbResponse = dbErrorToResponse(err);
     if (dbResponse) return dbResponse;
     return unexpectedError(err, "PATCH /api/people/[id]");
