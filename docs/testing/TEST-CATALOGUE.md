@@ -107,9 +107,10 @@ fixed fixture where the existing one will do.
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-03](cases/TC-TILES-03.md) | Părțile unei proprietăți, cu harta și Street View ca părți proprii | tiles | happy | — | `driven` | 2026-09-28 | — |
+| [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `draft` | — | — |
 
-**Twenty-seven are `automated`, thirteen are `driven`, and two are `draft`** — as of 2026-09-28 (Slice
-#37.19). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Twenty-seven are `automated`, thirteen are `driven`, and three are `draft`** — as of 2026-09-28 (Slice
+#37.20). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
