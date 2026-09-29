@@ -10,8 +10,8 @@ import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN`. */
@@ -243,7 +243,8 @@ export function JudicialPersonListView() {
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
-          className="flex-1 min-w-48 max-w-md rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+          {...screenBox("listSearch")}
+          className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
         <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (

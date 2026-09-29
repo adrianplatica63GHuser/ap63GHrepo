@@ -633,6 +633,10 @@ export const SCREEN = {
   proposedLabel: { step: "XL", kind: "fixed" }, //     a proposed field's label, as TEMPLATE_FIELD.text
   proposedType: { step: "M", kind: "select" }, //      „Text lung"
   proposedHint: { step: "XXL", kind: "fixed" }, //     the wordings the samples used
+  // META INFO, on the four detail screens (Slice #37.23 — the guard found them)
+  metaTag: { step: "XL", kind: "fixed" }, //           a tag, typed to add it (flex-1 up to max-w-xs before)
+  metaCrossRefNote: { step: "XXL", kind: "fixed" }, // a cross-reference's note, at most 500 (flex-1 before)
+  listSearch: { step: "XL", kind: "fixed" }, //        a list's search box (flex-1 up to max-w-md before; the natural persons' is w-64)
 } as const satisfies Record<string, FieldWidth>;
 export type ScreenField = keyof typeof SCREEN;
 

@@ -12,6 +12,7 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { screenBox } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -400,7 +401,8 @@ function TagsSection({
           onKeyDown={handleKeyDown}
           disabled={adding}
           placeholder={labelPlaceholder}
-          className="flex-1 max-w-xs rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          {...screenBox("metaTag")}
+          className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
         />
         <button
           type="button"
@@ -897,7 +899,8 @@ function CrossRefsSection({
               placeholder={t("crossRef.notePlaceholder")}
               disabled={adding}
               maxLength={500}
-              className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 flex-1 min-w-0"
+              {...screenBox("metaCrossRefNote")}
+              className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
             />
             <button
               type="button"
