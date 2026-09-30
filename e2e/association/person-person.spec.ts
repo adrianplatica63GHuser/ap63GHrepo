@@ -6,11 +6,11 @@
  * is quoted from it verbatim.
  *
  * ⚠️ **THIS ASSERTS SYMMETRIC READING, BECAUSE THAT IS ALL THE SCREEN CAN DO
- * TODAY.** No person role carries „Valabil pentru persoană", so there is no
- * „Tip relație" to choose and the link reads „—" from both ends. The step that
- * checks the select is ABSENT is the one that goes red the day a role is
- * ticked — and then this case needs a directional role and FU-221's fix, not a
- * quiet edit to this line.
+ * TODAY.** Since Slice #37.27 ten roles carry „Persoană → Persoană" (Adrian,
+ * 2026-09-30: the three he ticked and Soț … Soră), so step 3 offers „Tip
+ * relație" — but a role still reads the same from both ends until the
+ * direction slice (#37.28), so the case leaves it at „— fără relație —" and
+ * the link reads „—" from both ends. #37.28 gives it a directional role.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - Step 1's two people are this spec's own, created through the POST route
@@ -50,7 +50,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite la fel din ambele
       await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
-      // Step 3 — „Asociere persoană corelată": „Nume", „Cod", Cod · Nume · Tip, the hint, NO „Tip relație".
+      // Step 3 — „Asociere persoană corelată": „Nume", „Cod", Cod · Nume · Tip, the hint, „Tip relație" empty.
       await page.getByRole("button", { name: "Asociază", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${anaId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană corelată" })).toBeVisible({ timeout: 30_000 });
@@ -62,10 +62,14 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite la fel din ambele
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();
-      await expect(page.getByText("Tip relație", { exact: true })).toHaveCount(0);
-      await expect(page.locator("main select")).toHaveCount(0);
-      // Slice #37.27 (FU-221): …and the screen now says why.
-      await expect(page.getByText(/Niciun rol nu este bifat „Persoană → Persoană”/)).toBeVisible();
+      // Slice #37.27 (FU-221): „Tip relație" offers the family roles, and is left empty.
+      const roleSelect = page.getByLabel("Tip relație", { exact: true });
+      await expect(roleSelect).toBeVisible();
+      for (const role of ["Soț", "Soție", "Părinte", "Fiu", "Fiică", "Frate", "Soră"]) {
+        await expect(roleSelect.locator("option", { hasText: new RegExp(`^${role}$`) })).toHaveCount(1);
+      }
+      await expect(roleSelect).toHaveValue("");
+      await expect(page.getByText(/Niciun rol nu este bifat/)).toHaveCount(0);
 
       // Step 4 — tick Mihai; the hint goes.
       await nameFilter.fill(MARK);

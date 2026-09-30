@@ -44,11 +44,11 @@ Both are deleted at the end.
 |---|---|---|
 | 1 | Creates the company and the person above | Each on its list, badged „Nou!", `JPERS…` and `PPERS…` |
 | 2 | Opens the company and presses the tab **„Asocieri"** | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **No „Tip relație"** — see above |
+| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar" (#37.27), left at „— fără relație —" until the direction slice (#37.28) |
 | 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `PPERS…`, `Ion TC-ASSOC-11`, „Fizică" | The hint goes away |
 | 5 | Presses „Asociază selecția" | Back on the company's „Asocieri" (`?tab=related`): Nume · Tip · Tip relație — `Ion TC-ASSOC-11`, „Fizică", „—", and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The person, read-only (`/natural-persons/[id]?readonly=true`) |
-| 7 | Presses the person's tab **„Asocieri"** | One row: `TC-ASSOC-11 Firmă de test SRL`, „Juridică", „—", „Vizualizare" |
+| 7 | Ticks the person's tile **„Persoane"** („Asocieri" before #37.27) | One row: `TC-ASSOC-11 Firmă de test SRL`, „—", „Vizualizare" (no „Tip" column on the person since #37.27) |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen, `/judicial-persons/[id]?readonly=true` |
 
 Step 7 is the other end of the link.

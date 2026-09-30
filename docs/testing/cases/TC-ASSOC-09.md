@@ -39,11 +39,11 @@ Two natural persons, typed by hand, no CNP: „Nume" **`TC-ASSOC-09`**, „Prenu
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume" and „Prenume", „Salvează" | Two rows badged „Nou!", codes beginning `PPERS` |
-| 2 | Opens `Ana TC-ASSOC-09`, tab **„Asocieri"** | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", and **no „Tip relație"** |
+| 2 | Opens `Ana TC-ASSOC-09`, tile **„Persoane"** („Asocieri" before #37.27) | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
+| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", and **„Tip relație"** at „— fără relație —", offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră (#37.27) — left empty |
 | 4 | Ticks `Mihai TC-ASSOC-09` | The hint goes away |
-| 5 | Presses „Asociază selecția" | Back on Ana's „Asocieri" (`?tab=related`): a table Nume · Tip · Tip relație, one row — `Mihai TC-ASSOC-09`, „Fizică", „—", „Vizualizare" |
-| 6 | Opens `Mihai TC-ASSOC-09`, tab „Asocieri" | One row — `Ana TC-ASSOC-09`, „Fizică", „—" |
+| 5 | Presses „Asociază selecția" | Back on Ana's „Persoane" (`?tab=related`): a table Nume · Tip relație (no „Tip" since #37.27), one row — `Mihai TC-ASSOC-09`, „—", „Vizualizare" |
+| 6 | Opens `Mihai TC-ASSOC-09`, tile „Persoane" | One row — `Ana TC-ASSOC-09`, „—" |
 
 Step 6 is the other end: the link is there from both people, and with no role it says the same
 thing from each.

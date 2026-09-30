@@ -5,10 +5,12 @@
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
  *
- * ⚠️ **FU-221 IS ASSERTED AS IT IS.** No person role is ticked „Valabil pentru
- * persoană", so step 3 offers no „Tip relație" and both ends read „—". The day
- * FU-221 is fixed, the commit that closes it changes the two assertions marked
- * FU-221 below — and this case gains the role it was written for.
+ * ⚠️ **FU-221, HALF FIXED (Slice #37.27).** Adrian ticked roles for people on
+ * 2026-09-30, so step 3 now offers „Tip relație" — and the case still leaves it
+ * at „— fără relație —": a role on person_person reads the same from both ends
+ * until the direction slice (#37.28), so „Reprezentant legal / Mandatar" would
+ * read backwards on the person's tile. Both ends read „—". #37.28 gives this
+ * case the representative it was written for.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The company and the person are made through the POST routes „Adaugă"
@@ -61,9 +63,11 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();
-      // FU-221: no „Tip relație" — no person role is offered today.
-      await expect(page.getByText("Tip relație", { exact: true })).toHaveCount(0);
-      await expect(page.locator("main select")).toHaveCount(0);
+      // FU-221 (#37.27): „Tip relație" is offered, and left at „— fără relație —".
+      const roleSelect = page.getByLabel("Tip relație", { exact: true });
+      await expect(roleSelect).toBeVisible();
+      await expect(roleSelect.locator("option", { hasText: "Reprezentant legal / Mandatar" })).toHaveCount(1);
+      await expect(roleSelect).toHaveValue("");
 
       // Step 4 — `TC-E2E-ASSOC-11` into „Nume", tick `PPERS…`, the person, „Fizică": the hint goes.
       await nameFilter.fill(MARK);
