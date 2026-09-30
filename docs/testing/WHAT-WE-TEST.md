@@ -86,7 +86,8 @@ the process's memory, which surfaces as `Test suite failed to run` naming files 
 present on disk. The tell is a summary reading `Tests: N passed` with **zero** failed
 assertions beside a non-zero `Test Suites: n failed`. Measured in Slice #32.05, the full
 run then took 9.3 s for the 98 suites that existed at the time, against the 144 s Jest
-itself estimated from the crashed run.
+itself estimated from the crashed run. That was on the laptop's old 16 GB; it has 32 GB
+since 2026-09-30, and the two workers stay because they cost nothing.
 
 This project also uses Jest for a **second, less obvious job: structural guards that
 assert the codebase has a particular shape.** This is worth understanding, because it is

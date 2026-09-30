@@ -38,6 +38,10 @@ const config: Config = {
   // two workers against the 144 s Jest itself estimated from the crashed run.
   // Stopping `npm run dev` before Jest is still the other half of this — the
   // e2e step leaves it holding a couple of GB — and is in the sandbox rule file.
+  //
+  // All of the above was measured on the 16 GB laptop. It has 32 GB since
+  // 2026-09-30 and the cap stays: raising it buys a few seconds at most, and
+  // keeping it means a recurrence still reads as the tell above, not as noise.
   maxWorkers: 2,
   coverageProvider: "v8",
   testEnvironment: "jsdom",

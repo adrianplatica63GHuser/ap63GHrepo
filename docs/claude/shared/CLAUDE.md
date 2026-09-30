@@ -28,6 +28,10 @@ in that project's own `CLAUDE.md`.
 Adrian is a business analyst, not a full-time developer — comfortable reading code, running
 commands and reasoning about architecture, but he leans on Claude as a full-stack development
 partner. Windows + PowerShell 7 (`pwsh`). He prefers small, deliberate changes over big rewrites.
+His laptop has **32 GB of RAM since 2026-09-30** (16 GB, 14.6 usable, before that). Every memory
+limit, worker cap and "the machine runs out" measurement dated earlier was taken on 16 GB — what
+still applies and what does not is in `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The
+laptop's memory.
 All conversation with Claude is in English.
 
 ## Speed is a requirement, not a preference
