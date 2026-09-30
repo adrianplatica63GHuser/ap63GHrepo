@@ -92,11 +92,11 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
 
-      // Step 7 — the person's „Asocieri": the company, „Juridică", „—", „Vizualizare".
-      await showTile(page, "Asocieri");
+      // Step 7 — the person's „Persoane" (#37.27, „Asocieri" before): the company, „—", „Vizualizare".
+      // The person's tile has no „Tip" column since #37.27, so „Juridică" is not on it.
+      await showTile(page, "Persoane");
       const onPerson = page.getByRole("row").filter({ hasText: COMPANY });
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
-      await expect(onPerson).toContainText("Juridică");
       await expect(onPerson.getByRole("cell", { name: "—", exact: true })).toHaveCount(1); // FU-221
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.

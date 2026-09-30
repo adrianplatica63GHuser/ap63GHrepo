@@ -52,7 +52,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       // Step 1 — the person's screen: the eight tile checkboxes (Slice #37.17).
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Asocieri", "Proprietăți", "Acte", "META INFO"]) {
+      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Persoane", "Proprietăți", "Acte", "META INFO"]) {
         await expect(tileBox(page, tile)).toBeVisible();
       }
 

@@ -19,7 +19,7 @@
 // (e.g. "addresses.HOME") — the call site is responsible for matching it
 // against the form schema.
 
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import {
   type FieldPath,
@@ -96,11 +96,17 @@ type Props<TFormValues extends FieldValues> = {
   fixedWidths?: boolean;
   /**
    * Slice #37.26: with `fixedWidths`, every label sits ABOVE its box, the rows
-   * are `ADDRESS_ROWS`, Note takes the panel's whole width, and the panel is as
-   * wide as its widest row (Stradă) rather than 32rem. The Natural Person asks
+   * are `ADDRESS_ROWS`, Note takes the panel's whole width, and the panel is the
+   * fewest width units that hold its widest row (Stradă; #37.27) rather than 32rem. The Natural Person asks
    * for it; the Judicial Person and the Property keep their labels beside.
    */
   stacked?: boolean;
+  /**
+   * Slice #37.27: a last line inside the stacked panel, under Note — the
+   * Natural Person's „same as home" checkbox, which used to take a panel's
+   * room of its own beside this one.
+   */
+  footer?: ReactNode;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -112,6 +118,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   highlights,
   fixedWidths = false,
   stacked = false,
+  footer,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
@@ -154,6 +161,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
                 ))}
               </div>
             ))}
+            {footer && <div className="pt-1" data-address-footer>{footer}</div>}
           </div>
         </section>
       );

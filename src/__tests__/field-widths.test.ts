@@ -31,6 +31,18 @@ import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
   ADDRESS,
   ADDRESS_ROWS,
+  META_CELL_GAP_REM,
+  NP_LIST_COLUMNS,
+  NP_LIST_UNITS,
+  NP_META_CELL_REM,
+  NP_PANEL_UNITS,
+  UNIT_GAP_REM,
+  UNIT_REM,
+  tileTableRem,
+  unitsFor,
+  unitsInnerRem,
+  unitsRem,
+  type ColumnName,
   CELL_PADDING_REM,
   COLUMN,
   DOCUMENT,
@@ -200,7 +212,10 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Slice #37.26: each panel its own width, from its widest row.
     for (const p of ["identity", "idCard", "contact"]) expect(panels).toContain(`<section style={NP_PANEL_STYLE.${p}}`);
     expect(panels).not.toMatch(/PANEL_STYLE\}/);
-    expect(panels).toMatch(/style=\{NP_PANEL_STYLE\.address\} data-panel="correspondence"/);
+    // Slice #37.27: the same-as-home checkbox is the home address panel's last line, not a panel of its own.
+    expect(panels).not.toMatch(/data-panel="correspondence"/);
+    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?stacked\s+footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
+    expect(region(ADDRESS_BLOCK, "if (stacked) {", "\n    return (")).toMatch(/\{footer && <div/);
     expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths\s+stacked/g) ?? []).toHaveLength(2);
     // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
     expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : npRowStyle\(\)\}/);
@@ -347,7 +362,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     ]);
     // The validity status sits in the dates' row, after them.
     expect(region(panels, 'name="idValidUntil"', 'name="citizenshipId"')).toMatch(/data-validity-status/);
-    expect(NP_VALIDITY_REM).toBe(8);
+    expect(NP_VALIDITY_REM).toBe(10.125);
   });
 
   it("the ID card's first row is about 75% of what it was, and still holds its values", () => {
@@ -360,14 +375,22 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(textPx("Carte de identitate") + SELECT_CHROME_PX).toBeGreaterThan(0.75 * SCALE.L * 16);
   });
 
-  it("each panel is as wide as its widest row — no wider — and Note and the MRZ fill it", () => {
+  it("each panel is the fewest whole units that hold its widest row (#37.27), and Note and the MRZ fill it", () => {
     const widest = (rows: readonly (readonly string[])[], widths: Record<string, FieldWidth>): number =>
       Math.max(...rows.map((r) => rowRem(r.map((k) => widths[k]))));
-    expect(NP_PANEL_INNER_REM).toEqual({ identity: 26.5, idCard: 26, contact: 17.5, address: 24 });
-    expect(NP_PANEL_INNER_REM.identity).toBe(widest(NP_ROWS.identity, NP));
-    expect(NP_PANEL_INNER_REM.idCard).toBe(widest(NP_ROWS.idCard, NP));
-    expect(NP_PANEL_INNER_REM.contact).toBe(widest(NP_ROWS.contact, NP));
-    expect(NP_PANEL_INNER_REM.address).toBe(widest(ADDRESS_ROWS, ADDRESS));
+    const rowsOf: Record<keyof typeof NP_PANEL_UNITS, number> = {
+      identity: widest(NP_ROWS.identity, NP),
+      idCard: widest(NP_ROWS.idCard, NP),
+      contact: widest(NP_ROWS.contact, NP),
+      address: widest(ADDRESS_ROWS, ADDRESS),
+    };
+    expect(rowsOf).toEqual({ identity: 26.5, idCard: 26, contact: 17.5, address: 24 });
+    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
+    for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
+      expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
+      expect([k, unitsInnerRem(NP_PANEL_UNITS[k] - 1) < rowsOf[k]]).toEqual([k, true]); // one unit fewer would not hold it
+    }
+    expect(NP_PANEL_INNER_REM).toEqual({ identity: 28.125, idCard: 28.125, contact: 17.875, address: 28.125 });
     for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThan(PANEL_REM);
     expect(rowRem([NP.idValidFrom, NP.idValidUntil]) + STACK_GAP_REM + NP_VALIDITY_REM).toBe(NP_PANEL_INNER_REM.idCard);
     expect([NP.notes.fill, NP.idMrzRaw.fill, ADDRESS.notes.fill]).toEqual([true, true, true]);
@@ -378,7 +401,49 @@ describe("the Natural Person: every label above its box, every panel as wide as 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {
     expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(region(ADDRESS_BLOCK, "if (width && stacked) {", "\n  if (width) {")).not.toMatch(/LABEL_STYLE/);
-    expect(npRowStyle()).toEqual({ width: "fit-content", maxWidth: "100%", minWidth: `${panelRem(26.5)}rem` });
+    expect(String(npRowStyle().width)).toBe("max(50.25rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
+  });
+});
+
+describe("the width unit: every Natural Person tile a whole number of units (Slice #37.27)", () => {
+  it("n units are n units and the gaps between them, so a 3 and a 3 line up with a 4 and a 2", () => {
+    expect(UNIT_REM).toBe(9.25);
+    expect(UNIT_GAP_REM).toBe(1);
+    expect([1, 2, 3, 4, 5, 6].map(unitsRem)).toEqual([9.25, 19.5, 29.75, 40, 50.25, 60.5]);
+    expect(unitsRem(3) + UNIT_GAP_REM + unitsRem(3)).toBe(unitsRem(6));
+    expect(unitsRem(4) + UNIT_GAP_REM + unitsRem(2)).toBe(unitsRem(6));
+    expect(unitsFor(unitsRem(3))).toBe(3);
+    expect(unitsFor(unitsRem(3) + 0.01)).toBe(4);
+  });
+
+  it("a row holds 6 units beside the sidebar at 1366 px, 10 at 1920 and 14 at 2560", () => {
+    // The sidebar is 14rem and the page's padding 1.5rem a side: what is left, in rem.
+    const room = (px: number): number => px / 16 - 14 - 3;
+    const fit = (px: number): number => Math.floor((room(px) + UNIT_GAP_REM) / (UNIT_REM + UNIT_GAP_REM));
+    expect([1366, 1920, 2560].map(fit)).toEqual([6, 10, 14]);
+  });
+
+  it("each list tile's table fills its tile of whole units, to within half a rem", () => {
+    const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
+    for (const k of ["associations", "properties", "documents"] as const) {
+      const room = tileTableRem(NP_LIST_UNITS[k]);
+      expect([k, sum(NP_LIST_COLUMNS[k]) <= room]).toEqual([k, true]);
+      expect([k, room - sum(NP_LIST_COLUMNS[k]) < 0.5]).toEqual([k, true]);
+    }
+    // Persoane: the name, the relationship and the buttons — no „Tip".
+    expect(NP_LIST_COLUMNS.associations).not.toContain("personType");
+    expect(NP_LIST_UNITS).toEqual({ associations: 4, properties: 4, documents: 5, metadata: 5 });
+  });
+
+  it("the person's page gives every list tile its units and the compact tables, and META INFO its cells", () => {
+    const page = code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"));
+    for (const k of ["associations", "properties", "documents", "metadata"]) {
+      expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{NP_LIST_UNITS\\.${k}\\}`));
+    }
+    expect(page.match(/backBase="\/natural-persons" compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toMatch(/compactCellRem=\{NP_META_CELL_REM\}/);
+    // Two cells and the gap fill META INFO inside.
+    expect(2 * NP_META_CELL_REM + META_CELL_GAP_REM).toBe(unitsInnerRem(NP_LIST_UNITS.metadata));
   });
 });
 

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import type { ColumnName } from "@/lib/ui/field-widths";
+import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import Link from "next/link";
 import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
@@ -29,6 +29,11 @@ type Props = {
   personId: string;
   /** "/natural-persons" or "/judicial-persons" */
   backBase: string;
+  /**
+   * Slice #37.27 — the Natural Person's unit tile: the table fills it
+   * (`NP_LIST_COLUMNS`), and „Tip" (Fizică / Juridică) is dropped, and „Vizualizare" sits above „Previzualizare".
+   */
+  compact?: boolean;
 };
 
 async function fetchPersonReferences(personId: string): Promise<AssociatedPerson[]> {
@@ -38,7 +43,11 @@ async function fetchPersonReferences(personId: string): Promise<AssociatedPerson
   return data.items as AssociatedPerson[];
 }
 
-export function PersonReferencesTab({ personId, backBase }: Props) {
+export function PersonReferencesTab({ personId, backBase, compact = false }: Props) {
+  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.associations : COLUMNS;
+  const [nameCol, roleCol, buttonsCol] = compact
+    ? (["tileName", "tileRole", "openPreviewStacked"] as const)
+    : (["personName", "role", "openPreview"] as const);
   const t           = useTranslations("shared.personReferences");
   const router      = useRouter();
   const queryClient = useQueryClient();
@@ -85,15 +94,17 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
     <div className="flex flex-col gap-4">
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {items && items.length > 0 ? (
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(columns)}>
+            <FixedColumns columns={columns} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personName")}>{t("colName")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personType")}>{t("colType")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
-                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(nameCol)}>{t("colName")}</th>
+                {!compact && (
+                  <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personType")}>{t("colType")}</th>
+                )}
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(roleCol)}>{t("colRole")}</th>
+                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -128,9 +139,11 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                     />
                   </td>
                   <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.displayName}</td>
-                  <td className="px-3 py-2 text-fade dark:text-zinc-400">
-                    {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
-                  </td>
+                  {!compact && (
+                    <td className="px-3 py-2 text-fade dark:text-zinc-400">
+                      {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
+                    </td>
+                  )}
                   <td className={`px-3 py-2 ${WRAPS}`}>
                     {item.relationshipRoleName ? (
                       <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
@@ -141,7 +154,7 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex gap-1">
+                    <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                       <Link
                         href={`${personPath(item.type, item.id)}?readonly=true`}
                         onClick={(e) => e.stopPropagation()}

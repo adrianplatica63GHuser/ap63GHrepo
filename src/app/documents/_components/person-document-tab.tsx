@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import type { ColumnName } from "@/lib/ui/field-widths";
+import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import Link from "next/link";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -43,6 +43,11 @@ type Props = {
   personId: string;
   /** "/natural-persons" or "/judicial-persons" — used for the Associate button route */
   backBase: string;
+  /**
+   * Slice #37.27 — the Natural Person's unit tile: the table fills it
+   * (`NP_LIST_COLUMNS`), and „Vizualizare" sits above „Previzualizare".
+   */
+  compact?: boolean;
 };
 
 async function fetchPersonDocuments(personId: string): Promise<AssociatedDocument[]> {
@@ -52,7 +57,11 @@ async function fetchPersonDocuments(personId: string): Promise<AssociatedDocumen
   return data.items as AssociatedDocument[];
 }
 
-export function PersonDocumentTab({ personId, backBase }: Props) {
+export function PersonDocumentTab({ personId, backBase, compact = false }: Props) {
+  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.documents : COLUMNS;
+  const [typeCol, titleCol, roleCol, buttonsCol] = compact
+    ? (["tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"] as const)
+    : (["documentType", "documentTitle", "role", "openPreview"] as const);
   const t           = useTranslations("shared.document");
   // FU-224 (Slice #37.07): the role, else a certificate party's quality.
   const qualityWords = { DEFUNCT: t("qualityDefunct"), MOSTENITOR: t("qualityMostenitor") };
@@ -107,15 +116,15 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
     <div className="flex flex-col gap-4">
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {items && items.length > 0 ? (
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(columns)}>
+            <FixedColumns columns={columns} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("documentType")}>{t("colType")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("documentTitle")}>{t("colTitle")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
-                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(typeCol)}>{t("colType")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(titleCol)}>{t("colTitle")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(roleCol)}>{t("colRole")}</th>
+                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -152,7 +161,7 @@ export function PersonDocumentTab({ personId, backBase }: Props) {
                     {roleOrQualityLabel(item.roleName, item.quality, qualityWords)}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex gap-1">
+                    <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                       <Link
                         href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
                         onClick={(e) => e.stopPropagation()}

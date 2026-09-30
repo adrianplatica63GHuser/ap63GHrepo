@@ -685,7 +685,8 @@ export function NaturalPersonForm({
           the window and took every field with them.
           Slice #37.26: every label sits ABOVE its box, the fields are in the
           rows `NP_ROWS` names, and each panel is as wide as its widest row
-          (`NP_PANEL_STYLE`) rather than 32rem. */}
+          (`NP_PANEL_STYLE`) rather than 32rem — since #37.27 rounded up to
+          whole width units, so the tiles' edges line up. */}
       <div
         className={tiled ? "contents" : "flex flex-wrap items-start"}
         style={tiled ? undefined : { gap: PANEL_GAP }}
@@ -1002,8 +1003,10 @@ export function NaturalPersonForm({
         </div>
       </section>
 
-      {/* Slice #37.17: „Adrese" is one tile of two panels — the home address
-          and the correspondence panel — so they show and hide together. */}
+      {/* Slice #37.17: „Adrese" is one tile — the home address and, when it
+          differs, the correspondence address — so they show and hide together.
+          Slice #37.27: the same-as-home checkbox is the last line of the home
+          address panel, so it never takes a panel's room of its own. */}
       <div {...tileProps("addresses")} className={tileShown("addresses") ? "contents" : "hidden"}>
       <AddressBlock<FormValues>
         title={t("sections.homeAddress")}
@@ -1013,47 +1016,41 @@ export function NaturalPersonForm({
         highlights={displayHighlights?.addresses.HOME}
         fixedWidths
         stacked
+        footer={
+            <Controller
+              control={form.control}
+              name="correspondenceSameAsHome"
+              render={({ field }) => (
+                <label
+                  className={[
+                    "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
+                    watchedValues.correspondenceSameAsHome
+                      ? "font-bold text-ink dark:text-zinc-200"
+                      : "font-normal text-fade dark:text-zinc-400",
+                    displayHighlights?.fields.correspondenceSameAsHome
+                      ? "px-1 " + highlightRingClass(displayHighlights.fields.correspondenceSameAsHome, pulsing)
+                      : "",
+                  ].join(" ")}
+                >
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={(e) => {
+                      field.onChange(e.target.checked);
+                      if (e.target.checked) {
+                        const home = form.getValues("addresses.HOME");
+                        form.setValue("addresses.CORRESPONDENCE", { ...home }, { shouldDirty: true });
+                      }
+                    }}
+                    className="accent-cta"
+                    aria-label={t("fields.correspondenceSameAsHome")}
+                  />
+                  {t("fields.correspondenceSameAsHome")}
+                </label>
+              )}
+            />
+        }
       />
-
-      {/* The correspondence panel: the same-as-home checkbox, and the address
-          itself only when it differs. As wide as an address panel either way
-          (#37.26: `NP_PANEL_STYLE.address`), so the checkbox never lands on a
-          row of its own. */}
-      <div className="flex flex-col gap-2" style={NP_PANEL_STYLE.address} data-panel="correspondence">
-      <div className="flex items-center gap-2 px-1">
-        <Controller
-          control={form.control}
-          name="correspondenceSameAsHome"
-          render={({ field }) => (
-            <label
-              className={[
-                "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
-                watchedValues.correspondenceSameAsHome
-                  ? "font-bold text-ink dark:text-zinc-200"
-                  : "font-normal text-fade dark:text-zinc-400",
-                displayHighlights?.fields.correspondenceSameAsHome
-                  ? "px-1 " + highlightRingClass(displayHighlights.fields.correspondenceSameAsHome, pulsing)
-                  : "",
-              ].join(" ")}
-            >
-              <input
-                type="checkbox"
-                checked={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.checked);
-                  if (e.target.checked) {
-                    const home = form.getValues("addresses.HOME");
-                    form.setValue("addresses.CORRESPONDENCE", { ...home }, { shouldDirty: true });
-                  }
-                }}
-                className="accent-cta"
-                aria-label={t("fields.correspondenceSameAsHome")}
-              />
-              {t("fields.correspondenceSameAsHome")}
-            </label>
-          )}
-        />
-      </div>
 
       {/* CORRESPONDENCE address — only when not same as home */}
       {!watchedValues.correspondenceSameAsHome && (
@@ -1067,7 +1064,6 @@ export function NaturalPersonForm({
           stacked
         />
       )}
-      </div>{/* end correspondence panel */}
       </div>{/* end „Adrese" tile */}
 
       </div>{/* end panel row */}

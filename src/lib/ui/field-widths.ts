@@ -219,10 +219,10 @@ export const ADDRESS = {
  * form asks it to (`stacked`).
  *
  * The rows ARE the layout: the form draws exactly these, in this order
- * (`field-widths.test.ts` reads the form to check it). A panel's inner width is
- * its widest row — the boxes on it and the gaps between them — so a panel is
- * never wider than what it holds. A `fill` box (Note, the MRZ) takes whatever
- * that width is and does not count towards it.
+ * (`field-widths.test.ts` reads the form to check it). A panel holds its
+ * widest row — the boxes on it and the gaps between them — and since #37.27 is
+ * the fewest whole width units that do (`NP_PANEL_UNITS`). A `fill` box (Note,
+ * the MRZ) takes the panel's whole inner width and does not count towards it.
  */
 
 /** The gap between two boxes on one row (`gap-2`), and between two rows. */
@@ -278,22 +278,89 @@ export function panelRem(inner: number): number {
   return inner + 2 * PANEL_PADDING_REM + 2 * PANEL_BORDER_REM;
 }
 
-/** Each Natural Person panel's inner width — its widest row. */
-export const NP_PANEL_INNER_REM = {
-  identity: widestRow(NP_ROWS.identity, NATURAL_PERSON), //  26.5 — Nume | Prenume
-  idCard: widestRow(NP_ROWS.idCard, NATURAL_PERSON), //      26   — Cetățenie | Emisă de
-  contact: widestRow(NP_ROWS.contact, NATURAL_PERSON), //    17.5 — the two personal phones
-  address: widestRow(ADDRESS_ROWS, ADDRESS), //              24   — Stradă
-} as const;
-export type NpPanel = keyof typeof NP_PANEL_INNER_REM;
+// ---- the width unit (#37.27) ------------------------------------------------------------
 
-/** Each Natural Person panel's style — its own width, not `PANEL_STYLE`'s 32rem. */
-export const NP_PANEL_STYLE: Readonly<Record<NpPanel, CSSProperties>> = {
-  identity: { width: rem(panelRem(NP_PANEL_INNER_REM.identity)) },
-  idCard: { width: rem(panelRem(NP_PANEL_INNER_REM.idCard)) },
-  contact: { width: rem(panelRem(NP_PANEL_INNER_REM.contact)) },
-  address: { width: rem(panelRem(NP_PANEL_INNER_REM.address)) },
+/**
+ * A WIDTH UNIT, AND EVERY TILE A WHOLE NUMBER OF THEM.        (Slice #37.27)
+ *
+ * Adrian, 2026-09-30: „pick a width unit and then create panels that are
+ * multiples of that", so tiles line up edge to edge — two of 3 units side by
+ * side, a 4 and a 2 below them, and every right-hand edge falls on the same
+ * lines. A tile of `n` units is `n` units and the `n − 1` gaps between them,
+ * so a 3 beside a 3 is exactly as wide as a 4 beside a 2 (`unitsRem`). Height
+ * is left to the content.
+ *
+ * Why 9.25rem: the smallest unit on which Contact (two phones, 17.5rem inside)
+ * fits in two units and Identitate, Carte de identitate and Adresă (26.5, 26
+ * and 24 inside) fit in three. A row holds 6 units on a 1366-pixel laptop
+ * (68.4rem beside the sidebar), 10 on a 1920-pixel monitor and 14 on a 2560.
+ * Today only the Natural Person is on it.
+ */
+export const UNIT_REM = 9.25;
+export const UNIT_GAP_REM = PANEL_GAP_REM;
+
+/** `n` units wide: the units and the gaps between them. */
+export function unitsRem(n: number): number {
+  return n * UNIT_REM + (n - 1) * UNIT_GAP_REM;
+}
+
+/** The fewest units that are at least `outerRem` wide. */
+export function unitsFor(outerRem: number): number {
+  let n = 1;
+  while (unitsRem(n) < outerRem) n++;
+  return n;
+}
+
+/** Inside a tile of `n` units: less its padding and border. */
+export function unitsInnerRem(n: number): number {
+  return unitsRem(n) - 2 * PANEL_PADDING_REM - 2 * PANEL_BORDER_REM;
+}
+
+export function unitStyle(n: number): CSSProperties {
+  return { width: rem(unitsRem(n)) };
+}
+
+/** Each Natural Person form panel in units: the fewest that hold its widest row. */
+export const NP_PANEL_UNITS = {
+  identity: unitsFor(panelRem(widestRow(NP_ROWS.identity, NATURAL_PERSON))), //  3 — Nume | Prenume, 26.5rem
+  idCard: unitsFor(panelRem(widestRow(NP_ROWS.idCard, NATURAL_PERSON))), //      3 — Cetățenie | Emisă de, 26rem
+  contact: unitsFor(panelRem(widestRow(NP_ROWS.contact, NATURAL_PERSON))), //    2 — the two personal phones, 17.5rem
+  address: unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS))), //              3 — Stradă, 24rem
+} as const;
+export type NpPanel = keyof typeof NP_PANEL_UNITS;
+
+/** Each Natural Person panel's inner width — whole units, so at least its widest row. */
+export const NP_PANEL_INNER_REM: Readonly<Record<NpPanel, number>> = {
+  identity: unitsInnerRem(NP_PANEL_UNITS.identity),
+  idCard: unitsInnerRem(NP_PANEL_UNITS.idCard),
+  contact: unitsInnerRem(NP_PANEL_UNITS.contact),
+  address: unitsInnerRem(NP_PANEL_UNITS.address),
 };
+
+/** Each Natural Person panel's style — whole units, not `PANEL_STYLE`'s 32rem. */
+export const NP_PANEL_STYLE: Readonly<Record<NpPanel, CSSProperties>> = {
+  identity: unitStyle(NP_PANEL_UNITS.identity),
+  idCard: unitStyle(NP_PANEL_UNITS.idCard),
+  contact: unitStyle(NP_PANEL_UNITS.contact),
+  address: unitStyle(NP_PANEL_UNITS.address),
+};
+
+/**
+ * The Natural Person's list tiles in units (#37.27). Persoane and Proprietăți
+ * are a name, a role and the two buttons, stacked; Acte a type, a title, a
+ * role and the buttons; META INFO two columns of sections, each as wide as a
+ * dropdown and „Marchează ca verificat" side by side.
+ */
+export const NP_LIST_UNITS = { associations: 4, properties: 4, documents: 5, metadata: 5 } as const;
+
+/** A table on a list tile fills the tile inside its frame (the frame's 1-px border on each side). */
+export function tileTableRem(units: number): number {
+  return unitsInnerRem(units) - 2 * PANEL_BORDER_REM;
+}
+
+/** META INFO's cell on the Natural Person: half the tile, less the gap between the two. */
+export const META_CELL_GAP_REM = 1.5;
+export const NP_META_CELL_REM = (unitsInnerRem(NP_LIST_UNITS.metadata) - META_CELL_GAP_REM) / 2;
 
 /** A box on a stacked panel: its own width, or the panel's whole inner width when it `fill`s. */
 export function stackedBoxStyle(w: FieldWidth, panelInner: number): CSSProperties {
@@ -305,20 +372,18 @@ export const NP_VALIDITY_REM =
   NP_PANEL_INNER_REM.idCard - rowRem([NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil]) - STACK_GAP_REM;
 
 /**
- * The Natural Person's row of panels: as wide as the panels need, up to the
- * window, and never narrower than its widest panel (a narrower window scrolls).
- *
- * The panels are no longer one width, so `panelRowStyle`'s snap to whole 32rem
- * panels no longer describes them. `fit-content` does the same job: while the
- * panels fit on one line the row is exactly as wide as they are; once they wrap
- * it is the window's width. The action bar under the row takes that width, so
- * „Salvează" stays under the form.
+ * The Natural Person's row of tiles: a whole number of units wide (#37.27) —
+ * exactly as many as fit beside the sidebar — so every tile's edge falls on the
+ * same lines and the action bar under the form is as wide as the units above
+ * it. Never narrower than the widest tile (5 units): a narrower window scrolls.
+ * `round()` is Chrome 125+; without it the row is its parent's width and only
+ * the action bar is wider than the tiles.
  */
 export function npRowStyle(): CSSProperties {
+  const step = UNIT_REM + UNIT_GAP_REM;
+  const widest = unitsRem(Math.max(...Object.values(NP_PANEL_UNITS), ...Object.values(NP_LIST_UNITS)));
   return {
-    width: "fit-content",
-    maxWidth: "100%",
-    minWidth: rem(panelRem(Math.max(...Object.values(NP_PANEL_INNER_REM)))),
+    width: `max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)}))`,
   };
 }
 
@@ -586,6 +651,7 @@ export const COLUMN = {
   selectBadges: { content: "S", kind: "wraps" }, //         the property list's: „Nou!", and „Încrucișat" on a line of its own
   open: { content: "S", kind: "fixed" }, //                 „Deschide" / „Vizualizare", an xs button
   openPreview: { content: "L", kind: "fixed" }, //          „Vizualizare" and „Previzualizare" (#37.24), two xs buttons on an association tile
+  openPreviewStacked: { content: "M", kind: "fixed" }, //   the same two, one above the other, on a Natural Person's unit tile (#37.27)
   // Every entity
   code: { content: "S", kind: "fixed" }, //                 „JPERS03542", 10 mono characters at 12 px
   importance: { content: "M", kind: "fixed" }, //           „Ridicată"
@@ -596,6 +662,11 @@ export const COLUMN = {
   personNickname: { content: "L", kind: "wraps" }, //       NP.nickname, JP.nickname
   personType: { content: "S", kind: "fixed" }, //           „Fizică" / „Juridică"
   role: { content: "L", kind: "wraps" }, //                 LIST.role* — a role chip, or a certificate party's quality
+  // The Natural Person's list tiles (#37.27): each table fills its tile of whole units — tileTableRem().
+  tileName: { content: 12, kind: "wraps" }, //              a person's name, or a property's label, on Persoane / Proprietăți
+  tileRole: { content: "M", kind: "wraps" }, //             a role chip, wrapping
+  tileDocType: { content: "M", kind: "wraps" }, //          a document's type, wrapping
+  tileDocTitle: { content: 12, kind: "wraps" }, //          a document's title, wrapping
   cota: { content: "L", kind: "fixed" }, //                 an input showing „— fără cotă —" when empty
   cotaMp: { content: "L", kind: "fixed" }, //               „— fără suprafață —"
   cotaMod: { content: "L", kind: "fixed" }, //              a dropdown, „— nespecificat —"
@@ -657,6 +728,18 @@ export function columnsStyle(names: readonly ColumnName[]): CSSProperties {
 export function columnRem(name: ColumnName): number {
   return colRem(COLUMN[name]);
 }
+
+/**
+ * The Natural Person's list tiles' columns (#37.27). Each set fills its tile's
+ * table width exactly — `field-widths.test.ts` sums them against
+ * `tileTableRem(NP_LIST_UNITS[…])`. Persoane drops „Tip" (Fizică / Juridică):
+ * Adrian asked for the name, the relationship and the buttons.
+ */
+export const NP_LIST_COLUMNS = {
+  associations: ["select", "tileName", "tileRole", "openPreviewStacked"],
+  properties: ["select", "tileName", "tileRole", "openPreviewStacked"],
+  documents: ["select", "tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"],
+} as const satisfies Record<string, readonly ColumnName[]>;
 
 // ---- tiles (#37.17) -------------------------------------------------------------------------
 

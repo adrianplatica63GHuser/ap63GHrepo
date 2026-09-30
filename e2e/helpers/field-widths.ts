@@ -356,3 +356,48 @@ export async function expectTilesPerRow(
   expect(got, "small tiles that fit on one row, by window width").toEqual(expected);
   expect(odd, `small tiles that are not exactly ${smallRem.join(" / ")} rem wide`).toEqual([]);
 }
+
+/**
+ * THE NATURAL PERSON'S UNIT GRID (Slice #37.27). At each width the tile row is
+ * exactly `rowUnits[width]` units wide (`unitsRem`), and every tile and every
+ * form panel on it is a whole number of units — so their edges fall on the
+ * same lines. `unitRem` and `gapRem` are passed in from `field-widths.ts` so
+ * the check and the file cannot disagree. Puts the window back.
+ */
+export async function expectUnitGrid(
+  page: Page,
+  unitRem: number,
+  gapRem: number,
+  rowUnits: Readonly<Record<number, number>>,
+  height = 1000,
+): Promise<void> {
+  await settled(page);
+  const before = page.viewportSize();
+  const rows: Record<number, number> = {};
+  const odd: string[] = [];
+  try {
+    for (const width of Object.keys(rowUnits).map(Number)) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
+      const m = await page.evaluate(([u, g]) => {
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        // n units are n·u + (n−1)·g, so (w + g) / (u + g) is a whole number.
+        const units = (px: number) => (px / rem + g) / (u + g);
+        const row = document.querySelector<HTMLElement>("[data-tile-row]")?.parentElement;
+        const boxes = [...document.querySelectorAll<HTMLElement>("[data-tile], [data-panel]")]
+          .map((el) => ({ name: el.dataset.tile ?? el.dataset.panel ?? "?", w: el.getBoundingClientRect().width }))
+          .filter((b) => b.w > 0);
+        return {
+          row: row ? units(row.getBoundingClientRect().width) : 0,
+          off: boxes.filter((b) => Math.abs(units(b.w) - Math.round(units(b.w))) > 0.01).map((b) => `${b.name} ${Math.round(b.w)} px`),
+        };
+      }, [unitRem, gapRem] as const);
+      rows[width] = Math.round(m.row * 100) / 100;
+      if (m.off.length) odd.push(`${width}: ${m.off.join(", ")}`);
+    }
+  } finally {
+    if (before) await page.setViewportSize(before);
+  }
+  expect(rows, "the tile row's width in units, by window width").toEqual(rowUnits);
+  expect(odd, "tiles and panels that are not a whole number of units").toEqual([]);
+}

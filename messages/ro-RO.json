@@ -596,6 +596,7 @@
     "roleNotOffered": "Rolul ales nu mai este valid pentru această asociere — probabil a fost dezactivat între timp în Date de referință. Reîncărcați pagina și alegeți din nou; rolul este oricum opțional.",
     "roleNoLongerOffered": "{role} (nu mai este disponibil)",
     "noRolesForType": "Acest tip de document nu are niciun rol de persoană configurat, așa că nu se poate alege un rol aici. Rolurile se configurează în Date de referință → Tipuri de Document → Roluri pe Document. Asocierea se poate face și fără rol.",
+    "noRolesForPerson": "Niciun rol nu este bifat „Persoană → Persoană”, așa că nu se poate alege un tip de relație aici. Rolurile se bifează în Date de referință → Roluri. Asocierea se poate face și fără relație.",
     "noRolesForTypeLink": "Deschide Tipuri de Document (se deschide într-o filă nouă)",
     "roleStranded": "{count, plural, one {Rolul ales nu este configurat pe tipul actului {documents}. Asocierea se va face oricum, dar rolul nu va mai putea fi ales din nou pentru el.} other {Rolul ales nu este configurat pe tipul acestor acte: {documents}. Asocierea se va face oricum, dar rolul nu va mai putea fi ales din nou pentru ele.}} Rolurile se configurează în Date de referință → Tipuri de Document → Roluri pe Document.",
     "roleStrandedUnknown": "{count, plural, one {Nu se poate spune dacă rolul ales va mai fi disponibil pentru actul {documents}, pentru că lista lui de roluri nu a putut fi citită.} other {Nu se poate spune dacă rolul ales va mai fi disponibil pentru aceste acte, pentru că listele lor de roluri nu au putut fi citite: {documents}.}} Asocierea se va face cu rolul ales.",
@@ -1051,7 +1052,7 @@
       "idCard": "Carte de identitate",
       "contact": "Contact",
       "addresses": "Adrese",
-      "associations": "Asocieri",
+      "associations": "Persoane",
       "properties": "Proprietăți",
       "documents": "Acte",
       "metadata": "META INFO"

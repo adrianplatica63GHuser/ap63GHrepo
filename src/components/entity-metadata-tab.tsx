@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -12,7 +12,7 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { screenBox } from "@/lib/ui/field-widths";
+import { META_CELL_GAP_REM, screenBox } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -63,6 +63,13 @@ type Props = {
    * is ALGORITHM, the tab fetches this path and displays a link to the run.
    */
   calculationSourcePath?: string;
+  /**
+   * Slice #37.27 — a compact layout (the Natural Person's META INFO): the
+   * sections sit two to a row, each this many rem wide — a dropdown and
+   * „Marchează ca verificat" side by side — with their explanations wrapping
+   * inside, instead of one full-width band each. Omitted, nothing changes.
+   */
+  compactCellRem?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -1091,7 +1098,7 @@ function CalculationSourceLink({
 // Main component
 // ---------------------------------------------------------------------------
 
-export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath }: Props) {
+export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath, compactCellRem }: Props) {
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
   const { data: tf } = useTimeFrames();
@@ -1411,6 +1418,24 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  // Slice #37.27 — the compact layout. Plain functions, not components: a
+  // component declared here would be a new type on every render and remount
+  // the sections under it, losing a half-typed tag or a pending review.
+  const cellStyle = compactCellRem ? { width: `${compactCellRem}rem` } : undefined;
+  const cell = (node: ReactNode): ReactNode => (cellStyle ? <div style={cellStyle}>{node}</div> : node);
+  const grid = (node: ReactNode): ReactNode =>
+    cellStyle ? (
+      <div
+        className="flex flex-wrap items-start [&_h2]:mb-1 [&_h2]:text-base"
+        style={{ gap: `1.5rem ${META_CELL_GAP_REM}rem` }}
+        data-metadata-grid
+      >
+        {node}
+      </div>
+    ) : (
+      node
+    );
+
   return (
     <>
       {/* "Make current" confirmation dialog */}
@@ -1428,7 +1453,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         />
       )}
 
-      <div className="flex flex-col gap-8 py-2">
+      <div className={`flex flex-col ${cellStyle ? "gap-5" : "gap-8"} py-2`}>
 
         {/* ── Version nav (only when there are multiple versions) ──────────── */}
         {totalVer > 1 && (
@@ -1444,8 +1469,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           </h3>
         </div>
 
+        {grid(<>
         {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
-        <MetadataSection
+        {cell(<MetadataSection
           title={t("importance.title")}
           note={t("importance.note")}
           value={displayImportance}
@@ -1461,10 +1487,10 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("importance")}
           readOnly={!isOnLatest}
           highlight={highlights.importance}
-        />
+        />)}
 
         {/* ── 2. Relevanță / Relevance ─────────────────────────────────────── */}
-        <MetadataSection
+        {cell(<MetadataSection
           title={t("relevance.title")}
           note={t("relevance.note")}
           value={displayRelevance}
@@ -1480,10 +1506,10 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("relevance")}
           readOnly={!isOnLatest}
           highlight={highlights.relevance}
-        />
+        />)}
 
         {/* ── 3. Proveniență / Provenience (with history + collapsible statement) ── */}
-        <MetadataSection
+        {cell(<MetadataSection
           title={t("provenance.title")}
           note={t("provenance.note")}
           value={displayProvenance}
@@ -1529,7 +1555,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
               ))}
             </ul>
           )}
-        </MetadataSection>
+        </MetadataSection>)}
+        </>)}
 
         {/* ── Unified Save button (Task #20) ───────────────────────────────── */}
         {isOnLatest && (
@@ -1552,9 +1579,10 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           </h3>
         </div>
 
+        {grid(<>
         {/* ── 4. Etichete / Tags ───────────────────────────────────────────── */}
         {data.principalObjectId && isOnLatest && (
-          <TagsSection
+          cell(<TagsSection
             principalObjectId={data.principalObjectId}
             queryKey={queryKey}
             labelTitle={t("tags.title")}
@@ -1564,11 +1592,11 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             labelAdding={t("tags.adding")}
             labelRemove={t("tags.remove")}
             labelEmpty={t("tags.empty")}
-          />
+          />)
         )}
 
         {/* ── 5. Grupuri / Groups ──────────────────────────────────────────── */}
-        {data.principalObjectId ? (
+        {cell(data.principalObjectId ? (
           <InlineGroupsSection
             principalObjectId={data.principalObjectId}
             currentGroups={data.groups}
@@ -1586,10 +1614,10 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">{t("groups.title")}</h2>
             <p className="text-sm text-fade dark:text-zinc-400">{t("groups.empty")}</p>
           </section>
-        )}
+        ))}
 
         {/* ── 6. Ștampile / Stamps ─────────────────────────────────────────── */}
-        {data.principalObjectId ? (
+        {cell(data.principalObjectId ? (
           <InlineStampsSection
             principalObjectId={data.principalObjectId}
             currentStamps={data.stamps}
@@ -1607,18 +1635,19 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">{t("stamps.title")}</h2>
             <p className="text-sm text-fade dark:text-zinc-400">{t("stamps.empty")}</p>
           </section>
-        )}
+        ))}
 
         {/* ── 7. Trimiteri / See Also ──────────────────────────────────────── */}
         {data.principalObjectId && (
-          <CrossRefsSection
+          cell(<CrossRefsSection
             principalObjectId={data.principalObjectId}
             mainQueryKey={queryKey}
             isOnLatest={isOnLatest}
             t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
             withBack={withBack}
-          />
+          />)
         )}
+        </>)}
 
 
       </div>

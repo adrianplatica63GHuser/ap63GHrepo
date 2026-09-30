@@ -268,6 +268,13 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
       {/* The role is optional on this screen
           (`relationshipRoleId: selectedRoleId || null`), so the sentence says
           the association can still be made. */}
+      {/* Slice #37.27 (FU-221): a list that loaded with no role ticked for
+          people used to leave no dropdown and no word about it. */}
+      {roleListState === "loaded" && pickerOptions.length === 0 && (
+        <p className="text-sm text-fade dark:text-zinc-400" data-no-person-roles>
+          {tShared("noRolesForPerson")}
+        </p>
+      )}
       {roleListState === "failed" && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {tShared("roleListUnavailable")}

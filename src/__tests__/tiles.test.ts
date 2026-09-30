@@ -143,7 +143,8 @@ describe("the Natural Person's tiles", () => {
       shared: { tiles: Record<string, string> };
     };
     expect(NP_TILES.map((k) => ro.naturalPerson.tiles[k])).toEqual([
-      "Identitate", "Carte de identitate", "Contact", "Adrese", "Asocieri", "Proprietăți", "Acte", "META INFO",
+      // Slice #37.27: „Asocieri" is „Persoane" on the Natural Person — its people, by name and relationship.
+      "Identitate", "Carte de identitate", "Contact", "Adrese", "Persoane", "Proprietăți", "Acte", "META INFO",
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");

@@ -29,6 +29,7 @@
  *   - Slice #37.17: before the cleanup, „Toate" shows every tile of the saved
  *     person; their widths are held at 1400 and 2400 px and photographed at
  *     1920 and 2560 px, then „Implicit" puts the default back.
+ *   - Slice #37.27: the tiles sit on a width unit, checked by `expectUnitGrid`.
  *   - Slice #37.26: every label sits above its box and each form tile is as
  *     wide as its widest row, so the tile check is given those widths; the
  *     pictures are 1400 px high, the stacked form being taller than 1000.
@@ -37,9 +38,9 @@
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectTilesPerRow, photograph } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { TILE_GROUP } from "../helpers/tiles";
-import { ADDRESS, NATURAL_PERSON, NP_PANEL_INNER_REM, PANEL_REM, panelRem } from "../../src/lib/ui/field-widths";
+import { ADDRESS, NATURAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
 const SAMPLES: Record<string, string> = {};
@@ -132,10 +133,10 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Toate", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
-      // Slice #37.23 — two small tiles to a row at 1366 px, three at 1920, four at 2560.
-      // Slice #37.26 — the person's form tiles are each as wide as their widest row; a list tile
-      // narrower than a panel is still a panel wide (ListTile), so 32rem stays allowed.
-      await expectTilesPerRow(page, undefined, undefined, [PANEL_REM, ...Object.values(NP_PANEL_INNER_REM).map(panelRem)]);
+      // Slice #37.27 — the tiles are on a width unit: the row is 6 units at 1366 px, 10 at 1920,
+      // 14 at 2560, and every tile and panel is a whole number of units (replaces #37.23's
+      // two / three / four 32rem tiles to a row).
+      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
       await photograph(page, "natural-person-all-tiles", [1920, 2560], 1400);
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);

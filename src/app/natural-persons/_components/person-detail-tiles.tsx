@@ -10,11 +10,11 @@
  * (`useTileChoice`); with nothing stored the screen shows the four form tiles,
  * which is exactly what the Detalii tab showed.
  *
- * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). Each
- * form tile is one panel (Adrese is two), as wide as its widest row since
- * #37.26 (`NP_PANEL_STYLE`), and the tile row is as wide as they need, up to the
- * window (`npRowStyle`); each list tile is as wide as its table of fixed
- * columns (#37.16). They
+ * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). Since
+ * #37.27 every tile is a whole number of width units (`unitsRem`): the form
+ * panels the fewest that hold their widest row (`NP_PANEL_UNITS`), the list
+ * tiles `NP_LIST_UNITS`, their tables filling them; the tile row is a whole
+ * number of units (`npRowStyle`), so their edges line up. They
  * flow left to right and wrap. The form is still ONE form: its panels are
  * items of this row (the form is `display: contents`, see `tiles` in
  * natural-person-form.tsx), and „Salvează" saves every form tile, shown or
@@ -34,7 +34,7 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { PANEL_GAP, npRowStyle } from "@/lib/ui/field-widths";
+import { NP_LIST_UNITS, NP_META_CELL_REM, PANEL_GAP, npRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -124,27 +124,28 @@ export function PersonDetailTiles({
             tiles={{ shown: choice.shown, labels, onRevealTile: choice.reveal }}
           />
           {choice.isShown("associations") && (
-            <ListTile tile="associations" title={labels.associations}>
-              <PersonReferencesTab personId={personId} backBase="/natural-persons" />
+            <ListTile tile="associations" title={labels.associations} units={NP_LIST_UNITS.associations}>
+              <PersonReferencesTab personId={personId} backBase="/natural-persons" compact />
             </ListTile>
           )}
           {choice.isShown("properties") && (
-            <ListTile tile="properties" title={labels.properties}>
-              <PersonPropertiesTab personId={personId} backBase="/natural-persons" />
+            <ListTile tile="properties" title={labels.properties} units={NP_LIST_UNITS.properties}>
+              <PersonPropertiesTab personId={personId} backBase="/natural-persons" compact />
             </ListTile>
           )}
           {choice.isShown("documents") && (
-            <ListTile tile="documents" title={labels.documents}>
-              <PersonDocumentTab personId={personId} backBase="/natural-persons" />
+            <ListTile tile="documents" title={labels.documents} units={NP_LIST_UNITS.documents}>
+              <PersonDocumentTab personId={personId} backBase="/natural-persons" compact />
             </ListTile>
           )}
           {choice.isShown("metadata") && (
-            <ListTile tile="metadata" title={labels.metadata} wide>
+            <ListTile tile="metadata" title={labels.metadata} units={NP_LIST_UNITS.metadata}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
                 backHref={`/natural-persons/${encodeURIComponent(personId)}`}
                 backEntityName={personName}
+                compactCellRem={NP_META_CELL_REM}
               />
             </ListTile>
           )}
