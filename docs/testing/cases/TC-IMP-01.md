@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | `C:\dev\TEST.DATA\Test.Claude\07.smoke.tc.marker` |
 | **State** | `driven` |
-| **Last green** | 2026-09-25 |
+| **Last green** | 2026-10-01 |
 
 ## What this proves
 
@@ -37,11 +37,14 @@ folder that still has every ingredient in it.
   The wizard names renaming a file as the way to have it imported as new. The renames
   also put a **`TC-` marker in the title of every document this case creates**.
   Nothing in the pages changed, and `01.smoke.one.property` itself is untouched.
-- **The property is NOT created.** PROP01503 `40-212per40IE55818-Sud Costache Mihail`
-  already exists. The property step matches on tarla and parcelă, not on the folder's
-  description, so this run is linked to PROP01503. The folder's `TC-IMP-01` tail never
-  reaches a nickname. That is why the marker lives in the file names and not in the
-  property.
+- **The property is CREATED, and deleted at the end** (since 2026-10-01). Until then
+  PROP01503 `40-212per40IE55818-Sud Costache Mihail` existed and the run was linked to it;
+  it is no longer in the archive. So the property step finds no property for tarla `40`,
+  parcelă `212/40IE55818`, and creates one from the coordinate file. Its nickname is the
+  folder's name, with the `per` decoded since Slice #37.39:
+  `40-212/40IE55818-Sud Costache Mihail TC-IMP-01`. The marker therefore reaches the
+  property too, and the run deletes it with its documents. If a property for that parcel
+  exists again, the run links to it as before, and must not delete it.
 
 ## What Adrian is asked for
 
@@ -65,12 +68,12 @@ folder that still has every ingredient in it.
 | 8 | Presses „Continuă la pasul „Scanare"" — **the first step that costs** | „Se scanează: 2 / 2 fișiere"; a table CALE · DESCRIERE AI · STATUS: `Boleac Adriana TC-IMP-01.jpg` „Carte de Identitate", „Încredere ridicată", „Scanat"; the coordinate file „Nescanabil"; `CVC Costache S 2008 TC-IMP-01` (under it „Grup de 3 pagini") „Contract de Vânzare-Cumpărare", „Încredere ridicată", „Scanat" |
 | 9 | Presses „Continuă la pasul „Evaluare"" | „Ce va face acest import": „Documente care vor fi create" 3, „…dintre care cu mai multe pagini" 1, „Imagini pentru clasificare automată" 2, the coordinate file named, „Fișiere care vor fi ignorate" 0 |
 | 10 | Presses „Continuă la pasul „Import"" | „Ce se întâmplă când apăsați „Importă"", with „Se creează 3 documente, cu fișierele lor." and the cost note „Citirea AI se plătește: cel mult 2 documente vor fi citite." |
-| 11 | Presses „Importă" | The dialog „Proprietățile acestui import": „Această proprietate există deja în sistem: PROP01503 — …", with the tick „Confirm legarea celor 3 documente din acest subfolder de proprietatea PROP01503." and the note that its 4 corners stay unchanged. Ticks it, presses „Continuă" |
+| 11 | Presses „Importă" | The dialog „Proprietățile acestui import": the folder `40-212per40IE55818-Sud Costache Mihail TC-IMP-01`, „3 documente", „Tarla/sola 40 · parcela 212/40IE55818", the coordinate file with „4 colțuri", and „Se va crea o proprietate nouă, cu 4 colțuri." Presses „Continuă" |
 | 12 | Answers „Creare etichete din dosare" with „Da, pregătește etichetele", then „Importă Fișierele (3)" | „Se importă fișierele…", a row per document with „Deschide →" |
 | 13 | Answers the two confirmation dialogs | „Creează persoană din cartea de identitate" (Card 1 din 1) and „Confirmați persoanele din acest document" (5 people: two „Vânzător", „Cumpărător", „Notar", „Reprezentant legal / Mandatar"). **This case presses „Omite" on all six**, so that it creates no person. Confirming them is TC-AI-01's subject, not this one's |
 | 14 | Reads the dialog „3 documente importate." and presses „Închide" | The step „Rezultat": „Importul s-a încheiat" |
 | 15 | Reads „Pe scurt" | „Documente create" 3 · „Proprietăți create sau confirmate pentru acest import" 1 · „Fișiere de coordonate folosite pentru colțuri" 1 · „Documente citite de AI (inclusiv cărțile de identitate)" 1 · „Câmpuri completate de AI" 47 · „Persoane găsite de AI și neconfirmate" 5 · „Cărți de identitate fără răspuns" 1 |
-| 16 | Presses „Închide și vezi proprietățile", opens PROP01503 | Its „Puncte de contur" still hold the 4 corners it had, and its „Acte" tab (Tip · Titlu) lists the three new documents at the bottom. **Write their codes down** |
+| 16 | Presses „Închide și vezi proprietățile", opens the new property | Its nickname reads `40-212/40IE55818-Sud Costache Mihail TC-IMP-01` (the `per` decoded), parcelă `212/40IE55818`, 4 corners in „Puncte de contur", and its „Acte" tab lists the three new documents. Every tag the documents carry reads `/` (`40-212/40ie55818-…`, `212/40ie55818`). **Write the codes down** |
 | 17 | Runs the reconciliation check: `claude.sh request reconcile 07.smoke.tc.marker` (Slice #36.22) | **6 files: 5 landed, 1 set aside, 0 in archive, 0 ambiguous, 0 missing; 0 extra pages; structure clean.** The card and the coordinate file each land as their document's only page, the CVC's `530.jpg`, `531.jpg`, `532.jpg` as pages 1–3 of one document, all linked to PROP01503; the coordinate file is named as PROP01503's corner source; `desktop.ini` is set aside as a system file |
 
 **The numbers in step 15, and step 17's „0 missing", are the assertion.** „Documente create" = 3, not 2: the
@@ -97,16 +100,17 @@ per document the AI can read. An identity card counts as a read.
 
 ## At the end — leaving things as they were found
 
-**Never delete PROP01503.** It existed before this case and holds 23 documents that are
-not this case's. Only what the run created is removed:
+Only what the run created is removed: the three documents, and the property step 11
+created. (A property that existed before the run, as PROP01503 did until 2026-10-01, is
+never deleted. Then only the documents go, and step 2 below checks the property instead.)
 
 1. Open each of the three documents (by the codes from step 16, or search `TC-IMP-01` on
    „Căutare globală") and press „Șterge" on the document's own screen. The property's
    „Acte" tab has only „Asociază" / „Dezasociază", so the delete is not there.
-2. Check PROP01503's „Acte" tab: back to 23 documents, the 4 corners unchanged.
+2. Delete the property step 11 created: „Șterge" on its screen, then „Da".
 
-Nothing else is left: no person was created (step 13), the tags are strings on the
-documents and go with them, and the property was only linked.
+Nothing else is left: no person was created (step 13), and the tags are strings on the
+documents and go with them.
 
 3. Run `claude.sh request reconcile 07.smoke.tc.marker` again: **„nothing from this folder is
    in the database"** — 0 landed, 1 set aside, 3 in archive (the CVC's pages, which the original
@@ -159,3 +163,28 @@ documents and go with them, and the property was only linked.
   stored. The Pre-existing check and the reconciliation decode both sides, so a re-run still finds
   what this case imported (src/__tests__/per-to-slash-names.test.ts). The steps quote no value with
   „per", so none changes. The run needs Adrian to pick the folder, and spends the case's AI calls.
+- **2026-10-01, Slice #37.39 follow-up — re-driven, green, after the `per` → `/` change.** Driven
+  by Claude in Adrian's Chrome, and Adrian picked the folder. The desktop app's browser pane was
+  tried first: its folder dialog returned no folder, so the wizard stayed at „Alege folderul…".
+  - **PROP01503 was no longer in the archive**, so the run CREATED PROP06157. The case file is
+    corrected above (steps 11 and 16, and the cleanup).
+  - Steps 2–10 as written.
+  - Step 12: the tags dialog listed them decoded:
+    - `40-212/40IE55818-Sud Costache Mihail TC-IMP-01`
+    - `40`
+    - `212/40IE55818`
+    - `40-212/40IE55818`
+    - `CVC Costache S 2008 TC-IMP-01`
+  - Step 13: the card, then the 5 people (2 × Vânzător, Reprezentant legal / Mandatar,
+    Cumpărător, Notar), all „Omite".
+  - Step 15: 3 · 1 · 1 · 1 · **48** fields (47 on 09-25; recorded, not asserted) · 5 · 1.
+  - Step 16: PROP06157 nicknamed `40-212/40IE55818-Sud Costache Mihail TC-IMP-01`, parcela
+    `212/40IE55818`, 4 corners. DOC06158 (coordinate file), DOC06159 (CVC) and DOC06160 (card)
+    were all tagged with `/`.
+  - Step 17: reconcile `20261001T153436Z-3277`, 6 files, 5 landed, 1 set aside, 0 missing,
+    structure clean.
+  - At the end: the 3 documents and PROP06157 deleted (DELETE 204 each). Reconcile
+    `20261001T153454Z-5723` reported „nothing from this folder is in the database": 0 landed,
+    1 set aside, 3 in archive, 2 missing.
+  - Fixed in passing: the Structure screen's sentence on how a name is read said „„per” între
+    două cifre se citește ca bară de fracție", the rule before #37.39.

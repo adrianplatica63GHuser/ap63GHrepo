@@ -2869,7 +2869,7 @@
         "pageGroups": "…dintre care foldere de pagini scanate",
         "ignored": "Fișiere ignorate automat",
         "readingsTitle": "Cum a fost citit numele fiecărui folder de proprietate",
-        "readingsRule": "Numele se împarte la primele două liniuțe: înainte de prima este tarlaua sau sola, între prima și a doua este parcela, iar tot ce urmează după a doua este text liber — nu este citit ca tarla sau parcelă și nu face parte din identitatea proprietății. „per” între două cifre se citește ca bară de fracție. Dacă ceva de mai jos nu este cum vă așteptați, redenumiți folderul în File Explorer și porniți din nou verificarea de pe acest ecran — numele se citește din nou la fiecare verificare, iar din el se face și eticheta pusă pe documentele din folder.",
+        "readingsRule": "Numele se împarte la primele două liniuțe: înainte de prima este tarlaua sau sola, între prima și a doua este parcela, iar tot ce urmează după a doua este text liber — nu este citit ca tarla sau parcelă și nu face parte din identitatea proprietății. „per” se citește ca bară de fracție, fără spațiile din jurul lui — „47per2” și „T47 per P2” devin „47/2” și „T47/P2” —, în afară de când face parte dintr-un cuvânt, ca în „Perdea” sau „superficie”. Dacă ceva de mai jos nu este cum vă așteptați, redenumiți folderul în File Explorer și porniți din nou verificarea de pe acest ecran — numele se citește din nou la fiecare verificare, iar din el se face și eticheta pusă pe documentele din folder.",
         "tarla": "Tarla/sola:",
         "parcela": "Parcela:",
         "description": "Restul numelui (text liber):",
