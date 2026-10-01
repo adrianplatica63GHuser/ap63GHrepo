@@ -2033,6 +2033,7 @@ function Field({ label, name, type = "text", register, error, warn, width }: Fie
           registration={register(name)}
           width={String(box.width)}
           lines={width.kind === "lines"}
+          fold={width.fold}
           minRows={width.rows ?? 1}
           spellCheck={false}
           aria-invalid={error ? true : undefined}

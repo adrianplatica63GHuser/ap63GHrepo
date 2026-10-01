@@ -548,6 +548,10 @@
     "notes": "Notes"
   },
   "shared": {
+    "fold": {
+      "showMore": "Show more…",
+      "showLess": "Show less…"
+    },
     "preview": {
       "title": "Preview",
       "openPreview": "Preview",

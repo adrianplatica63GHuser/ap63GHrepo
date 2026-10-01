@@ -82,11 +82,21 @@ export const PANEL_INNER_REM = PANEL_REM - 2 * PANEL_PADDING_REM - 2 * PANEL_BOR
 
 export type FieldKind = "fixed" | "select" | "grows" | "lines";
 
+/**
+ * Slice #37.40 — every „Note…" box and the MRZ show at most this many RENDERED
+ * lines until „Arată mai mult…" (GrowingText's `fold`). Adrian, 2026-10-01:
+ * „cover all the Note boxes". field-widths.test.ts holds every notes entry and
+ * the MRZ to it, so a new „Note" box cannot appear without the fold.
+ */
+export const NOTE_FOLD_LINES = 5;
+
 export interface FieldWidth {
   step: Step;
   kind: FieldKind;
   /** For `lines`: the least number of lines shown. */
   rows?: number;
+  /** For `lines`: fold to this many rendered lines, with „Arată mai mult…" (#37.40). */
+  fold?: number;
   /**
    * For a FIXED field: the widest value it must hold without scrolling — the
    * format's longest, or the measured longest, masked (`H` a capital, `n` a
@@ -172,7 +182,7 @@ export const NATURAL_PERSON = {
   age: { step: "XS", kind: "fixed", sample: "000" }, //     beside the date it is worked out from
   physicalPersonTypeId: { step: "M", kind: "select" }, //   m: 2 options, longest „Expert" (6); longer ones show on hover
   placeOfBirth: { step: "XL", kind: "grows" }, //           m: 0
-  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
+  notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
   // Carte de identitate — the first row „about 75%" of L, M and M (Adrian, #37.26). Tip document
   // is 10rem, not 9.75: „Carte de identitate" needs 156.4 px with the arrow, and 9.75rem is 156.
   idDocumentType: { step: "L", kind: "select", rem: 10 }, // „Carte de identitate" (19)
@@ -182,7 +192,7 @@ export const NATURAL_PERSON = {
   idValidUntil: { step: "M", kind: "fixed" },
   citizenshipId: { step: "M", kind: "select" }, //          m: 8 options, longest „Moldoveană" (10)
   idIssuingAuthority: { step: "XL", kind: "grows" }, //     „SPCLEP Sector 3 București"; m: 0
-  idMrzRaw: { step: "XL", kind: "lines", rows: 3, fill: true }, // 3 × 30 monospace; m: 1 · 1507 — free text pasted into it, which grows; the panel's whole width (#37.26)
+  idMrzRaw: { step: "XL", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3, fill: true }, // 3 × 30 monospace; m: 1 · 1507 — free text pasted into it, which grows; the panel's whole width (#37.26)
   // Contact
   personalPhone1: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0
   personalPhone2: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0
@@ -203,7 +213,7 @@ export const ADDRESS = {
   locality: { step: "L", kind: "grows" }, //                m: 0
   county: { step: "M", kind: "fixed", sample: "Hnnnn-Hnnnnnn" }, // „Caraș-Severin", the longest county; m: 0
   country: { step: "M", kind: "fixed", sample: "Hnnnnnn" }, //      „România"; m: 0
-  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 0; on a stacked panel, its whole width (#37.26)
+  notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; on a stacked panel, its whole width (#37.26)
 } as const satisfies Record<string, FieldWidth>;
 
 // ---- the Natural Person, labels above their boxes (#37.26) ----------------------------
@@ -347,7 +357,7 @@ export const JUDICIAL_PERSON = {
   judicialPersonTypeId: { step: "L", kind: "select" }, //   m: 10 options, longest „Consiliu Local" (14) — one character past M
   cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
-  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 0; the panel's whole width (#37.29)
+  notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.29)
   contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
 } as const satisfies Record<string, FieldWidth>;
 
@@ -381,7 +391,7 @@ export const PROPERTY = {
   cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
   useCategoryId: { step: "M", kind: "select" }, //              m: 8 options, longest „Neproductiv" (11) — v02 guessed L
   propertyTypeId: { step: "L", kind: "select" }, //             m: 14 options, longest „Vegetație Forestieră" (20)
-  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
+  notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
   /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */
   streetViewStreetLine: { step: "TILE", kind: "grows" },
   streetViewStreetLineBox: { step: "L", kind: "grows" }, //     m: 0
@@ -423,7 +433,7 @@ export const DOCUMENT = {
   documentTypeId: { step: "XXL", kind: "select" }, //   m: 47 options, longest „Tabel/Lista - Nu este un document oficial" (41)
   title: { step: "TILE", kind: "grows", fill: true }, //  Etichetă scurtă; m: 105 · 151 · 73; the panel's whole width (#37.31)
   subject: { step: "TILE", kind: "grows", fill: true }, // m: 48 · 428 · 301; the panel's whole width (#37.31)
-  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // Note extinse; m: 50 · 2504 · 2283, at most 4000; whole width
+  notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // Note extinse; m: 50 · 2504 · 2283, at most 4000; whole width
   institutionId: { step: "XXL", kind: "select" }, //     m: 7 options; the dropdown shows „name (type)", longest „Primăria Municipiului (Administrație Locală)" (44)
   nrDocument: { step: "M", kind: "fixed", sample: "00/00.00.0000" }, // m: 24 · 13 · 6
   dateDocument: { step: "M", kind: "fixed" }, //         dd.mm.yyyy and the calendar button
@@ -1147,7 +1157,7 @@ export const SCREEN = {
   groupCode: { step: "M", kind: "fixed", sample: "HH 00" }, // „AA 01" (140 px before)
   groupDescription: { step: "XXL", kind: "lines", rows: 2 }, // at most 500 characters
   stampShortDescription: { step: "XXL", kind: "fixed" }, // a stamp's short description (max-w-sm before)
-  stampNotes: { step: "XXL", kind: "lines", rows: 3 },
+  stampNotes: { step: "XXL", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3 },
   groupCodePending: { step: "XL", kind: "fixed" }, //  „Codul se atribuie la salvare", before there is a code
   memberSearch: { step: "XXL", kind: "fixed" }, //     the search above the candidates
   // Setări

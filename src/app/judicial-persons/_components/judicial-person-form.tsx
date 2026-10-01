@@ -1373,6 +1373,7 @@ function Field({
           registration={register(name)}
           width={String(box.width)}
           lines={width.kind === "lines"}
+          fold={width.fold}
           minRows={width.rows ?? 1}
           aria-invalid={error ? true : undefined}
           className={className}

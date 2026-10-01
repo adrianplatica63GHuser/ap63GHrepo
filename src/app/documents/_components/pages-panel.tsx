@@ -33,6 +33,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { GrowingText } from "@/components/forms/growing-text";
+import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { HelpHint } from "@/components/help/help-hint";
@@ -1194,11 +1196,19 @@ function AddPageDialog({
 
           {/* Page notes */}
           <DialogRow label={t("dialog.pageNotes")} alignTop>
-            <textarea
+            {/* Slice #37.40: a GrowingText, so it folds at five lines like every
+                „Note…" box. It was a plain textarea with no name of its own;
+                the row's text is not a <label>, so it gets an aria-label. */}
+            <GrowingText
               value={pageNotes}
-              onChange={(e) => setPageNotes(e.target.value)}
-              rows={2}
-              className="flex-1 rounded-md border border-wire bg-white px-2 py-1 shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              onValueChange={setPageNotes}
+              width="100%"
+              lines
+              minRows={2}
+              fold={NOTE_FOLD_LINES}
+              wrapClassName="flex-1"
+              aria-label={t("dialog.pageNotes")}
+              className="rounded-md border border-wire bg-white px-2 py-1 shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
             />
           </DialogRow>
 

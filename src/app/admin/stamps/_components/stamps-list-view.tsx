@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { SCREEN, screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { GrowingText } from "@/components/forms/growing-text";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /** The stamps, at #37.16's column widths (Slice #37.22). */
@@ -138,13 +139,21 @@ function CreateForm({ onClose }: { onClose: () => void }) {
           <label className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("fields.notes")}
           </label>
-          <textarea
-            {...screenBox("stampNotes")}
-            rows={3}
-            maxLength={NOTES_MAX}
+          {/* Slice #37.40: a GrowingText, folding at five lines like every
+              „Note…" box. Its label above is not tied to it, so it names
+              itself. The box grows downward instead of a resize handle. */}
+          <GrowingText
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 resize-y"
+            onValueChange={setNotes}
+            width={String(screenBox("stampNotes").style.width)}
+            lines
+            minRows={SCREEN.stampNotes.rows}
+            fold={SCREEN.stampNotes.fold}
+            maxLength={NOTES_MAX}
+            aria-label={t("fields.notes")}
+            data-width-field="stampNotes"
+            data-width-kind={SCREEN.stampNotes.kind}
+            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
           />
         </div>
 

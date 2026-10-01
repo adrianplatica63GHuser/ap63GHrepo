@@ -12,7 +12,8 @@
 import fs from "fs";
 import path from "path";
 
-import { oneLine } from "@/components/forms/growing-text";
+// Slice #37.40: the pure module — GrowingText itself now loads next-intl.
+import { oneLine } from "@/components/forms/growing-text-rules";
 import {
   MAX_PAIRS,
   OVER_AT,

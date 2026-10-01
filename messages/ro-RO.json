@@ -548,6 +548,10 @@
     "notes": "Note"
   },
   "shared": {
+    "fold": {
+      "showMore": "Arată mai mult…",
+      "showLess": "Arată mai puțin…"
+    },
     "preview": {
       "title": "Previzualizare",
       "openPreview": "Previzualizare",

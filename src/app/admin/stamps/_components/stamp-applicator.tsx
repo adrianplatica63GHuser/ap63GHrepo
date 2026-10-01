@@ -9,7 +9,8 @@ import {
 } from "@/lib/stamps/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { SCREEN, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { NOTE_FOLD_LINES, SCREEN, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { GrowingText } from "@/components/forms/growing-text";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
@@ -332,13 +333,21 @@ export function StampApplicator({
             <span className="text-xs font-medium text-fade dark:text-zinc-400">
               {t("fields.notes")}
             </span>
-            <textarea
-              {...screenBox("groupDescription")}
-              rows={2}
-              maxLength={NOTES_MAX}
+            {/* Slice #37.40: a „Note" box the header did not list — a GrowingText
+                now, folding at five lines like the others. It keeps the width
+                it had (the group description's), and names itself. */}
+            <GrowingText
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
+              onValueChange={setNotes}
+              width={String(screenBox("groupDescription").style.width)}
+              lines
+              minRows={2}
+              fold={NOTE_FOLD_LINES}
+              maxLength={NOTES_MAX}
+              aria-label={t("fields.notes")}
+              data-width-field="groupDescription"
+              data-width-kind={SCREEN.groupDescription.kind}
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
             />
           </div>
         </div>
