@@ -31,3 +31,18 @@ export function newTabIfAsked(e: MouseEvent, href: string): boolean {
   window.open(href, "_blank", "noopener");
   return true;
 }
+
+/**
+ * A plain click on a record's open link leaves the screen through `navigate` —
+ * the unsaved-changes guard's `guardedNavigate` — so an unsaved edit beside it
+ * is asked about first, as a preview's „Deschide" is.   (FU-271, Slice #37.33)
+ * Ctrl/⌘, Shift and the middle button are left to the browser (a new tab or
+ * window, nothing lost). The row's own click — which selects it — never also
+ * runs.
+ */
+export function openThroughGuard(e: MouseEvent, href: string, navigate: (href: string) => void): void {
+  e.stopPropagation();
+  if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+  e.preventDefault();
+  navigate(href);
+}

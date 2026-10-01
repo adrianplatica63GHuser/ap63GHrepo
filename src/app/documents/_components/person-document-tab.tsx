@@ -9,7 +9,8 @@ import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/comp
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import Link from "next/link";
-import { newTabIfAsked } from "@/lib/ui/row-link";
+import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
+import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
@@ -66,6 +67,8 @@ export function PersonDocumentTab({ personId, backBase, compact = false }: Props
   // FU-224 (Slice #37.07): the role, else a certificate party's quality.
   const qualityWords = { DEFUNCT: t("qualityDefunct"), MOSTENITOR: t("qualityMostenitor") };
   const router      = useRouter();
+  // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
+  const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
   const [selectedId,    setSelectedId]    = useState<string | null>(null);
@@ -137,7 +140,7 @@ export function PersonDocumentTab({ personId, backBase, compact = false }: Props
                     setSelectedId(item.linkId === selectedId ? null : item.linkId);
                   }}
                   onAuxClick={(e) => newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)}
-                  onDoubleClick={() => router.push(`/documents/${encodeURIComponent(item.id)}?readonly=true`)}
+                  onDoubleClick={() => guardedNavigate(`/documents/${encodeURIComponent(item.id)}?readonly=true`)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
                     item.linkId === selectedId
@@ -164,7 +167,7 @@ export function PersonDocumentTab({ personId, backBase, compact = false }: Props
                     <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                       <Link
                         href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => openThroughGuard(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
                         className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         {t("view")}

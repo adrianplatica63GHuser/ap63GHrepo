@@ -8,7 +8,8 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import Link from "next/link";
-import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
+import { newTabIfAsked, openThroughGuard, personPath } from "@/lib/ui/row-link";
+import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 
@@ -56,6 +57,8 @@ export function PropertyPersonsTab({ propertyId, compact = false }: Props) {
     : (["personName", "role", "openPreview"] as const);
   const t           = useTranslations("property.persons");
   const router      = useRouter();
+  // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
+  const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
   const [selectedId,    setSelectedId]    = useState<string | null>(null);
@@ -134,10 +137,7 @@ export function PropertyPersonsTab({ propertyId, compact = false }: Props) {
                     setSelectedId(p.id === selectedId ? null : p.id);
                   }}
                   onAuxClick={(e) => newTabIfAsked(e, `${personPath(p.type, p.id)}?readonly=true`)}
-                  onDoubleClick={() => {
-                    const base = p.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
-                    router.push(`${base}/${encodeURIComponent(p.id)}?readonly=true`);
-                  }}
+                  onDoubleClick={() => guardedNavigate(`${personPath(p.type, p.id)}?readonly=true`)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
                     p.id === selectedId
@@ -165,7 +165,7 @@ export function PropertyPersonsTab({ propertyId, compact = false }: Props) {
                     <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                       <Link
                         href={`${personPath(p.type, p.id)}?readonly=true`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => openThroughGuard(e, `${personPath(p.type, p.id)}?readonly=true`, guardedNavigate)}
                         className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         {t("view")}

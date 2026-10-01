@@ -8,7 +8,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { personPath } from "@/lib/ui/row-link";
+import { openThroughGuard, personPath } from "@/lib/ui/row-link";
 
 const ROOT = process.cwd();
 const read = (...p: string[]): string => fs.readFileSync(path.join(ROOT, ...p), "utf8");
@@ -51,6 +51,42 @@ describe("an association row", () => {
     // „openPreview" beside, or „openPreviewStacked" on the Natural Person's unit tile.
     expect(src).toMatch(/\bcolumnHead\("openPreview"\)|"openPreviewStacked"\] as const\)\s*: \(\[[^\]]*"openPreview"\] as const\)/);
     expect(src).toMatch(/\bcolumnHead\((?:"openPreview"|buttonsCol)\)/);
+  });
+});
+
+describe("an association row leaves the screen through the unsaved-changes guard (FU-271, Slice #37.33)", () => {
+  // TC-TILES-05 found it: with an unsaved edit on the screen, „Vizualizare" and
+  // a row's double-click left WITHOUT the „Modificări nesalvate" question, and
+  // the edit was lost. Only the sidebar, the recently-viewed panel and a
+  // preview's „Deschide" went through `guardedNavigate`.
+  it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Vizualizare\" and the double-click ask first", (_n, f) => {
+    const src = read("src", "app", ...(f as string[]));
+    expect(src).toMatch(/const \{ guardedNavigate \} = useUnsavedChanges\(\);/);
+    // The link: a plain click through the guard; Ctrl/⌘ and middle click left to the browser.
+    expect(src).toMatch(/<Link\s+href=\{`[^`]*\?readonly=true`\}\s+onClick=\{\(e\) => openThroughGuard\(e, `[^`]*\?readonly=true`, guardedNavigate\)\}/);
+    // The double-click: through the guard, never straight to the router.
+    expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(`[^`]*\?readonly=true`\)\}/);
+    expect(src).not.toMatch(/router\.push\(`[^`]*\?readonly=true`\)/);
+  });
+
+  it("a plain click goes through the guard; Ctrl/⌘, Shift and the middle button are the browser's", () => {
+    const click = (over: Partial<{ ctrlKey: boolean; metaKey: boolean; shiftKey: boolean; button: number }> = {}) => ({
+      ctrlKey: false, metaKey: false, shiftKey: false, button: 0, ...over,
+      preventDefault: jest.fn(), stopPropagation: jest.fn(),
+    });
+    const went: string[] = [];
+    const plain = click();
+    openThroughGuard(plain as never, "/documents/1?readonly=true", (h) => went.push(h));
+    expect(went).toEqual(["/documents/1?readonly=true"]);
+    expect(plain.preventDefault).toHaveBeenCalled();
+    expect(plain.stopPropagation).toHaveBeenCalled(); // the row's own click (select) does not also run
+    for (const over of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { button: 1 }]) {
+      const e = click(over);
+      openThroughGuard(e as never, "/documents/1?readonly=true", (h) => went.push(h));
+      expect(e.preventDefault).not.toHaveBeenCalled();
+      expect(e.stopPropagation).toHaveBeenCalled();
+    }
+    expect(went).toHaveLength(1);
   });
 });
 
