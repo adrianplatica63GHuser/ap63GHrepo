@@ -1,8 +1,12 @@
 "use client";
 
 /**
- * HintBubble — the app's first tooltip, and the only one it should ever need.
- *                                                            (Slice #32.10)
+ * HintBubble — the app's first tooltip.                      (Slice #32.10)
+ *
+ * Since #37.42 its open/close behaviour is `useTooltipTriggers`
+ * (`use-tooltip.ts`), which IconButton's label tooltip shares; this file keeps
+ * what is HintBubble's own — the ⓘ, and a paragraph that is always in the
+ * document.
  *
  * Adrian asked for the step-control bar's permanent hint paragraphs to become
  * "a text bubble" on hover. A `<div>` written into `import-stage-bar.tsx` would
@@ -18,8 +22,8 @@
  *    a bad name.** A keyboard user never generates one, and a touch screen has
  *    no hover at all — Ciprian's laptop may well have one. So the bubble also
  *    opens on a KEYBOARD focus landing anywhere in the wrapper but the ⓘ (see
- *    `handleFocus`, which is where "keyboard" is decided, and why it is decided
- *    by the platform rather than by us) AND from the ⓘ itself, which is what a
+ *    `onFocus` in `use-tooltip.ts`, which is where "keyboard" is decided, and
+ *    why it is decided by the platform rather than by us) AND from the ⓘ itself, which is what a
  *    finger can reach. The pointer path is restricted to `pointerType ===
  *    "mouse"`: without that, a tap fires `pointerenter` and then `click`, the
  *    first opening the bubble and the second closing it again.
@@ -41,8 +45,8 @@
  *    displayed there is copy nobody can read. Disabled suppresses every open
  *    path and keeps the bubble unpainted for as long as it lasts — while
  *    leaving the description in place, because assistive technology can still
- *    be reading the label. It does NOT clear `open`: see `isOpen`, which reads
- *    `disabled` at render instead, and says why remembering the user's last
+ *    be reading the label. It does NOT clear `open`: see the hook's `isOpen`,
+ *    which reads `disabled` (as `silent`) at render instead, and says why remembering the user's last
  *    answer is the honest behaviour on re-enable.
  *
  * The text and the ⓘ button's accessible name are props: nothing under
@@ -50,9 +54,11 @@
  * own message key would be a shared control that only one namespace can use.
  */
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { Info } from "lucide-react";
 
 import { buttonClass } from "@/lib/ui/button-styles";
+import { useTooltipTriggers } from "@/lib/ui/use-tooltip";
 
 type Props = {
   /**
@@ -70,7 +76,7 @@ type Props = {
   triggerLabel: string;
   /**
    * Suppress every open path, and keep the bubble unpainted while it lasts.
-   * ⚠️ It does NOT clear `open` — see `isOpen`, which reads this at render, and
+   * ⚠️ It does NOT clear `open` — the hook's `isOpen` reads it at render, and
    * says why an effect that cleared it would be both refused by
    * `react-hooks/set-state-in-effect` and the less honest behaviour.
    */
@@ -88,149 +94,27 @@ export function HintBubble({
   children,
   className,
 }: Props) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   /**
-   * ⚠️ **DERIVED, NOT AN EFFECT THAT CLOSES IT.** A control that becomes
-   * disabled while its bubble is open — the bar entering a modal phase — must
-   * not leave the bubble hanging over the scrim, and the obvious way to write
-   * that is `useEffect(() => { if (disabled) setOpen(false) }, [disabled])`.
-   * `react-hooks/set-state-in-effect` refuses it, and is right to: it is a
-   * cascading render to compute something that was already computable. So
-   * `disabled` is read here, at every render, and `open` is left as the user's
-   * own last answer — which is what makes re-enabling honest rather than
-   * amnesiac. In practice the disabling itself blurs the control, and the blur
-   * handler below has already set `open` false by then.
+   * WHEN it opens and closes is `useTooltipTriggers` (Slice #37.42), shared
+   * with IconButton's label tooltip so the four adversarial rounds behind it
+   * exist once. Every reason that used to be written here is written there:
+   * mouse-only hover, keyboard focus decided by `:focus-visible`, the ⓘ's own
+   * focus excluded (`triggerRef`), Escape heard from the document and never
+   * taken from a dialog, the mouse leaving always closing it, and `disabled`
+   * read at render as `silent` rather than cleared by an effect.
    */
-  const isOpen = open && !disabled;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      // No `stopPropagation`: see the module note. Closing our own bubble is
-      // not a reason to take Escape away from a dialog above us.
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen]);
-
-  const show = useCallback(() => {
-    if (!disabled) setOpen(true);
-  }, [disabled]);
-
-  /**
-   * ⚠️ **WHICH FOCUS EVENTS ARE ALLOWED TO OPEN IT, AND WHY THE ANSWER IS
-   * `:focus-visible` RATHER THAN A FLAG WE KEEP OURSELVES.**
-   *
-   * Two things have to be excluded and one has to be let through:
-   *
-   *  - **The ⓘ's own focus.** The order on activation is `pointerdown → focus →
-   *    pointerup → click`, and focus and click are separate discrete events, so
-   *    a wrapper-wide focus-open commits `true` before the button's `onClick`
-   *    runs — which then reads `true` and writes `false`. On a touch screen,
-   *    where nothing opened it first, the ⓘ visibly does nothing. Hence the
-   *    identity test: the trigger's state is its click's business alone.
-   *  - **Focus that arrived from a pointer.** Clicking or tapping the tick is
-   *    the ordinary way anyone uses it, and throwing a six-line bubble over the
-   *    control below on every use is not a hint, it is an obstruction. A mouse
-   *    is hovering anyway, so it loses nothing.
-   *  - **Focus that arrived from the keyboard**, which is the entire reason
-   *    this handler exists: Tab is how a keyboard user reaches a tooltip at all.
-   *
-   * ⚠️ **AN EARLIER DRAFT DID THE SECOND WITH A `pointerdown` REF, AND TWO
-   * ADVERSARIAL ROUNDS TOOK IT APART FROM BOTH ENDS.** Cleared only in this
-   * handler, it stuck `true` after any pointerdown that no focus followed — a
-   * second click on the focused ⓘ, or a click on the gap between label and ⓘ —
-   * and swallowed the user's NEXT Tab, an intermittently dead tooltip that
-   * heals on the following press. Cleared in `pointerup` as well, it broke the
-   * only case it was ever for: the touch compatibility order is `pointerdown →
-   * pointerup → pointerleave → mousedown (focus) → click`, so every clear
-   * landed BEFORE the focus it was meant to suppress. There is no ordering that
-   * satisfies both, because the premise — that we can infer the input device
-   * from event order — is wrong on touch.
-   *
-   * `:focus-visible` is the platform's own answer to exactly this question, and
-   * it is what the browser already uses to decide whether to paint a focus
-   * ring: keyboard yes, mouse and touch no. `matches()` is wrapped because a
-   * browser that does not know the selector throws `SyntaxError` rather than
-   * returning false, and a hint that crashes the render is worse than one that
-   * opens too eagerly — so the fallback is "treat it as keyboard". That
-   * direction is deliberate: failing closed would leave a keyboard user on such
-   * a browser unable to reach the hint at all, while failing open costs a mouse
-   * user a bubble their next `pointerleave` closes and that can intercept
-   * nothing while it is up, being transparent to the pointer. (It still PAINTS
-   * over the row beneath — see the class note below; what it cannot do is
-   * swallow a click aimed there.)
-   *
-   * ⚠️ **KNOWN AND ACCEPTED: Shift+Tab ONTO the ⓘ shows nothing.** The identity
-   * test excludes the trigger whichever way focus arrived, so arriving at it
-   * from below gives a button named "what does X mean?" and no answer until
-   * Enter is pressed, where arriving at the tick from above gives the answer
-   * for free. Dropping the test would fix that and would re-open the defect it
-   * was added for on any engine that reports a mouse-clicked button as
-   * `:focus-visible`. One press of a labelled button is the cheaper of the two.
-   */
-  const handleFocus = useCallback(
-    // `HTMLElement` rather than `HTMLDivElement` on the type parameter: React
-    // types `e.target` from it, and the div's own type has no overlap with the
-    // button ref this compares against — `tsc` rejects the comparison outright
-    // (TS2367), which is the compiler correctly saying the annotation is a lie.
-    // The handler is on the wrapper; the events it hears come from inside it.
-    (e: React.FocusEvent<HTMLElement>) => {
-      if (e.target === triggerRef.current) return;
-      let keyboard = true;
-      try {
-        keyboard = e.target.matches(":focus-visible");
-      } catch {
-        // Selector unsupported — see above.
-      }
-      if (keyboard) show();
-    },
-    [show],
-  );
-
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
-    // `onBlur` is `focusout` and bubbles, so it fires when focus merely moves
-    // from the tick to the ⓘ beside it. Closing there would make the bubble
-    // impossible to keep open with the keyboard.
-    const next = e.relatedTarget as Node | null;
-    if (next !== null && wrapRef.current?.contains(next)) return;
-    setOpen(false);
-  }, []);
+  const { isOpen, setOpen, wrapRef, handlers } = useTooltipTriggers<HTMLDivElement>({
+    silent: disabled,
+    triggerRef,
+  });
 
   return (
     <div
       ref={wrapRef}
       className={`relative ${className ?? ""}`}
-      // ⚠️ Mouse only, both of them. A touch screen has no hover at all, and a
-      // tap fires `pointerenter` on its way to `click`: without this test the
-      // enter would open the bubble and the click would close it again, so the
-      // ⓘ would appear dead on the one input method that has no other way in.
-      onPointerEnter={(e) => {
-        if (e.pointerType === "mouse") show();
-      }}
-      // ⚠️ **NO FOCUS GUARD ON THIS, AND A THIRD ADVERSARIAL ROUND IS WHY.** A
-      // draft added "…and focus is not still inside the wrapper", meaning to
-      // protect a keyboard user's bubble from a mouse merely crossing the tick.
-      // But a MOUSE CLICK on a checkbox focuses it, so after any ordinary click
-      // the guard held for ever and the bubble never closed again until focus
-      // left the wrapper — a hint stuck open over the row beneath for the rest
-      // of the visit.
-      //
-      // ⚠️ **THAT REASON STANDS ON ITS OWN, AND IT IS NOT THE OCCLUSION.** A
-      // fourth round fixed the occlusion with `pointer-events-none` on the
-      // bubble; do not read that as licence to put the guard back, because a
-      // bubble that never closes is wrong whether or not it can swallow a
-      // click. What having no guard costs is that a mouse crossing the wrapper
-      // dismisses a bubble a keyboard user was reading; they get it back with
-      // Shift+Tab and Tab, or from the ⓘ.
-      onPointerLeave={(e) => {
-        if (e.pointerType === "mouse") setOpen(false);
-      }}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
+      // Hover (mouse only), keyboard focus, and the mouse leaving: see the hook.
+      {...handlers}
     >
       <div className="flex items-start gap-2">
         {children}
@@ -253,7 +137,11 @@ export function HintBubble({
             `ghost` contributes — sits inside it, because Tailwind's preflight
             makes every box `border-box`. Change the size and the padding grows
             with it: `sm` is `px-3 py-1.5`, which overflows the 24px box the
-            paragraph above is defending. */}
+            paragraph above is defending. The Info icon (#37.42) is 14px in a
+            6px-wide content box: a flex item that overflows a centring
+            container overflows both sides equally, so it sits in the middle
+            of the circle without a padding override that would fight the
+            size's own. */}
         <button
           ref={triggerRef}
           type="button"
@@ -267,10 +155,10 @@ export function HintBubble({
             className: "mt-0.5 h-6 w-6 shrink-0 leading-none",
           })}
         >
-          {/* A glyph rather than an icon component: this repo has no icon set,
-              and the accessible name is on the button, so the character is
-              decoration. `aria-hidden` keeps a screen reader from reading it
-              after the label.
+          {/* Lucide's Info since #37.42 (A007) — it was a letter „i" while the
+              repo had no icon set. The accessible name is on the button, so
+              the icon is decoration; `aria-hidden` keeps a screen reader from
+              reading anything after the label.
 
               ⚠️ **NO `aria-describedby` AND NO `aria-expanded` HERE, both
               removed by an adversarial round.** The paragraph is already the
@@ -280,7 +168,7 @@ export function HintBubble({
               named by `aria-controls` — a `role="tooltip"` that is present in
               the document either way is not one, so it announced
               "collapsed"/"expanded" about a paragraph that never leaves. */}
-          <span aria-hidden="true">i</span>
+          <Info size={14} strokeWidth={2.5} aria-hidden="true" />
         </button>
       </div>
 

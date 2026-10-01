@@ -22,9 +22,21 @@ const COMPONENTS = "src/app/admin/import/_components";
 const ROW = `${COMPONENTS}/import-listing-controls.tsx`;
 const BAR = `${COMPONENTS}/import-stage-bar.tsx`;
 const BUBBLE = "src/lib/ui/hint-bubble.tsx";
+/**
+ * Since Slice #37.42 the bubble's open/close behaviour lives in a hook that
+ * IconButton's label tooltip shares, so the behaviour assertions below read the
+ * two files together: what used to be one component is now the component plus
+ * the one copy of its logic. `BUBBLE_ONLY` is for what must stay in the
+ * component itself — the ⓘ, the paragraph, the strings.
+ */
+const TOOLTIP_HOOK = "src/lib/ui/use-tooltip.ts";
 
 function read(rel: string): string {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+}
+
+function readBubble(): string {
+  return `${read(BUBBLE)}\n${read(TOOLTIP_HOOK)}`;
 }
 
 /**
@@ -254,7 +266,7 @@ describe("the hint bubbles in the stage bar", () => {
     // bubble mounted on hover and unmounted on leave takes the description with
     // it, so the control the whole thing exists to explain becomes undescribed
     // for every screen-reader user. One element, two presentations.
-    const bubble = read(BUBBLE);
+    const bubble = readBubble();
     expect(bubble).toContain('role="tooltip"');
     expect(bubble).toContain("id={id}");
     // The two presentations of that one element: the bubble, and — when closed —
@@ -271,8 +283,10 @@ describe("the hint bubbles in the stage bar", () => {
     // Hover alone is the whole reason tooltips have a bad name: a keyboard user
     // never generates one and a touch screen has none at all — Ciprian's laptop
     // may well have one. Focus, an explicit ⓘ, and Escape to close.
-    const bubble = read(BUBBLE);
-    expect(bubble).toContain("onFocus={handleFocus}");
+    const bubble = readBubble();
+    // #37.42: the handlers are spread from the shared hook onto the wrapper.
+    expect(bubble).toContain("{...handlers}");
+    expect(bubble).toContain("onFocus, onBlur }");
     expect(bubble).toContain("onClick={() => setOpen((v) => !v)}");
     expect(bubble).toContain('e.key === "Escape"');
     // ⚠️ **THE ⓘ MUST NOT OPEN ON ITS OWN FOCUS**, and this is the assertion the
@@ -283,7 +297,8 @@ describe("the hint bubbles in the stage bar", () => {
     // writes `false`. On a touch screen, where no hover opened it first, the
     // result is a ⓘ that visibly does nothing: the very failure the mouse-only
     // pointer guard was written to prevent, arriving by the other route.
-    expect(bubble).toContain("if (e.target === triggerRef.current) return;");
+    expect(bubble).toContain("if (triggerRef && e.target === triggerRef.current) return;");
+    expect(bubble).toContain("triggerRef,\n  });");
     expect(bubble).toContain("ref={triggerRef}");
   });
 
@@ -298,7 +313,7 @@ describe("the hint bubbles in the stage bar", () => {
     // satisfies both, because the premise — infer the device from event order —
     // is wrong on touch. `:focus-visible` is what the browser itself uses to
     // decide whether to paint a focus ring.
-    const bubble = read(BUBBLE);
+    const bubble = readBubble();
     expect(bubble).toContain('e.target.matches(":focus-visible")');
     expect(code(bubble)).not.toContain("viaPointerRef");
     expect(code(bubble)).not.toContain("onPointerDown");
@@ -315,7 +330,7 @@ describe("the hint bubbles in the stage bar", () => {
     // row beneath — swallowed the clicks aimed at the second tick directly
     // below it, which became unreachable with a mouse.
     expect(bubble).toContain(
-      'onPointerLeave={(e) => {\n        if (e.pointerType === "mouse") setOpen(false);\n      }}',
+      'const onPointerLeave = useCallback((e: PointerEvent<T>) => {\n    if (e.pointerType === "mouse") setOpen(false);\n  }, []);',
     );
     expect(code(bubble)).not.toContain("contains(document.activeElement)");
     // ⚠️ **AND THE BUBBLE IS TRANSPARENT TO THE POINTER.** Closing on
@@ -345,13 +360,15 @@ describe("the hint bubbles in the stage bar", () => {
     // The bar is disabled in a modal phase — the Cancel's argument, at the top
     // of `import-stage-bar.tsx` — and the whole thing then sits under a 40%
     // scrim, unreachable by keyboard. A tooltip there is copy nobody can read.
-    const bubble = read(BUBBLE);
+    const bubble = readBubble();
     // ⚠️ Derived, not an effect that closes it: `react-hooks/set-state-in-effect`
     // refuses `useEffect(() => { if (disabled) setOpen(false) }, [disabled])`,
     // and is right to — it is a cascading render to compute something already
     // computable. The bubble reads `disabled` at every render instead.
-    expect(bubble).toContain("const isOpen = open && !disabled;");
-    expect(bubble).toContain("if (!disabled) setOpen(true);");
+    // #37.42: the hook calls it `silent`; HintBubble passes its `disabled`.
+    expect(bubble).toContain("const isOpen = open && !silent;");
+    expect(bubble).toContain("if (!silent) setOpen(true);");
+    expect(bubble).toContain("silent: disabled,");
     const bar = read(BAR);
     expect(bar.split("disabled={inModal}").length - 1).toBeGreaterThanOrEqual(5);
   });
@@ -360,7 +377,7 @@ describe("the hint bubbles in the stage bar", () => {
     // `src/lib/ui/` is shared presentation. A control there that reached for
     // `next-intl` would be a control only one namespace could use — and
     // `button-styles.ts`, its neighbour, sets the precedent.
-    const bubble = read(BUBBLE);
+    const bubble = readBubble();
     expect(code(bubble)).not.toContain("next-intl");
     expect(code(bubble)).not.toContain("useTranslations");
     // The ⓘ has an accessible name, and it names the control it explains.

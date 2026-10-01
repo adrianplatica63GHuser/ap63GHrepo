@@ -85,6 +85,15 @@ export interface ButtonClassOptions {
    * Ignored for `bare`, which has no surface to round.
    */
   pill?: boolean;
+  /**
+   * A square button holding only an icon (Slice #37.42, IconButton). It swaps
+   * the size's padding for a fixed square exactly as TALL as a text button of
+   * the same size — `SIZE_SQUARE` says how each height is arrived at — so a row
+   * that mixes the two does not jump. An option rather than an appended
+   * `h-… w-… p-0`, for the reason in the header: an appended `p-0` does not
+   * reliably beat the size's own `px-…`.
+   */
+  iconOnly?: boolean;
   /** Non-conflicting layout extras only. See the warning above. */
   className?: string;
 }
@@ -120,6 +129,25 @@ const SIZE_PADDING: Record<ButtonSize, string> = {
   sm: "px-3 py-1.5",
   md: "px-3 py-1.5",
   lg: "px-4 py-2",
+};
+
+/**
+ * The icon-only square per size (Slice #37.42). Each height is the text
+ * button's own, measured from its parts, so an icon button beside a text button
+ * of the same size lines up to the pixel:
+ *   xs — text-xs line 16px + py-1 (2 × 4px) + 1px border × 2 = 26px → h-6.5
+ *   sm — text-xs line 16px + py-1.5 (2 × 6px) + 2px          = 30px → h-7.5
+ *   md — text-sm line 20px + py-1.5 (2 × 6px) + 2px          = 34px → h-8.5
+ *   lg — text-sm line 20px + py-2 (2 × 8px) + 2px            = 38px → h-9.5
+ * The box is `border-box` (Tailwind's preflight), so the border is inside it.
+ * The icon itself is 16px at xs/sm and 18px at md/lg (`ICON_PX` in
+ * `icon-button.tsx`), centred by `BASE`'s flex alignment.
+ */
+const SIZE_SQUARE: Record<ButtonSize, string> = {
+  xs: "h-6.5 w-6.5 p-0",
+  sm: "h-7.5 w-7.5 p-0",
+  md: "h-8.5 w-8.5 p-0",
+  lg: "h-9.5 w-9.5 p-0",
 };
 
 /** Text size per size. Split from padding so `bare` can take one without the other. */
@@ -305,6 +333,7 @@ export function buttonClass({
   variant,
   size = "md",
   pill = false,
+  iconOnly = false,
   className,
 }: ButtonClassOptions): string {
   const isBare = variant === "bare" || variant === "bare-danger";
@@ -312,9 +341,12 @@ export function buttonClass({
   return [
     BASE,
     // A bare glyph has no surface, so it takes no radius and no padding —
-    // only the text size, which still drives the glyph's own scale.
-    isBare ? "p-0" : pill ? "rounded-full" : "rounded-md",
-    isBare ? "" : SIZE_PADDING[size],
+    // only the text size, which still drives the glyph's own scale. An
+    // icon-only square takes the square's geometry instead, bare or not: a
+    // bare icon still needs a target as big as its neighbours.
+    iconOnly ? SIZE_SQUARE[size] : isBare ? "p-0" : "",
+    isBare ? "" : pill ? "rounded-full" : "rounded-md",
+    iconOnly || isBare ? "" : SIZE_PADDING[size],
     SIZE_TEXT[size],
     ENABLED[variant],
     isBare ? BARE_DISABLED : SURFACE_DISABLED,
@@ -324,4 +356,41 @@ export function buttonClass({
     .join(" ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * The hover state per variant for a LINK styled as a button (Slice #37.42).
+ *
+ * `ENABLED`'s hover rules are `enabled:hover:*`, which can never match an `<a>`
+ * — the header's warning — so before #37.42 every link-button in the app was
+ * hand-styled. IconButton renders many of its sites as next/link `<Link>`s, and
+ * a link cannot be disabled, so a plain `hover:` is right here and nowhere
+ * else. Each string is the `enabled:hover:` half of its `ENABLED` entry with
+ * the `enabled:` dropped — written out literally, because Tailwind generates
+ * only class names it finds spelled out in the source.
+ */
+const LINK_HOVER: Record<ButtonVariant, string> = {
+  primary:
+    "hover:border-cta-d hover:bg-cta-d dark:hover:border-slate-300 dark:hover:bg-slate-300",
+  secondary:
+    "hover:bg-cta hover:text-white hover:**:text-white " +
+    "dark:hover:bg-zinc-700 dark:hover:**:text-zinc-100",
+  danger: "hover:border-danger-d hover:bg-danger-d dark:hover:bg-red-500",
+  ghost: "hover:bg-cta/15 dark:hover:bg-cta/25",
+  "danger-link":
+    "hover:border-danger hover:bg-danger hover:text-white hover:**:text-white " +
+    "hover:no-underline hover:shadow-sm " +
+    "dark:hover:border-red-500 dark:hover:bg-red-600 dark:hover:text-white",
+  bare: "hover:text-cta-d dark:hover:text-white",
+  "bare-danger": "hover:text-danger-d dark:hover:text-red-300",
+};
+
+/**
+ * The class for a link that looks like a button (Slice #37.42): `buttonClass`'s
+ * geometry, colours and focus ring, plus `LINK_HOVER` so the pointer gets the
+ * same feedback a `<button>` gives. The `disabled:` half is still emitted and
+ * simply never matches — a link has no disabled state to paint.
+ */
+export function linkClass(options: ButtonClassOptions): string {
+  return `${buttonClass(options)} ${LINK_HOVER[options.variant]}`;
 }
