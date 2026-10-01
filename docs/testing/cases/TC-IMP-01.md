@@ -152,3 +152,10 @@ documents and go with them, and the property was only linked.
   file; and the property dialog says the existing corners „rămân neschimbate" while the result
   row for the coordinate file says „a fost aplicat proprietății PROP01503 — 4 colțuri" (the
   claim row is written; the corners were identical, so nothing visible changed).
+- **2026-10-01, Slice #37.39 — not re-driven; what the next run will see differently.** The
+  folder on disk keeps its name, `40-212per40IE55818-Sud Costache Mihail TC-IMP-01`. Since #37.39 the
+  values the import takes from it read `/`: the property's tags read `40-212/40ie55818-…`, and a
+  document titled from a „per" file name reads `/`. migration_089 converts what earlier runs
+  stored. The Pre-existing check and the reconciliation decode both sides, so a re-run still finds
+  what this case imported (src/__tests__/per-to-slash-names.test.ts). The steps quote no value with
+  „per", so none changes. The run needs Adrian to pick the folder, and spends the case's AI calls.
