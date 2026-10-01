@@ -51,3 +51,7 @@ can clip it) and exists only while it is shown.
 Delete the sixteen persons (on each, „Șterge" and „Da", or `DELETE /api/people/<id>`).
 
 ## Notes from the runs
+
+**2026-10-01 — `automated`.** `e2e/ui/icon-button.spec.ts` translates the case with Playwright's
+real mouse and keyboard, and takes #37.42's pictures. Green on its first runner run,
+`20261001T165018Z-30877`.
