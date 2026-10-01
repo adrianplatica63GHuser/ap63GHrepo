@@ -884,6 +884,17 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   // screen.
   validForProperty: boolean("valid_for_property").notNull().default(false),
   validForPerson:   boolean("valid_for_person").notNull().default(false),
+
+  // Slice #37.28, migration_088: what the OTHER end of a person-to-person
+  // relationship is called, read from the holder's side. `converseName` is the
+  // wording when the person shown has no gender (a company, or gender unset)
+  // and the fallback for the two gendered ones; a role that reads the same
+  // both ways names itself („Coproprietar"); NULL on all three means no
+  // converse, and the screen says in a sentence which person holds the role.
+  // Resolved by `personRoleShown` (src/lib/persons/relation-roles.ts).
+  converseName:       text("converse_name"),
+  converseNameMale:   text("converse_name_male"),
+  converseNameFemale: text("converse_name_female"),
 });
 
 // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the
@@ -1502,6 +1513,11 @@ export const personPerson = pgTable(
     // ON DELETE SET NULL — cleared automatically if the role is removed.
     relationshipRoleId: uuid("relationship_role_id")
       .references(() => lookupPersonRole.id, { onDelete: "set null" }),
+    // Slice #37.28 (migration_088): which way the role reads. The pair order
+    // above is by uuid and means nothing; TRUE = person A holds the role
+    // towards B („A <rol> B", A „Fiu" of B), FALSE = B holds it towards A.
+    // Same column and default as document_document's and property_property's.
+    roleReadsAToB: boolean("role_reads_a_to_b").notNull().default(true),
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

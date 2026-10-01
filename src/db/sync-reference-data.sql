@@ -375,7 +375,17 @@ INSERT INTO lookup_person_role (id, name, description, sort_order, created_at, u
   (gen_random_uuid(), 'Titular de drept', '(cel în favoarea căruia s-a pronunțat)', 53, now(), now()),
   (gen_random_uuid(), 'Topograf / Expert cadastral', '(cel care întocmește documentația)', 54, now(), now()),
   (gen_random_uuid(), 'Urbanist / Proiectant', NULL, 55, now(), now()),
-  (gen_random_uuid(), 'Vânzător', '(Transmitent)', 56, now(), now())
+  (gen_random_uuid(), 'Vânzător', '(Transmitent)', 56, now(), now()),
+  -- Slice #37.28 (migration_088): Adrian's kinship roles for people (#37.27).
+  -- Same names, descriptions and sort_orders as migration_088 - verify-rebuild
+  -- compares these rows as whole tuples.
+  (gen_random_uuid(), 'Soț', '(masculin)', 57, now(), now()),
+  (gen_random_uuid(), 'Soție', '(feminin)', 58, now(), now()),
+  (gen_random_uuid(), 'Părinte', '(tată sau mamă)', 59, now(), now()),
+  (gen_random_uuid(), 'Fiu', '(masculin)', 60, now(), now()),
+  (gen_random_uuid(), 'Fiică', '(feminin)', 61, now(), now()),
+  (gen_random_uuid(), 'Frate', '(masculin)', 62, now(), now()),
+  (gen_random_uuid(), 'Soră', '(feminin)', 63, now(), now())
 ON CONFLICT DO NOTHING;
 
 -- ── lookup_doc_type_person_role ───────────────────────────────────────────────
@@ -527,11 +537,33 @@ INSERT INTO lookup_document_document_role (name, description, sort_order) VALUES
   ('Act adițional la',         'Act adițional care completează documentul asociat',                    11),
   ('Antecontract al',          'Promisiune de vânzare care a precedat documentul asociat',             12);
 
--- ── lookup_person_role.valid_for_person ───────────────────────────────────────
--- Deliberately no ticks. It is a whitelist Adrian fills from the Admin UI, and
--- migration_055 seeded nothing into the table this column replaced either, so
--- false everywhere is the same state a migrated database is in. It needs no
--- statement at all now: the column is `NOT NULL DEFAULT false` and the
--- lookup_person_role TRUNCATE above re-creates every row from scratch, so a
--- rebuild cannot inherit a previous run's whitelist. (Slice #34.04,
--- migration_079 -- it was the table `lookup_person_person_role`.)
+-- ── lookup_person_role.valid_for_person, and the converse ────────────────────
+-- Slice #37.28 (migration_088). Until then this block said "deliberately no
+-- ticks": the whitelist was Adrian's to fill from the Admin UI. He filled it in
+-- #37.27 (2026-09-30) and asked for it in the chain, so migration_088 ticks
+-- these ten and this file ticks the same ten, or a rebuilt cloud project would
+-- offer no role on either „Asociază persoană" screen.
+UPDATE lookup_person_role
+   SET valid_for_person = true
+ WHERE name IN ('Reprezentant legal / Mandatar', 'Moștenitor', 'Coproprietar',
+                'Soț', 'Soție', 'Părinte', 'Fiu', 'Fiică', 'Frate', 'Soră');
+
+-- What the other end of each is called (lookup_person_role.converse_name*):
+-- neutral, for a man, for a woman. Identical to migration_088's table.
+UPDATE lookup_person_role r
+   SET converse_name        = c.neutral,
+       converse_name_male   = c.male,
+       converse_name_female = c.female
+  FROM (VALUES
+    ('Coproprietar',                  'Coproprietar',          NULL,    NULL),
+    ('Reprezentant legal / Mandatar', 'Reprezentat / Mandant', NULL,    'Reprezentată / Mandantă'),
+    ('Moștenitor',                    'Autorul moștenirii',    NULL,    NULL),
+    ('Soț',                           'Soț / Soție',           'Soț',   'Soție'),
+    ('Soție',                         'Soț / Soție',           'Soț',   'Soție'),
+    ('Părinte',                       'Copil',                 'Fiu',   'Fiică'),
+    ('Fiu',                           'Părinte',               NULL,    NULL),
+    ('Fiică',                         'Părinte',               NULL,    NULL),
+    ('Frate',                         'Frate / Soră',          'Frate', 'Soră'),
+    ('Soră',                          'Frate / Soră',          'Frate', 'Soră')
+  ) AS c(name, neutral, male, female)
+ WHERE r.name = c.name;
