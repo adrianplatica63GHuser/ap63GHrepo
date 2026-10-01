@@ -221,7 +221,7 @@ describe("„Ieșire” empties the whole query cache before it leaves", () => {
     withClient(client, <SidebarNav />);
     expectAdminSections(true);
 
-    fireEvent.click(screen.getByTitle("signOut"));
+    fireEvent.click(screen.getByRole("button", { name: "signOut" })); // #37.42: an icon button — named, no `title`
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
 
     expect(mockSignOut).toHaveBeenCalledTimes(1);
@@ -274,7 +274,7 @@ describe("sign out, sign back in, in the same tab", () => {
     const sidebar = withClient(client, <SidebarNav />);
     expectAdminSections(true);
     fetchMock.mockImplementation(async () => UNAUTHORIZED());
-    fireEvent.click(screen.getByTitle("signOut"));
+    fireEvent.click(screen.getByRole("button", { name: "signOut" })); // #37.42: an icon button — named, no `title`
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
     sidebar.unmount(); // /login renders without the app shell
 

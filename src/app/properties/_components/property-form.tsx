@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -28,7 +27,8 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
-import { NavArrowIcon } from "@/components/back-arrow";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
@@ -1568,9 +1568,18 @@ export function PropertyForm({
           <ul className="mt-1 flex flex-col gap-0.5">
             {parcelExists.map((m) => (
               <li key={m.id}>
-                <Link href={`/properties/${m.id}`} className="font-medium underline">
-                  {t("parcelExists.open", { code: m.code, nickname: m.nickname ?? "" })}
-                </Link>
+                {/* #37.42 (A016): ArrowRight — with its words kept beside it, the
+                    one A016 site that does: the words are the record's code and
+                    nickname, and a column of bare arrows would not say which
+                    property each one opens. */}
+                <IconButton
+                  href={`/properties/${m.id}`}
+                  icon={ArrowRight}
+                  label={t("parcelExists.open", { code: m.code, nickname: m.nickname ?? "" })}
+                  showLabel
+                  variant="secondary"
+                  size="xs"
+                />
               </li>
             ))}
           </ul>
@@ -1588,14 +1597,13 @@ export function PropertyForm({
       {effectiveMode === "view" ? (
         mode === "view" && (
           <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
-            <button
-              type="button"
+            <IconButton
+              icon={ArrowLeft}
+              label={tShared("readonlyView.backToList")}
+              variant="secondary"
+              size="lg"
               onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
-            >
-              <NavArrowIcon dir="left" />
-              <span>{tShared("readonlyView.backToList")}</span>
-            </button>
+            />
             {/* Slice #32.15: on an older version this button used to be drawn,
                 clickable and inert — setAssociatedEditing cannot beat !isOnLatest
                 in the effectiveMode ternary above, so nothing unlocked. It is now
@@ -1613,14 +1621,13 @@ export function PropertyForm({
         )
       ) : mode === "view" ? (
         <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
-          <button
-            type="button"
+          <IconButton
+            icon={ArrowLeft}
+            label={tShared("readonlyView.backToList")}
+            variant="secondary"
+            size="lg"
             onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
-          >
-            <NavArrowIcon dir="left" />
-            <span>{tShared("readonlyView.backToList")}</span>
-          </button>
+          />
           <div className="flex items-center gap-3">
             <button
               type="submit"

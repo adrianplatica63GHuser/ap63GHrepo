@@ -38,7 +38,8 @@ import { useQueryClient }   from "@tanstack/react-query";
 import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
 import Link                 from "next/link";
-import { NavArrowIcon }      from "@/components/back-arrow";
+import { ArrowLeft }         from "lucide-react";
+import { IconButton }        from "@/lib/ui/icon-button";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
@@ -1354,15 +1355,16 @@ function ErrorBanner({ message }: { message: string }) {
 function BackButton(
   { onClick, label, disabled }: { onClick: () => void; label: string; disabled?: boolean },
 ) {
+  // #37.42 (A009): ArrowLeft, „Înapoi" its name and tooltip — the same icon
+  // as every other way back in the app.
   return (
-    <button
-      type="button"
+    <IconButton
+      icon={ArrowLeft}
+      label={label}
+      variant="secondary"
+      size="lg"
       onClick={onClick}
       disabled={disabled}
-      className={buttonClass({ variant: "secondary", size: "lg", className: "gap-1.5" })}
-    >
-      <NavArrowIcon dir="left" />
-      <span>{label}</span>
-    </button>
+    />
   );
 }

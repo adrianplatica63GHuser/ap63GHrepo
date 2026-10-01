@@ -36,7 +36,8 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NavArrowIcon } from "@/components/back-arrow";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import {
   UPLOAD_ACCEPT_ATTRIBUTE,
@@ -608,32 +609,30 @@ export function PagesPanel({
           </h2>
           {pages.length > 1 && (
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
+              {/* #37.42 (A018/A019): ChevronLeft / ChevronRight, through
+                  IconButton, whose tooltip replaces the `title` they carried. */}
+              <IconButton
+                icon={ChevronLeft}
+                label={t("prevPage")}
+                variant="secondary"
+                size="xs"
                 onClick={() => goToPage(-1)}
                 disabled={!canGoPrev}
-                aria-label={t("prevPage")}
-                title={t("prevPage")}
-                className={buttonClass({ variant: "secondary", size: "xs" })}
-              >
-                <NavArrowIcon dir="left" />
-              </button>
+              />
               <span className="text-xs tabular-nums text-fade">
                 {t("pageIndicator", {
                   current: currentIndex >= 0 ? currentIndex + 1 : 1,
                   total: pages.length,
                 })}
               </span>
-              <button
-                type="button"
+              <IconButton
+                icon={ChevronRight}
+                label={t("nextPage")}
+                variant="secondary"
+                size="xs"
                 onClick={() => goToPage(1)}
                 disabled={!canGoNext}
-                aria-label={t("nextPage")}
-                title={t("nextPage")}
-                className={buttonClass({ variant: "secondary", size: "xs" })}
-              >
-                <NavArrowIcon dir="right" />
-              </button>
+              />
             </div>
           )}
         </div>
@@ -762,13 +761,15 @@ export function PagesPanel({
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >
-                            <ActionBtn
+                            {/* #37.42 (A016): ArrowRight, „Vizualizare" its name and
+                                tooltip. „Tipărire" and „Șterge" beside it are #37.45's. */}
+                            <IconButton
+                              icon={ArrowRight}
+                              label={t("view")}
+                              variant="secondary"
+                              size="xs"
                               onClick={() => loadView(page)}
-                              className="text-cta hover:bg-cta-pale dark:hover:bg-zinc-700"
-                              title={t("view")}
-                            >
-                              {t("view")}
-                            </ActionBtn>
+                            />
 
                             <ActionBtn
                               onClick={() => handlePrint(page)}

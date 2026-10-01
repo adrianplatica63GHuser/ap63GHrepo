@@ -21,7 +21,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { User, Building2, List, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { User, Building2, List, FileText, History } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import {
   useNavigationHistory,
   type EntityType,
@@ -97,18 +98,17 @@ export function RecentlyViewedPanel({ isCollapsed }: { isCollapsed: boolean }) {
   return (
     <div className="border-t border-wire px-2 py-1.5 flex flex-col gap-0.5">
       {/* Section header — collapsible toggle */}
-      <button
-        type="button"
+      {/* #37.42 (A008): History, „Recente" its name and tooltip. It still
+          shows and hides the list under it (`aria-expanded`). */}
+      <IconButton
+        icon={History}
+        label={t("title")}
+        variant="bare"
+        size="sm"
+        className="ml-1"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-fade uppercase tracking-wider hover:text-ink transition-colors w-full text-left rounded-md hover:bg-crease"
         aria-expanded={open}
-      >
-        {open
-          ? <ChevronDown  size={12} aria-hidden="true" />
-          : <ChevronRight size={12} aria-hidden="true" />
-        }
-        {t("title")}
-      </button>
+      />
 
       {open && (
         <div className="flex flex-col gap-0.5">

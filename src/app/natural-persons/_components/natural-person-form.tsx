@@ -34,7 +34,8 @@ import {
 } from "@/lib/ui/field-widths";
 import { AddressBlock } from "@/components/address/address-block";
 import { safeMutate } from "@/lib/api/safe-mutate";
-import { NavArrowIcon } from "@/components/back-arrow";
+import { ArrowLeft } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
@@ -1087,14 +1088,13 @@ export function NaturalPersonForm({
       {effectiveMode === "view" ? (
         mode === "view" && (
           <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
-            <button
-              type="button"
+            <IconButton
+              icon={ArrowLeft}
+              label={tShared("backToList")}
+              variant="secondary"
+              size="lg"
               onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
-            >
-              <NavArrowIcon dir="left" />
-              <span>{tShared("backToList")}</span>
-            </button>
+            />
             {/* Slice #32.15: on an older version this button used to be drawn,
                 clickable and inert — setAssociatedEditing cannot beat !isOnLatest
                 in the effectiveMode ternary above, so nothing unlocked. It is now
@@ -1112,14 +1112,13 @@ export function NaturalPersonForm({
         )
       ) : mode === "view" ? (
         <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
-          <button
-            type="button"
+          <IconButton
+            icon={ArrowLeft}
+            label={tShared("backToList")}
+            variant="secondary"
+            size="lg"
             onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
-          >
-            <NavArrowIcon dir="left" />
-            <span>{tShared("backToList")}</span>
-          </button>
+          />
           <div className="flex items-center gap-3">
             <button
               type="submit"

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Lightbulb, X } from "lucide-react";
+import { IconTooltip } from "@/lib/ui/icon-button";
 import { useHelpData, pickLocaleText } from "./use-help-data";
 import type { HelpScreenKey } from "@/lib/help/registry";
 import { resolveRegisteredHelpScreenKey } from "@/lib/help/route-map";
@@ -57,15 +58,18 @@ export function HelpHint({ hintKey, screenKey, className }: Props) {
 
   return (
     <span className={["relative inline-block", className].filter(Boolean).join(" ")}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        aria-label={t("hintLabel")}
-        aria-expanded={isOpen}
-        className="inline-flex items-center justify-center rounded-full w-5 h-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
-      >
-        <Lightbulb className="w-3.5 h-3.5" />
-      </button>
+      {/* #37.42 (A006): already an icon; its name „Sfat" is now also its tooltip. */}
+      <IconTooltip label={t("hintLabel")}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          aria-label={t("hintLabel")}
+          aria-expanded={isOpen}
+          className="inline-flex items-center justify-center rounded-full w-5 h-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+        >
+          <Lightbulb className="w-3.5 h-3.5" aria-hidden="true" />
+        </button>
+      </IconTooltip>
 
       {isOpen && (
         <>

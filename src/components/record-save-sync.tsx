@@ -26,7 +26,8 @@
  * would pass the check it exists to fail.
  */
 import { useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { SafeMutateError } from "@/lib/api/safe-mutate";
@@ -137,9 +138,8 @@ export function RecordSyncNotice({
     >
       <span>{t(sync.notice)}</span>
       {sync.notice === "deleted" ? (
-        <Link href={listHref} className={buttonClass({ variant: "secondary", size: "sm" })}>
-          {t("backToList")}
-        </Link>
+        // #37.42 (A009): ArrowLeft, „Înapoi la listă" its name and tooltip.
+        <IconButton href={listHref} icon={ArrowLeft} label={t("backToList")} variant="secondary" size="sm" />
       ) : (
         <button type="button" onClick={reload} className={buttonClass({ variant: "secondary", size: "sm" })}>
           {t("reload")}

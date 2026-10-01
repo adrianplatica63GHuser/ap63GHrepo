@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { HelpCircle, X } from "lucide-react";
+import { CircleHelp, X } from "lucide-react";
+import { IconTooltip } from "@/lib/ui/icon-button";
 import { useHelpData, pickLocaleText } from "./use-help-data";
 import type { HelpScreenKey } from "@/lib/help/registry";
 
@@ -57,15 +58,19 @@ export function HelpButton({ screenKey, className, align = "right" }: Props) {
 
   return (
     <div className={["relative inline-block", className].filter(Boolean).join(" ")}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        aria-label={t("buttonLabel")}
-        aria-expanded={isOpen}
-        className="inline-flex items-center justify-center rounded-full w-7 h-7 text-fade hover:text-cta hover:bg-cta-pale transition-colors"
-      >
-        <HelpCircle className="w-5 h-5" />
-      </button>
+      {/* #37.42 (A005): already an icon — CircleHelp, the newer name of the
+          same glyph — and its name „Ajutor" is now also its tooltip. */}
+      <IconTooltip label={t("buttonLabel")}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          aria-label={t("buttonLabel")}
+          aria-expanded={isOpen}
+          className="inline-flex items-center justify-center rounded-full w-7 h-7 text-fade hover:text-cta hover:bg-cta-pale transition-colors"
+        >
+          <CircleHelp className="w-5 h-5" aria-hidden="true" />
+        </button>
+      </IconTooltip>
 
       {isOpen && (
         <>

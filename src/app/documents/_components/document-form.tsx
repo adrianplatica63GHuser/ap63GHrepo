@@ -13,7 +13,8 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { NavArrowIcon } from "@/components/back-arrow";
+import { ArrowLeft } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { safeMutate } from "@/lib/api/safe-mutate";
@@ -2065,14 +2066,13 @@ export function DocumentForm({
     {effectiveMode === "view" ? (
       mode === "view" && (
         <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
-          <button
-            type="button"
+          <IconButton
+            icon={ArrowLeft}
+            label={tShared("readonlyView.backToList")}
+            variant="secondary"
+            size="lg"
             onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
-          >
-            <NavArrowIcon dir="left" />
-            <span>{tShared("readonlyView.backToList")}</span>
-          </button>
+          />
           {/* Slice #32.15: on an older version this button used to be drawn,
               clickable and inert — setAssociatedEditing cannot beat !isOnLatest
               in the effectiveMode ternary above, so nothing unlocked. It is now
@@ -2090,14 +2090,13 @@ export function DocumentForm({
       )
     ) : mode === "view" ? (
       <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
-        <button
-          type="button"
+        <IconButton
+          icon={ArrowLeft}
+          label={tShared("readonlyView.backToList")}
+          variant="secondary"
+          size="lg"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
-        >
-          <NavArrowIcon dir="left" />
-          <span>{tShared("readonlyView.backToList")}</span>
-        </button>
+        />
         <div className="flex items-center gap-3">
           <button
             type="submit"
@@ -2919,13 +2918,13 @@ function SurveyorPickerDialog({
             )}
 
             <div className="flex justify-between">
-              <button
-                type="button"
+              <IconButton
+                icon={ArrowLeft}
+                label={t("surveyorPicker.back")}
+                variant="secondary"
+                size="md"
                 onClick={() => setStep("choose-type")}
-                className={buttonClass({ variant: "secondary", size: "md" })}
-              >
-                {t("surveyorPicker.back")}
-              </button>
+              />
               <button
                 type="button"
                 onClick={onClose}

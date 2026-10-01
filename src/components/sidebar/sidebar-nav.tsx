@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from "lucide-react";
+import { ChevronDown, LogOut, KeyRound, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { DevOnly } from "@/components/dev-only";
@@ -125,12 +126,13 @@ function NavSectionRow({
     (i) => i.href && i.href === activeHref,
   );
 
-  return (
-    <div>
+  const row = (
       <button
         type="button"
         onClick={isCollapsed ? onExpandSidebar : onToggle}
-        title={isCollapsed ? sectionLabel : undefined}
+        // #37.42 (A001): collapsed, the row is its icon alone — its name is the
+        // section's, and the shared tooltip shows it (no `title` any more).
+        aria-label={isCollapsed ? sectionLabel : undefined}
         aria-expanded={isCollapsed ? undefined : isOpen}
         className={[
           "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -152,6 +154,11 @@ function NavSectionRow({
           />
         )}
       </button>
+  );
+
+  return (
+    <div>
+      {isCollapsed ? <IconTooltip label={sectionLabel} fill>{row}</IconTooltip> : row}
 
       {!isCollapsed && isOpen && (
         <div className="mt-0.5 mb-1 ml-3 pl-3 border-l border-wire flex flex-col gap-0.5">
@@ -195,7 +202,7 @@ function NavFlatSectionRow({
   const SectionIcon = section.icon;
   const href = section.href!;
 
-  return (
+  const row = (
     <Link
       href={href}
       onClick={(e) => {
@@ -203,7 +210,9 @@ function NavFlatSectionRow({
         e.preventDefault();
         onNavigate(href);
       }}
-      title={isCollapsed ? sectionLabel : undefined}
+      // #37.42 (A001): collapsed, the name is the section's and the shared
+      // tooltip shows it.
+      aria-label={isCollapsed ? sectionLabel : undefined}
       className={[
         "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isCollapsed ? "justify-center" : "justify-between",
@@ -216,6 +225,8 @@ function NavFlatSectionRow({
       </span>
     </Link>
   );
+
+  return isCollapsed ? <IconTooltip label={sectionLabel} fill>{row}</IconTooltip> : row;
 }
 
 // ---------------------------------------------------------------------------
@@ -436,19 +447,14 @@ export function SidebarNav() {
             Collapsed sidebars still hide them: two flags do not fit a 3rem
             rail, which is why the original carried the same !isCollapsed. */}
         <DevOnly>{!isCollapsed && <LocaleToggle />}</DevOnly>
-        <button
-          type="button"
+        {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
+        <IconButton
+          icon={isCollapsed ? PanelLeftOpen : PanelLeftClose}
+          label={isCollapsed ? t("expand") : t("collapse")}
+          variant="bare"
+          size="sm"
           onClick={toggleCollapsed}
-          className="rounded-md p-1.5 text-fade hover:bg-crease transition-colors"
-          aria-label={isCollapsed ? t("expand") : t("collapse")}
-          title={isCollapsed ? t("expand") : t("collapse")}
-        >
-          {isCollapsed ? (
-            <ChevronRight size={16} aria-hidden="true" />
-          ) : (
-            <ChevronLeft size={16} aria-hidden="true" />
-          )}
-        </button>
+        />
       </div>
 
 
@@ -546,40 +552,34 @@ export function SidebarNav() {
       {/* ── Bottom strip — change password + logout (hidden in UAT mode, */}
       {/*    which has no real Supabase session to change or sign out of) */}
       {!isUatMode && (
+        // #37.42 (A003, A004): „Schimbă parola" and „Ieșire" are KeyRound and
+        // LogOut, side by side when the sidebar is open and one above the other
+        // on the collapsed rail; their words are the names and the tooltips.
         <div
           className={[
-            "border-t border-wire shrink-0 px-2 py-2 flex flex-col gap-0.5",
+            "border-t border-wire shrink-0 px-2 py-2 flex gap-1",
+            isCollapsed ? "flex-col items-center" : "items-center px-3",
           ].join(" ")}
         >
-          <Link
+          <IconButton
             href="/account/change-password"
+            icon={KeyRound}
+            label={t("changePassword")}
+            variant="bare"
+            size="sm"
             onClick={(e) => {
               if (!isPlainLeftClick(e)) return;
               e.preventDefault();
               guardedNavigate("/account/change-password");
             }}
-            title={t("changePassword")}
-            className={[
-              "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors",
-              isCollapsed ? "justify-center" : "",
-            ].join(" ")}
-          >
-            <KeyRound size={14} className="shrink-0" aria-hidden="true" />
-            {!isCollapsed && <span className="truncate">{t("changePassword")}</span>}
-          </Link>
-
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={LogOut}
+            label={t("signOut")}
+            variant="bare"
+            size="sm"
             onClick={handleLogout}
-            title={t("signOut")}
-            className={[
-              "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors w-full",
-              isCollapsed ? "justify-center" : "",
-            ].join(" ")}
-          >
-            <LogOut size={14} className="shrink-0" aria-hidden="true" />
-            {!isCollapsed && <span className="truncate">{t("signOut")}</span>}
-          </button>
+          />
         </div>
       )}
     </aside>
