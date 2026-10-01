@@ -119,9 +119,10 @@ fixed fixture where the existing one will do.
 | [TC-ICON-03](cases/TC-ICON-03.md) | „Asociază” și „Dezasociază” cu pictogramă și cuvinte, și un pas înapoi printre versiuni | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-associations.spec.ts` |
 | [TC-ICON-04](cases/TC-ICON-04.md) | Unghiurile pornite și oprite, un punct adăugat și mutat mai sus, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-property-tools.spec.ts` |
 | [TC-ICON-05](cases/TC-ICON-05.md) | O etichetă redenumită cu creionul, două fuzionate, o ștampilă aplicată, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-admin.spec.ts` |
+| [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 
-**Thirty-six are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-01 (Slices
-#37.38, #37.40 and #37.42–#37.46, which added TC-MAP-01, TC-FOLD-01 and TC-ICON-01–05 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Thirty-seven are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-01 (Slices
+#37.38, #37.40 and #37.42–#37.47, which added TC-MAP-01, TC-FOLD-01 and TC-ICON-01–06 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
@@ -350,6 +351,14 @@ it stops before „Scanare", which is then most of the value gone; and how a spe
 what an import writes — documents found by their `TC-` file names, but also links to a
 property that existed before the run (TC-IMP-02's `Dezasociază`), which no marker
 records.
+
+**Since #37.47, one case does pick a folder without the dialog — and it stops before anything
+costs.** TC-ICON-06 makes its folder in the browser's own private storage
+(`navigator.storage.getDirectory()`), which hands out a REAL `FileSystemDirectoryHandle`, and has
+`window.showDirectoryPicker` answer it. Nothing but the dialog is replaced, so the first of the
+three decisions above weakens; the other two do not apply to it, because it cancels the import at
+„Restricții", before „Deja în sistem", and writes, reads and pays for nothing. The import cases
+above still go to Adrian for the folder: their folders are on the disk, and their runs spend.
 
 ---
 
