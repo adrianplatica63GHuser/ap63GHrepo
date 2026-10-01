@@ -97,7 +97,11 @@
 #        Coproprietari / Coindivizari, Cumpărător, Proprietar / Titular de
 #        drept real and Titular de drept by name, and no migration ticks
 #        anything. The other 52 roles agree (false on both sides) and do not
-#        appear.
+#        appear. Slice #37.28 (migration_088) added three converse columns to
+#        the role row, so each of these eight lines ends with three `<null>`
+#        now - the same four facts, nothing gained or lost. The ten roles
+#        migration_088 ticks for people, and their converses, are written by
+#        the chain AND by the seed, so they agree and do not appear.
 #        The two `lookup_property_person_role` CONSTRAINT lines that used to
 #        sit in category 1 above ARE closed, and permanently: they were a
 #        `drizzle-kit push` artefact on a table that no longer exists.
@@ -198,14 +202,14 @@ REFDATA lookup_document_type :: - [Hotărâre Judecătorească | 16 | HOTARARE_J
 REFDATA lookup_document_type :: - [NECLASIFICAT | 18 | UNCLASSIFIED | <null> | MANUAL]
 REFDATA lookup_document_type :: - [Testament | 1019 | TESTAMENT | <null> | MANUAL]
 REFDATA lookup_document_type :: - [Titlu de Proprietate | 17 | TITLU_PROPRIETATE | <null> | MANUAL]
-REFDATA lookup_person_role :: + [Coproprietari / Coindivizari | (părți care partajează) | 11 | true | false]
-REFDATA lookup_person_role :: + [Cumpărător | (Dobânditor) | 14 | true | false]
-REFDATA lookup_person_role :: + [Proprietar / Titular de drept real | (principalul interesat) | 37 | true | false]
-REFDATA lookup_person_role :: + [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | true | false]
-REFDATA lookup_person_role :: - [Coproprietari / Coindivizari | (părți care partajează) | 11 | false | false]
-REFDATA lookup_person_role :: - [Cumpărător | (Dobânditor) | 14 | false | false]
-REFDATA lookup_person_role :: - [Proprietar / Titular de drept real | (principalul interesat) | 37 | false | false]
-REFDATA lookup_person_role :: - [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | false | false]
+REFDATA lookup_person_role :: + [Coproprietari / Coindivizari | (părți care partajează) | 11 | true | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: + [Cumpărător | (Dobânditor) | 14 | true | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: + [Proprietar / Titular de drept real | (principalul interesat) | 37 | true | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: + [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | true | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: - [Coproprietari / Coindivizari | (părți care partajează) | 11 | false | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: - [Cumpărător | (Dobânditor) | 14 | false | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: - [Proprietar / Titular de drept real | (principalul interesat) | 37 | false | false | <null> | <null> | <null>]
+REFDATA lookup_person_role :: - [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | false | false | <null> | <null> | <null>]
 TABLE public.document :: + principal_object_id uuid NOT NULL,
 TABLE public.document :: - principal_object_id uuid NOT NULL,
 TABLE public.person :: + principal_object_id uuid NOT NULL,
