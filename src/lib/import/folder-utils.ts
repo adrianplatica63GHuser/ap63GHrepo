@@ -438,10 +438,67 @@ export function folderNameTitleEvidence(name: string): FolderTitleEvidence {
  * else is a fragment of a word. Optional whitespace is allowed inside the match
  * so a hand-typed `47 per 2` in the Property form still decodes — that path has
  * never had a grammar in front of it.
+ *
+ * ⚠️ **WIDER SINCE SLICE #37.39 — „cover all per instances"**
+ * (Adrian, 2026-10-01). Between digits was too narrow: a folder named
+ * `T47 per P2` or `Tarla 47 per Parcela 2` uses `per` for a slash just as
+ * `47per2` does, and it reached the nickname as written. The rule now:
+ *
+ *   A `per` (any case) with something on both sides of it becomes `/`, and the
+ *   spaces around it go — UNLESS it is part of a word, which it is when a
+ *   letter touches it on one side and the other side is not a digit.
+ *
+ *   47per2 → 47/2 · 47 per 2 → 47/2 · 225per3per24 → 225/3/24 ·
+ *   T47 per P2 → T47/P2 · T47perP2 → T47/P2 ·
+ *   Tarla 47 per Parcela 2 → Tarla 47/Parcela 2
+ *
+ *   unchanged: superficie, Supermarket, Super 2, Perdea, Perimetru,
+ *   Persoane fizice, per2, 47per (nothing on one side)
+ *
+ * Every word in the list above has a letter touching `per` and no digit on the
+ * other side, which is what #28.02's examples needed; `T47perP2` has a letter
+ * on one side and a DIGIT on the other, which is what makes it a slash. A
+ * `per` with spaces on both sides (`T47 per P2`) has no letter touching it at
+ * all. It is still the one rule: STR-15's question (`usesPerAsSeparator`), the
+ * cadastral value and key, the name-derived columns and the search all call it,
+ * and migration_089 is its Postgres twin, checked against these examples.
  */
 export function perToSlash(s: string): string {
-  return s.replace(/(?<=\d)\s*per\s*(?=\d)/gi, "/");
+  return s.replace(PER_WITH_SPACES, (match: string, before: string, after: string, offset: number) => {
+    const left = s.slice(0, offset);
+    const right = s.slice(offset + match.length);
+    // Something on both sides: a `per` at the very start or end is not a slash.
+    if (!/\S/u.test(left) || !/\S/u.test(right)) return match;
+    // The character that TOUCHES it on each side — none when a space is between.
+    const l = before === "" ? left.slice(-1) : "";
+    const r = after === "" ? right.slice(0, 1) : "";
+    // Part of a word: a letter touches it on one side and the other side is not a digit.
+    if (LETTER.test(l) && !DIGIT.test(r)) return match;
+    if (LETTER.test(r) && !DIGIT.test(l)) return match;
+    return "/";
+  });
 }
+
+/**
+ * A value the import takes from a folder or file name — a Property's nickname,
+ * a document's title, a tag: `perToSlash`, trimmed, and `null` when nothing is
+ * left.                                                          (Slice #37.39)
+ *
+ * The name on disk keeps its `per`, because a name cannot hold a slash; the
+ * value in the system is the one the `per` stood for. Applied at the database
+ * boundary of each such column, beside `cadastralValue` for the tarla and the
+ * parcela, and idempotent like it, so a value that already holds `/` passes
+ * through unchanged. NOT for free text a person types into a notes box.
+ */
+export function nameValue(raw: string | null | undefined): string | null {
+  const v = perToSlash(raw ?? "").trim();
+  return v === "" ? null : v;
+}
+
+/** `per`, any case, with the spaces on either side — which the slash takes away. */
+const PER_WITH_SPACES = /(\s*)per(\s*)/giu;
+const LETTER = /^\p{L}$/u;
+const DIGIT = /^\p{Nd}$/u;
 
 // ---------------------------------------------------------------------------
 // Page-group detection
@@ -647,7 +704,11 @@ export function displayPathOf(chosenFolderName: string, path: string): string {
  * Tags are lowercase-normalised server-side; we pass the original casing.
  */
 export function tagsForEntry(rootFolderName: string, entry: FSEntry): string[] {
-  return [rootFolderName, ...entry.pathParts].filter(Boolean);
+  // Slice #37.39: a tag is a folder's name in the system, so its `per` is
+  // decoded like the nickname's — `47per2-225` is tagged `47/2-225`.
+  return [rootFolderName, ...entry.pathParts]
+    .map((name) => nameValue(name))
+    .filter((tag): tag is string => tag !== null);
 }
 
 // ---------------------------------------------------------------------------

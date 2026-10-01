@@ -331,6 +331,41 @@ describe("perToSlash", () => {
   });
 });
 
+describe("perToSlash — every „per” that stands for a slash  (Slice #37.39)", () => {
+  // Adrian, 2026-10-01: „cover all per instances". A `per` with something on
+  // both sides becomes `/` and takes its spaces with it, unless it is part of a
+  // word: a letter touching it on one side and no digit on the other.
+  it.each([
+    ["47per2", "47/2"],
+    ["47 per 2", "47/2"],
+    ["225per3per24", "225/3/24"],
+    ["T47 per P2", "T47/P2"],
+    ["T47perP2", "T47/P2"],
+    ["Tarla 47 per Parcela 2", "Tarla 47/Parcela 2"],
+    ["Tarla 47per2", "Tarla 47/2"],
+    ["t47 PER p2", "t47/p2"],
+  ])("%s → %s", (raw, decoded) => {
+    expect(perToSlash(raw)).toBe(decoded);
+    expect(perToSlash(decoded)).toBe(decoded);
+  });
+
+  it.each([
+    ["superficie"],
+    ["Supermarket"],
+    ["Super 2"],
+    ["Perdea"],
+    ["Perimetru"],
+    ["Persoane fizice"],
+    ["per2"],
+    ["47per"],
+    ["40-Perdea"],
+    ["12-superficie teren"],
+    ["Acte persoane"],
+  ])("%s stays as it is", (word) => {
+    expect(perToSlash(word)).toBe(word);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // tagsForEntry
 // ---------------------------------------------------------------------------

@@ -77,6 +77,7 @@ import {
 } from "./cadastral-identity";
 import type { CornerInput, PropertyCreate } from "./validation";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { nameValue } from "@/lib/import/folder-utils";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 
 /**
@@ -294,7 +295,8 @@ export async function ensurePropertyForFolder(
       const full = await createPropertyIn(
         tx,
         {
-          nickname: input.nickname?.trim() || null,
+          // Slice #37.39: the folder's name, its `per` decoded like the tarla's.
+          nickname: nameValue(input.nickname),
           // Slice #34.03: a folder-derived CODE, not an id. See
           // `resolveTarlaForCreate` in properties/queries.ts.
           tarlaCode: tarlaSola,

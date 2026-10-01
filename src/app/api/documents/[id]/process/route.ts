@@ -80,7 +80,7 @@ import { listDocumentPages }            from "@/lib/documents/pages-queries";
 import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
 import { parseLine }                   from "@/lib/geo/stereo70-parse";
-import { perToSlash, parseFolderName } from "@/lib/import/folder-utils";
+import { nameValue, perToSlash, parseFolderName } from "@/lib/import/folder-utils";
 import {
   addEntityTag,
   listEntityTags,
@@ -370,7 +370,9 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     let claimedCornerSource = false;
 
     try {
-      const nickname = propertyTag ?? textPage.fileName ?? null;
+      // Slice #37.39: a folder or file name, so its `per` is decoded here, at
+      // the database boundary, as the tarla and the parcela are above.
+      const nickname = nameValue(propertyTag ?? textPage.fileName);
 
       /**
        * Two creates, and the difference is whether there is an identity to

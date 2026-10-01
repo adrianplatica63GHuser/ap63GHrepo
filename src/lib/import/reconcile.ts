@@ -46,6 +46,7 @@
 
 import {
   entryFileNames,
+  perToSlash,
   tagsForEntry,
   walkFolder,
   type DirectoryObservation,
@@ -117,7 +118,9 @@ export type SourcePlan = {
 
 /** `addEntityTag` stores `tag.trim().toLowerCase()`; compare in that form. */
 export function normaliseTag(tag: string): string {
-  return tag.normalize("NFC").trim().toLowerCase();
+  // Slice #37.39: `perToSlash` first, so a stored tag and a folder name
+  // compare in the same form whichever of them still reads `per`.
+  return perToSlash(tag.normalize("NFC")).trim().toLowerCase();
 }
 
 function nfc(s: string): string {
@@ -335,7 +338,10 @@ export function reconcile(plan: SourcePlan, pages: readonly ArchivePage[]): Reco
       continue;
     }
     const candidates = pages.filter((p) => p.fileSize === e.file.size && nfc(p.fileName) === nfc(e.file.name));
-    const titleOk = (p: ArchivePage): boolean => p.importTitle !== null && nfc(p.importTitle) === nfc(e.title);
+    // Slice #37.39: decoded on both sides, so a re-import matches a title
+    // stored before or after migration_089, with or without its `per`.
+    const titleOk = (p: ArchivePage): boolean =>
+      p.importTitle !== null && nfc(perToSlash(p.importTitle)) === nfc(perToSlash(e.title));
     // Both: this import's title AND its tags. Failing that, one of the two — the
     // title when the tag dialog was declined, the tags on a document imported
     // before #32.06 recorded `import_title` at all (NULL there, never "wrong").

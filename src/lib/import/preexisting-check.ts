@@ -104,7 +104,7 @@
 
 import { metadataKeyFor, type FileMeta } from "./checks";
 import { foldRomanian, looksLikeIdCardName } from "./id-card";
-import { compareForDisplay, sortedForDisplay, type FSEntry } from "./folder-utils";
+import { compareForDisplay, perToSlash, sortedForDisplay, type FSEntry } from "./folder-utils";
 import { groupByPropertyFolder } from "./property-folders";
 import { isDeclaredCoordinateFile } from "./structure-rules";
 import {
@@ -157,7 +157,10 @@ export function preexistingKeyOf(
   const pages = files
     .map((f) => [foldRomanian(f.name), f.size] as const)
     .sort((a, b) => compareForDisplay(a[0], b[0]) || a[1] - b[1]);
-  return JSON.stringify([foldRomanian(title), pages]);
+  // Slice #37.39: `perToSlash` on the title as well, so an archive document
+  // whose stored title still reads `per` (one migration_089 left alone) keys
+  // the same as the folder's decoded title. Idempotent on a decoded one.
+  return JSON.stringify([foldRomanian(perToSlash(title)), pages]);
 }
 
 /**
@@ -177,8 +180,12 @@ export function preexistingKeyOf(
  * refuses those from the other direction for the same reason.
  */
 export function titleForEntry(entry: FSEntry): string {
-  if (entry.kind !== "page-group") return entry.name;
-  return entry.titleHint.trim() === "" ? entry.name : entry.titleHint;
+  // Slice #37.39: the name's `per` is decoded — „Plan 47per2.pdf" is titled
+  // „Plan 47/2.pdf" — because this IS the title the import writes, and the one
+  // definition both sides of the key use. The entry's `path` keeps the name on
+  // disk, which is how a person finds the file.
+  if (entry.kind !== "page-group") return perToSlash(entry.name);
+  return perToSlash(entry.titleHint.trim() === "" ? entry.name : entry.titleHint);
 }
 
 export type PreexistingCandidateInput = {
