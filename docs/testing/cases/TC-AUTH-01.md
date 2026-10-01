@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-09-26 |
+| **Last green** | 2026-10-01 |
 
 ## ⚠️ Claude cannot drive steps 2–4, and that is permanent
 
@@ -62,6 +62,7 @@ PowerShell window.**
 | 4 | Presses „Conectare" | The button reads „Se conectează…" while it works |
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
+| 6a | In „Părți afișate" above the sections, unticks „Metadate care necesită atenție", reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
 | 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte", then „Admin-Operațiuni" and „Admin-Configurare" — and below them, **once anything has been opened in this browser**, a „RECENTE" list of recently-opened records. A browser that has opened nothing shows no „RECENTE" at all (the list lives in the browser's own storage) |
 | 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
 | 9 | Presses „Ieșire" at the bottom of the sidebar | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
@@ -123,3 +124,7 @@ locale. The page bodies are correctly Romanian throughout; it is the `<title>` t
 never translated. Not fixed here — this slice adds one guard suite and touches nothing
 else — and it is in the handover. **Fixed in Slice #37.07 (FU-072):** the tab reads
 „Conectare — GA40" on `/login` (the root title had become „GA40" in #36.05).
+
+**2026-10-01 — step 6a added (Slice #37.36).** The home page's four sections became tiles ticked in
+„Părți afișate"; the spec unticks „Metadate care necesită atenție", reloads, finds it still
+unticked and gone, and ticks it back (e2e 20261001T035419Z-27044).

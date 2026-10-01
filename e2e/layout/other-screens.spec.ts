@@ -9,7 +9,8 @@
  * Then one picture of each at 1920 px into playwright-report/layout/, for the
  * slice's handover. Step 5 (Slice #37.34): on each „Asociază …" screen, the
  * three tiles, the unit grid at 1366, 1920 and 2560 px, and the breadcrumb.
- * Step 6 (Slice #37.35): the unit grid on every administration screen too.
+ * Step 6 (Slice #37.35): the unit grid on every administration screen too,
+ * and (Slice #37.36) on the home page.
  *
  * ⚠️ **THE PICTURES CARRY NO REAL RECORD.** The „Asociază …" screens search for
  * this spec's own marker, so their tables list only its records; a screen that
@@ -143,6 +144,9 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
       // The home page — its lists are the archive's own.
       await screen(page, "home", "/", heading, {
         mask: (p) => [p.locator('[data-panel="expiring-documents"] tbody'), p.locator('[data-panel="recent-activity"] ul')],
+        // Slice #37.36: four unit tiles on the unit row.
+        unitGrid: true,
+        alsoAt: [1366, 2560],
       });
 
       // The „Asociază …" screens, from this spec's own records.

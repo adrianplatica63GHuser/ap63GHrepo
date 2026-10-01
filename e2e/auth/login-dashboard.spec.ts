@@ -40,6 +40,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { sidebar } from "../helpers/sidebar";
 import { USER_STATE } from "../helpers/auth-state";
 import { fillLoginForm } from "../helpers/login-form";
+import { tileBox } from "../helpers/tiles";
 
 test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
   test("după conectare: tabloul de bord, bara laterală și numele contului", async ({ page }) => {
@@ -51,6 +52,23 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     // Step 6 — „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi".
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Ce necesită atenția dumneavoastră azi")).toBeVisible();
+
+    // Step 6a (Slice #37.36) — the four sections are tiles: „Metadate care necesită
+    // atenție" unticked leaves the page, stays unticked after a reload, and comes back.
+    const STALE = "Metadate care necesită atenție";
+    const staleTile = page.getByRole("region", { name: STALE, exact: true });
+    await expect(staleTile).toBeVisible({ timeout: 30_000 });
+    await expect(async () => {
+      await tileBox(page, STALE).uncheck();
+      await expect(tileBox(page, STALE)).not.toBeChecked({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(staleTile).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
+    await expect(tileBox(page, STALE)).not.toBeChecked({ timeout: 15_000 });
+    await expect(staleTile).toHaveCount(0);
+    await tileBox(page, STALE).check();
+    await expect(staleTile).toBeVisible({ timeout: 15_000 });
 
     // Step 7 — the sidebar's sections, scoped to the sidebar (helpers/sidebar.ts).
     const nav = sidebar(page);

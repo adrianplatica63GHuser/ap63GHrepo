@@ -65,7 +65,7 @@ fixed fixture where the existing one will do.
 
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
-| [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-09-26 | `e2e/auth/login-dashboard.spec.ts` |
+| [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-10-01 | `e2e/auth/login-dashboard.spec.ts` |
 | [TC-AUTH-02](cases/TC-AUTH-02.md) | Un cont „user" lucrează zilnic și nu poate administra | auth | authz | — | `draft` | — | — |
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |

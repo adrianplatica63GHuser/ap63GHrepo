@@ -5,11 +5,32 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { PANEL_GAP, PANEL_REM, rem, screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { ListTile } from "@/components/tiles/list-tile";
+import { TileSelector } from "@/components/tiles/tile-selector";
+import { useTileChoice } from "@/components/tiles/use-tile-choice";
+import { UnitRow } from "@/components/screen/unit-row";
+import { HOME_TILES, HOME_TILE_REGISTRY, type HomeTile } from "./home-tiles";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
 /** The expiring documents, at #37.16's column widths (Slice #37.22). */
 const EXPIRING_COLUMNS: readonly ColumnName[] = ["code", "documentType", "documentTitle", "date", "expiryStatus"];
+
+/**
+ * Slice #37.36: each section the fewest width units that hold it.
+ *   - the counts: three M cards and their gaps (27.5rem) — 3;
+ *   - the stale metadata: its sentence and three links on one row — 3, like the counts;
+ *   - the expiring documents: the fewest units that hold the table's columns (8),
+ *     the title taking what the others leave;
+ *   - the activity: a row is the type chip, the name (XL, truncated) and the time — 4.
+ */
+const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
+  recentCounts: 3,
+  staleMetadata: 3,
+  expiringDocuments: tableUnits(EXPIRING_COLUMNS),
+  recentActivity: 4,
+};
+const EXPIRING_FILL = { units: HOME_UNITS.expiringDocuments, column: "documentTitle" } as const;
 
 // ---------------------------------------------------------------------------
 // API response types — mirror src/lib/dashboard/queries.ts
@@ -187,39 +208,34 @@ function Skeleton({ className }: { className?: string }) {
 // ---------------------------------------------------------------------------
 
 /**
- * A section of the dashboard (Slice #37.22): a panel, a wide panel, or — for the
- * table of expiring documents — exactly as wide as its table. Never as wide as
- * the window: a wider window fits more sections on a row instead.
+ * A section of the dashboard: since Slice #37.36 a tile in the detail screens'
+ * own frame (`ListTile` — the same border, radius, padding and title), the
+ * fewest width units that hold it (`HOME_UNITS`). Loading, empty and full, it
+ * reads as the same tile.
  */
 function SectionCard({
   title,
   children,
-  panel,
-  size = "panel",
+  tile,
 }: {
   title: string;
   children: React.ReactNode;
-  /** Its name for the e2e width check (`data-panel`). */
-  panel: string;
-  size?: "panel" | "wide" | "table";
+  tile: HomeTile;
 }) {
-  // A table's section is as wide as the table, and never narrower than a panel —
-  // while it loads, or when nothing expires, it still reads as a section.
-  const fixed = size === "table" ? { "data-panel": panel, style: { minWidth: rem(PANEL_REM) } } : screenPanel(panel, size === "wide");
   return (
-    <section
-      {...fixed}
-      className={`rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden${size === "table" ? " w-fit max-w-full" : ""}`}
-    >
-      <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60">
-        <h2 className="text-sm font-semibold tracking-wide text-zinc-500 dark:text-zinc-400 uppercase">
-          {title}
-        </h2>
-      </div>
-      <div className="p-5">{children}</div>
-    </section>
+    <ListTile tile={tile} panel={PANEL_NAME[tile]} title={title} units={HOME_UNITS[tile]}>
+      {children}
+    </ListTile>
   );
 }
+
+/** The sections' names for the e2e width check (`data-panel`), as #37.22 named them. */
+const PANEL_NAME: Readonly<Record<HomeTile, string>> = {
+  recentCounts: "recent-counts",
+  staleMetadata: "stale-metadata",
+  expiringDocuments: "expiring-documents",
+  recentActivity: "recent-activity",
+};
 
 // ---------------------------------------------------------------------------
 // Section 1 — Recent counts
@@ -270,7 +286,7 @@ export function RecentCountsSection({
   ] as const;
 
   return (
-    <SectionCard panel="recent-counts" title={t("recentCounts.title", { days: recentDays })}>
+    <SectionCard tile="recentCounts" title={t("recentCounts.title", { days: recentDays })}>
       <div style={stepGridStyle("M", 3, 1)}>
         {cards.map((c) => (
           <Link
@@ -330,7 +346,7 @@ export function ExpiringDocumentsSection({
   }
 
   return (
-    <SectionCard panel="expiring-documents" size="table" title={t("expiringDocuments.title")}>
+    <SectionCard tile="expiringDocuments" title={t("expiringDocuments.title")}>
       {data === undefined ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
@@ -342,9 +358,9 @@ export function ExpiringDocumentsSection({
           {t("expiringDocuments.empty", { days: expiringDays })}
         </p>
       ) : (
-        <div className={TABLE_FRAME}>
-          <table {...fixedTable(EXPIRING_COLUMNS)}>
-            <FixedColumns columns={EXPIRING_COLUMNS} />
+        <div className={`${TABLE_FRAME} rounded-md border border-card-rim dark:border-zinc-800`}>
+          <table {...fixedTable(EXPIRING_COLUMNS, undefined, EXPIRING_FILL)}>
+            <FixedColumns columns={EXPIRING_COLUMNS} fill={EXPIRING_FILL} />
             <thead>
               <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
                 <th className="px-4 pb-2 font-medium" {...columnHead("code")}>{t("expiringDocuments.colCode")}</th>
@@ -409,7 +425,7 @@ export function StaleMetadataSection({
   staleDays: number;
 }) {
   return (
-    <SectionCard panel="stale-metadata" title={t("staleMetadata.title")}>
+    <SectionCard tile="staleMetadata" title={t("staleMetadata.title")}>
       {data === undefined ? (
         <Skeleton className="h-14 w-full" />
       ) : data.total === 0 ? (
@@ -477,7 +493,7 @@ function RecentActivitySection({
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
-    <SectionCard panel="recent-activity" size="wide" title={t("recentActivity.title")}>
+    <SectionCard tile="recentActivity" title={t("recentActivity.title")}>
       {data === undefined ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -519,6 +535,14 @@ function RecentActivitySection({
 export function DashboardClient() {
   const t = useTranslations("dashboard");
   const { data: tf } = useTimeFrames();
+  // Slice #37.36: the sections are tiles, ticked on and off like a record's.
+  const choice = useTileChoice<HomeTile>(HOME_TILE_REGISTRY);
+  const labels: Record<HomeTile, string> = {
+    recentCounts: t("recentCounts.title", { days: tfDays(tf, "dashboard_recent_days") }),
+    staleMetadata: t("staleMetadata.title"),
+    expiringDocuments: t("expiringDocuments.title"),
+    recentActivity: t("recentActivity.title"),
+  };
 
   const { data, isError } = useQuery<DashboardData>({
     queryKey:           ["dashboard"],
@@ -561,28 +585,37 @@ export function DashboardClient() {
       </header>
 
       {/* Slice #37.22 — one row of fixed sections that wraps: the window decides
-          how many sit side by side, never how wide one is. A 1920-pixel window
-          shows the counts and the stale records together, the table of expiring
-          documents and the activity under them. */}
-      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
-        <RecentCountsSection
-          data={data?.recentCounts}
-          t={t}
-          recentDays={tfDays(tf, "dashboard_recent_days")}
-        />
-        <StaleMetadataSection
-          data={data?.staleMetadata}
-          t={t}
-          staleDays={tfDays(tf, "dashboard_stale_metadata")}
-        />
-        <ExpiringDocumentsSection
-          data={data?.expiringDocuments}
-          t={t}
-          amberDays={tfDays(tf, "dashboard_expiring_amber")}
-          expiringDays={tfDays(tf, "dashboard_expiring_docs")}
-        />
-        <RecentActivitySection data={data?.recentActivity} t={t} />
-      </div>
+          how many sit side by side, never how wide one is. Slice #37.36: tiles
+          of whole units on the unit row, ticked on and off in „Părți afișate".
+          At 1920 px the counts and the stale metadata share a row and the
+          expiring documents (8 units) wrap under them; at 2560 the three fit
+          (3 + 3 + 8 = 14) and the activity sits under them. */}
+      <TileSelector all={HOME_TILES} labels={labels} choice={choice} />
+      <UnitRow units={choice.shown.map((k) => HOME_UNITS[k])}>
+        {choice.isShown("recentCounts") && (
+          <RecentCountsSection
+            data={data?.recentCounts}
+            t={t}
+            recentDays={tfDays(tf, "dashboard_recent_days")}
+          />
+        )}
+        {choice.isShown("staleMetadata") && (
+          <StaleMetadataSection
+            data={data?.staleMetadata}
+            t={t}
+            staleDays={tfDays(tf, "dashboard_stale_metadata")}
+          />
+        )}
+        {choice.isShown("expiringDocuments") && (
+          <ExpiringDocumentsSection
+            data={data?.expiringDocuments}
+            t={t}
+            amberDays={tfDays(tf, "dashboard_expiring_amber")}
+            expiringDays={tfDays(tf, "dashboard_expiring_docs")}
+          />
+        )}
+        {choice.isShown("recentActivity") && <RecentActivitySection data={data?.recentActivity} t={t} />}
+      </UnitRow>
     </div>
   );
 }

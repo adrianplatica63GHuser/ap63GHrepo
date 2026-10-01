@@ -18,6 +18,7 @@ export function ListTile({
   title,
   wide = false,
   units,
+  panel,
   children,
 }: {
   tile: string;
@@ -26,11 +27,14 @@ export function ListTile({
   wide?: boolean;
   /** Slice #37.27: exactly this many width units wide (`unitsRem`). */
   units?: number;
+  /** Slice #37.36: also a `data-panel`, for the screens whose width checks read that mark (the home page). */
+  panel?: string;
   children: ReactNode;
 }) {
   return (
     <section
       data-tile={tile}
+      data-panel={panel}
       aria-label={title}
       className={`${wide || units ? "" : "w-fit "}max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}
       style={units ? unitStyle(units) : wide ? WIDE_TILE_STYLE : { minWidth: PANEL_STYLE.width }}

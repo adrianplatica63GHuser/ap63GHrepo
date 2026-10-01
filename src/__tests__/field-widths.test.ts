@@ -1195,3 +1195,26 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
     expect(CALC_MAP_STYLE).toEqual({ width: `${unitsRem(6)}rem`, height: "26.25rem" });
   });
 });
+
+describe("the home page as unit tiles, in the detail screens' frame (Slice #37.36)", () => {
+  const src = code(read("src", "app", "_components", "dashboard-client.tsx"));
+
+  it("each section is a ListTile of whole units, on the unit row, ticked with the detail screens' selector", () => {
+    expect(src).toMatch(/<ListTile tile=\{tile\} panel=\{PANEL_NAME\[tile\]\} title=\{title\} units=\{HOME_UNITS\[tile\]\}>/);
+    expect(src).toMatch(/recentCounts: 3,\s*staleMetadata: 3,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 4,/);
+    expect(src).toMatch(/<UnitRow units=\{choice\.shown\.map\(\(k\) => HOME_UNITS\[k\]\)\}>/);
+    expect(src).toMatch(/useTileChoice<HomeTile>\(HOME_TILE_REGISTRY\)/);
+    expect(src).toMatch(/<TileSelector all=\{HOME_TILES\}/);
+    expect(src).toMatch(/fixedTable\(EXPIRING_COLUMNS, undefined, EXPIRING_FILL\)/);
+    // The old card (rounded-xl, a grey header band) and #37.22's widths are gone.
+    expect(src).not.toMatch(/rounded-xl|PANEL_REM|screenPanel\(|data-panel-row/);
+    expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(3));
+    expect(tableUnits(["code", "documentType", "documentTitle", "date", "expiryStatus"])).toBe(8);
+  });
+
+  it("with nothing stored all four show — the page as it was", () => {
+    const tiles = code(read("src", "app", "_components", "home-tiles.ts"));
+    expect(tiles).toMatch(/entity: "home"/);
+    expect(tiles).toMatch(/defaults: HOME_TILES/);
+  });
+});
