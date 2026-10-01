@@ -5,7 +5,7 @@
 | **Area** | map |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-01 |
 
 ## What this proves
@@ -95,3 +95,13 @@ unchanged.
 - At the end the property was removed (DELETE 204).
 - Nothing changed between the runs, so the case is confirmed, and
   `e2e/map/property-map-focus.spec.ts` translates it.
+
+**2026-10-01 — `automated`.** `e2e/map/property-map-focus.spec.ts` translates the case. It also
+photographs the form, the map mid-blink and the map after it, for #37.38's handover.
+- Its first runner run was green (`20261001T115320Z-12983`). Its pictures showed Next's dev overlay
+  counting „1 Issue".
+- The spec now fails on any console error. That found the issue: Google's „Attempted to load a
+  Vector Map, but failed. Falling back to Raster.", nine times, from the runner's headless Chromium,
+  which has no WebGL (FU-275).
+- SwiftShader did not stop it, so that one message is let through.
+- Green as `20261001T120030Z-32347`.
