@@ -15,7 +15,7 @@
  *     out the remembered choice (TC-MAP-01, #37.44) — the case's „the default".
  *   - Slice #37.45's pictures, not steps of the case: the corners manager with
  *     the angles on, the mini-map in drawing mode, the properties map's
- *     toolbar, and a document's pages panel with „Descoperire AI", at 1366 and
+ *     toolbar, a document's pages panel, and its „Descoperire AI", at 1366 and
  *     1920 px, into `playwright-report/icon-property-tools/`. The sidebar's
  *     „Recente" list is painted over.
  */
@@ -177,6 +177,11 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       // The pages panel and the sidebar's menus load after the form.
       await expect(page.getByText("Se încarcă…")).toHaveCount(0, { timeout: 30_000 });
       await expect(page.getByText("Autentificat ca", { exact: false })).toBeVisible({ timeout: 30_000 });
+      // Two pictures: at 1080 px the pages panel and the bottom bar do not fit together.
+      await photograph(page, "document-pages", async () => {
+        await addPage.scrollIntoViewIfNeeded();
+        await moveAway(page);
+      });
       await photograph(page, "document-tools", async () => {
         await discover.scrollIntoViewIfNeeded();
         await moveAway(page);
