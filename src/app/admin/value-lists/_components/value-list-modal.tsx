@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Pencil, Save, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
@@ -1355,13 +1355,16 @@ export function ValueListModal({
                   sitting side by side. An adversarial round pointed out that
                   the premise was no longer true of the layout. */}
               <div className="flex flex-wrap items-center gap-3">
-              <button
+              {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
+                  stays the one every locator knows. */}
+              <IconButton
+                icon={Plus}
+                label={`+ ${t("toolbar.add")}`}
+                variant="primary"
+                size="sm"
                 onClick={startAdd}
                 disabled={!!form}
-                className={buttonClass({ variant: "primary", size: "sm" })}
-              >
-                + {t("toolbar.add")}
-              </button>
+              />
               {/* Slice #34.10 — „Roluri pe Document", moved off the hub.
                   See `showDocPersons` above for why it is a grid and why it
                   belongs beside the Form button rather than under „Roluri".

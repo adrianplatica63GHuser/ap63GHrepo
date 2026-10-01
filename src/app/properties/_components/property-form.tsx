@@ -27,7 +27,7 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
-import { ArrowLeft, ArrowRight, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -1518,14 +1518,8 @@ export function PropertyForm({
               <span className="text-sm font-semibold text-ink dark:text-zinc-200">
                 {t("corners.theaterTitle")}
               </span>
-              <button
-                type="button"
-                onClick={handleCloseTheaterMap}
-                aria-label={t("corners.theaterClose")}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                ✕ {t("corners.theaterClose")}
-              </button>
+              {/* #37.44 (A028): Minimize2 in place of „✕ Restrânge"; „Restrânge" its name and tooltip. */}
+              <IconButton icon={Minimize2} label={t("corners.theaterClose")} variant="secondary" size="sm" onClick={handleCloseTheaterMap} />
             </div>
             {/* Map fills the rest */}
             <div className="relative flex-1 min-h-0">

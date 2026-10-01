@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, type ReactNode } from "react";
-import { Check, Save, X } from "lucide-react";
+import { Calculator, Check, Link as LinkIcon, Plus, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
+import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -240,14 +241,13 @@ function MetadataSection({
           highlight={highlight}
         />
         {!readOnly && (
-          <button
-            type="button"
+          // #37.44 (A031): BadgeCheck, filled once reviewed.
+          <MarkReviewedButton
+            reviewed={reviewed}
+            reviewing={reviewing}
+            labels={{ mark: labelMarkReviewed, marking: labelMarkingReviewed, marked: labelMarkedReviewed }}
             onClick={handleMarkReviewed}
-            disabled={reviewing || reviewed}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {reviewed ? labelMarkedReviewed : reviewing ? labelMarkingReviewed : labelMarkReviewed}
-          </button>
+          />
         )}
       </div>
 
@@ -413,14 +413,17 @@ function TagsSection({
           {...screenBox("metaTag")}
           className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
         />
-        <button
-          type="button"
+        {/* #37.44 (A032): Plus; „Se adaugă…" its name while it works. */}
+        <IconButton
+          icon={Plus}
+          label={labelAdd}
+          busy={adding}
+          busyLabel={labelAdding}
+          variant="primary"
+          size="md"
           onClick={handleAdd}
           disabled={adding || !input.trim()}
-          className={buttonClass({ variant: "primary", size: "md" })}
-        >
-          {adding ? labelAdding : labelAdd}
-        </button>
+        />
       </div>
 
       {/* Chip display */}
@@ -462,6 +465,7 @@ function InlineGroupsSection({
   labelTitle,
   labelEmpty,
   labelAdd,
+  labelHideAdd,
   labelAddPlaceholder,
   labelRemove,
   withBack,
@@ -473,6 +477,8 @@ function InlineGroupsSection({
   labelTitle:        string;
   labelEmpty:        string;
   labelAdd:          string;
+  /** The name of the open picker, which showed a bare up-triangle (#37.44). */
+  labelHideAdd:      string;
   labelAddPlaceholder: string;
   labelRemove:       string;
   withBack:          (href: string) => string;
@@ -537,13 +543,14 @@ function InlineGroupsSection({
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
         {isOnLatest && (
-          <button
-            type="button"
+          // #37.44 (A032): Plus while closed, ChevronUp while open („▲" before).
+          <AddToggleButton
+            open={showAdd}
+            icon={Plus}
+            labelAdd={labelAdd}
+            labelHide={labelHideAdd}
             onClick={() => setShowAdd((v) => !v)}
-            className={buttonClass({ variant: "bare", size: "md" })}
-          >
-            {showAdd ? "▲" : labelAdd}
-          </button>
+          />
         )}
       </div>
 
@@ -617,6 +624,7 @@ function InlineStampsSection({
   labelTitle,
   labelEmpty,
   labelAdd,
+  labelHideAdd,
   labelAddPlaceholder,
   labelRemove,
   withBack,
@@ -628,6 +636,8 @@ function InlineStampsSection({
   labelTitle:        string;
   labelEmpty:        string;
   labelAdd:          string;
+  /** The name of the open picker, which showed a bare up-triangle (#37.44). */
+  labelHideAdd:      string;
   labelAddPlaceholder: string;
   labelRemove:       string;
   withBack:          (href: string) => string;
@@ -691,13 +701,14 @@ function InlineStampsSection({
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
         {isOnLatest && (
-          <button
-            type="button"
+          // #37.44 (A032): Plus while closed, ChevronUp while open („▲" before).
+          <AddToggleButton
+            open={showAdd}
+            icon={Plus}
+            labelAdd={labelAdd}
+            labelHide={labelHideAdd}
             onClick={() => setShowAdd((v) => !v)}
-            className={buttonClass({ variant: "bare", size: "md" })}
-          >
-            {showAdd ? "▲" : labelAdd}
-          </button>
+          />
         )}
       </div>
 
@@ -871,13 +882,14 @@ function CrossRefsSection({
           {t("crossRef.title")}
         </h2>
         {isOnLatest && (
-          <button
-            type="button"
+          // #37.44 (A039): Link while closed, ChevronUp while open („▲" before).
+          <AddToggleButton
+            open={showAdd}
+            icon={LinkIcon}
+            labelAdd={t("crossRef.add")}
+            labelHide={t("hideAdd")}
             onClick={() => { setShowAdd((v) => !v); setAddError(null); }}
-            className={buttonClass({ variant: "bare", size: "md" })}
-          >
-            {showAdd ? "▲" : t("crossRef.add")}
-          </button>
+          />
         )}
       </div>
 
@@ -910,14 +922,16 @@ function CrossRefsSection({
               {...screenBox("metaCrossRefNote")}
               className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
             />
-            <button
-              type="button"
+            <IconButton
+              icon={LinkIcon}
+              label={t("crossRef.addConfirm")}
+              busy={adding}
+              busyLabel={t("crossRef.adding")}
+              variant="primary"
+              size="md"
               onClick={handleAdd}
               disabled={adding || !codeInput.trim()}
-              className={buttonClass({ variant: "primary", size: "md" })}
-            >
-              {adding ? t("crossRef.adding") : t("crossRef.addConfirm")}
-            </button>
+            />
           </div>
           {addError && (
             <p className="text-xs text-red-600 dark:text-red-400">{addError}</p>
@@ -1085,12 +1099,15 @@ function CalculationSourceLink({
           superseded
         </span>
       )}
-      <Link
+      {/* #37.44 (A033): Calculator; „Vezi calculul" its name and tooltip. */}
+      <IconButton
         href={`/admin/calculation/history/${encodeURIComponent(src.runId)}`}
-        className="ml-auto text-xs font-medium text-cta hover:underline dark:text-cta-light"
-      >
-        {labelView} →
-      </Link>
+        icon={Calculator}
+        label={labelView}
+        variant="secondary"
+        size="xs"
+        className="ml-auto"
+      />
     </div>
   );
 }
@@ -1610,6 +1627,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             labelTitle={t("groups.title")}
             labelEmpty={t("groups.empty")}
             labelAdd={t("groups.add")}
+            labelHideAdd={t("hideAdd")}
             labelAddPlaceholder={t("groups.addPlaceholder")}
             labelRemove={t("groups.remove")}
             withBack={withBack}
@@ -1631,6 +1649,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             labelTitle={t("stamps.title")}
             labelEmpty={t("stamps.empty")}
             labelAdd={t("stamps.add")}
+            labelHideAdd={t("hideAdd")}
             labelAddPlaceholder={t("stamps.addPlaceholder")}
             labelRemove={t("stamps.remove")}
             withBack={withBack}

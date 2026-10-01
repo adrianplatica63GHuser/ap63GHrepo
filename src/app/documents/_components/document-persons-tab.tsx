@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, boxStyle, type ColumnName } from "@/lib/ui/field-widths";
 import {
@@ -518,22 +517,26 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
 
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
-          <button
-            type="button"
+          <IconButton
+            icon={LinkIcon}
+            label={t("associate")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={handleAssociate}
             disabled={selectedId !== null}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("associate")}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={Unlink}
+            label={t("dissociate")}
+            busy={dissociating}
+            busyLabel={t("dissociating")}
+            showLabel
+            variant="secondary"
+            size="lg"
             onClick={handleDissociate}
             disabled={selectedId === null || dissociating}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {dissociating ? t("dissociating") : t("dissociate")}
-          </button>
+          />
         </div>
         {savingId !== null && (
           <p className="text-sm text-fade dark:text-zinc-400">{t("cotaSaving")}</p>

@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { NoRolesForTypeNote } from "@/components/forms/no-roles-for-type-note";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
@@ -374,14 +373,17 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
       )}
 
       <div className="flex gap-2">
-        <button
-          type="button"
+        <IconButton
+          icon={LinkIcon}
+          label={t("associate")}
+          busy={submitting}
+          busyLabel={t("associating")}
+          showLabel
+          variant="primary"
+          size="lg"
           onClick={handleAssociate}
           disabled={selectedIds.size === 0 || submitting}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {submitting ? t("associating") : t("associate")}
-        </button>
+        />
         <IconButton
           icon={X}
           label={t("cancel")}

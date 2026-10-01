@@ -880,7 +880,8 @@
       "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
       "sectionClassification": "Clasificare subiectivă",
       "sectionConnections": "Conexiuni",
-      "whatDoesThisMean": "Ce înseamnă asta?"
+      "whatDoesThisMean": "Ce înseamnă asta?",
+      "hideAdd": "Ascunde"
     },
     "errorBoundary": {
       "map": "Harta nu a putut fi afișată.",

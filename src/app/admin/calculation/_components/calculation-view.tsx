@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { RotateCcw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -280,12 +282,13 @@ export function CalculationView() {
         </div>
         </UnitRow>
         <div>
-          <button
+          <IconButton
+            icon={RotateCcw}
+            label={t("buttons.startOver")}
+            variant="primary"
+            size="sm"
             onClick={resetAll}
-            className={buttonClass({ variant: "primary", size: "sm" })}
-          >
-            {t("buttons.startOver")}
-          </button>
+          />
         </div>
       </div>
     );
@@ -328,12 +331,13 @@ export function CalculationView() {
           <span className="text-xs text-fade dark:text-zinc-400">{fileName}</span>
         )}
         {(computation || fileName) && (
-          <button
+          <IconButton
+            icon={RotateCcw}
+            label={t("buttons.reset")}
+            variant="secondary"
+            size="sm"
             onClick={resetAll}
-            className={buttonClass({ variant: "secondary", size: "sm" })}
-          >
-            {t("buttons.reset")}
-          </button>
+          />
         )}
       </div>
 

@@ -18,7 +18,8 @@ const versionLabelLoc = (page: Page) =>
   page.getByText(/^v \d+$/).first();
 
 /**
- * ◀ / "step back" button — matched by `title`, NOT by accessible role name.
+ * ◀ / "step back" button — matched by either of its two names (below; it was
+ * matched by `title` until #37.44, and the paragraph says why).
  *
  * VersionNavControls (Slice #20.12) has two states for "on the latest version
  * with prior history": the full strip's bare ◀ arrow (aria-label AND title
@@ -31,7 +32,14 @@ const versionLabelLoc = (page: Page) =>
  * showing; matching by `title` finds either one, since that attribute is the
  * one thing both states were already given identically.
  */
-const prevBtnLoc = (page: Page) => page.getByTitle("Versiunea anterioară");
+const prevBtnLoc = (page: Page) =>
+  // Slice #37.44: neither skin carries a `title` any more — both are
+  // IconButtons, whose words are the name and the tooltip. The arrow is named
+  // „Versiunea anterioară"; the chip keeps its count („2 versiuni") as its
+  // name, with „Versiunea anterioară" as its description. So: by role, either.
+  page
+    .getByRole("button", { name: "Versiunea anterioară", exact: true })
+    .or(page.getByRole("button", { name: /^\d+ versiuni$/ }));
 
 /** ▶ button — aria-label from property.corners.nextVersion in ro-RO.json. */
 const nextBtnLoc = (page: Page) =>

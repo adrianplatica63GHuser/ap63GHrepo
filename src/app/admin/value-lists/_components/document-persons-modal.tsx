@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Save, Trash2, X } from "lucide-react";
+import { Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -608,7 +608,17 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
             {/* Toolbar */}
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
-                <button
+                {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
+                    stays the one every locator knows. */}
+                <IconButton
+                  icon={Plus}
+                  label={`+ ${t("add")}`}
+                  variant="primary"
+                  size="sm"
+                  // `shrink-0`: the failure sentence is a full instruction and
+                  // this panel is `inset-x-4` on a phone, so without it the
+                  // button would be squeezed before the sentence wraps.
+                  className="shrink-0"
                   onClick={() => setShowAdd(true)}
                   // See `lookupsReady`: the button's enabled condition is the
                   // form's render condition, so a press can never leave the
@@ -626,18 +636,7 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
                   aria-describedby={
                     lookupsFailed ? lookupHintId : lookupsReady ? undefined : lookupWaitId
                   }
-                  // `shrink-0` / `whitespace-nowrap`: the failure sentence is a
-                  // full instruction and this panel is `inset-x-4` on a phone,
-                  // so without them the button's own label wraps mid-word
-                  // before the sentence does.
-                  className={buttonClass({
-                    variant: "primary",
-                    size: "sm",
-                    className: "shrink-0 whitespace-nowrap",
-                  })}
-                >
-                  + {t("add")}
-                </button>
+                />
                 {/* ⚠️ **TWO SPANS, AND AN ADVERSARIAL ROUND FOUND BOTH REASONS.**
 
                     The FAILURE span is rendered unconditionally with a bare

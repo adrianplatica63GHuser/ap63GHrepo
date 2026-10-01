@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
@@ -253,10 +252,17 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
       <div className="flex flex-wrap items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-        <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
-          className={buttonClass({ variant: "primary", size: "lg" })}>
-          {submitting ? t("associating") : t("associate")}
-        </button>
+        <IconButton
+          icon={LinkIcon}
+          label={t("associate")}
+          busy={submitting}
+          busyLabel={t("associating")}
+          showLabel
+          variant="primary"
+          size="lg"
+          onClick={handleAssociate}
+          disabled={submitting || selectedIds.size === 0}
+        />
         <IconButton
           icon={X}
           label={t("cancel")}

@@ -26,7 +26,7 @@
  * would pass the check it exists to fail.
  */
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -141,9 +141,13 @@ export function RecordSyncNotice({
         // #37.42 (A009): ArrowLeft, „Înapoi la listă" its name and tooltip.
         <IconButton href={listHref} icon={ArrowLeft} label={t("backToList")} variant="secondary" size="sm" />
       ) : (
-        <button type="button" onClick={reload} className={buttonClass({ variant: "secondary", size: "sm" })}>
-          {t("reload")}
-        </button>
+        <IconButton
+          icon={RefreshCw}
+          label={t("reload")}
+          variant="secondary"
+          size="sm"
+          onClick={reload}
+        />
       )}
       {confirming && (
         <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

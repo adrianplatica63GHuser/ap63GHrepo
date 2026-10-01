@@ -880,7 +880,8 @@
       "saveErrorSession": "Your session expired — please sign in again and retry.",
       "sectionClassification": "Subjective classification",
       "sectionConnections": "Connections",
-      "whatDoesThisMean": "What does this mean?"
+      "whatDoesThisMean": "What does this mean?",
+      "hideAdd": "Hide"
     },
     "errorBoundary": {
       "map": "The map could not be displayed.",

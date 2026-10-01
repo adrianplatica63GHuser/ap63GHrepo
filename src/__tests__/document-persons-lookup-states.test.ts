@@ -374,8 +374,11 @@ describe("the reason is on screen, not only in the button's silence", () => {
    * regex cost the first draft.
    */
   it("describes the button with whichever sentence is present", () => {
-    const at = code.indexOf('+ {t("add")}');
-    const button = code.slice(code.lastIndexOf("<button", at), at);
+    // #37.44: „+ Adaugă" is a Plus IconButton, the words its label; the
+    // element is read from its tag to its `/>`. (It was `<button …>+ {t("add")}`,
+    // read from the tag to its text.)
+    const at = code.indexOf("label={`+ ${t(\"add\")}`}");
+    const button = code.slice(code.lastIndexOf("<IconButton", at), code.indexOf("/>", at));
     expect(button.replace(/\s+/g, " ")).toContain(
       "aria-describedby={ lookupsFailed ? lookupHintId : lookupsReady ? undefined : lookupWaitId }",
     );

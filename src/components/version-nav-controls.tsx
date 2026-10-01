@@ -16,12 +16,13 @@
 // pointer-events-none (so its empty width never blocks the title).
 //
 // Sizing (Adrian's spec): the version label and "Make Current" button are 25%
-// larger than the base small controls; the ◀/▶ arrow buttons are 50% larger,
-// and the arrows themselves are drawn as thick-stroked SVGs (far heavier and
-// more visible than the hairline ←/→ unicode glyphs they replaced).
+// larger than the base small controls; the ◀/▶ arrow buttons are the large
+// icon size — Lucide's StepBack / StepForward since #37.44, which replaced the
+// thick-stroked drawing (itself the replacement for hairline ←/→ glyphs).
 
 import type { HighlightColor } from "@/lib/versioning/field-diff";
-import { buttonClass } from "@/lib/ui/button-styles";
+import { ArchiveRestore, StepBack, StepForward } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 
 export type VersionNavView = {
   current:        number;
@@ -49,59 +50,11 @@ export type VersionNavLabels = {
   historyChip?:    string;
 };
 
-// Thick-stroked directional arrow (shaft + head). 28px — bare, no button
-// chrome around it; strokeWidth 3 keeps it bold and clearly visible.
-// Colour follows the button text via `currentColor`.
-function NavArrow({ dir }: { dir: "left" | "right" }) {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={3}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {dir === "left" ? (
-        <path d="M20 12 H5 M11 6 L5 12 L11 18" />
-      ) : (
-        <path d="M4 12 H19 M13 6 L19 12 L13 18" />
-      )}
-    </svg>
-  );
-}
-
-// ◀/▶ arrow button — bare (no border / background / shadow); just the SVG
-// arrow. Slice #23.05.UX: the disabled state is now a real colour change
-// (ink -> wire) via the shared helper's `bare` variant, rather than a 30%
-// opacity dip on the enabled colour.
-const ARROW_BTN_CLASS = buttonClass({ variant: "bare", size: "md" });
-
-// Small counterclockwise-rotate icon for the history discovery chip.
-function HistoryIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {/* counterclockwise arc arrow */}
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-    </svg>
-  );
-}
+// Slice #37.44 (A030, A029): the arrows are Lucide's StepBack / StepForward
+// and „Fă curentă" is ArchiveRestore, all through IconButton — so they take
+// the shared tooltip, and the hand-drawn arrow and history glyph this file
+// used to hold are gone. The enabled / disabled rules are unchanged: the same
+// `canPrev`, `canNext` and `canMakeCurrent` decide them.
 
 export function VersionNavControls({
   nav,
@@ -127,32 +80,35 @@ export function VersionNavControls({
             since which one is showing depends on version count, not on
             anything the test controls. */}
         <span className="sr-only">{labels.versionLabel}</span>
-        <button
-          type="button"
+        {/* The chip's words are its count („2 versiuni"), so they stay its
+            name (#37.44: StepBack before them); what pressing it does —
+            „Versiunea anterioară", which was its `title` — is the tooltip's
+            second line and its description. */}
+        <IconButton
+          icon={StepBack}
+          label={labels.historyChip}
+          note={labels.prevVersion}
+          showLabel
+          variant="secondary"
+          size="xs"
+          pill
           onClick={nav.onPrev}
           disabled={!nav.canPrev}
-          title={labels.prevVersion}
-          className={buttonClass({ variant: "secondary", size: "xs", pill: true, className: "gap-1.5" })}
-        >
-          <HistoryIcon />
-          {labels.historyChip}
-        </button>
+        />
       </div>
     );
   }
 
   return (
     <div className="pointer-events-auto flex items-center">
-      <button
-        type="button"
+      <IconButton
+        icon={StepBack}
+        label={labels.prevVersion}
+        variant="bare"
+        size="lg"
         onClick={nav.onPrev}
         disabled={!nav.canPrev}
-        aria-label={labels.prevVersion}
-        title={labels.prevVersion}
-        className={ARROW_BTN_CLASS}
-      >
-        <NavArrow dir="left" />
-      </button>
+      />
       {/* Version label — tightly flanked by the bare arrows. */}
       <span
         className={[
@@ -164,26 +120,26 @@ export function VersionNavControls({
       >
         {labels.versionLabel}
       </span>
-      <button
-        type="button"
+      <IconButton
+        icon={StepForward}
+        label={labels.nextVersion}
+        variant="bare"
+        size="lg"
         onClick={nav.onNext}
         disabled={!nav.canNext}
-        aria-label={labels.nextVersion}
-        title={labels.nextVersion}
-        className={ARROW_BTN_CLASS}
-      >
-        <NavArrow dir="right" />
-      </button>
-      {/* "Make Current" — 25% larger than the base small button (text + padding). */}
-      <button
-        type="button"
+      />
+      {/* „Fă curentă" (A029): ArchiveRestore; its words the name, its hint
+          (the old `title`) the tooltip's second line. */}
+      <IconButton
+        icon={ArchiveRestore}
+        label={labels.makeCurrent}
+        note={labels.makeCurrentHint}
+        variant="secondary"
+        size="lg"
+        className="ml-4"
         onClick={nav.onMakeCurrent}
         disabled={!nav.canMakeCurrent}
-        title={labels.makeCurrentHint}
-        className={buttonClass({ variant: "secondary", size: "lg", className: "ml-4" })}
-      >
-        {labels.makeCurrent}
-      </button>
+      />
     </div>
   );
 }

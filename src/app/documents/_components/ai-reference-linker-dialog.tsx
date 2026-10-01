@@ -47,7 +47,7 @@
  */
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -344,14 +344,14 @@ export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onCl
                     </p>
                     <p className="mt-1 text-xs text-ink dark:text-zinc-300">{reasonFor(c)}</p>
                   </div>
-                  <button
-                    type="button"
+                  <IconButton
+                    icon={LinkIcon}
+                    label={t("link")}
+                    variant="primary"
+                    size="xs"
                     disabled={busy}
                     onClick={() => send({ action: "link", index: item.index, documentId: c.document.id }, "linked")}
-                    className={buttonClass({ variant: "primary", size: "xs" })}
-                  >
-                    {t("link")}
-                  </button>
+                  />
                 </div>
               </li>
             ))}

@@ -49,11 +49,12 @@ import {
   useRef,
   type ButtonHTMLAttributes,
   type ComponentProps,
+  type ComponentType,
   type ReactNode,
   type Ref,
 } from "react";
 import { createPortal } from "react-dom";
-import { LoaderCircle, type LucideIcon } from "lucide-react";
+import { LoaderCircle, type LucideProps } from "lucide-react";
 
 import {
   buttonClass,
@@ -177,8 +178,11 @@ export function IconTooltip({ label, note, children, className, fill = false }: 
 // ── The button ───────────────────────────────────────────────────────────────
 
 type Common = {
-  /** A Lucide icon component, e.g. `ArrowLeft`. */
-  icon: LucideIcon;
+  /**
+   * A Lucide icon component, e.g. `ArrowLeft` — or a component that draws one
+   * with Lucide's props (#37.44's filled BadgeCheck).
+   */
+  icon: ComponentType<LucideProps>;
   /**
    * What the button does, in the words it used to show — its accessible name,
    * and its tooltip when the words are not on screen.
@@ -251,7 +255,10 @@ export function IconButton(props: IconButtonProps) {
   } = props;
 
   const noteId = useId();
-  const describedBy = note ? noteId : undefined;
+  // A caller's own description (a hint beside a disabled button) and the note's
+  // are both kept: the attribute takes a list of ids.
+  const callerDescribedBy = (rest as { "aria-describedby"?: string })["aria-describedby"];
+  const describedBy = [callerDescribedBy, note ? noteId : undefined].filter(Boolean).join(" ") || undefined;
   const name = busy && busyLabel ? busyLabel : label;
   const px = ICON_PX[size];
   const badge = count !== undefined && count > 0 ? count : null;

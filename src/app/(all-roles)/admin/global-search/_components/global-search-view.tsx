@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { RotateCcw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -480,13 +482,13 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         >
           {loading ? t("searching") : t("search")}
         </button>
-        <button
-          type="button"
+        <IconButton
+          icon={RotateCcw}
+          label={t("reset")}
+          variant="secondary"
+          size="lg"
           onClick={onReset}
-          className={buttonClass({ variant: "secondary", size: "lg" })}
-        >
-          {t("reset")}
-        </button>
+        />
       </div>
     </form>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Save, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -224,13 +224,16 @@ export function GroupsListView({ about }: { about?: ReactNode } = {}) {
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <button
+        {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
+            stays the one every locator knows. */}
+        <IconButton
+          icon={Plus}
+          label={`+ ${t("add")}`}
+          variant="primary"
+          size="sm"
           onClick={() => setAdding(true)}
           disabled={adding}
-          className={buttonClass({ variant: "primary", size: "sm" })}
-        >
-          + {t("add")}
-        </button>
+        />
         {query.data && (
           <span className="text-xs text-fade dark:text-zinc-400">
             {t("count", { count: query.data.length })}

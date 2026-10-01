@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { RotateCcw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 
 /**
  * DocTypeEngine — „Distilare Tipizate".                         (Slice #29.09)
@@ -1361,14 +1363,14 @@ export function DocTypeEngine({
             >
               {saving ? t("save.saving") : t("save.button", { count: accepted.length })}
             </button>
-            <button
-              type="button"
+            <IconButton
+              icon={RotateCcw}
+              label={t("review.startOver")}
+              variant="secondary"
+              size="md"
               disabled={saving}
               onClick={startOver}
-              className={buttonClass({ variant: "secondary", size: "md" })}
-            >
-              {t("review.startOver")}
-            </button>
+            />
             <span className="text-xs text-fade dark:text-zinc-400">{t("save.note")}</span>
           </div>
         </>

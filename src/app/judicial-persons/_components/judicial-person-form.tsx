@@ -31,7 +31,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
-import { ArrowLeft, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -1079,24 +1079,21 @@ function ContactPersonRow({
               {(personName as string) || personId}
             </Link>
             {mode !== "view" && (
-              <button
-                type="button"
+              // #37.44 (A036): UserMinus; „Elimină" its name and tooltip.
+              <IconButton
+                icon={UserMinus}
+                label={removeLabel}
+                variant="danger"
+                size="xs"
+                className="shrink-0"
                 onClick={onClear}
-                className={buttonClass({ variant: "danger", size: "xs", className: "shrink-0" })}
-              >
-                {removeLabel}
-              </button>
+              />
             )}
           </>
         ) : (
           mode !== "view" && (
-            <button
-              type="button"
-              onClick={onAdd}
-              className={buttonClass({ variant: "secondary", size: "sm" })}
-            >
-              + {addLabel}
-            </button>
+            // #37.44 (A036): UserPlus in place of „+ …"; the words its name and tooltip.
+            <IconButton icon={UserPlus} label={addLabel} variant="secondary" size="sm" onClick={onAdd} />
           )
         )}
       </div>

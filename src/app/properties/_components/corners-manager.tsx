@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Pencil, Save, Trash2, X } from "lucide-react";
+import { Maximize2, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -655,13 +655,16 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             </button>
           )}
           {onToggleBigMap && (
-            <button
-              type="button"
+            // #37.44 (A028): Maximize2 to open „Hartă extinsă", Minimize2 to „Restrânge".
+            <IconButton
+              icon={bigMap ? Minimize2 : Maximize2}
+              label={bigMap ? t("showSmallMap") : t("showBigMap")}
+              variant="secondary"
+              size="sm"
+              className="ml-4 first:ml-0"
+              aria-pressed={bigMap}
               onClick={onToggleBigMap}
-              className={buttonClass({ variant: "secondary", size: "sm", className: "ml-4 first:ml-0" })}
-            >
-              {bigMap ? t("showSmallMap") : t("showBigMap")}
-            </button>
+            />
           )}
           {onToggleStreetView && (
             <button

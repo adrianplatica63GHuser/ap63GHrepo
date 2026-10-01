@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save } from "lucide-react";
+import { ChevronUp, Plus, Save } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useState } from "react";
@@ -276,13 +276,16 @@ export function GroupEditor({
           {/* Add items toggle */}
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-transparent select-none">.</span>
-            <button
-              type="button"
+            {/* #37.44 (A040): Plus while the picker is hidden, ChevronUp while it
+                shows (as the META INFO toggles); the words the name and tooltip. */}
+            <IconButton
+              icon={showItems ? ChevronUp : Plus}
+              label={showItems ? t("hideItems") : t("addItems")}
+              variant="secondary"
+              size="md"
+              aria-expanded={showItems}
               onClick={() => setShowItems((v) => !v)}
-              className={buttonClass({ variant: "secondary", size: "md" })}
-            >
-              {showItems ? t("hideItems") : t("addItems")}
-            </button>
+            />
           </div>
         </div>
         {error && (

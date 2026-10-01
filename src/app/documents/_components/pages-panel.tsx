@@ -36,7 +36,7 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Save, Trash2, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Maximize2, Minimize2, Printer, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import {
@@ -638,13 +638,15 @@ export function PagesPanel({
         </div>
         <div className="flex items-center gap-2">
           {onToggleBigPage && (
-            <button
-              type="button"
+            // #37.44 (A028): Maximize2 to open „Pagini extinse", Minimize2 to „Restrânge".
+            <IconButton
+              icon={bigPage ? Minimize2 : Maximize2}
+              label={bigPage ? t("showSmallPage") : t("showBigPage")}
+              variant="secondary"
+              size="sm"
+              aria-pressed={bigPage}
               onClick={onToggleBigPage}
-              className={buttonClass({ variant: "secondary", size: "sm" })}
-            >
-              {bigPage ? t("showSmallPage") : t("showBigPage")}
-            </button>
+            />
           )}
           {bigPage && <HelpHint hintKey="big-page-zoom" />}
           {mode === "edit" && (
@@ -771,13 +773,14 @@ export function PagesPanel({
                               onClick={() => loadView(page)}
                             />
 
-                            <ActionBtn
+                            {/* #37.44 (A034): Printer; „Tipărire" its name and tooltip. */}
+                            <IconButton
+                              icon={Printer}
+                              label={t("print")}
+                              variant="secondary"
+                              size="xs"
                               onClick={() => handlePrint(page)}
-                              className="text-ink hover:bg-canvas dark:text-zinc-300 dark:hover:bg-zinc-700"
-                              title={t("print")}
-                            >
-                              {t("print")}
-                            </ActionBtn>
+                            />
 
                             {mode === "edit" && (
                               // #37.43 (A023): Trash2, danger; „Șterge" its name and
@@ -1399,29 +1402,3 @@ function DialogRow({
   );
 }
 
-/** Compact text button used in the table action column. */
-function ActionBtn({
-  onClick,
-  className,
-  title,
-  children,
-}: {
-  onClick:   () => void;
-  className: string;
-  title:     string;
-  children:  React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      className={[
-        "rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}

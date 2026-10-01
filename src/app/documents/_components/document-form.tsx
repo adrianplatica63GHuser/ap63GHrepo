@@ -13,7 +13,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { ArrowLeft, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Building2, Minimize2, MousePointerClick, Pencil, Save, Trash2, User, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -2029,14 +2029,8 @@ export function DocumentForm({
             <span className="text-sm font-semibold text-ink dark:text-zinc-200">
               {t("pages.theaterTitle")}
             </span>
-            <button
-              type="button"
-              onClick={handleCloseTheaterPage}
-              aria-label={t("pages.theaterClose")}
-              className={buttonClass({ variant: "secondary", size: "sm" })}
-            >
-              ✕ {t("pages.theaterClose")}
-            </button>
+            {/* #37.44 (A028): Minimize2 in place of „✕ Restrânge"; „Restrânge" its name and tooltip. */}
+            <IconButton icon={Minimize2} label={t("pages.theaterClose")} variant="secondary" size="sm" onClick={handleCloseTheaterPage} />
           </div>
           {/* Viewer fills the rest */}
           <div className="relative flex-1 min-h-0">
@@ -2818,20 +2812,24 @@ function SurveyorPickerDialog({
               {t("surveyorPicker.stepChooseType")}
             </p>
             <div className="flex gap-3">
-              <button
-                type="button"
+              <IconButton
+                icon={User}
+                label={t("surveyorPicker.btnNatural")}
+                showLabel
+                variant="secondary"
+                size="lg"
+                className="flex-1"
                 onClick={() => handleChooseType("NATURAL")}
-                className={buttonClass({ variant: "secondary", size: "lg", className: "flex-1" })}
-              >
-                {t("surveyorPicker.btnNatural")}
-              </button>
-              <button
-                type="button"
+              />
+              <IconButton
+                icon={Building2}
+                label={t("surveyorPicker.btnJudicial")}
+                showLabel
+                variant="secondary"
+                size="lg"
+                className="flex-1"
                 onClick={() => handleChooseType("JUDICIAL")}
-                className={buttonClass({ variant: "secondary", size: "lg", className: "flex-1" })}
-              >
-                {t("surveyorPicker.btnJudicial")}
-              </button>
+              />
             </div>
             <div className="flex justify-end">
               <IconButton
@@ -2893,13 +2891,13 @@ function SurveyorPickerDialog({
                         <td className="px-3 py-1.5 font-mono text-xs text-fade">{item.code}</td>
                         <td className="px-3 py-1.5 text-ink dark:text-zinc-200">{item.displayName}</td>
                         <td className="px-3 py-1.5 text-right">
-                          <button
-                            type="button"
+                          <IconButton
+                            icon={MousePointerClick}
+                            label={t("surveyorPicker.select")}
+                            variant="primary"
+                            size="xs"
                             onClick={() => onSelect(item)}
-                            className={buttonClass({ variant: "primary", size: "xs" })}
-                          >
-                            {t("surveyorPicker.select")}
-                          </button>
+                          />
                         </td>
                       </tr>
                     ))}

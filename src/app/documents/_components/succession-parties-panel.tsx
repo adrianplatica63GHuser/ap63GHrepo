@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { UserMinus, UserPlus } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -10,7 +12,6 @@ import { useRouter } from "next/navigation";
 // ---------------------------------------------------------------------------
 
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { PANEL_UNIT_STYLE } from "@/lib/ui/field-widths";
 
 /**
@@ -163,14 +164,16 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
                 </td>
                 {mode === "edit" && (
                   <td className="px-2 py-1.5 text-right">
-                    <button
-                      type="button"
+                    <IconButton
+                      icon={UserMinus}
+                      label={t("remove")}
+                      busy={removingId === item.linkId}
+                      busyLabel={t("removing")}
+                      variant="bare-danger"
+                      size="xs"
                       onClick={() => void handleRemove(item)}
                       disabled={removingId === item.linkId}
-                      className={buttonClass({ variant: "bare-danger", size: "xs" })}
-                    >
-                      {removingId === item.linkId ? t("removing") : t("remove")}
-                    </button>
+                    />
                   </td>
                 )}
               </tr>
@@ -185,13 +188,15 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
 
       {mode === "edit" && (
         <div className="mt-3">
-          <button
-            type="button"
+          {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
+              stays the one every locator knows. */}
+          <IconButton
+            icon={UserPlus}
+            label={`+ ${t("addButton")}`}
+            variant="secondary"
+            size="md"
             onClick={handleAddParty}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            + {t("addButton")}
-          </button>
+          />
         </div>
       )}
     </section>

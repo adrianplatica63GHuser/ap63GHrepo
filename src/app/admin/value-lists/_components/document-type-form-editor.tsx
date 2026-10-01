@@ -82,7 +82,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Save, X } from "lucide-react";
+import { Plus, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -970,15 +970,17 @@ export function DocumentTypeFormEditor({
                   `aria-describedby` puts the reason on the control itself, so a
                   screen-reader user meets it at the button rather than having
                   to go looking above. */}
-              <button
-                type="button"
+              {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
+                  stays the one every locator knows. */}
+              <IconButton
+                icon={Plus}
+                label={`+ ${t("add")}`}
+                variant="secondary"
+                size="sm"
+                aria-describedby={formLock !== null ? lockNoteId : undefined}
                 onClick={addRow}
                 disabled={saving || atCapacity || formLock !== null}
-                aria-describedby={formLock !== null ? lockNoteId : undefined}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                + {t("add")}
-              </button>
+              />
               <span className="text-xs text-fade dark:text-zinc-400">
                 {atCapacity
                   ? t("atCapacity", { max: MAX_TEMPLATE_FIELDS })
