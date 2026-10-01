@@ -116,6 +116,7 @@ fixed fixture where the existing one will do.
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
 | [TC-ICON-02](cases/TC-ICON-02.md) | Creionul, Salvarea și Coșul pe o proprietate: modificată, păstrată, ștearsă | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-actions.spec.ts` |
+| [TC-ICON-03](cases/TC-ICON-03.md) | „Asociază” și „Dezasociază” cu pictogramă și cuvinte, și un pas înapoi printre versiuni | ui | happy | — | `confirmed` | 2026-10-01 | `e2e/ui/icon-associations.spec.ts` |
 
 **Thirty-three are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-01 (Slices
 #37.38, #37.40, #37.42 and #37.43, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01 and TC-ICON-02 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first

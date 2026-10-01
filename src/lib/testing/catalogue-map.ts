@@ -47,7 +47,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03"],
   // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
   "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02", "TC-VER-01", "TC-TILES-06", "TC-ICON-01"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01"],
@@ -63,7 +63,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/judicial-persons/new":                 ["TC-PERS-02", "TC-ASSOC-10", "TC-ASSOC-11"],
   "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06", "TC-ASSOC-10", "TC-ASSOC-11", "TC-TILES-02"],
   "/natural-persons/[id]/associate-document": ["TC-ASSOC-03", "TC-LAYOUT-01"],
-  "/properties/[id]/associate-person":     ["TC-ASSOC-04", "TC-LAYOUT-01"],
+  "/properties/[id]/associate-person":     ["TC-ASSOC-04", "TC-LAYOUT-01", "TC-ICON-03"],
   "/natural-persons/[id]/associate-property": ["TC-ASSOC-04", "TC-LAYOUT-01"],
   "/properties/[id]/associate-document":   ["TC-ASSOC-05", "TC-LAYOUT-01"],
   "/judicial-persons/[id]/associate-property": ["TC-ASSOC-06", "TC-LAYOUT-01"],
