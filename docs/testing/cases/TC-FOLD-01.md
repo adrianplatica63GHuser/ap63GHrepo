@@ -5,7 +5,7 @@
 | **Area** | forms |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-01 |
 
 ## What this proves
@@ -82,3 +82,10 @@ unchanged.
 - At the end, all three were removed (DELETE 204 each).
 - Nothing changed between the runs, so the case is confirmed, and
   `e2e/forms/note-fold.spec.ts` translates it.
+
+**2026-10-01 — `automated`.** `e2e/forms/note-fold.spec.ts` translates the case and photographs
+„Note extinse" and the MRZ, folded and open, at 1366 and 1920 px.
+- Its first runner run (`20261001T131538Z-3189`) found that a Property and a Natural Person each
+  draw two „Note" boxes, their own and the address block's. The case's box is the one with the
+  link, so the spec narrows to the folding box that has one.
+- Green as `20261001T131734Z-17747`.
