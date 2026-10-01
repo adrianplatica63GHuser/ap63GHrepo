@@ -61,17 +61,23 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
   DOCUMENT as DOC,
-  LABEL_STYLE,
   PAGES_PANEL_STYLE,
   PANEL_GAP,
-  PANEL_STYLE,
+  PANEL_UNITS,
+  PANEL_UNIT_INNER_REM,
+  boxRem,
   boxStyle,
-  documentRowStyle,
-  fieldsBesidePagesStyle,
-  panelRowStyle,
+  packFieldRows,
+  rem,
+  rowRem,
+  stackedBoxStyle,
   templateFieldWidth,
+  unitRowStyle,
+  unitStyle,
+  unitsInnerRem,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import {
   DiscoverReviewDialog,
   type DiscoverReviewPair,
@@ -89,6 +95,14 @@ import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sy
  * tile mode, where nothing is reordered.
  */
 const PanelOrderContext = createContext<number | undefined>(undefined);
+
+/**
+ * Slice #37.31 — inside a notebook tile's frame. A notebook tile is ONE frame
+ * titled with its tab's name, holding its panels as sections; a `Section` in
+ * here draws no border of its own and is its units' inner width, so the frame
+ * (`w-fit`) comes out exactly as many whole units as its widest panel.
+ */
+const FrameContext = createContext(false);
 
 /** The fees panel's own fields — where a highlight or an error on them is shown. */
 const FEES_FIELDS: ReadonlySet<string> = new Set(["institutionId", "nrDocument", "dateDocument"]);
@@ -1367,6 +1381,23 @@ export function DocumentForm({
       </div>
     </PanelOrderContext.Provider>
   );
+  // Slice #37.31: a notebook tile — or „Câmpuri specifice" for a type with no
+  // notebook — is ONE frame, titled with the tab's name, its panels sections
+  // inside it in the notebook's order, the frame as wide as its widest panel.
+  // Hidden, never unmounted, like every form tile (#37.20).
+  const frameBlock = (tile: string, title: string, children: React.ReactNode) => (
+    <section
+      {...tileProps(tile)}
+      data-frame={tile}
+      className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}`}
+      style={tiles ? { order: tiles.order(tile) } : undefined}
+    >
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{title}</h2>
+      <FrameContext.Provider value={true}>
+        <div className="flex flex-col gap-4">{children}</div>
+      </FrameContext.Provider>
+    </section>
+  );
 
   // An error in a hidden tile: show the tile (for this visit), scroll to the
   // field, focus it and pulse it — the Natural Person's `onInvalid` (#37.17).
@@ -1393,9 +1424,63 @@ export function DocumentForm({
   // `forceFullWidthTextarea` is set for Certificate și referințe so every
   // field there gets Vecinătăți's exact full-width/auto-grow treatment,
   // regardless of that field's own configured `type`.
+  /**
+   * Slice #37.31: a custom field's width, by `templateFieldWidth` exactly as
+   * #37.15 sized it — read by the packing rule (rule 18) as well as by the
+   * field itself, so the rows are worked out from the widths that are drawn.
+   */
+  const customFieldWidth = (
+    f: (typeof templateFields)[number],
+    forceFullWidthTextarea = false,
+  ): FieldWidth & { capped?: boolean } => {
+    if (f.type === "select" && f.options && f.options.length > 0) {
+      const options = selectOptionsForValue(f.options, watchedValues.customFields?.[f.key]);
+      return templateFieldWidth(f, [t("fields.customSelectEmpty"), ...options.map((o) => o.label)]);
+    }
+    return templateFieldWidth(
+      { type: f.type === "select" ? "text" : f.type, width: f.width },
+      [],
+      forceFullWidthTextarea,
+    );
+  };
+
+  /**
+   * A group's fields in the rows the packing rule gives them (rule 18), and
+   * the panel's units: fields flow in form order into rows of the panel's
+   * inner width; a textarea — and every Certificate și referințe field — takes
+   * a row of its own at the panel's whole width. `baseRowsRem`: the widest of
+   * the rows the panel draws before them (the fees panel's own three fields).
+   */
+  const packCustomFields = (
+    fields: readonly (typeof templateFields)[number][],
+    forceFullWidthTextarea = false,
+    baseRowsRem = 0,
+  ): { units: number; nodes: React.ReactNode[] } => {
+    const items = fields.map((f) => {
+      const width = customFieldWidth(f, forceFullWidthTextarea);
+      const isSelect = f.type === "select" && !!f.options && f.options.length > 0;
+      return { key: f.key, width, full: !isSelect && (forceFullWidthTextarea || width.kind === "lines") };
+    });
+    const { units, rows } = packFieldRows(items, { baseRowsRem });
+    const inner = unitsInnerRem(units);
+    const byKey = new Map(fields.map((f) => [f.key, f] as const));
+    const full = new Set(items.filter((i) => i.full).map((i) => i.key));
+    const nodes = rows.map((row) =>
+      row.length === 1 ? (
+        renderCustomField(byKey.get(row[0])!, forceFullWidthTextarea, full.has(row[0]) ? inner : undefined)
+      ) : (
+        <div key={row.join("|")} className={STACKED_ROW_CLASS}>
+          {row.map((k) => renderCustomField(byKey.get(k)!, forceFullWidthTextarea))}
+        </div>
+      ),
+    );
+    return { units, nodes };
+  };
+
   const renderCustomField = (
     f: (typeof templateFields)[number],
     forceFullWidthTextarea = false,
+    fillRem?: number,
   ) => {
     const name = `customFields.${f.key}` as unknown as FieldPath<FormValues>;
     const fieldLabel = f.labelRo || f.labelEn || f.key;
@@ -1425,7 +1510,7 @@ export function DocumentForm({
           options={options}
           // Slice #37.15: as wide as its longest option — the blank one too —
           // from S to XXL, by rule (`templateFieldWidth`).
-          width={templateFieldWidth(f, [emptyLabel, ...options.map((o) => o.label)])}
+          width={customFieldWidth(f, forceFullWidthTextarea)}
           watchValue={watchedValues.customFields?.[f.key]}
           // The blank choice is SELECTABLE here, unlike the type picker's
           // hidden placeholder: a clause ticked by mistake has to be
@@ -1445,11 +1530,7 @@ export function DocumentForm({
     // panel's width with its line breaks, a date or number is a fixed M — or
     // the step the field's own `width` names. A `select` with no options is a
     // text box here, so it is sized as one.
-    const width = templateFieldWidth(
-      { type: f.type === "select" ? "text" : f.type, width: f.width },
-      [],
-      forceFullWidthTextarea,
-    );
+    const width = customFieldWidth(f, forceFullWidthTextarea);
     return (
       <Field
         key={f.key}
@@ -1458,6 +1539,7 @@ export function DocumentForm({
         type={f.type === "date" ? "date" : f.type === "number" ? "number" : "text"}
         register={register}
         width={width}
+        fillRem={fillRem}
         disabled={typeMoveUnresolved}
       />
     );
@@ -1474,8 +1556,14 @@ export function DocumentForm({
   // "Fees". Uses the matched group's own label when one exists (preserves
   // the admin's exact wording); falls back to the generic i18n title for
   // types with no such template group.
+  // Slice #37.31: Instituție / Notariat, the panel's whole width — Nr. document
+  // | Data (rule 14: a number and its date) — then the fees group's own
+  // fields, packed (rule 18). The panel is the fewest units that hold the
+  // widest of all of them: 3 with Instituție at XXL.
+  const feesBaseRem = Math.max(rowRem([DOC.institutionId]), rowRem([DOC.nrDocument, DOC.dateDocument]));
+  const feesPacked = packCustomFields(feesGroup?.fields ?? [], false, feesBaseRem);
   const feesSection = (
-    <Section key="fees" panel="fees" title={feesGroup?.label || t("sections.fees")}>
+    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup?.label || t("sections.fees")}>
       <SelectField
         label={t(cfg.labels.institution)}
         name="institutionId"
@@ -1486,24 +1574,26 @@ export function DocumentForm({
         width={DOC.institutionId}
         watchValue={watchedValues.institutionId}
       />
-      <Field
-        label={t(cfg.labels.nrDocument)}
-        name="nrDocument"
-        register={register}
-        error={errors.nrDocument?.message}
-        highlight={displayHighlights?.nrDocument}
-        width={DOC.nrDocument}
-      />
-      <Field
-        label={t(cfg.labels.dateDocument)}
-        name="dateDocument"
-        type="date"
-        register={register}
-        error={errors.dateDocument?.message}
-        highlight={displayHighlights?.dateDocument}
-        width={DOC.dateDocument}
-      />
-      {feesGroup?.fields.map((f) => renderCustomField(f))}
+      <div className={STACKED_ROW_CLASS}>
+        <Field
+          label={t(cfg.labels.nrDocument)}
+          name="nrDocument"
+          register={register}
+          error={errors.nrDocument?.message}
+          highlight={displayHighlights?.nrDocument}
+          width={DOC.nrDocument}
+        />
+        <Field
+          label={t(cfg.labels.dateDocument)}
+          name="dateDocument"
+          type="date"
+          register={register}
+          error={errors.dateDocument?.message}
+          highlight={displayHighlights?.dateDocument}
+          width={DOC.dateDocument}
+        />
+      </div>
+      {feesPacked.nodes}
     </Section>
   );
 
@@ -1521,10 +1611,11 @@ export function DocumentForm({
   // notebook `feesPaired` is `!!financialGroup` exactly (`feesPairStaysTogether`
   // returns true whenever `tabs` is empty), so nothing about the pre-#36.01
   // rendering changes.
+  const financialPacked = packCustomFields(financialGroup?.fields ?? []);
   const feesOrPairedSection = feesPaired && financialGroup ? (
     <>
-      <Section panel="financial" title={financialGroup.label}>
-        {financialGroup.fields.map((f) => renderCustomField(f))}
+      <Section panel="financial" units={financialPacked.units} title={financialGroup.label}>
+        {financialPacked.nodes}
       </Section>
       {feesSection}
     </>
@@ -1546,6 +1637,7 @@ export function DocumentForm({
   const generalSection = (
       <Section
         panel="general"
+        units={PANEL_UNITS.document.general}
         title={t("sections.general")}
         code={mode !== "create" ? documentCode : undefined}
       >
@@ -1605,14 +1697,9 @@ export function DocumentForm({
           // at a control.
           hint={showNoFormHint ? t("typeForm.noFormHint") : undefined}
         />
-        <Field
-          label={t("fields.subject")}
-          name="subject"
-          register={register}
-          error={errors.subject?.message}
-          highlight={displayHighlights?.subject}
-          width={DOC.subject}
-        />
+        {/* Slice #37.31: Etichetă scurtă moves up next to Tip document — what
+            the document is, then what it is called, then what it is about —
+            each the panel's whole width. */}
         <Field
           label={t("fields.title")}
           name="title"
@@ -1620,6 +1707,16 @@ export function DocumentForm({
           error={errors.title?.message}
           highlight={displayHighlights?.title}
           width={DOC.title}
+          fillRem={PANEL_UNIT_INNER_REM.document.general}
+        />
+        <Field
+          label={t("fields.subject")}
+          name="subject"
+          register={register}
+          error={errors.subject?.message}
+          highlight={displayHighlights?.subject}
+          width={DOC.subject}
+          fillRem={PANEL_UNIT_INNER_REM.document.general}
         />
         <Field
           label={t("fields.notes")}
@@ -1629,6 +1726,7 @@ export function DocumentForm({
           maxLength={4000}
           highlight={displayHighlights?.notes}
           width={DOC.notes}
+          fillRem={PANEL_UNIT_INNER_REM.document.general}
         />
       </Section>
   );
@@ -1653,30 +1751,36 @@ export function DocumentForm({
           from the fees panel's cannot pair with it — half a pair drawn on each
           page would be the same panel twice. It renders alone there instead. */}
       {!feesPaired && financialGroup && financialSoloTab === tab && (
-        <Section panel="financial" title={financialGroup.label}>
-          {financialGroup.fields.map((f) => renderCustomField(f))}
+        <Section panel="financial" units={financialPacked.units} title={financialGroup.label}>
+          {financialPacked.nodes}
         </Section>
       )}
 
       {/* ── Certificate și referințe — every field forced full-width /
           auto-grow (Vecinătăți's exact treatment), whatever `type` is
           configured on it in Reference Data. ──────────────────────────── */}
-      {certificatesGroup && certificatesTab === tab && (
-        <Section panel="certificates" title={certificatesGroup.label}>
-          {certificatesGroup.fields.map((f) => renderCustomField(f, true))}
-        </Section>
-      )}
+      {certificatesGroup && certificatesTab === tab && (() => {
+        const packed = packCustomFields(certificatesGroup.fields, true);
+        return (
+          <Section panel="certificates" units={packed.units} title={certificatesGroup.label}>
+            {packed.nodes}
+          </Section>
+        );
+      })()}
 
       {/* ── Any other template groups — one fixed panel each (Slice #37.15:
           the fields flow two to a row where their widths fit, one where they
           do not, instead of a 2-column grid). ───────────────────────────── */}
       {otherGroups
         .filter(({ fields }) => tabIndexOfPanel(fields, tabs) === tab)
-        .map(({ label, fields }) => (
-          <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} title={label || t("sections.customFields")}>
-            {fields.map((f) => renderCustomField(f))}
-          </Section>
-        ))}
+        .map(({ label, fields }) => {
+          const packed = packCustomFields(fields);
+          return (
+            <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} units={packed.units} title={label || t("sections.customFields")}>
+              {packed.nodes}
+            </Section>
+          );
+        })}
     </>
   );
 
@@ -1711,10 +1815,10 @@ export function DocumentForm({
           {notebook
             ? tabs.map((label, i) => (
                 <div key={label} className="contents">
-                  {tileBlock(tileOfTabIndex(tabs, i), panelsOf(i))}
+                  {frameBlock(tileOfTabIndex(tabs, i), label, panelsOf(i))}
                 </div>
               ))
-            : tileBlock(tileOfTabIndex(tabs, 0), panelsOf(0))}
+            : frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("sections.customFields"), panelsOf(0))}
         </>
       ) : notebook ? (
         <>
@@ -1800,7 +1904,7 @@ export function DocumentForm({
     <div
       // Slice #37.20: as tiles the page's tile row carries the snap.
       className={tiled ? "contents" : "flex flex-col gap-4"}
-      style={tiled ? undefined : showPagesPanel ? documentRowStyle() : panelRowStyle()}
+      style={tiled ? undefined : unitRowStyle("document")}
     >
     {/* Slice #18.06: version controls portalled into the detail-tabs header so
         they sit on the document-name line. Only for an existing document once
@@ -1867,7 +1971,7 @@ export function DocumentForm({
       </>
     ) : showPagesPanel ? (
       <div className="flex flex-wrap items-stretch" style={{ gap: PANEL_GAP }}>
-        <div style={fieldsBesidePagesStyle()}>{formElement}</div>
+        <div className="min-w-0">{formElement}</div>
         <div className="flex flex-col" style={PAGES_PANEL_STYLE} data-panel="pages">
           <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
             <PagesPanel
@@ -2332,17 +2436,22 @@ export function DocumentForm({
 // ---------------------------------------------------------------------------
 
 /**
- * A titled panel: one fixed PANEL_STYLE (32rem) tile.        (Slice #37.15)
+ * A titled panel, a whole number of width units.      (Slice #37.15; #37.31)
  *
- * The fields inside FLOW — each is its label and a box as wide as its step in
- * `src/lib/ui/field-widths.ts`, two to a row where the two fit the panel, one
- * where they do not. No grid column decides a width here any more; the
- * 1/2/3/4-column `columns` prop went with the grid.
+ * Its children are its rows: a stacked field alone, or a `STACKED_ROW_CLASS`
+ * row of several (rule 16 keeps their boxes on one line). `units` comes from
+ * `PANEL_UNITS.document` for the general and fee panels and from the packing
+ * rule (`packFieldRows`) for a type's own groups.
+ *
+ * Inside a notebook tile's frame (`FrameContext`) it is a section of that
+ * frame — no border, its units' inner width, `data-section` rather than
+ * `data-panel` — so the frame is the tile and the tile is whole units.
  */
 function Section({
   title,
   code,
   panel,
+  units,
   children,
 }: {
   title:    string;
@@ -2352,27 +2461,39 @@ function Section({
   code?:    string | null;
   /** Slice #37.15: the panel's name for the e2e width check (`data-panel`). */
   panel:    string;
+  /** Slice #37.31: the panel's width in units. */
+  units:    number;
   children: React.ReactNode;
 }) {
   // Slice #37.20: as tiles, a panel takes its tile's place in the row.
   const order = useContext(PanelOrderContext);
+  const framed = useContext(FrameContext);
+  const heading = (
+    <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+      {title}
+      {code && (
+        <span className="font-mono text-xs font-normal normal-case text-fade dark:text-zinc-500">
+          {code}
+        </span>
+      )}
+    </h2>
+  );
+  if (framed) {
+    return (
+      <section data-section={panel} style={{ width: rem(unitsInnerRem(units)) }}>
+        {heading}
+        <div className="flex flex-col gap-2">{children}</div>
+      </section>
+    );
+  }
   return (
     <section
-      style={order === undefined ? PANEL_STYLE : { ...PANEL_STYLE, order }}
+      style={order === undefined ? unitStyle(units) : { ...unitStyle(units), order }}
       data-panel={panel}
       className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-        {title}
-        {code && (
-          <span className="font-mono text-xs font-normal normal-case text-fade dark:text-zinc-500">
-            {code}
-          </span>
-        )}
-      </h2>
-      <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
-        {children}
-      </div>
+      {heading}
+      <div className="flex flex-col gap-2">{children}</div>
     </section>
   );
 }
@@ -2400,6 +2521,8 @@ type FieldProps = {
    * step. This replaces the old TextAreaField and its auto-grow effect.
    */
   width:      FieldWidth;
+  /** Slice #37.31: the panel's inner width, for a box that fills it. */
+  fillRem?:   number;
 };
 
 /** The box's own look; its width is never a class here — it comes from `boxStyle`. */
@@ -2415,6 +2538,7 @@ function Field({
   highlight,
   disabled,
   width,
+  fillRem,
   maxLength,
 }: FieldProps & { maxLength?: number }) {
   const ring = usePulseRing(highlight);
@@ -2426,44 +2550,45 @@ function Field({
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
+  // Slice #37.31: the label ABOVE its box, the pair as wide as the box — or
+  // the panel, for a box that fills it — and a long label wraps inside it.
+  const box = stackedBoxStyle(fillRem !== undefined ? { ...width, fill: true } : width, fillRem ?? boxRem(width));
   return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
-      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
-        {grows ? (
-          <GrowingText
-            registration={register(name)}
-            width={String(boxStyle(width).width)}
-            lines={width.kind === "lines"}
-            minRows={width.rows ?? 1}
-            maxLength={maxLength}
-            disabled={disabled}
-            // All content here is Romanian legal/notarial text — the browser's
-            // spell-checker (English by default) flags most of it as errors.
-            spellCheck={false}
-            aria-invalid={error ? true : undefined}
-            className={className}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        ) : (
-          <input
-            type={type}
-            {...register(name)}
-            maxLength={maxLength}
-            disabled={disabled}
-            spellCheck={false}
-            aria-invalid={error ? true : undefined}
-            className={className}
-            style={boxStyle(width)}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        )}
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-        )}
-      </div>
+    <label className={STACKED_FIELD_CLASS} style={box}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
+      {grows ? (
+        <GrowingText
+          registration={register(name)}
+          width={String(box.width)}
+          lines={width.kind === "lines"}
+          minRows={width.rows ?? 1}
+          maxLength={maxLength}
+          disabled={disabled}
+          // All content here is Romanian legal/notarial text — the browser's
+          // spell-checker (English by default) flags most of it as errors.
+          spellCheck={false}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      ) : (
+        <input
+          type={type}
+          {...register(name)}
+          maxLength={maxLength}
+          disabled={disabled}
+          spellCheck={false}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          style={box}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      )}
+      {error && (
+        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+      )}
     </label>
   );
 }
@@ -2526,11 +2651,11 @@ function SelectField({
     // drifting to the middle of a two-line block when a hint is present.
     // Slice #37.15 made it unconditional, with the label's pt-1 — the line
     // every Field on this form now keeps, since any of them may grow.
-    <div className="flex items-start gap-2 text-sm">
+    // Slice #37.31: the label above the box, the pair as wide as the box.
+    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
       <label
         htmlFor={fieldId}
-        className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300"
-        style={LABEL_STYLE}
+        className={STACKED_LABEL_CLASS}
       >
         {label}
       </label>

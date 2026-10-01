@@ -88,7 +88,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 3 — open it, „Asocieri": empty, the two buttons, „Înscrisuri citate…".
       await top.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Asocieri");
+      await showTile(page, "Acte corelate");
       await expect(page.getByText("Niciun document asociat")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
       await expect(page.getByText("Înscrisuri citate în acest document")).toBeVisible();
@@ -129,7 +129,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 8 — the contract's „Asocieri": the converse.
       await page.goto(`/documents/${contractId}`);
       await expect(page.getByRole("heading", { name: CONTRACT })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Asocieri");
+      await showTile(page, "Acte corelate");
       const fromContract = page.getByRole("row").filter({ hasText: CERTIFICATE });
       await expect(fromContract).toHaveCount(1, { timeout: 30_000 });
       await expect(fromContract).toContainText("Certificat de Moștenitor");

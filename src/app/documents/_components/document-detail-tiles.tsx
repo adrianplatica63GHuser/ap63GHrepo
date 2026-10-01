@@ -21,10 +21,12 @@
  * that hold a framed field; a hidden one gets its checkbox marked
  * (`markedTiles`), and ticking it shows the frame where it was.
  *
- * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). The
- * row is snapped to whole panels, plus the page image's 40rem when that tile
- * is shown (#37.15). A notebook tile is `display: contents` around its panels,
- * so each of its fixed panels flows in the row by itself. Every tile carries
+ * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). Since
+ * #37.31 every tile is a whole number of width units and the row is
+ * `unitRowStyle("document")`: Date generale 3, Pagini 4 (its 40rem is exactly
+ * four units), each notebook tile ONE frame as wide as its widest panel, and
+ * the list tiles compact — Persoane 6, Proprietăți 3, „Acte corelate" 5, META
+ * INFO 5. Every tile carries
  * `order`, its place in the registry, because the form's tiles and the page's
  * list tiles come from two components and the row must read in one order.
  */
@@ -40,7 +42,7 @@ import { ProcessPanel } from "./process-panel";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { PANEL_GAP, documentRowStyle, panelRowStyle } from "@/lib/ui/field-widths";
+import { LIST_UNITS, META_CELL_REM, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
 import {
   DOCUMENT_STATUS_CLASS,
   type DocumentStatus,
@@ -166,7 +168,7 @@ export function DocumentDetailTiles({
 
       <div
         className="flex flex-col gap-4"
-        style={choice.isShown("pages") ? documentRowStyle() : panelRowStyle()}
+        style={unitRowStyle("document")}
       >
         {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
             made before would be stored under a key the type then replaces. */}
@@ -193,33 +195,34 @@ export function DocumentDetailTiles({
           />
           {choice.isShown("persons") && (
             <div className="max-w-full" style={{ order: order("persons") }}>
-              <ListTile tile="persons" title={labels.persons}>
-                <DocumentPersonsTab documentId={documentId} />
+              <ListTile tile="persons" title={labels.persons} units={LIST_UNITS.document.persons}>
+                <DocumentPersonsTab documentId={documentId} compact />
               </ListTile>
             </div>
           )}
           {choice.isShown("properties") && (
             <div className="max-w-full" style={{ order: order("properties") }}>
-              <ListTile tile="properties" title={labels.properties}>
-                <DocumentPropertiesTab documentId={documentId} />
+              <ListTile tile="properties" title={labels.properties} units={LIST_UNITS.document.properties}>
+                <DocumentPropertiesTab documentId={documentId} compact />
               </ListTile>
             </div>
           )}
           {choice.isShown("associations") && (
             <div className="max-w-full" style={{ order: order("associations") }}>
-              <ListTile tile="associations" title={labels.associations}>
-                <DocumentReferencesTab documentId={documentId} />
+              <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.document.associations}>
+                <DocumentReferencesTab documentId={documentId} compact />
               </ListTile>
             </div>
           )}
           {choice.isShown("metadata") && (
             <div className="max-w-full" style={{ order: order("metadata") }}>
-              <ListTile tile="metadata" title={labels.metadata} wide>
+              <ListTile tile="metadata" title={labels.metadata} units={LIST_UNITS.document.metadata}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}
                   backHref={`/documents/${encodeURIComponent(documentId)}`}
                   backEntityName={documentName}
+                  compactCellRem={META_CELL_REM}
                 />
               </ListTile>
             </div>

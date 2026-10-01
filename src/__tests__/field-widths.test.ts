@@ -76,8 +76,6 @@ import {
   boxStyle,
   columnRem,
   columnsStyle,
-  documentRowStyle,
-  fieldsBesidePagesStyle,
   isStep,
   npRowStyle,
   panelRem,
@@ -200,22 +198,19 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Every panel is a named Section, and a Section is a fixed panel.
     const panels = region(DOC_FORM, "const renderCustomField = (", "const formElement = (");
     expect((panels.match(/<Section\b/g) ?? []).length).toBe((panels.match(/<Section\b[^>]*?\bpanel=/g) ?? []).length);
-    // Slice #37.20: as tiles a panel also takes its tile's `order` — still PANEL_STYLE's width.
-    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/style=\{order === undefined \? PANEL_STYLE : \{ \.\.\.PANEL_STYLE, order \}\}[\s\S]*data-panel=\{panel\}/);
+    // Slice #37.31: a panel is whole units (as tiles it also takes its tile's `order`).
+    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/style=\{order === undefined \? unitStyle\(units\) : \{ \.\.\.unitStyle\(units\), order \}\}[\s\S]*data-panel=\{panel\}/);
     // A type's own fields: the rule, never a width of their own in the form.
-    const custom = region(DOC_FORM, "const renderCustomField = (", "const feesSection = (");
+    const custom = region(DOC_FORM, "const customFieldWidth = (", "const feesSection = (");
     expect(custom.match(/templateFieldWidth\(/g) ?? []).toHaveLength(2);
     expect(custom).not.toMatch(/width=\{(DOC|SCALE)\./);
-    // The row: whole panels and the page panel, the action bar under it at that width.
-    expect(DOC_FORM).toMatch(/style=\{tiled \? undefined : showPagesPanel \? documentRowStyle\(\) : panelRowStyle\(\)\}/);
-    // Slice #37.20: as tiles, the page's tile row carries the snap — with the page image when it is shown.
-    expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).toMatch(/choice\.isShown\("pages"\) \? documentRowStyle\(\) : panelRowStyle\(\)/);
-    expect(DOC_FORM).toMatch(/style=\{fieldsBesidePagesStyle\(\)\}/);
+    // Slice #37.31: the unit row, with or without the page image.
+    expect(DOC_FORM).toMatch(/style=\{tiled \? undefined : unitRowStyle\("document"\)\}/);
+    expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).toMatch(/style=\{unitRowStyle\("document"\)\}/);
     expect(DOC_FORM).toMatch(/style=\{PAGES_PANEL_STYLE\} data-panel="pages"/);
     expect(DOC_FORM).not.toMatch(/lg:grid-cols-5|lg:col-span-[23]/);
     expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).not.toMatch(/max-w-\[93rem\]|mx-auto/);
     expect(code(read("src", "app", "documents", "new", "page.tsx"))).not.toMatch(/max-w-4xl|mx-auto/);
-    expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_STYLE\}/);
   });
 
   it("the panels, the address block and the form itself take their widths from the file", () => {
@@ -586,6 +581,51 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
   });
 });
 
+describe("the Document: labels above, every tile on the unit, notebook tiles as one frame (Slice #37.31)", () => {
+  it("Date generale is Tip document, Etichetă scurtă, Subiect, Note extinse — 3 units, the free text filling it", () => {
+    expect(SCREEN_ROWS.document.general).toEqual([["documentTypeId"], ["title"], ["subject"], ["notes"]]);
+    const general = region(DOC_FORM, "const generalSection = (", "const panelsOf = (");
+    const order = [...general.matchAll(/name="([a-zA-Z]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(["documentTypeId", "title", "subject", "notes"]);
+    for (const f of ["title", "subject", "notes"]) {
+      expect(general).toMatch(new RegExp(`width=\\{DOC\\.${f}\\}\\s+fillRem=\\{PANEL_UNIT_INNER_REM\\.document\\.general\\}`));
+    }
+    expect(PANEL_UNITS.document.general).toBe(3);
+  });
+
+  it("Taxe și onorarii: Instituție — Nr. document | Data (rule 14) — then the fees group packed, 3 units at least", () => {
+    const fees = region(DOC_FORM, "const feesSection = (", "const financialPacked");
+    expect(fees).toMatch(/name="institutionId"[\s\S]*<div className=\{STACKED_ROW_CLASS\}>[\s\S]*name="nrDocument"[\s\S]*name="dateDocument"[\s\S]*\{feesPacked\.nodes\}/);
+    expect(PANEL_UNITS.document.fees).toBe(3);
+  });
+
+  it("a type's own panels are packed (rule 18), and a notebook tile is one frame of them", () => {
+    const panels = region(DOC_FORM, "const panelsOf = (", "const formElement = (");
+    expect(panels).not.toMatch(/\.map\(\(f\) => renderCustomField\(/);
+    expect(panels.match(/packCustomFields\(|financialPacked/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
+    expect(DOC_FORM).toMatch(/frameBlock\(tileOfTabIndex\(tabs, i\), label, panelsOf\(i\)\)/);
+    // Inside a frame a panel is a section of it: no border, `data-section`, its units' inner width.
+    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
+  });
+
+  it("the list tiles are compact and fill their units: Persoane 6, Proprietăți 3, „Acte corelate” 5, META INFO 5", () => {
+    const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
+    // Each table fills its tile to within half a rem (Proprietăți leaves exactly half: 27.5 in 28).
+    for (const [k, units] of [["documentPersons", 6], ["documentProperties", 3], ["documents", 5]] as const) {
+      const room = tileTableRem(units);
+      expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) <= 0.5]).toEqual([k, true]);
+    }
+    expect(LIST_UNITS.document).toEqual({ persons: 6, properties: 3, associations: 5, metadata: 5 });
+    const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
+    for (const k of ["persons", "properties", "associations", "metadata"]) {
+      expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
+    }
+    expect(page.match(/documentId=\{documentId\} compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toMatch(/compactCellRem=\{META_CELL_REM\}/);
+    expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_UNIT_STYLE\.document\.succession\}/);
+  });
+});
+
 describe("a growing field that holds one value", () => {
   it.each([
     ["Ion\nPopescu", "Ion Popescu"],
@@ -650,17 +690,11 @@ describe("the Document's page image and row (#37.15)", () => {
     expect(PAGES_PANEL_REM * 16).toBeGreaterThanOrEqual(576);
   });
 
-  it("the row is whole panels and the page panel, never less than the page panel; the fields take the rest", () => {
-    expect(String(documentRowStyle().width)).toBe("max(40rem, calc(round(down, 100% - 40rem, 33rem) + 40rem))");
-    expect(String(fieldsBesidePagesStyle().width)).toBe("max(32rem, calc(100% - 41rem))");
-    // What the snap gives, by the same arithmetic in rem.
-    const row = (w: number): number => Math.max(PAGES_PANEL_REM, Math.floor((w - PAGES_PANEL_REM) / 33) * 33 + PAGES_PANEL_REM);
-    const fields = (r: number): number => Math.max(PANEL_REM, r - 41);
-    expect(row(99.8)).toBe(73); //   1920 px: one panel and the page image
-    expect(fields(row(99.8))).toBe(32);
-    expect(row(139.8)).toBe(139); // 2560 px: three panels and the page image
-    expect(fields(row(139.8))).toBe(98);
-    expect(row(65.2)).toBe(40); //   1366 px: the page image wraps under one panel
+  it("is exactly four width units, so it joins the unit row unchanged (#37.31, rule 20)", () => {
+    expect(PAGES_PANEL_REM).toBe(unitsRem(4));
+    expect(PANEL_UNITS.document.pages).toBe(4);
+    // At 1920 px the default CVC is Date generale 3, Pagini 4 and Instrument 3 — a full row of 10.
+    expect(PANEL_UNITS.document.general + PANEL_UNITS.document.pages + 3).toBe(10);
   });
 });
 

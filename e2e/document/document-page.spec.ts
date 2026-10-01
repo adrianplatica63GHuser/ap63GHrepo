@@ -46,6 +46,10 @@
  *     one by one. After the widths, „Cadastru", „Stare juridică" and
  *     „Conformitate" are ticked beside the page image and photographed at 1920
  *     and 2560 px (a synthetic record), then „Implicit" puts the default back.
+ *   - Slice #37.31: every tile on the width unit, each notebook tile one frame;
+ *     `expectUnitGrid` checks the row at 1366, 1920 and 2560 px with „Toate".
+ *     The new document, the Plan parcelar and the Certificat de Moștenitor are
+ *     photographed too.
  */
 
 import fs from "fs";
@@ -53,9 +57,9 @@ import path from "path";
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, photograph } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { TILE_GROUP, showTile, tileBox } from "../helpers/tiles";
-import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD } from "../../src/lib/ui/field-widths";
+import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
 const SAMPLES: Record<string, string> = { nrDocument: DOCUMENT.nrDocument.sample };
@@ -87,6 +91,9 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   await group.getByRole("button", { name: "Toate", exact: true }).click();
   await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
   await expectStableWidths(page);
+  // Slice #37.31 — every tile on the width unit: the row is 6 units at 1366 px, 10 at 1920,
+  // 14 at 2560, and each tile — a notebook tile is one frame — a whole number of units.
+  await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
   const numbers = await page.locator('input[type="number"][data-width-field]').evaluateAll((els) =>
     els.map((e) => (e as HTMLElement).dataset.widthField ?? ""),
   );
@@ -179,6 +186,10 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // Step 4 — „Etichetă scurtă" is the title; there is no „Titlu" field.
       await page.getByLabel(/^Etichetă scurtă/).fill(TITLE);
       await expect(page.getByLabel(/^Titlu/)).toHaveCount(0);
+      // Slice #37.31 — the new document, filled with made-up values (typed, then cleared), pictured.
+      await page.getByLabel(/^Subiect/).fill("Vânzarea unei parcele de test");
+      await photograph(page, "document-new", [1366, 1920, 2560], 1200);
+      await page.getByLabel(/^Subiect/).fill("");
 
       // Step 5 — „Salvează"; back to „Acte", the new row on top, count + 1.
       await page.getByRole("button", { name: "Salvează", exact: true }).click();
@@ -212,7 +223,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(10, { timeout: 30_000 });
       for (const tile of ["Date generale", "Pagini", "Instrument"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Cadastru", "Stare juridică", "Conformitate", "Persoane", "Proprietăți", "Asocieri", "META INFO"]) {
+      for (const tile of ["Cadastru", "Stare juridică", "Conformitate", "Persoane", "Proprietăți", "Acte corelate", "META INFO"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(page.getByRole("tab")).toHaveCount(0);
@@ -300,6 +311,10 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
           page.locator(key === "CERTIFICAT_MOSTENITOR" ? '[data-panel="succession-parties"]' : '[data-width-field^="customFields."]').first(),
         ).toBeAttached({ timeout: 30_000 });
         await expectDocumentWidths(page);
+        // Slice #37.31 — the Plan parcelar's „Câmpuri specifice" and the certificate's „Părți", pictured.
+        if (key === "PLAN_PARCELAR" || key === "CERTIFICAT_MOSTENITOR") {
+          await photograph(page, `document-${key.toLowerCase()}`, [1366, 1920, 2560], 1200);
+        }
       }
     } finally {
       for (const id of made) await removeRecord(page.request, "document", id);

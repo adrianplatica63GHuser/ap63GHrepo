@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { PANEL_STYLE } from "@/lib/ui/field-widths";
+import { PANEL_UNIT_STYLE } from "@/lib/ui/field-widths";
 
 /**
  * `linkId` is `person_document.id` (#36.02). This panel reads the same endpoint
@@ -116,9 +116,10 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
 
   return (
     // Slice #37.15: one fixed panel, like every panel on the Document — a
-    // name that does not fit wraps inside its cell.
+    // name that does not fit wraps inside its cell. Slice #37.31: 3 width
+    // units, the fewest that hold Nume, Calitate and „Elimină".
     <section
-      style={PANEL_STYLE}
+      style={PANEL_UNIT_STYLE.document.succession}
       data-panel="succession-parties"
       className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >

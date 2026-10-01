@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { boxStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { NP_LIST_COLUMNS, boxStyle, type ColumnName } from "@/lib/ui/field-widths";
 import {
   COTA_MOD_VALUES,
   formatCotaParte,
@@ -57,7 +57,11 @@ type AssociatedPerson = {
   associatedAt:    string;
 };
 
-type Props = { documentId: string };
+type Props = {
+  documentId: string;
+  /** Slice #37.31 — the Document's unit tile: the compact table that fills it, the share values stacked. */
+  compact?: boolean;
+};
 
 /** What the user has typed but not yet committed, per row. */
 type Draft = { parte?: string; mp?: string };
@@ -97,7 +101,11 @@ function cotaErrorLabel(t: (key: string) => string, error: CotaParseError): stri
   }
 }
 
-export function DocumentPersonsTab({ documentId }: Props) {
+export function DocumentPersonsTab({ documentId, compact = false }: Props) {
+  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.documentPersons : COLUMNS;
+  const [nameCol, roleCol, buttonsCol] = compact
+    ? (["tileName", "tileRole", "openPreviewStacked"] as const)
+    : (["personName", "role", "openPreview"] as const);
   const t           = useTranslations("document.persons");
   const router      = useRouter();
   const queryClient = useQueryClient();
@@ -291,17 +299,28 @@ export function DocumentPersonsTab({ documentId }: Props) {
     <div className="flex flex-col gap-4">
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {items && items.length > 0 ? (
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(columns)}>
+            <FixedColumns columns={columns} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personName")}>{t("colName")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cota")}>{t("colCota")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMp")}>{t("colCotaMp")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMod")}>{t("colCotaMod")}</th>
-                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(nameCol)}>{t("colName")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(roleCol)}>{t("colRole")}</th>
+                {compact ? (
+                  // The three values' names, one under the other, as their boxes are below.
+                  <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("tileCota")}>
+                    <span className="block">{t("colCota")}</span>
+                    <span className="block">{t("colCotaMp")}</span>
+                    <span className="block">{t("colCotaMod")}</span>
+                  </th>
+                ) : (
+                  <>
+                    <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cota")}>{t("colCota")}</th>
+                    <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMp")}>{t("colCotaMp")}</th>
+                    <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMod")}>{t("colCotaMod")}</th>
+                  </>
+                )}
+                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -313,6 +332,79 @@ export function DocumentPersonsTab({ documentId }: Props) {
                   DEFUNCT:    t("qualityDefunct"),
                   MOSTENITOR: t("qualityMostenitor"),
                 });
+                const parteCell = (
+                    <div className="flex flex-col gap-0.5">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={draftOf(item, "parte")}
+                        placeholder={t("cotaPlaceholder")}
+                        disabled={savingId === item.linkId}
+                        aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
+                        aria-invalid={errors.parte ? true : undefined}
+                        onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
+                        onBlur={() => void commitNumeric(item, "parte")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "parte"); }
+                          if (e.key === "Escape") {
+                            clearDraft(item.linkId, "parte");
+                            setCellError(item.linkId, "parte", undefined);
+                          }
+                        }}
+                        className={inputClass(Boolean(errors.parte))}
+                        style={COTA_BOX_STYLE}
+                      />
+                      {errors.parte && (
+                        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                          {cotaErrorLabel(t, errors.parte)}
+                        </span>
+                      )}
+                    </div>
+                );
+                const mpCell = (
+                    <div className="flex flex-col gap-0.5">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={draftOf(item, "mp")}
+                        placeholder={t("cotaMpPlaceholder")}
+                        disabled={savingId === item.linkId}
+                        aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
+                        aria-invalid={errors.mp ? true : undefined}
+                        onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
+                        onBlur={() => void commitNumeric(item, "mp")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "mp"); }
+                          if (e.key === "Escape") {
+                            clearDraft(item.linkId, "mp");
+                            setCellError(item.linkId, "mp", undefined);
+                          }
+                        }}
+                        className={inputClass(Boolean(errors.mp))}
+                        style={COTA_BOX_STYLE}
+                      />
+                      {errors.mp && (
+                        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                          {cotaErrorLabel(t, errors.mp)}
+                        </span>
+                      )}
+                    </div>
+                );
+                const modCell = (
+                    <select
+                      value={item.cotaMod ?? ""}
+                      disabled={savingId === item.linkId}
+                      aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
+                      onChange={(e) => void commitMod(item, e.target.value)}
+                      className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                      style={COTA_BOX_STYLE}
+                    >
+                      <option value="">{t("cotaModPlaceholder")}</option>
+                      {COTA_MOD_VALUES.map((v) => (
+                        <option key={v} value={v}>{modLabel(t, v)}</option>
+                      ))}
+                    </select>
+                );
                 return (
                   <tr
                     key={item.linkId}
@@ -346,84 +438,26 @@ export function DocumentPersonsTab({ documentId }: Props) {
                     <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.displayName}</td>
                     <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{roleLabel}</td>
 
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex flex-col gap-0.5">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={draftOf(item, "parte")}
-                          placeholder={t("cotaPlaceholder")}
-                          disabled={savingId === item.linkId}
-                          aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
-                          aria-invalid={errors.parte ? true : undefined}
-                          onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
-                          onBlur={() => void commitNumeric(item, "parte")}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "parte"); }
-                            if (e.key === "Escape") {
-                              clearDraft(item.linkId, "parte");
-                              setCellError(item.linkId, "parte", undefined);
-                            }
-                          }}
-                          className={inputClass(Boolean(errors.parte))}
-                          style={COTA_BOX_STYLE}
-                        />
-                        {errors.parte && (
-                          <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                            {cotaErrorLabel(t, errors.parte)}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex flex-col gap-0.5">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={draftOf(item, "mp")}
-                          placeholder={t("cotaMpPlaceholder")}
-                          disabled={savingId === item.linkId}
-                          aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
-                          aria-invalid={errors.mp ? true : undefined}
-                          onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
-                          onBlur={() => void commitNumeric(item, "mp")}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "mp"); }
-                            if (e.key === "Escape") {
-                              clearDraft(item.linkId, "mp");
-                              setCellError(item.linkId, "mp", undefined);
-                            }
-                          }}
-                          className={inputClass(Boolean(errors.mp))}
-                          style={COTA_BOX_STYLE}
-                        />
-                        {errors.mp && (
-                          <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                            {cotaErrorLabel(t, errors.mp)}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={item.cotaMod ?? ""}
-                        disabled={savingId === item.linkId}
-                        aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
-                        onChange={(e) => void commitMod(item, e.target.value)}
-                        className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                        style={COTA_BOX_STYLE}
-                      >
-                        <option value="">{t("cotaModPlaceholder")}</option>
-                        {COTA_MOD_VALUES.map((v) => (
-                          <option key={v} value={v}>{modLabel(t, v)}</option>
-                        ))}
-                      </select>
-                    </td>
+                    {/* Slice #37.31: on the Document's unit tile the three share values
+                        stack in one column (6 units); on a wide table, three columns. */}
+                    {compact ? (
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col gap-1">
+                          {parteCell}
+                          {mpCell}
+                          {modCell}
+                        </div>
+                      </td>
+                    ) : (
+                      <>
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{parteCell}</td>
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{mpCell}</td>
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{modCell}</td>
+                      </>
+                    )}
 
                     <td className="px-3 py-2">
-                      <div className="flex gap-1">
+                      <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                         <Link
                           href={`${personPath(item.type, item.id)}?readonly=true`}
                           onClick={(e) => e.stopPropagation()}

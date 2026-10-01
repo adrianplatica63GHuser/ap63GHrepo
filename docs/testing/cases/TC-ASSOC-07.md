@@ -47,19 +47,19 @@ A document, created by hand: „Tip document" **„Certificat de Moștenitor"**,
 |---|---|---|
 | 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Date generale", „Taxe și onorarii" — with the note that this type has no form of its own |
 | 2 | Types `TC-ASSOC-07 Titlu anterior` into „Etichetă scurtă" and presses „Salvează" | Back on „Acte", a new row badged „Nou!", „Certificat de Moștenitor", `TC-ASSOC-07 Titlu anterior` |
-| 3 | Opens it, and presses the tab **„Asocieri"** | „Niciun document asociat", with „Asociază" and „Dezasociază", and below them the panel „Înscrisuri citate în acest document" |
+| 3 | Opens it, and ticks the tile **„Acte corelate"** („Asocieri" before #37.31) | „Niciun document asociat", with „Asociază" and „Dezasociază", and below them the panel „Înscrisuri citate în acest document" |
 | 4 | Presses „Asociază" | „Asociază Document" at `/documents/[id]/associate-reference`, the document's title under it, one filter „Căutare" („Cod sau titlu…"), a table Cod · Tip · Titlu, and a select **„Tip relație"** with „— fără relație —", „Înlocuiește", „Modifică", „Prelungește", „Anulează", „Consolidat cu", „Versiune anterioară a", „Anexă la", „Corecție a", „Titlu anterior al", „Înscris doveditor pentru", „Act adițional la", „Antecontract al" |
 | 5 | Types `TC-DOC-01` into „Căutare", ticks the one row, chooses **„Titlu anterior al"** | Both selected |
-| 6 | Presses „Asociază selecția" | Back on the certificate's „Asocieri" tab |
-| 7 | Reads the row on the certificate's „Asocieri" | A table Tip · Titlu · Tip relație: „Contract de Vânzare", `TC-DOC-01 Contract de test`, and in „Tip relație" **acest document „Titlu anterior al” DOC…** — the certificate is the earlier title of the contract, which is what was chosen |
-| 8 | Opens `TC-DOC-01 Contract de test`, tab „Asocieri" | One row: „Certificat de Moștenitor", `TC-ASSOC-07 Titlu anterior`, and **DOC… „Titlu anterior al” acest document** — the converse, read from the other end |
+| 6 | Presses „Asociază selecția" | Back on the certificate's „Acte corelate" tile |
+| 7 | Reads the row on the certificate's „Acte corelate" | A table Tip · Titlu · Tip relație: „Contract de Vânzare", `TC-DOC-01 Contract de test`, and in „Tip relație" **acest document „Titlu anterior al” DOC…** — the certificate is the earlier title of the contract, which is what was chosen |
+| 8 | Opens `TC-DOC-01 Contract de test`, tile „Acte corelate" | One row: „Certificat de Moștenitor", `TC-ASSOC-07 Titlu anterior`, and **DOC… „Titlu anterior al” acest document** — the converse, read from the other end |
 
 Steps 7 and 8 are the whole assertion. Each must read the sense in which the role was
 chosen; a link that reads the same from both ends, or the other way round from both, is red.
 
 ## At the end — leaving things as they were found
 
-On either document's „Asocieri", select the row's radio and press „Dezasociază" — „Niciun
+On either document's „Acte corelate", select the row's radio and press „Dezasociază" — „Niciun
 document asociat". Then open `TC-ASSOC-07 Titlu anterior`, press „Șterge" at the bottom of the
 form and answer „Ștergeți actul?" with **„Da"**. TC-DOC-01's own cleanup handles the contract.
 
