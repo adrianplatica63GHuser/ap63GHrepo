@@ -19,6 +19,7 @@ import {
   fetchMe,
 } from "@/lib/auth/me-query";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
+import { propertyMapHref } from "@/lib/geo/map-focus";
 import {
   getActiveHref,
   getActiveSectionKey,
@@ -269,6 +270,16 @@ export function SidebarNav() {
   // ── Quick-search ──────────────────────────────────────────────────────────
   const [quickSearch, setQuickSearch] = useState("");
 
+  // Slice #37.38: „Proprietăți — Hartă" pressed on a Property's form opens the
+  // map on that Property. The unsaved-changes guard still goes first, and the
+  // href is worked out only once the user has chosen to leave — so the
+  // mini-map's zoom is the one shown then. Anywhere else it is the plain map.
+  function navigateToPropertyMap() {
+    guardedAction(() => {
+      router.push(propertyMapHref(pathname));
+    });
+  }
+
   function handleQuickSearch(e: React.FormEvent) {
     e.preventDefault();
     const q = quickSearch.trim();
@@ -511,7 +522,7 @@ export function SidebarNav() {
                 isActive={isFlatSectionActive(section.key)}
                 isCollapsed={isCollapsed}
                 sectionLabel={sectionLabels[section.key] ?? section.key}
-                onNavigate={guardedNavigate}
+                onNavigate={section.key === "propertyMap" ? navigateToPropertyMap : guardedNavigate}
               />
             ) : (
               <NavSectionRow

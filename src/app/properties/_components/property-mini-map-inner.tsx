@@ -19,6 +19,7 @@ import {
   type AngleArcInfo,
 } from "@/lib/geo/angles";
 import { HelpHint } from "@/components/help/help-hint";
+import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -142,13 +143,19 @@ type Props = {
   onCornerHover?:    (idx: number | null) => void;
   /** When true, renders a green angle-arc overlay at each polygon corner. */
   showAngles?:       boolean;
+  /**
+   * Slice #37.38: told the map's zoom on every change, and `null` when the map
+   * unmounts. Given only by the form's „Hartă" tile — not by „Hartă extinsă" —
+   * so „Proprietăți — Hartă" opens the big map at the tile's zoom.
+   */
+  onZoomChange?:     (zoom: number | null) => void;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange }: Props) {
   // Slice #32.16: this file had no translator at all, so every one of its
   // controls was English on the Romanian interface. The namespace is
   // `property` rather than `property.map.miniMap` because the STR/SAT toggle
@@ -161,6 +168,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
   const [hoverLatLng, setHoverLatLng] = useState<google.maps.LatLngLiteral | null>(null);
 
   const positions = corners.map((c) => ({ lat: c.lat, lng: c.lon }));
+  // Slice #37.38: the box the camera probe writes the centre and zoom onto.
+  const boxRef = useRef<HTMLDivElement>(null);
 
   // -------------------------------------------------------------------------
   // Exit draw mode
@@ -235,7 +244,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
   // -------------------------------------------------------------------------
 
   return (
-    <div className="relative w-full h-full">
+    <div ref={boxRef} className="relative w-full h-full" data-mini-map>
       <Map
         defaultCenter={DEFAULT_CENTER}
         defaultZoom={DEFAULT_ZOOM}
@@ -251,6 +260,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
         onMousemove={readOnly ? undefined : handleMouseMove}
       >
         <FitBounds corners={corners} />
+        <MapCameraProbe target={boxRef} onZoom={onZoomChange} />
 
         {/* Closed polygon fill */}
         {corners.length >= 3 && (

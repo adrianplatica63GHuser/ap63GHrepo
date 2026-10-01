@@ -33,7 +33,17 @@ import {
   type AngleArcInfo,
 } from "@/lib/geo/angles";
 import { HelpHint } from "@/components/help/help-hint";
+import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths";
+import {
+  FOCUS_BLINK,
+  PROPERTY_MAP_PATH,
+  blinkIntensity,
+  cornersBoundsCenter,
+  parseMapFocus,
+  zoomToFitCorners,
+} from "@/lib/geo/map-focus";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -275,17 +285,32 @@ function MapTypeToggle({
 //
 // `tabKey` prop resets the `fitted` guard whenever the active tab changes so
 // the viewport refits to the (possibly filtered) item set on each tab switch.
+//
+// Slice #37.38: THE FIRST FIT YIELDS TO A FOCUS. When the map was opened on a
+// Property (`?focus=`), `holdInitial` keeps the first fit back until the data
+// says whether that Property is on the map, and `initialView` then replaces it:
+// the camera goes to the Property's centre at the mini-map's zoom, and nothing
+// refits over it. A later tab change by the user refits as before.
+
+type InitialView = { center: LatLng; zoom: number };
 
 function FitAllProperties({
   items,
   tabKey,
+  holdInitial = false,
+  initialView = null,
+  onInitialView,
 }: {
   items:   MapProperty[];
   tabKey:  string;
+  holdInitial?: boolean;
+  initialView?: InitialView | null;
+  onInitialView?: () => void;
 }) {
   const map    = useMap();
   const core   = useMapsLibrary("core");
   const fitted = useRef(false);
+  const firstDone = useRef(false);
 
   // Reset the guard when the tab changes so we refit on every tab switch.
   useEffect(() => {
@@ -294,6 +319,16 @@ function FitAllProperties({
 
   useEffect(() => {
     if (!map || !core || fitted.current) return;
+    if (!firstDone.current) {
+      if (holdInitial) return;
+      if (initialView) {
+        map.moveCamera({ center: initialView.center, zoom: initialView.zoom });
+        fitted.current    = true;
+        firstDone.current = true;
+        onInitialView?.();
+        return;
+      }
+    }
     const allCorners = items.flatMap((p) => p.corners);
     if (allCorners.length === 0) return;
 
@@ -311,10 +346,66 @@ function FitAllProperties({
     );
 
     map.fitBounds(padded, 0);
-    fitted.current = true;
-  }, [map, core, items, tabKey]);
+    fitted.current    = true;
+    firstDone.current = true;
+  }, [map, core, items, tabKey, holdInitial, initialView, onInitialView]);
 
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// FocusBlink — the focused Property blinks green three times (Slice #37.38)
+// ---------------------------------------------------------------------------
+//
+// A second shape drawn over the Property's own, in the green of
+// `.ga-vpulse-green`, whose opacity follows that pulse's curve
+// (`blinkIntensity`: 0.8 s ease-in-out cycles, three of them). At 0 it is
+// invisible and the Property shows its normal colour beneath; after 2.4 s it
+// is gone. Its own component, so only it re-renders on each animation frame —
+// not the whole map with every polygon on it. Not clickable, so a click goes
+// through to the map's own hit-test as on any other polygon.
+
+function FocusBlink({ prop, onDone }: { prop: MapProperty; onDone: () => void }) {
+  const [level, setLevel] = useState(0);
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
+  useEffect(() => {
+    const reduced =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const i = blinkIntensity(now - start, reduced);
+      if (i === null) {
+        setLevel(0);
+        onDoneRef.current();
+        return;
+      }
+      setLevel(i);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const common = {
+    strokeColor:   FOCUS_BLINK.rgb,
+    strokeOpacity: FOCUS_BLINK.peakStroke * level,
+    strokeWeight:  3,
+    fillColor:     FOCUS_BLINK.rgb,
+    fillOpacity:   FOCUS_BLINK.peakFill * level,
+    clickable:     false,
+    zIndex:        1000,
+  };
+  return prop.corners.length >= 3 ? (
+    <Polygon paths={toLatLng(prop.corners)} {...common} />
+  ) : (
+    <Circle center={{ lat: prop.corners[0].lat, lng: prop.corners[0].lon }} radius={25} {...common} />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -775,6 +866,23 @@ export default function PropertyMap() {
     return () => clearInterval(timer);
   }, []);
 
+  // Slice #37.38 — the focus, read ONCE from the link that opened the map
+  // (`?focus=<id>&z=<zoom>`, sent by „Proprietăți — Hartă" from a Property's
+  // form) and then removed from the URL, so a reload or a later visit opens
+  // the ordinary map. Read from `window.location` rather than
+  // `useSearchParams`: this component is client-only (map-view.tsx), and a
+  // value needed once on arrival is not one to re-render on.
+  const [focus] = useState(() =>
+    typeof window === "undefined" ? null : parseMapFocus(window.location.search),
+  );
+  useEffect(() => {
+    if (focus) router.replace(PROPERTY_MAP_PATH, { scroll: false });
+  }, [focus, router]);
+  // "on" while the focused Property blinks, then "done" — read by TC-MAP-01.
+  const [focusBlink, setFocusBlink] = useState<"on" | "done" | null>(null);
+  const startFocusBlink = useCallback(() => setFocusBlink("on"), []);
+  const endFocusBlink   = useCallback(() => setFocusBlink("done"), []);
+
   // Refs shared between outer handlers and inner MapRefCapture
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<google.maps.Map | null>(null);
@@ -878,6 +986,32 @@ export default function PropertyMap() {
 
   // Properties whose corner set is identical to at least one other property.
   const duplicateIds = findDuplicateIds(withGeometry);
+
+  // Slice #37.38 — the focused Property, once the data says whether it is on
+  // the map. Until then the first fit is held back (FitAllProperties).
+  const focusProp = focus && data ? withGeometry.find((p) => p.id === focus.id) ?? null : null;
+  const focusMissing = focus !== null && data !== undefined && focusProp === null;
+  const focusCenter = focusProp ? cornersBoundsCenter(focusProp.corners) : null;
+  const focusZoom = focusProp
+    ? focus?.zoom ??
+      zoomToFitCorners(
+        focusProp.corners,
+        PANEL_UNIT_INNER_REM.property.map * 16 - 2,
+        MAP_BOX_HEIGHT_REM * 16 - 2,
+      )
+    : null;
+  // A new object each render is harmless: FitAllProperties uses it once, on
+  // its first fit, and returns early on every render after that.
+  const focusView: InitialView | null =
+    focusCenter && focusZoom !== null ? { center: focusCenter, zoom: focusZoom } : null;
+  // Never a silent no-op: a focus the map cannot show says which id it was.
+  useEffect(() => {
+    if (focusMissing && focus) {
+      console.warn(
+        `[properties map] focus=${focus.id} is not on the map (deleted since, or no polygon drawn); opening the whole map.`,
+      );
+    }
+  }, [focusMissing, focus]);
 
   // Keep refs in sync after every render.
   useEffect(() => {
@@ -1564,6 +1698,8 @@ export default function PropertyMap() {
       {/* ------------------------------------------------------------------ */}
       <div
         ref={containerRef}
+        data-property-map
+        data-focus-blink={focusBlink ?? undefined}
         className="flex-1 min-h-0 relative"
         style={{
           cursor: anglesMode
@@ -1601,7 +1737,14 @@ export default function PropertyMap() {
         >
           {/* Inner helpers that require useMap() / useMapsLibrary() */}
           <MapRefCapture mapRef={mapRef} />
-          <FitAllProperties items={displayItems} tabKey={activeTab} />
+          <MapCameraProbe target={containerRef} />
+          <FitAllProperties
+            items={displayItems}
+            tabKey={activeTab}
+            holdInitial={focus !== null && data === undefined && !isError}
+            initialView={focusView}
+            onInitialView={startFocusBlink}
+          />
 
           {/* Polygons / circles */}
           {/* Colour: selected (red) > duplicate (blinking pink) > normal (blue) */}
@@ -1654,6 +1797,11 @@ export default function PropertyMap() {
               />
             );
           })}
+
+          {/* Slice #37.38 — the focused Property blinks green, over its own shape */}
+          {focusProp && focusBlink === "on" && (
+            <FocusBlink prop={focusProp} onDone={endFocusBlink} />
+          )}
 
           {/* Corner markers — constant-size red dots */}
           {displayItems.flatMap((prop) =>

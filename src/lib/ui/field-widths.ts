@@ -687,7 +687,8 @@ export const PANEL_UNIT_STYLE = {
 } as const;
 
 /** The mini-map and Street View boxes: their tile's whole inner width, 22rem tall (rule 20). */
-export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.property.map), height: rem(22) };
+export const MAP_BOX_HEIGHT_REM = 22;
+export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.property.map), height: rem(MAP_BOX_HEIGHT_REM) };
 
 /**
  * The list tiles in units (#37.27). Rule 17: the same list is the same size on

@@ -32,9 +32,11 @@ type Props = {
   hoveredCornerIdx?: number | null;
   onCornerHover?:    (idx: number | null) => void;
   showAngles?:       boolean;
+  /** Slice #37.38 — see property-mini-map-inner.tsx. The form's tile only. */
+  onZoomChange?:     (zoom: number | null) => void;
 };
 
-export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles }: Props) {
+export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles, onZoomChange }: Props) {
   return (
     <Inner
       corners={corners}
@@ -43,6 +45,7 @@ export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx,
       hoveredCornerIdx={hoveredCornerIdx}
       onCornerHover={onCornerHover}
       showAngles={showAngles}
+      onZoomChange={onZoomChange}
     />
   );
 }

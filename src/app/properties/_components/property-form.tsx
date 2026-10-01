@@ -58,6 +58,7 @@ import {
 import { CornersManager } from "./corners-manager";
 import { StraightenDialog } from "./straighten-dialog";
 import { PropertyMiniMap } from "./property-mini-map";
+import { setMapFocusSource } from "@/lib/geo/map-focus";
 import { StreetViewPanel } from "./street-view-panel";
 import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
@@ -66,6 +67,7 @@ import { AsyncSelect } from "@/components/forms/async-select";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
   ADDRESS,
+  MAP_BOX_HEIGHT_REM,
   MAP_BOX_STYLE,
   PANEL_GAP,
   PANEL_UNIT_INNER_REM,
@@ -585,6 +587,35 @@ export function PropertyForm({
   const [baseline, setBaseline] = useState<{ values: FormValues; corners: Corner[] }>(
     () => ({ values: initialValues ?? emptyFormValues, corners: initialCorners }),
   );
+
+  // Slice #37.38: „Proprietăți — Hartă" in the sidebar opens the properties map
+  // on this Property, at the zoom the „Hartă" tile shows when it is pressed.
+  // The form offers that through a registry the sidebar reads at click time:
+  // its id, its LATEST saved corners (the baseline — the map draws only current
+  // polygons, so even a historical version on screen centres on the latest),
+  // and the tile's live zoom, which the tile reports and clears when it is
+  // unticked. A Property that is still „Adaugă nou" offers nothing.
+  const miniMapZoomRef = useRef<number | null>(null);
+  const handleMiniMapZoom = useCallback((zoom: number | null) => {
+    miniMapZoomRef.current = zoom;
+  }, []);
+  const latestCornersRef = useRef<Corner[]>(baseline.corners);
+  useEffect(() => {
+    latestCornersRef.current = baseline.corners;
+  }, [baseline.corners]);
+  useEffect(() => {
+    if (mode === "create" || !propertyId) return;
+    return setMapFocusSource({
+      propertyId,
+      latestCorners: () => latestCornersRef.current,
+      miniMapZoom:   () => miniMapZoomRef.current,
+      // The map box inside its 1 px border (MAP_BOX_STYLE), at 16 px to the rem.
+      boxPx: {
+        width:  PANEL_UNIT_INNER_REM.property.map * 16 - 2,
+        height: MAP_BOX_HEIGHT_REM * 16 - 2,
+      },
+    });
+  }, [mode, propertyId]);
 
   // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
   // N-1 -> N change. `pulse` carries the field frames; `cornersPulse` flags a
@@ -1429,6 +1460,7 @@ export function PropertyForm({
                   hoveredCornerIdx={hoveredCornerIdx}
                   onCornerHover={setHoveredCornerIdx}
                   showAngles={showAngles}
+                  onZoomChange={handleMiniMapZoom}
                 />
               </ErrorBoundary>
             </div>
