@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, RotateCw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useRouter } from "next/navigation";
 import { PreviewMap } from "@/app/admin/calculation/_components/preview-map";
@@ -192,12 +192,16 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
           </span>
         )}
         <div className="ml-auto flex gap-2">
-          <button
+          {/* #37.46 (A088): RotateCw + „Re-rulează cu acești parametri", on
+              buttonClass's primary rather than a hand-written cta class. */}
+          <IconButton
+            icon={RotateCw}
+            label={t("detail.rerun")}
+            showLabel
+            variant="primary"
+            size="sm"
             onClick={handleRerun}
-            className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-cta-d"
-          >
-            {t("detail.rerun")}
-          </button>
+          />
         </div>
       </div>
 

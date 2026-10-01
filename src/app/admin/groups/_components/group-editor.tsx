@@ -1,13 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronUp, Plus, Save } from "lucide-react";
+import { ChevronUp, ListMinus, ListPlus, Plus, Save } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -344,14 +343,17 @@ export function GroupEditor({
               />
             }
             footer={
-              <button
-                type="button"
+              // #37.46 (A083): ListPlus + „Adaugă în grup (n)" — the count
+              // stays in the words, no badge.
+              <IconButton
+                icon={ListPlus}
+                label={t("addToGroup", { count: selAvailable.size })}
+                showLabel
+                variant="primary"
+                size="sm"
                 onClick={addSelected}
                 disabled={selAvailable.size === 0}
-                className={buttonClass({ variant: "primary", size: "sm" })}
-              >
-                {t("addToGroup", { count: selAvailable.size })}
-              </button>
+              />
             }
           />
 
@@ -379,14 +381,16 @@ export function GroupEditor({
             }}
             empty={t("panels.inGroupEmpty")}
             footer={
-              <button
-                type="button"
+              // #37.46 (A083): ListMinus + „Elimină din grup (n)".
+              <IconButton
+                icon={ListMinus}
+                label={t("removeFromGroup", { count: selMembers.size })}
+                showLabel
+                variant="danger"
+                size="sm"
                 onClick={removeSelected}
                 disabled={selMembers.size === 0}
-                className={buttonClass({ variant: "danger", size: "sm" })}
-              >
-                {t("removeFromGroup", { count: selMembers.size })}
-              </button>
+              />
             }
           />
         </>

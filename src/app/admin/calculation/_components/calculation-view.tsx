@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RotateCcw } from "lucide-react";
+import { History, PackagePlus, RotateCcw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
-import { buttonClass } from "@/lib/ui/button-styles";
 // Slice #34.20 — the coordinate picker's offer, named once for the two
 // screens that make it. See `picker-accept.ts` for why it is not derived
 // from the file-kind registry.
@@ -259,12 +258,16 @@ export function CalculationView() {
           <p className="mt-1 text-xs text-green-700 dark:text-green-400">
             {t("success.runCode", { code: committed.runCode })}
             {" · "}
-            <Link
+            {/* #37.46 (A087): History, icon-only; „Vezi istoricul calculului"
+                is its name and tooltip. */}
+            <IconButton
               href={`/admin/calculation/history/${committed.runId}`}
-              className="underline hover:no-underline"
-            >
-              {t("success.viewRun")}
-            </Link>
+              icon={History}
+              label={t("success.viewRun")}
+              variant="secondary"
+              size="xs"
+              className="ml-1 align-middle"
+            />
           </p>
           <ul className="mt-2 flex flex-col gap-1">
             {committed.properties.map((p) => (
@@ -521,13 +524,18 @@ export function CalculationView() {
             )}
 
             <div>
-              <button
+              {/* #37.46 (A089): PackagePlus + „Creează proprietăți + grup";
+                  working, „Se creează…" with the spinner in the icon's place. */}
+              <IconButton
+                icon={PackagePlus}
+                label={committing ? t("buttons.creating") : t("buttons.confirm")}
+                busy={committing}
+                showLabel
+                variant="primary"
+                size="lg"
                 onClick={doCommit}
                 disabled={committing || groupDescription.trim().length === 0}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {committing ? t("buttons.creating") : t("buttons.confirm")}
-              </button>
+              />
               <HelpHint hintKey="calc-preview-not-saved" />
             </div>
           </div>

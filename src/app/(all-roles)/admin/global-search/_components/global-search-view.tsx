@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { QueryResultItem } from "@/app/api/admin/global-search/route";
 import { PROVENANCE_VALUES } from "@/lib/metadata/provenance";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { PaginationControls } from "@/components/pagination-controls";
 import {
   PER_TYPE_CAP,
@@ -475,13 +474,18 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
 
       {/* Actions */}
       <div className="mt-5 flex items-center gap-3">
-        <button
+        {/* #37.46 (A090): Search, icon-only; „Caută" is its name and tooltip,
+            „Se caută…" while it works, with the spinner in the icon's place. */}
+        <IconButton
           type="submit"
+          icon={Search}
+          label={t("search")}
+          busy={loading}
+          busyLabel={t("searching")}
+          variant="primary"
+          size="lg"
           disabled={loading}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {loading ? t("searching") : t("search")}
-        </button>
+        />
         <IconButton
           icon={RotateCcw}
           label={t("reset")}

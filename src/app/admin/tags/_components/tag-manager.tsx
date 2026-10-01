@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Save, X } from "lucide-react";
+import { Merge, PencilLine, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { tableUnits, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -320,14 +319,18 @@ function MergeModal({
             onClick={onClose}
             disabled={saving}
           />
-          <button
-            type="button"
+          {/* #37.46 (A076): Merge + „Fuzionează"; working, „Se fuzionează…"
+              with the spinner in the icon's place. */}
+          <IconButton
+            icon={Merge}
+            label={saving ? t("merge.saving") : t("merge.save")}
+            busy={saving}
+            showLabel
+            variant="primary"
+            size="md"
             onClick={handleSave}
             disabled={saving || sources.size < 2 || !target}
-            className={buttonClass({ variant: "primary", size: "md" })}
-          >
-            {saving ? t("merge.saving") : t("merge.save")}
-          </button>
+          />
         </div>
       </div>
     </>
@@ -457,13 +460,15 @@ export function TagManager() {
           <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
             {t("list.title")}
           </h2>
-          <button
-            type="button"
+          {/* #37.46 (A076): Merge + „Fuzionează etichete". */}
+          <IconButton
+            icon={Merge}
+            label={t("merge.open")}
+            showLabel
+            variant="secondary"
+            size="md"
             onClick={() => { setMergeInit([]); setShowMerge(true); }}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {t("merge.open")}
-          </button>
+          />
         </div>
 
         <div className={`${TABLE_FRAME} rounded-lg border border-card-rim dark:border-zinc-800`}>
@@ -493,13 +498,15 @@ export function TagManager() {
                     {row.count}
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <button
-                      type="button"
+                    {/* #37.46 (A077): PencilLine, icon-only; „Redenumește" is
+                        its name and tooltip. */}
+                    <IconButton
+                      icon={PencilLine}
+                      label={t("list.rename")}
+                      variant="secondary"
+                      size="xs"
                       onClick={() => setRenameTarget(row.tag)}
-                      className={buttonClass({ variant: "bare", size: "xs" })}
-                    >
-                      {t("list.rename")}
-                    </button>
+                    />
                   </td>
                 </tr>
               ))}

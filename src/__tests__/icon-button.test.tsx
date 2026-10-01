@@ -17,10 +17,10 @@
  */
 import { createRef } from "react";
 import { act, createEvent, fireEvent, render, screen } from "@testing-library/react";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react";
 
 import { buttonClass, linkClass, BUTTON_SIZES } from "@/lib/ui/button-styles";
-import { IconButton, ICON_PX } from "@/lib/ui/icon-button";
+import { IconButton, ICON_PX, TrailingIcon } from "@/lib/ui/icon-button";
 
 function pointer(el: Element, type: "pointerOver" | "pointerOut", pointerType: string) {
   const ev = createEvent[type](el);
@@ -244,5 +244,21 @@ describe("linkClass (#37.42)", () => {
     const link = linkClass({ variant: "primary", size: "lg" }).split(" ");
     for (const k of button) expect(link).toContain(k);
     expect(link).toContain("hover:bg-cta-d");
+  });
+});
+
+describe("TrailingIcon (#37.46)", () => {
+  it("draws the icon after the link's words, hidden, and leaves the link's name alone", () => {
+    render(
+      <a href="/x" target="_blank" rel="noreferrer">
+        Deschide Tipuri de Document (se deschide într-o filă nouă)
+        <TrailingIcon icon={ExternalLink} />
+      </a>,
+    );
+    const link = screen.getByRole("link", { name: "Deschide Tipuri de Document (se deschide într-o filă nouă)" });
+    const svg = link.querySelector("svg[data-trailing-icon]");
+    expect(svg).toHaveAttribute("aria-hidden", "true");
+    expect(svg?.getAttribute("class")).toContain("lucide-external-link");
+    expect(link.lastElementChild).toBe(svg);
   });
 });

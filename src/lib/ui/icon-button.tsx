@@ -357,3 +357,28 @@ export function IconButton(props: IconButtonProps) {
     </IconTooltip>
   );
 }
+
+// ── An icon after a text link's words ────────────────────────────────────────
+
+/**
+ * An icon AFTER a text link's words — the ExternalLink a link that opens a new
+ * tab carries (#37.46, A096), after the words because that is where users look
+ * for it.
+ *
+ * Not IconButton: these links sit inside a sentence and keep the look of a
+ * link, underline and all; a button's frame around them would make a sentence
+ * of controls. The icon is decoration — the words already say „se deschide
+ * într-o filă nouă" — so it is hidden from the accessibility tree, and the
+ * link's name does not change. One place for its size and alignment, so the
+ * links that use it cannot drift apart.
+ */
+export function TrailingIcon({ icon: Icon }: { icon: ComponentType<LucideProps> }) {
+  return (
+    <Icon
+      size={14}
+      aria-hidden="true"
+      data-trailing-icon=""
+      className="ml-1 inline-block shrink-0 align-[-0.125em]"
+    />
+  );
+}

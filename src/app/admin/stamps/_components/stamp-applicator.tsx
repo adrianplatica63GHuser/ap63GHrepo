@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save } from "lucide-react";
+import { Eraser, Save, Stamp } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -10,7 +10,6 @@ import {
   type StampTargetType,
 } from "@/lib/stamps/validation";
 import { HelpHint } from "@/components/help/help-hint";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { NOTE_FOLD_LINES, SCREEN, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { GrowingText } from "@/components/forms/growing-text";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -452,14 +451,17 @@ export function StampApplicator({
             )}
             empty={t("applicator.availableEmpty")}
             footer={
-              <button
-                type="button"
+              // #37.46 (A080): Stamp + „Aplică ștampila (n)" — the count
+              // stays in the words, no badge.
+              <IconButton
+                icon={Stamp}
+                label={t("applicator.applyStamp", { count: selAvailable.size })}
+                showLabel
+                variant="primary"
+                size="sm"
                 onClick={applySelected}
                 disabled={selAvailable.size === 0}
-                className={buttonClass({ variant: "primary", size: "sm" })}
-              >
-                {t("applicator.applyStamp", { count: selAvailable.size })}
-              </button>
+              />
             }
           />
 
@@ -491,14 +493,16 @@ export function StampApplicator({
             )}
             empty={t("applicator.stampedEmpty")}
             footer={
-              <button
-                type="button"
+              // #37.46 (A081): Eraser + „Elimină ștampila (n)".
+              <IconButton
+                icon={Eraser}
+                label={t("applicator.removeStamp", { count: selStamped.size })}
+                showLabel
+                variant="danger"
+                size="sm"
                 onClick={removeSelected}
                 disabled={selStamped.size === 0}
-                className={buttonClass({ variant: "danger", size: "sm" })}
-              >
-                {t("applicator.removeStamp", { count: selStamped.size })}
-              </button>
+              />
             }
           />
         </>

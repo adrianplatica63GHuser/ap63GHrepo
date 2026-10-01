@@ -62,6 +62,8 @@
  * nothing can be chosen. Every caller therefore gates on the WHITELIST answer.
  */
 
+import { ExternalLink } from "lucide-react";
+import { TrailingIcon } from "@/lib/ui/icon-button";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -161,6 +163,8 @@ export function NoRolesForTypeNote({
                     by a sighted user from the same words, which is the whole of
                     what that split was for. */}
                 {t("noRolesForTypeLink")}
+                {/* #37.46 (A096): a new tab says so with its icon, after the words. */}
+                <TrailingIcon icon={ExternalLink} />
               </Link>
             </p>
           )}

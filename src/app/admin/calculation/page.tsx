@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import { HistoryLink } from "./_components/history-link";
 import { CalculationView } from "./_components/calculation-view";
 
 export default async function CalculationPage() {
@@ -19,12 +19,8 @@ export default async function CalculationPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t("pageTitle")}</h1>
           {/* Beside the heading (Slice #37.22), not at the window's far edge. */}
           <div className="ml-4">
-            <Link
-              href="/admin/calculation/history"
-              className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-            >
-              {th("linkFromCalculation")}
-            </Link>
+            {/* #37.46 (A087): History, icon-only. */}
+            <HistoryLink href="/admin/calculation/history" label={th("linkFromCalculation")} />
           </div>
         </header>
 

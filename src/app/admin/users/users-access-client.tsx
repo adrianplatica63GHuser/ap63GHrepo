@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations, useLocale } from "next-intl";
-import { CheckCircle, XCircle, Clock, UserCheck, UserX } from "lucide-react";
-import { buttonClass } from "@/lib/ui/button-styles";
+import { CheckCircle, Clock, UserCheck, UserX, XCircle } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -337,24 +337,25 @@ function RequestTable({
               {showActions && (
                 <td className="px-4 py-2.5">
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
+                    {/* #37.46 (A074): UserCheck / UserX, icon-only — they had
+                        the icon beside the word; the word is the name and the
+                        tooltip now. */}
+                    <IconButton
+                      icon={UserCheck}
+                      label={t("actions.approve")}
+                      variant="primary"
+                      size="sm"
                       onClick={() => onApprove(row.id)}
                       disabled={isBusy}
-                      className={buttonClass({ variant: "primary", size: "sm", className: "gap-1.5" })}
-                    >
-                      <UserCheck size={12} />
-                      {t("actions.approve")}
-                    </button>
-                    <button
-                      type="button"
+                    />
+                    <IconButton
+                      icon={UserX}
+                      label={t("actions.reject")}
+                      variant="danger"
+                      size="sm"
                       onClick={() => onReject(row.id)}
                       disabled={isBusy}
-                      className={buttonClass({ variant: "danger", size: "sm", className: "gap-1.5" })}
-                    >
-                      <UserX size={12} />
-                      {t("actions.reject")}
-                    </button>
+                    />
                   </div>
                 </td>
               )}

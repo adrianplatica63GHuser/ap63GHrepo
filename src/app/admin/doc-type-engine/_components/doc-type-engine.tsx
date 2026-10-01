@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { RotateCcw } from "lucide-react";
+import { CheckCheck, CircleStop, FolderOpen, Play, RotateCcw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 
 /**
@@ -893,13 +893,15 @@ export function DocTypeEngine({
           </div>
 
           <div className="mt-5">
-            <button
-              type="button"
+            {/* #37.46 (A092): FolderOpen + „Alege folderul cu mostre…". */}
+            <IconButton
+              icon={FolderOpen}
+              label={t("folder.pick")}
+              showLabel
+              variant="secondary"
+              size="md"
               onClick={handlePickFolder}
-              className={buttonClass({ variant: "secondary", size: "md" })}
-            >
-              {t("folder.pick")}
-            </button>
+            />
             {folderName && (
               <p className="mt-2 text-sm text-ink dark:text-zinc-300">
                 {t("folder.picked", { folder: folderName, count: samples.length })}
@@ -973,14 +975,16 @@ export function DocTypeEngine({
           </p>
 
           <div className="mt-3">
-            <button
-              type="button"
+            {/* #37.46 (A093): Play + „Începe citirea". */}
+            <IconButton
+              icon={Play}
+              label={t("run.start")}
+              showLabel
+              variant="primary"
+              size="lg"
               disabled={!canStart}
               onClick={startRun}
-              className={buttonClass({ variant: "primary", size: "lg" })}
-            >
-              {t("run.start")}
-            </button>
+            />
           </div>
         </>
       )}
@@ -1012,14 +1016,18 @@ export function DocTypeEngine({
             </p>
           ) : (
             <div className="mt-4">
-              <button
-                type="button"
+              {/* #37.46 (A093): CircleStop + „Oprește citirea"; „Se oprește…"
+                  with the spinner in the icon's place. */}
+              <IconButton
+                icon={CircleStop}
+                label={cancelling ? t("run.cancelling") : t("run.cancel")}
+                busy={cancelling}
+                showLabel
+                variant="secondary"
+                size="md"
                 disabled={cancelling}
                 onClick={cancelRun}
-                className={buttonClass({ variant: "secondary", size: "md" })}
-              >
-                {cancelling ? t("run.cancelling") : t("run.cancel")}
-              </button>
+              />
               <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("run.cancelNote")}</p>
             </div>
           )}
@@ -1353,16 +1361,20 @@ export function DocTypeEngine({
           )}
 
           <div className="mt-6 flex items-center gap-3">
-            <button
-              type="button"
+            {/* #37.46 (A094): CheckCheck + „Aprobă formularul (n câmpuri)";
+                „Se salvează…" with the spinner in the icon's place. */}
+            <IconButton
+              icon={CheckCheck}
+              label={saving ? t("save.saving") : t("save.button", { count: accepted.length })}
+              busy={saving}
+              showLabel
+              variant="primary"
+              size="lg"
               disabled={
                 saving || accepted.length === 0 || overCapacity || unnamedRow || duplicateRow
               }
               onClick={save}
-              className={buttonClass({ variant: "primary", size: "lg" })}
-            >
-              {saving ? t("save.saving") : t("save.button", { count: accepted.length })}
-            </button>
+            />
             <IconButton
               icon={RotateCcw}
               label={t("review.startOver")}

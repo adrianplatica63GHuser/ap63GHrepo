@@ -3054,8 +3054,8 @@
         "low": "Încredere: mică."
       },
       "unclassified": "{count, plural, one {Un fișier nu a primit un tip — fie nu a putut fi citit ca imagine și nu a fost trimis deloc, fie a fost trimis și nu s-a primit un răspuns, fie sistemul nu l-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} few {# fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} other {# de fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.}}",
-      "goToReferenceData": "Creați acest tip în Date de referință →",
-      "goToEngine": "Creați formularul în „Distilare Tipizate” →",
+      "goToReferenceData": "Creați acest tip în Date de referință",
+      "goToEngine": "Creați formularul în „Distilare Tipizate”",
       "opensInNewTab": "se deschide într-o filă nouă",
       "linksHint": "Legăturile de mai sus, de la fiecare tip, se deschid într-o filă nouă, ca lista de aici să rămână pe ecran cât lucrați.",
       "whatNextTitle": "Ce urmează",

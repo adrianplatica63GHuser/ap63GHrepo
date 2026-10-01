@@ -1,10 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Trash2, X } from "lucide-react";
+import { Plus, Save, Stamp, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
@@ -228,13 +227,16 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <button
+        {/* #37.46 (A082): Plus, icon-only. The name keeps its „+": e2e
+            finds the button by „+ Creare ștampilă", as #37.44 kept „+ Adaugă". */}
+        <IconButton
+          icon={Plus}
+          label={`+ ${t("create")}`}
+          variant="primary"
+          size="sm"
           onClick={() => setCreating(true)}
           disabled={creating}
-          className={buttonClass({ variant: "primary", size: "sm" })}
-        >
-          + {t("create")}
-        </button>
+        />
         {query.data && (
           <span className="text-xs text-fade dark:text-zinc-400">
             {t("count", { count: query.data.length })}
@@ -295,12 +297,15 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
                 </td>
                 <td className="px-4 py-2">
                   <div className="flex flex-wrap gap-2">
-                    <Link
+                    {/* #37.46 (A080): Stamp + „Aplică", a link. */}
+                    <IconButton
                       href={`/admin/stamps/${s.id}`}
-                      className="rounded border border-wire bg-white px-2 py-0.5 text-xs text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                    >
-                      {t("table.apply")}
-                    </Link>
+                      icon={Stamp}
+                      label={t("table.apply")}
+                      showLabel
+                      variant="secondary"
+                      size="xs"
+                    />
                     <IconButton
                       icon={Trash2}
                       label={t("table.delete")}

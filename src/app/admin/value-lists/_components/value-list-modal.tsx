@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { ClipboardList, FolderInput, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
@@ -1381,15 +1381,18 @@ export function ValueListModal({
                   half-typed new type is exactly when somebody wants to check
                   which roles it will accept. */}
               {isDocumentTypes && (
-                <button
+                // #37.46 (A086): Users + „Roluri pe Document".
+                <IconButton
+                  icon={Users}
+                  label={tDocPersons("title")}
+                  showLabel
+                  variant="secondary"
+                  size="sm"
                   onClick={(e) => {
                     docPersonsOpenerRef.current = e.currentTarget;
                     setShowDocPersons(true);
                   }}
-                  className={buttonClass({ variant: "secondary", size: "sm" })}
-                >
-                  {tDocPersons("title")}
-                </button>
+                />
               )}
               </div>
               {/* Slice #27.07: the onboarding backlog, in one click.
@@ -1644,7 +1647,16 @@ export function ValueListModal({
                               name: String(row.name ?? ""),
                             }) ||
                               parseTemplateFields(row.templateFields).length > 0) && (
-                            <button
+                            // #37.46 (A086): ClipboardList + „Formular (n)" — the
+                            // count stays in the words, no badge.
+                            <IconButton
+                              icon={ClipboardList}
+                              label={t("table.editForm", {
+                                count: parseTemplateFields(row.templateFields).length,
+                              })}
+                              showLabel
+                              variant="ghost"
+                              size="xs"
                               onClick={(e) => {
                                 formEditorOpenerRef.current = e.currentTarget;
                                 setFormEditorId(row.id);
@@ -1681,12 +1693,7 @@ export function ValueListModal({
                                 }
                               }}
                               disabled={!!form}
-                              className={buttonClass({ variant: "ghost", size: "xs" })}
-                            >
-                              {t("table.editForm", {
-                                count: parseTemplateFields(row.templateFields).length,
-                              })}
-                            </button>
+                            />
                           )}
                           <IconButton
                             icon={Trash2}
@@ -2250,15 +2257,18 @@ function DeleteDialog({
 
         <div className="flex justify-end gap-2">
           {blocked && targets.length > 0 && (
-            <button
+            // #37.46 (A078): FolderInput + „Mută"; working, „Se mută…" with
+            // the spinner in the icon's place.
+            <IconButton
+              icon={FolderInput}
+              label={reassignMutation.isPending ? t("confirm.moving") : t("confirm.move")}
+              busy={reassignMutation.isPending}
+              showLabel
+              variant="primary"
+              size="sm"
               onClick={() => reassignMutation.mutate()}
               disabled={busy || settling || targetId === ""}
-              className={buttonClass({ variant: "primary", size: "sm" })}
-            >
-              {reassignMutation.isPending
-                ? t("confirm.moving")
-                : t("confirm.move")}
-            </button>
+            />
           )}
           {free && (
             <button

@@ -82,7 +82,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Save, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -943,14 +943,17 @@ export function DocumentTypeFormEditor({
                           </td>
 
                           <td className="py-2">
-                            <button
-                              type="button"
+                            {/* #37.46 (A079): Trash2, icon-only; „Elimină" is its
+                                name and tooltip. The question it opens keeps its
+                                words (A110, #37.43). */}
+                            <IconButton
+                              icon={Trash2}
+                              label={t("remove")}
+                              variant="danger"
+                              size="xs"
                               onClick={(e) => requestRemove(row, e.currentTarget)}
                               disabled={saving}
-                              className={buttonClass({ variant: "danger", size: "xs" })}
-                            >
-                              {t("remove")}
-                            </button>
+                            />
                           </td>
                         </tr>
                       );

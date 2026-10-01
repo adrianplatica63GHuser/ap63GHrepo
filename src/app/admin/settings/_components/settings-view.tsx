@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Save, X } from "lucide-react";
+import { Group, Save, Stamp, Tags, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { DevOnly } from "@/components/dev-only";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
@@ -307,24 +306,11 @@ export function SettingsView() {
       <section {...screenPanel("others", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-ink">{t("sectionOthers")}</h2>
         <div className="flex flex-wrap gap-3">
-          <Link
-            href="/admin/groups"
-            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
-          >
-            {t("othersGroups")}
-          </Link>
-          <Link
-            href="/admin/stamps"
-            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
-          >
-            {t("othersStamps")}
-          </Link>
-          <Link
-            href="/admin/tags"
-            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
-          >
-            {t("othersTags")}
-          </Link>
+          {/* #37.46 (A084): Group / Stamp / Tags + the words, on linkClass's
+              primary rather than a hand-written cta class. */}
+          <IconButton href="/admin/groups" icon={Group} label={t("othersGroups")} showLabel variant="primary" size="md" />
+          <IconButton href="/admin/stamps" icon={Stamp} label={t("othersStamps")} showLabel variant="primary" size="md" />
+          <IconButton href="/admin/tags" icon={Tags} label={t("othersTags")} showLabel variant="primary" size="md" />
         </div>
       </section>
 

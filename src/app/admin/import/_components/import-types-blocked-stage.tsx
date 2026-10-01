@@ -1,5 +1,7 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
+import { TrailingIcon } from "@/lib/ui/icon-button";
 import Link from "next/link";
 
 /**
@@ -661,6 +663,8 @@ export function ImportTypesBlockedStage({
                     >
                       {t("goToEngine")}
                       <span className="sr-only"> {t("opensInNewTab")}</span>
+                      {/* #37.46 (A096): a new tab says so with its icon, after the words. */}
+                      <TrailingIcon icon={ExternalLink} />
                     </Link>
                   ) : (
                     <Link
@@ -671,6 +675,8 @@ export function ImportTypesBlockedStage({
                     >
                       {t("goToReferenceData")}
                       <span className="sr-only"> {t("opensInNewTab")}</span>
+                      {/* #37.46 (A096): a new tab says so with its icon, after the words. */}
+                      <TrailingIcon icon={ExternalLink} />
                     </Link>
                   )}
                 </p>
