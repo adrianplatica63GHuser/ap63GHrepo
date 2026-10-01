@@ -85,7 +85,13 @@ import {
   templateFieldWidth,
   textPx,
   type FieldWidth,
+  ID_CARD_DIALOG_CARD_STYLE,
+  ID_CARD_DIALOG_FIELDS,
+  ID_CARD_DIALOG_ROWS,
+  ID_CARD_INSTITUTION,
+  keepFields,
 } from "@/lib/ui/field-widths";
+import { LAYOUT_EXCEPTIONS } from "@/lib/ui/layout-exceptions";
 
 const ROOT = process.cwd();
 const read = (...p: string[]): string => fs.readFileSync(path.join(ROOT, ...p), "utf8");
@@ -110,6 +116,14 @@ const JP_FORM = code(read("src", "app", "judicial-persons", "_components", "judi
 const PROP_FORM = code(read("src", "app", "properties", "_components", "property-form.tsx"));
 const CORNERS = code(read("src", "app", "properties", "_components", "corners-manager.tsx"));
 const DOC_FORM = code(read("src", "app", "documents", "_components", "document-form.tsx"));
+const ID_CARD_DIALOG = code(read("src", "app", "admin", "import", "_components", "id-card-person-dialog.tsx"));
+
+/** From `start` to the end of the source: a helper that is the file's last. */
+function tail(src: string, start: string): string {
+  const i = src.indexOf(start);
+  if (i < 0) throw new Error(`no "${start}"`);
+  return src.slice(i);
+}
 
 /** The converted screens: every region that lays out fields at fixed widths. */
 const CONVERTED: [string, string][] = [
@@ -117,10 +131,9 @@ const CONVERTED: [string, string][] = [
   ["the Natural Person's Field", region(NP_FORM, "function Field(", "\nfunction ")],
   ["the Natural Person's SelectField", region(NP_FORM, "function SelectField(", "\nfunction ")],
   ["the Natural Person's ReadOnlyField", region(NP_FORM, "function ReadOnlyField(", "\nfunction ")],
-  ["the address block, fixed", region(ADDRESS_BLOCK, "if (fixedWidths) {", "\n  return (")],
-  ["the address block's Field, fixed", region(ADDRESS_BLOCK, "if (width) {", "\n  return (")],
-  // Slice #37.26
-  ["the address block's Field, stacked", region(ADDRESS_BLOCK, "if (width && stacked) {", "\n  if (width) {")],
+  // Slice #37.32: one shape, stacked, for every caller.
+  ["the address block", region(ADDRESS_BLOCK, "export function AddressBlock", "\nfunction Field<")],
+  ["the address block's Field", tail(ADDRESS_BLOCK, "function Field<")],
   // Slice #37.13
   ["the Judicial Person's panels", region(JP_FORM, "<fieldset disabled", "</fieldset>")],
   ["the Judicial Person's Field", region(JP_FORM, "function Field(", "\nfunction ")],
@@ -138,6 +151,10 @@ const CONVERTED: [string, string][] = [
   ["the Document's Section", region(DOC_FORM, "function Section(", "\ntype FieldProps")],
   ["the Document's Field", region(DOC_FORM, "function Field(", "\nfunction ")],
   ["the Document's SelectField", region(DOC_FORM, "function SelectField(", "\ntype TFunc")],
+  // Slice #37.32
+  ["the ID-card dialog's panels", region(ID_CARD_DIALOG, "data-panel-row", "{unmappedEntries")],
+  ["the ID-card dialog's Field", region(ID_CARD_DIALOG, "function Field(", "\nfunction ")],
+  ["the ID-card dialog's SelectField", tail(ID_CARD_DIALOG, "function SelectField(")],
 ];
 
 describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", () => {
@@ -161,7 +178,7 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Slice #37.29: each panel whole width units, from its widest row, and the addresses stacked.
     expect(panels.match(/<section style=\{PANEL_UNIT_STYLE\.judicialPerson\.(identity|contactPersons)\}/g) ?? []).toHaveLength(2);
     expect(panels).not.toMatch(/PANEL_STYLE\}/);
-    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths\s+stacked/g) ?? []).toHaveLength(2);
+    expect(panels.match(/<AddressBlock<FormValues>/g) ?? []).toHaveLength(2);
     // Slice #37.18: as tiles, the page's tile row carries the snap and the form is `contents`.
     expect(JP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : unitRowStyle\("judicialPerson"\)\}/);
     expect(code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{unitRowStyle\("judicialPerson"\)\}/);
@@ -220,14 +237,14 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     expect(panels).not.toMatch(/PANEL_STYLE\}/);
     // Slice #37.27: the same-as-home checkbox is the home address panel's last line, not a panel of its own.
     expect(panels).not.toMatch(/data-panel="correspondence"/);
-    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?stacked\s+footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
-    expect(region(ADDRESS_BLOCK, "if (stacked) {", "\n    return (")).toMatch(/\{footer && <div/);
-    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths\s+stacked/g) ?? []).toHaveLength(2);
+    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
+    expect(ADDRESS_BLOCK).toMatch(/\{footer && <div/);
+    expect(panels.match(/<AddressBlock<FormValues>/g) ?? []).toHaveLength(2);
     // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
     expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : npRowStyle\(\)\}/);
     expect(code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{npRowStyle\(\)\}/);
-    // Stacked only when asked (the two persons, #37.26 and #37.29); the Property draws its own address rows.
-    expect(ADDRESS_BLOCK).toMatch(/<section style=\{PANEL_STYLE\}/);
+    // One shape since #37.32 (the persons and the ID-card dialog); the Property draws its own address rows.
+    expect(ADDRESS_BLOCK).not.toMatch(/<section style=\{PANEL_STYLE\}/);
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{NP_PANEL_STYLE\.address\}/);
   });
 
@@ -351,7 +368,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(rowsOf(idCard)).toEqual(NP_ROWS.idCard.map((r) => [...r]));
     expect(rowsOf(contact)).toEqual(NP_ROWS.contact.map((r) => [...r]));
     // The address block draws ADDRESS_ROWS itself when stacked.
-    expect(region(ADDRESS_BLOCK, "if (stacked) {", "\n    return (")).toMatch(/ADDRESS_ROWS\.map\(/);
+    expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
   });
 
   it("Adrian's rows: Nume | Prenume, Poreclă | CNP, Data nașterii | Vârstă | Gen, Locul nașterii | Tip profesional, then Note", () => {
@@ -408,7 +425,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {
     expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
-    expect(region(ADDRESS_BLOCK, "if (width && stacked) {", "\n  if (width) {")).not.toMatch(/LABEL_STYLE/);
+    expect(ADDRESS_BLOCK).not.toMatch(/LABEL_STYLE/);
     expect(String(npRowStyle().width)).toBe("max(50.25rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
   });
 });
@@ -500,7 +517,7 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
   it("no label is left beside a box, the checkbox is the registered address's last line, and the loose panel is gone", () => {
     expect(JP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(panels).not.toMatch(/data-panel="correspondence"/);
-    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?stacked\s+footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/);
+    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/);
   });
 
   it("the company's list tiles are the Natural Person's, at the same units (rule 17), and META INFO has its cells", () => {
@@ -958,5 +975,58 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
   it("the import wizard is not on the list: it has its own rule file, and FU-269 says what it would need", () => {
     const register = read("docs", "claude", "FOLLOW-UP-REGISTER.md");
     expect(register).toMatch(/\| FU-269 \|[^\n]*import/i);
+  });
+});
+
+describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slice #37.32)", () => {
+  const panels = region(ID_CARD_DIALOG, "data-panel-row", "{unmappedEntries");
+
+  it("keeps the Natural Person's rows, less what a card does not carry — derived, never a copy", () => {
+    expect(ID_CARD_DIALOG_ROWS.identity).toEqual([["lastName", "firstName"], ["cnp"], ["dateOfBirth", "gender"], ["placeOfBirth"]]);
+    expect(ID_CARD_DIALOG_ROWS.idCard).toEqual([
+      ["idDocumentNumber", "idCardNumber"],
+      ["idValidFrom", "idValidUntil"],
+      ["citizenshipId", "idIssuingAuthority"],
+    ]);
+    expect(ID_CARD_DIALOG_ROWS.identity).toEqual(keepFields(NP_ROWS.identity, ID_CARD_DIALOG_FIELDS));
+    expect(ID_CARD_DIALOG_ROWS.idCard).toEqual(keepFields(NP_ROWS.idCard, ID_CARD_DIALOG_FIELDS));
+    expect(keepFields([["a", "b"], ["c"]], ["b"])).toEqual([["b"]]);
+    const file = code(read("src", "lib", "ui", "field-widths.ts"));
+    expect(file).toMatch(/identity: keepFields\(NP_ROWS\.identity, ID_CARD_DIALOG_FIELDS\)/);
+    expect(file).toMatch(/idCard: keepFields\(NP_ROWS\.idCard, ID_CARD_DIALOG_FIELDS\)/);
+    // Every field the dialog keeps is a row's; none of them is dropped on the way.
+    expect([...Object.values(ID_CARD_DIALOG_ROWS).flat(2)].sort()).toEqual([...ID_CARD_DIALOG_FIELDS].sort());
+  });
+
+  it("draws them, each field at its Natural Person width and label, in the Natural Person's 3-unit panels", () => {
+    for (const p of ["identity", "idCard"]) {
+      expect(panels).toMatch(new RegExp(`<section style=\\{NP_PANEL_STYLE\\.${p}\\}`));
+      expect(panels).toMatch(new RegExp(`ID_CARD_DIALOG_ROWS\\.${p}\\.map\\(`));
+    }
+    expect([NP_PANEL_UNITS.identity, NP_PANEL_UNITS.idCard, NP_PANEL_UNITS.address]).toEqual([3, 3, 3]);
+    const field = region(ID_CARD_DIALOG, "const reviewField = (", "if (fatalError) {");
+    expect(field).toMatch(/const width = NATURAL_PERSON\[name\];/);
+    expect(field).toMatch(/const label = tNp\(`fields\./);
+    expect(field.match(/width=\{width\}/g) ?? []).toHaveLength(3);
+    expect(panels).not.toMatch(/grid-cols-2/);
+    // Instituție: its own row under Emisă de, the panel's whole width, its offer and its retry under it.
+    expect(ID_CARD_INSTITUTION.fill).toBe(true);
+    expect(panels).toMatch(/ID_CARD_DIALOG_ROWS\.idCard\.map[\s\S]*data-institution-row[\s\S]*style=\{INSTITUTION_BOX\}[\s\S]*offerInstitutionAdd &&[\s\S]*reloadInstitutions/);
+    // The address block's one shape, the reading's ⚠ marks carried through.
+    expect(panels).toMatch(/<AddressBlock<FormValues>[\s\S]*?warnFields=\{addressWarnFields\}/);
+  });
+
+  it("the card is wide only when the review shows, and holds two 3-unit panels side by side", () => {
+    expect(unitsRem(NP_PANEL_UNITS.identity) + UNIT_GAP_REM + unitsRem(NP_PANEL_UNITS.idCard)).toBe(unitsRem(6));
+    expect(ID_CARD_DIALOG_CARD_STYLE.maxWidth).toBe("65rem");
+    expect(ID_CARD_DIALOG).toMatch(/wide=\{showForm\}/);
+    const card = code(read("src", "components", "persons", "person-resolution-dialog.tsx"));
+    expect(card).toMatch(/wide = false/);
+    expect(card).toMatch(/style=\{wide \? ID_CARD_DIALOG_CARD_STYLE : undefined\}/);
+  });
+
+  it("the address block's free-width branch is gone, and its layout exception with it", () => {
+    expect(ADDRESS_BLOCK).not.toMatch(/w-\[5\.5rem\]|fixedWidths|grid-cols-2/);
+    expect(LAYOUT_EXCEPTIONS.some((e) => e.file === "src/components/address/address-block.tsx")).toBe(false);
   });
 });

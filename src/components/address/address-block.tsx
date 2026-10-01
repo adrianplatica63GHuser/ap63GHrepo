@@ -32,12 +32,9 @@ import { GrowingText } from "@/components/forms/growing-text";
 import {
   ADDRESS,
   ADDRESS_ROWS,
-  LABEL_STYLE,
   NP_PANEL_INNER_REM,
   NP_PANEL_STYLE,
-  PANEL_STYLE,
   boxRem,
-  boxStyle,
   stackedBoxStyle,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
@@ -74,10 +71,9 @@ type Props<TFormValues extends FieldValues> = {
   errors: AddressErrors;
   /**
    * Optional set of sub-field names ("streetLine", "postalCode", "locality",
-   * "county", "country") to flag with a ⚠ badge — used by the Import →
-   * Classify → Person review panel to surface low-confidence vision-API
-   * extractions. Omitted (or empty) by every other caller, so this is a
-   * no-op everywhere except that one screen.
+   * "county", "country") to flag with a ⚠ badge — used by the import wizard's
+   * ID-card dialog to surface low-confidence vision-API extractions. Omitted
+   * (or empty) by every other caller, so this is a no-op everywhere else.
    */
   warnFields?: Set<string>;
   /**
@@ -88,22 +84,7 @@ type Props<TFormValues extends FieldValues> = {
    */
   highlights?: AddressHighlights;
   /**
-   * Slice #37.12: one panel wide, every box at its width from
-   * `src/lib/ui/field-widths.ts` (`ADDRESS`), the street and notes growing
-   * downward. The Natural Person form opts in; #37.13 and #37.14 find it ready.
-   * Without it — the import wizard's ID-card dialog, which this slice does not
-   * touch — the block keeps its two-column grid and fills its container.
-   */
-  fixedWidths?: boolean;
-  /**
-   * Slice #37.26: with `fixedWidths`, every label sits ABOVE its box, the rows
-   * are `ADDRESS_ROWS`, Note takes the panel's whole width, and the panel is the
-   * fewest width units that hold its widest row (Stradă; #37.27) rather than 32rem. The Natural Person asks
-   * for it; the Judicial Person and the Property keep their labels beside.
-   */
-  stacked?: boolean;
-  /**
-   * Slice #37.27: a last line inside the stacked panel, under Note — the
+   * Slice #37.27: a last line inside the panel, under Note — the
    * Natural Person's „same as home" checkbox, which used to take a panel's
    * room of its own beside this one.
    */
@@ -117,8 +98,6 @@ export function AddressBlock<TFormValues extends FieldValues>({
   errors,
   warnFields,
   highlights,
-  fixedWidths = false,
-  stacked = false,
   footer,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
@@ -126,140 +105,58 @@ export function AddressBlock<TFormValues extends FieldValues>({
   const warn = (sub: string) => warnFields?.has(sub) ?? false;
   const hl = (sub: keyof NonNullable<AddressHighlights>) => highlights?.[sub];
 
-  if (fixedWidths) {
-    const field = (sub: keyof typeof ADDRESS, label: string, err?: string, warnable = true) => (
-      <Field
-        label={label}
-        name={f(sub)}
-        register={register}
-        error={err}
-        warn={warnable && warn(sub)}
-        highlight={hl(sub)}
-        width={ADDRESS[sub]}
-        stacked={stacked}
-        fillRem={NP_PANEL_INNER_REM.address}
-      />
-    );
-    if (stacked) {
-      const labels: Record<keyof typeof ADDRESS, string> = {
-        streetLine: t("streetLine"),
-        postalCode: t("postalCode"),
-        locality: t("locality"),
-        county: t("county"),
-        country: t("country"),
-        notes: t("notes"),
-      };
-      return (
-        <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-            {title}
-          </h2>
-          <div className="flex flex-col gap-2">
-            {ADDRESS_ROWS.map((row) => (
-              <div key={row.join("|")} className={STACKED_ROW_CLASS}>
-                {row.map((sub) => (
-                  <Fragment key={sub}>{field(sub, labels[sub], errors?.[sub]?.message, sub !== "notes")}</Fragment>
-                ))}
-              </div>
-            ))}
-            {footer && <div className="pt-1" data-address-footer>{footer}</div>}
-          </div>
-        </section>
-      );
-    }
-    return (
-      <section style={PANEL_STYLE} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {title}
-        </h2>
-        <div className="flex flex-col gap-2">
-          {field("streetLine", t("streetLine"), errors?.streetLine?.message)}
-          {/* Cod poștal (S) and Localitate (L) share a row only with a 0.25rem
-              gap: with gap-2 they need 30.5rem and a panel has 30.375 inside,
-              so Localitate wrapped onto a line of its own (field-widths.test.ts). */}
-          <div className="flex flex-wrap gap-x-1 gap-y-2">
-            {field("postalCode", t("postalCode"), errors?.postalCode?.message)}
-            {field("locality", t("locality"), errors?.locality?.message)}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {field("county", t("county"), errors?.county?.message)}
-            {field("country", t("country"), errors?.country?.message)}
-          </div>
-          {field("notes", t("notes"), errors?.notes?.message, false)}
-        </div>
-      </section>
-    );
-  }
-
+  /**
+   * ONE SHAPE: LABELS ABOVE THEIR BOXES, ON THE UNIT.   (#37.26, #37.29, #37.32)
+   *
+   * Every caller — the Natural Person, the Judicial Person and the ID-card
+   * dialog — draws the block the same way: every label above its box, the rows
+   * `ADDRESS_ROWS`, every box at its width from `ADDRESS`, Note the panel's
+   * whole width, the panel the fewest width units that hold its widest row.
+   * #37.32 removed the two other shapes: the labels-beside one (no caller since
+   * #37.29) and the free-width grid that served only the ID-card dialog.
+   */
+  const labels: Record<keyof typeof ADDRESS, string> = {
+    streetLine: t("streetLine"),
+    postalCode: t("postalCode"),
+    locality: t("locality"),
+    county: t("county"),
+    country: t("country"),
+    notes: t("notes"),
+  };
+  const field = (sub: keyof typeof ADDRESS) => (
+    <Field
+      label={labels[sub]}
+      name={f(sub)}
+      register={register}
+      error={errors?.[sub]?.message}
+      warn={sub !== "notes" && warn(sub)}
+      highlight={hl(sub)}
+      width={ADDRESS[sub]}
+      fillRem={NP_PANEL_INNER_REM.address}
+    />
+  );
   return (
-    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
       </h2>
       <div className="flex flex-col gap-2">
-        {/* Row 1: Street Line | Notes */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={t("streetLine")}
-            name={f("streetLine")}
-            register={register}
-            error={errors?.streetLine?.message}
-            warn={warn("streetLine")}
-            highlight={hl("streetLine")}
-          />
-          <Field
-            label={t("notes")}
-            name={f("notes")}
-            register={register}
-            error={errors?.notes?.message}
-            highlight={hl("notes")}
-          />
-        </div>
-        {/* Row 2: Postal Code | Locality */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={t("postalCode")}
-            name={f("postalCode")}
-            register={register}
-            error={errors?.postalCode?.message}
-            warn={warn("postalCode")}
-            highlight={hl("postalCode")}
-          />
-          <Field
-            label={t("locality")}
-            name={f("locality")}
-            register={register}
-            error={errors?.locality?.message}
-            warn={warn("locality")}
-            highlight={hl("locality")}
-          />
-        </div>
-        {/* Row 3: County | Country */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={t("county")}
-            name={f("county")}
-            register={register}
-            error={errors?.county?.message}
-            warn={warn("county")}
-            highlight={hl("county")}
-          />
-          <Field
-            label={t("country")}
-            name={f("country")}
-            register={register}
-            error={errors?.country?.message}
-            warn={warn("country")}
-            highlight={hl("country")}
-          />
-        </div>
+        {ADDRESS_ROWS.map((row) => (
+          <div key={row.join("|")} className={STACKED_ROW_CLASS}>
+            {row.map((sub) => (
+              <Fragment key={sub}>{field(sub)}</Fragment>
+            ))}
+          </div>
+        ))}
+        {footer && <div className="pt-1" data-address-footer>{footer}</div>}
       </div>
     </section>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Local field helper (matches the inline-label style from Slice #4.3)
+// Local field helper — the label above its box, the pair exactly as wide as
+// the box (Slice #37.26)
 // ---------------------------------------------------------------------------
 
 function Field<TFormValues extends FieldValues>({
@@ -270,7 +167,6 @@ function Field<TFormValues extends FieldValues>({
   warn,
   highlight,
   width,
-  stacked = false,
   fillRem,
 }: {
   label: string;
@@ -279,17 +175,14 @@ function Field<TFormValues extends FieldValues>({
   error?: string;
   warn?: boolean;
   highlight?: HighlightColor;
-  /** Slice #37.12: set on a fixed-width block; absent, the box fills its grid cell as before. */
-  width?: FieldWidth;
-  /** Slice #37.26: the label above the box (with `width` only). */
-  stacked?: boolean;
-  /** Slice #37.26: a stacked panel's inner width, for the box that `fill`s it (Note). */
-  fillRem?: number;
+  width: FieldWidth;
+  /** The panel's inner width, for the box that `fill`s it (Note). */
+  fillRem: number;
 }) {
   // Static ring on a historical version; animated pulse on the freshly-
   // navigated-to latest (Bug 1). The pulsing flag comes from FieldPulseContext,
   // which the versioned person form provides; defaults to a static ring
-  // elsewhere (e.g. the Import → Classify person panel).
+  // elsewhere (e.g. the import wizard's ID-card dialog).
   const ring = usePulseRing(highlight);
   const boxClass = [
     "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
@@ -298,111 +191,41 @@ function Field<TFormValues extends FieldValues>({
       : "border-wire focus:border-focus dark:border-zinc-700",
     ring,
   ].join(" ");
-  if (width && stacked) {
-    // Slice #37.26: the label above the box, the pair exactly as wide as the box.
-    const grows = width.kind === "grows" || width.kind === "lines";
-    const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
-    return (
-      <label className={STACKED_FIELD_CLASS} style={box}>
-        <span className={STACKED_LABEL_CLASS}>
-          {label}
-          {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
-        </span>
-        {grows ? (
-          <GrowingText
-            registration={register(name)}
-            width={String(box.width)}
-            lines={width.kind === "lines"}
-            minRows={width.rows ?? 1}
-            aria-invalid={error ? true : undefined}
-            className={boxClass}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        ) : (
-          <input
-            type="text"
-            {...register(name)}
-            aria-invalid={error ? true : undefined}
-            className={boxClass}
-            style={box}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        )}
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">
-            {error}
-          </span>
-        )}
-      </label>
-    );
-  }
-  if (width) {
-    const grows = width.kind === "grows" || width.kind === "lines";
-    return (
-      <label className="flex items-start gap-2 text-sm">
-        <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
-          {label}
-          {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
-        </span>
-        <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
-          {grows ? (
-            <GrowingText
-              registration={register(name)}
-              width={String(boxStyle(width).width)}
-              lines={width.kind === "lines"}
-              minRows={width.rows ?? 1}
-              aria-invalid={error ? true : undefined}
-              className={boxClass}
-              data-width-field={name}
-              data-width-kind={width.kind}
-            />
-          ) : (
-            <input
-              type="text"
-              {...register(name)}
-              aria-invalid={error ? true : undefined}
-              className={boxClass}
-              style={boxStyle(width)}
-              data-width-field={name}
-              data-width-kind={width.kind}
-            />
-          )}
-          {error && (
-            <span className="text-xs text-red-600 dark:text-red-400">
-              {error}
-            </span>
-          )}
-        </div>
-      </label>
-    );
-  }
+  const grows = width.kind === "grows" || width.kind === "lines";
+  const box = stackedBoxStyle(width, width.fill ? fillRem : boxRem(width));
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">
+    <label className={STACKED_FIELD_CLASS} style={box}>
+      <span className={STACKED_LABEL_CLASS}>
         {label}
-        {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
+        {warn && <span className="ml-1 text-amber-600 dark:text-amber-400" data-low-confidence>⚠</span>}
       </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      {grows ? (
+        <GrowingText
+          registration={register(name)}
+          width={String(box.width)}
+          lines={width.kind === "lines"}
+          minRows={width.rows ?? 1}
+          aria-invalid={error ? true : undefined}
+          className={boxClass}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      ) : (
         <input
           type="text"
           {...register(name)}
           aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
-            ring,
-          ].join(" ")}
+          className={boxClass}
+          style={box}
+          data-width-field={name}
+          data-width-kind={width.kind}
         />
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">
-            {error}
-          </span>
-        )}
-      </div>
+      )}
+      {error && (
+        <span className="text-xs text-red-600 dark:text-red-400">
+          {error}
+        </span>
+      )}
     </label>
   );
 }

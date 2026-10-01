@@ -787,6 +787,65 @@ export function npRowStyle(): CSSProperties {
 export const NP_VALIDITY_REM =
   NP_PANEL_INNER_REM.idCard - rowRem([NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil]) - STACK_GAP_REM;
 
+// ---- the ID-card dialog, the Natural Person's rows (#37.32) -----------------------------
+
+/**
+ * THE ID-CARD DIALOG DRAWS THE NATURAL PERSON'S ROWS.          (Slice #37.32)
+ *
+ * „Creează persoană din cartea de identitate" shows what it read from a card
+ * exactly as the Natural Person's form will show it once saved: the same rows,
+ * the same widths, in the same 3-unit panels. So the dialog has no rows of its
+ * own: it keeps the fields of `NP_ROWS` a card carries, in their order, and
+ * drops a row left empty. Moving a field on the person moves it here.
+ * Poreclă, Vârstă, Tip profesional, Note, Tip document and the MRZ are not on a
+ * card's review, so they are not here.
+ */
+export const ID_CARD_DIALOG_FIELDS = [
+  "lastName",
+  "firstName",
+  "cnp",
+  "dateOfBirth",
+  "gender",
+  "placeOfBirth",
+  "idDocumentNumber",
+  "idCardNumber",
+  "idValidFrom",
+  "idValidUntil",
+  "citizenshipId",
+  "idIssuingAuthority",
+] as const satisfies readonly NpField[];
+export type IdCardDialogField = (typeof ID_CARD_DIALOG_FIELDS)[number];
+
+/** `rows` with only the fields in `keep`, in their order; a row left empty goes. */
+export function keepFields<F extends string, K extends string>(
+  rows: readonly (readonly F[])[],
+  keep: readonly K[],
+): Extract<F, K>[][] {
+  const kept = new Set<string>(keep);
+  return rows.map((row) => row.filter((f): f is Extract<F, K> => kept.has(f))).filter((row) => row.length > 0);
+}
+
+export const ID_CARD_DIALOG_ROWS = {
+  identity: keepFields(NP_ROWS.identity, ID_CARD_DIALOG_FIELDS),
+  idCard: keepFields(NP_ROWS.idCard, ID_CARD_DIALOG_FIELDS),
+} as const;
+
+/**
+ * Instituție, its own row under Emisă de: a document's column, not a person's,
+ * so it has no width on `NATURAL_PERSON`. Institution names run long („Serviciul
+ * Public Comunitar Local de Evidență a Persoanelor …"), so it takes the panel's
+ * whole width, and its „create" offer and its retry sit under it (rule 15).
+ */
+export const ID_CARD_INSTITUTION = { step: "XL", kind: "select", fill: true } as const satisfies FieldWidth;
+
+/**
+ * The dialog's card, opted into by `PersonResolutionDialog`'s `wide`: Identitate
+ * and Carte de identitate side by side (two 3-unit panels and the unit gap
+ * between them, 6 units), the card's padding (1.5rem a side) and room for its
+ * scrollbar, which a card capped at 90% of the window's height can show.
+ */
+export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = { maxWidth: rem(unitsRem(6) + 2 * 1.5 + 1.5) };
+
 // ---- table columns (#37.16) ------------------------------------------------------------
 
 /**

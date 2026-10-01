@@ -68,7 +68,7 @@
  * corrects. The Document keeps whatever provenance the import assigned it.
  */
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useCitizenshipOptions } from "@/hooks/use-lookup-options";
 import { useQueryClient } from "@tanstack/react-query";
@@ -116,6 +116,19 @@ import {
 } from "@/lib/import/id-card-review";
 import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { GrowingText } from "@/components/forms/growing-text";
+import {
+  ID_CARD_DIALOG_ROWS,
+  ID_CARD_INSTITUTION,
+  NATURAL_PERSON,
+  NP_PANEL_INNER_REM,
+  NP_PANEL_STYLE,
+  boxRem,
+  stackedBoxStyle,
+  type FieldWidth,
+  type IdCardDialogField,
+} from "@/lib/ui/field-widths";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 
 // ---------------------------------------------------------------------------
 // Wire shapes
@@ -421,6 +434,18 @@ type Props = {
 
 type Phase = "extracting" | "resolving" | "ready";
 
+/** Slice #37.32 — a review panel, as the Natural Person's: its frame and its title. */
+const PANEL_CLASS =
+  "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
+const PANEL_TITLE_CLASS =
+  "mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400";
+
+/** Instituție takes the Carte de identitate panel's whole width (`ID_CARD_INSTITUTION`). */
+const INSTITUTION_BOX = stackedBoxStyle(ID_CARD_INSTITUTION, NP_PANEL_INNER_REM.idCard);
+
+/** The review's dates, which keep the browser's date picker. */
+const DATE_FIELDS: ReadonlySet<IdCardDialogField> = new Set(["dateOfBirth", "idValidFrom", "idValidUntil"]);
+
 /**
  * How long the card's two opening calls may take before this dialog gives up.
  * (Slice #26.10)
@@ -450,6 +475,9 @@ export function IdCardPersonDialog({
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog.idCard");
+  // Slice #37.32 — the review's labels and panel titles are the Natural Person's, so a field
+  // reads here as it will on the person once saved.
+  const tNp = useTranslations("naturalPerson");
   const queryClient = useQueryClient();
   const {
     options: citizenshipOptions,
@@ -1459,6 +1487,74 @@ export function IdCardPersonDialog({
       .map(([, sub]) => sub),
   );
 
+  /**
+   * One field of the review, by its Natural Person name.       (Slice #37.32)
+   *
+   * Its label and its width are the Natural Person's. Its ⚠ is the reading's:
+   * Cetățenie is marked on the card's raw citizenship, which is what the model
+   * read (the id is this side's match of it).
+   */
+  const reviewField = (name: IdCardDialogField) => {
+    const label = tNp(`fields.${name === "citizenshipId" ? "citizenship" : name}`);
+    const width = NATURAL_PERSON[name];
+    if (name === "gender") {
+      return (
+        <SelectField
+          label={label}
+          name="gender"
+          register={register}
+          control={control}
+          error={errors.gender?.message}
+          warn={lowConfidence.has("gender")}
+          width={width}
+          options={[
+            { value: "", label: "—" },
+            { value: "MALE", label: t("genderMale") },
+            { value: "FEMALE", label: t("genderFemale") },
+          ]}
+        />
+      );
+    }
+    if (name === "citizenshipId") {
+      return (
+        <SelectField
+          label={label}
+          name="citizenshipId"
+          register={register}
+          control={control}
+          error={errors.citizenshipId?.message}
+          warn={lowConfidence.has("citizenshipRaw")}
+          width={width}
+          hint={citizenshipHint}
+          hintAction={
+            citizenshipListState === "failed" ? (
+              <button
+                type="button"
+                onClick={reloadCitizenships}
+                disabled={busy || citizenshipReloading}
+                className={buttonClass({ variant: "secondary", size: "sm" })}
+              >
+                {citizenshipReloading ? t("citizenshipRetrying") : t("citizenshipRetry")}
+              </button>
+            ) : undefined
+          }
+          options={[{ value: "", label: "—" }, ...citizenshipOptions]}
+        />
+      );
+    }
+    return (
+      <Field
+        label={label}
+        name={name}
+        type={DATE_FIELDS.has(name) ? "date" : "text"}
+        register={register}
+        error={errors[name]?.message}
+        warn={lowConfidence.has(name)}
+        width={width}
+      />
+    );
+  };
+
   if (fatalError) {
     return (
       <div
@@ -1548,6 +1644,7 @@ export function IdCardPersonDialog({
       onCreateNew={() => void handleSubmit(doCreate)()}
       onSkip={onClose}
       onClose={onClose}
+      wide={showForm}
     >
       {/*
         Slice #23.03.Import — first child, so it sits above BOTH branches the
@@ -1604,83 +1701,28 @@ export function IdCardPersonDialog({
             <ProvenanceField inferred={PERSON_PROVENANCE} value="" onChange={() => {}} />
           </div>
 
-          <div className="mt-3 flex flex-col gap-2">
-            <div className="grid grid-cols-2 gap-2">
-              <Field label={t("fLastName")}  name="lastName"  register={register} error={errors.lastName?.message}  warn={lowConfidence.has("lastName")} />
-              <Field label={t("fFirstName")} name="firstName" register={register} error={errors.firstName?.message} warn={lowConfidence.has("firstName")} />
-            </div>
-            {/* `items-start` for the same reason as the citizenship row below,
-                and it is not optional here either: `SelectField`'s root is a
-                <div> wrapper rather than the <label> itself, so it no longer
-                stretches to the row and its `items-center` has nothing to
-                centre against. Without this, „Sex" pins to the top while
-                „Data nașterii" beside it re-centres the moment either cell
-                grows. (Slice #34.13, second review round.) */}
-            <div className="grid grid-cols-2 items-start gap-2">
-              <SelectField
-                label={t("fGender")}
-                name="gender"
-                register={register}
-                control={control}
-                error={errors.gender?.message}
-                warn={lowConfidence.has("gender")}
-                options={[
-                  { value: "", label: "—" },
-                  { value: "MALE", label: t("genderMale") },
-                  { value: "FEMALE", label: t("genderFemale") },
-                ]}
-              />
-              <Field label={t("fDateOfBirth")} name="dateOfBirth" type="date" register={register} error={errors.dateOfBirth?.message} warn={lowConfidence.has("dateOfBirth")} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label={t("fCnp")} name="cnp" register={register} error={errors.cnp?.message} warn={lowConfidence.has("cnp")} />
-              <Field label={t("fIdDocumentNumber")} name="idDocumentNumber" register={register} error={errors.idDocumentNumber?.message} warn={lowConfidence.has("idDocumentNumber")} />
-            </div>
-            {/* ⚠️ **`items-start`, and it is #34.04's own one-word fix.**
-                (Slice #34.13.) The sentence under the citizenship select is
-                rendered INSIDE the field — wrapping <SelectField> at the call
-                site would stop it stretching with its row — so the field grows,
-                and with the grid's default `stretch` its short sibling stretches
-                with it and re-centres: „Număr carte" drifts down the row the
-                moment the list fails. #34.04 named this fix and could not render
-                the screen to check it; this slice takes it.
-                ⚠️ **And it is needed on EVERY row holding a <SelectField>,
-                not only on one that grows** — a later round caught that:
-                `SelectField`'s root is a <div> wrapper rather than the <label>
-                itself, so it no longer stretches to its row and its own
-                `items-center` has nothing left to centre against. Inside that
-                component the switch to `items-start` is on `error` alone, since
-                the sentence is rendered BELOW the label and cannot grow it. */}
-            <div className="grid grid-cols-2 items-start gap-2">
-              <Field label={t("fIdCardNumber")} name="idCardNumber" register={register} error={errors.idCardNumber?.message} warn={lowConfidence.has("idCardNumber")} />
-              <SelectField
-                label={t("fCitizenship")}
-                name="citizenshipId"
-                register={register}
-                control={control}
-                error={errors.citizenshipId?.message}
-                warn={lowConfidence.has("citizenshipRaw")}
-                hint={citizenshipHint}
-                hintAction={
-                  citizenshipListState === "failed" ? (
-                    <button
-                      type="button"
-                      onClick={reloadCitizenships}
-                      disabled={busy || citizenshipReloading}
-                      className={buttonClass({ variant: "secondary", size: "sm" })}
-                    >
-                      {citizenshipReloading ? t("citizenshipRetrying") : t("citizenshipRetry")}
-                    </button>
-                  ) : undefined
-                }
-                options={[{ value: "", label: "—" }, ...citizenshipOptions]}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label={t("fPlaceOfBirth")} name="placeOfBirth" register={register} error={errors.placeOfBirth?.message} warn={lowConfidence.has("placeOfBirth")} />
-              <Field label={t("fIdIssuingAuthority")} name="idIssuingAuthority" register={register} error={errors.idIssuingAuthority?.message} warn={lowConfidence.has("idIssuingAuthority")} />
-            </div>
-
+          {/* Slice #37.32 — the Natural Person's rows (`ID_CARD_DIALOG_ROWS`), its widths and its
+              3-unit panels, labels above their boxes. A stacked row starts every box on one line
+              (rule 16), which is what the `items-start` on the old two-column rows was for. */}
+          <div className="mt-3 flex flex-wrap items-start gap-4" data-panel-row>
+            <section style={NP_PANEL_STYLE.identity} data-panel="identity" className={PANEL_CLASS}>
+              <h2 className={PANEL_TITLE_CLASS}>{tNp("sections.identity")}</h2>
+              <div className="flex flex-col gap-2">
+                {ID_CARD_DIALOG_ROWS.identity.map((row) => (
+                  <div key={row.join("|")} className={STACKED_ROW_CLASS}>
+                    {row.map((name) => <Fragment key={name}>{reviewField(name)}</Fragment>)}
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" className={PANEL_CLASS}>
+              <h2 className={PANEL_TITLE_CLASS}>{tNp("sections.idCard")}</h2>
+              <div className="flex flex-col gap-2">
+                {ID_CARD_DIALOG_ROWS.idCard.map((row) => (
+                  <div key={row.join("|")} className={STACKED_ROW_CLASS}>
+                    {row.map((name) => <Fragment key={name}>{reviewField(name)}</Fragment>)}
+                  </div>
+                ))}
             {/* ── Slice #34.02: the authority, as a row rather than as prose ──
 
                 ⚠️ **A DROPDOWN PLUS AN OFFER, NOT AN AUTO-CREATE.** The model's
@@ -1698,14 +1740,11 @@ export function IdCardPersonDialog({
                 for an institution the archive already holds is the duplicate
                 this whole path exists to prevent. It is also withheld while the
                 authority field is blank — there would be nothing to name. */}
-            <div className="mt-2">
-              <label
-                htmlFor="id-card-institution"
-                className="mb-1 block text-xs font-medium text-ink dark:text-zinc-300"
-              >
+            <div className={STACKED_ROW_CLASS} data-institution-row>
+            <div className={STACKED_FIELD_CLASS} style={INSTITUTION_BOX}>
+              <label htmlFor="id-card-institution" className={STACKED_LABEL_CLASS}>
                 {t("fInstitution")}
               </label>
-              <div className="flex items-start gap-2">
                 {/* ⚠️ **A raw `<select>`, not `AsyncSelect`, and the reason is
                     not laziness.** `AsyncSelect` is react-hook-form bound —
                     it takes `register`/`control` and a form field name — and
@@ -1743,26 +1782,17 @@ export function IdCardPersonDialog({
                   // Frozen once the submit has captured its value, so what is on
                   // screen and what is being written cannot diverge.
                   disabled={busy || addingInstitution}
-                  className="w-full rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                  className="rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                  style={INSTITUTION_BOX}
+                  data-width-field="institutionId"
+                  data-width-kind={ID_CARD_INSTITUTION.kind}
                 >
                   <option value="">—</option>
                   {institutionOptions.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
-                {offerInstitutionAdd && (
-                  <button
-                    type="button"
-                    onClick={() => void addInstitution(authorityText)}
-                    disabled={addingInstitution || busy}
-                    className={buttonClass({ variant: "secondary", size: "sm" })}
-                  >
-                    {addingInstitution
-                      ? t("institutionAdding")
-                      : t("institutionAdd", { name: authorityText })}
-                  </button>
-                )}
-              </div>
+              <div className="flex flex-col items-start gap-1">
               {/* The reading itself, said once, under the control that acts on
                   it — so a person deciding whether to press the button is
                   looking at the words the card used, not at a dropdown that
@@ -1815,8 +1845,8 @@ export function IdCardPersonDialog({
                   // reached; the colour carries the urgency on screen.
                   className={
                     authorityNotFiled
-                      ? "mt-1 text-xs text-red-600 dark:text-red-400"
-                      : "mt-1 text-xs text-fade dark:text-zinc-400"
+                      ? "text-xs text-red-600 dark:text-red-400"
+                      : "text-xs text-fade dark:text-zinc-400"
                   }
                 >
                   {institutionListState === "loading"
@@ -1851,6 +1881,18 @@ export function IdCardPersonDialog({
                     : t("institutionUnmatched", { name: authorityText })}
                 </p>
               )}
+                {offerInstitutionAdd && (
+                  <button
+                    type="button"
+                    onClick={() => void addInstitution(authorityText)}
+                    disabled={addingInstitution || busy}
+                    className={buttonClass({ variant: "secondary", size: "sm" })}
+                  >
+                    {addingInstitution
+                      ? t("institutionAdding")
+                      : t("institutionAdd", { name: authorityText })}
+                  </button>
+                )}
               {/* The way out of the state the sentence describes, and it is the
                   reason the sentence can say „reîncercați citirea listei".
                   (Slice #34.25.) #34.13 put one under the citizenship select for
@@ -1866,24 +1908,24 @@ export function IdCardPersonDialog({
                     type="button"
                     onClick={() => void reloadInstitutions()}
                     disabled={busy || addingInstitution || institutionReloading}
-                    className={`mt-1 ${buttonClass({ variant: "secondary", size: "sm" })}`}
+                    className={buttonClass({ variant: "secondary", size: "sm" })}
                   >
                     {institutionReloading ? t("institutionRetrying") : t("institutionRetry")}
                   </button>
                 )}
               {addInstitutionError && (
-                <p role="alert" className="mt-1 text-xs text-rose-700 dark:text-rose-400">
+                <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">
                   {addInstitutionError}
                 </p>
               )}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label={t("fIdValidFrom")}  name="idValidFrom"  type="date" register={register} error={errors.idValidFrom?.message}  warn={lowConfidence.has("idValidFrom")} />
-              <Field label={t("fIdValidUntil")} name="idValidUntil" type="date" register={register} error={errors.idValidUntil?.message} warn={lowConfidence.has("idValidUntil")} />
             </div>
+              </div>
+            </section>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-4">
             <AddressBlock<FormValues>
               title={t("homeAddress")}
               prefix="addresses.HOME"
@@ -1923,9 +1965,15 @@ export function IdCardPersonDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Local field helpers — mirror the natural-person form's styling, with a `warn`
-// flag that flags a low-confidence extracted value with a ⚠ badge.
+// Local field helpers — the Natural Person form's stacked fields (Slice #37.32),
+// with a `warn` flag that marks a low-confidence extracted value with a ⚠ after
+// its label.
 // ---------------------------------------------------------------------------
+
+const BOX_CLASS =
+  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950";
+const boxBorder = (error?: string) =>
+  error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700";
 
 type FieldProps = {
   label: string;
@@ -1934,6 +1982,8 @@ type FieldProps = {
   register: UseFormRegister<FormValues>;
   error?: string;
   warn?: boolean;
+  /** The Natural Person's width for this field (`NATURAL_PERSON`). */
+  width: FieldWidth;
   /**
    * Slice #34.04 — the one sentence a field can need that an `error` cannot
    * say: nothing the user typed is wrong, the LIST behind the options could
@@ -1944,17 +1994,11 @@ type FieldProps = {
   /**
    * A control that acts on what `hint` says.                    (Slice #34.13)
    *
-   * ⚠️ **A PROP RATHER THAN A WRAPPER AT THE CALL SITE, for the reason
-   * #34.04 wrote the hint itself this way.** The call sites are direct
-   * children of a `grid grid-cols-2`, and an extra <div> around <SelectField>
-   * there was what stopped the field stretching with its row. So the control
-   * comes in through the component and is placed by it.
-   *
-   * ⚠️ **RENDERED OUTSIDE THE <label>, and two review rounds are why.** The
-   * first draft put it inside, beside the sentence — where interactive content
-   * other than the labelled control is invalid HTML and the browser folds it
-   * into the select's accessible name. The sentence went out with it, and is
-   * carried to the control by `aria-describedby` instead; see `SelectField`.
+   * ⚠️ **RENDERED OUTSIDE THE <label>, and two review rounds are why.** Inside
+   * it, interactive content other than the labelled control is invalid HTML and
+   * the browser folds it into the select's accessible name. The sentence went
+   * out with it, and is carried to the control by `aria-describedby` instead;
+   * see `SelectField`.
    *
    * Rendered only when `hint` is, and only when `error` is not: a control
    * offering to fix the LIST is noise beside a validation message about the
@@ -1963,132 +2007,133 @@ type FieldProps = {
   hintAction?: ReactNode;
 };
 
-function FieldLabel({ label, warn }: { label: string; warn?: boolean }) {
-  return (
-    <span className="w-32 shrink-0 font-medium text-ink dark:text-zinc-300">
+function FieldLabel({ label, warn, htmlFor }: { label: string; warn?: boolean; htmlFor?: string }) {
+  const content = (
+    <>
       {label}
-      {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
-    </span>
+      {warn && <span className="ml-1 text-amber-600 dark:text-amber-400" data-low-confidence>⚠</span>}
+    </>
+  );
+  return htmlFor ? (
+    <label htmlFor={htmlFor} className={STACKED_LABEL_CLASS}>{content}</label>
+  ) : (
+    <span className={STACKED_LABEL_CLASS}>{content}</span>
   );
 }
 
-function Field({ label, name, type = "text", register, error, warn }: FieldProps) {
+function Field({ label, name, type = "text", register, error, warn, width }: FieldProps) {
+  const grows = width.kind === "grows" || width.kind === "lines";
+  const box = stackedBoxStyle(width, boxRem(width));
+  const className = [BOX_CLASS, boxBorder(error)].join(" ");
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className={STACKED_FIELD_CLASS} style={box}>
       <FieldLabel label={label} warn={warn} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      {grows ? (
+        <GrowingText
+          registration={register(name)}
+          width={String(box.width)}
+          lines={width.kind === "lines"}
+          minRows={width.rows ?? 1}
+          spellCheck={false}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      ) : (
         <input
           type={type}
           spellCheck={false}
           {...register(name)}
           aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-            error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700",
-          ].join(" ")}
+          className={className}
+          style={box}
+          data-width-field={name}
+          data-width-kind={width.kind}
         />
-        {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
-      </div>
+      )}
+      {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
     </label>
   );
 }
 
 function SelectField({
-  label, name, register, control, error, warn, hint, hintAction, options,
+  label, name, register, control, error, warn, width, hint, hintAction, options,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
 }) {
   // ⚠️ **THE SENTENCE AND ITS CONTROL LIVE OUTSIDE THE <label>, AND TWO
-  // REVIEW ROUNDS ON #34.13 PUT THEM THERE.** #34.04 rendered the sentence
-  // inside the field, below the select, because wrapping <SelectField> AT THE
-  // CALL SITE stopped it stretching with its `grid grid-cols-2` row. Both call
-  // sites' rows now carry `items-start`, so a wrapper inside this component
-  // costs nothing — and inside the <label> costs two things it should not: a
-  // <button> there is invalid HTML (interactive content other than the labelled
-  // control), and the browser folds BOTH into the <select>'s accessible name,
-  // which then reads „Cetățenie <the whole red sentence> Reîncearcă" and
-  // changes every time the sentence does.
+  // REVIEW ROUNDS ON #34.13 PUT THEM THERE.** Inside it they cost two things:
+  // a <button> there is invalid HTML (interactive content other than the
+  // labelled control), and the browser folds BOTH into the <select>'s
+  // accessible name, which then reads „Cetățenie <the whole red sentence>
+  // Reîncearcă" and changes every time the sentence does. So the field is a
+  // <div> whose first row is a <label for>, and the sentence and its button
+  // are its third row, under the box they act on (rule 15).
   //
   // `aria-describedby` is what carries the sentence to the control instead —
   // announced after the name rather than as part of it, which is what a
-  // description is for. `<AsyncSelect>` has accepted the prop since #32.13; it
-  // simply had no caller.
+  // description is for.
   const hintId = `${name}-hint`;
+  const controlId = `id-card-${name}`;
   const showHint = Boolean(hint) && !error;
+  const box = stackedBoxStyle(width, boxRem(width));
+  // Slice #37.12: NOTHING IS CUT OFF WITHOUT A WAY TO READ IT. The box is as
+  // wide as its step; an option longer than that shows in full on hover.
+  const current = useWatch({ control, name });
+  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
   return (
-    <div className="flex flex-col gap-0.5">
-      {/* `items-start` once an error grows the column, so the label does not
-          float halfway down beside a select that is still at the top. The hint
-          no longer grows it — that is now the block below. */}
-      <label className={["flex gap-2 text-sm", error ? "items-start" : "items-center"].join(" ")}>
-        <FieldLabel label={label} warn={warn} />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          {/* Slice #32.13: the same defect as the six selects on the entity
-              forms — this one had no remount key either — so <AsyncSelect> is
-              the single idiom here too. What it buys is the ordering where the
-              citizenship list resolves AFTER the review form appears: the
-              extract and resolve calls gate `showForm`, so `setValue` has
-              normally run long before this mounts, and without the key a slow
-              value-list fetch left the field on "—" over a citizenship already
-              in `_formValues`.
+    <div className={STACKED_FIELD_CLASS} style={box}>
+      <FieldLabel label={label} warn={warn} htmlFor={controlId} />
+      {/* Slice #32.13: the same defect as the six selects on the entity
+          forms — this one had no remount key either — so <AsyncSelect> is
+          the single idiom here too. What it buys is the ordering where the
+          citizenship list resolves AFTER the review form appears: the
+          extract and resolve calls gate `showForm`, so `setValue` has
+          normally run long before this mounts, and without the key a slow
+          value-list fetch left the field on "—" over a citizenship already
+          in `_formValues`.
 
-              Half-closed by Slice #34.04: `useCitizenshipOptions` no longer
-              swallows the failure — it is a React Query key now, so a failure
-              to load reads as `listState === "failed"` and the sentence under
-              the field says so.
+          ⚠️ **It recovers inside this dialog** (Slice #34.13):
+          `useCitizenshipOptions` returns a `reload`, and the sentence under
+          the field comes with a button that fires it. Closing the dialog to
+          get the list back would be recorded as a decision not to create the
+          person.
 
-              CLOSED BY SLICE #34.13, in both halves it left open:
-
-              ⚠️ **It recovers inside this dialog now.** `useCitizenshipOptions`
-              returns a `reload` — a refetch of its own key — and the sentence
-              under the field comes with a button that fires it. It still does
-              not recover on its own: `refetchOnWindowFocus` is off globally and
-              the three invalidations this file issues are keyed `["people"]`,
-              `["persons"]` and `["documents"]`, none of which prefix-matches
-              `["value-list", "citizenships"]`. What changed is that the user is
-              no longer asked to close a dialog the run opened in order to get
-              the list back — closing it is recorded as a decision not to create
-              the person.
-
-              ⚠️ **And Confirm no longer writes what this select cannot show.**
-              `citizenshipForWrite` drops the id from the POST while no
-              `<option>` matches it, and `citizenshipIsHidden` — the same rule —
-              decides the sentence, so the screen and the write cannot
-              disagree. The form's own value is untouched throughout, which is
-              what makes the retry worth pressing: the list comes back and the
-              same click writes the citizenship after all. */}
-          <AsyncSelect
-            name={name}
-            control={control}
-            register={register}
-            options={options}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={showHint ? hintId : undefined}
-            className={[
-              "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-              error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700",
-            ].join(" ")}
-          />
+          ⚠️ **And Confirm never writes what this select cannot show.**
+          `citizenshipForWrite` drops the id from the POST while no
+          `<option>` matches it, and `citizenshipIsHidden` — the same rule —
+          decides the sentence, so the screen and the write cannot
+          disagree. */}
+      <AsyncSelect
+        id={controlId}
+        name={name}
+        control={control}
+        register={register}
+        options={options}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={showHint ? hintId : undefined}
+        className={[BOX_CLASS, boxBorder(error)].join(" ")}
+        style={box}
+        title={chosenLabel}
+        widthField={name}
+      />
+      {(error || showHint) && (
+        <div className="flex flex-col items-start gap-1">
           {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
-        </div>
-      </label>
-      {/* Slice #34.04's sentence, Slice #34.13's control, both below the label
-          and indented to the select's own column by a spacer that mirrors
-          `FieldLabel`'s width. `role="alert"` because the sentence appears
-          after the field is on screen and describes something the user has to
-          act on — and here "—" is not harmless, per the paragraphs above. The
-          button is outside the live region on purpose: a region should announce
-          the sentence, not re-read a button label every time it changes. */}
-      {showHint && (
-        <div className="flex gap-2 text-sm">
-          <span aria-hidden="true" className="w-32 shrink-0" />
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          {/* Slice #34.04's sentence, Slice #34.13's control. `role="alert"`
+              because the sentence appears after the field is on screen and
+              describes something the user has to act on — and here "—" is not
+              harmless. The button is outside the live region on purpose: a
+              region should announce the sentence, not re-read a button label
+              every time it changes. */}
+          {showHint && (
             <span id={hintId} role="alert" className="text-xs text-red-600 dark:text-red-400">
               {hint}
             </span>
-            {hintAction}
-          </div>
+          )}
+          {showHint && hintAction}
         </div>
       )}
     </div>

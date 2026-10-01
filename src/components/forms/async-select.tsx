@@ -73,6 +73,8 @@ type AsyncSelectProps<T extends FieldValues> = {
   title?: string;
   /** Slice #37.12: the field's name for the width checks (`data-width-field`). */
   widthField?: string;
+  /** Slice #37.32: for a `<label htmlFor>` that cannot wrap the select (the ID-card dialog's citizenship). */
+  id?: string;
 };
 
 /**
@@ -141,6 +143,7 @@ export function AsyncSelect<T extends FieldValues>({
   style,
   title,
   widthField,
+  id,
 }: AsyncSelectProps<T>) {
   // Slice #34.03: `useWatch` and the once-captured `openedWith` went with
   // `allowUnlistedValue` - nothing reads the current value any more, because
@@ -150,6 +153,7 @@ export function AsyncSelect<T extends FieldValues>({
   return (
     <select
       key={options.length}
+      id={id}
       aria-describedby={describedBy}
       aria-invalid={invalid}
       className={className}

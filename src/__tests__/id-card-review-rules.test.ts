@@ -435,19 +435,19 @@ describe("the dialog decides through these rules and not beside them", () => {
     // sentence> Reîncearcă" and changed every time the sentence did. Two
     // adversarial rounds: the first moved the button out, the second the
     // sentence. `aria-describedby` is what carries it to the control instead.
+    // Slice #37.32: the field is a <div> (a stacked field's subgrid), and its
+    // <label> is FieldLabel's — the label and its ⚠, nothing else — pointed at
+    // the select by id. The sentence and its button are the field's third row.
     const field = code.slice(code.indexOf("function SelectField("));
-    const labelOpen = field.indexOf("<label");
-    const labelClose = field.indexOf("</label>");
-    expect(labelOpen).toBeGreaterThan(-1);
-    expect(labelClose).toBeGreaterThan(labelOpen);
-    // Between the tags, and not merely „somewhere before them" — both props are
-    // named in the destructured parameter list above, which is not the label.
-    const inLabel = field.slice(labelOpen, labelClose);
-    expect(inLabel).not.toContain("hintAction");
-    expect(inLabel).not.toContain("{hint}");
-    expect(field.slice(labelClose)).toContain("hintAction");
-    expect(field.slice(labelClose)).toContain("{hint}");
-    expect(inLabel).toMatch(/aria-describedby=\{showHint \? hintId : undefined\}/);
+    expect(field).toMatch(/<FieldLabel label=\{label\} warn=\{warn\} htmlFor=\{controlId\} \/>/);
+    const fieldLabel = code.slice(code.indexOf("function FieldLabel("), code.indexOf("function Field("));
+    expect(fieldLabel).toMatch(/<label htmlFor=\{htmlFor\}/);
+    expect(fieldLabel).not.toMatch(/hint/);
+    const select = field.slice(field.indexOf("<AsyncSelect"));
+    expect(select).toMatch(/id=\{controlId\}/);
+    expect(select).toMatch(/aria-describedby=\{showHint \? hintId : undefined\}/);
+    expect(select).toContain("hintAction");
+    expect(select).toContain("{hint}");
   });
 
   it("asks the OPTIONS whether an institution can be shown, not the load state", () => {
@@ -590,7 +590,7 @@ describe("the dialog decides through these rules and not beside them", () => {
     expect(code).toMatch(/id=\{INSTITUTION_HINT_ID\}/);
     // The colour carries the urgency that the live region deliberately does
     // not — see the assertion below for why there is no `role` here.
-    expect(code).toMatch(/authorityNotFiled\s*\?\s*"mt-1 text-xs text-red-600/);
+    expect(code).toMatch(/authorityNotFiled\s*\?\s*"text-xs text-red-600/);
   });
 
   it("did not teach institutionForCardWrite the new question", () => {
@@ -620,20 +620,18 @@ describe("the dialog decides through these rules and not beside them", () => {
     expect(code).toMatch(/idCardNumber:\s*wIdCardNumber/);
   });
 
-  it("top-aligns both the grid row and the field that grows inside it", () => {
-    // #34.04 named the row half of this one-word fix and could not render the
-    // screen to take it: the citizenship field's sentence grows its row, and
-    // with the grid's default `stretch` the short sibling stretches and
-    // re-centres. The field's OWN label needs the same treatment against its
-    // own taller column — a review round on this slice found that half missing.
-    expect(code).toMatch(/grid grid-cols-2 items-start gap-2[\s\S]{0,400}?name="citizenshipId"/);
-    // Every row holding a <SelectField> needs it, not only the one that grows:
-    // that component's root is a <div> wrapper rather than the <label>, so it
-    // no longer stretches to the row and its own `items-center` has nothing to
-    // centre against. „Sex" would pin to the top while „Data nașterii" beside
-    // it re-centred. Found by the second adversarial round.
-    expect(code).toMatch(/grid grid-cols-2 items-start gap-2[\s\S]{0,400}?name="gender"/);
+  it("starts every box of a row on one line: the stacked rows (rule 16) replaced the items-start fixes", () => {
+    // #34.04 and #34.13 top-aligned each two-column grid row holding a
+    // <SelectField>, because a field's sentence grew its row and the grid's
+    // default `stretch` re-centred the short sibling. Slice #37.32 put the
+    // review on the Natural Person's stacked rows: each field a subgrid of its
+    // row's three tracks (label, box, what is under the box), so a growing
+    // sentence lengthens the third track and moves nothing above it.
+    expect(code).not.toMatch(/grid-cols-2/);
+    for (const p of ["identity", "idCard"]) {
+      expect(code).toMatch(new RegExp(`ID_CARD_DIALOG_ROWS\\.${p}\\.map\\(\\(row\\) => \\(\\s*<div key=\\{row\\.join\\("\\|"\\)\\} className=\\{STACKED_ROW_CLASS\\}>`));
+    }
     const field = code.slice(code.indexOf("function SelectField("));
-    expect(field).toMatch(/error \? "items-start" : "items-center"/);
+    expect(field).toMatch(/<div className=\{STACKED_FIELD_CLASS\} style=\{box\}>/);
   });
 });

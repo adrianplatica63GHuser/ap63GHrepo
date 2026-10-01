@@ -1015,8 +1015,6 @@ export function NaturalPersonForm({
         register={register}
         errors={errors.addresses?.HOME}
         highlights={displayHighlights?.addresses.HOME}
-        fixedWidths
-        stacked
         footer={
             <Controller
               control={form.control}
@@ -1061,8 +1059,6 @@ export function NaturalPersonForm({
           register={register}
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
-          fixedWidths
-          stacked
         />
       )}
       </div>{/* end „Adrese" tile */}

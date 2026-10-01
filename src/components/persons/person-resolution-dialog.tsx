@@ -38,6 +38,7 @@
 
 import type { ReactNode } from "react";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { ID_CARD_DIALOG_CARD_STYLE } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // The i18n contract
@@ -182,6 +183,12 @@ export type PersonResolutionDialogProps = {
   onClose: () => void;
   /** Rendered under the branch — e.g. the ID-card review form, or an error. */
   children?: ReactNode;
+  /**
+   * Slice #37.32: a card wide enough for two 3-unit panels side by side
+   * (`ID_CARD_DIALOG_CARD_STYLE`), for the ID-card dialog's review form. Off,
+   * the card stays max-w-2xl, and the document-party path does not ask.
+   */
+  wide?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -204,6 +211,7 @@ export function PersonResolutionDialog({
   onSkip,
   onClose,
   children,
+  wide = false,
 }: PersonResolutionDialogProps) {
   return (
     <div
@@ -212,7 +220,11 @@ export function PersonResolutionDialog({
       aria-labelledby="person-resolution-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
+      <div
+        className={`max-h-[90vh] w-full ${wide ? "" : "max-w-2xl "}overflow-y-auto rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900`}
+        style={wide ? ID_CARD_DIALOG_CARD_STYLE : undefined}
+        data-dialog-card={wide ? "wide" : undefined}
+      >
         <div className="flex items-start justify-between gap-4">
           <h3
             id="person-resolution-title"

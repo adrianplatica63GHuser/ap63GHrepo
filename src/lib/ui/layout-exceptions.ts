@@ -55,11 +55,6 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
     reason: "The import wizard has its own rule file and its own risks; FU-269 says what putting it on the rule would take.",
   },
   {
-    file: "src/components/address/address-block.tsx",
-    region: ['<span className="w-[5.5rem] shrink-0 text-center', ""],
-    reason: "The address block's free-width branch serves only the import wizard's ID-card dialog; the four detail screens use its fixed branch.",
-  },
-  {
     file: "src/app/documents/_components/pages-panel.tsx",
     region: ["function PageViewer(", "function DownloadPrompt("],
     reason: "The full-screen page viewer shows one page image as large as the window allows, which is its purpose.",

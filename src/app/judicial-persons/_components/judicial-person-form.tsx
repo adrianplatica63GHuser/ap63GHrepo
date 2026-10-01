@@ -785,8 +785,6 @@ export function JudicialPersonForm({
         register={register}
         errors={errors.addresses?.HEADQUARTERS}
         highlights={displayHighlights?.addresses.HEADQUARTERS}
-        fixedWidths
-        stacked
         footer={
           <Controller
             control={control}
@@ -838,8 +836,6 @@ export function JudicialPersonForm({
           register={register}
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
-          fixedWidths
-          stacked
         />
       )}
       </div>{/* end „Adrese" tile */}
