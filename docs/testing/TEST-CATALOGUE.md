@@ -117,9 +117,10 @@ fixed fixture where the existing one will do.
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
 | [TC-ICON-02](cases/TC-ICON-02.md) | Creionul, Salvarea și Coșul pe o proprietate: modificată, păstrată, ștearsă | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-actions.spec.ts` |
 | [TC-ICON-03](cases/TC-ICON-03.md) | „Asociază” și „Dezasociază” cu pictogramă și cuvinte, și un pas înapoi printre versiuni | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-associations.spec.ts` |
+| [TC-ICON-04](cases/TC-ICON-04.md) | Unghiurile pornite și oprite, un punct adăugat și mutat mai sus, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-property-tools.spec.ts` |
 
-**Thirty-four are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-01 (Slices
-#37.38, #37.40 and #37.42–#37.44, which added TC-MAP-01, TC-FOLD-01 and TC-ICON-01–03 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Thirty-five are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-01 (Slices
+#37.38, #37.40 and #37.42–#37.45, which added TC-MAP-01, TC-FOLD-01 and TC-ICON-01–04 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
