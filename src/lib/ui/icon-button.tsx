@@ -49,6 +49,7 @@ import {
   type ButtonHTMLAttributes,
   type ComponentProps,
   type ReactNode,
+  type Ref,
 } from "react";
 import { createPortal } from "react-dom";
 import { LoaderCircle, type LucideIcon } from "lucide-react";
@@ -206,6 +207,12 @@ type Common = {
 type AsButton = Common &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "className" | "aria-label"> & {
     href?: undefined;
+    /**
+     * The `<button>` itself (#37.43): a dialog that returns focus to its close
+     * button, or focuses it on open, holds a ref to it. React 19 passes `ref`
+     * to a function component as a prop, so it rides in with the rest.
+     */
+    ref?: Ref<HTMLButtonElement>;
   };
 
 type AsLink = Common &

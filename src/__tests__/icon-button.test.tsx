@@ -15,6 +15,7 @@
  * and mouse focus cases pin `matches(":focus-visible")` to the answer a browser
  * gives for each — that call is the hook's whole decision.
  */
+import { createRef } from "react";
 import { act, createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
@@ -178,6 +179,16 @@ describe("IconButton — the count badge", () => {
   it("shows no badge at zero", () => {
     render(<IconButton icon={Trash2} label="Șterge selecția (0)" count={0} variant="danger" />);
     expect(screen.getByRole("button").querySelector("[data-icon-badge]")).toBeNull();
+  });
+});
+
+describe("IconButton — a ref (#37.43)", () => {
+  it("reaches the <button> itself, so a dialog can focus its close button", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<IconButton ref={ref} icon={ArrowLeft} label="Închide" variant="bare" />);
+    expect(ref.current).toBe(screen.getByRole("button", { name: "Închide" }));
+    act(() => ref.current?.focus());
+    expect(document.activeElement).toBe(ref.current);
   });
 });
 
