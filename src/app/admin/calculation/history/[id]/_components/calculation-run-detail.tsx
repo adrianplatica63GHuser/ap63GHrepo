@@ -6,7 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PreviewMap } from "@/app/admin/calculation/_components/preview-map";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { SCREEN_COLUMN, WIDE_COLUMN_STYLE, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/** Slice #37.35: one run is one tile of 7 units, as the calculation is — it holds the 6-unit map and the figures' grid. */
+const RUN_UNITS = 7;
 
 /** The run's two tables, at #37.16's column widths (Slice #37.22). */
 const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
@@ -166,7 +170,8 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
   }
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-6`} style={WIDE_COLUMN_STYLE}>
+    <UnitRow units={[RUN_UNITS]}>
+    <section {...screenPanel("calculation-run", RUN_UNITS)} className="flex flex-col gap-6 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
 
       {/* ── Header info bar ────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-4">
@@ -315,6 +320,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
         )}
       </SectionCard>
 
-    </div>
+    </section>
+    </UnitRow>
   );
 }

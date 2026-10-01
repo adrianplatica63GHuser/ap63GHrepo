@@ -9,7 +9,11 @@ import {
 } from "@/lib/stamps/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { PANEL_GAP, SCREEN, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { SCREEN, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
+const EDITOR_UNITS = 3;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -306,9 +310,9 @@ export function StampApplicator({
     (stagedForType?.toRemove.size ?? 0) > 0;
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-4`} style={SCREEN_COLUMN_STYLE}>
+    <UnitRow units={[EDITOR_UNITS]}>
       {/* Area A — code (read-only), short description (read-only), notes (editable) */}
-      <section className="rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section {...screenPanel("stamp", EDITOR_UNITS)} className="flex flex-col gap-4 rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-wrap items-start gap-4">
           {/* Code + short description */}
           <div className="flex flex-col gap-1" style={boxStyle(SCREEN.groupTarget)}>
@@ -338,16 +342,40 @@ export function StampApplicator({
             />
           </div>
         </div>
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            {error}
+          </p>
+        )}
+
+        {/* Save */}
+        <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            disabled={!dirty || mutation.isPending}
+            className={buttonClass({ variant: "primary", size: "lg" })}
+          >
+            {mutation.isPending ? t("saving") : t("applicator.saveStamps")}
+          </button>
+          <HelpHint hintKey="stamp-staged-changes" />
+          {dirty && (
+            <span className="text-xs text-fade dark:text-zinc-500">
+              {t("unsavedChanges")}
+            </span>
+          )}
+        </div>
       </section>
 
       {/* Area B — target type selector */}
-      <section className="rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm font-medium text-ink dark:text-zinc-300">
+      <section {...screenPanel("stamp-target", EDITOR_UNITS)} className="rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <label htmlFor="stamp-target-type" className="basis-full text-sm font-medium text-ink dark:text-zinc-300">
             {t("applicator.targetTypeLabel")}
           </label>
           <select
             {...screenBox("groupTarget")}
+            id="stamp-target-type"
             value={selectedType}
             onChange={(e) => switchType(e.target.value as StampTargetType)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
@@ -371,18 +399,18 @@ export function StampApplicator({
         <p className="mt-2 text-xs italic text-fade dark:text-zinc-500">
           {t("applicator.typeNote")}
         </p>
+        {isLoading && (
+          <p className="text-sm text-fade dark:text-zinc-400">{t("applicator.loading")}</p>
+        )}
+        {isError && (
+          <p className="text-sm text-red-600 dark:text-red-400">{t("applicator.loadError")}</p>
+        )}
       </section>
 
       {/* Areas C + D — Available / Stamped panels */}
-      {isLoading && (
-        <p className="text-sm text-fade dark:text-zinc-400">{t("applicator.loading")}</p>
-      )}
-      {isError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{t("applicator.loadError")}</p>
-      )}
 
       {!isLoading && !isError && (
-        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
+        <>
           {/* Panel C — Available */}
           <Panel
             name="available"
@@ -460,33 +488,10 @@ export function StampApplicator({
               </button>
             }
           />
-        </div>
+        </>
       )}
 
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {error}
-        </p>
-      )}
-
-      {/* Save */}
-      <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-        <button
-          type="button"
-          onClick={() => mutation.mutate()}
-          disabled={!dirty || mutation.isPending}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {mutation.isPending ? t("saving") : t("applicator.saveStamps")}
-        </button>
-        <HelpHint hintKey="stamp-staged-changes" />
-        {dirty && (
-          <span className="text-xs text-fade dark:text-zinc-500">
-            {t("unsavedChanges")}
-          </span>
-        )}
-      </div>
-    </div>
+    </UnitRow>
   );
 }
 
@@ -513,7 +518,7 @@ function Panel({
   footer:     React.ReactNode;
 }) {
   return (
-    <section {...screenPanel(name)} className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section {...screenPanel(name, EDITOR_UNITS)} className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center justify-between border-b border-card-rim px-4 py-2 dark:border-zinc-800">
         <span className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
         <span className="text-xs text-fade dark:text-zinc-400">{count}</span>

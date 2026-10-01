@@ -3,17 +3,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   GROUP_TARGET_TYPES,
   type GroupTargetType,
 } from "@/lib/groups/validation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
 
 /** The groups, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"];
+
+/**
+ * Slice #37.35: the screen's tiles — what this list is (6 units, #37.22's two
+ * panels), the add form (3) while it is open, and the list (the fewest units
+ * that hold its columns, the description taking what the others leave).
+ */
+const ABOUT_UNITS = 6;
+const FORM_UNITS = 3;
+const LIST_UNITS = tableUnits(COLUMNS);
+const LIST_FILL = { units: LIST_UNITS, column: "description" } as const;
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -92,7 +103,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
   const canSave = description.trim().length > 0 && !mutation.isPending;
 
   return (
-    <div {...screenPanel("add-group")} className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+    <div {...screenPanel("add-group", FORM_UNITS)} className="rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
       <h3 className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100">
         {t("addTitle")}
       </h3>
@@ -179,7 +190,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
 
 // ── List ─────────────────────────────────────────────────────────────────────
 
-export function GroupsListView() {
+export function GroupsListView({ about }: { about?: ReactNode } = {}) {
   const t = useTranslations("group");
   const qc = useQueryClient();
 
@@ -200,8 +211,11 @@ export function GroupsListView() {
   });
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-3`} style={SCREEN_COLUMN_STYLE}>
+    <UnitRow units={[ABOUT_UNITS, LIST_UNITS]}>
+      {about}
       {adding && <AddForm onClose={() => setAdding(false)} />}
+
+      <section {...screenPanel("groups", LIST_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
@@ -221,8 +235,8 @@ export function GroupsListView() {
 
       {/* Table */}
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        <table {...fixedTable(COLUMNS)}>
-          <FixedColumns columns={COLUMNS} />
+        <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
+          <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-4 py-2" {...columnHead("groupCode")}>{t("table.code")}</th>
@@ -290,6 +304,8 @@ export function GroupsListView() {
         </table>
       </div>
 
+      </section>
+
       {/* Delete confirm */}
       {confirmDeleteId && (
         <>
@@ -319,6 +335,6 @@ export function GroupsListView() {
           </div>
         </>
       )}
-    </div>
+    </UnitRow>
   );
 }

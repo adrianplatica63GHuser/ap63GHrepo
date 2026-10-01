@@ -17,8 +17,10 @@ export default async function StampsPage() {
           </h1>
         </header>
 
-        {/* Info panel — what is a Stamp and when to use it */}
-        <section {...screenPanel("about-stamps", true)} className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900 dark:bg-amber-950/40">
+        {/* Info panel — what is a Stamp and when to use it. Slice #37.35: the first tile of the list's unit row (6 units). */}
+        <StampsListView
+          about={
+            <section {...screenPanel("about-stamps", 6)} className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900 dark:bg-amber-950/40">
           <h2 className="mb-3 text-base font-semibold text-amber-900 dark:text-amber-200">
             {t("infoPanel.title")}
           </h2>
@@ -34,8 +36,8 @@ export default async function StampsPage() {
             </p>
           </div>
         </section>
-
-        <StampsListView />
+          }
+        />
       </main>
     </div>
   );

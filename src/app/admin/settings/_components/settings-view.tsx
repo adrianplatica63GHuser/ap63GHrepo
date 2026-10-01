@@ -8,7 +8,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { PANEL_GAP, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/** Slice #37.35: Setări's three tiles, 3 units each — fixed, not tickable (Ask first). */
+const SETTINGS_TILE_UNITS = 3;
 
 // ---------------------------------------------------------------------------
 // Locale helper — read the current cookie locale so we can pick _en vs _ro
@@ -134,7 +138,7 @@ function TimeFramesPanel() {
   }
 
   return (
-    <section {...screenPanel("time-frames")} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("time-frames", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionTimeFrames")}</h2>
 
       {isLoading && (
@@ -154,15 +158,15 @@ function TimeFramesPanel() {
               const isChanged = row.key in drafts && drafts[row.key] !== String(row.value);
 
               return (
-                <div key={row.key} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-ink leading-snug">{label}</p>
-                    {desc && (
-                      <p className="text-xs text-fade leading-snug mt-0.5">{desc}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                // Slice #37.35: the label (and what it counts) above its S box, the unit beside the box.
+                <div key={row.key} className="flex flex-col gap-1">
+                  <label htmlFor={`time-frame-${row.key}`} className="text-sm font-medium text-ink leading-snug">{label}</label>
+                  {desc && (
+                    <p className="text-xs text-fade leading-snug">{desc}</p>
+                  )}
+                  <div className="flex items-center gap-2">
                     <input
+                      id={`time-frame-${row.key}`}
                       {...screenBox("timeFrameDays")}
                       type="number"
                       min={1}
@@ -250,7 +254,7 @@ function DeveloperPanel() {
   const [showDevNotes, setShowDevNotes] = useState(false);
 
   return (
-    <section {...screenPanel("developer")} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("developer", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionDeveloper")}</h2>
 
       <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -291,10 +295,11 @@ export function SettingsView() {
 
   return (
     // Slice #37.22: three panels in a row that wraps — the window decides how
-    // many sit side by side, never how wide one is.
-    <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-panel-row>
+    // many sit side by side, never how wide one is. Slice #37.35: three tiles of
+    // whole units on the screen's unit row.
+    <UnitRow units={[SETTINGS_TILE_UNITS]}>
       {/* ── Others ── */}
-      <section {...screenPanel("others")} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+      <section {...screenPanel("others", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-ink">{t("sectionOthers")}</h2>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -341,6 +346,6 @@ export function SettingsView() {
       <DevOnly>
         <DeveloperPanel />
       </DevOnly>
-    </div>
+    </UnitRow>
   );
 }

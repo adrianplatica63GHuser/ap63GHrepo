@@ -17,8 +17,10 @@ export default async function GroupsPage() {
           </h1>
         </header>
 
-        {/* Info panel — what is a Group and when to use it */}
-        <section {...screenPanel("about-groups", true)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
+        {/* Info panel — what is a Group and when to use it. Slice #37.35: the first tile of the list's unit row (6 units). */}
+        <GroupsListView
+          about={
+            <section {...screenPanel("about-groups", 6)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
           <h2 className="mb-3 text-base font-semibold text-blue-900 dark:text-blue-200">
             {t("infoPanel.title")}
           </h2>
@@ -33,8 +35,8 @@ export default async function GroupsPage() {
             </p>
           </div>
         </section>
-
-        <GroupsListView />
+          }
+        />
       </main>
     </div>
   );

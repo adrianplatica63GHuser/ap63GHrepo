@@ -13,19 +13,14 @@
 import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
-import { PANEL_GAP, screenRowStyle, unitStyle } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+import { unitStyle } from "@/lib/ui/field-widths";
 
 export type AssociateTileName = "search" | "results" | "association";
 
-/** The row: as many whole units as the window holds, never fewer than its widest tile. */
+/** The row: as many whole units as the window holds, never fewer than its widest tile (`UnitRow`). */
 export function AssociateRow({ units, children }: { units: readonly number[]; children: ReactNode }) {
-  return (
-    <div style={screenRowStyle(Math.max(...units))}>
-      <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
-        {children}
-      </div>
-    </div>
-  );
+  return <UnitRow units={units}>{children}</UnitRow>;
 }
 
 /** One tile, titled with its name, `units` wide; its height follows its content. */

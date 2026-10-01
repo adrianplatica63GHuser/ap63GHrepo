@@ -14,7 +14,17 @@ import { buttonClass } from "@/lib/ui/button-styles";
 // same value so the copy cannot outlive it.
 import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, WIDE_COLUMN_STYLE, screenBox, screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/**
+ * Slice #37.35: the calculation is one tile of 7 units — it holds the 6-unit map
+ * (rule 20), the figures' grid (four L) and the owners' table inside its padding;
+ * the commit form inside it is 3 units, and the success panel 6.
+ */
+const CALC_UNITS = 7;
+const COMMIT_UNITS = 3;
+const COMMITTED_UNITS = 6;
 
 /** The owners' shares, at #37.16's column widths (Slice #37.22). */
 const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
@@ -238,8 +248,9 @@ export function CalculationView() {
 
   if (committed) {
     return (
-      <div className={`${SCREEN_COLUMN} gap-4`} style={SCREEN_COLUMN_STYLE}>
-        <div {...screenPanel("committed", true)} className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
+      <div className="flex flex-col gap-4">
+        <UnitRow units={[COMMITTED_UNITS]}>
+        <div {...screenPanel("committed", COMMITTED_UNITS)} className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
           <p className="font-semibold text-green-800 dark:text-green-300">
             {t("success.title", { code: committed.groupCode })}
           </p>
@@ -267,6 +278,7 @@ export function CalculationView() {
             ))}
           </ul>
         </div>
+        </UnitRow>
         <div>
           <button
             onClick={resetAll}
@@ -286,7 +298,8 @@ export function CalculationView() {
   // ---- Main ----------------------------------------------------------------
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-5`} style={WIDE_COLUMN_STYLE} data-panel="calculation">
+    <UnitRow units={[CALC_UNITS]}>
+    <section {...screenPanel("calculation", CALC_UNITS)} className="flex flex-col gap-5 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       {/* Intro / reasoning */}
       <p className="text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
 
@@ -422,7 +435,7 @@ export function CalculationView() {
           />
 
           {/* Commit form */}
-          <div {...screenPanel("commit")} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+          <div {...screenPanel("commit", COMMIT_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
             <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
               {t("commit.title", { count: computation.owners.length })}
             </h3>
@@ -516,7 +529,8 @@ export function CalculationView() {
           </div>
         </>
       )}
-    </div>
+    </section>
+    </UnitRow>
   );
 }
 

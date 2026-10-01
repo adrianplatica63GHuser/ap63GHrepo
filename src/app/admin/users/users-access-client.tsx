@@ -6,7 +6,17 @@ import { useTranslations, useLocale } from "next-intl";
 import { CheckCircle, XCircle, Clock, UserCheck, UserX } from "lucide-react";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, type ColumnName } from "@/lib/ui/field-widths";
+import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/**
+ * Slice #37.35: the two tabs' tables, and the tile each fills — the fewest
+ * units that hold its columns (7 for the pending requests, 9 for the history);
+ * the email takes what the other columns leave.
+ */
+const PENDING_COLUMNS: readonly ColumnName[] = ["username", "email", "dateTime", "decision"];
+const HISTORY_COLUMNS: readonly ColumnName[] = ["username", "email", "dateTime", "requestStatus", "dateTime", "updatedBy"];
+const TAB_UNITS = { pending: tableUnits(PENDING_COLUMNS), history: tableUnits(HISTORY_COLUMNS) } as const;
 
 type RequestStatus = "pending" | "approved" | "rejected";
 
@@ -166,15 +176,16 @@ export function UsersAccessClient() {
   const isBusy = approveMutation.isPending || rejectMutation.isPending;
 
   return (
-    <div className={SCREEN_COLUMN} style={SCREEN_COLUMN_STYLE}>
+    <UnitRow units={[TAB_UNITS[tab]]}>
+    <section {...screenPanel("users", TAB_UNITS[tab])} className="flex flex-col rounded-md border border-wire bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       {actionSuccess && (
-        <div className="mb-4 w-0 min-w-full rounded-md bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm flex items-center gap-2">
+        <div className="mb-4 rounded-md bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm flex items-center gap-2">
           <CheckCircle size={14} className="shrink-0" />
           {actionSuccess}
         </div>
       )}
       {actionError && (
-        <div className="mb-4 w-0 min-w-full rounded-md bg-red-50 border border-red-200 text-red-800 px-4 py-2 text-sm flex items-center gap-2">
+        <div className="mb-4 rounded-md bg-red-50 border border-red-200 text-red-800 px-4 py-2 text-sm flex items-center gap-2">
           <XCircle size={14} className="shrink-0" />
           {actionError}
         </div>
@@ -236,7 +247,8 @@ export function UsersAccessClient() {
           locale={locale}
         />
       )}
-    </div>
+    </section>
+    </UnitRow>
   );
 }
 
@@ -263,9 +275,8 @@ function RequestTable({
 }) {
   // Slice #37.22: #37.16's column widths — a request's table is as wide as its
   // columns, whichever tab it is on.
-  const columns: readonly ColumnName[] = showActions
-    ? ["username", "email", "dateTime", "decision"]
-    : ["username", "email", "dateTime", "requestStatus", "dateTime", "updatedBy"];
+  const columns = showActions ? PENDING_COLUMNS : HISTORY_COLUMNS;
+  const fill = { units: showActions ? TAB_UNITS.pending : TAB_UNITS.history, column: "email" } as const;
   if (query.isPending) {
     return <p className="text-sm text-fade py-8 text-center">{t("table.loading")}</p>;
   }
@@ -285,8 +296,8 @@ function RequestTable({
 
   return (
     <div className={`${TABLE_FRAME} rounded-lg border border-wire`}>
-      <table {...fixedTable(columns)}>
-        <FixedColumns columns={columns} />
+      <table {...fixedTable(columns, undefined, fill)}>
+        <FixedColumns columns={columns} fill={fill} />
         <thead className="bg-surface border-b border-wire">
           <tr>
             <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("username")}>{t("table.username")}</th>

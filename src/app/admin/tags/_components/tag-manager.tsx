@@ -5,10 +5,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+import { tableUnits, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
 
 /** The tags, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["tag", "count", "rowActions"];
+
+/** Slice #37.35: the cloud is 6 units (#37.22's two panels); the list the fewest that hold its columns, the tag taking the rest. */
+const CLOUD_UNITS = 6;
+const LIST_UNITS = tableUnits(COLUMNS);
+const LIST_FILL = { units: LIST_UNITS, column: "tag" } as const;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -405,10 +411,12 @@ export function TagManager() {
 
   return (
     <>
+      <UnitRow units={[CLOUD_UNITS, LIST_UNITS]}>
       {/* ── Tag Cloud ──────────────────────────────────────────────────────── */}
       {/* Slice #37.22: the cloud is two panels wide and wraps downward; the
-          table under it is as wide as its columns. */}
-      <section {...screenPanel("tag-cloud", true)} className="mb-8">
+          table under it is as wide as its columns. Slice #37.35: both are tiles
+          of the unit row, the cloud 6 units and the list as many as its columns. */}
+      <section {...screenPanel("tag-cloud", CLOUD_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
             {t("cloud.title")}
@@ -419,7 +427,7 @@ export function TagManager() {
         </div>
         <p className="mb-4 text-sm text-fade dark:text-zinc-400">{t("cloud.note")}</p>
 
-        <div className="flex flex-wrap gap-2 p-4 rounded-lg border border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-wrap gap-2">
           {tags.map((row) => (
             <button
               key={row.tag}
@@ -440,7 +448,7 @@ export function TagManager() {
       </section>
 
       {/* ── Management table ───────────────────────────────────────────────── */}
-      <section className="w-fit max-w-full">
+      <section {...screenPanel("tag-list", LIST_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
             {t("list.title")}
@@ -455,8 +463,8 @@ export function TagManager() {
         </div>
 
         <div className={`${TABLE_FRAME} rounded-lg border border-card-rim dark:border-zinc-800`}>
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
+            <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
             <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-fade dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-2 text-left font-semibold" {...columnHead("tag")}>{t("list.colTag")}</th>
@@ -495,6 +503,7 @@ export function TagManager() {
           </table>
         </div>
       </section>
+      </UnitRow>
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}
       {renameTarget !== null && (

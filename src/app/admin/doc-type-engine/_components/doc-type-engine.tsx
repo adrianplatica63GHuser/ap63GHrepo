@@ -104,7 +104,15 @@ import {
   uniqueFieldKey,
 } from "@/lib/documents/discover-to-template";
 import { isSessionLoss, servesHtml } from "@/lib/import/ai-interpret-run";
-import { CAPTION_STYLE, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/**
+ * Slice #37.35: the engine is one tile of 6 units (#37.22's two panels, on the
+ * unit) — a proposed field's row (XL, M and XXL) fits inside it; a caption under
+ * a box wraps at the tile's inner width.
+ */
+const ENGINE_UNITS = 6;
 
 /*
  * ⚠️ **THERE IS DELIBERATELY NO MODULE-LEVEL `_dirHandle` HERE, AND THE FIRST
@@ -807,7 +815,8 @@ export function DocTypeEngine({
     !!selectedType && refusalFor(selectedType) === null && samples.length > 0;
 
   return (
-    <section {...screenPanel("doc-type-engine", true)} className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+    <UnitRow units={[ENGINE_UNITS]}>
+    <section {...screenPanel("doc-type-engine", ENGINE_UNITS)} className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
       {/* ⚠️ **MOUNTED ONCE, FOR THE WHOLE SCREEN, AND `import-types-blocked-stage.tsx`
           RECORDS WHY.** "A live region inserted into the DOM together with its
           text is not reliably announced — the region has to exist before its
@@ -875,7 +884,7 @@ export function DocTypeEngine({
               })}
             </select>
             {selectedType && documentTypeHasForm(selectedType.templateFields) && (
-              <p className="mt-1.5 text-xs text-fade dark:text-zinc-400" style={CAPTION_STYLE}>
+              <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">
                 {t("types.additiveNote", { count: existingFields.length })}
               </p>
             )}
@@ -935,7 +944,7 @@ export function DocTypeEngine({
                 </option>
               ))}
             </select>
-            <p className="mt-1.5 text-xs text-fade dark:text-zinc-400" style={CAPTION_STYLE}>
+            <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">
               {t("matching.hint")}
             </p>
           </div>
@@ -1067,8 +1076,8 @@ export function DocTypeEngine({
           )}
 
           {/* The line is still movable here, and moving it re-reads nothing. */}
-          <div className="mt-5 flex items-center gap-3">
-            <label htmlFor="dte-percent-review" className="text-sm font-medium text-ink dark:text-zinc-200">
+          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <label htmlFor="dte-percent-review" className="basis-full text-sm font-medium text-ink dark:text-zinc-200">
               {t("matching.label")}
             </label>
             <select
@@ -1392,6 +1401,7 @@ export function DocTypeEngine({
         </>
       )}
     </section>
+    </UnitRow>
   );
 }
 

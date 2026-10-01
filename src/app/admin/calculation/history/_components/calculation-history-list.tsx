@@ -1,13 +1,30 @@
 "use client";
 
+import type React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import type { ColumnName } from "@/lib/ui/field-widths";
+import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
 
 /** The runs, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["code", "algorithm", "count", "groupCode", "runStatus", "updatedBy", "date", "open"];
+
+/** Slice #37.35: one tile, the fewest units that hold the runs' columns; „De către" takes the rest. */
+const LIST_UNITS = tableUnits(COLUMNS);
+const LIST_FILL = { units: LIST_UNITS, column: "updatedBy" } as const;
+
+/** Every state of the list in the same tile, on the screen's unit row. */
+function ListTile({ children }: { children: React.ReactNode }) {
+  return (
+    <UnitRow units={[LIST_UNITS]}>
+      <section {...screenPanel("calculation-runs", LIST_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        {children}
+      </section>
+    </UnitRow>
+  );
+}
 
 type CalcRunListItem = {
   id:              string;
@@ -64,23 +81,26 @@ export function CalculationHistoryList() {
   });
 
   if (isLoading) {
-    return <p className="text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
+    return <ListTile><p className="text-sm text-fade dark:text-zinc-400">{t("loading")}</p></ListTile>;
   }
   if (isError) {
     return (
-      <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-        {t("error")}
-      </p>
+      <ListTile>
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          {t("error")}
+        </p>
+      </ListTile>
     );
   }
   if (!items || items.length === 0) {
-    return <p className="text-sm text-fade dark:text-zinc-400">{t("empty")}</p>;
+    return <ListTile><p className="text-sm text-fade dark:text-zinc-400">{t("empty")}</p></ListTile>;
   }
 
   return (
-    <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-      <table {...fixedTable(COLUMNS)}>
-        <FixedColumns columns={COLUMNS} />
+    <ListTile>
+    <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900`}>
+      <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
+        <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
         <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
           <tr>
             <th className="px-3 py-2" {...columnHead("code")}>{t("col.code")}</th>
@@ -143,5 +163,6 @@ export function CalculationHistoryList() {
         </tbody>
       </table>
     </div>
+    </ListTile>
   );
 }

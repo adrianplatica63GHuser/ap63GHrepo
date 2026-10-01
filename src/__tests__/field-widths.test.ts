@@ -97,6 +97,7 @@ import {
   PREVIEW_UNITS,
   PREVIEW_WIDTHS,
   boxesUnits,
+  CALC_MAP_STYLE,
   fillColumnRem,
   screenPanel,
   screenRowStyle,
@@ -973,8 +974,9 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
       expect(SCREEN_COLUMN).toContain(`[&>${child}]:min-w-full`);
     }
     for (const [what, src] of VIEWS.filter(([w]) => w.startsWith("/") || ["Grupuri", "a group", "Ștampile", "a stamp", "Utilizatori & Acces", "Texte de ajutor", "Calcul", "one calculation"].includes(w))) {
-      // Slice #37.34: an „Asociază …" screen is a row of unit tiles instead (`AssociateRow`).
-      const column = /associate-/.test(what) ? /<AssociateRow units=/.test(src) : /\$\{SCREEN_COLUMN\}|\{SCREEN_COLUMN\}/.test(src);
+      // Slices #37.34 and #37.35: an „Asociază …" screen and every administration screen
+      // is a row of unit tiles instead (`AssociateRow`, `UnitRow`).
+      const column = /associate-/.test(what) ? /<AssociateRow units=/.test(src) : /<UnitRow units=/.test(src);
       expect([what, column]).toEqual([what, true]);
     }
   });
@@ -1147,5 +1149,49 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
     expect(screenPanel("x", 3).style).toEqual({ width: "29.75rem" });
     expect(screenPanel("x").style).toEqual(PANEL_STYLE);
     expect(String(screenRowStyle(6).width)).toBe("max(60.5rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
+  });
+});
+
+describe("the administration screens on the unit (Slice #37.35)", () => {
+  const APP = (...p: string[]) => code(read("src", "app", ...p));
+  const ADMIN: [string, string][] = [
+    ["Setări", APP("admin", "settings", "_components", "settings-view.tsx")],
+    ["Liste de valori", APP("admin", "value-lists", "_components", "value-list-hub.tsx")],
+    ["Utilizatori & Acces", APP("admin", "users", "users-access-client.tsx")],
+    ["Grupuri", APP("admin", "groups", "_components", "groups-list-view.tsx")],
+    ["a group", APP("admin", "groups", "_components", "group-editor.tsx")],
+    ["Ștampile", APP("admin", "stamps", "_components", "stamps-list-view.tsx")],
+    ["a stamp", APP("admin", "stamps", "_components", "stamp-applicator.tsx")],
+    ["Etichete", APP("admin", "tags", "_components", "tag-manager.tsx")],
+    ["Texte de ajutor", APP("admin", "help-content", "_components", "help-content-hub.tsx")],
+    ["Calcul", APP("admin", "calculation", "_components", "calculation-view.tsx")],
+    ["Istoricul calculelor", APP("admin", "calculation", "history", "_components", "calculation-history-list.tsx")],
+    ["one calculation", APP("admin", "calculation", "history", "[id]", "_components", "calculation-run-detail.tsx")],
+    ["Distilare Tipizate", APP("admin", "doc-type-engine", "_components", "doc-type-engine.tsx")],
+    ["Schimbă parola", APP("account", "change-password", "page.tsx")],
+    ["Grupuri — the page", APP("admin", "groups", "page.tsx")],
+    ["Ștampile — the page", APP("admin", "stamps", "page.tsx")],
+  ];
+
+  it.each(ADMIN)("%s: every section a tile of whole units, no #37.22 width left", (what, src) => {
+    for (const m of src.matchAll(/screenPanel\(([^()]*(?:\([^()]*\))?[^()]*)\)/g)) {
+      // Two arguments, the second a number of units — never a lone name (32rem) or `true` (65rem).
+      expect([what, m[1], /,\s*(?!true\b)[A-Za-z0-9_]+(\[[a-z]+\])?\s*$/.test(m[1])]).toEqual([what, m[1], true]);
+    }
+    expect(src).not.toMatch(/SCREEN_COLUMN|WIDE_COLUMN_STYLE|HELP_NAV_STYLE|CAPTION_STYLE|data-panel-row/);
+    if (!/— the page$/.test(what)) expect([what, /<UnitRow units=/.test(src)]).toEqual([what, true]);
+  });
+
+  // The lists whose table IS the tile; Calcul's owners and parcels sit in a 7-unit tile beside its map and figures.
+  const LISTS = ["Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Istoricul calculelor"];
+  it.each(ADMIN.filter(([w]) => LISTS.includes(w)))("%s: its table fills its tile", (what, src) => {
+    expect(src).toMatch(/<table \{\.\.\.fixedTable\(/);
+    for (const m of src.matchAll(/<table \{\.\.\.fixedTable\(([^)]*)\)\}/g)) {
+      expect([what, m[1].split(",").length]).toEqual([what, 3]);
+    }
+  });
+
+  it("Calcul's map is whole units, at its height (rule 20)", () => {
+    expect(CALC_MAP_STYLE).toEqual({ width: `${unitsRem(6)}rem`, height: "26.25rem" });
   });
 });

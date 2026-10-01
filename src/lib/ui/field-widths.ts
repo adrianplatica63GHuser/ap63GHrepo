@@ -1113,8 +1113,9 @@ export function stepGridStyle(step: Step, columns: number, gapRem = 0.75): CSSPr
   return { display: "grid", gridTemplateColumns: `repeat(${columns}, ${rem(SCALE[step])})`, gap: rem(gapRem) };
 }
 
-/** The calculation's preview map: two panels wide, as tall as it was (420 px). */
-export const CALC_MAP_STYLE: CSSProperties = { width: rem(TILE_REM.wide), height: rem(26.25) };
+/** The calculation's preview map: 6 width units (#37.35, rule 20; two panels before), as tall as it was (420 px). */
+export const CALC_MAP_UNITS = 6;
+export const CALC_MAP_STYLE: CSSProperties = { width: rem(unitsRem(CALC_MAP_UNITS)), height: rem(26.25) };
 
 /** The list of screens and hints beside the help editor (18rem before; XL now). */
 export const HELP_NAV_STYLE: CSSProperties = { width: rem(SCALE.XL) };

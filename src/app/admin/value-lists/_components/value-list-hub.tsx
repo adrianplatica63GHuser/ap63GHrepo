@@ -5,6 +5,10 @@ import { useTranslations } from "next-intl";
 import { isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 import { screenPanel } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/** Slice #37.35: a section is 6 units (#37.22's two panels, 65rem, on the unit); its buttons wrap inside it. */
+const SECTION_UNITS = 6;
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -26,8 +30,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    // Slice #37.22: a section is two panels wide; its buttons wrap inside it.
-    <div {...screenPanel(`value-lists-${label}`, true)} className="rounded-lg border border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900">
+    // Slice #37.22: a section is two panels wide; its buttons wrap inside it. #37.35: 6 units.
+    <div {...screenPanel(`value-lists-${label}`, SECTION_UNITS)} className="rounded-lg border border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900">
       <div className="border-b border-card-rim px-4 py-2 dark:border-zinc-800">
         <span className="text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
           {label}
@@ -154,7 +158,7 @@ export function ValueListHub({
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <UnitRow units={[SECTION_UNITS]}>
         {/* ── Proprietate ── */}
         <Section label={t("sections.property")}>
           <ListBtn label={t("lists.propertyTypes")}  onClick={() => open("property-types")} />
@@ -228,7 +232,7 @@ export function ValueListHub({
           <ListBtn label={t("lists.documentToDocument")} onClick={() => open("document-document-roles")} />
         </Section>
 
-      </div>
+      </UnitRow>
 
       {openList && (
         <ValueListModal

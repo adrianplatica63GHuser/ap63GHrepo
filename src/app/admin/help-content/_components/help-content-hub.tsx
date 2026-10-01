@@ -11,7 +11,15 @@ import {
   type HelpScreenKey,
 } from "@/lib/help/registry";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { HELP_NAV_STYLE, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, screenPanel, stepGridStyle } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel, stepGridStyle } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
+
+/**
+ * Slice #37.35: the list of screens and hints is 2 units (#37.22's XL nav, on the
+ * unit); an editor 6 — its two XXL columns and their gap, inside its padding.
+ */
+const NAV_UNITS = 2;
+const EDITOR_UNITS = 6;
 
 // Slice #32.16: the screen and hint names on this page come from
 // `help.admin.screens.*` / `help.admin.hints.*` rather than from the registry,
@@ -98,7 +106,7 @@ function StatusBadge({ complete, completeLabel, missingLabel }: { complete: bool
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div {...screenPanel("help-empty", true)} className="flex items-center justify-center rounded-lg border border-dashed border-card-rim p-12 text-center text-sm text-fade dark:border-zinc-800">
+    <div {...screenPanel("help-empty", EDITOR_UNITS)} className="flex items-center justify-center rounded-lg border border-dashed border-card-rim p-12 text-center text-sm text-fade dark:border-zinc-800">
       {text}
     </div>
   );
@@ -211,7 +219,7 @@ function ScreenEditor({
   });
 
   return (
-    <div {...screenPanel("screen-editor", true)} className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
+    <div {...screenPanel("screen-editor", EDITOR_UNITS)} className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">
         {t(helpScreenLabelKey(screenKey))}
       </h2>
@@ -318,7 +326,7 @@ function HintEditor({
   });
 
   return (
-    <div {...screenPanel("hint-editor", true)} className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
+    <div {...screenPanel("hint-editor", EDITOR_UNITS)} className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">
           {t(helpHintLabelKey(hintKey))}
@@ -392,7 +400,7 @@ export function HelpContentHub() {
     : null;
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-4`} style={SCREEN_COLUMN_STYLE}>
+    <div className="flex flex-col gap-4">
       <div className="flex gap-1 border-b border-card-rim dark:border-zinc-800">
         <button
           type="button"
@@ -416,8 +424,8 @@ export function HelpContentHub() {
         </button>
       </div>
 
-      <div className="flex gap-4 items-start">
-        <div style={HELP_NAV_STYLE} data-panel="help-nav" className="shrink-0 rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
+      <UnitRow units={[NAV_UNITS, EDITOR_UNITS]}>
+        <div {...screenPanel("help-nav", NAV_UNITS)} className="shrink-0 rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
           {tab === "screens" &&
             HELP_SCREENS.map((s) => {
               const complete = isComplete(contentByKey.get(s.key));
@@ -512,7 +520,7 @@ export function HelpContentHub() {
               <EmptyState text={t("noHintSelected")} />
             ))}
         </div>
-      </div>
+      </UnitRow>
     </div>
   );
 }

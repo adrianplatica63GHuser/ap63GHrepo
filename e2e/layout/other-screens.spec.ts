@@ -9,6 +9,7 @@
  * Then one picture of each at 1920 px into playwright-report/layout/, for the
  * slice's handover. Step 5 (Slice #37.34): on each „Asociază …" screen, the
  * three tiles, the unit grid at 1366, 1920 and 2560 px, and the breadcrumb.
+ * Step 6 (Slice #37.35): the unit grid on every administration screen too.
  *
  * ⚠️ **THE PICTURES CARRY NO REAL RECORD.** The „Asociază …" screens search for
  * this spec's own marker, so their tables list only its records; a screen that
@@ -50,7 +51,15 @@ async function screen(
   name: string,
   url: string,
   ready: (page: Page) => Locator,
-  opts: { mask?: (page: Page) => Locator[]; prepare?: (page: Page) => Promise<void>; mayBeEmpty?: boolean } = {},
+  opts: {
+    mask?: (page: Page) => Locator[];
+    prepare?: (page: Page) => Promise<void>;
+    mayBeEmpty?: boolean;
+    /** Slice #37.35: the screen is a row of unit tiles; check its grid at 1366, 1920 and 2560 px. */
+    unitGrid?: boolean;
+    /** Slice #37.35: also photograph it at these widths. */
+    alsoAt?: number[];
+  } = {},
 ): Promise<void> {
   await test.step(name, async () => {
     await page.goto(url);
@@ -58,8 +67,26 @@ async function screen(
     if (opts.prepare) await opts.prepare(page);
     await settled(page);
     await expectStableScreen(page, [1400, 2400], 900, !opts.mayBeEmpty);
-    await photograph(page, `other-${name}`, [1920], 1000, opts.mask ? opts.mask(page) : []);
+    if (opts.unitGrid) await expectScreenUnitGrid(page);
+    await photograph(page, `other-${name}`, [1920, ...(opts.alsoAt ?? [])], 1000, opts.mask ? opts.mask(page) : []);
   });
+}
+
+/**
+ * A screen of unit tiles (Slice #37.35): every tile and panel a whole number of
+ * units, and the row as many units as the window holds — 6, 10 and 14 at 1366,
+ * 1920 and 2560 px — or, where one tile is wider than that, as wide as it (the
+ * row is never narrower than its widest tile, and the page scrolls sideways).
+ */
+async function expectScreenUnitGrid(page: Page): Promise<void> {
+  const widest = await page.evaluate(([u, g]) => {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const units = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-tile], [data-tile-row] [data-panel]")]
+      .map((el) => Math.round((el.getBoundingClientRect().width / rem + g) / (u + g)));
+    return Math.max(0, ...units);
+  }, [UNIT_REM, UNIT_GAP_REM] as const);
+  expect(widest, "no tile on the unit row").toBeGreaterThan(0);
+  await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: Math.max(6, widest), 1920: Math.max(10, widest), 2560: Math.max(14, widest) });
 }
 
 /**
@@ -161,55 +188,62 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
       }
 
       // Administration.
-      await screen(page, "settings", "/admin/settings", (p) => p.locator('[data-width-field="timeFrameDays"]').first());
-      await screen(page, "value-lists", "/admin/value-lists", (p) => p.locator("[data-panel]").first());
+      await screen(page, "settings", "/admin/settings", (p) => p.locator('[data-width-field="timeFrameDays"]').first(), { unitGrid: true, alsoAt: [1366, 2560] });
+      await screen(page, "value-lists", "/admin/value-lists", (p) => p.locator("[data-panel]").first(), { unitGrid: true });
       // „Istoric", whose table is there whenever anyone has ever asked for access;
       // with no request at all the screen has nothing fixed to measure but the
       // page itself, which must still not be pushed sideways.
       await screen(page, "users", "/admin/users", heading, {
         mask: rows,
         mayBeEmpty: true,
+        unitGrid: true,
         prepare: async (p) => {
           await p.getByRole("button", { name: "Istoric", exact: true }).click();
           await expect(p.locator("table[data-width-table]").or(p.getByText("Nu există istoric."))).toBeVisible({ timeout: 30_000 });
         },
       });
-      await screen(page, "groups", "/admin/groups", (p) => p.locator("table[data-width-table]"), { mask: rows });
+      await screen(page, "groups", "/admin/groups", (p) => p.locator("table[data-width-table]"), { mask: rows, unitGrid: true });
       await screen(page, "group", `/admin/groups/${groupId}`, (p) => p.locator('[data-width-field="groupDescription"]'), {
         // The member panels are open when the editor opens („Ascunde elementele").
         prepare: async (p) => {
           await expect(p.locator('[data-panel="available"]')).toBeVisible({ timeout: 30_000 });
         },
         mask: (p) => [p.locator('[data-panel="available"] ul'), p.locator('[data-panel="in-group"] ul')],
+        unitGrid: true,
+        alsoAt: [1366, 2560],
       });
-      await screen(page, "stamps", "/admin/stamps", (p) => p.locator("table[data-width-table]"), { mask: rows });
+      await screen(page, "stamps", "/admin/stamps", (p) => p.locator("table[data-width-table]"), { mask: rows, unitGrid: true });
       await screen(page, "stamp", `/admin/stamps/${stampId}`, (p) => p.locator('[data-panel="available"]'), {
         mask: (p) => [p.locator('[data-panel="available"] ul'), p.locator('[data-panel="stamped"] ul')],
+        unitGrid: true,
       });
       await screen(page, "tags", "/admin/tags", heading, {
         mask: (p) => [p.locator('[data-panel="tag-cloud"] > div').last(), p.locator("tbody")],
+        unitGrid: true,
       });
       await screen(page, "help-content", "/admin/help-content", (p) => p.locator('[data-panel="help-nav"]'), {
         prepare: async (p) => {
           await p.locator('[data-panel="help-nav"] button').first().click();
           await expect(p.locator('[data-width-field="helpText"]').first()).toBeVisible({ timeout: 30_000 });
         },
+        unitGrid: true,
       });
-      await screen(page, "calculation", "/admin/calculation", heading);
+      await screen(page, "calculation", "/admin/calculation", heading, { unitGrid: true, alsoAt: [1366, 2560] });
       // With no calculation yet the history is one sentence, and nothing on it is marked.
-      await screen(page, "calculation-history", "/admin/calculation/history", heading, { mask: rows, mayBeEmpty: true });
+      await screen(page, "calculation-history", "/admin/calculation/history", heading, { mask: rows, mayBeEmpty: true, unitGrid: true });
       const run = page.locator('a[href^="/admin/calculation/history/"]').first();
       if (await run.count()) {
         const href = await run.getAttribute("href");
         await screen(page, "calculation-run", href!, (p) => p.locator("table[data-width-table]").first(), {
           // Its header names who made it; its tables and map, whose land.
           mask: (p) => [p.locator("tbody"), p.locator('[data-panel="preview-map"]'), p.locator("main div.flex.flex-wrap.items-center.gap-4").first()],
+          unitGrid: true,
         });
       } else {
         test.info().annotations.push({ type: "note", description: "no calculation run to open; „one calculation” not photographed" });
       }
-      await screen(page, "doc-type-engine", "/admin/doc-type-engine", (p) => p.locator('[data-width-field="documentType"]'));
-      await screen(page, "change-password", "/account/change-password", (p) => p.locator('[data-width-field="password"]').first());
+      await screen(page, "doc-type-engine", "/admin/doc-type-engine", (p) => p.locator('[data-width-field="documentType"]'), { unitGrid: true });
+      await screen(page, "change-password", "/account/change-password", (p) => p.locator('[data-width-field="password"]').first(), { unitGrid: true });
     } finally {
       await removeLeftovers(req, MARK);
       await removeGroupLeftovers(req, MARK);

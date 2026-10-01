@@ -3,13 +3,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { UnitRow } from "@/components/screen/unit-row";
 
 /** The stamps, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["description", "count", "rowActions"];
+
+/**
+ * Slice #37.35: the screen's tiles — what this list is (6 units, #37.22's two
+ * panels), the create form (3) while it is open, and the list (the fewest units
+ * that hold its columns, the description taking what the others leave).
+ */
+const ABOUT_UNITS = 6;
+const FORM_UNITS = 3;
+const LIST_UNITS = tableUnits(COLUMNS);
+const LIST_FILL = { units: LIST_UNITS, column: "description" } as const;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +99,7 @@ function CreateForm({ onClose }: { onClose: () => void }) {
   const canSave = shortDescription.trim().length > 0 && !mutation.isPending;
 
   return (
-    <div {...screenPanel("add-stamp")} className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+    <div {...screenPanel("add-stamp", FORM_UNITS)} className="rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
       <h3 className="mb-1 text-sm font-semibold text-ink dark:text-zinc-100">
         {t("createTitle")}
       </h3>
@@ -173,7 +184,7 @@ function CreateForm({ onClose }: { onClose: () => void }) {
 
 // ── List ──────────────────────────────────────────────────────────────────────
 
-export function StampsListView() {
+export function StampsListView({ about }: { about?: ReactNode } = {}) {
   const t = useTranslations("stamp");
   const qc = useQueryClient();
 
@@ -194,8 +205,11 @@ export function StampsListView() {
   });
 
   return (
-    <div className={`${SCREEN_COLUMN} gap-3`} style={SCREEN_COLUMN_STYLE}>
+    <UnitRow units={[ABOUT_UNITS, LIST_UNITS]}>
+      {about}
       {creating && <CreateForm onClose={() => setCreating(false)} />}
+
+      <section {...screenPanel("stamps", LIST_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
@@ -215,8 +229,8 @@ export function StampsListView() {
 
       {/* Table */}
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        <table {...fixedTable(COLUMNS)}>
-          <FixedColumns columns={COLUMNS} />
+        <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
+          <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-4 py-2" {...columnHead("description")}>{t("table.stamp")}</th>
@@ -286,6 +300,8 @@ export function StampsListView() {
         </table>
       </div>
 
+      </section>
+
       {/* Delete confirm */}
       {confirmDeleteId && (
         <>
@@ -317,6 +333,6 @@ export function StampsListView() {
           </div>
         </>
       )}
-    </div>
+    </UnitRow>
   );
 }
