@@ -16,6 +16,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzl
 import { db, type DbTransaction } from "@/db";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey, cadastralValue } from "./cadastral-identity";
+import { perSearchTerms } from "@/lib/search/per-terms";
 // Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
 import { sameTarlaCode, tarlaLockIdentities } from "./tarla-code-guard";
@@ -505,15 +506,16 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
     pat
       ? or(
           ilike(property.code,            pat),
-          ilike(property.nickname,        pat),
+          // Slice #37.39: as typed, and with its `per` decoded.
+          ...perSearchTerms(q).map((t) => ilike(property.nickname, `%${t}%`)),
           ilike(property.cadastralNumber, pat),
           ilike(property.carteFunciara,   pat),
           // Slice #34.03: the code lives one table over now. The LEFT JOIN
           // below is what makes this reachable; on a property with no tarla
           // `indicativ` is NULL and `ilike` is NULL, which `or` treats as
           // "no match" — the same answer the old NULL `tarla_sola` gave.
-          ilike(lookupTarla.indicativ,    pat),
-          ilike(property.parcela,         pat),
+          ...perSearchTerms(q).map((t) => ilike(lookupTarla.indicativ, `%${t}%`)),
+          ...perSearchTerms(q).map((t) => ilike(property.parcela, `%${t}%`)),
         )
       : undefined,
     groupFilter,

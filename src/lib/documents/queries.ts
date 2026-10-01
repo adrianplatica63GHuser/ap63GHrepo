@@ -14,6 +14,7 @@
  */
 
 import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { perSearchTerms } from "@/lib/search/per-terms";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
@@ -139,7 +140,8 @@ export async function listDocument(
     pat
       ? or(
           ilike(document.code,       pat),
-          ilike(document.title,      pat),
+          // Slice #37.39: as typed, and with its `per` decoded.
+          ...perSearchTerms(q).map((t) => ilike(document.title, `%${t}%`)),
           ilike(document.nrDocument, pat),
         )
       : undefined,
@@ -963,7 +965,10 @@ export async function searchDocumentAll(opts: {
   const pat = opts.q?.trim() ? `%${opts.q.trim()}%` : null;
 
   const where = pat
-      ? or(ilike(document.code, pat), ilike(document.title, pat))
+      ? or(
+          ilike(document.code, pat),
+          ...perSearchTerms(opts.q).map((t) => ilike(document.title, `%${t}%`)),
+        )
       : undefined;
 
   const [{ value: total }] = await db.select({ value: count() }).from(document).where(where);

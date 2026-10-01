@@ -91,6 +91,7 @@ import {
   type SearchBucket,
   type SearchEntityType,
 } from "@/lib/search/interleave";
+import { perSearchTerms } from "@/lib/search/per-terms";
 
 /** One membership badge on a result row. */
 export type ResultGroupTag = { code: string; position: number };
@@ -136,6 +137,8 @@ export async function GET(req: Request) {
   const stampCode     = p("stampCode");
   const tag           = p("tag");
   const search        = p("search");
+  // Slice #37.39 — see src/lib/search/per-terms.ts.
+  const searchTerms   = perSearchTerms(search);
   const updatedFrom   = p("updatedFrom");
   const updatedTo     = p("updatedTo");
   const hasMetadata   = p("hasMetadata");  // "yes" | "no" | null=any
@@ -178,11 +181,14 @@ export async function GET(req: Request) {
     : null;
 
   // Tag filter — uses the literal name for the same Drizzle gotcha reason.
-  const tagExists = tag
+  // Slice #37.39: a tag is a folder's name, stored with its `per` decoded, so
+  // the filter asks for the decoded form too.
+  const tagTerms = perSearchTerms(tag);
+  const tagExists = tagTerms.length > 0
     ? sql`EXISTS (
           SELECT 1 FROM entity_tag et
           WHERE et.principal_object_id = principal_object.id
-            AND et.tag ILIKE ${`%${tag}%`}
+            AND (${sql.join(tagTerms.map((t) => sql`et.tag ILIKE ${`%${t}%`}`), sql` OR `)})
         )`
     : null;
 
@@ -285,13 +291,15 @@ export async function GET(req: Request) {
     //   nickname, carte_funciara, tarla_sola, cadastral_number, code
     //   + property_address.street_line, property_address.locality
     //   + group description (via correlated EXISTS)
+    // Slice #37.39: the nickname and the tarla code are matched against the
+    // term as typed AND with its `per` decoded (`perSearchTerms`).
     const searchCond = search
       ? or(
-          ilike(property.nickname,          `%${search}%`),
+          ...searchTerms.map((t) => ilike(property.nickname,     `%${t}%`)),
           ilike(property.carteFunciara,     `%${search}%`),
           // Slice #34.03: the code lives in lookup_tarla now, reached by the
           // LEFT JOIN below.
-          ilike(lookupTarla.indicativ,      `%${search}%`),
+          ...searchTerms.map((t) => ilike(lookupTarla.indicativ, `%${t}%`)),
           ilike(property.cadastralNumber,   `%${search}%`),
           ilike(principalObject.code,       `%${search}%`),
           ilike(propertyAddress.streetLine, `%${search}%`),
@@ -367,7 +375,8 @@ export async function GET(req: Request) {
     // + group description (via correlated EXISTS).
     const searchCond = search
       ? or(
-          ilike(document.title,       `%${search}%`),
+          // Slice #37.39: the title as typed and with its `per` decoded.
+          ...searchTerms.map((t) => ilike(document.title, `%${t}%`)),
           ilike(document.nrDocument,  `%${search}%`),
           ilike(document.subject,     `%${search}%`),
           ilike(principalObject.code, `%${search}%`),
