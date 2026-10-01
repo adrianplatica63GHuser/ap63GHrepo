@@ -85,7 +85,14 @@ export async function documentTypeIdFor(request: APIRequestContext, key: string)
 
 export async function createProperty(
   request: APIRequestContext,
-  fields: { nickname: string; tarlaId?: string; parcela?: string; surfaceAreaMp?: number },
+  // `corners` since Slice #37.38: TC-MAP-01's property is a drawn rectangle.
+  fields: {
+    nickname: string;
+    tarlaId?: string;
+    parcela?: string;
+    surfaceAreaMp?: number;
+    corners?: { lat: number; lon: number }[];
+  },
 ): Promise<string> {
   const body = await postJson<{ property: { id: string } }>(request, ROUTE.property, {
     ...fields,

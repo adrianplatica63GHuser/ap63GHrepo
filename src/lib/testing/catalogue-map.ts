@@ -44,7 +44,10 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-AUTH-02", "TC-TILES-06"],
   "/properties/new":                       ["TC-PROP-01", "TC-PROP-05"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03"],
+  // Slice #37.38: the map opened on a Property from its form. Needs a Google
+  // Maps key in .env — the laptop and the runner have one.
+  "/properties/map":                       ["TC-MAP-01"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01"],
   "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02", "TC-VER-01", "TC-TILES-06"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01"],
   "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01"],
@@ -96,8 +99,6 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
  * CATALOGUE_ROUTE_CASES is the visible shape of the suite growing.
  */
 export const CATALOGUE_NOT_YET: Readonly<Record<string, string>> = {
-  "/properties/map":
-    "Open the map, see the property from TC-PROP-01 on it, open it from there. Needs a Google Maps key in .env, so it is not a case every machine can run.",
   // TC-LAYOUT-01 (Slice #37.22) opens this route too, but only to measure its
   // widths; what the screen is FOR — distilling a type — still has no case,
   // so the route stays here rather than moving to CATALOGUE_ROUTE_CASES.

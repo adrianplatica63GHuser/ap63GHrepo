@@ -112,6 +112,7 @@ fixed fixture where the existing one will do.
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
+| [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `confirmed` | 2026-10-01 | `e2e/map/property-map-focus.spec.ts` |
 
 **Twenty-nine are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-09-29 (Slice
 #37.25). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
