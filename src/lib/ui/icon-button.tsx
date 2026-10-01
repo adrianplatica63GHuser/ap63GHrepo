@@ -44,6 +44,7 @@
 
 import Link from "next/link";
 import {
+  useId,
   useLayoutEffect,
   useRef,
   type ButtonHTMLAttributes,
@@ -206,7 +207,8 @@ type Common = {
   /**
    * Why the button is as it is — „Modifică" disabled on an older version says
    * so (#37.43; it was the button's `title`). Shown in the tooltip under the
-   * label and given to assistive technology as the button's description.
+   * label, and the button's description through `aria-describedby` on a hidden
+   * span — not `aria-description`, which jsx-a11y rightly calls unsupported.
    */
   note?: string;
   /** Layout extras for the outer wrapper only (`ml-auto`, `shrink-0`). */
@@ -248,6 +250,8 @@ export function IconButton(props: IconButtonProps) {
     ...rest
   } = props;
 
+  const noteId = useId();
+  const describedBy = note ? noteId : undefined;
   const name = busy && busyLabel ? busyLabel : label;
   const px = ICON_PX[size];
   const badge = count !== undefined && count > 0 ? count : null;
@@ -300,7 +304,7 @@ export function IconButton(props: IconButtonProps) {
   if (rest.href !== undefined) {
     const { href, ...linkRest } = rest as Omit<AsLink, keyof Common>;
     control = (
-      <Link href={href} {...linkRest} aria-label={ariaLabel} aria-description={note} className={linkClass(options)}>
+      <Link href={href} {...linkRest} aria-label={ariaLabel} aria-describedby={describedBy} className={linkClass(options)}>
         {inner}
       </Link>
     );
@@ -313,11 +317,24 @@ export function IconButton(props: IconButtonProps) {
         aria-busy={busy || undefined}
         {...buttonRest}
         aria-label={ariaLabel}
-        aria-description={note}
+        aria-describedby={describedBy}
         className={buttonClass(options)}
       >
         {inner}
       </button>
+    );
+  }
+
+  // The note's text for `aria-describedby`; `hidden`, because the tooltip is
+  // where the eye reads it.
+  if (note) {
+    control = (
+      <>
+        {control}
+        <span id={noteId} hidden>
+          {note}
+        </span>
+      </>
     );
   }
 

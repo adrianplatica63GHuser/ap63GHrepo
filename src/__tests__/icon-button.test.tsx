@@ -186,7 +186,7 @@ describe("IconButton — a note (#37.43)", () => {
   it("adds a line under the label in the tooltip, and is the button's description", () => {
     render(<IconButton icon={ArrowLeft} label="Modifică" note="Doar versiunea curentă se poate modifica" variant="secondary" disabled />);
     const button = screen.getByRole("button", { name: "Modifică" });
-    expect(button).toHaveAttribute("aria-description", "Doar versiunea curentă se poate modifica");
+    expect(button).toHaveAccessibleDescription("Doar versiunea curentă se poate modifica");
     pointer(button.parentElement as Element, "pointerOver", "mouse");
     expect(tooltip()).toHaveTextContent("ModificăDoar versiunea curentă se poate modifica");
   });
