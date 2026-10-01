@@ -47,7 +47,9 @@ describe("a preview never changes data (#37.24)", () => {
     renderBody({ url: "/p.png", mimeType: "image/png" });
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Închide"]);
     const links = screen.getAllByRole("link");
-    expect(links.map((a) => a.textContent)).toEqual(["Deschide"]);
+    // #37.42: „Deschide" is an ArrowRight icon link — its words are its
+    // accessible name (aria-label) and tooltip, no longer its text.
+    expect(links.map((a) => a.getAttribute("aria-label") ?? a.textContent)).toEqual(["Deschide"]);
     expect(links[0].getAttribute("href")).toBe("/documents/1");
     for (const role of ["textbox", "combobox", "checkbox", "radio", "spinbutton"] as const) {
       expect(screen.queryAllByRole(role)).toHaveLength(0);
