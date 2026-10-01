@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-27 06:59
+-- Generated : 2026-09-30 20:06
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -649,7 +649,10 @@ CREATE TABLE public.lookup_person_role (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     valid_for_property boolean DEFAULT false NOT NULL,
-    valid_for_person boolean DEFAULT false NOT NULL
+    valid_for_person boolean DEFAULT false NOT NULL,
+    converse_name text,
+    converse_name_male text,
+    converse_name_female text
 );
 
 
@@ -665,6 +668,27 @@ COMMENT ON COLUMN public.lookup_person_role.valid_for_property IS 'TRUE when thi
 --
 
 COMMENT ON COLUMN public.lookup_person_role.valid_for_person IS 'TRUE when this role may tag a Persoană ↔ Persoană association (Slice #34.04, migration_079). Replaces the table lookup_person_person_role, which was identical in every column to lookup_property_person_role and is collapsed for the same reason. Note there is deliberately NO valid_for_document column: lookup_doc_type_person_role is unique over (document_type_id, person_role_id), so a role can be valid on one document type and not another, and a boolean on the role would destroy that distinction. See migration_079''s header.';
+
+
+--
+-- Name: COLUMN lookup_person_role.converse_name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.converse_name IS 'What the OTHER end of this role is called when a person-to-person relationship is read from the holder''s side (Slice #37.28). Used when the person shown has no gender (a company, or gender not set) and whenever converse_name_male / converse_name_female is NULL. A role that reads the same both ways names itself ("Coproprietar"). NULL: no converse - the screen says in a sentence that the person viewed holds the role.';
+
+
+--
+-- Name: COLUMN lookup_person_role.converse_name_male; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.converse_name_male IS 'The converse when the person shown is MALE ("Fiu" for "Părinte"). NULL falls back to converse_name.';
+
+
+--
+-- Name: COLUMN lookup_person_role.converse_name_female; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.converse_name_female IS 'The converse when the person shown is FEMALE ("Fiică" for "Părinte"). NULL falls back to converse_name.';
 
 
 --
@@ -854,8 +878,16 @@ CREATE TABLE public.person_person (
     person_id_b uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     relationship_role_id uuid,
+    role_reads_a_to_b boolean DEFAULT true NOT NULL,
     CONSTRAINT person_person_order CHECK ((person_id_a < person_id_b))
 );
+
+
+--
+-- Name: COLUMN person_person.role_reads_a_to_b; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.person_person.role_reads_a_to_b IS 'Which way relationship_role_id reads. TRUE (the default) means person_id_a holds the role towards person_id_b - "A <role> B", e.g. A is "Fiu" of B. FALSE means B holds it towards A. The pair order is canonicalised by UUID (CHECK person_person_order) only so one pair cannot be stored twice, and carries no meaning. Rows written from Slice #37.28 on set it from the association screen, where the role is the ticked person''s; rows that predate it took the default, and migration_088 printed them. Same column and reasoning as document_document (migration_086) and property_property (migration_087). The other end''s wording is lookup_person_role.converse_name*.';
 
 
 --
