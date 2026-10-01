@@ -31,6 +31,8 @@
  */
 
 import { useTranslations } from "next-intl";
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import type { SavedImportEntry, SavedImportSession } from "@/lib/import/session";
 import type { SavedSessionAudit } from "@/lib/import/session-client";
 
@@ -132,14 +134,16 @@ function StatusBadge({
     return (
       <span className="inline-flex items-center gap-1.5">
         <DoneBadges entry={entry} />
-        <a
+        {/* #37.42 (A016): ArrowRight; „Deschide" its name and tooltip. */}
+        <IconButton
           href={`/documents/${entry.docId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
-        >
-          {tD("viewLink")}
-        </a>
+          icon={ArrowRight}
+          label={tD("viewLink")}
+          variant="secondary"
+          size="xs"
+        />
       </span>
     );
   }
@@ -201,14 +205,15 @@ function StatusBadge({
               {t("resumedRowGone")}
             </span>
           ) : (
-            <a
+            <IconButton
               href={`/documents/${entry.docId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-medium text-amber-700 underline hover:no-underline dark:text-amber-400"
-            >
-              {entry.emptyDocument === "left" ? tD("emptyDocumentOpen") : tD("viewLink")}
-            </a>
+              icon={ArrowRight}
+              label={entry.emptyDocument === "left" ? tD("emptyDocumentOpen") : tD("viewLink")}
+              variant="secondary"
+              size="xs"
+            />
           ))}
         {entry.cornerClaimLost === true && (
           <span className="text-xs font-medium text-amber-700 dark:text-amber-400">

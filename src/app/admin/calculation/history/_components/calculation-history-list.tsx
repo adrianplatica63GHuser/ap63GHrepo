@@ -3,7 +3,8 @@
 import type React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -151,12 +152,14 @@ export function CalculationHistoryList() {
                 })}
               </td>
               <td className="px-3 py-2 text-right">
-                <Link
+                {/* #37.42 (A016): ArrowRight; „Detalii" its name and tooltip. */}
+                <IconButton
                   href={`/admin/calculation/history/${run.id}`}
-                  className="text-xs font-medium text-cta hover:underline dark:text-cta-light"
-                >
-                  {t("viewDetail")} →
-                </Link>
+                  icon={ArrowRight}
+                  label={t("viewDetail")}
+                  variant="secondary"
+                  size="xs"
+                />
               </td>
             </tr>
           ))}

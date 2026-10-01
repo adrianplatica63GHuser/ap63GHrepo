@@ -3,12 +3,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { metadataValueLabel } from "@/lib/metadata/value-labels";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { ArrowRight, ChevronLeft, ChevronRight, Columns3, Plus, Trash2 } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -372,16 +373,17 @@ export function NaturalPersonListView() {
         {/* Choose fields (only shown when there are optional cols available) */}
         {optionalCols.length > 0 && (
           <div ref={colPickerRef} className="relative">
-            <button
-              type="button"
+            {/* #37.42 (A013): Columns3. Its name and tooltip keep the count
+                the words used to show beside it — „Câmpuri afișate 2/4". */}
+            <IconButton
+              icon={Columns3}
+              label={`${t("chooseFields")} ${visibleCols.length}/${MAX_OPT}`}
+              variant="secondary"
+              size="md"
               onClick={() => setShowColPicker((v) => !v)}
               aria-haspopup="true"
               aria-expanded={showColPicker}
-              className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
-            >
-              <span className="text-fade">{t("chooseFields")}</span>
-              <span className="font-mono text-xs text-fade">{visibleCols.length}/{MAX_OPT}</span>
-            </button>
+            />
             {showColPicker && (
               <div className="absolute z-20 mt-1 left-0 w-52 rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 p-3">
                 <p className="mb-2 text-xs text-fade dark:text-zinc-500">
@@ -410,21 +412,24 @@ export function NaturalPersonListView() {
 
         <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (
-            <button
-              type="button"
+            <IconButton
+              icon={Trash2}
+              label={tBulk("deleteSelected", { count: selectedIds.size })}
+              count={selectedIds.size}
+              variant="danger"
+              size="lg"
               onClick={() => setConfirmOpen(true)}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {tBulk("deleteSelected", { count: selectedIds.size })}
-            </button>
+            />
           )}
           <HelpHint hintKey="select-all-page-only" />
-          <Link
+          <IconButton
             href="/natural-persons/new"
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
-          >
-            {t("addNew")}
-          </Link>
+            icon={Plus}
+            label={t("addNew")}
+            showLabel
+            variant="primary"
+            size="lg"
+          />
         </div>
       </div>
 
@@ -526,12 +531,13 @@ export function NaturalPersonListView() {
                   ))}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     <span className="flex gap-2">
-                      <Link
+                      <IconButton
                         href={`/natural-persons/${item.id}`}
-                        className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                      >
-                        {t("open")}
-                      </Link>
+                        icon={ArrowRight}
+                        label={t("open")}
+                        variant="secondary"
+                        size="xs"
+                      />
                       <PreviewButton target={{ kind: "person", id: item.id }} />
                     </span>
                   </td>
@@ -553,25 +559,25 @@ export function NaturalPersonListView() {
           </span>
           {paginate && (
             <div className="flex items-center gap-1">
-              <button
-                type="button"
+              <IconButton
+                icon={ChevronLeft}
+                label={tPag("previous")}
+                variant="secondary"
+                size="xs"
                 onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                 disabled={currentPage === 0}
-                className={buttonClass({ variant: "secondary", size: "xs" })}
-              >
-                {tPag("previous")}
-              </button>
+              />
               <span className="px-2">
                 {tPag("pageOf", { page: currentPage + 1, total: totalPages })}
               </span>
-              <button
-                type="button"
+              <IconButton
+                icon={ChevronRight}
+                label={tPag("next")}
+                variant="secondary"
+                size="xs"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={currentPage >= totalPages - 1}
-                className={buttonClass({ variant: "secondary", size: "xs" })}
-              >
-                {tPag("next")}
-              </button>
+              />
             </div>
           )}
         </div>

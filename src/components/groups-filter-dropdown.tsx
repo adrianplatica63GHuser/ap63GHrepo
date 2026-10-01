@@ -22,6 +22,8 @@
  */
 
 import { useEffect, useRef } from "react";
+import { ChevronDown } from "lucide-react";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 export type GroupsFilter =
   | undefined
@@ -132,11 +134,15 @@ export function GroupsFilterDropdown({
         onClick={() => onOpenChange(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+        // #37.42: through buttonClass, as the Acte list's type filter beside
+        // it already was (the „convert every button in a file you touch" rule).
+        className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
       >
         <span className="text-fade">{label}</span>
         <span className="font-medium text-ink dark:text-zinc-100">{triggerText}</span>
-        <span aria-hidden="true" className="text-fade text-xs">&#9660;</span>
+        {/* #37.42 (A015): Lucide's ChevronDown in place of the „▼" glyph —
+            decoration inside a button that has its words, so no name of its own. */}
+        <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-fade" />
       </button>
 
       {open && (

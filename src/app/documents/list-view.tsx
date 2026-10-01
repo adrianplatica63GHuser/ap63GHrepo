@@ -3,12 +3,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { metadataValueLabel } from "@/lib/metadata/value-labels";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Columns3, Plus, Trash2 } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
@@ -175,7 +176,9 @@ function DocumentTypeFilterDropdown({
       >
         <span className="text-fade">{label}</span>
         <span className="font-medium text-ink dark:text-zinc-100">{triggerText}</span>
-        <span aria-hidden="true" className="text-fade text-xs">▾</span>
+        {/* #37.42 (A015): Lucide's ChevronDown in place of the „▾" glyph —
+            decoration inside a button that has its words, so no name of its own. */}
+        <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-fade" />
       </button>
 
       {open && (
@@ -838,31 +841,31 @@ export function DocumentListView({
         )}
 
         {/* Expiring-soon toggle */}
-        <button
-          type="button"
-          onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
+        {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong
+            `primary` fill and `aria-pressed`, so the state is a colour and a
+            name, not the amber tint the hand-written class used to carry. */}
+        <IconButton
+          icon={CalendarClock}
+          label={tFilter("expiringSoon")}
+          variant={expiringSoon ? "primary" : "secondary"}
+          size="md"
           aria-pressed={expiringSoon}
-          className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm transition-colors ${
-            expiringSoon
-              ? "border-amber-500 bg-amber-50 text-amber-700 dark:border-amber-400 dark:bg-amber-900/30 dark:text-amber-300"
-              : "border-wire bg-white text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          }`}
-        >
-          {tFilter("expiringSoon")}
-        </button>
+          onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
+        />
 
         {/* Choose fields */}
         <div ref={colPickerRef} className="relative">
-          <button
-            type="button"
+          {/* #37.42 (A013): Columns3. Its name and tooltip keep the count
+              the words used to show beside it — „Câmpuri afișate 2/4". */}
+          <IconButton
+            icon={Columns3}
+            label={`${t("chooseFields")} ${visibleCols.length}/${MAX_OPT}`}
+            variant="secondary"
+            size="md"
             onClick={() => setShowColPicker((v) => !v)}
             aria-haspopup="true"
             aria-expanded={showColPicker}
-            className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
-          >
-            <span className="text-fade">{t("chooseFields")}</span>
-            <span className="font-mono text-xs text-fade">{visibleCols.length}/{MAX_OPT}</span>
-          </button>
+          />
           {showColPicker && (
             <div className="absolute z-20 mt-1 left-0 w-52 rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 p-3">
               <p className="mb-2 text-xs text-fade dark:text-zinc-500">
@@ -890,21 +893,24 @@ export function DocumentListView({
 
         <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (
-            <button
-              type="button"
+            <IconButton
+              icon={Trash2}
+              label={tBulk("deleteSelected", { count: selectedIds.size })}
+              count={selectedIds.size}
+              variant="danger"
+              size="lg"
               onClick={() => setConfirmOpen(true)}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {tBulk("deleteSelected", { count: selectedIds.size })}
-            </button>
+            />
           )}
           <HelpHint hintKey="select-all-page-only" />
-          <Link
+          <IconButton
             href="/documents/new"
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
-          >
-            {t("addNew")}
-          </Link>
+            icon={Plus}
+            label={t("addNew")}
+            showLabel
+            variant="primary"
+            size="lg"
+          />
         </div>
       </div>
 
@@ -1014,12 +1020,13 @@ export function DocumentListView({
                       ))}
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <span className="flex gap-2">
-                          <Link
+                          <IconButton
                             href={`/documents/${item.id}`}
-                            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                          >
-                            {t("open")}
-                          </Link>
+                            icon={ArrowRight}
+                            label={t("open")}
+                            variant="secondary"
+                            size="xs"
+                          />
                           <PreviewButton target={{ kind: "document", id: item.id }} />
                         </span>
                       </td>
@@ -1038,25 +1045,25 @@ export function DocumentListView({
                 : null}
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
+              <IconButton
+                icon={ChevronLeft}
+                label={tPag("previous")}
+                variant="secondary"
+                size="sm"
                 onClick={() => setCurrentPage((p) => p - 1)}
                 disabled={!paginate || currentPage === 0}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                {tPag("previous")}
-              </button>
+              />
               <span className="text-xs text-fade dark:text-zinc-400">
                 {tPag("pageOf", { page: currentPage + 1, total: totalPages })}
               </span>
-              <button
-                type="button"
+              <IconButton
+                icon={ChevronRight}
+                label={tPag("next")}
+                variant="secondary"
+                size="sm"
                 onClick={() => setCurrentPage((p) => p + 1)}
                 disabled={!paginate || currentPage >= totalPages - 1}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                {tPag("next")}
-              </button>
+              />
             </div>
           </div>
         </>

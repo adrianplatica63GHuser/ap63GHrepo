@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ArrowRight, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +35,7 @@ import {
 import { HelpHint } from "@/components/help/help-hint";
 import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { IconButton } from "@/lib/ui/icon-button";
 import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths";
 import {
   FOCUS_BLINK,
@@ -1595,14 +1596,17 @@ export default function PropertyMap() {
   // same on both tabs, so a change made to one copy and not the other is a
   // difference the user meets and nothing here would report.
 
+  // #37.42 (A012): Trash2, the count a badge on its corner; the full text,
+  // count included, is the name and the tooltip.
   const deleteAllSelectedButton = (
-    <button
-      type="button"
+    <IconButton
+      icon={Trash2}
+      label={t("map.deleteAllSelected", { count: selectedIds.size })}
+      count={selectedIds.size}
+      variant="danger"
+      size="lg"
       onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-      className={buttonClass({ variant: "danger", size: "lg" })}
-    >
-      {t("map.deleteAllSelected", { count: selectedIds.size })}
-    </button>
+    />
   );
 
   // -------------------------------------------------------------------------
@@ -1904,13 +1908,14 @@ export default function PropertyMap() {
                           : t("map.selectLink")}
                       </button>
                     ) : (
-                      // Normal / selected-tab: show "Open →" link
-                      <Link
+                      // Normal / selected-tab: „Deschide" — ArrowRight since #37.42 (A016)
+                      <IconButton
                         href={`/properties/${item.id}`}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        {t("map.openLink")}
-                      </Link>
+                        icon={ArrowRight}
+                        label={t("map.openLink")}
+                        variant="secondary"
+                        size="xs"
+                      />
                     )}
                   </div>
                 ))}

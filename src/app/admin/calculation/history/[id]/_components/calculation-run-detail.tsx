@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useRouter } from "next/navigation";
 import { PreviewMap } from "@/app/admin/calculation/_components/preview-map";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
@@ -302,12 +303,14 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
                     </td>
                     <td className="px-3 py-2 text-right">
                       {o.propertyId ? (
-                        <Link
+                        // #37.42 (A016): ArrowRight; „Vezi proprietatea" its name and tooltip.
+                        <IconButton
                           href={`/properties/${encodeURIComponent(o.propertyId)}`}
-                          className="text-xs font-medium text-cta hover:underline dark:text-cta-light"
-                        >
-                          {t("detail.viewProperty")} →
-                        </Link>
+                          icon={ArrowRight}
+                          label={t("detail.viewProperty")}
+                          variant="secondary"
+                          size="xs"
+                        />
                       ) : (
                         <span className="text-xs text-fade dark:text-zinc-500">{t("detail.deleted")}</span>
                       )}

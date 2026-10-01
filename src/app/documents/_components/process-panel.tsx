@@ -39,7 +39,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations }     from "next-intl";
-import Link                    from "next/link";
+import { ArrowRight }          from "lucide-react";
+import { IconButton }          from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -372,14 +373,19 @@ export function ProcessPanel({ documentId }: Props) {
               <p className="text-sm text-emerald-700 dark:text-emerald-400">
                 {t("alreadyProcessedLink", { code: panelState.link.propertyCode })}
               </p>
-              <Link
+              {/* #37.42 (A016): ArrowRight; the words, the nickname included,
+                  are its name and tooltip. */}
+              <IconButton
                 href={`/properties/${encodeURIComponent(panelState.link.propertyId)}`}
-                className="w-fit text-sm font-medium text-cta hover:underline"
-              >
-                {panelState.link.propertyNickname
-                  ? t("openPropertyNamed", { name: panelState.link.propertyNickname })
-                  : t("viewProperty")}
-              </Link>
+                icon={ArrowRight}
+                label={
+                  panelState.link.propertyNickname
+                    ? t("openPropertyNamed", { name: panelState.link.propertyNickname })
+                    : t("viewProperty")
+                }
+                variant="secondary"
+                size="sm"
+              />
             </>
           ) : (
             <p className="text-sm text-emerald-700 dark:text-emerald-400">
@@ -427,19 +433,15 @@ export function ProcessPanel({ documentId }: Props) {
               to `matches[0]` — an arbitrary one of them, labelled as though it
               were THE property — is how the wrong one gets deleted. */}
           {severalMatches ? (
-            <Link
-              href="/properties"
-              className="w-fit text-sm font-medium text-cta hover:underline"
-            >
-              {t("openPropertiesList")}
-            </Link>
+            <IconButton href="/properties" icon={ArrowRight} label={t("openPropertiesList")} variant="secondary" size="sm" />
           ) : panelState.link ? (
-            <Link
+            <IconButton
               href={`/properties/${encodeURIComponent(panelState.link.propertyId)}`}
-              className="w-fit text-sm font-medium text-cta hover:underline"
-            >
-              {t("viewProperty")}
-            </Link>
+              icon={ArrowRight}
+              label={t("viewProperty")}
+              variant="secondary"
+              size="sm"
+            />
           ) : null}
         </div>
       )}
@@ -452,12 +454,13 @@ export function ProcessPanel({ documentId }: Props) {
               {t("provenanceLabel")}{" "}
               <strong>{panelState.result.propertyCode}</strong>
             </span>
-            <Link
+            <IconButton
               href={`/properties/${encodeURIComponent(panelState.result.propertyId)}`}
-              className="text-sm font-medium text-cta hover:underline"
-            >
-              {t("viewProperty")}
-            </Link>
+              icon={ArrowRight}
+              label={t("viewProperty")}
+              variant="secondary"
+              size="sm"
+            />
           </div>
           {panelState.hadTag ? (
             <ul className="text-sm text-emerald-700 dark:text-emerald-400 list-disc list-inside">

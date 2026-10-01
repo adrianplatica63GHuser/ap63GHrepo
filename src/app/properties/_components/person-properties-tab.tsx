@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -7,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
-import Link from "next/link";
 import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
@@ -135,13 +136,14 @@ export function PersonPropertiesTab({ personId, backBase, compact = false }: Pro
                   <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{item.roleName ?? "—"}</td>
                   <td className="px-3 py-2">
                     <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
-                      <Link
+                      <IconButton
                         href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
                         onClick={(e) => openThroughGuard(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
-                        className={buttonClass({ variant: "secondary", size: "xs" })}
-                      >
-                        {t("view")}
-                      </Link>
+                        icon={ArrowRight}
+                        label={t("view")}
+                        variant="secondary"
+                        size="xs"
+                      />
                       <PreviewButton target={{ kind: "property", id: item.id }} />
                     </div>
                   </td>

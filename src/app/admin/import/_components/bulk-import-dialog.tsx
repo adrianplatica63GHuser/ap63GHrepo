@@ -184,6 +184,8 @@ import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
 import { ProgressBar } from "@/components/progress-bar";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import {
   IdCardPersonDialog,
   type IdCardPersonOutcome,
@@ -7673,14 +7675,17 @@ function ResultRow({
           </span>
         )}
         {status === "done" && docId && (
-          <a
+          // #37.42 (A016): ArrowRight; „Deschide" its name and tooltip. Still
+          // a new tab, so the wizard behind it is not left.
+          <IconButton
             href={`/documents/${docId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
-          >
-            {t("viewLink")}
-          </a>
+            icon={ArrowRight}
+            label={t("viewLink")}
+            variant="secondary"
+            size="xs"
+          />
         )}
       </td>
 
@@ -7985,13 +7990,7 @@ function ResultRow({
               branches are the only places an error row carries a `docId`. */}
           {(emptyDocument === "left" || pagesUploaded !== undefined) &&
             docId !== undefined && (
-            <a
-              href={`/documents/${docId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium text-amber-700 underline hover:no-underline dark:text-amber-400"
-            >
-              {/* ⚠️ **THE LABEL FOLLOWS THE BRANCH, and a fourth round found
+            /* ⚠️ **THE LABEL FOLLOWS THE BRANCH, and a fourth round found
                   it not doing so.** "Deschide documentul rămas" is the ORPHAN's
                   wording; over a page group that landed three of five pages it
                   names a document that is not an orphan, and the resumed view —
@@ -8000,9 +7999,18 @@ function ResultRow({
                   pairing. The saved report is deliberately not a third: it
                   passes ONE `openLabel` for the whole table by contract
                   (`ResultReportRow` has no per-row label), and changing that
-                  shipped shape for a cosmetic gain is not worth a slice. */}
-              {emptyDocument === "left" ? t("emptyDocumentOpen") : t("viewLink")}
-            </a>
+                  shipped shape for a cosmetic gain is not worth a slice. */
+            <IconButton
+              href={`/documents/${docId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              icon={ArrowRight}
+              // #37.42 (A016): ArrowRight; the words below are its name and
+              // tooltip, and the note on them stands.
+              label={emptyDocument === "left" ? t("emptyDocumentOpen") : t("viewLink")}
+              variant="secondary"
+              size="xs"
+            />
           )}
           {cornerClaimLost === true && (
             <span className="text-xs font-medium text-amber-700 dark:text-amber-400">

@@ -7,8 +7,9 @@
  * fields, it offers „Deschide" and „Închide" and nothing that could write.
  */
 import type { CSSProperties } from "react";
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { IconButton } from "@/lib/ui/icon-button";
 import {
   PREVIEW_FILL,
   PREVIEW_INNER_REM,
@@ -86,17 +87,19 @@ export function PreviewTileBody({
         {code && <span className="font-mono text-xs text-fade dark:text-zinc-400">{code}</span>}
         <span className="rounded-full bg-cap px-2 py-0.5 text-xs text-fade dark:bg-zinc-800 dark:text-zinc-400">{labels.readonly}</span>
         <span className="ml-auto flex gap-2">
-          <Link
+          {/* #37.42 (A016): ArrowRight, „Deschide" its name and tooltip. */}
+          <IconButton
             href={openHref}
+            icon={ArrowRight}
+            label={labels.open}
+            variant="secondary"
+            size="xs"
             onClick={(e) => {
               if (!onOpen || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
               e.preventDefault();
               onOpen(openHref);
             }}
-            className={buttonClass({ variant: "secondary", size: "xs" })}
-          >
-            {labels.open}
-          </Link>
+          />
           <button type="button" onClick={onClose} className={buttonClass({ variant: "secondary", size: "xs" })}>
             {labels.close}
           </button>

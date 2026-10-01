@@ -400,11 +400,12 @@ describe("the branch that uses it", () => {
     // Several matches → the LIST, because the advice is "keep a single one"
     // and a link to matches[0] labelled as THE property is how the wrong one
     // gets deleted.
-    expect(panel).toContain('{severalMatches ? ( <Link href="/properties"');
+    // #37.42: the links are ArrowRight IconButtons (which render a <Link>).
+    expect(panel).toContain('{severalMatches ? ( <IconButton href="/properties"');
     expect(panel).toContain('{t("openPropertiesList")}');
     // One match → that property.
     expect(panel).toContain(
-      ") : panelState.link ? ( <Link href={`/properties/${encodeURIComponent(panelState.link.propertyId)}`}",
+      ") : panelState.link ? ( <IconButton href={`/properties/${encodeURIComponent(panelState.link.propertyId)}`}",
     );
   });
 

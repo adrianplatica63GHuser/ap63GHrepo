@@ -32,7 +32,8 @@ import { createContext, useCallback, useContext, useMemo, useState, type CSSProp
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
-import { buttonClass } from "@/lib/ui/button-styles";
+import { Eye } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
@@ -70,17 +71,18 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
   const t = useTranslations("shared.preview");
   if (!open) return null;
   return (
-    <button
-      type="button"
+    // #37.42 (A017): Eye, its words the name and the tooltip.
+    <IconButton
+      icon={Eye}
+      label={t("openPreview")}
+      variant="secondary"
+      size="xs"
       onClick={(e) => {
         e.stopPropagation();
         open(target);
       }}
       onDoubleClick={(e) => e.stopPropagation()}
-      className={buttonClass({ variant: "secondary", size: "xs" })}
-    >
-      {t("openPreview")}
-    </button>
+    />
   );
 }
 

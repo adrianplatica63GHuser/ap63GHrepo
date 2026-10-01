@@ -35,8 +35,11 @@ const LISTS = [
 describe("an association row", () => {
   it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Vizualizare\" is a link to the record read-only, and the row opens a new tab on request", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
-    // 300, not 200: since #37.24 the link sits one level deeper, beside „Previzualizare".
-    expect(src).toMatch(/<Link\s+href=\{`[^`]*\?readonly=true`\}[\s\S]{0,300}?\{t\("view"\)\}\s*<\/Link>/);
+    // Slice #37.42: „Vizualizare" is an ArrowRight IconButton in its link form —
+    // its words the name and the tooltip. It was asserted as
+    // `<Link href={`…?readonly=true`}>…{t("view")}</Link>`; the link it renders
+    // is the same, so the assertion moved to the component that draws it.
+    expect(src).toMatch(/<IconButton\s+href=\{`[^`]*\?readonly=true`\}[\s\S]{0,300}?icon=\{ArrowRight\}\s+label=\{t\("view"\)\}/);
     expect(src).not.toMatch(/<button[^>]*>\s*\{t\("view"\)\}/);
     expect(src).toMatch(/onClick=\{\(e\) => \{\s*if \(newTabIfAsked\(e, `[^`]*\?readonly=true`\)\) return;/);
     expect(src).toMatch(/onAuxClick=\{\(e\) => newTabIfAsked\(e, `[^`]*\?readonly=true`\)\}/);
@@ -63,7 +66,8 @@ describe("an association row leaves the screen through the unsaved-changes guard
     const src = read("src", "app", ...(f as string[]));
     expect(src).toMatch(/const \{ guardedNavigate \} = useUnsavedChanges\(\);/);
     // The link: a plain click through the guard; Ctrl/⌘ and middle click left to the browser.
-    expect(src).toMatch(/<Link\s+href=\{`[^`]*\?readonly=true`\}\s+onClick=\{\(e\) => openThroughGuard\(e, `[^`]*\?readonly=true`, guardedNavigate\)\}/);
+    // (#37.42: `<IconButton href=… onClick=…>`, which renders that same `<Link>`.)
+    expect(src).toMatch(/<IconButton\s+href=\{`[^`]*\?readonly=true`\}\s+onClick=\{\(e\) => openThroughGuard\(e, `[^`]*\?readonly=true`, guardedNavigate\)\}/);
     // The double-click: through the guard, never straight to the router.
     expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(`[^`]*\?readonly=true`\)\}/);
     expect(src).not.toMatch(/router\.push\(`[^`]*\?readonly=true`\)/);
