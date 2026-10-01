@@ -193,7 +193,10 @@ function functionBody(source: string, name: string): string {
 function modifyButtonAttributes(source: string): string | null {
   // `(?<!=)` so the capture runs to the tag's own `>` rather than stopping at
   // the `>` of a later `onKeyDown={(e) => …}`.
-  const m = /<button\s+type="button"\s+onClick=\{\(\) => setAssociatedEditing\(true\)\}([\s\S]*?)(?<!=)>/
+  // #37.43: „Modifică" is a Pencil IconButton; the attributes after its
+  // onClick are read up to the element's own `/>`. (It was matched as
+  // `<button type="button" onClick={() => setAssociatedEditing(true)} …>`.)
+  const m = /<IconButton\b[\s\S]*?onClick=\{\(\) => setAssociatedEditing\(true\)\}([\s\S]*?)\/>/
     .exec(source);
   return m ? m[1] : null;
 }
@@ -281,12 +284,14 @@ describe("every list search matches its entity's code", () => {
 
 describe("the Modify button on a read-only record", () => {
   it.each(FORMS.map((f) => [f.name, f.file] as const))(
-    "%s-form: disabled, with the reason in a title, when not on the latest version",
+    "%s-form: disabled, with the reason in its tooltip (IconButton's note), when not on the latest version",
     (_name, file) => {
       const attrs = modifyButtonAttributes(stripComments(read(file)));
       expect(attrs).not.toBeNull();
       expect(attrs).toContain("disabled={!isOnLatest}");
-      expect(attrs).toMatch(/title=\{!isOnLatest \? tShared\("[\w.]+"\) : undefined\}/);
+      // #37.43: the reason is IconButton's `note` — under the label in its
+      // tooltip, and its description — where it was the button's `title`.
+      expect(attrs).toMatch(/note=\{!isOnLatest \? tShared\("[\w.]+"\) : undefined\}/);
     },
   );
 

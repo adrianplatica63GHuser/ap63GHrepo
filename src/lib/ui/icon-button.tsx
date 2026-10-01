@@ -98,6 +98,8 @@ function place(anchor: HTMLElement, tip: HTMLElement): void {
 type IconTooltipProps = {
   /** The text shown — for an icon button, its accessible name. */
   label: string;
+  /** A second, smaller line under the label: why the control is as it is (#37.43). */
+  note?: string;
   /** The control. Its own name must already be `label`. */
   children: ReactNode;
   /** Layout extras for the wrapper (`ml-auto`, `shrink-0`). */
@@ -123,7 +125,7 @@ type IconTooltipProps = {
  * the press just opened („Ajutor") would cover it. (HintBubble does not do this — its ⓘ's click is
  * what toggles its bubble.)
  */
-export function IconTooltip({ label, children, className, fill = false }: IconTooltipProps) {
+export function IconTooltip({ label, note, children, className, fill = false }: IconTooltipProps) {
   const { isOpen, setOpen, wrapRef, handlers } = useTooltipTriggers<HTMLSpanElement>();
   const tipRef = useRef<HTMLSpanElement | null>(null);
 
@@ -163,6 +165,7 @@ export function IconTooltip({ label, children, className, fill = false }: IconTo
             className="pointer-events-none fixed z-[70] max-w-[20rem] rounded-md border border-card-rim bg-white px-2 py-1 text-xs leading-snug font-medium text-ink shadow-lg dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
           >
             {label}
+            {note && <span className="mt-0.5 block font-normal text-fade dark:text-zinc-400">{note}</span>}
           </span>,
           document.body,
         )}
@@ -200,6 +203,12 @@ type Common = {
   count?: number;
   /** Fully rounded, as `buttonClass`'s `pill`. */
   pill?: boolean;
+  /**
+   * Why the button is as it is — „Modifică" disabled on an older version says
+   * so (#37.43; it was the button's `title`). Shown in the tooltip under the
+   * label and given to assistive technology as the button's description.
+   */
+  note?: string;
   /** Layout extras for the outer wrapper only (`ml-auto`, `shrink-0`). */
   className?: string;
 };
@@ -234,6 +243,7 @@ export function IconButton(props: IconButtonProps) {
     busyLabel,
     count,
     pill,
+    note,
     className,
     ...rest
   } = props;
@@ -284,13 +294,13 @@ export function IconButton(props: IconButtonProps) {
   // tooltip. Busy, the words on screen stay (the width holds) but the name is
   // the busy text, which the tooltip shows.
   const ariaLabel = showLabel && !busy ? undefined : name;
-  const tooltip = !showLabel || (busy && name !== label);
+  const tooltip = !showLabel || (busy && name !== label) || Boolean(note);
 
   let control: ReactNode;
   if (rest.href !== undefined) {
     const { href, ...linkRest } = rest as Omit<AsLink, keyof Common>;
     control = (
-      <Link href={href} {...linkRest} aria-label={ariaLabel} className={linkClass(options)}>
+      <Link href={href} {...linkRest} aria-label={ariaLabel} aria-description={note} className={linkClass(options)}>
         {inner}
       </Link>
     );
@@ -303,6 +313,7 @@ export function IconButton(props: IconButtonProps) {
         aria-busy={busy || undefined}
         {...buttonRest}
         aria-label={ariaLabel}
+        aria-description={note}
         className={buttonClass(options)}
       >
         {inner}
@@ -317,7 +328,7 @@ export function IconButton(props: IconButtonProps) {
     return wrapClass ? <span className={`inline-flex w-fit ${wrapClass}`}>{control}</span> : <>{control}</>;
   }
   return (
-    <IconTooltip label={name} className={wrapClass}>
+    <IconTooltip label={name} note={note} className={wrapClass}>
       {control}
     </IconTooltip>
   );

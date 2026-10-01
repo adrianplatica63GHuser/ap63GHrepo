@@ -45,7 +45,8 @@ function renderBody(image?: { url: string; mimeType: string | null } | null) {
 describe("a preview never changes data (#37.24)", () => {
   it("offers „Deschide” and „Închide”, and nothing else to press or type into", () => {
     renderBody({ url: "/p.png", mimeType: "image/png" });
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Închide"]);
+    // #37.43: „Închide" is an X icon button — its word is its name, not its text.
+    expect(screen.getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual(["Închide"]);
     const links = screen.getAllByRole("link");
     // #37.42: „Deschide" is an ArrowRight icon link — its words are its
     // accessible name (aria-label) and tooltip, no longer its text.

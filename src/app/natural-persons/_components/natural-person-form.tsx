@@ -1106,6 +1106,7 @@ export function NaturalPersonForm({
               size="lg"
               onClick={() => setAssociatedEditing(true)}
               disabled={!isOnLatest}
+              note={!isOnLatest ? tShared("modifyNeedsLatest") : undefined}
             />
           </div>
         )

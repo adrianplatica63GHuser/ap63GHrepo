@@ -1615,6 +1615,7 @@ export function PropertyForm({
               size="lg"
               onClick={() => setAssociatedEditing(true)}
               disabled={!isOnLatest}
+              note={!isOnLatest ? tShared("readonlyView.modifyNeedsLatest") : undefined}
             />
           </div>
         )

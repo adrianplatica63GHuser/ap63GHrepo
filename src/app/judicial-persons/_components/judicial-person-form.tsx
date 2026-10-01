@@ -883,6 +883,7 @@ export function JudicialPersonForm({
               size="lg"
               onClick={() => setAssociatedEditing(true)}
               disabled={!isOnLatest}
+              note={!isOnLatest ? tShared("modifyNeedsLatest") : undefined}
             />
           </div>
         )
