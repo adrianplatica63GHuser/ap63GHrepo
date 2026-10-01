@@ -48,6 +48,17 @@ async function photograph(page: Page, name: string, before?: () => Promise<void>
   await page.setViewportSize({ width: 1920, height: 1080 });
 }
 
+/**
+ * The window's view of a form's toolbar. The screen scrolls inside its own
+ * column, so a full-page picture is only the window: the toolbar under the
+ * form is brought into it first. (#37.44 — #37.43's first pictures showed the
+ * top of each form and not its toolbar.)
+ */
+async function toolbarInView(page: Page, button: Locator): Promise<void> {
+  await button.scrollIntoViewIfNeeded();
+  await moveAway(page);
+}
+
 async function moveAway(page: Page): Promise<void> {
   const v = page.viewportSize() ?? { width: 1920, height: 1080 };
   await page.mouse.move(v.width - 10, v.height - 10);
@@ -80,7 +91,7 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       expect(await iconOf(modify)).toBe("lucide-pencil");
       expect(Math.round((await modify.boundingBox())!.height)).toBe(38);
       expect(Math.round((await back.boundingBox())!.height)).toBe(38);
-      await photograph(page, "property-view", () => moveAway(page));
+      await photograph(page, "property-view", () => toolbarInView(page, modify));
 
       // Step 2 — the pencil's tooltip.
       await modify.hover();
@@ -93,7 +104,7 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       await expect(save).toBeDisabled();
       expect(await iconOf(save)).toBe("lucide-save");
       expect(await iconOf(del)).toBe("lucide-trash2");
-      await photograph(page, "property-edit-from-view", () => moveAway(page));
+      await photograph(page, "property-edit-from-view", () => toolbarInView(page, del));
 
       // Step 4 — „Poreclă" changed; the floppy disk active, its tooltip „Salvează".
       const nickname = page.getByRole("textbox", { name: "Poreclă", exact: true });
@@ -114,7 +125,7 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       await expect(bin).toBeVisible({ timeout: 15_000 });
       expect(await iconOf(page.getByRole("button", { name: "Salvează" }))).toBe("lucide-save");
       expect(await iconOf(page.getByRole("button", { name: "Anulează" }))).toBe("lucide-x");
-      await photograph(page, "property-edit", () => moveAway(page));
+      await photograph(page, "property-edit", () => toolbarInView(page, bin));
 
       // Step 7 — the bin's tooltip, then the question: „Nu" / „Da", words, no icon.
       await bin.hover();
@@ -152,10 +163,10 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       ] as const) {
         await page.goto(`${url}?readonly=true`);
         await expect(page.getByRole("button", { name: "Modifică" })).toBeVisible({ timeout: 15_000 });
-        await photograph(page, `${name}-view`, () => moveAway(page));
+        await photograph(page, `${name}-view`, () => toolbarInView(page, page.getByRole("button", { name: "Modifică" })));
         await page.goto(url);
         await expect(page.getByRole("button", { name: "Șterge" })).toBeVisible({ timeout: 15_000 });
-        await photograph(page, `${name}-edit`, () => moveAway(page));
+        await photograph(page, `${name}-edit`, () => toolbarInView(page, page.getByRole("button", { name: "Șterge", exact: true }).last()));
       }
 
       // A value list's edit footer: „Cetățenie", „Editează" on its first row, left with „Anulează".

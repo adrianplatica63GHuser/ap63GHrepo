@@ -97,7 +97,12 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       const row = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PERSON }) });
       await expect(row).toHaveCount(1, { timeout: 15_000 });
       await expect(row).toContainText(ROLE);
-      await photograph(page, "property-persons", () => moveAway(page));
+      await photograph(page, "property-persons", async () => {
+        // The screen scrolls inside its own column, so a full-page picture is
+        // the window: bring the tile into it.
+        await row.scrollIntoViewIfNeeded();
+        await moveAway(page);
+      });
 
       // Step 5 — the row's radio, „Dezasociază": empty again, no question.
       await page.getByRole("radio", { name: PERSON }).check();
@@ -138,7 +143,10 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       await addToGroup.click();
       const hide = page.getByRole("button", { name: "Ascunde" }).first();
       expect(await iconOf(hide)).toBe("lucide-chevron-up");
-      await photograph(page, "metadata-picker-open", () => moveAway(page));
+      await photograph(page, "metadata-picker-open", async () => {
+        await hide.scrollIntoViewIfNeeded();
+        await moveAway(page);
+      });
     } finally {
       for (const { kind, id } of made) await removeRecord(page.request, kind, id);
     }
