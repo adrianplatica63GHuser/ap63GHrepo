@@ -313,8 +313,14 @@ function FitAllProperties({
   const firstDone = useRef(false);
 
   // Reset the guard when the tab changes so we refit on every tab switch.
+  // Slice #37.38: only on a REAL change of tab. The effect also re-runs with
+  // the same tab — a Fast Refresh, a Strict Mode replay — and a refit then
+  // undid the focus; measured on the first drive of TC-MAP-01.
+  const lastTab = useRef(tabKey);
   useEffect(() => {
-    fitted.current = false;
+    if (lastTab.current === tabKey) return;
+    lastTab.current = tabKey;
+    fitted.current  = false;
   }, [tabKey]);
 
   useEffect(() => {
@@ -379,7 +385,10 @@ function FocusBlink({ prop, onDone }: { prop: MapProperty; onDone: () => void })
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
-      const i = blinkIntensity(now - start, reduced);
+      // A frame's timestamp is when the frame BEGAN, which can be a little
+      // before `start` was read — measured on the first drive of TC-MAP-01: a
+      // negative elapsed time, read as "over", ended the blink before it began.
+      const i = blinkIntensity(Math.max(0, now - start), reduced);
       if (i === null) {
         setLevel(0);
         onDoneRef.current();
