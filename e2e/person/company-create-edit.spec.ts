@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-02 — Persoană juridică creată și modificată
- * Source: docs/testing/cases/TC-PERS-02.md, „Last green" 2026-09-25
+ * Source: docs/testing/cases/TC-PERS-02.md, „Last green" 2026-09-30
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
