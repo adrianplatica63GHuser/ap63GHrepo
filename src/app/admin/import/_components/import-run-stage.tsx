@@ -45,11 +45,10 @@
  * loop use; what it cannot know here is the second argument.
  */
 
-import { Import } from "lucide-react";
+import { Import, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 
-import { buttonClass } from "@/lib/ui/button-styles";
 import { COST_NOTE_CLASS } from "@/lib/ui/cost-note";
 
 /**
@@ -233,13 +232,15 @@ export function ImportRunStage({
             one. The `disabled` went with the other states: `finished` and
             `running` are exclusive. */}
         {finished && (
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A100): Plus before „Începe alt import".
+            icon={Plus}
+            label={t("startAnotherImport")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={onChooseFolder}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("startAnotherImport")}
-          </button>
+          />
         )}
       </div>
 

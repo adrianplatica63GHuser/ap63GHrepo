@@ -20,8 +20,8 @@
  * always" is not "always" and the evidence should still be reachable.
  */
 
-import { Download } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { ChevronDown, ChevronUp, Download } from "lucide-react";
+import { IconButton, LeadingIcon } from "@/lib/ui/icon-button";
 import { useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { buildReportHtml, reportFileName } from "@/lib/import/report-html";
@@ -149,6 +149,9 @@ function SkippedSection({
         aria-expanded={open}
         className="text-sm font-medium text-cta underline-offset-2 hover:underline"
       >
+        {/* #37.47 (A102): ChevronDown / ChevronUp before the words; the
+            disclosure keeps its link look. */}
+        <LeadingIcon icon={open ? ChevronUp : ChevronDown} />
         {t("skippedToggle", { count: total })}
       </button>
       {open && (
@@ -304,6 +307,8 @@ export function ReportSections({
             aria-expanded={showQuiet}
             className="text-sm font-medium text-cta underline-offset-2 hover:underline"
           >
+            {/* #37.47 (A102): as the skipped files' toggle above. */}
+            <LeadingIcon icon={showQuiet ? ChevronUp : ChevronDown} />
             {t("quietToggle", { count: quiet.length })}
           </button>
           {showQuiet && (

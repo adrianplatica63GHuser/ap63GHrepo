@@ -78,11 +78,12 @@
  * renderer's decision.
  */
 
+import { ArrowRight, Eye, RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useId, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
-import { buttonClass } from "@/lib/ui/button-styles";
 
 import { ImportListingControls } from "./import-listing-controls";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
@@ -957,14 +958,16 @@ export function ImportPreexistingStage({
               Afterwards the primary action is to go on — the report is read,
               not fixed — and re-asking becomes the secondary one. */}
           {!asked ? (
-            <button
-              type="button"
+            <IconButton
+              // #37.47 (A103): Eye before „Vezi ce se află deja în sistem".
+              icon={Eye}
+              label={t("check")}
+              showLabel
+              variant="primary"
+              size="lg"
               onClick={onCheck}
               disabled={!acknowledged || busy}
-              className={buttonClass({ variant: "primary", size: "lg" })}
-            >
-              {t("check")}
-            </button>
+            />
           ) : (
             <>
               {/* ⚠️ **Slice #29.08 REMOVED THE `gated` SUPPRESSION THAT STOOD
@@ -990,14 +993,17 @@ export function ImportPreexistingStage({
                   the tick gone the screen needs the wizard's own "continue to
                   the named step" sentence, which is what the three quiet
                   screens before this one leave the user expecting. */}
-              <button
-                type="button"
+              <IconButton
+                // #37.47 (A099): ArrowRight after the words.
+                icon={ArrowRight}
+                label={pressLabel}
+                showLabel
+                iconEnd
+                variant="primary"
+                size="lg"
                 onClick={onContinue}
                 disabled={resultOnly ? busy : !acknowledged || busy}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {pressLabel}
-              </button>
+              />
               {/* ⚠️ **THE RE-CHECK GOES ONLY WHEN THE REPORT HAS NOTHING TO
                   SAY, and `resultOnly` is what carries that.** (Slice #32.04.)
                   This is the only control anywhere that re-walks the folder
@@ -1010,18 +1016,20 @@ export function ImportPreexistingStage({
                   #26.02's unfixable message, on the screen where it costs
                   most. */}
               {!resultOnly && (
-                <button
-                  type="button"
+                <IconButton
+                  // #37.47 (A097): RefreshCw before „Verifică din nou".
+                  icon={RefreshCw}
+                  label={t("recheck")}
+                  showLabel
+                  variant="secondary"
+                  size="md"
                   onClick={onCheck}
                   disabled={!acknowledged || busy}
                   // Deliberately secondary although the primary beside it is
                   // often disabled: promoting this one would make the dead
                   // button the largest thing in the row and the live one
                   // visually subordinate. (#29.02's adversarial round.)
-                  className={buttonClass({ variant: "secondary", size: "md" })}
-                >
-                  {t("recheck")}
-                </button>
+                />
               )}
             </>
           )}

@@ -62,6 +62,8 @@
  * would go looking for a rule that does not exist.
  */
 
+import { FolderOpen, RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -1258,8 +1260,13 @@ export function ImportStructureStage({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A097): RefreshCw once checked; before that it picks a folder, so FolderOpen (A092).
+            icon={checked ? RefreshCw : FolderOpen}
+            label={checked ? t("recheck") : t("chooseFolder")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={checked ? onRecheck : onChooseFolder}
             disabled={!acknowledged || busy}
             // ⚠️ Fixed in passing (#32.03) — this read `variant: gated ?
@@ -1272,10 +1279,7 @@ export function ImportStructureStage({
             // one of three is worse than the demotion is worth: the next reader
             // has to work out which ruling is current. The `gated` prop's own
             // note above records what the demotion was for.
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {checked ? t("recheck") : t("chooseFolder")}
-          </button>
+          />
 
           {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04, and this panel
               was the last of the six to keep it.** The case for it here was that

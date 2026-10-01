@@ -26,9 +26,10 @@
  * when it is zero is how many documents were created. See the rule for why.
  */
 
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 
-import { buttonClass } from "@/lib/ui/button-styles";
 import { summaryLines, type ImportRunSummary } from "@/lib/import/import-outcome";
 
 type Props = {
@@ -90,14 +91,17 @@ export function ImportSummaryDialog({ folderName, summary, onClose }: Props) {
         <p className="mt-4 text-sm text-ink dark:text-zinc-300">{t("invitation")}</p>
 
         <div className="mt-5 flex justify-end">
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A105): ArrowRight after „Închide și vezi proprietățile".
+            icon={ArrowRight}
+            label={t("closeButton")}
+            showLabel
+            iconEnd
+            variant="primary"
+            size="lg"
             onClick={onClose}
             autoFocus
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("closeButton")}
-          </button>
+          />
         </div>
       </div>
     </div>

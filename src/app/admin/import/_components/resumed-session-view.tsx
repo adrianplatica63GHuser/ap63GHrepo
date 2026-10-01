@@ -31,7 +31,7 @@
  */
 
 import { useTranslations } from "next-intl";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import type { SavedImportEntry, SavedImportSession } from "@/lib/import/session";
 import type { SavedSessionAudit } from "@/lib/import/session-client";
@@ -336,13 +336,16 @@ export function ResumedSessionView({ session, audit, onClear }: Props) {
             {errorCount > 0 && ` · ${errorCount} ${t("resumedErrors")}`}
           </p>
         </div>
-        <button
-          type="button"
+        {/* #37.47 (A100): Plus before „Import nou", on buttonClass's
+            secondary rather than a hand-written amber class. */}
+        <IconButton
+          icon={Plus}
+          label={t("resumedNewImport")}
+          showLabel
+          variant="secondary"
+          size="sm"
           onClick={onClear}
-          className="rounded-md border border-amber-400 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-transparent dark:text-amber-300 dark:hover:bg-amber-900/30"
-        >
-          {t("resumedNewImport")}
-        </button>
+        />
       </div>
 
       {/* ── Does this report still match the archive?   (Slice #29.11) ────

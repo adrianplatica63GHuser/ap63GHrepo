@@ -37,7 +37,8 @@
  * records the window; this prop is where the four of them now meet.
  */
 
-import { buttonClass } from "@/lib/ui/button-styles";
+import { ChevronDown, ChevronUp, FileDown } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 
 type Props = {
   /** Is the listing open? The panel owns the state; the wizard hoists it. */
@@ -74,29 +75,33 @@ export function ImportListingControls({
     <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
       <div className="flex flex-wrap items-center gap-3">
         {showToggle && (
-          <button
-            type="button"
+          // `ghost` against the Save's `secondary`: two buttons of equal
+          // weight side by side would make the row compete with the primary
+          // below it, and of the two this is the one that changes nothing but
+          // the view. Through `buttonClass` rather than the bare text link it
+          // replaced, because Adrian asked for a button beside Save and a
+          // hand-written class string is the bet that helper exists to forbid.
+          // #37.47 (A102): ChevronDown / ChevronUp before the words.
+          <IconButton
+            icon={open ? ChevronUp : ChevronDown}
+            label={open ? hideLabel : showLabel}
+            showLabel
+            variant="ghost"
+            size="md"
             onClick={() => onOpenChange(!open)}
             aria-expanded={open}
-            // `ghost` against the Save's `secondary`: two buttons of equal
-            // weight side by side would make the row compete with the primary
-            // below it, and of the two this is the one that changes nothing but
-            // the view. Through `buttonClass` rather than the bare text link it
-            // replaced, because Adrian asked for a button beside Save and a
-            // hand-written class string is the bet that helper exists to forbid.
-            className={buttonClass({ variant: "ghost", size: "md" })}
-          >
-            {open ? hideLabel : showLabel}
-          </button>
+          />
         )}
-        <button
-          type="button"
+        {/* #37.47 (A101): FileDown before the words. */}
+        <IconButton
+          icon={FileDown}
+          label={saveLabel}
+          showLabel
+          variant="secondary"
+          size="md"
           onClick={onSave}
           disabled={busy}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {saveLabel}
-        </button>
+        />
       </div>
       <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{saveHint}</p>
     </div>

@@ -101,6 +101,8 @@
  * they survive React unmount/remount (handles cannot be serialised).
  */
 
+import { History } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -3353,8 +3355,14 @@ export function ImportWizard() {
             meant the sole way back to the checklist was destroying the record
             of the previous run. */}
         {phase === "structure" && savedSession && (
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A100): History before „Reia ultimul import (…)", on
+            // buttonClass's secondary rather than a hand-written amber class.
+            icon={History}
+            label={t("resumeButton", { folder: savedSession.rootFolderName })}
+            showLabel
+            variant="secondary"
+            size="md"
             onClick={() => {
               // Slice #29.02 — a pause belongs to the run being walked, and
               // this button leaves it to read a PREVIOUS run's report. The
@@ -3364,10 +3372,7 @@ export function ImportWizard() {
               setGate(null);
               setPhase("resumed");
             }}
-            className="inline-flex items-center rounded-md border border-amber-400 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-900/40"
-          >
-            {t("resumeButton", { folder: savedSession.rootFolderName })}
-          </button>
+          />
         )}
 
         {/* ⚠️ **THE REPORT IS NOT OFFERED AS THOUGH IT STILL MATCHED THE

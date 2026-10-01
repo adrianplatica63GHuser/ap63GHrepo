@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { AuthLink } from "@/components/auth-link";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { DevOnly } from "@/components/dev-only";
 import { SignupForm } from "./signup-form";
@@ -55,9 +56,7 @@ export default async function SignupPage() {
 
         <p className="text-center text-sm text-fade mt-5">
           {t("signup.alreadyHaveAccount")}{" "}
-          <a href="/login" className="text-cta hover:underline font-medium">
-            {t("signup.signIn")}
-          </a>
+          <AuthLink href="/login" label={t("signup.signIn")} kind="sign-in" />
         </p>
       </div>
     </div>

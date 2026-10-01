@@ -94,9 +94,10 @@
  * and that is a slice, not a fix in passing.
  */
 
+import { ArrowRight } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 
-import { buttonClass } from "@/lib/ui/button-styles";
 import type { WorkflowStageId } from "@/lib/import/workflow-stages";
 
 /**
@@ -173,13 +174,16 @@ export function ImportStepGate({ stage, nextStage, onAdvance }: Props) {
       </p>
 
       <div className="mt-4">
-        <button
-          type="button"
+        <IconButton
+          // #37.47 (A099): ArrowRight after „Continuă la pasul…".
+          icon={ArrowRight}
+          label={advanceLabel}
+          showLabel
+          iconEnd
+          variant="primary"
+          size="lg"
           onClick={onAdvance}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {advanceLabel}
-        </button>
+        />
       </div>
     </section>
   );

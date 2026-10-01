@@ -68,6 +68,8 @@
  * corrects. The Document keeps whatever provenance the import assigned it.
  */
 
+import { RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useCitizenshipOptions } from "@/hooks/use-lookup-options";
@@ -1528,14 +1530,17 @@ export function IdCardPersonDialog({
           hint={citizenshipHint}
           hintAction={
             citizenshipListState === "failed" ? (
-              <button
-                type="button"
+              <IconButton
+                // #37.47 (A097): RefreshCw before „Reîncearcă"; „Se reîncearcă…" with the spinner.
+                icon={RefreshCw}
+                label={citizenshipReloading ? t("citizenshipRetrying") : t("citizenshipRetry")}
+                busy={citizenshipReloading}
+                showLabel
+                variant="secondary"
+                size="sm"
                 onClick={reloadCitizenships}
                 disabled={busy || citizenshipReloading}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                {citizenshipReloading ? t("citizenshipRetrying") : t("citizenshipRetry")}
-              </button>
+              />
             ) : undefined
           }
           options={[{ value: "", label: "—" }, ...citizenshipOptions]}
@@ -1904,14 +1909,17 @@ export function IdCardPersonDialog({
                   read, and re-reading the list here would not touch it. */}
               {showInstitutionHint &&
                 (institutionListState === "failed" || institutionListUnreadable) && (
-                  <button
-                    type="button"
+                  <IconButton
+                    // #37.47 (A097): RefreshCw before „Reîncearcă"; „Se reîncearcă…" with the spinner.
+                    icon={RefreshCw}
+                    label={institutionReloading ? t("institutionRetrying") : t("institutionRetry")}
+                    busy={institutionReloading}
+                    showLabel
+                    variant="secondary"
+                    size="sm"
                     onClick={() => void reloadInstitutions()}
                     disabled={busy || addingInstitution || institutionReloading}
-                    className={buttonClass({ variant: "secondary", size: "sm" })}
-                  >
-                    {institutionReloading ? t("institutionRetrying") : t("institutionRetry")}
-                  </button>
+                  />
                 )}
               {addInstitutionError && (
                 <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">

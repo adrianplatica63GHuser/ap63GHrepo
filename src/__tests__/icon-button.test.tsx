@@ -17,10 +17,10 @@
  */
 import { createRef } from "react";
 import { act, createEvent, fireEvent, render, screen } from "@testing-library/react";
-import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, LogIn, Trash2 } from "lucide-react";
 
 import { buttonClass, linkClass, BUTTON_SIZES } from "@/lib/ui/button-styles";
-import { IconButton, ICON_PX, TrailingIcon } from "@/lib/ui/icon-button";
+import { IconButton, ICON_PX, LeadingIcon, TrailingIcon } from "@/lib/ui/icon-button";
 
 function pointer(el: Element, type: "pointerOver" | "pointerOut", pointerType: string) {
   const ev = createEvent[type](el);
@@ -50,6 +50,20 @@ describe("IconButton — the name", () => {
     expect(button.textContent).toBe("");
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(button.querySelector("svg")).toHaveAttribute("width", String(ICON_PX.lg));
+  });
+
+  it("icon + label with iconEnd: the words first, the icon after them (#37.47)", () => {
+    render(<IconButton icon={ArrowLeft} label="Continuă" variant="primary" showLabel iconEnd />);
+    const button = screen.getByRole("button", { name: "Continuă" });
+    expect(button.firstElementChild?.tagName.toLowerCase()).toBe("span");
+    expect(button.lastElementChild?.tagName.toLowerCase()).toBe("svg");
+    expect(button.querySelectorAll("svg")).toHaveLength(1);
+  });
+
+  it("iconEnd changes nothing on an icon-only button", () => {
+    render(<IconButton icon={ArrowLeft} label="Înapoi" variant="secondary" iconEnd />);
+    const button = screen.getByRole("button", { name: "Înapoi" });
+    expect(button.firstElementChild?.tagName.toLowerCase()).toBe("svg");
   });
 
   it("icon + label: the icon before the words, the words the name, and no tooltip", () => {
@@ -260,5 +274,21 @@ describe("TrailingIcon (#37.46)", () => {
     expect(svg).toHaveAttribute("aria-hidden", "true");
     expect(svg?.getAttribute("class")).toContain("lucide-external-link");
     expect(link.lastElementChild).toBe(svg);
+  });
+});
+
+describe("LeadingIcon (#37.47)", () => {
+  it("draws the icon before the link's words, hidden, and leaves the link's name alone", () => {
+    render(
+      <a href="/login">
+        <LeadingIcon icon={LogIn} />
+        Conectare
+      </a>,
+    );
+    const link = screen.getByRole("link", { name: "Conectare" });
+    const svg = link.querySelector("svg[data-leading-icon]");
+    expect(svg).toHaveAttribute("aria-hidden", "true");
+    expect(svg?.getAttribute("class")).toContain("lucide-log-in");
+    expect(link.firstElementChild).toBe(svg);
   });
 });

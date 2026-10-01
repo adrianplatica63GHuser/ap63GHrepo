@@ -53,12 +53,13 @@
  * the data is complete, and truncation is the renderer's decision.
  */
 
+import { RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useId, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
-import { buttonClass } from "@/lib/ui/button-styles";
 
 import { ImportListingControls } from "./import-listing-controls";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
@@ -822,8 +823,13 @@ export function ImportConstraintsStage({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A097): RefreshCw before the words, both before and after the first check.
+            icon={RefreshCw}
+            label={checked ? t("recheck") : t("check")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={onCheck}
             disabled={!acknowledged || busy}
             // ⚠️ Fixed in passing (#32.03) — this read `variant: gated ?
@@ -833,10 +839,7 @@ export function ImportConstraintsStage({
             // rather than removing it. A branch that cannot run, kept only by a
             // comment saying so, is a claim the next reader has to re-derive.
             // The `gated` prop's own note above records what the demotion was.
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {checked ? t("recheck") : t("check")}
-          </button>
+          />
 
           {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04.** (Adrian:) a
               folder change in the middle of a run is neither a cancel nor a

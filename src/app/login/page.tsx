@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { AuthLink } from "@/components/auth-link";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { DevOnly } from "@/components/dev-only";
 import { LoginForm } from "./login-form";
@@ -50,9 +51,7 @@ export default async function LoginPage() {
 
         <p className="text-center text-sm text-fade mt-5">
           {t("login.noAccount")}{" "}
-          <a href="/signup" className="text-cta hover:underline font-medium">
-            {t("login.requestAccess")}
-          </a>
+          <AuthLink href="/signup" label={t("login.requestAccess")} kind="request-access" />
         </p>
       </div>
     </div>

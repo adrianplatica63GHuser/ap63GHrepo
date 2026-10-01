@@ -50,12 +50,13 @@
  * the data is complete, and truncation is the renderer's decision.
  */
 
+import { RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useId, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
-import { buttonClass } from "@/lib/ui/button-styles";
 
 import { ImportListingControls } from "./import-listing-controls";
 import {
@@ -759,8 +760,13 @@ export function ImportDuplicationStage({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A097): RefreshCw before the words, both before and after the first check.
+            icon={RefreshCw}
+            label={checked ? t("recheck") : t("check")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={onCheck}
             disabled={!acknowledged || busy}
             // ⚠️ Slice #32.03 — this used to read `variant: gated ? "secondary"
@@ -768,10 +774,7 @@ export function ImportDuplicationStage({
             // IS `resultOnly` and this whole row is inside `!resultOnly`, so the
             // `gated` arm had become unreachable. Removed rather than kept and
             // flagged: the prop's own note above records what it was for.
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {checked ? t("recheck") : t("check")}
-          </button>
+          />
 
           {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04**, and the panel
               header's own note above already said the way back to File Explorer

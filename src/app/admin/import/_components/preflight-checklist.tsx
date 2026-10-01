@@ -58,11 +58,12 @@
  * delivered 2.9s later. `revealPlan` owns that refusal.
  */
 
+import { RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ActivityCue } from "@/components/activity-cue";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { dwellRemaining, revealPlan } from "@/lib/import/phase-dwell";
 import {
   allChecksPass,
@@ -370,14 +371,16 @@ export function PreflightChecklist({ onVerdict }: Props) {
       </ul>
 
       <div className="mt-4 flex items-center gap-3">
-        <button
-          type="button"
+        <IconButton
+          // #37.47 (A097): RefreshCw before „Verifică din nou".
+          icon={RefreshCw}
+          label={t("recheck")}
+          showLabel
+          variant="secondary"
+          size="md"
           onClick={recheck}
           disabled={running}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("recheck")}
-        </button>
+        />
         {running && <ActivityCue>{t("checking")}</ActivityCue>}
         {!running && !passed && (
           <p role="status" className="text-sm text-red-700 dark:text-red-400">

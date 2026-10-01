@@ -194,6 +194,12 @@ type Common = {
   /** Icon + label: the icon before the visible label, and no tooltip (A011). */
   showLabel?: boolean;
   /**
+   * With `showLabel`: the icon AFTER the words instead of before them — a
+   * forward arrow („Continuă →", #37.47 A099/A105) reads in the direction it
+   * points. Ignored on an icon-only button, which has no words to follow.
+   */
+  iconEnd?: boolean;
+  /**
    * Working: a spinning LoaderCircle in place of the icon, and `busyLabel`
    * („Se salvează…") as the name and the tooltip. An icon + label button
    * keeps its label on screen, so it keeps its width.
@@ -245,6 +251,7 @@ export function IconButton(props: IconButtonProps) {
     variant,
     size = "md",
     showLabel = false,
+    iconEnd = false,
     busy = false,
     busyLabel,
     count,
@@ -287,8 +294,9 @@ export function IconButton(props: IconButtonProps) {
 
   const inner = (
     <>
-      {glyph}
+      {!(showLabel && iconEnd) && glyph}
       {showLabel && <span>{label}</span>}
+      {showLabel && iconEnd && glyph}
       {badge !== null && (
         <span
           aria-hidden="true"
@@ -379,6 +387,23 @@ export function TrailingIcon({ icon: Icon }: { icon: ComponentType<LucideProps> 
       aria-hidden="true"
       data-trailing-icon=""
       className="ml-1 inline-block shrink-0 align-[-0.125em]"
+    />
+  );
+}
+
+/**
+ * An icon BEFORE a text link's words — the sign-in pages' „Solicită acces" /
+ * „Conectare" and the import's „Conectați-vă" (#37.47, A106/A109), links that
+ * sit in a sentence and keep a link's look, as `TrailingIcon`'s do. Decoration:
+ * the words are the name.
+ */
+export function LeadingIcon({ icon: Icon }: { icon: ComponentType<LucideProps> }) {
+  return (
+    <Icon
+      size={14}
+      aria-hidden="true"
+      data-leading-icon=""
+      className="mr-1 inline-block shrink-0 align-[-0.125em]"
     />
   );
 }

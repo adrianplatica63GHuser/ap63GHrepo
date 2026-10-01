@@ -68,10 +68,11 @@
  * no rule, which is the split every stage panel in this folder is built on.
  */
 
+import { CircleStop, FileDown } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { buttonClass } from "@/lib/ui/button-styles";
 import { COST_NOTE_CLASS } from "@/lib/ui/cost-note";
 import { displayPathOf } from "@/lib/import/folder-utils";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
@@ -273,13 +274,15 @@ export function ImportCardsBlockedStage({ folderName, verdict, onLeave }: Props)
       </div>
 
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-        <button
-          type="button"
+        <IconButton
+          // #37.47 (A101): FileDown before „Salvează lista ca pagină".
+          icon={FileDown}
+          label={t("save.button")}
+          showLabel
+          variant="secondary"
+          size="md"
           onClick={handleSave}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("save.button")}
-        </button>
+        />
         <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
 
@@ -292,13 +295,15 @@ export function ImportCardsBlockedStage({ folderName, verdict, onLeave }: Props)
       <p className={`mt-4 ${COST_NOTE_CLASS}`}>{t("nothingWritten")}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
+        <IconButton
+          // #37.47 (A098): CircleStop before „Oprește importul".
+          icon={CircleStop}
+          label={t("leave")}
+          showLabel
+          variant="primary"
+          size="lg"
           onClick={onLeave}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {t("leave")}
-        </button>
+        />
       </div>
 
       <p className="mt-2 text-xs text-fade dark:text-zinc-400">{t("leaveHint")}</p>

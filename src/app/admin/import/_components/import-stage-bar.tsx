@@ -35,6 +35,8 @@
  * opened under the dialog.)
  */
 
+import { CircleStop } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useId } from "react";
 import { useTranslations } from "next-intl";
 
@@ -42,7 +44,6 @@ import {
   StageIndicator,
   type StageIndicatorLine,
 } from "@/components/stage-indicator";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import {
   WORKFLOW_LINE_IDS,
@@ -155,18 +156,18 @@ export function ImportStageBar({
             variant's own `px-3 py-1.5` instead of the `min-h-6` the bare
             variant needed.
           */}
-          <button
-            type="button"
+          {/* #37.47 (A098): CircleStop before „Renunță la import". The
+              wrapper carries `whitespace-nowrap`, which the label inherits. */}
+          <IconButton
+            icon={CircleStop}
+            label={tc("button")}
+            showLabel
+            variant="danger-link"
+            size="md"
+            className="whitespace-nowrap"
             onClick={onCancel}
             disabled={inModal}
-            className={buttonClass({
-              variant: "danger-link",
-              size: "md",
-              className: "whitespace-nowrap",
-            })}
-          >
-            {tc("button")}
-          </button>
+          />
 
           {/*
             ── Step-through   (Slice #29.02) ──────────────────────────────

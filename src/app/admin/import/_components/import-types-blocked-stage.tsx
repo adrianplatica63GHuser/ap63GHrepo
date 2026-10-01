@@ -1,7 +1,7 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
-import { TrailingIcon } from "@/lib/ui/icon-button";
+import { ChevronDown, ChevronUp, CircleStop, ExternalLink, FileDown, RefreshCw } from "lucide-react";
+import { IconButton, LeadingIcon, TrailingIcon } from "@/lib/ui/icon-button";
 import Link from "next/link";
 
 /**
@@ -634,6 +634,9 @@ export function ImportTypesBlockedStage({
                   // more confidently.
                   className="mt-1.5 text-sm font-medium text-cta underline-offset-2 hover:underline dark:text-amber-200"
                 >
+                  {/* #37.47 (A102): ChevronDown / ChevronUp before the words; the
+                      disclosure keeps its link look and its dark-mode colour. */}
+                  <LeadingIcon icon={open ? ChevronUp : ChevronDown} />
                   {open
                     ? t("files.hide", { type: type.name })
                     : t("files.show", { type: type.name })}
@@ -740,13 +743,15 @@ export function ImportTypesBlockedStage({
               `busy` either: `busy` is only ever true on the branch this is not
               on. */}
           <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-            <button
-              type="button"
+            <IconButton
+              // #37.47 (A101): FileDown before „Salvează lista ca pagină".
+              icon={FileDown}
+              label={t("save.button")}
+              showLabel
+              variant="secondary"
+              size="md"
               onClick={handleSave}
-              className={buttonClass({ variant: "secondary", size: "md" })}
-            >
-              {t("save.button")}
-            </button>
+            />
             <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
           </div>
 
@@ -808,28 +813,29 @@ export function ImportTypesBlockedStage({
             twice; a type without a form does not acquire one because the user
             pressed a button on this screen. */}
         {verdict === null && !unusable && (
-          <button
-            type="button"
+          <IconButton
+            // #37.47 (A097): RefreshCw before „Încearcă din nou".
+            icon={RefreshCw}
+            label={t("retry")}
+            showLabel
+            variant="primary"
+            size="lg"
             ref={retryRef}
             onClick={onRetry}
             disabled={busy}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("retry")}
-          </button>
+          />
         )}
 
-        <button
-          type="button"
+        {/* #37.47 (A098): CircleStop before „Oprește importul". */}
+        <IconButton
+          icon={CircleStop}
+          label={t("leave")}
+          showLabel
+          variant={verdict === null ? "secondary" : "primary"}
+          size={verdict === null ? "md" : "lg"}
           onClick={onLeave}
           disabled={busy}
-          className={buttonClass({
-            variant: verdict === null ? "secondary" : "primary",
-            size: verdict === null ? "md" : "lg",
-          })}
-        >
-          {t("leave")}
-        </button>
+        />
 
         {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04, and nothing is
             stranded by its going.** It sat beside "Oprește importul" — the

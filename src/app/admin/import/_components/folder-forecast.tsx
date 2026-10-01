@@ -51,9 +51,10 @@
  * top of it — shown even when everything passes.
  */
 
+import { ArrowRight, RefreshCw } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { formatMb } from "@/lib/ui/format-mb";
 import { stageForPhase } from "@/lib/import/workflow-stages";
 import type { ImportForecast } from "@/lib/import/preflight";
@@ -440,27 +441,32 @@ export function FolderForecast({
             leaves one sentence pattern for "continue to the named step"
             instead of a literal beside it. The stage is read through
             `stageForPhase` from the phase this button actually sets. */}
-        <button
-          type="button"
+        <IconButton
+          // #37.47 (A099): ArrowRight after „Continuă…".
+          icon={ArrowRight}
+          label={advanceLabel}
+          showLabel
+          iconEnd
+          variant="primary"
+          size="lg"
           onClick={onContinue}
           disabled={nothingToDo}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {advanceLabel}
-        </button>
+        />
         {/* Slice #24.02c. The report is a to-do list acted on in Windows
             Explorer, so the expensive part of this loop was coming BACK: the
             user had to re-open the OS picker and find the folder again just to
             see whether their fix worked. The browser still holds the handle,
             so re-walking it is one click and no dialog — which is what turns
             the report from a snapshot into a checklist. */}
-        <button
-          type="button"
+        <IconButton
+          // #37.47 (A097): RefreshCw before the words.
+          icon={RefreshCw}
+          label={t("recheckFolder")}
+          showLabel
+          variant="secondary"
+          size="md"
           onClick={onRecheck}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("recheckFolder")}
-        </button>
+        />
         {/* ⚠️ **"Alegeți alt folder (clasificarea de până acum se pierde)"
             STOOD HERE UNTIL #32.04.** Only ONE of the two secondary buttons on
             this screen was a folder change: `onRecheck` above re-walks the

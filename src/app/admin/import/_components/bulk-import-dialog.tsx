@@ -183,9 +183,8 @@ import { isDeclaredCoordinateFile } from "@/lib/import/structure-rules";
 import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
 import { ProgressBar } from "@/components/progress-bar";
-import { buttonClass } from "@/lib/ui/button-styles";
-import { ArrowRight, X } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { ArrowRight, CheckCheck, Eye, FileDown, LogIn, RefreshCw, UserCheck, X } from "lucide-react";
+import { IconButton, LeadingIcon } from "@/lib/ui/icon-button";
 import {
   IdCardPersonDialog,
   type IdCardPersonOutcome,
@@ -6736,13 +6735,15 @@ export function BulkImportDialog({
                     : t("donePendingPeople", { count: pendingPeopleCount })}
                 </span>
                 {!readRunning && (
-                  <button
-                    type="button"
+                  <IconButton
+                    // #37.47 (A104): UserCheck before „Confirmă persoanele".
+                    icon={UserCheck}
+                    label={t("confirmPendingButton")}
+                    showLabel
+                    variant="ghost"
+                    size="xs"
                     onClick={handleConfirmPending}
-                    className={buttonClass({ variant: "ghost", size: "xs" })}
-                  >
-                    {t("confirmPendingButton")}
-                  </button>
+                  />
                 )}
               </p>
             )}
@@ -6818,18 +6819,20 @@ export function BulkImportDialog({
                   <span className="text-amber-700 dark:text-amber-400">{reviewTypesError}</span>
                 )}
                 {canReviewTypes && (
-                  <button
-                    type="button"
+                  <IconButton
+                    // #37.47 (A103): Eye before „Vezi câmpurile găsite".
+                    icon={Eye}
+                    label={t("reviewTypesButton")}
+                    showLabel
+                    variant="ghost"
+                    size="xs"
                     onClick={() => void handleReviewTypes()}
                     // Its own press is an await, and a second one would set the
                     // cursor back to zero under a user who had advanced. See
                     // `handleReviewTypes`, which refuses re-entry as well —
                     // this is the half of that guard the user can see.
                     disabled={reviewingTypes}
-                    className={buttonClass({ variant: "ghost", size: "xs" })}
-                  >
-                    {t("reviewTypesButton")}
-                  </button>
+                  />
                 )}
               </p>
             )}
@@ -6954,8 +6957,13 @@ export function BulkImportDialog({
                         : t("doneRefillWaiting", { count: refillCount })}
                 </span>
                 {canRefill && (
-                  <button
-                    type="button"
+                  <IconButton
+                    // #37.47 (A097): RefreshCw before „Reia citirea…".
+                    icon={RefreshCw}
+                    label={t("refillButton", { count: refillCount })}
+                    showLabel
+                    variant="ghost"
+                    size="xs"
                     onClick={() => void handleRefill()}
                     // ⚠️ **No `disabled` here, unlike the review button above,
                     // and a third adversarial round is why the first draft's was
@@ -6969,10 +6977,7 @@ export function BulkImportDialog({
                     // frame is `readRunningRef`, in the handler. (The review
                     // button's `disabled` IS live, because `reviewingTypes` is
                     // not a term of `canReviewTypes`.)
-                    className={buttonClass({ variant: "ghost", size: "xs" })}
-                  >
-                    {t("refillButton", { count: refillCount })}
-                  </button>
+                  />
                 )}
               </p>
             )}
@@ -7012,8 +7017,13 @@ export function BulkImportDialog({
               `reportSaved`. */}
           {done && (
             <div className="text-right">
-              <button
-                type="button"
+              <IconButton
+                // #37.47 (A101): FileDown before „Salvează raportul (HTML)".
+                icon={FileDown}
+                label={tres("saveButton")}
+                showLabel
+                variant="secondary"
+                size="md"
                 onClick={handleSaveReport}
                 // ⚠️ `readRunning` as well as the follow-up, and it is the
                 // same argument the Close beside it carries. A report saved
@@ -7034,10 +7044,7 @@ export function BulkImportDialog({
                 // lands says „niciun tip fără formular" over a type that has
                 // none, with `saveDone` showing so nobody saves again.
                 disabled={currentFollowUp !== null || readRunning || recheckingPath !== null}
-                className={buttonClass({ variant: "secondary", size: "md" })}
-              >
-                {tres("saveButton")}
-              </button>
+              />
               <p className="mt-1 text-[10px] text-fade dark:text-zinc-400">
                 {reportSaved ? tres("saveDone") : tres("saveHint")}
               </p>
@@ -7119,6 +7126,8 @@ export function BulkImportDialog({
               rel="noopener noreferrer"
               className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
             >
+              {/* #37.47 (A106): LogIn before the words; the link keeps its look. */}
+              <LeadingIcon icon={LogIn} />
               {t("signInAgain")}
             </a>
           </div>
@@ -7178,8 +7187,13 @@ export function BulkImportDialog({
             </table>
 
             <div className="mt-4 flex items-center justify-between gap-2">
-              <button
-                type="button"
+              <IconButton
+                // #37.47 (A104): CheckCheck before „Aplică tuturor".
+                icon={CheckCheck}
+                label={tprov("gateApplyAll")}
+                showLabel
+                variant="secondary"
+                size="md"
                 onClick={() => {
                   // "Apply to all" copies the first answered value down the
                   // list — the common case is a folder of one odd file type.
@@ -7191,18 +7205,18 @@ export function BulkImportDialog({
                     Object.fromEntries(ambiguousEntries.map((e) => [e.path, first])),
                   );
                 }}
-                className={buttonClass({ variant: "secondary", size: "md" })}
-              >
-                {tprov("gateApplyAll")}
-              </button>
-              <button
-                type="button"
+              />
+              <IconButton
+                // #37.47 (A099): ArrowRight after „Continuă importul".
+                icon={ArrowRight}
+                label={tprov("gateContinue")}
+                showLabel
+                iconEnd
+                variant="primary"
+                size="lg"
                 onClick={() => setGatePassed(true)}
                 disabled={!allAmbiguousAnswered}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {tprov("gateContinue")}
-              </button>
+              />
             </div>
           </div>
         )}
@@ -7849,16 +7863,18 @@ function ResultRow({
                   set one screen along, applied to a button rather than to a
                   sentence. */}
               {canRetryInterpret && !aiRefused && !refillRefused && (
-                <button
-                  type="button"
+                <IconButton
+                  // #37.47 (A097): RefreshCw before the words; the hint its `title` carried is the tooltip note.
+                  icon={RefreshCw}
+                  label={t("interpretRetry")}
+                  showLabel
+                  variant="ghost"
+                  size="xs"
                   onClick={onRetryInterpret}
                   // The click is one billed model call, and the count the user
                   // approved before the run did not include retries.
-                  title={t("interpretRetryHint")}
-                  className={buttonClass({ variant: "ghost", size: "xs" })}
-                >
-                  {t("interpretRetry")}
-                </button>
+                  note={t("interpretRetryHint")}
+                />
               )}
             </>
           )}
@@ -7920,8 +7936,13 @@ function ResultRow({
                 // the dialog.
                 canRecheckTypeCatalogue(result) &&
                 canRecheckTypeForm && (
-                  <button
-                    type="button"
+                  <IconButton
+                    // #37.47 (A097): RefreshCw before the words; the hint its `title` carried is the tooltip note.
+                    icon={RefreshCw}
+                    label={t("typeCatalogueRecheck")}
+                    showLabel
+                    variant="ghost"
+                    size="xs"
                     onClick={onRecheckTypeForm}
                     // ⚠️ **The hint says what the retry's says the opposite of,
                     // and it is the sentence the whole slice turns on.** That
@@ -7929,11 +7950,8 @@ function ResultRow({
                     // one promises that it is not. A user who has just been
                     // told a read costs money needs to be told when one does
                     // not, or the control goes unpressed for the right reason.
-                    title={t("typeCatalogueRecheckHint")}
-                    className={buttonClass({ variant: "ghost", size: "xs" })}
-                  >
-                    {t("typeCatalogueRecheck")}
-                  </button>
+                    note={t("typeCatalogueRecheckHint")}
+                  />
                 )
               )}
             </>

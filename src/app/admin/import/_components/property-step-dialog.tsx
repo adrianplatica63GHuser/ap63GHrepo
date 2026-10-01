@@ -56,7 +56,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { ArrowRight, RefreshCw, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import type { FSEntry, FSFileEntry } from "@/lib/import/folder-utils";
@@ -72,7 +72,6 @@ import type {
 } from "@/lib/properties/import-property-plan";
 import { isCoordinateFileName } from "@/lib/import/coordinate-file";
 import { ActivityCue } from "@/components/activity-cue";
-import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -921,14 +920,19 @@ export function PropertyStepDialog({
             size="lg"
             onClick={handleCancel}
           />
-          <button
-            type="button"
+          {/* #37.47 (A099): „Continuă" with ArrowRight after the words;
+              working, „Se pregătesc proprietățile…" with the spinner. */}
+          <IconButton
+            icon={ArrowRight}
+            label={submitting ? t("confirmBusy") : t("confirmButton")}
+            busy={submitting}
+            showLabel
+            iconEnd
+            variant="primary"
+            size="lg"
             onClick={handleConfirm}
             disabled={!canConfirm}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {submitting ? t("confirmBusy") : t("confirmButton")}
-          </button>
+          />
         </div>
       </div>
     </div>
@@ -944,15 +948,17 @@ function RecheckButton({
   disabled: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
+  // #37.47 (A097): RefreshCw before „Încearcă din nou".
   return (
-    <button
-      type="button"
+    <IconButton
+      icon={RefreshCw}
+      label={t("retry")}
+      showLabel
+      variant="secondary"
+      size="xs"
       onClick={onClick}
       disabled={disabled}
-      className={buttonClass({ variant: "secondary", size: "xs" })}
-    >
-      {t("retry")}
-    </button>
+    />
   );
 }
 
