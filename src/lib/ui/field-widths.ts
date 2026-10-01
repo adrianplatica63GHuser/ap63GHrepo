@@ -351,9 +351,82 @@ export const JUDICIAL_PERSON = {
   contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
 } as const satisfies Record<string, FieldWidth>;
 
+// ---- the Property (#37.14) --------------------------------------------------------------
+
+/** The width a label and its gap take — where a line that belongs to a box, not to a label, starts. */
+export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
+
+/**
+ * The Property's fields. `measure-fields` 20260928T185247Z-3109 on the local
+ * archive's 8 properties: `m:` is `rows · longest · p95`.
+ *
+ * Nr. parcelă at M is Adrian's LATER note (01.Slice.Inputs\Slices.37.nn\
+ * Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M",
+ * i.e. Field.Widths.v01), which Slice #37.30 took over v02's L; „000/00/00", the
+ * longest (#37.14's measurement), holds at M. ⚠️ **Nr. tarla / sola stays at M,
+ * not the note's S — rule 10, the longest value is a floor:** the longest tarla
+ * („47/2") fits S, but the dropdown's own empty option „— niciunul —" needs
+ * 107 px and S is 80 (TC-PROP-04's fixed-box check, e2e 20261001T010949Z-7174).
+ * At M, M and M, Cod | Nr. tarla / sola | Nr. parcelă is 26.5rem — still one
+ * row (rule 14), still a 3-unit Date cadastrale.
+ */
+export const PROPERTY = {
+  code: { step: "M", kind: "fixed", sample: "HHHH00000" }, //   „PROP00012"
+  tarlaId: { step: "M", kind: "select" }, //                    M: „— niciunul —" needs 107 px (see above); m: 3 options, longest „47/2"
+  parcela: { step: "M", kind: "fixed", sample: "000/00/00" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
+  nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
+  surfaceAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, //  the box shows 1234567.89, no separators; m: 3 · 6
+  calculatedAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, // toFixed(2), in the mono font; m: 3 · 6
+  carteFunciara: { step: "M", kind: "fixed", sample: "000000" }, //       m: 0
+  cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
+  useCategoryId: { step: "M", kind: "select" }, //              m: 8 options, longest „Neproductiv" (11) — v02 guessed L
+  propertyTypeId: { step: "L", kind: "select" }, //             m: 14 options, longest „Vegetație Forestieră" (20)
+  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
+  /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */
+  streetViewStreetLine: { step: "TILE", kind: "grows" },
+  streetViewStreetLineBox: { step: "L", kind: "grows" }, //     m: 0
+} as const satisfies Record<string, FieldWidth>;
+
+/**
+ * The mini-map and Street View: each fills its tile — since #37.30 a tile of
+ * whole units (`PANEL_UNITS.property.map`), 22rem tall. The polygon is
+ * fitted with `fitBounds` (40 px padding), so any parcel fits at the default
+ * zoom; a property with no corners keeps the same box, so nothing jumps.
+ */
+// MAP_BOX_STYLE moved to the screen-keyed block below (#37.30, rule 20): whole units now.
+
+/**
+ * „Puncte de contur" columns: Nr., Nr. inițial, then N and E (Stereo 70,
+ * „512345.67" — six digits and two decimals in the mono font; latitude and
+ * longitude in decimal degrees, „44.4123456", fit too), and the row's buttons
+ * take the rest of the panel.
+ */
+export const CORNER_COLUMNS = {
+  seq: rem(2.5),
+  originalIndex: rem(3.5),
+  north: rem(6.5),
+  east: rem(6.5),
+} as const;
+
 // ---- every stacked screen on the width unit, keyed by screen (#37.27, #37.29) ---------
 
 type JpField = keyof typeof JUDICIAL_PERSON;
+
+/**
+ * The Property's address panel, by the names its boxes carry (`address.…`): the
+ * shared address widths and, after Stradă, the Street View street line — its
+ * box (L), with „Preia din Street View" and its help beside it (#37.30).
+ */
+export const PROPERTY_ADDRESS = {
+  "address.streetLine": ADDRESS.streetLine,
+  "address.streetViewStreetLine": PROPERTY.streetViewStreetLineBox,
+  "address.postalCode": ADDRESS.postalCode,
+  "address.locality": ADDRESS.locality,
+  "address.county": ADDRESS.county,
+  "address.country": ADDRESS.country,
+  "address.notes": ADDRESS.notes,
+} as const satisfies Record<string, FieldWidth>;
+type PropField = keyof typeof PROPERTY | keyof typeof PROPERTY_ADDRESS;
 
 /**
  * ONE SHAPE, KEYED BY SCREEN.                           (Slice #37.29, rule 19)
@@ -383,9 +456,33 @@ export const SCREEN_ROWS = {
     // Persoană de contact 1, then 2: each label above an XL box holding the name and its button.
     contactPersons: [["contactPerson"], ["contactPerson"]],
   },
+  property: {
+    // Cod | Nr. tarla / sola | Nr. parcelă (rule 14; Cod only on a saved property, the two
+    // cadastral numbers not on an urban type) — Poreclă — the two areas, the bow-tie marker
+    // under them (rule 15) — Nr. CF | Nr. cadastru — Categorie de folosință | Tip proprietate
+    // — Note, the whole width.
+    cadastral: [
+      ["code", "tarlaId", "parcela"],
+      ["nickname"],
+      ["surfaceAreaMp", "calculatedAreaMp"],
+      ["carteFunciara", "cadastralNumber"],
+      ["useCategoryId", "propertyTypeId"],
+      ["notes"],
+    ],
+    // Stradă — Adresă Street View (box, „Preia", help; the hint under them) — Cod poștal |
+    // Localitate — Județ | Țară, the „Țară" default under them — Note, the whole width.
+    address: [
+      ["address.streetLine"],
+      ["address.streetViewStreetLine"],
+      ["address.postalCode", "address.locality"],
+      ["address.county", "address.country"],
+      ["address.notes"],
+    ],
+  },
 } as const satisfies {
   naturalPerson: Record<string, readonly (readonly NpField[])[]>;
   judicialPerson: Record<string, readonly (readonly JpField[])[]>;
+  property: Record<string, readonly (readonly PropField[])[]>;
 };
 export type Screen = keyof typeof SCREEN_ROWS;
 
@@ -411,19 +508,34 @@ export const PANEL_UNITS = {
   naturalPerson: { ...panelUnitsOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), address: ADDRESS_PANEL_UNITS },
   //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
   judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), address: ADDRESS_PANEL_UNITS },
+  //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Stradă, 24rem.
+  //  corners 4: the four fixed columns are 19rem and a row's ↑ ↓ „Editează" „Șterge" need about
+  //  15rem more to stay on one line; 3 units leave 9rem. map and streetView 3 (rule 20; Adrian's
+  //  Ask first): 28.1rem inside, about the 30.4 they were, and beside Date cadastrale at 1366 px.
+  property: {
+    ...panelUnitsOf(SCREEN_ROWS.property, { ...PROPERTY, ...PROPERTY_ADDRESS }),
+    corners: 4,
+    map: 3,
+    streetView: 3,
+  },
 } as const;
 
 /** Each panel's inner width — whole units, so at least its widest row. */
 export const PANEL_UNIT_INNER_REM = {
   naturalPerson: mapUnits(PANEL_UNITS.naturalPerson, unitsInnerRem),
   judicialPerson: mapUnits(PANEL_UNITS.judicialPerson, unitsInnerRem),
+  property: mapUnits(PANEL_UNITS.property, unitsInnerRem),
 } as const;
 
 /** Each panel's style — whole units, not `PANEL_STYLE`'s 32rem. */
 export const PANEL_UNIT_STYLE = {
   naturalPerson: mapUnits(PANEL_UNITS.naturalPerson, unitStyle),
   judicialPerson: mapUnits(PANEL_UNITS.judicialPerson, unitStyle),
+  property: mapUnits(PANEL_UNITS.property, unitStyle),
 } as const;
+
+/** The mini-map and Street View boxes: their tile's whole inner width, 22rem tall (rule 20). */
+export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.property.map), height: rem(22) };
 
 /**
  * The list tiles in units (#37.27). Rule 17: the same list is the same size on
@@ -434,6 +546,9 @@ const PERSON_LIST_UNITS = { associations: 4, properties: 4, documents: 5, metada
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
+  // „Proprietăți corelate" and Persoane: a name, a role, the buttons — 4. Acte: a property's
+  // documents carry no role, so type, title and the buttons — 4. META INFO 5.
+  property: { associations: 4, persons: 4, documents: 4, metadata: 5 },
 } as const;
 
 /** META INFO's cell: half the 5-unit tile, less the gap between the two — the same on every screen. */
@@ -471,57 +586,6 @@ export function npRowStyle(): CSSProperties {
 /** Beside Valabil de la | Până la: the rest of that row, for „VALABIL", „EXPIRAT" or „EXPIRĂ ÎN n ZILE" (which wraps). */
 export const NP_VALIDITY_REM =
   NP_PANEL_INNER_REM.idCard - rowRem([NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil]) - STACK_GAP_REM;
-
-// ---- the Property (#37.14) --------------------------------------------------------------
-
-/** The width a label and its gap take — where a line that belongs to a box, not to a label, starts. */
-export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
-
-/**
- * The Property's fields. `measure-fields` 20260928T185247Z-3109 on the local
- * archive's 8 properties: `m:` is `rows · longest · p95`.
- *
- * Nr. tarla / sola at M and Nr. parcelă at L are Adrian's decisions
- * (Field.Widths.v02): a measurement may widen them, never narrow them. At M and
- * L they do not share a panel row, so each has its own.
- */
-export const PROPERTY = {
-  code: { step: "M", kind: "fixed", sample: "HHHH00000" }, //   „PROP00012"
-  tarlaId: { step: "M", kind: "select" }, //                    Adrian's M; m: 3 options, longest „47/2"
-  parcela: { step: "L", kind: "fixed", sample: "000/00/00" }, // Adrian's L; m: 3 · 6 · 6
-  nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
-  surfaceAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, //  the box shows 1234567.89, no separators; m: 3 · 6
-  calculatedAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, // toFixed(2), in the mono font; m: 3 · 6
-  carteFunciara: { step: "M", kind: "fixed", sample: "000000" }, //       m: 0
-  cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
-  useCategoryId: { step: "M", kind: "select" }, //              m: 8 options, longest „Neproductiv" (11) — v02 guessed L
-  propertyTypeId: { step: "L", kind: "select" }, //             m: 14 options, longest „Vegetație Forestieră" (20)
-  notes: { step: "TILE", kind: "lines", rows: 1 }, //           m: 1 · 72, at most 300
-  /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */
-  streetViewStreetLine: { step: "TILE", kind: "grows" },
-  streetViewStreetLineBox: { step: "L", kind: "grows" }, //     m: 0
-} as const satisfies Record<string, FieldWidth>;
-
-/**
- * The mini-map and Street View: each fills a small tile (Field.Widths.v02,
- * ≈ 30rem × 22rem) — the panel's whole inner width, 22rem tall. The polygon is
- * fitted with `fitBounds` (40 px padding), so any parcel fits at the default
- * zoom; a property with no corners keeps the same box, so nothing jumps.
- */
-export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_INNER_REM), height: rem(22) };
-
-/**
- * „Puncte de contur" columns: Nr., Nr. inițial, then N and E (Stereo 70,
- * „512345.67" — six digits and two decimals in the mono font; latitude and
- * longitude in decimal degrees, „44.4123456", fit too), and the row's buttons
- * take the rest of the panel.
- */
-export const CORNER_COLUMNS = {
-  seq: rem(2.5),
-  originalIndex: rem(3.5),
-  north: rem(6.5),
-  east: rem(6.5),
-} as const;
 
 // ---- the Document (#37.15) -------------------------------------------------------------
 
@@ -803,6 +867,8 @@ export const NP_LIST_COLUMNS = {
   associations: ["select", "tileName", "tileRole", "openPreviewStacked"],
   properties: ["select", "tileName", "tileRole", "openPreviewStacked"],
   documents: ["select", "tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"],
+  // Slice #37.30: a property's Acte — its documents carry no role — at 4 units.
+  documentsWithoutRole: ["select", "tileDocType", "tileDocTitle", "openPreviewStacked"],
 } as const satisfies Record<string, readonly ColumnName[]>;
 
 // ---- tiles (#37.17) -------------------------------------------------------------------------

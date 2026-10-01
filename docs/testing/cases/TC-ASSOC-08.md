@@ -41,11 +41,11 @@ Two properties, typed by hand, „Poreclă" only: **`TC-ASSOC-08 Teren întreg`*
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates both properties: „Proprietăți — Listă" → „Adaugă proprietate" → „Introducere manuală", types the „Poreclă", „Salvează" | Two rows badged „Nou!" |
-| 2 | Opens `TC-ASSOC-08 Parcelă inclusă`, tab **„Asocieri"** | „Nicio proprietate corelată", with „Asociază" and „Dezasociază" |
+| 2 | Opens `TC-ASSOC-08 Parcelă inclusă`, tile **„Proprietăți corelate"** („Asocieri" before #37.30) | „Nicio proprietate corelată", with „Asociază" and „Dezasociază" |
 | 3 | Presses „Asociază" | „Asociere proprietate corelată" at `/properties/[id]/associate-reference`, the property's name under it, one filter „Căutare" („Cod sau denumire…"), a table Cod · Denumire listing every other property, and a select „Tip relație": „— fără relație —", „Adiacent", „Inclus în", „Contiguu", „Subdiviziune a", „Suprapus cu", „Acces prin", „Alipit de" |
 | 4 | Types `TC-ASSOC-08` into „Căutare", ticks `TC-ASSOC-08 Teren întreg`, chooses **„Inclus în"** | Both selected |
-| 5 | Presses „Asociază selecția" | Back on the part's „Asocieri" (`?tab=related`): a table Denumire · Tip relație, one row — `TC-ASSOC-08 Teren întreg`, **„această proprietate „Inclus în” PROP…"** (the whole's code), „Vizualizare" |
-| 6 | Opens `TC-ASSOC-08 Teren întreg`, tab „Asocieri" | One row, `TC-ASSOC-08 Parcelă inclusă`, **„PROP… „Inclus în” această proprietate"** (the part's code) — the whole is the one that includes it |
+| 5 | Presses „Asociază selecția" | Back on the part's „Proprietăți corelate" (`?tab=related`): a table Denumire · Tip relație, one row — `TC-ASSOC-08 Teren întreg`, **„această proprietate „Inclus în” PROP…"** (the whole's code), „Vizualizare" |
+| 6 | Opens `TC-ASSOC-08 Teren întreg`, tile „Proprietăți corelate" | One row, `TC-ASSOC-08 Parcelă inclusă`, **„PROP… „Inclus în” această proprietate"** (the part's code) — the whole is the one that includes it |
 | 7 | Runs steps 1–6 again with a second pair whose uuids sort the **other** way (compare the two properties' ids in the address bar; if the new pair sorts the same way as the first, create another whole until it does not) | The same two sentences |
 
 Step 6 is the assertion, and step 7 is what makes it one: before #37.10 the screen was right on
@@ -54,7 +54,7 @@ documents, #36.19).
 
 ## At the end — leaving things as they were found
 
-On either property's „Asocieri", select the row's radio and press „Dezasociază". Then delete both
+On either property's „Proprietăți corelate", select the row's radio and press „Dezasociază". Then delete both
 properties: open each, „Șterge" at the bottom of the form, „Da".
 
 ## Notes from the runs

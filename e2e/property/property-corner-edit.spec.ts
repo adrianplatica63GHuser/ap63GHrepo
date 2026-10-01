@@ -36,7 +36,8 @@ import os from "os";
 import path from "path";
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
-import { expectFixedFieldsHold, expectStableWidths } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableWidths, photograph } from "../helpers/field-widths";
+import { hideTile, showTile } from "../helpers/tiles";
 import { ADDRESS, MAP_BOX_STYLE, PROPERTY } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.14). */
@@ -119,6 +120,11 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
         await page.screenshot({ path: `playwright-report/layout/property-${width}.png`, fullPage: true });
       }
       if (viewport) await page.setViewportSize(viewport);
+      // Slice #37.30 — the same parcel with Street View beside the map and Date cadastrale, then off again.
+      await showTile(page, "Street View");
+      await expect(page.locator('[data-panel="street-view"]')).toBeVisible({ timeout: 30_000 });
+      await photograph(page, "property-with-corners", [1366, 1920, 2560], 1200);
+      await hideTile(page, "Street View");
 
       // Step 2 — „Editează" on row 3 (Nr. orig. 18): two inputs holding its values, „Salvează" / „Anulează".
       const row18 = cornerRow(page, "18");

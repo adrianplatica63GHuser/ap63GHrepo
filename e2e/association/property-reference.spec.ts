@@ -23,7 +23,7 @@
  *   - The cleanup's „Dezasociază" runs on the last pair; every property is
  *     removed in `finally` through DELETE /api/properties/[id], the route
  *     „Șterge" → „Da" calls (the link is ON DELETE CASCADE).
- *   - Slice #37.19: a property has no tab row; its „Asocieri" (steps 2 and 6)
+ *   - Slice #37.19: a property has no tab row; its „Proprietăți corelate" (steps 2 and 6; „Asocieri" until #37.30)
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
@@ -71,10 +71,10 @@ async function codeOf(page: Page, id: string): Promise<string> {
 
 /** Steps 2–6 for one pair: link from the part's screen, read from both ends. */
 async function linkAndRead(page: Page, part: { id: string; name: string }, whole: { id: string; code: string }) {
-  // Step 2 — the part's „Asocieri": empty, „Asociază", „Dezasociază".
+  // Step 2 — the part's „Proprietăți corelate" (#37.30, „Asocieri" before): empty, „Asociază", „Dezasociază".
   await page.goto(`/properties/${part.id}`);
   await expect(page.getByRole("heading", { name: part.name })).toBeVisible({ timeout: 30_000 });
-  await showTile(page, "Asocieri");
+  await showTile(page, "Proprietăți corelate");
   await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -106,11 +106,11 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   await expect(fromPart).toContainText(`această proprietate „${ROLE}” ${whole.code}`);
   await expect(fromPart.getByRole("link", { name: "Vizualizare" })).toBeVisible();
 
-  // Step 6 — the whole's „Asocieri": the converse, with the part's code.
+  // Step 6 — the whole's „Proprietăți corelate": the converse, with the part's code.
   const partCode = await codeOf(page, part.id);
   await page.goto(`/properties/${whole.id}`);
   await expect(page.getByRole("heading", { name: WHOLE })).toBeVisible({ timeout: 30_000 });
-  await showTile(page, "Asocieri");
+  await showTile(page, "Proprietăți corelate");
   const fromWhole = page.getByRole("row").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
   await expect(fromWhole).toHaveCount(1, { timeout: 30_000 });
   await expect(fromWhole).toContainText(`${partCode} „${ROLE}” această proprietate`);
@@ -150,7 +150,7 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
       await linkAndRead(page, before, whole);
       await linkAndRead(page, after, whole);
 
-      // ── At the end — radio, „Dezasociază", on the whole's „Asocieri" ─────
+      // ── At the end — radio, „Dezasociază", on the whole's „Proprietăți corelate" ─
       for (const part of [before, after]) {
         await page.getByRole("radio", { name: part.name, exact: true }).check();
         // The DELETE route compiles on its first request on a cold server

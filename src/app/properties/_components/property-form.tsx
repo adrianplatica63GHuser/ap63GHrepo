@@ -66,16 +66,19 @@ import { AsyncSelect } from "@/components/forms/async-select";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
   ADDRESS,
-  LABEL_INDENT,
-  LABEL_STYLE,
   MAP_BOX_STYLE,
   PANEL_GAP,
-  PANEL_STYLE,
+  PANEL_UNIT_INNER_REM,
+  PANEL_UNIT_STYLE,
   PROPERTY as PROP,
+  boxRem,
   boxStyle,
-  panelRowStyle,
+  rem,
+  stackedBoxStyle,
+  unitRowStyle,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { SnapshotValue } from "@/components/versioning/snapshot-value";
 import {
   snapshotReplacesPicker,
@@ -1041,7 +1044,7 @@ export function PropertyForm({
       // mode the page's tile row carries that width and the form itself is
       // `contents` (see `tiles`).
       className={tiled ? "contents" : "flex flex-col gap-4"}
-      style={tiled ? undefined : panelRowStyle()}
+      style={tiled ? undefined : unitRowStyle("property")}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
@@ -1081,48 +1084,49 @@ export function PropertyForm({
         data-panel-row
       >
 
-        {/* Cadastral data. Tarla / sola (M) and Nr. parcelă (L) are Adrian's
-            widths (Field.Widths.v02); at M and L they do not share a row, so
-            each has its own. Hidden for urban types (Slice #19.02). */}
-        <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_STYLE} {...tileProps("cadastral")}>
+        {/* Cadastral data. Slice #37.30: every label above its box, the rows
+            of `SCREEN_ROWS.property.cadastral`, and the panel the fewest whole
+            width units that hold its widest row (3). Nr. tarla / sola (S) and
+            Nr. parcelă (M) are Adrian's later note (Stacked.txt), so the
+            identifiers share one row (rule 14). They are hidden for urban
+            types (Slice #19.02), and the row closes up to Cod alone. */}
+        <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_UNIT_STYLE.property.cadastral} {...tileProps("cadastral")}>
           <section data-panel="cadastral" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.cadastral")}
             </h2>
             <div className="flex flex-col gap-2">
-              {propertyCode && (
-                <ReadOnlyField label={t("fields.code")} value={propertyCode} width={PROP.code} field="code" />
-              )}
-              {!typeConfig.hideTarlaParcela && (
-                <>
-                  {/* Slice #34.03: an ORDINARY id-valued select, like the two
-                      below. `allowUnlistedValue` was here from #32.13, because a
-                      property could hold a tarla `lookup_tarla` had never had
-                      and blanking it would have lost the value.
-                      `property.tarla_id` is a foreign key now, so an unlisted
-                      value cannot exist — and `optionsWithUnlistedValues`,
-                      whose only job was inventing the missing entry, is gone
-                      from the codebase with it. */}
-                  <SelectField
-                    label={t("fields.tarlaSola")}
-                    name="tarlaId"
-                    register={register}
-                    control={control}
-                    error={errors.tarlaId?.message}
-                    options={tarlaOptions}
-                    highlight={displayHighlights?.property.tarlaId}
-                    snapshot={snapshotLookups.tarlaId}
-                    width={PROP.tarlaId}
-                  />
-                  <Field
-                    label={t("fields.parcela")}
-                    name="parcela"
-                    register={register}
-                    error={errors.parcela?.message}
-                    highlight={displayHighlights?.property.parcela}
-                    width={PROP.parcela}
-                  />
-                </>
+              {(propertyCode || !typeConfig.hideTarlaParcela) && (
+                <div className={STACKED_ROW_CLASS}>
+                  {propertyCode && (
+                    <ReadOnlyField label={t("fields.code")} value={propertyCode} width={PROP.code} field="code" />
+                  )}
+                  {/* Slice #34.03: an ORDINARY id-valued select — `property.tarla_id`
+                      is a foreign key, so an unlisted value cannot exist. */}
+                  {!typeConfig.hideTarlaParcela && (
+                    <SelectField
+                      label={t("fields.tarlaSola")}
+                      name="tarlaId"
+                      register={register}
+                      control={control}
+                      error={errors.tarlaId?.message}
+                      options={tarlaOptions}
+                      highlight={displayHighlights?.property.tarlaId}
+                      snapshot={snapshotLookups.tarlaId}
+                      width={PROP.tarlaId}
+                    />
+                  )}
+                  {!typeConfig.hideTarlaParcela && (
+                    <Field
+                      label={t("fields.parcela")}
+                      name="parcela"
+                      register={register}
+                      error={errors.parcela?.message}
+                      highlight={displayHighlights?.property.parcela}
+                      width={PROP.parcela}
+                    />
+                  )}
+                </div>
               )}
               <Field
                 label={t("fields.nickname")}
@@ -1132,7 +1136,7 @@ export function PropertyForm({
                 highlight={displayHighlights?.property.nickname}
                 width={PROP.nickname}
               />
-              <div className="flex flex-wrap gap-2">
+              <div className={STACKED_ROW_CLASS}>
                 <Field
                   label={t("fields.surfaceAreaMp")}
                   name="surfaceAreaMp"
@@ -1153,9 +1157,11 @@ export function PropertyForm({
                 />
               </div>
               {/* Slice #32.14: the marker sits under the number it explains,
-                  because the number is the only symptom the user ever saw. */}
+                  because the number is the only symptom the user ever saw.
+                  Slice #37.30 (rule 15): on the line under the two areas, inside
+                  the panel, with „Îndreaptă" beside it. */}
               {cornersSelfIntersect && (
-                <div className="flex flex-wrap items-center gap-2" style={{ paddingLeft: LABEL_INDENT }}>
+                <div className="flex flex-wrap items-center gap-2">
                   <span
                     className="text-xs font-semibold text-amber-600 dark:text-amber-500"
                     title={t("bowTie.markerHint")}
@@ -1173,7 +1179,7 @@ export function PropertyForm({
                   )}
                 </div>
               )}
-              <div className="flex flex-wrap gap-2">
+              <div className={STACKED_ROW_CLASS}>
                 <Field
                   label={t("fields.carteFunciara")}
                   name="carteFunciara"
@@ -1191,28 +1197,30 @@ export function PropertyForm({
                   width={PROP.cadastralNumber}
                 />
               </div>
-              <SelectField
-                label={t("fields.useCategory")}
-                name="useCategoryId"
-                register={register}
-                control={control}
-                error={errors.useCategoryId?.message}
-                options={useCategoryOptions}
-                highlight={displayHighlights?.property.useCategoryId}
-                snapshot={snapshotLookups.useCategoryId}
-                width={PROP.useCategoryId}
-              />
-              <SelectField
-                label={t("fields.propertyType")}
-                name="propertyTypeId"
-                register={register}
-                control={control}
-                error={errors.propertyTypeId?.message}
-                options={propertyTypeOptions}
-                highlight={displayHighlights?.property.propertyTypeId}
-                snapshot={snapshotLookups.propertyTypeId}
-                width={PROP.propertyTypeId}
-              />
+              <div className={STACKED_ROW_CLASS}>
+                <SelectField
+                  label={t("fields.useCategory")}
+                  name="useCategoryId"
+                  register={register}
+                  control={control}
+                  error={errors.useCategoryId?.message}
+                  options={useCategoryOptions}
+                  highlight={displayHighlights?.property.useCategoryId}
+                  snapshot={snapshotLookups.useCategoryId}
+                  width={PROP.useCategoryId}
+                />
+                <SelectField
+                  label={t("fields.propertyType")}
+                  name="propertyTypeId"
+                  register={register}
+                  control={control}
+                  error={errors.propertyTypeId?.message}
+                  options={propertyTypeOptions}
+                  highlight={displayHighlights?.property.propertyTypeId}
+                  snapshot={snapshotLookups.propertyTypeId}
+                  width={PROP.propertyTypeId}
+                />
+              </div>
               <Field
                 label={t("fields.notes")}
                 name="notes"
@@ -1221,6 +1229,7 @@ export function PropertyForm({
                 maxLength={300}
                 highlight={displayHighlights?.property.notes}
                 width={PROP.notes}
+                fillRem={PANEL_UNIT_INNER_REM.property.cadastral}
               />
             </div>
           </section>
@@ -1235,7 +1244,7 @@ export function PropertyForm({
             pitfall #4); it enforces its own read-only state via the readOnly
             prop instead. Its columns take their widths from the file. */}
         <section
-          style={PANEL_STYLE}
+          style={PANEL_UNIT_STYLE.property.corners}
           data-panel="corners"
           {...tileProps("corners")}
           className={[
@@ -1265,9 +1274,12 @@ export function PropertyForm({
           />
         </section>
 
-        {/* Address — Slice #19.02: hidden for agricultural / forest types. */}
+        {/* Address — Slice #19.02: hidden for agricultural / forest types.
+            Slice #37.30: labels above, the rows of `SCREEN_ROWS.property.address`
+            — the shared address rows with the Street View street line after
+            Stradă — 3 units. */}
         {!typeConfig.hideAddress && (
-          <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("address")}`} style={PANEL_STYLE} {...tileProps("address")}>
+          <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("address")}`} style={PANEL_UNIT_STYLE.property.address} {...tileProps("address")}>
             <section data-panel="address" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
                 {t("sections.address")}
@@ -1286,55 +1298,55 @@ export function PropertyForm({
                     postal/locality/county/country fields below apply to both.
                     The Fetch button reverse-geocodes the corners' centroid. In a
                     read-only historical version the whole address fieldset is
-                    disabled, which also disables this button. */}
-                <label className="flex items-start gap-2 text-sm">
-                  <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
+                    disabled, which also disables this button. Slice #37.30
+                    (rule 15): the label above, „Preia din Street View" and its
+                    help beside the box, the hint or the error under them. */}
+                <label className={STACKED_FIELD_CLASS} style={{ width: rem(PANEL_UNIT_INNER_REM.property.address) }}>
+                  <span className={STACKED_LABEL_CLASS}>
                     {t("streetViewAddress.label")}
                   </span>
-                  <div className="flex flex-col gap-0.5" style={boxStyle(PROP.streetViewStreetLine)}>
-                    <div className="flex items-start gap-2">
-                      <GrowingText
-                        registration={register("address.streetViewStreetLine")}
-                        width={String(boxStyle(PROP.streetViewStreetLineBox).width)}
-                        className={[
-                          BOX_CLASS,
-                          "border-wire focus:border-focus dark:border-zinc-700",
-                          highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
-                        ].join(" ")}
-                        data-width-field="address.streetViewStreetLine"
-                        data-width-kind={PROP.streetViewStreetLineBox.kind}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleFetchStreetViewAddress}
-                        disabled={
-                          fetchingStreetView || !streetViewCentroid || !geocodingLib
-                        }
-                        title={
-                          !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
-                        }
-                        className={buttonClass({ variant: "secondary", size: "xs", className: "mt-1 shrink-0" })}
-                      >
-                        {fetchingStreetView
-                          ? t("streetViewAddress.fetching")
-                          : t("streetViewAddress.fetch")}
-                      </button>
-                      <span className="mt-1 shrink-0">
-                        <HelpHint hintKey="street-view-fetch-address" />
-                      </span>
-                    </div>
-                    {streetViewFetchError ? (
-                      <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                        {streetViewFetchError}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-fade dark:text-zinc-400">
-                        {t("streetViewAddress.hint")}
-                      </span>
-                    )}
+                  <div className="flex items-start gap-2">
+                    <GrowingText
+                      registration={register("address.streetViewStreetLine")}
+                      width={String(boxStyle(PROP.streetViewStreetLineBox).width)}
+                      className={[
+                        BOX_CLASS,
+                        "border-wire focus:border-focus dark:border-zinc-700",
+                        highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
+                      ].join(" ")}
+                      data-width-field="address.streetViewStreetLine"
+                      data-width-kind={PROP.streetViewStreetLineBox.kind}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFetchStreetViewAddress}
+                      disabled={
+                        fetchingStreetView || !streetViewCentroid || !geocodingLib
+                      }
+                      title={
+                        !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
+                      }
+                      className={buttonClass({ variant: "secondary", size: "xs", className: "mt-1 shrink-0" })}
+                    >
+                      {fetchingStreetView
+                        ? t("streetViewAddress.fetching")
+                        : t("streetViewAddress.fetch")}
+                    </button>
+                    <span className="mt-1 shrink-0">
+                      <HelpHint hintKey="street-view-fetch-address" />
+                    </span>
                   </div>
+                  {streetViewFetchError ? (
+                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                      {streetViewFetchError}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-fade dark:text-zinc-400">
+                      {t("streetViewAddress.hint")}
+                    </span>
+                  )}
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className={STACKED_ROW_CLASS}>
                   <Field
                     label={t("address.postalCode")}
                     name="address.postalCode"
@@ -1352,7 +1364,7 @@ export function PropertyForm({
                     width={ADDRESS.locality}
                   />
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className={STACKED_ROW_CLASS}>
                   <Field
                     label={t("address.county")}
                     name="address.county"
@@ -1370,8 +1382,9 @@ export function PropertyForm({
                     width={ADDRESS.country}
                   />
                 </div>
-                {/* Slice #37.04 (FU-013): a blank „Țară" is saved as „România". */}
-                <p className="text-xs text-fade" style={{ paddingLeft: LABEL_INDENT }}>{t("address.countryDefault")}</p>
+                {/* Slice #37.04 (FU-013): a blank „Țară" is saved as „România".
+                    Slice #37.30 (rule 15): under Țară's row, inside the panel. */}
+                <p className="text-xs text-fade">{t("address.countryDefault")}</p>
                 <Field
                   label={t("address.notes")}
                   name="address.notes"
@@ -1379,6 +1392,7 @@ export function PropertyForm({
                   error={errors.address?.notes?.message}
                   highlight={displayHighlights?.address.notes}
                   width={ADDRESS.notes}
+                  fillRem={PANEL_UNIT_INNER_REM.property.address}
                 />
               </div>
             </section>
@@ -1395,7 +1409,7 @@ export function PropertyForm({
             ticked — an unticked map makes no Google Maps request of its own. */}
         {tileShown("map") && (
         <section
-          style={PANEL_STYLE}
+          style={PANEL_UNIT_STYLE.property.map}
           data-panel="map"
           {...tileProps("map")}
           className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
@@ -1427,7 +1441,7 @@ export function PropertyForm({
             open. The same fixed size as the map, beside it. */}
         {streetViewOpen && !typeConfig.hideStreetView && (
           <section
-            style={PANEL_STYLE}
+            style={PANEL_UNIT_STYLE.property.streetView}
             data-panel="street-view"
             {...tileProps("streetView")}
             className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
@@ -1747,13 +1761,15 @@ type FieldProps = {
   width:      FieldWidth;
   /** The most characters the box takes — the notes' 300. */
   maxLength?: number;
+  /** Slice #37.30: the panel's inner width, for a box that `fill`s it (Note). */
+  fillRem?: number;
 };
 
 /** The box's own look; its width is never a class here — it comes from `boxStyle`. */
 const BOX_CLASS =
   "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
-function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength }: FieldProps) {
+function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength, fillRem }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
     BOX_CLASS,
@@ -1763,41 +1779,42 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
+  // Slice #37.30: the label ABOVE its box, the pair exactly as wide as the box
+  // (or the panel, for a box that fills it) — a long label wraps inside it.
+  const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
   return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
-      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
-        {grows ? (
-          <GrowingText
-            registration={register(name)}
-            width={String(boxStyle(width).width)}
-            lines={width.kind === "lines"}
-            minRows={width.rows ?? 1}
-            maxLength={maxLength}
-            aria-invalid={error ? true : undefined}
-            className={className}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        ) : (
-          <input
-            type={type}
-            {...register(name)}
-            maxLength={maxLength}
-            aria-invalid={error ? true : undefined}
-            className={className}
-            style={boxStyle(width)}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        )}
-        {hint && !error && (
-          <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
-        )}
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-        )}
-      </div>
+    <label className={STACKED_FIELD_CLASS} style={box}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
+      {grows ? (
+        <GrowingText
+          registration={register(name)}
+          width={String(box.width)}
+          lines={width.kind === "lines"}
+          minRows={width.rows ?? 1}
+          maxLength={maxLength}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      ) : (
+        <input
+          type={type}
+          {...register(name)}
+          maxLength={maxLength}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          style={box}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      )}
+      {hint && !error && (
+        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+      )}
+      {error && (
+        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+      )}
     </label>
   );
 }
@@ -1848,8 +1865,8 @@ function SelectField({
     // There is no `hint` here, which is why this one can name the span itself.
     const labelId = `${name}-version-label`;
     return (
-      <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
-        <span id={labelId} className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+      <div className={STACKED_FIELD_CLASS} style={boxStyle(width)} role="group" aria-labelledby={labelId}>
+        <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
         <div className="flex flex-col gap-0.5" style={boxStyle(width)} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
             state={snapshot}
@@ -1862,8 +1879,8 @@ function SelectField({
   }
 
   return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>{label}</span>
+    <label className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         {/* Slice #32.13: the async-options idiom lives in <AsyncSelect> now.
             The key that used to be here was inert — `noneOption` is prepended
@@ -1940,8 +1957,8 @@ function ReadOnlyField({
 }) {
   const labelId = useId();
   return (
-    <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
-      <span className="shrink-0 pt-1 font-medium text-ink dark:text-zinc-300 flex items-center justify-center gap-1" style={LABEL_STYLE}>
+    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)} role="group" aria-labelledby={labelId}>
+      <span className={`${STACKED_LABEL_CLASS} flex items-center gap-1`}>
         <span id={labelId}>{label}</span>
         {hint}
       </span>

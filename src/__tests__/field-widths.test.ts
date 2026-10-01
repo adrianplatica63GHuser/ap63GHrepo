@@ -36,6 +36,7 @@ import {
   PANEL_UNITS,
   PANEL_UNIT_INNER_REM,
   SCREEN_ROWS,
+  MAP_BOX_STYLE,
   unitRowStyle,
   META_CELL_GAP_REM,
   NP_LIST_COLUMNS,
@@ -176,11 +177,13 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
     expect(uses.length).toBe(17);
     expect(panels.match(/width=\{(PROP|ADDRESS)\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
-    expect(panels.match(/style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(5);
+    // Slice #37.30: each tile whole width units — the five panels from PANEL_UNITS.property.
+    expect(panels.match(/style=\{PANEL_UNIT_STYLE\.property\.(cadastral|corners|address|map|streetView)\}/g) ?? []).toHaveLength(5);
+    expect(panels).not.toMatch(/PANEL_STYLE\}/);
     expect(panels.match(/style=\{MAP_BOX_STYLE\}/g) ?? []).toHaveLength(2);
     // Slice #37.19: as tiles, the page's tile row carries the snap and the form is `contents`.
-    expect(PROP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : panelRowStyle\(\)\}/);
-    expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/style=\{panelRowStyle\(\)\}/);
+    expect(PROP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : unitRowStyle\("property"\)\}/);
+    expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/style=\{unitRowStyle\("property"\)\}/);
     for (const f of ["property-detail-tiles.tsx", "new-property-shell.tsx"]) {
       expect(code(read("src", "app", "properties", "_components", f))).not.toMatch(/max-w-\[1040px\]|mx-auto/);
     }
@@ -228,7 +231,7 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
     expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : npRowStyle\(\)\}/);
     expect(code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{npRowStyle\(\)\}/);
-    // Beside a label for the Property; stacked only when asked (the two persons, #37.26 and #37.29).
+    // Stacked only when asked (the two persons, #37.26 and #37.29); the Property draws its own address rows.
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{PANEL_STYLE\}/);
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{NP_PANEL_STYLE\.address\}/);
   });
@@ -256,9 +259,14 @@ describe("the scale", () => {
     for (const s of steps) expect(HOLDS[s] * 7 + 18).toBeLessThanOrEqual(SCALE[s] * 16 + 8);
   });
 
-  it("Adrian's two cadastral widths are never narrowed: Nr. tarla / sola at least M, Nr. parcelă at least L", () => {
-    expect(SCALE[PROPERTY.tarlaId.step]).toBeGreaterThanOrEqual(SCALE.M);
-    expect(SCALE[PROPERTY.parcela.step]).toBeGreaterThanOrEqual(SCALE.L);
+  it("Adrian's cadastral widths: Nr. parcelă M (his later note, #37.30); Nr. tarla / sola M, because its empty option is the longest value (rule 10)", () => {
+    // 01.Slice.Inputs\Slices.37.nn\Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M".
+    expect(PROPERTY.parcela.step).toBe("M");
+    expect(PROPERTY.parcela.sample).toBe("000/00/00");
+    // „47/2" would fit S; „— niciunul —", the dropdown's own empty option, does not — so M.
+    expect(textPx("47/2") + SELECT_CHROME_PX).toBeLessThanOrEqual(SCALE.S * 16);
+    expect(textPx("— niciunul —") + SELECT_CHROME_PX).toBeGreaterThan(SCALE.S * 16);
+    expect(PROPERTY.tarlaId.step).toBe("M");
   });
 
   it("TILE is the panel's whole inner width beside the label", () => {
@@ -287,8 +295,6 @@ describe("the scale", () => {
     for (const [a, b, gap] of [
       [ADDRESS.postalCode, ADDRESS.locality, 0.25],
       [ADDRESS.county, ADDRESS.country],
-      [PROPERTY.surfaceAreaMp, PROPERTY.calculatedAreaMp],
-      [PROPERTY.carteFunciara, PROPERTY.cadastralNumber],
       [DOCUMENT.nrDocument, DOCUMENT.dateDocument],
       [TEMPLATE_FIELD.number, TEMPLATE_FIELD.date],
     ] as [FieldWidth, FieldWidth, number?][]) {
@@ -529,6 +535,54 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(stacked).toMatch(/STACKED_FIELD_CLASS = "row-span-3 grid grid-rows-subgrid/);
     expect(stacked).toMatch(/STACKED_LABEL_CLASS = "self-end/);
     for (const src of [NP_FORM, JP_FORM, ADDRESS_BLOCK]) expect(src).toMatch(/STACKED_ROW_CLASS/);
+  });
+});
+
+describe("the Property: labels above, rows by meaning, every tile on the unit (Slice #37.30)", () => {
+  const panels = region(PROP_FORM, "data-panel-row", "{bigMap && createPortal(");
+  const cadastral = region(panels, 'data-panel="cadastral"', 'data-panel="corners"');
+  const address = region(panels, 'data-panel="address"', 'data-panel="map"');
+
+  /** A STACKED_ROW_CLASS div is a row (it holds no other div); a field outside one is a row alone. */
+  function rowsOf(src: string): string[][] {
+    const rows: string[][] = [];
+    const re = /<div className=\{STACKED_ROW_CLASS\}>([\s\S]*?)<\/div>|(?:name|field)="([a-zA-Z0-9.]+)"/g;
+    for (const m of src.matchAll(re)) {
+      if (m[1] !== undefined) rows.push([...m[1].matchAll(/(?:name|field)="([a-zA-Z0-9.]+)"/g)].map((n) => n[1]));
+      else rows.push([m[2]]);
+    }
+    return rows;
+  }
+
+  it("draws exactly the rows the file names, in both panels", () => {
+    expect(rowsOf(cadastral)).toEqual(SCREEN_ROWS.property.cadastral.map((r) => [...r]));
+    expect(rowsOf(address)).toEqual(SCREEN_ROWS.property.address.map((r) => [...r]));
+    expect(cadastral).toMatch(/width=\{PROP\.notes\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.property\.cadastral\}/);
+    expect(address).toMatch(/width=\{ADDRESS\.notes\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.property\.address\}/);
+    // Rule 15: the bow-tie marker, the Street View button and the „Țară" default sit inside the panel, with no label indent.
+    expect(PROP_FORM).not.toMatch(/LABEL_INDENT|LABEL_STYLE/);
+  });
+
+  it("each tile is whole units: Date cadastrale 3, Adresă 3, Puncte de contur 4, Hartă and Street View 3", () => {
+    expect(rowRem([PROPERTY.code, PROPERTY.tarlaId, PROPERTY.parcela])).toBe(26.5);
+    expect(PANEL_UNITS.property).toEqual({ cadastral: 3, address: 3, corners: 4, map: 3, streetView: 3 });
+    expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(3));
+    expect(MAP_BOX_STYLE.height).toBe("22rem");
+  });
+
+  it("the list tiles are compact and fill their units: Proprietăți corelate, Persoane and Acte 4, META INFO 5", () => {
+    const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
+    const room = tileTableRem(4);
+    for (const k of ["associations", "documentsWithoutRole"] as const) {
+      expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) < 0.5]).toEqual([k, true]);
+    }
+    expect(LIST_UNITS.property).toEqual({ associations: 4, persons: 4, documents: 4, metadata: 5 });
+    const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
+    for (const k of ["associations", "persons", "documents", "metadata"]) {
+      expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.property\\.${k}\\}`));
+    }
+    expect(page.match(/propertyId=\{propertyId\} compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toMatch(/compactCellRem=\{META_CELL_REM\}/);
   });
 });
 

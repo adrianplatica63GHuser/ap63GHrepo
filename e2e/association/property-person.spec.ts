@@ -65,7 +65,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 });
       for (const tile of ["Date cadastrale", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Street View", "Asocieri", "Persoane", "Acte", "META INFO"]) await expect(tileBox(page, tile)).not.toBeChecked();
+      for (const tile of ["Street View", "Proprietăți corelate", "Persoane", "Acte", "META INFO"]) await expect(tileBox(page, tile)).not.toBeChecked();
       await expect(page.getByRole("tab")).toHaveCount(0);
 
       // Step 2 — „Persoane": empty, „Asociază", „Dezasociază".

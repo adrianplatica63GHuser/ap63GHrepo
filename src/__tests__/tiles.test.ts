@@ -290,7 +290,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { property: { tiles: Record<string, string> } };
     expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
-      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Asocieri", "Persoane", "Acte", "META INFO",
+      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Proprietăți corelate", "Persoane", "Acte", "META INFO",
     ]);
   });
 });

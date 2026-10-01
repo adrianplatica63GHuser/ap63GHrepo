@@ -31,7 +31,7 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { PANEL_GAP, panelRowStyle } from "@/lib/ui/field-widths";
+import { LIST_UNITS, META_CELL_REM, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues, type Corner } from "./form-schema";
 import { PROP_TILES, PROP_TILE_OF_TAB, PROP_TILE_REGISTRY, type PropTile } from "./property-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -104,7 +104,7 @@ export function PropertyDetailTiles({
         />
       </header>
 
-      <div className="flex flex-col gap-4" style={panelRowStyle()}>
+      <div className="flex flex-col gap-4" style={unitRowStyle("property")}>
         <TileSelector all={PROP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
@@ -124,28 +124,29 @@ export function PropertyDetailTiles({
             }}
           />
           {choice.isShown("associations") && (
-            <ListTile tile="associations" title={labels.associations}>
-              <PropertyReferencesTab propertyId={propertyId} />
+            <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.property.associations}>
+              <PropertyReferencesTab propertyId={propertyId} compact />
             </ListTile>
           )}
           {choice.isShown("persons") && (
-            <ListTile tile="persons" title={labels.persons}>
-              <PropertyPersonsTab propertyId={propertyId} />
+            <ListTile tile="persons" title={labels.persons} units={LIST_UNITS.property.persons}>
+              <PropertyPersonsTab propertyId={propertyId} compact />
             </ListTile>
           )}
           {choice.isShown("documents") && (
-            <ListTile tile="documents" title={labels.documents}>
-              <PropertyDocumentTab propertyId={propertyId} />
+            <ListTile tile="documents" title={labels.documents} units={LIST_UNITS.property.documents}>
+              <PropertyDocumentTab propertyId={propertyId} compact />
             </ListTile>
           )}
           {choice.isShown("metadata") && (
-            <ListTile tile="metadata" title={labels.metadata} wide>
+            <ListTile tile="metadata" title={labels.metadata} units={LIST_UNITS.property.metadata}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}
                 backHref={`/properties/${encodeURIComponent(propertyId)}`}
                 backEntityName={propertyName}
                 calculationSourcePath={`/api/properties/${encodeURIComponent(propertyId)}/calculation-source`}
+                compactCellRem={META_CELL_REM}
               />
             </ListTile>
           )}

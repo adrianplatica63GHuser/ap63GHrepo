@@ -24,6 +24,11 @@
  *     row moves, and the same click on the persons and documents lists went
  *     through at once. Not explained yet; `force` skips only the stability
  *     wait, and the URL assertion after each click still proves it landed.
+ *   - Slice #37.30: labels above their boxes and every tile on the width unit.
+ *     The new property is photographed filled (`property-new-*`) before
+ *     „Salvează"; before the cleanup the saved one is photographed with the
+ *     default tiles, then with „Toate", where `expectUnitGrid` checks the row is
+ *     6, 10 and 14 units at 1366, 1920 and 2560 px. Not steps of the case.
  *   - Slice #37.16 checks the list's fixed column widths here: every column the
  *     same width at 1400 and 2400 px, the table no wider than its columns, and
  *     no fixed column's cell wider than the column. Not a step of the case.
@@ -32,7 +37,9 @@
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectStableColumns } from "../helpers/field-widths";
+import { expectStableColumns, expectUnitGrid, photograph } from "../helpers/field-widths";
+import { TILE_GROUP } from "../helpers/tiles";
+import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 const NICKNAME = `${E2E_MARKER}PROP-01 Teren de test`;
 
@@ -121,6 +128,9 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       // Step 9 — „Suprafață oficială (m²)".
       await page.getByLabel(/^Suprafață oficială \(m²\)/).fill("1000");
 
+      // Slice #37.30 — the new property, filled, pictured (the made-up values are the case's).
+      await photograph(page, "property-new", [1366, 1920, 2560], 1200);
+
       // Step 10 — „Salvează", at the bottom below the map; back to the LIST.
       await page.getByRole("button", { name: "Salvează", exact: true }).click();
       await expect(page).toHaveURL(/\/properties$/, { timeout: 30_000 });
@@ -148,6 +158,17 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       // ── At the end — the case's cleanup, through the UI ──────────────────
       await top.getByRole("link", { name: "Deschide" }).click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
+
+      // Slice #37.30 — the saved property with the default tiles, then „Toate" on the width unit.
+      await expect(page.locator('[data-panel="cadastral"]')).toBeVisible({ timeout: 30_000 });
+      await photograph(page, "property-saved", [1366, 1920, 2560], 1200);
+      const tiles = page.getByRole("group", { name: TILE_GROUP });
+      await tiles.getByRole("button", { name: "Toate", exact: true }).click();
+      await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
+      await photograph(page, "property-all-tiles", [1366, 1920, 2560], 1200);
+      await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
+      await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți proprietatea?" });
       await expect(confirm.getByRole("button", { name: "Nu", exact: true })).toBeVisible();

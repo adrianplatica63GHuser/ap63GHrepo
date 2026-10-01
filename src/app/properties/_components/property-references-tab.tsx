@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import type { ColumnName } from "@/lib/ui/field-widths";
+import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import { propertyRoleChip } from "@/lib/properties/relation-roles";
 import Link from "next/link";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -26,7 +26,11 @@ type AssociatedProperty = {
   roleReadsFromViewed: boolean;
 };
 
-type Props = { propertyId: string };
+type Props = {
+  propertyId: string;
+  /** Slice #37.30 — the Property's unit tile: the compact table that fills it, the two buttons stacked. */
+  compact?: boolean;
+};
 
 async function fetchPropertyReferences(propertyId: string): Promise<AssociatedProperty[]> {
   const res = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/references`);
@@ -35,7 +39,11 @@ async function fetchPropertyReferences(propertyId: string): Promise<AssociatedPr
   return data.items as AssociatedProperty[];
 }
 
-export function PropertyReferencesTab({ propertyId }: Props) {
+export function PropertyReferencesTab({ propertyId, compact = false }: Props) {
+  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.associations : COLUMNS;
+  const [col1, col2, buttonsCol] = compact
+    ? (["tileName", "tileRole", "openPreviewStacked"] as const)
+    : (["propertyLabel", "role", "openPreview"] as const);
   const t           = useTranslations("property.references");
   const router      = useRouter();
   const queryClient = useQueryClient();
@@ -82,14 +90,14 @@ export function PropertyReferencesTab({ propertyId }: Props) {
     <div className="flex flex-col gap-4">
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {items && items.length > 0 ? (
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(columns)}>
+            <FixedColumns columns={columns} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("propertyLabel")}>{t("colLabel")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("role")}>{t("colRole")}</th>
-                <th className="px-3 py-2" {...columnHead("openPreview")} aria-label="view" />
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(col1)}>{t("colLabel")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(col2)}>{t("colRole")}</th>
+                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -149,7 +157,7 @@ export function PropertyReferencesTab({ propertyId }: Props) {
                     })()}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex gap-1">
+                    <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                       <Link
                         href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
                         onClick={(e) => e.stopPropagation()}
