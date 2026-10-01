@@ -48,7 +48,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01"],
   "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01"],
-  "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02", "TC-VER-01", "TC-TILES-06"],
+  // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
+  "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02", "TC-VER-01", "TC-TILES-06", "TC-ICON-01"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01"],
   "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01"],
   "/documents":                            ["TC-DOC-01", "TC-AUTH-02", "TC-VER-02", "TC-TILES-06"],
