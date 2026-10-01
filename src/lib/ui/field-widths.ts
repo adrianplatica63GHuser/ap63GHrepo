@@ -1002,6 +1002,21 @@ export const COLUMN = {
   viewLink: { content: "L", kind: "fixed" }, //             „Vezi proprietatea →", or „șters"
   percent: { content: "S", kind: "fixed" }, //              „33.333%"
   area: { content: "M", kind: "fixed" }, //                 „1234567.89", as surfaceAreaMp
+  // Slice #37.37 — the value-list editor's table, a column per field of the list
+  valueName: { content: "XL", kind: "wraps" }, //           a list's „Denumire" — „Contract de Vânzare-Cumpărare"
+  valueText: { content: "L", kind: "wraps" }, //            any other text field — an indicativ, a converse name, a type of institution
+  valueKey: { content: "L", kind: "wraps" }, //             a document type's key, „CONTRACT_VANZARE", in mono — the longest (22 characters, 356 px) wraps
+  valueFlag: { content: "S", kind: "fixed" }, //            a checkbox field, „✓" or „–" — S for its header, „PROPRIETATE"
+  valueDescription: { content: "XL", kind: "wraps" }, //    a list's description, which wraps downward
+  valueStatus: { content: "L", kind: "wraps" }, //          „Fără formular" / „De revizuit" — the review lists' status
+  // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
+  feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
+  feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward
+  feType: { content: "M", kind: "fixed" }, //               „Text lung", the longest type
+  feGroup: { content: "L", kind: "fixed" }, //              Panou, which shows both spellings: „Financiar / Financial"
+  feTab: { content: "M", kind: "fixed" }, //                Filă, a short name
+  feHint: { content: "XL", kind: "wraps" }, //              Indiciu AI, and a select's options under it; grows downward
+  feActions: { content: "S", kind: "fixed" }, //            „Elimină", an xs button
 } as const satisfies Record<string, ColumnWidth>;
 export type ColumnName = keyof typeof COLUMN;
 
@@ -1153,6 +1168,12 @@ export const SCREEN = {
   metaTag: { step: "XL", kind: "fixed" }, //           a tag, typed to add it (flex-1 up to max-w-xs before)
   metaCrossRefNote: { step: "XXL", kind: "fixed" }, // a cross-reference's note, at most 500 (flex-1 before)
   listSearch: { step: "XL", kind: "fixed" }, //        a list's search box (flex-1 up to max-w-md before; the natural persons' is w-64)
+  // The value-list editor's add/edit form and „Roluri pe Document"'s pickers (Slice #37.37)
+  valueName: { step: "XL", kind: "fixed" }, //         a list's „Denumire"
+  valueText: { step: "L", kind: "fixed" }, //          any other one-line field — an indicativ, a key, a converse name
+  valueDescription: { step: "XXL", kind: "lines", rows: 3 }, // a description, which grows downward
+  docPersonsType: { step: "XL", kind: "select" }, //   Tip Document; a longer name shows on hover
+  docPersonsRole: { step: "XL", kind: "select" }, //   Rol Persoană
 } as const satisfies Record<string, FieldWidth>;
 export type ScreenField = keyof typeof SCREEN;
 
@@ -1220,4 +1241,35 @@ export function fillColumnRem(columns: readonly ColumnName[], units: number, fil
 /** A `SCREEN` box's field, label above it: as wide as its box (rule 16's stacked field). */
 export function screenFieldStyle(name: ScreenField): CSSProperties {
   return boxStyle(SCREEN[name]);
+}
+
+// ---- the dialogs that open from Date de referință (#37.37) ----------------------------
+
+/**
+ * A DIALOG'S CARD IS WHOLE UNITS.                              (Slice #37.37)
+ *
+ * The value-list editor, „Roluri pe Document" and the Form editor stay dialogs —
+ * centred over the page, with their focus trap and z-order — but a card is the
+ * fewest whole width units that hold what is inside it: a table exactly as wide
+ * as its columns (#37.16), the frame around it (1 px a side), the card's own
+ * padding and its border. A window narrower than that keeps the card at the
+ * window's width and the table scrolls sideways inside it.
+ */
+export function dialogUnits(innerRem: number, paddingRem: number): number {
+  return unitsFor(innerRem + 2 * PANEL_BORDER_REM + 2 * paddingRem + 2 * PANEL_BORDER_REM);
+}
+
+/** A card of `units`, never wider than the window (it sits `inset-x-4` over the page). */
+export function dialogCardStyle(units: number): CSSProperties {
+  return { maxWidth: rem(unitsRem(units)) };
+}
+
+/** A table's columns, summed: what `columnsStyle` gives as a width, as a number. */
+export function columnsRem(names: readonly ColumnName[]): number {
+  return names.reduce((sum, n) => sum + columnRem(n), 0);
+}
+
+/** A box inside a fixed column: the column's content width, without the cell's padding. */
+export function columnBoxStyle(name: ColumnName): CSSProperties {
+  return { width: rem(columnRem(name) - CELL_PADDING_REM) };
 }

@@ -98,6 +98,7 @@ import {
   PREVIEW_WIDTHS,
   boxesUnits,
   CALC_MAP_STYLE,
+  columnsRem,
   fillColumnRem,
   screenPanel,
   screenRowStyle,
@@ -1216,5 +1217,44 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     const tiles = code(read("src", "app", "_components", "home-tiles.ts"));
     expect(tiles).toMatch(/entity: "home"/);
     expect(tiles).toMatch(/defaults: HOME_TILES/);
+  });
+});
+
+describe("the value-list editors and the Form editor on the unit (Slice #37.37)", () => {
+  const DIR = ["src", "app", "admin", "value-lists", "_components"];
+  const FILES: [string, string][] = [
+    ["the value-list editor", code(read(...DIR, "value-list-modal.tsx"))],
+    ["„Roluri pe Document”", code(read(...DIR, "document-persons-modal.tsx"))],
+    ["the Form editor", code(read(...DIR, "document-type-form-editor.tsx"))],
+  ];
+
+  it.each(FILES)("%s: no width from the window inside the card, and its card is whole units", (what, src) => {
+    // The confirmations keep their max-w-sm / max-w-md cards; the editors' own cards do not cap.
+    expect([what, src.match(/\bmin-w-48\b|(?<![\w-])w-full\b|(?<![\w-])w-(20|24|28|32|40|56)\b|max-w-\[240px\]|\btruncate\b|max-w-(2xl|3xl|5xl)/g) ?? []]).toEqual([what, []]);
+    expect(src).toMatch(/style=\{(\{ \.\.\.)?dialogCardStyle\(/);
+    for (const m of src.matchAll(/<table\b/g)) {
+      const table = region(src.slice(m.index), "<table", "</thead>");
+      expect([what, /^<table \{\.\.\.fixedTable\(/.test(table)]).toEqual([what, true]);
+      expect(table).toContain("<FixedColumns columns={");
+      const ths = table.match(/<th\b/g) ?? [];
+      expect([what, (table.match(/columnHead\(/g) ?? []).length >= ths.length]).toEqual([what, true]);
+    }
+  });
+
+  it("every value list shares one card width — the widest list's table, „Roluri Persoană”", () => {
+    const src = code(read(...DIR, "value-list-modal.tsx"));
+    expect(src).toMatch(/export const VALUE_LIST_CARD_UNITS = Math\.max\(\s*\.\.\.VALID_LIST_KEYS\.map\(\(k\) => dialogUnits\(columnsRem\(listColumns\(k\)\), CARD_PADDING_REM\)\),\s*\);/);
+    expect(src).toMatch(/style=\{dialogCardStyle\(VALUE_LIST_CARD_UNITS\)\}/);
+    // The boxes of its form at their steps, labels above.
+    expect(src).toMatch(/\{\.\.\.screenBox\(formBox\(f\)\)\}/);
+    expect(src).toMatch(/\{\.\.\.screenBox\("valueDescription"\)\}/);
+  });
+
+  it("the Form editor's columns are COLUMN's, its labels and hint grow downward, the rows module untouched", () => {
+    const src = code(read(...DIR, "document-type-form-editor.tsx"));
+    expect(src).toMatch(/const FE_COLUMNS: readonly ColumnName\[\] = \["feOrder", "feLabel", "feLabel", "feType", "feGroup", "feTab", "feHint", "feActions"\];/);
+    expect((src.match(/<GrowField\b/g) ?? []).length).toBe(3);
+    expect((src.match(/style=\{columnBoxStyle\("fe[A-Z][a-z]+"\)\}/g) ?? []).length).toBe(8);
+    expect(columnsRem(["feOrder", "feLabel", "feLabel", "feType", "feGroup", "feTab", "feHint", "feActions"])).toBe(98);
   });
 });

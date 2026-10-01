@@ -115,6 +115,37 @@ import {
   type ReclaimableKey,
   type TemplateEditorRow,
 } from "@/lib/documents/template-editor-rows";
+import { FixedColumns, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { columnBoxStyle, columnsRem, dialogCardStyle, dialogUnits, type ColumnName } from "@/lib/ui/field-widths";
+
+/**
+ * Slice #37.37 (Ask first, as recommended: keep the table): every column at a
+ * `COLUMN` width — the labels and the AI hint growing downward, the type, the
+ * panel and the tab fixed at their longest option — and the card the fewest
+ * units that hold the table, never wider than the window (the table then
+ * scrolls with the dialog body, which is the sticky header's containing block).
+ */
+const FE_COLUMNS: readonly ColumnName[] = ["feOrder", "feLabel", "feLabel", "feType", "feGroup", "feTab", "feHint", "feActions"];
+const FE_CARD_UNITS = dialogUnits(columnsRem(FE_COLUMNS), 1.5);
+
+/**
+ * A one-line box that grows downward as its text wraps (Slice #37.37):
+ * `field-sizing: content`, and Enter does not add a line — it is still a
+ * one-line value.
+ */
+function GrowField({ style, onKeyDown, ...rest }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      rows={1}
+      {...rest}
+      style={{ ...style, fieldSizing: "content", resize: "none", overflow: "hidden" } as React.CSSProperties}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.preventDefault();
+        onKeyDown?.(e);
+      }}
+    />
+  );
+}
 
 const FIELD_TYPES: readonly DocumentTemplateFieldType[] = [
   "text",
@@ -596,7 +627,7 @@ export function DocumentTypeFormEditor({
   }
 
   const inputClass =
-    "w-full rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink " +
+    "rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink " +
     "shadow-sm focus:border-focus focus:outline-none " +
     "disabled:bg-cap disabled:text-fade " +
     "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
@@ -619,7 +650,8 @@ export function DocumentTypeFormEditor({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="my-8 flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+          className="my-8 flex max-h-[90vh] flex-col rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+          style={{ ...dialogCardStyle(FE_CARD_UNITS), width: "100%" }}
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -687,7 +719,8 @@ export function DocumentTypeFormEditor({
                     `overflow-y` to `auto` as well, which would make IT the
                     sticky containing block instead of the dialog body, and the
                     header below would stick to a box that never scrolls. */}
-                <table className="w-full border-collapse text-sm">
+                <table {...fixedTable(FE_COLUMNS, "border-collapse text-sm")}>
+                  <FixedColumns columns={FE_COLUMNS} />
                   <caption className="sr-only">{t("tableCaption", { type: typeName })}</caption>
                   <thead>
                     {/* Sticky: eight columns of near-identical text inputs, and
@@ -698,27 +731,29 @@ export function DocumentTypeFormEditor({
                         once its cells are positioned. */}
                     <tr className="text-left text-xs uppercase tracking-wide text-fade dark:text-zinc-400">
                       {[
-                        ["colOrder", "w-20 pr-2"],
-                        ["colLabelRo", "pr-3"],
-                        ["colLabelEn", "pr-3"],
-                        ["colType", "w-32 pr-3"],
-                        ["colGroup", "w-56 pr-3"],
+                        ["colOrder", "pr-2", "feOrder"],
+                        ["colLabelRo", "pr-3", "feLabel"],
+                        ["colLabelEn", "pr-3", "feLabel"],
+                        ["colType", "pr-3", "feType"],
+                        ["colGroup", "pr-3", "feGroup"],
                         // Slice #36.01: beside „Panou", because a tab is the
                         // page a panel sits on and the two are read together.
-                        ["colTab", "w-40 pr-3"],
-                        ["colHint", "pr-3"],
-                      ].map(([id, width]) => (
+                        ["colTab", "pr-3", "feTab"],
+                        ["colHint", "pr-3", "feHint"],
+                      ].map(([id, pad, column]) => (
                         <th
                           key={id}
                           scope="col"
-                          className={`sticky top-0 z-10 border-b border-crease bg-card py-2 dark:border-zinc-700 dark:bg-zinc-900 ${width}`}
+                          className={`sticky top-0 z-10 border-b border-crease bg-card py-2 dark:border-zinc-700 dark:bg-zinc-900 ${pad}`}
+                          {...columnHead(column as ColumnName)}
                         >
                           {t(id as "colOrder")}
                         </th>
                       ))}
                       <th
                         scope="col"
-                        className="sticky top-0 z-10 w-24 border-b border-crease bg-card py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                        className="sticky top-0 z-10 border-b border-crease bg-card py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                        {...columnHead("feActions")}
                       >
                         <span className="sr-only">{t("colActions")}</span>
                       </th>
@@ -762,12 +797,12 @@ export function DocumentTypeFormEditor({
                           </td>
 
                           <td className="py-2 pr-3">
-                            <input
-                              type="text"
+                            <GrowField
                               value={row.labelRo}
                               disabled={saving}
                               onChange={(e) => patch(row.rowId, { labelRo: e.target.value })}
                               aria-label={t("labelRoAria", { key: key || t("keyPending") })}
+                              style={columnBoxStyle("feLabel")}
                               className={inputClass}
                             />
                             {/* Rule 1, on every row: the key, shown and inert. */}
@@ -783,12 +818,12 @@ export function DocumentTypeFormEditor({
                           </td>
 
                           <td className="py-2 pr-3">
-                            <input
-                              type="text"
+                            <GrowField
                               value={row.labelEn}
                               disabled={saving}
                               onChange={(e) => patch(row.rowId, { labelEn: e.target.value })}
                               aria-label={t("labelEnAria", { key: key || t("keyPending") })}
+                              style={columnBoxStyle("feLabel")}
                               className={inputClass}
                             />
                           </td>
@@ -803,6 +838,7 @@ export function DocumentTypeFormEditor({
                                 })
                               }
                               aria-label={t("typeAria", { label })}
+                              style={columnBoxStyle("feType")}
                               className={inputClass}
                             >
                               {FIELD_TYPES.map((ft) => (
@@ -824,6 +860,7 @@ export function DocumentTypeFormEditor({
                               disabled={saving}
                               onChange={(e) => patch(row.rowId, { groupChoice: e.target.value })}
                               aria-label={t("groupAria", { label })}
+                              style={columnBoxStyle("feGroup")}
                               className={inputClass}
                             >
                               <option value={GROUP_NONE}>{t("groupNone")}</option>
@@ -845,7 +882,8 @@ export function DocumentTypeFormEditor({
                                 onChange={(e) => patch(row.rowId, { groupCustom: e.target.value })}
                                 placeholder={t("groupCustomPlaceholder")}
                                 aria-label={t("groupCustomAria", { label })}
-                                className={`${inputClass} mt-1`}
+                                style={columnBoxStyle("feGroup")}
+                              className={`${inputClass} mt-1`}
                               />
                             )}
                           </td>
@@ -866,17 +904,18 @@ export function DocumentTypeFormEditor({
                               onChange={(e) => patch(row.rowId, { tabName: e.target.value })}
                               placeholder={t("tabPlaceholder")}
                               aria-label={t("tabAria", { label })}
+                              style={columnBoxStyle("feTab")}
                               className={inputClass}
                             />
                           </td>
 
                           <td className="py-2 pr-3">
-                            <input
-                              type="text"
+                            <GrowField
                               value={row.aiHint}
                               disabled={saving}
                               onChange={(e) => patch(row.rowId, { aiHint: e.target.value })}
                               aria-label={t("hintAria", { label })}
+                              style={columnBoxStyle("feHint")}
                               className={inputClass}
                             />
                             {/* ── The choices, for a `select` ── (Slice #36.01)
@@ -894,7 +933,8 @@ export function DocumentTypeFormEditor({
                                 onChange={(e) => patch(row.rowId, { optionsText: e.target.value })}
                                 placeholder={t("optionsPlaceholder")}
                                 aria-label={t("optionsAria", { label })}
-                                className={`${inputClass} mt-1 font-mono text-xs`}
+                                style={columnBoxStyle("feHint")}
+                              className={`${inputClass} mt-1 font-mono text-xs`}
                               />
                             )}
                           </td>

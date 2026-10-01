@@ -12,6 +12,12 @@ import {
   RequestFailedError,
   throwRequestFailed,
 } from "@/lib/admin/value-lists/failures";
+import { FixedColumns, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { columnsRem, dialogCardStyle, dialogUnits, screenBox, type ColumnName } from "@/lib/ui/field-widths";
+
+/** Slice #37.37: the associations' table, at `COLUMN`'s widths, and the card the fewest units that hold it. */
+const COLUMNS: readonly ColumnName[] = ["documentType", "valueName", "rowActions"];
+const CARD_UNITS = dialogUnits(columnsRem(COLUMNS), 1.25);
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -181,12 +187,13 @@ function AddForm({
 
       <div className="flex flex-wrap gap-3">
         {/* Document Type dropdown */}
-        <div className="flex min-w-56 flex-col gap-1">
+        <div className="flex flex-col gap-1" style={screenBox("docPersonsType").style}>
           <label className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("colDocType")}
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <select
+            {...screenBox("docPersonsType")}
             value={docTypeId}
             onChange={(e) => setDocTypeId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
@@ -201,12 +208,13 @@ function AddForm({
         </div>
 
         {/* Person Role dropdown */}
-        <div className="flex min-w-56 flex-col gap-1">
+        <div className="flex flex-col gap-1" style={screenBox("docPersonsRole").style}>
           <label className="text-xs font-medium text-ink dark:text-zinc-400">
             {t("colPersonRole")}
             <span className="ml-0.5 text-red-500">*</span>
           </label>
           <select
+            {...screenBox("docPersonsRole")}
             value={roleId}
             onChange={(e) => setRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
@@ -558,7 +566,8 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
         // Slice #29.13: the backdrop hides this panel, it does not disable it —
         // see the comment on `listPanelRef` for the row the Tab reached.
         inert={!!confirmDeleteId}
-        className="fixed inset-x-4 top-[5%] z-80 mx-auto max-w-3xl rounded-xl border border-card-rim bg-card shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+        className="fixed inset-x-4 top-[5%] z-80 mx-auto rounded-xl border border-card-rim bg-card shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+        style={dialogCardStyle(CARD_UNITS)}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-800">
@@ -669,13 +678,14 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
-              <table className="w-full text-sm">
+            <div className="w-fit max-w-full overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
+              <table {...fixedTable(COLUMNS)}>
+                <FixedColumns columns={COLUMNS} />
                 <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
-                    <th className="px-4 py-2">{t("colDocType")}</th>
-                    <th className="px-4 py-2">{t("colPersonRole")}</th>
-                    <th className="w-20 px-4 py-2" />
+                    <th className="px-4 py-2" {...columnHead("documentType")}>{t("colDocType")}</th>
+                    <th className="px-4 py-2" {...columnHead("valueName")}>{t("colPersonRole")}</th>
+                    <th className="px-4 py-2" {...columnHead("rowActions")} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease bg-white dark:divide-zinc-800 dark:bg-zinc-900">
@@ -705,10 +715,10 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
                       key={row.id}
                       className="hover:bg-cta-pale dark:hover:bg-zinc-800/50"
                     >
-                      <td className="px-4 py-2 text-ink dark:text-zinc-300">
+                      <td className={`px-4 py-2 text-ink dark:text-zinc-300 ${wrapsIf("valueName")}`}>
                         {row.documentTypeName}
                       </td>
-                      <td className="px-4 py-2 text-ink dark:text-zinc-300">
+                      <td className={`px-4 py-2 text-ink dark:text-zinc-300 ${wrapsIf("valueName")}`}>
                         {row.personRoleName}
                       </td>
                       <td className="px-4 py-2">

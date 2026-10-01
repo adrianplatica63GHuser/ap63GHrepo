@@ -7,7 +7,9 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
+import { LIST_META, VALID_LIST_KEYS, type FieldMeta, type ListKey } from "@/lib/admin/value-lists/config";
+import { FixedColumns, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { columnsRem, dialogCardStyle, dialogUnits, screenBox, type ColumnName } from "@/lib/ui/field-widths";
 import {
   isInUseBody,
   type InUseBody,
@@ -35,6 +37,75 @@ import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { DocumentPersonsModal } from "./document-persons-modal";
+
+// ── Slice #37.37: the table's columns, and one card width for every list ──────
+
+/** The lists whose table carries a status column (`review`, below). */
+const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla", "institutions"]);
+
+/** A field's column: its width from `COLUMN`, by what the field holds. */
+function fieldColumn(f: FieldMeta): ColumnName {
+  if (f.type === "checkbox") return "valueFlag";
+  if (f.key === "key") return "valueKey";
+  if (f.multiline) return "valueDescription";
+  return f.key === "name" ? "valueName" : "valueText";
+}
+
+/** A field's box in the add/edit form, at its step (`SCREEN`). */
+function formBox(f: FieldMeta): "valueName" | "valueText" | "valueDescription" {
+  if (f.multiline) return "valueDescription";
+  return f.key === "name" ? "valueName" : "valueText";
+}
+
+/**
+ * Fields shown one under another in ONE column: a role's three converse names
+ * (#37.28), which are read together — „Fiu / Fiică / Copil" — and side by side
+ * would make „Roluri Persoană" the widest table by three columns, and with it
+ * every list's card.
+ */
+const STACKED_FIELDS: Partial<Record<ListKey, readonly string[]>> = {
+  "person-roles": ["converseName", "converseNameMale", "converseNameFemale"],
+};
+
+/** A list's table cells: each field its own, the stacked ones together, in the fields' order. */
+function listCells(listKey: ListKey): FieldMeta[][] {
+  const stacked = new Set(STACKED_FIELDS[listKey] ?? []);
+  const cells: FieldMeta[][] = [];
+  for (const f of LIST_META[listKey].fields) {
+    const last = cells[cells.length - 1];
+    if (stacked.has(f.key) && last && stacked.has(last[0].key)) last.push(f);
+    else cells.push([f]);
+  }
+  return cells;
+}
+
+/** A cell's column: a stacked one is a text column; any other, its field's. */
+function cellColumn(cell: FieldMeta[]): ColumnName {
+  return cell.length > 1 ? "valueText" : fieldColumn(cell[0]);
+}
+
+/** A list's table: a column per cell, the status where the list has one, then the actions. */
+function listColumns(listKey: ListKey): ColumnName[] {
+  return [
+    ...listCells(listKey).map(cellColumn),
+    ...(REVIEWED_LISTS.has(listKey) ? (["valueStatus"] as const) : []),
+    "rowActions",
+  ];
+}
+
+/** The card's padding (`p-5`). */
+const CARD_PADDING_REM = 1.25;
+
+/**
+ * Every value list's card is the same width — the fewest units that hold the
+ * widest list's table — so switching from one list to another does not make it
+ * jump. The widest is „Roluri Persoană" (name, description, two flags and the
+ * three converse names, #37.28).
+ */
+export const VALUE_LIST_CARD_UNITS = Math.max(
+  ...VALID_LIST_KEYS.map((k) => dialogUnits(columnsRem(listColumns(k)), CARD_PADDING_REM)),
+);
+
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
@@ -479,7 +550,9 @@ function EditForm({
           return (
             <div
               key={f.key}
-              className={`flex flex-col gap-1 ${f.multiline ? "w-full" : "min-w-48"}`}
+              // Slice #37.37: the label above its box, one width with it; the box at its step.
+              className="flex flex-col gap-1"
+              style={screenBox(formBox(f)).style}
             >
               <label className="text-xs font-medium text-ink dark:text-zinc-400">
                 {f.labelText ?? t(`fields.${f.labelKey}`)}
@@ -487,6 +560,7 @@ function EditForm({
               </label>
               {f.multiline ? (
                 <textarea
+                  {...screenBox("valueDescription")}
                   rows={3}
                   value={String(values[f.key] ?? "")}
                   onChange={(e) =>
@@ -500,6 +574,7 @@ function EditForm({
                 />
               ) : (
                 <input
+                  {...screenBox(formBox(f))}
                   ref={i === 0 ? firstInputRef : undefined}
                   type="text"
                   value={String(values[f.key] ?? "")}
@@ -867,9 +942,11 @@ export function ValueListModal({
   // workaround necessary (type `CONTRACT_VANZARE` as the NAME, let it slug,
   // then rename the row, because that was the only way to know what key you
   // had been given). It costs `document-types` a fourth column against the
-  // budget the header below states for this `max-w-2xl` panel; keys are short
-  // and it is one list.
-  const displayFields = meta.fields;
+  // budget the header below states for this panel; keys are short and it is one
+  // list. (Since Slice #37.37 every column is `COLUMN`'s and the card is whole
+  // units, the same for every list — `VALUE_LIST_CARD_UNITS`.)
+  const columns = listColumns(listKey);
+  const cells = listCells(listKey);
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
   //
@@ -1142,7 +1219,7 @@ export function ValueListModal({
         }
       : null;
   // One extra column for the status, plus the always-present actions column.
-  const emptyStateColSpan = displayFields.length + (review ? 2 : 1);
+  const emptyStateColSpan = cells.length + (review ? 2 : 1);
   // ⚠️ **`onlyAwaiting && review`, in that order and both terms — and the
   // second term is belt-and-braces TODAY, which a review round established and
   // #27.07's own comment did not.** That comment said the state "outlives a
@@ -1229,7 +1306,8 @@ export function ValueListModal({
         // confirmation — the exact stack `document-type-form-editor.tsx`
         // documents as unreachable by Escape.)
         inert={!!formEditorRow || !!confirmDeleteRow || showDocPersons}
-        className="fixed inset-x-4 top-[10%] z-50 mx-auto max-w-2xl rounded-xl border border-card-rim bg-card shadow-2xl focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+        className="fixed inset-x-4 top-[10%] z-50 mx-auto rounded-xl border border-card-rim bg-card shadow-2xl focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+        style={dialogCardStyle(VALUE_LIST_CARD_UNITS)}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-800">
@@ -1379,25 +1457,25 @@ export function ValueListModal({
             )}
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
-              <table className="w-full text-sm">
+            <div className="w-fit max-w-full overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
+              <table {...fixedTable(columns)}>
+                <FixedColumns columns={columns} />
                 <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
-                    {displayFields.map((f) => (
-                      <th key={f.key} className="px-4 py-2">
-                        {f.labelText ?? t(`fields.${f.labelKey}`)}
+                    {cells.map((cell) => (
+                      <th key={cell[0].key} className="px-4 py-2" {...columnHead(cellColumn(cell))}>
+                        {cell.map((f) => (
+                          <span key={f.key} className="block">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
+                        ))}
                       </th>
                     ))}
-                    {/* w-32: the panel is max-w-2xl and this was a third
-                        column where there were two — a FOURTH since Slice
-                        #34.09 put the `key` column beside the name — so
-                        without a width the type name loses room and the modal
-                        grows a horizontal scrollbar. Matches the w-28 already
-                        on the actions column. */}
+                    {/* The status column (#26.12), at `COLUMN.valueStatus` since
+                        Slice #37.37 — it was a w-32 beside a w-28 actions column
+                        in a max-w-2xl panel. */}
                     {review && (
-                      <th className="w-32 px-4 py-2">{t("fields.status")}</th>
+                      <th className="px-4 py-2" {...columnHead("valueStatus")}>{t("fields.status")}</th>
                     )}
-                    <th className="w-28 px-4 py-2" />
+                    <th className="px-4 py-2" {...columnHead("rowActions")} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease bg-white dark:divide-zinc-800 dark:bg-zinc-900">
@@ -1455,9 +1533,9 @@ export function ValueListModal({
                       key={row.id}
                       className="hover:bg-cta-pale dark:hover:bg-zinc-800/50"
                     >
-                      {displayFields.map((f) => (
+                      {cells.map((cell) => (
                         <td
-                          key={f.key}
+                          key={cell[0].key}
                           className={[
                             "px-4 py-2",
                             // Slice #26.12: the type's name carries the colour
@@ -1465,12 +1543,12 @@ export function ValueListModal({
                             // colour. `documentTypeNameClass` returns exactly
                             // that body colour for a hand-added type, so an
                             // untouched row looks as it always did.
-                            review && f.key === review.colouredField
+                            review && cell[0].key === review.colouredField
                               ? review.nameClass(row)
                               : "text-ink dark:text-zinc-300",
-                            f.multiline ? "max-w-[240px] truncate" : "",
+                            // Slice #37.37: a long value wraps downward in its column, never truncated.
+                            wrapsIf(cellColumn(cell)),
                           ].filter(Boolean).join(" ")}
-                          title={f.multiline ? String(row[f.key] ?? "") : undefined}
                         >
                           {/* Slice #19.02: render checkboxes as ✓ / – symbols.
                               Slice #29.13: a dash for an empty text cell.
@@ -1480,13 +1558,17 @@ export function ValueListModal({
                               a dash and were right to. It is the EN dash the
                               checkbox column beside it already prints, so one
                               table does not carry two different ones. */}
-                          {f.type === "checkbox"
-                            ? (row[f.key] ? "✓" : "–")
-                            : (String(row[f.key] ?? "").trim() || "–")}
+                          {cell.map((f) => (
+                            <span key={f.key} className={cell.length > 1 ? "block" : undefined}>
+                              {f.type === "checkbox"
+                                ? (row[f.key] ? "✓" : "–")
+                                : (String(row[f.key] ?? "").trim() || "–")}
+                            </span>
+                          ))}
                         </td>
                       ))}
                       {review && (
-                        <td className="px-4 py-2 text-ink dark:text-zinc-300">
+                        <td className={`px-4 py-2 text-ink dark:text-zinc-300 ${wrapsIf("valueStatus")}`}>
                           {t(
                             `${review.statusPrefix}.${review.statusOf(row)}` as Parameters<
                               typeof t
@@ -1495,7 +1577,8 @@ export function ValueListModal({
                         </td>
                       )}
                       <td className="px-4 py-2">
-                        <div className="flex gap-2">
+                        {/* Slice #37.37: the buttons wrap inside the fixed actions column. */}
+                        <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => startEdit(row)}
                             disabled={!!form}
@@ -1506,7 +1589,7 @@ export function ValueListModal({
                           {/* Slice #27.03: the type's custom form. Document
                               types only — no other list has one. The count is
                               on the button rather than in a column of its own
-                              because the panel is max-w-2xl and #26.12 already
+                              because the panel was max-w-2xl and #26.12 already
                               spent the one spare column on the status — and
                               #34.09 spent one more on the `key`, deliberately
                               and over that budget, because an immutable key

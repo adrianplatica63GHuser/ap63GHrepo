@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-01, Slice #37.33 — 273 entries. Rows are status, columns are impact.
+As of 2026-10-01, Slice #37.37 — 274 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 15 | 57 | 52 | 15 | 139 |
+| open | 15 | 58 | 52 | 15 | 140 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 36 | 54 | 25 | 3 | 118 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 55 | 117 | 81 | 20 | 273 |
+| **total** | 55 | 118 | 81 | 20 | 274 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -357,3 +357,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-271 | 2026-09-29 #37.24 TC-TILES-05 step 9 | defect | UI shell | On a detail screen with an unsaved edit, an association tile's „Vizualizare" link and a row's double-click leave the screen WITHOUT the „Modificări nesalvate" question, and the edit is lost. Only the sidebar, the recently-viewed panel and (since #37.24) a preview's „Deschide" go through `guardedNavigate`. Found by TC-TILES-05, where the preview's „Deschide" did the same until it was fixed. | the nine association tabs (`router.push` on double-click, `<Link>` „Vizualizare"); src/components/providers/unsaved-changes-provider.tsx guardedNavigate | data | S | resolved | Done in Slice #37.33: `openThroughGuard` in src/lib/ui/row-link.ts sends a plain click on „Vizualizare" through `guardedNavigate` (Ctrl/⌘, Shift and middle click left to the browser), and every double-click calls `guardedNavigate`, on all nine tabs. row-link.test.ts holds it, written red first (jest 20261001T023505Z-1638, 10 failed); TC-TILES-05's second run asked on both. | 2026-10-01 |
 | FU-272 | 2026-09-30 #37.28 | defect | Associations | „Asociază" on two people who are already linked keeps the old role and its direction and answers success: associatePersonsToPerson inserts with onConflictDoNothing, so choosing „Fiu" for a pair stored without a role, or the other way round, changes nothing and says nothing. The only way to change a relationship is „Dezasociază", then „Asociază" again. | src/lib/persons/queries.ts associatePersonsToPerson (.onConflictDoNothing()); the property and document families do the same | user | S | open | Either update the role and direction of an existing pair (it is one relationship), or tell the user the pair is already linked and how to change it. | 2026-09-30 |
 | FU-273 | 2026-10-01 #37.33 | defect | UI shell | „Asociază" on an association tile leaves the record for its „Asociere …" screen with `router.push`, outside the unsaved-changes guard: with an unsaved edit on the record (a Subiect typed and not saved), pressing it leaves without the „Modificări nesalvate" question and the edit is lost. Seen in the code while closing FU-271, which covered „Vizualizare" and the double-click only; not driven. | the nine association tabs (handleAssociate: router.push(`…/associate-…`)); src/components/providers/unsaved-changes-provider.tsx guardedNavigate | data | S | open | The same one-line change as FU-271: `guardedNavigate` instead of `router.push` in each tab's handleAssociate, and a line in row-link.test.ts. | 2026-10-01 |
+| FU-274 | 2026-10-01 #37.37 | next-slice idea | Reference data | Under the Form editor's table, a read-only picture of how the type's form will lay out — its notebook tiles, panels and rows, built from #37.31's packing rule (`packFieldRows`), labels and no inputs, redrawn as rows are edited — so a type's author sees the result without opening a document. #37.37's second Ask first recommended it, as #37.31 has run; it was left out of #37.37 to keep that slice to layout and widths. | src/app/admin/value-lists/_components/document-type-form-editor.tsx; src/lib/ui/field-widths.ts packFieldRows; src/app/documents/_components/document-form.tsx (the frames it would mirror) | user | M | open | Render the rows on screen through the same notebook/panel grouping and `packFieldRows` the Document form uses, read-only, in a 3-unit-per-panel strip under the table; jest-render it against the six seeded types. | 2026-10-01 |

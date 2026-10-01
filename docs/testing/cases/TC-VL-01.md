@@ -62,3 +62,12 @@ the first press — its route's first compile — and said „Se verifică…”
 
 **One finding, not a step (FU-248):** the add/edit form's „Denumire” box has no accessible name (the
 label is not tied to it).
+
+**2026-10-01 — the editors' widths (Slice #37.37), by a throwaway Playwright script through the
+test runner (e2e 20261001T044915Z-14475), deleted after; nothing saved.** It opened „Tipuri de
+Proprietate", „Roluri Persoană" and „Tipuri de Document", then „Roluri pe Document", then
+„Formular" on „Contract de Vânzare", and read each card at 1366, 1920 and 2560 px. Every value
+list's card was the same width (1,296 px, 8 units) at all three widths and on all three lists;
+„Roluri pe Document" was 968 px (6 units); the Form editor 1,624 px (10 units) at 1920 and 2560,
+and the window's width at 1366, where its table scrolls with the dialog. No fixed column's cell
+was wider than its column. The steps above were not re-run; the case stays `driven`.

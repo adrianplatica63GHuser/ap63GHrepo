@@ -36,7 +36,7 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
   {
     line: "fixed inset-",
     reason:
-      "A dialog's card is fixed by design: its max-w-sm, -md or -lg (or the value lists' wider editors) holds it at one width over the page, and centring it over the page is what makes it a dialog.",
+      "A dialog's card is fixed by design: its max-w-sm, -md or -lg — or, since #37.37, the value lists' editors' whole width units (`dialogCardStyle`) — holds it at one width over the page, and centring it over the page is what makes it a dialog.",
   },
   {
     file: "src/app/properties/map/",
