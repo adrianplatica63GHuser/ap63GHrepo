@@ -217,10 +217,13 @@ describe("the add button cannot open a form that does not draw", () => {
     // and its Save button has a `disabled` of its own, so a bare
     // `/disabled=\{/` would have asserted about the wrong control and passed
     // while this one stayed ungated.
-    const label = code.indexOf('+ {t("add")}');
+    // #37.44: the button is a Plus IconButton whose label is „+ Adaugă", and
+    // its `disabled` comes after the label, inside the same element. (It was
+    // read backwards from the text of `<button …>+ {t("add")}</button>`.)
+    const label = code.indexOf("label={`+ ${t(\"add\")}`}");
     expect(label).toBeGreaterThan(0);
-    const before = code.slice(0, label);
-    const gate = before.slice(before.lastIndexOf("disabled={")).match(/disabled=\{([^}]+)\}/);
+    const element = code.slice(label, code.indexOf("/>", label));
+    const gate = element.match(/disabled=\{([^}]+)\}/);
     expect(gate).not.toBeNull();
     // ⚠️ **THE WHOLE EXPRESSION.** Two `toContain`s are satisfied by
     // `showAdd && !lookupsReady`, which is enabled whenever the form is closed
