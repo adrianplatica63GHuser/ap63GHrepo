@@ -5,7 +5,7 @@
 | **Area** | ui |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-01 |
 
 ## What this proves
@@ -67,3 +67,6 @@ above unchanged.
   on either; `/properties`, and the property's GET 404.
 - Nothing changed between the runs, so the case is confirmed, and `e2e/ui/icon-actions.spec.ts`
   translates it.
+
+**2026-10-01 — `automated`.** `e2e/ui/icon-actions.spec.ts` translates the case with Playwright's
+real mouse, and takes #37.43's pictures. Green on its first runner run, `20261001T172458Z-22140`.
