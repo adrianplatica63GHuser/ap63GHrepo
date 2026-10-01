@@ -192,7 +192,11 @@ describe("the „Roluri Persoană” row can set both flags", () => {
     // the shipping language. `value-list-dependents.test.ts` §8 already pins
     // the relationship lists this way.
     expect(LIST_META["person-roles"].fields.map((f) => f.key))
-      .toEqual(["name", "description", "validForProperty", "validForPerson"]);
+      .toEqual([
+        "name", "description", "validForProperty", "validForPerson",
+        // Slice #37.28 (migration_088): the converse, as three text boxes.
+        "converseName", "converseNameMale", "converseNameFemale",
+      ]);
     const byKey = Object.fromEntries(LIST_META["person-roles"].fields.map((f) => [f.key, f]));
     for (const key of ["validForProperty", "validForPerson"]) {
       expect([key, byKey[key]?.type]).toEqual([key, "checkbox"]);

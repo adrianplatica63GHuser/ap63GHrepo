@@ -24,6 +24,13 @@ import {
   PERSON_ADDRESS_SNAPSHOT_KEYS,
 } from "@/lib/versioning/snapshot-registry";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
+import {
+  pairForTicked,
+  personRoleShown,
+  roleHeldBy,
+  type PersonGender,
+  type PersonRoleShown,
+} from "@/lib/persons/relation-roles";
 import { ID_CARD_TYPE_KEYS } from "@/lib/import/id-card";
 import {
   address,
@@ -1289,7 +1296,15 @@ export type PersonRefItem = {
   displayName:          string;
   associatedAt:         Date;
   relationshipRoleId:   string | null;
+  /** The role as stored — the word the HOLDER has. Kept for the carried-role
+   *  merge and anything else that needs the stored role, not the shown word. */
   relationshipRoleName: string | null;
+  /**
+   * Slice #37.28: the word to show beside THIS person on the viewed person's
+   * tile — their role when they hold it, its converse (by their gender) when
+   * the viewed person does. See `personRoleShown`.
+   */
+  roleShown:            PersonRoleShown;
 };
 
 export async function listPersonReferences(personId: string): Promise<PersonRefItem[]> {
@@ -1298,13 +1313,18 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
     .select({
       personIdA:            personPerson.personIdA,
       personIdB:            personPerson.personIdB,
+      roleReadsAToB:        personPerson.roleReadsAToB,
       associatedAt:         personPerson.createdAt,
       relationshipRoleId:   personPerson.relationshipRoleId,
       relationshipRoleName: lookupPersonRole.name,
+      converseName:         lookupPersonRole.converseName,
+      converseNameMale:     lookupPersonRole.converseNameMale,
+      converseNameFemale:   lookupPersonRole.converseNameFemale,
       id:                   person.id,
       code:                 person.code,
       type:                 person.type,
       displayName:          person.displayName,
+      gender:               naturalPerson.gender,
     })
     .from(personPerson)
     .innerJoin(
@@ -1315,6 +1335,9 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
         ),
     )
     .leftJoin(lookupPersonRole, eq(personPerson.relationshipRoleId, lookupPersonRole.id))
+    // The listed person's gender picks the converse („Fiu" / „Fiică" / „Copil").
+    // A company has no natural_person row, so it reads as no gender.
+    .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
     .where(or(eq(personPerson.personIdA, personId), eq(personPerson.personIdB, personId)))
     .orderBy(person.displayName);
 
@@ -1326,6 +1349,19 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
     associatedAt:         r.associatedAt,
     relationshipRoleId:   r.relationshipRoleId ?? null,
     relationshipRoleName: r.relationshipRoleName ?? null,
+    roleShown: personRoleShown(
+      r.relationshipRoleName
+        ? {
+            name:               r.relationshipRoleName,
+            converseName:       r.converseName ?? null,
+            converseNameMale:   r.converseNameMale ?? null,
+            converseNameFemale: r.converseNameFemale ?? null,
+          }
+        : null,
+      // The LISTED person is `r.id`; they hold the role unless the viewed one does.
+      roleHeldBy(r.id, r.personIdA, r.roleReadsAToB),
+      (r.gender as PersonGender | null) ?? null,
+    ),
   }));
 }
 
@@ -1345,14 +1381,12 @@ export async function associatePersonsToPerson(
   await assertRoleMayBeAttached("person-person", relationshipRoleId, personRoleIdsValidForPerson);
   const values = otherIds
     .filter((id) => id !== personId)
-    .map((otherId) => {
-      const [a, b] = [personId, otherId].sort();
-      return {
-        personIdA:          a,
-        personIdB:          b,
-        relationshipRoleId: relationshipRoleId ?? undefined,
-      };
-    });
+    // Slice #37.28: the screen asks for the TICKED person's role, so they hold
+    // it — per pair, right whichever way each pair's uuids sort.
+    .map((otherId) => ({
+      ...pairForTicked(personId, otherId),
+      relationshipRoleId: relationshipRoleId ?? undefined,
+    }));
   if (values.length === 0) return;
   await db.insert(personPerson).values(values).onConflictDoNothing();
 }

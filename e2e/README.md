@@ -31,14 +31,14 @@ proves; this table is where to find the file.
 | TC-ASSOC-05 | `e2e/association/property-document.spec.ts` | A document on a property, made from the property's screen, read from the document |
 | TC-ASSOC-06 | `e2e/association/company-property.spec.ts` | A company as a property's owner; „Vizualizare" on the property opens the company |
 | TC-ASSOC-07 | `e2e/association/document-reference.spec.ts` | A certificate linked by hand as „Titlu anterior al" a contract, read that way from the certificate and as the converse from the contract |
-| TC-ASSOC-09 | `e2e/association/person-person.spec.ts` | Two people linked to each other, with no role on offer, read the same from both ends |
+| TC-ASSOC-09 | `e2e/association/person-person.spec.ts` | Two people linked as parent and daughter; each end reads the other's role (#37.28) |
 | TC-PROP-03 | `e2e/property/property-from-coord-file.spec.ts` | A property from a synthetic coordinate file: corners in file order, the area, „Fișier de coordonate (.txt)"; deleted again |
 | TC-SRCH-01 | `e2e/search/global-search.spec.ts` | One Căutare globală finds a person, a property and a document |
 | TC-GRP-01 | `e2e/group/group-two-properties.spec.ts` | A group, two properties saved into it, found by the group's code; the group deleted, even on a failure |
 | TC-TAG-01 | `e2e/tag/tag-property.spec.ts` | A tag on a property, counted on „Etichete", found by Căutare globală, gone with its last use |
 | TC-PROP-04 | `e2e/property/property-corner-edit.spec.ts` | One corner moved 3 m east in „Puncte de contur": 611.87 → 614.42 m², „v 1" after a reload, „v 0" still 611.87. Reads the case's own corner file from `TEST.DATA` at run time (below) |
 | TC-ASSOC-10 | `e2e/association/company-document.spec.ts` | A contract on a company as „Cumpărător", made from the company's screen, read from the contract; „Vizualizare" opens the company |
-| TC-ASSOC-11 | `e2e/association/company-person.spec.ts` | A person beside a company, with no role on offer (FU-221), read from both ends |
+| TC-ASSOC-11 | `e2e/association/company-person.spec.ts` | A person as a company's representative; the company reads „Reprezentant", the person „Reprezentat" (#37.28) |
 | TC-ASSOC-12 | `e2e/association/certificate-parties.spec.ts` | A certificate's „Părți": the deceased and the heir with their quality; „—" from the other ends (FU-224) |
 | TC-STAMP-01 | `e2e/stamp/stamp-person.spec.ts` | A stamp created, applied to a person, counted, read on the person; deleted, even on a failure |
 | TC-VER-01 | `e2e/versioning/person-versioning.spec.ts` | A person's versions: three saves, back to „v 0", „Fă curentă" copies it into „v 3" and keeps „v 2" |

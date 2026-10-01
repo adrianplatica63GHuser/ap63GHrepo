@@ -5,12 +5,11 @@
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
  *
- * ⚠️ **FU-221, HALF FIXED (Slice #37.27).** Adrian ticked roles for people on
- * 2026-09-30, so step 3 now offers „Tip relație" — and the case still leaves it
- * at „— fără relație —": a role on person_person reads the same from both ends
- * until the direction slice (#37.28), so „Reprezentant legal / Mandatar" would
- * read backwards on the person's tile. Both ends read „—". #37.28 gives this
- * case the representative it was written for.
+ * Slice #37.28 (FU-221 closed): the case chooses the representative it was
+ * written for. From the company's screen Ion is ticked as „Reprezentant legal /
+ * Mandatar": the company's „Asocieri" reads „Ion — Reprezentant legal /
+ * Mandatar", and Ion's „Persoane" reads the company as „Reprezentat / Mandant"
+ * — the role's converse, neutral because a company has no gender.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The company and the person are made through the POST routes „Adaugă"
@@ -63,11 +62,11 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();
-      // FU-221 (#37.27): „Tip relație" is offered, and left at „— fără relație —".
+      // „Tip relație" offers the representative, and says whose role it is (#37.28).
       const roleSelect = page.getByLabel("Tip relație", { exact: true });
       await expect(roleSelect).toBeVisible();
       await expect(roleSelect.locator("option", { hasText: "Reprezentant legal / Mandatar" })).toHaveCount(1);
-      await expect(roleSelect).toHaveValue("");
+      await expect(page.getByText(`Rolul pe care persoana bifată îl are față de ${COMPANY}.`)).toBeVisible();
 
       // Step 4 — `TC-E2E-ASSOC-11` into „Nume", tick `PPERS…`, the person, „Fizică": the hint goes.
       await nameFilter.fill(MARK);
@@ -77,15 +76,16 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(candidate).toContainText("Fizică");
       await page.getByRole("checkbox", { name: PERSON }).check();
       await expect(page.getByText("Selectați cel puțin o persoană")).toHaveCount(0);
+      await roleSelect.selectOption({ label: "Reprezentant legal / Mandatar" });
 
       // Step 5 — „Asociază selecția": the company's „Asocieri" (`?tab=related`),
-      // Nume · Tip · Tip relație — the person, „Fizică", „—", „Vizualizare".
+      // Nume · Tip · Tip relație — the person, „Fizică", „Reprezentant legal / Mandatar", „Vizualizare".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=related$`), { timeout: 30_000 });
       const onCompany = page.getByRole("row").filter({ hasText: PERSON });
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
       await expect(onCompany).toContainText("Fizică");
-      await expect(onCompany.getByRole("cell", { name: "—", exact: true })).toHaveCount(1); // FU-221
+      await expect(onCompany.getByText("Reprezentant legal / Mandatar", { exact: true })).toBeVisible();
       const table = page.getByRole("table").filter({ has: onCompany });
       for (const col of ["Nume", "Tip", "Tip relație"]) {
         await expect(table.getByText(col, { exact: true })).toBeVisible();
@@ -96,12 +96,13 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
 
-      // Step 7 — the person's „Persoane" (#37.27, „Asocieri" before): the company, „—", „Vizualizare".
+      // Step 7 — the person's „Persoane": the company, „Reprezentat / Mandant" (the converse), „Vizualizare".
       // The person's tile has no „Tip" column since #37.27, so „Juridică" is not on it.
       await showTile(page, "Persoane");
       const onPerson = page.getByRole("row").filter({ hasText: COMPANY });
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
-      await expect(onPerson.getByRole("cell", { name: "—", exact: true })).toHaveCount(1); // FU-221
+      await expect(onPerson.getByText("Reprezentat / Mandant", { exact: true })).toBeVisible();
+      await expect(onPerson.getByText("Reprezentant legal / Mandatar", { exact: true })).toHaveCount(0);
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.
       await onPerson.getByRole("link", { name: "Vizualizare" }).click();

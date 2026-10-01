@@ -11,6 +11,7 @@ import Link from "next/link";
 import { newTabIfAsked, personPath } from "@/lib/ui/row-link";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
+import type { PersonRoleShown } from "@/lib/persons/relation-roles";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
 const COLUMNS: ColumnName[] = ["select", "personName", "personType", "role", "openPreview"];
@@ -23,6 +24,8 @@ type AssociatedPerson = {
   associatedAt:        string;
   relationshipRoleId:  string | null;
   relationshipRoleName: string | null;
+  /** Slice #37.28: the word for THIS person — their role, or its converse. */
+  roleShown:           PersonRoleShown;
 };
 
 type Props = {
@@ -145,9 +148,20 @@ export function PersonReferencesTab({ personId, backBase, compact = false }: Pro
                     </td>
                   )}
                   <td className={`px-3 py-2 ${WRAPS}`}>
-                    {item.relationshipRoleName ? (
-                      <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
-                        {item.relationshipRoleName}
+                    {/* Slice #37.28: the listed person's own word — „Fiu" on
+                        the parent's tile, „Părinte" on the son's — resolved by
+                        `personRoleShown` from the stored direction and the
+                        role's converse. A role with no converse, held by the
+                        person viewed, is said as a sentence rather than shown
+                        as a chip that would read backwards. */}
+                    {item.roleShown.kind !== "none" ? (
+                      <span
+                        className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light"
+                        data-role-shown={item.roleShown.kind}
+                      >
+                        {item.roleShown.kind === "role"
+                          ? item.roleShown.name
+                          : t("roleHeldByViewed", { role: item.roleShown.name })}
                       </span>
                     ) : (
                       <span className="text-fade dark:text-zinc-500">—</span>

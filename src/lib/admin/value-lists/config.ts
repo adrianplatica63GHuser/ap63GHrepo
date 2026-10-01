@@ -193,6 +193,13 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "description", labelKey: "description", required: false, multiline: true },
       { key: "validForProperty", labelKey: "validForProperty", required: false, type: "checkbox" },
       { key: "validForPerson",   labelKey: "validForPerson",   required: false, type: "checkbox" },
+      // Slice #37.28 (migration_088): what the other end of a person-to-person
+      // relationship is called — neutral, then for a man and for a woman. A
+      // role that reads the same both ways names itself. See
+      // `src/lib/persons/relation-roles.ts`.
+      { key: "converseName",       labelKey: "converseName",       required: false },
+      { key: "converseNameMale",   labelKey: "converseNameMale",   required: false },
+      { key: "converseNameFemale", labelKey: "converseNameFemale", required: false },
     ],
   },
   citizenships: {

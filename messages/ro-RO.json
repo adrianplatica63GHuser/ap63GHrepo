@@ -674,7 +674,8 @@
       "dissociating": "Se elimină…",
       "view": "Vizualizare",
       "loading": "Se încarcă…",
-      "error": "Eroare la încărcarea referințelor"
+      "error": "Eroare la încărcarea referințelor",
+      "roleHeldByViewed": "această persoană este „{role}”"
     },
     "associatePersonReference": {
       "title": "Asociere persoană corelată",
@@ -695,7 +696,8 @@
       "associate": "Asociază selecția",
       "associating": "Se asociază…",
       "cancel": "Anulează",
-      "noSelection": "Selectați cel puțin o persoană"
+      "noSelection": "Selectați cel puțin o persoană",
+      "roleHint": "Rolul pe care persoana bifată îl are față de {name}."
     },
     "pagination": {
       "previous": "Anterior",
@@ -1964,6 +1966,9 @@
       "key": "Cheie",
       "validForProperty": "Persoană → Proprietate",
       "validForPerson": "Persoană → Persoană",
+      "converseName": "Rol invers",
+      "converseNameMale": "Rol invers — bărbat",
+      "converseNameFemale": "Rol invers — femeie",
       "status": "Stare"
     },
     "documentTypeStatus": {

@@ -674,7 +674,8 @@
       "dissociating": "Removing…",
       "view": "View",
       "loading": "Loading…",
-      "error": "Failed to load references"
+      "error": "Failed to load references",
+      "roleHeldByViewed": "this person is „{role}”"
     },
     "associatePersonReference": {
       "title": "Associate Related Person",
@@ -695,7 +696,8 @@
       "associate": "Associate Selected",
       "associating": "Associating…",
       "cancel": "Cancel",
-      "noSelection": "Select at least one person"
+      "noSelection": "Select at least one person",
+      "roleHint": "The role the ticked person has towards {name}."
     },
     "pagination": {
       "previous": "Previous",
@@ -1964,6 +1966,9 @@
       "key": "Key",
       "validForProperty": "Person → Property",
       "validForPerson": "Person → Person",
+      "converseName": "Converse role",
+      "converseNameMale": "Converse role — man",
+      "converseNameFemale": "Converse role — woman",
       "status": "Status"
     },
     "documentTypeStatus": {

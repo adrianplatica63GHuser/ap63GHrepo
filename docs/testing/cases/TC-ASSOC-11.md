@@ -10,9 +10,10 @@
 
 ## What this proves
 
-A natural person can be linked to a company **from the company's screen**, and the link reads
-the same from both ends — the company lists the person, the person lists the company, and each
-„Vizualizare" opens the other record of the right kind.
+A natural person can be linked to a company **from the company's screen** as its representative,
+and the link reads correctly from both ends — the company lists the person as „Reprezentant legal /
+Mandatar", the person lists the company as „Reprezentat / Mandant" (the role's converse, neutral
+because a company has no gender), and each „Vizualizare" opens the other record of the right kind.
 
 ## Before you start
 
@@ -21,14 +22,8 @@ the same from both ends — the company lists the person, the person lists the c
 
 ## What Adrian is asked for
 
-**Nothing to answer — but one thing to know, recorded so it is not asked again.** The slice
-header asked for the person *as the company's representative*. **The screen cannot say that
-today**: it offers a role only when some person role is ticked „Valabil pentru persoană", and
-none is (FU-221, measured on 2026-09-25: 56 roles, none ticked). So the link is made with no
-role and both ends read „—" under „Tip relație". A notary would write „Reprezentant legal /
-Mandatar"; the day that role is ticked for people, step 3 gains a „Tip relație" select and this
-case chooses it — and FU-221's second half (no direction on `person_person`) decides whether it
-then reads right from the company's end.
+Nothing. (Until Slice #37.28 the case could not choose the representative: no role was ticked for
+people, then no direction was stored — FU-221, closed by #37.28.)
 
 ## The records this case creates
 
@@ -44,14 +39,14 @@ Both are deleted at the end.
 |---|---|---|
 | 1 | Creates the company and the person above | Each on its list, badged „Nou!", `JPERS…` and `PPERS…` |
 | 2 | Opens the company and presses the tab **„Asocieri"** | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar" (#37.27), left at „— fără relație —" until the direction slice (#37.28) |
-| 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `PPERS…`, `Ion TC-ASSOC-11`, „Fizică" | The hint goes away |
-| 5 | Presses „Asociază selecția" | Back on the company's „Asocieri" (`?tab=related`): Nume · Tip · Tip relație — `Ion TC-ASSOC-11`, „Fizică", „—", and „Vizualizare" |
+| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
+| 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `PPERS…`, `Ion TC-ASSOC-11`, „Fizică" — and chooses „Tip relație" **„Reprezentant legal / Mandatar"** | The hint goes away |
+| 5 | Presses „Asociază selecția" | Back on the company's „Asocieri" (`?tab=related`): Nume · Tip · Tip relație — `Ion TC-ASSOC-11`, „Fizică", **„Reprezentant legal / Mandatar"**, and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The person, read-only (`/natural-persons/[id]?readonly=true`) |
-| 7 | Ticks the person's tile **„Persoane"** („Asocieri" before #37.27) | One row: `TC-ASSOC-11 Firmă de test SRL`, „—", „Vizualizare" (no „Tip" column on the person since #37.27) |
+| 7 | Ticks the person's tile **„Persoane"** („Asocieri" before #37.27) | One row: `TC-ASSOC-11 Firmă de test SRL`, **„Reprezentat / Mandant"**, „Vizualizare" (no „Tip" column on the person since #37.27) |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen, `/judicial-persons/[id]?readonly=true` |
 
-Step 7 is the other end of the link.
+Step 7 is the other end of the link: the person represents the company, so the company is the one represented.
 
 ## At the end — leaving things as they were found
 

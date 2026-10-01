@@ -234,6 +234,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           </label>
           <select {...screenBox("role")}
             id="role-select"
+            aria-describedby="role-hint"
             value={selectedRoleId}
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
@@ -246,6 +247,12 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
               <option key={r.value} value={r.value} disabled={r.unavailable}>{r.label}</option>
             ))}
           </select>
+          {/* Slice #37.28: the role is the TICKED person's, towards this one —
+              which is how both people's tiles read it back
+              (`pairForTicked`, src/lib/persons/relation-roles.ts). */}
+          <span id="role-hint" className="text-xs text-fade dark:text-zinc-400">
+            {t("roleHint", { name: personName })}
+          </span>
         </div>
       )}
 

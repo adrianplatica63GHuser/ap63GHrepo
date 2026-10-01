@@ -208,6 +208,14 @@ export const personRoleSchema = z.object({
   // no input existed to send it.
   validForProperty: boolField.default(false),
   validForPerson:   boolField.default(false),
+  // Slice #37.28 (migration_088): the role's converse, read on the other end
+  // of a person-to-person relationship. Plain nullish text: an empty box
+  // arrives as "" and `personRoleShown` treats blank as absent, so no
+  // transform is needed here — and none is wanted, because a transform would
+  // put the key into every parse, including a PUT that never mentioned it.
+  converseName:       z.string().nullish(),
+  converseNameMale:   z.string().nullish(),
+  converseNameFemale: z.string().nullish(),
 });
 
 /**

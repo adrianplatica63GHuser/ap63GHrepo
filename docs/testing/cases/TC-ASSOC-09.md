@@ -1,4 +1,4 @@
-# TC-ASSOC-09 — Două persoane corelate, citite la fel din ambele capete
+# TC-ASSOC-09 — Două persoane corelate, citite corect din ambele capete
 
 | | |
 |---|---|
@@ -10,16 +10,20 @@
 
 ## What this proves
 
-Two people can be linked to each other from one person's screen, and the link is then visible
-from **both** people — each lists the other. It asks of person↔person links the question
-TC-ASSOC-07 asks of document↔document ones.
+Two people can be linked to each other from one person's screen with a **directional** role, and
+the link then reads correctly from **both** people: each lists the other beside the word that is
+*that* person's — the role on one end, its converse on the other, in the gender of the person
+shown. It asks of person↔person links the question TC-ASSOC-07 asks of document↔document ones and
+TC-ASSOC-08 of property↔property ones.
 
-**How this family encodes direction — it does not, and today it offers no role.**
-`person_person` stores the pair in uuid order and an optional role from `lookup_person_role`,
-and no direction flag; and on this database no role carries „Valabil pentru persoană", so the
-screen offers no „Tip relație" at all and the link is made without one. A link with no role reads
-the same from both ends, so **this case asserts symmetric reading**; the day a directional role
-(„Moștenitor", „Mandatar") is ticked for people, it meets TC-ASSOC-08's defect (FU-221).
+**How this family encodes direction (Slice #37.28).** `person_person` stores the pair in uuid
+order, an optional role from `lookup_person_role`, and since migration_088 `role_reads_a_to_b`,
+saying which of the two holds the role. On „Asociere persoană corelată" the role is the **ticked**
+person's, towards the person whose screen it is — the sentence under „Tip relație" says so. The
+other end shows the role's converse, stored on the role itself (Date de referință → Roluri
+Persoană → „Rol invers", „— bărbat", „— femeie"): the converse of „Părinte" is „Fiu" for a man,
+„Fiică" for a woman, and „Copil" when the gender is not set. Before #37.28 both ends showed the
+same word (FU-221), so this case picked no role.
 
 ## Before you start
 
@@ -31,26 +35,26 @@ Nothing.
 
 ## The records this case creates
 
-Two natural persons, typed by hand, no CNP: „Nume" **`TC-ASSOC-09`**, „Prenume" **`Ana`** and
-**`Mihai`** — listed as `Ana TC-ASSOC-09` and `Mihai TC-ASSOC-09`.
+Two natural persons, typed by hand, no CNP: „Nume" **`TC-ASSOC-09`**, „Prenume" **`Ana`** with
+„Gen" **Feminin**, and **`Mihai`** with „Gen" **Masculin** — listed as `Ana TC-ASSOC-09` and
+`Mihai TC-ASSOC-09`. Mihai is Ana's father.
 
 ## Steps
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume" and „Prenume", „Salvează" | Two rows badged „Nou!", codes beginning `PPERS` |
-| 2 | Opens `Ana TC-ASSOC-09`, tile **„Persoane"** („Asocieri" before #37.27) | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", and **„Tip relație"** at „— fără relație —", offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră (#37.27) — left empty |
-| 4 | Ticks `Mihai TC-ASSOC-09` | The hint goes away |
-| 5 | Presses „Asociază selecția" | Back on Ana's „Persoane" (`?tab=related`): a table Nume · Tip relație (no „Tip" since #37.27), one row — `Mihai TC-ASSOC-09`, „—", „Vizualizare" |
-| 6 | Opens `Mihai TC-ASSOC-09`, tile „Persoane" | One row — `Ana TC-ASSOC-09`, „—" |
+| 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume", „Prenume", chooses „Gen", „Salvează" | Two rows badged „Nou!", codes beginning `PPERS` |
+| 2 | Opens `Ana TC-ASSOC-09`, tile **„Persoane"** | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
+| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Tip relație"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
+| 4 | Ticks `Mihai TC-ASSOC-09`, chooses „Tip relație" **„Părinte"** | The hint goes away |
+| 5 | Presses „Asociază selecția" | Back on Ana's „Persoane" (`?tab=related`): a table Nume · Tip relație, one row — `Mihai TC-ASSOC-09`, **„Părinte"**, „Vizualizare" |
+| 6 | Opens `Mihai TC-ASSOC-09`, tile „Persoane" | One row — `Ana TC-ASSOC-09`, **„Fiică"** (not „Părinte") |
 
-Step 6 is the other end: the link is there from both people, and with no role it says the same
-thing from each.
+Step 6 is the other end: Mihai is Ana's „Părinte", so Ana is Mihai's „Fiică".
 
 ## At the end — leaving things as they were found
 
-On either person's „Asocieri", select the row's radio and press „Dezasociază" — „Nicio persoană
+On either person's „Persoane", select the row's radio and press „Dezasociază" — „Nicio persoană
 corelată". Then delete both people: open each, „Șterge" at the bottom of the form, „Da".
 
 ## Notes from the runs

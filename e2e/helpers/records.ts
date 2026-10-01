@@ -96,7 +96,9 @@ export async function createProperty(
 
 export async function createNaturalPerson(
   request: APIRequestContext,
-  fields: { lastName: string; firstName: string },
+  // `gender` since Slice #37.28: a relationship's converse follows it
+  // („Fiu" / „Fiică"), so TC-ASSOC-09 sets it.
+  fields: { lastName: string; firstName: string; gender?: "MALE" | "FEMALE" },
 ): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.person, {
     ...fields,
