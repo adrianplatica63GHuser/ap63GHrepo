@@ -20,9 +20,11 @@
  * preview is state of this screen only: it does not navigate, so the form
  * beside it and its „Modificări nesalvate" banner are untouched.
  *
- * A TILE LIKE ANY OTHER (#37.17): a person, a company or a property is one
- * panel wide; a document is the Pagini panel's width, its general data above
- * its first page. While open it has a ticked box in the tile row
+ * A TILE LIKE ANY OTHER (#37.17), ON THE UNIT (#37.33): a person, a company or
+ * a property is 3 units, like the first panel of its screen; a document is 4,
+ * the Pagini panel's width, its general data above its first page. Its fields
+ * sit as on the record's screen — labels above, in the screen's rows and at
+ * its widths (`PREVIEW_ROWS`, `PREVIEW_WIDTHS`). While open it has a ticked box in the tile row
  * (`TileSelector`'s `extra`) — unticking it closes it. At most two are open
  * (`@/lib/ui/previews`); a third replaces the oldest.
  */
@@ -31,7 +33,8 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { PreviewTileBody } from "./preview-tile-body";
+import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
+import { PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
 
 // ── Which previews are open ───────────────────────────────────────────────────
@@ -107,16 +110,22 @@ export function ListPreviews({ children }: { children: ReactNode }) {
 
 // ── What a preview reads ──────────────────────────────────────────────────────
 
-type FieldId =
-  | "code" | "lastName" | "firstName" | "cnp" | "dateOfBirth" | "placeOfBirth"
-  | "name" | "companyType" | "cui" | "tradeRegister"
-  | "nickname" | "parcela" | "cadastralNumber" | "carteFunciara" | "surfaceAreaMp"
-  | "documentType" | "title" | "subject" | "nrDocument" | "dateDocument";
+/**
+ * The label of a field, by its screen name: `shared.preview.fields.*`, whose
+ * keys #37.24 named before the rows were the screens' (#37.33).
+ */
+const LABEL_KEY: Record<string, string> = {
+  judicialPersonTypeId: "companyType",
+  cuiNumber: "cui",
+  tradeRegisterNumber: "tradeRegister",
+  documentTypeId: "documentType",
+};
 
 interface PreviewData {
   title: string;
   code: string;
-  fields: [FieldId, string | null][];
+  /** The short set's values, by the screen's field names (`PREVIEW_FIELDS`). */
+  fields: Record<string, string | null>;
   /** A document's first page; null when it has none; undefined for the other kinds. */
   image?: { url: string; mimeType: string | null } | null;
 }
@@ -146,13 +155,13 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       return {
         title: s(r.person.displayName) ?? s(r.person.code) ?? "",
         code: s(r.person.code) ?? "",
-        fields: [
-          ["lastName", s(n.lastName)],
-          ["firstName", s(n.firstName)],
-          ["cnp", s(n.cnp)],
-          ["dateOfBirth", dmy(s(n.dateOfBirth))],
-          ["placeOfBirth", s(n.placeOfBirth)],
-        ],
+        fields: {
+          lastName: s(n.lastName),
+          firstName: s(n.firstName),
+          cnp: s(n.cnp),
+          dateOfBirth: dmy(s(n.dateOfBirth)),
+          placeOfBirth: s(n.placeOfBirth),
+        },
       };
     }
     case "company": {
@@ -161,12 +170,12 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       return {
         title: s(j.name) ?? s(r.person.displayName) ?? "",
         code: s(r.person.code) ?? "",
-        fields: [
-          ["name", s(j.name)],
-          ["companyType", s(r.judicialPersonTypeName)],
-          ["cui", s(j.cuiNumber)],
-          ["tradeRegister", s(j.tradeRegisterNumber)],
-        ],
+        fields: {
+          name: s(j.name),
+          judicialPersonTypeId: s(r.judicialPersonTypeName),
+          cuiNumber: s(j.cuiNumber),
+          tradeRegisterNumber: s(j.tradeRegisterNumber),
+        },
       };
     }
     case "property": {
@@ -175,13 +184,13 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       return {
         title: s(p.nickname) ?? s(p.code) ?? "",
         code: s(p.code) ?? "",
-        fields: [
-          ["nickname", s(p.nickname)],
-          ["parcela", s(p.parcela)],
-          ["cadastralNumber", s(p.cadastralNumber)],
-          ["carteFunciara", s(p.carteFunciara)],
-          ["surfaceAreaMp", s(p.surfaceAreaMp)],
-        ],
+        fields: {
+          nickname: s(p.nickname),
+          parcela: s(p.parcela),
+          cadastralNumber: s(p.cadastralNumber),
+          carteFunciara: s(p.carteFunciara),
+          surfaceAreaMp: s(p.surfaceAreaMp),
+        },
       };
     }
     case "document": {
@@ -197,13 +206,13 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       return {
         title: s(d.title) ?? s(d.code) ?? "",
         code: s(d.code) ?? "",
-        fields: [
-          ["documentType", types.items.find((ty) => ty.id === d.documentTypeId)?.name ?? null],
-          ["title", s(d.title)],
-          ["subject", s(d.subject)],
-          ["nrDocument", s(d.nrDocument)],
-          ["dateDocument", dmy(s(d.dateDocument))],
-        ],
+        fields: {
+          documentTypeId: types.items.find((ty) => ty.id === d.documentTypeId)?.name ?? null,
+          title: s(d.title),
+          subject: s(d.subject),
+          nrDocument: s(d.nrDocument),
+          dateDocument: dmy(s(d.dateDocument)),
+        },
         image,
       };
     }
@@ -260,6 +269,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
   const { guardedNavigate } = useUnsavedChanges();
   const labels = { open: t("open"), close: t("close"), readonly: t("readonly"), firstPage: t("firstPage"), noPage: t("noPage") };
   const width = target.kind === "document" ? "pages" : "panel";
+  const kind: PreviewKind = target.kind;
   if (!q.data) {
     return (
       <PreviewTileBody
@@ -276,16 +286,24 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
       />
     );
   }
+  const data = q.data;
   return (
     <PreviewTileBody
-      title={q.data.title}
-      code={q.data.code}
-      fields={q.data.fields.map(([id, value]) => ({ label: t(`fields.${id}` as Parameters<typeof t>[0]), value }))}
+      title={data.title}
+      code={data.code}
+      fields={PREVIEW_ROWS[kind].flatMap((row, i): PreviewField[] =>
+        row.map((name) => ({
+          label: t(`fields.${LABEL_KEY[name] ?? name}` as Parameters<typeof t>[0]),
+          value: data.fields[name] ?? null,
+          width: PREVIEW_WIDTHS[kind][name],
+          row: i,
+        })),
+      )}
       openHref={previewHref(target)}
       labels={labels}
       onClose={onClose}
       onOpen={guardedNavigate}
-      image={q.data.image}
+      image={data.image}
       width={width}
       tile={previewKey(target)}
       style={style}

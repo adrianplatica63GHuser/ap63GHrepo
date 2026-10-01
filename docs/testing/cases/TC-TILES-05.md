@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `driven` |
-| **Last green** | 2026-09-29 |
+| **Last green** | 2026-10-01 |
 
 ## What this proves
 
@@ -44,15 +44,15 @@ step 7 is never saved.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens the contract and ticks „Persoane" | The three persons, each row with „Vizualizare" and „Previzualizare" |
-| 2 | „Previzualizare" on „Ion TC-TILES-05-A" | A tile at the end of the row, with a dashed border, headed with his name, his `PPERS…` code and „Numai citire". It lists Nume, Prenume, CNP, Data nașterii and Locul nașterii (empty ones as „—") and has „Deschide" and „Închide". **No box, no „Modifică", no „Fă curentă", no „Asociază" or „Dezasociază".** In „Părți afișate" a ticked box „Previzualizare: PPERS…" appears |
+| 2 | „Previzualizare" on „Ion TC-TILES-05-A" | A tile at the end of the row, with a dashed border, headed with his name, his `PPERS…` code and „Numai citire". It is 3 width units wide (476 px at the default font) and lists, labels above their values, Nume | Prenume — CNP — Data nașterii — Locul nașterii, the Natural Person's rows (empty ones as „—") and has „Deschide" and „Închide". **No box, no „Modifică", no „Fă curentă", no „Asociază" or „Dezasociază".** In „Părți afișate" a ticked box „Previzualizare: PPERS…" appears |
 | 3 | „Previzualizare" on „Maria TC-TILES-05-B" | A second preview after the first. Two ticked boxes „Previzualizare: …" |
 | 4 | „Previzualizare" on „Dan TC-TILES-05-C" | Still two previews: **Ion's is gone**, and Maria's and Dan's are there, in that order. Its box is gone from „Părți afișate" too |
 | 5 | „Previzualizare" on „Maria TC-TILES-05-B" again | Nothing changes: still Maria and Dan |
 | 6 | Unticks „Previzualizare: …" for Maria | Her preview closes; Dan's stays |
 | 7 | In „Date generale", types `TC-NESALVAT` into „Subiect", **without saving** | „Modificări nesalvate" |
 | 8 | „Închide" on Dan's preview, then „Previzualizare" on Ion again | The preview closes and Ion's opens. „Subiect" still reads `TC-NESALVAT`, „Modificări nesalvate" is still there, and no „leave the page?" question was asked |
-| 9 | „Deschide" on Ion's preview | The question about unsaved changes, because this one does leave the page. „Anulează": still on the contract, `TC-NESALVAT` still there |
-| 10 | At a 2560-pixel window, with one preview open | The contract's tiles and the preview side by side on one row |
+| 9 | „Deschide" on Ion's preview | The question about unsaved changes, because this one does leave the page. „Anulează": still on the contract, `TC-NESALVAT` still there. Then „Vizualizare" on Maria's row, and a double-click on her row: the same question each time, and „Anulează" each time leaves the contract as it was (FU-271, Slice #37.33) |
+| 10 | At a 2560-pixel window, with one preview open | The contract's tiles and the preview side by side on one row. Every tile and the preview is a whole number of width units, and the row is 14 units (10 at 1920) |
 
 ## At the end — leaving things as they were found
 
@@ -84,3 +84,17 @@ admin.** The contract and the three persons were made, and associated, through t
 - The same gap sits outside the preview: an association tile's „Vizualizare" and a row's
   double-click also leave the screen without asking. That is FU-271.
 
+**2026-10-01 — `driven` again (Slice #37.33), by a throwaway Playwright script through the test
+runner's browser (e2e 20261001T023944Z-24047), which ran the steps as written and was deleted
+after.** The contract, the three persons (with „Cumpărător" and „Vânzător" through the route
+„Asociază" calls) and, for the pictures, a property associated to the contract, were made through
+the API and removed at the end through the DELETE routes.
+- Steps 1–8 as written. The preview is now 3 width units, 476 px, with its labels above the values
+  in the Natural Person's rows (#37.33); step 2 is corrected to say so.
+- Step 9 as written, and FU-271 is closed: „Vizualizare" on Maria's row and a double-click on it
+  both asked „Aveți modificări nesalvate…", and „Anulează" left `TC-NESALVAT` in place. Step 9 now
+  says so.
+- Step 10: at 2560 × 1440 the preview's top edge was level with „Persoane"'s (804 px), and
+  `expectUnitGrid` found every tile, the preview among them, a whole number of units, with the row
+  10 units at 1920 and 14 at 2560. It found the same with a property preview open beside the buyer's.
+  Step 10 now says so.

@@ -846,6 +846,57 @@ export const ID_CARD_INSTITUTION = { step: "XL", kind: "select", fill: true } as
  */
 export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = { maxWidth: rem(unitsRem(6) + 2 * 1.5 + 1.5) };
 
+// ---- a Previzualizare tile, on the unit, in its screen's rows (#37.33) ------------------
+
+/**
+ * A PREVIEW IS A SMALLER COPY OF THE RECORD.                   (Slice #37.33)
+ *
+ * A Previzualizare tile is whole width units — a person, a company or a
+ * property 3, like the first panel of its screen; a document 4, the page
+ * image's width (`PAGES_PANEL_REM` is exactly `unitsRem(4)`) — and shows its
+ * fields as that screen does: labels above, in the screen's rows, at the
+ * screen's widths. The fields are #37.24's short set per kind; the rows are the
+ * screen's, through `keepFields`, so nothing is laid out by hand here.
+ */
+export const PREVIEW_UNITS = { panel: 3, pages: 4 } as const;
+export type PreviewWidth = keyof typeof PREVIEW_UNITS;
+export const PREVIEW_STYLE: Readonly<Record<PreviewWidth, CSSProperties>> = {
+  panel: unitStyle(PREVIEW_UNITS.panel),
+  pages: unitStyle(PREVIEW_UNITS.pages),
+};
+export const PREVIEW_INNER_REM: Readonly<Record<PreviewWidth, number>> = {
+  panel: unitsInnerRem(PREVIEW_UNITS.panel),
+  pages: unitsInnerRem(PREVIEW_UNITS.pages),
+};
+
+/** #37.24's short set per kind, by the screen's own field names. */
+export const PREVIEW_FIELDS = {
+  person: ["lastName", "firstName", "cnp", "dateOfBirth", "placeOfBirth"],
+  company: ["name", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber"],
+  property: ["nickname", "parcela", "cadastralNumber", "carteFunciara", "surfaceAreaMp"],
+  document: ["documentTypeId", "title", "subject", "nrDocument", "dateDocument"],
+} as const;
+export type PreviewKind = keyof typeof PREVIEW_FIELDS;
+
+/** Each kind's rows: its screen's, filtered to the short set (a document's Date generale, then Taxe și onorarii). */
+export const PREVIEW_ROWS: Readonly<Record<PreviewKind, readonly (readonly string[])[]>> = {
+  person: keepFields(SCREEN_ROWS.naturalPerson.identity, PREVIEW_FIELDS.person),
+  company: keepFields(SCREEN_ROWS.judicialPerson.identity, PREVIEW_FIELDS.company),
+  property: keepFields(SCREEN_ROWS.property.cadastral, PREVIEW_FIELDS.property),
+  document: keepFields([...SCREEN_ROWS.document.general, ...SCREEN_ROWS.document.fees], PREVIEW_FIELDS.document),
+};
+
+/** Each kind's widths: its screen's. */
+export const PREVIEW_WIDTHS: Readonly<Record<PreviewKind, Readonly<Record<string, FieldWidth>>>> = {
+  person: NATURAL_PERSON,
+  company: JUDICIAL_PERSON,
+  property: PROPERTY,
+  document: DOCUMENT,
+};
+
+/** The width a preview shows a field without one at: the tile's whole inner width. */
+export const PREVIEW_FILL: FieldWidth = { step: "TILE", kind: "grows", fill: true };
+
 // ---- table columns (#37.16) ------------------------------------------------------------
 
 /**

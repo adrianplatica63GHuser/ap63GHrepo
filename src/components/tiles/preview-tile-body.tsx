@@ -9,7 +9,38 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { PAGES_PANEL_STYLE, PANEL_STYLE } from "@/lib/ui/field-widths";
+import {
+  PREVIEW_FILL,
+  PREVIEW_INNER_REM,
+  PREVIEW_STYLE,
+  stackedBoxStyle,
+  type FieldWidth,
+  type PreviewWidth,
+} from "@/lib/ui/field-widths";
+import { STACKED_FIELD_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+
+/** A stacked label (`self-end`, rule 16), quieter than the value it names: the value is what a preview is for. */
+const PREVIEW_LABEL_CLASS = "self-end text-xs font-medium text-fade dark:text-zinc-400";
+
+/**
+ * One field of a preview.                                       (Slice #37.33)
+ *
+ * `width` is the field's width on its record's screen; without one it takes
+ * the tile's whole inner width. Fields with the same `row` share a row, as on
+ * the screen; a field without one is a row alone.
+ */
+export type PreviewField = { label: string; value: string | null; width?: FieldWidth; row?: number };
+
+/** Consecutive fields with the same `row` together; a field without one alone. */
+function rowsOf(fields: readonly PreviewField[]): PreviewField[][] {
+  const rows: PreviewField[][] = [];
+  for (const f of fields) {
+    const last = rows[rows.length - 1];
+    if (last && f.row !== undefined && last[0].row === f.row) last.push(f);
+    else rows.push([f]);
+  }
+  return rows;
+}
 
 export function PreviewTileBody({
   title,
@@ -26,7 +57,7 @@ export function PreviewTileBody({
 }: {
   title: string;
   code: string;
-  fields: { label: string; value: string | null }[];
+  fields: PreviewField[];
   openHref: string;
   labels: { open: string; close: string; readonly: string; firstPage: string; noPage: string };
   onClose: () => void;
@@ -37,7 +68,8 @@ export function PreviewTileBody({
    */
   onOpen?: (href: string) => void;
   image?: { url: string; mimeType: string | null } | null;
-  width: "panel" | "pages";
+  /** Slice #37.33: whole width units — 3 for a person, a company or a property, 4 for a document. */
+  width: PreviewWidth;
   tile?: string;
   style?: CSSProperties;
 }) {
@@ -47,7 +79,7 @@ export function PreviewTileBody({
       data-preview
       aria-label={title}
       className="rounded-md border border-dashed border-cta/50 bg-card p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
-      style={{ ...(width === "pages" ? PAGES_PANEL_STYLE : PANEL_STYLE), ...style }}
+      style={{ ...PREVIEW_STYLE[width], ...style }}
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</h2>
@@ -70,14 +102,20 @@ export function PreviewTileBody({
           </button>
         </span>
       </div>
-      <dl className="grid gap-x-3 gap-y-1 text-sm" style={{ gridTemplateColumns: "5.5rem 1fr" }}>
-        {fields.map((f) => (
-          <div key={f.label} className="contents">
-            <dt className="text-fade dark:text-zinc-400">{f.label}</dt>
-            <dd className="break-words text-ink dark:text-zinc-100">{f.value ?? "—"}</dd>
+      {/* Slice #37.33: labels above their values, in the record's screen's rows and widths;
+          a value wraps inside its field's width, an empty one is „—". */}
+      <div className="flex flex-col gap-2 text-sm" data-preview-fields>
+        {rowsOf(fields).map((row) => (
+          <div key={row.map((f) => f.label).join("|")} className={STACKED_ROW_CLASS}>
+            {row.map((f) => (
+              <div key={f.label} className={STACKED_FIELD_CLASS} style={stackedBoxStyle(f.width ?? PREVIEW_FILL, PREVIEW_INNER_REM[width])}>
+                <span className={PREVIEW_LABEL_CLASS}>{f.label}</span>
+                <span className="break-words text-ink dark:text-zinc-100" data-preview-value>{f.value ?? "—"}</span>
+              </div>
+            ))}
           </div>
         ))}
-      </dl>
+      </div>
       {image !== undefined && (
         <figure className="mt-3">
           <figcaption className="mb-1 text-xs font-medium uppercase tracking-wide text-fade">{labels.firstPage}</figcaption>

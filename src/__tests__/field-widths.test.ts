@@ -90,6 +90,12 @@ import {
   ID_CARD_DIALOG_ROWS,
   ID_CARD_INSTITUTION,
   keepFields,
+  PREVIEW_FIELDS,
+  PREVIEW_INNER_REM,
+  PREVIEW_ROWS,
+  PREVIEW_STYLE,
+  PREVIEW_UNITS,
+  PREVIEW_WIDTHS,
 } from "@/lib/ui/field-widths";
 import { LAYOUT_EXCEPTIONS } from "@/lib/ui/layout-exceptions";
 
@@ -1028,5 +1034,51 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
   it("the address block's free-width branch is gone, and its layout exception with it", () => {
     expect(ADDRESS_BLOCK).not.toMatch(/w-\[5\.5rem\]|fixedWidths|grid-cols-2/);
     expect(LAYOUT_EXCEPTIONS.some((e) => e.file === "src/components/address/address-block.tsx")).toBe(false);
+  });
+});
+
+describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)", () => {
+  it("is 3 units for a person, a company or a property and 4 — the page image's width — for a document", () => {
+    expect(PREVIEW_UNITS).toEqual({ panel: 3, pages: 4 });
+    expect(PREVIEW_STYLE.panel.width).toBe("29.75rem");
+    expect(PREVIEW_STYLE.pages.width).toBe(`${PAGES_PANEL_REM}rem`);
+  });
+
+  it("lays #37.24's short set in its screen's rows — derived, never written by hand", () => {
+    expect(PREVIEW_ROWS).toEqual({
+      person: [["lastName", "firstName"], ["cnp"], ["dateOfBirth"], ["placeOfBirth"]],
+      company: [["name"], ["judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
+      property: [["parcela"], ["nickname"], ["surfaceAreaMp"], ["carteFunciara", "cadastralNumber"]],
+      document: [["documentTypeId"], ["title"], ["subject"], ["nrDocument", "dateDocument"]],
+    });
+    const file = code(read("src", "lib", "ui", "field-widths.ts"));
+    expect(file).toMatch(/person: keepFields\(SCREEN_ROWS\.naturalPerson\.identity, PREVIEW_FIELDS\.person\)/);
+    expect(file).toMatch(/company: keepFields\(SCREEN_ROWS\.judicialPerson\.identity, PREVIEW_FIELDS\.company\)/);
+    expect(file).toMatch(/property: keepFields\(SCREEN_ROWS\.property\.cadastral, PREVIEW_FIELDS\.property\)/);
+    expect(file).toMatch(/document: keepFields\(\[\.\.\.SCREEN_ROWS\.document\.general, \.\.\.SCREEN_ROWS\.document\.fees\], PREVIEW_FIELDS\.document\)/);
+    // Every field of the short set is on a row, and has its screen's width.
+    for (const kind of Object.keys(PREVIEW_FIELDS) as (keyof typeof PREVIEW_FIELDS)[]) {
+      expect([kind, [...PREVIEW_ROWS[kind].flat()].sort()]).toEqual([kind, [...PREVIEW_FIELDS[kind]].sort()]);
+      for (const f of PREVIEW_FIELDS[kind]) expect([kind, f, Boolean(PREVIEW_WIDTHS[kind][f])]).toEqual([kind, f, true]);
+    }
+  });
+
+  it("every row fits inside its tile", () => {
+    for (const kind of Object.keys(PREVIEW_ROWS) as (keyof typeof PREVIEW_ROWS)[]) {
+      const inner = PREVIEW_INNER_REM[kind === "document" ? "pages" : "panel"];
+      for (const row of PREVIEW_ROWS[kind]) {
+        expect([kind, row.join("|"), rowRem(row.map((f) => PREVIEW_WIDTHS[kind][f])) <= inner]).toEqual([kind, row.join("|"), true]);
+      }
+    }
+  });
+
+  it("the body takes its width from the unit and its rows from the screen; the 5.5rem label column is gone", () => {
+    const body = code(read("src", "components", "tiles", "preview-tile-body.tsx"));
+    expect(body).toMatch(/style=\{\{ \.\.\.PREVIEW_STYLE\[width\], \.\.\.style \}\}/);
+    expect(body).not.toMatch(/PANEL_STYLE\b|PAGES_PANEL_STYLE|5\.5rem|<dl/);
+    expect(body).toMatch(/className=\{STACKED_ROW_CLASS\}/);
+    const tiles = code(read("src", "components", "tiles", "preview-tiles.tsx"));
+    expect(tiles).toMatch(/PREVIEW_ROWS\[kind\]\.flatMap\(/);
+    expect(tiles).toMatch(/width: PREVIEW_WIDTHS\[kind\]\[name\]/);
   });
 });
