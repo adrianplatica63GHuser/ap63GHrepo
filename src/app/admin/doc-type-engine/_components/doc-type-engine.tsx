@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { CheckCheck, CircleStop, FolderOpen, Play, RotateCcw } from "lucide-react";
+import { ArrowRight, CheckCheck, CircleStop, FolderOpen, Play, RotateCcw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 
 /**
@@ -53,7 +52,6 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { buttonClass } from "@/lib/ui/button-styles";
 import { COST_NOTE_CLASS } from "@/lib/ui/cost-note";
 import {
   fetchDocumentTypeCatalogue,
@@ -1406,12 +1404,19 @@ export function DocTypeEngine({
               the type. This link stays because the journey is genuinely a round
               trip — the form has just been saved and the import is what it was
               saved for. */}
-          <Link
+          {/* #37.48 (found by the sweep): ArrowRight after „Mergi la Import în
+              sistem" — a way onward, as „Închide și vezi proprietățile" (A105).
+              The same tab, so no ExternalLink (#37.46). */}
+          <IconButton
             href="/admin/import"
-            className={`mt-4 inline-block ${buttonClass({ variant: "secondary", size: "md" })}`}
-          >
-            {t("saved.toImport")}
-          </Link>
+            icon={ArrowRight}
+            label={t("saved.toImport")}
+            showLabel
+            iconEnd
+            variant="secondary"
+            size="md"
+            className="mt-4"
+          />
         </>
       )}
     </section>

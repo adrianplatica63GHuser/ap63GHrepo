@@ -31,7 +31,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
-import { ArrowLeft, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
+import { ArrowLeft, MousePointerClick, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -1270,21 +1270,23 @@ function ContactPersonPickerDialog({
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2 border-t border-crease pt-3 dark:border-zinc-800">
-          <button
-            type="button"
+          <IconButton
+            // #37.48 (A022, found by the sweep): X, icon-only; „Anulează" is its name and tooltip.
+            icon={X}
+            label={t.cancel}
+            variant="secondary"
+            size="lg"
             onClick={onClose}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t.cancel}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            // #37.48 (as the surveyor picker, #37.44; found by the sweep): MousePointerClick, icon-only.
+            icon={MousePointerClick}
+            label={t.select}
+            variant="primary"
+            size="lg"
             onClick={handleConfirm}
             disabled={!selectedId}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t.select}
-          </button>
+          />
         </div>
       </div>
     </div>
