@@ -5,7 +5,7 @@
 | **Area** | ui |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-01 |
 
 ## What this proves
@@ -66,3 +66,8 @@ unchanged.
   forward active.
 - Both records deleted at the end (204 each). Nothing changed between the runs, so the case is
   confirmed, and `e2e/ui/icon-associations.spec.ts` translates it.
+
+**2026-10-01 — `automated`.** `e2e/ui/icon-associations.spec.ts` translates the case with
+Playwright's real mouse and takes #37.44's pictures. Green on its first runner run,
+`20261001T180511Z-30826` (with the versioning and corner-edit specs, whose step-back locator
+moved to roles).
