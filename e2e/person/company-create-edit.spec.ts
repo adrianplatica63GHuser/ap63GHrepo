@@ -29,14 +29,18 @@
  *     „Implicit" — where the case reads five tabs. Before the cleanup, „Toate"
  *     shows every tile; their widths are held at 1400 and 2400 px and
  *     photographed at 1920 and 2560 px, then „Implicit" puts the default back.
+ *   - Slice #37.29: labels above their boxes and every tile on the width unit,
+ *     checked by `expectUnitGrid` (6 units at 1366 px, 10 at 1920, 14 at 2560);
+ *     „Asocieri" is „Persoane corelate". The new company is photographed filled
+ *     with made-up values before „Salvează" (`judicial-person-new-*`).
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectTilesPerRow, photograph } from "../helpers/field-widths";
+import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { TILE_GROUP, tileBox } from "../helpers/tiles";
-import { ADDRESS, JUDICIAL_PERSON } from "../../src/lib/ui/field-widths";
+import { ADDRESS, JUDICIAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
 const SAMPLES: Record<string, string> = {};
@@ -92,6 +96,13 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // Step 5 — „Nr. înregistrare (CUI)", unchecked.
       await page.getByLabel(/^Nr\. înregistrare \(CUI\)/).fill(CUI);
 
+      // Slice #37.29 — the new company, filled with made-up values (typed, then put back), pictured.
+      await page.getByLabel(/^Nr\. registru comerțului/).fill("J00/00000/0000");
+      await page.getByLabel(/^Poreclă/).fill("Firma de test");
+      await photograph(page, "judicial-person-new", [1366, 1920, 2560], 1200);
+      await page.getByLabel(/^Nr\. registru comerțului/).fill("");
+      await page.getByLabel(/^Poreclă/).fill("");
+
       // Step 6 — „Salvează"; back to the LIST.
       await page.getByRole("button", { name: "Salvează", exact: true }).click();
       await expect(page).toHaveURL(/\/judicial-persons$/, { timeout: 30_000 });
@@ -126,7 +137,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       for (const tile of ["Persoană juridică", "Persoane de contact", "Adrese"]) {
         await expect(tileBox(page, tile)).toBeChecked();
       }
-      for (const tile of ["Asocieri", "Proprietăți", "Acte", "META INFO"]) {
+      for (const tile of ["Persoane corelate", "Proprietăți", "Acte", "META INFO"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(tiles.getByRole("button", { name: "Toate", exact: true })).toBeVisible();
@@ -168,9 +179,11 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await tiles.getByRole("button", { name: "Toate", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
-      // Slice #37.23 — two small tiles to a row at 1366 px, three at 1920, four at 2560.
-      await expectTilesPerRow(page);
-      await photograph(page, "judicial-person-all-tiles", [1920, 2560]);
+      // Slice #37.29 — the tiles are on a width unit: the row is 6 units at 1366 px, 10 at 1920,
+      // 14 at 2560, and every tile and panel is a whole number of units (replaces #37.23's
+      // two / three / four 32rem tiles to a row).
+      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
+      await photograph(page, "judicial-person-all-tiles", [1366, 1920, 2560], 1200);
       await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
 

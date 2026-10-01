@@ -7,7 +7,7 @@
  *
  * Slice #37.28 (FU-221 closed): the case chooses the representative it was
  * written for. From the company's screen Ion is ticked as „Reprezentant legal /
- * Mandatar": the company's „Asocieri" reads „Ion — Reprezentant legal /
+ * Mandatar": the company's „Persoane corelate" (#37.29, „Asocieri" before) reads „Ion — Reprezentant legal /
  * Mandatar", and Ion's „Persoane" reads the company as „Reprezentat / Mandant"
  * — the role's converse, neutral because a company has no gender.
  *
@@ -43,10 +43,10 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
 
     try {
-      // Step 2 — the company's „Asocieri": „Nicio persoană corelată", „Asociază", „Dezasociază".
+      // Step 2 — the company's „Persoane corelate" (#37.29): „Nicio persoană corelată", „Asociază", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Asocieri");
+      await showTile(page, "Persoane corelate");
       await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -78,18 +78,19 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page.getByText("Selectați cel puțin o persoană")).toHaveCount(0);
       await roleSelect.selectOption({ label: "Reprezentant legal / Mandatar" });
 
-      // Step 5 — „Asociază selecția": the company's „Asocieri" (`?tab=related`),
-      // Nume · Tip · Tip relație — the person, „Fizică", „Reprezentant legal / Mandatar", „Vizualizare".
+      // Step 5 — „Asociază selecția": the company's „Persoane corelate" (`?tab=related`),
+      // Nume · Tip relație — the person, „Reprezentant legal / Mandatar", „Vizualizare". Slice #37.29:
+      // the company's tile is the person's compact table, so the Fizică / Juridică column is gone.
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=related$`), { timeout: 30_000 });
       const onCompany = page.getByRole("row").filter({ hasText: PERSON });
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
-      await expect(onCompany).toContainText("Fizică");
       await expect(onCompany.getByText("Reprezentant legal / Mandatar", { exact: true })).toBeVisible();
       const table = page.getByRole("table").filter({ has: onCompany });
-      for (const col of ["Nume", "Tip", "Tip relație"]) {
+      for (const col of ["Nume", "Tip relație"]) {
         await expect(table.getByText(col, { exact: true })).toBeVisible();
       }
+      await expect(table.getByRole("columnheader", { name: "Tip", exact: true })).toHaveCount(0);
 
       // Step 6 — „Vizualizare": the person, read-only.
       await onCompany.getByRole("link", { name: "Vizualizare" }).click();
@@ -109,7 +110,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 
-      // ── At the end — on the company's „Asocieri": radio, „Dezasociază" ────
+      // ── At the end — on the company's „Persoane corelate": radio, „Dezasociază" ────
       await page.goto(`/judicial-persons/${companyId}?tab=related`);
       await page.getByRole("row").filter({ hasText: PERSON }).getByRole("radio").check({ timeout: 30_000 });
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();

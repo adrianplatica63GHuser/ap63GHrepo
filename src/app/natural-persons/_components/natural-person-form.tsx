@@ -41,6 +41,7 @@ import {
   VersionNavControls,
   type VersionNavView,
 } from "@/components/version-nav-controls";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { SnapshotValue } from "@/components/versioning/snapshot-value";
 import {
@@ -705,7 +706,7 @@ export function NaturalPersonForm({
         </h2>
         {/* Slice #37.26 — the rows of `NP_ROWS.identity`. */}
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.lastName")}
               name="lastName"
@@ -723,7 +724,7 @@ export function NaturalPersonForm({
               width={NP.firstName}
             />
           </div>
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.nickname")}
               name="nickname"
@@ -743,7 +744,7 @@ export function NaturalPersonForm({
             />
           </div>
           {/* The age beside the date it is worked out from, then the gender. */}
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.dateOfBirth")}
               name="dateOfBirth"
@@ -774,7 +775,7 @@ export function NaturalPersonForm({
               width={NP.gender}
             />
           </div>
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.placeOfBirth")}
               name="placeOfBirth"
@@ -815,7 +816,7 @@ export function NaturalPersonForm({
         </h2>
         {/* Slice #37.26 — the rows of `NP_ROWS.idCard`. */}
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <SelectField
               label={t("fields.idDocumentType")}
               name="idDocumentType"
@@ -849,7 +850,7 @@ export function NaturalPersonForm({
           </div>
           {/* The two dates, then their validity status in the rest of the row,
               level with the boxes (an empty line where their labels are). */}
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.idValidFrom")}
               name="idValidFrom"
@@ -870,8 +871,8 @@ export function NaturalPersonForm({
               expiringSoon={idValidUntilExpiringSoon}
               width={NP.idValidUntil}
             />
-            <div className="flex flex-col gap-0.5 text-sm" style={{ width: rem(NP_VALIDITY_REM) }} data-validity-status>
-              <span aria-hidden="true" className="invisible font-medium">{" "}</span>
+            <div className={STACKED_FIELD_CLASS} style={{ width: rem(NP_VALIDITY_REM) }} data-validity-status>
+              <span aria-hidden="true" className={`invisible ${STACKED_LABEL_CLASS}`}>{" "}</span>
               <div className="flex min-h-[1.875rem] items-center leading-tight">
                 {idValidUntilExpired && (
                   <span className="text-xs font-bold uppercase text-red-600 dark:text-red-400">
@@ -891,7 +892,7 @@ export function NaturalPersonForm({
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <SelectField
               label={t("fields.citizenship")}
               name="citizenshipId"
@@ -950,7 +951,7 @@ export function NaturalPersonForm({
         </h2>
         {/* Slice #37.26 — the rows of `NP_ROWS.contact`; the panel is as wide as the two phones. */}
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.personalPhone1")}
               name="personalPhone1"
@@ -1270,8 +1271,8 @@ type FieldProps = {
  * exactly as wide as the box: a long label wraps inside that width rather than
  * widening the row (`shrink-0` so a row can never squeeze a box either).
  */
-const STACKED_CLASS = "flex shrink-0 flex-col gap-0.5 text-sm";
-const LABEL_TEXT_CLASS = "font-medium text-ink dark:text-zinc-300";
+// Slice #37.29 (rule 16): the stacked classes are shared (`@/lib/ui/stacked`), so a row's
+// boxes start on one line whatever its labels wrap to — the Judicial Person draws the same.
 
 /** The box's own look; its width is never a class here — it comes from `stackedBoxStyle`. */
 const BOX_CLASS =
@@ -1292,8 +1293,8 @@ function Field({ label, name, type = "text", register, error, hint, highlight, e
   const grows = width.kind === "grows" || width.kind === "lines";
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
   return (
-    <label className={STACKED_CLASS} style={box}>
-      <span className={LABEL_TEXT_CLASS}>{label}</span>
+    <label className={STACKED_FIELD_CLASS} style={box}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
       {grows ? (
         <GrowingText
           registration={register(name)}
@@ -1396,8 +1397,8 @@ function SelectField({
     // read leaves this field in `pending`, which takes the picker branch below.
     const labelId = `${name}-version-label`;
     return (
-      <div className={STACKED_CLASS} style={box} role="group" aria-labelledby={labelId}>
-        <span id={labelId} className={LABEL_TEXT_CLASS}>{label}</span>
+      <div className={STACKED_FIELD_CLASS} style={box} role="group" aria-labelledby={labelId}>
+        <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
         <div className="flex flex-col gap-0.5" style={box} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
             state={snapshot}
@@ -1410,8 +1411,8 @@ function SelectField({
   }
 
   return (
-    <label className={STACKED_CLASS} style={box}>
-      <span className={LABEL_TEXT_CLASS}>{label}</span>
+    <label className={STACKED_FIELD_CLASS} style={box}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div className="flex flex-col gap-0.5" style={box}>
         {/* Slice #32.13: this select had no remount key at all, so a stored
             Professional Type or Citizenship — both fed by fetches that resolve
@@ -1455,8 +1456,8 @@ function SelectField({
 
 function ReadOnlyField({ label, value, width, field }: { label: string; value: string; width: FieldWidth; field: string }) {
   return (
-    <div className={STACKED_CLASS} style={boxStyle(width)}>
-      <span className={LABEL_TEXT_CLASS}>{label}</span>
+    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div
         className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
         style={boxStyle(width)}

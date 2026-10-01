@@ -31,6 +31,12 @@ import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
   ADDRESS,
   ADDRESS_ROWS,
+  LIST_UNITS,
+  META_CELL_REM,
+  PANEL_UNITS,
+  PANEL_UNIT_INNER_REM,
+  SCREEN_ROWS,
+  unitRowStyle,
   META_CELL_GAP_REM,
   NP_LIST_COLUMNS,
   NP_LIST_UNITS,
@@ -153,11 +159,13 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
     expect(uses.length).toBe(7);
     expect(panels.match(/width=\{JP\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
-    expect(panels.match(/<section style=\{PANEL_STYLE\}/g) ?? []).toHaveLength(2);
-    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths/g) ?? []).toHaveLength(2);
+    // Slice #37.29: each panel whole width units, from its widest row, and the addresses stacked.
+    expect(panels.match(/<section style=\{PANEL_UNIT_STYLE\.judicialPerson\.(identity|contactPersons)\}/g) ?? []).toHaveLength(2);
+    expect(panels).not.toMatch(/PANEL_STYLE\}/);
+    expect(panels.match(/<AddressBlock<FormValues>[\s\S]*?fixedWidths\s+stacked/g) ?? []).toHaveLength(2);
     // Slice #37.18: as tiles, the page's tile row carries the snap and the form is `contents`.
-    expect(JP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : panelRowStyle\(\)\}/);
-    expect(code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{panelRowStyle\(\)\}/);
+    expect(JP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : unitRowStyle\("judicialPerson"\)\}/);
+    expect(code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{unitRowStyle\("judicialPerson"\)\}/);
     for (const page of [["[id]", "page.tsx"], ["new", "page.tsx"]]) {
       expect(code(read("src", "app", "judicial-persons", ...page))).not.toMatch(/max-w-3xl|mx-auto/);
     }
@@ -220,7 +228,7 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
     expect(NP_FORM).toMatch(/<form[\s\S]{0,600}?style=\{tiled \? undefined : npRowStyle\(\)\}/);
     expect(code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"))).toMatch(/style=\{npRowStyle\(\)\}/);
-    // Beside a label for the Judicial Person and the Property; stacked only when asked.
+    // Beside a label for the Property; stacked only when asked (the two persons, #37.26 and #37.29).
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{PANEL_STYLE\}/);
     expect(ADDRESS_BLOCK).toMatch(/<section style=\{NP_PANEL_STYLE\.address\}/);
   });
@@ -279,7 +287,6 @@ describe("the scale", () => {
     for (const [a, b, gap] of [
       [ADDRESS.postalCode, ADDRESS.locality, 0.25],
       [ADDRESS.county, ADDRESS.country],
-      [JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber],
       [PROPERTY.surfaceAreaMp, PROPERTY.calculatedAreaMp],
       [PROPERTY.carteFunciara, PROPERTY.cadastralNumber],
       [DOCUMENT.nrDocument, DOCUMENT.dateDocument],
@@ -320,7 +327,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
    */
   function rowsOf(src: string): string[][] {
     const rows: string[][] = [];
-    const re = /<div className="flex gap-2">([\s\S]*?)\n {10}<\/div>|(?:name|field)="([a-zA-Z0-9.]+)"/g;
+    const re = /<div className=\{STACKED_ROW_CLASS\}>([\s\S]*?)\n {10}<\/div>|(?:name|field)="([a-zA-Z0-9.]+)"/g;
     for (const m of src.matchAll(re)) {
       if (m[1] !== undefined) rows.push([...m[1].matchAll(/(?:name|field)="([a-zA-Z0-9.]+)"/g)].map((n) => n[1]));
       else rows.push([m[2]]);
@@ -444,6 +451,84 @@ describe("the width unit: every Natural Person tile a whole number of units (Sli
     expect(page).toMatch(/compactCellRem=\{NP_META_CELL_REM\}/);
     // Two cells and the gap fill META INFO inside.
     expect(2 * NP_META_CELL_REM + META_CELL_GAP_REM).toBe(unitsInnerRem(NP_LIST_UNITS.metadata));
+  });
+});
+
+describe("the Judicial Person: labels above, rows by meaning, every tile on the unit (Slice #37.29)", () => {
+  const JP = JUDICIAL_PERSON;
+  const panels = region(JP_FORM, "<fieldset disabled", "</fieldset>");
+  const identity = region(panels, 'data-panel="identity"', 'data-panel="contact-persons"');
+
+  /** The same reading as the Natural Person's: a STACKED_ROW_CLASS div is a row, a field outside one a row alone. */
+  function rowsOf(src: string): string[][] {
+    const rows: string[][] = [];
+    const re = /<div className=\{STACKED_ROW_CLASS\}>([\s\S]*?)\n {10}<\/div>|(?:name|field)="([a-zA-Z0-9.]+)"/g;
+    for (const m of src.matchAll(re)) {
+      if (m[1] !== undefined) rows.push([...m[1].matchAll(/(?:name|field)="([a-zA-Z0-9.]+)"/g)].map((n) => n[1]));
+      else rows.push([m[2]]);
+    }
+    return rows;
+  }
+
+  it("draws exactly the rows the file names: Denumire — Poreclă | Tip — ID | CUI | Nr. Reg. Com. — Note", () => {
+    expect(SCREEN_ROWS.judicialPerson.identity).toEqual([
+      ["name"],
+      ["nickname", "judicialPersonTypeId"],
+      ["code", "cuiNumber", "tradeRegisterNumber"],
+      ["notes"],
+    ]);
+    expect(rowsOf(identity)).toEqual(SCREEN_ROWS.judicialPerson.identity.map((r) => [...r]));
+    // Denumire and Note fill the panel; the CUI hint stays with CUI (rule 15).
+    expect(identity).toMatch(/width=\{JP\.name\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
+    expect(identity).toMatch(/width=\{JP\.notes\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
+    expect(identity).toMatch(/name="cuiNumber"[\s\S]{0,200}hint=\{cuiIsLocked/);
+    expect(JP.name.fill && JP.notes.fill).toBe(true);
+  });
+
+  it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2, Adresă 3", () => {
+    expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(26.5);
+    expect(rowRem([JP.code, JP.cuiNumber, JP.tradeRegisterNumber])).toBe(26.5);
+    expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 2, address: 3 });
+    expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(26.5);
+    expect(unitsInnerRem(2)).toBeLessThan(26.5);
+    expect(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons).toBeGreaterThanOrEqual(boxRem(JP.contactPerson));
+    // The contact rows are the XL box under its label; the hint wraps inside the panel.
+    expect(region(JP_FORM, "function ContactPersonRow(", "\nfunction ")).toMatch(/STACKED_FIELD_CLASS/);
+  });
+
+  it("no label is left beside a box, the checkbox is the registered address's last line, and the loose panel is gone", () => {
+    expect(JP_FORM).not.toMatch(/LABEL_STYLE/);
+    expect(panels).not.toMatch(/data-panel="correspondence"/);
+    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?stacked\s+footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/);
+  });
+
+  it("the company's list tiles are the Natural Person's, at the same units (rule 17), and META INFO has its cells", () => {
+    const page = code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"));
+    for (const k of ["associations", "properties", "documents", "metadata"]) {
+      expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.judicialPerson\\.${k}\\}`));
+    }
+    expect(page.match(/backBase="\/judicial-persons" compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toMatch(/compactCellRem=\{META_CELL_REM\}/);
+    expect(LIST_UNITS.judicialPerson).toEqual(LIST_UNITS.naturalPerson);
+    expect(META_CELL_REM).toBe(NP_META_CELL_REM);
+  });
+
+  it("rule 19: one shape keyed by screen — the Natural Person's numbers did not move", () => {
+    expect(NP_ROWS).toBe(SCREEN_ROWS.naturalPerson);
+    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
+    expect(PANEL_UNITS.naturalPerson).toBe(NP_PANEL_UNITS);
+    expect(String(unitRowStyle("naturalPerson").width)).toBe(String(npRowStyle().width));
+    expect(String(unitRowStyle("judicialPerson").width)).toBe("max(50.25rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
+    // No JP_ twins of the unit shape.
+    expect(code(read("src", "lib", "ui", "field-widths.ts"))).not.toMatch(/export const JP_(ROWS|PANEL|LIST|META)/);
+  });
+
+  it("rule 16: a row's boxes start on one line — each field a subgrid of the row's three tracks", () => {
+    const stacked = code(read("src", "lib", "ui", "stacked.ts"));
+    expect(stacked).toMatch(/STACKED_ROW_CLASS = "grid grid-flow-col auto-cols-max grid-rows-\[auto_auto_auto\]/);
+    expect(stacked).toMatch(/STACKED_FIELD_CLASS = "row-span-3 grid grid-rows-subgrid/);
+    expect(stacked).toMatch(/STACKED_LABEL_CLASS = "self-end/);
+    for (const src of [NP_FORM, JP_FORM, ADDRESS_BLOCK]) expect(src).toMatch(/STACKED_ROW_CLASS/);
   });
 });
 

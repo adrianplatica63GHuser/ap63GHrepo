@@ -216,7 +216,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { judicialPerson: { tiles: Record<string, string> } };
     expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
-      "Persoană juridică", "Persoane de contact", "Adrese", "Asocieri", "Proprietăți", "Acte", "META INFO",
+      "Persoană juridică", "Persoane de contact", "Adrese", "Persoane corelate", "Proprietăți", "Acte", "META INFO",
     ]);
   });
 });

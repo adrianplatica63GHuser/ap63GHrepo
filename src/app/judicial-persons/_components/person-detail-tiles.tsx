@@ -11,6 +11,13 @@
  * company's tiles declared (`person-tiles.ts`); the frame, the selector and
  * the stored choice are the shared pieces, used as they are.
  *
+ * Slice #37.29: every tile a whole number of width units, as on the Natural
+ * Person (#37.27) — the form panels the fewest that hold their widest row
+ * (`PANEL_UNITS.judicialPerson`), the list tiles `LIST_UNITS.judicialPerson`
+ * with the Natural Person's compact tables, META INFO two sections a row; the
+ * tile row is a whole number of units (`unitRowStyle`). „Asocieri" is
+ * „Persoane corelate" (rule 17: it lists records of the screen's own kind).
+ *
  * THE WINDOW DECIDES HOW MANY TILES FIT, NEVER HOW WIDE ONE IS (#37.12). Each
  * form tile is one panel (Adrese is two), each list tile as wide as its table
  * of fixed columns (#37.16), META INFO two panels. The form is still ONE form:
@@ -32,7 +39,7 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { PANEL_GAP, panelRowStyle } from "@/lib/ui/field-widths";
+import { LIST_UNITS, META_CELL_REM, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -101,7 +108,7 @@ export function JudicialPersonDetailTiles({
         />
       </header>
 
-      <div className="flex flex-col gap-4" style={panelRowStyle()}>
+      <div className="flex flex-col gap-4" style={unitRowStyle("judicialPerson")}>
         <TileSelector all={JP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
@@ -115,27 +122,28 @@ export function JudicialPersonDetailTiles({
             tiles={{ shown: choice.shown, labels, onRevealTile: choice.reveal }}
           />
           {choice.isShown("associations") && (
-            <ListTile tile="associations" title={labels.associations}>
-              <PersonReferencesTab personId={personId} backBase="/judicial-persons" />
+            <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.judicialPerson.associations}>
+              <PersonReferencesTab personId={personId} backBase="/judicial-persons" compact />
             </ListTile>
           )}
           {choice.isShown("properties") && (
-            <ListTile tile="properties" title={labels.properties}>
-              <PersonPropertiesTab personId={personId} backBase="/judicial-persons" />
+            <ListTile tile="properties" title={labels.properties} units={LIST_UNITS.judicialPerson.properties}>
+              <PersonPropertiesTab personId={personId} backBase="/judicial-persons" compact />
             </ListTile>
           )}
           {choice.isShown("documents") && (
-            <ListTile tile="documents" title={labels.documents}>
-              <PersonDocumentTab personId={personId} backBase="/judicial-persons" />
+            <ListTile tile="documents" title={labels.documents} units={LIST_UNITS.judicialPerson.documents}>
+              <PersonDocumentTab personId={personId} backBase="/judicial-persons" compact />
             </ListTile>
           )}
           {choice.isShown("metadata") && (
-            <ListTile tile="metadata" title={labels.metadata} wide>
+            <ListTile tile="metadata" title={labels.metadata} units={LIST_UNITS.judicialPerson.metadata}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
                 backHref={`/judicial-persons/${encodeURIComponent(personId)}`}
                 backEntityName={personName}
+                compactCellRem={META_CELL_REM}
               />
             </ListTile>
           )}

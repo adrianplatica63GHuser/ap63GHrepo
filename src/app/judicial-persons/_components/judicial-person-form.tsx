@@ -21,13 +21,16 @@ import { AddressBlock } from "@/components/address/address-block";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
   JUDICIAL_PERSON as JP,
-  LABEL_STYLE,
   PANEL_GAP,
-  PANEL_STYLE,
+  PANEL_UNIT_INNER_REM,
+  PANEL_UNIT_STYLE,
+  boxRem,
   boxStyle,
-  panelRowStyle,
+  stackedBoxStyle,
+  unitRowStyle,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -622,7 +625,7 @@ export function JudicialPersonForm({
       // mode the page's tile row carries that width and the form itself is
       // `contents` (see `tiles`).
       className={tiled ? "contents" : "flex flex-col gap-4"}
-      style={tiled ? undefined : panelRowStyle()}
+      style={tiled ? undefined : unitRowStyle("judicialPerson")}
       noValidate
     >
       {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
@@ -659,8 +662,10 @@ export function JudicialPersonForm({
         data-panel-row
       >
 
-      {/* Judicial Person identity section */}
-      <section style={PANEL_STYLE} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
+      {/* Judicial Person identity section. Slice #37.29: every label above its
+          box, the rows of `SCREEN_ROWS.judicialPerson.identity`, and the panel
+          the fewest whole width units that hold its widest row (3). */}
+      <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
         </h2>
@@ -672,30 +677,36 @@ export function JudicialPersonForm({
             error={errors.name?.message}
             highlight={displayHighlights?.fields.name}
             width={JP.name}
+            fillRem={PANEL_UNIT_INNER_REM.judicialPerson.identity}
           />
-          <Field
-            label={t("fields.nickname")}
-            name="nickname"
-            register={register}
-            error={errors.nickname?.message}
-            highlight={displayHighlights?.fields.nickname}
-            width={JP.nickname}
-          />
-          {mode !== "create" && personCode && (
-            <ReadOnlyField label={t("fields.code")} value={personCode} width={JP.code} field="code" />
-          )}
-          <SelectField
-            label={t("fields.judicialType")}
-            name="judicialPersonTypeId"
-            register={register}
-            control={control}
-            error={errors.judicialPersonTypeId?.message}
-            options={judicialPersonTypeSelectOptions}
-            highlight={displayHighlights?.fields.judicialPersonTypeId}
-            snapshot={snapshotLookups.judicialPersonTypeId}
-            width={JP.judicialPersonTypeId}
-          />
-          <div className="flex flex-wrap gap-2">
+          <div className={STACKED_ROW_CLASS}>
+            <Field
+              label={t("fields.nickname")}
+              name="nickname"
+              register={register}
+              error={errors.nickname?.message}
+              highlight={displayHighlights?.fields.nickname}
+              width={JP.nickname}
+            />
+            <SelectField
+              label={t("fields.judicialType")}
+              name="judicialPersonTypeId"
+              register={register}
+              control={control}
+              error={errors.judicialPersonTypeId?.message}
+              options={judicialPersonTypeSelectOptions}
+              highlight={displayHighlights?.fields.judicialPersonTypeId}
+              snapshot={snapshotLookups.judicialPersonTypeId}
+              width={JP.judicialPersonTypeId}
+            />
+          </div>
+          {/* Rule 14: the identifiers together — the app's own code (a saved
+              company only) beside the two registry numbers. Rule 15: the CUI
+              lock hint sits under CUI, inside its width. */}
+          <div className={STACKED_ROW_CLASS}>
+            {mode !== "create" && personCode && (
+              <ReadOnlyField label={t("fields.code")} value={personCode} width={JP.code} field="code" />
+            )}
             <Field
               label={t("fields.cuiNumber")}
               name="cuiNumber"
@@ -721,12 +732,13 @@ export function JudicialPersonForm({
             error={errors.notes?.message}
             highlight={displayHighlights?.fields.notes}
             width={JP.notes}
+            fillRem={PANEL_UNIT_INNER_REM.judicialPerson.identity}
           />
         </div>
       </section>
 
       {/* ── Contact Persons ──────────────────────────────────────────────── */}
-      <section style={PANEL_STYLE} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
+      <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.contactPersons")}
         </h2>
@@ -763,7 +775,10 @@ export function JudicialPersonForm({
       {/* Slice #37.18: „Adrese" is one tile of two panels — the registered
           address and the correspondence panel — so they show and hide together. */}
       <div {...tileProps("addresses")} className={tileShown("addresses") ? "contents" : "hidden"}>
-      {/* ── Registered Address — the shared block, at its fixed widths (#37.12) ── */}
+      {/* ── Registered Address — the shared block, stacked (#37.29) ──
+          „Aceeași cu adresa sediului social" is its last line (the block's
+          `footer`), as on the Natural Person, so nothing floats between panels
+          (rule 6) and the loose correspondence panel is gone. */}
       <AddressBlock<FormValues>
         title={t("sections.registeredAddress")}
         prefix="addresses.HEADQUARTERS"
@@ -771,50 +786,51 @@ export function JudicialPersonForm({
         errors={errors.addresses?.HEADQUARTERS}
         highlights={displayHighlights?.addresses.HEADQUARTERS}
         fixedWidths
+        stacked
+        footer={
+          <Controller
+            control={control}
+            name="correspondenceSameAsHq"
+            render={({ field }) => (
+              <label
+                className={[
+                  "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
+                  field.value
+                    ? "font-bold text-ink dark:text-zinc-200"
+                    : "font-normal text-fade dark:text-zinc-400",
+                  displayHighlights?.fields.correspondenceSameAsHq
+                    ? "px-1 " +
+                      highlightRingClass(
+                        displayHighlights.fields.correspondenceSameAsHq,
+                        pulsing,
+                      )
+                    : "",
+                ].join(" ")}
+              >
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.checked);
+                    // When toggling to "same", copy HQ into correspondence so
+                    // there's no stale data sitting in the hidden inputs.
+                    if (e.target.checked) {
+                      const hq = getValues("addresses.HEADQUARTERS");
+                      setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
+                    }
+                  }}
+                  className="accent-cta"
+                  aria-label={t("fields.sameAsRegistered")}
+                />
+                {t("fields.sameAsRegistered")}
+              </label>
+            )}
+          />
+        }
       />
 
-      {/* The correspondence panel: the same-as-registered checkbox, and the
-          address itself only when it differs. One panel wide either way. */}
-      <div className="flex flex-col gap-2" style={PANEL_STYLE} data-panel="correspondence">
-      <div className="flex items-center gap-2 px-1">
-        <Controller
-          control={control}
-          name="correspondenceSameAsHq"
-          render={({ field }) => (
-            <label
-              className={[
-                "flex cursor-pointer items-center gap-2 rounded-md text-sm text-fade dark:text-zinc-400 select-none",
-                displayHighlights?.fields.correspondenceSameAsHq
-                  ? "px-1 " +
-                    highlightRingClass(
-                      displayHighlights.fields.correspondenceSameAsHq,
-                      pulsing,
-                    )
-                  : "",
-              ].join(" ")}
-            >
-              <input
-                type="checkbox"
-                checked={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.checked);
-                  // When toggling to "same", copy HQ into correspondence so
-                  // there's no stale data sitting in the hidden inputs.
-                  if (e.target.checked) {
-                    const hq = getValues("addresses.HEADQUARTERS");
-                    setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
-                  }
-                }}
-                className="accent-cta"
-                aria-label={t("fields.sameAsRegistered")}
-              />
-              {t("fields.sameAsRegistered")}
-            </label>
-          )}
-        />
-      </div>
-
-      {/* ── Correspondence Address — only when not same as registered ──────── */}
+      {/* ── Correspondence Address — only when not same as registered: its own
+          3-unit panel, as on the Natural Person. ── */}
       {!correspondenceSameAsHq && (
         <AddressBlock<FormValues>
           title={t("sections.correspondenceAddress")}
@@ -823,9 +839,9 @@ export function JudicialPersonForm({
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           fixedWidths
+          stacked
         />
       )}
-      </div>{/* end correspondence panel */}
       </div>{/* end „Adrese" tile */}
 
       </div>{/* end panel row */}
@@ -1042,9 +1058,10 @@ function ContactPersonRow({
 
   // Slice #37.13: the chosen person's name is a GROWING value — the box is
   // `JP.contactPerson` wide and a long name wraps onto more lines, never cut.
+  // Slice #37.29: the label above it, the pair as wide as the box.
   return (
-    <div className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
+    <div className={STACKED_FIELD_CLASS} style={boxStyle(JP.contactPerson)} role="group" aria-label={label}>
+      <span className={STACKED_LABEL_CLASS}>
         {label}
       </span>
       <div
@@ -1321,6 +1338,8 @@ type FieldProps = {
    * as its step. The same helper shape as the Natural Person's (#37.12).
    */
   width: FieldWidth;
+  /** Slice #37.29: the panel's inner width, for a box that `fill`s it (Denumire, Note). */
+  fillRem?: number;
 };
 
 /** The box's own look; its width is never a class here — it comes from `boxStyle`. */
@@ -1336,6 +1355,7 @@ function Field({
   hint,
   highlight,
   width,
+  fillRem,
 }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
@@ -1346,43 +1366,42 @@ function Field({
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
+  // Slice #37.29: the label ABOVE its box, the pair exactly as wide as the box
+  // (or the panel, for a box that fills it) — a long label wraps inside it.
+  const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
   return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
-        {label}
-      </span>
-      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
-        {grows ? (
-          <GrowingText
-            registration={register(name)}
-            width={String(boxStyle(width).width)}
-            lines={width.kind === "lines"}
-            minRows={width.rows ?? 1}
-            aria-invalid={error ? true : undefined}
-            className={className}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        ) : (
-          <input
-            type={type}
-            {...register(name)}
-            aria-invalid={error ? true : undefined}
-            className={className}
-            style={boxStyle(width)}
-            data-width-field={name}
-            data-width-kind={width.kind}
-          />
-        )}
-        {hint && !error && (
-          <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
-        )}
-        {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">
-            {error}
-          </span>
-        )}
-      </div>
+    <label className={STACKED_FIELD_CLASS} style={box}>
+      <span className={STACKED_LABEL_CLASS}>{label}</span>
+      {grows ? (
+        <GrowingText
+          registration={register(name)}
+          width={String(box.width)}
+          lines={width.kind === "lines"}
+          minRows={width.rows ?? 1}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      ) : (
+        <input
+          type={type}
+          {...register(name)}
+          aria-invalid={error ? true : undefined}
+          className={className}
+          style={box}
+          data-width-field={name}
+          data-width-kind={width.kind}
+        />
+      )}
+      {hint && !error && (
+        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+      )}
+      {error && (
+        <span className="text-xs text-red-600 dark:text-red-400">
+          {error}
+        </span>
+      )}
     </label>
   );
 }
@@ -1451,8 +1470,8 @@ function SelectField({
     // nothing to a screen reader.
     const labelId = `${name}-version-label`;
     return (
-      <div className="flex items-start gap-2 text-sm" role="group" aria-labelledby={labelId}>
-        <span id={labelId} className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
+      <div className={STACKED_FIELD_CLASS} style={boxStyle(width)} role="group" aria-labelledby={labelId}>
+        <span id={labelId} className={STACKED_LABEL_CLASS}>
           {label}
         </span>
         <div className="flex flex-col gap-0.5" style={boxStyle(width)} data-width-field={name} data-width-kind={width.kind}>
@@ -1467,8 +1486,8 @@ function SelectField({
   }
 
   return (
-    <label className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
+    <label className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+      <span className={STACKED_LABEL_CLASS}>
         {label}
       </span>
       <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
@@ -1506,8 +1525,8 @@ function SelectField({
 
 function ReadOnlyField({ label, value, width, field }: { label: string; value: string; width: FieldWidth; field: string }) {
   return (
-    <div className="flex items-start gap-2 text-sm">
-      <span className="shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300" style={LABEL_STYLE}>
+    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+      <span className={STACKED_LABEL_CLASS}>
         {label}
       </span>
       <div

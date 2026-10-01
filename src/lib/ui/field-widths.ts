@@ -231,7 +231,7 @@ export const STACK_GAP_REM = 0.5;
 type NpField = keyof typeof NATURAL_PERSON;
 type AddressField = keyof typeof ADDRESS;
 
-export const NP_ROWS = {
+const NATURAL_PERSON_ROWS = {
   identity: [
     ["lastName", "firstName"],
     ["nickname", "cnp"],
@@ -320,71 +320,14 @@ export function unitStyle(n: number): CSSProperties {
   return { width: rem(unitsRem(n)) };
 }
 
-/** Each Natural Person form panel in units: the fewest that hold its widest row. */
-export const NP_PANEL_UNITS = {
-  identity: unitsFor(panelRem(widestRow(NP_ROWS.identity, NATURAL_PERSON))), //  3 — Nume | Prenume, 26.5rem
-  idCard: unitsFor(panelRem(widestRow(NP_ROWS.idCard, NATURAL_PERSON))), //      3 — Cetățenie | Emisă de, 26rem
-  contact: unitsFor(panelRem(widestRow(NP_ROWS.contact, NATURAL_PERSON))), //    2 — the two personal phones, 17.5rem
-  address: unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS))), //              3 — Stradă, 24rem
-} as const;
-export type NpPanel = keyof typeof NP_PANEL_UNITS;
-
-/** Each Natural Person panel's inner width — whole units, so at least its widest row. */
-export const NP_PANEL_INNER_REM: Readonly<Record<NpPanel, number>> = {
-  identity: unitsInnerRem(NP_PANEL_UNITS.identity),
-  idCard: unitsInnerRem(NP_PANEL_UNITS.idCard),
-  contact: unitsInnerRem(NP_PANEL_UNITS.contact),
-  address: unitsInnerRem(NP_PANEL_UNITS.address),
-};
-
-/** Each Natural Person panel's style — whole units, not `PANEL_STYLE`'s 32rem. */
-export const NP_PANEL_STYLE: Readonly<Record<NpPanel, CSSProperties>> = {
-  identity: unitStyle(NP_PANEL_UNITS.identity),
-  idCard: unitStyle(NP_PANEL_UNITS.idCard),
-  contact: unitStyle(NP_PANEL_UNITS.contact),
-  address: unitStyle(NP_PANEL_UNITS.address),
-};
-
-/**
- * The Natural Person's list tiles in units (#37.27). Persoane and Proprietăți
- * are a name, a role and the two buttons, stacked; Acte a type, a title, a
- * role and the buttons; META INFO two columns of sections, each as wide as a
- * dropdown and „Marchează ca verificat" side by side.
- */
-export const NP_LIST_UNITS = { associations: 4, properties: 4, documents: 5, metadata: 5 } as const;
-
-/** A table on a list tile fills the tile inside its frame (the frame's 1-px border on each side). */
-export function tileTableRem(units: number): number {
-  return unitsInnerRem(units) - 2 * PANEL_BORDER_REM;
-}
-
-/** META INFO's cell on the Natural Person: half the tile, less the gap between the two. */
-export const META_CELL_GAP_REM = 1.5;
-export const NP_META_CELL_REM = (unitsInnerRem(NP_LIST_UNITS.metadata) - META_CELL_GAP_REM) / 2;
-
-/** A box on a stacked panel: its own width, or the panel's whole inner width when it `fill`s. */
+/** A box on a stacked panel: its own width, or the panel's whole inner width when it `fill`s it. */
 export function stackedBoxStyle(w: FieldWidth, panelInner: number): CSSProperties {
   return { width: rem(w.fill ? panelInner : boxRem(w)) };
 }
 
-/** Beside Valabil de la | Până la: the rest of that row, for „VALABIL", „EXPIRAT" or „EXPIRĂ ÎN n ZILE" (which wraps). */
-export const NP_VALIDITY_REM =
-  NP_PANEL_INNER_REM.idCard - rowRem([NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil]) - STACK_GAP_REM;
-
-/**
- * The Natural Person's row of tiles: a whole number of units wide (#37.27) —
- * exactly as many as fit beside the sidebar — so every tile's edge falls on the
- * same lines and the action bar under the form is as wide as the units above
- * it. Never narrower than the widest tile (5 units): a narrower window scrolls.
- * `round()` is Chrome 125+; without it the row is its parent's width and only
- * the action bar is wider than the tiles.
- */
-export function npRowStyle(): CSSProperties {
-  const step = UNIT_REM + UNIT_GAP_REM;
-  const widest = unitsRem(Math.max(...Object.values(NP_PANEL_UNITS), ...Object.values(NP_LIST_UNITS)));
-  return {
-    width: `max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)}))`,
-  };
+/** A table on a list tile fills the tile inside its frame (the frame's 1-px border on each side). */
+export function tileTableRem(units: number): number {
+  return unitsInnerRem(units) - 2 * PANEL_BORDER_REM;
 }
 
 // ---- the Judicial Person (#37.13) -----------------------------------------------------
@@ -398,15 +341,136 @@ export function npRowStyle(): CSSProperties {
  * Person — the widths are v02's, checked against formats. `m:` is `rows · longest`.
  */
 export const JUDICIAL_PERSON = {
-  name: { step: "XXL", kind: "grows" }, //                  „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; m: 0
+  name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
   nickname: { step: "L", kind: "grows" }, //                m: 0
   code: { step: "M", kind: "fixed", sample: "HHHHH00000" }, // „JPERS00012"
   judicialPersonTypeId: { step: "L", kind: "select" }, //   m: 10 options, longest „Consiliu Local" (14) — one character past M
   cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
-  notes: { step: "TILE", kind: "lines", rows: 1 }, //       m: 0
+  notes: { step: "TILE", kind: "lines", rows: 1, fill: true }, // m: 0; the panel's whole width (#37.29)
   contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
 } as const satisfies Record<string, FieldWidth>;
+
+// ---- every stacked screen on the width unit, keyed by screen (#37.27, #37.29) ---------
+
+type JpField = keyof typeof JUDICIAL_PERSON;
+
+/**
+ * ONE SHAPE, KEYED BY SCREEN.                           (Slice #37.29, rule 19)
+ *
+ * #37.26–27 wrote the rows, the panel units, the list units, META INFO's cell
+ * and the tile row's style for the Natural Person alone (`NP_ROWS`,
+ * `NP_PANEL_UNITS`, …). The Judicial Person is the second screen to use them,
+ * so they are one shape keyed by screen; copying them into `JP_` twins is the
+ * thing rule 19 forbids. The `NP_` names below are the Natural Person's entry
+ * of each, unchanged in value — `field-widths.test.ts` holds the numbers.
+ *
+ * The rows ARE the layout: each form draws exactly its screen's rows, and the
+ * test reads the form to hold it. A `fill` box (Note, Denumire, the MRZ) takes
+ * the panel's whole inner width and does not count towards it.
+ */
+export const SCREEN_ROWS = {
+  naturalPerson: NATURAL_PERSON_ROWS,
+  judicialPerson: {
+    // Denumire, the whole width — Poreclă | Tip — ID | CUI | Nr. Reg. Com. (rule 14:
+    // the identifiers together; ID only on a saved company) — Note, the whole width.
+    identity: [
+      ["name"],
+      ["nickname", "judicialPersonTypeId"],
+      ["code", "cuiNumber", "tradeRegisterNumber"],
+      ["notes"],
+    ],
+    // Persoană de contact 1, then 2: each label above an XL box holding the name and its button.
+    contactPersons: [["contactPerson"], ["contactPerson"]],
+  },
+} as const satisfies {
+  naturalPerson: Record<string, readonly (readonly NpField[])[]>;
+  judicialPerson: Record<string, readonly (readonly JpField[])[]>;
+};
+export type Screen = keyof typeof SCREEN_ROWS;
+
+/** The fewest units that hold each panel's widest row. */
+function panelUnitsOf<R extends Record<string, readonly (readonly string[])[]>>(
+  rows: R,
+  widths: Readonly<Record<string, FieldWidth>>,
+): { [K in keyof R]: number } {
+  return Object.fromEntries(
+    Object.entries(rows).map(([panel, r]) => [panel, unitsFor(panelRem(widestRow(r, widths)))]),
+  ) as { [K in keyof R]: number };
+}
+
+function mapUnits<T extends Record<string, number>, V>(units: T, f: (n: number) => V): { [K in keyof T]: V } {
+  return Object.fromEntries(Object.entries(units).map(([k, n]) => [k, f(n)])) as { [K in keyof T]: V };
+}
+
+/** The shared address block, stacked: Stradă is its widest row (24rem) — 3 units on every screen. */
+const ADDRESS_PANEL_UNITS = unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS)));
+
+/** Each form panel in units, by screen. */
+export const PANEL_UNITS = {
+  naturalPerson: { ...panelUnitsOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), address: ADDRESS_PANEL_UNITS },
+  //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
+  judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), address: ADDRESS_PANEL_UNITS },
+} as const;
+
+/** Each panel's inner width — whole units, so at least its widest row. */
+export const PANEL_UNIT_INNER_REM = {
+  naturalPerson: mapUnits(PANEL_UNITS.naturalPerson, unitsInnerRem),
+  judicialPerson: mapUnits(PANEL_UNITS.judicialPerson, unitsInnerRem),
+} as const;
+
+/** Each panel's style — whole units, not `PANEL_STYLE`'s 32rem. */
+export const PANEL_UNIT_STYLE = {
+  naturalPerson: mapUnits(PANEL_UNITS.naturalPerson, unitStyle),
+  judicialPerson: mapUnits(PANEL_UNITS.judicialPerson, unitStyle),
+} as const;
+
+/**
+ * The list tiles in units (#37.27). Rule 17: the same list is the same size on
+ * every screen — a name, a role and the two buttons stacked are 4 units, Acte
+ * (type, title, role, buttons) 5, META INFO 5, two columns of sections.
+ */
+const PERSON_LIST_UNITS = { associations: 4, properties: 4, documents: 5, metadata: 5 } as const;
+export const LIST_UNITS = {
+  naturalPerson: PERSON_LIST_UNITS,
+  judicialPerson: PERSON_LIST_UNITS,
+} as const;
+
+/** META INFO's cell: half the 5-unit tile, less the gap between the two — the same on every screen. */
+export const META_CELL_GAP_REM = 1.5;
+export const META_CELL_REM = (unitsInnerRem(PERSON_LIST_UNITS.metadata) - META_CELL_GAP_REM) / 2;
+
+/**
+ * A screen's row of tiles: a whole number of units wide (#37.27) — exactly as
+ * many as fit beside the sidebar — so every tile's edge falls on the same lines
+ * and the action bar under the form is as wide as the units above it. Never
+ * narrower than the screen's widest tile: a narrower window scrolls. `round()`
+ * is Chrome 125+; without it the row is its parent's width and only the action
+ * bar is wider than the tiles.
+ */
+export function unitRowStyle(screen: Screen): CSSProperties {
+  const step = UNIT_REM + UNIT_GAP_REM;
+  const widest = unitsRem(Math.max(...Object.values(PANEL_UNITS[screen]), ...Object.values(LIST_UNITS[screen])));
+  return {
+    width: `max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)}))`,
+  };
+}
+
+// The Natural Person's entry of each, by the names #37.26–27 gave them.
+export const NP_ROWS = SCREEN_ROWS.naturalPerson;
+export const NP_PANEL_UNITS = PANEL_UNITS.naturalPerson;
+export type NpPanel = keyof typeof NP_PANEL_UNITS;
+export const NP_PANEL_INNER_REM: Readonly<Record<NpPanel, number>> = PANEL_UNIT_INNER_REM.naturalPerson;
+export const NP_PANEL_STYLE: Readonly<Record<NpPanel, CSSProperties>> = PANEL_UNIT_STYLE.naturalPerson;
+export const NP_LIST_UNITS = LIST_UNITS.naturalPerson;
+export const NP_META_CELL_REM = META_CELL_REM;
+export function npRowStyle(): CSSProperties {
+  return unitRowStyle("naturalPerson");
+}
+
+/** Beside Valabil de la | Până la: the rest of that row, for „VALABIL", „EXPIRAT" or „EXPIRĂ ÎN n ZILE" (which wraps). */
+export const NP_VALIDITY_REM =
+  NP_PANEL_INNER_REM.idCard - rowRem([NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil]) - STACK_GAP_REM;
 
 // ---- the Property (#37.14) --------------------------------------------------------------
 

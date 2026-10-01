@@ -41,6 +41,7 @@ import {
   stackedBoxStyle,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -155,7 +156,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
           </h2>
           <div className="flex flex-col gap-2">
             {ADDRESS_ROWS.map((row) => (
-              <div key={row.join("|")} className="flex gap-2">
+              <div key={row.join("|")} className={STACKED_ROW_CLASS}>
                 {row.map((sub) => (
                   <Fragment key={sub}>{field(sub, labels[sub], errors?.[sub]?.message, sub !== "notes")}</Fragment>
                 ))}
@@ -302,8 +303,8 @@ function Field<TFormValues extends FieldValues>({
     const grows = width.kind === "grows" || width.kind === "lines";
     const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
     return (
-      <label className="flex shrink-0 flex-col gap-0.5 text-sm" style={box}>
-        <span className="font-medium text-ink dark:text-zinc-300">
+      <label className={STACKED_FIELD_CLASS} style={box}>
+        <span className={STACKED_LABEL_CLASS}>
           {label}
           {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
         </span>
