@@ -199,13 +199,13 @@
       "loading": "Se încarcă datele hărții…",
       "loadError": "Datele hărții nu au putut fi încărcate",
       "openLink": "Deschide",
-      "select": "⬚ Selectează",
-      "cancelSelect": "✕ Anulează selecția",
+      "select": "Selectează",
+      "cancelSelect": "Anulează selecția",
       "selectEnterTitle": "Intră în modul de selecție — trage un dreptunghi pentru a selecta proprietăți de șters",
       "selectExitTitle": "Ieși din modul de selecție",
       "miniMap": {
-        "draw": "✏ Desenează",
-        "done": "✓ Gata",
+        "draw": "Desenează",
+        "done": "Gata",
         "hintFirst": "Apasă pe hartă pentru a plasa primul punct",
         "hintMore": "Apasă pe hartă pentru a adăuga puncte",
         "hintClose": "Apasă pe hartă pentru a adăuga puncte · apasă punctul 1 pentru a închide"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Maximize2, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, DraftingCompass, MapPinPlus, Maximize2, Minimize2, Pencil, PersonStanding, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import {
 } from "@/lib/geo/convert-client";
 import type { Corner, CornerDiffEntry } from "./form-schema";
 import { HelpHint } from "@/components/help/help-hint";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { CORNER_COLUMNS } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
@@ -588,24 +587,25 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   // columns leave them too little room — the row grows downward.
                   <td className={cellCls}>
                     <div className="flex flex-wrap gap-1 items-center">
-                      <button
-                        type="button"
+                      {/* #37.45 (A068): ArrowUp / ArrowDown. The bare „↑" / „↓"
+                          were the names; the hint they carried („Mută mai sus" /
+                          „Mută mai jos") is the name and the tooltip now. */}
+                      <IconButton
+                        icon={ArrowUp}
+                        label={t("moveUp")}
+                        variant="secondary"
+                        size="xs"
                         onClick={() => moveUp(idx)}
                         disabled={idx === 0}
-                        title={t("moveUp")}
-                        className={buttonClass({ variant: "secondary", size: "xs" })}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
+                      />
+                      <IconButton
+                        icon={ArrowDown}
+                        label={t("moveDown")}
+                        variant="secondary"
+                        size="xs"
                         onClick={() => moveDown(idx)}
                         disabled={idx === corners.length - 1}
-                        title={t("moveDown")}
-                        className={buttonClass({ variant: "secondary", size: "xs" })}
-                      >
-                        ↓
-                      </button>
+                      />
                       <IconButton
                         icon={Pencil}
                         label={t("edit")}
@@ -645,14 +645,16 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         // Version-nav controls moved to the page header in Slice #18.UX.04.
         <div className="flex flex-wrap items-center gap-y-2">
           {!adding && editingIdx === null && (
-            <button
-              type="button"
+            // #37.45 (A067): MapPinPlus. The name keeps its „+": e2e finds
+            // the button by „+ Adaugă punct", as #37.44 kept „+ Adaugă".
+            <IconButton
+              icon={MapPinPlus}
+              label={`+ ${t("add")}`}
+              variant="secondary"
+              size="sm"
               onClick={() => setAdding(true)}
               disabled={readOnly}
-              className={buttonClass({ variant: "secondary", size: "sm" })}
-            >
-              + {t("add")}
-            </button>
+            />
           )}
           {onToggleBigMap && (
             // #37.44 (A028): Maximize2 to open „Hartă extinsă", Minimize2 to „Restrânge".
@@ -667,27 +669,32 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             />
           )}
           {onToggleStreetView && (
-            <button
-              type="button"
+            // #37.45 (A059): PersonStanding, a toggle — the cta fill and
+            // `aria-pressed` while Street View shows; the name and tooltip
+            // follow the state, as the words did.
+            <IconButton
+              icon={PersonStanding}
+              label={streetView ? t("hideStreetView") : t("showStreetView")}
+              variant={streetView ? "primary" : "secondary"}
+              size="sm"
+              className="ml-4 first:ml-0"
+              aria-pressed={streetView}
               onClick={onToggleStreetView}
-              className={buttonClass({ variant: "secondary", size: "sm", className: "ml-4 first:ml-0" })}
-            >
-              {streetView ? t("hideStreetView") : t("showStreetView")}
-            </button>
+            />
           )}
           {onToggleAngles && corners.length >= 3 && (
-            <button
-              type="button"
+            // #37.45 (A058): DraftingCompass, a toggle — the cta fill and
+            // `aria-pressed` while the angles show (it was green); the name
+            // and tooltip follow the state, as the words did.
+            <IconButton
+              icon={DraftingCompass}
+              label={showAngles ? t("hideAngles") : t("showAngles")}
+              variant={showAngles ? "primary" : "secondary"}
+              size="sm"
+              className="ml-4 first:ml-0"
+              aria-pressed={showAngles}
               onClick={onToggleAngles}
-              className={[
-                "ml-4 first:ml-0 rounded-md border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors",
-                showAngles
-                  ? "border-green-600 bg-green-600 text-white hover:bg-green-700"
-                  : "border-wire bg-white text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
-              ].join(" ")}
-            >
-              {showAngles ? t("hideAngles") : t("showAngles")}
-            </button>
+            />
           )}
         </div>
       )}

@@ -84,7 +84,8 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       propertyId = (await top.getByRole("link", { name: "Deschide" }).getAttribute("href"))?.split("/").pop();
 
       // Step 1 — „v 0", 611.87, „Afișare: DD DMS Stereo 70", Nr. · Nr. orig. · Nord (m) · Est (m),
-      // rows 16–19 each with „↑", „↓", „Editează", „Șterge", then „+ Adaugă punct".
+      // rows 16–19 each with „Mută mai sus", „Mută mai jos", „Editează", „Șterge", then „+ Adaugă punct".
+      // (#37.45: the arrows are icons now, named by the hint they carried — „↑" / „↓" were their names.)
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
@@ -99,7 +100,7 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       for (const orig of ["16", "17", "18", "19"]) {
         const r = cornerRow(page, orig);
         await expect(r).toHaveCount(1);
-        for (const b of ["↑", "↓", "Editează", "Șterge"]) {
+        for (const b of ["Mută mai sus", "Mută mai jos", "Editează", "Șterge"]) {
           await expect(r.getByRole("button", { name: b, exact: true })).toBeVisible();
         }
       }

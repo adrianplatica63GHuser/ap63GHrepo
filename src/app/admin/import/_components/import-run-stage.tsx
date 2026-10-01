@@ -45,6 +45,8 @@
  * loop use; what it cannot know here is the second argument.
  */
 
+import { Import } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -207,14 +209,16 @@ export function ImportRunStage({
             A greyed "Importă" invites the question "why can't I?"; the sentence
             above has already answered a question the user did not have to ask. */}
         {!finished && (
-          <button
-            type="button"
+          // #37.45 (A073): Import + „Importă".
+          <IconButton
+            icon={Import}
+            label={t("importButton")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={onImport}
             disabled={state !== "ready" || !canImport}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("importButton")}
-          </button>
+          />
         )}
 
         {/* ⚠️ **ONLY ONCE A RUN HAS FINISHED, SINCE #32.04, AND IT IS THE

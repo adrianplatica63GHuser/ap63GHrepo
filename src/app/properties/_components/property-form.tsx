@@ -27,7 +27,7 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
-import { ArrowLeft, ArrowRight, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -1348,21 +1348,21 @@ export function PropertyForm({
                       data-width-field="address.streetViewStreetLine"
                       data-width-kind={PROP.streetViewStreetLineBox.kind}
                     />
-                    <button
-                      type="button"
+                    {/* #37.45 (A060): Camera + the words; fetching, „Se preia…"
+                        with the spinner in the icon's place. Why it is greyed
+                        (no corners) was its `title`: the tooltip's note now. */}
+                    <IconButton
+                      icon={Camera}
+                      label={fetchingStreetView ? t("streetViewAddress.fetching") : t("streetViewAddress.fetch")}
+                      busy={fetchingStreetView}
+                      note={!streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined}
+                      showLabel
+                      variant="secondary"
+                      size="xs"
+                      className="mt-1 shrink-0"
                       onClick={handleFetchStreetViewAddress}
-                      disabled={
-                        fetchingStreetView || !streetViewCentroid || !geocodingLib
-                      }
-                      title={
-                        !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
-                      }
-                      className={buttonClass({ variant: "secondary", size: "xs", className: "mt-1 shrink-0" })}
-                    >
-                      {fetchingStreetView
-                        ? t("streetViewAddress.fetching")
-                        : t("streetViewAddress.fetch")}
-                    </button>
+                      disabled={fetchingStreetView || !streetViewCentroid || !geocodingLib}
+                    />
                     <span className="mt-1 shrink-0">
                       <HelpHint hintKey="street-view-fetch-address" />
                     </span>

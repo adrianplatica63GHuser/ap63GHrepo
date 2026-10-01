@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Trash2 } from "lucide-react";
+import { ArrowRight, DraftingCompass, Group, Ruler, ScanEye, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -466,69 +466,8 @@ function CornerMarker({
 // Ruler tool — inner components + helpers  (Slice #18.14.ruler)
 // ---------------------------------------------------------------------------
 
-// Angles-tool glyph: a right-angle triangle with a corner marker at the
-// right-angle vertex.
-function AnglesIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polygon points="2,14 2,2 14,14" />
-      {/* Right-angle marker at (2,14) */}
-      <polyline points="2,11 5,11 5,14" />
-    </svg>
-  );
-}
-
-// Groups filter glyph: an outer circle containing three small filled
-// quadrilaterals of different sizes to suggest grouped items.
-function GroupsIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-      {/* Three filled rects of different sizes inside the circle */}
-      <rect x="3"  y="4"  width="3" height="2" rx="0.3" fill="currentColor" />
-      <rect x="4"  y="8"  width="4" height="3" rx="0.3" fill="currentColor" />
-      <rect x="9"  y="5"  width="4" height="4" rx="0.3" fill="currentColor" />
-    </svg>
-  );
-}
-
-// Ruler glyph: a horizontal bar crossed by short tick marks (shown on the
-// toolbar button). The cursor now uses a crosshair shape (see RULER_CURSOR above).
-function RulerIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2" y="8" width="20" height="8" rx="1" />
-      <line x1="7" y1="8" x2="7" y2="12" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="17" y1="8" x2="17" y2="12" />
-    </svg>
-  );
-}
+// The toolbar's own glyphs (angles, groups, ruler) were hand-drawn SVGs here
+// until #37.45; the buttons draw Lucide's DraftingCompass, Group and Ruler now.
 
 // ---------------------------------------------------------------------------
 // Angles tool — corner-pixel → neighbor collection → arc computation (pure)
@@ -1893,20 +1832,17 @@ export default function PropertyMap() {
 
                     {selectMode && activeTab === "all" ? (
                       // Select mode: show Select / Unselect toggle button
-                      <button
-                        type="button"
+                      // #37.45 (A064): a toggle. SquareCheck and the cta fill
+                      // while the property is selected, Square while it is
+                      // not; the name says what a press does, as the words did.
+                      <IconButton
+                        icon={selectedIds.has(item.id) ? SquareCheck : Square}
+                        label={selectedIds.has(item.id) ? t("map.unselectLink") : t("map.selectLink")}
+                        variant={selectedIds.has(item.id) ? "primary" : "secondary"}
+                        size="xs"
+                        aria-pressed={selectedIds.has(item.id)}
                         onClick={() => togglePropertySelected(item.id)}
-                        className={[
-                          "text-xs font-semibold text-left underline cursor-pointer",
-                          selectedIds.has(item.id)
-                            ? "text-green-600 hover:text-green-700"
-                            : "text-red-600 hover:text-red-700",
-                        ].join(" ")}
-                      >
-                        {selectedIds.has(item.id)
-                          ? t("map.unselectLink")
-                          : t("map.selectLink")}
-                      </button>
+                      />
                     ) : (
                       // Normal / selected-tab: „Deschide" — ArrowRight since #37.42 (A016)
                       <IconButton
@@ -1969,40 +1905,32 @@ export default function PropertyMap() {
           <div data-map-ui className="absolute top-3 right-3 z-20 flex flex-wrap justify-end items-start gap-2 max-w-[calc(100%-6rem)]">
             {/* Angles tool — show interior angles at corners (Slice #19.05).   */}
             {/* Sits to the left of Ruler; depressed while active.              */}
-            <button
-              type="button"
-              onClick={toggleAnglesMode}
+            {/* #37.45 (A058, A057, A061, A063): icons. Angles, ruler and   */}
+            {/* groups are toggles — the cta fill and aria-pressed (groups:   */}
+            {/* aria-expanded) while on; the hints their `title` carried are  */}
+            {/* the tooltip's second line.                                    */}
+            <IconButton
+              icon={DraftingCompass}
+              label={t("map.anglesButton")}
+              note={t("map.anglesHint")}
+              variant={anglesMode ? "primary" : "secondary"}
+              size="sm"
               aria-pressed={anglesMode}
-              title={t("map.anglesHint")}
-              className={[
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
-                anglesMode
-                  ? "bg-green-600 text-white border-green-600"
-                  : "bg-white text-ink border-wire hover:bg-canvas",
-              ].join(" ")}
-            >
-              <AnglesIcon />
-              {t("map.anglesButton")}
-            </button>
+              onClick={toggleAnglesMode}
+            />
             <HelpHint hintKey="angles-click-corner" />
 
             {/* Ruler — measure real ground distance (Slice #18.14.ruler).      */}
             {/* Sits to the left of Groups; depressed while active.             */}
-            <button
-              type="button"
-              onClick={toggleRulerMode}
+            <IconButton
+              icon={Ruler}
+              label={t("map.rulerButton")}
+              note={t("map.rulerHint")}
+              variant={rulerMode ? "primary" : "secondary"}
+              size="sm"
               aria-pressed={rulerMode}
-              title={t("map.rulerHint")}
-              className={[
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
-                rulerMode
-                  ? "bg-cta text-white border-cta"
-                  : "bg-white text-ink border-wire hover:bg-canvas",
-              ].join(" ")}
-            >
-              <RulerIcon />
-              {t("map.rulerButton")}
-            </button>
+              onClick={toggleRulerMode}
+            />
             <HelpHint hintKey="ruler-two-clicks" />
 
             {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
@@ -2011,21 +1939,14 @@ export default function PropertyMap() {
             {/* all checked by default. Unchecking a group hides properties     */}
             {/* whose every group is unchecked.                                 */}
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setGroupsPanelOpen((o) => !o)}
+              <IconButton
+                icon={Group}
+                label={t("map.groupsButton")}
+                variant={groupsPanelOpen ? "primary" : "secondary"}
+                size="sm"
                 aria-expanded={groupsPanelOpen}
-                title={t("map.groupsButton")}
-                className={[
-                  "flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
-                  groupsPanelOpen
-                    ? "bg-cta text-white border-cta"
-                    : "bg-white text-ink border-wire hover:bg-canvas",
-                ].join(" ")}
-              >
-                <GroupsIcon />
-                {t("map.groupsButton")}
-              </button>
+                onClick={() => setGroupsPanelOpen((o) => !o)}
+              />
 
               {groupsPanelOpen && (
                 <div className="absolute left-0 top-full mt-1 w-52 rounded shadow-lg border border-wire bg-white overflow-hidden">
@@ -2083,23 +2004,16 @@ export default function PropertyMap() {
               )}
             </div>
 
-            <button
-              type="button"
+            {/* „⬚" and „✕" were glyphs in the messages, standing in for     */}
+            {/* the icons; the messages lost them, as #37.42's „→" did.        */}
+            <IconButton
+              icon={selectMode ? X : SquareDashedMousePointer}
+              label={selectMode ? t("map.cancelSelect") : t("map.select")}
+              note={selectMode ? t("map.selectExitTitle") : t("map.selectEnterTitle")}
+              variant={selectMode ? "danger" : "secondary"}
+              size="sm"
               onClick={toggleSelectMode}
-              title={
-                selectMode
-                  ? t("map.selectExitTitle")
-                  : t("map.selectEnterTitle")
-              }
-              className={[
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
-                selectMode
-                  ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
-                  : "bg-white text-ink border-wire hover:bg-canvas",
-              ].join(" ")}
-            >
-              {selectMode ? t("map.cancelSelect") : t("map.select")}
-            </button>
+            />
             <HelpHint hintKey="drag-select" />
 
             <MapTypeToggle value={mapType} onChange={setMapType} />
@@ -2131,13 +2045,16 @@ export default function PropertyMap() {
             {deleteAllSelectedButton}
 
             {/* Display all selected — shows / switches to the "selected" tab */}
-            <button
-              type="button"
+            {/* #37.45 (A065): ScanEye with the count as a badge; the name    */}
+            {/* and tooltip keep the words and the count.                     */}
+            <IconButton
+              icon={ScanEye}
+              label={`${t("map.displayAllSelected")} (${selectedIds.size})`}
+              count={selectedIds.size}
+              variant="secondary"
+              size="lg"
               onClick={() => { setShowTabs(true); setActiveTab("selected"); }}
-              className={buttonClass({ variant: "secondary", size: "lg" })}
-            >
-              {t("map.displayAllSelected")} ({selectedIds.size})
-            </button>
+            />
             <HelpHint hintKey="map-selected-tab" />
           </div>
         )}

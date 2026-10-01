@@ -34,7 +34,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Save, X } from "lucide-react";
+import { Import, Save, ScanText, X } from "lucide-react";
 import { useQueryClient }   from "@tanstack/react-query";
 import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
@@ -44,7 +44,6 @@ import { IconButton }        from "@/lib/ui/icon-button";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
-import { buttonClass } from "@/lib/ui/button-styles";
 // Slice #34.20 — this dialog makes two of the three offers, and the
 // coordinate one is the copy `calculation-view.tsx` also held.
 // Slice #34.23 — and the list the coordinate sentence names. The photo picker
@@ -992,14 +991,16 @@ export function AddPropertyDialog({ onClose }: Props) {
 
               <div className="flex justify-end gap-2">
                 <BackButton onClick={() => { setStep("choice"); setError(null); setSelectedFile(null); }} disabled={isBusy} label={t("back")} />
-                <button
-                  type="button"
+                {/* #37.45 (A072): ScanText + „Procesează imaginea". */}
+                <IconButton
+                  icon={ScanText}
+                  label={t("processButton")}
+                  showLabel
+                  variant="primary"
+                  size="lg"
                   onClick={() => { void handleProcess(); }}
                   disabled={isBusy || !selectedFile}
-                  className={buttonClass({ variant: "primary", size: "lg" })}
-                >
-                  {t("processButton")}
-                </button>
+                />
               </div>
             </div>
           )}
@@ -1157,14 +1158,16 @@ export function AddPropertyDialog({ onClose }: Props) {
 
               <div className="flex justify-end gap-2">
                 <BackButton onClick={() => { resetToChoice(); }} disabled={isBusy} label={t("back")} />
-                <button
-                  type="button"
+                {/* #37.45 (A073): Import + „Importă". */}
+                <IconButton
+                  icon={Import}
+                  label={t("importButton")}
+                  showLabel
+                  variant="primary"
+                  size="lg"
                   onClick={() => { void handleImportText(); }}
                   disabled={isBusy || !textFile}
-                  className={buttonClass({ variant: "primary", size: "lg" })}
-                >
-                  {t("importButton")}
-                </button>
+                />
               </div>
             </div>
           )}
@@ -1224,14 +1227,16 @@ export function AddPropertyDialog({ onClose }: Props) {
 
               <div className="flex justify-end gap-2">
                 <BackButton onClick={() => { resetToChoice(); }} disabled={isBusy} label={t("back")} />
-                <button
-                  type="button"
+                {/* #37.45 (A073): Import + „Importă tot". */}
+                <IconButton
+                  icon={Import}
+                  label={t("importAllButton")}
+                  showLabel
+                  variant="primary"
+                  size="lg"
                   onClick={() => { void handleImportFolder(); }}
                   disabled={isBusy || folderFiles.length === 0}
-                  className={buttonClass({ variant: "primary", size: "lg" })}
-                >
-                  {t("importAllButton")}
-                </button>
+                />
               </div>
             </div>
           )}

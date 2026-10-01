@@ -82,7 +82,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Save, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -776,26 +776,26 @@ export function DocumentTypeFormEditor({
                               {/* `aria-disabled`, not `disabled`: the boundary
                                   is still announced, but the button keeps focus
                                   when a row reaches the end of the list. */}
-                              <button
-                                type="button"
+                              {/* #37.45 (A068): ArrowUp / ArrowDown; the name they
+                                  already had („Mută … mai sus") is the tooltip. */}
+                              <IconButton
+                                icon={ArrowUp}
+                                label={t("moveUpAria", { label })}
+                                variant="secondary"
+                                size="xs"
                                 onClick={() => move(index, -1, label)}
                                 disabled={saving}
                                 aria-disabled={index === 0}
-                                aria-label={t("moveUpAria", { label })}
-                                className={buttonClass({ variant: "secondary", size: "xs" })}
-                              >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
+                              />
+                              <IconButton
+                                icon={ArrowDown}
+                                label={t("moveDownAria", { label })}
+                                variant="secondary"
+                                size="xs"
                                 onClick={() => move(index, 1, label)}
                                 disabled={saving}
                                 aria-disabled={index === rows.length - 1}
-                                aria-label={t("moveDownAria", { label })}
-                                className={buttonClass({ variant: "secondary", size: "xs" })}
-                              >
-                                ↓
-                              </button>
+                              />
                             </div>
                           </td>
 

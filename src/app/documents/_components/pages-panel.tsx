@@ -36,7 +36,7 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Maximize2, Minimize2, Printer, Save, Trash2, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, Maximize2, Minimize2, Printer, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import {
@@ -650,13 +650,15 @@ export function PagesPanel({
           )}
           {bigPage && <HelpHint hintKey="big-page-zoom" />}
           {mode === "edit" && (
-            <button
-              type="button"
+            // #37.45 (A052): FilePlus. The name keeps its „+" — e2e finds
+            // the button by „+ Adaugă pagină", as #37.44 kept „+ Adaugă".
+            <IconButton
+              icon={FilePlus}
+              label={`+ ${t("addPage")}`}
+              variant="primary"
+              size="sm"
               onClick={() => setDialogOpen(true)}
-              className={buttonClass({ variant: "primary", size: "sm", className: "gap-1" })}
-            >
-              + {t("addPage")}
-            </button>
+            />
           )}
         </div>
       </div>
@@ -1005,15 +1007,20 @@ function DownloadPrompt({
         </p>
         <p className="mt-1 text-xs text-fade">{t(messageKey)}</p>
       </div>
-      <a
+      {/* #37.45 (A051): Download, icon-only. The „↓" was a glyph standing
+          in for the icon, outside the message, so the name is the message's
+          own „Descarcă" — as #37.42 dropped „→" from „Deschide". next/link
+          leaves a link with `download` or a `target` to the browser. */}
+      <IconButton
         href={viewData.url}
         download={viewData.fileName}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
-      >
-        ↓ {t("viewer.download")}
-      </a>
+        icon={Download}
+        label={t("viewer.download")}
+        variant="primary"
+        size="md"
+      />
     </div>
   );
 }
@@ -1229,13 +1236,14 @@ function AddPageDialog({
               className="sr-only"
               aria-label={t("dialog.upload")}
             />
-            <button
-              type="button"
+            {/* #37.45 (A050): Upload, icon-only; „Încarcă" is its name and tooltip. */}
+            <IconButton
+              icon={Upload}
+              label={t("dialog.upload")}
+              variant="secondary"
+              size="md"
               onClick={() => fileInputRef.current?.click()}
-              className={buttonClass({ variant: "secondary", size: "md" })}
-            >
-              {t("dialog.upload")}
-            </button>
+            />
             {stagedFile && (
               <span
                 className="max-w-[180px] truncate text-sm text-ink dark:text-zinc-300"

@@ -39,9 +39,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations }     from "next-intl";
-import { ArrowRight }          from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { IconButton }          from "@/lib/ui/icon-button";
-import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -490,14 +489,18 @@ export function ProcessPanel({ documentId }: Props) {
           actual next step. */}
       {!isAlreadyDone && !isSuccess && (
         <div className="flex items-center gap-3">
-          <button
-            type="button"
+          {/* #37.45 (A049): Play + „Procesează"; working, „Se procesează…"
+              with the spinner in the icon's place. */}
+          <IconButton
+            icon={Play}
+            label={processing ? t("processing") : t("buttonLabel")}
+            busy={processing}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={handleProcess}
             disabled={processing}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {processing ? t("processing") : t("buttonLabel")}
-          </button>
+          />
         </div>
       )}
     </section>

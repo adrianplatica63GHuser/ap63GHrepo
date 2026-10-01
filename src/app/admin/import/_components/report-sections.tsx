@@ -20,11 +20,12 @@
  * always" is not "always" and the evidence should still be reachable.
  */
 
+import { Download } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { buildReportHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { formatMb } from "@/lib/ui/format-mb";
 import type { ImportForecast } from "@/lib/import/preflight";
 import type { Finding, ImportReport, SkippedGroup } from "@/lib/import/checks";
@@ -324,13 +325,15 @@ export function ReportSections({
       {/* The take-away copy. Offered even when nothing was found, because
           "this folder is clean" is itself worth filing. */}
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-        <button
-          type="button"
+        {/* #37.45 (A051): Download, icon-only; „Descarcă această listă" is
+            its name and tooltip, and the hint below still says what it is. */}
+        <IconButton
+          icon={Download}
+          label={t("downloadButton")}
+          variant="secondary"
+          size="md"
           onClick={handleDownload}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("downloadButton")}
-        </button>
+        />
         <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("downloadHint")}</p>
       </div>
     </section>

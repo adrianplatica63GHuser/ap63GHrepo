@@ -199,13 +199,13 @@
       "loading": "Loading map data…",
       "loadError": "Failed to load map data",
       "openLink": "Open",
-      "select": "⬚ Select",
-      "cancelSelect": "✕ Cancel select",
+      "select": "Select",
+      "cancelSelect": "Cancel select",
       "selectEnterTitle": "Enter selection mode — drag to select properties for deletion",
       "selectExitTitle": "Exit selection mode",
       "miniMap": {
-        "draw": "✏ Draw",
-        "done": "✓ Done",
+        "draw": "Draw",
+        "done": "Done",
         "hintFirst": "Click map to place first corner",
         "hintMore": "Click map to add corners",
         "hintClose": "Click map to add corners · click corner 1 to close"

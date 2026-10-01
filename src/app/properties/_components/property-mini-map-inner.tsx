@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, PenTool } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
@@ -383,25 +385,28 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
       <div className="absolute bottom-2 left-2 z-10 flex items-center gap-2">
         {!drawing ? (
           <>
-            <button
-              type="button"
+            {/* #37.45 (A066): PenTool / Check, icon-only, the words as the
+                name and tooltip. „✏" and „✓" were glyphs in the messages,
+                standing in for the icons; the messages lost them. */}
+            <IconButton
+              icon={PenTool}
+              label={t("map.miniMap.draw")}
+              variant="secondary"
+              size="sm"
               onClick={() => setDrawing(true)}
-              className="rounded shadow border border-wire bg-white px-2.5 py-1 text-xs font-semibold text-ink hover:bg-canvas transition-colors"
-            >
-              {t("map.miniMap.draw")}
-            </button>
+            />
             <HelpHint hintKey="map-draw-corners" />
             {corners.length > 0 && <HelpHint hintKey="map-drag-corner" />}
           </>
         ) : (
           <>
-            <button
-              type="button"
+            <IconButton
+              icon={Check}
+              label={t("map.miniMap.done")}
+              variant="primary"
+              size="sm"
               onClick={exitDraw}
-              className="rounded shadow border border-blue-500 bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
-            >
-              {t("map.miniMap.done")}
-            </button>
+            />
             <span className="rounded bg-black/50 px-2 py-0.5 text-xs text-white select-none">
               {corners.length === 0
                 ? t("map.miniMap.hintFirst")

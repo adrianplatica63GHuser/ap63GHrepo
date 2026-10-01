@@ -35,7 +35,7 @@ the application says 611.87 and 614.42 — the application is right; the file's 
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-PROP-03 Teren din fisier` | „v 0", „Suprafață calculată (m²)" **611.87**, and „Puncte de contur" with „Afișare: DD DMS Stereo 70", a table Nr. · Nr. orig. · Nord (m) · Est (m), four rows 16–19, each with „↑", „↓", „Editează" and „Șterge", then „+ Adaugă punct" |
+| 1 | Opens `TC-PROP-03 Teren din fisier` | „v 0", „Suprafață calculată (m²)" **611.87**, and „Puncte de contur" with „Afișare: DD DMS Stereo 70", a table Nr. · Nr. orig. · Nord (m) · Est (m), four rows 16–19, each with „Mută mai sus", „Mută mai jos" (↑ / ↓ icons since #37.45), „Editează" and „Șterge", then „+ Adaugă punct" |
 | 2 | Presses „Editează" on row 3 (Nr. orig. 18, 318659.52 / 573567.20) | The row turns into two inputs, „Nord (m)" and „Est (m)", holding its values, with „Salvează" and „Anulează" on the row |
 | 3 | Changes „Est (m)" to `573570.20` — three metres east — and presses the row's „Salvează" | The row reads 318659.52 / **573570.20**; the area reads **614.42** at once; **„Modificări nesalvate"** appears — nothing is written yet |
 | 4 | Presses „Salvează" at the bottom of the form | Stays on the property: **„v 1"**, „2 versiuni" |

@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
+import { ArrowRight, Link as LinkIcon, ListChecks, ScanText, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import {
@@ -344,22 +343,27 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
               : t("instrumentsPending", { count: pendingCount })}
         </p>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
+          {/* #37.45 (A048, A047): icon + the words; re-reading shows
+              „Se citește…" with the spinner in the icon's place. */}
+          <IconButton
+            icon={ListChecks}
+            label={t("openLinker")}
+            showLabel
+            variant="primary"
+            size="lg"
             onClick={() => setLinkerOpen(true)}
             disabled={pendingCount === 0 || rereading}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("openLinker")}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={ScanText}
+            label={rereading ? t("rereading") : t("reread")}
+            busy={rereading}
+            showLabel
+            variant="secondary"
+            size="lg"
             onClick={handleReread}
             disabled={rereading}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {rereading ? t("rereading") : t("reread")}
-          </button>
+          />
         </div>
         {/*
           The cost, where the button is, rather than in a hint nobody opens.

@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Import, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { ProgressBar } from "@/components/progress-bar";
@@ -287,13 +287,16 @@ function DonePhase({
         ✓ {t("doneMessage", { count })}
       </p>
       <div className="flex justify-end">
-        <button
-          type="button"
+        {/* #37.45 (A073): Import + „Importă Fișierele (n)", on buttonClass's
+            primary rather than a hand-written cta class. */}
+        <IconButton
+          icon={Import}
+          label={t("importFilesButton", { count: totalFiles })}
+          showLabel
+          variant="primary"
+          size="lg"
           onClick={onImport}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
-        >
-          {t("importFilesButton", { count: totalFiles })}
-        </button>
+        />
       </div>
     </div>
   );

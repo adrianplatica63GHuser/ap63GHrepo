@@ -13,7 +13,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { ArrowLeft, Building2, Minimize2, MousePointerClick, Pencil, Save, Trash2, User, X } from "lucide-react";
+import { ArrowLeft, Building2, Minimize2, MousePointerClick, Pencil, Save, Sparkles, Trash2, User, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -2177,8 +2177,17 @@ export function DocumentForm({
                 title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
                 className="inline-flex"
               >
-                <button
-                  type="button"
+                {/* #37.45 (A046): Sparkles + the words — „AI" stays on screen,
+                    because the word says it takes time and calls a paid
+                    service. Working, the words are „Se citește documentul…"
+                    as before, and the spinner takes the icon's place. */}
+                <IconButton
+                  icon={Sparkles}
+                  label={aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
+                  busy={aiDiscovering}
+                  showLabel
+                  variant="secondary"
+                  size="lg"
                   // Slice #27.04: also blocked while nobody can say which type
                   // this document is on. A re-run would open the review step on
                   // `selectedDocumentTypeId` — which in that state is the type
@@ -2186,10 +2195,7 @@ export function DocumentForm({
                   // clears the very banner explaining why not to.
                   disabled={!hasPages || busy || typeMoveUnresolved}
                   onClick={handleAiDiscover}
-                  className={buttonClass({ variant: "secondary", size: "lg" })}
-                >
-                  {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
-                </button>
+                />
               </span>
             );
           })()}
