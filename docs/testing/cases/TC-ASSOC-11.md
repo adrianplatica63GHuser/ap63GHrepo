@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-09-26 |
+| **Last green** | 2026-09-30 |
 
 ## What this proves
 
@@ -55,6 +55,8 @@ asked, and „Nicio persoană corelată" follows. Then „Șterge" and **„Da"*
 („Ștergeți persoana juridică?") and on the person („Ștergeți persoana?").
 
 ## Notes from the runs
+
+**2026-09-30 — rewritten for the directional role, `automated`, green (Slice #37.28).** Ion is ticked as „Reprezentant legal / Mandatar" from the company's screen; the company reads that, Ion's „Persoane" reads „Reprezentat / Mandant". Green in the test runner's `full-db` `20261001T000715Z-325` on `17d3397` (e2e 38 passed). FU-221 resolved.
 
 **2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 

@@ -1,6 +1,6 @@
 /**
  * Case:   TC-ASSOC-09 — Două persoane corelate, citite corect din ambele capete
- * Source: docs/testing/cases/TC-ASSOC-09.md, „Last green" 2026-09-25
+ * Source: docs/testing/cases/TC-ASSOC-09.md, „Last green" 2026-09-30
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

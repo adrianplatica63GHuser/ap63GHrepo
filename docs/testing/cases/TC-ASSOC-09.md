@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-09-25 |
+| **Last green** | 2026-09-30 |
 
 ## What this proves
 
@@ -58,6 +58,8 @@ On either person's „Persoane", select the row's radio and press „Dezasociaz�
 corelată". Then delete both people: open each, „Șterge" at the bottom of the form, „Da".
 
 ## Notes from the runs
+
+**2026-09-30 — rewritten for the directional role, `automated`, green (Slice #37.28).** Mihai is ticked as „Părinte" from Ana's screen; Ana's „Persoane" reads „Părinte", Mihai's reads „Fiică". Green in the test runner's `full-db` `20261001T000715Z-325` on `17d3397` (e2e 38 passed). FU-221 resolved.
 
 **2026-09-25 — `automated` (Slice #36.19).** Green in the test runner's whole `npm run e2e`,
 result `20260925T205914Z-28808` on `7195b77` (23 tests); the spec is named in the catalogue's `Spec` column.

@@ -1,6 +1,6 @@
 /**
  * Case:   TC-ASSOC-11 — Persoană fizică legată de o firmă, citită din ambele capete
- * Source: docs/testing/cases/TC-ASSOC-11.md, „Last green" 2026-09-26
+ * Source: docs/testing/cases/TC-ASSOC-11.md, „Last green" 2026-09-30
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
