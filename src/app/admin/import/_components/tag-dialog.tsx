@@ -18,6 +18,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { ProgressBar } from "@/components/progress-bar";
 import { parseFolderName } from "@/lib/import/folder-utils";
@@ -156,13 +158,13 @@ export function TagDialog({ folders, totalFiles, onConfirm, onCancel }: Props) {
         {/* Footer — only in confirm phase */}
         {phase === "confirm" && (
           <div className="flex items-center justify-end gap-3 border-t border-card-rim px-5 py-3 dark:border-zinc-700">
-            <button
-              type="button"
+            <IconButton
+              icon={X}
+              label={t("cancelButton")}
+              variant="secondary"
+              size="md"
               onClick={onCancel}
-              className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-            >
-              {t("cancelButton")}
-            </button>
+            />
             <button
               type="button"
               onClick={handleConfirm}

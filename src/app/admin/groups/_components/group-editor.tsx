@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Save } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
@@ -291,14 +293,16 @@ export function GroupEditor({
 
         {/* Save */}
         <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-          <button
-            type="button"
+          <IconButton
+            icon={Save}
+            label={t("saveGroup")}
+            busy={mutation.isPending}
+            busyLabel={t("saving")}
+            variant="primary"
+            size="lg"
             onClick={() => mutation.mutate()}
             disabled={!dirty || !descriptionValid || mutation.isPending}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {mutation.isPending ? t("saving") : t("saveGroup")}
-          </button>
+          />
           <HelpHint hintKey="group-staged-members" />
           {dirty && (
             <span className="text-xs text-fade dark:text-zinc-500">

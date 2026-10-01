@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Pencil, Save, Trash2, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
@@ -310,22 +312,24 @@ function CornerInputRow({
       {/* Slice #37.14: may wrap under the fixed columns — the row grows downward. */}
       <td className="px-3 py-2">
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
+          <IconButton
+            icon={Save}
+            label={t("save")}
+            busy={converting}
+            busyLabel={t("converting")}
+            variant="primary"
+            size="sm"
             onClick={handleSave}
             disabled={converting}
-            className={buttonClass({ variant: "primary", size: "sm" })}
-          >
-            {converting ? t("converting") : t("save")}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={X}
+            label={t("cancel")}
+            variant="secondary"
+            size="sm"
             onClick={onCancel}
             disabled={converting}
-            className={buttonClass({ variant: "secondary", size: "sm" })}
-          >
-            {t("cancel")}
-          </button>
+          />
         </div>
       </td>
     </tr>
@@ -602,20 +606,20 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                       >
                         ↓
                       </button>
-                      <button
-                        type="button"
+                      <IconButton
+                        icon={Pencil}
+                        label={t("edit")}
+                        variant="secondary"
+                        size="xs"
                         onClick={() => { setEditingIdx(idx); setAdding(false); }}
-                        className={buttonClass({ variant: "secondary", size: "xs" })}
-                      >
-                        {t("edit")}
-                      </button>
-                      <button
-                        type="button"
+                      />
+                      <IconButton
+                        icon={Trash2}
+                        label={t("delete")}
+                        variant="danger"
+                        size="xs"
                         onClick={() => handleDelete(idx)}
-                        className={buttonClass({ variant: "danger", size: "xs" })}
-                      >
-                        {t("delete")}
-                      </button>
+                      />
                     </div>
                   </td>
                   )}

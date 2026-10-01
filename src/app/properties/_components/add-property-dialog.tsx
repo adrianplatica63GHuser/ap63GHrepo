@@ -34,6 +34,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { Save, X } from "lucide-react";
 import { useQueryClient }   from "@tanstack/react-query";
 import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
@@ -820,15 +821,14 @@ export function AddPropertyDialog({ onClose }: Props) {
             buttonClass paints the inert state, and a control that invites a
             click it will not honour is the lying button #23.05.UX removed.
           */}
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("cancel")}
+            variant="bare"
+            size="md"
             onClick={onClose}
             disabled={isBusy}
-            aria-label={t("cancel")}
-            className={buttonClass({ variant: "bare", size: "md" })}
-          >
-            ✕
-          </button>
+          />
         </div>
 
         {/*
@@ -1093,15 +1093,15 @@ export function AddPropertyDialog({ onClose }: Props) {
 
               <div className="flex justify-end gap-2">
                 <BackButton onClick={() => { setStep("upload"); setError(null); }} disabled={isBusy} label={t("back")} />
-                <button
-                  type="button"
+                <IconButton
+                  icon={Save}
+                  label={t("saveCount1")}
+                  busy={!(saveCount === 1)}
+                  busyLabel={t("savingProperties", { count: saveCount })}
+                  variant="primary"
+                  size="lg"
                   onClick={handleConfirmSave}
-                  className={buttonClass({ variant: "primary", size: "lg" })}
-                >
-                  {saveCount === 1
-                    ? t("saveCount1")
-                    : t("savingProperties", { count: saveCount })}
-                </button>
+                />
               </div>
             </div>
           )}
@@ -1254,13 +1254,13 @@ export function AddPropertyDialog({ onClose }: Props) {
               <p className={`max-w-sm text-center ${NO_IDENTITY_BOX}`} role="note">
                 {t("noCadastralIdentityResult")}
               </p>
-              <button
-                type="button"
+              <IconButton
+                icon={X}
+                label={t("close")}
+                variant="primary"
+                size="lg"
                 onClick={onClose}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {t("close")}
-              </button>
+              />
             </div>
           )}
 
@@ -1276,13 +1276,13 @@ export function AddPropertyDialog({ onClose }: Props) {
                   ? t("noCadastralIdentityResult")
                   : t("noCadastralIdentityResultPlural")}
               </p>
-              <button
-                type="button"
+              <IconButton
+                icon={X}
+                label={t("close")}
+                variant="primary"
+                size="lg"
                 onClick={onClose}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {t("close")}
-              </button>
+              />
             </div>
           )}
 

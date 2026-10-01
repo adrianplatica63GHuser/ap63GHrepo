@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Lightbulb, X } from "lucide-react";
-import { IconTooltip } from "@/lib/ui/icon-button";
+import { IconTooltip, IconButton } from "@/lib/ui/icon-button";
 import { useHelpData, pickLocaleText } from "./use-help-data";
 import type { HelpScreenKey } from "@/lib/help/registry";
 import { resolveRegisteredHelpScreenKey } from "@/lib/help/route-map";
@@ -77,14 +77,8 @@ export function HelpHint({ hintKey, screenKey, className }: Props) {
           <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-lg border border-card-rim bg-white dark:bg-zinc-900 shadow-xl p-3">
             <div className="flex items-start justify-between gap-2">
               <p className="text-xs text-ink dark:text-zinc-200 whitespace-pre-wrap">{text}</p>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                aria-label={t("close")}
-                className="text-fade hover:text-ink dark:hover:text-zinc-200 shrink-0"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              {/* #37.43 (A025): through IconButton — the same X, now with its tooltip. */}
+              <IconButton icon={X} label={t("close")} variant="bare" size="xs" className="shrink-0" onClick={() => setIsOpen(false)} />
             </div>
           </div>
         </>

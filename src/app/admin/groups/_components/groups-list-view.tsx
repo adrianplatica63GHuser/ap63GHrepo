@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Save, Trash2, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   GROUP_TARGET_TYPES,
@@ -170,19 +171,23 @@ function AddForm({ onClose }: { onClose: () => void }) {
       )}
 
       <div className="mt-3 flex gap-2">
-        <button
+        <IconButton
+          icon={Save}
+          label={t("save")}
+          busy={mutation.isPending}
+          busyLabel={t("saving")}
+          variant="primary"
+          size="sm"
           onClick={() => mutation.mutate()}
           disabled={!canSave}
-          className={buttonClass({ variant: "primary", size: "sm" })}
-        >
-          {mutation.isPending ? t("saving") : t("save")}
-        </button>
-        <button
+        />
+        <IconButton
+          icon={X}
+          label={t("cancel")}
+          variant="secondary"
+          size="sm"
           onClick={onClose}
-          className={buttonClass({ variant: "secondary", size: "sm" })}
-        >
-          {t("cancel")}
-        </button>
+        />
       </div>
     </div>
   );
@@ -284,18 +289,20 @@ export function GroupsListView({ about }: { about?: ReactNode } = {}) {
                 </td>
                 <td className="px-4 py-2">
                   <div className="flex flex-wrap gap-2">
-                    <Link
+                    <IconButton
                       href={`/admin/groups/${g.id}`}
-                      className="rounded border border-wire bg-white px-2 py-0.5 text-xs text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                    >
-                      {t("table.edit")}
-                    </Link>
-                    <button
+                      icon={Pencil}
+                      label={t("table.edit")}
+                      variant="secondary"
+                      size="xs"
+                    />
+                    <IconButton
+                      icon={Trash2}
+                      label={t("table.delete")}
+                      variant="danger"
+                      size="xs"
                       onClick={() => setConfirmDeleteId(g.id)}
-                      className={buttonClass({ variant: "danger", size: "xs" })}
-                    >
-                      {t("table.delete")}
-                    </button>
+                    />
                   </div>
                 </td>
               </tr>

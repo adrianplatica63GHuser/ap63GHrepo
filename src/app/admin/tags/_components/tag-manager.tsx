@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { Save, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -147,22 +149,24 @@ function RenameModal({
         </div>
 
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("rename.cancel")}
+            variant="secondary"
+            size="md"
             onClick={onClose}
             disabled={saving}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {t("rename.cancel")}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={Save}
+            label={t("rename.save")}
+            busy={saving}
+            busyLabel={t("rename.saving")}
+            variant="primary"
+            size="md"
             onClick={handleSave}
             disabled={saving || !to.trim() || to.trim().toLowerCase() === from}
-            className={buttonClass({ variant: "primary", size: "md" })}
-          >
-            {saving ? t("rename.saving") : t("rename.save")}
-          </button>
+          />
         </div>
       </div>
     </>
@@ -308,14 +312,14 @@ function MergeModal({
         )}
 
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("merge.cancel")}
+            variant="secondary"
+            size="md"
             onClick={onClose}
             disabled={saving}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {t("merge.cancel")}
-          </button>
+          />
           <button
             type="button"
             onClick={handleSave}

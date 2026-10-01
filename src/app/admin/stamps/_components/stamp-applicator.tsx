@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Save } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
@@ -359,14 +361,16 @@ export function StampApplicator({
 
         {/* Save */}
         <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-          <button
-            type="button"
+          <IconButton
+            icon={Save}
+            label={t("applicator.saveStamps")}
+            busy={mutation.isPending}
+            busyLabel={t("saving")}
+            variant="primary"
+            size="lg"
             onClick={() => mutation.mutate()}
             disabled={!dirty || mutation.isPending}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {mutation.isPending ? t("saving") : t("applicator.saveStamps")}
-          </button>
+          />
           <HelpHint hintKey="stamp-staged-changes" />
           {dirty && (
             <span className="text-xs text-fade dark:text-zinc-500">

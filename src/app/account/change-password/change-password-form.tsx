@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
@@ -113,13 +115,13 @@ export function ChangePasswordForm() {
         >
           {state === "saving" ? t("buttonSaving") : t("buttonSave")}
         </button>
-        <button
-          type="button"
+        <IconButton
+          icon={X}
+          label={t("buttonCancel")}
+          variant="secondary"
+          size="lg"
           onClick={() => router.back()}
-          className={buttonClass({ variant: "secondary", size: "lg" })}
-        >
-          {t("buttonCancel")}
-        </button>
+        />
       </div>
     </form>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Save, Trash2, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -173,19 +175,23 @@ function CreateForm({ onClose }: { onClose: () => void }) {
       )}
 
       <div className="mt-3 flex gap-2">
-        <button
+        <IconButton
+          icon={Save}
+          label={t("save")}
+          busy={mutation.isPending}
+          busyLabel={t("saving")}
+          variant="primary"
+          size="sm"
           onClick={() => mutation.mutate()}
           disabled={!canSave}
-          className={buttonClass({ variant: "primary", size: "sm" })}
-        >
-          {mutation.isPending ? t("saving") : t("save")}
-        </button>
-        <button
+        />
+        <IconButton
+          icon={X}
+          label={t("cancel")}
+          variant="secondary"
+          size="sm"
           onClick={onClose}
-          className={buttonClass({ variant: "secondary", size: "sm" })}
-        >
-          {t("cancel")}
-        </button>
+        />
       </div>
     </div>
   );
@@ -295,12 +301,13 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
                     >
                       {t("table.apply")}
                     </Link>
-                    <button
+                    <IconButton
+                      icon={Trash2}
+                      label={t("table.delete")}
+                      variant="danger"
+                      size="xs"
                       onClick={() => setConfirmDeleteId(s.id)}
-                      className={buttonClass({ variant: "danger", size: "xs" })}
-                    >
-                      {t("table.delete")}
-                    </button>
+                    />
                   </div>
                 </td>
               </tr>

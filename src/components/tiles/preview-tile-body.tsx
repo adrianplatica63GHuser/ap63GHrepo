@@ -7,8 +7,7 @@
  * fields, it offers „Deschide" and „Închide" and nothing that could write.
  */
 import type { CSSProperties } from "react";
-import { ArrowRight } from "lucide-react";
-import { buttonClass } from "@/lib/ui/button-styles";
+import { ArrowRight, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import {
   PREVIEW_FILL,
@@ -100,9 +99,8 @@ export function PreviewTileBody({
               onOpen(openHref);
             }}
           />
-          <button type="button" onClick={onClose} className={buttonClass({ variant: "secondary", size: "xs" })}>
-            {labels.close}
-          </button>
+          {/* #37.43 (A025): X, „Închide" its name and tooltip. */}
+          <IconButton icon={X} label={labels.close} variant="secondary" size="xs" onClick={onClose} />
         </span>
       </div>
       {/* Slice #37.33: labels above their values, in the record's screen's rows and widths;

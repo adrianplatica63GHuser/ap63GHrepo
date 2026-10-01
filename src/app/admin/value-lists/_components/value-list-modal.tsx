@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { Pencil, Save, Trash2, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
   useQuery,
@@ -626,19 +628,23 @@ function EditForm({
       )}
 
       <div className="mt-3 flex gap-2">
-        <button
+        <IconButton
+          icon={Save}
+          label={t("form.save")}
+          busy={mutation.isPending}
+          busyLabel={t("form.saving")}
+          variant="primary"
+          size="sm"
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          className={buttonClass({ variant: "primary", size: "sm" })}
-        >
-          {mutation.isPending ? t("form.saving") : t("form.save")}
-        </button>
-        <button
+        />
+        <IconButton
+          icon={X}
+          label={t("form.cancel")}
+          variant="secondary"
+          size="sm"
           onClick={onClose}
-          className={buttonClass({ variant: "secondary", size: "sm" })}
-        >
-          {t("form.cancel")}
-        </button>
+        />
       </div>
     </div>
   );
@@ -1317,13 +1323,13 @@ export function ValueListModal({
           >
             {t(`lists.${meta.titleKey}`)}
           </h2>
-          <button
+          <IconButton
+            icon={X}
+            label={t("modal.close")}
+            variant="bare"
+            size="md"
             onClick={onClose}
-            className={buttonClass({ variant: "bare", size: "md" })}
-            aria-label={t("modal.close")}
-          >
-            ✕
-          </button>
+          />
         </div>
 
         {/* Body */}
@@ -1579,13 +1585,14 @@ export function ValueListModal({
                       <td className="px-4 py-2">
                         {/* Slice #37.37: the buttons wrap inside the fixed actions column. */}
                         <div className="flex flex-wrap gap-2">
-                          <button
+                          <IconButton
+                            icon={Pencil}
+                            label={t("table.edit")}
+                            variant="secondary"
+                            size="xs"
                             onClick={() => startEdit(row)}
                             disabled={!!form}
-                            className={buttonClass({ variant: "secondary", size: "xs" })}
-                          >
-                            {t("table.edit")}
-                          </button>
+                          />
                           {/* Slice #27.03: the type's custom form. Document
                               types only — no other list has one. The count is
                               on the button rather than in a column of its own
@@ -1678,15 +1685,16 @@ export function ValueListModal({
                               })}
                             </button>
                           )}
-                          <button
+                          <IconButton
+                            icon={Trash2}
+                            label={t("table.delete")}
+                            variant="danger"
+                            size="xs"
                             onClick={(e) => {
                               deleteOpenerRef.current = e.currentTarget;
                               setConfirmDeleteId(row.id);
                             }}
-                            className={buttonClass({ variant: "danger", size: "xs" })}
-                          >
-                            {t("table.delete")}
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>

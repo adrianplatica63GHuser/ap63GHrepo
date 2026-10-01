@@ -47,6 +47,8 @@
  */
 
 import { useState } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
 import type { InstrumentPurpose, MatchSignal } from "@/lib/documents/referenced-instruments";
@@ -279,14 +281,13 @@ export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onCl
             <span className="whitespace-nowrap text-sm text-fade dark:text-zinc-400">
               {t("subtitle", { current: index + 1, total })}
             </span>
-            <button
-              type="button"
-              aria-label={t("close")}
+            <IconButton
+              icon={X}
+              label={t("close")}
+              variant="bare"
+              size="md"
               onClick={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
-              className="text-lg leading-none text-fade hover:text-ink dark:text-zinc-500 dark:hover:text-zinc-200"
-            >
-              ×
-            </button>
+            />
           </div>
         </div>
 
@@ -390,14 +391,14 @@ export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onCl
               >
                 {t("stubConfirm")}
               </button>
-              <button
-                type="button"
+              <IconButton
+                icon={X}
+                label={t("stubCancel")}
+                variant="secondary"
+                size="sm"
                 disabled={busy}
                 onClick={() => setStubbing(false)}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                {t("stubCancel")}
-              </button>
+              />
             </div>
           </div>
         ) : (

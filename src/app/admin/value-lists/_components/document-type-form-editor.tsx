@@ -82,6 +82,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Save, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -663,16 +665,17 @@ export function DocumentTypeFormEditor({
               </h2>
               <p className="mt-1 text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
             </div>
-            <button
+            {/* #37.43 (A025): X in place of the „✕" glyph; „Închide" its name and
+                tooltip. The ref stays: focus returns here (IconButton takes it). */}
+            <IconButton
               ref={closeRef}
-              type="button"
+              icon={X}
+              label={t("close")}
+              variant="bare"
+              size="md"
               onClick={(e) => requestClose(e.currentTarget)}
               disabled={saving}
-              className={buttonClass({ variant: "bare", size: "md" })}
-              aria-label={t("close")}
-            >
-              ✕
-            </button>
+            />
           </div>
 
           {/* ── Clear-only, and why ─────────────────────── (Slice #34.10) ──
@@ -1025,22 +1028,24 @@ export function DocumentTypeFormEditor({
           )}
 
           <div className="mt-6 flex justify-end gap-2">
-            <button
-              type="button"
+            <IconButton
+              icon={Save}
+              label={t("save")}
+              busy={saving}
+              busyLabel={t("saving")}
+              variant="primary"
+              size="sm"
               onClick={handleSave}
               disabled={saving}
-              className={buttonClass({ variant: "primary", size: "sm" })}
-            >
-              {saving ? t("saving") : t("save")}
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              icon={X}
+              label={t("cancel")}
+              variant="secondary"
+              size="sm"
               onClick={(e) => requestClose(e.currentTarget)}
               disabled={saving}
-              className={buttonClass({ variant: "secondary", size: "sm" })}
-            >
-              {t("cancel")}
-            </button>
+            />
           </div>
         </div>
       </div>

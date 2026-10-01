@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { IconButton } from "@/lib/ui/icon-button";
+import { Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,7 +12,6 @@ import {
   helpHintLabelKey,
   type HelpScreenKey,
 } from "@/lib/help/registry";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox, screenPanel, stepGridStyle } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -165,14 +166,17 @@ function SaveBar({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <button
-        type="button"
+      {/* #37.43 (A022): Save; „Se salvează…" its name while it works. */}
+      <IconButton
+        icon={Save}
+        label={saveLabel}
+        busy={pending}
+        busyLabel={savingLabel}
+        variant="primary"
+        size="lg"
         onClick={onSave}
         disabled={pending}
-        className={buttonClass({ variant: "primary", size: "lg" })}
-      >
-        {pending ? savingLabel : saveLabel}
-      </button>
+      />
       {success && !pending && (
         <span className="text-xs text-emerald-600 dark:text-emerald-400">{savedLabel}</span>
       )}

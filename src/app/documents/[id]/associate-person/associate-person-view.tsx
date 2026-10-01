@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -380,13 +382,13 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
         >
           {submitting ? t("associating") : t("associate")}
         </button>
-        <button
-          type="button"
+        <IconButton
+          icon={X}
+          label={t("cancel")}
+          variant="secondary"
+          size="lg"
           onClick={handleCancel}
-          className={buttonClass({ variant: "secondary", size: "lg" })}
-        >
-          {t("cancel")}
-        </button>
+        />
       </div>
       </AssociateTile>
       </AssociateRow>

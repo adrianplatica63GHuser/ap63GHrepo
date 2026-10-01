@@ -13,7 +13,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -2077,15 +2077,14 @@ export function DocumentForm({
               clickable and inert — setAssociatedEditing cannot beat !isOnLatest
               in the effectiveMode ternary above, so nothing unlocked. It is now
               disabled, and carries the reason in its title. */}
-          <button
-            type="button"
+          <IconButton
+            icon={Pencil}
+            label={t("buttons.modify")}
+            variant="secondary"
+            size="lg"
             onClick={() => setAssociatedEditing(true)}
             disabled={!isOnLatest}
-            title={!isOnLatest ? tShared("readonlyView.modifyNeedsLatest") : undefined}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t("buttons.modify")}
-          </button>
+          />
         </div>
       )
     ) : mode === "view" ? (
@@ -2098,53 +2097,55 @@ export function DocumentForm({
           onClick={() => router.back()}
         />
         <div className="flex items-center gap-3">
-          <button
+          <IconButton
+            icon={Save}
+            label={t("buttons.save")}
+            variant="primary"
+            size="lg"
             type="submit"
             form="document-form"
             disabled={saveDisabled}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("buttons.save")}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={Trash2}
+            label={t("buttons.delete")}
+            variant="danger"
+            size="lg"
             onClick={() => setShowCannotDelete(true)}
             disabled={submitting}
-            className={buttonClass({ variant: "danger", size: "lg" })}
-          >
-            {t("buttons.delete")}
-          </button>
+          />
         </div>
       </div>
     ) : (
       <div className="flex flex-col items-center gap-2 border-t border-crease pt-6 dark:border-zinc-800">
         <div className="flex items-center justify-center gap-3">
-          <button
+          <IconButton
+            icon={Save}
+            label={t("buttons.save")}
+            variant="primary"
+            size="lg"
             type="submit"
             form="document-form"
             disabled={saveDisabled}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("buttons.save")}
-          </button>
+          />
           {mode === "edit" && (
-            <button
-              type="button"
+            <IconButton
+              icon={Trash2}
+              label={t("buttons.delete")}
+              variant="danger"
+              size="lg"
               onClick={() => setConfirmDelete(true)}
               disabled={submitting}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {t("buttons.delete")}
-            </button>
+            />
           )}
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("buttons.cancel")}
+            variant="secondary"
+            size="lg"
             onClick={() => router.push("/documents")}
             disabled={submitting}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t("buttons.cancel")}
-          </button>
+          />
 
           {/* Slice #21.10.Import: AI-Discover — reads a document whose type the
               system does not understand yet and reports everything it can
@@ -2801,14 +2802,13 @@ function SurveyorPickerDialog({
           <h3 id="surveyor-picker-title" className="text-base font-semibold text-ink dark:text-zinc-100">
             {t("surveyorPicker.title")}
           </h3>
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("surveyorPicker.cancel")}
+            variant="bare"
+            size="md"
             onClick={onClose}
-            className={buttonClass({ variant: "bare", size: "md" })}
-            aria-label={t("surveyorPicker.cancel")}
-          >
-            ✕
-          </button>
+          />
         </div>
 
         {step === "choose-type" ? (
@@ -2833,13 +2833,13 @@ function SurveyorPickerDialog({
               </button>
             </div>
             <div className="flex justify-end">
-              <button
-                type="button"
+              <IconButton
+                icon={X}
+                label={t("surveyorPicker.cancel")}
+                variant="secondary"
+                size="lg"
                 onClick={onClose}
-                className={buttonClass({ variant: "secondary", size: "lg" })}
-              >
-                {t("surveyorPicker.cancel")}
-              </button>
+              />
             </div>
           </div>
         ) : (
@@ -2925,13 +2925,13 @@ function SurveyorPickerDialog({
                 size="md"
                 onClick={() => setStep("choose-type")}
               />
-              <button
-                type="button"
+              <IconButton
+                icon={X}
+                label={t("surveyorPicker.cancel")}
+                variant="secondary"
+                size="md"
                 onClick={onClose}
-                className={buttonClass({ variant: "secondary", size: "md" })}
-              >
-                {t("surveyorPicker.cancel")}
-              </button>
+              />
             </div>
           </div>
         )}

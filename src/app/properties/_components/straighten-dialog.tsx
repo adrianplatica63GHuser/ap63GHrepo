@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import type { PlanarPoint } from "@/lib/properties/area";
 import { buttonClass } from "@/lib/ui/button-styles";
 
@@ -229,13 +231,13 @@ export function StraightenDialog({
         <p className="mt-4 text-xs text-fade dark:text-zinc-400">{t("thenSave")}</p>
 
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("cancel")}
+            variant="secondary"
+            size="lg"
             onClick={onCancel}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t("cancel")}
-          </button>
+          />
           <button
             type="button"
             onClick={onConfirm}

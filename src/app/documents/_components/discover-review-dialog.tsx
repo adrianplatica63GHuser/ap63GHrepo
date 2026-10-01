@@ -70,8 +70,9 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Save, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
-import { buttonClass } from "@/lib/ui/button-styles";
 import type { DiscoverConfidence } from "@/lib/documents/discover-log";
 import {
   buildFieldHint,
@@ -1662,37 +1663,35 @@ export function DiscoverReviewDialog({
             )}
           </p>
           <div className="flex gap-2">
-            <button
+            {/* #37.43 (A024/A025): X — „Închide" or „Anulează", the same icon for
+                both (Adrian, A024/A025); the tooltip and the name still say
+                which. ⚠️ Slice #27.04: "Anulează" is a lie once anything has
+                been written. A user who has just been told a type was created
+                and to close the window should not have to press a button that
+                says the run is being cancelled — it reads as undoing the type
+                that now exists. Slice #27.04 too: `unresolved` is a dead end —
+                Save is disabled and cannot be re-armed — so this button is the
+                only exit and reads as the primary one. */}
+            <IconButton
               ref={closeRef}
-              type="button"
+              icon={X}
+              label={nothingToAdd || createdType !== null || unresolved ? t("close") : t("cancel")}
+              variant={nothingToAdd || unresolved ? "primary" : "secondary"}
+              size="lg"
               onClick={onClose}
               disabled={saving}
-              className={buttonClass({
-                // Slice #27.04: `unresolved` is a dead end — Save is disabled
-                // and cannot be re-armed — so this button is the only exit and
-                // reads as the primary one.
-                variant: nothingToAdd || unresolved ? "primary" : "secondary",
-                size: "lg",
-              })}
-            >
-              {/* ⚠️ Slice #27.04: "Anulează" is a lie once anything has been
-                  written. A user who has just been told a type was created and
-                  to close the window should not have to press a button that
-                  says the run is being cancelled — it reads as undoing the type
-                  that now exists. */}
-              {nothingToAdd || createdType !== null || unresolved
-                ? t("close")
-                : t("cancel")}
-            </button>
+            />
             {!nothingToAdd && (
-              <button
-                type="button"
+              <IconButton
+                icon={Save}
+                label={t("save")}
+                busy={saving}
+                busyLabel={t("saving")}
+                variant="primary"
+                size="lg"
                 onClick={handleSave}
                 disabled={!canSave}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {saving ? t("saving") : t("save")}
-              </button>
+              />
             )}
           </div>
         </div>

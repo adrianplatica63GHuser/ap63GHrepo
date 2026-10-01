@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -315,10 +317,14 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           className={buttonClass({ variant: "primary", size: "lg" })}>
           {submitting ? t("associating") : t("associate")}
         </button>
-        <button type="button" onClick={handleCancel} disabled={submitting}
-          className={buttonClass({ variant: "secondary", size: "lg" })}>
-          {t("cancel")}
-        </button>
+        <IconButton
+          icon={X}
+          label={t("cancel")}
+          variant="secondary"
+          size="lg"
+          onClick={handleCancel}
+          disabled={submitting}
+        />
         {selectedIds.size === 0 && !isLoading && displayList.length > 0 && (
           <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
         )}

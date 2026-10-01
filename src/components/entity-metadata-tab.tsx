@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, type ReactNode } from "react";
+import { Check, Save, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -432,15 +434,14 @@ function TagsSection({
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-zinc-800 px-3 py-1 text-sm text-ink dark:text-zinc-100"
             >
               {tag}
-              <button
-                type="button"
+              <IconButton
+                icon={X}
+                label={`${labelRemove} ${tag}`}
+                variant="bare-danger"
+                size="md"
                 onClick={() => handleRemove(tag)}
                 disabled={removing === tag}
-                aria-label={`${labelRemove} ${tag}`}
-                className={buttonClass({ variant: "bare-danger", size: "md" })}
-              >
-                ×
-              </button>
+              />
             </span>
           ))}
         </div>
@@ -586,15 +587,15 @@ function InlineGroupsSection({
                 </span>
               </Link>
               {isOnLatest && (
-                <button
-                  type="button"
+                <IconButton
+                  icon={X}
+                  label={`${labelRemove} ${g.code}`}
+                  variant="bare-danger"
+                  size="xs"
+                  className="ml-auto"
                   onClick={() => handleRemove(g.id)}
                   disabled={removing === g.id}
-                  aria-label={`${labelRemove} ${g.code}`}
-                  className={buttonClass({ variant: "bare-danger", size: "xs", className: "ml-auto" })}
-                >
-                  ×
-                </button>
+                />
               )}
             </li>
           ))}
@@ -739,15 +740,15 @@ function InlineStampsSection({
                 </span>
               </Link>
               {isOnLatest && (
-                <button
-                  type="button"
+                <IconButton
+                  icon={X}
+                  label={`${labelRemove} ${s.code}`}
+                  variant="bare-danger"
+                  size="xs"
+                  className="ml-auto"
                   onClick={() => handleRemove(s.id)}
                   disabled={removing === s.id}
-                  aria-label={`${labelRemove} ${s.code}`}
-                  className={buttonClass({ variant: "bare-danger", size: "xs", className: "ml-auto" })}
-                >
-                  ×
-                </button>
+                />
               )}
             </li>
           ))}
@@ -971,15 +972,15 @@ function CrossRefsSection({
               </div>
               {/* Delete — only the owner may remove */}
               {ref.isOwner && isOnLatest && (
-                <button
-                  type="button"
+                <IconButton
+                  icon={X}
+                  label={t("crossRef.remove")}
+                  variant="bare-danger"
+                  size="xs"
+                  className="shrink-0"
                   onClick={() => handleRemove(ref.id)}
                   disabled={removing === ref.id}
-                  aria-label={t("crossRef.remove")}
-                  className={buttonClass({ variant: "bare-danger", size: "xs", className: "shrink-0" })}
-                >
-                  ×
-                </button>
+                />
               )}
             </li>
           ))}
@@ -1561,14 +1562,18 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         {/* ── Unified Save button (Task #20) ───────────────────────────────── */}
         {isOnLatest && (
           <div className="flex items-center gap-3">
-            <button
-              type="button"
+            {/* #37.42/#37.43 (A022): Save; while „✓ Salvat" shows, a Check in its
+                place, then Save again — the after-save confirmation stays. */}
+            <IconButton
+              icon={saved ? Check : Save}
+              label={saved ? t("saved") : t("save")}
+              busy={saving}
+              busyLabel={t("saving")}
+              variant="primary"
+              size="lg"
               onClick={saveAll}
               disabled={saving || saved || !isDirty}
-              className={buttonClass({ variant: "primary", size: "lg" })}
-            >
-              {saved ? t("saved") : saving ? t("saving") : t("save")}
-            </button>
+            />
           </div>
         )}
 

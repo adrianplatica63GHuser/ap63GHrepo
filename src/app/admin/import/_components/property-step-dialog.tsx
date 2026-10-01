@@ -56,6 +56,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import type { FSEntry, FSFileEntry } from "@/lib/import/folder-utils";
 import {
@@ -912,13 +914,13 @@ export function PropertyStepDialog({
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-card-rim px-5 py-3 dark:border-zinc-700">
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("cancelButton")}
+            variant="secondary"
+            size="lg"
             onClick={handleCancel}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t("cancelButton")}
-          </button>
+          />
           <button
             type="button"
             onClick={handleConfirm}

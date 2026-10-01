@@ -184,7 +184,7 @@ import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
 import { ProgressBar } from "@/components/progress-bar";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import {
   IdCardPersonDialog,
@@ -7044,8 +7044,11 @@ export function BulkImportDialog({
             </div>
           )}
           {(done || importError !== null) && (
-            <button
-              type="button"
+            <IconButton
+              icon={X}
+              label={t("closeButton")}
+              variant="secondary"
+              size="lg"
               // ⚠️ `runLandedSomething`, not `done`, and a second adversarial
               // round is why: a loop that COMPLETED and produced nothing has no
               // conclusion to report, and the concluding message's one button
@@ -7086,10 +7089,7 @@ export function BulkImportDialog({
               // ⚠️ **Do not name the utility in prose here.** That guard scans
               // raw lines, so a comment quoting the class is an offender: this
               // exact sentence failed the suite once already.
-              className={buttonClass({ variant: "secondary", size: "lg" })}
-            >
-              {t("closeButton")}
-            </button>
+            />
           )}
           </div>
         </div>

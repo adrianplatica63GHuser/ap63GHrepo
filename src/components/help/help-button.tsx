@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { CircleHelp, X } from "lucide-react";
-import { IconTooltip } from "@/lib/ui/icon-button";
+import { IconTooltip, IconButton } from "@/lib/ui/icon-button";
 import { useHelpData, pickLocaleText } from "./use-help-data";
 import type { HelpScreenKey } from "@/lib/help/registry";
 
@@ -84,14 +84,8 @@ export function HelpButton({ screenKey, className, align = "right" }: Props) {
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                aria-label={t("close")}
-                className="text-fade hover:text-ink dark:hover:text-zinc-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {/* #37.43 (A025): through IconButton — the same X, now with its tooltip. */}
+              <IconButton icon={X} label={t("close")} variant="bare" size="xs" onClick={() => setIsOpen(false)} />
             </div>
 
             {background && (

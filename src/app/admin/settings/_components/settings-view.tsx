@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Save, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { DevOnly } from "@/components/dev-only";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -198,21 +199,25 @@ function TimeFramesPanel() {
           )}
 
           <div className="flex gap-3">
-            <button
+            <IconButton
+              icon={Save}
+              label={t("timeFrames.save")}
+              busy={saving}
+              busyLabel={t("timeFrames.saving")}
+              variant="primary"
+              size="lg"
               onClick={handleSave}
               disabled={!isDirty || saving}
-              className={buttonClass({ variant: "primary", size: "lg" })}
-            >
-              {saving ? t("timeFrames.saving") : t("timeFrames.save")}
-            </button>
+            />
             {isDirty && (
-              <button
+              <IconButton
+                icon={X}
+                label={t("timeFrames.cancel")}
+                variant="secondary"
+                size="lg"
                 onClick={handleReset}
                 disabled={saving}
-                className={buttonClass({ variant: "secondary", size: "lg" })}
-              >
-                {t("timeFrames.cancel")}
-              </button>
+              />
             )}
           </div>
         </>

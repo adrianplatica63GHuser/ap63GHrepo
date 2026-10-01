@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Save, Trash2, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -244,19 +246,23 @@ function AddForm({
       )}
 
       <div className="mt-3 flex gap-2">
-        <button
+        <IconButton
+          icon={Save}
+          label={t("save")}
+          busy={mutation.isPending}
+          busyLabel={t("saving")}
+          variant="primary"
+          size="sm"
           onClick={handleSubmit}
           disabled={mutation.isPending}
-          className={buttonClass({ variant: "primary", size: "sm" })}
-        >
-          {mutation.isPending ? t("saving") : t("save")}
-        </button>
-        <button
+        />
+        <IconButton
+          icon={X}
+          label={t("cancel")}
+          variant="secondary"
+          size="sm"
           onClick={onClose}
-          className={buttonClass({ variant: "secondary", size: "sm" })}
-        >
-          {t("cancel")}
-        </button>
+        />
       </div>
     </div>
   );
@@ -577,13 +583,13 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
           >
             {t("title")}
           </h2>
-          <button
+          <IconButton
+            icon={X}
+            label={tModal("close")}
+            variant="bare"
+            size="md"
             onClick={onClose}
-            className={buttonClass({ variant: "bare", size: "md" })}
-            aria-label={tModal("close")}
-          >
-            ✕
-          </button>
+          />
         </div>
 
         {/* Body */}
@@ -722,16 +728,17 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
                         {row.personRoleName}
                       </td>
                       <td className="px-4 py-2">
-                        <button
+                        <IconButton
+                          icon={Trash2}
+                          label={t("delete")}
+                          variant="danger"
+                          size="xs"
                           onClick={(e) => {
                               deleteOpenerRef.current = e.currentTarget;
                               setDeleteError(null);
                               setConfirmDeleteId(row.id);
                             }}
-                          className={buttonClass({ variant: "danger", size: "xs" })}
-                        >
-                          {t("delete")}
-                        </button>
+                        />
                       </td>
                     </tr>
                   ))}

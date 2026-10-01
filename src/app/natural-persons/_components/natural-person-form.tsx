@@ -34,7 +34,7 @@ import {
 } from "@/lib/ui/field-widths";
 import { AddressBlock } from "@/components/address/address-block";
 import { safeMutate } from "@/lib/api/safe-mutate";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -1099,15 +1099,14 @@ export function NaturalPersonForm({
                 clickable and inert — setAssociatedEditing cannot beat !isOnLatest
                 in the effectiveMode ternary above, so nothing unlocked. It is now
                 disabled, and carries the reason in its title. */}
-            <button
-              type="button"
+            <IconButton
+              icon={Pencil}
+              label={t("buttons.modify")}
+              variant="secondary"
+              size="lg"
               onClick={() => setAssociatedEditing(true)}
               disabled={!isOnLatest}
-              title={!isOnLatest ? tShared("modifyNeedsLatest") : undefined}
-              className={buttonClass({ variant: "secondary", size: "lg" })}
-            >
-              {t("buttons.modify")}
-            </button>
+            />
           </div>
         )
       ) : mode === "view" ? (
@@ -1120,50 +1119,52 @@ export function NaturalPersonForm({
             onClick={() => router.back()}
           />
           <div className="flex items-center gap-3">
-            <button
+            <IconButton
+              icon={Save}
+              label={t("buttons.save")}
+              variant="primary"
+              size="lg"
               type="submit"
               disabled={saveDisabled}
-              className={buttonClass({ variant: "primary", size: "lg" })}
-            >
-              {t("buttons.save")}
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              icon={Trash2}
+              label={t("buttons.delete")}
+              variant="danger"
+              size="lg"
               onClick={() => setShowCannotDelete(true)}
               disabled={submitting}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {t("buttons.delete")}
-            </button>
+            />
           </div>
         </div>
       ) : (
         <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-          <button
+          <IconButton
+            icon={Save}
+            label={t("buttons.save")}
+            variant="primary"
+            size="lg"
             type="submit"
             disabled={saveDisabled}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {t("buttons.save")}
-          </button>
+          />
           {mode === "edit" && (
-            <button
-              type="button"
+            <IconButton
+              icon={Trash2}
+              label={t("buttons.delete")}
+              variant="danger"
+              size="lg"
               onClick={() => setConfirmDelete(true)}
               disabled={submitting}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {t("buttons.delete")}
-            </button>
+            />
           )}
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("buttons.cancel")}
+            variant="secondary"
+            size="lg"
             onClick={onCancel}
             disabled={submitting}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t("buttons.cancel")}
-          </button>
+          />
         </div>
       )}
 

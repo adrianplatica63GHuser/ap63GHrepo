@@ -36,7 +36,7 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import {
@@ -780,13 +780,15 @@ export function PagesPanel({
                             </ActionBtn>
 
                             {mode === "edit" && (
-                              <ActionBtn
+                              // #37.43 (A023): Trash2, danger; „Șterge" its name and
+                              // tooltip. The confirmation it opens keeps its words.
+                              <IconButton
+                                icon={Trash2}
+                                label={t("delete")}
+                                variant="danger"
+                                size="xs"
                                 onClick={() => setDeleteTarget(page)}
-                                className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                title={t("delete")}
-                              >
-                                {t("delete")}
-                              </ActionBtn>
+                              />
                             )}
                           </div>
                         </td>
@@ -1252,22 +1254,24 @@ function AddPageDialog({
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
+          <IconButton
+            icon={X}
+            label={t("dialog.cancel")}
+            variant="secondary"
+            size="lg"
             onClick={onClose}
             disabled={saving}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {t("dialog.cancel")}
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            icon={Save}
+            label={t("dialog.save")}
+            busy={saving}
+            busyLabel={t("dialog.saving")}
+            variant="primary"
+            size="lg"
             onClick={handleSave}
             disabled={saving || !stagedFile}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {saving ? t("dialog.saving") : t("dialog.save")}
-          </button>
+          />
         </div>
       </div>
     </div>
