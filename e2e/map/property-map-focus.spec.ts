@@ -155,7 +155,13 @@ test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de
       await expectFocused(page, nav, id, zoom);
       await page.goto(`/properties/${id}`);
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("checkbox", { name: "Hartă", exact: true }).check();
+      // The first render shows the default ticks and the remembered choice
+      // lands after it (use-tile-choice.ts): wait for „Hartă" to read unticked,
+      // or `check()` finds the default already ticked, does nothing, and the
+      // remembered „unticked" arrives a moment later (#37.44's full run).
+      const tickAgain = page.getByRole("checkbox", { name: "Hartă", exact: true });
+      await expect(tickAgain).not.toBeChecked();
+      await tickAgain.check();
       await expect(tileMap(page)).toHaveCount(1);
 
       // Step 7 — from „Proprietăți — Listă", the ordinary map.
