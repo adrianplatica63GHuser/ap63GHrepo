@@ -69,6 +69,7 @@
 
 import {
   folderNameTitleEvidence,
+  perToSlash,
   type FSEntry,
 } from "@/lib/import/folder-utils";
 // ⚠️ **The expression that WROTE the stored title, not a second copy of it.**
@@ -104,7 +105,12 @@ import { titleForEntry } from "@/lib/import/preexisting-check";
  * untouched.
  */
 function sameTitle(a: string, b: string): boolean {
-  const norm = (s: string) => s.normalize("NFC").replace(/\s+/g, " ").trim();
+  // Slice #37.39: decoded on both sides. `titleForEntry` now decodes a file
+  // name's `per`, and a title stored before migration_089 (or left alone by
+  // it) still reads `PAD lot 5per3.jpg` — the same title, which must keep
+  // winning over the AI's reading. Found by „thirty-three PAD scans keep
+  // thirty-three distinct titles", whose stored titles are the raw names.
+  const norm = (s: string) => perToSlash(s.normalize("NFC")).replace(/\s+/g, " ").trim();
   return norm(a) === norm(b);
 }
 
