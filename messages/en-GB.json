@@ -919,6 +919,11 @@
     "filePicker": {
       "offersExtensions": "The file window only lists {list} files. If yours is not there, switch its filter to “All files”.",
       "offersImages": "The file window only lists pictures. If yours is not there, switch its filter to “All files”."
+    },
+    "associateTiles": {
+      "search": "Search",
+      "results": "Results",
+      "association": "Association"
     }
   },
   "naturalPerson": {
@@ -3578,14 +3583,19 @@
       "helpContent": "Help information",
       "docTypeEngine": "DocTypeEngine",
       "changePassword": "Change password",
-      "associatePerson": "Add person",
-      "associateDocument": "Add document",
-      "associateProperty": "Add property",
-      "associateReference": "Add reference",
-      "associateParty": "Add party",
       "new": "New",
       "entity": "Entity",
-      "ariaLabel": "Breadcrumb"
+      "ariaLabel": "Breadcrumb",
+      "associatePersonOfPerson": "Associate Related Person",
+      "associatePropertyOfPerson": "Associate Property",
+      "associateDocumentOfPerson": "Associate Document",
+      "associatePersonOfDocument": "Associate Person",
+      "associatePropertyOfDocument": "Associate Property",
+      "associateReferenceOfDocument": "Associate Document Reference",
+      "associatePartyOfDocument": "Add Party to Certificate",
+      "associatePersonOfProperty": "Associate Person",
+      "associateDocumentOfProperty": "Associate Document",
+      "associateReferenceOfProperty": "Associate Related Property"
     },
     "recentlyViewed": {
       "title": "Recently viewed",

@@ -1165,7 +1165,58 @@ export function screenBox(name: ScreenField, extra?: CSSProperties) {
   return { style: { ...boxStyle(w), ...extra }, "data-width-field": name, "data-width-kind": w.kind };
 }
 
-/** A section card at a fixed width, marked for the e2e check (`data-panel`). */
-export function screenPanel(name: string, wide = false) {
-  return { style: wide ? WIDE_TILE_STYLE : PANEL_STYLE, "data-panel": name };
+/**
+ * A section card at a fixed width, marked for the e2e check (`data-panel`):
+ * a panel, a wide panel, or — since #37.34 — a whole number of width units.
+ */
+export function screenPanel(name: string, wide: boolean | number = false) {
+  const style = typeof wide === "number" ? unitStyle(wide) : wide ? WIDE_TILE_STYLE : PANEL_STYLE;
+  return { style, "data-panel": name };
+}
+
+// ---- a screen of unit tiles: the „Asociază …" screens (#37.34) --------------------------
+
+/**
+ * THE SCREEN FORM OF THE UNIT ROW.                             (Slice #37.34)
+ *
+ * #37.22's screens are a `SCREEN_COLUMN` of 32rem and 65rem pieces. A screen
+ * of unit tiles is a row of whole units instead, as the four detail screens
+ * are (`unitRowStyle`): as many units as the window holds, never fewer than its
+ * widest tile, and the tiles flow and wrap in reading order. The „Asociază …"
+ * screens are the first; #37.35 and #37.36 use the same form.
+ */
+export function screenRowStyle(widestUnits: number): CSSProperties {
+  const step = UNIT_REM + UNIT_GAP_REM;
+  return {
+    width: `max(${rem(unitsRem(widestUnits))}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)}))`,
+  };
+}
+
+/** A tile is never narrower than this: two units hold a role, two buttons and a sentence. */
+export const MIN_TILE_UNITS = 2;
+
+/** The fewest units whose tile holds these `SCREEN` boxes side by side (labels above). */
+export function boxesUnits(names: readonly ScreenField[]): number {
+  return Math.max(MIN_TILE_UNITS, unitsFor(panelRem(rowRem(names.map((n) => SCREEN[n])))));
+}
+
+/** The fewest units whose tile holds a table of these columns inside its frame (1 px a side). */
+export function tableUnits(columns: readonly ColumnName[]): number {
+  const table = columns.reduce((sum, n) => sum + columnRem(n), 0);
+  return Math.max(MIN_TILE_UNITS, unitsFor(panelRem(table + 2 * PANEL_BORDER_REM)));
+}
+
+/**
+ * A table that FILLS its tile of `units`: every column at its own width and
+ * `fill` — a `wraps` column — taking the rest, so the table is exactly
+ * `tileTableRem(units)` wide and its columns still the same at every window.
+ */
+export function fillColumnRem(columns: readonly ColumnName[], units: number, fill: ColumnName): number {
+  const others = columns.filter((n) => n !== fill).reduce((sum, n) => sum + columnRem(n), 0);
+  return tileTableRem(units) - others;
+}
+
+/** A `SCREEN` box's field, label above it: as wide as its box (rule 16's stacked field). */
+export function screenFieldStyle(name: ScreenField): CSSProperties {
+  return boxStyle(SCREEN[name]);
 }

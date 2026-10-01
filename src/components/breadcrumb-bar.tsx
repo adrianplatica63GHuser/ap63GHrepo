@@ -37,6 +37,35 @@ import { ScreenHelpButton } from "@/components/help/screen-help-button";
 // Build segments from current pathname
 // ---------------------------------------------------------------------------
 
+/**
+ * The crumb of each „Asociază …" screen, by the record's list and the screen's
+ * segment: its key in navigation.breadcrumb, whose text is the screen's own
+ * title (`breadcrumb-copy.test.ts` holds the two equal).   (Slice #37.34)
+ */
+export const ASSOCIATE_CRUMB: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  "natural-persons": {
+    "associate-person": "associatePersonOfPerson",
+    "associate-property": "associatePropertyOfPerson",
+    "associate-document": "associateDocumentOfPerson",
+  },
+  "judicial-persons": {
+    "associate-person": "associatePersonOfPerson",
+    "associate-property": "associatePropertyOfPerson",
+    "associate-document": "associateDocumentOfPerson",
+  },
+  documents: {
+    "associate-person": "associatePersonOfDocument",
+    "associate-property": "associatePropertyOfDocument",
+    "associate-reference": "associateReferenceOfDocument",
+    "associate-party": "associatePartyOfDocument",
+  },
+  properties: {
+    "associate-person": "associatePersonOfProperty",
+    "associate-document": "associateDocumentOfProperty",
+    "associate-reference": "associateReferenceOfProperty",
+  },
+};
+
 interface Segment {
   label: string;
   href:  string;
@@ -119,12 +148,11 @@ export function buildSegments(
     }
     if (part === "calculation")    { segments.push({ label: t("calculation"),        href: accumulated }); continue; }
 
-    // Associate sub-pages
-    if (part === "associate-person")    { segments.push({ label: t("associatePerson"),    href: accumulated }); continue; }
-    if (part === "associate-document")  { segments.push({ label: t("associateDocument"),  href: accumulated }); continue; }
-    if (part === "associate-property")  { segments.push({ label: t("associateProperty"),  href: accumulated }); continue; }
-    if (part === "associate-reference") { segments.push({ label: t("associateReference"), href: accumulated }); continue; }
-    if (part === "associate-party")     { segments.push({ label: t("associateParty"),     href: accumulated }); continue; }
+    // Associate sub-pages — Slice #37.34: each named by its own screen's title,
+    // which depends on the record it hangs from („Asociere persoană corelată"
+    // under a person, „Asociere persoană" under a document), not „Adaugă …".
+    const associateKey = ASSOCIATE_CRUMB[parts[0]]?.[part];
+    if (associateKey) { segments.push({ label: t(associateKey), href: accumulated }); continue; }
     if (part === "new")                 { segments.push({ label: t("new"),                href: accumulated }); continue; }
 
     // --- Dynamic entity UUID --- look up the cached display label

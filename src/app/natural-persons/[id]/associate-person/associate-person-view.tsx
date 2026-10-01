@@ -7,12 +7,21 @@ import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { LABEL_STYLE, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, type ColumnName } from "@/lib/ui/field-widths";
+import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["select", "code", "personName", "personType"];
+
+/** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
+const SEARCH_UNITS = boxesUnits(["searchName", "searchCode"]);
+const RESULTS_UNITS = tableUnits(COLUMNS);
+const ASSOCIATION_UNITS = boxesUnits(["role"]);
+/** The results table fills its tile; personName takes what the other columns leave. */
+const RESULTS_FILL = { units: RESULTS_UNITS, column: "personName" } as const;
 
 const PAGE_SIZE = 15;
 
@@ -134,16 +143,21 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
   const handleCancel = () =>
     router.push(`${backBase}/${encodeURIComponent(personId)}?tab=related`);
 
+  useRecordCrumb(`${backBase}/${encodeURIComponent(personId)}`, personName);
+
   return (
-    <div className={`${SCREEN_COLUMN} gap-6`} style={SCREEN_COLUMN_STYLE}>
+    <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-fade dark:text-zinc-400">{personName}</p>
       </header>
 
-      <div className="flex flex-wrap gap-3">
-        <label className="flex items-center gap-2 text-sm">
-          <span style={LABEL_STYLE} className="shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelName")}</span>
+      <AssociateRow units={[SEARCH_UNITS, RESULTS_UNITS, ASSOCIATION_UNITS]}>
+      <AssociateTile tile="search" units={SEARCH_UNITS}>
+
+      <div className={STACKED_ROW_CLASS}>
+        <label className={STACKED_FIELD_CLASS} style={screenFieldStyle("searchName")}>
+          <span className={STACKED_LABEL_CLASS}>{t("labelName")}</span>
           <input {...screenBox("searchName")}
             type="text"
             value={nameInput}
@@ -152,8 +166,8 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
             className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>
-        <label className="flex items-center gap-2 text-sm">
-          <span style={LABEL_STYLE} className="shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelCode")}</span>
+        <label className={STACKED_FIELD_CLASS} style={screenFieldStyle("searchCode")}>
+          <span className={STACKED_LABEL_CLASS}>{t("labelCode")}</span>
           <input {...screenBox("searchCode")}
             type="text"
             value={codeInput}
@@ -164,6 +178,9 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         </label>
       </div>
 
+      </AssociateTile>
+
+      <AssociateTile tile="results" units={RESULTS_UNITS}>
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {isLoading ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
@@ -172,8 +189,8 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         ) : displayList.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(COLUMNS, undefined, RESULTS_FILL)}>
+            <FixedColumns columns={COLUMNS} fill={RESULTS_FILL} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
@@ -213,6 +230,9 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         onPrev={() => setPage((p) => p - 1)}
         onNext={() => setPage((p) => p + 1)}
       />
+      </AssociateTile>
+
+      <AssociateTile tile="association" units={ASSOCIATION_UNITS}>
 
       {/* Role selector — only shown when at least one role is ticked
           „Persoană → Persoană" on the master list. Slice #34.04: gated on the
@@ -220,7 +240,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           through to the sentence below instead of silently rendering as "no
           roles are ticked" — which is what this condition used to do. */}
       {pickerOptions.length > 0 && (
-        <div className="flex items-center gap-3">
+        <div className={STACKED_FIELD_CLASS} style={screenFieldStyle("role")}>
           {/* ⚠️ **`htmlFor`/`id` — Slice #34.26.** These two screens are the
               only ones of the eight whose role `<label>` neither wrapped its
               `<select>` nor named it, so clicking the word „Rol" did nothing
@@ -229,7 +249,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
               faithfully; its own handover recorded it as pre-existing. The six
               others are already tied — four by `htmlFor`, two by nesting the
               `<select>` inside the `<label>` — and are left as they are. */}
-          <label htmlFor="role-select" className="text-sm font-medium text-ink dark:text-zinc-300">
+          <label htmlFor="role-select" className={STACKED_LABEL_CLASS}>
             {t("labelRole")}
           </label>
           <select {...screenBox("role")}
@@ -274,7 +294,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
-      <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
         <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
           className={buttonClass({ variant: "primary", size: "lg" })}>
           {submitting ? t("associating") : t("associate")}
@@ -287,6 +307,8 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
         )}
       </div>
+      </AssociateTile>
+      </AssociateRow>
     </div>
   );
 }

@@ -919,6 +919,11 @@
     "filePicker": {
       "offersExtensions": "Fereastra de fișiere arată doar fișiere {list}. Dacă fișierul dumneavoastră nu apare acolo, schimbați filtrul pe „Toate fișierele”.",
       "offersImages": "Fereastra de fișiere arată doar imagini. Dacă fișierul dumneavoastră nu apare acolo, schimbați filtrul pe „Toate fișierele”."
+    },
+    "associateTiles": {
+      "search": "Căutare",
+      "results": "Rezultate",
+      "association": "Asociere"
     }
   },
   "naturalPerson": {
@@ -3578,14 +3583,19 @@
       "helpContent": "Informații de ajutor",
       "docTypeEngine": "Distilare Tipizate",
       "changePassword": "Schimbă parola",
-      "associatePerson": "Adaugă persoană",
-      "associateDocument": "Adaugă document",
-      "associateProperty": "Adaugă proprietate",
-      "associateReference": "Adaugă referință",
-      "associateParty": "Adaugă parte",
       "new": "Nou",
       "entity": "Entitate",
-      "ariaLabel": "Fir de navigare"
+      "ariaLabel": "Fir de navigare",
+      "associatePersonOfPerson": "Asociere persoană corelată",
+      "associatePropertyOfPerson": "Asociere proprietate",
+      "associateDocumentOfPerson": "Asociere act",
+      "associatePersonOfDocument": "Asociere persoană",
+      "associatePropertyOfDocument": "Asociere proprietate",
+      "associateReferenceOfDocument": "Asociază Document",
+      "associatePartyOfDocument": "Adaugă parte la certificat",
+      "associatePersonOfProperty": "Asociere persoană",
+      "associateDocumentOfProperty": "Asociere act",
+      "associateReferenceOfProperty": "Asociere proprietate corelată"
     },
     "recentlyViewed": {
       "title": "Recente",

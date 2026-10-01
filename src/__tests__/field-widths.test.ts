@@ -96,6 +96,12 @@ import {
   PREVIEW_STYLE,
   PREVIEW_UNITS,
   PREVIEW_WIDTHS,
+  boxesUnits,
+  fillColumnRem,
+  screenPanel,
+  screenRowStyle,
+  tableUnits,
+  PANEL_STYLE,
 } from "@/lib/ui/field-widths";
 import { LAYOUT_EXCEPTIONS } from "@/lib/ui/layout-exceptions";
 
@@ -967,7 +973,9 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
       expect(SCREEN_COLUMN).toContain(`[&>${child}]:min-w-full`);
     }
     for (const [what, src] of VIEWS.filter(([w]) => w.startsWith("/") || ["Grupuri", "a group", "Ștampile", "a stamp", "Utilizatori & Acces", "Texte de ajutor", "Calcul", "one calculation"].includes(w))) {
-      expect([what, /\$\{SCREEN_COLUMN\}|\{SCREEN_COLUMN\}/.test(src)]).toEqual([what, true]);
+      // Slice #37.34: an „Asociază …" screen is a row of unit tiles instead (`AssociateRow`).
+      const column = /associate-/.test(what) ? /<AssociateRow units=/.test(src) : /\$\{SCREEN_COLUMN\}|\{SCREEN_COLUMN\}/.test(src);
+      expect([what, column]).toEqual([what, true]);
     }
   });
 
@@ -1080,5 +1088,64 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
     const tiles = code(read("src", "components", "tiles", "preview-tiles.tsx"));
     expect(tiles).toMatch(/PREVIEW_ROWS\[kind\]\.flatMap\(/);
     expect(tiles).toMatch(/width: PREVIEW_WIDTHS\[kind\]\[name\]/);
+  });
+});
+
+describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asociere on the unit (Slice #37.34)", () => {
+  const VIEWS = [
+    ["natural-persons", "associate-person"], ["natural-persons", "associate-property"], ["natural-persons", "associate-document"],
+    ["judicial-persons", "associate-person"], ["judicial-persons", "associate-property"], ["judicial-persons", "associate-document"],
+    ["documents", "associate-person"], ["documents", "associate-property"], ["documents", "associate-reference"], ["documents", "associate-party"],
+    ["properties", "associate-person"], ["properties", "associate-document"], ["properties", "associate-reference"],
+  ] as const;
+
+  it.each(VIEWS.map(([e, s]) => [`${e}/${s}`, e, s]))("%s: the three tiles in reading order, each whole units, the table filling its tile", (_n, e, s) => {
+    const src = code(read("src", "app", e as string, "[id]", s as string, `${s}-view.tsx`));
+    expect(src).toMatch(/<AssociateRow units=\{\[SEARCH_UNITS, RESULTS_UNITS, ASSOCIATION_UNITS\]\}>/);
+    const at = (tile: string, units: string) => {
+      const m = src.match(new RegExp(`<AssociateTile tile="${tile}" units=\\{${units}\\}>`));
+      expect([tile, Boolean(m)]).toEqual([tile, true]);
+      return m!.index!;
+    };
+    const search = at("search", "SEARCH_UNITS");
+    const results = at("results", "RESULTS_UNITS");
+    const association = at("association", "ASSOCIATION_UNITS");
+    expect(search < results && results < association).toBe(true);
+    expect(src).toMatch(/const SEARCH_UNITS = boxesUnits\(\["search(Name", "searchCode|Text)"\]\);/);
+    expect(src).toMatch(/const RESULTS_UNITS = tableUnits\(COLUMNS\);/);
+    expect(src).toMatch(/const ASSOCIATION_UNITS = boxesUnits\(\[("role")?\]\);/);
+    expect(src).toMatch(/fixedTable\(COLUMNS, undefined, RESULTS_FILL\)/);
+    expect(src).toMatch(/<FixedColumns columns=\{COLUMNS\} fill=\{RESULTS_FILL\} \/>/);
+    // Labels above: no 5.5rem label beside a box, no #37.22 column.
+    expect(src).not.toMatch(/LABEL_STYLE|SCREEN_COLUMN/);
+    expect(src).toMatch(/className=\{STACKED_FIELD_CLASS\} style=\{screenFieldStyle\("search(Name|Text)"\)\}/);
+    if (/screenBox\("role"\)/.test(src)) expect(src).toMatch(/className=\{STACKED_FIELD_CLASS\} style=\{screenFieldStyle\("role"\)\}/);
+    expect(src).toMatch(/useRecordCrumb\(/);
+  });
+
+  it("the tiles are the fewest units that hold them, and the three sit side by side at 1920 px (10 units)", () => {
+    expect(boxesUnits(["searchName", "searchCode"])).toBe(3);
+    expect(boxesUnits(["searchText"])).toBe(2);
+    expect(boxesUnits(["role"])).toBe(2);
+    expect(boxesUnits([])).toBe(2);
+    const person = ["select", "code", "personName", "personType"] as const;
+    const doc = ["select", "code", "documentType", "documentTitle"] as const;
+    const prop = ["select", "code", "propertyLabel"] as const;
+    expect([tableUnits(person), tableUnits(doc), tableUnits(prop)]).toEqual([4, 6, 4]);
+    expect(3 + tableUnits(person) + 2).toBeLessThanOrEqual(10);
+    expect(2 + tableUnits(doc) + 2).toBeLessThanOrEqual(10);
+    // One unit fewer would not hold the table, and the fill column keeps at least its own width.
+    for (const [cols, fill] of [[person, "personName"], [doc, "documentTitle"], [prop, "propertyLabel"]] as const) {
+      const sum = cols.reduce((n, c) => n + columnRem(c), 0);
+      expect(tileTableRem(tableUnits(cols) - 1)).toBeLessThan(sum);
+      expect(fillColumnRem(cols, tableUnits(cols), fill)).toBeGreaterThanOrEqual(columnRem(fill));
+      expect(fillColumnRem(cols, tableUnits(cols), fill) + sum - columnRem(fill)).toBeCloseTo(tileTableRem(tableUnits(cols)));
+    }
+  });
+
+  it("screenPanel and the screen row learn the unit, by opt-in", () => {
+    expect(screenPanel("x", 3).style).toEqual({ width: "29.75rem" });
+    expect(screenPanel("x").style).toEqual(PANEL_STYLE);
+    expect(String(screenRowStyle(6).width)).toBe("max(60.5rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
   });
 });

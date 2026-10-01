@@ -1,13 +1,14 @@
 /**
  * Case:   TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe
- * Source: docs/testing/cases/TC-LAYOUT-01.md, „Last green" 2026-09-28
+ * Source: docs/testing/cases/TC-LAYOUT-01.md, „Last green" 2026-10-01
  *
  * Every screen Slice #37.22 put on #37.12's rule, opened at 1400 and at
  * 2400 px: every box (`data-width-field`), panel (`data-panel`) and table
  * column (`data-width-column`) on it is exactly as wide at both, and no fixed
  * column's cell overflows (`expectStableScreen`, e2e/helpers/field-widths.ts).
  * Then one picture of each at 1920 px into playwright-report/layout/, for the
- * slice's handover.
+ * slice's handover. Step 5 (Slice #37.34): on each „Asociază …" screen, the
+ * three tiles, the unit grid at 1366, 1920 and 2560 px, and the breadcrumb.
  *
  * ⚠️ **THE PICTURES CARRY NO REAL RECORD.** The „Asociază …" screens search for
  * this spec's own marker, so their tables list only its records; a screen that
@@ -38,7 +39,8 @@ import {
   removeLeftovers,
   removeStampLeftovers,
 } from "../helpers/records";
-import { expectStableScreen, photograph } from "../helpers/field-widths";
+import { expectStableScreen, expectUnitGrid, photograph } from "../helpers/field-widths";
+import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 const MARK = `${E2E_MARKER}LAYOUT-01`;
 
@@ -132,8 +134,30 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
         ["property-associate-person", `/properties/${propA}/associate-person`],
         ["property-associate-reference", `/properties/${propA}/associate-reference`],
       ];
+      // Slice #37.34: each is a row of three unit tiles — Căutare, Rezultate, Asociere — on
+      // the unit grid at 1366, 1920 and 2560 px, and its breadcrumb names the screen:
+      // Acasă › the list › the record › the screen's own title.
+      const LIST: Record<string, string> = {
+        "natural-persons": "Persoane fizice",
+        "judicial-persons": "Persoane juridice",
+        documents: "Acte",
+        properties: "Proprietăți",
+      };
       for (const [name, url] of associate) {
         await screen(page, name, url, heading, { prepare: (p) => searchMark(p)() });
+        await test.step(`${name}: three unit tiles, and the breadcrumb`, async () => {
+          for (const tile of ["Căutare", "Rezultate", "Asociere"]) {
+            await expect(page.getByRole("region", { name: tile, exact: true })).toBeVisible();
+          }
+          await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
+          const title = (await heading(page).textContent())?.trim() ?? "";
+          const record = (await page.locator("main header p").first().textContent())?.trim() ?? "";
+          const crumbs = page.getByRole("navigation", { name: "Fir de navigare" }).locator("a, [aria-current=page]");
+          await expect(crumbs).toHaveText(["Acasă", LIST[url.split("/")[1]], record, title], { timeout: 15_000 });
+          if (name === "document-associate-person" || name === "property-associate-reference") {
+            await photograph(page, `other-${name}`, [1366, 2560], 1000);
+          }
+        });
       }
 
       // Administration.

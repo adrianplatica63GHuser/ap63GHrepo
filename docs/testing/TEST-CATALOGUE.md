@@ -109,7 +109,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-03](cases/TC-TILES-03.md) | Părțile unei proprietăți, cu harta și Street View ca părți proprii | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
-| [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-09-29 | `e2e/layout/other-screens.spec.ts` |
+| [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 

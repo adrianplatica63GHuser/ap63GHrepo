@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-09-29 |
+| **Last green** | 2026-10-01 |
 
 ## What this proves
 
@@ -54,6 +54,7 @@ editor, and saves nothing.
 | 2 | Opens the same screen in a window 2400 px wide | **Every width is the same as in step 1**, to the tenth of a pixel. The page starts at the sidebar, not in the middle of the window |
 | 3 | Looks at the table columns marked fixed (codes, dates, counts, buttons) | No cell's value is wider than its column. Names, titles and descriptions wrap onto a second line instead |
 | 4 | Looks at a long sentence on a screen (the calculation's introduction, a note under a box) | It wraps inside the screen's column. It does not stretch the column to the window |
+| 5 | On each „Asociază …" screen, at 1366, 1920 and 2560 px (Slice #37.34) | Three tiles in reading order — „Căutare", „Rezultate", „Asociere" — side by side when the window holds them and wrapping when it does not. Every tile, and the row they sit in, is a whole number of width units (6 at 1366, 10 at 1920, 14 at 2560). The breadcrumb reads „Acasă › <the list> › <the record> › <this screen's title>" |
 
 ## Notes from the runs
 
@@ -74,3 +75,6 @@ stopped adding marks, and on an „Asociază …" screen after typing `e` into i
 every screen at 1400 and 2400 px and photographs each at 1920 for #37.22's handover, painting over
 the archive's own rows. It first went green in the runner as `20260929T024515Z-5762`.
 
+**2026-10-01 — step 5 added (Slice #37.34).** The thirteen „Asociază …" screens became rows of
+unit tiles; the spec checks them with `expectUnitGrid` and reads the breadcrumb, as step 5 says. Its
+first run with the step was green (e2e 20261001T030112Z-23451).

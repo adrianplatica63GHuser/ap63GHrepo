@@ -13,24 +13,33 @@
  * `expectStableColumns` (`e2e/helpers/field-widths.ts`). A cell in a `wraps`
  * column carries `WRAPS` so a long name breaks inside its width.
  */
-import { COLUMN, columnStyle, columnsStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { COLUMN, columnStyle, columnsStyle, fillColumnRem, rem, tileTableRem, type ColumnName } from "@/lib/ui/field-widths";
 
 /** The `<colgroup>`: one `<col>` per column shown, in order. */
-export function FixedColumns({ columns }: { columns: readonly ColumnName[] }) {
+export function FixedColumns({ columns, fill }: { columns: readonly ColumnName[]; fill?: TileFill }) {
   return (
     <colgroup>
       {columns.map((name, i) => (
-        <col key={`${name}-${i}`} style={columnStyle(name)} />
+        <col
+          key={`${name}-${i}`}
+          style={fill && name === fill.column ? { width: rem(fillColumnRem(columns, fill.units, fill.column)) } : columnStyle(name)}
+        />
       ))}
     </colgroup>
   );
 }
 
+/**
+ * A table that fills a unit tile (Slice #37.34): `units` wide inside its frame,
+ * `column` — a `wraps` column — taking what the others leave.
+ */
+export type TileFill = { units: number; column: ColumnName };
+
 /** The `<table>`'s own props: fixed layout, exactly as wide as `columns`. */
-export function fixedTable(columns: readonly ColumnName[], className = "text-sm") {
+export function fixedTable(columns: readonly ColumnName[], className = "text-sm", fill?: TileFill) {
   return {
     className: `table-fixed ${className}`,
-    style: columnsStyle(columns),
+    style: fill ? { width: rem(tileTableRem(fill.units)) } : columnsStyle(columns),
     "data-width-table": columns.join(" "),
   };
 }

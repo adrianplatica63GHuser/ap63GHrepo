@@ -7,10 +7,19 @@ import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { LABEL_STYLE, SCREEN_COLUMN, SCREEN_COLUMN_STYLE, screenBox, type ColumnName } from "@/lib/ui/field-widths";
+import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
+import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["select", "code", "documentType", "documentTitle"];
+
+/** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
+const SEARCH_UNITS = boxesUnits(["searchText"]);
+const RESULTS_UNITS = tableUnits(COLUMNS);
+const ASSOCIATION_UNITS = boxesUnits([]);
+/** The results table fills its tile; documentTitle takes what the other columns leave. */
+const RESULTS_FILL = { units: RESULTS_UNITS, column: "documentTitle" } as const;
 
 const PAGE_SIZE = 15;
 
@@ -81,16 +90,21 @@ export function AssociateDocumentView({ propertyId, propertyName }: Props) {
 
   const handleCancel = () => router.push(`/properties/${encodeURIComponent(propertyId)}?tab=document`);
 
+  useRecordCrumb(`/properties/${encodeURIComponent(propertyId)}`, propertyName);
+
   return (
-    <div className={`${SCREEN_COLUMN} gap-6`} style={SCREEN_COLUMN_STYLE}>
+    <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-sm text-fade dark:text-zinc-400">{propertyName}</p>
       </header>
 
-      <div className="flex flex-wrap gap-3">
-        <label className="flex items-center gap-2 text-sm">
-          <span style={LABEL_STYLE} className="shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelSearch")}</span>
+      <AssociateRow units={[SEARCH_UNITS, RESULTS_UNITS, ASSOCIATION_UNITS]}>
+      <AssociateTile tile="search" units={SEARCH_UNITS}>
+
+      <div className={STACKED_ROW_CLASS}>
+        <label className={STACKED_FIELD_CLASS} style={screenFieldStyle("searchText")}>
+          <span className={STACKED_LABEL_CLASS}>{t("labelSearch")}</span>
           <input {...screenBox("searchText")}
             type="text"
             value={qInput}
@@ -101,6 +115,9 @@ export function AssociateDocumentView({ propertyId, propertyName }: Props) {
         </label>
       </div>
 
+      </AssociateTile>
+
+      <AssociateTile tile="results" units={RESULTS_UNITS}>
       <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
         {isLoading ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
@@ -109,8 +126,8 @@ export function AssociateDocumentView({ propertyId, propertyName }: Props) {
         ) : items.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
-          <table {...fixedTable(COLUMNS)}>
-            <FixedColumns columns={COLUMNS} />
+          <table {...fixedTable(COLUMNS, undefined, RESULTS_FILL)}>
+            <FixedColumns columns={COLUMNS} fill={RESULTS_FILL} />
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
@@ -148,10 +165,13 @@ export function AssociateDocumentView({ propertyId, propertyName }: Props) {
         onPrev={() => setPage((p) => p - 1)}
         onNext={() => setPage((p) => p + 1)}
       />
+      </AssociateTile>
+
+      <AssociateTile tile="association" units={ASSOCIATION_UNITS}>
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
-      <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
         <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
           className={buttonClass({ variant: "primary", size: "lg" })}>
           {submitting ? t("associating") : t("associate")}
@@ -164,6 +184,8 @@ export function AssociateDocumentView({ propertyId, propertyName }: Props) {
           <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
         )}
       </div>
+      </AssociateTile>
+      </AssociateRow>
     </div>
   );
 }
