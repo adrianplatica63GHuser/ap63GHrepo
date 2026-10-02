@@ -188,7 +188,7 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
   it("every field on the Judicial Person form names its width in the file, and its page has no centred cap", () => {
     const panels = region(JP_FORM, "<fieldset disabled", "</fieldset>");
     const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
-    expect(uses.length).toBe(7);
+    expect(uses.length).toBe(6); // #37.57: the „ID" field left for the heading's corner
     expect(panels.match(/width=\{JP\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
     // Slice #37.29: each panel whole width units, from its widest row, and the addresses stacked.
     expect(panels.match(/<section style=\{PANEL_UNIT_STYLE\.judicialPerson\.(identity|contactPersons)\}/g) ?? []).toHaveLength(2);
@@ -205,7 +205,7 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
   it("every field on the Property form names its width in the file, the map has a fixed size, and no page caps it", () => {
     const panels = region(PROP_FORM, "data-panel-row", "{bigMap && createPortal(");
     const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
-    expect(uses.length).toBe(17);
+    expect(uses.length).toBe(16); // #37.57: „Cod" left for the heading's corner
     expect(panels.match(/width=\{(PROP|ADDRESS)\.[A-Za-z0-9]+\}/g) ?? []).toHaveLength(uses.length);
     // Slice #37.30: each tile whole width units — the five panels from PANEL_UNITS.property.
     expect(panels.match(/style=\{PANEL_UNIT_STYLE\.property\.(cadastral|corners|address|map|streetView)\}/g) ?? []).toHaveLength(5);
