@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-02, Slice #37.52 — 279 entries. Rows are status, columns are impact.
+As of 2026-10-02, Slice #37.57 — 281 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 15 | 59 | 53 | 16 | 143 |
+| open | 15 | 59 | 55 | 16 | 145 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 36 | 55 | 26 | 3 | 120 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 55 | 120 | 83 | 21 | 279 |
+| **total** | 55 | 120 | 85 | 21 | 281 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -363,3 +363,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-277 | 2026-10-01 #37.39 | recommendation | Import | The widened perToSlash converts a „per" between two non-letters that is not a fraction: `TC-E2E-PER-01` became `TC-E2E-/-01` in #37.39's own throwaway run. No letter touches it, so the rule as Adrian stated it holds. The local archive's dry run found no such value. | src/lib/import/folder-utils.ts perToSlash; runner e2e 20261001T123502Z-15823 | user | XS | open | If such a name appears, narrow the rule: a „per" with punctuation (not a space) on both sides stays. One condition in perToSlash and its SQL twin in migration_089. | 2026-10-01 |
 | FU-278 | 2026-10-01 #37.39 migration_089 | data risk | Groups & tags | 75 entity_tag rows still read „per" because their record already carries the same tag decoded. 75 documents, one row each (DOC01504 onwards from the first import of `40-212per40IE…`, `46-222per13…` and `47per2-225per3…`) are tagged both `40-212per40ie52172-ratiu` and `40-212/40ie52172-ratiu`, so each shows the folder's tag twice. migration_089 held them back rather than break entity_tag's unique index. Search, Pre-existing and reconcile read both forms as one, so nothing is mismatched; it is the same fact twice. | runner migrate-local 20261001T143345Z-846, apply-migration.log „LEFT AS IT IS - tag" (75 lines) | user | XS | resolved | Slice #37.39, `0536c3b` (migration_090): the 75 „per" twins deleted, each record keeping its decoded tag; the runner's migrate-local 20261001T145922Z-23178 printed all 75. | 2026-10-01 |
 | FU-279 | 2026-10-02 #37.52 TC-DOC-03 | recommendation | Documents | On a type without pages of its own whose fields have no group (a PAD: „Nr. cadastral al corpului de proprietate", „Teritoriul adm.", …), #37.52 took the „Câmpuri specifice tipului de document" heading away as asked, so those fields now follow „Date de emitere" with only a gap between them and read as part of that panel. A thin rule or a little more space above the headless panel would set them apart without a name. | the PAD picture of #37.52 (`pad-ro-1366.png` in its screens folder); src/app/documents/_components/document-form.tsx Section (`title === undefined`) | cosmetic | XS | open | Draw a top border on a framed Section with no title. | 2026-10-02 |
+| FU-280 | 2026-10-02 #37.57 | tooling | Test runner | The runner's e2e re-run reads the working tree, not the commit it was asked about. Full 20261002T215247Z-18295 on `123dc2e` failed four specs on a real assertion (a „COD" column the commit had removed); the runner called every failure „a wait that ran out while next dev compiled", re-ran the four, and they passed — because I had already fixed those specs in the working tree during the run, uncommitted. The step then read „e2e passed" for a commit whose specs fail. The result also failed on jest, so nothing was pushed on it. | runner result 20261002T215247Z-18295 (e2e note); scripts/test-runner/runner.ts, the re-run branch | dev | S | open | Before the re-run, compare `git status --porcelain` and `git rev-parse HEAD` with what the run started on; if either changed, do not re-run — report the first pass as failed and say why. A failure whose message is an assertion (`toBeVisible`, `toContainText`) rather than a navigation or compile timeout is not a cold-compile failure. | 2026-10-02 |
+| FU-281 | 2026-10-02 #37.57 | recommendation | i18n | After the system ID left every list and field, six message keys may no longer be read by any code: `property.fields.code`, `document.fields.code`, `naturalPerson.fields.code`, `judicialPerson.fields.code`, `shared.preview.fields.code` and `person.table.code` (26 others were deleted in #37.57, where a grep proved them dead). These six were kept because a field's label can be looked up by its key at run time (the version history, the import report), which a grep cannot rule out. The pre-existing stage's rows also still carry a `code` they no longer show. | messages/ro-RO.json, messages/en-GB.json; src/app/admin/import/_components/import-preexisting-stage.tsx | dev | XS | open | Find the run-time lookups (`t(`fields.${…}`)`) and either prove these keys unread and delete them, or leave them with a comment saying who reads them; drop `code` from the pre-existing row type if nothing reads it. | 2026-10-02 |
