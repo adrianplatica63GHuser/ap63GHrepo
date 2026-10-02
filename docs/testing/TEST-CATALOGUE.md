@@ -77,6 +77,7 @@ fixed fixture where the existing one will do.
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
 | [TC-DOC-02](cases/TC-DOC-02.md) | Un „Subiect" pe mai multe rânduri împinge „Note extinse" în jos, în vizualizare și în editare | document | happy | — | `automated` | 2026-10-02 | `e2e/document/subject-grows.spec.ts` |
+| [TC-DOC-03](cases/TC-DOC-03.md) | Un PAD: „Detalii act", „Date de emitere", fără „Câmpuri specifice tipului de document", „Data autentificării" pe un rând | document | happy | — | `confirmed` | 2026-10-02 | `e2e/document/type-fields-tile.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-document.spec.ts` |
