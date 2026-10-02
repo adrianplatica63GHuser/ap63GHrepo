@@ -122,22 +122,20 @@ describe("a CVC's panels, written out", () => {
 });
 
 /**
- * What the rule gives CONTRACT_VANZARE (measured by this suite, Slice #37.31).
- * Most rows hold one field: a CVC's clauses are dropdowns of three to five
- * words, L or XL wide, and two of those do not share a 2-unit panel. The fees
- * fit three numbers to a row beside Instituție's 3 units; Antet instrument is 3
- * because „Categorie internă" has a 37-character option.
+ * What the rule gives CONTRACT_VANZARE (measured by this suite, Slice #37.31;
+ * re-measured in #37.53). Since #37.53 a dropdown is as wide as its widest
+ * choice — most of them 10rem, „Nu e menționat" with the blank „— fără valoare —"
+ * — and a panel of dropdowns takes a third unit when that pairs them, so the
+ * clauses sit two to a row. The fees fit three numbers to a row beside
+ * Instituție's 3 units; Antet instrument is 3 because „Categorie internă" has
+ * a 37-character option (18rem).
  */
 const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
-  { label: "Financiar", units: 2, rows: [
-    ["pretTotal"],
-    ["monedaPret"],
-    ["starePlata"],
-    ["modalitatePlata"],
-    ["dataPlatii"],
-    ["temeiPret"],
-    ["alocarePret"],
-    ["scopVanzare"],
+  { label: "Financiar", units: 3, rows: [
+    ["pretTotal", "monedaPret"],
+    ["starePlata", "modalitatePlata"],
+    ["dataPlatii", "temeiPret"],
+    ["alocarePret", "scopVanzare"],
     ["predareStapanire"],
   ] },
   { label: "Taxe și onorarii", units: 3, rows: [
@@ -151,46 +149,55 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["temeiAutentificare"],
     ["dataContinut"],
   ] },
-  { label: "Excepție cadastru", units: 2, rows: [
+  { label: "Excepție cadastru", units: 3, rows: [
     ["temeiExceptieCadastru"],
-    ["marcajCarteFunciara"],
-    ["poateFiIntabulat"],
-    ["renuntareCercetareOcpi"],
-    ["obligatieNrCadastral"],
+    ["marcajCarteFunciara", "poateFiIntabulat"],
+    ["renuntareCercetareOcpi", "obligatieNrCadastral"],
     ["termenFormalitati"],
-    ["completareUlterioara"],
-    ["consimtamantRadiere"],
+    ["completareUlterioara", "consimtamantRadiere"],
   ] },
   { label: "Obiect declarat", units: 2, rows: [
     ["vecinatati"],
     ["origineLot"],
   ] },
-  { label: "Stare juridică afirmată", units: 2, rows: [
-    ["inCircuitCivil"],
-    ["liberDeSarcini"],
-    ["faraServituti"],
-    ["neipotecat"],
-    ["nepromisAltcuiva"],
-    ["nearendat"],
-    ["neaportatSocietate"],
-    ["faraLitigii"],
-    ["faraExpropriere"],
-    ["faraMonumentIstoric"],
-    ["nedezmembratContrar"],
-    ["garantieEvictiune"],
-    ["garantieVicii"],
-    ["cumparatorCunoasteSituatia"],
+  { label: "Stare juridică afirmată", units: 3, rows: [
+    ["inCircuitCivil", "liberDeSarcini"],
+    ["faraServituti", "neipotecat"],
+    ["nepromisAltcuiva", "nearendat"],
+    ["neaportatSocietate", "faraLitigii"],
+    ["faraExpropriere", "faraMonumentIstoric"],
+    ["nedezmembratContrar", "garantieEvictiune"],
+    ["garantieVicii", "cumparatorCunoasteSituatia"],
   ] },
-  { label: "Conformitate și formalități", units: 2, rows: [
-    ["temeiLegalEvictiune"],
-    ["declaratieArt292"],
-    ["pretRealDeclarat"],
-    ["notificareAml"],
-    ["consimtamantDatePersonale"],
-    ["preemptiuneTerenAgricol"],
-    ["preemptiunePadure"],
-    ["taxeLocaleLaZi"],
-    ["taxeLocalePlatiteDe"],
-    ["cheltuieliPerfectare"],
+  { label: "Conformitate și formalități", units: 3, rows: [
+    ["temeiLegalEvictiune", "declaratieArt292"],
+    ["pretRealDeclarat", "notificareAml"],
+    ["consimtamantDatePersonale", "preemptiuneTerenAgricol"],
+    ["preemptiunePadure", "taxeLocaleLaZi"],
+    ["taxeLocalePlatiteDe", "cheltuieliPerfectare"],
   ] },
 ];
+
+describe("dropdowns pair up (#37.53)", () => {
+  it("packs „Stare juridică afirmată” and „Conformitate și formalități” two to a row, in form order", () => {
+    const cvc = panelsOf(FORMS.forms.CONTRACT_VANZARE);
+    for (const label of ["Stare juridică afirmată", "Conformitate și formalități"]) {
+      const p = cvc.find((x) => x.label === label)!;
+      expect([label, p.units]).toEqual([label, 3]);
+      expect([label, p.rows.every((r) => r.length === 2)]).toEqual([label, true]);
+      const order = FORMS.forms.CONTRACT_VANZARE.filter((f) => f.groupRo === label).map((f) => f.key);
+      expect(p.rows.flat()).toEqual(order);
+    }
+  });
+
+  it("takes the third unit only for a panel of two or more dropdowns, and only when it saves rows", () => {
+    const M = { step: "M", kind: "fixed" } as const;
+    const D = { step: "L", kind: "select", rem: 10 } as const;
+    // Two dropdowns: 20.5rem — no fit in 2 units (17.875 inside), a pair in 3.
+    expect(packFieldRows([{ key: "a", width: D }, { key: "b", width: D }])).toEqual({ units: 3, rows: [["a", "b"]] });
+    // One dropdown and boxes that already pair at 2: nothing changes.
+    expect(packFieldRows([{ key: "a", width: M }, { key: "b", width: M }, { key: "c", width: D }]).units).toBe(2);
+    // No dropdowns: rule 18 as it was.
+    expect(packFieldRows([{ key: "a", width: { step: "L", kind: "grows" } }, { key: "b", width: { step: "L", kind: "grows" } }]).units).toBe(2);
+  });
+});

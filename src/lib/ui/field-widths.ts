@@ -104,9 +104,11 @@ export interface FieldWidth {
    */
   sample?: string;
   /**
-   * A width off the scale, in rem — only where Adrian asked for one by size
-   * (#37.26: the ID card's first row „about 75%" of what it was). The step
-   * still says what the box is, and the scale stays a handful of steps.
+   * A width off the scale, in rem — where Adrian asked for one by size
+   * (#37.26: the ID card's first row „about 75%" of what it was), and a
+   * document type's own dropdown, which is as wide as its widest choice
+   * (#37.53, `templateFieldWidth`). The step still says what the box is, and
+   * the scale stays a handful of steps.
    */
   rem?: number;
   /**
@@ -465,8 +467,13 @@ export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
  *   text      the default text width, growing downward (one value, no breaks);
  *   textarea  the panel's whole width, growing, line breaks kept;
  *   number    a fixed M;   date   a fixed M;
- *   select    as wide as its longest option, from S up to XXL — past XXL it
- *             stays XXL and shows the chosen option in full on hover.
+ *   select    as wide as its widest choice needs (the blank one included),
+ *             rounded up to the next 0.5rem, never narrower than S — past XXL
+ *             it stays XXL and shows the chosen option in full on hover.
+ *             (#37.53: it used to be rounded up to the next STEP, so a CVC
+ *             dropdown needing 157 px — „— fără valoare —" — was drawn at L,
+ *             208 px. Measured on the six seeded forms: 49 of 49 dropdowns
+ *             narrower, by 16 to 96 px.)
  * A field whose JSON carries `width` (one of the scale's steps) takes that step
  * instead; its KIND still follows from its type. No form sets `width` today.
  *
@@ -511,11 +518,35 @@ export function textPx(text: string, fontPx = 14): number {
   return (units * fontPx) / 1000;
 }
 
+/**
+ * The px a dropdown needs to show every one of `labels` whole: the widest in
+ * Arial, a 5% margin, and its padding, border and arrow. The margin and the
+ * chrome are #37.15's, set against Arial; since #37.53 nothing rounds them up
+ * to a step, so TC-DOC-04 measures every CVC dropdown in the browser with its
+ * widest choice selected.
+ */
+export function selectNeedPx(labels: readonly string[]): number {
+  return Math.max(0, ...labels.map((l) => textPx(l))) * 1.05 + SELECT_CHROME_PX;
+}
+
 /** The narrowest step whose dropdown shows every one of `labels` whole, capped at XXL. */
 export function selectStepFor(labels: readonly string[]): { step: Step; capped: boolean } {
-  const need = Math.max(0, ...labels.map((l) => textPx(l))) * 1.05 + SELECT_CHROME_PX;
+  const need = selectNeedPx(labels);
   for (const step of SELECT_STEPS) if (SCALE[step] * 16 >= need) return { step, capped: false };
   return { step: SELECT_STEPS[SELECT_STEPS.length - 1], capped: true };
+}
+
+/**
+ * A document type's own dropdown: as wide as `labels` need, rounded up to the
+ * next 0.5rem, never narrower than S; past XXL, XXL and `capped`. (#37.53)
+ * „Nu e menționat" needs 142 px → 9rem; „— fără valoare —" 157 px → 10rem.
+ * The step is the one that would have held it — what the box is, not its width.
+ */
+export function templateSelectWidth(labels: readonly string[]): FieldWidth & { capped?: boolean } {
+  const need = selectNeedPx(labels);
+  const { step, capped } = selectStepFor(labels);
+  if (capped) return { step, kind: "select", capped };
+  return { step, kind: "select", rem: Math.max(SCALE.S, Math.ceil(need / 8) / 2) };
 }
 
 /** What a template field needs to be sized: its type, its optional `width`, and a select's labels. */
@@ -537,8 +568,7 @@ export function templateFieldWidth(
 ): FieldWidth & { capped?: boolean } {
   if (field.type === "select") {
     if (field.width) return { step: field.width, kind: "select" };
-    const { step, capped } = selectStepFor(labels);
-    return capped ? { step, kind: "select", capped } : { step, kind: "select" };
+    return templateSelectWidth(labels);
   }
   if (forceLines) return { ...TEMPLATE_FIELD.textarea, ...(field.width ? { step: field.width } : {}) };
   const base: FieldWidth = TEMPLATE_FIELD[field.type];
@@ -728,6 +758,16 @@ export const LIST_UNITS = {
  * panel's Instituție and Nr. document | Data) — never fewer than `minUnits`.
  * One pure function, so a new type needs no layout work. Each box keeps the
  * width `templateFieldWidth` gave it (#37.15); this decides only the rows.
+ *
+ * AND A PANEL OF DROPDOWNS TAKES A THIRD UNIT WHEN THAT PAIRS THEM. (#37.53)
+ * Since #37.53 a dropdown is as wide as its widest choice — most of a CVC's
+ * 10rem — but a 2-unit panel is 17.875rem inside, and two of them with the gap
+ * are 20.5. So a panel holding two or more dropdowns is packed at 3 units as
+ * well (28.125rem inside), and takes the 3 when its fields come out in fewer
+ * rows. Form order is kept; no field moves to make a pair. Measured on the six
+ * seeded forms: six panels go from 2 units to 3 (the CVC's Financiar, Excepție
+ * cadastru, Stare juridică afirmată and Conformitate și formalități, the Act
+ * adițional's Act părinte and Clauze completate); every other panel is as it was.
  */
 export interface PackItem {
   key: string;
@@ -742,6 +782,15 @@ export function packFieldRows(
 ): { units: number; rows: string[][] } {
   const widest = Math.max(baseRowsRem, 0, ...items.filter((i) => !i.full).map((i) => boxRem(i.width)));
   const units = Math.max(minUnits, unitsFor(panelRem(widest)));
+  const packed = packAt(items, units);
+  const dropdowns = items.filter((i) => !i.full && i.width.kind === "select").length;
+  if (units >= 3 || dropdowns < 2) return packed;
+  const wider = packAt(items, 3);
+  return wider.rows.length < packed.rows.length ? wider : packed;
+}
+
+/** The rows `items` flow into at `units` wide (rule 18). */
+function packAt(items: readonly PackItem[], units: number): { units: number; rows: string[][] } {
   const inner = unitsInnerRem(units);
   const rows: string[][] = [];
   let row: PackItem[] = [];

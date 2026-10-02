@@ -82,6 +82,7 @@ import {
   panelRem,
   panelRowStyle,
   rowRem,
+  selectNeedPx,
   selectStepFor,
   templateFieldWidth,
   textPx,
@@ -746,11 +747,25 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"], true).kind).toBe("select");
   });
 
-  it("a dropdown is as wide as its longest option, from S up, and stops at XXL", () => {
-    expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"])).toEqual({ step: "S", kind: "select" });
+  it("a dropdown is as wide as its widest choice needs, in half rems, from S up, and stops at XXL (#37.53)", () => {
+    // Never narrower than S.
+    expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"])).toEqual({ step: "S", kind: "select", rem: 5 });
+    // „Nu e menționat" needs 142 px: 9rem, where the step rule drew L (13rem).
+    expect(selectNeedPx(["Nu e menționat"])).toBeCloseTo(141.7, 0);
+    expect(boxRem(templateFieldWidth({ type: "select" }, ["Nu e menționat"]))).toBe(9);
+    // The blank „— fără valoare —" needs 157 px: 10rem — every CVC dropdown holds it.
+    expect(selectNeedPx(["— fără valoare —"])).toBeCloseTo(157.2, 0);
+    expect(boxRem(templateFieldWidth({ type: "select" }, ["— fără valoare —", "Da", "Nu", "Nu e menționat"]))).toBe(10);
     expect(selectStepFor(["— fără valoare —", "Da", "Nu"]).step).toBe("L");
     const long = "O opțiune foarte lungă, mult peste ce încape într-o casetă";
     expect(templateFieldWidth({ type: "select" }, [long])).toEqual({ step: "XXL", kind: "select", capped: true });
+    expect(boxRem(templateFieldWidth({ type: "select" }, [long]))).toBe(SCALE.XXL);
+    // The width shows every label whole, and is never more than half a rem past what it needs.
+    for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"], ["— fără valoare —"]]) {
+      const w = boxRem(templateFieldWidth({ type: "select" }, labels)) * 16;
+      expect(w).toBeGreaterThanOrEqual(selectNeedPx(labels));
+      expect(w).toBeLessThanOrEqual(Math.max(SCALE.S * 16, selectNeedPx(labels) + 8));
+    }
     // The chosen step shows every label whole, with the arrow and the padding.
     for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"]]) {
       const { step, capped } = selectStepFor(labels);
