@@ -118,7 +118,7 @@ fixed fixture where the existing one will do.
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
-| [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `confirmed` | 2026-10-02 | `e2e/tiles/tile-placement.spec.ts` |
+| [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-02 | `e2e/tiles/tile-placement.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-01 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
@@ -129,8 +129,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 
-**Forty-four are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.55, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03 and TC-DOC-02–06 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Forty-five are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.56, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03, TC-DOC-02–06 and TC-TILES-07 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

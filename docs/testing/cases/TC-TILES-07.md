@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -75,3 +75,10 @@ choices set aside again, against the file above unchanged.
 - The two stored choices put back as they were; the document and the property deleted (204, 204).
   Nothing in the file changed, so the case is confirmed, and `e2e/tiles/tile-placement.spec.ts`
   translates it.
+
+**2026-10-02 — `automated`.** `e2e/tiles/tile-placement.spec.ts` translates the case, takes
+#37.56's pictures and measures the narrowest window at which each column stands beside the left
+area on the defaults: **1404 px** for both screens (at 1366 the column is under the form). Its
+first run, `20261002T200409Z-28873`, was green; that `full` was red on two other specs the new
+layout moved a button under (TC-PROP-04, TC-ASSOC-04), fixed in `9eedadb`–`c0a2896`. Green in the
+whole run `20261002T204206Z-23356` on `c0a2896`.
