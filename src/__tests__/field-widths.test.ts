@@ -473,7 +473,7 @@ describe("the width unit: every Natural Person tile a whole number of units (Sli
     }
     // Persoane: the name, the relationship and the buttons — no „Tip".
     expect(NP_LIST_COLUMNS.associations).not.toContain("personType");
-    expect(NP_LIST_UNITS).toEqual({ associations: 4, properties: 4, documents: 5, metadata: 5 });
+    expect(NP_LIST_UNITS).toEqual({ associations: 4, properties: 5, documents: 5, metadata: 5 }); // #37.58: Proprietăți 5
   });
 
   it("the person's page gives every list tile its units and the compact tables, and META INFO its cells", () => {
@@ -604,13 +604,15 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
-  it("the list tiles are compact and fill their units: Proprietăți corelate, Persoane and Acte 4, META INFO 5", () => {
+  it("the list tiles are compact and fill their units: Proprietăți corelate 5 (#37.58), Persoane and Acte 4, META INFO 5", () => {
     const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
     const room = tileTableRem(4);
     for (const k of ["associations", "documentsWithoutRole"] as const) {
       expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) < 0.5]).toEqual([k, true]);
     }
-    expect(LIST_UNITS.property).toEqual({ associations: 4, persons: 4, documents: 4, metadata: 5 });
+    const room5 = tileTableRem(5);
+    expect(sum(NP_LIST_COLUMNS.propertyAssociations) <= room5 && room5 - sum(NP_LIST_COLUMNS.propertyAssociations) < 0.5).toBe(true);
+    expect(LIST_UNITS.property).toEqual({ associations: 5, persons: 4, documents: 4, metadata: 5 });
     const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
     for (const k of ["associations", "persons", "documents", "metadata"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.property\\.${k}\\}`));
@@ -647,14 +649,14 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
   });
 
-  it("the list tiles are compact and fill their units: Persoane 6, Proprietăți 3, „Acte corelate” 5, META INFO 5", () => {
+  it("the list tiles are compact and fill their units: Persoane 6, Proprietăți 4 (#37.58), „Acte corelate” 5, META INFO 5", () => {
     const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
-    // Each table fills its tile to within half a rem (Proprietăți leaves exactly half: 27.5 in 28).
-    for (const [k, units] of [["documentPersons", 6], ["documentProperties", 3], ["documents", 5]] as const) {
+    // Each table fills its tile to within half a rem (Proprietăți leaves a quarter: 38 in 38.25).
+    for (const [k, units] of [["documentPersons", 6], ["documentProperties", 4], ["documents", 5]] as const) {
       const room = tileTableRem(units);
       expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) <= 0.5]).toEqual([k, true]);
     }
-    expect(LIST_UNITS.document).toEqual({ persons: 6, properties: 3, associations: 5, metadata: 5 });
+    expect(LIST_UNITS.document).toEqual({ persons: 6, properties: 4, associations: 5, metadata: 5 });
     const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
     for (const k of ["persons", "properties", "associations", "metadata"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
