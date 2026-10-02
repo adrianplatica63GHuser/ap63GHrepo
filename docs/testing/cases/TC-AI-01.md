@@ -45,8 +45,8 @@ proposed four after reading pages 1 and 3 on screen (Slice #36.07), and they are
 
 | What a reader looks for first | Where the form puts it | Read on 2026-09-23 | On the deed |
 |---|---|---|---|
-| The price | „Preț total" + „Monedă" (Instrument) | 25000, Euro (EUR) | „Pretul vânzarii este de 25.000 Euro" (p. 1) |
-| The date of the deed | „Data autentificării" + „Nr. act autentic" (Instrument) | 2008-06-16, 1941 | „Încheiere de autentificare nr. 1941 … luna Iunie, ziua 16" (p. 3) |
+| The price | „Preț total" + „Monedă" (Preț și taxe) | 25000, Euro (EUR) | „Pretul vânzarii este de 25.000 Euro" (p. 1) |
+| The date of the deed | „Data autentificării" + „Nr. act autentic" (Preț și taxe) | 2008-06-16, 1941 | „Încheiere de autentificare nr. 1941 … luna Iunie, ziua 16" (p. 3) |
 | The seller | **Not a field.** People come from the persons dialog at the end of the import | two people with the role „Vânzător" | both sellers, one of them also acting as mandatar for the other (p. 1) |
 | The parcel's identifiers | **No dedicated field on this form.** They are in „Subiect", with „Origine lot" and „Vecinătăți" (Cadastru) | „Subiect" names tarla 40, parcela 212/40, nr. cad. 1174/5/2 (612 mp) and the 6,50 % share of 1174/6 | the same (p. 1) |
 
@@ -56,7 +56,7 @@ proposed four after reading pages 1 and 3 on screen (Slice #36.07), and they are
 |---|---|---|
 | 1 | Opens `Contract de Vânzare-Cumpărare Costache S 2008 TC-IMP-01` | Its detail screen, tabs „Detalii", „Asocieri", „Persoane", „Proprietăți", „Meta info"; „Tip document" = „Contract de Vânzare (are formular)" |
 | 2 | Looks at „Stare procesare" | „Procesat cu AI" |
-| 3 | Looks at the tab „Detalii" | The form is a notebook labelled „Secțiunile formularului", with the tabs **„Instrument", „Cadastru", „Stare juridică", „Conformitate"**, and not one long scroll. „Cadastru" holds the panels „ANTET INSTRUMENT", „EXCEPȚIE CADASTRU" and „OBIECT DECLARAT" |
+| 3 | Looks at the tab „Detalii" | The form is a notebook labelled „Secțiunile formularului", with the tabs **„Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități"**, and not one long scroll. „Cadastru și carte funciară" holds the panels „DOSAR ȘI EXEMPLAR", „EXCEPȚIE CADASTRU" and „OBIECT DECLARAT" |
 | 4 | Goes through the tabs | The four fields in the table above carry the values shown |
 | 5 | Finds „Note extinse" | **A note, not the deed**: the line „[AI] Text neasociat unui câmp:", then six short facts the form has no field for (the lei equivalent of the price, the tax base, and so on), then „Titlul tipărit pe document". About 1,200 characters in all, against three dense pages of deed |
 | 6 | Opens the tab „Persoane" | „Nicio persoană asociată acestui act". The five people the AI found were offered **once, in the import's own dialog** („Confirmați persoanele din acest document"), and TC-IMP-01 skips them. After that dialog closes the document does not offer them again. The import says so itself: „După ce închideți, nu mai există unde." |
@@ -86,3 +86,5 @@ Nothing of its own. The rows belong to TC-IMP-01 and are cleaned up there.
 - **Question for Adrian, recorded rather than waited on:** the Cadastru tab's „Data
   conținutului" stayed empty while „Data autentificării" was filled. If „Data
   conținutului" is meant to carry the date of the deed, the extraction misses it.
+
+**2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. Not driven again; the case stays where it was.

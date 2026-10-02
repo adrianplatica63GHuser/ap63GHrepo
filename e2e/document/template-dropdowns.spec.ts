@@ -10,9 +10,13 @@
  *   - The widest choice is selected with Playwright's `selectOption`, a real
  *     change; nothing is saved, as in the case.
  *   - Slice #37.53's pictures, not steps of the case: the CVC's four tiles
- *     („Instrument", „Cadastru", „Stare juridică", „Conformitate") at 1366 and
- *     1920 px, into `playwright-report/template-dropdowns/`, the page from
- *     „Instrument" down, the sidebar's „Recente" list painted over.
+ *     („Preț și taxe", „Cadastru și carte funciară", „Stare juridică",
+ *     „Formalități" since #37.54) at 1366 and 1920 px, into
+ *     `playwright-report/template-dropdowns/`, the page from „Preț și taxe"
+ *     down, the sidebar's „Recente" list painted over.
+ *   - #37.54 renamed the two panels the case counts: „Stare juridică afirmată"
+ *     is „Declarații și garanții", „Conformitate și formalități" is
+ *     „Declarații și obligații legale". The case file says so.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -74,15 +78,15 @@ async function stepsTwoAndThree(page: Page): Promise<void> {
   for (const { name, value } of await widestChoices(page)) await page.locator(`select[name="${name}"]`).selectOption(value);
   expect(await clipped(page)).toEqual([]);
   // Step 3 — two boxes to every row: 14 in 7, 10 in 5.
-  expect(await boxesPerRow(page, "Stare juridică afirmată")).toEqual([2, 2, 2, 2, 2, 2, 2]);
-  expect(await boxesPerRow(page, "Conformitate și formalități")).toEqual([2, 2, 2, 2, 2]);
+  expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([2, 2, 2, 2, 2, 2, 2]);
+  expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 2, 2, 2, 2]);
 }
 
 async function photograph(page: Page): Promise<void> {
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 1080 });
     await page.waitForTimeout(300);
-    await page.getByRole("region", { name: "Instrument", exact: true }).scrollIntoViewIfNeeded();
+    await page.getByRole("region", { name: "Preț și taxe", exact: true }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${SHOTS}/cvc-tiles-${width}.png`, fullPage: true, mask: [recent(page)] });
   }
 }
@@ -106,8 +110,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       // Step 4 — 1920 × 1080: the same.
       await page.setViewportSize({ width: 1920, height: 1080 });
       expect(await clipped(page)).toEqual([]);
-      expect(await boxesPerRow(page, "Stare juridică afirmată")).toEqual([2, 2, 2, 2, 2, 2, 2]);
-      expect(await boxesPerRow(page, "Conformitate și formalități")).toEqual([2, 2, 2, 2, 2]);
+      expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([2, 2, 2, 2, 2, 2, 2]);
+      expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 2, 2, 2, 2]);
 
       await photograph(page);
     } finally {

@@ -64,15 +64,17 @@ What the run measured:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Instrument", „Cadastru", „Stare juridică", „Conformitate", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale, the page panel, and Instrument's panels, Financiar and Taxe și onorarii. The type's form puts „Antet instrument” on Cadastru |
-| 2 | Ticks „Cadastru", „Stare juridică" and „Conformitate" | Their panels appear, in that order, after Instrument's. All four notebook tabs' panels and the page image are on one screen |
+| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale, the page panel, and Instrument's panels, Financiar and Taxe și onorarii. The type's form puts „Antet instrument” on Cadastru |
+| 2 | Ticks „Cadastru și carte funciară", „Stare juridică" and „Formalități" | Their panels appear, in that order, after Preț și taxe's. All four notebook tabs' panels and the page image are on one screen |
 | 3 | Reloads the page | The same arrangement |
-| 4 | Types `TC` into a field of „Conformitate", unticks „Conformitate" | The panels go; „Modificări nesalvate" stays at the top |
-| 5 | Presses „Salvează" | „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Conformitate": the field reads `TC` |
-| 6 | In „Instrument", types `TC-1` into „Nr. act autentic", „Salvează" (v 2). In „Date generale", types `TC` into „Notițe", „Salvează" (v 3). Unticks „Instrument", then presses „◀" to v 2 | On the read-only v 2, „Instrument" has a small dot beside its checkbox, with the title „Are câmpuri evidențiate — bifați pentru a le vedea": v 2 changed a field on that tile. „Date generale" has none, because v 2 changed nothing there. Ticks „Instrument": „Nr. act autentic" is framed, as it was on the tab. Presses „▶" back to v 3 |
+| 4 | Types `TC` into a field of „Formalități", unticks „Formalități" | The panels go; „Modificări nesalvate" stays at the top |
+| 5 | Presses „Salvează" | „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Formalități": the field reads `TC` |
+| 6 | In „Preț și taxe", types `TC-1` into „Nr. act autentic", „Salvează" (v 2). In „Date generale", types `TC` into „Notițe", „Salvează" (v 3). Unticks „Preț și taxe", then presses „◀" to v 2 | On the read-only v 2, „Preț și taxe" has a small dot beside its checkbox, with the title „Are câmpuri evidențiate — bifați pentru a le vedea": v 2 changed a field on that tile. „Date generale" has none, because v 2 changed nothing there. Ticks „Preț și taxe": „Nr. act autentic" is framed, as it was on the tab. Presses „▶" back to v 3 |
 | 7 | In „Date generale", changes the type to „Plan parcelar" (does not save) | The checkboxes become that type's: „Date generale", „Pagini", „Detalii act", then the lists. What is ticked is the Plan parcelar's own choice (the defaults, since none is stored); the Contract's four notebook tiles are gone. „Modificări nesalvate" shows. Changes the type back to „Contract de Vânzare": the Contract's stored arrangement returns, `TC` is still in its field, and the banner goes, because nothing differs from the saved document any more |
 | 8 | „Anulează" | Back on the list, nothing saved from step 7 |
 | 9 | Opens the document again: „Toate", then „Implicit" | „Toate": every box ticked. „Implicit": Date generale, Pagini, Instrument |
 | — | At the end: „Șterge" → „Da" | Back on the documents list; the document is gone |
 
 **2026-10-02 — Slice #37.52.** Step 7's third tile is „Detalii act", no longer „Câmpuri specifice" — the tile of a type without pages of its own was renamed. Not driven again; the case stays `driven`.
+
+**2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. Not driven again; the case stays `driven`.
