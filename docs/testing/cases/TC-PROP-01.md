@@ -33,8 +33,8 @@ Properties list and can be removed by hand.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Proprietăți — Listă" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), the filters „Importanță:" and „Relevanță:", „Câmpuri afișate 4/4", a button „Adaugă proprietate", and a table headed COD and **the four columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE |
-| 2 | Presses „Câmpuri afișate" and makes the four ticked columns „Poreclă", „Localitate", „Tarla/Solă" and „Parcelă" — **untick first** („Nr. cadastru", „Oficială (m²)", whatever else is ticked): the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed COD · PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
+| 1 | Presses „Proprietăți — Listă" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), the filters „Importanță:" and „Relevanță:", „Câmpuri afișate 4/4", a button „Adaugă proprietate", and a table headed by **the four columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE |
+| 2 | Presses „Câmpuri afișate" and makes the four ticked columns „Poreclă", „Localitate", „Tarla/Solă" and „Parcelă" — **untick first** („Nr. cadastru", „Oficială (m²)", whatever else is ticked): the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
 | 3 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 12 checks it |
 | 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering four ways in: „Introducere manuală", „Din imagine scanată", „Din fișier text", „Din folder text" |
 | 5 | Presses „Introducere manuală" („Completați detaliile proprietății manual") | The heading „Proprietate nouă" at `/properties/new`, with the sections „DATE CADASTRALE", „PUNCTE DE CONTUR", „ADRESĂ" and a map |
@@ -135,3 +135,5 @@ Four corrections, and the first one is the kind a case file is worthless without
 Also noted: the property detail screen reached from the list shows „Cod" as a read-only
 `PROP01620`, and the form's own tabs are „DETALII", „ASOCIERI", „PERSOANE", „ACTE",
 „META INFO".
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists no longer show it — „Proprietăți — Listă" has no „Cod" column. The steps above that read a code or a „Cod" column were rewritten to match; the search boxes' placeholders („caută după cod…") are unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

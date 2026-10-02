@@ -36,7 +36,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — COD · TIP · TITLU — with the filters „Tip document: Toate tipurile", „Importanță:", „Relevanță:", „Câmp specific:", and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
+| 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with the filters „Tip document: Toate tipurile", „Importanță:", „Relevanță:", „Câmp specific:", and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
 | 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „DATE DE EMITERE". „Tip document" is a field inside „Date generale", and it starts **empty** |
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |

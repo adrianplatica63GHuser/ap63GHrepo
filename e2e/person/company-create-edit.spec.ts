@@ -68,7 +68,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page.getByText("Toate grupurile").first()).toBeVisible();
       const search = page.getByPlaceholder("caută după cod, nume, poreclă sau ID");
       await expect(search).toBeVisible();
-      for (const col of ["COD", "DENUMIRE", "PORECLĂ"]) {
+      for (const col of ["DENUMIRE", "PORECLĂ"] /* #37.57: no „Cod" */) {
         await expect(page.getByRole("columnheader", { name: col }).first()).toBeVisible();
       }
       await expect(page.getByRole("columnheader", { name: "CUI" })).toHaveCount(0);

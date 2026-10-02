@@ -84,7 +84,7 @@ async function listStep(page: Page, url: string, name: string): Promise<void> {
   // Filtered to this case's record, so the picture holds no real one.
   await page.getByPlaceholder(/caută după/).first().fill(MARK);
   await expect(table.locator("tbody tr").filter({ hasText: MARK })).toHaveCount(1, { timeout: 30_000 });
-  await expect(table.getByRole("columnheader", { name: "Cod", exact: true })).toHaveCount(0);
+  await expect(table.getByRole("columnheader", { name: /^cod$/i })).toHaveCount(0);
   expect((await table.innerText()).match(CODE) ?? []).toEqual([]);
   expect(((await page.locator("aside").first().innerText()).match(CODE) ?? [])).toEqual([]);
   for (const width of [1366, 1920]) {

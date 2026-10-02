@@ -66,7 +66,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await page.goto("/");
       await openFromSidebar(page, "Persoane Fizice");
       await expect(page.getByRole("heading", { name: "Persoană fizică", exact: true })).toBeVisible({ timeout: 30_000 });
-      for (const col of ["COD", "NUME", "PORECLĂ"]) {
+      for (const col of ["NUME", "PORECLĂ"] /* #37.57: no „Cod" */) {
         await expect(page.getByRole("columnheader", { name: col, exact: false }).first()).toBeVisible();
       }
 

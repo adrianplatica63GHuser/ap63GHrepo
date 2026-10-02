@@ -159,7 +159,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await page.goto("/");
       await openFromSidebar(page, "Acte");
       await expect(page.getByRole("heading", { name: "Acte", exact: true })).toBeVisible({ timeout: 30_000 });
-      for (const col of ["COD", "TIP", "TITLU"]) {
+      for (const col of ["TIP", "TITLU"] /* #37.57: no „Cod" */) {
         await expect(page.getByRole("columnheader", { name: col }).first()).toBeVisible();
       }
       await expect(page.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ })).toBeVisible();

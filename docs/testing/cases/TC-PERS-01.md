@@ -33,7 +33,7 @@ record; the form does not require one for a save.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Persoane Fizice" in the left sidebar | The heading „Persoană fizică", a table headed COD · NUME · PORECLĂ, and a button „Adaugă persoană" |
+| 1 | Presses „Persoane Fizice" in the left sidebar | The heading „Persoană fizică", a table headed NUME · PORECLĂ, and a button „Adaugă persoană" |
 | 2 | Presses „Adaugă persoană" | **Straight to** „Persoană fizică nouă" at `/natural-persons/new` — no chooser dialog, unlike the property list. Its sections are „IDENTITATE", „CARTE DE IDENTITATE", „CONTACT", „ADRESĂ DOMICILIU" |
 | 3 | Types `TC-PERS-01` into „Nume" | The value appears |
 | 4 | Types `Ion` into „Prenume" | The value appears |
