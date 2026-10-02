@@ -74,7 +74,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-05](cases/TC-PROP-05.md) | A doua proprietate pentru aceeași parcelă este refuzată | property | negative | — | `driven` | 2026-09-27 | — |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-09-30 | `e2e/person/company-create-edit.spec.ts` |
-| [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `confirmed` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
+| [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
 | [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
@@ -123,8 +123,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 
-**Thirty-eight are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49, which added TC-MAP-01, TC-FOLD-01 and TC-ICON-01–07 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Thirty-nine are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
+#37.38, #37.40, #37.42–#37.47, #37.49 and #37.50, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07 and TC-PERS-03 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

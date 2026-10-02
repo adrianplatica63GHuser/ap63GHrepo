@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -81,3 +81,8 @@ unchanged.
   CNP still `1800101420010`.
 - The person deleted at the end (204); nothing left. Nothing changed between the runs, so the
   case is confirmed, and `e2e/person/cnp-lock-bubble.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/person/cnp-lock-bubble.spec.ts` translates the case with
+Playwright's real mouse and keyboard and takes #37.50's pictures. Green on its first runner run,
+`20261002T130624Z-14261` on `2a28142` (the spec alone, with lint and tsc; jest
+`20261002T130839Z-21933`, 204 suites).
