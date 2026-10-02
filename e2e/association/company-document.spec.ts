@@ -54,7 +54,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(page.getByText(COMPANY).first()).toBeVisible();
       const search = page.getByPlaceholder("Cod sau titlu…", { exact: true });
       await expect(search).toBeVisible();
-      for (const col of ["Cod", "Tip", "Titlu"]) {
+      for (const col of ["Tip", "Titlu"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });

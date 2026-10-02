@@ -105,7 +105,7 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       await expect(page.getByText("1 rezultat", { exact: true })).toBeVisible({ timeout: 30_000 });
       const hit = page.locator("tbody tr");
       await expect(hit).toHaveCount(1);
-      await expect(hit).toContainText(/PROP\d+/);
+      await expect(hit).not.toContainText(/PROP\d+/); // #37.57: no system ID here
       await expect(hit).toContainText(PROPERTY);
 
       // Step 6 — „×" on the chip: „Nicio etichetă adăugată încă".

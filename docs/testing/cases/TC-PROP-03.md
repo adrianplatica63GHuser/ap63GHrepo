@@ -44,7 +44,7 @@ moved; the archive is not touched.
 | 4 | Puts the data file into the dialog's file input **without pressing the drop zone** — the same way TC-DOC-01 puts a page in (see the catalogue's „A file into a page, without the dialog") | The drop zone shows `TC-PROP-03 Teren din fisier.txt` |
 | 5 | Presses „Importă" | „Proprietatea a fost importată cu succes." and the longer warning „Această proprietate nu are nici tarla, nici parcelă, deci nu are identitate cadastrală: …", with „Închide". Behind the dialog, the list already has a new row at the top badged „Nou!", „Poreclă" `TC-PROP-03 Teren din fisier`, no tarla and no parcelă, and the count is N+1 |
 | 6 | Presses „Închide", then „Deschide" on that row | The property's screen, headed `TC-PROP-03 Teren din fisier`, „v 0", „Suprafață calculată (m²)" **611.87**, and under „PUNCTE DE CONTUR" four rows — NR. 1–4, NR. ORIG. **16, 17, 18, 19**, NORD/EST 318693.71 / 573578.56, 318675.77 / 573554.70, 318659.52 / 573567.20, 318677.46 / 573591.06 — and the map drawn |
-| 7 | On Căutare globală, searches `TC-PROP-03` | One row, `PROP…`, with „Proveniență" = **„Fișier de coordonate (.txt)"** |
+| 7 | On Căutare globală, searches `TC-PROP-03` | One row, with no system ID, with „Proveniență" = **„Fișier de coordonate (.txt)"** |
 
 ## At the end — leaving things as they were found
 
@@ -83,3 +83,5 @@ Corrections to what was written from the code before the run:
    four corners are lines 1–4 — and all four were imported. `POST /api/properties/parse-text`
    reads every line and skips only the ones that are not a coordinate row. Both locales now
    say that lines which are not coordinates are ignored.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

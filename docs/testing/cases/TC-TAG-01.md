@@ -41,7 +41,7 @@ it.
 | 2 | Opens `TC-PROP-01 Teren de test`, tab **„META INFO"** | „Clasificare subiectivă" (Importanță, Relevanță, Proveniență), then „Conexiuni": „Etichete / Cuvinte cheie" with an input „Introduceți o etichetă…", „Adaugă", and „Nicio etichetă adăugată încă" |
 | 3 | Types `TC-TAG-01` and presses „Adaugă" | A chip **`tc-tag-01`** with „×". It is saved at once — the „Salvează" under „Clasificare subiectivă" is not needed, and the chip is still there after a reload |
 | 4 | Returns to „Etichete" | „N+1 etichete distincte", `tc-tag-01` in the cloud as „tc-tag-01 ×1", and in the table with „Utilizări" 1 and „Redenumește" |
-| 5 | On Căutare globală, types `tc-tag-01` into „Etichetă" and presses „Caută" | „1 rezultat": the property, `PROP…` |
+| 5 | On Căutare globală, types `tc-tag-01` into „Etichetă" and presses „Caută" | „1 rezultat": the property, with no system ID |
 | 6 | Back on the property's „META INFO", presses „×" on the chip | „Nicio etichetă adăugată încă" |
 | 7 | Returns to „Etichete" | „N etichete distincte" again, and `tc-tag-01` nowhere on the page |
 
@@ -66,3 +66,5 @@ the system stores it.
 One thing seen, not fixed, and not this case's: the „Vezi și" note on the same tab asked for a
 code „ex. PERS00001", a shape no record has had since the PPERS/JPERS split — the same slip
 #36.05 fixed on Căutare globală. Corrected to `PPERS00001` in both locales in this slice.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

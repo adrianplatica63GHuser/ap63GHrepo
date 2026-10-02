@@ -82,7 +82,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await nameFilter.fill(MARK);
       const candidates = page.getByRole("row").filter({ hasText: PERSON });
       await expect(candidates).toHaveCount(1, { timeout: 15_000 });
-      await expect(candidates).toContainText(/PPERS\d+/);
+      await expect(candidates).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       await expect(candidates).toContainText("Fizică");
 
       // Step 5 — „Cumpărător", out of the five a Contract de Vânzare offers.

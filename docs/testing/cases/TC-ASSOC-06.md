@@ -32,7 +32,7 @@ person it is. The list the company is offered is the same four roles a natural p
 |---|---|---|
 | 1 | Opens `TC-PERS-02 Firmă de test SRL` from „Persoane Juridice" | The company's screen |
 | 2 | Presses the tab **„Proprietăți"** | „Nicio proprietate asociată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere proprietate" at `/judicial-persons/[id]/associate-property`, the company's name under it, one filter „Căutare" („Cod sau denumire…"), a table Cod · Denumire listing every property, and „Rol" offering „Coproprietari / Coindivizari", „Cumpărător", „Proprietar / Titular de drept real", „Titular de drept" |
+| 3 | Presses „Asociază" | „Asociere proprietate" at `/judicial-persons/[id]/associate-property`, the company's name under it, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every property, and „Rol" offering „Coproprietari / Coindivizari", „Cumpărător", „Proprietar / Titular de drept real", „Titular de drept" |
 | 4 | Types `TC-PROP-01` into „Căutare" and ticks the one row | The row is selected |
 | 5 | Chooses „Proprietar / Titular de drept real" in „Rol" | The role is selected |
 | 6 | Presses „Asociază selecția" | Back on the company's „Proprietăți" (`?tab=properties`): Denumire · Rol, `TC-PROP-01 Teren de test`, „Proprietar / Titular de drept real", „Vizualizare" |
@@ -61,3 +61,5 @@ radio and „Dezasociază". Only this section was written; the spec is
 `PROP01713`; read from the property's „Persoane"; „Vizualizare" opened
 `/judicial-persons/<id>?readonly=true`; removed with the radio and „Dezasociază". Nothing
 written from the code needed correcting.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

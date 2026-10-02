@@ -36,7 +36,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", a filter „Grupuri: Toate grupurile", a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed COD · DENUMIRE · PORECLĂ. **There is no CUI column**, and no „Importanță" / „Relevanță" / „Câmpuri afișate" as on the other lists |
+| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", a filter „Grupuri: Toate grupurile", a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column**, and no „Importanță" / „Relevanță" / „Câmpuri afișate" as on the other lists |
 | 2 | Presses „Adaugă persoană juridică" | **Straight to** „Persoană juridică nouă" at `/judicial-persons/new` — no chooser dialog, as for natural persons. Its sections are „PERSOANĂ JURIDICĂ", „PERSOANE DE CONTACT", „ADRESĂ SEDIU SOCIAL", a checkbox „Aceeași cu adresa sediului social", and „ADRESĂ CORESPONDENȚĂ" |
 | 3 | Types `TC-PERS-02 Firmă de test SRL` into „Denumire" | The value appears. „Denumire" is the only required field |
 | 4 | Chooses „SRL" in „Tip" | The select offers „—", „Consiliu Local", „Instituție", „SRL", „SA", „SRL-D", „PFA", „II", „IF", „ONG", „Altele" |
@@ -44,7 +44,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 | 6 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new company |
 | 7 | Looks at the top of the list | A row badged **„Nou!"**, with a code beginning `JPERS`, „DENUMIRE" `TC-PERS-02 Firmă de test SRL`, „PORECLĂ" „—" |
 | 8 | Types `0000000002` into the list's search box | The row is still there — the search matches the CUI, which is what the placeholder's „ID" means. `0000000003` empties the list („Nu există persoane juridice") |
-| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Persoane corelate" (#37.29), „Proprietăți", „Acte" and „META INFO" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. „ID" shows the `JPERS…` code read-only, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
+| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Persoane corelate" (#37.29), „Proprietăți", „Acte" and „META INFO" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
 | 10 | Types `TC-PERS-02 editat` into „Poreclă" and presses „Salvează" at the bottom | **The screen stays on the company**, unlike step 6. The header now reads **„v 1"** with the chip **„2 versiuni"**, and „Poreclă" holds `TC-PERS-02 editat` |
 
 ## At the end — leaving things as they were found
@@ -86,3 +86,5 @@ cannot be changed once set, but the input is neither `readOnly` nor `disabled` (
 page on this run) and `PATCH /api/judicial-persons/[id]` has no check on it either. The natural
 person's CNP carries the same hint on the same kind of field. The case does not change the CUI,
 so it does not depend on which way this is decided. In the 36.08 handover.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

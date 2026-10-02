@@ -111,7 +111,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(NAME, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
-      await expect(top).toContainText(/JPERS\d+/);
+      await expect(top).not.toContainText(/JPERS\d+/); // #37.57: no system ID here
       await expect(top).toContainText("—");
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       companyId = href?.split("/").pop();
@@ -143,7 +143,8 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(tiles.getByRole("button", { name: "Toate", exact: true })).toBeVisible();
       await expect(tiles.getByRole("button", { name: "Implicit", exact: true })).toBeVisible();
       await expect(page.getByRole("tab")).toHaveCount(0);
-      await expect(page.getByText(/^JPERS\d+$/).first()).toBeVisible();
+      // #37.57: the system ID is the identity panel heading's corner, not a field.
+      await expect(page.locator('[data-panel="identity"] [data-system-id]')).toContainText(/JPERS\d+$/);
       await expect(
         page.getByText("CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba"),
       ).toBeVisible();

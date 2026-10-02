@@ -43,7 +43,7 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       const row = page.getByRole("row").filter({ hasText: named("Unu") });
       await expect(row).toHaveCount(1, { timeout: 15_000 });
       await expect(row).toContainText("Nou!");
-      await expect(row).toContainText(/PPERS\d+/);
+      await expect(row).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       const href = await row.getByRole("link", { name: "Deschide" }).getAttribute("href");
       personId = href?.split("/").pop();
 
@@ -120,7 +120,7 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       const listed = page.getByRole("row").filter({ hasText: LAST_NAME });
       await expect(listed).toHaveCount(1, { timeout: 30_000 });
       await expect(listed).toContainText(named("Unu"));
-      await expect(listed).toContainText(/PPERS\d+/);
+      await expect(listed).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
 
       // ── At the end — „Șterge", „Da" ───────────────────────────────────────
       await listed.getByRole("link", { name: "Deschide" }).click();

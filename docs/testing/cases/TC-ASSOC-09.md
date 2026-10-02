@@ -43,9 +43,9 @@ Two natural persons, typed by hand, no CNP: „Nume" **`TC-ASSOC-09`**, „Prenu
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume", „Prenume", chooses „Gen", „Salvează" | Two rows badged „Nou!", codes beginning `PPERS` |
+| 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume", „Prenume", chooses „Gen", „Salvează" | Two rows badged „Nou!", with no system ID |
 | 2 | Opens `Ana TC-ASSOC-09`, tile **„Persoane"** | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Tip relație"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
+| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Tip relație"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
 | 4 | Ticks `Mihai TC-ASSOC-09`, chooses „Tip relație" **„Părinte"** | The hint goes away |
 | 5 | Presses „Asociază selecția" | Back on Ana's „Persoane" (`?tab=related`): a table Nume · Tip relație, one row — `Mihai TC-ASSOC-09`, **„Părinte"**, „Vizualizare" |
 | 6 | Opens `Mihai TC-ASSOC-09`, tile „Persoane" | One row — `Ana TC-ASSOC-09`, **„Fiică"** (not „Părinte") |
@@ -76,3 +76,5 @@ corrected by the run in one place: the „Tip relație" select is not disabled o
 **absent** — `associate-person-view.tsx` renders it only when there is a role to offer, and
 says nothing when there is none (FU-221). Removed with the radio and „Dezasociază", then both
 people through `DELETE /api/people/[id]`, the route „Șterge" → „Da" calls.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

@@ -38,9 +38,9 @@ Both are deleted at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates the company and the document above | „Nou! JPERS… TC-ASSOC-10 Firmă de test SRL" on „Persoane Juridice"; „Nou! DOC… Contract de Vânzare TC-ASSOC-10 Contract de test" on „Acte" |
+| 1 | Creates the company and the document above | „Nou! TC-ASSOC-10 Firmă de test SRL" on „Persoane Juridice"; „Nou! Contract de Vânzare TC-ASSOC-10 Contract de test" on „Acte" |
 | 2 | Opens the company and presses the tab **„Acte"** | „Niciun act asociat", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere act" at `/judicial-persons/[id]/associate-document`, the company's name under it, one filter „Căutare" („Cod sau titlu…"), a table Cod · Tip · Titlu listing every document with a tick box on each row, and a select **„Rol"** starting at „— fără rol —" and offering every role in the system |
+| 3 | Presses „Asociază" | „Asociere act" at `/judicial-persons/[id]/associate-document`, the company's name under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu listing every document with a tick box on each row, and a select **„Rol"** starting at „— fără rol —" and offering every role in the system |
 | 4 | Types `TC-ASSOC-10` into „Căutare" and ticks the one row | The row is selected, and „Rol" **narrows to the roles a Contract de Vânzare offers**: „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 5 | Chooses **„Cumpărător"** and presses „Asociază selecția" | Back on the company's „Acte" (`?tab=document`): Tip · Titlu · Rol — „Contract de Vânzare", `TC-ASSOC-10 Contract de test`, „Cumpărător", and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The document, read-only (`/documents/[id]?readonly=true`) |
@@ -73,3 +73,5 @@ the return lands on the company's „Acte" as `?tab=document`.
 **Before promoting:** the first „Salvează" on a new record, pressed the moment the form appears,
 sometimes does nothing (the form is not yet interactive); the second works. A spec must wait for
 the form, not press twice.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

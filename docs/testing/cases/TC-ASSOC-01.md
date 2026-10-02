@@ -55,8 +55,8 @@ Two consequences for the steps:
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
 | 2 | Presses the tab **„Persoane"** — it sits beside „Asocieri", not inside it | „Nicio persoană asociată acestui act", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
-| 4 | Types `TC-PERS-01` into „Nume" | One row: `PPERS…`, `Ion TC-PERS-01`, „Tip" = „Fizică" |
+| 3 | Presses „Asociază" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
+| 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
 | 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
 | 6 | Ticks the row for `Ion TC-PERS-01` | The row is selected |
 | 7 | Presses „Asociază selecția" | The screen returns to the document, on its „Persoane" tab |
@@ -161,3 +161,5 @@ data, and nothing else. (All of it was seen on the second run, above.)
 _(Earlier, without a run: a person's name renders **prenume-first**, from TC-PERS-01's
 first run; and the subject-matter answer above replaced the open question the case
 shipped with.)_
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

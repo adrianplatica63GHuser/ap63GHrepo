@@ -56,21 +56,8 @@ const ROLES = [
  */
 const POOL = 3;
 
-/**
- * The property's code (`PROP…`), read from GET /api/properties/[id] — the
- * route the property's screen loads. Not from the page text: the sidebar's
- * „RECENTE" lists other properties' codes too.
- */
-async function codeOf(page: Page, id: string): Promise<string> {
-  const res = await page.request.get(`/api/properties/${id}`);
-  expect(res.ok(), `GET /api/properties/${id} failed (${res.status()})`).toBeTruthy();
-  const code = ((await res.json()) as { property?: { code?: string } }).property?.code;
-  expect(code, `no code on property ${id}`).toMatch(/^PROP\d+$/);
-  return code as string;
-}
-
 /** Steps 2–6 for one pair: link from the part's screen, read from both ends. */
-async function linkAndRead(page: Page, part: { id: string; name: string }, whole: { id: string; code: string }) {
+async function linkAndRead(page: Page, part: { id: string; name: string }, whole: { id: string; name: string }) {
   // Step 2 — the part's „Proprietăți corelate" (#37.30, „Asocieri" before): empty, „Asociază", „Dezasociază".
   await page.goto(`/properties/${part.id}`);
   await expect(page.getByRole("heading", { name: part.name })).toBeVisible({ timeout: 30_000 });
@@ -78,13 +65,13 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
-  // Step 3 — „Asociere proprietate corelată": „Căutare", Cod · Denumire, „Tip relație".
+  // Step 3 — „Asociere proprietate corelată": „Căutare", Denumire, „Tip relație" (#37.57: no „Cod").
   await page.getByRole("button", { name: "Asociază", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/properties/${part.id}/associate-reference$`), { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Asociere proprietate corelată" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(part.name).first()).toBeVisible();
   const search = page.getByPlaceholder("Cod sau denumire…", { exact: true });
-  for (const col of ["Cod", "Denumire"]) {
+  for (const col of ["Denumire"]) {
     await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
   }
   // The select renders only once GET /api/admin/property-property-roles has
@@ -103,17 +90,17 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   await expect(page).toHaveURL(new RegExp(`/properties/${part.id}\\?tab=related$`), { timeout: 30_000 });
   const fromPart = page.getByRole("row").filter({ has: page.getByRole("radio", { name: WHOLE }) });
   await expect(fromPart).toHaveCount(1, { timeout: 15_000 });
-  await expect(fromPart).toContainText(`această proprietate „${ROLE}” ${whole.code}`);
+  // #37.57: the other property by its name, not its system ID.
+  await expect(fromPart).toContainText(`această proprietate „${ROLE}” ${whole.name}`);
   await expect(fromPart.getByRole("link", { name: "Vizualizare" })).toBeVisible();
 
-  // Step 6 — the whole's „Proprietăți corelate": the converse, with the part's code.
-  const partCode = await codeOf(page, part.id);
+  // Step 6 — the whole's „Proprietăți corelate": the converse, with the part's name.
   await page.goto(`/properties/${whole.id}`);
   await expect(page.getByRole("heading", { name: WHOLE })).toBeVisible({ timeout: 30_000 });
   await showTile(page, "Proprietăți corelate");
   const fromWhole = page.getByRole("row").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
   await expect(fromWhole).toHaveCount(1, { timeout: 30_000 });
-  await expect(fromWhole).toContainText(`${partCode} „${ROLE}” această proprietate`);
+  await expect(fromWhole).toContainText(`${part.name} „${ROLE}” această proprietate`);
 }
 
 test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele capete", () => {
@@ -146,7 +133,7 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
       }
       expect(before.id < wholeId && wholeId < after.id).toBe(true);
 
-      const whole = { id: wholeId, code: await codeOf(page, wholeId) };
+      const whole = { id: wholeId, name: WHOLE };
       await linkAndRead(page, before, whole);
       await linkAndRead(page, after, whole);
 

@@ -100,7 +100,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByRole("heading", { name: "Asociază Document" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(CERTIFICATE).first()).toBeVisible();
       const search = page.getByPlaceholder("Cod sau titlu…", { exact: true });
-      for (const col of ["Cod", "Tip", "Titlu"]) {
+      for (const col of ["Tip", "Titlu"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const relation = page.getByRole("combobox", { name: "Tip relație", exact: true });
@@ -121,7 +121,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       const fromCertificate = page.getByRole("row").filter({ hasText: CONTRACT });
       await expect(fromCertificate).toHaveCount(1, { timeout: 15_000 });
       await expect(fromCertificate).toContainText("Contract de Vânzare");
-      await expect(fromCertificate).toContainText(/acest document „Titlu anterior al” DOC\d+/);
+      await expect(fromCertificate).toContainText(`acest document „Titlu anterior al” ${CONTRACT}`); // #37.57: by its title, not its code
       const table = page.getByRole("table").filter({ has: fromCertificate });
       for (const col of ["Tip", "Titlu", "Tip relație"]) {
         await expect(table.getByText(col, { exact: true })).toBeVisible();
@@ -134,7 +134,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       const fromContract = page.getByRole("row").filter({ hasText: CERTIFICATE });
       await expect(fromContract).toHaveCount(1, { timeout: 30_000 });
       await expect(fromContract).toContainText("Certificat de Moștenitor");
-      await expect(fromContract).toContainText(/DOC\d+ „Titlu anterior al” acest document/);
+      await expect(fromContract).toContainText(`${CERTIFICATE} „Titlu anterior al” acest document`); // #37.57
 
       // ── At the end — radio, „Dezasociază"; then the certificate „Șterge" / „Da" ─
       await page.getByRole("radio", { name: CERTIFICATE }).check();

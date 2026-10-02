@@ -42,7 +42,7 @@ All three are deleted at the end.
 |---|---|---|
 | 1 | Creates the two people and the certificate above | Each on its list, badged „Nou!" |
 | 2 | Opens the certificate | Tab „Detalii"; at the bottom of the form, after „Pagini", a section **„Părți"**: „Nicio parte adăugată" and „+ Adaugă parte" |
-| 3 | Presses „+ Adaugă parte" | „Adaugă parte la certificat" at `/documents/[id]/associate-party`, the certificate's title under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip with **one choice per row** (a radio, not a tick box), a pager, and **„Calitate"** with two buttons, „Defunct" and „Moștenitor"; the hint reads „Selectați o persoană" |
+| 3 | Presses „+ Adaugă parte" | „Adaugă parte la certificat" at `/documents/[id]/associate-party`, the certificate's title under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with **one choice per row** (a radio, not a tick box), a pager, and **„Calitate"** with two buttons, „Defunct" and „Moștenitor"; the hint reads „Selectați o persoană" |
 | 4 | Chooses `Vasile TC-ASSOC-12 Defunct` | The hint becomes „Selectați calitatea (Defunct sau Moștenitor)" |
 | 5 | Presses „Defunct", then „Adaugă parte" | Back on the certificate's „Detalii". „Părți" is a table Nume · Calitate with one row — `Vasile TC-ASSOC-12 Defunct`, „Defunct", „Elimină" |
 | 6 | Presses „+ Adaugă parte" again, chooses `Maria TC-ASSOC-12 Mostenitor`, presses „Moștenitor", then „Adaugă parte" | Two rows, the newest first: `Maria TC-ASSOC-12 Mostenitor` „Moștenitor", `Vasile TC-ASSOC-12 Defunct` „Defunct" |
@@ -76,3 +76,5 @@ table picks one person with a radio.
 **What the run found, not fixed here (FU-224):** the quality is visible **only** in the
 certificate's own „Părți". The certificate's „Persoane" and each person's „Acte" list the link
 with „Rol" „—", so from the person's end nothing says whether they are the deceased or the heir.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

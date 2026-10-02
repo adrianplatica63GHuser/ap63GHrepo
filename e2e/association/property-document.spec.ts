@@ -58,7 +58,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(page.getByText(PROPERTY).first()).toBeVisible();
       const search = page.getByPlaceholder("Cod sau titlu…", { exact: true });
       await expect(search).toBeVisible();
-      for (const col of ["Cod", "Tip", "Titlu"]) {
+      for (const col of ["Tip", "Titlu"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByRole("combobox", { name: "Rol", exact: true })).toHaveCount(0);
@@ -67,7 +67,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await search.fill(MARK);
       const candidates = page.getByRole("row").filter({ hasText: DOC_TITLE });
       await expect(candidates).toHaveCount(1, { timeout: 15_000 });
-      await expect(candidates).toContainText(/DOC\d+/);
+      await expect(candidates).not.toContainText(/DOC\d+/); // #37.57: no system ID here
       await expect(candidates).toContainText("Contract de Vânzare");
 
       // Step 5 — tick it; the hint „Selectați cel puțin un act" goes away.

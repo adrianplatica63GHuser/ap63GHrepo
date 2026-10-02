@@ -58,7 +58,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       // `exact`: the sidebar's quick search is „Nume, cod…".
       const nameFilter = page.getByPlaceholder("Nume…", { exact: true });
       await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
-      for (const col of ["Cod", "Nume", "Tip"]) {
+      for (const col of ["Nume", "Tip"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();
@@ -72,7 +72,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await nameFilter.fill(MARK);
       const candidate = page.getByRole("row").filter({ hasText: PERSON });
       await expect(candidate).toHaveCount(1, { timeout: 15_000 });
-      await expect(candidate).toContainText(/PPERS\d+/);
+      await expect(candidate).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       await expect(candidate).toContainText("Fizică");
       await page.getByRole("checkbox", { name: PERSON }).check();
       await expect(page.getByText("Selectați cel puțin o persoană")).toHaveCount(0);

@@ -31,8 +31,8 @@ role a notary writes for the buyer on a Contract de Vânzare.
 |---|---|---|
 | 1 | Opens `Ion TC-PERS-01` from „Persoane Fizice" | The person's screen, tabs DETALII · ASOCIERI · PROPRIETĂȚI · ACTE · META INFO |
 | 2 | Presses the tab **„Acte"** | „Niciun act asociat", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere act" at `/natural-persons/[id]/associate-document`, the person's name under it, one filter „Căutare" (placeholder „Cod sau titlu…"), a table Cod · Tip · Titlu listing **every** document, and below it a select „Rol" with „— fără rol —" |
-| 4 | Types `TC-DOC-01` into „Căutare" | One row: `DOC…`, „Contract de Vânzare", `TC-DOC-01 Contract de test` |
+| 3 | Presses „Asociază" | „Asociere act" at `/natural-persons/[id]/associate-document`, the person's name under it, one filter „Căutare" (placeholder „Cod sau titlu…"), a table Tip · Titlu listing **every** document, and below it a select „Rol" with „— fără rol —" |
+| 4 | Types `TC-DOC-01` into „Căutare" | One row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
 | 5 | **Ticks the row first** | The row is selected, the hint „Selectați cel puțin un act" goes away, and **„Rol" narrows to the roles of that document's type**: „— fără rol —", „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 6 | Chooses „Cumpărător" in „Rol" | The role is selected |
 | 7 | Presses „Asociază selecția" | Back on the person, on its „Acte" tab (`?tab=document`): a table Tip · Titlu · Rol with one row — „Contract de Vânzare", `TC-DOC-01 Contract de test`, „Cumpărător" — and „Vizualizare" |
@@ -77,3 +77,5 @@ Corrections to what was written from the code before the run:
    as „Moștenitor / succesor" and „Moștenitor / Succesor", and „Coproprietar" beside
    „Coproprietari / Coindivizari". Reference data, not this screen; in the handover.
 3. The breadcrumb reads „Adaugă document" while the heading reads „Asociere act". Noted only.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

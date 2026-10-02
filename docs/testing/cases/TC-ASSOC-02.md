@@ -29,7 +29,7 @@ Nothing.
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
 | 2 | Presses the tab **„Proprietăți"** — it sits beside „Asocieri", not inside it | „Nicio proprietate asociată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere proprietate" at `/documents/[id]/associate-property`, the document's title under it, one filter „Căutare" (placeholder „Cod sau denumire…"), and a table Cod · Denumire listing **every** property. There is no „Rol" on this screen |
+| 3 | Presses „Asociază" | „Asociere proprietate" at `/documents/[id]/associate-property`, the document's title under it, one filter „Căutare" (placeholder „Cod sau denumire…"), and a table Denumire listing **every** property. There is no „Rol" on this screen |
 | 4 | Types `TC-PROP-01` into „Căutare" | The table narrows to one row, „Denumire" = `TC-PROP-01 Teren de test` |
 | 5 | Ticks that row | The row is selected, and the hint „Selectați cel puțin o proprietate" under the buttons goes away |
 | 6 | Presses „Asociază selecția" | Back on the document, on its „Proprietăți" tab |
@@ -76,3 +76,5 @@ Four corrections:
 3. **The associated-properties table has only „Denumire"**, not „Cod" and „Denumire".
 4. **„Vizualizare" opens the property read-only**, and „Dezasociază" needs the row's radio
    selected first — the same as on the „Persoane" tab.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

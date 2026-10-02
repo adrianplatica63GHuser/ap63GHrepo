@@ -103,7 +103,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(LISTED_AS, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
-      await expect(top).toContainText(/PPERS\d+/);
+      await expect(top).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       await expect(top).toContainText("—");
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       personId = href?.split("/").pop();

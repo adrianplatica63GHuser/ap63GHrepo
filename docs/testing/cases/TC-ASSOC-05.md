@@ -29,8 +29,8 @@ Nothing. There is no role on this link, from either end.
 |---|---|---|
 | 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți — Listă" | The property's screen |
 | 2 | Presses the tab **„Acte"** | „Niciun act asociat acestei proprietăți", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere act" at `/properties/[id]/associate-document`, the property's name under it, one filter „Căutare" („Cod sau titlu…"), a table Cod · Tip · Titlu listing every document. **There is no „Rol"** — the same as TC-ASSOC-02 from the other end |
-| 4 | Types `TC-DOC-01` into „Căutare" | One row: `DOC…`, „Contract de Vânzare", `TC-DOC-01 Contract de test` |
+| 3 | Presses „Asociază" | „Asociere act" at `/properties/[id]/associate-document`, the property's name under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu listing every document. **There is no „Rol"** — the same as TC-ASSOC-02 from the other end |
+| 4 | Types `TC-DOC-01` into „Căutare" | One row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
 | 5 | Ticks that row | The hint „Selectați cel puțin un act" goes away |
 | 6 | Presses „Asociază selecția" | Back on the property's „Acte" tab (`?tab=document`): a table **Tip · Titlu** with one row — „Contract de Vânzare", `TC-DOC-01 Contract de test` — and „Vizualizare" |
 | 7 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
@@ -57,3 +57,5 @@ section was written; the spec is `e2e/association/property-document.spec.ts`.
 `DOC01715` from the property; read back from the document's „Proprietăți"; removed from there
 with the radio and „Dezasociază". Every step written from TC-ASSOC-02 and the code held; the
 one thing the run added is the property's „Acte" table being **Tip · Titlu**, without „Cod".
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

@@ -81,7 +81,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // `exact`: the sidebar's quick search „Nume, cod…" (the TC-ASSOC-01 spec).
       const nameFilter = page.getByPlaceholder("Nume…", { exact: true });
       await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
-      for (const col of ["Cod", "Nume", "Tip"]) {
+      for (const col of ["Nume", "Tip"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
@@ -91,7 +91,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await nameFilter.fill(MARK);
       const candidates = page.getByRole("row").filter({ hasText: PERSON });
       await expect(candidates).toHaveCount(1, { timeout: 15_000 });
-      await expect(candidates).toContainText(/PPERS\d+/);
+      await expect(candidates).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       await expect(candidates).toContainText("Fizică");
 
       // Step 5 — tick the row, then the role.
@@ -136,7 +136,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       const search = page.getByPlaceholder("Cod sau denumire…", { exact: true });
       await expect(search).toBeVisible();
-      for (const col of ["Cod", "Denumire"]) {
+      for (const col of ["Denumire"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(role.locator("option")).toHaveText(ROLES);

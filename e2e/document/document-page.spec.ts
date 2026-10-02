@@ -200,7 +200,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(TITLE, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
-      await expect(top).toContainText(/DOC\d+/);
+      await expect(top).not.toContainText(/DOC\d+/); // #37.57: no system ID here
       await expect(top).toContainText("Contract de Vânzare");
       await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${totalBefore + 1}$`))).toBeVisible();
       // Slice #37.16: the list's fixed columns, on the archive's real rows; then

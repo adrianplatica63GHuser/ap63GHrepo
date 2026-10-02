@@ -37,10 +37,10 @@ Both are deleted at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates the company and the person above | Each on its list, badged „Nou!", `JPERS…` and `PPERS…` |
+| 1 | Creates the company and the person above | Each on its list, badged „Nou!", with no system ID |
 | 2 | Opens the company and ticks the tile **„Persoane corelate"** („Asocieri" before #37.29) | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Cod · Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
-| 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `PPERS…`, `Ion TC-ASSOC-11`, „Fizică" — and chooses „Tip relație" **„Reprezentant legal / Mandatar"** | The hint goes away |
+| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
+| 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `Ion TC-ASSOC-11`, „Fizică" — and chooses „Tip relație" **„Reprezentant legal / Mandatar"** | The hint goes away |
 | 5 | Presses „Asociază selecția" | Back on the company's „Persoane corelate" (`?tab=related`): Nume · Tip relație — `Ion TC-ASSOC-11`, **„Reprezentant legal / Mandatar"**, and „Vizualizare" (no „Tip" column since #37.29) |
 | 6 | Presses „Vizualizare" | The person, read-only (`/natural-persons/[id]?readonly=true`) |
 | 7 | Ticks the person's tile **„Persoane"** („Asocieri" before #37.27) | One row: `TC-ASSOC-11 Firmă de test SRL`, **„Reprezentat / Mandant"**, „Vizualizare" (no „Tip" column on the person since #37.27) |
@@ -69,3 +69,5 @@ linked from the company, read from both ends, unlinked and deleted. Corrections 
 header supposed: the tab is „Asocieri", not „Persoane" (a company has no „Persoane" tab), the
 screen is titled „Asociere persoană corelată", and there is no role to choose — which is FU-221,
 not a new finding; this case is added to its evidence.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

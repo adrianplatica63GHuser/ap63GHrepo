@@ -97,7 +97,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(page.getByText(CERTIFICATE).first()).toBeVisible();
       await expect(page.getByPlaceholder("Nume…", { exact: true })).toBeVisible();
       await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
-      for (const col of ["Cod", "Nume", "Tip"]) {
+      for (const col of ["Nume", "Tip"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.locator("tbody input[type=checkbox]")).toHaveCount(0);

@@ -38,7 +38,7 @@ record; the form does not require one for a save.
 | 3 | Types `TC-PERS-01` into „Nume" | The value appears |
 | 4 | Types `Ion` into „Prenume" | The value appears |
 | 5 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new person |
-| 6 | Looks at the top of the list | A row badged **„Nou!"**, with a code beginning `PPERS`, whose „NUME" reads **`Ion TC-PERS-01`** — prenume first — and whose „PORECLĂ" is „—" |
+| 6 | Looks at the top of the list | A row badged **„Nou!"**, with no system ID, whose „NUME" reads **`Ion TC-PERS-01`** — prenume first — and whose „PORECLĂ" is „—" |
 | 7 | Types `TC-PERS` into the list's search box (placeholder „caută după cod, nume, email sau telefon") | The row is still there — the search matches on the name |
 
 ## At the end — leaving things as they were found
@@ -104,3 +104,5 @@ Four corrections:
 The section „Document de identitate" named in `messages/ro-RO.json` is not what the
 screen shows — the second section renders „CARTE DE IDENTITATE". Step 2 now quotes the
 screen.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

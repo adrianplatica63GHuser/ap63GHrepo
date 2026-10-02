@@ -68,7 +68,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByText(PERSON).first()).toBeVisible();
       const search = page.getByPlaceholder("Cod sau titlu…", { exact: true });
       await expect(search).toBeVisible();
-      for (const col of ["Cod", "Tip", "Titlu"]) {
+      for (const col of ["Tip", "Titlu"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
@@ -78,7 +78,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await search.fill(MARK);
       const candidates = page.getByRole("row").filter({ hasText: DOC_TITLE });
       await expect(candidates).toHaveCount(1, { timeout: 15_000 });
-      await expect(candidates).toContainText(/DOC\d+/);
+      await expect(candidates).not.toContainText(/DOC\d+/); // #37.57: no system ID here
       await expect(candidates).toContainText("Contract de Vânzare");
 
       // Step 5 — tick FIRST: the hint goes and „Rol" narrows to the type's roles.

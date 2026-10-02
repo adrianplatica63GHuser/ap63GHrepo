@@ -59,7 +59,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       // `exact`: the sidebar's quick search „Nume, cod…" (the TC-ASSOC-01 spec).
       const nameFilter = page.getByPlaceholder("Nume…", { exact: true });
       await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
-      for (const col of ["Cod", "Nume", "Tip"]) {
+      for (const col of ["Nume", "Tip"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();

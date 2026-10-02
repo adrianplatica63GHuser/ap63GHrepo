@@ -34,7 +34,7 @@ on the record. Deleted at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates the person above | On „Persoane Fizice" (Cod · Nume · Poreclă): „Nou!", `PPERS…`, `Unu TC-VER-01` |
+| 1 | Creates the person above | On „Persoane Fizice" (Nume · Poreclă): „Nou!", `Unu TC-VER-01` |
 | 2 | Opens it | Headed `Unu TC-VER-01` and **„v 0"**; „Versiunea anterioară", „Versiunea următoare" and „Fă curentă" are all disabled; at the bottom „Salvează" (disabled until something changes), „Șterge", „Anulează" |
 | 3 | Changes „Prenume" to `Doi` and presses „Salvează" | **Stays on the record**, headed `Doi TC-VER-01`, **„v 1"** and a chip **„2 versiuni"** — on the current version the arrows are not shown |
 | 4 | Changes „Prenume" to `Trei` and presses „Salvează" | `Trei TC-VER-01`, **„v 2"**, „3 versiuni" |
@@ -43,7 +43,7 @@ on the record. Deleted at the end.
 | 7 | Presses **„Fă curentă"** | „Faceți această versiune curentă?" — „Versiunea 0 va fi copiată într-o nouă versiune 3, care devine versiunea curentă. Continuați?" — „Anulează" / „OK" |
 | 8 | Presses „OK" | `Unu TC-VER-01`, **„v 3"**, **„4 versiuni"**, „Prenume" `Unu` |
 | 9 | Presses „4 versiuni" | „v 2" still reads `Trei` — the version „Fă curentă" replaced is kept |
-| 10 | Returns to „Persoane Fizice" | The row reads `PPERS…`, `Unu TC-VER-01` |
+| 10 | Returns to „Persoane Fizice" | The row reads `Unu TC-VER-01` |
 
 Steps 8–10 are the assertion: the counter advanced by copying, the older value is current, the
 replaced one is still in the history, and the list agrees with the record.
@@ -68,3 +68,5 @@ current version there are no arrows until it is pressed.
 
 **Before promoting:** a „Salvează" pressed the moment a new person's form appears can do nothing
 (the form is not interactive yet); a spec waits for the form.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

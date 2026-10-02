@@ -90,22 +90,22 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
       // Step 5 — three rows: „Document", „Persoană" with „Fizic", „Proprietate"
       // as „tarla / parcelă(poreclă)". „Tip" says the filter's Romanian words
       // since Slice #37.07 (FU-061); the raw enum must not come back.
-      for (const col of ["Cod", "Tip", "Nume", "Grupuri", "Ștampile", "Importanță", "Relevanță", "Proveniență", "Actualizat de", "Metadate actualizate"]) {
+      for (const col of ["Tip", "Nume", "Grupuri", "Ștampile", "Importanță", "Relevanță", "Proveniență", "Actualizat de", "Metadate actualizate"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const body = page.locator("tbody tr");
       await expect(body).toHaveCount(3);
       const doc = body.filter({ hasText: `${MARK} Contract de test` });
-      await expect(doc).toContainText(/DOC\d+/);
+      await expect(doc).not.toContainText(/DOC\d+/); // #37.57: no system ID here
       await expect(doc).toContainText("Document");
       await expect(doc).not.toContainText("DOCUMENT");
       const person = body.filter({ hasText: `Ion ${MARK}` });
-      await expect(person).toContainText(/PPERS\d+/);
+      await expect(person).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       await expect(person).toContainText("Persoană");
       await expect(person).not.toContainText("PERSON");
       await expect(person).toContainText("Fizic");
       const property = body.filter({ hasText: `40 / TC01(${MARK} Teren de test)` });
-      await expect(property).toContainText(/PROP\d+/);
+      await expect(property).not.toContainText(/PROP\d+/); // #37.57: no system ID here
       await expect(property).toContainText("Proprietate");
       await expect(property).not.toContainText("PROPERTY");
       await expectStableColumns(page);

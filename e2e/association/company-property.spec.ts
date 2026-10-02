@@ -59,7 +59,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(COMPANY).first()).toBeVisible();
       const search = page.getByPlaceholder("Cod sau denumire…", { exact: true });
-      for (const col of ["Cod", "Denumire"]) {
+      for (const col of ["Denumire"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });

@@ -31,7 +31,7 @@ Nothing.
 | 2 | Types `TC-` into „Căutare nume / cod" (placeholder „ex. Popescu sau PPERS00012") | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „3 rezultate", and the address bar carries `?search=TC-` |
-| 5 | Reads the results — columns Cod · Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows. `DOC…` — „Tip" **„Document"**, „Nume" `TC-DOC-01 Contract de test`. `PPERS…` — „Tip" **„Persoană"** with the badge „Fizic", „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). `PROP…` — „Tip" **„Proprietate"**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |
+| 5 | Reads the results — columns Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows, none with a system ID. The document — „Tip" **„Document"**, „Nume" `TC-DOC-01 Contract de test`. The person — „Tip" **„Persoană"** with the badge „Fizic", „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). The property — „Tip" **„Proprietate"**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |
 | 6 | Looks at the „Proveniență" column | All three read „Manual (Adaugă nou)" — they were typed in, not imported |
 | 7 | Sets „Tip entitate" to „Proprietate" and presses „Caută" again | One row, the property |
 | 8 | Presses „Resetează" | Every filter clears, the results table goes, and the address bar is back to `/admin/global-search` |
@@ -86,3 +86,5 @@ Corrections:
    in `en-GB.json`) — fixed in passing in 36.05.
 4. „Se caută…" was never seen — the search answered faster than the page could show it.
    Step 4 now asserts the count, which is what a spec can wait for.
+
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows; the runner's `full` decides the date.

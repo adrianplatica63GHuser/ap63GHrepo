@@ -43,7 +43,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       const row = page.getByRole("row").filter({ hasText: titled("Unu") });
       await expect(row).toHaveCount(1, { timeout: 15_000 });
       await expect(row).toContainText("Nou!");
-      await expect(row).toContainText(/DOC\d+/);
+      await expect(row).not.toContainText(/DOC\d+/); // #37.57: no system ID here
       await expect(row).toContainText("Adeverință");
       const href = await row.getByRole("link", { name: "Deschide" }).getAttribute("href");
       documentId = href?.split("/").pop();
@@ -111,7 +111,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       await expect(listed).toHaveCount(1, { timeout: 30_000 });
       await expect(listed).toContainText(titled("Unu"));
       await expect(listed).toContainText("Adeverință");
-      await expect(listed).toContainText(/DOC\d+/);
+      await expect(listed).not.toContainText(/DOC\d+/); // #37.57: no system ID here
 
       // ── At the end — „Șterge", „Da" to „Ștergeți actul?" ─────────────────
       await listed.getByRole("link", { name: "Deschide" }).click();
