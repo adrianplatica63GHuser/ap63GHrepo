@@ -57,6 +57,19 @@ export function tabTileKey(label: string): string {
   return `tab:${label}`;
 }
 
+/**
+ * Tabs renamed since a choice could have been stored under them, old label →
+ * new (Slice #37.54: the CVC's „Instrument", „Cadastru" and „Conformitate").
+ * A tile's key IS its tab's label, so without this a renamed tab would drop
+ * every browser's remembered choice of that tile. The registry passes it on
+ * as `renamed`, for the tabs the type on screen still has.
+ */
+export const RENAMED_TABS: Readonly<Record<string, string>> = {
+  Instrument: "Preț și taxe",
+  Cadastru: "Cadastru și carte funciară",
+  Conformitate: "Formalități",
+};
+
 /** The single tile of a type with no notebook tabs. */
 export const FIELDS_TILE = "fields";
 
@@ -94,6 +107,11 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       ...typeTiles,
       ...(layout.succession ? ["succession"] : []),
     ],
+    renamed: Object.fromEntries(
+      Object.entries(RENAMED_TABS)
+        .filter(([, now]) => layout.tabs.includes(now))
+        .map(([was, now]) => [tabTileKey(was), tabTileKey(now)]),
+    ),
   };
 }
 

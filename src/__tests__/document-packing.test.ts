@@ -127,8 +127,9 @@ describe("a CVC's panels, written out", () => {
  * choice — most of them 10rem, „Nu e menționat" with the blank „— fără valoare —"
  * — and a panel of dropdowns takes a third unit when that pairs them, so the
  * clauses sit two to a row. The fees fit three numbers to a row beside
- * Instituție's 3 units; Antet instrument is 3 because „Categorie internă" has
- * a 37-character option (18rem).
+ * Instituție's 3 units, „Taxă timbru și publicitate" last and alone (#37.54);
+ * Dosar și exemplar (#37.54, it was Antet instrument) is 3 because „Categorie
+ * internă" has a 37-character option (18rem).
  */
 const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
   { label: "Financiar", units: 3, rows: [
@@ -139,10 +140,10 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["predareStapanire"],
   ] },
   { label: "Taxe și onorarii", units: 3, rows: [
-    ["taxaTimbruPublicitate", "timbruJudiciar", "onorariuNotarial"],
-    ["impozitTransfer"],
+    ["timbruJudiciar", "onorariuNotarial", "impozitTransfer"],
+    ["taxaTimbruPublicitate"],
   ] },
-  { label: "Antet instrument", units: 3, rows: [
+  { label: "Dosar și exemplar", units: 3, rows: [
     ["categorieInterna"],
     ["documentatieFinalizata", "calitateExemplar"],
     ["exemplareEmise"],
@@ -160,7 +161,7 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["vecinatati"],
     ["origineLot"],
   ] },
-  { label: "Stare juridică afirmată", units: 3, rows: [
+  { label: "Declarații și garanții", units: 3, rows: [
     ["inCircuitCivil", "liberDeSarcini"],
     ["faraServituti", "neipotecat"],
     ["nepromisAltcuiva", "nearendat"],
@@ -169,7 +170,7 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["nedezmembratContrar", "garantieEvictiune"],
     ["garantieVicii", "cumparatorCunoasteSituatia"],
   ] },
-  { label: "Conformitate și formalități", units: 3, rows: [
+  { label: "Declarații și obligații legale", units: 3, rows: [
     ["temeiLegalEvictiune", "declaratieArt292"],
     ["pretRealDeclarat", "notificareAml"],
     ["consimtamantDatePersonale", "preemptiuneTerenAgricol"],
@@ -179,9 +180,10 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
 ];
 
 describe("dropdowns pair up (#37.53)", () => {
-  it("packs „Stare juridică afirmată” and „Conformitate și formalități” two to a row, in form order", () => {
+  it("packs „Declarații și garanții” and „Declarații și obligații legale” two to a row, in form order", () => {
     const cvc = panelsOf(FORMS.forms.CONTRACT_VANZARE);
-    for (const label of ["Stare juridică afirmată", "Conformitate și formalități"]) {
+    // #37.54 renamed them from „Stare juridică afirmată" and „Conformitate și formalități".
+    for (const label of ["Declarații și garanții", "Declarații și obligații legale"]) {
       const p = cvc.find((x) => x.label === label)!;
       expect([label, p.units]).toEqual([label, 3]);
       expect([label, p.rows.every((r) => r.length === 2)]).toEqual([label, true]);

@@ -27,6 +27,11 @@ export interface TileRegistry<K extends string> {
   defaults: readonly K[];
   /** The tiles that are parts of the form (hidden, never unmounted). */
   form: readonly K[];
+  /**
+   * A tile whose key changed, old key → current key, so a choice stored under
+   * the old one is read as the new one (Slice #37.54: the CVC's renamed tiles).
+   */
+  renamed?: Readonly<Record<string, K>>;
 }
 
 /** Where a screen's choice is remembered — per browser, per entity kind. */
@@ -50,7 +55,8 @@ export function parseStoredTiles<K extends string>(raw: string | null, reg: Tile
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [...reg.defaults];
-    const known = inRegistryOrder(parsed.filter((x): x is string => typeof x === "string"), reg.all);
+    const keys = parsed.filter((x): x is string => typeof x === "string").map((k) => reg.renamed?.[k] ?? k);
+    const known = inRegistryOrder(keys, reg.all);
     return known.length > 0 ? known : [...reg.defaults];
   } catch {
     return [...reg.defaults];

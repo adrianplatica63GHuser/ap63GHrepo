@@ -1466,9 +1466,13 @@ export function DocumentForm({
     const inner = unitsInnerRem(units);
     const byKey = new Map(fields.map((f) => [f.key, f] as const));
     const full = new Set(items.filter((i) => i.full).map((i) => i.key));
+    // Slice #37.54: a field alone in its row is a row too, so rule 19 (a label
+    // with nothing to its right does not wrap — `STACKED_ROW_CLASS`) reaches it:
+    // „Taxă timbru și publicitate", last and alone among the fees, on one line.
+    // A `full` field fills the panel and keeps its own width, as before.
     const nodes = rows.map((row) =>
-      row.length === 1 ? (
-        renderCustomField(byKey.get(row[0])!, forceFullWidthTextarea, full.has(row[0]) ? inner : undefined)
+      row.length === 1 && full.has(row[0]) ? (
+        renderCustomField(byKey.get(row[0])!, forceFullWidthTextarea, inner)
       ) : (
         <div key={row.join("|")} className={STACKED_ROW_CLASS}>
           {row.map((k) => renderCustomField(byKey.get(k)!, forceFullWidthTextarea))}

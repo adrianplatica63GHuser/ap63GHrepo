@@ -766,8 +766,10 @@ export const LIST_UNITS = {
  * well (28.125rem inside), and takes the 3 when its fields come out in fewer
  * rows. Form order is kept; no field moves to make a pair. Measured on the six
  * seeded forms: six panels go from 2 units to 3 (the CVC's Financiar, Excepție
- * cadastru, Stare juridică afirmată and Conformitate și formalități, the Act
- * adițional's Act părinte and Clauze completate); every other panel is as it was.
+ * cadastru, Declarații și garanții and Declarații și obligații legale — named
+ * „Stare juridică afirmată" and „Conformitate și formalități" until #37.54 —
+ * the Act adițional's Act părinte and Clauze completate); every other panel is
+ * as it was.
  */
 export interface PackItem {
   key: string;
