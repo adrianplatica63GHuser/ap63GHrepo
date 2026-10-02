@@ -5,7 +5,7 @@
 | **Area** | ui |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -82,3 +82,8 @@ unchanged.
   characters, „Neprocesat" then the version controls after the name, inside the header.
 - All five records deleted at the end (204 each); nothing left for `TC-ICON-07`. Nothing changed
   between the runs, so the case is confirmed, and `e2e/ui/record-heading.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/ui/record-heading.spec.ts` translates the case with Playwright's
+bounding boxes and takes #37.49's pictures. Green in the runner's `full` run
+`20261002T122536Z-11225` on `1e34ce3` (48 passed); the run before it, `20261002T121942Z-1353`, never
+reached it — the setup's login timed out on a cold server (FU-256).
