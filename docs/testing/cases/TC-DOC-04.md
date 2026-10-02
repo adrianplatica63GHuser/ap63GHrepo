@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -64,3 +64,7 @@ written from it.
   on a second `TC-DOC-04 CVC`, opened straight at 1920: the same numbers. Deleted (204); nothing
   left for `TC-DOC-04`. Nothing in the file changed, so the case is confirmed, and
   `e2e/document/template-dropdowns.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/document/template-dropdowns.spec.ts` translates the case and
+takes #37.53's pictures. Green on its first runner run, `20261002T144858Z-6734` on `0d546b6` (with
+TC-DOC-01's spec, whose unit grid holds the wider panels, lint, tsc and the three jest suites).
