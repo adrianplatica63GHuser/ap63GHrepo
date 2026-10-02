@@ -1433,8 +1433,7 @@
       "notes": "Notes",
       "validUntil": "Validity",
       "surveyor": "Surveyor",
-      "customFields": "Document-type-specific fields",
-      "fees": "Fees"
+      "issue": "Issue details"
     },
     "status": {
       "label": "Processing status",
@@ -1479,11 +1478,11 @@
       "nrRuling": "Ruling No.",
       "nrCadastral": "OCPI No.",
       "nrPermit": "Permit No.",
-      "dateAuthenticated": "Date of Authentication",
-      "dateIssued": "Date of Issue",
-      "dateRuled": "Date of Ruling",
-      "dateEmitted": "Date of Issuance",
-      "dateRegistered": "Date of Registration",
+      "dateAuthenticated": "Authentication date",
+      "dateIssued": "Issue date",
+      "dateRuled": "Ruling date",
+      "dateEmitted": "Issuance date",
+      "dateRegistered": "Registration date",
       "institutionRegistrar": "Registering Institution",
       "institutionIssuer": "Issuer",
       "institutionNotary": "Notary Office",
@@ -1543,7 +1542,7 @@
     "tiles": {
       "general": "General data",
       "pages": "Pages",
-      "fields": "Type fields",
+      "fields": "Document details",
       "succession": "Parties",
       "persons": "Persons",
       "properties": "Properties",

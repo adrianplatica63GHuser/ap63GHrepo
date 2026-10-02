@@ -558,7 +558,8 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
 
   it("rule 16: a row's boxes start on one line — each field a subgrid of the row's three tracks", () => {
     const stacked = code(read("src", "lib", "ui", "stacked.ts"));
-    expect(stacked).toMatch(/STACKED_ROW_CLASS = "grid grid-flow-col auto-cols-max grid-rows-\[auto_auto_auto\]/);
+    // #37.52 (rule 19): `auto` columns from the start, so the last field can take the room to its right.
+    expect(stacked).toMatch(/STACKED_ROW_CLASS =\s*"grid grid-flow-col auto-cols-auto justify-start grid-rows-\[auto_auto_auto\]/);
     expect(stacked).toMatch(/STACKED_FIELD_CLASS = "row-span-3 grid grid-rows-subgrid/);
     expect(stacked).toMatch(/STACKED_LABEL_CLASS = "self-end/);
     for (const src of [NP_FORM, JP_FORM, ADDRESS_BLOCK]) expect(src).toMatch(/STACKED_ROW_CLASS/);

@@ -1433,8 +1433,7 @@
       "notes": "Observații",
       "validUntil": "Valabilitate",
       "surveyor": "Topograf / Cadastrist",
-      "customFields": "Câmpuri specifice tipului de document",
-      "fees": "Taxe și onorarii"
+      "issue": "Date de emitere"
     },
     "status": {
       "label": "Stare procesare",
@@ -1543,7 +1542,7 @@
     "tiles": {
       "general": "Date generale",
       "pages": "Pagini",
-      "fields": "Câmpuri specifice",
+      "fields": "Detalii act",
       "succession": "Părți",
       "persons": "Persoane",
       "properties": "Proprietăți",

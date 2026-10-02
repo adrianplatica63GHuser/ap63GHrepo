@@ -1564,7 +1564,7 @@ export function DocumentForm({
   const feesBaseRem = Math.max(rowRem([DOC.institutionId]), rowRem([DOC.nrDocument, DOC.dateDocument]));
   const feesPacked = packCustomFields(feesGroup?.fields ?? [], false, feesBaseRem);
   const feesSection = (
-    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup?.label || t("sections.fees")}>
+    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup?.label || t("sections.issue")}>
       <SelectField
         label={t(cfg.labels.institution)}
         name="institutionId"
@@ -1777,7 +1777,7 @@ export function DocumentForm({
         .map(({ label, fields }) => {
           const packed = packCustomFields(fields);
           return (
-            <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} units={packed.units} title={label || t("sections.customFields")}>
+            <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} units={packed.units} title={label || undefined}>
               {packed.nodes}
             </Section>
           );
@@ -1819,7 +1819,7 @@ export function DocumentForm({
                   {frameBlock(tileOfTabIndex(tabs, i), label, panelsOf(i))}
                 </div>
               ))
-            : frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("sections.customFields"), panelsOf(0))}
+            : frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0))}
         </>
       ) : notebook ? (
         <>
@@ -2455,7 +2455,11 @@ function Section({
   units,
   children,
 }: {
-  title:    string;
+  /**
+   * Slice #37.52: optional — a type's fields with no group sit under no
+   * heading, the tile's own name („Detalii act") already saying whose they are.
+   */
+  title?:   string;
   /** Slice #21.06.misc: shown inline on the heading line, mirroring how
    *  Person's Identity section shows its personCode — used by General to
    *  show documentCode instead of as its own field row. */
@@ -2469,7 +2473,7 @@ function Section({
   // Slice #37.20: as tiles, a panel takes its tile's place in the row.
   const order = useContext(PanelOrderContext);
   const framed = useContext(FrameContext);
-  const heading = (
+  const heading = title === undefined ? null : (
     <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
       {title}
       {code && (
