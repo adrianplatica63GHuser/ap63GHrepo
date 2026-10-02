@@ -132,10 +132,10 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       expect(Math.round(width)).toBe(Math.round((4 * 9.25 + 3) * rem));
       await photograph(page, "pad-properties", tile);
 
-      // At the end — „Dezasociază".
-      await page.getByRole("radio", { name: PROPERTY }).check();
-      await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
+      // At the end — „Dezasociază" in „Proprietăți" (the PAD's „Persoane" has one too).
+      await tile.getByRole("radio", { name: PROPERTY }).check();
+      await tile.getByRole("button", { name: "Dezasociază", exact: true }).click();
+      await expect(tile.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", padId);
       await removeRecord(page.request, "property", propertyId);
