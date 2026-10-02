@@ -166,7 +166,7 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
         await photograph(page, `${name}-view`, () => toolbarInView(page, page.getByRole("button", { name: "Modifică" })));
         await page.goto(url);
         await expect(page.getByRole("button", { name: "Șterge" })).toBeVisible({ timeout: 15_000 });
-        await photograph(page, `${name}-edit`, () => toolbarInView(page, page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last()));
+        await photograph(page, `${name}-edit`, () => toolbarInView(page, page.getByRole("button", { name: "Șterge", exact: true }).last()));
       }
 
       // A value list's edit footer: „Cetățenie", „Editează" on its first row, left with „Anulează".
