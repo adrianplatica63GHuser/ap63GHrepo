@@ -739,16 +739,19 @@ export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.pr
  * every screen — a name, a role and the two buttons stacked are 4 units, Acte
  * (type, title, role, buttons) 5, META INFO 5, two columns of sections.
  */
-const PERSON_LIST_UNITS = { associations: 4, properties: 4, documents: 5, metadata: 5 } as const;
+// Slice #37.58: Proprietăți 5 — a property's name holds on one line (`tilePropertyName`).
+const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, metadata: 5 } as const;
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
-  // „Proprietăți corelate" and Persoane: a name, a role, the buttons — 4. Acte: a property's
-  // documents carry no role, so type, title and the buttons — 4. META INFO 5.
-  property: { associations: 4, persons: 4, documents: 4, metadata: 5 },
-  // Persoane: name, role, the three share values stacked, the buttons — 6. Proprietăți: the
-  // label and the buttons — 3. „Acte corelate": type, title, Tip relație, buttons — 5.
-  document: { persons: 6, properties: 3, associations: 5, metadata: 5 },
+  // „Proprietăți corelate": a property's name on one line, a role, the buttons — 5 (#37.58).
+  // Persoane: a name, a role, the buttons — 4. Acte: a property's documents carry no role,
+  // so type, title and the buttons — 4. META INFO 5.
+  property: { associations: 5, persons: 4, documents: 4, metadata: 5 },
+  // Persoane: name, role, the three share values stacked, the buttons — 6. Proprietăți: a
+  // property's name on one line and the buttons — 4 (3 before #37.58, when it wrapped).
+  // „Acte corelate": type, title, Tip relație, buttons — 5.
+  document: { persons: 6, properties: 4, associations: 5, metadata: 5 },
 } as const;
 
 /**
@@ -991,6 +994,14 @@ export const PREVIEW_FILL: FieldWidth = { step: "TILE", kind: "grows", fill: tru
  */
 export const CELL_PADDING_REM = 2;
 
+/**
+ * The longest property name the lists must hold on one line (Slice #37.58): 38
+ * characters, 273 px in the lists' 14-px Arial — measured on every property's
+ * nickname in the local archive and the e2e records on 2026-10-02 (the
+ * longest is the archive's; `PROP.nickname` in measure-fields agrees: 8 · 38 · 38).
+ */
+export const PROPERTY_NAME_PX = 273;
+
 export interface ColumnWidth {
   /** The content's width, a step of the scale — or, for the two tiny controls, rem. */
   content: Step | number;
@@ -1019,7 +1030,11 @@ export const COLUMN = {
   personType: { content: "S", kind: "fixed" }, //           „Fizică" / „Juridică"
   role: { content: "L", kind: "wraps" }, //                 LIST.role* — a role chip, or a certificate party's quality
   // The Natural Person's list tiles (#37.27): each table fills its tile of whole units — tileTableRem().
-  tileName: { content: 12, kind: "wraps" }, //              a person's name, or a property's label, on Persoane / Proprietăți
+  tileName: { content: 12, kind: "wraps" }, //              a person's name on Persoane / Persoane corelate
+  // Slice #37.58: a property's name on Proprietăți / „Proprietăți corelate", ONE line — the
+  // longest in the archive and the test data is 38 characters, 273 px (`PROPERTY_NAME_PX`);
+  // past 22.5rem (360 px) it is cut with „…" and shown whole on hover, never wrapped.
+  tilePropertyName: { content: 22.5, kind: "fixed" },
   tileRole: { content: "M", kind: "wraps" }, //             a role chip, wrapping
   tileDocType: { content: "M", kind: "wraps" }, //          a document's type, wrapping
   tileDocTitle: { content: 12, kind: "wraps" }, //          a document's title, wrapping
@@ -1109,14 +1124,16 @@ export function columnRem(name: ColumnName): number {
  */
 export const NP_LIST_COLUMNS = {
   associations: ["select", "tileName", "tileRole", "openPreviewStacked"],
-  properties: ["select", "tileName", "tileRole", "openPreviewStacked"],
+  properties: ["select", "tilePropertyName", "tileRole", "openPreviewStacked"],
   documents: ["select", "tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"],
   // Slice #37.30: a property's Acte — its documents carry no role — at 4 units.
   documentsWithoutRole: ["select", "tileDocType", "tileDocTitle", "openPreviewStacked"],
   // Slice #37.31: a document's Persoane (6 units, the three share values stacked in one
   // column) and Proprietăți (3 units). Its „Acte corelate" is `documents` above, at 5.
   documentPersons: ["select", "tileName", "tileRole", "tileCota", "openPreviewStacked"],
-  documentProperties: ["select", "tileName", "openPreviewStacked"],
+  documentProperties: ["select", "tilePropertyName", "openPreviewStacked"],
+  // Slice #37.58: a property's „Proprietăți corelate" — its name on one line, the relation, the buttons.
+  propertyAssociations: ["select", "tilePropertyName", "tileRole", "openPreviewStacked"],
 } as const satisfies Record<string, readonly ColumnName[]>;
 
 // ---- tiles (#37.17) -------------------------------------------------------------------------

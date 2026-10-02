@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
@@ -44,7 +44,7 @@ async function fetchPersonProperties(personId: string): Promise<AssociatedProper
 export function PersonPropertiesTab({ personId, backBase, compact = false }: Props) {
   const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.properties : COLUMNS;
   const [labelCol, roleCol, buttonsCol] = compact
-    ? (["tileName", "tileRole", "openPreviewStacked"] as const)
+    ? (["tilePropertyName", "tileRole", "openPreviewStacked"] as const)
     : (["propertyLabel", "role", "openPreview"] as const);
   const t           = useTranslations("shared.properties");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
@@ -133,7 +133,7 @@ export function PersonPropertiesTab({ personId, backBase, compact = false }: Pro
                       aria-label={nameOr(item.label, "property")}
                     />
                   </td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{nameOr(item.label, "property")}</td>
+                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${ONE_LINE}`} title={nameOr(item.label, "property")}>{nameOr(item.label, "property")}</td>
                   <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{item.roleName ?? "—"}</td>
                   <td className="px-3 py-2">
                     <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>

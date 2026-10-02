@@ -168,7 +168,8 @@ export function AssociateReferenceView({ propertyId, propertyName }: Props) {
                     <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)}
                       onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={nameOr(item.label, "property")} />
                   </td>
-                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{nameOr(item.label, "property")}</td>
+                  {/* #37.58: one line — cut with „…" past the column, whole on hover. */}
+                  <td className="truncate px-3 py-2 font-medium text-ink dark:text-zinc-100" title={nameOr(item.label, "property")}>{nameOr(item.label, "property")}</td>
                 </tr>
               ))}
             </tbody>

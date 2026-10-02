@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
@@ -39,7 +39,7 @@ async function fetchDocumentProperties(documentId: string): Promise<AssociatedPr
 export function DocumentPropertiesTab({ documentId, compact = false }: Props) {
   const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.documentProperties : COLUMNS;
   const [labelCol, buttonsCol] = compact
-    ? (["tileName", "openPreviewStacked"] as const)
+    ? (["tilePropertyName", "openPreviewStacked"] as const)
     : (["propertyLabel", "openPreview"] as const);
   const t           = useTranslations("shared.properties");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
@@ -127,7 +127,7 @@ export function DocumentPropertiesTab({ documentId, compact = false }: Props) {
                       aria-label={nameOr(item.label, "property")}
                     />
                   </td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{nameOr(item.label, "property")}</td>
+                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${ONE_LINE}`} title={nameOr(item.label, "property")}>{nameOr(item.label, "property")}</td>
                   <td className="px-3 py-2">
                     <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
                       <IconButton

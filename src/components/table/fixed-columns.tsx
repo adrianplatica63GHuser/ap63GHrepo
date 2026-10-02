@@ -52,6 +52,13 @@ export function columnHead(name: ColumnName) {
 /** The frame around a fixed table: as wide as the table, scrolling sideways past the window. */
 export const TABLE_FRAME = "w-fit max-w-full overflow-x-auto";
 
+/**
+ * A cell that stays on ONE line (Slice #37.58): what does not fit is cut with
+ * „…" — the cell carries the whole text in `title`, shown on hover. A property's
+ * name, on every table that lists properties.
+ */
+export const ONE_LINE = "truncate";
+
 /** A cell in a `wraps` column: a long word breaks inside the column. */
 export const WRAPS = "break-words";
 

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
 import { propertyRoleChip } from "@/lib/properties/relation-roles";
 import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
@@ -42,9 +42,9 @@ async function fetchPropertyReferences(propertyId: string): Promise<AssociatedPr
 }
 
 export function PropertyReferencesTab({ propertyId, compact = false }: Props) {
-  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.associations : COLUMNS;
+  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.propertyAssociations : COLUMNS;
   const [col1, col2, buttonsCol] = compact
-    ? (["tileName", "tileRole", "openPreviewStacked"] as const)
+    ? (["tilePropertyName", "tileRole", "openPreviewStacked"] as const)
     : (["propertyLabel", "role", "openPreview"] as const);
   const t           = useTranslations("property.references");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
@@ -133,7 +133,7 @@ export function PropertyReferencesTab({ propertyId, compact = false }: Props) {
                       aria-label={nameOr(item.label, "property")}
                     />
                   </td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{nameOr(item.label, "property")}</td>
+                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${ONE_LINE}`} title={nameOr(item.label, "property")}>{nameOr(item.label, "property")}</td>
                   <td className={`px-3 py-2 ${WRAPS}`}>
                     {(() => {
                       /*
