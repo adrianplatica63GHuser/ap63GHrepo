@@ -22,6 +22,9 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+// `Map` shadows the global Map constructor, hence the alias.
+import { Map as MapIcon } from "lucide-react";
+import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { PropertyForm } from "./property-form";
 import { PropertyPersonsTab } from "./property-persons-tab";
@@ -97,7 +100,7 @@ export function PropertyDetailTiles({
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center">
-        <h1 className="text-2xl font-semibold tracking-tight">{propertyName}</h1>
+        <RecordHeading icon={MapIcon} name={propertyName} />
         <div
           ref={setNavSlot}
           className="pointer-events-none absolute inset-y-0 right-0 flex items-center"

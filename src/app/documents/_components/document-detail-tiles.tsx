@@ -32,6 +32,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { FileText } from "lucide-react";
+import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { DocumentForm } from "./document-form";
 import { DocumentPersonsTab } from "./document-persons-tab";
@@ -143,12 +145,13 @@ export function DocumentDetailTiles({
           strip is IN FLOW at the end of the row, so the title yields to it
           rather than running underneath. */}
       <header className="relative flex min-h-[2.5rem] items-center gap-3">
-        <h1
-          className="min-w-[8rem] truncate text-2xl font-semibold tracking-tight"
+        <RecordHeading
+          icon={FileText}
+          name={documentName}
+          truncate
+          className="min-w-[8rem]"
           title={documentName}
-        >
-          {documentName}
-        </h1>
+        />
         {status && (
           <span
             className={[
