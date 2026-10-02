@@ -5,7 +5,7 @@
 | **Area** | association |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -77,3 +77,5 @@ file above unchanged.
 - „Dezasociază" and the two records deleted (204 ×3); a search for `TC-ASSOC-13` finds nothing.
   Nothing in the file changed, so the case is confirmed, and
   `e2e/association/associate-stacked.spec.ts` translates it.
+
+**2026-10-02 — `automated` (Slice #37.58).** `e2e/association/associate-stacked.spec.ts`, at 1366 × 768: every step green in the runner's full `20261002T231136Z-29132`, whose cleanup then pressed the wrong „Dezasociază" (the PAD's „Persoane" has one too); scoped to „Proprietăți", the whole spec green in `20261002T232715Z-18822`.

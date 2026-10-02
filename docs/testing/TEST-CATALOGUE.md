@@ -93,7 +93,7 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-document.spec.ts` |
 | [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-person.spec.ts` |
 | [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-10-02 | `e2e/association/certificate-parties.spec.ts` |
-| [TC-ASSOC-13](cases/TC-ASSOC-13.md) | Ecranele de asociere: „Căutare", „Rezultate" și „Asociere" una sub alta; numele proprietății pe un rând | association | happy | — | `confirmed` | 2026-10-02 | `e2e/association/associate-stacked.spec.ts` |
+| [TC-ASSOC-13](cases/TC-ASSOC-13.md) | Ecranele de asociere: „Căutare", „Rezultate" și „Asociere" una sub alta; numele proprietății pe un rând | association | happy | — | `automated` | 2026-10-02 | `e2e/association/associate-stacked.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-10-01 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
@@ -131,8 +131,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Forty-six are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.57, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03, TC-DOC-02–06, TC-TILES-07 and TC-SYSID-01 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Forty-seven are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.58, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03, TC-DOC-02–06, TC-TILES-07, TC-SYSID-01 and TC-ASSOC-13 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
