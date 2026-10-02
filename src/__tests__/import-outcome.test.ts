@@ -1385,7 +1385,7 @@ describe("the result screen's copy", () => {
     // an id added to `OUTCOME_NOTE_IDS` and not to this map is asserted to take
     // none, which fails loudly the moment its message interpolates anything.
     const NOTE_ARGS: Partial<Record<(typeof OUTCOME_NOTE_IDS)[number], string[]>> = {
-      coordinateApplied: ["name", "count"],
+      coordinateApplied: ["count", "name"],
       // Slice #34.08 — one contract can create a company, create a natural
       // person and link a second, so each of the four is a COUNT rather than a
       // bare sentence. `partyNotes` passes exactly `count` on all four.

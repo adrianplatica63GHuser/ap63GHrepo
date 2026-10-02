@@ -154,7 +154,6 @@ const CONVERTED: [string, string][] = [
   ["the Judicial Person's panels", region(JP_FORM, "<fieldset disabled", "</fieldset>")],
   ["the Judicial Person's Field", region(JP_FORM, "function Field(", "\nfunction ")],
   ["the Judicial Person's SelectField", region(JP_FORM, "function SelectField(", "\nfunction ")],
-  ["the Judicial Person's ReadOnlyField", region(JP_FORM, "function ReadOnlyField(", "\nfunction ")],
   ["the Judicial Person's contact-person row", region(JP_FORM, "function ContactPersonRow(", "\nfunction ")],
   // Slice #37.14
   ["the Property's panels", region(PROP_FORM, "data-panel-row", "{bigMap && createPortal(")],
