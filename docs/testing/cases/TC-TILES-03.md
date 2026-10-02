@@ -65,9 +65,11 @@ What the run measured:
 | 2 | Unticks „Hartă" | The map goes; the other panels stay where they are |
 | 3 | Clears the network log, reloads the page | „Hartă" is still unticked and no map is drawn. The log holds no map request: no `/maps/vt` tiles, and no `AuthenticationService`, `QuotaService` or `ViewportInfoService` call. The Maps script the whole app loads may appear; it is not a map |
 | 4 | In „Puncte de contur" (Stereo 70), „Editează" on the first corner, „Nord (m)" 100 m less, the row's „Salvează"; then ticks „Hartă" | The map comes back, and its first corner is where the table now says: the square has one corner pulled out. It is the edited polygon, not the saved one. „Modificări nesalvate" is at the top |
-| 5 | Presses „Arată Street View" under the corners | „Street View" is ticked in the row and a Street View tile appears beside the map. The button now reads „Ascunde Street View"; pressing it unticks the tile again |
+| 5 | Presses „Arată Street View" under the corners | „Street View" is ticked in the row and a Street View tile appears under „Puncte de contur", in the column at the right. The button now reads „Ascunde Street View"; pressing it unticks the tile again |
 | 6 | Unticks „Puncte de contur", presses „Salvează" | The page stays: „v 1" and „2 versiuni" in the header, and the banner goes. Ticks „Puncte de contur": the first corner holds the edited latitude |
 | 7 | Types `-5` into „Suprafață oficială (m²)", unticks „Date cadastrale". „Salvează" stays enabled. Presses „Salvează" | „Date cadastrale" is ticked and shown again, for this visit only. The page has scrolled to „Suprafață oficială (m²)"; the box has the focus, its row pulses red, and beneath it is „Surface area must be a positive number". Nothing is saved (still „v 1"). Then „Anulează": back on the list |
 | 8 | Opens the property again, ticks „Persoane" and „Acte" | Both tiles after the panels, each „Asociază" / „Dezasociază". „Date cadastrale", „Persoane" and „Hartă" can be read side by side |
 | 9 | „Toate", then „Implicit" | „Toate": all nine boxes ticked, Street View among the tiles. „Implicit": back to the four, the map drawn |
 | — | At the end: „Șterge" → „Da" | Back on the property list; the property is gone |
+
+**2026-10-02 — Slice #37.56.** The map, the corners and Street View now stand in one column at the right of the row, the map on top (TC-TILES-07). Step 5 says „under „Puncte de contur"" where it said „beside the map"; not driven again.

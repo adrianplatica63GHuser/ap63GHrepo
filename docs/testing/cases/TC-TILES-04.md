@@ -64,7 +64,7 @@ What the run measured:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale, the page panel, and Instrument's panels, Financiar and Taxe și onorarii. The type's form puts „Antet instrument” on Cadastru |
+| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale and Instrument's panels, Financiar and Taxe și onorarii, with the page panel at the right of the row (#37.56). The type's form puts „Antet instrument” on Cadastru |
 | 2 | Ticks „Cadastru și carte funciară", „Stare juridică" and „Formalități" | Their panels appear, in that order, after Preț și taxe's. All four notebook tabs' panels and the page image are on one screen |
 | 3 | Reloads the page | The same arrangement |
 | 4 | Types `TC` into a field of „Formalități", unticks „Formalități" | The panels go; „Modificări nesalvate" stays at the top |
@@ -78,3 +78,5 @@ What the run measured:
 **2026-10-02 — Slice #37.52.** Step 7's third tile is „Detalii act", no longer „Câmpuri specifice" — the tile of a type without pages of its own was renamed. Not driven again; the case stays `driven`.
 
 **2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. Not driven again; the case stays `driven`.
+
+**2026-10-02 — Slice #37.56.** The page image now stands in a column at the right of the row, top-aligned (TC-TILES-07); step 1 says so. Not driven again.
