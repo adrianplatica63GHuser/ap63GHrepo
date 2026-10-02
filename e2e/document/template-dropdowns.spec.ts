@@ -1,5 +1,5 @@
 /**
- * Case:   TC-DOC-04 — Listele derulante ale unui CVC: cât cea mai lungă alegere, două pe rând
+ * Case:   TC-DOC-04 — Listele derulante ale unui CVC: cât cea mai lungă alegere, trei pe rând
  * Source: docs/testing/cases/TC-DOC-04.md, „Last green" 2026-10-02
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -17,6 +17,8 @@
  *   - #37.54 renamed the two panels the case counts: „Stare juridică afirmată"
  *     is „Declarații și garanții", „Conformitate și formalități" is
  *     „Declarații și obligații legale". The case file says so.
+ *   - #37.55 took the dashes off the blank choice, so the clauses are 9rem and
+ *     sit three to a row; step 3 counts the new rows. The case file says so.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -77,9 +79,9 @@ async function stepsTwoAndThree(page: Page): Promise<void> {
   // Step 2 — every one, its widest choice selected, shows it whole.
   for (const { name, value } of await widestChoices(page)) await page.locator(`select[name="${name}"]`).selectOption(value);
   expect(await clipped(page)).toEqual([]);
-  // Step 3 — two boxes to every row: 14 in 7, 10 in 5.
-  expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([2, 2, 2, 2, 2, 2, 2]);
-  expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 2, 2, 2, 2]);
+  // Step 3 — since #37.55, three to a row: 14 as 3,3,3,3,2; 10 as 2,3,3,2.
+  expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([3, 3, 3, 3, 2]);
+  expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 3, 3, 2]);
 }
 
 async function photograph(page: Page): Promise<void> {
@@ -92,7 +94,7 @@ async function photograph(page: Page): Promise<void> {
 }
 
 test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
-  test("cât cea mai lungă alegere, întregi, două pe rând, la 1366 și la 1920", async ({ page }) => {
+  test("cât cea mai lungă alegere, întregi, trei pe rând, la 1366 și la 1920", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -110,8 +112,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       // Step 4 — 1920 × 1080: the same.
       await page.setViewportSize({ width: 1920, height: 1080 });
       expect(await clipped(page)).toEqual([]);
-      expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([2, 2, 2, 2, 2, 2, 2]);
-      expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 2, 2, 2, 2]);
+      expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([3, 3, 3, 3, 2]);
+      expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 3, 3, 2]);
 
       await photograph(page);
     } finally {

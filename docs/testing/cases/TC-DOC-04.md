@@ -1,4 +1,4 @@
-# TC-DOC-04 — Listele derulante ale unui CVC: cât cea mai lungă alegere, două pe rând
+# TC-DOC-04 — Listele derulante ale unui CVC: cât cea mai lungă alegere, trei pe rând
 
 | | |
 |---|---|
@@ -11,10 +11,11 @@
 ## What this proves
 
 Since Slice #37.53 a document type's own dropdown is as wide as its widest choice needs (the
-blank „— fără valoare —" included), rounded up to half a rem — not the next step up. On a CVC
-most are 10 rem (160 px) where they were L (208 px), and a panel of dropdowns takes a third unit
-when that pairs them, so „Declarații și garanții" and „Declarații și obligații legale" show two
-dropdowns to a row. Narrower must not mean clipped: every dropdown, with its widest choice
+blank one included), rounded up to half a rem — not the next step up — and a panel of dropdowns
+takes a third unit when that pairs them. Since #37.55 the blank reads „fără valoare", in italics
+and without dashes, so on a CVC most are 9 rem (144 px) — they were 10, and L (208 px) before
+#37.53 — and „Declarații și garanții" and „Declarații și obligații legale" show three dropdowns
+to a row. Narrower must not mean clipped: every dropdown, with its widest choice
 selected, shows that choice whole beside its arrow.
 
 ## Before you start
@@ -38,7 +39,7 @@ saved.
 |---|---|---|
 | 1 | Opens `TC-DOC-04 CVC` in a 1366 × 900 window and presses „Toate" | 36 dropdowns of the type's own fields |
 | 2 | Selects in each its widest choice | Every one shows it whole |
-| 3 | Looks at „Declarații și garanții" and „Declarații și obligații legale" | Two boxes to every row: 14 boxes in 7 rows, 10 in 5 |
+| 3 | Looks at „Declarații și garanții" and „Declarații și obligații legale" | Boxes per row 3, 3, 3, 3, 2 and 2, 3, 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
 | 4 | Widens the window to 1920 × 1080 | Steps 2 and 3 the same |
 
 ## At the end — leaving things as they were found
@@ -70,3 +71,5 @@ takes #37.53's pictures. Green on its first runner run, `20261002T144858Z-6734` 
 TC-DOC-01's spec, whose unit grid holds the wider panels, lint, tsc and the three jest suites).
 
 **2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. The spec reads them too.
+
+**2026-10-02 — Slice #37.55.** The blank choice lost its dashes („— fără valoare —" → „fără valoare", in italics), so the clauses are 9 rem and step 3's two panels hold three boxes to a row: 3,3,3,3,2 and 2,3,3,2 (measured in TC-DOC-06's runs, in Chrome). The title, the opening paragraph and step 3 say so; the notes above keep the old counts, as they were run. The spec reads the new rows.
