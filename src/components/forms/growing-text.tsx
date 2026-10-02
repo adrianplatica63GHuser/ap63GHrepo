@@ -16,11 +16,22 @@
  *     a space, so what is saved is still one line.
  *   - `lines`: notes and the MRZ, whose line breaks are part of the value.
  *
- * The height comes from `field-sizing: content` (Chrome 123+). Where a browser
- * does not have it, a small fallback sets the height from `scrollHeight` after
- * every render and every keystroke. A value written by react-hook-form's
- * `reset` (version navigation) lands without a keystroke, which is why the
- * fallback also runs after each render.
+ * The height is set from `scrollHeight` after every render and every
+ * keystroke, IN EVERY BROWSER. A value written by react-hook-form's `reset`
+ * (version navigation) lands without a keystroke, which is why it also runs
+ * after each render. `field-sizing: content` stays on the box, but it is no
+ * longer what the layout is sized from.
+ *
+ * ⚠️ **WHY THE SCROLLHEIGHT HEIGHT IS NOT ONLY A FALLBACK ANY MORE** (Slice
+ * #37.51). Until then it ran only where `field-sizing` was missing. Every
+ * stacked field is a small grid — label, box, hint (`STACKED_FIELD_CLASS`) —
+ * and Chrome sizes that grid's box row from the textarea's `min-height`, not
+ * from the taller box `field-sizing: content` draws. Measured on a Document
+ * whose „Subiect" took three lines: the box 70 px tall in a 30 px row, its
+ * field 52 px, so the box ran 31 px over „Note extinse" below it — and the
+ * same over „Subiect" from a long „Etichetă scurtă". The same box with an
+ * explicit height (or its field laid out as a flex column) made the field
+ * 92 px and pushed the next one down. So the height is always explicit.
  *
  * Two ways to hold the value (Slice #37.40): react-hook-form's `registration`,
  * as every form field does, or `value` + `onValueChange` for a box kept in
@@ -61,9 +72,6 @@ import {
 import { useTranslations } from "next-intl";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { oneLine, renderedLines } from "./growing-text-rules";
-
-const supportsFieldSizing = (): boolean =>
-  typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("field-sizing", "content");
 
 export { oneLine, renderedLines };
 
@@ -126,7 +134,14 @@ export function GrowingText(props: Props) {
 
   const fit = useCallback(() => {
     const el = inner.current;
-    if (!el || supportsFieldSizing()) return;
+    if (!el) return;
+    // Not laid out (a hidden tile, `display: none` above it): its scrollHeight
+    // is 0, and a height set from that would leave a 2 px box when it shows.
+    // Leave it to `field-sizing` and `min-height`; the next render fits it.
+    if (el.getClientRects().length === 0) {
+      el.style.height = "";
+      return;
+    }
     el.style.height = "auto";
     const border = el.offsetHeight - el.clientHeight;
     el.style.height = `${el.scrollHeight + border}px`;
@@ -157,10 +172,17 @@ export function GrowingText(props: Props) {
   const mounted = useRef(true);
   useLayoutEffect(() => {
     mounted.current = true;
+    // A web font that arrives after the first measure changes how many lines
+    // the value wraps to; measure once more when the fonts are in (#37.51).
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      void document.fonts.ready.then(() => {
+        if (mounted.current) fit();
+      });
+    }
     return () => {
       mounted.current = false;
     };
-  }, []);
+  }, [fit]);
   useLayoutEffect(() => {
     fit();
     if (!fold || pending.current) return;
