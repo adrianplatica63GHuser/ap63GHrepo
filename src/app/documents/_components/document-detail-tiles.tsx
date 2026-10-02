@@ -29,6 +29,10 @@
  * INFO 5. Every tile carries
  * `order`, its place in the registry, because the form's tiles and the page's
  * list tiles come from two components and the row must read in one order.
+ *
+ * WHERE THE TILES STAND (#37.56): the page image is a column at the right,
+ * top-aligned with the row; every other tile flows to its left
+ * (`documentTileRegistry`'s `placement`, `<TileAreas>`).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -44,7 +48,9 @@ import { ProcessPanel } from "./process-panel";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { LIST_UNITS, META_CELL_REM, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
+import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
+import { splitTiles } from "@/lib/ui/tiles";
+import { LIST_UNITS, META_CELL_REM, unitRowStyle } from "@/lib/ui/field-widths";
 import {
   DOCUMENT_STATUS_CLASS,
   type DocumentStatus,
@@ -72,6 +78,8 @@ type Props = {
   /** The `?tab=` the page was opened with, if any. */
   initialTab?:       string;
 };
+
+const NO_RIGHT: readonly string[] = [];
 
 /** Until the form has loaded the types, the row knows no type: general data and the page image. */
 const NO_TYPE_YET: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: true, ready: false };
@@ -102,6 +110,9 @@ export function DocumentDetailTiles({
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
+  // Slice #37.56 — the right-hand column, and the slot the form places the page image in.
+  const rightAll = reg.placement?.right ?? NO_RIGHT;
+  const { column, slotRefs } = useRightColumn(rightAll);
   // Slice #18.06: the details form portals its version-nav controls into this
   // header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -138,6 +149,7 @@ export function DocumentDetailTiles({
 
   const order = (tile: string): number => reg.all.indexOf(tile);
   const marked = markedTiles(highlighted, choice.shown, reg.all);
+  const shownRight = splitTiles(choice.shown, reg).right.length;
 
   return (
     <>
@@ -180,7 +192,7 @@ export function DocumentDetailTiles({
         )}
 
         <PreviewOpenerProvider previews={previews}>
-        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
+        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs}>
           <DocumentForm
             mode={readonly ? "view" : "edit"}
             documentId={documentId}
@@ -194,6 +206,7 @@ export function DocumentDetailTiles({
               order,
               onRevealTile: choice.reveal,
               onLayout,
+              right: column,
             }}
           />
           {choice.isShown("persons") && (
@@ -231,7 +244,7 @@ export function DocumentDetailTiles({
             </div>
           )}
           <PreviewTiles previews={previews} order={reg.all.length} />
-        </div>
+        </TileAreas>
         </PreviewOpenerProvider>
 
         {/* Slice #23.06.Import: what Detalii showed under the form. It is not a

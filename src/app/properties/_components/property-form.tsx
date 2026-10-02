@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import type { RightColumn } from "@/components/tiles/tile-areas";
 import {
   type Control,
   type FieldPath,
@@ -206,6 +207,13 @@ type Props = {
     onRevealTile: (tile: PropTile) => void;
     /** Tick or untick a tile, as its checkbox does (the Street View button). */
     onToggleTile: (tile: PropTile) => void;
+    /**
+     * Slice #37.56: the right-hand column — Hartă, Puncte de contur and Street
+     * View are placed there (`<TileAreas>`). ⚠️ Puncte de contur is then outside
+     * the `<form>` element in the DOM, though not in React: its buttons are all
+     * `type="button"`, and Enter in a corner's box no longer saves the property.
+     */
+    right?: RightColumn;
   };
 };
 
@@ -251,6 +259,14 @@ export function PropertyForm({
       ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile], hidden: !tileShown(tile) }
       : {};
   const hiddenClass = (tile: PropTile): string => (tileShown(tile) ? "" : " hidden");
+  // Slice #37.56: a tile that stands in the right column is rendered here, as
+  // before, and placed in its slot there; nothing until the slot exists, so
+  // the map is never mounted twice.
+  const placeTile = (tile: PropTile, node: React.ReactNode): React.ReactNode => {
+    if (!tiles?.right?.has(tile)) return node;
+    const slot = tiles.right.slot(tile);
+    return slot ? createPortal(node, slot) : null;
+  };
   const tShared = useTranslations("shared");
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -1274,7 +1290,9 @@ export function PropertyForm({
             disables EVERY descendant control, including the version ◀/▶ nav
             buttons that live inside CornersManager's toolbar — Slice #18.02
             pitfall #4); it enforces its own read-only state via the readOnly
-            prop instead. Its columns take their widths from the file. */}
+            prop instead. Its columns take their widths from the file.
+            Slice #37.56: placed in the right-hand column (`placeTile`). */}
+        {placeTile("corners",
         <section
           style={PANEL_UNIT_STYLE.property.corners}
           data-panel="corners"
@@ -1304,7 +1322,8 @@ export function PropertyForm({
             onToggleAngles={() => setShowAngles((v) => !v)}
             cornerDiff={cornerDiff ?? undefined}
           />
-        </section>
+        </section>,
+        )}
 
         {/* Address — Slice #19.02: hidden for agricultural / forest types.
             Slice #37.30: labels above, the rows of `SCREEN_ROWS.property.address`
@@ -1439,7 +1458,7 @@ export function PropertyForm({
             full-screen theater overlay. */}
         {/* Slice #37.19: as tiles, the map is mounted only while „Hartă" is
             ticked — an unticked map makes no Google Maps request of its own. */}
-        {tileShown("map") && (
+        {tileShown("map") && placeTile("map",
         <section
           style={PANEL_UNIT_STYLE.property.map}
           data-panel="map"
@@ -1466,13 +1485,13 @@ export function PropertyForm({
               </ErrorBoundary>
             </div>
           </div>
-        </section>
+        </section>,
         )}
 
         {/* Slice #18.03b: Street View panel — mounted only while open so the
             (billed) panorama and Street View library never load on property
             open. The same fixed size as the map, beside it. */}
-        {streetViewOpen && !typeConfig.hideStreetView && (
+        {streetViewOpen && !typeConfig.hideStreetView && placeTile("streetView",
           <section
             style={PANEL_UNIT_STYLE.property.streetView}
             data-panel="street-view"
@@ -1489,7 +1508,7 @@ export function PropertyForm({
                 <StreetViewPanel centroid={streetViewCentroid} />
               </ErrorBoundary>
             </div>
-          </section>
+          </section>,
         )}
 
       </div>{/* end Slice #37.14 panel row */}

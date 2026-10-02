@@ -107,6 +107,8 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       ...typeTiles,
       ...(layout.succession ? ["succession"] : []),
     ],
+    // Slice #37.56: the page image stands at the right of the row, top-aligned.
+    placement: { right: layout.pages ? ["pages"] : [] },
     renamed: Object.fromEntries(
       Object.entries(RENAMED_TABS)
         .filter(([, now]) => layout.tabs.includes(now))

@@ -19,6 +19,11 @@
  *
  * `?tab=` still works: the tab it names adds its tile for this visit and
  * scrolls to it, so the association screens' „Înapoi" lands where it did.
+ *
+ * WHERE THE TILES STAND (#37.56): Hartă, Puncte de contur and — ticked —
+ * Street View one under another in a column at the right; Date cadastrale,
+ * Adresă and the lists to their left (`PROP_TILE_REGISTRY.placement`,
+ * `<TileAreas>`).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -34,10 +39,14 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { LIST_UNITS, META_CELL_REM, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
+import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
+import { splitTiles } from "@/lib/ui/tiles";
+import { LIST_UNITS, META_CELL_REM, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues, type Corner } from "./form-schema";
 import { PROP_TILES, PROP_TILE_OF_TAB, PROP_TILE_REGISTRY, type PropTile } from "./property-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
+
+const NO_RIGHT: readonly PropTile[] = [];
 
 type Props = {
   propertyId:     string;
@@ -67,6 +76,10 @@ export function PropertyDetailTiles({
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
+  // Slice #37.56 — the right-hand column, and the slots the form places its tiles in.
+  const rightAll = PROP_TILE_REGISTRY.placement?.right ?? NO_RIGHT;
+  const { column, slotRefs } = useRightColumn(rightAll);
+  const shownRight = splitTiles(choice.shown, PROP_TILE_REGISTRY).right.length;
   // Slice #18.UX.04: the details form portals its version-nav controls into
   // this header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -111,7 +124,7 @@ export function PropertyDetailTiles({
         <TileSelector all={PROP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
-        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
+        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs}>
           <PropertyForm
             mode={readonly ? "view" : "edit"}
             propertyId={propertyId}
@@ -124,6 +137,7 @@ export function PropertyDetailTiles({
               labels,
               onRevealTile: choice.reveal,
               onToggleTile: choice.toggle,
+              right: column,
             }}
           />
           {choice.isShown("associations") && (
@@ -154,7 +168,7 @@ export function PropertyDetailTiles({
             </ListTile>
           )}
           <PreviewTiles previews={previews} />
-        </div>
+        </TileAreas>
         </PreviewOpenerProvider>
       </div>
     </>

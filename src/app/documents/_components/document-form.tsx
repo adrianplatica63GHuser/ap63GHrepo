@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import type { RightColumn } from "@/components/tiles/tile-areas";
 import {
   type FieldPath,
   type FieldErrors,
@@ -253,6 +254,8 @@ type Props = {
     /** Show a hidden tile for this visit — an error has been found in it. */
     onRevealTile: (tile: string) => void;
     onLayout: (layout: DocumentLayout, highlightedTiles: string[]) => void;
+    /** Slice #37.56: the right-hand column — the page image is placed there (`<TileAreas>`). */
+    right?: RightColumn;
   };
 };
 
@@ -275,6 +278,13 @@ export function DocumentForm({
   // class goes with it (`tileClass`).
   const tiled = tiles !== undefined;
   const tileShown = (tile: string): boolean => !tiles || tiles.shown.includes(tile);
+  // Slice #37.56: a tile that stands in the right column is rendered here, as
+  // before, and placed in its slot there; nothing until the slot exists.
+  const placeTile = (tile: string, node: React.ReactNode): React.ReactNode => {
+    if (!tiles?.right?.has(tile)) return node;
+    const slot = tiles.right.slot(tile);
+    return slot ? createPortal(node, slot) : null;
+  };
   const tileProps = (tile: string) =>
     tiles
       ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile] ?? tile, hidden: !tileShown(tile) }
@@ -1952,9 +1962,10 @@ export function DocumentForm({
         {formElement}
         {/* Slice #37.20: the page image is a tile — hidden, not unmounted, so
             an upload in progress survives unticking it. */}
-        {showPagesPanel && (
+        {showPagesPanel && placeTile("pages",
           // No `role="region"` here: PagesPanel is itself the region „Pagini",
           // and two regions of one name are one too many for a screen reader.
+          // Slice #37.56: placed in the right-hand column (`placeTile`).
           <div
             data-tile="pages"
             hidden={!tileShown("pages")}
@@ -1971,7 +1982,7 @@ export function DocumentForm({
                 sidebar
               />
             </ErrorBoundary>
-          </div>
+          </div>,
         )}
       </>
     ) : showPagesPanel ? (

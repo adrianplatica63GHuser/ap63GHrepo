@@ -32,6 +32,42 @@ export interface TileRegistry<K extends string> {
    * the old one is read as the new one (Slice #37.54: the CVC's renamed tiles).
    */
   renamed?: Readonly<Record<string, K>>;
+  /**
+   * Where the tiles stand when the screen opens (Slice #37.56). `right` names
+   * the tiles that stand in a column at the right of the screen, top to
+   * bottom, top-aligned with the row; every other tile flows and wraps in the
+   * left area as before. Absent, every tile is in the left area. It is data,
+   * not a layout, so a later slice can store a user's own arrangement in its
+   * place and this becomes its default. The checkboxes keep `all`'s order.
+   */
+  placement?: { right: readonly K[] };
+}
+
+/**
+ * The shown tiles, split into the two areas (Slice #37.56): `right` in the
+ * placement's order, `left` in the registry's. An unticked right tile is in
+ * neither, so the column closes up; with none of them ticked `right` is empty
+ * and the screen draws no column — the left area takes the whole width.
+ */
+export function splitTiles<K extends string>(
+  shown: readonly K[],
+  reg: Pick<TileRegistry<K>, "all" | "placement">,
+): { left: K[]; right: K[] } {
+  const rightAll = reg.placement?.right ?? [];
+  const isShown = new Set(shown);
+  return {
+    left: inRegistryOrder(shown, reg.all).filter((k) => !rightAll.includes(k)),
+    right: rightAll.filter((k) => isShown.has(k) && reg.all.includes(k)),
+  };
+}
+
+/** A tile's place in the right column, top to bottom, or `undefined` when it stands in the left area. */
+export function rightColumnIndex<K extends string>(
+  tile: K,
+  reg: Pick<TileRegistry<K>, "placement">,
+): number | undefined {
+  const i = reg.placement?.right.indexOf(tile) ?? -1;
+  return i >= 0 ? i : undefined;
 }
 
 /** Where a screen's choice is remembered — per browser, per entity kind. */

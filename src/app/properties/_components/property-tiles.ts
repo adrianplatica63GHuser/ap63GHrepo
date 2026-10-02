@@ -42,6 +42,10 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
   all: PROP_TILES,
   defaults: ["cadastral", "corners", "address", "map"],
   form: PROP_FORM_TILES,
+  // Slice #37.56: Hartă at the right, Puncte de contur under it, Street View
+  // under that when ticked — one column; the cadastral data, the address and
+  // the lists to their left.
+  placement: { right: ["map", "corners", "streetView"] },
 };
 
 /**
