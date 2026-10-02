@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -79,3 +79,7 @@ unchanged.
 - Step 4: Romanian again (the cookie gone), „Taxe și onorarii" over „Data autentificării", 20 px.
 - Both documents deleted (204, 204); nothing left for `TC-DOC-03`. Nothing changed during the run,
   so the case is confirmed, and `e2e/document/type-fields-tile.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/document/type-fields-tile.spec.ts` translates the case and takes
+#37.52's pictures. Green on its first runner run, `20261002T140319Z-4705` on `c86c0f6` (the spec,
+lint, tsc; jest `20261002T140544Z-22944`, 206 suites).
