@@ -1931,6 +1931,7 @@ export function BulkImportDialog({
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
+  const tUnnamed = useTranslations("shared.unnamed");
   /**
    * What a failed AI read tells the user, with ONE reason answered from the
    * locale instead of from the route.                          (Slice #32.08)
@@ -3099,7 +3100,8 @@ export function BulkImportDialog({
                 // is. See `error-cell.ts`.
                 throw new TranslatedError(
                   t("cornerSourceConflict", {
-                    code: claim.link?.propertyCode ?? "?",
+                    // #37.57: the property by its nickname, not its system ID.
+                    name: claim.link?.propertyNickname ?? tUnnamed("property"),
                   }),
                 );
               }
@@ -6252,7 +6254,8 @@ export function BulkImportDialog({
         // The CODE, not the id: a note that named a uuid would be a note nobody
         // can act on. An id with no Property behind it is treated as "not
         // applied" rather than printed raw — see `coordinateNote`.
-        cornerPropertyCode: cornerProperty?.code ?? null,
+        // #37.57: the NAME, not the code or the id — a nickname, or words.
+        cornerPropertyName: cornerProperty === undefined ? null : (cornerProperty.nickname ?? tUnnamed("property")),
         cornerCount: cornerProperty?.cornerCount ?? 0,
         isIdCard: isIdCardEntry(scanResults.get(r.entry.path)),
         canLinkPerson: soleProperty(r.entry.path) !== null,
@@ -6333,7 +6336,7 @@ export function BulkImportDialog({
         refill: r.refill,
       };
     },
-    [cornerSourceByPath, fallbackTypeId, propertyById, runTypes, scanResults, soleProperty],
+    [cornerSourceByPath, fallbackTypeId, propertyById, runTypes, scanResults, soleProperty, tUnnamed],
   );
 
   /**

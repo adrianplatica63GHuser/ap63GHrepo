@@ -1,5 +1,6 @@
 "use client";
 
+import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -2491,11 +2492,8 @@ function Section({
   const heading = title === undefined ? null : (
     <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
       {title}
-      {code && (
-        <span className="font-mono text-xs font-normal normal-case text-fade dark:text-zinc-500">
-          {code}
-        </span>
-      )}
+      {/* Slice #37.57: the system ID's one place — this corner. */}
+      {code && <SystemIdCorner code={code} />}
     </h2>
   );
   if (framed) {
@@ -2902,7 +2900,6 @@ function SurveyorPickerDialog({
                 <table className="w-full text-sm">
                   <thead className="bg-canvas dark:bg-zinc-800">
                     <tr>
-                      <th className="px-3 py-1.5 text-left text-xs font-medium text-fade">{t("surveyorPicker.colCode")}</th>
                       <th className="px-3 py-1.5 text-left text-xs font-medium text-fade">{t("surveyorPicker.colName")}</th>
                       <th className="px-3 py-1.5" />
                     </tr>
@@ -2913,7 +2910,6 @@ function SurveyorPickerDialog({
                         key={item.id}
                         className="border-t border-wire hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
                       >
-                        <td className="px-3 py-1.5 font-mono text-xs text-fade">{item.code}</td>
                         <td className="px-3 py-1.5 text-ink dark:text-zinc-200">{item.displayName}</td>
                         <td className="px-3 py-1.5 text-right">
                           <IconButton

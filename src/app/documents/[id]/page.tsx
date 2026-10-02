@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import {
   getDocumentTypeTemplate,
@@ -19,7 +20,8 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
   if (!record) notFound();
 
   const initialValues = fromApiRecord(record);
-  const label = record.title ?? record.code;
+  const tUnnamed = await getTranslations("shared.unnamed");
+  const label = record.title ?? tUnnamed("document") /* #37.57: never the system ID */;
 
   // ── Slice #26.12: New / AI processed / Imported, derived, never stored ─────
   //

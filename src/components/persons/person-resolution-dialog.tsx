@@ -384,7 +384,7 @@ function ExactMatchBranch({
         </div>
         <div className="rounded-md border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm dark:border-emerald-800 dark:bg-emerald-950/20">
           <div className="mb-1 font-medium text-fade dark:text-zinc-400">{t("existingPersonTitle")}</div>
-          <div className="text-ink dark:text-zinc-200">{candidate.displayName} ({candidate.code})</div>
+          <div className="text-ink dark:text-zinc-200">{candidate.displayName}</div>{/* #37.57: no system ID — CNP / CUI below tell two of one name apart */}
           {isNatural && candidate.cnp && <div className="text-ink dark:text-zinc-200">CNP: {candidate.cnp}</div>}
           {!isNatural && candidate.cuiNumber && <div className="text-ink dark:text-zinc-200">CUI: {candidate.cuiNumber}</div>}
           {isNatural && candidate.idDocumentNumber && (
@@ -437,7 +437,7 @@ function PossibleMatchesBranch({
             className="flex items-center justify-between rounded-md border border-wire px-3 py-2 text-sm dark:border-zinc-700"
           >
             <span className="text-ink dark:text-zinc-200">
-              {m.displayName} ({m.code}) —{" "}
+              {m.displayName} —{" "}{/* #37.57: no system ID */}
               {m.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
             </span>
             <SecondaryButton onClick={() => onLink(m.id)} disabled={busy}>

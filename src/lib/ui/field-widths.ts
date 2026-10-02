@@ -355,7 +355,6 @@ export function tileTableRem(units: number): number {
 export const JUDICIAL_PERSON = {
   name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
   nickname: { step: "L", kind: "grows" }, //                m: 0
-  code: { step: "M", kind: "fixed", sample: "HHHHH00000" }, // „JPERS00012"
   judicialPersonTypeId: { step: "L", kind: "select" }, //   m: 10 options, longest „Consiliu Local" (14) — one character past M
   cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
@@ -381,11 +380,10 @@ export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
  * 107 px and S is 80 (TC-PROP-04's fixed-box check, e2e 20261001T010949Z-7174).
  * Since #37.55 it reads „niciunul", in italics and without the dashes: about
  * 90 px, still past S, so M still holds.
- * At M, M and M, Cod | Nr. tarla / sola | Nr. parcelă is 26.5rem — still one
- * row (rule 14), still a 3-unit Date cadastrale.
+ * At M, M and M, Cod | Nr. tarla / sola | Nr. parcelă was 26.5rem; since
+ * #37.57 the system ID is the heading's corner and the row is the two numbers.
  */
 export const PROPERTY = {
-  code: { step: "M", kind: "fixed", sample: "HHHH00000" }, //   „PROP00012"
   tarlaId: { step: "M", kind: "select" }, //                    M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
   parcela: { step: "M", kind: "fixed", sample: "000/00/00" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
   nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
@@ -623,24 +621,25 @@ type DocField = keyof typeof DOCUMENT;
 export const SCREEN_ROWS = {
   naturalPerson: NATURAL_PERSON_ROWS,
   judicialPerson: {
-    // Denumire, the whole width — Poreclă | Tip — ID | CUI | Nr. Reg. Com. (rule 14:
-    // the identifiers together; ID only on a saved company) — Note, the whole width.
+    // Denumire, the whole width — Poreclă | Tip — CUI | Nr. Reg. Com. (rule 14: the
+    // identifiers together; #37.57 took the system ID out — it is the heading's corner)
+    // — Note, the whole width.
     identity: [
       ["name"],
       ["nickname", "judicialPersonTypeId"],
-      ["code", "cuiNumber", "tradeRegisterNumber"],
+      ["cuiNumber", "tradeRegisterNumber"],
       ["notes"],
     ],
     // Persoană de contact 1, then 2: each label above an XL box holding the name and its button.
     contactPersons: [["contactPerson"], ["contactPerson"]],
   },
   property: {
-    // Cod | Nr. tarla / sola | Nr. parcelă (rule 14; Cod only on a saved property, the two
-    // cadastral numbers not on an urban type) — Poreclă — the two areas, the bow-tie marker
+    // Nr. tarla / sola | Nr. parcelă (rule 14; not on an urban type; #37.57 took the system
+    // ID out — it is the heading's corner) — Poreclă — the two areas, the bow-tie marker
     // under them (rule 15) — Nr. CF | Nr. cadastru — Categorie de folosință | Tip proprietate
     // — Note, the whole width.
     cadastral: [
-      ["code", "tarlaId", "parcela"],
+      ["tarlaId", "parcela"],
       ["nickname"],
       ["surfaceAreaMp", "calculatedAreaMp"],
       ["carteFunciara", "cadastralNumber"],
@@ -1010,7 +1009,7 @@ export const COLUMN = {
   openPreview: { content: "L", kind: "fixed" }, //          „Vizualizare" and „Previzualizare" (#37.24), two xs buttons on an association tile
   openPreviewStacked: { content: "M", kind: "fixed" }, //   the same two, one above the other, on a Natural Person's unit tile (#37.27)
   // Every entity
-  code: { content: "S", kind: "fixed" }, //                 „JPERS03542", 10 mono characters at 12 px
+  code: { content: "S", kind: "fixed" }, //                 a calculation run's „CALC00012" — since #37.57 never a record's system ID
   importance: { content: "M", kind: "fixed" }, //           „Ridicată"
   relevance: { content: "M", kind: "fixed" }, //            „De perspectivă" (14)
   provenance: { content: "M", kind: "fixed" }, //           „Import AI"

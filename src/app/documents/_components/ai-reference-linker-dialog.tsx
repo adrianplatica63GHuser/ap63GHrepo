@@ -46,6 +46,7 @@
  * the candidate at all.
  */
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useState } from "react";
 import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -109,6 +110,7 @@ type Props = {
 
 export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onClose }: Props) {
   const t = useTranslations("document.aiReferenceLinker");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
 
   /**
    * ⚠️ **ONLY THE UNANSWERED ONES ARE WALKED.** The stored array keeps every
@@ -330,7 +332,7 @@ export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onCl
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink dark:text-zinc-100">
-                      {c.document.title ?? c.document.code}
+                      {nameOr(c.document.title, "document")}
                       {c.document.isStub && (
                         <span className="ml-2 rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
                           {t("isStub")}
@@ -338,7 +340,7 @@ export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onCl
                       )}
                     </p>
                     <p className="text-xs text-fade dark:text-zinc-400">
-                      {[c.document.code, c.document.typeName, c.document.nrDocument, c.document.dateDocument]
+                      {[c.document.typeName, c.document.nrDocument, c.document.dateDocument]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>

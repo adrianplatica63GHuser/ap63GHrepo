@@ -1,5 +1,7 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
+import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { useState, useRef, type ReactNode } from "react";
 import { Calculator, Check, Link as LinkIcon, Plus, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -813,6 +815,7 @@ function CrossRefsSection({
   t:                 (key: string, opts?: any) => string;
   withBack:          (href: string) => string;
 }) {
+  const nameOr      = useNameOr(); // #37.57: a peer by its name, or words — never its system ID
   const queryClient = useQueryClient();
   const crossRefKey = `${mainQueryKey}-cross-refs`;
   const apiBase     = `/api/metadata/${principalObjectId}/cross-refs`;
@@ -951,10 +954,7 @@ function CrossRefsSection({
             <li key={ref.id} className="flex items-start gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Type badge */}
-                  <span className="inline-block font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                    {ref.peerCode}
-                  </span>
+                  {/* Slice #37.57: no system-ID badge — the peer by its type and name. */}
                   <span className="inline-block text-xs text-fade dark:text-zinc-500 border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5">
                     {peerTypeBadge(ref.peerType, t)}
                   </span>
@@ -964,11 +964,11 @@ function CrossRefsSection({
                       href={withBack(peerHref(ref.peerType, ref.peerEntityId))}
                       className="text-sm text-ink dark:text-zinc-100 underline-offset-2 hover:underline"
                     >
-                      {ref.peerName ?? ref.peerCode}
+                      {nameOr(ref.peerName, unnamedKindOf(ref.peerType))}
                     </Link>
                   ) : (
                     <span className="text-sm text-ink dark:text-zinc-100">
-                      {ref.peerName ?? ref.peerCode}
+                      {nameOr(ref.peerName, unnamedKindOf(ref.peerType))}
                     </span>
                   )}
                   {/* "referenced by" indicator */}

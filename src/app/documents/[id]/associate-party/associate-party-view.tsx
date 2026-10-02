@@ -14,7 +14,7 @@ import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/l
 import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
-const COLUMNS: readonly ColumnName[] = ["select", "code", "personName", "personType"];
+const COLUMNS: readonly ColumnName[] = ["select", "personName", "personType"];
 
 /** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
 const SEARCH_UNITS = boxesUnits(["searchName", "searchCode"]);
@@ -173,7 +173,6 @@ export function AssociatePartyView({ documentId, documentName }: Props) {
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("code")}>{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personName")}>{t("colName")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("personType")}>{t("colType")}</th>
               </tr>
@@ -201,7 +200,6 @@ export function AssociatePartyView({ documentId, documentName }: Props) {
                       aria-label={item.displayName}
                     />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}

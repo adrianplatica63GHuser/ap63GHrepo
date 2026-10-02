@@ -41,7 +41,7 @@ import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
-type IdCardLink = { id: string; code: string } | null;
+type IdCardLink = { id: string; code: string; title: string | null } | null;
 
 type Props = {
   personId:      string;

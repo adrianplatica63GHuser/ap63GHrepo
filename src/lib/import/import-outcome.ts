@@ -177,7 +177,8 @@ export type OutcomeRow = {
    * the same — this file did not build the Property — and none of the three is
    * an error.
    */
-  cornerPropertyCode: string | null;
+  /** The Property a coordinate file's corners built, by its name (#37.57: never its code). */
+  cornerPropertyName: string | null;
   cornerCount: number;
   /** The scan says this is an identity card. */
   isIdCard: boolean;
@@ -471,11 +472,11 @@ export function coordinateNote(row: OutcomeRow): OutcomeNote | null {
   // An errored row never reached the archive, and a row still importing has no
   // settled story. Neither is the moment to make a claim about geometry.
   if (row.status !== "done") return null;
-  return row.cornerPropertyCode === null
+  return row.cornerPropertyName === null
     ? { id: "coordinateNotApplied", values: {} }
     : {
         id: "coordinateApplied",
-        values: { code: row.cornerPropertyCode, count: row.cornerCount },
+        values: { name: row.cornerPropertyName, count: row.cornerCount },
       };
 }
 
@@ -1084,7 +1085,7 @@ export function summariseImportRun(
 
     // The corners were written by the property step, before any document
     // existed, so this one is counted whatever happened to the file itself.
-    if (row.isCoordinate && row.cornerPropertyCode !== null) {
+    if (row.isCoordinate && row.cornerPropertyName !== null) {
       summary.coordinateFilesApplied += 1;
     }
 

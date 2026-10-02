@@ -519,8 +519,8 @@ export function ImportPreexistingStage({
               // carried away to CHECK the import afterwards, and since #32.06
               // the code alone does not say which document was matched.
               const titled = row.title !== null && row.title.trim() !== ""
-                ? `${t("row.line", { path: row.path, code: row.code })} ${t("row.archivedTitle", { title: row.title })}`
-                : t("row.line", { path: row.path, code: row.code });
+                ? `${t("row.line", { path: row.path })} ${t("row.archivedTitle", { title: row.title })}`
+                : t("row.line", { path: row.path });
               if (row.folders.length === 0) return titled;
               return `${titled} ${t("row.folders", {
                 folders: row.folders.join(", "),
@@ -1082,7 +1082,7 @@ function RowList({
             {row.path}
           </span>
           <span className="ml-1.5 font-mono text-ink dark:text-zinc-300">
-            {t("row.existing", { code: row.code })}
+            {t("row.existing") /* #37.57: the archived title follows; no system ID */}
           </span>
           {/* ⚠️ No `truncate`: on an inline box `overflow-hidden` and
               `text-overflow` are inert and all the class does is forbid

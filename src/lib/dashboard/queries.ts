@@ -45,7 +45,7 @@ export type StaleMetadataCount = {
 export type RecentActivityItem = {
   id:          string;
   code:        string;
-  displayName: string;
+  displayName: string | null;
   entityType:  "person" | "property" | "document";
   /** Only set when entityType === "person"; drives URL routing to natural-persons vs judicial-persons. */
   personType?: "NATURAL" | "JUDICIAL";
@@ -218,14 +218,14 @@ export async function getDashboardRecentActivity(): Promise<RecentActivityItem[]
     ...latestProperties.map((r) => ({
       id:          r.id,
       code:        r.code,
-      displayName: r.displayName ?? r.code,
+      displayName: r.displayName ?? null, // #37.57: never the system ID
       entityType:  "property" as const,
       updatedAt:   r.updatedAt,
     })),
     ...latestDocuments.map((r) => ({
       id:          r.id,
       code:        r.code,
-      displayName: r.displayName ?? r.code,
+      displayName: r.displayName ?? null, // #37.57: never the system ID
       entityType:  "document" as const,
       updatedAt:   r.updatedAt,
     })),

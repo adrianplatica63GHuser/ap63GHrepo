@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronUp, ListMinus, ListPlus, Plus, Save } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
+import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
@@ -19,11 +20,11 @@ const EDITOR_UNITS = 3;
 type MemberItem = {
   memberId:     string;
   position:     number;
-  displayLabel: string;
+  displayLabel: string | null;
 };
 type Candidate = {
   id:              string;
-  displayLabel:    string;
+  displayLabel:    string | null;
   otherGroupCount: number;
 };
 type GroupDetail = {
@@ -79,6 +80,7 @@ export function GroupEditor({
   initialDetail: GroupDetail;
 }) {
   const t = useTranslations("group");
+  const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
   // FU-219 (Slice #37.07): the description's caption is its label.
   const descriptionId = useId();
@@ -110,12 +112,14 @@ export function GroupEditor({
   const [error, setError] = useState<string | null>(null);
 
   // Lookups: memberId → displayLabel (from both members and candidates).
+  // Slice #37.57: a member with no name is named in words, never by its system ID.
   const labelById = useMemo(() => {
+    const unnamed = tUnnamed(unnamedKindOf(detail.targetType));
     const map = new Map<string, string>();
-    for (const m of detail.members)   map.set(m.memberId, m.displayLabel);
-    for (const c of detail.candidates) map.set(c.id,       c.displayLabel);
+    for (const m of detail.members)   map.set(m.memberId, m.displayLabel ?? unnamed);
+    for (const c of detail.candidates) map.set(c.id,       c.displayLabel ?? unnamed);
     return map;
-  }, [detail]);
+  }, [detail, tUnnamed]);
 
   const originalPositionById = useMemo(() => {
     const map = new Map<string, number>();

@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { metadataValueLabel } from "@/lib/metadata/value-labels";
@@ -175,6 +176,7 @@ function readStoredCols(): string[] {
 
 export function PropertyListView() {
   const t       = useTranslations("property");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const tPag    = useTranslations("shared.pagination");
   const tBulk   = useTranslations("shared.bulkDelete");
   const tFilter = useTranslations("shared.listFilters");
@@ -366,7 +368,7 @@ export function PropertyListView() {
   // optionals, open — each a fixed width, so ticking one widens the table. A
   // stored key this build has no column for stays in storage and is not drawn.
   const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const columns: ColumnName[] = ["selectBadges", "code", ...shownCols.map((c) => c.column), "openPreview"];
+  const columns: ColumnName[] = ["selectBadges", ...shownCols.map((c) => c.column), "openPreview"];
   const colCount = columns.length;
 
   return (
@@ -519,7 +521,6 @@ export function PropertyListView() {
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
                 </th>
-                <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
                 {shownCols.map((col) => (
                   <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
                     {col.label}
@@ -569,15 +570,12 @@ export function PropertyListView() {
                         type="checkbox"
                         checked={selectedIds.has(item.id)}
                         onChange={() => toggleOne(item.id)}
-                        aria-label={item.nickname ?? item.code}
+                        aria-label={nameOr(item.nickname, "property")}
                         className="h-4 w-4 rounded border-wire accent-cta"
                       />
                       <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                       <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
                     </span>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs text-fade">
-                    {item.code}
                   </td>
                   {shownCols.map((col) => (
                     <td

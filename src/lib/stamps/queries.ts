@@ -59,12 +59,12 @@ export type StampListItem = {
 
 export type StampMemberItem = {
   memberId:     string;
-  displayLabel: string;
+  displayLabel: string | null;
 };
 
 export type StampCandidate = {
   id:           string;
-  displayLabel: string;
+  displayLabel: string | null;
 };
 
 export type StampDetail = {
@@ -81,8 +81,9 @@ export type StampDetail = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function propLabel(code: string, nickname: string | null): string {
-  return nickname?.trim() || code;
+function propLabel(_code: string, nickname: string | null): string | null {
+  // Slice #37.57: never the system ID — null, and the screen says so in words (`shared.unnamed`).
+  return nickname?.trim() || null;
 }
 
 // ---------------------------------------------------------------------------
@@ -206,7 +207,7 @@ export async function getStampDetail(
 
     members = rows.map((r) => ({
       memberId:     r.memberId,
-      displayLabel: r.displayName?.trim() || r.code,
+      displayLabel: r.displayName?.trim() || null,
     }));
 
   } else if (targetType === "DOCUMENT") {
@@ -228,7 +229,7 @@ export async function getStampDetail(
 
     members = rows.map((r) => ({
       memberId:     r.memberId,
-      displayLabel: r.title?.trim() || r.code,
+      displayLabel: r.title?.trim() || null,
     }));
   }
 
@@ -276,7 +277,7 @@ export async function getStampDetail(
 
     candidates = rows.map((r) => ({
       id:           r.id,
-      displayLabel: r.displayName?.trim() || r.code,
+      displayLabel: r.displayName?.trim() || null,
     }));
 
   } else if (targetType === "DOCUMENT") {
@@ -294,7 +295,7 @@ export async function getStampDetail(
 
     candidates = rows.map((r) => ({
       id:           r.id,
-      displayLabel: r.title?.trim() || r.code,
+      displayLabel: r.title?.trim() || null,
     }));
   }
 

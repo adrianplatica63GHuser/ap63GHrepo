@@ -28,6 +28,8 @@
  * (`TileSelector`'s `extra`) — unticking it closes it. At most two are open
  * (`@/lib/ui/previews`); a third replaces the oldest.
  */
+import { useNameOr } from "@/components/record/use-name-or";
+import type { UnnamedKind } from "@/lib/ui/unnamed";
 import { createContext, useCallback, useContext, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -123,9 +125,12 @@ const LABEL_KEY: Record<string, string> = {
   documentTypeId: "documentType",
 };
 
+/** The words for a preview with no name (#37.57). */
+const UNNAMED_KIND: Record<PreviewKind, UnnamedKind> = { person: "person", company: "person", property: "property", document: "document" };
+
 interface PreviewData {
-  title: string;
-  code: string;
+  /** The record's name; null when it has none (#37.57: never its system ID — `nameOr` words it). */
+  title: string | null;
   /** The short set's values, by the screen's field names (`PREVIEW_FIELDS`). */
   fields: Record<string, string | null>;
   /** A document's first page; null when it has none; undefined for the other kinds. */
@@ -155,8 +160,7 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       const r = await getJson<{ person: Row; natural: Row | null }>(`/api/people/${id}`);
       const n = r.natural ?? {};
       return {
-        title: s(r.person.displayName) ?? s(r.person.code) ?? "",
-        code: s(r.person.code) ?? "",
+        title: s(r.person.displayName),
         fields: {
           lastName: s(n.lastName),
           firstName: s(n.firstName),
@@ -170,8 +174,7 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       const r = await getJson<{ person: Row; judicial: Row | null; judicialPersonTypeName: string | null }>(`/api/judicial-persons/${id}`);
       const j = r.judicial ?? {};
       return {
-        title: s(j.name) ?? s(r.person.displayName) ?? "",
-        code: s(r.person.code) ?? "",
+        title: s(j.name) ?? s(r.person.displayName),
         fields: {
           name: s(j.name),
           judicialPersonTypeId: s(r.judicialPersonTypeName),
@@ -184,8 +187,7 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       const r = await getJson<{ property: Row }>(`/api/properties/${id}`);
       const p = r.property;
       return {
-        title: s(p.nickname) ?? s(p.code) ?? "",
-        code: s(p.code) ?? "",
+        title: s(p.nickname),
         fields: {
           nickname: s(p.nickname),
           parcela: s(p.parcela),
@@ -206,8 +208,7 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
         ? await getJson<{ url: string; mimeType: string | null }>(`/api/documents/${id}/pages/${encodeURIComponent(first.id)}/view`).catch(() => null)
         : null;
       return {
-        title: s(d.title) ?? s(d.code) ?? "",
-        code: s(d.code) ?? "",
+        title: s(d.title),
         fields: {
           documentTypeId: types.items.find((ty) => ty.id === d.documentTypeId)?.name ?? null,
           title: s(d.title),
@@ -230,17 +231,18 @@ export function usePreviewData(target: PreviewTarget) {
 }
 
 /**
- * The tile row's boxes for the open previews — „Previzualizare: CODE", ticked;
+ * The tile row's boxes for the open previews — „Previzualizare: <name>", ticked (#37.57: it was the code);
  * unticking one closes it. For `TileSelector`'s `extra`.
  */
 export function usePreviewSelectorEntries(previews: Previews) {
   const t = useTranslations("shared.preview");
+  const nameOr = useNameOr();
   const results = useQueries({
     queries: previews.open.map((target) => ({ queryKey: ["preview", target.kind, target.id], queryFn: () => loadPreview(target) })),
   });
   return previews.open.map((target, i) => ({
     key: previewKey(target),
-    label: `${t("title")}: ${results[i]?.data?.code || "…"}`,
+    label: `${t("title")}: ${results[i]?.data ? nameOr(results[i].data.title, UNNAMED_KIND[target.kind]) : "…"}`,
     onRemove: () => previews.close(previewKey(target)),
   }));
 }
@@ -265,6 +267,7 @@ export function PreviewTiles({ previews, order }: { previews: Previews; order?: 
 
 function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClose: () => void; style?: CSSProperties }) {
   const t = useTranslations("shared.preview");
+  const nameOr = useNameOr();
   const q = usePreviewData(target);
   // „Deschide" leaves the screen: through the guard, like the sidebar, so an
   // unsaved edit beside the preview is asked about first.
@@ -276,7 +279,6 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
     return (
       <PreviewTileBody
         title={q.isError ? t("error") : t("loading")}
-        code=""
         fields={[]}
         openHref={previewHref(target)}
         labels={labels}
@@ -291,8 +293,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
   const data = q.data;
   return (
     <PreviewTileBody
-      title={data.title}
-      code={data.code}
+      title={nameOr(data.title, UNNAMED_KIND[kind])}
       fields={PREVIEW_ROWS[kind].flatMap((row, i): PreviewField[] =>
         row.map((name) => ({
           label: t(`fields.${LABEL_KEY[name] ?? name}` as Parameters<typeof t>[0]),

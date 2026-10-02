@@ -39,7 +39,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       .limit(limit)
       .offset(offset);
 
-    return Response.json({ items: items.map((r) => ({ ...r, label: r.nickname ?? r.code })), total, limit, offset });
+    return Response.json({ items: items.map((r) => ({ ...r, label: r.nickname ?? null /* #37.57: never the system ID */ })), total, limit, offset });
   } catch (err) {
     return unexpectedError(err, "GET /api/properties/search");
   }

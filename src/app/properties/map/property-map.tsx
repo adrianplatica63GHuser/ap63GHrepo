@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, DraftingCompass, Group, Ruler, ScanEye, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -753,6 +754,7 @@ const DEFAULT_ZOOM            = 13;
 
 export default function PropertyMap() {
   const t           = useTranslations("property");
+  const nameOr      = useNameOr();
   const queryClient = useQueryClient();
   const router      = useRouter();
 
@@ -1003,9 +1005,10 @@ export default function PropertyMap() {
     }
     setSelected({
       position: pos,
-      items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
+      // #37.57: a property by its nickname, or words — never its system ID.
+      items:    overlapping.map((p) => ({ id: p.id, label: nameOr(p.nickname, "property") })),
     });
-  }, []);
+  }, [nameOr]);
 
   const handleMapDblClick = useCallback((pos: LatLng | null) => {
     if (!pos) return;

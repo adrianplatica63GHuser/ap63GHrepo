@@ -1,5 +1,7 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
+import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -248,6 +250,7 @@ export function PropertyForm({
   tiles,
 }: Props) {
   const t       = useTranslations("property");
+  const nameOr  = useNameOr(); // #37.57: a name, or words — never the system ID
   // Slice #37.19 — tile mode, as the Natural Person's (#37.17). `tileProps`
   // marks a tile for the specs and hides a FORM tile when unticked; `hidden`
   // alone would lose to any display class, so the class goes with it. The
@@ -1137,18 +1140,17 @@ export function PropertyForm({
             width units that hold its widest row (3). Nr. tarla / sola (S) and
             Nr. parcelă (M) are Adrian's later note (Stacked.txt), so the
             identifiers share one row (rule 14). They are hidden for urban
-            types (Slice #19.02), and the row closes up to Cod alone. */}
+            types (Slice #19.02), and, since #37.57 (the code moved to the corner), the row with them. */}
         <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_UNIT_STYLE.property.cadastral} {...tileProps("cadastral")}>
           <section data-panel="cadastral" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.cadastral")}
+              {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
+              {propertyCode && <SystemIdCorner code={propertyCode} />}
             </h2>
             <div className="flex flex-col gap-2">
-              {(propertyCode || !typeConfig.hideTarlaParcela) && (
+              {!typeConfig.hideTarlaParcela && (
                 <div className={STACKED_ROW_CLASS}>
-                  {propertyCode && (
-                    <ReadOnlyField label={t("fields.code")} value={propertyCode} width={PROP.code} field="code" />
-                  )}
                   {/* Slice #34.03: an ORDINARY id-valued select — `property.tarla_id`
                       is a foreign key, so an unlisted value cannot exist. */}
                   {!typeConfig.hideTarlaParcela && (
@@ -1583,13 +1585,13 @@ export function PropertyForm({
             {parcelExists.map((m) => (
               <li key={m.id}>
                 {/* #37.42 (A016): ArrowRight — with its words kept beside it, the
-                    one A016 site that does: the words are the record's code and
-                    nickname, and a column of bare arrows would not say which
+                    one A016 site that does: the words are the record's nickname
+                    (#37.57: not its system ID), and a column of bare arrows would not say which
                     property each one opens. */}
                 <IconButton
                   href={`/properties/${m.id}`}
                   icon={ArrowRight}
-                  label={t("parcelExists.open", { code: m.code, nickname: m.nickname ?? "" })}
+                  label={t("parcelExists.open", { name: nameOr(m.nickname, "property") })}
                   showLabel
                   variant="secondary"
                   size="xs"

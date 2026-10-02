@@ -121,7 +121,6 @@
       "parcelsTitle": "Parcele create",
       "parcelsEmpty": "Nicio parcelă înregistrată.",
       "parcelsCol": {
-        "code": "Cod",
         "nickname": "Poreclă",
         "role": "Rol"
       },
@@ -358,7 +357,6 @@
       "ok": "OK"
     },
     "table": {
-      "code": "Cod",
       "nickname": "Poreclă",
       "parcela": "Parcelă",
       "tarlaSola": "Tarla/Solă",
@@ -392,7 +390,6 @@
     },
     "persons": {
       "empty": "Nicio persoană asociată acestei proprietăți",
-      "colCode": "Cod",
       "colName": "Nume",
       "colRole": "Rol",
       "associate": "Asociază",
@@ -410,7 +407,6 @@
       "namePlaceholder": "Nume…",
       "codePlaceholder": "Cod…",
       "rolePlaceholder": "fără rol",
-      "colCode": "Cod",
       "colName": "Nume",
       "colType": "Tip",
       "typeNatural": "Fizică",
@@ -425,7 +421,6 @@
     },
     "document": {
       "empty": "Niciun act asociat acestei proprietăți",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "associate": "Asociază",
@@ -439,7 +434,6 @@
       "title": "Asociere act",
       "labelSearch": "Căutare",
       "searchPlaceholder": "Cod sau titlu…",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "resultsEmpty": "Niciun act găsit",
@@ -452,7 +446,6 @@
     },
     "references": {
       "empty": "Nicio proprietate corelată",
-      "colCode": "Cod",
       "colLabel": "Denumire",
       "colRole": "Tip relație",
       "associate": "Asociază",
@@ -468,7 +461,6 @@
       "title": "Asociere proprietate corelată",
       "labelSearch": "Căutare",
       "searchPlaceholder": "Cod sau denumire…",
-      "colCode": "Cod",
       "colLabel": "Denumire",
       "labelRole": "Tip relație",
       "roleNone": "fără relație",
@@ -536,7 +528,7 @@
     "parcelExists": {
       "title": "Această parcelă are deja o proprietate",
       "body": "Tarla {tarla}, parcela {parcela} aparține deja proprietății de mai jos. Nu s-a creat o proprietate nouă.",
-      "open": "Deschide {code} {nickname}"
+      "open": "Deschide {name}"
     }
   },
   "address": {
@@ -607,7 +599,6 @@
     "documentNotFound": "Actul selectat nu mai există — probabil a fost șters între timp. Reîncărcați pagina și încercați din nou.",
     "properties": {
       "empty": "Nicio proprietate asociată",
-      "colCode": "Cod",
       "colLabel": "Denumire",
       "colRole": "Rol",
       "associate": "Asociază",
@@ -623,7 +614,6 @@
       "labelRole": "Rol",
       "searchPlaceholder": "Cod sau denumire…",
       "rolePlaceholder": "fără rol",
-      "colCode": "Cod",
       "colLabel": "Denumire",
       "resultsEmpty": "Nicio proprietate găsită",
       "loading": "Se caută…",
@@ -635,7 +625,6 @@
     },
     "document": {
       "empty": "Niciun act asociat",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "colRole": "Rol",
@@ -654,7 +643,6 @@
       "labelRole": "Rol",
       "searchPlaceholder": "Cod sau titlu…",
       "rolePlaceholder": "fără rol",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "resultsEmpty": "Niciun act găsit",
@@ -667,7 +655,6 @@
     },
     "personReferences": {
       "empty": "Nicio persoană corelată",
-      "colCode": "Cod",
       "colName": "Nume",
       "colType": "Tip",
       "colRole": "Tip relație",
@@ -689,7 +676,6 @@
       "roleNone": "fără relație",
       "namePlaceholder": "Nume…",
       "codePlaceholder": "Cod…",
-      "colCode": "Cod",
       "colName": "Nume",
       "colType": "Tip",
       "typeNatural": "Fizică",
@@ -929,6 +915,14 @@
       "search": "Căutare",
       "results": "Rezultate",
       "association": "Asociere"
+    },
+    "systemId": {
+      "label": "ID sistem"
+    },
+    "unnamed": {
+      "document": "Act fără titlu",
+      "property": "Proprietate fără poreclă",
+      "person": "Persoană fără nume"
     }
   },
   "naturalPerson": {
@@ -964,7 +958,6 @@
       "cancel": "Anulează"
     },
     "table": {
-      "code": "Cod",
       "name": "Nume",
       "nickname": "Poreclă",
       "email": "Email",
@@ -1101,7 +1094,6 @@
       "cancel": "Anulează"
     },
     "table": {
-      "code": "Cod",
       "name": "Denumire",
       "nickname": "Poreclă",
       "cui": "CUI",
@@ -1139,7 +1131,6 @@
       "namePlaceholder": "caută după nume",
       "labelCode": "Cod",
       "codePlaceholder": "PERS…",
-      "colCode": "Cod",
       "colName": "Nume",
       "loading": "Se încarcă…",
       "error": "Eroare la încărcare",
@@ -1414,7 +1405,6 @@
       "UNCLASSIFIED": "Neclasificat"
     },
     "table": {
-      "code": "Cod",
       "type": "Tip",
       "title": "Titlu",
       "nrDocument": "Nr. document",
@@ -1512,7 +1502,6 @@
       "labelCode": "Cod",
       "namePlaceholder": "Nume…",
       "codePlaceholder": "Cod…",
-      "colCode": "Cod",
       "colName": "Nume",
       "resultsEmpty": "Nicio persoană găsită",
       "loading": "Se caută…",
@@ -1559,7 +1548,6 @@
     },
     "persons": {
       "empty": "Nicio persoană asociată acestui act",
-      "colCode": "Cod",
       "colName": "Nume",
       "colRole": "Rol",
       "associate": "Asociază",
@@ -1604,7 +1592,6 @@
       "namePlaceholder": "Nume…",
       "codePlaceholder": "Cod…",
       "rolePlaceholder": "fără rol",
-      "colCode": "Cod",
       "colName": "Nume",
       "colType": "Tip",
       "typeNatural": "Fizică",
@@ -1715,7 +1702,6 @@
       "labelCode": "Cod",
       "namePlaceholder": "Nume…",
       "codePlaceholder": "Cod…",
-      "colCode": "Cod",
       "colName": "Nume",
       "colType": "Tip",
       "typeNatural": "Fizică",
@@ -1734,7 +1720,6 @@
     },
     "references": {
       "empty": "Niciun document asociat",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "colRole": "Tip relație",
@@ -1764,7 +1749,6 @@
       "title": "Asociază Document",
       "labelSearch": "Căutare",
       "searchPlaceholder": "Cod sau titlu…",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "labelRole": "Tip relație",
@@ -1837,9 +1821,9 @@
       "buttonLabel": "Procesează",
       "processing": "Se procesează…",
       "alreadyProcessed": "Acest document a fost deja folosit pentru a crea o proprietate.",
-      "alreadyProcessedLink": "Acest document a fost deja folosit pentru a crea proprietatea {code}.",
+      "alreadyProcessedLink": "Acest document a fost deja folosit pentru a crea o proprietate.",
       "openPropertyNamed": "Deschide proprietatea {name}",
-      "provenanceLabel": "Proprietate creată:",
+      "provenanceLabel": "Proprietatea a fost creată.",
       "viewProperty": "Deschide proprietatea",
       "resultDocuments": "{count} document(e) asociat(e)",
       "resultPersons": "{count} persoană/persoane asociat(e)",
@@ -1849,7 +1833,7 @@
       "errorAlreadyProcessed": "Acest document a fost deja procesat.",
       "errorGeneric": "Procesarea a eșuat. Vă rugăm să încercați din nou.",
       "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou și să reîncercați.",
-      "parcelTaken": "Tarlaua și parcela acestui document aparțin deja proprietății {code}. Documentul nu a fost procesat și nu s-a creat nimic.",
+      "parcelTaken": "Tarlaua și parcela acestui document aparțin deja altei proprietăți. Documentul nu a fost procesat și nu s-a creat nimic.",
       "parcelTakenSeveral": "{count, plural, one {O proprietate are} few {# proprietăți au} other {# de proprietăți au}} tarlaua {tarla} și parcela {parcela}, la fel ca acest document. Documentul nu a fost procesat și nu s-a creat nimic.",
       "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din fila Acte, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din fila META INFO.",
       "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din fila Acte.",
@@ -2239,9 +2223,9 @@
         "coordinateFound": "Fișier de coordonate „{name}”: {count, plural, =0 {niciun colț} one {un colț} few {# colțuri} other {# de colțuri}}.",
         "willCreate": "Se va crea o proprietate nouă, {corners, plural, one {cu un colț} few {cu # colțuri} other {cu # de colțuri}}.",
         "willCreateNoCorners": "Se va crea o proprietate nouă, fără colțuri: nu va avea contur pe hartă. Colțurile pot fi adăugate oricând mai târziu, în secțiunea „Puncte de contur” a proprietății.",
-        "alreadyExists": "Această proprietate există deja în sistem: {code} — {nickname}.",
-        "confirmLink": "{count, plural, =0 {Confirm că acest subfolder, care nu conține niciun document, este legat de proprietatea {code}} one {Confirm legarea documentului din acest subfolder de proprietatea {code}} few {Confirm legarea celor # documente din acest subfolder de proprietatea {code}} other {Confirm legarea celor # de documente din acest subfolder de proprietatea {code}}}.",
-        "confirmCorners": "Confirm adăugarea colțurilor din fișierul de coordonate la proprietatea {code} — {count, plural, one {un colț} few {# colțuri} other {# de colțuri}}. Proprietatea nu are colțuri în acest moment.",
+        "alreadyExists": "Această proprietate există deja în sistem: „{nickname}”.",
+        "confirmLink": "{count, plural, =0 {Confirm că acest subfolder, care nu conține niciun document, este legat de proprietatea „{name}”} one {Confirm legarea documentului din acest subfolder de proprietatea „{name}”} few {Confirm legarea celor # documente din acest subfolder de proprietatea „{name}”} other {Confirm legarea celor # de documente din acest subfolder de proprietatea „{name}”}}.",
+        "confirmCorners": "Confirm adăugarea colțurilor din fișierul de coordonate la proprietatea „{name}” — {count, plural, one {un colț} few {# colțuri} other {# de colțuri}}. Proprietatea nu are colțuri în acest moment.",
         "cornersKept": "Proprietatea are deja {existing, plural, one {un colț} few {# colțuri} other {# de colțuri}}, iar fișierul din folder conține {offered, plural, one {unul} few {#} other {#}}. Colțurile existente rămân neschimbate. Dacă vreți să le înlocuiți cu cele din fișier, deschideți fișa proprietății după import și modificați colțurile acolo.",
         "ambiguous": "În sistem există {count, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}} cu aceeași tarla și aceeași parcelă:",
         "ambiguousBlocks": "Importul nu poate continua cât timp aceeași parcelă are mai multe proprietăți în sistem. Deschideți lista de proprietăți, păstrați una singură, apoi reveniți aici și apăsați „Încearcă din nou”.",
@@ -2330,7 +2314,7 @@
         "sessionExpiredShort": "Sesiune expirată",
         "pageFileTypeRefused": "Tip de fișier neacceptat ca pagină",
         "pageFileTooLarge": "Fișier peste limita de {limitMb} MB",
-        "cornerSourceConflict": "Acest fișier de coordonate a fost deja folosit pentru proprietatea {code}. Un fișier de coordonate poate defini o singură proprietate.",
+        "cornerSourceConflict": "Acest fișier de coordonate a fost deja folosit pentru proprietatea „{name}”. Un fișier de coordonate poate defini o singură proprietate.",
         "signInAgain": "Conectați-vă",
         "aiProcessedBadge": "Procesat AI",
         "idCard": {
@@ -2475,7 +2459,7 @@
         "doneWithErrors": "{created} importate cu succes · {errors} erori (verificați coloana Status)",
         "colOutcome": "Ce s-a făcut",
         "note": {
-          "coordinateApplied": "✓ a fost aplicat proprietății {code} — {count, plural, =0 {fără colțuri} one {un colț} few {# colțuri} other {# de colțuri}}",
+          "coordinateApplied": "✓ a fost aplicat proprietății „{name}” — {count, plural, =0 {fără colțuri} one {un colț} few {# colțuri} other {# de colțuri}}",
           "coordinateNotApplied": "colțurile din acest fișier nu au fost preluate — proprietatea le avea deja sau fișierul nu conținea colțuri",
           "personCreated": "o persoană a fost creată din cartea de identitate",
           "personConfirmed": "persoana din cartea de identitate exista deja și a fost legată",
@@ -2947,9 +2931,9 @@
       "nothingToFix": "Nu aveți nimic de îndreptat în File Explorer pentru cele de mai sus. Citiți totuși lista: dacă un document din arhivă nu este cel la care vă gândeați, redenumiți fișierul din folder — sau folderul de pagini, dacă documentul este unul — și sistemul îl va importa ca document nou. Când sunteți mulțumit, bifați mai jos și apăsați „Continuă”.",
       "morePaths": "încă {count, number}…",
       "row": {
-        "existing": "→ {code}",
+        "existing": "→ în arhivă",
         "folders": "{count, plural, one {(proprietatea {folders})} few {(proprietățile {folders})} other {(proprietățile {folders})}}",
-        "line": "{path} → {code}",
+        "line": "{path} → în arhivă",
         "archivedTitle": "„{title}”"
       },
       "unchecked": {
@@ -3478,7 +3462,6 @@
       "EXTERNAL_FEED": "Flux extern"
     },
     "table": {
-      "code": "Cod",
       "type": "Tip",
       "name": "Nume",
       "groups": "Grupuri",
@@ -3504,7 +3487,6 @@
     "expiringDocuments": {
       "title": "Acte cu valabilitate limitată",
       "empty": "{days, plural, one {Niciun act nu expiră în următoarea zi} few {Niciun act nu expiră în următoarele # zile} other {Niciun act nu expiră în următoarele # de zile}}",
-      "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
       "colDate": "Dată expirare",

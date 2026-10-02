@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useState, useEffect } from "react";
 import { History, PackagePlus, RotateCcw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -128,6 +129,7 @@ const COORDINATE_PICKER_OFFER_ID = "calculation-coordinate-picker-offer";
 
 export function CalculationView() {
   const t            = useTranslations("calculation");
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   // Slice #34.23 — the picker sentence is `shared` because two screens make the
   // same offer; see `picker-accept.ts`.
   const tShared      = useTranslations("shared");
@@ -276,8 +278,8 @@ export function CalculationView() {
                   href={`/properties/${p.id}`}
                   className="text-blue-600 hover:underline dark:text-blue-400"
                 >
-                  {p.code}
-                  {p.nickname ? ` — ${p.nickname}` : ""}
+                  {/* #37.57: the property by its nickname, never its system ID. */}
+                  {nameOr(p.nickname, "property")}
                 </Link>
               </li>
             ))}

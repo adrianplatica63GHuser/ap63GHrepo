@@ -1,5 +1,7 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
+import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -74,7 +76,7 @@ import { firstErrorPath } from "@/lib/ui/tiles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
-type IdCardLink = { id: string; code: string } | null;
+type IdCardLink = { id: string; code: string; title: string | null } | null;
 
 /** Compute age in whole years from an ISO date string (YYYY-MM-DD). */
 function calculateAge(dob: string): number | null {
@@ -153,6 +155,7 @@ export function NaturalPersonForm({
   tiles,
 }: Props) {
   const t = useTranslations("naturalPerson");
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   // Slice #37.17 — tile mode. `tileProps` marks a form tile for the specs and
   // hides it when unticked; `hidden` alone would lose to any display class, so
   // the class goes with it (the notebook's note in document-form.tsx).
@@ -705,11 +708,8 @@ export function NaturalPersonForm({
       <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
-          {mode !== "create" && personCode && (
-            <span className="font-mono text-xs font-normal normal-case text-fade dark:text-zinc-500">
-              {personCode}
-            </span>
-          )}
+          {/* Slice #37.57: the system ID's one place — this corner. */}
+          {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
         </h2>
         {/* Slice #37.26 — the rows of `NP_ROWS.identity`. */}
         <div className="flex flex-col gap-2">
@@ -941,7 +941,8 @@ export function NaturalPersonForm({
                   href={`/documents/${linkedIdCard.id}`}
                   className="text-cta hover:underline"
                 >
-                  {linkedIdCard.code} →
+                  {/* #37.57: the card by its title, not its system ID. */}
+                  {nameOr(linkedIdCard.title, "document")} →
                 </a>
               ) : (
                 <span className="text-fade dark:text-zinc-500">{t("hints.idLinkNone")}</span>

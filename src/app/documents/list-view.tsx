@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { metadataValueLabel } from "@/lib/metadata/value-labels";
@@ -386,6 +387,7 @@ export function DocumentListView({
   initialDocumentTypeIds?: string[];
 }) {
   const t       = useTranslations("document");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const tPag    = useTranslations("shared.pagination");
   const tBulk   = useTranslations("shared.bulkDelete");
   const tFilter = useTranslations("shared.listFilters");
@@ -697,7 +699,7 @@ export function DocumentListView({
   // `COLUMN` — a ticked optional column widens the table. A stored key this
   // build has no column for stays in storage and is not drawn.
   const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const columns: ColumnName[] = ["selectNew", "code", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "openPreview"];
+  const columns: ColumnName[] = ["selectNew", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "openPreview"];
   const colCount = columns.length;
 
   return (
@@ -946,7 +948,6 @@ export function DocumentListView({
                         className="h-4 w-4 rounded border-wire accent-cta"
                       />
                     </th>
-                    <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
                     <th className="px-4 py-2" {...columnHead("documentType")}>{t("table.type")}</th>
                     <th className="px-4 py-2" {...columnHead("documentTitle")}>{t("table.title")}</th>
                     {shownCols.map((col) => (
@@ -996,14 +997,11 @@ export function DocumentListView({
                             type="checkbox"
                             checked={selectedIds.has(item.id)}
                             onChange={() => toggleOne(item.id)}
-                            aria-label={item.title ?? item.code}
+                            aria-label={nameOr(item.title, "document")}
                             className="h-4 w-4 rounded border-wire accent-cta"
                           />
                           <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                         </span>
-                      </td>
-                      <td className="px-4 py-2 font-mono text-xs text-fade">
-                        {item.code}
                       </td>
                       <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
                         {item.documentTypeName ?? "—"}

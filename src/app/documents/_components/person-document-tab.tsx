@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
@@ -64,6 +65,7 @@ export function PersonDocumentTab({ personId, backBase, compact = false }: Props
     ? (["tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"] as const)
     : (["documentType", "documentTitle", "role", "openPreview"] as const);
   const t           = useTranslations("shared.document");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   // FU-224 (Slice #37.07): the role, else a certificate party's quality.
   const qualityWords = { DEFUNCT: t("qualityDefunct"), MOSTENITOR: t("qualityMostenitor") };
   const router      = useRouter();
@@ -154,7 +156,7 @@ export function PersonDocumentTab({ personId, backBase, compact = false }: Props
                       checked={item.linkId === selectedId}
                       onChange={() => setSelectedId(item.linkId)}
                       onClick={(e) => e.stopPropagation()}
-                      aria-label={`${item.title ?? item.code} — ${roleOrQualityLabel(item.roleName, item.quality, qualityWords)}`}
+                      aria-label={`${nameOr(item.title, "document")} — ${roleOrQualityLabel(item.roleName, item.quality, qualityWords)}`}
                       className="accent-cta"
                     />
                   </td>

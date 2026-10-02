@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useMemo, useState } from "react";
 import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -13,7 +14,7 @@ import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/l
 import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
-const COLUMNS: readonly ColumnName[] = ["select", "code", "propertyLabel"];
+const COLUMNS: readonly ColumnName[] = ["select", "propertyLabel"];
 
 /** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
 const SEARCH_UNITS = boxesUnits(["searchText"]);
@@ -50,6 +51,7 @@ async function fetchRelationshipRoles(): Promise<RoleItem[]> {
 
 export function AssociateReferenceView({ propertyId, propertyName }: Props) {
   const t           = useTranslations("property.associateReference");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -152,7 +154,6 @@ export function AssociateReferenceView({ propertyId, propertyName }: Props) {
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("code")}>{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("propertyLabel")}>{t("colLabel")}</th>
               </tr>
             </thead>
@@ -165,10 +166,9 @@ export function AssociateReferenceView({ propertyId, propertyName }: Props) {
                   ].join(" ")}>
                   <td className="px-3 py-2">
                     <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)}
-                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.label} />
+                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={nameOr(item.label, "property")} />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
-                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.label}</td>
+                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{nameOr(item.label, "property")}</td>
                 </tr>
               ))}
             </tbody>

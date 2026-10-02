@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getPropertyById } from "@/lib/properties/queries";
 import { PropertyDetailTiles } from "../_components/property-detail-tiles";
@@ -26,7 +27,9 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
     originalIndex: c.originalIndex,
   }));
 
-  const label = data.property.nickname ?? data.property.code;
+  const tUnnamed = await getTranslations("shared.unnamed");
+
+  const label = data.property.nickname ?? tUnnamed("property") /* #37.57: never the system ID */;
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">

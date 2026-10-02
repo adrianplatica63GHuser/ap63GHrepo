@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useNameOr } from "@/components/record/use-name-or";
 import Link from "next/link";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
@@ -14,7 +15,8 @@ import { HOME_TILES, HOME_TILE_REGISTRY, type HomeTile } from "./home-tiles";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
 /** The expiring documents, at #37.16's column widths (Slice #37.22). */
-const EXPIRING_COLUMNS: readonly ColumnName[] = ["code", "documentType", "documentTitle", "date", "expiryStatus"];
+// Slice #37.57: no „Cod" — the title is the link; a record's system ID is shown on its own screen only.
+const EXPIRING_COLUMNS: readonly ColumnName[] = ["documentType", "documentTitle", "date", "expiryStatus"];
 
 /**
  * Slice #37.36: each section the fewest width units that hold it.
@@ -60,7 +62,7 @@ type StaleMetadataCount = {
 type RecentActivityItem = {
   id:          string;
   code:        string;
-  displayName: string;
+  displayName: string | null;
   entityType:  "person" | "property" | "document";
   personType?: "NATURAL" | "JUDICIAL";
   updatedAt:   string; // ISO string after JSON serialization
@@ -330,6 +332,7 @@ export function ExpiringDocumentsSection({
   /** `dashboard_expiring_docs` — the window the list was computed over. */
   expiringDays: number;
 }) {
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   function rowColor(dateValidUntil: string): string {
     const days = daysFromToday(dateValidUntil);
     if (days < 0)           return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20";
@@ -363,7 +366,6 @@ export function ExpiringDocumentsSection({
             <FixedColumns columns={EXPIRING_COLUMNS} fill={EXPIRING_FILL} />
             <thead>
               <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                <th className="px-4 pb-2 font-medium" {...columnHead("code")}>{t("expiringDocuments.colCode")}</th>
                 <th className="px-4 pb-2 font-medium" {...columnHead("documentType")}>{t("expiringDocuments.colType")}</th>
                 <th className="px-4 pb-2 font-medium" {...columnHead("documentTitle")}>{t("expiringDocuments.colTitle")}</th>
                 <th className="px-4 pb-2 font-medium" {...columnHead("date")}>{t("expiringDocuments.colDate")}</th>
@@ -376,19 +378,16 @@ export function ExpiringDocumentsSection({
                   key={doc.id}
                   className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0"
                 >
-                  <td className="px-4 py-2">
-                    <Link
-                      href={`/documents/${doc.id}`}
-                      className="font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      {doc.code}
-                    </Link>
-                  </td>
                   <td className={`px-4 py-2 text-zinc-600 dark:text-zinc-300 ${WRAPS}`}>
                     {doc.documentTypeName ?? "—"}
                   </td>
-                  <td className={`px-4 py-2 text-zinc-600 dark:text-zinc-300 ${WRAPS}`}>
-                    {doc.title ?? "—"}
+                  <td className={`px-4 py-2 ${WRAPS}`}>
+                    <Link
+                      href={`/documents/${doc.id}`}
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {nameOr(doc.title, "document")}
+                    </Link>
                   </td>
                   <td className="px-4 py-2 font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
                     {formatDMY(doc.dateValidUntil)}
@@ -492,6 +491,7 @@ function RecentActivitySection({
   data: RecentActivityItem[] | undefined;
   t: ReturnType<typeof useTranslations>;
 }) {
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   return (
     <SectionCard tile="recentActivity" title={t("recentActivity.title")}>
       {data === undefined ? (
@@ -515,7 +515,7 @@ function RecentActivitySection({
                 href={entityUrl(item)}
                 className="flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
-                {item.displayName}
+                {nameOr(item.displayName, item.entityType)}
               </Link>
               <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
                 {relativeTime(item.updatedAt, t)}

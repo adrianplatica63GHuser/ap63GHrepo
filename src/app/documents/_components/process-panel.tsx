@@ -370,7 +370,8 @@ export function ProcessPanel({ documentId }: Props) {
           {panelState.link ? (
             <>
               <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                {t("alreadyProcessedLink", { code: panelState.link.propertyCode })}
+                {/* #37.57: the button below names the property; its system ID is not shown. */}
+                {t("alreadyProcessedLink")}
               </p>
               {/* #37.42 (A016): ArrowRight; the words, the nickname included,
                   are its name and tooltip. */}
@@ -401,17 +402,16 @@ export function ProcessPanel({ documentId }: Props) {
       {isParcelTaken && panelState.status === "parcelTaken" && (
         <div className="flex flex-col gap-1 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700 dark:bg-amber-950/30">
           <p className="text-sm text-amber-900 dark:text-amber-200">
-            {/* ⚠️ The code-free sentence is also the fallback when there is no
-                code to name. `t("parcelTaken", { code: "" })` renders
-                "…aparțin deja proprietății ." — a refusal with a hole where
-                its subject should be. `parcelTakenSeveral` names the parcel
-                instead of a property, and its `one` branch reads correctly for
-                a single match, so one sentence covers both. */}
+            {/* `parcelTakenSeveral` names the parcel instead of a property, and
+                its `one` branch reads correctly for a single match, so it is
+                also the sentence when there is no property to link. Slice
+                #37.57: `parcelTaken` names no property either — no system ID —
+                and „Vezi proprietatea" below opens it. */}
             {/* Written code-first so the compiler can narrow `link` in the
                 branch that reads it; `severalMatches` is a boolean by then and
                 carries no type information. */}
             {!severalMatches && panelState.link
-              ? t("parcelTaken", { code: panelState.link.propertyCode })
+              ? t("parcelTaken")
               : t("parcelTakenSeveral", {
                   count:   panelState.matchCount,
                   tarla:   panelState.tarla   ?? "—",
@@ -450,8 +450,8 @@ export function ProcessPanel({ documentId }: Props) {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm text-emerald-700 dark:text-emerald-400">
-              {t("provenanceLabel")}{" "}
-              <strong>{panelState.result.propertyCode}</strong>
+              {/* #37.57: no system ID — „Vezi proprietatea" beside it opens the property. */}
+              {t("provenanceLabel")}
             </span>
             <IconButton
               href={`/properties/${encodeURIComponent(panelState.result.propertyId)}`}

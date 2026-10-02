@@ -1171,7 +1171,6 @@ function PropertyPlanCard({
           <ul className="space-y-0.5">
             {plan.matches.map((m) => (
               <li key={m.id} className="flex items-baseline gap-2">
-                <span className="font-mono text-xs">{m.code}</span>
                 <span className="flex-1 truncate">{m.nickname ?? t("noNickname")}</span>
                 <span className="text-xs">
                   {t("chipCorners", { count: m.cornerCount })}
@@ -1186,7 +1185,6 @@ function PropertyPlanCard({
         <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700 dark:bg-amber-950/30">
           <p className="text-sm text-amber-900 dark:text-amber-200">
             {t("alreadyExists", {
-              code: existing.code,
               nickname: existing.nickname ?? t("noNickname"),
             })}
           </p>
@@ -1204,7 +1202,7 @@ function PropertyPlanCard({
                 rendered — so the one number a user needs before agreeing to
                 attach documents to an existing property was the one the
                 sentence omitted, sitting instead in the card header above. */}
-            {t("confirmLink", { count: documentCount, code: existing.code })}
+            {t("confirmLink", { count: documentCount, name: existing.nickname ?? t("noNickname") })}
           </label>
 
           {plan.cornersToAdd > 0 && (
@@ -1216,7 +1214,7 @@ function PropertyPlanCard({
                 disabled={disabled}
                 onChange={(e) => onCornersConfirmed(e.target.checked)}
               />
-              {t("confirmCorners", { count: plan.cornersToAdd, code: existing.code })}
+              {t("confirmCorners", { count: plan.cornersToAdd, name: existing.nickname ?? t("noNickname") })}
             </label>
           )}
 

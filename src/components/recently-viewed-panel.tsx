@@ -71,13 +71,11 @@ function RecentEntry({
         onNavigate(entry.href);
       }}
       className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-ink hover:bg-or-light transition-colors min-w-0"
-      title={`${entry.label} (${entry.code})`}
+      title={entry.label}
     >
       <EntityIcon type={entry.entityType} />
+      {/* Slice #37.57: the name only — a record's system ID is shown on its own screen. */}
       <span className="truncate min-w-0 flex-1">{entry.label}</span>
-      <span className="shrink-0 text-[10px] font-mono text-fade bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded">
-        {entry.code}
-      </span>
     </Link>
   );
 }

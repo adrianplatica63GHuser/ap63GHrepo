@@ -3419,7 +3419,6 @@ export function ImportWizard() {
             key={property.id}
             className="inline-flex items-center gap-1.5 rounded-full border border-cta/30 bg-cta-pale px-3 py-1 text-xs font-medium text-cta dark:bg-cta/15"
           >
-            <span className="font-mono">{property.code}</span>
             <span>{property.nickname ?? t("propertyStep.noNickname")}</span>
             <span className="text-cta/70">
               {t("propertyStep.chipCorners", { count: property.cornerCount })}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useState } from "react";
 import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -25,7 +26,7 @@ import {
 import { lookupListState } from "@/hooks/use-lookup-options";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
-const COLUMNS: readonly ColumnName[] = ["select", "code", "documentType", "documentTitle"];
+const COLUMNS: readonly ColumnName[] = ["select", "documentType", "documentTitle"];
 
 /** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
 const SEARCH_UNITS = boxesUnits(["searchText"]);
@@ -80,6 +81,7 @@ async function fetchDistinctRoles(): Promise<RoleItem[]> {
 
 export function AssociateDocumentView({ personId, personName, backBase, canConfigureRoles }: Props) {
   const t           = useTranslations("shared.associateDocument");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   // The sentence itself lives in `shared`, unchanged since Slice #34.04.
   const tShared     = useTranslations("shared");
   // Borrowed from the Persons tab rather than copied — see the document-side
@@ -324,7 +326,7 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
       // own checkbox `aria-label` uses, rather than the „Titlu" cell's, which
       // falls back to an em dash and would name nothing.
       if (next.has(item.id)) next.delete(item.id);
-      else next.set(item.id, item.title ?? item.code);
+      else next.set(item.id, nameOr(item.title, "document"));
       return next;
     });
   };
@@ -426,7 +428,6 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("code")}>{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("documentType")}>{t("colType")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("documentTitle")}>{t("colTitle")}</th>
               </tr>
@@ -443,9 +444,8 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
                 >
                   <td className="px-3 py-2">
                     <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item)}
-                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.title ?? item.code} />
+                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={nameOr(item.title, "document")} />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 break-words text-fade dark:text-zinc-400">{item.typeName ?? "—"}</td>
                   <td className="px-3 py-2 break-words text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
                 </tr>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
@@ -46,6 +47,7 @@ export function PropertyReferencesTab({ propertyId, compact = false }: Props) {
     ? (["tileName", "tileRole", "openPreviewStacked"] as const)
     : (["propertyLabel", "role", "openPreview"] as const);
   const t           = useTranslations("property.references");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
   const { guardedNavigate } = useUnsavedChanges();
@@ -128,10 +130,10 @@ export function PropertyReferencesTab({ propertyId, compact = false }: Props) {
                       onChange={() => setSelectedId(item.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="accent-cta"
-                      aria-label={item.label}
+                      aria-label={nameOr(item.label, "property")}
                     />
                   </td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.label}</td>
+                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{nameOr(item.label, "property")}</td>
                   <td className={`px-3 py-2 ${WRAPS}`}>
                     {(() => {
                       /*
@@ -146,7 +148,7 @@ export function PropertyReferencesTab({ propertyId, compact = false }: Props) {
                        * documents have since #36.03; the four symmetric roles
                        * keep their bare chip (`propertyRoleChip`).
                        */
-                      const chip = propertyRoleChip(item.relationshipRoleName, item.roleReadsFromViewed, item.code);
+                      const chip = propertyRoleChip(item.relationshipRoleName, item.roleReadsFromViewed, nameOr(item.label, "property"));
                       if (chip.kind === "none") return <span className="text-fade dark:text-zinc-500">—</span>;
                       return (
                         <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">

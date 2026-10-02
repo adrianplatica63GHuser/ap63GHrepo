@@ -44,7 +44,6 @@ function rowsOf(fields: readonly PreviewField[]): PreviewField[][] {
 
 export function PreviewTileBody({
   title,
-  code,
   fields,
   openHref,
   labels,
@@ -56,7 +55,6 @@ export function PreviewTileBody({
   style,
 }: {
   title: string;
-  code: string;
   fields: PreviewField[];
   openHref: string;
   labels: { open: string; close: string; readonly: string; firstPage: string; noPage: string };
@@ -83,7 +81,7 @@ export function PreviewTileBody({
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</h2>
-        {code && <span className="font-mono text-xs text-fade dark:text-zinc-400">{code}</span>}
+        {/* Slice #37.57: no system ID — the record's own screen shows it, in its first panel's corner. */}
         <span className="rounded-full bg-cap px-2 py-0.5 text-xs text-fade dark:bg-zinc-800 dark:text-zinc-400">{labels.readonly}</span>
         <span className="ml-auto flex gap-2">
           {/* #37.42 (A016): ArrowRight, „Deschide" its name and tooltip. */}

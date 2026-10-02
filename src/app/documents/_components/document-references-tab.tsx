@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Link as LinkIcon, ListChecks, ScanText, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
@@ -75,6 +76,7 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
     ? (["tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"] as const)
     : (["documentType", "documentTitle", "role", "openPreview"] as const);
   const t           = useTranslations("document.references");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
   const { guardedNavigate } = useUnsavedChanges();
@@ -241,7 +243,7 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
                       onChange={() => setSelectedId(item.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="accent-cta"
-                      aria-label={item.title ?? item.code}
+                      aria-label={nameOr(item.title, "document")}
                     />
                   </td>
                   <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{item.typeName ?? "—"}</td>
@@ -264,8 +266,8 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
                        */
                       <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
                         {item.roleReadsFromViewed
-                          ? t("roleForward", { role: item.relationshipRoleName, other: item.code })
-                          : t("roleBackward", { role: item.relationshipRoleName, other: item.code })}
+                          ? t("roleForward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
+                          : t("roleBackward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })}
                       </span>
                     ) : (
                       <span className="text-fade dark:text-zinc-500">—</span>

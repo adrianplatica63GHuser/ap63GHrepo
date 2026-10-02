@@ -41,11 +41,12 @@ export type PropertyRoleChip =
 export function propertyRoleChip(
   roleName: string | null,
   roleReadsFromViewed: boolean,
-  otherCode: string,
+  /** The other property, by its name (#37.57: never its system ID). */
+  other: string,
 ): PropertyRoleChip {
   if (!roleName) return { kind: "none" };
   if (propertyRoleReadsSameBothWays(roleName)) return { kind: "bare", role: roleName };
   return roleReadsFromViewed
-    ? { kind: "forward", role: roleName, other: otherCode }
-    : { kind: "backward", role: roleName, other: otherCode };
+    ? { kind: "forward", role: roleName, other }
+    : { kind: "backward", role: roleName, other };
 }

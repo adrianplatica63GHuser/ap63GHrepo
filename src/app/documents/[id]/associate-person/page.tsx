@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { canConfigureRoles } from "@/lib/auth/can-configure-roles";
 import { getDocumentById } from "@/lib/documents/queries";
@@ -9,7 +10,8 @@ export default async function AssociatePersonPage({ params }: PageParams) {
   const { id } = await params;
   const record = await getDocumentById(id);
   if (!record) notFound();
-  const label = record.title ?? record.code;
+  const tUnnamed = await getTranslations("shared.unnamed");
+  const label = record.title ?? tUnnamed("document") /* #37.57: never the system ID */;
 
   /**
    * Whether this reader can open „Roluri pe Document" — Slice #34.16.

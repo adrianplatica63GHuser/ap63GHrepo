@@ -121,7 +121,6 @@
       "parcelsTitle": "Created parcels",
       "parcelsEmpty": "No parcels recorded.",
       "parcelsCol": {
-        "code": "Code",
         "nickname": "Nickname",
         "role": "Role"
       },
@@ -358,7 +357,6 @@
       "ok": "OK"
     },
     "table": {
-      "code": "Code",
       "nickname": "Nickname",
       "parcela": "Parcelă",
       "tarlaSola": "Tarla/Solă",
@@ -392,7 +390,6 @@
     },
     "persons": {
       "empty": "No persons associated with this property",
-      "colCode": "Code",
       "colName": "Name",
       "colRole": "Role",
       "associate": "Associate",
@@ -410,7 +407,6 @@
       "namePlaceholder": "Name…",
       "codePlaceholder": "Code…",
       "rolePlaceholder": "no role",
-      "colCode": "Code",
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
@@ -425,7 +421,6 @@
     },
     "document": {
       "empty": "No documents associated with this property",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "associate": "Associate",
@@ -439,7 +434,6 @@
       "title": "Associate Document",
       "labelSearch": "Search",
       "searchPlaceholder": "Code or title…",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "resultsEmpty": "No documents found",
@@ -452,7 +446,6 @@
     },
     "references": {
       "empty": "No related properties",
-      "colCode": "Code",
       "colLabel": "Name",
       "colRole": "Relationship",
       "associate": "Associate",
@@ -468,7 +461,6 @@
       "title": "Associate Related Property",
       "labelSearch": "Search",
       "searchPlaceholder": "Code or name…",
-      "colCode": "Code",
       "colLabel": "Name",
       "labelRole": "Relationship",
       "roleNone": "no relationship",
@@ -536,7 +528,7 @@
     "parcelExists": {
       "title": "This parcel already has a property",
       "body": "Tarla {tarla}, parcel {parcela} already belongs to the property below. No new property was created.",
-      "open": "Open {code} {nickname}"
+      "open": "Open {name}"
     }
   },
   "address": {
@@ -607,7 +599,6 @@
     "documentNotFound": "The selected document no longer exists — it has probably been deleted in the meantime. Reload the page and try again.",
     "properties": {
       "empty": "No properties associated",
-      "colCode": "Code",
       "colLabel": "Name",
       "colRole": "Role",
       "associate": "Associate",
@@ -623,7 +614,6 @@
       "labelRole": "Role",
       "searchPlaceholder": "Code or name…",
       "rolePlaceholder": "no role",
-      "colCode": "Code",
       "colLabel": "Name",
       "resultsEmpty": "No properties found",
       "loading": "Searching…",
@@ -635,7 +625,6 @@
     },
     "document": {
       "empty": "No documents associated",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "colRole": "Role",
@@ -654,7 +643,6 @@
       "labelRole": "Role",
       "searchPlaceholder": "Code or title…",
       "rolePlaceholder": "no role",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "resultsEmpty": "No documents found",
@@ -667,7 +655,6 @@
     },
     "personReferences": {
       "empty": "No related persons",
-      "colCode": "Code",
       "colName": "Name",
       "colType": "Type",
       "colRole": "Relationship",
@@ -689,7 +676,6 @@
       "roleNone": "no relationship",
       "namePlaceholder": "Name…",
       "codePlaceholder": "Code…",
-      "colCode": "Code",
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
@@ -929,6 +915,14 @@
       "search": "Search",
       "results": "Results",
       "association": "Association"
+    },
+    "systemId": {
+      "label": "System ID"
+    },
+    "unnamed": {
+      "document": "Untitled document",
+      "property": "Property without a nickname",
+      "person": "Unnamed person"
     }
   },
   "naturalPerson": {
@@ -964,7 +958,6 @@
       "cancel": "Cancel"
     },
     "table": {
-      "code": "Code",
       "name": "Name",
       "nickname": "Nickname",
       "email": "Email",
@@ -1101,7 +1094,6 @@
       "cancel": "Cancel"
     },
     "table": {
-      "code": "Code",
       "name": "Name",
       "nickname": "Nickname",
       "cui": "CUI",
@@ -1139,7 +1131,6 @@
       "namePlaceholder": "search by name",
       "labelCode": "Code",
       "codePlaceholder": "PERS…",
-      "colCode": "Code",
       "colName": "Name",
       "loading": "Loading…",
       "error": "Failed to load",
@@ -1414,7 +1405,6 @@
       "UNCLASSIFIED": "Unclassified"
     },
     "table": {
-      "code": "Code",
       "type": "Type",
       "title": "Title",
       "nrDocument": "Document No.",
@@ -1512,7 +1502,6 @@
       "labelCode": "Code",
       "namePlaceholder": "Name…",
       "codePlaceholder": "Code…",
-      "colCode": "Code",
       "colName": "Name",
       "resultsEmpty": "No persons found",
       "loading": "Searching…",
@@ -1559,7 +1548,6 @@
     },
     "persons": {
       "empty": "No persons associated with this document",
-      "colCode": "Code",
       "colName": "Name",
       "colRole": "Role",
       "associate": "Associate",
@@ -1604,7 +1592,6 @@
       "namePlaceholder": "Name…",
       "codePlaceholder": "Code…",
       "rolePlaceholder": "no role",
-      "colCode": "Code",
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
@@ -1715,7 +1702,6 @@
       "labelCode": "Code",
       "namePlaceholder": "Name…",
       "codePlaceholder": "Code…",
-      "colCode": "Code",
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
@@ -1734,7 +1720,6 @@
     },
     "references": {
       "empty": "No related documents",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "colRole": "Relationship",
@@ -1764,7 +1749,6 @@
       "title": "Associate Document Reference",
       "labelSearch": "Search",
       "searchPlaceholder": "Code or title…",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "labelRole": "Relationship",
@@ -1837,9 +1821,9 @@
       "buttonLabel": "Process",
       "processing": "Processing…",
       "alreadyProcessed": "This document has already been used to create a property.",
-      "alreadyProcessedLink": "This document has already been used to create property {code}.",
+      "alreadyProcessedLink": "This document has already been used to create a property.",
       "openPropertyNamed": "Open property {name}",
-      "provenanceLabel": "Created property:",
+      "provenanceLabel": "The property was created.",
       "viewProperty": "Open property",
       "resultDocuments": "{count} document(s) associated",
       "resultPersons": "{count} person(s) associated",
@@ -1849,7 +1833,7 @@
       "errorAlreadyProcessed": "This document has already been processed.",
       "errorGeneric": "Processing failed. Please try again.",
       "errorSession": "Your session has expired. Please sign in again and retry.",
-      "parcelTaken": "This document's tarla and parcela already belong to property {code}. The document was not processed and nothing was created.",
+      "parcelTaken": "This document's tarla and parcela already belong to another property. The document was not processed and nothing was created.",
       "parcelTakenSeveral": "{count, plural, one {One property has} other {# properties have}} tarla {tarla} and parcela {parcela}, the same as this document. The document was not processed and nothing was created.",
       "parcelTakenWhatToDo": "Open the property and add this document to it from the Documents tab, or, if this is a different parcel, correct the document's folder tag under the METADATA tab.",
       "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from the Documents tab.",
@@ -2239,9 +2223,9 @@
         "coordinateFound": "Coordinate file “{name}”: {count, plural, =0 {no corners} one {one corner} other {# corners}}.",
         "willCreate": "A new property will be created, {corners, plural, one {with one corner} other {with # corners}}.",
         "willCreateNoCorners": "A new property will be created with no corners: it will have no outline on the map. Corners can be added at any time later, in the property's “Corners” section.",
-        "alreadyExists": "This property already exists in the system: {code} — {nickname}.",
-        "confirmLink": "{count, plural, =0 {I confirm that this subfolder, which holds no documents, belongs to property {code}} one {I confirm linking the document in this subfolder to property {code}} other {I confirm linking the # documents in this subfolder to property {code}}}.",
-        "confirmCorners": "I confirm adding the corners from the coordinate file to property {code} — {count, plural, one {one corner} other {# corners}}. The property has no corners at the moment.",
+        "alreadyExists": "This property already exists in the system: “{nickname}”.",
+        "confirmLink": "{count, plural, =0 {I confirm that this subfolder, which holds no documents, belongs to property “{name}”} one {I confirm linking the document in this subfolder to property “{name}”} other {I confirm linking the # documents in this subfolder to property “{name}”}}.",
+        "confirmCorners": "I confirm adding the corners from the coordinate file to property “{name}” — {count, plural, one {one corner} other {# corners}}. The property has no corners at the moment.",
         "cornersKept": "The property already has {existing, plural, one {one corner} other {# corners}}, and the file in the folder holds {offered, plural, one {one} other {#}}. The existing corners are left unchanged. To replace them with the ones in the file, open the property's own page after the import and edit its corners there.",
         "ambiguous": "The system holds {count, plural, one {one property} other {# properties}} with the same tarla and parcela:",
         "ambiguousBlocks": "The import cannot continue while one parcel has more than one property in the system. Open the properties list, keep a single one, then come back here and press “Try again”.",
@@ -2330,7 +2314,7 @@
         "sessionExpiredShort": "Session expired",
         "pageFileTypeRefused": "File type not accepted as a page",
         "pageFileTooLarge": "File over the {limitMb} MB limit",
-        "cornerSourceConflict": "This coordinate file has already been used for property {code}. A coordinate file can define only one property.",
+        "cornerSourceConflict": "This coordinate file has already been used for property “{name}”. A coordinate file can define only one property.",
         "signInAgain": "Sign in again",
         "aiProcessedBadge": "AI Done",
         "idCard": {
@@ -2475,7 +2459,7 @@
         "doneWithErrors": "{created} imported successfully · {errors} errors (check the Status column)",
         "colOutcome": "What was done",
         "note": {
-          "coordinateApplied": "✓ was applied to property {code} — {count, plural, =0 {no corners} one {one corner} other {# corners}}",
+          "coordinateApplied": "✓ was applied to property “{name}” — {count, plural, =0 {no corners} one {one corner} other {# corners}}",
           "coordinateNotApplied": "the corners in this file were not taken up — the property already had corners, or the file held none",
           "personCreated": "a person was created from the identity card",
           "personConfirmed": "the person on the identity card was already in the system and was linked",
@@ -2947,9 +2931,9 @@
       "nothingToFix": "There is nothing for you to put right in File Explorer about any of the above. Do read the list, though: if an archived document is not the one you had in mind, rename the file in your folder — or the page folder, if that is what the document is — and the system will import it as a new document. When you are happy, tick below and press “Continue”.",
       "morePaths": "{count, number} more…",
       "row": {
-        "existing": "→ {code}",
+        "existing": "→ in the archive",
         "folders": "{count, plural, one {(property {folders})} other {(properties {folders})}}",
-        "line": "{path} → {code}",
+        "line": "{path} → in the archive",
         "archivedTitle": "“{title}”"
       },
       "unchecked": {
@@ -3478,7 +3462,6 @@
       "EXTERNAL_FEED": "External feed"
     },
     "table": {
-      "code": "Code",
       "type": "Type",
       "name": "Name",
       "groups": "Groups",
@@ -3504,7 +3487,6 @@
     "expiringDocuments": {
       "title": "Documents with limited validity",
       "empty": "No documents expiring in the next {days, plural, one {day} other {# days}}",
-      "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
       "colDate": "Expiry date",

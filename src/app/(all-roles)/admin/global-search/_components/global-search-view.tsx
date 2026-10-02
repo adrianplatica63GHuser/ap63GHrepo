@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { RotateCcw, Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -20,8 +21,10 @@ import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/co
 import type { ColumnName } from "@/lib/ui/field-widths";
 
 /** Slice #37.16: the results' columns, each a fixed width from `COLUMN`. */
+// Slice #37.57: no „Cod" — the name is the link; a record's system ID is shown on its own
+// screen only, and the search box still matches on it.
 const RESULT_COLUMNS: ColumnName[] = [
-  "code", "entityType", "searchName", "groups", "stamps",
+  "entityType", "searchName", "groups", "stamps",
   "importance", "relevance", "provenance", "updatedBy", "metadataUpdated",
 ];
 
@@ -212,7 +215,7 @@ function stampTagCells(row: QueryResultItem) {
  * Build the display label for a PROPERTY row.
  * Priority: tarla + parcela (combined) → nickname → cadastralNumber → "—"
  */
-function propertyLabel(row: QueryResultItem): React.ReactNode {
+function propertyLabel(row: QueryResultItem, unnamed: string): React.ReactNode {
   const tarla   = row.propertyTarlaSola?.trim();
   const parcela = row.propertyParcela?.trim();
 
@@ -239,7 +242,7 @@ function propertyLabel(row: QueryResultItem): React.ReactNode {
     );
   }
 
-  return <span className="text-zinc-400 italic">—</span>;
+  return <span className="italic">{unnamed}</span>;
 }
 
 /** Build a URLSearchParams from the active non-empty filter values. */
@@ -546,6 +549,7 @@ type ResultsTableProps = {
 
 function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }: ResultsTableProps) {
   const t = useTranslations("globalSearch");
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   const locale = useLocale();
   // ⚠️ **Slice #32.19 — the same three value maps the FILTERS above already
   // render, now read for the CELLS too.** These five columns were `<DevOnly>`
@@ -601,7 +605,6 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
           <FixedColumns columns={RESULT_COLUMNS} />
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("code")}>{t("table.code")}</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("entityType")}>{t("table.type")}</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("searchName")}>{t("table.name")}</th>
               {/* Slice #23.11.search — Grup / Stampile are NOT dev-only: they
@@ -641,14 +644,6 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                 className="border-b border-zinc-50 align-top transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/30"
               >
                 <td className="px-4 py-2">
-                  <Link
-                    href={entityHref(row)}
-                    className="font-mono text-xs font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
-                  >
-                    {row.code}
-                  </Link>
-                </td>
-                <td className="px-4 py-2">
                   <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${badgeClass(row.entityType)}`}>
                     {/* FU-061 (Slice #37.07): the same Romanian words the „Tip
                         entitate" filter above says, not the raw enum. */}
@@ -663,10 +658,15 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                   )}
                 </td>
                 <td className={`px-4 py-2 text-zinc-700 dark:text-zinc-300 ${wrapsIf("searchName")}`}>
-                  {row.entityType === "PROPERTY"
-                    ? propertyLabel(row)
-                    : (row.displayName || <span className="text-zinc-400 italic">—</span>)
-                  }
+                  {/* Slice #37.57: the name is the row's link (it was the code). */}
+                  <Link
+                    href={entityHref(row)}
+                    className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
+                  >
+                    {row.entityType === "PROPERTY"
+                      ? propertyLabel(row, nameOr(null, "property"))
+                      : nameOr(row.displayName, row.entityType === "DOCUMENT" ? "document" : "person")}
+                  </Link>
                 </td>
                 <td className="px-4 py-2">{groupTagCells(row)}</td>
                 <td className="px-4 py-2">{stampTagCells(row)}</td>

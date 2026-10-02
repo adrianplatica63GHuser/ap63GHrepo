@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ArrowRight, RotateCw } from "lucide-react";
@@ -15,7 +16,8 @@ const RUN_UNITS = 7;
 
 /** The run's two tables, at #37.16's column widths (Slice #37.22). */
 const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
-const PARCEL_COLUMNS: readonly ColumnName[] = ["code", "propertyNickname", "outputRole", "viewLink"];
+// Slice #37.57: no „Cod" — a parcel by its nickname; its system ID is on its own screen.
+const PARCEL_COLUMNS: readonly ColumnName[] = ["propertyNickname", "outputRole", "viewLink"];
 
 // ---------------------------------------------------------------------------
 // Types  (mirror src/lib/calculation/runs.ts — no server import in client)
@@ -133,6 +135,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export function CalculationRunDetail({ runId }: { runId: string }) {
   const t      = useTranslations("calculationHistory");
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   const router = useRouter();
 
   const { data: run, isLoading, isError } = useQuery({
@@ -285,7 +288,6 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
               <FixedColumns columns={PARCEL_COLUMNS} />
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
                 <tr>
-                  <th className="px-3 py-2" {...columnHead("code")}>{t("detail.parcelsCol.code")}</th>
                   <th className="px-3 py-2" {...columnHead("propertyNickname")}>{t("detail.parcelsCol.nickname")}</th>
                   <th className="px-3 py-2" {...columnHead("outputRole")}>{t("detail.parcelsCol.role")}</th>
                   <th className="px-3 py-2" {...columnHead("viewLink")} />
@@ -294,11 +296,8 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
               <tbody className="divide-y divide-crease dark:divide-zinc-800">
                 {run.outputs.map((o) => (
                   <tr key={o.principalObjectId}>
-                    <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">
-                      {o.propertyCode ?? "—"}
-                    </td>
                     <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
-                      {o.propertyNickname ?? "—"}
+                      {nameOr(o.propertyNickname, "property")}
                     </td>
                     <td className="px-3 py-2">
                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">

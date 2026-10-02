@@ -1,5 +1,6 @@
 "use client";
 
+import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -673,8 +674,10 @@ export function JudicialPersonForm({
           box, the rows of `SCREEN_ROWS.judicialPerson.identity`, and the panel
           the fewest whole width units that hold its widest row (3). */}
       <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
+          {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
+          {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
         </h2>
         <div className="flex flex-col gap-2">
           <Field
@@ -707,13 +710,10 @@ export function JudicialPersonForm({
               width={JP.judicialPersonTypeId}
             />
           </div>
-          {/* Rule 14: the identifiers together — the app's own code (a saved
-              company only) beside the two registry numbers. Rule 15: the CUI
-              lock hint sits under CUI, inside its width. */}
+          {/* Rule 14: the registry numbers together (#37.57: the app's own
+              code is the heading's corner now). Rule 15: the CUI lock hint
+              sits under CUI, inside its width. */}
           <div className={STACKED_ROW_CLASS}>
-            {mode !== "create" && personCode && (
-              <ReadOnlyField label={t("fields.code")} value={personCode} width={JP.code} field="code" />
-            )}
             <Field
               label={t("fields.cuiNumber")}
               name="cuiNumber"
@@ -1120,7 +1120,6 @@ type PickerT = {
   namePlaceholder: string;
   labelCode: string;
   codePlaceholder: string;
-  colCode: string;
   colName: string;
   loading: string;
   error: string;
@@ -1228,7 +1227,6 @@ function ContactPersonPickerDialog({
               <thead>
                 <tr className="border-b border-card-rim dark:border-zinc-800">
                   <th className="w-8 px-3 py-2" aria-label="select" />
-                  <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t.colCode}</th>
                   <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t.colName}</th>
                 </tr>
               </thead>
@@ -1254,7 +1252,6 @@ function ContactPersonPickerDialog({
                         aria-label={p.displayName}
                       />
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{p.code}</td>
                     <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{p.displayName}</td>
                   </tr>
                 ))}
@@ -1311,7 +1308,6 @@ function useContactPickerTranslations(): PickerT {
     namePlaceholder: t("namePlaceholder"),
     labelCode:       t("labelCode"),
     codePlaceholder: t("codePlaceholder"),
-    colCode:         t("colCode"),
     colName:         t("colName"),
     loading:         t("loading"),
     error:           t("error"),
@@ -1543,24 +1539,6 @@ function SelectField({
         )}
       </div>
     </label>
-  );
-}
-
-function ReadOnlyField({ label, value, width, field }: { label: string; value: string; width: FieldWidth; field: string }) {
-  return (
-    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
-      <span className={STACKED_LABEL_CLASS}>
-        {label}
-      </span>
-      <div
-        className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
-        style={boxStyle(width)}
-        data-width-field={field}
-        data-width-kind={width.kind}
-      >
-        {value}
-      </div>
-    </div>
   );
 }
 

@@ -998,7 +998,7 @@ export async function searchDocumentAll(opts: {
 export type DocumentPropertyItem = {
   id:           string;
   code:         string;
-  label:        string;   // nickname ?? code
+  label:        string | null;   // the nickname; never the system ID (#37.57)
   associatedAt: Date;
 };
 
@@ -1015,7 +1015,7 @@ export async function listDocumentProperties(documentId: string): Promise<Docume
     .where(eq(propertyDocument.documentId, documentId))
     .orderBy(property.code);
 
-  return rows.map((r) => ({ id: r.id, code: r.code, label: r.nickname ?? r.code, associatedAt: r.associatedAt }));
+  return rows.map((r) => ({ id: r.id, code: r.code, label: r.nickname ?? null, associatedAt: r.associatedAt }));
 }
 
 export async function associatePropertiesToDocument(documentId: string, propertyIds: string[]): Promise<void> {

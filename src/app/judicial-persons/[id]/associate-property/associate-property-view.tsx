@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useState } from "react";
 import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -15,7 +16,7 @@ import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
-const COLUMNS: readonly ColumnName[] = ["select", "code", "propertyLabel"];
+const COLUMNS: readonly ColumnName[] = ["select", "propertyLabel"];
 
 /** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
 const SEARCH_UNITS = boxesUnits(["searchText"]);
@@ -44,6 +45,7 @@ async function searchProperties(q: string, page: number): Promise<SearchResponse
 
 export function AssociatePropertyView({ personId, personName, backBase }: Props) {
   const t           = useTranslations("shared.associateProperty");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   // One sentence shared by all four association screens (Slice #34.04).
   const tShared     = useTranslations("shared");
   const router      = useRouter();
@@ -169,7 +171,6 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("code")}>{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("propertyLabel")}>{t("colLabel")}</th>
               </tr>
             </thead>
@@ -182,10 +183,9 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
                   ].join(" ")}>
                   <td className="px-3 py-2">
                     <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)}
-                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.label} />
+                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={nameOr(item.label, "property")} />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
-                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.label}</td>
+                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{nameOr(item.label, "property")}</td>
                 </tr>
               ))}
             </tbody>
@@ -219,7 +219,7 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
             // state, it does not hand back the eligibility an administrator
             // removed. `carried-roles-merge.ts` argues it.
             <option key={r.value} value={r.value} disabled={r.unavailable}>
-              {r.label}
+              {nameOr(r.label, "property")}
             </option>
           ))}
         </select>

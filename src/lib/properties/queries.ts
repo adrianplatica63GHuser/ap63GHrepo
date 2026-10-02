@@ -1513,7 +1513,7 @@ export type PropertyRefItem = {
   id:               string;
   code:             string;
   nickname:         string | null;
-  label:            string;   // nickname ?? code
+  label:            string | null;   // the nickname; never the system ID (#37.57)
   associatedAt:     Date;
   relationshipRoleId:   string | null;
   relationshipRoleName: string | null;
@@ -1556,7 +1556,7 @@ export async function listPropertyReferences(propertyId: string): Promise<Proper
     id:                   r.id,
     code:                 r.code,
     nickname:             r.nickname,
-    label:                r.nickname ?? r.code,
+    label:                r.nickname ?? null,
     associatedAt:         r.associatedAt,
     relationshipRoleId:   r.relationshipRoleId ?? null,
     relationshipRoleName: r.relationshipRoleName ?? null,

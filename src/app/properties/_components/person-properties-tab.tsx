@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
@@ -46,6 +47,7 @@ export function PersonPropertiesTab({ personId, backBase, compact = false }: Pro
     ? (["tileName", "tileRole", "openPreviewStacked"] as const)
     : (["propertyLabel", "role", "openPreview"] as const);
   const t           = useTranslations("shared.properties");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
   const { guardedNavigate } = useUnsavedChanges();
@@ -128,10 +130,10 @@ export function PersonPropertiesTab({ personId, backBase, compact = false }: Pro
                       onChange={() => setSelectedId(item.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="accent-cta"
-                      aria-label={item.label}
+                      aria-label={nameOr(item.label, "property")}
                     />
                   </td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.label}</td>
+                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{nameOr(item.label, "property")}</td>
                   <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{item.roleName ?? "—"}</td>
                   <td className="px-3 py-2">
                     <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>

@@ -72,7 +72,7 @@ export type GroupListItem = {
 export type GroupMemberItem = {
   memberId:     string;
   position:     number;
-  displayLabel: string;
+  displayLabel: string | null;
 };
 
 /**
@@ -80,7 +80,7 @@ export type GroupMemberItem = {
  */
 export type GroupCandidate = {
   id:              string;
-  displayLabel:    string;
+  displayLabel:    string | null;
   otherGroupCount: number;
 };
 
@@ -99,8 +99,9 @@ export type GroupTag = { code: string; position: number };
 // Internal helper — build display label for a property candidate/member
 // ---------------------------------------------------------------------------
 
-function propLabel(code: string, nickname: string | null): string {
-  return nickname?.trim() || code;
+function propLabel(_code: string, nickname: string | null): string | null {
+  // Slice #37.57: never the system ID — null, and the screen says so in words (`shared.unnamed`).
+  return nickname?.trim() || null;
 }
 
 // ---------------------------------------------------------------------------
@@ -237,7 +238,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
     members = rows.map((r) => ({
       memberId:     r.memberId,
       position:     r.position,
-      displayLabel: r.displayName?.trim() || r.code,
+      displayLabel: r.displayName?.trim() || null,
     }));
 
   } else if (targetType === "DOCUMENT") {
@@ -259,7 +260,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
     members = rows.map((r) => ({
       memberId:     r.memberId,
       position:     r.position,
-      displayLabel: r.title?.trim() || r.code,
+      displayLabel: r.title?.trim() || null,
     }));
   }
 
@@ -342,7 +343,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .filter((r) => r.otherGroupCount < MAX_GROUPS_PER_ITEM)
       .map((r) => ({
         id:              r.id,
-        displayLabel:    r.displayName?.trim() || r.code,
+        displayLabel:    r.displayName?.trim() || null,
         otherGroupCount: r.otherGroupCount,
       }));
 
@@ -375,7 +376,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .filter((r) => r.otherGroupCount < MAX_GROUPS_PER_ITEM)
       .map((r) => ({
         id:              r.id,
-        displayLabel:    r.title?.trim() || r.code,
+        displayLabel:    r.title?.trim() || null,
         otherGroupCount: r.otherGroupCount,
       }));
   }

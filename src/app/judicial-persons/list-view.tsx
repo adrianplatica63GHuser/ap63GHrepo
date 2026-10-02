@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,7 @@ import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN`. */
-const COLUMNS: ColumnName[] = ["selectNew", "code", "personName", "personNickname", "openPreview"];
+const COLUMNS: ColumnName[] = ["selectNew", "personName", "personNickname", "openPreview"];
 
 type JudicialPersonListItem = {
   id:          string;
@@ -120,6 +121,7 @@ function ConfirmDialog({
 
 export function JudicialPersonListView() {
   const t     = useTranslations("judicialPerson");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const tPag  = useTranslations("shared.pagination");
   const tBulk = useTranslations("shared.bulkDelete");
   const router = useRouter();
@@ -296,7 +298,6 @@ export function JudicialPersonListView() {
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
                 </th>
-                <th className="px-4 py-2" {...columnHead("code")}>{t("table.code")}</th>
                 <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
                 <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
                 <th className="px-4 py-2" {...columnHead("openPreview")} />
@@ -341,14 +342,11 @@ export function JudicialPersonListView() {
                         type="checkbox"
                         checked={selectedIds.has(item.id)}
                         onChange={() => toggleOne(item.id)}
-                        aria-label={item.displayName || item.code}
+                        aria-label={nameOr(item.displayName, "person")}
                         className="h-4 w-4 rounded border-wire accent-cta"
                       />
                       <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                     </span>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs text-fade">
-                    {item.code}
                   </td>
                   <td className={`px-4 py-2 font-medium ${WRAPS}`}>
                     {item.displayName || (

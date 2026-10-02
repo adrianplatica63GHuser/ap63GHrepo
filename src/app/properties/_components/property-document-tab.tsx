@@ -1,5 +1,6 @@
 "use client";
 
+import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState } from "react";
@@ -42,6 +43,7 @@ export function PropertyDocumentTab({ propertyId, compact = false }: Props) {
     ? (["tileDocType", "tileDocTitle", "openPreviewStacked"] as const)
     : (["documentType", "documentTitle", "openPreview"] as const);
   const t           = useTranslations("property.document");
+  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
   const { guardedNavigate } = useUnsavedChanges();
@@ -124,7 +126,7 @@ export function PropertyDocumentTab({ propertyId, compact = false }: Props) {
                       onChange={() => setSelectedId(item.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="accent-cta"
-                      aria-label={item.title ?? item.code}
+                      aria-label={nameOr(item.title, "document")}
                     />
                   </td>
                   <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{item.typeName ?? "—"}</td>

@@ -1044,7 +1044,7 @@ import {
 export type PersonPropertyItem = {
   id:           string;
   code:         string;
-  label:        string;   // nickname ?? code
+  label:        string | null;   // the nickname; never the system ID (#37.57)
   roleName:     string | null;
   associatedAt: Date;
 };
@@ -1067,7 +1067,7 @@ export async function listPersonProperties(personId: string): Promise<PersonProp
   return rows.map((r) => ({
     id:           r.id,
     code:         r.code,
-    label:        r.nickname ?? r.code,
+    label:        r.nickname ?? null,
     roleName:     r.roleName ?? null,
     associatedAt: r.associatedAt,
   }));
@@ -1178,9 +1178,9 @@ export async function listPersonDocuments(personId: string): Promise<PersonDocum
  */
 export async function getPersonIdCardLink(
   personId: string,
-): Promise<{ id: string; code: string } | null> {
+): Promise<{ id: string; code: string; title: string | null } | null> {
   const rows = await db
-    .select({ id: document.id, code: document.code })
+    .select({ id: document.id, code: document.code, title: document.title })
     .from(personDocument)
     .innerJoin(document, eq(personDocument.documentId, document.id))
     .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))

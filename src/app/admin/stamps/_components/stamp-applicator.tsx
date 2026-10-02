@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eraser, Save, Stamp } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
+import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { useMemo, useState } from "react";
 import {
   GROUP_TARGET_TYPES,
@@ -21,11 +22,11 @@ const EDITOR_UNITS = 3;
 
 type StampMemberItem = {
   memberId:     string;
-  displayLabel: string;
+  displayLabel: string | null;
 };
 type StampCandidate = {
   id:           string;
-  displayLabel: string;
+  displayLabel: string | null;
 };
 type StampDetail = {
   id:               string;
@@ -94,6 +95,7 @@ export function StampApplicator({
   initialDetail: StampDetail;
 }) {
   const t  = useTranslations("stamp");
+  const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
 
   // Which target type is currently being viewed / edited.
@@ -141,12 +143,14 @@ export function StampApplicator({
   const staged = getChanges(selectedType);
 
   // memberId → displayLabel (from server data for this type).
+  // Slice #37.57: a member with no name is named in words, never by its system ID.
   const labelById = useMemo(() => {
+    const unnamed = tUnnamed(unnamedKindOf(selectedType));
     const map = new Map<string, string>();
-    for (const m of detail?.members   ?? []) map.set(m.memberId, m.displayLabel);
-    for (const c of detail?.candidates ?? []) map.set(c.id,       c.displayLabel);
+    for (const m of detail?.members   ?? []) map.set(m.memberId, m.displayLabel ?? unnamed);
+    for (const c of detail?.candidates ?? []) map.set(c.id,       c.displayLabel ?? unnamed);
     return map;
-  }, [detail]);
+  }, [detail, selectedType, tUnnamed]);
 
   const label = (id: string) => labelById.get(id) ?? id;
 
