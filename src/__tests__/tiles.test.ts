@@ -269,8 +269,9 @@ describe("the Property's tiles (Slice #37.19)", () => {
   });
 
   it("AN UNTICKED MAP COSTS NOTHING: Hartă and Street View are mounted only while shown", () => {
-    expect(FORM).toMatch(/\{tileShown\("map"\) && \(\s*<section[^>]*data-panel="map"/);
-    expect(FORM).toMatch(/\{streetViewOpen && !typeConfig\.hideStreetView && \(\s*<section[^>]*data-panel="street-view"/);
+    // #37.56: each is placed in the right-hand column (`placeTile`) — still mounted only while shown.
+    expect(FORM).toMatch(/\{tileShown\("map"\) && placeTile\("map",\s*<section[^>]*data-panel="map"/);
+    expect(FORM).toMatch(/\{streetViewOpen && !typeConfig\.hideStreetView && placeTile\("streetView",\s*<section[^>]*data-panel="street-view"/);
     // As tiles, the Street View button ticks the tile; the create form keeps its own state.
     expect(FORM).toMatch(/tiles \? tiles\.onToggleTile\("streetView"\) : setShowStreetView/);
     expect(FORM).toMatch(/streetViewOpen = tiles \? tiles\.shown\.includes\("streetView"\) : showStreetView/);
