@@ -26,7 +26,7 @@ import { personPreview } from "@/lib/ui/previews";
 
 /** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
 const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "openPreview"];
-/** The three cotă boxes fill their L column, so „— fără suprafață —" shows whole. */
+/** The three cotă boxes fill their L column, so „fără suprafață" shows whole. */
 const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "fixed" });
 
 /**
@@ -342,6 +342,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                         inputMode="decimal"
                         value={draftOf(item, "parte")}
                         placeholder={t("cotaPlaceholder")}
+                        data-blank=""
                         disabled={savingId === item.linkId}
                         aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
                         aria-invalid={errors.parte ? true : undefined}
@@ -371,6 +372,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                         inputMode="decimal"
                         value={draftOf(item, "mp")}
                         placeholder={t("cotaMpPlaceholder")}
+                        data-blank=""
                         disabled={savingId === item.linkId}
                         aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
                         aria-invalid={errors.mp ? true : undefined}
@@ -402,7 +404,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                       className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                       style={COTA_BOX_STYLE}
                     >
-                      <option value="">{t("cotaModPlaceholder")}</option>
+                      <option value="" data-blank="">{t("cotaModPlaceholder")}</option>
                       {COTA_MOD_VALUES.map((v) => (
                         <option key={v} value={v}>{modLabel(t, v)}</option>
                       ))}

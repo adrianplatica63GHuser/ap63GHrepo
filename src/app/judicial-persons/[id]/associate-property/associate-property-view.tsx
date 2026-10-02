@@ -213,7 +213,7 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
           onChange={(e) => setSelectedRoleId(e.target.value)}
           className="rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
         >
-          <option value="">{t("rolePlaceholder")}</option>
+          <option value="" data-blank="">{t("rolePlaceholder")}</option>
           {pickerOptions.map((r) => (
             // `disabled` on a carried-but-unoffered role: the picker SAYS the
             // state, it does not hand back the eligibility an administrator

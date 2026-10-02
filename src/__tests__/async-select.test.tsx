@@ -29,7 +29,7 @@ import { AsyncSelect } from "@/components/forms/async-select";
 
 type Values = { field: string };
 
-const NONE = { value: "", label: "— niciunul —" };
+const NONE = { value: "", label: "niciunul" };
 
 /**
  * A small list whose values happen to READ like labels.
@@ -141,7 +141,7 @@ describe("the defect this component exists to fix", () => {
   it("a plainly registered select still shows blank after the options arrive", () => {
     const { atMount } = openThenLoad("47/2", { legacy: true });
     expect(atMount.value).toBe("");
-    expect(shown()).toEqual({ value: "", text: "— niciunul —" });
+    expect(shown()).toEqual({ value: "", text: "niciunul" });
   });
 });
 
@@ -149,7 +149,7 @@ describe("AsyncSelect", () => {
   it("shows a stored id once the options query resolves", async () => {
     // The five selects whose column is a uuid FK. Nothing can render a label
     // for them before the list arrives — what matters is that they correct
-    // themselves when it does, instead of staying on "— niciunul —" forever.
+    // themselves when it does, instead of staying on "niciunul" forever.
     const { atMount, onSubmit } = openThenLoad(UUID_B, { loaded: TYPES });
     // Before the list: `register` assigned an id with no matching <option>, so
     // the browser dropped the selection (selectedIndex −1) and the box reads
@@ -209,7 +209,7 @@ describe("AsyncSelect", () => {
 
   it("leaves an empty stored value empty", async () => {
     const { onSubmit } = openThenLoad("");
-    expect(shown()).toEqual({ value: "", text: "— niciunul —" });
+    expect(shown()).toEqual({ value: "", text: "niciunul" });
     expect(select().options).toHaveLength(TARLA.length);
 
     await save();
@@ -264,5 +264,13 @@ describe("AsyncSelect", () => {
     openThenLoad("47/2");
     expect(select()).toHaveClass("cls");
     expect(select()).toHaveAttribute("aria-describedby", "field-label");
+  });
+
+  it("marks the option the caller calls blank, and only that one (#37.55)", () => {
+    // `data-blank` is what globals.css draws in italics; a bare „—" is not marked.
+    const blank = { value: "", label: "niciunul", blank: true };
+    openThenLoad("40", { loaded: [blank, ...TARLA.slice(1)] });
+    const marked = [...select().options].filter((o) => o.hasAttribute("data-blank")).map((o) => o.text);
+    expect(marked).toEqual(["niciunul"]);
   });
 });

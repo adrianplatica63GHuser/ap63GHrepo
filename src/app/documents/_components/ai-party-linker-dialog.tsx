@@ -675,6 +675,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
             inputMode="decimal"
             value={cotaParteText}
             placeholder={tCota("cotaPlaceholder")}
+            data-blank=""
             disabled={busy}
             aria-invalid={cotaErrors.parte ? true : undefined}
             onChange={(e) => setCotaDraft((d) => ({ ...d, parte: e.target.value }))}
@@ -699,6 +700,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
             inputMode="decimal"
             value={cotaMpText}
             placeholder={tCota("cotaMpPlaceholder")}
+            data-blank=""
             disabled={busy}
             aria-invalid={cotaErrors.mp ? true : undefined}
             onChange={(e) => setCotaDraft((d) => ({ ...d, mp: e.target.value }))}
@@ -727,7 +729,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
             }}
             className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           >
-            <option value="">{tCota("cotaModPlaceholder")}</option>
+            <option value="" data-blank="">{tCota("cotaModPlaceholder")}</option>
             {COTA_MOD_VALUES.map((v) => (
               <option key={v} value={v}>{modLabel(v)}</option>
             ))}

@@ -152,7 +152,7 @@ function MetaSelect({
         .filter(Boolean)
         .join(" ")}
     >
-      <option value="">{placeholder}</option>
+      <option value="" data-blank="">{placeholder}</option>
       {options.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>
       ))}
@@ -564,7 +564,7 @@ function InlineGroupsSection({
             onChange={(e) => { void handleAdd(e.target.value); }}
             className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
-            <option value="" disabled>
+            <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}
             </option>
             {available.map((g) => (
@@ -721,7 +721,7 @@ function InlineStampsSection({
             onChange={(e) => { void handleAdd(e.target.value); }}
             className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
-            <option value="" disabled>
+            <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}
             </option>
             {available.map((s) => (

@@ -276,7 +276,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           >
-            <option value="">{t("roleNone")}</option>
+            <option value="" data-blank="">{t("roleNone")}</option>
             {pickerOptions.map((r) => (
               // `disabled` on a carried-but-unoffered role — see
               // `carried-roles-merge.ts`: the picker says the state, it does

@@ -291,9 +291,10 @@ describe("the scale", () => {
     // 01.Slice.Inputs\Slices.37.nn\Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M".
     expect(PROPERTY.parcela.step).toBe("M");
     expect(PROPERTY.parcela.sample).toBe("000/00/00");
-    // „47/2" would fit S; „— niciunul —", the dropdown's own empty option, does not — so M.
+    // „47/2" would fit S; „niciunul", the dropdown's own empty option, does not — so M.
+    // (#37.55 took its dashes off: about 90 px where it was 107 — still past S's 80.)
     expect(textPx("47/2") + SELECT_CHROME_PX).toBeLessThanOrEqual(SCALE.S * 16);
-    expect(textPx("— niciunul —") + SELECT_CHROME_PX).toBeGreaterThan(SCALE.S * 16);
+    expect(textPx("niciunul") + SELECT_CHROME_PX).toBeGreaterThan(SCALE.S * 16);
     expect(PROPERTY.tarlaId.step).toBe("M");
   });
 
@@ -753,15 +754,17 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     // „Nu e menționat" needs 142 px: 9rem, where the step rule drew L (13rem).
     expect(selectNeedPx(["Nu e menționat"])).toBeCloseTo(141.7, 0);
     expect(boxRem(templateFieldWidth({ type: "select" }, ["Nu e menționat"]))).toBe(9);
-    // The blank „— fără valoare —" needs 157 px: 10rem — every CVC dropdown holds it.
+    // The blank „fără valoare" (#37.55: italic, no dashes — it was „— fără valoare —", 157 px)
+    // needs 120 px, so beside „Nu e menționat" the dropdown is 9rem, where it was 10.
     expect(selectNeedPx(["— fără valoare —"])).toBeCloseTo(157.2, 0);
-    expect(boxRem(templateFieldWidth({ type: "select" }, ["— fără valoare —", "Da", "Nu", "Nu e menționat"]))).toBe(10);
-    expect(selectStepFor(["— fără valoare —", "Da", "Nu"]).step).toBe("L");
+    expect(selectNeedPx(["fără valoare"])).toBeCloseTo(119.6, 0);
+    expect(boxRem(templateFieldWidth({ type: "select" }, ["fără valoare", "Da", "Nu", "Nu e menționat"]))).toBe(9);
+    expect(selectStepFor(["fără valoare", "Da", "Nu"]).step).toBe("M");
     const long = "O opțiune foarte lungă, mult peste ce încape într-o casetă";
     expect(templateFieldWidth({ type: "select" }, [long])).toEqual({ step: "XXL", kind: "select", capped: true });
     expect(boxRem(templateFieldWidth({ type: "select" }, [long]))).toBe(SCALE.XXL);
     // The width shows every label whole, and is never more than half a rem past what it needs.
-    for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"], ["— fără valoare —"]]) {
+    for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"], ["fără valoare"]]) {
       const w = boxRem(templateFieldWidth({ type: "select" }, labels)) * 16;
       expect(w).toBeGreaterThanOrEqual(selectNeedPx(labels));
       expect(w).toBeLessThanOrEqual(Math.max(SCALE.S * 16, selectNeedPx(labels) + 8));
@@ -794,7 +797,7 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
       for (const f of parseTemplateFields(form.fields)) {
         if (f.type !== "select" || !f.options?.length) continue;
         selects++;
-        const w = templateFieldWidth(f, ["— fără valoare —", ...f.options.map((o) => o.labelRo)]);
+        const w = templateFieldWidth(f, ["fără valoare", ...f.options.map((o) => o.labelRo)]);
         expect([form.key, f.key, w.capped ?? false]).toEqual([form.key, f.key, false]);
       }
     }

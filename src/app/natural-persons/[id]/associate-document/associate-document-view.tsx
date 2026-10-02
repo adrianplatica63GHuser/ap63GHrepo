@@ -473,7 +473,7 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           >
-            <option value="">{t("rolePlaceholder")}</option>
+            <option value="" data-blank="">{t("rolePlaceholder")}</option>
             {roles.map((r) => (
               <option key={r.id} value={r.id}>{r.name}</option>
             ))}

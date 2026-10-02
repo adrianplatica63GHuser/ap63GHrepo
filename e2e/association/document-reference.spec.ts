@@ -38,7 +38,7 @@ const MARK = `${E2E_MARKER}ASSOC-07`;
 const CERTIFICATE = `${MARK} Titlu anterior`;
 const CONTRACT = `${MARK} Contract de test`;
 const ROLES = [
-  "— fără relație —",
+  "fără relație",
   "Înlocuiește",
   "Modifică",
   "Prelungește",

@@ -371,7 +371,7 @@ export function AiReferenceLinkerDialog({ documentId, items, documentTypes, onCl
                 onChange={(e) => setStubTypeId(e.target.value)}
                 className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               >
-                <option value="">{t("stubTypePlaceholder")}</option>
+                <option value="" data-blank="">{t("stubTypePlaceholder")}</option>
                 {documentTypes.map((dt) => (
                   <option key={dt.id} value={dt.id}>{dt.name}</option>
                 ))}

@@ -35,7 +35,7 @@ const MARK = `${E2E_MARKER}ASSOC-08`;
 const WHOLE = `${MARK} Teren întreg`;
 const ROLE = "Inclus în";
 const ROLES = [
-  "— fără relație —",
+  "fără relație",
   "Adiacent",
   "Inclus în",
   "Contiguu",

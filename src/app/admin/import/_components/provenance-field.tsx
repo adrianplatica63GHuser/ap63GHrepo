@@ -77,7 +77,7 @@ export function ProvenanceField({
           : "w-full min-w-0 flex-1 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none disabled:bg-canvas dark:border-zinc-700 dark:bg-zinc-950"
       }
     >
-      <option value="">{t("placeholder")}</option>
+      <option value="" data-blank="">{t("placeholder")}</option>
       {PROVENANCE_VALUES.map((code) => (
         <option key={code} value={code}>
           {labelFor(code)}

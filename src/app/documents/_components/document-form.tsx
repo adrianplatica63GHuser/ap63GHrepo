@@ -2719,7 +2719,7 @@ function SelectField({
           ].join(" ")}
         >
           {emptyOptionLabel !== undefined ? (
-            <option value="">{emptyOptionLabel}</option>
+            <option value="" data-blank="">{emptyOptionLabel}</option>
           ) : (
             <option value="" disabled hidden />
           )}

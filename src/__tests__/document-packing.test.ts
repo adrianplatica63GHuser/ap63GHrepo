@@ -18,6 +18,7 @@ import {
   boxRem,
   packFieldRows,
   rowRem,
+  selectNeedPx,
   templateFieldWidth,
   unitsInnerRem,
   type FieldWidth,
@@ -38,7 +39,7 @@ const FORMS = JSON.parse(
 ) as { forms: Record<string, StoredField[]> };
 
 /** messages/ro-RO.json → document.fields.customSelectEmpty. */
-const EMPTY = "— fără valoare —";
+const EMPTY = "fără valoare";
 const FEES_BASE = Math.max(rowRem([DOCUMENT.institutionId]), rowRem([DOCUMENT.nrDocument, DOCUMENT.dateDocument]));
 
 function widthOf(f: StoredField, force: boolean): FieldWidth {
@@ -123,10 +124,11 @@ describe("a CVC's panels, written out", () => {
 
 /**
  * What the rule gives CONTRACT_VANZARE (measured by this suite, Slice #37.31;
- * re-measured in #37.53). Since #37.53 a dropdown is as wide as its widest
- * choice — most of them 10rem, „Nu e menționat" with the blank „— fără valoare —"
- * — and a panel of dropdowns takes a third unit when that pairs them, so the
- * clauses sit two to a row. The fees fit three numbers to a row beside
+ * re-measured in #37.53 and #37.55). Since #37.53 a dropdown is as wide as its
+ * widest choice, and a panel of dropdowns takes a third unit when that pairs
+ * them. Since #37.55 the blank reads „fără valoare" (120 px, no longer the
+ * widest), so a clause offering „Da / Nu / Nu e menționat" is 9rem — three to
+ * a row of the 3-unit panel's 28.125rem, in Romanian as in English. The fees fit three numbers to a row beside
  * Instituție's 3 units, „Taxă timbru și publicitate" last and alone (#37.54);
  * Dosar și exemplar (#37.54, it was Antet instrument) is 3 because „Categorie
  * internă" has a 37-character option (18rem).
@@ -162,34 +164,50 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["origineLot"],
   ] },
   { label: "Declarații și garanții", units: 3, rows: [
-    ["inCircuitCivil", "liberDeSarcini"],
-    ["faraServituti", "neipotecat"],
-    ["nepromisAltcuiva", "nearendat"],
-    ["neaportatSocietate", "faraLitigii"],
-    ["faraExpropriere", "faraMonumentIstoric"],
-    ["nedezmembratContrar", "garantieEvictiune"],
+    ["inCircuitCivil", "liberDeSarcini", "faraServituti"],
+    ["neipotecat", "nepromisAltcuiva", "nearendat"],
+    ["neaportatSocietate", "faraLitigii", "faraExpropriere"],
+    ["faraMonumentIstoric", "nedezmembratContrar", "garantieEvictiune"],
     ["garantieVicii", "cumparatorCunoasteSituatia"],
   ] },
   { label: "Declarații și obligații legale", units: 3, rows: [
+    // „Temei legal evicțiune" is a text box (XL, 17rem): one dropdown beside it.
     ["temeiLegalEvictiune", "declaratieArt292"],
-    ["pretRealDeclarat", "notificareAml"],
-    ["consimtamantDatePersonale", "preemptiuneTerenAgricol"],
-    ["preemptiunePadure", "taxeLocaleLaZi"],
+    ["pretRealDeclarat", "notificareAml", "consimtamantDatePersonale"],
+    ["preemptiuneTerenAgricol", "preemptiunePadure", "taxeLocaleLaZi"],
     ["taxeLocalePlatiteDe", "cheltuieliPerfectare"],
   ] },
 ];
 
-describe("dropdowns pair up (#37.53)", () => {
-  it("packs „Declarații și garanții” and „Declarații și obligații legale” two to a row, in form order", () => {
-    const cvc = panelsOf(FORMS.forms.CONTRACT_VANZARE);
-    // #37.54 renamed them from „Stare juridică afirmată" and „Conformitate și formalități".
-    for (const label of ["Declarații și garanții", "Declarații și obligații legale"]) {
-      const p = cvc.find((x) => x.label === label)!;
-      expect([label, p.units]).toEqual([label, 3]);
-      expect([label, p.rows.every((r) => r.length === 2)]).toEqual([label, true]);
-      const order = FORMS.forms.CONTRACT_VANZARE.filter((f) => f.groupRo === label).map((f) => f.key);
-      expect(p.rows.flat()).toEqual(order);
+describe("dropdowns three to a row (#37.53, #37.55)", () => {
+  it("on „Da / Nu / Nu e menționat” plus the blank choice, the widest is „Nu e menționat”, and the dropdown is 9rem", () => {
+    const labels = [EMPTY, "Da", "Nu", "Nu e menționat"];
+    const widest = labels.reduce((a, b) => (selectNeedPx([b]) > selectNeedPx([a]) ? b : a));
+    expect(widest).toBe("Nu e menționat");
+    expect(boxRem(templateFieldWidth({ type: "select" }, labels))).toBe(9);
+    // Three of them and the two gaps fit a 3-unit panel; at 10rem (the dashed blank) they did not.
+    expect(rowRem([templateFieldWidth({ type: "select" }, labels), templateFieldWidth({ type: "select" }, labels), templateFieldWidth({ type: "select" }, labels)])).toBeLessThanOrEqual(unitsInnerRem(3));
+    expect(rowRem([{ step: "L", kind: "select", rem: 10 }, { step: "L", kind: "select", rem: 10 }, { step: "L", kind: "select", rem: 10 }])).toBeGreaterThan(unitsInnerRem(3));
+  });
+
+  it("names the seeded panels that hold three dropdowns to a row, each 3 units, in form order", () => {
+    // #37.54 renamed the CVC's two from „Stare juridică afirmată" and „Conformitate și formalități".
+    const threes: string[] = [];
+    for (const [type, fields] of Object.entries(FORMS.forms)) {
+      for (const p of panelsOf(fields)) {
+        const kind = new Map(p.items.map((i) => [i.key, i.width.kind] as const));
+        if (p.rows.some((r) => r.length === 3 && r.every((k) => kind.get(k) === "select"))) {
+          threes.push(`${type} · ${p.label}`);
+          expect([p.label, p.units]).toEqual([p.label, 3]);
+          expect(p.rows.flat()).toEqual(fields.filter((f) => (f.groupRo || f.groupEn || "") === p.label).map((f) => f.key));
+        }
+      }
     }
+    expect(threes.sort()).toEqual([
+      "ACT_ADITIONAL · Clauze completate",
+      "CONTRACT_VANZARE · Declarații și garanții",
+      "CONTRACT_VANZARE · Declarații și obligații legale",
+    ]);
   });
 
   it("takes the third unit only for a panel of two or more dropdowns, and only when it saves rows", () => {

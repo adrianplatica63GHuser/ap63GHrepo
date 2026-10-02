@@ -64,7 +64,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
       await expect(role.locator("option")).toHaveText([
-        "— fără rol —",
+        "fără rol",
         "Coproprietari / Coindivizari",
         "Cumpărător",
         ROLE,

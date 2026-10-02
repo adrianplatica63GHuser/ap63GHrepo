@@ -866,7 +866,7 @@ export function DocumentTypeFormEditor({
                               style={columnBoxStyle("feGroup")}
                               className={inputClass}
                             >
-                              <option value={GROUP_NONE}>{t("groupNone")}</option>
+                              <option value={GROUP_NONE} data-blank="">{t("groupNone")}</option>
                               {/* Both spellings shown: these strings are the
                                   data, and an exact-text match is what earns
                                   the type its special layout. */}

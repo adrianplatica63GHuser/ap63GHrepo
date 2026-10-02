@@ -241,7 +241,7 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           >
-            <option value="">{t("roleNone")}</option>
+            <option value="" data-blank="">{t("roleNone")}</option>
             {roles.map((r) => (
               <option key={r.id} value={r.id}>{r.name}</option>
             ))}

@@ -46,7 +46,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
-      // Step 3 — „Asociere act": the name, „Căutare", Cod · Tip · Titlu, „Rol" at „— fără rol —",
+      // Step 3 — „Asociere act": the name, „Căutare", Cod · Tip · Titlu, „Rol" at „fără rol",
       // offering every role in the system.
       await page.getByRole("button", { name: "Asociază", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}/associate-document$`), { timeout: 30_000 });
@@ -58,7 +58,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
-      await expect(role.locator("option:checked")).toHaveText("— fără rol —");
+      await expect(role.locator("option:checked")).toHaveText("fără rol");
       // „every role in the system": far more than the five a contract offers.
       expect(await role.locator("option").count()).toBeGreaterThan(6);
 
@@ -68,7 +68,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(candidate).toHaveCount(1, { timeout: 15_000 });
       await page.getByRole("checkbox", { name: DOC_TITLE }).check();
       await expect(role.locator("option")).toHaveText([
-        "— fără rol —",
+        "fără rol",
         "Cumpărător",
         "Moștenitor / Succesor",
         "Notar",
@@ -95,7 +95,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 7 — its „Persoane": one row — the company, „Cumpărător", the two empty fields
-      // reading „— fără cotă —" and „— fără suprafață —", „Mod de deținere" „— nespecificat —".
+      // reading „fără cotă" and „fără suprafață", „Mod de deținere" „nespecificat".
       await showTile(page, "Persoane");
       const back = page.getByRole("row").filter({ hasText: COMPANY });
       await expect(back).toHaveCount(1, { timeout: 15_000 });
@@ -105,12 +105,12 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       }
       await expect(back.getByRole("cell", { name: "Cumpărător", exact: true })).toHaveCount(1);
       await expect(back.getByLabel(`Cotă-parte — ${COMPANY} — Cumpărător`)).toHaveValue("");
-      await expect(back.getByLabel(`Cotă-parte — ${COMPANY} — Cumpărător`)).toHaveAttribute("placeholder", "— fără cotă —");
+      await expect(back.getByLabel(`Cotă-parte — ${COMPANY} — Cumpărător`)).toHaveAttribute("placeholder", "fără cotă");
       await expect(back.getByLabel(`Suprafață echivalentă (mp) — ${COMPANY} — Cumpărător`)).toHaveAttribute(
         "placeholder",
-        "— fără suprafață —",
+        "fără suprafață",
       );
-      await expect(back.locator("select option:checked")).toHaveText("— nespecificat —");
+      await expect(back.locator("select option:checked")).toHaveText("nespecificat");
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.
       await back.getByRole("link", { name: "Vizualizare" }).click();

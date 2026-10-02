@@ -51,7 +51,7 @@ import type { PropertySnapshot } from "@/lib/properties/validation";
 // Fixtures — the shapes the property form really hands the resolver
 // ---------------------------------------------------------------------------
 
-const NONE: SnapshotLookupOption = { value: "", label: "— niciunul —" };
+const NONE: SnapshotLookupOption = { value: "", label: "niciunul" };
 
 const ARABIL = "63877b7f-dcd6-4509-a3c7-e0ba7c00dbea";
 const GARAJ = "f57ad7a3-8487-4a32-be98-93e2bd892b45";
@@ -158,7 +158,7 @@ describe("resolveSnapshotLookup", () => {
   });
 
   it("is empty rather than pending for an absent id on an unread list", () => {
-    // Nothing to resolve, so nothing to wait for: the picker's "— niciunul —"
+    // Nothing to resolve, so nothing to wait for: the picker's "niciunul"
     // is already the right answer and must not flicker into a label.
     expect(resolveSnapshotLookup({ id: null, options: undefined }).kind).toBe("empty");
   });
@@ -189,7 +189,7 @@ describe("resolveSnapshotLookup", () => {
 
   it("never matches the none-option, which every list carries", () => {
     // `noneOption` has value "", and "" is not an id — a snapshot holding it
-    // must read as empty rather than resolving to "— niciunul —".
+    // must read as empty rather than resolving to "niciunul".
     expect(resolveSnapshotLookup({ id: "", options: TYPES }).kind).toBe("empty");
   });
 });

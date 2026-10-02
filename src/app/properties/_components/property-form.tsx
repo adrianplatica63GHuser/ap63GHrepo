@@ -290,7 +290,8 @@ export function PropertyForm({
     staleTime: 5 * 60 * 1000,
   });
 
-  const noneOption = { value: "", label: t("fields.noneOption") };
+  // Slice #37.55: „niciunul", in italics (`blank`).
+  const noneOption = { value: "", label: t("fields.noneOption"), blank: true };
   const propertyTypeOptions = [
     noneOption,
     ...(propertyTypes ?? []).map((o) => ({ value: o.id, label: o.name })),
@@ -1867,7 +1868,7 @@ function SelectField({
   width,
 }: FieldProps & {
   control: Control<FormValues>;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; blank?: boolean }[];
   /**
    * Slice #34.17: what the viewed VERSION recorded in this field.
    *

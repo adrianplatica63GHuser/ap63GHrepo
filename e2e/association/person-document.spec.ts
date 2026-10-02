@@ -72,7 +72,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
-      await expect(role.locator("option:checked")).toHaveText("— fără rol —");
+      await expect(role.locator("option:checked")).toHaveText("fără rol");
 
       // Step 4 — one row: `DOC…`, „Contract de Vânzare", the title.
       await search.fill(MARK);
@@ -85,7 +85,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByText("Selectați cel puțin un act")).toBeVisible();
       await page.getByRole("checkbox", { name: DOC_TITLE }).check();
       await expect(page.getByText("Selectați cel puțin un act")).toHaveCount(0);
-      const offered = ["— fără rol —", "Cumpărător", "Moștenitor / Succesor", "Notar", "Reprezentant legal / Mandatar", "Vânzător"];
+      const offered = ["fără rol", "Cumpărător", "Moștenitor / Succesor", "Notar", "Reprezentant legal / Mandatar", "Vânzător"];
       await expect(role.locator("option")).toHaveText(offered);
 
       // Step 6 — „Cumpărător".

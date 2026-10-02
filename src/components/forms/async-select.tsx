@@ -8,7 +8,13 @@ import type {
   UseFormRegister,
 } from "react-hook-form";
 
-export type AsyncSelectOption = { value: string; label: string };
+/**
+ * `blank` (Slice #37.55): this option is the picker's „no value" — drawn in
+ * italics, every other option in the regular font (`data-blank`, globals.css).
+ * Set by the caller, not inferred from `value === ""`: the persons' pickers
+ * use a bare „—" there, which is a gap, not a label.
+ */
+export type AsyncSelectOption = { value: string; label: string; blank?: boolean };
 
 /**
  * ⚠️ **`optionsWithUnlistedValues` was here, and Slice #34.03 deleted it
@@ -167,7 +173,7 @@ export function AsyncSelect<T extends FieldValues>({
       {...register(name)}
     >
       {rendered.map((o) => (
-        <option key={o.value} value={o.value}>
+        <option key={o.value} value={o.value} data-blank={o.blank ? "" : undefined}>
           {o.label}
         </option>
       ))}

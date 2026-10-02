@@ -73,10 +73,10 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await expect(nameFilter).toBeVisible();
       await expect(page.getByPlaceholder("Cod…", { exact: true })).toBeVisible();
       // By role, not getByLabel: the <label> wraps the <select>, so its text runs
-      // straight into the options — „Rol— fără rol —Cumpărător…", no space — and
+      // straight into the options — „Rolfără rolCumpărător…", no space — and
       // /^Rol(\s|$)/ matched nothing (second run). The accessible name is „Rol".
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
-      await expect(role.locator("option:checked")).toHaveText("— fără rol —");
+      await expect(role.locator("option:checked")).toHaveText("fără rol");
 
       // Step 4 — one row: `PPERS…`, „Ion TC-E2E-ASSOC-01", „Fizică".
       await nameFilter.fill(MARK);
@@ -140,7 +140,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       // Step 10 — „Mod de deținere" is an inline select on the same row; the
       // qualifier survives a reload.
       const mod = page.getByRole("combobox", { name: `Mod de deținere — ${ROW}` });
-      for (const offered of ["— nespecificat —", "în nume propriu", "devălmășie", "indiviziune", "prin mandatar"]) {
+      for (const offered of ["nespecificat", "în nume propriu", "devălmășie", "indiviziune", "prin mandatar"]) {
         await expect(mod.locator("option", { hasText: offered })).toHaveCount(1);
       }
       await mod.selectOption({ label: "indiviziune" });

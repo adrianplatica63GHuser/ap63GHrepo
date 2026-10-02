@@ -377,14 +377,16 @@ export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
  * i.e. Field.Widths.v01), which Slice #37.30 took over v02's L; „000/00/00", the
  * longest (#37.14's measurement), holds at M. ⚠️ **Nr. tarla / sola stays at M,
  * not the note's S — rule 10, the longest value is a floor:** the longest tarla
- * („47/2") fits S, but the dropdown's own empty option „— niciunul —" needs
+ * („47/2") fits S, but the dropdown's own empty option „— niciunul —" needed
  * 107 px and S is 80 (TC-PROP-04's fixed-box check, e2e 20261001T010949Z-7174).
+ * Since #37.55 it reads „niciunul", in italics and without the dashes: about
+ * 90 px, still past S, so M still holds.
  * At M, M and M, Cod | Nr. tarla / sola | Nr. parcelă is 26.5rem — still one
  * row (rule 14), still a 3-unit Date cadastrale.
  */
 export const PROPERTY = {
   code: { step: "M", kind: "fixed", sample: "HHHH00000" }, //   „PROP00012"
-  tarlaId: { step: "M", kind: "select" }, //                    M: „— niciunul —" needs 107 px (see above); m: 3 options, longest „47/2"
+  tarlaId: { step: "M", kind: "select" }, //                    M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
   parcela: { step: "M", kind: "fixed", sample: "000/00/00" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
   nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
   surfaceAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, //  the box shows 1234567.89, no separators; m: 3 · 6
@@ -473,7 +475,9 @@ export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
  *             (#37.53: it used to be rounded up to the next STEP, so a CVC
  *             dropdown needing 157 px — „— fără valoare —" — was drawn at L,
  *             208 px. Measured on the six seeded forms: 49 of 49 dropdowns
- *             narrower, by 16 to 96 px.)
+ *             narrower, by 16 to 96 px. #37.55: the blank reads „fără
+ *             valoare", in italics, 120 px — no longer the widest choice of a
+ *             CVC dropdown, so „Da / Nu / Nu e menționat" is 9rem.)
  * A field whose JSON carries `width` (one of the scale's steps) takes that step
  * instead; its KIND still follows from its type. No form sets `width` today.
  *
@@ -539,7 +543,8 @@ export function selectStepFor(labels: readonly string[]): { step: Step; capped: 
 /**
  * A document type's own dropdown: as wide as `labels` need, rounded up to the
  * next 0.5rem, never narrower than S; past XXL, XXL and `capped`. (#37.53)
- * „Nu e menționat" needs 142 px → 9rem; „— fără valoare —" 157 px → 10rem.
+ * „Nu e menționat" needs 142 px → 9rem; the blank „fără valoare" (#37.55, in
+ * italics — Arial Italic has Arial's widths) 120 px → 7.5rem.
  * The step is the one that would have held it — what the box is, not its width.
  */
 export function templateSelectWidth(labels: readonly string[]): FieldWidth & { capped?: boolean } {
@@ -1020,9 +1025,9 @@ export const COLUMN = {
   tileDocType: { content: "M", kind: "wraps" }, //          a document's type, wrapping
   tileDocTitle: { content: 12, kind: "wraps" }, //          a document's title, wrapping
   tileCota: { content: 18.75, kind: "fixed" }, //           Cotă-parte, Suprafață echivalentă and Mod de deținere, stacked, at L — and the rest of the 6-unit tile (#37.31)
-  cota: { content: "L", kind: "fixed" }, //                 an input showing „— fără cotă —" when empty
-  cotaMp: { content: "L", kind: "fixed" }, //               „— fără suprafață —"
-  cotaMod: { content: "L", kind: "fixed" }, //              a dropdown, „— nespecificat —"
+  cota: { content: "L", kind: "fixed" }, //                 an input showing „fără cotă" (italic) when empty
+  cotaMp: { content: "L", kind: "fixed" }, //               „fără suprafață"
+  cotaMod: { content: "L", kind: "fixed" }, //              a dropdown, „nespecificat"
   // Documents
   documentType: { content: "XL", kind: "wraps" }, //        DOC.documentTypeId: longest 41 — wraps to two lines
   documentTitle: { content: "XXL", kind: "wraps" }, //      DOC.title: 105 · 151 · 73 — wraps

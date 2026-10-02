@@ -311,7 +311,7 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           >
-            <option value="">{t("rolePlaceholder")}</option>
+            <option value="" data-blank="">{t("rolePlaceholder")}</option>
             {pickerOptions.map((r) => (
               // `disabled` on a carried-but-unoffered role — see
               // `carried-roles-merge.ts`: the picker says the state, it does

@@ -285,3 +285,28 @@ body {
     box-shadow: 0 0 0 2px rgb(var(--ga-stage-halo) / 1);
   }
 }
+
+/* Slice #37.55 — „no value" reads one way everywhere: „fără valoare",
+   „fără rol", „niciunul" … in italics, without the long dashes that used to
+   wrap them, and every real choice in the regular font.
+
+   The blank choice carries `data-blank` — an <option>, or an <input> whose
+   placeholder stands for „nothing entered". A <select> is italic while its
+   blank choice is the chosen one (`:has(… :checked)` follows the selection,
+   so no component has to); in the open list only the blank option is italic,
+   which is why the others are set back to normal explicitly — an option
+   inherits the select's font, and the select is italic exactly when the list
+   is opened from the blank.
+
+   Chrome on Windows draws the open list itself and honours an option's
+   font-style (checked with a picture of the open list, #37.55). Arial Italic
+   has Arial's advance widths, so `textPx` (field-widths.ts) measures the
+   italic label as drawn. */
+option[data-blank],
+input[data-blank]::placeholder,
+select:has(option[data-blank]:checked) {
+  font-style: italic;
+}
+select:has(option[data-blank]) option:not([data-blank]) {
+  font-style: normal;
+}
