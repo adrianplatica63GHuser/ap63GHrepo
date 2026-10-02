@@ -166,13 +166,13 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(page.getByText("Câmp specific:")).toBeVisible();
       const totalBefore = await readTotal(page);
 
-      // Step 2 — „Adaugă act": „Act nou", „DATE GENERALE", „TAXE ȘI ONORARII",
+      // Step 2 — „Adaugă act": „Act nou", „DATE GENERALE", „DATE DE EMITERE" (#37.52: no type, so no fees group),
       // and „Tip document" starts empty.
       await page.getByRole("link", { name: "Adaugă act" }).click();
       await expect(page).toHaveURL(/\/documents\/new$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Act nou" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("DATE GENERALE").first()).toBeVisible();
-      await expect(page.getByText("TAXE ȘI ONORARII").first()).toBeVisible();
+      await expect(page.getByText("DATE DE EMITERE").first()).toBeVisible();
       const type = page.getByLabel(/^Tip document/);
       await expect(type).toHaveValue("");
 

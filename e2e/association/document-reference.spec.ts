@@ -70,7 +70,8 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page).toHaveURL(/\/documents\/new$/, { timeout: 30_000 });
       await page.getByLabel(/^Tip document/).selectOption({ label: "Certificat de Moștenitor" });
       await expect(page.getByText("DATE GENERALE").first()).toBeVisible();
-      await expect(page.getByText("TAXE ȘI ONORARII").first()).toBeVisible();
+      // #37.52: a type with no fees group titles that panel „Date de emitere".
+      await expect(page.getByText("DATE DE EMITERE").first()).toBeVisible();
       await expect(page.getByText("Acest tip de document nu are formular propriu", { exact: false })).toBeVisible();
       await expect(page.getByRole("tab", { name: "Instrument", exact: true })).toHaveCount(0);
 

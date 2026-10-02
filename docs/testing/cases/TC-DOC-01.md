@@ -37,7 +37,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — COD · TIP · TITLU — with the filters „Tip document: Toate tipurile", „Importanță:", „Relevanță:", „Câmp specific:", and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
-| 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „TAXE ȘI ONORARII". „Tip document" is a field inside „Date generale", and it starts **empty** |
+| 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „DATE DE EMITERE". „Tip document" is a field inside „Date generale", and it starts **empty** |
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Instrument", „Cadastru", „Stare juridică", „Conformitate" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
 | 5 | Scrolls down and presses „Salvează" | **The screen returns to „Acte"**, not to the new document. At the top, a row badged „Nou!", code beginning `DOC`, „Tip" = „Contract de Vânzare", „Titlu" = `TC-DOC-01 Contract de test`. The count at the foot goes up by one |
@@ -152,3 +152,5 @@ Seven corrections, and three of them would have stopped a spec dead:
 Also seen: the document screen's tabs PERSOANE and PROPRIETĂȚI sit **beside**
 ASOCIERI, not inside it — ASOCIERI holds the document-to-document references
 („Înscrisuri citate…"). TC-ASSOC-01 and TC-ASSOC-02 are corrected for that.
+
+**2026-10-02 — Slice #37.52.** Step 2's second section is „DATE DE EMITERE", no longer „TAXE ȘI ONORARII": with no type chosen there is no fees group, and #37.52 names that panel for what it holds. The spec reads the new title; nothing else in the case changed.
