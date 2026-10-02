@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -78,3 +78,8 @@ above unchanged.
 - Step 4: one line (30 px), above „Note extinse".
 - Both documents deleted (204, 204); nothing left. Nothing changed between the runs, so the case is
   confirmed, and `e2e/document/subject-grows.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/document/subject-grows.spec.ts` translates the case with
+Playwright's bounding boxes and real typing, and takes #37.51's pictures. Green on its first runner
+run, `20261002T133450Z-26136` on `6b9ccc9` (the spec, lint, tsc and the GrowingText and catalogue
+jest suites).
