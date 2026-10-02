@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -70,3 +70,7 @@ unchanged.
 - The pane's own remembered tiles put back exactly as they were; the document deleted (204);
   nothing left for `TC-DOC-05`. Nothing in the file changed, so the case is confirmed, and
   `e2e/document/cvc-tile-names.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/document/cvc-tile-names.spec.ts` translates the case and takes
+#37.54's pictures. Green on its first runner run, `20261002T153024Z-12630` on `ed4b4ac` (with
+TC-DOC-01's and TC-DOC-04's specs, which read the new names; jest `20261002T153427Z-31120`).

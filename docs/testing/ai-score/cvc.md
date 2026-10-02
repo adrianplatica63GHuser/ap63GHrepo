@@ -71,6 +71,8 @@ baseline. „All" also counts the keys that are still only proposed.
 | 2026-09-26 | `f0a24e2` | `8792170fe289` | 0 | — | **90.1 %** | 10 | Run 2, the provisional baseline |
 | 2026-09-26 | `f0a24e2` | `8792170fe289` | 0 | — | 90.1 % | 10 | Run 3, the repeat. It has the same total as run 2, but 6 items differ. |
 | 2026-09-27 | `1cfa97c` | `8792170fe289` | 0 | — | 91.8 % | 0 | Slice #37.06, `ai-rescore` of run 1 after the FU-234 repair: cvc-01 was repaired (2 quotes) and scored, 157/171. Runs 2 and 3 rescored unchanged at 90.1 %. Before the repair the same rescore gave 83.0 / 90.1 / 90.1 (runner `20260927T053532Z-30663`). |
+| 2026-10-02 | `e1b6031` | `8792170fe289` | 0 | — | 89.5 % | 10 | Slice #37.54's „before", runner `20261002T150927Z-30496`, on the form before its renames and the fees' new order. The prompt is the one runs 1–3 asked, so this is a fourth run of it. |
+| 2026-10-02 | `ed4b4ac` | `ec64d766719e` | 0 | — | 91.2 % | 10 | Slice #37.54's „after", runner `20261002T153516Z-17054`: the same fields with „Taxă timbru și publicitate" moved after „Impozit transfer" (the tile and panel names are not in the prompt). +1.7 points — inside the 2-point noise; `taxaTimbruPublicitate` 8/10 → 10/10, `onorariuNotarial` 9/10 → 8/10, `land.carteFunciara` 3/5 → 2/5. |
 
 **The baseline is provisional.** No answer key had been confirmed when these runs were made. Once
 Adrian confirms keys, `ai-rescore` re-scores all three runs without new reads. Its numbers go in a
