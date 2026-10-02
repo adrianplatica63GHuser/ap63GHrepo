@@ -70,9 +70,9 @@
  * WHAT IS DISPLAYED, AND WHAT IS COMPLETE
  * ---------------------------------------
  * Every file is named by its path from the chosen folder inclusive
- * (`displayPathOf`), and beside it the code of the document the archive already
- * holds — because that code is the only handle the user has on something they
- * cannot see in File Explorer. The lists are truncated on screen at four,
+ * (`displayPathOf`), with „→ în arhivă" and the title the archive files it under
+ * — never its system ID, which since #37.57 shows only in the corner of the
+ * document's own screen. The lists are truncated on screen at four,
  * exactly as the other three panels truncate, and NOT truncated in the saved
  * page: #26.01's contract restated, the data is complete and truncation is the
  * renderer's decision.
@@ -516,8 +516,8 @@ export function ImportPreexistingStage({
               // import — which is what the page is carried away to do.
               // ⚠️ The archived title goes on the printed line for the same
               // reason the property folders do, one comment up: the page is
-              // carried away to CHECK the import afterwards, and since #32.06
-              // the code alone does not say which document was matched.
+              // carried away to CHECK the import afterwards, and since #37.57
+              // the line names no code, so the title says which document was matched.
               const titled = row.title !== null && row.title.trim() !== ""
                 ? `${t("row.line", { path: row.path })} ${t("row.archivedTitle", { title: row.title })}`
                 : t("row.line", { path: row.path });
