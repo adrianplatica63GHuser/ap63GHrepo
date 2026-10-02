@@ -5,7 +5,7 @@
 | **Area** | ui |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -68,3 +68,5 @@ the file above unchanged; each screen loaded in turn and read with the same scri
 - Step 5: the four tables as in run 1; no code; this case's record in each; none in the sidebar.
 - The four records deleted (204 ×4). Nothing in the file changed, so the case is confirmed, and
   `e2e/ui/system-id.spec.ts` translates it.
+
+**2026-10-02 — `automated` (Slice #37.57).** `e2e/ui/system-id.spec.ts` green in the runner's full `20261002T222558Z-906` (e2e 56), on the commit that also carries the fixes below it; the slice's pictures are its own.

@@ -67,43 +67,43 @@ fixed fixture where the existing one will do.
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-10-01 | `e2e/auth/login-dashboard.spec.ts` |
 | [TC-AUTH-02](cases/TC-AUTH-02.md) | Un cont „user" lucrează zilnic și nu poate administra | auth | authz | — | `draft` | — | — |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-09-25 | `e2e/property/property-create.spec.ts` |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-02 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
-| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-09-25 | `e2e/property/property-from-coord-file.spec.ts` |
+| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-10-02 | `e2e/property/property-from-coord-file.spec.ts` |
 | [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
 | [TC-PROP-05](cases/TC-PROP-05.md) | A doua proprietate pentru aceeași parcelă este refuzată | property | negative | — | `driven` | 2026-09-27 | — |
-| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-09-23 | `e2e/person/person-create.spec.ts` |
-| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-09-30 | `e2e/person/company-create-edit.spec.ts` |
+| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-02 | `e2e/person/person-create.spec.ts` |
+| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-02 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
-| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-09-23 | `e2e/document/document-page.spec.ts` |
+| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-10-02 | `e2e/document/document-page.spec.ts` |
 | [TC-DOC-02](cases/TC-DOC-02.md) | Un „Subiect" pe mai multe rânduri împinge „Note extinse" în jos, în vizualizare și în editare | document | happy | — | `automated` | 2026-10-02 | `e2e/document/subject-grows.spec.ts` |
 | [TC-DOC-03](cases/TC-DOC-03.md) | Un PAD: „Detalii act", „Date de emitere", fără „Câmpuri specifice tipului de document", „Data autentificării" pe un rând | document | happy | — | `automated` | 2026-10-02 | `e2e/document/type-fields-tile.spec.ts` |
 | [TC-DOC-04](cases/TC-DOC-04.md) | Listele derulante ale unui CVC: cât cea mai lungă alegere, trei pe rând | document | happy | — | `automated` | 2026-10-02 | `e2e/document/template-dropdowns.spec.ts` |
 | [TC-DOC-05](cases/TC-DOC-05.md) | Filele și panourile unui CVC, fiecare cu un singur nume; „Taxă timbru și publicitate" ultima | document | happy | — | `automated` | 2026-10-02 | `e2e/document/cvc-tile-names.spec.ts` |
 | [TC-DOC-06](cases/TC-DOC-06.md) | „Fără valoare" în cursive, fără liniuțe; listele derulante ale unui CVC trei pe rând, în română ca în engleză | document | happy | — | `automated` | 2026-10-02 | `e2e/document/blank-choice.spec.ts` |
-| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
-| [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
-| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-document.spec.ts` |
-| [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-person.spec.ts` |
-| [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `automated` | 2026-09-25 | `e2e/association/property-document.spec.ts` |
-| [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `automated` | 2026-09-25 | `e2e/association/company-property.spec.ts` |
-| [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `automated` | 2026-09-25 | `e2e/association/document-reference.spec.ts` |
-| [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `automated` | 2026-09-27 | `e2e/association/property-reference.spec.ts` |
-| [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite corect din ambele capete | association | happy | — | `automated` | 2026-09-30 | `e2e/association/person-person.spec.ts` |
-| [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `automated` | 2026-09-26 | `e2e/association/company-document.spec.ts` |
-| [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-09-30 | `e2e/association/company-person.spec.ts` |
-| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-09-26 | `e2e/association/certificate-parties.spec.ts` |
+| [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-02 | `e2e/association/document-person.spec.ts` |
+| [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-02 | `e2e/association/document-property.spec.ts` |
+| [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-02 | `e2e/association/person-document.spec.ts` |
+| [TC-ASSOC-04](cases/TC-ASSOC-04.md) | Persoană asociată proprietății, cu rol, văzută din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/property-person.spec.ts` |
+| [TC-ASSOC-05](cases/TC-ASSOC-05.md) | Act asociat proprietății, din ecranul proprietății | association | happy | — | `automated` | 2026-10-02 | `e2e/association/property-document.spec.ts` |
+| [TC-ASSOC-06](cases/TC-ASSOC-06.md) | Firmă proprietară a unui teren | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-property.spec.ts` |
+| [TC-ASSOC-07](cases/TC-ASSOC-07.md) | Act legat manual de înscrisul pe care îl citează, citit în sensul corect | association | happy | — | `automated` | 2026-10-02 | `e2e/association/document-reference.spec.ts` |
+| [TC-ASSOC-08](cases/TC-ASSOC-08.md) | Proprietate inclusă în alta, citită din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/property-reference.spec.ts` |
+| [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite corect din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/person-person.spec.ts` |
+| [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-document.spec.ts` |
+| [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-person.spec.ts` |
+| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-10-02 | `e2e/association/certificate-parties.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-10-01 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-IMP-04](cases/TC-IMP-04.md) | Folderele speciale „comune” și „flotante” | import | happy | `11.mixed.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
-| [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-09-23 | `e2e/search/global-search.spec.ts` |
+| [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-10-02 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
-| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-09-25 | `e2e/tag/tag-property.spec.ts` |
+| [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-10-02 | `e2e/tag/tag-property.spec.ts` |
 | [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `automated` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
-| [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-09-26 | `e2e/versioning/person-versioning.spec.ts` |
-| [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-09-26 | `e2e/versioning/document-versioning.spec.ts` |
+| [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
+| [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
@@ -128,10 +128,10 @@ fixed fixture where the existing one will do.
 | [TC-ICON-05](cases/TC-ICON-05.md) | O etichetă redenumită cu creionul, două fuzionate, o ștampilă aplicată, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-admin.spec.ts` |
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
-| [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `confirmed` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
+| [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Forty-five are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.56, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03, TC-DOC-02–06 and TC-TILES-07 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Forty-six are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.57, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03, TC-DOC-02–06, TC-TILES-07 and TC-SYSID-01 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

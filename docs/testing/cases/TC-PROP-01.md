@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-09-25 |
+| **Last green** | 2026-10-02 |
 
 ## What this proves
 
@@ -136,4 +136,4 @@ Also noted: the property detail screen reached from the list shows „Cod" as a 
 `PROP01620`, and the form's own tabs are „DETALII", „ASOCIERI", „PERSOANE", „ACTE",
 „META INFO".
 
-**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists no longer show it — „Proprietăți — Listă" has no „Cod" column. The steps above that read a code or a „Cod" column were rewritten to match; the search boxes' placeholders („caută după cod…") are unchanged — they still search by code. The spec follows; the runner's `full` decides the date.
+**2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists no longer show it — „Proprietăți — Listă" has no „Cod" column. The steps above that read a code or a „Cod" column were rewritten to match; the search boxes' placeholders („caută după cod…") are unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
