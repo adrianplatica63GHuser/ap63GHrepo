@@ -80,7 +80,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-03](cases/TC-DOC-03.md) | Un PAD: „Detalii act", „Date de emitere", fără „Câmpuri specifice tipului de document", „Data autentificării" pe un rând | document | happy | — | `automated` | 2026-10-02 | `e2e/document/type-fields-tile.spec.ts` |
 | [TC-DOC-04](cases/TC-DOC-04.md) | Listele derulante ale unui CVC: cât cea mai lungă alegere, trei pe rând | document | happy | — | `automated` | 2026-10-02 | `e2e/document/template-dropdowns.spec.ts` |
 | [TC-DOC-05](cases/TC-DOC-05.md) | Filele și panourile unui CVC, fiecare cu un singur nume; „Taxă timbru și publicitate" ultima | document | happy | — | `automated` | 2026-10-02 | `e2e/document/cvc-tile-names.spec.ts` |
-| [TC-DOC-06](cases/TC-DOC-06.md) | „Fără valoare" în cursive, fără liniuțe; listele derulante ale unui CVC trei pe rând, în română ca în engleză | document | happy | — | `confirmed` | 2026-10-02 | `e2e/document/blank-choice.spec.ts` |
+| [TC-DOC-06](cases/TC-DOC-06.md) | „Fără valoare" în cursive, fără liniuțe; listele derulante ale unui CVC trei pe rând, în română ca în engleză | document | happy | — | `automated` | 2026-10-02 | `e2e/document/blank-choice.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-09-23 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-09-25 | `e2e/association/person-document.spec.ts` |
@@ -128,8 +128,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 
-**Forty-three are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.54, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03 and TC-DOC-02–05 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Forty-four are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-02 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.55, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03 and TC-DOC-02–06 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

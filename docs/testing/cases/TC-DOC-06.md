@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -83,3 +83,7 @@ as run 2 left it, unchanged.
   3,3,3,3,2 and 2,3,3,2. Step 6 in English: 36 „no value", italic; the same rows.
 - The interface put back to English; the document deleted (204). Nothing in the file changed, so
   the case is confirmed, and `e2e/document/blank-choice.spec.ts` translates it.
+
+**2026-10-02 — `automated`.** `e2e/document/blank-choice.spec.ts` translates the case and takes
+#37.55's pictures. Green on its first runner run, `20261002T191704Z-32333` on `876cea0` (a whole
+`full`: e2e 54 passed, lint, tsc, jest 208 suites).
