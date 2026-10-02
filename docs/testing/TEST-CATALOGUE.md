@@ -120,6 +120,7 @@ fixed fixture where the existing one will do.
 | [TC-ICON-04](cases/TC-ICON-04.md) | Unghiurile pornite și oprite, un punct adăugat și mutat mai sus, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-property-tools.spec.ts` |
 | [TC-ICON-05](cases/TC-ICON-05.md) | O etichetă redenumită cu creionul, două fuzionate, o ștampilă aplicată, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-admin.spec.ts` |
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
+| [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `confirmed` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 
 **Thirty-seven are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-01 (Slices
 #37.38, #37.40 and #37.42–#37.47, which added TC-MAP-01, TC-FOLD-01 and TC-ICON-01–06 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
