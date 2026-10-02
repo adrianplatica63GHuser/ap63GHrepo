@@ -43,21 +43,21 @@ type Allowed = [id: string, childrenStart: string];
 
 const ALLOW: Record<string, Allowed[]> = {
   "src/app/(all-roles)/admin/global-search/_components/global-search-view.tsx": [
-    ["A113", "{row.code}"],
+    ["A113", "{row.entityType === \"PROPERTY\" ? propertyLabel(row, nameOr(n"], // #37.57: the name is the link
   ],
   "src/app/_components/dashboard-client.tsx": [
     ["A113", "{data === undefined ? ( <Skeleton className=\"h-8 w-12\" /"],
-    ["A113", "{doc.code}"],
+    ["A113", "{nameOr(doc.title, \"document\")}"], // #37.57: the title is the link
     ["A113", "<span className=\"font-bold\">{data.persons}</span> <span>"],
     ["A113", "<span className=\"font-bold\">{data.properties}</span> <sp"],
     ["A113", "<span className=\"font-bold\">{data.documents}</span> <spa"],
-    ["A113", "{item.displayName}"],
+    ["A113", "{nameOr(item.displayName, item.entityType)}"],
   ],
   "src/app/account/change-password/change-password-form.tsx": [
     ["A108", "{state === \"saving\" ? t(\"buttonSaving\") : t(\"buttonSave\""],
   ],
   "src/app/admin/calculation/_components/calculation-view.tsx": [
-    ["A113", "{p.code} {p.nickname ? ` — ${p.nickname}` : \"\"}"],
+    ["A113", "{nameOr(p.nickname, \"property\")}"], // #37.57: no system ID
   ],
   "src/app/admin/groups/_components/groups-list-view.tsx": [
     ["A110", "{deleteMutation.isPending ? t(\"confirm.deleting\") : t(\"c"],
@@ -163,7 +163,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A108", "{loading ? buttonSigningIn : buttonSignIn}"],
   ],
   "src/app/natural-persons/_components/natural-person-form.tsx": [
-    ["A113", "{linkedIdCard.code} →"],
+    ["A113", "{nameOr(linkedIdCard.title, \"document\")} →"], // #37.57: the card by its title
     ["A110", "{noLabel}"],
     ["A110", "{yesLabel}"],
   ],
@@ -215,7 +215,7 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/components/entity-metadata-tab.tsx": [
     ["A113", "<span className=\"font-mono text-xs rounded border border"],
     ["A113", "<span className=\"font-mono text-xs rounded border border"],
-    ["A113", "{ref.peerName ?? ref.peerCode}"],
+    ["A113", "{nameOr(ref.peerName, unnamedKindOf(ref.peerType))}"], // #37.57
     ["A110", "{labelCancel}"],
     ["A110", "{labelOk}"],
   ],

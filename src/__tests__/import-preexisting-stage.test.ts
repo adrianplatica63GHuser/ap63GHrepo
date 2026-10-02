@@ -282,16 +282,20 @@ describe("the Pre-existing stage's copy", () => {
     }
   });
 
-  it("names the archived document in the row, in both places it is drawn", () => {
-    // `row.existing` is the screen and `row.line` is the saved page, and both
-    // have to carry the CODE — it is the only handle the user has on a document
-    // they cannot go and look at in File Explorer.
+  it("names the archived document in the row by its title, in both places it is drawn", () => {
+    // `row.existing` is the screen and `row.line` is the saved page. Until
+    // Slice #37.57 both carried the CODE — „it is the only handle the user has
+    // on a document they cannot go and look at in File Explorer". Adrian,
+    // #37.57: the system ID is shown in one place only, the record's first
+    // panel. So both say „→ în arhivă" with no value, and the handle is the
+    // archived TITLE beside them (and the search boxes, which still match a
+    // code typed into them).
     for (const file of LOCALES) {
       const copy = loadCopy(file);
-      expect([...scanIcu(String(at(copy, "row.existing"))).args]).toEqual(["code"]);
-      expect([...scanIcu(String(at(copy, "row.line"))).args].sort()).toEqual(["code", "path"]);
+      expect([...scanIcu(String(at(copy, "row.existing"))).args]).toEqual([]);
+      expect([...scanIcu(String(at(copy, "row.line"))).args].sort()).toEqual(["path"]);
       // Slice #32.06: and the archived TITLE, which is what tells the user
-      // whether the code they were just handed is the document they meant.
+      // whether the document matched is the one they meant.
       expect([...scanIcu(String(at(copy, "row.archivedTitle"))).args]).toEqual(["title"]);
     }
   });

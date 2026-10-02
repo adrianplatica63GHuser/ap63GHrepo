@@ -78,7 +78,8 @@ describe("the parcel-conflict copy", () => {
 
   it.each(LOCALES)("%s interpolates exactly what the panel hands each sentence", (file) => {
     const copy = loadCopy(file);
-    expect([...scanIcu(String(copy.parcelTaken)).args]).toEqual(["code"]);
+    // #37.57: no system ID — the button under it opens the property.
+    expect([...scanIcu(String(copy.parcelTaken)).args]).toEqual([]);
     expect([...scanIcu(String(copy.parcelTakenSeveral)).args].sort()).toEqual(
       ["count", "parcela", "tarla"],
     );
@@ -385,7 +386,7 @@ describe("the branch that uses it", () => {
       "&& (panelState.matchCount > 1 || !panelState.link);",
     );
     expect(panel).toContain(
-      '{!severalMatches && panelState.link ? t("parcelTaken", { code: panelState.link.propertyCode })',
+      '{!severalMatches && panelState.link ? t("parcelTaken")',
     );
     expect(panel).toContain(
       '{severalMatches ? t("parcelTakenSeveralWhatToDo") : t("parcelTakenWhatToDo")}',

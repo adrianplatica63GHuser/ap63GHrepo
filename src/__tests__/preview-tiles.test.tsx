@@ -27,7 +27,6 @@ function renderBody(image?: { url: string; mimeType: string | null } | null) {
   return render(
     <PreviewTileBody
       title="Contract de vânzare"
-      code="DOC04388"
       fields={[
         { label: "Tip document", value: "Contract de Vânzare" },
         { label: "Subiect", value: "Teren arabil" },
@@ -84,7 +83,7 @@ describe("„Deschide” asks about unsaved work first (#37.24, TC-TILES-05 step
   it("a plain click goes through the screen's guarded navigation, not straight to the link", () => {
     const opened: string[] = [];
     render(
-      <PreviewTileBody title="Ion" code="PPERS1" fields={[]} openHref="/natural-persons/1?readonly=true" labels={LABELS} onClose={() => {}} onOpen={(h) => opened.push(h)} width="panel" />,
+      <PreviewTileBody title="Ion" fields={[]} openHref="/natural-persons/1?readonly=true" labels={LABELS} onClose={() => {}} onOpen={(h) => opened.push(h)} width="panel" />,
     );
     const link = screen.getByRole("link", { name: "Deschide" });
     const plain = fireEvent.click(link);

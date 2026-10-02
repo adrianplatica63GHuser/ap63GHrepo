@@ -505,11 +505,11 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     return rows;
   }
 
-  it("draws exactly the rows the file names: Denumire — Poreclă | Tip — ID | CUI | Nr. Reg. Com. — Note", () => {
+  it("draws exactly the rows the file names: Denumire — Poreclă | Tip — CUI | Nr. Reg. Com. — Note (#37.57: no ID)", () => {
     expect(SCREEN_ROWS.judicialPerson.identity).toEqual([
       ["name"],
       ["nickname", "judicialPersonTypeId"],
-      ["code", "cuiNumber", "tradeRegisterNumber"],
+      ["cuiNumber", "tradeRegisterNumber"],
       ["notes"],
     ]);
     expect(rowsOf(identity)).toEqual(SCREEN_ROWS.judicialPerson.identity.map((r) => [...r]));
@@ -522,7 +522,9 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
 
   it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2, Adresă 3", () => {
     expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(26.5);
-    expect(rowRem([JP.code, JP.cuiNumber, JP.tradeRegisterNumber])).toBe(26.5);
+    // #37.57: the system ID left this row for the heading's corner; Poreclă | Tip still makes it 3.
+    expect(rowRem([JP.cuiNumber, JP.tradeRegisterNumber])).toBe(17.5);
+    expect("code" in JP).toBe(false);
     expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 2, address: 3 });
     expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(26.5);
     expect(unitsInnerRem(2)).toBeLessThan(26.5);
@@ -594,7 +596,10 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
   });
 
   it("each tile is whole units: Date cadastrale 3, Adresă 3, Puncte de contur 4, Hartă and Street View 3", () => {
-    expect(rowRem([PROPERTY.code, PROPERTY.tarlaId, PROPERTY.parcela])).toBe(26.5);
+    // #37.57: the system ID left the first row for the heading's corner; the panel stays 3.
+    expect(rowRem([PROPERTY.tarlaId, PROPERTY.parcela])).toBe(17.5);
+    expect("code" in PROPERTY).toBe(false);
+    expect(SCREEN_ROWS.property.cadastral[0]).toEqual(["tarlaId", "parcela"]);
     expect(PANEL_UNITS.property).toEqual({ cadastral: 3, address: 3, corners: 4, map: 3, streetView: 3 });
     expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(3));
     expect(MAP_BOX_STYLE.height).toBe("22rem");
@@ -1151,10 +1156,11 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
     expect(boxesUnits(["searchText"])).toBe(2);
     expect(boxesUnits(["role"])).toBe(2);
     expect(boxesUnits([])).toBe(2);
-    const person = ["select", "code", "personName", "personType"] as const;
-    const doc = ["select", "code", "documentType", "documentTitle"] as const;
-    const prop = ["select", "code", "propertyLabel"] as const;
-    expect([tableUnits(person), tableUnits(doc), tableUnits(prop)]).toEqual([4, 6, 4]);
+    // #37.57: no „Cod" column — a record's system ID is on its own screen only.
+    const person = ["select", "personName", "personType"] as const;
+    const doc = ["select", "documentType", "documentTitle"] as const;
+    const prop = ["select", "propertyLabel"] as const;
+    expect([tableUnits(person), tableUnits(doc), tableUnits(prop)]).toEqual([4, 5, 3]);
     expect(3 + tableUnits(person) + 2).toBeLessThanOrEqual(10);
     expect(2 + tableUnits(doc) + 2).toBeLessThanOrEqual(10);
     // One unit fewer would not hold the table, and the fill column keeps at least its own width.
@@ -1230,7 +1236,8 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     // The old card (rounded-xl, a grey header band) and #37.22's widths are gone.
     expect(src).not.toMatch(/rounded-xl|PANEL_REM|screenPanel\(|data-panel-row/);
     expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(3));
-    expect(tableUnits(["code", "documentType", "documentTitle", "date", "expiryStatus"])).toBe(8);
+    // #37.57: no „Cod" — the title is the link; the tile stays 8 units, the title filling it.
+    expect(tableUnits(["documentType", "documentTitle", "date", "expiryStatus"])).toBe(8);
   });
 
   it("with nothing stored all four show — the page as it was", () => {

@@ -79,7 +79,7 @@ function row(patch: Partial<OutcomeRow> = {}): OutcomeRow {
   return {
     status: "done",
     isCoordinate: false,
-    cornerPropertyCode: null,
+    cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
     canLinkPerson: true,
@@ -190,8 +190,8 @@ describe("inResultOrder", () => {
 describe("coordinateNote", () => {
   it("says which Property the corners built, and how many", () => {
     expect(
-      coordinateNote(row({ isCoordinate: true, cornerPropertyCode: "PROP-AA", cornerCount: 4 })),
-    ).toEqual({ id: "coordinateApplied", values: { code: "PROP-AA", count: 4 } });
+      coordinateNote(row({ isCoordinate: true, cornerPropertyName: "PROP-AA", cornerCount: 4 })),
+    ).toEqual({ id: "coordinateApplied", values: { name: "PROP-AA", count: 4 } });
   });
 
   it("says the corners were NOT taken up when this file built nothing", () => {
@@ -206,7 +206,7 @@ describe("coordinateNote", () => {
   });
 
   it("says nothing at all about a file that is not coordinate-named", () => {
-    expect(coordinateNote(row({ cornerPropertyCode: "PROP-AA" }))).toBeNull();
+    expect(coordinateNote(row({ cornerPropertyName: "PROP-AA" }))).toBeNull();
   });
 
   it("⚠️ is still said on a row the archive already held", () => {
@@ -216,14 +216,14 @@ describe("coordinateNote", () => {
     // "already in the system".
     expect(
       coordinateNote(
-        row({ isCoordinate: true, preexisting: "linked", cornerPropertyCode: "PROP-AB", cornerCount: 6 }),
+        row({ isCoordinate: true, preexisting: "linked", cornerPropertyName: "PROP-AB", cornerCount: 6 }),
       ),
-    ).toEqual({ id: "coordinateApplied", values: { code: "PROP-AB", count: 6 } });
+    ).toEqual({ id: "coordinateApplied", values: { name: "PROP-AB", count: 6 } });
   });
 
   it("makes no claim about a row that never reached the archive", () => {
     expect(
-      coordinateNote(row({ status: "error", isCoordinate: true, cornerPropertyCode: "PROP-AA" })),
+      coordinateNote(row({ status: "error", isCoordinate: true, cornerPropertyName: "PROP-AA" })),
     ).toBeNull();
     expect(coordinateNote(row({ status: "importing", isCoordinate: true }))).toBeNull();
   });
@@ -449,7 +449,7 @@ describe("outcomeNotes", () => {
     const notes = outcomeNotes(
       row({
         isCoordinate: true,
-        cornerPropertyCode: "PROP-AA",
+        cornerPropertyName: "PROP-AA",
         cornerCount: 3,
         isIdCard: true,
         personId: "p1",
@@ -477,7 +477,7 @@ describe("what the row says about the document TYPE's form", () => {
   const row = (over: Partial<OutcomeRow> = {}): OutcomeRow => ({
     status: "done",
     isCoordinate: false,
-    cornerPropertyCode: null,
+    cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
     canLinkPerson: false,
@@ -562,7 +562,7 @@ describe("what the row says about being read again", () => {
   const row = (over: Partial<OutcomeRow> = {}): OutcomeRow => ({
     status: "done",
     isCoordinate: false,
-    cornerPropertyCode: null,
+    cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
     canLinkPerson: false,
@@ -848,7 +848,7 @@ describe("summariseImportRun", () => {
         srow({
           status: "error",
           isCoordinate: true,
-          cornerPropertyCode: "PROP-AA",
+          cornerPropertyName: "PROP-AA",
           aiProcessed: true,
           aiFieldCount: 9,
           personId: "p1",
@@ -952,7 +952,7 @@ describe("summariseImportRun", () => {
 
   it("counts a coordinate file that built a Property even where the archive held the document", () => {
     const summary = summariseImportRun(
-      [srow({ isCoordinate: true, preexisting: "linked", cornerPropertyCode: "PROP-AA" })],
+      [srow({ isCoordinate: true, preexisting: "linked", cornerPropertyName: "PROP-AA" })],
       1,
     );
     expect(summary.coordinateFilesApplied).toBe(1);
@@ -1385,7 +1385,7 @@ describe("the result screen's copy", () => {
     // an id added to `OUTCOME_NOTE_IDS` and not to this map is asserted to take
     // none, which fails loudly the moment its message interpolates anything.
     const NOTE_ARGS: Partial<Record<(typeof OUTCOME_NOTE_IDS)[number], string[]>> = {
-      coordinateApplied: ["code", "count"],
+      coordinateApplied: ["name", "count"],
       // Slice #34.08 — one contract can create a company, create a natural
       // person and link a second, so each of the four is a COUNT rather than a
       // bare sentence. `partyNotes` passes exactly `count` on all four.

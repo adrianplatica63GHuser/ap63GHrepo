@@ -18,7 +18,6 @@ function renderPerson(width: "panel" | "pages" = "panel") {
   return render(
     <PreviewTileBody
       title="Ion Exemplu"
-      code="PPERS1"
       fields={[
         { label: "Nume", value: "Exemplu", width: NATURAL_PERSON.lastName, row: 0 },
         { label: "Prenume", value: "Ion", width: NATURAL_PERSON.firstName, row: 0 },

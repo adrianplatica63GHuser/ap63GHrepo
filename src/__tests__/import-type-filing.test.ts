@@ -33,7 +33,7 @@ function row(patch: Partial<OutcomeRow> = {}): OutcomeRow {
   return {
     status: "done",
     isCoordinate: false,
-    cornerPropertyCode: null,
+    cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
     canLinkPerson: true,

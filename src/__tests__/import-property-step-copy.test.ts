@@ -192,9 +192,10 @@ describe("the property step's copy", () => {
       // `{folders}` list because it speaks about several folders at once.
       coordinateNotDeclared: ["count"],
       willCreate: ["corners"],
-      alreadyExists: ["code", "nickname"],
-      confirmLink: ["code", "count"],
-      confirmCorners: ["code", "count"],
+      // #37.57: the property by its nickname — never its system ID.
+      alreadyExists: ["nickname"],
+      confirmLink: ["count", "name"],
+      confirmCorners: ["count", "name"],
       cornersKept: ["existing", "offered"],
       cornersAlreadyApplied: ["count"],
       cornersKeptNoFile: ["existing"],
@@ -222,7 +223,6 @@ describe("the property step's copy", () => {
     const order: Record<string, string[]> = {
       cadastral: ["tarla", "parcela"],
       progress: ["done", "total"],
-      alreadyExists: ["code", "nickname"],
       cornersKept: ["existing", "offered"],
     };
     for (const [key, args] of Object.entries(order)) {
@@ -371,11 +371,11 @@ describe("the property step's copy", () => {
         });
       }
       // …and the property is named in EVERY branch, including `=0` and `one`.
-      // Stripping `{code}` from `few` alone also stayed green, and `few` is
+      // Stripping `{name}` (#37.57: it was `{code}`) from `few` alone also stayed green, and `few` is
       // counts 2–19: the commonest property subfolder there is.
       for (const category of ["=0", "one", ...counted]) {
         const branch = pluralBranch(message, category);
-        expect({ file, category, branch, named: branch.includes("{code}") }).toEqual({
+        expect({ file, category, branch, named: branch.includes("{name}") }).toEqual({
           file,
           category,
           branch,

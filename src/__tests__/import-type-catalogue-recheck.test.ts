@@ -93,7 +93,7 @@ const recheckPatch = (over: Partial<Parameters<typeof typeFormPatchAfterRecheck>
 const row = (over: Partial<SummaryRow> = {}): SummaryRow => ({
   status: "done",
   isCoordinate: false,
-  cornerPropertyCode: null,
+  cornerPropertyName: null,
   cornerCount: 0,
   isIdCard: false,
   canLinkPerson: false,
