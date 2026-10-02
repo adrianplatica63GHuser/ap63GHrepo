@@ -129,8 +129,9 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
       // `.last()`: each corner row carries its own „Șterge", and the form's is
-      // the one at the very bottom, below the map (TC-PROP-01's step 10).
-      await page.getByRole("button", { name: "Șterge", exact: true }).last().click();
+      // the one at the very bottom, below the map (TC-PROP-01's step 10). Since #37.56 the corners
+      // stand in the right-hand column, after the form in the page: the left area's last one.
+      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last().click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți proprietatea?" });
       await confirm.getByRole("button", { name: "Da", exact: true }).click();
       await expect(page).toHaveURL(/\/properties$/, { timeout: 30_000 });

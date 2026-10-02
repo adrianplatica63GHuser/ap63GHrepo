@@ -189,9 +189,15 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
         }
         return urls;
       };
+      // #37.56: at 1920 px, where the map's column stands beside the cadastral data and the
+      // owners. At Playwright's 1280 the column goes under them, below the fold, and Google
+      // Maps does not start a map nobody can see — so the control would count nothing.
+      const before = page.viewportSize();
+      await page.setViewportSize({ width: 1920, height: 1080 });
       const withMap = await seen();
       await hideTile(page, "Hartă");
       const withoutMap = await seen();
+      if (before) await page.setViewportSize(before);
       await expect(page.getByRole("region", { name: "Hartă", exact: true })).toHaveCount(0);
       const tally = (urls: string[]) => ({ all: urls.length, mapLoads: urls.filter((u) => MAP_LOAD.test(u)).length });
       // Printed for the handover: host and path only, never a query string (the API key).

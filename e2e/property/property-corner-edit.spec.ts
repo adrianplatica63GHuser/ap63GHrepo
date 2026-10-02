@@ -148,7 +148,9 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       await expect(page.getByRole("status").filter({ hasText: "Modificări nesalvate" })).toBeVisible();
 
       // Step 4 — the form's „Salvează": stays, „v 1", „2 versiuni".
-      await page.getByRole("button", { name: "Salvează", exact: true }).last().click();
+      // #37.56: the corners stand in the right-hand column, after the form in the page, so the
+      // form's buttons are looked for in the left area.
+      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Salvează", exact: true }).last().click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`));
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();
@@ -169,7 +171,7 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       // ── At the end — made for this run, so deleted: „Șterge", „Da" ───────
       await page.reload();
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("button", { name: "Șterge", exact: true }).last().click();
+      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last().click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți proprietatea?" });
       await confirm.getByRole("button", { name: "Da", exact: true }).click();
       await expect(page).toHaveURL(/\/properties$/, { timeout: 30_000 });

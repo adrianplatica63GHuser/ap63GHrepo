@@ -137,7 +137,7 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       await expect(rows.nth(3)).toContainText("319355.12");
 
       // Step 6 — the floppy disk: „v 1", „2 versiuni", the order kept.
-      await page.getByRole("button", { name: "Salvează", exact: true }).last().click();
+      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Salvează", exact: true }).last().click(); // #37.56: the form's, not a corner row's
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();
       await expect(rows.nth(2)).toContainText("319340.00");

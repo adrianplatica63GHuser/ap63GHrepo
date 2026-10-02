@@ -142,8 +142,9 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByText("Niciun document asociat")).toBeVisible({ timeout: 15_000 });
       await page.goto(`/documents/${certificateId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      // `.last()`: the form's „Șterge" is at the bottom; „Pagini" rows carry their own.
-      await page.getByRole("button", { name: "Șterge", exact: true }).last().click();
+      // `.last()`: the form's „Șterge" is at the bottom; „Pagini" rows carry their own, and since
+      // #37.56 stand in the right-hand column, after the form in the page: the left area's last one.
+      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last().click();
       await page.getByRole("dialog", { name: "Ștergeți actul?" }).getByRole("button", { name: "Da", exact: true }).click();
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
     } finally {

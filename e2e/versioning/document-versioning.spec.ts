@@ -116,7 +116,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       // ── At the end — „Șterge", „Da" to „Ștergeți actul?" ─────────────────
       await listed.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: titled("Unu") })).toBeVisible({ timeout: 30_000 });
-      await page.getByRole("button", { name: "Șterge", exact: true }).last().click();
+      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last().click(); // #37.56: not a page's, in the right-hand column
       const confirm = page.getByRole("dialog", { name: "Ștergeți actul?" });
       await confirm.getByRole("button", { name: "Da", exact: true }).click();
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
