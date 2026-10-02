@@ -123,9 +123,9 @@ describe("the natural-person form mirrors the judicial-person form", () => {
     );
   });
 
-  it("passes the hint on the field itself, and only when locked", () => {
-    expect(NATURAL).toMatch(/hint=\{cnpIsLocked \? t\("hints\.cnpLocked"\) : undefined\}/);
-    expect(JUDICIAL).toMatch(/hint=\{cuiIsLocked \? t\("hints\.cuiLocked"\) : undefined\}/);
+  it("passes the hint on the field itself, and only when locked — as a bubble since #37.50", () => {
+    expect(NATURAL).toMatch(/bubble=\{cnpIsLocked \? t\("hints\.cnpLocked"\) : undefined\}/);
+    expect(JUDICIAL).toMatch(/bubble=\{cuiIsLocked \? t\("hints\.cuiLocked"\) : undefined\}/);
   });
 
   it("puts the hint on the CNP field, and leaves that field editable", () => {
@@ -171,5 +171,69 @@ describe("the natural-person form mirrors the judicial-person form", () => {
       expect(props).not.toBeNull();
       expect(props![0]).not.toMatch(/\b(disabled|readOnly)\b/);
     }
+  });
+});
+
+/** The body of a form's own `function Field(…)`, comments already stripped. */
+function fieldBody(source: string): string {
+  const start = source.indexOf("function Field(");
+  expect(start).toBeGreaterThan(-1);
+  const end = source.indexOf("\n}\n", start);
+  expect(end).toBeGreaterThan(start);
+  return source.slice(start, end);
+}
+
+describe("the lock note is a bubble, not a line under the field (Slice #37.50)", () => {
+  it.each([
+    ["natural", NATURAL],
+    ["judicial", JUDICIAL],
+  ])("%s: Field prints no hint under the box — the sentence goes to HintBubble, with no ⓘ", (_which, source) => {
+    const body = fieldBody(source);
+    // The permanent caption #32.18 drew is gone.
+    expect(body).not.toMatch(/\bhint\b/);
+    expect(body).not.toContain("text-xs text-fade");
+    // The bubble, only when there is a sentence, its text the field's description.
+    expect(body).toMatch(/\{bubble \? \(\s*<HintBubble id=\{bubbleId\} text=\{bubble\}>/);
+    expect(body).not.toContain("triggerLabel");
+    expect(body).toContain("const describedBy = bubble ? bubbleId : undefined;");
+    expect(body.split("aria-describedby={describedBy}").length - 1).toBe(2);
+    // Named by its label alone: the sentence sits inside the <label>.
+    expect(body).toContain("<span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>");
+    expect(body.split("aria-labelledby={labelledBy}").length - 1).toBe(2);
+  });
+
+  it("no bubble without a saved value or in view mode — the same lock as before", () => {
+    // Unchanged from #32.18: the flag is false on a new person (no initialValues),
+    // an empty CNP (trim), and wherever the fieldset is disabled (effectiveMode).
+    expect(NATURAL).toMatch(/const cnpIsLocked\s*=\s*effectiveMode === "edit" && Boolean\(initialValues\?\.cnp\?\.trim\(\)\)/);
+    expect(JUDICIAL).toMatch(/const cuiIsLocked\s*=\s*mode === "edit" && Boolean\(initialValues\?\.cuiNumber\?\.trim\(\)\)/);
+  });
+});
+
+describe("the refusal on save is said in Romanian (Slice #37.50)", () => {
+  // Measured in #37.50 before the change: a changed CNP saved on a Romanian
+  // screen showed „CNP cannot be changed once set; delete and recreate the
+  // person instead" — the trigger's sentence, passed through by errors.ts.
+  const ERRORS = codeOnly(read("src", "lib", "api", "errors.ts"));
+  const SAFE = codeOnly(read("src", "lib", "api", "safe-mutate.ts"));
+
+  it("the route tags each lock's refusal with a code, beside the trigger's sentence", () => {
+    expect(ERRORS).toContain('Response.json({ error: message, code: "CNP_LOCKED" }, { status: 400 })');
+    expect(ERRORS).toContain('Response.json({ error: message, code: "CUI_LOCKED" }, { status: 400 })');
+  });
+
+  it("each form shows its own Romanian sentence for its code — the same spelling on both sides", () => {
+    expect(NATURAL).toMatch(/refusalCode\(err\) === "CNP_LOCKED"\s*\?\s*t\("hints\.cnpLocked"\)/);
+    expect(JUDICIAL).toMatch(/refusalCode\(err\) === "CUI_LOCKED"\s*\?\s*t\("hints\.cuiLocked"\)/);
+    expect(SAFE).toContain("export function refusalCode(err: unknown): string | undefined");
+  });
+
+  it("names the CUI's remedy too", () => {
+    const sql = read("src", "db", "supabase_schema_full.sql");
+    expect(sql).toContain("CUI cannot be changed once set; delete and recreate the judicial person instead");
+    const cui = ((MESSAGES["en-GB"].judicialPerson as MessageNode).hints as MessageNode).cuiLocked as string;
+    expect(cui.toLowerCase()).toContain("delete");
+    expect(cui.toLowerCase()).toContain("recreate");
+    expect(((MESSAGES["ro-RO"].judicialPerson as MessageNode).hints as MessageNode).cuiLocked).toBeTruthy();
   });
 });

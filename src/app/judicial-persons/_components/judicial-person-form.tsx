@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type Control,
@@ -33,7 +33,8 @@ import {
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { ArrowLeft, MousePointerClick, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { safeMutate } from "@/lib/api/safe-mutate";
+import { refusalCode, safeMutate } from "@/lib/api/safe-mutate";
+import { HintBubble } from "@/lib/ui/hint-bubble";
 import { PaginationControls } from "@/components/pagination-controls";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -459,7 +460,12 @@ export function JudicialPersonForm({
     } catch (err) {
       // Slice #37.21: a save refused as stale writes nothing; the notice says so.
       if (recordSync.refused(err)) return false;
-      setSubmitError(err instanceof Error ? err.message : String(err));
+      // Slice #37.50: the lock's refusal is the trigger's English sentence; say it in Romanian.
+      setSubmitError(
+        refusalCode(err) === "CUI_LOCKED"
+          ? t("hints.cuiLocked")
+          : err instanceof Error ? err.message : String(err),
+      );
       return false;
     } finally {
       setSubmitting(false);
@@ -713,7 +719,7 @@ export function JudicialPersonForm({
               name="cuiNumber"
               register={register}
               error={errors.cuiNumber?.message}
-              hint={cuiIsLocked ? t("hints.cuiLocked") : undefined}
+              bubble={cuiIsLocked ? t("hints.cuiLocked") : undefined}
               highlight={displayHighlights?.fields.cuiNumber}
               width={JP.cuiNumber}
             />
@@ -1326,7 +1332,13 @@ type FieldProps = {
   type?: string;
   register: UseFormRegister<FormValues>;
   error?: string;
-  hint?: string;
+  /**
+   * Slice #37.50: a sentence about the box, shown in a bubble while the mouse
+   * is over the box or the focus is in it, and the box's description at all
+   * times (`HintBubble`) — never printed under the field. The CNP's (CUI's)
+   * lock note, the only one.
+   */
+  bubble?: string;
   highlight?: HighlightColor;
   /**
    * Slice #37.13: the box's width and kind, from `src/lib/ui/field-widths.ts`
@@ -1348,7 +1360,7 @@ function Field({
   type = "text",
   register,
   error,
-  hint,
+  bubble,
   highlight,
   width,
   fillRem,
@@ -1362,37 +1374,51 @@ function Field({
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
+  const bubbleId = useId();
+  const describedBy = bubble ? bubbleId : undefined;
+  // The bubble's text sits inside this <label>, so without a name of its own the
+  // box would be NAMED by the sentence as well as described by it (#37.50).
+  const labelId = useId();
+  const labelledBy = bubble ? labelId : undefined;
   // Slice #37.29: the label ABOVE its box, the pair exactly as wide as the box
   // (or the panel, for a box that fills it) — a long label wraps inside it.
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  const control = grows ? (
+    <GrowingText
+      registration={register(name)}
+      width={String(box.width)}
+      lines={width.kind === "lines"}
+      fold={width.fold}
+      minRows={width.rows ?? 1}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      aria-labelledby={labelledBy}
+      className={className}
+      data-width-field={name}
+      data-width-kind={width.kind}
+    />
+  ) : (
+    <input
+      type={type}
+      {...register(name)}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      aria-labelledby={labelledBy}
+      className={className}
+      style={box}
+      data-width-field={name}
+      data-width-kind={width.kind}
+    />
+  );
   return (
     <label className={STACKED_FIELD_CLASS} style={box}>
-      <span className={STACKED_LABEL_CLASS}>{label}</span>
-      {grows ? (
-        <GrowingText
-          registration={register(name)}
-          width={String(box.width)}
-          lines={width.kind === "lines"}
-          fold={width.fold}
-          minRows={width.rows ?? 1}
-          aria-invalid={error ? true : undefined}
-          className={className}
-          data-width-field={name}
-          data-width-kind={width.kind}
-        />
+      <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
+      {bubble ? (
+        <HintBubble id={bubbleId} text={bubble}>
+          {control}
+        </HintBubble>
       ) : (
-        <input
-          type={type}
-          {...register(name)}
-          aria-invalid={error ? true : undefined}
-          className={className}
-          style={box}
-          data-width-field={name}
-          data-width-kind={width.kind}
-        />
-      )}
-      {hint && !error && (
-        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+        control
       )}
       {error && (
         <span className="text-xs text-red-600 dark:text-red-400">

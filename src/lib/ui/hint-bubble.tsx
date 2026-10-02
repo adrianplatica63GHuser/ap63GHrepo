@@ -52,6 +52,13 @@
  * The text and the ⓘ button's accessible name are props: nothing under
  * `src/lib/ui/` reaches for `next-intl`, and a shared control that picked its
  * own message key would be a shared control that only one namespace can use.
+ *
+ * ⚠️ **WITHOUT `triggerLabel` THERE IS NO ⓘ** (Slice #37.50). The CNP and the
+ * CUI explain a TEXT BOX, and a text box's focus is `:focus-visible` whatever
+ * put it there — a tap included — so the box itself is what a finger reaches
+ * and an ⓘ beside it would only be a second trace on screen, which Adrian
+ * asked not to have. A checkbox's focus from a tap is not visible, which is why
+ * the import bar's two ticks keep their ⓘ.
  */
 
 import { useRef, type ReactNode } from "react";
@@ -70,10 +77,11 @@ type Props = {
   /** The explanation itself. */
   text: string;
   /**
-   * The accessible name of the ⓘ button. Required rather than defaulted: a
-   * default would be an English string in a Romanian-first app.
+   * The accessible name of the ⓘ button. Never defaulted: a default would be an
+   * English string in a Romanian-first app. Left out, there is no ⓘ at all —
+   * for a text box, whose own focus opens the bubble (#37.50, note above).
    */
-  triggerLabel: string;
+  triggerLabel?: string;
   /**
    * Suppress every open path, and keep the bubble unpainted while it lasts.
    * ⚠️ It does NOT clear `open` — the hook's `isOpen` reads it at render, and
@@ -142,6 +150,7 @@ export function HintBubble({
             container overflows both sides equally, so it sits in the middle
             of the circle without a padding override that would fight the
             size's own. */}
+        {triggerLabel !== undefined && (
         <button
           ref={triggerRef}
           type="button"
@@ -170,6 +179,7 @@ export function HintBubble({
               "collapsed"/"expanded" about a paragraph that never leaves. */}
           <Info size={14} strokeWidth={2.5} aria-hidden="true" />
         </button>
+        )}
       </div>
 
       {/* ⚠️ ONE element, two presentations — never mounted and unmounted. The

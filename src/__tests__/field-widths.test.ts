@@ -511,10 +511,10 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
       ["notes"],
     ]);
     expect(rowsOf(identity)).toEqual(SCREEN_ROWS.judicialPerson.identity.map((r) => [...r]));
-    // Denumire and Note fill the panel; the CUI hint stays with CUI (rule 15).
+    // Denumire and Note fill the panel; the CUI hint stays with CUI (rule 15) — a bubble since #37.50.
     expect(identity).toMatch(/width=\{JP\.name\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
     expect(identity).toMatch(/width=\{JP\.notes\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
-    expect(identity).toMatch(/name="cuiNumber"[\s\S]{0,200}hint=\{cuiIsLocked/);
+    expect(identity).toMatch(/name="cuiNumber"[\s\S]{0,200}bubble=\{cuiIsLocked/);
     expect(JP.name.fill && JP.notes.fill).toBe(true);
   });
 

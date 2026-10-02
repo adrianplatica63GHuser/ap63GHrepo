@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { useCitizenshipOptions, usePersonTypeOptions } from "@/hooks/use-lookup-options";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Controller,
@@ -33,7 +33,8 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { AddressBlock } from "@/components/address/address-block";
-import { safeMutate } from "@/lib/api/safe-mutate";
+import { refusalCode, safeMutate } from "@/lib/api/safe-mutate";
+import { HintBubble } from "@/lib/ui/hint-bubble";
 import { ArrowLeft, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -478,7 +479,12 @@ export function NaturalPersonForm({
     } catch (err) {
       // Slice #37.21: a save refused as stale writes nothing; the notice says so.
       if (recordSync.refused(err)) return false;
-      setSubmitError(err instanceof Error ? err.message : String(err));
+      // Slice #37.50: the lock's refusal is the trigger's English sentence; say it in Romanian.
+      setSubmitError(
+        refusalCode(err) === "CNP_LOCKED"
+          ? t("hints.cnpLocked")
+          : err instanceof Error ? err.message : String(err),
+      );
       return false;
     } finally {
       setSubmitting(false);
@@ -739,7 +745,7 @@ export function NaturalPersonForm({
               name="cnp"
               register={register}
               error={errors.cnp?.message}
-              hint={cnpIsLocked ? t("hints.cnpLocked") : undefined}
+              bubble={cnpIsLocked ? t("hints.cnpLocked") : undefined}
               highlight={displayHighlights?.fields.cnp}
               width={NP.cnp}
             />
@@ -1241,7 +1247,13 @@ type FieldProps = {
   type?: string;
   register: UseFormRegister<FormValues>;
   error?: string;
-  hint?: string;
+  /**
+   * Slice #37.50: a sentence about the box, shown in a bubble while the mouse
+   * is over the box or the focus is in it, and the box's description at all
+   * times (`HintBubble`) — never printed under the field. The CNP's (CUI's)
+   * lock note, the only one.
+   */
+  bubble?: string;
   highlight?: HighlightColor;
   /** Adds a red border — used for expired dates. */
   expired?: boolean;
@@ -1275,7 +1287,7 @@ type FieldProps = {
 const BOX_CLASS =
   "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
-function Field({ label, name, type = "text", register, error, hint, highlight, expired, expiringSoon, width, mono, fillRem }: FieldProps) {
+function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
     BOX_CLASS,
@@ -1288,35 +1300,49 @@ function Field({ label, name, type = "text", register, error, hint, highlight, e
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
+  const bubbleId = useId();
+  const describedBy = bubble ? bubbleId : undefined;
+  // The bubble's text sits inside this <label>, so without a name of its own the
+  // box would be NAMED by the sentence as well as described by it (#37.50).
+  const labelId = useId();
+  const labelledBy = bubble ? labelId : undefined;
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  const control = grows ? (
+    <GrowingText
+      registration={register(name)}
+      width={String(box.width)}
+      lines={width.kind === "lines"}
+      fold={width.fold}
+      minRows={width.rows ?? 1}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      aria-labelledby={labelledBy}
+      className={className}
+      data-width-field={name}
+      data-width-kind={width.kind}
+    />
+  ) : (
+    <input
+      type={type}
+      {...register(name)}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      aria-labelledby={labelledBy}
+      className={className}
+      style={box}
+      data-width-field={name}
+      data-width-kind={width.kind}
+    />
+  );
   return (
     <label className={STACKED_FIELD_CLASS} style={box}>
-      <span className={STACKED_LABEL_CLASS}>{label}</span>
-      {grows ? (
-        <GrowingText
-          registration={register(name)}
-          width={String(box.width)}
-          lines={width.kind === "lines"}
-          fold={width.fold}
-          minRows={width.rows ?? 1}
-          aria-invalid={error ? true : undefined}
-          className={className}
-          data-width-field={name}
-          data-width-kind={width.kind}
-        />
+      <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
+      {bubble ? (
+        <HintBubble id={bubbleId} text={bubble}>
+          {control}
+        </HintBubble>
       ) : (
-        <input
-          type={type}
-          {...register(name)}
-          aria-invalid={error ? true : undefined}
-          className={className}
-          style={box}
-          data-width-field={name}
-          data-width-kind={width.kind}
-        />
-      )}
-      {hint && !error && (
-        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+        control
       )}
       {error && (
         <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
@@ -1339,6 +1365,8 @@ function SelectField({
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
+  /** A list that failed to load, said under the picker (#37.50 moved Field's own hint to `bubble`). */
+  hint?: string;
   /**
    * Slice #34.27: what the viewed VERSION recorded in this field.
    *

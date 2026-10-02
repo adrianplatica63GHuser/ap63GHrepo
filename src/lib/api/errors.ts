@@ -74,13 +74,15 @@ export function dbErrorToResponse(err: unknown): Response | null {
   const message = e?.message ?? top?.message ?? String(err);
 
   // RAISE EXCEPTION from our `natural_person_lock_cnp` trigger (SQLSTATE P0001).
+  // Slice #37.50: with a `code`, so the form can say it in Romanian
+  // (safe-mutate.ts → `refusalCode`); the sentence stays the trigger's.
   if (message.includes("CNP cannot be changed")) {
-    return Response.json({ error: message }, { status: 400 });
+    return Response.json({ error: message, code: "CNP_LOCKED" }, { status: 400 });
   }
 
   // RAISE EXCEPTION from our `judicial_person_lock_cui` trigger (SQLSTATE P0001).
   if (message.includes("CUI cannot be changed")) {
-    return Response.json({ error: message }, { status: 400 });
+    return Response.json({ error: message, code: "CUI_LOCKED" }, { status: 400 });
   }
 
   // Unique violation. Since Slice #29.04 CNP/CUI collisions come from the

@@ -95,3 +95,21 @@ export async function safeMutate(
 
   return res;
 }
+
+/**
+ * The `code` of a refusal `safeMutate` threw, or `undefined`.   (Slice #37.50)
+ *
+ * The CNP and CUI locks are refused by a database trigger whose sentence is
+ * English („CNP cannot be changed once set; …"), and `dbErrorToResponse`
+ * passes it through as `error` — measured in #37.50, it reached the Romanian
+ * screen as it was. The route now adds `code: "CNP_LOCKED"` / `"CUI_LOCKED"`,
+ * and each form shows its own Romanian `hints.cnpLocked` / `hints.cuiLocked`
+ * for that code. Matched on `code`, never on the prose, for the reason the
+ * FOREIGN_KEY_VIOLATION branch above gives; the literals are written out on
+ * both sides and `cnp-lock-hint.test.ts` keeps the spellings together.
+ */
+export function refusalCode(err: unknown): string | undefined {
+  if (!(err instanceof SafeMutateError)) return undefined;
+  const code = (err.body as { code?: unknown } | null)?.code;
+  return typeof code === "string" ? code : undefined;
+}
