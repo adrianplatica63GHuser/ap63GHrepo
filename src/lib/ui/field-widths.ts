@@ -813,10 +813,9 @@ const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, classi
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
-  // „Proprietăți corelate": a property's name on one line, a role, the buttons — 5 (#37.58).
-  // Persoane: a name, a role, the buttons — 4. Acte: a property's documents carry no role,
-  // so type, title and the buttons — 4. META INFO 5.
-  property: { associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 },
+  // Slice #37.66: „Proprietăți corelate" (5), Persoane (4) and Acte (4) are one tile, „Corelate" —
+  // the Document's `RELATED_UNITS`, 4 (rule 17).
+  property: { related: RELATED_UNITS, classification: 2, connections: 3 },
   // Slice #37.65: Persoane, Proprietăți and „Acte corelate" (3 units each since #37.64) are one
   // tile, „Corelate" — `RELATED_UNITS`, 4.
   document: { related: RELATED_UNITS, classification: 2, connections: 3 },
@@ -1224,12 +1223,8 @@ export const NP_LIST_COLUMNS = {
   associations: ["select", "tileName", "tileRole", "openPreviewStacked"],
   properties: ["select", "tilePropertyName", "tileRole", "openPreviewStacked"],
   documents: ["select", "tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"],
-  // Slice #37.30: a property's Acte — its documents carry no role — at 4 units.
-  documentsWithoutRole: ["select", "tileDocType", "tileDocTitle", "openPreviewStacked"],
-  // Slice #37.64: a document's Persoane, Proprietăți and „Acte corelate" are one-line rows
-  // (`oneLineRowUnits`), not tables — their two column sets went with them.
-  // Slice #37.58: a property's „Proprietăți corelate" — its name on one line, the relation, the buttons.
-  propertyAssociations: ["select", "tilePropertyName", "tileRole", "openPreviewStacked"],
+  // Slice #37.64/#37.66: a document's and a property's lists are „Corelate"'s one-line rows
+  // (`oneLineRowUnits`), not tables — their column sets went with them.
 } as const satisfies Record<string, readonly ColumnName[]>;
 
 // ---- tiles (#37.17) -------------------------------------------------------------------------

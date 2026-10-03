@@ -13,8 +13,8 @@
  * - MAP tiles — Hartă, Street View — hold no form state (the map draws the
  *   corners it is given). AN UNTICKED MAP COSTS NOTHING: neither is mounted
  *   while unticked, so neither makes a Google Maps request of its own.
- * - LIST tiles — Asocieri, Persoane, Acte, Clasificare subiectivă and Conexiuni
- *   (META INFO until #37.63) — as on the persons.
+ * - LIST tiles — Corelate (#37.66: „Proprietăți corelate", Persoane and Acte
+ *   in one), Clasificare subiectivă and Conexiuni (META INFO until #37.63).
  *
  * Nothing stored shows what Detalii showed: the cadastral data, the corners,
  * the address and the map. Street View was a button there, off on open; it is
@@ -29,9 +29,7 @@ export const PROP_TILES = [
   "address",
   "map",
   "streetView",
-  "associations",
-  "persons",
-  "documents",
+  "related",
   "classification",
   "connections",
 ] as const;
@@ -48,7 +46,13 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
   // under that when ticked — one column; the cadastral data, the address and
   // the lists to their left.
   placement: { right: ["map", "corners", "streetView"] },
-  renamed: { metadata: ["classification", "connections"] },
+  // #37.63: META INFO is two tiles; #37.66: the three lists are „Corelate".
+  renamed: {
+    metadata: ["classification", "connections"],
+    associations: "related",
+    persons: "related",
+    documents: "related",
+  },
 };
 
 /**
@@ -57,10 +61,11 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
  */
 // Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+// Slice #37.66: the association screens' „Anulează" (?tab=related, persons, document) lands on „Corelate".
 export const PROP_TILE_OF_TAB: Readonly<Record<string, PropTile | readonly PropTile[] | undefined>> = {
-  related: "associations",
-  persons: "persons",
-  document: "documents",
+  related: "related",
+  persons: "related",
+  document: "related",
   metadata: ["classification", "connections"],
 };
 

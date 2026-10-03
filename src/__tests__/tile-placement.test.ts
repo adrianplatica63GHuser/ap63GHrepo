@@ -43,11 +43,11 @@ describe("the split", () => {
   });
 
   it("draws no column when nothing in it is ticked, and the left area takes every tile, in registry order", () => {
-    expect(splitTiles(["persons", "address", "cadastral"], P)).toEqual({ left: ["cadastral", "address", "persons"], right: [] });
+    expect(splitTiles(["related", "address", "cadastral"], P)).toEqual({ left: ["cadastral", "address", "related"], right: [] }); // #37.66: „Persoane" is „Corelate"
   });
 
   it("keeps the left area in the registry's order whatever order the choice was stored in", () => {
-    expect(splitTiles(["connections", "map", "cadastral", "persons"], P)).toEqual({ left: ["cadastral", "persons", "connections"], right: ["map"] }); // #37.63: META INFO's half
+    expect(splitTiles(["connections", "map", "cadastral", "related"], P)).toEqual({ left: ["cadastral", "related", "connections"], right: ["map"] }); // #37.63: META INFO's half
   });
 
   it("puts a Document's page image at the right, and only when the document has pages", () => {

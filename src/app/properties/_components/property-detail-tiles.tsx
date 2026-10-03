@@ -32,9 +32,7 @@ import { Map as MapIcon } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { PropertyForm } from "./property-form";
-import { PropertyPersonsTab } from "./property-persons-tab";
-import { PropertyDocumentTab } from "./property-document-tab";
-import { PropertyReferencesTab } from "./property-references-tab";
+import { PropertyRelatedTile } from "./property-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
@@ -102,9 +100,7 @@ export function PropertyDetailTiles({
       address:      t("tiles.address"),
       map:          t("tiles.map"),
       streetView:   t("tiles.streetView"),
-      associations: t("tiles.associations"),
-      persons:      t("tiles.persons"),
-      documents:    t("tiles.documents"),
+      related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
     }),
@@ -143,19 +139,10 @@ export function PropertyDetailTiles({
               right: column,
             }}
           />
-          {choice.isShown("associations") && (
-            <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.property.associations}>
-              <PropertyReferencesTab propertyId={propertyId} compact />
-            </ListTile>
-          )}
-          {choice.isShown("persons") && (
-            <ListTile tile="persons" title={labels.persons} units={LIST_UNITS.property.persons}>
-              <PropertyPersonsTab propertyId={propertyId} compact />
-            </ListTile>
-          )}
-          {choice.isShown("documents") && (
-            <ListTile tile="documents" title={labels.documents} units={LIST_UNITS.property.documents}>
-              <PropertyDocumentTab propertyId={propertyId} compact />
+          {/* Slice #37.66: „Proprietăți corelate", Persoane and Acte are one tile, „Corelate" — the Document's (#37.65). */}
+          {choice.isShown("related") && (
+            <ListTile tile="related" title={labels.related} units={LIST_UNITS.property.related}>
+              <PropertyRelatedTile propertyId={propertyId} label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata

@@ -378,6 +378,7 @@
       "associations": "Related properties",
       "persons": "Persons",
       "documents": "Documents",
+      "related": "Related",
       "classification": "Subjective classification",
       "connections": "Connections"
     },
@@ -456,7 +457,8 @@
       "loading": "Loading…",
       "error": "Failed to load references",
       "roleForward": "this property “{role}” {other}",
-      "roleBackward": "{other} “{role}” this property"
+      "roleBackward": "{other} “{role}” this property",
+      "relationship": "Relationship"
     },
     "associateReference": {
       "title": "Associate Related Property",
@@ -1706,10 +1708,10 @@
       "stubTypePlaceholder": "choose a type",
       "stubConfirm": "Create the stub and link",
       "stubCancel": "Cancel",
-      "alreadyAssociated": "These two documents are already associated. Nothing changed. Dissociate them from the References tab if you want a different relationship.",
-      "alreadyAssociatedAs": "These two documents are already associated, as “{roleName}”. Nothing changed. Dissociate them from the References tab if you want a different relationship.",
+      "alreadyAssociated": "These two documents are already associated. Nothing changed. Dissociate them from “Related” if you want a different relationship.",
+      "alreadyAssociatedAs": "These two documents are already associated, as “{roleName}”. Nothing changed. Dissociate them from “Related” if you want a different relationship.",
       "roleMissing": "The relationship type “{roleName}” is not in Reference Data, so the link cannot be created with the right direction. Ask an administrator to add it, then try again.",
-      "noPurpose": "It is not known what role this instrument plays on the document, so there is no relationship type to link it under. Leave the reference and associate manually from the References tab.",
+      "noPurpose": "It is not known what role this instrument plays on the document, so there is no relationship type to link it under. Leave the reference and associate manually from “Related”.",
       "referenceGone": "The list of instruments changed in the meantime. Close and reopen this dialog.",
       "selfReference": "A document cannot be linked to itself.",
       "saveError": "The operation failed. Please try again."
@@ -1794,7 +1796,7 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one document",
-      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from the References tab if you want a different relationship."
+      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from “Related” if you want a different relationship."
     },
     "pages": {
       "sectionTitle": "Pages",
@@ -1869,8 +1871,8 @@
       "errorSession": "Your session has expired. Please sign in again and retry.",
       "parcelTaken": "This document's tarla and parcela already belong to another property. The document was not processed and nothing was created.",
       "parcelTakenSeveral": "{count, plural, one {One property has} other {# properties have}} tarla {tarla} and parcela {parcela}, the same as this document. The document was not processed and nothing was created.",
-      "parcelTakenWhatToDo": "Open the property and add this document to it from the Documents tab, or, if this is a different parcel, correct the document's folder tag under “Connections”.",
-      "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from the Documents tab.",
+      "parcelTakenWhatToDo": "Open the property and add this document to it from “Related”, or, if this is a different parcel, correct the document's folder tag under “Connections”.",
+      "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from “Related”.",
       "openPropertiesList": "Open the properties list"
     },
     "aiDiscovering": "Reading document…",

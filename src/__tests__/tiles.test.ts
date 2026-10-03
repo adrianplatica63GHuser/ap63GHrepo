@@ -227,7 +227,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
 
   it("are the nine the header names, and nothing stored shows exactly the old Detalii tab", () => {
     expect([...PROP_TILES]).toEqual([
-      "cadastral", "corners", "address", "map", "streetView", "associations", "persons", "documents", "classification", "connections",
+      "cadastral", "corners", "address", "map", "streetView", "related", "classification", "connections", // #37.66: „Corelate"
     ]);
     // Detalii showed the four panels; Street View was a button, off on open.
     expect([...PROP_TILE_REGISTRY.defaults]).toEqual(["cadastral", "corners", "address", "map"]);
@@ -241,7 +241,8 @@ describe("the Property's tiles (Slice #37.19)", () => {
   });
 
   it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
-    expect(PROP_TILE_OF_TAB).toEqual({ related: "associations", persons: "persons", document: "documents", metadata: ["classification", "connections"] });
+    // #37.66: the association screens' way back — ?tab=related, persons or document — lands on „Corelate".
+    expect(PROP_TILE_OF_TAB).toEqual({ related: "related", persons: "related", document: "related", metadata: ["classification", "connections"] });
     expect(PROP_TILE_OF_TAB.details).toBeUndefined();
   });
 
@@ -280,7 +281,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
-    for (const tile of ["associations", "persons", "documents", "classification", "connections"]) {
+    for (const tile of ["related", "classification", "connections"]) {
       expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
     }
     expect(PAGE).not.toMatch(/role="tab/);
@@ -291,7 +292,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { property: { tiles: Record<string, string> } };
     expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
-      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Proprietăți corelate", "Persoane", "Acte", "Clasificare subiectivă", "Conexiuni",
+      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Corelate", "Clasificare subiectivă", "Conexiuni", // #37.66: three tiles became „Corelate"
     ]);
   });
 });

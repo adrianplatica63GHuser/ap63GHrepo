@@ -78,11 +78,11 @@ describe("a property's name on one line (Slice #37.58)", () => {
     expect(unitsInnerRem(4) - 2 / 16 - oneLineRowRem(RELATED_SLOTS, 0, true)).toBeGreaterThanOrEqual(NAME_REM);
   });
 
-  it("rule 17: a person's Proprietăți and a property's „Proprietăți corelate” are 5 units, the same name column", () => {
+  it("rule 17: a person's Proprietăți is 5 units, the same name column; a property's related properties are „Corelate”'s rows (#37.66)", () => {
     expect(LIST_UNITS.naturalPerson.properties).toBe(5);
     expect(LIST_UNITS.judicialPerson.properties).toBe(5);
-    expect(LIST_UNITS.property.associations).toBe(5);
-    for (const k of ["properties", "propertyAssociations"] as const) {
+    expect(LIST_UNITS.property.related).toBe(LIST_UNITS.document.related);
+    for (const k of ["properties"] as const) {
       expect(NP_LIST_COLUMNS[k]).toContain("tilePropertyName");
       const room = tileTableRem(5);
       expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) <= 0.5]).toEqual([k, true]);
@@ -98,7 +98,6 @@ describe("a property's name on one line (Slice #37.58)", () => {
   it("every cell that shows a property's name is one line, cut with „…”, whole in its title", () => {
     const files = [
       ["src", "app", "properties", "_components", "person-properties-tab.tsx"],
-      ["src", "app", "properties", "_components", "property-references-tab.tsx"],
       ["src", "app", "documents", "[id]", "associate-property", "associate-property-view.tsx"],
       ["src", "app", "judicial-persons", "[id]", "associate-property", "associate-property-view.tsx"],
       ["src", "app", "natural-persons", "[id]", "associate-property", "associate-property-view.tsx"],
@@ -111,9 +110,12 @@ describe("a property's name on one line (Slice #37.58)", () => {
       expect([f.join("/"), cells[0]]).toEqual([f.join("/"), expect.stringMatching(/(ONE_LINE|truncate)[\s\S]*title=\{nameOr\(item\.label, "property"\)\}/)]);
       expect(cells[0]).not.toMatch(/WRAPS|break-words/);
     }
-    // #37.64: the Document's Proprietăți is a one-line row — the name its content, whole in its title.
-    const doc = read("src", "app", "documents", "_components", "document-properties-tab.tsx");
-    expect(doc).toMatch(/title: nameOr\(item\.label, "property"\),\s+content: <span[^>]*>\{nameOr\(item\.label, "property"\)\}<\/span>,/);
+    // #37.64/#37.66: the Document's and the Property's related properties are one-line rows —
+    // the name their content, whole in its title.
+    for (const f of [["documents", "document-properties-tab.tsx"], ["properties", "property-references-tab.tsx"]]) {
+      const src = read("src", "app", f[0], "_components", f[1]);
+      expect([f[1], /title: nameOr\(item\.label, "property"\),\s+content: <span[^>]*>\{nameOr\(item\.label, "property"\)\}<\/span>,/.test(src)]).toEqual([f[1], true]);
+    }
     expect(read("src", "components", "tiles", "one-line-rows.tsx")).toMatch(/className="min-w-0 flex-1 truncate" title=\{title\}/);
   });
 });

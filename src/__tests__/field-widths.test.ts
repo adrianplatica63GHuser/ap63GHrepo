@@ -106,6 +106,7 @@ import {
   oneLineRowUnits,
   ROW_CONTENT_REM,
   RELATED_SLOTS,
+  RELATED_UNITS,
 } from "@/lib/ui/field-widths";
 import { LAYOUT_EXCEPTIONS } from "@/lib/ui/layout-exceptions";
 
@@ -604,20 +605,14 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
-  it("the list tiles are compact and fill their units: Proprietăți corelate 5 (#37.58), Persoane and Acte 4, Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
-    const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
-    const room = tileTableRem(4);
-    for (const k of ["associations", "documentsWithoutRole"] as const) {
-      expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) < 0.5]).toEqual([k, true]);
-    }
-    const room5 = tileTableRem(5);
-    expect(sum(NP_LIST_COLUMNS.propertyAssociations) <= room5 && room5 - sum(NP_LIST_COLUMNS.propertyAssociations) < 0.5).toBe(true);
-    expect(LIST_UNITS.property).toEqual({ associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 });
+  it("the list tiles: „Corelate” the Document's 4 units (#37.66, rule 17), Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
+    expect(LIST_UNITS.property).toEqual({ related: RELATED_UNITS, classification: 2, connections: 3 });
+    expect(LIST_UNITS.property.related).toBe(LIST_UNITS.document.related);
     const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
-    for (const k of ["associations", "persons", "documents", "classification", "connections"]) {
+    for (const k of ["related", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.property\\.${k}\\}`));
     }
-    expect(page.match(/propertyId=\{propertyId\} compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toContain("<PropertyRelatedTile propertyId={propertyId} label={labels.related} />");
     expect(page).not.toMatch(/compactCellRem/);
   });
 });
@@ -849,11 +844,8 @@ describe("tables at fixed column widths (#37.16)", () => {
     ["a person's Asocieri", APP("natural-persons", "_components", "person-references-tab.tsx")],
     ["a person's Acte", APP("documents", "_components", "person-document-tab.tsx")],
     ["a person's Proprietăți", APP("properties", "_components", "person-properties-tab.tsx")],
-    ["a property's Persoane", APP("properties", "_components", "property-persons-tab.tsx")],
-    ["a property's Acte", APP("properties", "_components", "property-document-tab.tsx")],
-    ["a property's Asocieri", APP("properties", "_components", "property-references-tab.tsx")],
-    // #37.64: a document's Persoane, Proprietăți and „Acte corelate" are one-line rows, not tables
-    // (one-line-rows.test.tsx).
+    // #37.64–#37.66: a document's and a property's lists are „Corelate"'s one-line rows, not tables
+    // (one-line-rows, related-tile and property-related-tile tests).
   ];
 
   it.each(TABLES)("%s: a fixed table from COLUMN, as wide as its columns, every header marked", (_what, src) => {

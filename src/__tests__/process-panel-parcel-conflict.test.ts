@@ -175,10 +175,11 @@ describe("the parcel-conflict copy", () => {
     // "Acte", not "Documente", and a user reading "document" on a page whose
     // tabs are Detalii / Asocieri / META INFO / Persoane / Acte has to guess.
     // The META INFO half of the same sentence already set the pattern.
-    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("din fila Acte");
-    expect(String(loadCopy("ro-RO.json").parcelTakenSeveralWhatToDo)).toContain("din fila Acte");
-    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("from the Documents tab");
-    expect(String(loadCopy("en-GB.json").parcelTakenSeveralWhatToDo)).toContain("from the Documents tab");
+    // #37.66: the Property's „Acte" is part of one tile, „Corelate", and the sentence names it.
+    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("din „Corelate”");
+    expect(String(loadCopy("ro-RO.json").parcelTakenSeveralWhatToDo)).toContain("din „Corelate”");
+    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("from “Related”");
+    expect(String(loadCopy("en-GB.json").parcelTakenSeveralWhatToDo)).toContain("from “Related”");
   });
 
   it("⚠️ the whole panel says 'etichetă', which is what the app calls a tag", () => {

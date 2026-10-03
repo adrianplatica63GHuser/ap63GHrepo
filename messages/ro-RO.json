@@ -378,6 +378,7 @@
       "associations": "Proprietăți corelate",
       "persons": "Persoane",
       "documents": "Acte",
+      "related": "Corelate",
       "classification": "Clasificare subiectivă",
       "connections": "Conexiuni"
     },
@@ -456,7 +457,8 @@
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea referințelor",
       "roleForward": "această proprietate „{role}” {other}",
-      "roleBackward": "{other} „{role}” această proprietate"
+      "roleBackward": "{other} „{role}” această proprietate",
+      "relationship": "Relația"
     },
     "associateReference": {
       "title": "Asociere proprietate corelată",
@@ -1706,10 +1708,10 @@
       "stubTypePlaceholder": "alegeți tipul",
       "stubConfirm": "Creează schița și leagă",
       "stubCancel": "Renunță",
-      "alreadyAssociated": "Cele două documente sunt deja asociate. Nu s-a schimbat nimic. Dezasociați-le din fila Referințe dacă doriți alt tip de relație.",
-      "alreadyAssociatedAs": "Cele două documente sunt deja asociate, ca „{roleName}”. Nu s-a schimbat nimic. Dezasociați-le din fila Referințe dacă doriți alt tip de relație.",
+      "alreadyAssociated": "Cele două documente sunt deja asociate. Nu s-a schimbat nimic. Dezasociați-le din „Corelate” dacă doriți alt tip de relație.",
+      "alreadyAssociatedAs": "Cele două documente sunt deja asociate, ca „{roleName}”. Nu s-a schimbat nimic. Dezasociați-le din „Corelate” dacă doriți alt tip de relație.",
       "roleMissing": "Tipul de relație „{roleName}” nu există în Date de referință, deci legătura nu poate fi creată cu sensul corect. Cereți unui administrator să-l adauge, apoi încercați din nou.",
-      "noPurpose": "Nu se știe ce rol are acest înscris pe document, deci nu există un tip de relație sub care să fie legat. Lăsați referința și creați asocierea manual din fila Referințe.",
+      "noPurpose": "Nu se știe ce rol are acest înscris pe document, deci nu există un tip de relație sub care să fie legat. Lăsați referința și creați asocierea manual din „Corelate”.",
       "referenceGone": "Lista de înscrisuri s-a schimbat între timp. Închideți și redeschideți această fereastră.",
       "selfReference": "Un document nu poate fi legat de el însuși.",
       "saveError": "Operația a eșuat. Încercați din nou."
@@ -1794,7 +1796,7 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin un document",
-      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din fila Referințe dacă doriți alt tip de relație."
+      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din „Corelate” dacă doriți alt tip de relație."
     },
     "pages": {
       "sectionTitle": "Pagini",
@@ -1869,8 +1871,8 @@
       "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou și să reîncercați.",
       "parcelTaken": "Tarlaua și parcela acestui document aparțin deja altei proprietăți. Documentul nu a fost procesat și nu s-a creat nimic.",
       "parcelTakenSeveral": "{count, plural, one {O proprietate are} few {# proprietăți au} other {# de proprietăți au}} tarlaua {tarla} și parcela {parcela}, la fel ca acest document. Documentul nu a fost procesat și nu s-a creat nimic.",
-      "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din fila Acte, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din „Conexiuni”.",
-      "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din fila Acte.",
+      "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din „Corelate”, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din „Conexiuni”.",
+      "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din „Corelate”.",
       "openPropertiesList": "Deschide lista de proprietăți"
     },
     "aiDiscovering": "Se citește documentul…",
