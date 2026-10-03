@@ -86,7 +86,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-07](cases/TC-DOC-07.md) | Cota-parte doar pentru rolurile care dețin o cotă: un PAD cu un Proiectant, un CVC cu un Vânzător | document | happy | — | `automated` | 2026-10-03 | `e2e/document/role-share.spec.ts` |
 | [TC-DOC-08](cases/TC-DOC-08.md) | Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat | document | happy | — | `automated` | 2026-10-02 | `e2e/document/document-list.spec.ts` |
 | [TC-DOC-09](cases/TC-DOC-09.md) | „Persoane", „Proprietăți" și „Acte corelate" pe un rând: cota-parte după butonul portocaliu, relația după butonul ei, „Înscrisuri citate" pliate | document | happy | — | `automated` | 2026-10-03 | `e2e/document/one-line-rows.spec.ts` |
-| [TC-DOC-10](cases/TC-DOC-10.md) | „Corelate" pe un act: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, un singur „Dezasociază" | document | happy | — | `confirmed` | 2026-10-03 | `e2e/document/related-tile.spec.ts` |
+| [TC-DOC-10](cases/TC-DOC-10.md) | „Corelate" pe un act: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, un singur „Dezasociază" | document | happy | — | `automated` | 2026-10-03 | `e2e/document/related-tile.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/person-document.spec.ts` |
@@ -138,8 +138,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Fifty-three are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.64, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08 and TC-DOC-09 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Fifty-four are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.65, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09 and TC-DOC-10 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

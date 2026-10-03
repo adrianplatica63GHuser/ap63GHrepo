@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -81,3 +81,6 @@ the file above unchanged.
 - The five records deleted (204 ×5).
   Nothing in the file changed, so the case is confirmed, and `e2e/document/related-tile.spec.ts`
   translates it.
+
+**2026-10-03 — `automated` (Slice #37.65).** `e2e/document/related-tile.spec.ts`, green in the
+runner's whole `full` run `20261003T172547Z-19016` on `04a6f4b` (64 passed).
