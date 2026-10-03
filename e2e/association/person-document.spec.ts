@@ -23,6 +23,9 @@
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
  *     run clicks the tile's checkbox.
  *   - Slice #37.20: nor has the document; its „Persoane" is a tile too.
+ *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one line a row with no heading row, the share boxes behind the row's
+ *     orange „Cotă" (step 9 as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -34,7 +37,7 @@ import {
   removeRecord,
 } from "../helpers/records";
 import { expectStableColumns } from "../helpers/field-widths";
-import { showTile, tileBox } from "../helpers/tiles";
+import { lineRow, showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-03`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -110,13 +113,12 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 9 — the other end: „Persoane" reads the person as „Cumpărător".
-      await showTile(page, "Persoane");
-      const back = page.getByRole("row").filter({ has: page.getByRole("radio", { name: `${PERSON} — Cumpărător` }) });
+      const personsTile = await showTile(page, "Persoane");
+      const back = lineRow(personsTile, PERSON);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
-      const persons = page.getByRole("table").filter({ has: back });
-      for (const col of ["Nume", "Rol", "Cotă-parte", "Suprafață echivalentă (mp)", "Mod de deținere"]) {
-        await expect(persons.getByText(col, { exact: true })).toBeVisible();
-      }
+      await expect(back.getByRole("radio", { name: `${PERSON} — Cumpărător` })).toHaveCount(1);
+      await expect(back.locator("[data-row-content]")).toHaveText(`${PERSON} (Cumpărător)`);
+      await expect(back.getByRole("button", { name: "Cotă", exact: true })).toBeVisible();
 
       // ── At the end — on the person's „Acte": radio, then „Dezasociază" ───
       await page.goto(`/natural-persons/${personId}?tab=document`);

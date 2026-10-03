@@ -15,6 +15,9 @@
  *   - Slices #37.18 and #37.20: neither the company nor the document has a
  *     tab row; the company's „Acte" (step 2) and the document's „Persoane"
  *     (step 7) are tiles, ticked with `showTile` (e2e/helpers/tiles.ts).
+ *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one line a row with no heading row, the share boxes behind the row's
+ *     orange „Cotă" (step 7 as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -25,7 +28,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { lineRow, openShare, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-10`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -96,14 +99,11 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
 
       // Step 7 — its „Persoane": one row — the company, „Cumpărător", the two empty fields
       // reading „fără cotă" and „fără suprafață", „Mod de deținere" „nespecificat".
-      await showTile(page, "Persoane");
-      const back = page.getByRole("row").filter({ hasText: COMPANY });
+      const personsTile = await showTile(page, "Persoane");
+      const back = lineRow(personsTile, COMPANY);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
-      const persons = page.getByRole("table").filter({ has: back });
-      for (const col of ["Nume", "Rol", "Cotă-parte", "Suprafață echivalentă (mp)", "Mod de deținere"]) {
-        await expect(persons.getByText(col, { exact: true })).toBeVisible();
-      }
-      await expect(back.getByRole("cell", { name: "Cumpărător", exact: true })).toHaveCount(1);
+      await expect(back.locator("[data-row-content]")).toHaveText(`${COMPANY} (Cumpărător)`);
+      await openShare(back);
       await expect(back.getByLabel(`Cotă-parte — ${COMPANY} — Cumpărător`)).toHaveValue("");
       await expect(back.getByLabel(`Cotă-parte — ${COMPANY} — Cumpărător`)).toHaveAttribute("placeholder", "fără cotă");
       await expect(back.getByLabel(`Suprafață echivalentă (mp) — ${COMPANY} — Cumpărător`)).toHaveAttribute(
@@ -111,6 +111,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
         "fără suprafață",
       );
       await expect(back.locator("select option:checked")).toHaveText("nespecificat");
+      await page.keyboard.press("Escape");
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.
       await back.getByRole("link", { name: "Vizualizare" }).click();

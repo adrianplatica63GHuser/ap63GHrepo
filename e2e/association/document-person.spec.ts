@@ -24,6 +24,10 @@
  *     the case.
  *   - Slice #37.20: the document has no tab row; its „Persoane" is a tile,
  *     ticked with `showTile` (e2e/helpers/tiles.ts).
+ *   - Slice #37.64: „Persoane" is one line a row, so #37.16's column check
+ *     (`expectStableColumns`) has no table to measure here; the row is measured
+ *     one line tall instead. The three share boxes are behind the row's
+ *     orange „Cotă" (the case's steps 8–12, as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -34,8 +38,8 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { expectStableColumns, photograph } from "../helpers/field-widths";
-import { showTile } from "../helpers/tiles";
+import { photograph } from "../helpers/field-widths";
+import { expectOneLine, lineRow, openShare, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-01`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -108,20 +112,21 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=persons$`), { timeout: 30_000 });
 
-      // Step 8 — Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de
-      // deținere, no „Cod" column, and the one row as „Cumpărător".
+      // Step 8 — one line: „Ion TC-E2E-ASSOC-01 (Cumpărător)", no heading row, no „Cod",
+      // and the orange „Cotă" — the three share values are behind it (#37.64).
       await expect(page.getByRole("radio", { name: ROW })).toBeVisible({ timeout: 15_000 });
-      const linked = page.getByRole("table").filter({ has: page.getByRole("radio", { name: ROW }) });
-      for (const col of ["Nume", "Rol", "Cotă-parte", "Suprafață echivalentă (mp)", "Mod de deținere"]) {
-        await expect(linked.getByText(col, { exact: true }).first()).toBeVisible();
-      }
-      await expect(linked.getByText("Cod", { exact: true })).toHaveCount(0);
-      await expectStableColumns(page);
+      const tile = page.getByRole("region", { name: "Persoane", exact: true });
+      const row = lineRow(tile, PERSON);
+      await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Cumpărător)`);
+      await expectOneLine(row);
+      await expect(tile.getByRole("columnheader")).toHaveCount(0);
+      await expect(tile.getByText("Cod", { exact: true })).toHaveCount(0);
+      await expect(row.getByRole("button", { name: "Cotă", exact: true })).toBeVisible();
       await photograph(page, "association-tab");
 
       // Slice #37.24 — the buyer in a Previzualizare tile beside the contract, for the
       // handover's picture at 2560 px; then „Închide", and the case goes on.
-      await linked.getByRole("button", { name: "Previzualizare", exact: true }).click();
+      await row.getByRole("button", { name: "Previzualizare", exact: true }).click();
       const preview = page.locator("[data-preview]");
       await expect(preview).toBeVisible({ timeout: 30_000 });
       await expect(preview.getByRole("link", { name: "Deschide", exact: true })).toBeVisible();
@@ -130,22 +135,24 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await preview.getByRole("button", { name: "Închide", exact: true }).click();
       await expect(preview).toHaveCount(0);
 
-      // Step 9 — `50%`, leave the field: stored, and the cell reads `50`.
-      const cota = page.getByRole("textbox", { name: `Cotă-parte — ${ROW}` });
+      // Step 9 — „Cotă", `50%`, leave the field: stored, and the box reads `50`.
+      let panel = await openShare(row);
+      const cota = panel.getByRole("textbox", { name: `Cotă-parte — ${ROW}` });
       await cota.click();
       await cota.fill("50%");
       await cota.blur();
       await expect(cota).toHaveValue("50", { timeout: 15_000 });
 
-      // Step 10 — „Mod de deținere" is an inline select on the same row; the
-      // qualifier survives a reload.
-      const mod = page.getByRole("combobox", { name: `Mod de deținere — ${ROW}` });
+      // Step 10 — „Mod de deținere" is a select in the same panel; the qualifier
+      // survives a reload.
+      const mod = panel.getByRole("combobox", { name: `Mod de deținere — ${ROW}` });
       for (const offered of ["nespecificat", "în nume propriu", "devălmășie", "indiviziune", "prin mandatar"]) {
         await expect(mod.locator("option", { hasText: offered })).toHaveCount(1);
       }
       await mod.selectOption({ label: "indiviziune" });
       await expect(mod.locator("option:checked")).toHaveText("indiviziune");
       await page.reload();
+      panel = await openShare(lineRow(page.getByRole("region", { name: "Persoane", exact: true }), PERSON));
       await expect(mod.locator("option:checked")).toHaveText("indiviziune", { timeout: 30_000 });
       await expect(cota).toHaveValue("50");
 
@@ -156,7 +163,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       );
       await expect(page.getByText("Total Cumpărător: 50%")).toHaveCount(0);
 
-      // Step 12 — `100%`: click into the cell, Ctrl+A, type, leave. Never a
+      // Step 12 — `100%`: click into the box, Ctrl+A, type, leave. Never a
       // double-click on a person row: it opens the person (the case's ⚠️).
       await cota.click();
       await page.keyboard.press("ControlOrMeta+A");
@@ -164,6 +171,8 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await cota.blur();
       await expect(page.getByText("Total Cumpărător: 100%")).toBeVisible({ timeout: 15_000 });
       await expect(page.getByText("Cotele pentru")).toHaveCount(0);
+      await page.keyboard.press("Escape");
+      await expect(panel).toHaveCount(0);
 
       // ── At the end — select the row's radio, then „Dezasociază" ──────────
       await page.getByRole("radio", { name: ROW }).check();

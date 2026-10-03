@@ -60,11 +60,11 @@ Two consequences for the steps:
 | 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
 | 6 | Ticks the row for `Ion TC-PERS-01` | The row is selected |
 | 7 | Presses „Asociază selecția" | The screen returns to the document, on its „Persoane" tab |
-| 8 | Looks at „Persoane" | A table headed Nume · Rol · Cotă-parte · Suprafață echivalentă (mp) · Mod de deținere — there is no „Cod" column — and one row: `Ion TC-PERS-01`, „Rol" = „Cumpărător" |
-| 9 | Types `50%` into that row's „Cotă-parte" and leaves the field | The value is saved and the cell then reads `50` — the percent sign is accepted and not kept |
-| 10 | Chooses „indiviziune" in that row's **„Mod de deținere"** — an inline select on the same row, offering „— nespecificat —", „în nume propriu", „devălmășie", „indiviziune", „prin mandatar" | The qualifier is recorded beside the share, and is still there after a reload |
+| 8 | Looks at „Persoane" | No column headings and no „Cod": one row, on one line, `Ion TC-PERS-01 (Cumpărător)`, then an orange „Cotă", „Vizualizare" and „Previzualizare" |
+| 9 | Presses the row's „Cotă", types `50%` into „Cotă-parte" in the panel beside the row, and leaves the field | The value is saved and the cell then reads `50` — the percent sign is accepted and not kept |
+| 10 | Chooses „indiviziune" in the panel's **„Mod de deținere"** — a select under „Cotă-parte", offering „— nespecificat —", „în nume propriu", „devălmășie", „indiviziune", „prin mandatar" | The qualifier is recorded beside the share, and is still there after a reload |
 | 11 | Reads the one line under the table | „Cotele pentru „Cumpărător" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." **While the total is off there is no separate „Total Cumpărător: 50%" line** — the warning replaces it |
-| 12 | Changes the cotă-parte to `100%` — click into the cell, select its text with the keyboard (Ctrl+A), type, and leave the field | The warning is replaced by „Total Cumpărător: 100%" |
+| 12 | Changes the cotă-parte to `100%` — „Cotă" pressed again after the reload, click into the box, select its text with the keyboard (Ctrl+A), type, and leave the field | The warning is replaced by „Total Cumpărător: 100%" |
 
 Step 11 is the assertion that matters most: the application **warns and saves anyway**.
 A version that refused the save would be wrong — a deed can say whatever it says, and
@@ -163,3 +163,10 @@ first run; and the subject-matter answer above replaced the open question the ca
 shipped with.)_
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-03 — Slice #37.64 (steps 8–10 and 12 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one line a row under no headings; the share values went behind the row's
+orange „Cotă", a related document's relationship behind „Relația", and „Înscrisuri citate în acest
+document" behind one button. The steps now say what the screen shows; the spec follows them, and
+the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
+(TC-DOC-09 drove the new shape by hand, twice).

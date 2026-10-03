@@ -40,7 +40,7 @@ cut („…").
 | 2 | Looks at „Asociere" | „Asociază selecția" and „Anulează" inside the window, without scrolling |
 | 3 | Presses „Anulează"; on the PAD ticks „Proprietăți" and presses its „Asociază" | „Asociere proprietate" at `/documents/[id]/associate-property`: the same three tiles, one under another; „Asociere"'s buttons inside the window |
 | 4 | Types `TC-ASSOC-13` into „Căutare" (placeholder „Cod sau denumire…") | One row: `TC-ASSOC-13 Parcelă de test cu un nume lung`, on one line |
-| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Proprietăți" is 4 units wide and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
+| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Proprietăți" is 3 units wide (4 before #37.64) and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
 
 ## At the end — leaving things as they were found
 
@@ -79,3 +79,10 @@ file above unchanged.
   `e2e/association/associate-stacked.spec.ts` translates it.
 
 **2026-10-02 — `automated` (Slice #37.58).** `e2e/association/associate-stacked.spec.ts`, at 1366 × 768: every step green in the runner's full `20261002T231136Z-29132`, whose cleanup then pressed the wrong „Dezasociază" (the PAD's „Persoane" has one too); scoped to „Proprietăți", the whole spec green in `20261002T232715Z-18822`.
+
+**2026-10-03 — Slice #37.64 (steps 5 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one line a row under no headings; the share values went behind the row's
+orange „Cotă", a related document's relationship behind „Relația", and „Înscrisuri citate în acest
+document" behind one button. The steps now say what the screen shows; the spec follows them, and
+the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
+(TC-DOC-09 drove the new shape by hand, twice).

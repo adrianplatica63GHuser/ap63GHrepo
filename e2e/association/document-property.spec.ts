@@ -16,6 +16,9 @@
  *   - Slices #37.19 and #37.20: neither the property nor the document has a
  *     tab row; the property's „Acte" (step 9) and the document's
  *     „Proprietăți" are tiles, ticked with `showTile` (e2e/helpers/tiles.ts).
+ *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one line a row with no heading row, the share boxes behind the row's
+ *     orange „Cotă" (step 7 as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -26,7 +29,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-02`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -76,11 +79,12 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=properties$`), { timeout: 30_000 });
 
       // Step 7 — one column, „Denumire" (no „Cod"), one row with „Vizualizare".
-      const linkedRow = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
+      const propertiesTile = page.getByRole("region", { name: "Proprietăți", exact: true });
+      const linkedRow = lineRow(propertiesTile, PROPERTY);
       await expect(linkedRow).toHaveCount(1, { timeout: 15_000 });
-      const linked = page.getByRole("table").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
-      await expect(linked.getByText("Denumire", { exact: true })).toBeVisible();
-      await expect(linked.getByText("Cod", { exact: true })).toHaveCount(0);
+      await expect(linkedRow.locator("[data-row-content]")).toHaveText(PROPERTY);
+      await expect(propertiesTile.getByRole("columnheader")).toHaveCount(0);
+      await expect(propertiesTile.getByText("Cod", { exact: true })).toHaveCount(0);
 
       // Step 8 — „Vizualizare": the property's own screen, READ-ONLY.
       await linkedRow.getByRole("link", { name: "Vizualizare" }).click();

@@ -17,6 +17,8 @@
  *   - Slices #37.19 and #37.20: neither the property nor the document has a
  *     tab row; the property's „Acte" (step 2) and the document's
  *     „Proprietăți" are tiles, ticked with `showTile` (e2e/helpers/tiles.ts).
+ *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one line a row with no heading row (step 8 as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -27,7 +29,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-05`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -93,12 +95,12 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 8 — the other end: „Proprietăți", one column „Denumire", one row.
-      await showTile(page, "Proprietăți");
-      const back = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
+      const props = await showTile(page, "Proprietăți");
+      const back = lineRow(props, PROPERTY);
       await expect(back).toHaveCount(1, { timeout: 30_000 });
+      await expect(back.getByRole("radio", { name: PROPERTY })).toHaveCount(1);
       await expect(back.getByRole("link", { name: "Vizualizare" })).toBeVisible();
-      const props = page.getByRole("table").filter({ has: back });
-      await expect(props.getByText("Denumire", { exact: true })).toBeVisible();
+      await expect(back.locator("[data-row-content]")).toHaveText(PROPERTY);
 
       // ── At the end — on the document's „Proprietăți": radio, „Dezasociază" ─
       await page.getByRole("radio", { name: PROPERTY }).check();

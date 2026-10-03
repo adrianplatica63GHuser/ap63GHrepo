@@ -24,6 +24,9 @@
  *     Certificat de Moștenitor only — ticked by default, as the panel was
  *     shown); its „Persoane" is a tile, ticked with `showTile`. „Părți" is
  *     found as the panel's heading, since the checkbox carries the same word.
+ *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one line a row with no heading row, the share boxes behind the row's
+ *     orange „Cotă" (step 7 as corrected on 2026-10-03).
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -34,7 +37,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile, tileBox } from "../helpers/tiles";
+import { lineRow, showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-12`;
 const DECEASED = `Vasile ${MARK} Defunct`;
@@ -130,14 +133,11 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       // both list the two people — so the rows are looked for in the tile.
       const personsTile = await showTile(page, "Persoane");
       for (const [person, quality] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"]] as const) {
-        const r = personsTile.getByRole("row").filter({ hasText: person });
+        const r = lineRow(personsTile, person);
         await expect(r).toHaveCount(1, { timeout: 15_000 });
-        await expect(r.getByRole("cell", { name: quality, exact: true })).toHaveCount(1); // FU-224
+        await expect(r.locator("[data-row-content]")).toHaveText(`${person} (${quality})`); // FU-224, „Nume (Rol)" since #37.64
       }
-      const persons = personsTile.getByRole("table").filter({ has: page.getByRole("row").filter({ hasText: HEIR }) });
-      for (const col of ["Nume", "Rol", "Cotă-parte", "Suprafață echivalentă (mp)", "Mod de deținere"]) {
-        await expect(persons.getByText(col, { exact: true })).toBeVisible();
-      }
+      await expect(personsTile.getByRole("columnheader")).toHaveCount(0);
 
       // Step 8 — each person's „Acte": „Certificat de Moștenitor", the title, the quality (FU-224).
       for (const [id, person, quality] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {

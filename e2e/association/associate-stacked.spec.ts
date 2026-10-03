@@ -15,6 +15,8 @@
  *     px, into `playwright-report/associate-stacked/`. „Asociere persoană"'s
  *     results list real people, so that picture is of the tiles' frames only,
  *     the results table masked.
+ *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one line a row with no heading row (step 5 as corrected on 2026-10-03).
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -119,17 +121,17 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       await expectStacked(page);
       await photograph(page, "associate-property");
 
-      // Step 5 — „Asociază selecția": back on the PAD; „Proprietăți" 4 units, the name on one line.
+      // Step 5 — „Asociază selecția": back on the PAD; „Proprietăți" 3 units (#37.64), the name on one line.
       await page.getByRole("checkbox", { name: PROPERTY }).check();
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}\\?tab=properties$`), { timeout: 30_000 });
       const tile = page.getByRole("region", { name: "Proprietăți", exact: true });
-      const linked = tile.locator("td").filter({ hasText: PROPERTY });
+      const linked = tile.locator("li[data-one-line-row] [data-row-content]").filter({ hasText: PROPERTY });
       await expect(linked).toHaveCount(1, { timeout: 30_000 });
       await expectOneLine(linked);
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
       const width = await tile.evaluate((el) => el.getBoundingClientRect().width);
-      expect(Math.round(width)).toBe(Math.round((4 * 9.25 + 3) * rem));
+      expect(Math.round(width)).toBe(Math.round((3 * 9.25 + 2) * rem));
       await photograph(page, "pad-properties", tile);
 
       // At the end — „Dezasociază" in „Proprietăți" (the PAD's „Persoane" has one too).

@@ -33,7 +33,7 @@ Nothing.
 | 4 | Types `TC-PROP-01` into „Căutare" | The table narrows to one row, „Denumire" = `TC-PROP-01 Teren de test` |
 | 5 | Ticks that row | The row is selected, and the hint „Selectați cel puțin o proprietate" under the buttons goes away |
 | 6 | Presses „Asociază selecția" | Back on the document, on its „Proprietăți" tab |
-| 7 | Looks at „Proprietăți" | A table with one column, „Denumire" — there is no „Cod" column — and one row, `TC-PROP-01 Teren de test`, with „Vizualizare" |
+| 7 | Looks at „Proprietăți" | No column headings and no „Cod": one row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
 | 8 | Presses „Vizualizare" on that row | The property's own screen, headed `TC-PROP-01 Teren de test`, opened **read-only** (`?readonly=true`) |
 | 9 | Presses the tab „Acte" on the property | A table Tip · Titlu with one row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
 
@@ -78,3 +78,10 @@ Four corrections:
    selected first — the same as on the „Persoane" tab.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-03 — Slice #37.64 (steps 7 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one line a row under no headings; the share values went behind the row's
+orange „Cotă", a related document's relationship behind „Relația", and „Înscrisuri citate în acest
+document" behind one button. The steps now say what the screen shows; the spec follows them, and
+the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
+(TC-DOC-09 drove the new shape by hand, twice).

@@ -27,12 +27,16 @@
  *   - Slice #37.20: a document has no tab row; its „Asocieri" (steps 3 and 8)
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts). Step 1's
  *     „no notebook" check is on „Adaugă act", which keeps its notebook.
+ *   - Slice #37.64: „Acte corelate" is one line a row — „Etichetă scurtă (Tip)" —
+ *     and the relationship is a button before „Vizualizează" whose sentence
+ *     shows on a press; „Înscrisuri citate" is one button that unfolds the panel
+ *     (the case's steps 3, 7 and 8 as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { showTile } from "../helpers/tiles";
+import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-07`;
 const CERTIFICATE = `${MARK} Titlu anterior`;
@@ -92,7 +96,13 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await showTile(page, "Acte corelate");
       await expect(page.getByText("Niciun document asociat")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      const cited = page.getByRole("button", { name: "Înscrisuri citate", exact: true });
+      await expect(cited).toHaveAttribute("aria-expanded", "false");
+      await expect(page.getByText("Înscrisuri citate în acest document")).toHaveCount(0);
+      await cited.click();
       await expect(page.getByText("Înscrisuri citate în acest document")).toBeVisible();
+      await cited.click();
+      await expect(page.getByText("Înscrisuri citate în acest document")).toHaveCount(0);
 
       // Step 4 — „Asociază": „Asociază Document", „Căutare", Cod · Tip · Titlu, „Tip relație".
       await page.getByRole("button", { name: "Asociază", exact: true }).click();
@@ -117,24 +127,31 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${certificateId}\\?tab=related$`), { timeout: 30_000 });
 
-      // Step 7 — Tip · Titlu · Tip relație; the role reads FROM the certificate.
-      const fromCertificate = page.getByRole("row").filter({ hasText: CONTRACT });
+      // Step 7 — one line, „Etichetă scurtă (Tip)"; the relationship behind its button
+      // reads FROM the certificate, and a click outside hides it.
+      const fromCertificate = lineRow(page.getByRole("region", { name: "Acte corelate", exact: true }), CONTRACT);
       await expect(fromCertificate).toHaveCount(1, { timeout: 15_000 });
-      await expect(fromCertificate).toContainText("Contract de Vânzare");
-      await expect(fromCertificate).toContainText(`acest document „Titlu anterior al” ${CONTRACT}`); // #37.57: by its title, not its code
-      const table = page.getByRole("table").filter({ has: fromCertificate });
-      for (const col of ["Tip", "Titlu", "Tip relație"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
+      await expect(fromCertificate.locator("[data-row-content]")).toHaveText(`${CONTRACT} (Contract de Vânzare)`);
+      await expectOneLine(fromCertificate);
+      await expect(page.getByText(`acest document „Titlu anterior al” ${CONTRACT}`)).toHaveCount(0);
+      await fromCertificate.getByRole("button", { name: "Relația", exact: true }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Titlu anterior al" }))
+        .toHaveText(`acest document „Titlu anterior al” ${CONTRACT}`); // #37.57: by its title, not its code
+      await page.getByRole("heading", { name: CERTIFICATE }).click();
+      await expect(page.getByText(`acest document „Titlu anterior al” ${CONTRACT}`)).toHaveCount(0);
 
-      // Step 8 — the contract's „Asocieri": the converse.
+      // Step 8 — the contract's „Acte corelate": the converse.
       await page.goto(`/documents/${contractId}`);
       await expect(page.getByRole("heading", { name: CONTRACT })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Acte corelate");
-      const fromContract = page.getByRole("row").filter({ hasText: CERTIFICATE });
+      const related = await showTile(page, "Acte corelate");
+      const fromContract = lineRow(related, CERTIFICATE);
       await expect(fromContract).toHaveCount(1, { timeout: 30_000 });
-      await expect(fromContract).toContainText("Certificat de Moștenitor");
-      await expect(fromContract).toContainText(`${CERTIFICATE} „Titlu anterior al” acest document`); // #37.57
+      await expect(fromContract.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);
+      await fromContract.getByRole("button", { name: "Relația", exact: true }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Titlu anterior al" }))
+        .toHaveText(`${CERTIFICATE} „Titlu anterior al” acest document`); // #37.57
+      await page.keyboard.press("Escape");
+      await expect(page.getByText(`${CERTIFICATE} „Titlu anterior al” acest document`)).toHaveCount(0);
 
       // ── At the end — radio, „Dezasociază"; then the certificate „Șterge" / „Da" ─
       await page.getByRole("radio", { name: CERTIFICATE }).check();

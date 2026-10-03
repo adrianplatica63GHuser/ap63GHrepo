@@ -58,3 +58,30 @@ export async function hideTile(page: Page, name: string): Promise<void> {
   }).toPass({ timeout: 30_000 });
   await expect(page.getByRole("region", { name, exact: true })).toBeHidden();
 }
+
+/**
+ * A one-line row (Slice #37.64): a row of a Document's „Persoane", „Proprietăți"
+ * or „Acte corelate" — a radio, one content field and its buttons, on one line.
+ * They are list items, not table rows, and have no heading row.
+ */
+export function lineRow(scope: Page | Locator, text: string): Locator {
+  return scope.locator("li[data-one-line-row]").filter({ hasText: text });
+}
+
+/**
+ * One line tall: a row of buttons at `xs` (26 px) and the row's padding — 34 px
+ * measured — never the two or three lines a stacked cell made it.
+ */
+export async function expectOneLine(row: Locator): Promise<void> {
+  const box = await row.boundingBox();
+  expect(box, "the row is on the page").not.toBeNull();
+  expect(box?.height ?? 0).toBeLessThan(44);
+}
+
+/** Press a person row's orange „Cotă" and return the panel with its three boxes. */
+export async function openShare(row: Locator): Promise<Locator> {
+  await row.getByRole("button", { name: "Cotă", exact: true }).click();
+  const panel = row.locator("[data-share-panel]");
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  return panel;
+}

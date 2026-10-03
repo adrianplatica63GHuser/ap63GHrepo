@@ -16,6 +16,9 @@
  *   - Slice #37.59's pictures, not steps of the case: the PAD's and the
  *     CVC's „Persoane" and „Roluri pe Document", at 1366 and 1920 px, into
  *     `playwright-report/role-share/`.
+ *   - Slice #37.64: the boxes are behind the row's orange „Cotă" (the case's
+ *     steps 1, 2, 5–7 as corrected on 2026-10-03); a row whose role holds no
+ *     share has no „Cotă" at all.
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -26,7 +29,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { lineRow, openShare, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-07`;
 const PERSON = `Ion ${MARK}`;
@@ -54,12 +57,14 @@ async function link(page: Page, documentId: string, personId: string, personRole
 async function personsRow(page: Page, documentId: string): Promise<Locator> {
   await page.goto(`/documents/${documentId}`);
   const tile = await showTile(page, "Persoane");
-  const row = tile.locator("tbody tr").filter({ hasText: PERSON });
+  const row = lineRow(tile, PERSON);
   await expect(row).toHaveCount(1, { timeout: 30_000 });
   return row;
 }
 
-const boxes = (row: Locator) => row.locator('input[type="text"], select');
+/** The share boxes in the row's „Cotă" panel (#37.64) — none, and no button, where the role holds no share. */
+const boxes = (row: Locator) => row.locator("[data-share-panel]").locator('input[type="text"], select');
+const shareButton = (row: Locator) => row.getByRole("button", { name: "Cotă", exact: true });
 
 async function openRolesScreen(page: Page): Promise<Locator> {
   await page.goto("/admin/value-lists");
@@ -109,12 +114,14 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       // Step 1 — the PAD: „Proiectant / Consultant", no share boxes.
       let row = await personsRow(page, padId);
       await expect(row).toContainText("Proiectant / Consultant");
+      await expect(shareButton(row)).toHaveCount(0);
       await expect(boxes(row)).toHaveCount(0);
       await photograph(page, "pad-persons-unticked", page.getByRole("region", { name: "Persoane", exact: true }));
 
       // Step 2 — the CVC: „Vânzător", the three boxes, empty.
       row = await personsRow(page, cvcId);
       await expect(row).toContainText("Vânzător");
+      await openShare(row);
       await expect(boxes(row)).toHaveCount(3);
       for (const b of await boxes(row).all()) await expect(b).toBeEnabled();
       await expect(boxes(row).first()).toHaveValue("");
@@ -136,6 +143,7 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
 
       // Step 5 — the PAD: the three boxes, empty.
       row = await personsRow(page, padId);
+      await openShare(row);
       await expect(boxes(row)).toHaveCount(3);
       await photograph(page, "pad-persons-ticked", page.getByRole("region", { name: "Persoane", exact: true }));
 
@@ -151,6 +159,7 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await expect(tick(dialog, P)).not.toBeChecked();
       await expect.poll(async () => (await pairs(page)).find((p) => p.id === P.id)?.holdsShare, { timeout: 15_000 }).toBe(false);
       row = await personsRow(page, padId);
+      await openShare(row);
       await expect(boxes(row)).toHaveCount(3);
       for (const b of await boxes(row).all()) await expect(b).toBeDisabled();
       await expect(row.getByRole("textbox", { name: /^Cotă-parte/ })).toHaveValue("50");

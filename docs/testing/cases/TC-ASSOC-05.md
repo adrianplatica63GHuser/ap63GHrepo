@@ -34,7 +34,7 @@ Nothing. There is no role on this link, from either end.
 | 5 | Ticks that row | The hint „Selectați cel puțin un act" goes away |
 | 6 | Presses „Asociază selecția" | Back on the property's „Acte" tab (`?tab=document`): a table **Tip · Titlu** with one row — „Contract de Vânzare", `TC-DOC-01 Contract de test` — and „Vizualizare" |
 | 7 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
-| 8 | Presses the tab „Proprietăți" on the document | A table with one column, „Denumire", and one row, `TC-PROP-01 Teren de test`, with „Vizualizare" |
+| 8 | Presses the tab „Proprietăți" on the document | One row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
 
 Step 8 is the other end of the link.
 
@@ -59,3 +59,10 @@ with the radio and „Dezasociază". Every step written from TC-ASSOC-02 and the
 one thing the run added is the property's „Acte" table being **Tip · Titlu**, without „Cod".
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-03 — Slice #37.64 (steps 8 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one line a row under no headings; the share values went behind the row's
+orange „Cotă", a related document's relationship behind „Relația", and „Înscrisuri citate în acest
+document" behind one button. The steps now say what the screen shows; the spec follows them, and
+the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
+(TC-DOC-09 drove the new shape by hand, twice).
