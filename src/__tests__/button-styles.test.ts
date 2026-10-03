@@ -51,6 +51,9 @@ describe("buttonClass — the state rule", () => {
       // A link at rest, so its strong treatment is the red LABEL; the fill
       // arrives on hover and on focus and is pinned in its own block below.
       "danger-link": "text-danger",
+      // Slice #37.64: the Document's „Cotă" — solid orange while the share is empty, an outline once filled.
+      attention: "bg-orange-700",
+      "attention-outline": "border-orange-700",
       bare: "text-cta",
       "bare-danger": "text-danger",
     };

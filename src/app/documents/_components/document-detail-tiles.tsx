@@ -25,8 +25,8 @@
  * #37.31 every tile is a whole number of width units and the row is
  * `unitRowStyle("document")`: Date generale 3, Pagini 4 (its 40rem is exactly
  * four units), each notebook tile ONE frame as wide as its widest panel, and
- * the list tiles compact — Persoane 6, Proprietăți 3, „Acte corelate" 5, META
- * INFO 5. Every tile carries
+ * the list tiles one line a row since #37.64 — Persoane, Proprietăți and „Acte
+ * corelate" 3 each, Clasificare subiectivă 2, Conexiuni 3. Every tile carries
  * `order`, its place in the registry, because the form's tiles and the page's
  * list tiles come from two components and the row must read in one order.
  *
@@ -215,21 +215,21 @@ export function DocumentDetailTiles({
           {choice.isShown("persons") && (
             <div className="max-w-full" style={{ order: order("persons") }}>
               <ListTile tile="persons" title={labels.persons} units={LIST_UNITS.document.persons}>
-                <DocumentPersonsTab documentId={documentId} compact />
+                <DocumentPersonsTab documentId={documentId} label={labels.persons} />
               </ListTile>
             </div>
           )}
           {choice.isShown("properties") && (
             <div className="max-w-full" style={{ order: order("properties") }}>
               <ListTile tile="properties" title={labels.properties} units={LIST_UNITS.document.properties}>
-                <DocumentPropertiesTab documentId={documentId} compact />
+                <DocumentPropertiesTab documentId={documentId} label={labels.properties} />
               </ListTile>
             </div>
           )}
           {choice.isShown("associations") && (
             <div className="max-w-full" style={{ order: order("associations") }}>
               <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.document.associations}>
-                <DocumentReferencesTab documentId={documentId} compact />
+                <DocumentReferencesTab documentId={documentId} label={labels.associations} />
               </ListTile>
             </div>
           )}

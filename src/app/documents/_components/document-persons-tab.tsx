@@ -1,13 +1,15 @@
 "use client";
 
-import { ArrowRight, Link as LinkIcon, Unlink } from "lucide-react";
+import { ArrowRight, Link as LinkIcon, PieChart, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { NP_LIST_COLUMNS, boxStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { OneLineRow, OneLineRows } from "@/components/tiles/one-line-rows";
+import { SHARE_PANEL_STYLE, boxStyle, type RowSlot } from "@/lib/ui/field-widths";
+import { HintBubble } from "@/lib/ui/hint-bubble";
+import { usePressAway } from "@/lib/ui/press-bubble";
 import {
   COTA_MOD_VALUES,
   formatCotaParte,
@@ -18,16 +20,21 @@ import {
   type CotaParseError,
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
-import { shareCells } from "@/lib/documents/share-cells";
+import { shareCells, storesShare } from "@/lib/documents/share-cells";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import { newTabIfAsked, openThroughGuard, personPath } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 
-/** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "personName", "role", "cota", "cotaMp", "cotaMod", "openPreview"];
-/** The three cotă boxes fill their L column, so „fără suprafață" shows whole. */
+/**
+ * Slice #37.64: one line a row — the radio, „Nume (Rol)", and three button
+ * slots: „Cotă" (only where the role holds a share), „Vizualizare",
+ * „Previzualizare". No heading row: #37.59 emptied a Proiectant's share cells
+ * but the three names still stood over the empty column.
+ */
+const SLOTS: readonly RowSlot[] = ["share", "view", "preview"];
+/** The three cotă boxes at L, so „fără suprafață" shows whole. */
 const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "fixed" });
 
 /**
@@ -63,8 +70,8 @@ type AssociatedPerson = {
 
 type Props = {
   documentId: string;
-  /** Slice #37.31 — the Document's unit tile: the compact table that fills it, the share values stacked. */
-  compact?: boolean;
+  /** The tile's title — the list's accessible name. */
+  label: string;
 };
 
 /** What the user has typed but not yet committed, per row. */
@@ -105,11 +112,7 @@ function cotaErrorLabel(t: (key: string) => string, error: CotaParseError): stri
   }
 }
 
-export function DocumentPersonsTab({ documentId, compact = false }: Props) {
-  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.documentPersons : COLUMNS;
-  const [nameCol, roleCol, buttonsCol] = compact
-    ? (["tileName", "tileRole", "openPreviewStacked"] as const)
-    : (["personName", "role", "openPreview"] as const);
+export function DocumentPersonsTab({ documentId, label }: Props) {
   const t           = useTranslations("document.persons");
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
@@ -124,6 +127,36 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
   const [cellErrors, setCellErrors] = useState<Record<string, CellErrors>>({});
   const [savingId,   setSavingId]   = useState<string | null>(null);
   const [saveErr,    setSaveErr]    = useState<string | null>(null);
+
+  /**
+   * The row whose share panel is open (#37.64) — one at a time.
+   *
+   * ⚠️ **CLOSING IT NEVER LOSES A TYPED VALUE.** A press outside or Esc first
+   * takes the focus out of the box being typed into, which commits it exactly
+   * as leaving the box always did (`onBlur` → `commitNumeric`), and only then
+   * closes the panel. Unmounting a focused box would not fire its blur, and
+   * the value would be gone with the panel.
+   */
+  const [shareOpenId, setShareOpenId] = useState<string | null>(null);
+  const panelIdBase = useId();
+  const closeShare = useCallback((how: "outside" | "escape" | "button") => {
+    const panel = document.querySelector<HTMLElement>("[data-share-panel]");
+    const active = document.activeElement;
+    if (panel && active instanceof HTMLElement && panel.contains(active)) active.blur();
+    if (how === "escape") {
+      document.querySelector<HTMLElement>("[data-share-open] button[data-share-button]")?.focus();
+    }
+    setShareOpenId(null);
+  }, []);
+  const shareRef = usePressAway<HTMLDivElement>(shareOpenId !== null, closeShare);
+
+  // The panel opens on its first box that can be typed into; a read-only one has none.
+  useEffect(() => {
+    if (shareOpenId === null) return;
+    document
+      .querySelector<HTMLElement>("[data-share-panel] input:not(:disabled), [data-share-panel] select:not(:disabled)")
+      ?.focus();
+  }, [shareOpenId]);
 
   const { data: items, isLoading, isError } = useQuery({
     queryKey: ["document-persons", documentId],
@@ -303,201 +336,195 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
         : "border-wire focus:border-focus dark:border-zinc-700",
     ].join(" ");
 
+  /** „1/2" — or the box's own „fără cotă" when there is nothing: the bubble reads like the boxes. */
+  const shareSummary = (item: AssociatedPerson): string =>
+    t("shareSummary", {
+      parte: item.cotaParte === null ? t("cotaPlaceholder") : formatCotaParte(item.cotaParte),
+      mp:    item.cotaSuprafataMp === null ? t("cotaMpPlaceholder") : formatCotaSuprafataMp(item.cotaSuprafataMp),
+      mod:   item.cotaMod === null ? t("cotaModPlaceholder") : modLabel(t, item.cotaMod),
+    });
+
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        {items && items.length > 0 ? (
-          <table {...fixedTable(columns)}>
-            <FixedColumns columns={columns} />
-            <thead>
-              <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(nameCol)}>{t("colName")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(roleCol)}>{t("colRole")}</th>
-                {compact ? (
-                  // The three values' names, one under the other, as their boxes are below.
-                  <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("tileCota")}>
-                    <span className="block">{t("colCota")}</span>
-                    <span className="block">{t("colCotaMp")}</span>
-                    <span className="block">{t("colCotaMod")}</span>
-                  </th>
-                ) : (
-                  <>
-                    <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cota")}>{t("colCota")}</th>
-                    <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMp")}>{t("colCotaMp")}</th>
-                    <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead("cotaMod")}>{t("colCotaMod")}</th>
-                  </>
-                )}
-                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const errors   = cellErrors[item.linkId] ?? {};
-                const selected = item.linkId === selectedId;
-                // Slice #37.59: the three share values only for a role that holds a share
-                // (or no role); a stored value on a role that holds none shows read-only.
-                const cells  = shareCells(item);
-                const locked = cells === "readonly";
-                // FU-224 (Slice #37.07): the role, else a certificate party's quality.
-                const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
-                  DEFUNCT:    t("qualityDefunct"),
-                  MOSTENITOR: t("qualityMostenitor"),
-                });
-                const parteCell = (
-                    <div className="flex flex-col gap-0.5">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={draftOf(item, "parte")}
-                        placeholder={t("cotaPlaceholder")}
-                        data-blank=""
-                        disabled={locked || savingId === item.linkId}
-                        aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
-                        aria-invalid={errors.parte ? true : undefined}
-                        onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
-                        onBlur={() => void commitNumeric(item, "parte")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "parte"); }
-                          if (e.key === "Escape") {
-                            clearDraft(item.linkId, "parte");
-                            setCellError(item.linkId, "parte", undefined);
-                          }
-                        }}
-                        className={inputClass(Boolean(errors.parte))}
-                        style={COTA_BOX_STYLE}
-                      />
-                      {errors.parte && (
-                        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                          {cotaErrorLabel(t, errors.parte)}
-                        </span>
-                      )}
-                    </div>
-                );
-                const mpCell = (
-                    <div className="flex flex-col gap-0.5">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={draftOf(item, "mp")}
-                        placeholder={t("cotaMpPlaceholder")}
-                        data-blank=""
-                        disabled={locked || savingId === item.linkId}
-                        aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
-                        aria-invalid={errors.mp ? true : undefined}
-                        onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
-                        onBlur={() => void commitNumeric(item, "mp")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "mp"); }
-                          if (e.key === "Escape") {
-                            clearDraft(item.linkId, "mp");
-                            setCellError(item.linkId, "mp", undefined);
-                          }
-                        }}
-                        className={inputClass(Boolean(errors.mp))}
-                        style={COTA_BOX_STYLE}
-                      />
-                      {errors.mp && (
-                        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                          {cotaErrorLabel(t, errors.mp)}
-                        </span>
-                      )}
-                    </div>
-                );
-                const modCell = (
-                    <select
-                      value={item.cotaMod ?? ""}
-                      disabled={locked || savingId === item.linkId}
-                      aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
-                      onChange={(e) => void commitMod(item, e.target.value)}
-                      className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                      style={COTA_BOX_STYLE}
-                    >
-                      <option value="" data-blank="">{t("cotaModPlaceholder")}</option>
-                      {COTA_MOD_VALUES.map((v) => (
-                        <option key={v} value={v}>{modLabel(t, v)}</option>
-                      ))}
-                    </select>
-                );
-                const lockedHint = locked ? (
-                  <span className="text-xs text-fade dark:text-zinc-400" data-share-hint>{t("shareNotHeld")}</span>
-                ) : null;
-                return (
-                  <tr
-                    key={item.linkId}
-                    data-share={cells}
-                    // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                    onClick={(e) => {
-                      if (newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)) return;
-                      setSelectedId(selected ? null : item.linkId);
+      {items && items.length > 0 ? (
+        <OneLineRows slots={SLOTS} label={label}>
+          {items.map((item) => {
+            const errors   = cellErrors[item.linkId] ?? {};
+            const selected = item.linkId === selectedId;
+            // Slice #37.59: the three share values only for a role that holds a share
+            // (or no role); a stored value on a role that holds none shows read-only.
+            // Slice #37.64: they live behind the row's orange „Cotă", never on the row.
+            const cells  = shareCells(item);
+            const locked = cells === "readonly";
+            const open   = shareOpenId === item.linkId;
+            // FU-224 (Slice #37.07): the role, else a certificate party's quality.
+            const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
+              DEFUNCT:    t("qualityDefunct"),
+              MOSTENITOR: t("qualityMostenitor"),
+            });
+            // „Nume (Rol)" — a link with no role (and no quality) is the name alone.
+            const hasRole = roleLabel !== "—";
+            const text    = hasRole ? `${item.displayName} (${roleLabel})` : item.displayName;
+            const panelId = `${panelIdBase}-${item.linkId}`;
+            const parteCell = (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCota")}</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={draftOf(item, "parte")}
+                    placeholder={t("cotaPlaceholder")}
+                    data-blank=""
+                    disabled={locked || savingId === item.linkId}
+                    aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
+                    aria-invalid={errors.parte ? true : undefined}
+                    onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
+                    onBlur={() => void commitNumeric(item, "parte")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "parte"); }
                     }}
-                    onAuxClick={(e) => newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)}
-                    onDoubleClick={() => guardedNavigate(`${personPath(item.type, item.id)}?readonly=true`)}
-                    className={[
-                      "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
-                      selected
-                        ? "bg-cta-pale dark:bg-cta/10"
-                        : "hover:bg-canvas dark:hover:bg-zinc-800/50",
-                    ].join(" ")}
+                    className={inputClass(Boolean(errors.parte))}
+                    style={COTA_BOX_STYLE}
+                  />
+                  {errors.parte && (
+                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                      {cotaErrorLabel(t, errors.parte)}
+                    </span>
+                  )}
+                </div>
+            );
+            const mpCell = (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCotaMp")}</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={draftOf(item, "mp")}
+                    placeholder={t("cotaMpPlaceholder")}
+                    data-blank=""
+                    disabled={locked || savingId === item.linkId}
+                    aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
+                    aria-invalid={errors.mp ? true : undefined}
+                    onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
+                    onBlur={() => void commitNumeric(item, "mp")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "mp"); }
+                    }}
+                    className={inputClass(Boolean(errors.mp))}
+                    style={COTA_BOX_STYLE}
+                  />
+                  {errors.mp && (
+                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                      {cotaErrorLabel(t, errors.mp)}
+                    </span>
+                  )}
+                </div>
+            );
+            const modCell = (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCotaMod")}</span>
+                  <select
+                    value={item.cotaMod ?? ""}
+                    disabled={locked || savingId === item.linkId}
+                    aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
+                    onChange={(e) => void commitMod(item, e.target.value)}
+                    className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                    style={COTA_BOX_STYLE}
                   >
-                    <td className="px-3 py-2">
-                      <input
-                        type="radio"
-                        checked={selected}
-                        onChange={() => setSelectedId(item.linkId)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="accent-cta"
-                        aria-label={`${item.displayName} — ${roleLabel}`}
-                      />
-                    </td>
-                    <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.displayName}</td>
-                    <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{roleLabel}</td>
-
-                    {/* Slice #37.31: on the Document's unit tile the three share values
-                        stack in one column (6 units); on a wide table, three columns. */}
-                    {compact ? (
-                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                        {cells !== "none" && (
-                          <div className="flex flex-col gap-1">
-                            {parteCell}
-                            {mpCell}
-                            {modCell}
-                            {lockedHint}
-                          </div>
-                        )}
-                      </td>
-                    ) : (
-                      <>
-                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{cells !== "none" && parteCell}</td>
-                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{cells !== "none" && mpCell}</td>
-                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                          {cells !== "none" && <div className="flex flex-col gap-0.5">{modCell}{lockedHint}</div>}
-                        </td>
-                      </>
-                    )}
-
-                    <td className="px-3 py-2">
-                      <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
-                        <IconButton
-                          href={`${personPath(item.type, item.id)}?readonly=true`}
-                          onClick={(e) => openThroughGuard(e, `${personPath(item.type, item.id)}?readonly=true`, guardedNavigate)}
-                          icon={ArrowRight}
-                          label={t("view")}
-                          variant="secondary"
-                          size="xs"
-                        />
-                        <PreviewButton target={personPreview(item.type, item.id)} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
-          <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
-        )}
-      </div>
+                    <option value="" data-blank="">{t("cotaModPlaceholder")}</option>
+                    {COTA_MOD_VALUES.map((v) => (
+                      <option key={v} value={v}>{modLabel(t, v)}</option>
+                    ))}
+                  </select>
+                </div>
+            );
+            const lockedHint = locked ? (
+              <span className="text-xs text-fade dark:text-zinc-400" data-share-hint>{t("shareNotHeld")}</span>
+            ) : null;
+            /*
+             * The orange „Cotă" (#37.64): solid while the three values are all empty —
+             * something left to fill — and an outline once one is. Resting on it shows
+             * the three values; pressing it opens them, beside the row, to edit.
+             */
+            const shareButton = cells !== "none" && (
+              <div
+                ref={open ? shareRef : undefined}
+                data-share-open={open ? "" : undefined}
+                className="relative"
+              >
+                <HintBubble id={`${panelId}-summary`} text={shareSummary(item)} disabled={open} align="end">
+                  <IconButton
+                    icon={PieChart}
+                    label={t("share")}
+                    showLabel
+                    variant={storesShare(item) ? "attention-outline" : "attention"}
+                    size="xs"
+                    data-share-button=""
+                    aria-describedby={`${panelId}-summary`}
+                    aria-expanded={open}
+                    aria-controls={open ? panelId : undefined}
+                    onClick={() => (open ? closeShare("button") : setShareOpenId(item.linkId))}
+                  />
+                </HintBubble>
+                {open && (
+                  <div
+                    id={panelId}
+                    role="group"
+                    aria-label={`${t("shareTitle")} — ${item.displayName} — ${roleLabel}`}
+                    data-share-panel=""
+                    className="absolute right-0 top-full z-30 mt-1 flex flex-col gap-2 whitespace-normal rounded-md border border-card-rim bg-white p-3 text-left shadow-lg dark:border-zinc-600 dark:bg-zinc-900"
+                    style={SHARE_PANEL_STYLE}
+                  >
+                    {parteCell}
+                    {mpCell}
+                    {modCell}
+                    {lockedHint}
+                  </div>
+                )}
+              </div>
+            );
+            return (
+              <OneLineRow
+                key={item.linkId}
+                data-share={cells}
+                selected={selected}
+                onSelect={() => setSelectedId(item.linkId)}
+                radioLabel={`${item.displayName} — ${roleLabel}`}
+                title={text}
+                content={
+                  <>
+                    <span className="font-medium text-ink dark:text-zinc-100">{item.displayName}</span>
+                    {hasRole && <span className="text-fade dark:text-zinc-400"> ({roleLabel})</span>}
+                  </>
+                }
+                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                onClick={(e) => {
+                  if (newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)) return;
+                  setSelectedId(selected ? null : item.linkId);
+                }}
+                onAuxClick={(e) => newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)}
+                onDoubleClick={() => guardedNavigate(`${personPath(item.type, item.id)}?readonly=true`)}
+                buttons={{
+                  share: shareButton || undefined,
+                  view: (
+                    <IconButton
+                      href={`${personPath(item.type, item.id)}?readonly=true`}
+                      onClick={(e) => openThroughGuard(e, `${personPath(item.type, item.id)}?readonly=true`, guardedNavigate)}
+                      icon={ArrowRight}
+                      label={t("view")}
+                      variant="secondary"
+                      size="xs"
+                    />
+                  ),
+                  preview: <PreviewButton target={personPreview(item.type, item.id)} />,
+                }}
+              />
+            );
+          })}
+        </OneLineRows>
+      ) : (
+        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
+      )}
 
       {/*
         ⚠️ **THE TOTAL WARNS AND DOES NOT BLOCK, AND NOTHING HERE MAY MAKE IT
@@ -536,7 +563,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <IconButton
             icon={LinkIcon}
             label={t("associate")}

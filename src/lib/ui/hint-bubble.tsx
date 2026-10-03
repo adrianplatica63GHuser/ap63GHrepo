@@ -92,6 +92,13 @@ type Props = {
   /** The control being explained. */
   children: ReactNode;
   className?: string;
+  /**
+   * Which edge the bubble hangs from (Slice #37.64). `start`, the default, is
+   * the control's left edge; `end` its right edge, for a control at the right
+   * of a tile — the „Cotă" button of a Document's person row — whose bubble
+   * would otherwise hang out of the tile.
+   */
+  align?: "start" | "end";
 };
 
 export function HintBubble({
@@ -101,6 +108,7 @@ export function HintBubble({
   disabled = false,
   children,
   className,
+  align = "start",
 }: Props) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   /**
@@ -187,6 +195,9 @@ export function HintBubble({
       <p
         id={id}
         role="tooltip"
+        // `align="end"` (#37.64): hung from the right edge. An inline style rather
+        // than a second class string, so the one string below stays the one place.
+        style={isOpen && align === "end" ? { left: "auto", right: 0 } : undefined}
         className={
           isOpen
             ? // ⚠️ `w-56` (224px) matches the narrowest column this is used

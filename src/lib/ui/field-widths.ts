@@ -754,11 +754,58 @@ export const LIST_UNITS = {
   // Persoane: a name, a role, the buttons — 4. Acte: a property's documents carry no role,
   // so type, title and the buttons — 4. META INFO 5.
   property: { associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 },
-  // Persoane: name, role, the three share values stacked, the buttons — 6. Proprietăți: a
-  // property's name on one line and the buttons — 4 (3 before #37.58, when it wrapped).
-  // „Acte corelate": type, title, Tip relație, buttons — 5.
-  document: { persons: 6, properties: 4, associations: 5, classification: 2, connections: 3 },
+  // Slice #37.64: Persoane, Proprietăți and „Acte corelate" are one line a row (`oneLineRowUnits`)
+  // — 3 each (before: 6, 4 and 5, when they were tables with headings and stacked buttons).
+  document: { persons: 3, properties: 3, associations: 3, classification: 2, connections: 3 },
 } as const;
+
+/**
+ * ONE LINE A ROW.                                                  (Slice #37.64)
+ *
+ * A row of the Document's „Persoane", „Proprietăți" and „Acte corelate" is a
+ * radio button, one content field and its buttons, on one line: the content is
+ * cut with „…" and shown whole on hover, and every button sits in a SLOT of a
+ * fixed width, in the same place on every row — a row without that button
+ * leaves its slot empty, so the buttons line up down the tile
+ * (`src/components/tiles/one-line-rows.tsx`).
+ *
+ * The slots, in rem: „Cotă" is the orange icon + word at `xs` (16 px icon, a
+ * 6 px gap, the word at 12 px, `px-2`, the border — 66 px) with room to spare;
+ * the other three are the 26-px `xs` icon squares (`SIZE_SQUARE.xs`).
+ */
+export const ROW_SLOT_REM = { share: 4.5, relation: 1.625, view: 1.625, preview: 1.625 } as const;
+export type RowSlot = keyof typeof ROW_SLOT_REM;
+/** The radio button's slot. */
+export const ROW_SELECT_REM = 1;
+/** The gap between the radio, the content and the buttons (`gap-2`), and between two slots (`gap-1`). */
+export const ROW_GAP_REM = 0.5;
+export const ROW_SLOT_GAP_REM = 0.25;
+/** A row's own padding, each side (`px-2`). */
+export const ROW_PADDING_REM = 0.5;
+
+/**
+ * „A typical content" (the header's words) per kind of row, in rem at the rows'
+ * 14 px: a person's „Nume (Rol)" — „Popescu Ion Gheorghe (Cumpărător)", 33
+ * characters, about 240 px — 16rem; a property's name, the longest the archive
+ * holds (`PROPERTY_NAME_PX`, 273 px); a document's „Etichetă scurtă (Tip)" 16rem.
+ * Anything longer is cut with „…" and shown whole on hover, so this decides the
+ * tile's units, never what the row can hold.
+ */
+export const ROW_CONTENT_REM = { person: 16, property: 273 / 16, document: 16 } as const;
+
+/** The width a one-line row needs: its padding, the radio, the content and its slots. */
+export function oneLineRowRem(slots: readonly RowSlot[], contentRem: number): number {
+  const slotsRem = slots.reduce((sum, s) => sum + ROW_SLOT_REM[s], 0) + Math.max(0, slots.length - 1) * ROW_SLOT_GAP_REM;
+  return 2 * ROW_PADDING_REM + ROW_SELECT_REM + ROW_GAP_REM + contentRem + ROW_GAP_REM + slotsRem;
+}
+
+/** The fewest units whose tile holds that row inside its list frame (1 px a side) — rule 17. */
+export function oneLineRowUnits(slots: readonly RowSlot[], contentRem: number): number {
+  return unitsFor(panelRem(oneLineRowRem(slots, contentRem) + 2 * PANEL_BORDER_REM));
+}
+
+/** The share panel (#37.64): the three boxes at L, under one another, inside its padding. */
+export const SHARE_PANEL_STYLE: CSSProperties = { width: rem(panelRem(SCALE.L)) };
 
 /**
  * RULE 18 — DATA-DRIVEN PANELS GET A PACKING RULE, NOT ROWS.   (Slice #37.31)
@@ -1068,7 +1115,6 @@ export const COLUMN = {
   tileRole: { content: "M", kind: "wraps" }, //             a role chip, wrapping
   tileDocType: { content: "M", kind: "wraps" }, //          a document's type, wrapping
   tileDocTitle: { content: 12, kind: "wraps" }, //          a document's title, wrapping
-  tileCota: { content: 18.75, kind: "fixed" }, //           Cotă-parte, Suprafață echivalentă and Mod de deținere, stacked, at L — and the rest of the 6-unit tile (#37.31)
   cota: { content: "L", kind: "fixed" }, //                 an input showing „fără cotă" (italic) when empty
   cotaMp: { content: "L", kind: "fixed" }, //               „fără suprafață"
   cotaMod: { content: "L", kind: "fixed" }, //              a dropdown, „nespecificat"
@@ -1162,10 +1208,8 @@ export const NP_LIST_COLUMNS = {
   documents: ["select", "tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"],
   // Slice #37.30: a property's Acte — its documents carry no role — at 4 units.
   documentsWithoutRole: ["select", "tileDocType", "tileDocTitle", "openPreviewStacked"],
-  // Slice #37.31: a document's Persoane (6 units, the three share values stacked in one
-  // column) and Proprietăți (3 units). Its „Acte corelate" is `documents` above, at 5.
-  documentPersons: ["select", "tileName", "tileRole", "tileCota", "openPreviewStacked"],
-  documentProperties: ["select", "tilePropertyName", "openPreviewStacked"],
+  // Slice #37.64: a document's Persoane, Proprietăți and „Acte corelate" are one-line rows
+  // (`oneLineRowUnits`), not tables — their two column sets went with them.
   // Slice #37.58: a property's „Proprietăți corelate" — its name on one line, the relation, the buttons.
   propertyAssociations: ["select", "tilePropertyName", "tileRole", "openPreviewStacked"],
 } as const satisfies Record<string, readonly ColumnName[]>;

@@ -103,6 +103,8 @@ import {
   screenRowStyle,
   tableUnits,
   PANEL_STYLE,
+  oneLineRowUnits,
+  ROW_CONTENT_REM,
 } from "@/lib/ui/field-widths";
 import { LAYOUT_EXCEPTIONS } from "@/lib/ui/layout-exceptions";
 
@@ -646,19 +648,21 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
   });
 
-  it("the list tiles are compact and fill their units: Persoane 6, Proprietăți 4 (#37.58), „Acte corelate” 5, Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
-    const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
-    // Each table fills its tile to within half a rem (Proprietăți leaves a quarter: 38 in 38.25).
-    for (const [k, units] of [["documentPersons", 6], ["documentProperties", 4], ["documents", 5]] as const) {
-      const room = tileTableRem(units);
-      expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) <= 0.5]).toEqual([k, true]);
-    }
-    expect(LIST_UNITS.document).toEqual({ persons: 6, properties: 4, associations: 5, classification: 2, connections: 3 });
+  it("the list tiles: Persoane, Proprietăți and „Acte corelate” one line a row at 3 units (#37.64), Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
+    // #37.64: the fewest units that hold the radio, a typical content and the row's button slots (rule 17).
+    expect(LIST_UNITS.document.persons).toBe(oneLineRowUnits(["share", "view", "preview"], ROW_CONTENT_REM.person));
+    expect(LIST_UNITS.document.properties).toBe(oneLineRowUnits(["view", "preview"], ROW_CONTENT_REM.property));
+    expect(LIST_UNITS.document.associations).toBe(oneLineRowUnits(["relation", "view", "preview"], ROW_CONTENT_REM.document));
+    expect(LIST_UNITS.document).toEqual({ persons: 3, properties: 3, associations: 3, classification: 2, connections: 3 });
     const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
     for (const k of ["persons", "properties", "associations", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
     }
-    expect(page.match(/documentId=\{documentId\} compact \/>/g) ?? []).toHaveLength(3);
+    // #37.64: no `compact` left — the three lists have one shape, named by their tile.
+    expect(page).not.toMatch(/\bcompact\b \/>/);
+    for (const [tab, k] of [["DocumentPersonsTab", "persons"], ["DocumentPropertiesTab", "properties"], ["DocumentReferencesTab", "associations"]]) {
+      expect(page).toContain(`<${tab} documentId={documentId} label={labels.${k}} />`);
+    }
     expect(page).not.toMatch(/compactCellRem/);
     expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_UNIT_STYLE\.document\.succession\}/);
   });
@@ -849,12 +853,11 @@ describe("tables at fixed column widths (#37.16)", () => {
     ["a person's Asocieri", APP("natural-persons", "_components", "person-references-tab.tsx")],
     ["a person's Acte", APP("documents", "_components", "person-document-tab.tsx")],
     ["a person's Proprietăți", APP("properties", "_components", "person-properties-tab.tsx")],
-    ["a document's Persoane", APP("documents", "_components", "document-persons-tab.tsx")],
-    ["a document's Proprietăți", APP("documents", "_components", "document-properties-tab.tsx")],
-    ["a document's Asocieri", APP("documents", "_components", "document-references-tab.tsx")],
     ["a property's Persoane", APP("properties", "_components", "property-persons-tab.tsx")],
     ["a property's Acte", APP("properties", "_components", "property-document-tab.tsx")],
     ["a property's Asocieri", APP("properties", "_components", "property-references-tab.tsx")],
+    // #37.64: a document's Persoane, Proprietăți and „Acte corelate" are one-line rows, not tables
+    // (one-line-rows.test.tsx).
   ];
 
   it.each(TABLES)("%s: a fixed table from COLUMN, as wide as its columns, every header marked", (_what, src) => {

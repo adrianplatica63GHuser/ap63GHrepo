@@ -1,14 +1,15 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowRight, Link as LinkIcon, ListChecks, ScanText, Unlink } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Link as LinkIcon, ListChecks, ScanText, ScrollText, Unlink } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { useState } from "react";
+import { PressBubble } from "@/lib/ui/press-bubble";
+import { useId, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
+import { OneLineRow, OneLineRows } from "@/components/tiles/one-line-rows";
+import type { RowSlot } from "@/lib/ui/field-widths";
 import {
   AiReferenceLinkerDialog,
   type LinkerDocumentType,
@@ -18,8 +19,13 @@ import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 
-/** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "documentType", "documentTitle", "role", "openPreview"];
+/**
+ * Slice #37.64: one line a row — the radio, „Etichetă scurtă (Tip)", and three
+ * slots: the relationship (only on a link with a role), „Vizualizează",
+ * „Previzualizare". Adrian: „The relationship should not be listed. It should be
+ * a button before the view button."
+ */
+const SLOTS: readonly RowSlot[] = ["relation", "view", "preview"];
 
 type AssociatedDocument = {
   id:                  string;
@@ -45,8 +51,8 @@ type AssociatedDocument = {
 
 type Props = {
   documentId: string;
-  /** Slice #37.31 — the Document's unit tile: the compact table that fills it, the two buttons stacked. */
-  compact?: boolean;
+  /** The tile's title — the list's accessible name. */
+  label: string;
 };
 
 async function fetchDocumentReferences(documentId: string): Promise<AssociatedDocument[]> {
@@ -70,11 +76,7 @@ async function fetchInstrumentReferences(documentId: string): Promise<Instrument
   return (await res.json()) as InstrumentReferencesPayload;
 }
 
-export function DocumentReferencesTab({ documentId, compact = false }: Props) {
-  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.documents : COLUMNS;
-  const [typeCol, titleCol, roleCol, buttonsCol] = compact
-    ? (["tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"] as const)
-    : (["documentType", "documentTitle", "role", "openPreview"] as const);
+export function DocumentReferencesTab({ documentId, label }: Props) {
   const t           = useTranslations("document.references");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
@@ -105,6 +107,13 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
   });
 
   const [linkerOpen, setLinkerOpen] = useState(false);
+  /**
+   * „Înscrisuri citate" folded behind one button (#37.64), folded at first.
+   * The button carries the number still waiting for an answer, so the fold
+   * never hides a pending answer.
+   */
+  const [instrumentsOpen, setInstrumentsOpen] = useState(false);
+  const instrumentsPanelId = useId();
   const [rereading, setRereading] = useState(false);
   const [rereadErr, setRereadErr] = useState<string | null>(null);
 
@@ -205,98 +214,83 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        {items && items.length > 0 ? (
-          <table {...fixedTable(columns)}>
-            <FixedColumns columns={columns} />
-            <thead>
-              <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(typeCol)}>{t("colType")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(titleCol)}>{t("colTitle")}</th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(roleCol)}>{t("colRole")}</th>
-                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr
-                  key={item.id}
-                  // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                  onClick={(e) => {
-                    if (newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)) return;
-                    setSelectedId(item.id === selectedId ? null : item.id);
-                  }}
-                  onAuxClick={(e) => newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)}
-                  onDoubleClick={() => guardedNavigate(`/documents/${encodeURIComponent(item.id)}?readonly=true`)}
-                  className={[
-                    "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
-                    item.id === selectedId
-                      ? "bg-cta-pale dark:bg-cta/10"
-                      : "hover:bg-canvas dark:hover:bg-zinc-800/50",
-                  ].join(" ")}
-                >
-                  <td className="px-3 py-2">
-                    <input
-                      type="radio"
-                      checked={item.id === selectedId}
-                      onChange={() => setSelectedId(item.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="accent-cta"
-                      aria-label={nameOr(item.title, "document")}
-                    />
-                  </td>
-                  <td className={`px-3 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>{item.typeName ?? "—"}</td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${WRAPS}`}>{item.title ?? "—"}</td>
-                  <td className={`px-3 py-2 ${WRAPS}`}>
-                    {item.relationshipRoleName ? (
-                      /*
-                       * ⚠️ **THE ROLE IS RENDERED IN THE DIRECTION THE FLAG
-                       * SAYS, AND THE SAME WORDS MEAN DIFFERENT THINGS EITHER
-                       * WAY ROUND.**                            (Slice #36.03)
-                       *
-                       * „Titlu anterior al" between this document and that one
-                       * says one thing read forwards and the opposite read
-                       * backwards, and before this slice nothing could tell:
-                       * the pair order in `document_document` is by UUID. So
-                       * the chip no longer shows the role alone — it shows
-                       * „acest document «rol» DOC01511" or
-                       * „DOC01511 «rol» acest document", which is a sentence
-                       * rather than a label and cannot be read the wrong way.
-                       */
-                      <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
-                        {item.roleReadsFromViewed
+      {items && items.length > 0 ? (
+        <OneLineRows slots={SLOTS} label={label}>
+          {items.map((item) => {
+            // „Etichetă scurtă (Tip)"; with no title, the type alone — never the system ID (#37.57).
+            const text = item.title
+              ? (item.typeName ? `${item.title} (${item.typeName})` : item.title)
+              : (item.typeName ?? nameOr(item.title, "document"));
+            return (
+              <OneLineRow
+                key={item.id}
+                selected={item.id === selectedId}
+                onSelect={() => setSelectedId(item.id)}
+                radioLabel={nameOr(item.title, "document")}
+                title={text}
+                content={
+                  item.title ? (
+                    <>
+                      <span className="font-medium text-ink dark:text-zinc-100">{item.title}</span>
+                      {item.typeName && <span className="text-fade dark:text-zinc-400"> ({item.typeName})</span>}
+                    </>
+                  ) : (
+                    <span className="font-medium text-ink dark:text-zinc-100">{text}</span>
+                  )
+                }
+                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+                onClick={(e) => {
+                  if (newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)) return;
+                  setSelectedId(item.id === selectedId ? null : item.id);
+                }}
+                onAuxClick={(e) => newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)}
+                onDoubleClick={() => guardedNavigate(`/documents/${encodeURIComponent(item.id)}?readonly=true`)}
+                buttons={{
+                  /*
+                   * ⚠️ **THE ROLE IS SHOWN IN THE DIRECTION THE FLAG SAYS, AND THE
+                   * SAME WORDS MEAN DIFFERENT THINGS EITHER WAY ROUND.** (Slice #36.03)
+                   *
+                   * „Titlu anterior al" between this document and that one says one
+                   * thing read forwards and the opposite read backwards, and the pair
+                   * order in `document_document` is by UUID. So the relationship is
+                   * never the role alone — it is „acest document «rol» X" or
+                   * „X «rol» acest document", a sentence that cannot be read the wrong
+                   * way. Since #37.64 it is behind a button before „Vizualizează",
+                   * shown on a press and gone on a click outside or Esc.
+                   */
+                  relation: item.relationshipRoleName ? (
+                    <PressBubble
+                      icon={ArrowLeftRight}
+                      label={t("relationship")}
+                      text={
+                        item.roleReadsFromViewed
                           ? t("roleForward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
-                          : t("roleBackward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })}
-                      </span>
-                    ) : (
-                      <span className="text-fade dark:text-zinc-500">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
-                      <IconButton
-                        href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
-                        onClick={(e) => openThroughGuard(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
-                        icon={ArrowRight}
-                        label={t("view")}
-                        variant="secondary"
-                        size="xs"
-                      />
-                      <PreviewButton target={{ kind: "document", id: item.id }} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
-        )}
-      </div>
+                          : t("roleBackward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
+                      }
+                    />
+                  ) : undefined,
+                  view: (
+                    <IconButton
+                      href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
+                      onClick={(e) => openThroughGuard(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
+                      icon={ArrowRight}
+                      label={t("view")}
+                      variant="secondary"
+                      size="xs"
+                    />
+                  ),
+                  preview: <PreviewButton target={{ kind: "document", id: item.id }} />,
+                }}
+              />
+            );
+          })}
+        </OneLineRows>
+      ) : (
+        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
+      )}
 
       <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <IconButton
             icon={LinkIcon}
             label={t("associate")}
@@ -317,6 +311,20 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
             onClick={handleDissociate}
             disabled={selectedId === null || dissociating}
           />
+          {/* „Înscrisuri citate" (#37.64): the panel below, folded behind one button
+              that says how many instruments wait for an answer. */}
+          <IconButton
+            icon={ScrollText}
+            label={t("instrumentsButton")}
+            showLabel
+            count={pendingCount}
+            note={pendingCount > 0 ? t("instrumentsPending", { count: pendingCount }) : undefined}
+            variant="secondary"
+            size="lg"
+            aria-expanded={instrumentsOpen}
+            aria-controls={instrumentsOpen ? instrumentsPanelId : undefined}
+            onClick={() => setInstrumentsOpen((v) => !v)}
+          />
         </div>
         {dissociateErr && (
           <p className="text-sm text-red-600 dark:text-red-400" role="alert">{dissociateErr}</p>
@@ -324,7 +332,13 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
       </div>
 
       {/* ── Instruments this document's pages cite (Slice #36.03) ─────────── */}
-      <div className="flex flex-col gap-2 rounded-md border border-card-rim bg-card px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Unfolded by „Înscrisuri citate" (#37.64), and otherwise unchanged. */}
+      {instrumentsOpen && (
+      <div
+        id={instrumentsPanelId}
+        data-instruments-panel=""
+        className="flex flex-col gap-2 rounded-md border border-card-rim bg-card px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
         <p className="text-sm font-medium text-ink dark:text-zinc-100">{t("instrumentsTitle")}</p>
         <p className="text-xs text-fade dark:text-zinc-400">
           {/*
@@ -377,6 +391,7 @@ export function DocumentReferencesTab({ documentId, compact = false }: Props) {
           <p className="text-sm text-red-600 dark:text-red-400" role="alert">{rereadErr}</p>
         )}
       </div>
+      )}
 
       {linkerOpen && instruments && (
         <AiReferenceLinkerDialog

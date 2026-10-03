@@ -7,14 +7,14 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { FixedColumns, ONE_LINE, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { NP_LIST_COLUMNS, type ColumnName } from "@/lib/ui/field-widths";
+import { OneLineRow, OneLineRows } from "@/components/tiles/one-line-rows";
+import type { RowSlot } from "@/lib/ui/field-widths";
 import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 
-/** Slice #37.16: the tab's columns, each a fixed width from `COLUMN`; the table is as wide as they are. */
-const COLUMNS: ColumnName[] = ["select", "propertyLabel", "openPreview"];
+/** Slice #37.64: one line a row — the radio, the property's name, „Vizualizare" and „Previzualizare". */
+const SLOTS: readonly RowSlot[] = ["view", "preview"];
 
 type AssociatedProperty = {
   id:           string;
@@ -25,8 +25,8 @@ type AssociatedProperty = {
 
 type Props = {
   documentId: string;
-  /** Slice #37.31 — the Document's unit tile: the compact table that fills it, the two buttons stacked. */
-  compact?: boolean;
+  /** The tile's title — the list's accessible name. */
+  label: string;
 };
 
 async function fetchDocumentProperties(documentId: string): Promise<AssociatedProperty[]> {
@@ -36,11 +36,7 @@ async function fetchDocumentProperties(documentId: string): Promise<AssociatedPr
   return data.items as AssociatedProperty[];
 }
 
-export function DocumentPropertiesTab({ documentId, compact = false }: Props) {
-  const columns: readonly ColumnName[] = compact ? NP_LIST_COLUMNS.documentProperties : COLUMNS;
-  const [labelCol, buttonsCol] = compact
-    ? (["tilePropertyName", "openPreviewStacked"] as const)
-    : (["propertyLabel", "openPreview"] as const);
+export function DocumentPropertiesTab({ documentId, label }: Props) {
   const t           = useTranslations("shared.properties");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
@@ -88,70 +84,46 @@ export function DocumentPropertiesTab({ documentId, compact = false }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        {items && items.length > 0 ? (
-          <table {...fixedTable(columns)}>
-            <FixedColumns columns={columns} />
-            <thead>
-              <tr className="border-b border-card-rim dark:border-zinc-800">
-                <th className="px-3 py-2" {...columnHead("select")} aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400" {...columnHead(labelCol)}>{t("colLabel")}</th>
-                <th className="px-3 py-2" {...columnHead(buttonsCol)} aria-label="view" />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr
-                  key={item.id}
-                  // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                  onClick={(e) => {
-                    if (newTabIfAsked(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`)) return;
-                    setSelectedId(item.id === selectedId ? null : item.id);
-                  }}
-                  onAuxClick={(e) => newTabIfAsked(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`)}
-                  onDoubleClick={() => guardedNavigate(`/properties/${encodeURIComponent(item.id)}?readonly=true`)}
-                  className={[
-                    "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
-                    item.id === selectedId
-                      ? "bg-cta-pale dark:bg-cta/10"
-                      : "hover:bg-canvas dark:hover:bg-zinc-800/50",
-                  ].join(" ")}
-                >
-                  <td className="px-3 py-2">
-                    <input
-                      type="radio"
-                      checked={item.id === selectedId}
-                      onChange={() => setSelectedId(item.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="accent-cta"
-                      aria-label={nameOr(item.label, "property")}
-                    />
-                  </td>
-                  <td className={`px-3 py-2 font-medium text-ink dark:text-zinc-100 ${ONE_LINE}`} title={nameOr(item.label, "property")}>{nameOr(item.label, "property")}</td>
-                  <td className="px-3 py-2">
-                    <div className={compact ? "flex flex-col items-start gap-1" : "flex gap-1"}>
-                      <IconButton
-                        href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
-                        onClick={(e) => openThroughGuard(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
-                        icon={ArrowRight}
-                        label={t("view")}
-                        variant="secondary"
-                        size="xs"
-                      />
-                      <PreviewButton target={{ kind: "property", id: item.id }} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
-        )}
-      </div>
+      {items && items.length > 0 ? (
+        <OneLineRows slots={SLOTS} label={label}>
+          {items.map((item) => (
+            <OneLineRow
+              key={item.id}
+              selected={item.id === selectedId}
+              onSelect={() => setSelectedId(item.id)}
+              radioLabel={nameOr(item.label, "property")}
+              // #37.58: one line, cut with „…", whole on hover.
+              title={nameOr(item.label, "property")}
+              content={<span className="font-medium text-ink dark:text-zinc-100">{nameOr(item.label, "property")}</span>}
+              // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
+              onClick={(e) => {
+                if (newTabIfAsked(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`)) return;
+                setSelectedId(item.id === selectedId ? null : item.id);
+              }}
+              onAuxClick={(e) => newTabIfAsked(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`)}
+              onDoubleClick={() => guardedNavigate(`/properties/${encodeURIComponent(item.id)}?readonly=true`)}
+              buttons={{
+                view: (
+                  <IconButton
+                    href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
+                    onClick={(e) => openThroughGuard(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
+                    icon={ArrowRight}
+                    label={t("view")}
+                    variant="secondary"
+                    size="xs"
+                  />
+                ),
+                preview: <PreviewButton target={{ kind: "property", id: item.id }} />,
+              }}
+            />
+          ))}
+        </OneLineRows>
+      ) : (
+        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
+      )}
 
       <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <IconButton
             icon={LinkIcon}
             label={t("associate")}

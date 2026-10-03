@@ -17,6 +17,8 @@ import {
   fillColumnRem,
   tableUnits,
   tileTableRem,
+  unitsInnerRem,
+  oneLineRowRem,
   CELL_PADDING_REM,
   type ColumnName,
 } from "@/lib/ui/field-widths";
@@ -69,11 +71,10 @@ describe("a property's name on one line (Slice #37.58)", () => {
     expect(columnRem("tilePropertyName") - CELL_PADDING_REM).toBeGreaterThanOrEqual(NAME_REM);
   });
 
-  it("the Document's Proprietăți is 4 units and its table fills them", () => {
-    expect(LIST_UNITS.document.properties).toBe(4);
-    const room = tileTableRem(4);
-    expect(sum(NP_LIST_COLUMNS.documentProperties)).toBeLessThanOrEqual(room);
-    expect(room - sum(NP_LIST_COLUMNS.documentProperties)).toBeLessThanOrEqual(0.5);
+  it("the Document's Proprietăți holds the longest name on one line: 3 units since #37.64 (4 as a table)", () => {
+    expect(LIST_UNITS.document.properties).toBe(3);
+    // The row's content takes what the radio and the two button slots leave: past 273 px.
+    expect(unitsInnerRem(3) - 2 / 16 - oneLineRowRem(["view", "preview"], 0)).toBeGreaterThanOrEqual(NAME_REM);
   });
 
   it("rule 17: a person's Proprietăți and a property's „Proprietăți corelate” are 5 units, the same name column", () => {
@@ -95,7 +96,6 @@ describe("a property's name on one line (Slice #37.58)", () => {
 
   it("every cell that shows a property's name is one line, cut with „…”, whole in its title", () => {
     const files = [
-      ["src", "app", "documents", "_components", "document-properties-tab.tsx"],
       ["src", "app", "properties", "_components", "person-properties-tab.tsx"],
       ["src", "app", "properties", "_components", "property-references-tab.tsx"],
       ["src", "app", "documents", "[id]", "associate-property", "associate-property-view.tsx"],
@@ -110,5 +110,9 @@ describe("a property's name on one line (Slice #37.58)", () => {
       expect([f.join("/"), cells[0]]).toEqual([f.join("/"), expect.stringMatching(/(ONE_LINE|truncate)[\s\S]*title=\{nameOr\(item\.label, "property"\)\}/)]);
       expect(cells[0]).not.toMatch(/WRAPS|break-words/);
     }
+    // #37.64: the Document's Proprietăți is a one-line row — the name its content, whole in its title.
+    const doc = read("src", "app", "documents", "_components", "document-properties-tab.tsx");
+    expect(doc).toMatch(/title=\{nameOr\(item\.label, "property"\)\}\s+content=\{<span[^>]*>\{nameOr\(item\.label, "property"\)\}<\/span>\}/);
+    expect(read("src", "components", "tiles", "one-line-rows.tsx")).toMatch(/className="min-w-0 flex-1 truncate" title=\{title\}/);
   });
 });

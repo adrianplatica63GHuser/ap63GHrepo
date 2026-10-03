@@ -1589,7 +1589,10 @@
       "alreadyAttached": "Această persoană este deja atașată acestui act cu acest rol — nu s-a adăugat nimic.",
       "qualityDefunct": "Defunct",
       "qualityMostenitor": "Moștenitor",
-      "shareNotHeld": "Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit."
+      "shareNotHeld": "Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit.",
+      "share": "Cotă",
+      "shareTitle": "Cota-parte",
+      "shareSummary": "Cotă-parte: {parte} · Suprafață echivalentă (mp): {mp} · Mod de deținere: {mod}"
     },
     "associatePerson": {
       "title": "Asociere persoană",
@@ -1750,7 +1753,9 @@
       "rereadBusy": "Prea multe cereri de citire. Încercați din nou peste un minut.",
       "rereadNoPages": "Documentul nu are pagini încărcate, deci nu poate fi citit.",
       "rereadNotConfigured": "Citirea AI nu este configurată pe server.",
-      "rereadError": "Citirea a eșuat. Încercați din nou."
+      "rereadError": "Citirea a eșuat. Încercați din nou.",
+      "relationship": "Relația",
+      "instrumentsButton": "Înscrisuri citate"
     },
     "associateReference": {
       "title": "Asociază Document",

@@ -48,6 +48,8 @@ export type ButtonVariant =
   | "danger"
   | "ghost"
   | "danger-link"
+  | "attention"
+  | "attention-outline"
   | "bare"
   | "bare-danger";
 
@@ -67,6 +69,13 @@ export interface ButtonClassOptions {
    *             abandons a run (Adrian, #26.11) while a resting solid `danger`
    *             chip in the stage bar's corner reads as a warning about the
    *             stage rather than as an exit from the flow.
+   * attention — orange, to draw the eye to something on a row that is waiting
+   *             (Slice #37.64): the Document's „Cotă" button while a person's
+   *             three share values are all empty. Adrian: „a button that is
+   *             very prominent (maybe using orange colour …)".
+   * attention-outline — the same orange as an outline: „Cotă" once one of the
+   *             three values is filled — still the button to look for, no
+   *             longer something left to do.
    * bare      — icon-only glyph buttons with no surface at all (the version-nav
    *             ◀ ▶ arrows). See BARE_DISABLED below for how the state rule is
    *             adapted when there is no surface to neutralise.
@@ -278,6 +287,29 @@ const ENABLED: Record<ButtonVariant, string> = {
     "dark:enabled:hover:border-red-500 dark:enabled:hover:bg-red-600 dark:enabled:hover:text-white " +
     "dark:focus-visible:border-red-500 dark:focus-visible:bg-red-600 dark:focus-visible:text-white",
 
+  /**
+   * Orange (Slice #37.64). `orange-700` (#C2410C) under white is 5.2 : 1 — the
+   * lighter `orange-600` is 3.6 : 1 and fails AA for the 12-px label. In dark
+   * mode the fill lightens to `orange-500` with a near-black label (8.3 : 1),
+   * for the reason `primary` lightens: a dark fill on a zinc-900 page is lost.
+   */
+  attention:
+    "border border-orange-700 bg-orange-700 text-white shadow-sm " +
+    "enabled:hover:border-orange-800 enabled:hover:bg-orange-800 " +
+    "dark:border-orange-500 dark:bg-orange-500 dark:text-zinc-950 " +
+    "dark:enabled:hover:border-orange-400 dark:enabled:hover:bg-orange-400",
+
+  /**
+   * The orange as an outline: `orange-800` on `orange-50` is 6.9 : 1. It fills
+   * on hover, so it inverts its label and carries `**:` for the reason
+   * `secondary` does. Dark: an orange-400 edge and label on zinc-800 (7.4 : 1).
+   */
+  "attention-outline":
+    "border border-orange-700 bg-orange-50 text-orange-800 shadow-sm " +
+    "enabled:hover:bg-orange-700 enabled:hover:text-white enabled:hover:**:text-white " +
+    "dark:border-orange-400 dark:bg-zinc-800 dark:text-orange-300 " +
+    "dark:enabled:hover:bg-orange-500 dark:enabled:hover:text-zinc-950 dark:enabled:hover:**:text-zinc-950",
+
   bare:
     "border-0 bg-transparent shadow-none text-cta " +
     "enabled:hover:text-cta-d " +
@@ -304,6 +336,8 @@ export const SURFACED_VARIANTS: readonly ButtonVariant[] = [
   "danger",
   "ghost",
   "danger-link",
+  "attention",
+  "attention-outline",
 ] as const;
 
 /** Every variant name, for exhaustive iteration in tests. */
@@ -381,6 +415,11 @@ const LINK_HOVER: Record<ButtonVariant, string> = {
     "hover:border-danger hover:bg-danger hover:text-white hover:**:text-white " +
     "hover:no-underline hover:shadow-sm " +
     "dark:hover:border-red-500 dark:hover:bg-red-600 dark:hover:text-white",
+  attention:
+    "hover:border-orange-800 hover:bg-orange-800 dark:hover:border-orange-400 dark:hover:bg-orange-400",
+  "attention-outline":
+    "hover:bg-orange-700 hover:text-white hover:**:text-white " +
+    "dark:hover:bg-orange-500 dark:hover:text-zinc-950 dark:hover:**:text-zinc-950",
   bare: "hover:text-cta-d dark:hover:text-white",
   "bare-danger": "hover:text-danger-d dark:hover:text-red-300",
 };
