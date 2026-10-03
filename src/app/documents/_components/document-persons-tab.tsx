@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowRight, Link as LinkIcon, PieChart, Unlink } from "lucide-react";
+import { ArrowRight, PieChart } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { OneLineRow, OneLineRows } from "@/components/tiles/one-line-rows";
-import { SHARE_PANEL_STYLE, boxStyle, type RowSlot } from "@/lib/ui/field-widths";
+import type { RelatedRow } from "@/components/tiles/related-tile";
+import { SHARE_PANEL_STYLE, boxStyle } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { usePressAway } from "@/lib/ui/press-bubble";
 import {
@@ -22,18 +22,19 @@ import {
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
 import { shareCells, storesShare } from "@/lib/documents/share-cells";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
-import { newTabIfAsked, openThroughGuard, personPath } from "@/lib/ui/row-link";
+import { openThroughGuard, personPath } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 
 /**
- * Slice #37.64: one line a row — the radio, „Nume (Rol)", and three button
- * slots: „Cotă" (only where the role holds a share), „Vizualizare",
- * „Previzualizare". No heading row: #37.59 emptied a Proiectant's share cells
- * but the three names still stood over the empty column.
+ * A Document's persons, as „Corelate"'s rows (Slice #37.65; one line a row
+ * since #37.64): „Nume (Rol)", the orange „Cotă" where the role holds a share,
+ * „Vizualizare", „Previzualizare". No heading row: #37.59 emptied a
+ * Proiectant's share cells but the three names still stood over the empty
+ * column. Natural and judicial persons go into their own groups by the
+ * person's type.
  */
-const SLOTS: readonly RowSlot[] = ["share", "view", "preview"];
 /** The three cotă boxes at L, so „fără suprafață" shows whole. */
 const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "fixed" });
 
@@ -68,11 +69,15 @@ type AssociatedPerson = {
   associatedAt:    string;
 };
 
-type Props = {
-  documentId: string;
-  /** The tile's title — the list's accessible name. */
-  label: string;
-};
+/** What „Corelate" draws from this list. */
+export interface DocumentPersonRows {
+  isLoading: boolean;
+  rows: RelatedRow[];
+  /** Under the rows: the per-role totals, the save status, a load error. */
+  below: ReactNode;
+  /** „Asociază persoană" — either kind of person. */
+  associate: () => void;
+}
 
 /** What the user has typed but not yet committed, per row. */
 type Draft = { parte?: string; mp?: string };
@@ -112,16 +117,12 @@ function cotaErrorLabel(t: (key: string) => string, error: CotaParseError): stri
   }
 }
 
-export function DocumentPersonsTab({ documentId, label }: Props) {
+export function useDocumentPersonRows(documentId: string): DocumentPersonRows {
   const t           = useTranslations("document.persons");
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
   const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
-
-  const [selectedId,    setSelectedId]    = useState<string | null>(null);
-  const [dissociating,  setDissociating]  = useState(false);
-  const [dissociateErr, setDissociateErr] = useState<string | null>(null);
 
   const [drafts,     setDrafts]     = useState<Record<string, Draft>>({});
   const [cellErrors, setCellErrors] = useState<Record<string, CellErrors>>({});
@@ -297,40 +298,22 @@ export function DocumentPersonsTab({ documentId, label }: Props) {
     });
   };
 
-  const handleAssociate = () => {
-    router.push(`/documents/${encodeURIComponent(documentId)}/associate-person`);
-  };
-
-  const handleDissociate = async () => {
-    if (!selectedId) return;
-    const target = items?.find((i) => i.linkId === selectedId);
-    if (!target) return;
-    setDissociating(true);
-    setDissociateErr(null);
-    try {
-      // ⚠️ `linkId` is REQUIRED by the route, and that is the fix: this used to
-      // address the DELETE at the person, which removed every role they held on
-      // this document rather than the one selected.
-      const res = await fetch(
-        `/api/documents/${encodeURIComponent(documentId)}/persons/${encodeURIComponent(target.id)}`
-          + `?linkId=${encodeURIComponent(target.linkId)}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `HTTP ${res.status}`);
-      }
-      setSelectedId(null);
-      await queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
-    } catch (err) {
-      setDissociateErr(err instanceof Error ? err.message : String(err));
-    } finally {
-      setDissociating(false);
+  /** Remove one row's link; „Corelate"'s „Dezasociază" shows what it throws. */
+  const dissociate = async (target: AssociatedPerson) => {
+    // ⚠️ `linkId` is REQUIRED by the route, and that is the fix: this used to
+    // address the DELETE at the person, which removed every role they held on
+    // this document rather than the one selected.
+    const res = await fetch(
+      `/api/documents/${encodeURIComponent(documentId)}/persons/${encodeURIComponent(target.id)}`
+        + `?linkId=${encodeURIComponent(target.linkId)}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error ?? `HTTP ${res.status}`);
     }
+    await queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
   };
-
-  if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
-  if (isError)   return <p className="py-6 text-sm text-red-600 dark:text-red-400">{t("error")}</p>;
 
   const inputClass = (invalid: boolean) =>
     [
@@ -349,188 +332,175 @@ export function DocumentPersonsTab({ documentId, label }: Props) {
       mod:   item.cotaMod === null ? t("cotaModPlaceholder") : modLabel(t, item.cotaMod),
     });
 
-  return (
-    <div className="flex flex-col gap-4">
-      {items && items.length > 0 ? (
-        <OneLineRows slots={SLOTS} label={label}>
-          {items.map((item) => {
-            const errors   = cellErrors[item.linkId] ?? {};
-            const selected = item.linkId === selectedId;
-            // Slice #37.59: the three share values only for a role that holds a share
-            // (or no role); a stored value on a role that holds none shows read-only.
-            // Slice #37.64: they live behind the row's orange „Cotă", never on the row.
-            const cells  = shareCells(item);
-            const locked = cells === "readonly";
-            const open   = shareOpenId === item.linkId;
-            // FU-224 (Slice #37.07): the role, else a certificate party's quality.
-            const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
-              DEFUNCT:    t("qualityDefunct"),
-              MOSTENITOR: t("qualityMostenitor"),
-            });
-            // „Nume (Rol)" — a link with no role (and no quality) is the name alone.
-            const hasRole = roleLabel !== "—";
-            const text    = hasRole ? `${item.displayName} (${roleLabel})` : item.displayName;
-            const panelId = `${panelIdBase}-${item.linkId}`;
-            const parteCell = (
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCota")}</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={draftOf(item, "parte")}
-                    placeholder={t("cotaPlaceholder")}
-                    data-blank=""
-                    disabled={locked || savingId === item.linkId}
-                    aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
-                    aria-invalid={errors.parte ? true : undefined}
-                    onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
-                    onBlur={() => void commitNumeric(item, "parte")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "parte"); }
-                    }}
-                    className={inputClass(Boolean(errors.parte))}
-                    style={COTA_BOX_STYLE}
-                  />
-                  {errors.parte && (
-                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                      {cotaErrorLabel(t, errors.parte)}
-                    </span>
-                  )}
-                </div>
-            );
-            const mpCell = (
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCotaMp")}</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={draftOf(item, "mp")}
-                    placeholder={t("cotaMpPlaceholder")}
-                    data-blank=""
-                    disabled={locked || savingId === item.linkId}
-                    aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
-                    aria-invalid={errors.mp ? true : undefined}
-                    onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
-                    onBlur={() => void commitNumeric(item, "mp")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "mp"); }
-                    }}
-                    className={inputClass(Boolean(errors.mp))}
-                    style={COTA_BOX_STYLE}
-                  />
-                  {errors.mp && (
-                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                      {cotaErrorLabel(t, errors.mp)}
-                    </span>
-                  )}
-                </div>
-            );
-            const modCell = (
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCotaMod")}</span>
-                  <select
-                    value={item.cotaMod ?? ""}
-                    disabled={locked || savingId === item.linkId}
-                    aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
-                    onChange={(e) => void commitMod(item, e.target.value)}
-                    className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                    style={COTA_BOX_STYLE}
-                  >
-                    <option value="" data-blank="">{t("cotaModPlaceholder")}</option>
-                    {COTA_MOD_VALUES.map((v) => (
-                      <option key={v} value={v}>{modLabel(t, v)}</option>
-                    ))}
-                  </select>
-                </div>
-            );
-            const lockedHint = locked ? (
-              <span className="text-xs text-fade dark:text-zinc-400" data-share-hint>{t("shareNotHeld")}</span>
-            ) : null;
-            /*
-             * The orange „Cotă" (#37.64): solid while the three values are all empty —
-             * something left to fill — and an outline once one is. Resting on it shows
-             * the three values; pressing it opens them, beside the row, to edit.
-             */
-            const shareButton = cells !== "none" && (
-              <div
-                ref={open ? shareRef : undefined}
-                data-share-open={open ? "" : undefined}
-                className="relative"
-              >
-                <HintBubble id={`${panelId}-summary`} text={shareSummary(item)} disabled={open} align="end">
-                  <IconButton
-                    icon={PieChart}
-                    label={t("share")}
-                    showLabel
-                    variant={storesShare(item) ? "attention-outline" : "attention"}
-                    size="xs"
-                    data-share-button=""
-                    aria-describedby={`${panelId}-summary`}
-                    aria-expanded={open}
-                    aria-controls={open ? panelId : undefined}
-                    onClick={() => (open ? closeShare("button") : setShareOpenId(item.linkId))}
-                  />
-                </HintBubble>
-                {open && (
-                  <div
-                    id={panelId}
-                    role="group"
-                    aria-label={`${t("shareTitle")} — ${item.displayName} — ${roleLabel}`}
-                    data-share-panel=""
-                    className="absolute right-0 top-full z-30 mt-1 flex flex-col gap-2 whitespace-normal rounded-md border border-card-rim bg-white p-3 text-left shadow-lg dark:border-zinc-600 dark:bg-zinc-900"
-                    style={SHARE_PANEL_STYLE}
-                  >
-                    {parteCell}
-                    {mpCell}
-                    {modCell}
-                    {lockedHint}
-                  </div>
-                )}
-              </div>
-            );
-            return (
-              <OneLineRow
-                key={item.linkId}
-                data-share={cells}
-                selected={selected}
-                onSelect={() => setSelectedId(item.linkId)}
-                radioLabel={`${item.displayName} — ${roleLabel}`}
-                title={text}
-                content={
-                  <>
-                    <span className="font-medium text-ink dark:text-zinc-100">{item.displayName}</span>
-                    {hasRole && <span className="text-fade dark:text-zinc-400"> ({roleLabel})</span>}
-                  </>
-                }
-                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                onClick={(e) => {
-                  if (newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)) return;
-                  setSelectedId(selected ? null : item.linkId);
-                }}
-                onAuxClick={(e) => newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)}
-                onDoubleClick={() => guardedNavigate(`${personPath(item.type, item.id)}?readonly=true`)}
-                buttons={{
-                  share: shareButton || undefined,
-                  view: (
-                    <IconButton
-                      href={`${personPath(item.type, item.id)}?readonly=true`}
-                      onClick={(e) => openThroughGuard(e, `${personPath(item.type, item.id)}?readonly=true`, guardedNavigate)}
-                      icon={ArrowRight}
-                      label={t("view")}
-                      variant="secondary"
-                      size="xs"
-                    />
-                  ),
-                  preview: <PreviewButton target={personPreview(item.type, item.id)} />,
-                }}
-              />
-            );
-          })}
-        </OneLineRows>
-      ) : (
-        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
-      )}
+  const rows: RelatedRow[] = (items ?? []).map((item) => {
+    const errors   = cellErrors[item.linkId] ?? {};
+    // Slice #37.59: the three share values only for a role that holds a share
+    // (or no role); a stored value on a role that holds none shows read-only.
+    // Slice #37.64: they live behind the row's orange „Cotă", never on the row.
+    const cells  = shareCells(item);
+    const locked = cells === "readonly";
+    const open   = shareOpenId === item.linkId;
+    // FU-224 (Slice #37.07): the role, else a certificate party's quality.
+    const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
+      DEFUNCT:    t("qualityDefunct"),
+      MOSTENITOR: t("qualityMostenitor"),
+    });
+    // „Nume (Rol)" — a link with no role (and no quality) is the name alone.
+    const hasRole = roleLabel !== "—";
+    const text    = hasRole ? `${item.displayName} (${roleLabel})` : item.displayName;
+    const panelId = `${panelIdBase}-${item.linkId}`;
+    const parteCell = (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCota")}</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={draftOf(item, "parte")}
+            placeholder={t("cotaPlaceholder")}
+            data-blank=""
+            disabled={locked || savingId === item.linkId}
+            aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
+            aria-invalid={errors.parte ? true : undefined}
+            onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
+            onBlur={() => void commitNumeric(item, "parte")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "parte"); }
+            }}
+            className={inputClass(Boolean(errors.parte))}
+            style={COTA_BOX_STYLE}
+          />
+          {errors.parte && (
+            <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+              {cotaErrorLabel(t, errors.parte)}
+            </span>
+          )}
+        </div>
+    );
+    const mpCell = (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCotaMp")}</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={draftOf(item, "mp")}
+            placeholder={t("cotaMpPlaceholder")}
+            data-blank=""
+            disabled={locked || savingId === item.linkId}
+            aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
+            aria-invalid={errors.mp ? true : undefined}
+            onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
+            onBlur={() => void commitNumeric(item, "mp")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); void commitNumeric(item, "mp"); }
+            }}
+            className={inputClass(Boolean(errors.mp))}
+            style={COTA_BOX_STYLE}
+          />
+          {errors.mp && (
+            <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+              {cotaErrorLabel(t, errors.mp)}
+            </span>
+          )}
+        </div>
+    );
+    const modCell = (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-fade dark:text-zinc-400" aria-hidden="true">{t("colCotaMod")}</span>
+          <select
+            value={item.cotaMod ?? ""}
+            disabled={locked || savingId === item.linkId}
+            aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
+            onChange={(e) => void commitMod(item, e.target.value)}
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+            style={COTA_BOX_STYLE}
+          >
+            <option value="" data-blank="">{t("cotaModPlaceholder")}</option>
+            {COTA_MOD_VALUES.map((v) => (
+              <option key={v} value={v}>{modLabel(t, v)}</option>
+            ))}
+          </select>
+        </div>
+    );
+    const lockedHint = locked ? (
+      <span className="text-xs text-fade dark:text-zinc-400" data-share-hint>{t("shareNotHeld")}</span>
+    ) : null;
+    /*
+     * The orange „Cotă" (#37.64): solid while the three values are all empty —
+     * something left to fill — and an outline once one is. Resting on it shows
+     * the three values; pressing it opens them, beside the row, to edit.
+     */
+    const shareButton = cells !== "none" && (
+      <div
+        ref={open ? shareRef : undefined}
+        data-share-open={open ? "" : undefined}
+        className="relative"
+      >
+        <HintBubble id={`${panelId}-summary`} text={shareSummary(item)} disabled={open} align="end">
+          <IconButton
+            icon={PieChart}
+            label={t("share")}
+            showLabel
+            variant={storesShare(item) ? "attention-outline" : "attention"}
+            size="xs"
+            data-share-button=""
+            aria-describedby={`${panelId}-summary`}
+            aria-expanded={open}
+            aria-controls={open ? panelId : undefined}
+            onClick={() => (open ? closeShare("button") : setShareOpenId(item.linkId))}
+          />
+        </HintBubble>
+        {open && (
+          <div
+            id={panelId}
+            role="group"
+            aria-label={`${t("shareTitle")} — ${item.displayName} — ${roleLabel}`}
+            data-share-panel=""
+            className="absolute right-0 top-full z-30 mt-1 flex flex-col gap-2 whitespace-normal rounded-md border border-card-rim bg-white p-3 text-left shadow-lg dark:border-zinc-600 dark:bg-zinc-900"
+            style={SHARE_PANEL_STYLE}
+          >
+            {parteCell}
+            {mpCell}
+            {modCell}
+            {lockedHint}
+          </div>
+        )}
+      </div>
+    );
+    const href = `${personPath(item.type, item.id)}?readonly=true`;
+    return {
+      // ⚠️ The LINK, never the person: one person may hold two roles here (#36.02).
+      key: `person:${item.linkId}`,
+      kind: item.type === "JUDICIAL" ? "judicial" : "natural",
+      data: { "data-share": cells },
+      radioLabel: `${item.displayName} — ${roleLabel}`,
+      title: text,
+      content: (
+        <>
+          <span className="font-medium text-ink dark:text-zinc-100">{item.displayName}</span>
+          {hasRole && <span className="text-fade dark:text-zinc-400"> ({roleLabel})</span>}
+        </>
+      ),
+      href,
+      dissociate: () => dissociate(item),
+      buttons: {
+        share: shareButton || undefined,
+        view: (
+          <IconButton
+            href={`${personPath(item.type, item.id)}?readonly=true`}
+            onClick={(e) => openThroughGuard(e, `${personPath(item.type, item.id)}?readonly=true`, guardedNavigate)}
+            icon={ArrowRight}
+            label={t("view")}
+            variant="secondary"
+            size="xs"
+          />
+        ),
+        preview: <PreviewButton target={personPreview(item.type, item.id)} />,
+      },
+    };
+  });
 
+  const below = (
+    <>
       {/*
         ⚠️ **THE TOTAL WARNS AND DOES NOT BLOCK, AND NOTHING HERE MAY MAKE IT
         BLOCK.** A 2006 deed that states no shares, and a deed that really does
@@ -567,39 +537,22 @@ export function DocumentPersonsTab({ documentId, label }: Props) {
         })}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-2">
-          <IconButton
-            icon={LinkIcon}
-            label={t("associate")}
-            showLabel
-            variant="primary"
-            size="lg"
-            onClick={handleAssociate}
-            disabled={selectedId !== null}
-          />
-          <IconButton
-            icon={Unlink}
-            label={t("dissociate")}
-            busy={dissociating}
-            busyLabel={t("dissociating")}
-            showLabel
-            variant="secondary"
-            size="lg"
-            onClick={handleDissociate}
-            disabled={selectedId === null || dissociating}
-          />
-        </div>
-        {savingId !== null && (
-          <p className="text-sm text-fade dark:text-zinc-400">{t("cotaSaving")}</p>
-        )}
-        {saveErr && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">{saveErr}</p>
-        )}
-        {dissociateErr && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">{dissociateErr}</p>
-        )}
-      </div>
-    </div>
+      {isError && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("error")}</p>
+      )}
+      {savingId !== null && (
+        <p className="text-sm text-fade dark:text-zinc-400">{t("cotaSaving")}</p>
+      )}
+      {saveErr && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">{saveErr}</p>
+      )}
+    </>
   );
+
+  return {
+    isLoading,
+    rows,
+    below,
+    associate: () => router.push(`/documents/${encodeURIComponent(documentId)}/associate-person`),
+  };
 }

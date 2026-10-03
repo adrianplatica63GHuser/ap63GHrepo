@@ -745,20 +745,6 @@ export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.pr
  * side, the widest being Proveniență's „Fișier de coordonate (.txt)" — and
  * „Conexiuni" 3 — the tag box (`metaTag`, XL) and its „Adaugă" button.
  */
-// Slice #37.58: Proprietăți 5 — a property's name holds on one line (`tilePropertyName`).
-const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, classification: 2, connections: 3 } as const;
-export const LIST_UNITS = {
-  naturalPerson: PERSON_LIST_UNITS,
-  judicialPerson: PERSON_LIST_UNITS,
-  // „Proprietăți corelate": a property's name on one line, a role, the buttons — 5 (#37.58).
-  // Persoane: a name, a role, the buttons — 4. Acte: a property's documents carry no role,
-  // so type, title and the buttons — 4. META INFO 5.
-  property: { associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 },
-  // Slice #37.64: Persoane, Proprietăți and „Acte corelate" are one line a row (`oneLineRowUnits`)
-  // — 3 each (before: 6, 4 and 5, when they were tables with headings and stacked buttons).
-  document: { persons: 3, properties: 3, associations: 3, classification: 2, connections: 3 },
-} as const;
-
 /**
  * ONE LINE A ROW.                                                  (Slice #37.64)
  *
@@ -793,16 +779,48 @@ export const ROW_PADDING_REM = 0.5;
  */
 export const ROW_CONTENT_REM = { person: 16, property: 273 / 16, document: 16 } as const;
 
-/** The width a one-line row needs: its padding, the radio, the content and its slots. */
-export function oneLineRowRem(slots: readonly RowSlot[], contentRem: number): number {
+/** The icon of a row's kind (#37.65), 16 px, after the radio. */
+export const ROW_ICON_REM = 1;
+
+/** The width a one-line row needs: its padding, the radio, the kind's icon if any, the content and its slots. */
+export function oneLineRowRem(slots: readonly RowSlot[], contentRem: number, icon = false): number {
   const slotsRem = slots.reduce((sum, s) => sum + ROW_SLOT_REM[s], 0) + Math.max(0, slots.length - 1) * ROW_SLOT_GAP_REM;
-  return 2 * ROW_PADDING_REM + ROW_SELECT_REM + ROW_GAP_REM + contentRem + ROW_GAP_REM + slotsRem;
+  const iconRem = icon ? ROW_ICON_REM + ROW_GAP_REM : 0;
+  return 2 * ROW_PADDING_REM + ROW_SELECT_REM + ROW_GAP_REM + iconRem + contentRem + ROW_GAP_REM + slotsRem;
 }
 
 /** The fewest units whose tile holds that row inside its list frame (1 px a side) — rule 17. */
-export function oneLineRowUnits(slots: readonly RowSlot[], contentRem: number): number {
-  return unitsFor(panelRem(oneLineRowRem(slots, contentRem) + 2 * PANEL_BORDER_REM));
+export function oneLineRowUnits(slots: readonly RowSlot[], contentRem: number, icon = false): number {
+  return unitsFor(panelRem(oneLineRowRem(slots, contentRem, icon) + 2 * PANEL_BORDER_REM));
 }
+
+/**
+ * „Corelate" (Slice #37.65): the four kinds of row in one tile, so one set of
+ * slots — „Cotă" first, the relationship before „Vizualizare", then
+ * „Previzualizare" — every row's in the same place whatever its kind.
+ */
+export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "view", "preview"];
+
+/**
+ * „Corelate"'s units: the fewest that hold its widest row — the icon, the
+ * longest property name and all four slots: 4. The same on the four screens
+ * (rule 17); #37.66 and #37.67 take it from here.
+ */
+export const RELATED_UNITS = oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true);
+
+// Slice #37.58: Proprietăți 5 — a property's name holds on one line (`tilePropertyName`).
+const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, classification: 2, connections: 3 } as const;
+export const LIST_UNITS = {
+  naturalPerson: PERSON_LIST_UNITS,
+  judicialPerson: PERSON_LIST_UNITS,
+  // „Proprietăți corelate": a property's name on one line, a role, the buttons — 5 (#37.58).
+  // Persoane: a name, a role, the buttons — 4. Acte: a property's documents carry no role,
+  // so type, title and the buttons — 4. META INFO 5.
+  property: { associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 },
+  // Slice #37.65: Persoane, Proprietăți and „Acte corelate" (3 units each since #37.64) are one
+  // tile, „Corelate" — `RELATED_UNITS`, 4.
+  document: { related: RELATED_UNITS, classification: 2, connections: 3 },
+} as const;
 
 /** The share panel (#37.64): the three boxes at L, under one another, inside its padding. */
 export const SHARE_PANEL_STYLE: CSSProperties = { width: rem(panelRem(SCALE.L)) };

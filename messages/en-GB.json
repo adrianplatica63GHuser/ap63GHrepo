@@ -922,6 +922,27 @@
       "document": "Untitled document",
       "property": "Property without a nickname",
       "person": "Unnamed person"
+    },
+    "related": {
+      "loading": "Loading…",
+      "empty": "Nothing related yet.",
+      "group": {
+        "natural": "Natural persons",
+        "judicial": "Judicial persons",
+        "property": "Properties",
+        "document": "Documents"
+      },
+      "kind": {
+        "natural": "Natural person",
+        "judicial": "Judicial person",
+        "property": "Property",
+        "document": "Document"
+      },
+      "associatePerson": "Associate person",
+      "associateProperty": "Associate property",
+      "associateDocument": "Associate document",
+      "dissociate": "Dissociate",
+      "dissociating": "Removing…"
     }
   },
   "naturalPerson": {
@@ -1541,6 +1562,7 @@
       "persons": "Persons",
       "properties": "Properties",
       "associations": "Related documents",
+      "related": "Related",
       "classification": "Subjective classification",
       "connections": "Connections"
     },

@@ -42,11 +42,17 @@ const SlotsContext = createContext<readonly RowSlot[]>([]);
 export function OneLineRows({
   slots,
   label,
+  bare = false,
   children,
 }: {
   slots: readonly RowSlot[];
-  /** The list's accessible name (the tile's title). */
+  /** The list's accessible name (the tile's title, or its group's). */
   label: string;
+  /**
+   * No frame of its own (#37.65): one group of „Corelate"'s rows, inside the
+   * tile's one frame, with the others.
+   */
+  bare?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -54,7 +60,7 @@ export function OneLineRows({
       <ul
         aria-label={label}
         data-one-line-rows=""
-        className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+        className={bare ? undefined : "rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"}
       >
         {children}
       </ul>
@@ -70,6 +76,7 @@ export function OneLineRow({
   onSelect,
   radioLabel,
   icon: Icon,
+  kindLabel,
   content,
   title,
   buttons,
@@ -82,8 +89,10 @@ export function OneLineRow({
   onSelect: () => void;
   /** The radio's accessible name — what the row is, for a screen reader. */
   radioLabel: string;
-  /** The icon of the row's kind, after the radio (#37.65). Decoration: the kind is in `radioLabel`. */
+  /** The icon of the row's kind, after the radio (#37.65). Decoration: the kind is `kindLabel`. */
   icon?: ComponentType<LucideProps>;
+  /** The row's kind in words, for a screen reader (#37.65): „Persoană fizică", „Act". */
+  kindLabel?: string;
   /** The one content field. */
   content: ReactNode;
   /** The content as plain text: shown whole on hover. */
@@ -120,6 +129,7 @@ export function OneLineRow({
         />
       </span>
       {Icon && <Icon size={16} aria-hidden="true" className="shrink-0 text-fade dark:text-zinc-400" />}
+      {kindLabel && <span className="sr-only">{kindLabel}: </span>}
       <span data-row-content="" className="min-w-0 flex-1 truncate" title={title}>
         {content}
       </span>

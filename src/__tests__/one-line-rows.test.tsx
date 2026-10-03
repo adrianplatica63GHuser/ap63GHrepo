@@ -1,8 +1,10 @@
 /**
  * Slice #37.64 — the Document's „Persoane", „Proprietăți" and „Acte corelate":
- * one line a row, the rest behind buttons.
+ * one line a row, the rest behind buttons. Since #37.65 they are one tile,
+ * „Corelate", and these rows are its rows: the same assertions, read through it
+ * (`related-tile.test.tsx` holds #37.65's own).
  *
- * The real tiles over a real `QueryClient`, with only the edges mocked (the
+ * The real tile over a real `QueryClient`, with only the edges mocked (the
  * router, the translations, the unsaved-changes guard, the preview opener and
  * the AI linker dialog). `useTranslations` returns the key — with its values
  * after a colon, so the share bubble's three values can be read.
@@ -13,9 +15,7 @@ import { readFileSync } from "node:fs";
 import type { ReactNode } from "react";
 import { join } from "node:path";
 
-import { DocumentPersonsTab } from "@/app/documents/_components/document-persons-tab";
-import { DocumentPropertiesTab } from "@/app/documents/_components/document-properties-tab";
-import { DocumentReferencesTab } from "@/app/documents/_components/document-references-tab";
+import { DocumentRelatedTile } from "@/app/documents/_components/document-related-tile";
 import { ROW_SLOT_REM } from "@/lib/ui/field-widths";
 
 jest.mock("next-intl", () => ({
@@ -82,8 +82,8 @@ const rowOf = (name: string): HTMLElement => {
 
 describe("one line a row", () => {
   it("„Persoane”: „Nume (Rol)” on one line, cut with „…” and whole on hover, no heading row", async () => {
-    renderTile(<DocumentPersonsTab documentId="doc" label="Persoane" />);
-    await screen.findByRole("list", { name: "Persoane" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     expect(screen.queryByRole("columnheader")).toBeNull();
     expect(screen.queryByRole("table")).toBeNull();
     const row = rowOf("Maria Proiectant");
@@ -97,11 +97,12 @@ describe("one line a row", () => {
   });
 
   it("every row has the same slots, in the same places — a missing button leaves its slot empty", async () => {
-    renderTile(<DocumentPersonsTab documentId="doc" label="Persoane" />);
-    await screen.findByRole("list", { name: "Persoane" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     for (const li of screen.getAllByRole("listitem")) {
       const slots = [...li.querySelectorAll<HTMLElement>("[data-slot]")];
-      expect(slots.map((s) => s.dataset.slot)).toEqual(["share", "view", "preview"]);
+      // #37.65: one slot set for the whole tile, whatever the row's kind.
+      expect(slots.map((s) => s.dataset.slot)).toEqual(["share", "relation", "view", "preview"]);
       expect(slots[0].style.width).toBe(`${ROW_SLOT_REM.share}rem`);
     }
     expect(rowOf("Maria Proiectant").querySelector('[data-slot="share"]')?.childElementCount).toBe(0);
@@ -110,8 +111,8 @@ describe("one line a row", () => {
 
 describe("„Cotă”, the orange share button", () => {
   it("only where shareCells is not „none”: solid while empty, an outline once a value is stored", async () => {
-    renderTile(<DocumentPersonsTab documentId="doc" label="Persoane" />);
-    await screen.findByRole("list", { name: "Persoane" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     const share = (name: string) => within(rowOf(name)).queryByRole("button", { name: "share" });
     expect(share("Maria Proiectant")).toBeNull();
     expect(rowOf("Maria Proiectant")).toHaveAttribute("data-share", "none");
@@ -125,8 +126,8 @@ describe("„Cotă”, the orange share button", () => {
   });
 
   it("opens the three boxes beside the row; a value typed there is saved when Esc closes it", async () => {
-    renderTile(<DocumentPersonsTab documentId="doc" label="Persoane" />);
-    await screen.findByRole("list", { name: "Persoane" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     const button = within(rowOf("Ion Vânzătorul")).getByRole("button", { name: "share" });
     fireEvent.click(button);
     const panel = screen.getByRole("group", { name: /^shareTitle — Ion Vânzătorul/ });
@@ -145,8 +146,8 @@ describe("„Cotă”, the orange share button", () => {
   });
 
   it("a press outside closes it and saves what was typed, as leaving the box did", async () => {
-    renderTile(<DocumentPersonsTab documentId="doc" label="Persoane" />);
-    await screen.findByRole("list", { name: "Persoane" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     fireEvent.click(within(rowOf("Fără Rol")).getByRole("button", { name: "share" }));
     const mp = screen.getByRole("textbox", { name: /^colCotaMp — Fără Rol/ });
     act(() => mp.focus());
@@ -161,8 +162,8 @@ describe("„Cotă”, the orange share button", () => {
   });
 
   it("a read-only share shows its boxes disabled, with #37.59's hint", async () => {
-    renderTile(<DocumentPersonsTab documentId="doc" label="Persoane" />);
-    await screen.findByRole("list", { name: "Persoane" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     fireEvent.click(within(rowOf("Ana Păstrată")).getByRole("button", { name: "share" }));
     const panel = screen.getByRole("group", { name: /^shareTitle — Ana Păstrată/ });
     for (const box of [...within(panel).getAllByRole("textbox"), within(panel).getByRole("combobox")]) expect(box).toBeDisabled();
@@ -172,9 +173,9 @@ describe("„Cotă”, the orange share button", () => {
 
 describe("„Acte corelate”", () => {
   it("„Etichetă scurtă (Tip)”, the type alone without a title; the relationship a button only with a role", async () => {
-    renderTile(<DocumentReferencesTab documentId="doc" label="Acte corelate" />);
-    await screen.findByRole("list", { name: "Acte corelate" });
-    const rows = screen.getAllByRole("listitem");
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
+    const rows = within(screen.getByRole("list", { name: "group.document" })).getAllByRole("listitem");
     expect(rows.map((r) => r.querySelector("[data-row-content]")?.textContent)).toEqual(["CVC 2016 (Contract de Vânzare)", "Carte funciară"]);
     expect(within(rows[1]).queryByRole("button", { name: "relationship" })).toBeNull();
     const rel = within(rows[0]).getByRole("button", { name: "relationship" });
@@ -190,8 +191,8 @@ describe("„Acte corelate”", () => {
   });
 
   it("„Înscrisuri citate” is one button that unfolds today's panel and folds it again, its badge the number waiting", async () => {
-    renderTile(<DocumentReferencesTab documentId="doc" label="Acte corelate" />);
-    await screen.findByRole("list", { name: "Acte corelate" });
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
     const button = screen.getByRole("button", { name: /instrumentsButton/ });
     expect(button).toHaveAttribute("aria-expanded", "false");
     expect(document.querySelector("[data-instruments-panel]")).toBeNull();
@@ -206,19 +207,21 @@ describe("„Acte corelate”", () => {
 
 describe("„Proprietăți”", () => {
   it("a property's name on one line, the view and preview slots after it", async () => {
-    renderTile(<DocumentPropertiesTab documentId="doc" label="Proprietăți" />);
-    await screen.findByRole("list", { name: "Proprietăți" });
-    const row = screen.getByRole("listitem");
+    renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
+    await screen.findByRole("group", { name: "Corelate" });
+    const row = within(screen.getByRole("list", { name: "group.property" })).getByRole("listitem");
     expect(row.querySelector("[data-row-content]")).toHaveAttribute("title", "Livada de la deal");
-    expect([...row.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["view", "preview"]);
+    // The two buttons it has, in their slots; the share and relationship slots empty.
+    const slots = [...row.querySelectorAll<HTMLElement>("[data-slot]")];
+    expect(slots.map((s) => [s.dataset.slot, s.childElementCount > 0])).toEqual([["share", false], ["relation", false], ["view", true], ["preview", false]]);
   });
 });
 
-describe("the three tiles share one row component", () => {
-  it("each draws its rows through OneLineRow, with no table and no `compact` left", () => {
+describe("the three lists draw one-line rows for „Corelate”", () => {
+  it("each is a hook giving RelatedTile its rows, with no table and no `compact` left", () => {
     for (const f of ["document-persons-tab.tsx", "document-properties-tab.tsx", "document-references-tab.tsx"]) {
       const src = readFileSync(join(__dirname, "..", "app", "documents", "_components", f), "utf8");
-      expect([f, src.includes("<OneLineRows slots={SLOTS} label={label}>")]).toEqual([f, true]);
+      expect([f, src.includes("const rows: RelatedRow[] = (items ?? []).map(")]).toEqual([f, true]);
       expect([f, /<table|<thead|\bcompact\b/.test(src)]).toEqual([f, false]);
     }
   });

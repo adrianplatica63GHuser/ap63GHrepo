@@ -922,6 +922,27 @@
       "document": "Act fără titlu",
       "property": "Proprietate fără poreclă",
       "person": "Persoană fără nume"
+    },
+    "related": {
+      "loading": "Se încarcă…",
+      "empty": "Nimic corelat încă.",
+      "group": {
+        "natural": "Persoane fizice",
+        "judicial": "Persoane juridice",
+        "property": "Proprietăți",
+        "document": "Acte"
+      },
+      "kind": {
+        "natural": "Persoană fizică",
+        "judicial": "Persoană juridică",
+        "property": "Proprietate",
+        "document": "Act"
+      },
+      "associatePerson": "Asociază persoană",
+      "associateProperty": "Asociază proprietate",
+      "associateDocument": "Asociază act",
+      "dissociate": "Dezasociază",
+      "dissociating": "Se elimină…"
     }
   },
   "naturalPerson": {
@@ -1541,6 +1562,7 @@
       "persons": "Persoane",
       "properties": "Proprietăți",
       "associations": "Acte corelate",
+      "related": "Corelate",
       "classification": "Clasificare subiectivă",
       "connections": "Conexiuni"
     },

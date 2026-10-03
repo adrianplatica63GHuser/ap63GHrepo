@@ -6,7 +6,8 @@
  *
  *   Date generale · Pagini · one tile per notebook tab of the type (or, for a
  *   type with none, one tile for its own fields) · Părți (a Certificat de
- *   Moștenitor only) · Persoane · Proprietăți · Asocieri · META INFO
+ *   Moștenitor only) · Corelate (#37.65: Persoane, Proprietăți and Asocieri in
+ *   one) · Clasificare subiectivă · Conexiuni (#37.63: META INFO in two)
  *
  * Unlike the other three screens, the SET OF TILES DEPENDS ON THE TYPE. A
  * Contract de vânzare-cumpărare has Instrument, Cadastru, Stare juridică and
@@ -79,7 +80,19 @@ export function tileOfTabIndex(tabs: readonly string[], index: number): string {
 }
 
 // Slice #37.63: META INFO („metadata") is two tiles — „Clasificare subiectivă" and „Conexiuni".
-export const DOCUMENT_LIST_TILES = ["persons", "properties", "associations", "classification", "connections"] as const;
+// Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate" („related").
+export const DOCUMENT_LIST_TILES = ["related", "classification", "connections"] as const;
+
+/**
+ * The three tiles „Corelate" replaced (#37.65). A browser that had any of them
+ * ticked opens with „Corelate" ticked — under every type's key, since the
+ * registry passes this on whatever the type.
+ */
+export const RELATED_WAS: Readonly<Record<string, "related">> = {
+  persons: "related",
+  properties: "related",
+  associations: "related",
+};
 
 /** Built from the type on screen. The entity — and so the storage key — carries the type's key. */
 export function documentTileRegistry(layout: DocumentLayout): TileRegistry<string> {
@@ -118,6 +131,8 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       ),
       // A browser that stored META INFO opens with both of its halves (#37.63).
       metadata: ["classification", "connections"],
+      // …and one that stored any of the three lists, with „Corelate" (#37.65).
+      ...RELATED_WAS,
     },
   };
 }
@@ -128,10 +143,11 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
  */
 // Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+// Slice #37.65: the association screens' „Înapoi" (?tab=persons, properties, related) all land on „Corelate".
 export const DOC_TILE_OF_TAB: Readonly<Record<string, string | readonly string[] | undefined>> = {
-  related: "associations",
-  persons: "persons",
-  properties: "properties",
+  related: "related",
+  persons: "related",
+  properties: "related",
   metadata: ["classification", "connections"],
 };
 

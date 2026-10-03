@@ -19,6 +19,7 @@ import {
   tileTableRem,
   unitsInnerRem,
   oneLineRowRem,
+  RELATED_SLOTS,
   CELL_PADDING_REM,
   type ColumnName,
 } from "@/lib/ui/field-widths";
@@ -71,10 +72,10 @@ describe("a property's name on one line (Slice #37.58)", () => {
     expect(columnRem("tilePropertyName") - CELL_PADDING_REM).toBeGreaterThanOrEqual(NAME_REM);
   });
 
-  it("the Document's Proprietăți holds the longest name on one line: 3 units since #37.64 (4 as a table)", () => {
-    expect(LIST_UNITS.document.properties).toBe(3);
-    // The row's content takes what the radio and the two button slots leave: past 273 px.
-    expect(unitsInnerRem(3) - 2 / 16 - oneLineRowRem(["view", "preview"], 0)).toBeGreaterThanOrEqual(NAME_REM);
+  it("the Document's „Corelate” holds the longest property name on one line (4 units, #37.65; Proprietăți was 3 in #37.64, 4 as a table)", () => {
+    expect(LIST_UNITS.document.related).toBe(4);
+    // The row's content takes what the radio, the icon and the four button slots leave: past 273 px.
+    expect(unitsInnerRem(4) - 2 / 16 - oneLineRowRem(RELATED_SLOTS, 0, true)).toBeGreaterThanOrEqual(NAME_REM);
   });
 
   it("rule 17: a person's Proprietăți and a property's „Proprietăți corelate” are 5 units, the same name column", () => {
@@ -112,7 +113,7 @@ describe("a property's name on one line (Slice #37.58)", () => {
     }
     // #37.64: the Document's Proprietăți is a one-line row — the name its content, whole in its title.
     const doc = read("src", "app", "documents", "_components", "document-properties-tab.tsx");
-    expect(doc).toMatch(/title=\{nameOr\(item\.label, "property"\)\}\s+content=\{<span[^>]*>\{nameOr\(item\.label, "property"\)\}<\/span>\}/);
+    expect(doc).toMatch(/title: nameOr\(item\.label, "property"\),\s+content: <span[^>]*>\{nameOr\(item\.label, "property"\)\}<\/span>,/);
     expect(read("src", "components", "tiles", "one-line-rows.tsx")).toMatch(/className="min-w-0 flex-1 truncate" title=\{title\}/);
   });
 });

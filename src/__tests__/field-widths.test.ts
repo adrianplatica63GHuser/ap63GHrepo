@@ -105,6 +105,7 @@ import {
   PANEL_STYLE,
   oneLineRowUnits,
   ROW_CONTENT_REM,
+  RELATED_SLOTS,
 } from "@/lib/ui/field-widths";
 import { LAYOUT_EXCEPTIONS } from "@/lib/ui/layout-exceptions";
 
@@ -648,21 +649,16 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
   });
 
-  it("the list tiles: Persoane, Proprietăți and „Acte corelate” one line a row at 3 units (#37.64), Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
-    // #37.64: the fewest units that hold the radio, a typical content and the row's button slots (rule 17).
-    expect(LIST_UNITS.document.persons).toBe(oneLineRowUnits(["share", "view", "preview"], ROW_CONTENT_REM.person));
-    expect(LIST_UNITS.document.properties).toBe(oneLineRowUnits(["view", "preview"], ROW_CONTENT_REM.property));
-    expect(LIST_UNITS.document.associations).toBe(oneLineRowUnits(["relation", "view", "preview"], ROW_CONTENT_REM.document));
-    expect(LIST_UNITS.document).toEqual({ persons: 3, properties: 3, associations: 3, classification: 2, connections: 3 });
+  it("the list tiles: „Corelate” 4 units (#37.65), Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
+    // #37.65: the fewest units that hold its widest row — the icon, the longest property name, all four slots (rule 17).
+    expect(LIST_UNITS.document.related).toBe(oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true));
+    expect(LIST_UNITS.document).toEqual({ related: 4, classification: 2, connections: 3 });
     const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
-    for (const k of ["persons", "properties", "associations", "classification", "connections"]) {
+    for (const k of ["related", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
     }
-    // #37.64: no `compact` left — the three lists have one shape, named by their tile.
-    expect(page).not.toMatch(/\bcompact\b \/>/);
-    for (const [tab, k] of [["DocumentPersonsTab", "persons"], ["DocumentPropertiesTab", "properties"], ["DocumentReferencesTab", "associations"]]) {
-      expect(page).toContain(`<${tab} documentId={documentId} label={labels.${k}} />`);
-    }
+    // #37.65: one tile for the three lists, named by its tile.
+    expect(page).toContain("<DocumentRelatedTile documentId={documentId} label={labels.related} />");
     expect(page).not.toMatch(/compactCellRem/);
     expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_UNIT_STYLE\.document\.succession\}/);
   });

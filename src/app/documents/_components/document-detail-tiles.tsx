@@ -25,8 +25,9 @@
  * #37.31 every tile is a whole number of width units and the row is
  * `unitRowStyle("document")`: Date generale 3, Pagini 4 (its 40rem is exactly
  * four units), each notebook tile ONE frame as wide as its widest panel, and
- * the list tiles one line a row since #37.64 — Persoane, Proprietăți and „Acte
- * corelate" 3 each, Clasificare subiectivă 2, Conexiuni 3. Every tile carries
+ * the list tiles one line a row since #37.64 — „Corelate" 4 (#37.65: Persoane,
+ * Proprietăți and „Acte corelate" in one), Clasificare subiectivă 2, Conexiuni
+ * 3. Every tile carries
  * `order`, its place in the registry, because the form's tiles and the page's
  * list tiles come from two components and the row must read in one order.
  *
@@ -40,9 +41,7 @@ import { FileText } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { DocumentForm } from "./document-form";
-import { DocumentPersonsTab } from "./document-persons-tab";
-import { DocumentPropertiesTab } from "./document-properties-tab";
-import { DocumentReferencesTab } from "./document-references-tab";
+import { DocumentRelatedTile } from "./document-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ProcessPanel } from "./process-panel";
 import { ListTile } from "@/components/tiles/list-tile";
@@ -139,9 +138,7 @@ export function DocumentDetailTiles({
       pages:        t("tiles.pages"),
       [FIELDS_TILE]: t("tiles.fields"),
       succession:   t("tiles.succession"),
-      persons:      t("tiles.persons"),
-      properties:   t("tiles.properties"),
-      associations: t("tiles.associations"),
+      related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
     };
@@ -212,24 +209,11 @@ export function DocumentDetailTiles({
               right: column,
             }}
           />
-          {choice.isShown("persons") && (
-            <div className="max-w-full" style={{ order: order("persons") }}>
-              <ListTile tile="persons" title={labels.persons} units={LIST_UNITS.document.persons}>
-                <DocumentPersonsTab documentId={documentId} label={labels.persons} />
-              </ListTile>
-            </div>
-          )}
-          {choice.isShown("properties") && (
-            <div className="max-w-full" style={{ order: order("properties") }}>
-              <ListTile tile="properties" title={labels.properties} units={LIST_UNITS.document.properties}>
-                <DocumentPropertiesTab documentId={documentId} label={labels.properties} />
-              </ListTile>
-            </div>
-          )}
-          {choice.isShown("associations") && (
-            <div className="max-w-full" style={{ order: order("associations") }}>
-              <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.document.associations}>
-                <DocumentReferencesTab documentId={documentId} label={labels.associations} />
+          {/* Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate". */}
+          {choice.isShown("related") && (
+            <div className="max-w-full" style={{ order: order("related") }}>
+              <ListTile tile="related" title={labels.related} units={LIST_UNITS.document.related}>
+                <DocumentRelatedTile documentId={documentId} label={labels.related} />
               </ListTile>
             </div>
           )}

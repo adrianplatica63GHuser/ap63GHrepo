@@ -1,31 +1,30 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowLeftRight, ArrowRight, Link as LinkIcon, ListChecks, ScanText, ScrollText, Unlink } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, ListChecks, ScanText, ScrollText } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PressBubble } from "@/lib/ui/press-bubble";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { OneLineRow, OneLineRows } from "@/components/tiles/one-line-rows";
-import type { RowSlot } from "@/lib/ui/field-widths";
+import type { RelatedRow } from "@/components/tiles/related-tile";
 import {
   AiReferenceLinkerDialog,
   type LinkerDocumentType,
   type LinkerItem,
 } from "./ai-reference-linker-dialog";
-import { newTabIfAsked, openThroughGuard } from "@/lib/ui/row-link";
+import { openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 
 /**
- * Slice #37.64: one line a row — the radio, „Etichetă scurtă (Tip)", and three
- * slots: the relationship (only on a link with a role), „Vizualizează",
- * „Previzualizare". Adrian: „The relationship should not be listed. It should be
- * a button before the view button."
+ * A Document's related documents, as „Corelate"'s rows (Slice #37.65; one line
+ * a row since #37.64): „Etichetă scurtă (Tip)", the relationship behind its
+ * button (only on a link with a role), „Vizualizează", „Previzualizare".
+ * Adrian: „The relationship should not be listed. It should be a button before
+ * the view button." And „Înscrisuri citate" — one button, its panel folded.
  */
-const SLOTS: readonly RowSlot[] = ["relation", "view", "preview"];
 
 type AssociatedDocument = {
   id:                  string;
@@ -49,11 +48,18 @@ type AssociatedDocument = {
   roleReadsFromViewed: boolean;
 };
 
-type Props = {
-  documentId: string;
-  /** The tile's title — the list's accessible name. */
-  label: string;
-};
+/** What „Corelate" draws from this list. */
+export interface DocumentReferenceRows {
+  isLoading: boolean;
+  rows: RelatedRow[];
+  /** Under the rows: a load error. */
+  below: ReactNode;
+  associate: () => void;
+  /** „Înscrisuri citate", after „Corelate"'s buttons. */
+  instrumentsButton: ReactNode;
+  /** Its panel, under the buttons while unfolded, and the linker dialog it opens. */
+  instrumentsPanel: ReactNode;
+}
 
 async function fetchDocumentReferences(documentId: string): Promise<AssociatedDocument[]> {
   const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/references`);
@@ -76,7 +82,7 @@ async function fetchInstrumentReferences(documentId: string): Promise<Instrument
   return (await res.json()) as InstrumentReferencesPayload;
 }
 
-export function DocumentReferencesTab({ documentId, label }: Props) {
+export function useDocumentReferenceRows(documentId: string): DocumentReferenceRows {
   const t           = useTranslations("document.references");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
@@ -84,9 +90,6 @@ export function DocumentReferencesTab({ documentId, label }: Props) {
   const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
-  const [selectedId,    setSelectedId]    = useState<string | null>(null);
-  const [dissociating,  setDissociating]  = useState(false);
-  const [dissociateErr, setDissociateErr] = useState<string | null>(null);
 
   const { data: items, isLoading, isError } = useQuery({
     queryKey: ["document-references", documentId],
@@ -183,136 +186,82 @@ export function DocumentReferencesTab({ documentId, label }: Props) {
     }
   };
 
-  const handleAssociate = () => {
-    router.push(`/documents/${encodeURIComponent(documentId)}/associate-reference`);
-  };
-
-  const handleDissociate = async () => {
-    if (!selectedId) return;
-    setDissociating(true);
-    setDissociateErr(null);
-    try {
-      const res = await fetch(
-        `/api/documents/${encodeURIComponent(documentId)}/references/${encodeURIComponent(selectedId)}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `HTTP ${res.status}`);
-      }
-      setSelectedId(null);
-      await queryClient.invalidateQueries({ queryKey: ["document-references", documentId] });
-    } catch (err) {
-      setDissociateErr(err instanceof Error ? err.message : String(err));
-    } finally {
-      setDissociating(false);
+  /** Remove one row's link; „Corelate"'s „Dezasociază" shows what it throws. */
+  const dissociate = async (otherId: string) => {
+    const res = await fetch(
+      `/api/documents/${encodeURIComponent(documentId)}/references/${encodeURIComponent(otherId)}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error ?? `HTTP ${res.status}`);
     }
+    await queryClient.invalidateQueries({ queryKey: ["document-references", documentId] });
   };
 
-  if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
-  if (isError)   return <p className="py-6 text-sm text-red-600 dark:text-red-400">{t("error")}</p>;
+  const rows: RelatedRow[] = (items ?? []).map((item) => {
+    // „Etichetă scurtă (Tip)"; with no title, the type alone — never the system ID (#37.57).
+    const text = item.title
+      ? (item.typeName ? `${item.title} (${item.typeName})` : item.title)
+      : (item.typeName ?? nameOr(item.title, "document"));
+    return {
+      key: `document:${item.id}`,
+      kind: "document",
+      radioLabel: nameOr(item.title, "document"),
+      title: text,
+      content:
+          item.title ? (
+            <>
+              <span className="font-medium text-ink dark:text-zinc-100">{item.title}</span>
+              {item.typeName && <span className="text-fade dark:text-zinc-400"> ({item.typeName})</span>}
+            </>
+          ) : (
+            <span className="font-medium text-ink dark:text-zinc-100">{text}</span>
+          ),
+      href: `/documents/${encodeURIComponent(item.id)}?readonly=true`,
+      dissociate: () => dissociate(item.id),
+      buttons: {
+          /*
+           * ⚠️ **THE ROLE IS SHOWN IN THE DIRECTION THE FLAG SAYS, AND THE
+           * SAME WORDS MEAN DIFFERENT THINGS EITHER WAY ROUND.** (Slice #36.03)
+           *
+           * „Titlu anterior al" between this document and that one says one
+           * thing read forwards and the opposite read backwards, and the pair
+           * order in `document_document` is by UUID. So the relationship is
+           * never the role alone — it is „acest document «rol» X" or
+           * „X «rol» acest document", a sentence that cannot be read the wrong
+           * way. Since #37.64 it is behind a button before „Vizualizează",
+           * shown on a press and gone on a click outside or Esc.
+           */
+          relation: item.relationshipRoleName ? (
+            <PressBubble
+              icon={ArrowLeftRight}
+              label={t("relationship")}
+              text={
+                item.roleReadsFromViewed
+                  ? t("roleForward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
+                  : t("roleBackward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
+              }
+            />
+          ) : undefined,
+          view: (
+            <IconButton
+              href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
+              onClick={(e) => openThroughGuard(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
+              icon={ArrowRight}
+              label={t("view")}
+              variant="secondary"
+              size="xs"
+            />
+          ),
+          preview: <PreviewButton target={{ kind: "document", id: item.id }} />,
+      },
+    };
+  });
 
-  return (
-    <div className="flex flex-col gap-4">
-      {items && items.length > 0 ? (
-        <OneLineRows slots={SLOTS} label={label}>
-          {items.map((item) => {
-            // „Etichetă scurtă (Tip)"; with no title, the type alone — never the system ID (#37.57).
-            const text = item.title
-              ? (item.typeName ? `${item.title} (${item.typeName})` : item.title)
-              : (item.typeName ?? nameOr(item.title, "document"));
-            return (
-              <OneLineRow
-                key={item.id}
-                selected={item.id === selectedId}
-                onSelect={() => setSelectedId(item.id)}
-                radioLabel={nameOr(item.title, "document")}
-                title={text}
-                content={
-                  item.title ? (
-                    <>
-                      <span className="font-medium text-ink dark:text-zinc-100">{item.title}</span>
-                      {item.typeName && <span className="text-fade dark:text-zinc-400"> ({item.typeName})</span>}
-                    </>
-                  ) : (
-                    <span className="font-medium text-ink dark:text-zinc-100">{text}</span>
-                  )
-                }
-                // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
-                onClick={(e) => {
-                  if (newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)) return;
-                  setSelectedId(item.id === selectedId ? null : item.id);
-                }}
-                onAuxClick={(e) => newTabIfAsked(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`)}
-                onDoubleClick={() => guardedNavigate(`/documents/${encodeURIComponent(item.id)}?readonly=true`)}
-                buttons={{
-                  /*
-                   * ⚠️ **THE ROLE IS SHOWN IN THE DIRECTION THE FLAG SAYS, AND THE
-                   * SAME WORDS MEAN DIFFERENT THINGS EITHER WAY ROUND.** (Slice #36.03)
-                   *
-                   * „Titlu anterior al" between this document and that one says one
-                   * thing read forwards and the opposite read backwards, and the pair
-                   * order in `document_document` is by UUID. So the relationship is
-                   * never the role alone — it is „acest document «rol» X" or
-                   * „X «rol» acest document", a sentence that cannot be read the wrong
-                   * way. Since #37.64 it is behind a button before „Vizualizează",
-                   * shown on a press and gone on a click outside or Esc.
-                   */
-                  relation: item.relationshipRoleName ? (
-                    <PressBubble
-                      icon={ArrowLeftRight}
-                      label={t("relationship")}
-                      text={
-                        item.roleReadsFromViewed
-                          ? t("roleForward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
-                          : t("roleBackward", { role: item.relationshipRoleName, other: nameOr(item.title, "document") })
-                      }
-                    />
-                  ) : undefined,
-                  view: (
-                    <IconButton
-                      href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
-                      onClick={(e) => openThroughGuard(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
-                      icon={ArrowRight}
-                      label={t("view")}
-                      variant="secondary"
-                      size="xs"
-                    />
-                  ),
-                  preview: <PreviewButton target={{ kind: "document", id: item.id }} />,
-                }}
-              />
-            );
-          })}
-        </OneLineRows>
-      ) : (
-        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
-      )}
-
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-2">
-          <IconButton
-            icon={LinkIcon}
-            label={t("associate")}
-            showLabel
-            variant="primary"
-            size="lg"
-            onClick={handleAssociate}
-            disabled={selectedId !== null}
-          />
-          <IconButton
-            icon={Unlink}
-            label={t("dissociate")}
-            busy={dissociating}
-            busyLabel={t("dissociating")}
-            showLabel
-            variant="secondary"
-            size="lg"
-            onClick={handleDissociate}
-            disabled={selectedId === null || dissociating}
-          />
-          {/* „Înscrisuri citate" (#37.64): the panel below, folded behind one button
-              that says how many instruments wait for an answer. */}
+  // „Înscrisuri citate" (#37.64): the panel, folded behind one button that says
+  // how many instruments wait for an answer.
+  const instrumentsButton = (
           <IconButton
             icon={ScrollText}
             label={t("instrumentsButton")}
@@ -320,17 +269,15 @@ export function DocumentReferencesTab({ documentId, label }: Props) {
             count={pendingCount}
             note={pendingCount > 0 ? t("instrumentsPending", { count: pendingCount }) : undefined}
             variant="secondary"
-            size="lg"
+            size="sm"
             aria-expanded={instrumentsOpen}
             aria-controls={instrumentsOpen ? instrumentsPanelId : undefined}
             onClick={() => setInstrumentsOpen((v) => !v)}
           />
-        </div>
-        {dissociateErr && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">{dissociateErr}</p>
-        )}
-      </div>
+  );
 
+  const instrumentsPanel = (
+    <>
       {/* ── Instruments this document's pages cite (Slice #36.03) ─────────── */}
       {/* Unfolded by „Înscrisuri citate" (#37.64), and otherwise unchanged. */}
       {instrumentsOpen && (
@@ -407,6 +354,15 @@ export function DocumentReferencesTab({ documentId, label }: Props) {
           }}
         />
       )}
-    </div>
+    </>
   );
+
+  return {
+    isLoading,
+    rows,
+    below: isError ? <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("error")}</p> : null,
+    associate: () => router.push(`/documents/${encodeURIComponent(documentId)}/associate-reference`),
+    instrumentsButton,
+    instrumentsPanel,
+  };
 }
