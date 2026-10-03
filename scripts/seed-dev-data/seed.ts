@@ -368,7 +368,10 @@ async function ensureReferenceData(): Promise<void> {
   for (const indicativ of ["52", "61"]) {
     const rows = await db.select().from(lookupTarla).where(eq(lookupTarla.indicativ, indicativ));
     if (rows.length === 0) {
-      await db.insert(lookupTarla).values({ indicativ, descriere: "Tarla extravilan Bragadiru (date de test)", sortOrder: 100 });
+      // No `descriere`: the tarla picker shows „indicativ — descriere" in a fixed
+      // box sized for the archive's bare codes, and TC-PROP-04 fails a box that
+      // cannot hold its longest option.
+      await db.insert(lookupTarla).values({ indicativ, descriere: null, sortOrder: 100 });
       added.push(`Tarla „${indicativ}"`);
     }
   }
