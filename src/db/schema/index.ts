@@ -1058,6 +1058,11 @@ export const lookupDocTypePersonRole = pgTable(
     personRoleId:   uuid("person_role_id")
       .notNull()
       .references(() => lookupPersonRole.id, { onDelete: "cascade" }),
+    // Slice #37.59, migration_091: this role, on this document type, holds a
+    // share in the property (a seller, a buyer, an owner, an heir) — so a link
+    // in it carries „Cotă-parte", „Suprafață echivalentă" and „Mod de deținere".
+    // A role that provides a service (Notar, Proiectant / Consultant) does not.
+    holdsShare:     boolean("holds_share").notNull().default(false),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
