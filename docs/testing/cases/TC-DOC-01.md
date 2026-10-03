@@ -36,7 +36,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with the filters „Tip document: Toate tipurile", „Importanță:", „Relevanță:", „Câmp specific:", and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
+| 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with a search box („caută după cod, titlu sau nr. document") before the filter „Tip document: Toate tipurile", then „Câmp specific:" — no „Importanță" or „Relevanță" filter (#37.62) — and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
 | 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „DATE DE EMITERE". „Tip document" is a field inside „Date generale", and it starts **empty** |
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
@@ -158,3 +158,7 @@ ASOCIERI, not inside it — ASOCIERI holds the document-to-document references
 **2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. The spec reads them too.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-02 — Slice #37.62 (the Documents list).** The „Importanță:" and „Relevanță:" filters are
+gone, and the search box now stands before „Tip document", its placeholder without the „SAU" it had
+while it came second. Step 1 reads both. The spec follows.

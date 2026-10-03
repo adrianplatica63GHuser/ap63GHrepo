@@ -147,9 +147,16 @@ export async function createSaleContract(request: APIRequestContext, title: stri
  * what „Acte" → „Adaugă act" sends with only those two fields filled.
  * (Slice #37.02, for TC-ASSOC-12's CERTIFICAT_MOSTENITOR.)
  */
-export async function createDocumentOfType(request: APIRequestContext, key: string, title: string): Promise<string> {
+export async function createDocumentOfType(
+  request: APIRequestContext,
+  key: string,
+  title: string,
+  // Slice #37.62: any other field the case needs filled — `{ subject }`, say.
+  extra: Record<string, unknown> = {},
+): Promise<string> {
   const documentTypeId = await documentTypeIdFor(request, key);
   const body = await postJson<{ id: string }>(request, ROUTE.document, {
+    ...extra,
     documentTypeId,
     title,
     provenance: "MANUAL",

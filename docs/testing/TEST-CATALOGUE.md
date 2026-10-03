@@ -84,6 +84,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-05](cases/TC-DOC-05.md) | Filele și panourile unui CVC, fiecare cu un singur nume; „Taxă timbru și publicitate" ultima | document | happy | — | `automated` | 2026-10-02 | `e2e/document/cvc-tile-names.spec.ts` |
 | [TC-DOC-06](cases/TC-DOC-06.md) | „Fără valoare" în cursive, fără liniuțe; listele derulante ale unui CVC trei pe rând, în română ca în engleză | document | happy | — | `automated` | 2026-10-02 | `e2e/document/blank-choice.spec.ts` |
 | [TC-DOC-07](cases/TC-DOC-07.md) | Cota-parte doar pentru rolurile care dețin o cotă: un PAD cu un Proiectant, un CVC cu un Vânzător | document | happy | — | `automated` | 2026-10-02 | `e2e/document/role-share.spec.ts` |
+| [TC-DOC-08](cases/TC-DOC-08.md) | Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat | document | happy | — | `confirmed` | 2026-10-02 | `e2e/document/document-list.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-02 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-02 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-02 | `e2e/association/person-document.spec.ts` |
