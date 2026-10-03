@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-02, Slice #37.62 — 285 entries. Rows are status, columns are impact.
+As of 2026-10-02, Slice #37.62 — 286 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 16 | 59 | 58 | 16 | 149 |
+| open | 16 | 59 | 59 | 16 | 150 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 36 | 55 | 26 | 3 | 120 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 56 | 120 | 88 | 21 | 285 |
+| **total** | 56 | 120 | 89 | 21 | 286 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -369,3 +369,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-283 | 2026-10-02 #37.59 | data risk | DB & migrations | Supabase records migration_084 (person_document's three share columns, #36.02) but never ran it: its one-time `--baseline 086` declared 008–086 applied, and the project had been built from a schema older than 084. migration_091 failed there on „column pd.cota_parte does not exist", and every cloud route that reads or writes a person's cotă has failed since #36.02. 085 (the CVC and Act Adițional forms) and 086 (document_document direction, referenced_instruments) are recorded the same way and were not checked. | Adrian's `npm run supabase:migrate`, 2026-10-02 (091 FAILED, rolled back); scripts/supabase-migrate.ts --baseline | data | S | open | `npm run supabase:migrate -- --reapply 084` (added in #37.59), then `npm run supabase:migrate`. Then check the cloud for 086's two columns and 085's forms — a cloud twin of Verify-Schema.ps1 that compares columns, not only tables, would answer it for every recorded row. | 2026-10-02 |
 | FU-284 | 2026-10-02 #37.59 | tooling | Test runner | The runner's migrate-local regenerates supabase_schema_full.sql only when IT applied something. When Adrian applies a migration himself first (091, 2026-10-02), migrate-local finds nothing pending and skips the export, so the committed schema file stays a migration behind until someone runs Export-SupabaseSchema.ps1 by hand. | runner migrate-local 20261003T000056Z-21940 („export-schema skipped — nothing was applied") | dev | XS | open | Export whenever HEAD's newest migration is recorded in the database but the committed schema file predates it (or simply always, after the backup); or add an `export-schema` sequence. | 2026-10-02 |
 | FU-285 | 2026-10-02 #37.62 | debt | Lists | `src/lib/metadata/value-labels.ts` (`metadataValueLabel`) has no caller left: #37.60–#37.62 took importance, relevance and provenance off the Natural Persons, Properties and Documents lists, its only users; Căutare globală has its own `valueLabel`. Only `property-list.test.tsx` names it, to assert it is NOT imported. | `grep -rn metadataValueLabel src` (2026-10-02) | dev | XS | open | Delete the module (it needs delete permission in the repo folder), or reuse it in Căutare globală in place of that screen's own copy. | 2026-10-02 |
+| FU-286 | 2026-10-02 #37.62 runner result 20261003T033224Z-877 | test gap | Import | FU-214's quadratic guard in import-constraint-check.test.ts failed again inside a whole jest run: small 12 ms, large 39 ms, ratio 3.21 against the bound of 3, after Propus.3's best-of-five. The same code passed the next jest run (20261003T033257Z-30386) a minute later. Adrian's dev server on 3000 was up during both. | .test-runner/logs/20261003T033224Z-877/jest.log against 20261003T033257Z-30386; src/__tests__/import-constraint-check.test.ts:674 | dev | XS | open | Measure work rather than time (count the walk's comparisons), or take the median of more pairs and skip the verdict when the machine is loaded (the large run under ~50 ms is noise-dominated). | 2026-10-02 |
