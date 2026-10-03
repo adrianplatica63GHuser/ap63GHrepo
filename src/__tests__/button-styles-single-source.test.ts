@@ -38,7 +38,9 @@ const ALLOWLIST: Record<string, string> = {
   // Row-select checkboxes on the three entity lists. <input type="checkbox">,
   // not a button — `accent-cta` colours the native control and the dip fades it.
   "app/documents/list-view.tsx": "row-select checkbox",
-  "app/natural-persons/list-view.tsx": "row-select checkbox",
+  // Slice #37.60: the Natural Persons list's „Câmpuri afișate" moved into the shared chooser,
+  // whose ticks fade when the maximum is reached — the same <input type="checkbox">.
+  "components/list/field-chooser.tsx": "the „Câmpuri afișate” checkbox",
   "app/properties/list-view.tsx": "row-select checkbox",
 
   // Three <select> dropdowns (importance / relevance / provenance). A native

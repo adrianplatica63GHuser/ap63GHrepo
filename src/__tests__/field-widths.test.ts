@@ -1083,8 +1083,9 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
 
   it("lays #37.24's short set in its screen's rows — derived, never written by hand", () => {
     expect(PREVIEW_ROWS).toEqual({
-      person: [["lastName", "firstName"], ["cnp"], ["dateOfBirth"], ["placeOfBirth"]],
-      company: [["name"], ["judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
+      // Slice #37.60: the name is the heading; the person and the company draw PREVIEW_LINES.
+      person: [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"]],
+      company: [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
       property: [["parcela"], ["nickname"], ["surfaceAreaMp"], ["carteFunciara", "cadastralNumber"]],
       document: [["documentTypeId"], ["title"], ["subject"], ["nrDocument", "dateDocument"]],
     });
@@ -1111,7 +1112,7 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
 
   it("the body takes its width from the unit and its rows from the screen; the 5.5rem label column is gone", () => {
     const body = code(read("src", "components", "tiles", "preview-tile-body.tsx"));
-    expect(body).toMatch(/style=\{\{ \.\.\.PREVIEW_STYLE\[width\], \.\.\.style \}\}/);
+    expect(body).toMatch(/style=\{lines \? style : \{ \.\.\.PREVIEW_STYLE\[width\], \.\.\.style \}\}/);
     expect(body).not.toMatch(/PANEL_STYLE\b|PAGES_PANEL_STYLE|5\.5rem|<dl/);
     expect(body).toMatch(/className=\{STACKED_ROW_CLASS\}/);
     const tiles = code(read("src", "components", "tiles", "preview-tiles.tsx"));
