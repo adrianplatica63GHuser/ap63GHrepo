@@ -10,6 +10,8 @@
  *   npm run supabase:migrate -- --status      report only, change nothing
  *   npm run supabase:migrate -- --baseline 086  record 008..086 as applied, RUN NOTHING
  *   npm run supabase:migrate                  apply everything pending
+ *   npm run supabase:migrate -- --reapply 084   run ONE recorded-but-unverified file
+ *                                               again and record its hash (#37.59)
  *
  * Requires in .env:
  *   SUPABASE_SYNC_URL -- the same session-pooler URL `supabase-sync.ts` uses
@@ -119,6 +121,36 @@ if (baselineIdx !== -1) {
     baselineThrough = parseBaselineArg(raw);
   } catch (e) {
     console.error(`\n❌  ${(e as Error).message}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * `--reapply NNN` (Slice #37.59): run one file that is RECORDED but carries no
+ * checksum — a baseline row, which says „recorded", not „ran" — and record its
+ * hash afterwards. Found the day migration_091 failed on Supabase with
+ * „column pd.cota_parte does not exist": `--baseline 086` had recorded
+ * migration_084 there, and the project had been built from a schema older
+ * than it. Refused for a file with a checksum (it verifiably ran) and for one
+ * that is not recorded (that is just pending). Only for a file whose SQL is
+ * safe to run again — the caller names it; 084 is (`IF NOT EXISTS` throughout).
+ */
+const reapplyIdx = argv.indexOf("--reapply");
+let reapplyNumber: number | null = null;
+if (reapplyIdx !== -1) {
+  const raw = argv[reapplyIdx + 1];
+  if (!raw || raw.startsWith("--")) {
+    console.error("\n❌  --reapply needs a migration number, e.g. --reapply 084");
+    process.exit(1);
+  }
+  try {
+    reapplyNumber = parseBaselineArg(raw);
+  } catch (e) {
+    console.error(`\n❌  ${(e as Error).message}`);
+    process.exit(1);
+  }
+  if (wantStatus || baselineThrough !== null) {
+    console.error("\n❌  --reapply runs one file; it does not go with --status or --baseline.");
     process.exit(1);
   }
 }
@@ -328,6 +360,41 @@ async function main(): Promise<number> {
     console.log("If the two lists are unrelated, delete the stale row and run this again:");
     log(`DELETE FROM schema_migrations WHERE filename = '<recorded name>';`);
     return 2;
+  }
+
+  // -------------------------------------------------------------------------
+  // --reapply : one recorded-but-unverified file, run again and hashed
+  // -------------------------------------------------------------------------
+
+  if (reapplyNumber !== null) {
+    const files = disk.filter((f) => f.number === reapplyNumber);
+    if (files.length !== 1) {
+      fail(`${files.length} migration file(s) on disk are numbered ${reapplyNumber}; --reapply runs exactly one. Nothing run.`, 1);
+    }
+    const target = files[0];
+    const row = appliedRows.find((r) => r.filename === target.name);
+    if (!row) {
+      fail(`${target.name} is not recorded here, so it is simply pending -- run without --reapply.`, 1);
+    }
+    if ((row as AppliedRow).checksum !== null) {
+      fail(`${target.name} is recorded WITH a checksum, so it verifiably ran here. Nothing run.`, 1);
+    }
+    console.log("");
+    console.log(`▶  ${target.name}  (recorded with no checksum; running it again)`);
+    const sql = fs.readFileSync(target.fullPath, "utf-8").replace(/^\uFEFF/, "");
+    try {
+      await client.query(sql);
+    } catch (e) {
+      console.error(`\n❌  ${target.name} FAILED. Postgres said:`);
+      console.error(`    ${(e as Error).message}`);
+      console.error("    The file rolled back; its row is unchanged.");
+      return 1;
+    }
+    await client.query("UPDATE schema_migrations SET checksum = $2 WHERE filename = $1", [target.name, target.checksum]);
+    ok(`ran again and recorded (MD5 ${target.checksum})`);
+    console.log("");
+    console.log("Next: npm run supabase:migrate");
+    return 0;
   }
 
   // -------------------------------------------------------------------------
