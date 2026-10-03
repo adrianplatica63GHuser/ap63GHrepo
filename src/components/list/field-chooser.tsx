@@ -12,6 +12,10 @@
  * that remembers „importance", „relevance" or „provenance" (offered until
  * #37.60) simply loses them: they are dropped on the first read and never
  * drawn, and the count beside the button counts only what is shown.
+ *
+ * Slice #37.61: the Properties list draws it too, with its default columns —
+ * what a browser that has never chosen sees (`defaults`). A stored `[]` is a
+ * choice of none and is kept as one.
  */
 import { useEffect, useRef, useState } from "react";
 import { Columns3 } from "lucide-react";
@@ -20,31 +24,35 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 
 export type ChooserField = { key: string; label: string; column: ColumnName };
 
-function readStored(storageKey: string, offered: readonly string[]): string[] {
+function readStored(storageKey: string, offered: readonly string[], defaults: readonly string[]): string[] {
   try {
     const raw = localStorage.getItem(storageKey);
-    if (!raw) return [];
+    if (raw === null) return [...defaults];
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === "string" && offered.includes(k)) : [];
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === "string" && offered.includes(k)) : [...defaults];
   } catch {
-    return [];
+    return [...defaults];
   }
 }
 
 /**
- * The ticked keys, in the order they were ticked, and the toggle. Starts empty
- * on the server and on the first client render (no hydration mismatch), then
- * reads the browser's choice.
+ * The ticked keys, in the order they were ticked, and the toggle. Starts at
+ * `defaults` on the server and on the first client render (no hydration
+ * mismatch), then reads the browser's choice.
  */
-export function useFieldChooser(storageKey: string, offered: readonly string[], max: number) {
-  const [visible, setVisible] = useState<string[]>([]);
+export function useFieldChooser(storageKey: string, offered: readonly string[], max: number, defaults: readonly string[] = []) {
+  const [visible, setVisible] = useState<string[]>(() => [...defaults]);
   const offeredKey = offered.join("|");
+  const defaultsKey = defaults.join("|");
   // After mount, in a timer: the same shape the lists used, so setState is in a
   // callback and `react-hooks/set-state-in-effect` has nothing to say.
   useEffect(() => {
-    const id = setTimeout(() => setVisible(readStored(storageKey, offeredKey.split("|"))), 0);
+    const id = setTimeout(
+      () => setVisible(readStored(storageKey, offeredKey.split("|"), defaultsKey ? defaultsKey.split("|") : [])),
+      0,
+    );
     return () => clearTimeout(id);
-  }, [storageKey, offeredKey]);
+  }, [storageKey, offeredKey, defaultsKey]);
 
   function toggle(key: string) {
     setVisible((prev) => {

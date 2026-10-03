@@ -3,20 +3,20 @@
 import { useNameOr } from "@/components/record/use-name-or";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { metadataValueLabel } from "@/lib/metadata/value-labels";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { BowTieBadge } from "@/components/bow-tie-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { ArrowRight, ChevronLeft, ChevronRight, Columns3, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-property-v2";
@@ -44,9 +44,6 @@ type PropertyListItem = {
   cornerOrderSelfIntersects: boolean;
   locality:         string | null;
   county:           string | null;
-  importance:       string | null;
-  relevance:        string | null;
-  provenance:       string | null;
   createdAt:        string;
   updatedAt:        string;
 };
@@ -58,16 +55,11 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchProperties(
-  q: string,
-  page: number,
-  importance: string,
-  relevance: string,
-): Promise<ListResponse> {
+// Slice #37.61: no importance or relevance filter any more — the route still
+// takes both parameters, and nothing here sends them.
+async function fetchProperties(q: string, page: number): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
   if (q)          url.searchParams.set("q",          q);
-  if (importance) url.searchParams.set("importance", importance);
-  if (relevance)  url.searchParams.set("relevance",  relevance);
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
@@ -143,56 +135,18 @@ function ConfirmDialog({
   );
 }
 
-/**
- * ⚠️ **Slice #32.19 deleted `DEV_ONLY_COLS` — all three copies of it — rather
- * than centralising it.**
- *
- * It was the same `["importance", "relevance", "provenance"]` array in each of
- * documents/list-view.tsx, natural-persons/list-view.tsx and
- * properties/list-view.tsx — this file being one of the three — and
- * the codebase's own habit ("centralise a bypass rule at the third copy site,
- * not the fourth") pointed at one shared module. That habit is about a rule
- * that SURVIVES. This one does not: Adrian asked for the developer-only screen
- * items to be revealed, the three curation columns are the clearest case of
- * what he meant, and a constant listing the columns that are hidden has nothing
- * left to say once none of them is. A shared module holding an array nobody
- * filters by would be the third copy with a nicer address.
- *
- * What the deleted comment argued for — pruning a stored choice on restore,
- * because localStorage does not know the build changed underneath it — went
- * with it. There is no build in which these columns are absent any more, so
- * there is nothing for a stored value to disagree with.
- */
-function readStoredCols(): string[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return DEFAULT_COLS;
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as string[]) : DEFAULT_COLS;
-  } catch {
-    return DEFAULT_COLS;
-  }
-}
 
 export function PropertyListView() {
   const t       = useTranslations("property");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const tPag    = useTranslations("shared.pagination");
   const tBulk   = useTranslations("shared.bulkDelete");
-  const tFilter = useTranslations("shared.listFilters");
-  const tMeta   = useTranslations("shared");
-  // Slice #32.19 — next-intl types `t`'s key as a literal union per namespace,
-  // so a key built from a stored value needs one cast. It is made HERE, once,
-  // rather than in each case of `cellValue` below.
-  const tMetaKey = (key: string) => tMeta(key as Parameters<typeof tMeta>[0]);
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
-  const [importance,      setImportance]      = useState("");
-  const [relevance,       setRelevance]       = useState("");
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -200,29 +154,6 @@ export function PropertyListView() {
   const [addOpen,      setAddOpen]      = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
-
-  // Column picker — always start with DEFAULT_COLS to match SSR; hydrate from
-  // localStorage after mount via setTimeout so setState is in a callback and
-  // does not trigger the react-hooks/set-state-in-effect lint rule.
-  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS);
-  useEffect(() => {
-    const id = setTimeout(() => setVisibleCols(readStoredCols()), 0);
-    return () => clearTimeout(id);
-  }, []);
-  const [showColPicker, setShowColPicker] = useState(false);
-  const colPickerRef = useRef<HTMLDivElement>(null);
-
-  // Close col picker on outside click
-  useEffect(() => {
-    if (!showColPicker) return;
-    function handler(e: MouseEvent) {
-      if (colPickerRef.current && !colPickerRef.current.contains(e.target as Node)) {
-        setShowColPicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showColPicker]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -233,8 +164,8 @@ export function PropertyListView() {
   }, [searchInput]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, importance, relevance, currentPage],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage, importance, relevance),
+    queryKey: ["properties", "list", debouncedSearch, currentPage],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage),
   });
 
   const total      = query.data?.total ?? 0;
@@ -245,7 +176,7 @@ export function PropertyListView() {
   // Slice #32.15: this key must carry every value the query key above carries.
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
-  const pageKey = `${debouncedSearch}|${importance}|${relevance}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${currentPage}`;
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
@@ -298,27 +229,12 @@ export function PropertyListView() {
     }
   }
 
-  function toggleCol(key: string) {
-    setVisibleCols((prev) => {
-      let next: string[];
-      if (prev.includes(key)) {
-        next = prev.filter((k) => k !== key);
-      } else if (prev.length < MAX_OPT) {
-        next = [...prev, key];
-      } else {
-        return prev;
-      }
-      localStorage.setItem(LS_KEY, JSON.stringify(next));
-      return next;
-    });
-  }
-
   // Optional column definitions (ordered)
   //
   // Slice #37.16: each carries the `COLUMN` that gives its width. The KEY is
   // what localStorage stores and stays as it was — "nickname" is drawn in the
   // `propertyNickname` column, which is the only one whose name differs.
-  const optionalCols: { key: string; label: string; column: ColumnName }[] = [
+  const optionalCols: ChooserField[] = [
     { key: "nickname",         label: t("table.nickname"),         column: "propertyNickname" },
     { key: "parcela",          label: t("table.parcela"),          column: "parcela" },
     // ⚠️ The column KEY stays "tarlaSola" while the field beside it is now
@@ -332,15 +248,8 @@ export function PropertyListView() {
     { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp"),    column: "surfaceAreaMp" },
     { key: "calculatedAreaMp", label: t("table.calculatedAreaMp"), column: "calculatedAreaMp" },
     { key: "locality",         label: t("table.locality"),         column: "locality" },
-    // Slice #23.10.dev hid these three behind the developer-tools flag because
-    // the Metadata tab that feeds them was a developer surface. Slice #32.19
-    // revealed both: the tab and the columns move together, so a value a user
-    // can now set is a value they can now see in the list beside the filter
-    // that selects on it. (See, not sort — none of these lists sorts by a
-    // column, and saying so here would be a claim the next reader believes.)
-    { key: "importance",       label: t("table.importance"),       column: "importance" },
-    { key: "relevance",        label: t("table.relevance"),        column: "relevance" },
-    { key: "provenance",       label: t("table.provenance"),       column: "provenance" },
+    // Slice #37.61: importance, relevance and provenance are no longer offered; a
+    // browser that remembers one simply loses it (`field-chooser.tsx`).
   ];
 
   function cellValue(item: PropertyListItem, key: string): React.ReactNode {
@@ -353,13 +262,6 @@ export function PropertyListView() {
       case "surfaceAreaMp":    return formatArea(item.surfaceAreaMp);
       case "calculatedAreaMp": return formatArea(item.calculatedAreaMp);
       case "locality":         return [item.locality, item.county].filter(Boolean).join(", ");
-      // Slice #32.19 — the label the user sees, not the database code. The
-      // filter beside this column already renders „Ridicată"; before this the
-      // cell under it rendered `HIGH`. `tMeta` is the same `shared` namespace
-      // both read from.
-      case "importance":       return metadataValueLabel(tMetaKey, "importance", item.importance);
-      case "relevance":        return metadataValueLabel(tMetaKey, "relevance",  item.relevance);
-      case "provenance":       return metadataValueLabel(tMetaKey, "provenance", item.provenance);
       default:                 return null;
     }
   }
@@ -367,7 +269,8 @@ export function PropertyListView() {
   // Slice #37.16: the columns shown, in order — checkbox, code, the ticked
   // optionals, open — each a fixed width, so ticking one widens the table. A
   // stored key this build has no column for stays in storage and is not drawn.
-  const shownCols = visibleCols.flatMap((key) => optionalCols.filter((c) => c.key === key));
+  const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT, DEFAULT_COLS);
+  const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   const columns: ColumnName[] = ["selectBadges", ...shownCols.map((c) => c.column), "openPreview"];
   const colCount = columns.length;
 
@@ -384,80 +287,16 @@ export function PropertyListView() {
           className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
 
-        {/* Importance and Relevance are curation values set on the Metadata
-            tab. Slice #23.10.dev wrapped both filters in <DevOnly> because that
-            tab was developer-only; Slice #32.19 removed the wrapper along with
-            the gate on the tab itself, so the two agree again. */}
-        {/* Importance filter */}
-        <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="text-fade">{tFilter("importanceLabel")}</span>
-          <select
-            value={importance}
-            onChange={(e) => { setImportance(e.target.value); setCurrentPage(0); }}
-            aria-label={tFilter("importanceLabel")}
-            className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
-          >
-            <option value="">{tFilter("allImportances")}</option>
-            <option value="LOW">{tMeta("importanceValues.LOW")}</option>
-            <option value="MEDIUM">{tMeta("importanceValues.MEDIUM")}</option>
-            <option value="HIGH">{tMeta("importanceValues.HIGH")}</option>
-          </select>
-        </div>
-
-        {/* Relevance filter */}
-        <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="text-fade">{tFilter("relevanceLabel")}</span>
-          <select
-            value={relevance}
-            onChange={(e) => { setRelevance(e.target.value); setCurrentPage(0); }}
-            aria-label={tFilter("relevanceLabel")}
-            className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
-          >
-            <option value="">{tFilter("allRelevances")}</option>
-            <option value="INACTIVE">{tMeta("relevanceValues.INACTIVE")}</option>
-            <option value="HISTORICAL">{tMeta("relevanceValues.HISTORICAL")}</option>
-            <option value="CURRENT">{tMeta("relevanceValues.CURRENT")}</option>
-            <option value="FUTURE">{tMeta("relevanceValues.FUTURE")}</option>
-          </select>
-        </div>
-
-        {/* Choose fields */}
-        <div ref={colPickerRef} className="relative">
-          {/* #37.42 (A013): Columns3. Its name and tooltip keep the count
-              the words used to show beside it — „Câmpuri afișate 2/4". */}
-          <IconButton
-            icon={Columns3}
-            label={`${t("chooseFields")} ${visibleCols.length}/${MAX_OPT}`}
-            variant="secondary"
-            size="md"
-            onClick={() => setShowColPicker((v) => !v)}
-            aria-haspopup="true"
-            aria-expanded={showColPicker}
-          />
-          {showColPicker && (
-            <div className="absolute z-20 mt-1 left-0 w-56 rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 p-3">
-              <p className="mb-2 text-xs text-fade dark:text-zinc-500">
-                {t("chooseFieldsHint", { max: MAX_OPT })}
-              </p>
-              {optionalCols.map((col) => {
-                const checked  = visibleCols.includes(col.key);
-                const disabled = !checked && visibleCols.length >= MAX_OPT;
-                return (
-                  <label key={col.key} className="flex items-center gap-2 py-0.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={disabled}
-                      onChange={() => toggleCol(col.key)}
-                      className="h-4 w-4 rounded border-wire accent-cta disabled:opacity-40"
-                    />
-                    <span className="text-sm text-ink dark:text-zinc-100">{col.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        {/* Slice #37.61: no „Importanță" or „Relevanță" filter; „Câmpuri afișate" is the
+            shared chooser, its fields today's less importance, relevance and provenance. */}
+        <FieldChooser
+          label={t("chooseFields")}
+          hint={t("chooseFieldsHint", { max: MAX_OPT })}
+          fields={optionalCols}
+          visible={chooser.visible}
+          max={MAX_OPT}
+          onToggle={chooser.toggle}
+        />
 
         <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (
