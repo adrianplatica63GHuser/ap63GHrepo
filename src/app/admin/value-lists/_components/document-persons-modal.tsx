@@ -471,14 +471,35 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
    */
   /** Slice #37.59: „Deține cotă" — saved as it is ticked; the Document's „Persoane" follows. */
   const [shareError, setShareError] = useState<string | null>(null);
+  /**
+   * ⚠️ **THE TICK SHOWS WHAT WAS CLICKED AT ONCE, NOT WHEN THE LIST COMES BACK.**
+   * Bound to `row.holdsShare` alone, React put the box straight back until the
+   * PATCH and the refetch had both landed, so a click looked like it did nothing
+   * — TC-DOC-07's first hand run, and Playwright's `check()` („Clicking the
+   * checkbox did not change its state"). `pendingShare` holds the clicked value
+   * per pair until the list is fresh; a failed save drops it, and the box goes
+   * back with the sentence above the table.
+   */
+  const [pendingShare, setPendingShare] = useState<Record<string, boolean>>({});
+  const dropPending = (id: string) =>
+    setPendingShare((p) => {
+      const next = { ...p };
+      delete next[id];
+      return next;
+    });
   const shareMutation = useMutation({
     mutationFn: ({ id, holdsShare }: { id: string; holdsShare: boolean }) => setHoldsShare(id, holdsShare),
-    onSuccess: () => {
+    onMutate: ({ id, holdsShare }) => setPendingShare((p) => ({ ...p, [id]: holdsShare })),
+    onSuccess: async (_data, { id }) => {
       setShareError(null);
-      qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
+      await qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
       qc.invalidateQueries({ queryKey: ["document-persons"] });
+      dropPending(id);
     },
-    onError: () => setShareError(t("holdsShareError")),
+    onError: (_err, { id }) => {
+      dropPending(id);
+      setShareError(t("holdsShareError"));
+    },
   });
 
   const deleteMutation = useMutation({
@@ -759,7 +780,7 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
                         <input
                           type="checkbox"
                           className="accent-cta"
-                          checked={row.holdsShare}
+                          checked={pendingShare[row.id] ?? row.holdsShare}
                           disabled={shareMutation.isPending}
                           aria-label={t("holdsShareLabel", { docType: row.documentTypeName, role: row.personRoleName })}
                           data-holds-share=""

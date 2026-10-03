@@ -199,7 +199,7 @@ describe("every path that writes or offers a share reads the tick", () => {
   it("the tick is set on „Persoană → Document”, beside the role it qualifies", () => {
     const modal = read("src", "app", "admin", "value-lists", "_components", "document-persons-modal.tsx");
     expect(modal).toMatch(/\["documentType", "valueName", "valueFlag", "rowActions"\]/);
-    expect(modal).toMatch(/checked=\{row\.holdsShare\}/);
+    expect(modal).toMatch(/checked=\{pendingShare\[row\.id\] \?\? row\.holdsShare\}/);
     expect(modal).toMatch(/method: "PATCH"/);
   });
 
