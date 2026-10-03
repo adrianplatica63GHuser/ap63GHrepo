@@ -12,7 +12,7 @@
 
 „Acte" opens on its search box, then „Tip document"; it has no „Importanță" or „Relevanță" filter;
 „Câmpuri afișate" offers the fields every document has — and no importance, relevance or
-provenance — and a ticked one shows its value; „Câmp specific" explains itself in a bubble. A filter
+provenance — and a ticked one shows its value; „Câmp specific" explains itself in a bubble on hover. A filter
 back on the toolbar, the search after the type, one of the three in the chooser, an empty cell under
 a ticked field or a „Câmp specific" with no explanation is the defect this case exists to catch.
 
@@ -34,7 +34,7 @@ Nothing.
 | 2 | Types `TC-DOC-08` into the search | One row: „Adeverință", `TC-DOC-08 Act de test` |
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Persoane, Proprietăți, Adăugat la — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
-| 5 | Presses anywhere outside the list, then the ⓘ beside „Câmp specific" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Pressing the ⓘ again closes it |
+| 5 | Presses anywhere outside the list, then rests the mouse on „Câmp specific:" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Moving the mouse away closes it. (On a touch screen the ⓘ beside it opens and closes it.) |
 
 ## At the end — leaving things as they were found
 
@@ -67,3 +67,15 @@ select it describes). The stored choice `[]` afterwards. Nothing else changed.
 toggle „Expiring soon" in English), no `DOC…` in the table, the bubble open on the first press and
 `sr-only` on the second, the stored choice `[]` afterwards; the document deleted (204). Nothing in
 the file changed, so the case is confirmed, and `e2e/document/document-list.spec.ts` translates it.
+
+**2026-10-02 — run 4 (Slice #37.62).** The spec's first runner run (`20261003T023306Z-28797`) failed
+at step 5: Playwright's mouse rests on the ⓘ before it presses it, the rest opens the bubble and the
+press closes it again — as the bubble does on the import bar since #37.50. A mouse opens it by
+resting, not by pressing; the ⓘ is the way in for a finger. Step 5 now rests the mouse on „Câmp
+specific:", and the case was driven again against the corrected file. A new document, the same steps: the same as
+before in steps 1–4; step 5's rest opened the bubble and moving away closed it; the stored choice
+`[]` afterwards.
+
+**2026-10-02 — run 5, `confirmed` (Slice #37.62).** Reloaded, against the file unchanged since run
+4: the same in every step, no `DOC…` in the table; the stored choice `[]` afterwards; the document
+deleted (204). The case is confirmed, and `e2e/document/document-list.spec.ts` translates it.

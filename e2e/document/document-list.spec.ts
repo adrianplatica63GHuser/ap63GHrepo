@@ -10,8 +10,8 @@
  *   - A Playwright browser has never chosen, so the columns start as the two
  *     defaults, Nr. document and Data: „Câmpuri afișate 2/4", and step 4's two
  *     headers follow theirs.
- *   - Step 5 checks the bubble's opening and closing, not its whole text; the
- *     jest suite `document-list.test.tsx` holds the text.
+ *   - Step 5 checks the bubble's opening and closing and the start of its text;
+ *     the jest suite `document-list.test.tsx` holds the rest.
  *   - Slice #37.62's pictures, not steps of the case: the toolbar, and the list
  *     with „Câmpuri afișate" open, at 1366 and 1920 px, into
  *     `playwright-report/document-list/`.
@@ -92,14 +92,17 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(row).toContainText(today);
       await photograph(page, "documents-chooser", main);
 
-      // Step 5 — outside the list; the ⓘ opens the bubble, a second press closes it.
+      // Step 5 — outside the list; resting the mouse on „Câmp specific:" opens the
+      // bubble, moving it away closes it. (A press on the ⓘ after a rest would close
+      // it again — the ⓘ is the way in for a finger, as on the import bar.)
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(picker.locator("label")).toHaveCount(0);
       const bubble = page.locator("#custom-field-hint");
-      await about.click();
+      await expect(bubble).toHaveClass(/sr-only/);
+      await main.getByText("Câmp specific:").hover();
       await expect(bubble).toContainText("Filtrează după unul dintre câmpurile proprii ale unui tip de act");
       await expect(bubble).not.toHaveClass(/sr-only/);
-      await about.click();
+      await page.mouse.move(5, 5);
       await expect(bubble).toHaveClass(/sr-only/);
     } finally {
       await removeRecord(page.request, "document", documentId);
