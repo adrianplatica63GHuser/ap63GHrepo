@@ -140,4 +140,5 @@ Also noted: the property detail screen reached from the list shows „Cod" as a 
 
 **2026-10-02 — Slice #37.61 (the Properties list).** The „Importanță:" and „Relevanță:" filters are
 gone; step 1 reads their absence. „Câmpuri afișate" is the shared chooser now, its eight fields
-unchanged and importance, relevance and provenance gone. The spec follows.
+unchanged and importance, relevance and provenance gone. The spec follows. Green in the runner's full run
+20261003T020117Z-4160 on 43437a1.

@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -54,3 +54,7 @@ written from it.
 above unchanged: the same in every step, no `PROP…` in the table; the stored choice unchanged
 afterwards; the property deleted (204). Nothing in the file changed, so the case is confirmed, and
 `e2e/property/property-list.spec.ts` translates it.
+
+**2026-10-02 — `automated` (Slice #37.61).** The test runner's full run 20261003T020117Z-4160 on
+43437a1 ran `e2e/property/property-list.spec.ts` green with the other 59 specs (lint, tsc, jest and
+forms-drift green too).
