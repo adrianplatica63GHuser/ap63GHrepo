@@ -466,7 +466,6 @@ export function useDocumentPersonRows(documentId: string): DocumentPersonRows {
         )}
       </div>
     );
-    const href = `${personPath(item.type, item.id)}?readonly=true`;
     return {
       // ⚠️ The LINK, never the person: one person may hold two roles here (#36.02).
       key: `person:${item.linkId}`,
@@ -480,7 +479,7 @@ export function useDocumentPersonRows(documentId: string): DocumentPersonRows {
           {hasRole && <span className="text-fade dark:text-zinc-400"> ({roleLabel})</span>}
         </>
       ),
-      href,
+      href: `${personPath(item.type, item.id)}?readonly=true`,
       dissociate: () => dissociate(item),
       buttons: {
         share: shareButton || undefined,

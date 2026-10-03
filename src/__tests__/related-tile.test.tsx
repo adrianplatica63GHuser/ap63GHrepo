@@ -116,10 +116,11 @@ describe("„Corelate”", () => {
   ])("„Dezasociază” on %s removes its link through its kind's route", async (name, url) => {
     renderTile();
     await screen.findByRole("group", { name: "Corelate" });
-    const dissociate = screen.getByRole("button", { name: "dissociate" });
-    expect(dissociate).toBeDisabled();
+    // Queried again after each change: IconButton wraps a disabled button in a span, so the
+    // element is replaced when it is enabled (FU-291).
+    expect(screen.getByRole("button", { name: "dissociate" })).toBeDisabled();
     fireEvent.click(radio(name));
-    fireEvent.click(dissociate);
+    fireEvent.click(screen.getByRole("button", { name: "dissociate" }));
     await waitFor(() => expect(calls.filter((c) => c.method === "DELETE").map((c) => c.url)).toEqual([url]));
   });
 
@@ -135,9 +136,9 @@ describe("„Corelate”", () => {
       "/documents/doc/associate-reference",
     ]);
     fireEvent.click(radio("Ion Vânzătorul"));
-    for (const b of buttons) expect(b).toBeDisabled();
+    for (const name of names) expect(screen.getByRole("button", { name })).toBeDisabled();
     // In one row with „Dezasociază" and „Înscrisuri citate", in that order.
-    const row = buttons[0].closest("div.flex-wrap") as HTMLElement;
+    const row = screen.getByRole("button", { name: "dissociate" }).closest("div.flex-wrap") as HTMLElement;
     expect(within(row).getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual([
       ...names, "dissociate", "instrumentsButton",
     ]);

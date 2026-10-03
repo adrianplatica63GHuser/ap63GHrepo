@@ -73,6 +73,7 @@ describe("a remembered tile choice survives the rename (#37.54)", () => {
       [tabTileKey("Cadastru")]: tabTileKey("Cadastru și carte funciară"),
       [tabTileKey("Conformitate")]: tabTileKey("Formalități"),
       metadata: ["classification", "connections"], // #37.63
+      persons: "related", properties: "related", associations: "related", // #37.65: „Corelate"
     });
     expect(Object.keys(RENAMED_TABS)).toHaveLength(3);
   });
@@ -84,6 +85,7 @@ describe("a remembered tile choice survives the rename (#37.54)", () => {
 
   it("maps nothing for a type that does not have the new tab", () => {
     const other = documentTileRegistry({ typeKey: "ACT_ADITIONAL", tabs: ["Act adițional"], succession: false, pages: true });
-    expect(other.renamed).toEqual({ metadata: ["classification", "connections"] }); // #37.63: META INFO's two halves, on every type
+    // #37.63: META INFO's two halves, and #37.65: „Corelate" for the three lists — on every type.
+    expect(other.renamed).toEqual({ metadata: ["classification", "connections"], persons: "related", properties: "related", associations: "related" });
   });
 });
