@@ -50,6 +50,12 @@ describe("an association row", () => {
   it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Previzualizare\" opens the record beside this one (#37.24)", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
     expect(src).toMatch(/<PreviewButton target=\{/);
+    if (src.includes("<OneLineRow")) {
+      // Slice #37.64: a one-line row — „Previzualizare" in its own slot, after „Vizualizare".
+      expect(src).toMatch(/const SLOTS: readonly RowSlot\[\] = \[[^\]]*"view", "preview"\]/);
+      expect(src).toMatch(/preview: <PreviewButton target=\{/);
+      return;
+    }
     // Slice #37.27: the header cell takes the column by name from a pair —
     // „openPreview" beside, or „openPreviewStacked" on the Natural Person's unit tile.
     expect(src).toMatch(/\bcolumnHead\("openPreview"\)|"openPreviewStacked"\] as const\)\s*: \(\[[^\]]*"openPreview"\] as const\)/);
