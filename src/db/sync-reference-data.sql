@@ -480,6 +480,23 @@ JOIN doc d ON d.name = pairs.doc_name
 JOIN rol r ON r.name = pairs.role_name
 ON CONFLICT DO NOTHING;
 
+-- „Deține cotă" (migration_091, Slice #37.59): the ownership roles hold a
+-- share. The SAME rule as migration_091's UPDATE, so a database built from
+-- this file agrees with one built from the migrations (verify-rebuild step 11).
+-- Until 2026-10-03 this file left every pair `false` (DB rebuild #175).
+UPDATE lookup_doc_type_person_role AS p
+   SET holds_share = true
+  FROM lookup_person_role AS r
+ WHERE r.id = p.person_role_id
+   AND (
+        r.name IN ('Vânzător', 'Cumpărător', 'Succesor universal', 'Adjudecatar',
+                   'Titular / Proprietar', 'Titular al imobilului', 'Titular de drept')
+     OR r.name LIKE 'Proprietar%'
+     OR r.name LIKE 'Coproprietar%'
+     OR r.name LIKE 'Moștenitor%'
+     OR r.name LIKE 'Moştenitor%'
+   );
+
 -- ── lookup_person_role.valid_for_property ─────────────────────────────────────
 -- Name-resolved. Roles valid for the Property ↔ Person association.
 --

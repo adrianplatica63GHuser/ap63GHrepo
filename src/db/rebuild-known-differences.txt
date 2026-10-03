@@ -154,13 +154,13 @@ FK CONSTRAINT public.property_property property_property_a_fk :: absent from ful
 FK CONSTRAINT public.property_property property_property_b_fk :: absent from full-schema
 FK CONSTRAINT public.property_property property_property_property_id_a_fkey :: absent from migrations
 FK CONSTRAINT public.property_property property_property_property_id_b_fkey :: absent from migrations
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Coproprietar / Co-moștenitor]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Moștenitor]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Notar public]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Reprezentant legal / Mandatar]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Solicitant]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Succesor universal]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Titular al succesiunii / Defunct]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Coproprietar / Co-moștenitor | true]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Moștenitor | true]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Notar public | false]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Reprezentant legal / Mandatar | false]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Solicitant | false]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Succesor universal | true]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Titular al succesiunii / Defunct | false]
 REFDATA lookup_document_type :: + [Act de Donație | 3 | ACT_DONATIE | <null> | MANUAL]
 REFDATA lookup_document_type :: + [Autorizație | 22 | AUTORIZATIE | <null> | MANUAL]
 REFDATA lookup_document_type :: + [Aviz de Instituție | 5 | AVIZ_INSTITUTIE | <null> | MANUAL]

@@ -275,7 +275,7 @@ const SIMPLE_TABLES: Array<[string, string]> = [
  */
 async function syncDocTypePersonRoles(): Promise<void> {
   const { rows, rowCount } = await localPool.query(`
-    SELECT ldt.name AS doc_name, lpr.name AS role_name
+    SELECT ldt.name AS doc_name, lpr.name AS role_name, ldtpr.holds_share
     FROM   lookup_doc_type_person_role ldtpr
     JOIN   lookup_document_type ldt ON ldt.id = ldtpr.document_type_id
     JOIN   lookup_person_role   lpr ON lpr.id = ldtpr.person_role_id
@@ -283,14 +283,17 @@ async function syncDocTypePersonRoles(): Promise<void> {
   `);
   for (const row of rows) {
     await supaPool.query(
+      // ⚠️ `holds_share` travels with the pair (migration_091, Slice #37.59).
+      // Left out, every pair landed on Supabase as `false` — the column's
+      // default — so a sync would have unticked every „Deține cotă" there.
       `INSERT INTO lookup_doc_type_person_role
-         (id, document_type_id, person_role_id, created_at)
-       SELECT gen_random_uuid(), d.id, r.id, now()
+         (id, document_type_id, person_role_id, created_at, holds_share)
+       SELECT gen_random_uuid(), d.id, r.id, now(), $3
        FROM   lookup_document_type d,
               lookup_person_role   r
        WHERE  d.name = $1
          AND  r.name = $2`,
-      [row.doc_name, row.role_name],
+      [row.doc_name, row.role_name, row.holds_share === true],
     );
   }
   ok(`lookup_doc_type_person_role  (${rowCount ?? 0} rows)`);
