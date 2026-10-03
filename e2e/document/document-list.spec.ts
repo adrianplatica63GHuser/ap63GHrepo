@@ -25,11 +25,13 @@ const TITLE = `${MARK} Act de test`;
 const SUBJECT = "Subiect de test TC-DOC-08";
 const SHOTS = "playwright-report/document-list";
 
-async function photograph(page: Page, name: string, target: Locator): Promise<void> {
+/** `target` alone, or — with none — the window, so an open list that hangs below the table is in the picture whole. */
+async function photograph(page: Page, name: string, target?: Locator): Promise<void> {
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
-    await target.screenshot({ path: `${SHOTS}/${name}-${width}.png` });
+    const path = `${SHOTS}/${name}-${width}.png`;
+    await (target ? target.screenshot({ path }) : page.screenshot({ path }));
   }
   await page.setViewportSize({ width: 1366, height: 900 });
 }
@@ -90,7 +92,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       });
       await expect(row).toContainText(SUBJECT);
       await expect(row).toContainText(today);
-      await photograph(page, "documents-chooser", main);
+      await photograph(page, "documents-chooser");
 
       // Step 5 — outside the list; resting the mouse on „Câmp specific:" opens the
       // bubble, moving it away closes it. (A press on the ⓘ after a rest would close

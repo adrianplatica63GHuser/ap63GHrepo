@@ -775,7 +775,8 @@ export function DocumentListView({
           onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
         />
 
-        {/* Slice #37.62: the shared chooser, as on the other three lists. */}
+        {/* Slice #37.62: the shared chooser, as on the other three lists — its list
+            hanging from the right, the button being near the toolbar's end. */}
         <FieldChooser
           label={t("chooseFields")}
           hint={t("chooseFieldsHint", { max: MAX_OPT })}
@@ -783,6 +784,7 @@ export function DocumentListView({
           visible={chooser.visible}
           max={MAX_OPT}
           onToggle={chooser.toggle}
+          align="right"
         />
 
         <div className="ml-auto flex items-center gap-2">

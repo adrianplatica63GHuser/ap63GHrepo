@@ -76,6 +76,7 @@ export function FieldChooser({
   visible,
   max,
   onToggle,
+  align = "left",
 }: {
   label: string;
   hint: string;
@@ -83,6 +84,13 @@ export function FieldChooser({
   visible: readonly string[];
   max: number;
   onToggle: (key: string) => void;
+  /**
+   * Which edge of the button the list hangs from (Slice #37.62). „left" where the
+   * button stands near the start of the toolbar; „right" where it stands near the
+   * end — the Documents list's — so the list opens inside the page rather than
+   * past its right edge.
+   */
+  align?: "left" | "right";
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -109,7 +117,7 @@ export function FieldChooser({
         aria-expanded={open}
       />
       {open && (
-        <div className="absolute left-0 z-20 mt-1 w-56 rounded-md border border-wire bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        <div className={`absolute ${align === "right" ? "right-0" : "left-0"} z-20 mt-1 w-56 rounded-md border border-wire bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900`}>
           <p className="mb-2 text-xs text-fade dark:text-zinc-500">{hint}</p>
           {fields.map((f) => {
             const checked = visible.includes(f.key);
