@@ -23,7 +23,7 @@
  *     are found by position on the page. Not changed here.
  *   - „Disponibile" is narrowed with its „Caută…" to this spec's person, so the
  *     tick lands on the right row on a database with many people.
- *   - Slice #37.17: a Natural Person has no tab row; the person's „META INFO"
+ *   - Slice #37.17: a Natural Person has no tab row; the person's „META INFO" (since #37.63 „Conexiuni")
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
  *     run clicks the tile's checkbox.
  */
@@ -132,11 +132,10 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await expect(row.locator("td").nth(1)).toHaveText("1");
       const code = /STMP-[A-Z]{3}/.exec((await row.textContent()) ?? "")?.[0] ?? "STMP-";
 
-      // Step 9 — the person's „META INFO": „Ștampile", „+ Aplică ștampilă", the chip with „×".
+      // Step 9 — the person's „Conexiuni" (META INFO until #37.63): „Ștampile", „+ Aplică ștampilă", the chip with „×".
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "META INFO");
-      await expect(page.getByText("Conexiuni", { exact: true })).toBeVisible({ timeout: 15_000 });
+      await showTile(page, "Conexiuni");
       await expect(page.getByRole("button", { name: "+ Aplică ștampilă" })).toBeVisible();
       await expect(page.getByText(code, { exact: true })).toBeVisible();
       await expect(page.getByText(DESCRIPTION, { exact: true })).toBeVisible();
@@ -153,7 +152,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await confirm.getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.getByText(`${before} ștampile`, { exact: true })).toBeVisible({ timeout: 15_000 });
       await page.goto(`/natural-persons/${personId}`);
-      await showTile(page, "META INFO");
+      await showTile(page, "Conexiuni");
       await expect(page.getByText("Nicio ștampilă aplicată")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeStampLeftovers(page.request, MARK);

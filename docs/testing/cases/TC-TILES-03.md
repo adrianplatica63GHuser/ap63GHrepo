@@ -61,7 +61,7 @@ What the run measured:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-03 Teren de test" | Under the name, no tab row. Instead, nine checkboxes: „Date cadastrale", „Puncte de contur", „Adresă", „Hartă", „Street View", „Asocieri", „Persoane", „Acte", „META INFO". The first four are ticked. Then come „Toate" and „Implicit". Below: the panels Date cadastrale, Puncte de contur (four rows), Adresă and the map with the square on it. There is no Street View panel |
+| 1 | Opens „TC-TILES-03 Teren de test" | Under the name, no tab row. Instead, ten checkboxes: „Date cadastrale", „Puncte de contur", „Adresă", „Hartă", „Street View", „Asocieri", „Persoane", „Acte", „Clasificare subiectivă", „Conexiuni". The first four are ticked. Then come „Toate" and „Implicit". Below: the panels Date cadastrale, Puncte de contur (four rows), Adresă and the map with the square on it. There is no Street View panel |
 | 2 | Unticks „Hartă" | The map goes; the other panels stay where they are |
 | 3 | Clears the network log, reloads the page | „Hartă" is still unticked and no map is drawn. The log holds no map request: no `/maps/vt` tiles, and no `AuthenticationService`, `QuotaService` or `ViewportInfoService` call. The Maps script the whole app loads may appear; it is not a map |
 | 4 | In „Puncte de contur" (Stereo 70), „Editează" on the first corner, „Nord (m)" 100 m less, the row's „Salvează"; then ticks „Hartă" | The map comes back, and its first corner is where the table now says: the square has one corner pulled out. It is the edited polygon, not the saved one. „Modificări nesalvate" is at the top |
@@ -73,3 +73,8 @@ What the run measured:
 | — | At the end: „Șterge" → „Da" | Back on the property list; the property is gone |
 
 **2026-10-02 — Slice #37.56.** The map, the corners and Street View now stand in one column at the right of the row, the map on top (TC-TILES-07). Step 5 says „under „Puncte de contur"" where it said „beside the map"; not driven again.
+
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
+subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 1 reads ten boxes. The notes
+above keep the old name, as they were run.

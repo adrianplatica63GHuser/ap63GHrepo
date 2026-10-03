@@ -133,10 +133,10 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       await expect(forward).toBeEnabled();
       await photograph(page, "version-strip", () => moveAway(page));
 
-      // Picture (#37.44), not a step: META INFO with the group picker open (ChevronUp).
+      // Picture (#37.44), not a step: „Conexiuni" (META INFO until #37.63) with the group picker open (ChevronUp).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: `${PROPERTY} v1` })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "META INFO");
+      await showTile(page, "Conexiuni");
       const addToGroup = page.getByRole("button", { name: "+ Adaugă în grup" });
       await expect(addToGroup).toBeVisible({ timeout: 30_000 });
       expect(await iconOf(addToGroup)).toBe("lucide-plus");

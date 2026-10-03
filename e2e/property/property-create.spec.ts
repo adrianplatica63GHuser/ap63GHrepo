@@ -164,11 +164,11 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await photograph(page, "property-saved", [1366, 1920, 2560], 1200);
       const tiles = page.getByRole("group", { name: TILE_GROUP });
       await tiles.getByRole("button", { name: "Toate", exact: true }).click();
-      await expect(page.getByRole("region", { name: "META INFO", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("region", { name: "Conexiuni", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
       await photograph(page, "property-all-tiles", [1366, 1920, 2560], 1200);
       await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
-      await expect(page.getByRole("region", { name: "META INFO", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("region", { name: "Conexiuni", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți proprietatea?" });
       await expect(confirm.getByRole("button", { name: "Nu", exact: true })).toBeVisible();

@@ -41,7 +41,9 @@ async function readDistinct(page: Page): Promise<number> {
 async function openMetaInfo(page: Page, propertyId: string): Promise<void> {
   await page.goto(`/properties/${propertyId}`);
   await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-  await showTile(page, "META INFO");
+  // Slice #37.63: META INFO is two tiles; the case reads both.
+  await showTile(page, "Clasificare subiectivă");
+  await showTile(page, "Conexiuni");
   await expect(page.getByPlaceholder("Introduceți o etichetă…")).toBeVisible({ timeout: 30_000 });
 }
 
@@ -70,8 +72,8 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
         await expect(page.getByRole("columnheader", { name: col })).toBeVisible();
       }
 
-      // Step 2 — the property's „META INFO": „Clasificare subiectivă", then
-      // „Conexiuni" → „Etichete / Cuvinte cheie", empty.
+      // Step 2 — the property's „Clasificare subiectivă" and „Conexiuni" (META INFO's
+      // two halves since #37.63) → „Etichete / Cuvinte cheie", empty.
       await openMetaInfo(page, propertyId);
       await expect(page.getByText("Clasificare subiectivă").first()).toBeVisible();
       for (const field of ["Importanță", "Relevanță", "Proveniență"]) {

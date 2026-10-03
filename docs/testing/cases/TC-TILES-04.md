@@ -64,7 +64,7 @@ What the run measured:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „META INFO". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale and Instrument's panels, Financiar and Taxe și onorarii, with the page panel at the right of the row (#37.56). The type's form puts „Antet instrument” on Cadastru |
+| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „Clasificare subiectivă", „Conexiuni". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale and Instrument's panels, Financiar and Taxe și onorarii, with the page panel at the right of the row (#37.56). The type's form puts „Antet instrument” on Cadastru |
 | 2 | Ticks „Cadastru și carte funciară", „Stare juridică" and „Formalități" | Their panels appear, in that order, after Preț și taxe's. All four notebook tabs' panels and the page image are on one screen |
 | 3 | Reloads the page | The same arrangement |
 | 4 | Types `TC` into a field of „Formalități", unticks „Formalități" | The panels go; „Modificări nesalvate" stays at the top |
@@ -80,3 +80,8 @@ What the run measured:
 **2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. Not driven again; the case stays `driven`.
 
 **2026-10-02 — Slice #37.56.** The page image now stands in a column at the right of the row, top-aligned (TC-TILES-07); step 1 says so. Not driven again.
+
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
+subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 1 reads the two. The notes
+above keep the old name, as they were run.

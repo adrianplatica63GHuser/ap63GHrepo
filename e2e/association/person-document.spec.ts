@@ -49,10 +49,10 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
     const documentId = await createSaleContract(page.request, DOC_TITLE);
 
     try {
-      // Step 1 — the person's screen: the eight tile checkboxes (Slice #37.17).
+      // Step 1 — the person's screen: the tile checkboxes (Slice #37.17; nine since #37.63).
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Persoane", "Proprietăți", "Acte", "META INFO"]) {
+      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Persoane", "Proprietăți", "Acte", "Clasificare subiectivă", "Conexiuni"]) {
         await expect(tileBox(page, tile)).toBeVisible();
       }
 

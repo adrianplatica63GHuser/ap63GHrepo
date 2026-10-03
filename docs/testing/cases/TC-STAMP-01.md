@@ -51,7 +51,7 @@ delete `Ion TC-STAMP-01` if it is still there.
 | 6 | With „Persoană fizică", ticks `Ion TC-STAMP-01` in „Disponibile" and presses „Aplică ștampila (1)" | It moves to „Ștampilate", and „Modificări nesalvate" appears — **nothing is written yet** |
 | 7 | Presses „Salvează ștampilele" | „Modificări nesalvate" goes away |
 | 8 | Returns to „Ștampile" | The row's „Elemente" reads **1** |
-| 9 | Opens `Ion TC-STAMP-01`, tab **„META INFO"** | Under „Conexiuni", „Ștampile": „+ Aplică ștampilă" and a chip `STMP-… TC-STAMP-01 Ștampilă de test` with „×" |
+| 9 | Opens `Ion TC-STAMP-01`, tile **„Conexiuni"** | „Ștampile": „+ Aplică ștampilă" and a chip `STMP-… TC-STAMP-01 Ștampilă de test` with „×" |
 
 Step 9 is the other end: the record knows it carries the stamp, not only the stamp knows.
 
@@ -76,3 +76,8 @@ Corrections to what was written from the code: „+ Creare ștampilă" is an inl
 list, and saving stays there; „Aplică" is the way into the stamp's own screen (there is no
 separate „open"); and applying is **staged** until „Salvează ștampilele", like a group's members
 (TC-GRP-01).
+
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
+subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 9 ticks „Conexiuni", and the spec follows. The notes
+above keep the old name, as they were run.
