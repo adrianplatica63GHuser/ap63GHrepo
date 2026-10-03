@@ -19,6 +19,9 @@
  *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one line a row with no heading row, the share boxes behind the row's
  *     orange „Cotă" (step 7 as corrected on 2026-10-03).
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -51,12 +54,12 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Proprietăți", beside „Asocieri": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Proprietăți");
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible();
+      await showTile(page, "Corelate");
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible();
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociază": „Asociere proprietate", one filter, no „Rol".
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await page.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-property$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(DOC_TITLE).first()).toBeVisible();
@@ -79,7 +82,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=properties$`), { timeout: 30_000 });
 
       // Step 7 — one column, „Denumire" (no „Cod"), one row with „Vizualizare".
-      const propertiesTile = page.getByRole("region", { name: "Proprietăți", exact: true });
+      const propertiesTile = page.getByRole("region", { name: "Corelate", exact: true });
       const linkedRow = lineRow(propertiesTile, PROPERTY);
       await expect(linkedRow).toHaveCount(1, { timeout: 15_000 });
       await expect(linkedRow.locator("[data-row-content]")).toHaveText(PROPERTY);
@@ -104,7 +107,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await page.goto(`/documents/${documentId}?tab=properties`);
       await page.getByRole("radio", { name: PROPERTY }).check({ timeout: 30_000 });
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "property", propertyId);

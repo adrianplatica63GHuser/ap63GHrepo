@@ -52,6 +52,9 @@
  *     `expectUnitGrid` checks the row at 1366, 1920 and 2560 px with „Toate".
  *     The new document, the Plan parcelar and the Certificat de Moștenitor are
  *     photographed too.
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import fs from "fs";
@@ -226,9 +229,9 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // (document-detail-tiles.tsx), so its text is „Stare procesare: Neprocesat"
       // and an exact match on „Neprocesat" alone finds nothing (first run).
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
-      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(11, { timeout: 30_000 }); // #37.63: META INFO is two
+      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"
       for (const tile of ["Date generale", "Pagini", "Preț și taxe"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Cadastru și carte funciară", "Stare juridică", "Formalități", "Persoane", "Proprietăți", "Acte corelate", "Clasificare subiectivă", "Conexiuni"]) {
+      for (const tile of ["Cadastru și carte funciară", "Stare juridică", "Formalități", "Corelate", "Clasificare subiectivă", "Conexiuni"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(page.getByRole("tab")).toHaveCount(0);

@@ -28,12 +28,12 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
-| 2 | Presses the tab **„Proprietăți"** — it sits beside „Asocieri", not inside it | „Nicio proprietate asociată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere proprietate" at `/documents/[id]/associate-property`, the document's title under it, one filter „Căutare" (placeholder „Cod sau denumire…"), and a table Denumire listing **every** property. There is no „Rol" on this screen |
+| 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 3 | Presses „Asociază proprietate" | „Asociere proprietate" at `/documents/[id]/associate-property`, the document's title under it, one filter „Căutare" (placeholder „Cod sau denumire…"), and a table Denumire listing **every** property. There is no „Rol" on this screen |
 | 4 | Types `TC-PROP-01` into „Căutare" | The table narrows to one row, „Denumire" = `TC-PROP-01 Teren de test` |
 | 5 | Ticks that row | The row is selected, and the hint „Selectați cel puțin o proprietate" under the buttons goes away |
-| 6 | Presses „Asociază selecția" | Back on the document, on its „Proprietăți" tab |
-| 7 | Looks at „Proprietăți" | No column headings and no „Cod": one row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
+| 6 | Presses „Asociază selecția" | Back on the document, on its „Corelate" tile |
+| 7 | Looks at „Corelate" | No column headings and no „Cod": one row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
 | 8 | Presses „Vizualizare" on that row | The property's own screen, headed `TC-PROP-01 Teren de test`, opened **read-only** (`?readonly=true`) |
 | 9 | Presses the tab „Acte" on the property | A table Tip · Titlu with one row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
 
@@ -85,3 +85,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 2, 3, 6 and 7 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

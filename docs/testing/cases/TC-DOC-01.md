@@ -41,7 +41,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
 | 5 | Scrolls down and presses „Salvează" | **The screen returns to „Acte"**, not to the new document. At the top, a row badged „Nou!", with no system ID, „Tip" = „Contract de Vânzare", „Titlu" = `TC-DOC-01 Contract de test`. The count at the foot goes up by one |
-| 6 | Presses „Deschide" on that row | The document's own screen, headed `TC-DOC-01 Contract de test` with the chip „Neprocesat", and the tabs DETALII · ASOCIERI · PERSOANE · PROPRIETĂȚI · META INFO (since #37.63 two tiles, „Clasificare subiectivă" and „Conexiuni"). On „Detalii" there is a panel „Pagini" reading „Nicio pagină adăugată", with „Pagini extinse" and „+ Adaugă pagină". On a wide window „Pagini" sits to the right of the form; on a narrow one, below it |
+| 6 | Presses „Deschide" on that row | The document's own screen, headed `TC-DOC-01 Contract de test` with the chip „Neprocesat", and the tabs DETALII · ASOCIERI · PERSOANE · PROPRIETĂȚI · META INFO (since #37.63 two tiles, „Clasificare subiectivă" and „Conexiuni"; since #37.65 one tile, „Corelate", for ASOCIERI, PERSOANE and PROPRIETĂȚI). On „Detalii" there is a panel „Pagini" reading „Nicio pagină adăugată", with „Pagini extinse" and „+ Adaugă pagină". On a wide window „Pagini" sits to the right of the form; on a narrow one, below it |
 | 7 | Presses „+ Adaugă pagină" | **The application's own dialog** „Adaugă pagină" — not the operating system's — with „Număr pagină" (already `1`), „Denumire pagină", „Note pagină", a button „Încarcă", and „Anulează" / „Salvează". „Salvează" stays disabled until a file is in |
 | 8 | Puts `530.jpg` into the dialog's file input **without pressing „Încarcă"** — see the section below | „✓ 530.jpg" appears beside „Încarcă" |
 | 9 | Presses „Salvează" in the dialog | The dialog closes. „Pagini" shows the page as a thumbnail, and a row „530.jpg" with „Vizualizare", „Tipărire" and „Șterge" — the page takes its file name when „Denumire pagină" is left empty. **There is no „1 / 1" indicator**: the page counter only appears once a document has two pages or more |
@@ -168,3 +168,6 @@ while it came second. Step 1 reads both. The spec follows. Green in the runner's
 subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 6 names the two; its spec does not read that row. The notes
 above keep the old name, as they were run.
+
+**2026-10-03 — Slice #37.65 (step 6).** The Document's „Persoane", „Proprietăți" and „Acte corelate"
+are one tile, „Corelate": nine checkboxes on a CVC where there were eleven. The spec follows.

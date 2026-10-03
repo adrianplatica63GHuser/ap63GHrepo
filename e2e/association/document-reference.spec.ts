@@ -31,6 +31,9 @@
  *     and the relationship is a button before „Vizualizează" whose sentence
  *     shows on a press; „Înscrisuri citate" is one button that unfolds the panel
  *     (the case's steps 3, 7 and 8 as corrected on 2026-10-03).
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -93,8 +96,8 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 3 — open it, „Asocieri": empty, the two buttons, „Înscrisuri citate…".
       await top.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Acte corelate");
-      await expect(page.getByText("Niciun document asociat")).toBeVisible({ timeout: 30_000 });
+      await showTile(page, "Corelate");
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
       const cited = page.getByRole("button", { name: "Înscrisuri citate", exact: true });
       await expect(cited).toHaveAttribute("aria-expanded", "false");
@@ -105,7 +108,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByText("Înscrisuri citate în acest document")).toHaveCount(0);
 
       // Step 4 — „Asociază": „Asociază Document", „Căutare", Cod · Tip · Titlu, „Tip relație".
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await page.getByRole("button", { name: "Asociază act", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${certificateId}/associate-reference$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociază Document" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(CERTIFICATE).first()).toBeVisible();
@@ -129,7 +132,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
 
       // Step 7 — one line, „Etichetă scurtă (Tip)"; the relationship behind its button
       // reads FROM the certificate, and a click outside hides it.
-      const fromCertificate = lineRow(page.getByRole("region", { name: "Acte corelate", exact: true }), CONTRACT);
+      const fromCertificate = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), CONTRACT);
       await expect(fromCertificate).toHaveCount(1, { timeout: 15_000 });
       await expect(fromCertificate.locator("[data-row-content]")).toHaveText(`${CONTRACT} (Contract de Vânzare)`);
       await expectOneLine(fromCertificate);
@@ -143,7 +146,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 8 — the contract's „Acte corelate": the converse.
       await page.goto(`/documents/${contractId}`);
       await expect(page.getByRole("heading", { name: CONTRACT })).toBeVisible({ timeout: 30_000 });
-      const related = await showTile(page, "Acte corelate");
+      const related = await showTile(page, "Corelate");
       const fromContract = lineRow(related, CERTIFICATE);
       await expect(fromContract).toHaveCount(1, { timeout: 30_000 });
       await expect(fromContract.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);
@@ -156,7 +159,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // ── At the end — radio, „Dezasociază"; then the certificate „Șterge" / „Da" ─
       await page.getByRole("radio", { name: CERTIFICATE }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Niciun document asociat")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
       await page.goto(`/documents/${certificateId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       // `.last()`: the form's „Șterge" is at the bottom; „Pagini" rows carry their own, and since

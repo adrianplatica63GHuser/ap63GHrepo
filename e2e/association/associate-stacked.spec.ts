@@ -17,6 +17,9 @@
  *     the results table masked.
  *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one line a row with no heading row (step 5 as corrected on 2026-10-03).
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -84,11 +87,11 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
     const padId = await createDocumentOfType(page.request, "PLAN_AMPLASAMENT_DELIMITARE", PAD);
     const propertyId = await createProperty(page.request, { nickname: PROPERTY });
     try {
-      // Step 1 — „Persoane" → „Asociază": „Asociere persoană", the three tiles one under another.
+      // Step 1 — „Corelate" → „Asociază persoană": „Asociere persoană", the three tiles one under another.
       await page.goto(`/documents/${padId}`);
       await expect(page.getByRole("heading", { name: PAD })).toBeVisible({ timeout: 30_000 });
-      const persons = await showTile(page, "Persoane");
-      await persons.getByRole("button", { name: "Asociază", exact: true }).click();
+      const persons = await showTile(page, "Corelate");
+      await persons.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană" })).toBeVisible({ timeout: 30_000 });
       for (const name of ["Căutare", "Rezultate", "Asociere"]) {
@@ -104,8 +107,8 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       // Step 3 — „Anulează"; „Proprietăți" → „Asociază": „Asociere proprietate", the same three.
       await page.getByRole("button", { name: "Anulează", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}`), { timeout: 30_000 });
-      const properties = await showTile(page, "Proprietăți");
-      await properties.getByRole("button", { name: "Asociază", exact: true }).click();
+      const properties = await showTile(page, "Corelate");
+      await properties.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}/associate-property$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("region", { name: "Rezultate", exact: true }).locator("tbody tr").first()).toBeVisible({ timeout: 30_000 });
@@ -121,23 +124,23 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       await expectStacked(page);
       await photograph(page, "associate-property");
 
-      // Step 5 — „Asociază selecția": back on the PAD; „Proprietăți" 3 units (#37.64), the name on one line.
+      // Step 5 — „Asociază selecția": back on the PAD; „Corelate" 4 units (#37.65), the name on one line.
       await page.getByRole("checkbox", { name: PROPERTY }).check();
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}\\?tab=properties$`), { timeout: 30_000 });
-      const tile = page.getByRole("region", { name: "Proprietăți", exact: true });
+      const tile = page.getByRole("region", { name: "Corelate", exact: true });
       const linked = tile.locator("li[data-one-line-row] [data-row-content]").filter({ hasText: PROPERTY });
       await expect(linked).toHaveCount(1, { timeout: 30_000 });
       await expectOneLine(linked);
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
       const width = await tile.evaluate((el) => el.getBoundingClientRect().width);
-      expect(Math.round(width)).toBe(Math.round((3 * 9.25 + 2) * rem));
+      expect(Math.round(width)).toBe(Math.round((4 * 9.25 + 3) * rem));
       await photograph(page, "pad-properties", tile);
 
       // At the end — „Dezasociază" in „Proprietăți" (the PAD's „Persoane" has one too).
       await tile.getByRole("radio", { name: PROPERTY }).check();
       await tile.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(tile.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
+      await expect(tile.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", padId);
       await removeRecord(page.request, "property", propertyId);

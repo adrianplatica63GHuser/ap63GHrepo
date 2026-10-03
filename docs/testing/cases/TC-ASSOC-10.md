@@ -44,7 +44,7 @@ Both are deleted at the end.
 | 4 | Types `TC-ASSOC-10` into „Căutare" and ticks the one row | The row is selected, and „Rol" **narrows to the roles a Contract de Vânzare offers**: „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 5 | Chooses **„Cumpărător"** and presses „Asociază selecția" | Back on the company's „Acte" (`?tab=document`): Tip · Titlu · Rol — „Contract de Vânzare", `TC-ASSOC-10 Contract de test`, „Cumpărător", and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The document, read-only (`/documents/[id]?readonly=true`) |
-| 7 | Presses its tab **„Persoane"**, then the row's „Cotă" | One row, on one line, `TC-ASSOC-10 Firmă de test SRL (Cumpărător)`; behind „Cotă" an empty „Cotă-parte" reading „— fără cotă —", an empty „Suprafață echivalentă (mp)" reading „— fără suprafață —", and „Mod de deținere" „— nespecificat —" |
+| 7 | Ticks its tile **„Corelate"**, then the company's row's „Cotă" | One row, on one line, `TC-ASSOC-10 Firmă de test SRL (Cumpărător)`; behind „Cotă" an empty „Cotă-parte" reading „— fără cotă —", an empty „Suprafață echivalentă (mp)" reading „— fără suprafață —", and „Mod de deținere" „— nespecificat —" |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen at `/judicial-persons/[id]?readonly=true` |
 
 Step 7 is the other end; step 8 checks that the document knows what kind of person it holds.
@@ -82,3 +82,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 7 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

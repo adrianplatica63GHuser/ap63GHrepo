@@ -18,6 +18,9 @@
  *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one line a row with no heading row, the share boxes behind the row's
  *     orange „Cotă" (step 7 as corrected on 2026-10-03).
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -99,7 +102,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
 
       // Step 7 — its „Persoane": one row — the company, „Cumpărător", the two empty fields
       // reading „fără cotă" and „fără suprafață", „Mod de deținere" „nespecificat".
-      const personsTile = await showTile(page, "Persoane");
+      const personsTile = await showTile(page, "Corelate");
       const back = lineRow(personsTile, COMPANY);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       await expect(back.locator("[data-row-content]")).toHaveText(`${COMPANY} (Cumpărător)`);

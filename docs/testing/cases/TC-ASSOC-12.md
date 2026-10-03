@@ -46,7 +46,7 @@ All three are deleted at the end.
 | 4 | Chooses `Vasile TC-ASSOC-12 Defunct` | The hint becomes „Selectați calitatea (Defunct sau Moștenitor)" |
 | 5 | Presses „Defunct", then „Adaugă parte" | Back on the certificate's „Detalii". „Părți" is a table Nume · Calitate with one row — `Vasile TC-ASSOC-12 Defunct`, „Defunct", „Elimină" |
 | 6 | Presses „+ Adaugă parte" again, chooses `Maria TC-ASSOC-12 Mostenitor`, presses „Moștenitor", then „Adaugă parte" | Two rows, the newest first: `Maria TC-ASSOC-12 Mostenitor` „Moștenitor", `Vasile TC-ASSOC-12 Defunct` „Defunct" |
-| 7 | Presses the certificate's tab **„Persoane"** | Both people, one line each and no headings: „Vasile … (Defunct)" and „Maria … (Moștenitor)" — the quality, where a role would be (FU-224, fixed in #37.07) |
+| 7 | Ticks the certificate's tile **„Corelate"** | Both people, one line each and no headings: „Vasile … (Defunct)" and „Maria … (Moștenitor)" — the quality, where a role would be (FU-224, fixed in #37.07) |
 | 8 | Opens `Maria TC-ASSOC-12 Mostenitor`, tab **„Acte"** | Tip · Titlu · Rol: „Certificat de Moștenitor", `TC-ASSOC-12 Certificat de test`, „Moștenitor". On `Vasile TC-ASSOC-12 Defunct` the same, with „Defunct" |
 
 Steps 5 and 6 are the assertion that the qualities are recorded; steps 7 and 8 are the other
@@ -85,3 +85,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 7 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

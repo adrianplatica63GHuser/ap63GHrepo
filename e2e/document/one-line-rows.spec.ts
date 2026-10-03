@@ -16,6 +16,9 @@
  *     three tiles, the share panel open, the relationship bubble, and
  *     „Înscrisuri citate" folded and unfolded, at 1366 and 1920 px, into
  *     `playwright-report/one-line-rows/`.
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -83,7 +86,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
 
       // Step 1 — the PAD's „Persoane": no headings, one line, no „Cotă", no box.
       await open(page, padId, PAD);
-      let persons = await showTile(page, "Persoane");
+      let persons = await showTile(page, "Corelate");
       let row = lineRow(persons, PERSON);
       await expect(row).toHaveCount(1, { timeout: 30_000 });
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Proiectant / Consultant)`);
@@ -93,13 +96,11 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       await expect(row.locator('input[type="text"], select')).toHaveCount(0);
       await expect(row.getByRole("link", { name: "Vizualizare", exact: true })).toBeVisible();
       await expect(row.getByRole("button", { name: "Previzualizare", exact: true })).toBeVisible();
-      await showTile(page, "Proprietăți");
-      await showTile(page, "Acte corelate");
       await photograph(page, "pad-tiles", persons);
 
       // Step 2 — the CVC's „Persoane": one line, a solid orange „Cotă".
       await open(page, cvcId, CVC);
-      persons = await showTile(page, "Persoane");
+      persons = await showTile(page, "Corelate");
       row = lineRow(persons, PERSON);
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Vânzător)`, { timeout: 30_000 });
       await expectOneLine(row);
@@ -135,7 +136,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       const mp = panel.getByRole("textbox", { name: /^Suprafață echivalentă \(mp\)/ });
       await mp.click();
       await mp.fill("120");
-      await persons.getByRole("heading", { name: "Persoane" }).click();
+      await persons.getByRole("heading", { name: "Corelate" }).click();
       await expect(panel).toHaveCount(0);
       await expect.poll(async () => {
         const res = await page.request.get(`/api/documents/${cvcId}/persons`);
@@ -144,7 +145,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       }, { timeout: 15_000 }).toEqual([[50, 120]]);
 
       // Step 7 — „Acte corelate": no headings, one line, the sentence not on the row.
-      const related = await showTile(page, "Acte corelate");
+      const related = await showTile(page, "Corelate");
       const doc = lineRow(related, PAD);
       await expect(doc.locator("[data-row-content]")).toHaveText(`${PAD} (Plan de Amplasament și Delimitare)`, { timeout: 30_000 });
       await expectOneLine(doc);
@@ -164,14 +165,17 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       await expect(page.getByText(sentence)).toHaveCount(0);
       await doc.getByRole("button", { name: "Relația", exact: true }).click();
       await expect(page.getByText(sentence)).toBeVisible();
-      await related.getByRole("heading", { name: "Acte corelate" }).click();
+      await related.getByRole("heading", { name: "Corelate" }).click();
       await expect(page.getByText(sentence)).toHaveCount(0);
 
-      // Step 10 — „Asociază", „Dezasociază", „Înscrisuri citate" in one row; the panel unfolds.
+      // Step 10 — „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one
+      // row, „Înscrisuri citate" after them (#37.65); the panel unfolds.
       const cited = related.getByRole("button", { name: "Înscrisuri citate", exact: true });
-      const associate = related.getByRole("button", { name: "Asociază", exact: true });
-      const [a, c] = [await associate.boundingBox(), await cited.boundingBox()];
-      expect(Math.abs((a?.y ?? 0) - (c?.y ?? 1))).toBeLessThan(2);
+      const tops = await Promise.all(
+        ["Asociază persoană", "Asociază proprietate", "Asociază act", "Dezasociază"].map(async (name) =>
+          Math.round((await related.getByRole("button", { name, exact: true }).boundingBox())?.y ?? -1)),
+      );
+      expect(new Set(tops).size, `one row: ${tops.join(", ")}`).toBe(1);
       await expect(cited).toHaveAttribute("aria-expanded", "false");
       await photograph(page, "cvc-cited-folded", related);
       await cited.click();

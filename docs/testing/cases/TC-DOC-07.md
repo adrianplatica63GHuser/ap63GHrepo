@@ -33,13 +33,13 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-07 PAD`, tile „Persoane" | One row, `Ion TC-DOC-07 (Proiectant / Consultant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
-| 2 | Opens `TC-DOC-07 CVC`, tile „Persoane", and presses the row's „Cotă" | One row, `Ion TC-DOC-07 (Vânzător)`; behind „Cotă" the three boxes, empty |
+| 1 | Opens `TC-DOC-07 PAD`, tile „Corelate" | One row, `Ion TC-DOC-07 (Proiectant / Consultant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
+| 2 | Opens `TC-DOC-07 CVC`, tile „Corelate", and presses the row's „Cotă" | One row, `Ion TC-DOC-07 (Vânzător)`; behind „Cotă" the three boxes, empty |
 | 3 | Opens „Date de referință" → „Tipuri de Document" → „Roluri pe Document" | A table Tip document · Rol persoană · Deține cotă; the PAD's „Proiectant / Consultant" unticked, Contract de Vânzare's „Vânzător" ticked |
 | 4 | Ticks „Deține cotă" on the PAD's „Proiectant / Consultant" | The tick stays after the screen is opened again |
-| 5 | Opens `TC-DOC-07 PAD`, tile „Persoane", and presses the row's „Cotă" | The row now has „Cotă", and behind it the three boxes, empty |
+| 5 | Opens `TC-DOC-07 PAD`, tile „Corelate", and presses the row's „Cotă" | The row now has „Cotă", and behind it the three boxes, empty |
 | 6 | Types `50` into „Cotă-parte" and presses Enter | The value stays: `50` |
-| 7 | Unticks „Deține cotă" on the PAD's „Proiectant / Consultant" again, and opens `TC-DOC-07 PAD`, tile „Persoane", „Cotă" | The three boxes are still there, greyed and not editable, `50` in „Cotă-parte", and under them „Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit." — nothing stored is hidden |
+| 7 | Unticks „Deține cotă" on the PAD's „Proiectant / Consultant" again, and opens `TC-DOC-07 PAD`, tile „Corelate", „Cotă" | The three boxes are still there, greyed and not editable, `50` in „Cotă-parte", and under them „Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit." — nothing stored is hidden |
 
 ## At the end — leaving things as they were found
 
@@ -84,3 +84,9 @@ file above unchanged.
 **2026-10-03 — Slice #37.64 (steps 1, 2, 5 and 7 rewritten).** The share boxes moved behind the
 row's orange „Cotă", which a role that holds no share does not get; the steps say so. The spec
 follows them, and the runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-03 — Slice #37.65 (steps 1, 2, 5 and 7 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

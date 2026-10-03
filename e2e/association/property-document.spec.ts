@@ -19,6 +19,9 @@
  *     „Proprietăți" are tiles, ticked with `showTile` (e2e/helpers/tiles.ts).
  *   - Slice #37.64: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one line a row with no heading row (step 8 as corrected on 2026-10-03).
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -95,7 +98,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 8 — the other end: „Proprietăți", one column „Denumire", one row.
-      const props = await showTile(page, "Proprietăți");
+      const props = await showTile(page, "Corelate");
       const back = lineRow(props, PROPERTY);
       await expect(back).toHaveCount(1, { timeout: 30_000 });
       await expect(back.getByRole("radio", { name: PROPERTY })).toHaveCount(1);
@@ -105,7 +108,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       // ── At the end — on the document's „Proprietăți": radio, „Dezasociază" ─
       await page.getByRole("radio", { name: PROPERTY }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "property", propertyId);

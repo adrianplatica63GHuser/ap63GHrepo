@@ -34,7 +34,7 @@ Nothing. There is no role on this link, from either end.
 | 5 | Ticks that row | The hint „Selectați cel puțin un act" goes away |
 | 6 | Presses „Asociază selecția" | Back on the property's „Acte" tab (`?tab=document`): a table **Tip · Titlu** with one row — „Contract de Vânzare", `TC-DOC-01 Contract de test` — and „Vizualizare" |
 | 7 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
-| 8 | Presses the tab „Proprietăți" on the document | One row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
+| 8 | Ticks the tile „Corelate" on the document | One row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
 
 Step 8 is the other end of the link.
 
@@ -66,3 +66,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 8 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

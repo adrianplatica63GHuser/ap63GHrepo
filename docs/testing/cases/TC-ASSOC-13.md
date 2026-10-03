@@ -36,11 +36,11 @@ cut („…").
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-ASSOC-13 PAD`, ticks „Persoane" and presses its „Asociază" | „Asociere persoană" at `/documents/[id]/associate-person`: the tiles „Căutare", „Rezultate" and „Asociere", one under another, „Căutare" first |
+| 1 | Opens `TC-ASSOC-13 PAD`, ticks „Corelate" and presses its „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`: the tiles „Căutare", „Rezultate" and „Asociere", one under another, „Căutare" first |
 | 2 | Looks at „Asociere" | „Asociază selecția" and „Anulează" inside the window, without scrolling |
-| 3 | Presses „Anulează"; on the PAD ticks „Proprietăți" and presses its „Asociază" | „Asociere proprietate" at `/documents/[id]/associate-property`: the same three tiles, one under another; „Asociere"'s buttons inside the window |
+| 3 | Presses „Anulează"; on the PAD presses „Corelate"'s „Asociază proprietate" | „Asociere proprietate" at `/documents/[id]/associate-property`: the same three tiles, one under another; „Asociere"'s buttons inside the window |
 | 4 | Types `TC-ASSOC-13` into „Căutare" (placeholder „Cod sau denumire…") | One row: `TC-ASSOC-13 Parcelă de test cu un nume lung`, on one line |
-| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Proprietăți" is 3 units wide (4 before #37.64) and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
+| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Corelate" is 4 units wide (#37.65; „Proprietăți" was 3 in #37.64, 4 before) and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
 
 ## At the end — leaving things as they were found
 
@@ -86,3 +86,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 1, 3 and 5 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

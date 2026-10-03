@@ -37,7 +37,7 @@ role a notary writes for the buyer on a Contract de Vânzare.
 | 6 | Chooses „Cumpărător" in „Rol" | The role is selected |
 | 7 | Presses „Asociază selecția" | Back on the person, on its „Acte" tab (`?tab=document`): a table Tip · Titlu · Rol with one row — „Contract de Vânzare", `TC-DOC-01 Contract de test`, „Cumpărător" — and „Vizualizare" |
 | 8 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
-| 9 | Presses the tab „Persoane" on the document | One row, on one line: `Ion TC-PERS-01 (Cumpărător)`, with an orange „Cotă" |
+| 9 | Ticks the tile „Corelate" on the document | One row, on one line: `Ion TC-PERS-01 (Cumpărător)`, with an orange „Cotă" |
 
 Step 9 is the other end of the link, and is the reason this case is not just step 7.
 
@@ -86,3 +86,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 9 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

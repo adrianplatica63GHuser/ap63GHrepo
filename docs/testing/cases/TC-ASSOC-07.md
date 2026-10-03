@@ -47,12 +47,12 @@ A document, created by hand: „Tip document" **„Certificat de Moștenitor"**,
 |---|---|---|
 | 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Date generale", „Date de emitere" — with the note that this type has no form of its own |
 | 2 | Types `TC-ASSOC-07 Titlu anterior` into „Etichetă scurtă" and presses „Salvează" | Back on „Acte", a new row badged „Nou!", „Certificat de Moștenitor", `TC-ASSOC-07 Titlu anterior` |
-| 3 | Opens it, and ticks the tile **„Acte corelate"** („Asocieri" before #37.31) | „Niciun document asociat", with „Asociază" and „Dezasociază", and beside them „Înscrisuri citate", which unfolds the panel „Înscrisuri citate în acest document" and folds it again |
-| 4 | Presses „Asociază" | „Asociază Document" at `/documents/[id]/associate-reference`, the document's title under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu, and a select **„Tip relație"** with „— fără relație —", „Înlocuiește", „Modifică", „Prelungește", „Anulează", „Consolidat cu", „Versiune anterioară a", „Anexă la", „Corecție a", „Titlu anterior al", „Înscris doveditor pentru", „Act adițional la", „Antecontract al" |
+| 3 | Opens it, and ticks the tile **„Corelate"** („Acte corelate" before #37.65, „Asocieri" before #37.31) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază", and beside them „Înscrisuri citate", which unfolds the panel „Înscrisuri citate în acest document" and folds it again |
+| 4 | Presses „Asociază act" | „Asociază Document" at `/documents/[id]/associate-reference`, the document's title under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu, and a select **„Tip relație"** with „— fără relație —", „Înlocuiește", „Modifică", „Prelungește", „Anulează", „Consolidat cu", „Versiune anterioară a", „Anexă la", „Corecție a", „Titlu anterior al", „Înscris doveditor pentru", „Act adițional la", „Antecontract al" |
 | 5 | Types `TC-DOC-01` into „Căutare", ticks the one row, chooses **„Titlu anterior al"** | Both selected |
-| 6 | Presses „Asociază selecția" | Back on the certificate's „Acte corelate" tile |
-| 7 | Reads the row on the certificate's „Acte corelate", and presses its „Relația" | One row, on one line: `TC-DOC-01 Contract de test (Contract de Vânzare)`; „Relația" shows **acest document „Titlu anterior al” TC-DOC-01 Contract de test** — the certificate is the earlier title of the contract, which is what was chosen — and a click outside hides it |
-| 8 | Opens `TC-DOC-01 Contract de test`, tile „Acte corelate", and presses the row's „Relația" | One row: `TC-ASSOC-07 Titlu anterior (Certificat de Moștenitor)`; „Relația" shows **TC-ASSOC-07 Titlu anterior „Titlu anterior al” acest document** — the converse, read from the other end — and Esc hides it |
+| 6 | Presses „Asociază selecția" | Back on the certificate's „Corelate" tile |
+| 7 | Reads the document's row on the certificate's „Corelate", and presses its „Relația" | One row, on one line: `TC-DOC-01 Contract de test (Contract de Vânzare)`; „Relația" shows **acest document „Titlu anterior al” TC-DOC-01 Contract de test** — the certificate is the earlier title of the contract, which is what was chosen — and a click outside hides it |
+| 8 | Opens `TC-DOC-01 Contract de test`, tile „Corelate", and presses the certificate's row's „Relația" | One row: `TC-ASSOC-07 Titlu anterior (Certificat de Moștenitor)`; „Relația" shows **TC-ASSOC-07 Titlu anterior „Titlu anterior al” acest document** — the converse, read from the other end — and Esc hides it |
 
 Steps 7 and 8 are the whole assertion. Each must read the sense in which the role was
 chosen; a link that reads the same from both ends, or the other way round from both, is red.
@@ -136,3 +136,9 @@ orange „Cotă", a related document's relationship behind „Relația", and „
 document" behind one button. The steps now say what the screen shows; the spec follows them, and
 the runner's whole `full` run on the slice's commit is the run that keeps the row `automated`
 (TC-DOC-09 drove the new shape by hand, twice).
+
+**2026-10-03 — Slice #37.65 (steps 3, 4, 6, 7 and 8 rewritten).** A Document's „Persoane", „Proprietăți" and
+„Acte corelate" became one tile, „Corelate": the natural persons, the judicial persons, the properties
+and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
+proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
+and the runner's whole `full` run on the slice's commit keeps the row `automated`.

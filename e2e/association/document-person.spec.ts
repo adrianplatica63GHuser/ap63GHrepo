@@ -28,6 +28,9 @@
  *     (`expectStableColumns`) has no table to measure here; the row is measured
  *     one line tall instead. The three share boxes are behind the row's
  *     orange „Cotă" (the case's steps 8–12, as corrected on 2026-10-03).
+ *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
+ *     are one tile, „Corelate", with „Asociază persoană", „Asociază
+ *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -62,12 +65,12 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Persoane", beside „Asocieri": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Persoane");
-      await expect(page.getByText("Nicio persoană asociată acestui act")).toBeVisible();
+      await showTile(page, "Corelate");
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible();
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociază": „Asociere persoană", the title, the filters, „Rol".
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await page.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(DOC_TITLE).first()).toBeVisible();
@@ -115,7 +118,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       // Step 8 — one line: „Ion TC-E2E-ASSOC-01 (Cumpărător)", no heading row, no „Cod",
       // and the orange „Cotă" — the three share values are behind it (#37.64).
       await expect(page.getByRole("radio", { name: ROW })).toBeVisible({ timeout: 15_000 });
-      const tile = page.getByRole("region", { name: "Persoane", exact: true });
+      const tile = page.getByRole("region", { name: "Corelate", exact: true });
       const row = lineRow(tile, PERSON);
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Cumpărător)`);
       await expectOneLine(row);
@@ -152,7 +155,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await mod.selectOption({ label: "indiviziune" });
       await expect(mod.locator("option:checked")).toHaveText("indiviziune");
       await page.reload();
-      panel = await openShare(lineRow(page.getByRole("region", { name: "Persoane", exact: true }), PERSON));
+      panel = await openShare(lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PERSON));
       await expect(mod.locator("option:checked")).toHaveText("indiviziune", { timeout: 30_000 });
       await expect(cota).toHaveValue("50");
 
@@ -177,7 +180,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       // ── At the end — select the row's radio, then „Dezasociază" ──────────
       await page.getByRole("radio", { name: ROW }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio persoană asociată acestui act")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "person", personId);
