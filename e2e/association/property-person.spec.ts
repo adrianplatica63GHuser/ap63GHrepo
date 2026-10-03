@@ -44,6 +44,7 @@ import {
   E2E_MARKER,
   createNaturalPerson,
   createProperty,
+  propertyRoleOptions,
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
@@ -54,7 +55,6 @@ const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
 const PERSON = `Ion ${MARK}`;
 const ROLE = "Proprietar / Titular de drept real";
-const ROLES = ["fără rol", "Coproprietari / Coindivizari", "Cumpărător", ROLE, "Titular de drept"];
 
 test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzută din ambele capete", () => {
   test("legătura persoană–proprietate făcută din fiecare capăt, citită din celălalt", async ({ page }) => {
@@ -63,6 +63,9 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
     await removeLeftovers(page.request, MARK);
     const propertyId = await createProperty(page.request, { nickname: PROPERTY });
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
+    // Exactly the roles ticked „valid for property", as Date de referință holds them today.
+    const ROLES = await propertyRoleOptions(page.request);
+    expect(ROLES).toContain(ROLE);
 
     try {
       // ── From the property's end ──────────────────────────────────────────

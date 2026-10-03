@@ -31,6 +31,7 @@ import {
   E2E_MARKER,
   createCompany,
   createSaleContract,
+  documentRoleOptions,
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
@@ -76,14 +77,10 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       const candidate = page.getByRole("row").filter({ hasText: DOC_TITLE });
       await expect(candidate).toHaveCount(1, { timeout: 15_000 });
       await page.getByRole("checkbox", { name: DOC_TITLE }).check();
-      await expect(role.locator("option")).toHaveText([
-        "fără rol",
-        "Cumpărător",
-        "Moștenitor / Succesor",
-        "Notar",
-        "Reprezentant legal / Mandatar",
-        "Vânzător",
-      ]);
+      // Exactly the contract type's roles, as Date de referință holds them today.
+      const offered = await documentRoleOptions(page.request, documentId);
+      expect(offered).toContain("Cumpărător");
+      await expect(role.locator("option")).toHaveText(offered);
 
       // Step 5 — „Cumpărător", „Asociază selecția": the company's „Corelate" (`?tab=document`), one
       // line — „Etichetă scurtă (Tip)" — the role behind „Relația" (#37.67).

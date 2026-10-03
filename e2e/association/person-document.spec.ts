@@ -40,6 +40,7 @@ import {
   E2E_MARKER,
   createNaturalPerson,
   createSaleContract,
+  documentRoleOptions,
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
@@ -94,7 +95,9 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByText("Selectați cel puțin un act")).toBeVisible();
       await page.getByRole("checkbox", { name: DOC_TITLE }).check();
       await expect(page.getByText("Selectați cel puțin un act")).toHaveCount(0);
-      const offered = ["fără rol", "Cumpărător", "Moștenitor / Succesor", "Notar", "Reprezentant legal / Mandatar", "Vânzător"];
+      // Exactly the contract type's roles, as Date de referință holds them today.
+      const offered = await documentRoleOptions(page.request, documentId);
+      expect(offered).toContain("Cumpărător");
       await expect(role.locator("option")).toHaveText(offered);
 
       // Step 6 — „Cumpărător".

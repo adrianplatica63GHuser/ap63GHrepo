@@ -29,6 +29,7 @@ import {
   E2E_MARKER,
   createCompany,
   createProperty,
+  propertyRoleOptions,
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
@@ -67,13 +68,10 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       const role = page.getByRole("combobox", { name: "Rol", exact: true });
-      await expect(role.locator("option")).toHaveText([
-        "fără rol",
-        "Coproprietari / Coindivizari",
-        "Cumpărător",
-        ROLE,
-        "Titular de drept",
-      ]);
+      // Exactly the roles ticked „valid for property", as Date de referință holds them today.
+      const offered = await propertyRoleOptions(page.request);
+      expect(offered).toContain(ROLE);
+      await expect(role.locator("option")).toHaveText(offered);
 
       // Step 4 — the one row, ticked.
       await search.fill(MARK);

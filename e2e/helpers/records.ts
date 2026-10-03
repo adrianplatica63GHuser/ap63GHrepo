@@ -83,6 +83,32 @@ export async function documentTypeIdFor(request: APIRequestContext, key: string)
   return hit.id;
 }
 
+/**
+ * What a „Rol" dropdown on Proprietate ↔ Persoană offers: „fără rol", then
+ * every role Reference Data ticks „valid for property", in the list's own
+ * order (by name — the same endpoint the screen reads).
+ *
+ * Read from the database rather than spelled out in the spec, because the
+ * list is Adrian's to edit under Date de referință: a spec that hard-coded the
+ * four roles of September went red the day a seed added eight more, while the
+ * screen was doing exactly the right thing. Exactness is kept — the dropdown
+ * must equal the whitelist, no more and no less.
+ */
+export async function propertyRoleOptions(request: APIRequestContext): Promise<string[]> {
+  const items = await getItems<{ name: string; validForProperty: boolean }>(request, "/api/admin/value-lists/person-roles");
+  return ["fără rol", ...items.filter((r) => r.validForProperty).map((r) => r.name)];
+}
+
+/**
+ * What „Rol" offers once one document is ticked: „fără rol", then the roles
+ * its type holds under Date de referință, from the endpoint the screen reads.
+ * See `propertyRoleOptions` for why this is read and not spelled out.
+ */
+export async function documentRoleOptions(request: APIRequestContext, documentId: string): Promise<string[]> {
+  const items = await getItems<{ name: string }>(request, `/api/documents/${encodeURIComponent(documentId)}/valid-person-roles`);
+  return ["fără rol", ...items.map((r) => r.name)];
+}
+
 export async function createProperty(
   request: APIRequestContext,
   // `corners` since Slice #37.38: TC-MAP-01's property is a drawn rectangle.
