@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -75,3 +75,8 @@ document, the tile on the left; the bubble `această proprietate „Inclus în�
 „Dezasociază" the groups natural · property · document; „Anulează" on the three screens back to
 `?tab=persons`, `?tab=related`, `?tab=document`. The five records deleted (`DELETE` 204 on each),
 Căutare globală for `TC-PROP-07` empty.
+
+**2026-10-03 — `automated` (Slice #37.66).** `e2e/property/related-tile.spec.ts`, green in the
+runner's whole `full` run `20261003T182441Z-10963` on `e80d6fa` (65 passed). Its first `full`
+(`20261003T180836Z-93`) passed every step and then timed out in `finally` on an unbounded
+„networkidle": the map and Street View keep a property's network busy. The wait is bounded now.
