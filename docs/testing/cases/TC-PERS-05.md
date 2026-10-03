@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -85,3 +85,7 @@ document, the four buttons at one top, „Relația" only on the contract's row; 
 `?tab=related`, `?tab=properties`, `?tab=document`. On the company natural · document, `Rol în act:
 „Cumpărător”` gone on Esc, after „Dezasociază" only Ion, and the three screens and back. The five
 records deleted (`DELETE` 204 on each), Căutare globală for `TC-PERS-05` empty.
+
+**2026-10-03 — `automated` (Slice #37.67).** `e2e/person/related-tile.spec.ts`, green first time in the
+runner's e2e run of the slice's specs `20261003T191258Z-18437` and in its whole `full` run
+`20261003T191537Z-11484` on `d7aafae` (66 passed).

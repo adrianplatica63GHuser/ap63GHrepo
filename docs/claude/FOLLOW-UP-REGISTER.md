@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-03, Slice #37.65 — 291 entries. Rows are status, columns are impact.
+As of 2026-10-03, Slice #37.67 — 292 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 60 | 61 | 16 | 154 |
+| open | 17 | 60 | 62 | 16 | 155 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 55 | 26 | 3 | 121 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 58 | 121 | 91 | 21 | 291 |
+| **total** | 58 | 121 | 92 | 21 | 292 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -375,3 +375,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-289 | 2026-10-03 #37.59 (FU-283's check) | defect | Reference data | Supabase has a document type the local database does not — „Anunț vânzare teren (postare Facebook)" (ANUNT_VANZARE_TEREN_POSTARE_FACEBOOK), a 3-field form, 0 documents — and it is offered in the cloud's „Tip document". Nobody edits types on the cloud app (Adrian, 2026-10-03), so it is a leftover of an older sync of a type since removed locally. Adrian, 2026-10-03: it should be retired — a bug, to fix in a later session, not this one. | Adrian's comparison of the two databases, 2026-10-03 (FORMS line; the forms load's last line: „used by 0 document(s)") | data | XS | open | Retire the type on Supabase (Date de referință, or one DELETE by key after re-checking that no document uses it), then re-run the two-database comparison: the FORMS lines should match. | 2026-10-03 |
 | FU-290 | 2026-10-03 #37.64 (TC-DOC-09); 2026-10-03 #37.65 (TC-DOC-10) | tooling | Tests & e2e | Three limits of the desktop app's browser pane met while driving a case by hand: its `hover` raises no pointer event the page hears, so no tooltip or HintBubble opens there (not „Vizualizare"'s either), and with a viewport emulated by `resize_window` (1366 × 900 in a 342-px pane) every click lands at the wrong place — measured at (4442, 1802) for a button at (1098, 450); and (#37.65) its first click after a navigation can deliver no event at all — nothing reaches the document — while the same click after a screenshot lands. A case driven in the pane therefore cannot check a hover step, and cannot be driven at a stated width. | docs/testing/cases/TC-DOC-09.md, „Notes from the runs" | dev | XS | open | Write it into sandbox-and-toolchain.md → „The built-in browser pane": drive cases at the pane's own width, read a hover bubble as the control's description, leave the hover and the widths to the spec, and take a screenshot before a click that must land. | 2026-10-03 |
 | FU-291 | 2026-10-03 #37.65 (runner jest 20261003T171618Z-7527) | debt | UI shell | `IconButton` wraps a DISABLED button in a `<span>` (`cursor-not-allowed`) and renders an enabled one bare, so the `<button>` element is unmounted and a new one mounted every time `disabled` flips. A test holding the element, or a caller holding a `ref` to it, then points at a detached node; it cost #37.65 a red jest run („Dezasociază" captured before a row was selected). | src/lib/ui/icon-button.tsx — `if (!tooltip) { return wrapClass ? <span …>{control}</span> : <>{control}</>; }` | dev | XS | open | Always render the wrapper span (an empty class when enabled), so the element tree does not change with `disabled`. | 2026-10-03 |
+| FU-292 | 2026-10-03 #37.67 | test gap | Tests & e2e | TC-TILES-01, -02 and -03 — the three record screens' tile boxes, `driven`, no spec — still read the boxes of #37.17–#37.19 („Asocieri", nine or ten boxes): since then the tiles were renamed (#37.27, #37.29, #37.30), META INFO split in two (#37.63) and the lists merged into „Corelate" (#37.66, #37.67). Each now carries a dated note naming the current boxes; the steps are not rewritten, since no one has driven them. | docs/testing/cases/TC-TILES-01.md, TC-TILES-02.md, TC-TILES-03.md — „Notes from the runs", 2026-10-03 | dev | S | open | Drive the three again on the current screens, rewrite their steps from the run, and translate them into specs (they are the catalogue's natural next `automated` cases). | 2026-10-03 |
