@@ -25,11 +25,14 @@
  *     „Șterge" → „Da" calls (the link is ON DELETE CASCADE).
  *   - Slice #37.19: a property has no tab row; its „Proprietăți corelate" (steps 2 and 6; „Asocieri" until #37.30)
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts).
+ *   - Slice #37.66: the Property's „Proprietăți corelate", Persoane and Acte are one tile,
+ *     „Corelate", one line a row; the relationship is behind „Relația" (the case's steps as
+ *     corrected on 2026-10-03).
  */
 
 import { test, expect, type Page } from "@playwright/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-08`;
 const WHOLE = `${MARK} Teren întreg`;
@@ -58,15 +61,16 @@ const POOL = 3;
 
 /** Steps 2–6 for one pair: link from the part's screen, read from both ends. */
 async function linkAndRead(page: Page, part: { id: string; name: string }, whole: { id: string; name: string }) {
-  // Step 2 — the part's „Proprietăți corelate" (#37.30, „Asocieri" before): empty, „Asociază", „Dezasociază".
+  // Step 2 — the part's „Corelate" (#37.66; „Proprietăți corelate" since #37.30, „Asocieri" before):
+  // empty, „Asociază proprietate", „Dezasociază".
   await page.goto(`/properties/${part.id}`);
   await expect(page.getByRole("heading", { name: part.name })).toBeVisible({ timeout: 30_000 });
-  await showTile(page, "Proprietăți corelate");
-  await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 30_000 });
+  await showTile(page, "Corelate");
+  await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
   // Step 3 — „Asociere proprietate corelată": „Căutare", Denumire, „Tip relație" (#37.57: no „Cod").
-  await page.getByRole("button", { name: "Asociază", exact: true }).click();
+  await page.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/properties/${part.id}/associate-reference$`), { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Asociere proprietate corelată" })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(part.name).first()).toBeVisible();
@@ -88,19 +92,27 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   // Step 5 — „Asociază selecția": the part reads „această proprietate „Inclus în” <whole>".
   await page.getByRole("button", { name: "Asociază selecția" }).click();
   await expect(page).toHaveURL(new RegExp(`/properties/${part.id}\\?tab=related$`), { timeout: 30_000 });
-  const fromPart = page.getByRole("row").filter({ has: page.getByRole("radio", { name: WHOLE }) });
+  const fromPart = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), WHOLE);
   await expect(fromPart).toHaveCount(1, { timeout: 15_000 });
-  // #37.57: the other property by its name, not its system ID.
-  await expect(fromPart).toContainText(`această proprietate „${ROLE}” ${whole.name}`);
+  await expect(fromPart.getByRole("radio", { name: WHOLE })).toHaveCount(1);
+  await expectOneLine(fromPart);
+  // #37.66: the relationship is behind „Relația"; #37.57: the other property by its name, not its system ID.
+  await expect(fromPart).not.toContainText(ROLE);
+  await fromPart.getByRole("button", { name: "Relația", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: ROLE })).toHaveText(`această proprietate „${ROLE}” ${whole.name}`);
+  await page.keyboard.press("Escape");
   await expect(fromPart.getByRole("link", { name: "Vizualizare" })).toBeVisible();
 
   // Step 6 — the whole's „Proprietăți corelate": the converse, with the part's name.
   await page.goto(`/properties/${whole.id}`);
   await expect(page.getByRole("heading", { name: WHOLE })).toBeVisible({ timeout: 30_000 });
-  await showTile(page, "Proprietăți corelate");
-  const fromWhole = page.getByRole("row").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
+  const related = await showTile(page, "Corelate");
+  const fromWhole = related.locator("li[data-one-line-row]").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
   await expect(fromWhole).toHaveCount(1, { timeout: 30_000 });
-  await expect(fromWhole).toContainText(`${part.name} „${ROLE}” această proprietate`);
+  await fromWhole.getByRole("button", { name: "Relația", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: ROLE })).toHaveText(`${part.name} „${ROLE}” această proprietate`);
+  await related.getByRole("heading", { name: "Corelate" }).click();
+  await expect(page.getByRole("status").filter({ hasText: ROLE })).toHaveCount(0);
 }
 
 test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele capete", () => {
@@ -150,7 +162,7 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
         expect((await dissociated).ok()).toBeTruthy();
         await expect(page.getByRole("radio", { name: part.name, exact: true })).toHaveCount(0, { timeout: 15_000 });
       }
-      await expect(page.getByText("Nicio proprietate corelată")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       for (const id of created) await removeRecord(page.request, "property", id);
     }

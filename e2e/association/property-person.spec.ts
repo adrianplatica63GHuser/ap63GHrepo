@@ -31,6 +31,10 @@
  *       · AN UNTICKED MAP COSTS NOTHING — the Google requests of a reload with
  *         „Hartă" ticked and of one with it unticked, counted and printed to
  *         the log (host and path only: a query string carries the API key).
+ *   - Slice #37.66: the Property's „Proprietăți corelate", Persoane and Acte are one tile,
+ *     „Corelate", one line a row, with „Asociază persoană" (the case's steps as corrected
+ *     on 2026-10-03). #37.16's column check (`expectStableColumns`) has no table to measure
+ *     on the property any more; the row is measured one line tall instead.
  */
 
 import { test, expect, type Request } from "@playwright/test";
@@ -41,8 +45,8 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { expectStableColumns, photograph } from "../helpers/field-widths";
-import { TILE_GROUP, hideTile, showTile, tileBox } from "../helpers/tiles";
+import { photograph } from "../helpers/field-widths";
+import { TILE_GROUP, expectOneLine, hideTile, lineRow, showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -63,18 +67,18 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // Step 1 — the property's screen: its tile row (no tabs — #37.19).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(10, { timeout: 30_000 }); // #37.63: META INFO is two
+      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(8, { timeout: 30_000 }); // #37.63: META INFO is two; #37.66: the three lists are „Corelate"
       for (const tile of ["Date cadastrale", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Street View", "Proprietăți corelate", "Persoane", "Acte", "Clasificare subiectivă", "Conexiuni"]) await expect(tileBox(page, tile)).not.toBeChecked();
+      for (const tile of ["Street View", "Corelate", "Clasificare subiectivă", "Conexiuni"]) await expect(tileBox(page, tile)).not.toBeChecked();
       await expect(page.getByRole("tab")).toHaveCount(0);
 
-      // Step 2 — „Persoane": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Persoane");
-      await expect(page.getByText("Nicio persoană asociată acestei proprietăți")).toBeVisible({ timeout: 30_000 });
+      // Step 2 — „Corelate" (#37.66): empty, „Asociază persoană", „Dezasociază".
+      await showTile(page, "Corelate");
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere persoană": „Nume", „Cod", Cod · Nume · Tip, „Rol" with the four.
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await page.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(PROPERTY).first()).toBeVisible();
@@ -98,19 +102,17 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await page.getByRole("checkbox", { name: PERSON }).check();
       await role.selectOption({ label: ROLE });
 
-      // Step 6 — back on „Persoane" (`?tab=persons`): Nume · Rol, one row, no cotă-parte.
+      // Step 6 — back on „Corelate" (`?tab=persons`): one line, „Nume (Rol)", no „Cotă".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?tab=persons$`), { timeout: 30_000 });
-      const onProperty = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PERSON }) });
+      const related = page.getByRole("region", { name: "Corelate", exact: true });
+      const onProperty = lineRow(related, PERSON);
       await expect(onProperty).toHaveCount(1, { timeout: 15_000 });
-      await expect(onProperty).toContainText(ROLE);
+      await expect(onProperty.locator("[data-row-content]")).toHaveText(`${PERSON} (${ROLE})`);
+      await expectOneLine(onProperty);
       await expect(onProperty.getByRole("link", { name: "Vizualizare" })).toBeVisible();
-      const personsTable = page.getByRole("table").filter({ has: onProperty });
-      for (const col of ["Nume", "Rol"]) {
-        await expect(personsTable.getByText(col, { exact: true })).toBeVisible();
-      }
-      await expect(personsTable.getByText("Cotă-parte", { exact: true })).toHaveCount(0);
-      await expectStableColumns(page);
+      await expect(related.getByRole("columnheader")).toHaveCount(0);
+      await expect(onProperty.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
 
       // Step 7 — the other end: the person's „Proprietăți", Denumire · Rol.
       await page.goto(`/natural-persons/${personId}`);
@@ -158,8 +160,8 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await again.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Persoane");
-      const readBack = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PERSON }) });
+      const readBackTile = await showTile(page, "Corelate");
+      const readBack = lineRow(readBackTile, PERSON);
       await expect(readBack).toHaveCount(1, { timeout: 30_000 });
       await expect(readBack).toContainText(ROLE);
 
@@ -205,12 +207,12 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       console.log(`[TC-ASSOC-04 #37.19] unticked, every Google request: ${JSON.stringify([...new Set(withoutMap)])}`);
       expect(tally(withMap).mapLoads, "the control: a ticked map makes map requests").toBeGreaterThan(0);
       expect(withoutMap.filter((u) => MAP_LOAD.test(u)), "an unticked map makes no map request").toEqual([]);
-      await showTile(page, "Persoane");
+      await showTile(page, "Corelate");
 
-      // ── At the end — on the property's „Persoane": radio, „Dezasociază" ──
+      // ── At the end — on the property's „Corelate": radio, „Dezasociază" ──
       await page.getByRole("radio", { name: PERSON }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio persoană asociată acestei proprietăți")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(tileBox(page, "Hartă")).toBeChecked();
     } finally {

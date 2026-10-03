@@ -22,6 +22,8 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #37.66: the Property's „Proprietăți corelate", Persoane and Acte are one tile,
+ *     „Corelate", one line a row (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -51,13 +53,13 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
 
-      // Step 2 — „Acte": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Acte");
-      await expect(page.getByText("Niciun act asociat acestei proprietăți")).toBeVisible({ timeout: 30_000 });
+      // Step 2 — „Corelate" (#37.66): empty, „Asociază act", „Dezasociază".
+      await showTile(page, "Corelate");
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere act": „Căutare", Cod · Tip · Titlu, and no „Rol".
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await page.getByRole("button", { name: "Asociază act", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}/associate-document$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere act" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(PROPERTY).first()).toBeVisible();
@@ -80,17 +82,15 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await page.getByRole("checkbox", { name: DOC_TITLE }).check();
       await expect(page.getByText("Selectați cel puțin un act")).toHaveCount(0);
 
-      // Step 6 — back on „Acte" (`?tab=document`): Tip · Titlu, one row, „Vizualizare".
+      // Step 6 — back on „Corelate" (`?tab=document`): one line, „Etichetă scurtă (Tip)", „Vizualizare".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?tab=document$`), { timeout: 30_000 });
-      const linked = page.getByRole("row").filter({ has: page.getByRole("radio", { name: DOC_TITLE }) });
+      const related = page.getByRole("region", { name: "Corelate", exact: true });
+      const linked = lineRow(related, DOC_TITLE);
       await expect(linked).toHaveCount(1, { timeout: 15_000 });
-      await expect(linked).toContainText("Contract de Vânzare");
-      const table = page.getByRole("table").filter({ has: linked });
-      for (const col of ["Tip", "Titlu"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
-      await expect(table.getByText("Cod", { exact: true })).toHaveCount(0);
+      await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
+      await expect(related.getByRole("columnheader")).toHaveCount(0);
+      await expect(related.getByText("Cod", { exact: true })).toHaveCount(0);
 
       // Step 7 — „Vizualizare": the document, READ-ONLY.
       await linked.getByRole("link", { name: "Vizualizare" }).click();

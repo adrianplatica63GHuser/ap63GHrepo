@@ -16,6 +16,8 @@
  *     picker open (ChevronUp), and the version strip on „v 0", at 1366 and
  *     1920 px, into `playwright-report/icon-associations/`. The sidebar's
  *     „Recente" list is painted over.
+ *   - Slice #37.66: the Property's „Persoane" is part of „Corelate", whose button reads
+ *     „Asociază persoană" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -61,14 +63,14 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       made.push({ kind: "property", id: propertyId });
       made.push({ kind: "person", id: await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" }) });
 
-      // Step 1 — „Persoane": empty; „Asociază" (link + word), „Dezasociază" (broken link + word, inactive).
+      // Step 1 — „Corelate" (#37.66): empty; „Asociază persoană" (link + words), „Dezasociază" (broken link + word, inactive).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Persoane");
-      await expect(page.getByText("Nicio persoană asociată acestei proprietăți")).toBeVisible({ timeout: 30_000 });
-      const associate = page.getByRole("button", { name: "Asociază", exact: true });
+      await showTile(page, "Corelate");
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
+      const associate = page.getByRole("button", { name: "Asociază persoană", exact: true });
       const dissociate = page.getByRole("button", { name: "Dezasociază", exact: true });
-      await expect(associate).toHaveText("Asociază");
+      await expect(associate).toHaveText("Asociază persoană");
       expect(await iconOf(associate)).toBe("lucide-link");
       await expect(dissociate).toHaveText("Dezasociază");
       expect(await iconOf(dissociate)).toBe("lucide-unlink");
@@ -94,7 +96,7 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       // Step 4 — back on the property: one row, with the role.
       await associateSelected.click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?tab=persons$`), { timeout: 30_000 });
-      const row = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PERSON }) });
+      const row = page.locator("li[data-one-line-row]").filter({ has: page.getByRole("radio", { name: PERSON }) });
       await expect(row).toHaveCount(1, { timeout: 15_000 });
       await expect(row).toContainText(ROLE);
       await photograph(page, "property-persons", async () => {
@@ -107,7 +109,7 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       // Step 5 — the row's radio, „Dezasociază": empty again, no question.
       await page.getByRole("radio", { name: PERSON }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio persoană asociată acestei proprietăți")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
       await expect(page.getByRole("dialog")).toHaveCount(0);
 
       // Step 6 — „Poreclă" changed, the floppy disk: the „2 versiuni" chip, step-back icon first.

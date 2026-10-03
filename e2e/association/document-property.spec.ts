@@ -22,6 +22,8 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #37.66: the Property's „Proprietăți corelate", Persoane and Acte are one tile,
+ *     „Corelate", one line a row (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -95,13 +97,9 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
 
       // Step 9 — the other end: „Acte" lists „Contract de Vânzare", the title.
-      await showTile(page, "Acte");
-      const back = page.getByRole("row").filter({ has: page.getByRole("radio", { name: DOC_TITLE }) });
+      const back = lineRow(await showTile(page, "Corelate"), DOC_TITLE);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
-      await expect(back).toContainText("Contract de Vânzare");
-      const docs = page.getByRole("table").filter({ has: page.getByRole("radio", { name: DOC_TITLE }) });
-      await expect(docs.getByText("Tip", { exact: true })).toBeVisible();
-      await expect(docs.getByText("Titlu", { exact: true })).toBeVisible();
+      await expect(back.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
 
       // ── At the end — back on the document: radio, then „Dezasociază" ─────
       await page.goto(`/documents/${documentId}?tab=properties`);

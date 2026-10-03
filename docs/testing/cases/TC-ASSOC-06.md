@@ -36,7 +36,7 @@ person it is. The list the company is offered is the same four roles a natural p
 | 4 | Types `TC-PROP-01` into „Căutare" and ticks the one row | The row is selected |
 | 5 | Chooses „Proprietar / Titular de drept real" in „Rol" | The role is selected |
 | 6 | Presses „Asociază selecția" | Back on the company's „Proprietăți" (`?tab=properties`): Denumire · Rol, `TC-PROP-01 Teren de test`, „Proprietar / Titular de drept real", „Vizualizare" |
-| 7 | Opens `TC-PROP-01 Teren de test` and presses its tab „Persoane" | Nume · Rol, one row: `TC-PERS-02 Firmă de test SRL`, „Proprietar / Titular de drept real" |
+| 7 | Opens `TC-PROP-01 Teren de test` and ticks its tile „Corelate" | One line: `TC-PERS-02 Firmă de test SRL (Proprietar / Titular de drept real)` |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen at `/judicial-persons/[id]?readonly=true`, with „Înapoi la listă" and „Modifică" at the bottom |
 
 Step 7 is the other end; step 8 checks that the property knows what kind of person it holds.
@@ -63,3 +63,9 @@ radio and „Dezasociază". Only this section was written; the spec is
 written from the code needed correcting.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-03 — Slice #37.66 (steps 7 rewritten).** The Property's „Proprietăți corelate",
+„Persoane" and „Acte" became one tile, „Corelate" — the Document's (#37.65): one line a row, the
+relationship behind „Relația", one „Dezasociază", and „Asociază persoană", „Asociază proprietate"
+and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows, and the
+runner's whole `full` run on the slice's commit keeps the row `automated`.

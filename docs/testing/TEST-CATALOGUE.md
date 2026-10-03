@@ -73,6 +73,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
 | [TC-PROP-05](cases/TC-PROP-05.md) | A doua proprietate pentru aceeași parcelă este refuzată | property | negative | — | `driven` | 2026-09-27 | — |
 | [TC-PROP-06](cases/TC-PROP-06.md) | Lista proprietăților: fără filtre de importanță și relevanță, fără „Cod", „Câmpuri afișate" fără importanță, relevanță și proveniență | property | happy | — | `automated` | 2026-10-02 | `e2e/property/property-list.spec.ts` |
+| [TC-PROP-07](cases/TC-PROP-07.md) | „Corelate" pe o proprietate: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, relația după „Relația" | property | happy | — | `confirmed` | 2026-10-03 | `e2e/property/related-tile.spec.ts` |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-02 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-02 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |

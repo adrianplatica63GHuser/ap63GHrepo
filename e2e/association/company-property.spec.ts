@@ -18,6 +18,8 @@
  *     tab row; the company's „Proprietăți" (step 2) and the property's
  *     „Persoane" (step 7) are tiles, ticked with `showTile`
  *     (e2e/helpers/tiles.ts).
+ *   - Slice #37.66: the Property's „Proprietăți corelate", Persoane and Acte are one tile,
+ *     „Corelate", one line a row (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -28,7 +30,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-06`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -94,8 +96,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       // Step 7 — the other end: the property's „Persoane", Nume · Rol, the company.
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Persoane");
-      const onProperty = page.getByRole("row").filter({ has: page.getByRole("radio", { name: COMPANY }) });
+      const onProperty = lineRow(await showTile(page, "Corelate"), COMPANY);
       await expect(onProperty).toHaveCount(1, { timeout: 30_000 });
       await expect(onProperty).toContainText(ROLE);
 

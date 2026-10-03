@@ -33,11 +33,11 @@ tooltip is the element with role `tooltip`.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the property and ticks „Persoane" in „Părți afișate" | „Nicio persoană asociată acestei proprietăți"; „Asociază" — a link icon and the word — and „Dezasociază" — a broken link and the word, inactive |
-| 2 | Presses „Asociază" | „Asociere persoană" (`/properties/<id>/associate-person`), its „Anulează" an X |
+| 1 | Opens the property and ticks „Corelate" in „Părți afișate" | „Nimic corelat încă."; „Asociază persoană" — a link icon and the words — and „Dezasociază" — a broken link and the word, inactive |
+| 2 | Presses „Asociază persoană" | „Asociere persoană" (`/properties/<id>/associate-person`), its „Anulează" an X |
 | 3 | Types `TC-ICON-03` in „Nume…", ticks `Ion TC-ICON-03`, picks „Rol": „Proprietar / Titular de drept real" | „Asociază selecția" — a link icon and the words — active |
 | 4 | Presses „Asociază selecția" | Back on the property (`?tab=persons`): one row, `Ion TC-ICON-03`, „Proprietar / Titular de drept real" |
-| 5 | Picks the row's radio, presses „Dezasociază" | „Nicio persoană asociată acestei proprietăți" — no question asked |
+| 5 | Picks the row's radio, presses „Dezasociază" | „Nimic corelat încă." — no question asked |
 | 6 | Changes „Poreclă" to `TC-ICON-03 Teren v1`, presses the floppy disk („Salvează") | It stays; the strip shows a chip „2 versiuni" with the step-back icon before the words |
 | 7 | Moves the mouse over the chip | A tooltip of two lines: `2 versiuni` and `Versiunea anterioară` |
 | 8 | Presses the chip | „v 0"; the step-back arrow („Versiunea anterioară") inactive, the step-forward arrow („Versiunea următoare") active |
@@ -71,3 +71,9 @@ unchanged.
 Playwright's real mouse and takes #37.44's pictures. Green on its first runner run,
 `20261001T180511Z-30826` (with the versioning and corner-edit specs, whose step-back locator
 moved to roles).
+
+**2026-10-03 — Slice #37.66 (steps 1, 2 and 5 rewritten).** The Property's „Proprietăți corelate",
+„Persoane" and „Acte" became one tile, „Corelate" — the Document's (#37.65): one line a row, the
+relationship behind „Relația", one „Dezasociază", and „Asociază persoană", „Asociază proprietate"
+and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows, and the
+runner's whole `full` run on the slice's commit keeps the row `automated`.
