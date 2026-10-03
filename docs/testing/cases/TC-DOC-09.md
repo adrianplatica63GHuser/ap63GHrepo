@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -99,3 +99,6 @@ the file above unchanged.
 - The three records deleted (204 ×3).
   Nothing in the file changed, so the case is confirmed, and `e2e/document/one-line-rows.spec.ts`
   translates it.
+
+**2026-10-03 — `automated` (Slice #37.64).** `e2e/document/one-line-rows.spec.ts`, green in the
+runner's whole `full` run `20261003T163253Z-20215` on `835e118` (63 passed).
