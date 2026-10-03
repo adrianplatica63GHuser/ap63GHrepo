@@ -808,8 +808,9 @@ export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "view", "
  */
 export const RELATED_UNITS = oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true);
 
-// Slice #37.58: Proprietăți 5 — a property's name holds on one line (`tilePropertyName`).
-const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, classification: 2, connections: 3 } as const;
+// Slice #37.67: a person's Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" —
+// the Document's `RELATED_UNITS`, 4 (rule 17), on both person screens.
+const PERSON_LIST_UNITS = { related: RELATED_UNITS, classification: 2, connections: 3 } as const;
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
@@ -1102,7 +1103,6 @@ export const COLUMN = {
   selectBadges: { content: "S", kind: "wraps" }, //         the property list's: „Nou!", and „Încrucișat" on a line of its own
   open: { content: "S", kind: "fixed" }, //                 „Deschide" / „Vizualizare", an xs button
   openPreview: { content: "L", kind: "fixed" }, //          „Vizualizare" and „Previzualizare" (#37.24), two xs buttons on an association tile
-  openPreviewStacked: { content: "M", kind: "fixed" }, //   the same two, one above the other, on a Natural Person's unit tile (#37.27)
   // Every entity
   code: { content: "S", kind: "fixed" }, //                 a calculation run's „CALC00012" — since #37.57 never a record's system ID
   importance: { content: "M", kind: "fixed" }, //           „Ridicată"
@@ -1123,15 +1123,6 @@ export const COLUMN = {
   cui: { content: "M", kind: "fixed" }, //                  „RO12345678", JP.cuiNumber
   tradeRegister: { content: "M", kind: "fixed" }, //        „J40/12345/2020", JP.tradeRegisterNumber
   role: { content: "L", kind: "wraps" }, //                 LIST.role* — a role chip, or a certificate party's quality
-  // The Natural Person's list tiles (#37.27): each table fills its tile of whole units — tileTableRem().
-  tileName: { content: 12, kind: "wraps" }, //              a person's name on Persoane / Persoane corelate
-  // Slice #37.58: a property's name on Proprietăți / „Proprietăți corelate", ONE line — the
-  // longest in the archive and the test data is 38 characters, 273 px (`PROPERTY_NAME_PX`);
-  // past 22.5rem (360 px) it is cut with „…" and shown whole on hover, never wrapped.
-  tilePropertyName: { content: 22.5, kind: "fixed" },
-  tileRole: { content: "M", kind: "wraps" }, //             a role chip, wrapping
-  tileDocType: { content: "M", kind: "wraps" }, //          a document's type, wrapping
-  tileDocTitle: { content: 12, kind: "wraps" }, //          a document's title, wrapping
   cota: { content: "L", kind: "fixed" }, //                 an input showing „fără cotă" (italic) when empty
   cotaMp: { content: "L", kind: "fixed" }, //               „fără suprafață"
   cotaMod: { content: "L", kind: "fixed" }, //              a dropdown, „nespecificat"
@@ -1213,19 +1204,9 @@ export function columnRem(name: ColumnName): number {
   return colRem(COLUMN[name]);
 }
 
-/**
- * The Natural Person's list tiles' columns (#37.27). Each set fills its tile's
- * table width exactly — `field-widths.test.ts` sums them against
- * `tileTableRem(NP_LIST_UNITS[…])`. Persoane drops „Tip" (Fizică / Juridică):
- * Adrian asked for the name, the relationship and the buttons.
- */
-export const NP_LIST_COLUMNS = {
-  associations: ["select", "tileName", "tileRole", "openPreviewStacked"],
-  properties: ["select", "tilePropertyName", "tileRole", "openPreviewStacked"],
-  documents: ["select", "tileDocType", "tileDocTitle", "tileRole", "openPreviewStacked"],
-  // Slice #37.64/#37.66: a document's and a property's lists are „Corelate"'s one-line rows
-  // (`oneLineRowUnits`), not tables — their column sets went with them.
-} as const satisfies Record<string, readonly ColumnName[]>;
+// Slice #37.64/#37.66/#37.67: a document's, a property's and a person's lists are „Corelate"'s
+// one-line rows (`oneLineRowUnits`), not tables — the Natural Person's column sets
+// (`NP_LIST_COLUMNS`, #37.27) went with them.
 
 // ---- tiles (#37.17) -------------------------------------------------------------------------
 

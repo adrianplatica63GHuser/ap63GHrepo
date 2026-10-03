@@ -38,7 +38,6 @@ import {
   SCREEN_ROWS,
   MAP_BOX_STYLE,
   unitRowStyle,
-  NP_LIST_COLUMNS,
   NP_LIST_UNITS,
   NP_PANEL_UNITS,
   UNIT_GAP_REM,
@@ -47,7 +46,6 @@ import {
   unitsFor,
   unitsInnerRem,
   unitsRem,
-  type ColumnName,
   CELL_PADDING_REM,
   COLUMN,
   DOCUMENT,
@@ -443,7 +441,8 @@ describe("the Natural Person: every label above its box, every panel as wide as 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {
     expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(ADDRESS_BLOCK).not.toMatch(/LABEL_STYLE/);
-    expect(String(npRowStyle().width)).toBe("max(50.25rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
+    // #37.67: the widest tile is 4 units („Corelate"), where Proprietăți made it 5.
+    expect(String(npRowStyle().width)).toBe("max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
   });
 });
 
@@ -465,24 +464,18 @@ describe("the width unit: every Natural Person tile a whole number of units (Sli
     expect([1366, 1920, 2560].map(fit)).toEqual([6, 10, 14]);
   });
 
-  it("each list tile's table fills its tile of whole units, to within half a rem", () => {
-    const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
-    for (const k of ["associations", "properties", "documents"] as const) {
-      const room = tileTableRem(NP_LIST_UNITS[k]);
-      expect([k, sum(NP_LIST_COLUMNS[k]) <= room]).toEqual([k, true]);
-      expect([k, room - sum(NP_LIST_COLUMNS[k]) < 0.5]).toEqual([k, true]);
-    }
-    // Persoane: the name, the relationship and the buttons — no „Tip".
-    expect(NP_LIST_COLUMNS.associations).not.toContain("personType");
-    expect(NP_LIST_UNITS).toEqual({ associations: 4, properties: 5, documents: 5, classification: 2, connections: 3 }); // #37.58: Proprietăți 5; #37.63: META INFO in two
+  it("a person's list tiles: „Corelate” at the Document's units, META INFO's two halves at theirs (#37.67)", () => {
+    // #37.67: Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" — no tables, so no column sets.
+    expect(NP_LIST_UNITS).toEqual({ related: RELATED_UNITS, classification: 2, connections: 3 });
+    expect(RELATED_UNITS).toBe(4);
   });
 
   it("the person's page gives every list tile its units and the compact tables, and META INFO's two halves theirs", () => {
     const page = code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"));
-    for (const k of ["associations", "properties", "documents", "classification", "connections"]) {
+    for (const k of ["related", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{NP_LIST_UNITS\\.${k}\\}`));
     }
-    expect(page.match(/backBase="\/natural-persons" compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toMatch(/<PersonRelatedTile personId=\{personId\} backBase="\/natural-persons"/);
     // Slice #37.63: no cells any more — each half is one column of items.
     expect(page).toMatch(/part="classification"/);
     expect(page).toMatch(/part="connections"/);
@@ -542,10 +535,10 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
 
   it("the company's list tiles are the Natural Person's, at the same units (rule 17), META INFO's two halves among them", () => {
     const page = code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"));
-    for (const k of ["associations", "properties", "documents", "classification", "connections"]) {
+    for (const k of ["related", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.judicialPerson\\.${k}\\}`));
     }
-    expect(page.match(/backBase="\/judicial-persons" compact \/>/g) ?? []).toHaveLength(3);
+    expect(page).toMatch(/<PersonRelatedTile personId=\{personId\} backBase="\/judicial-persons"/);
     expect(page).not.toMatch(/compactCellRem/);
     expect(LIST_UNITS.judicialPerson).toEqual(LIST_UNITS.naturalPerson);
   });
@@ -555,7 +548,7 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
     expect(PANEL_UNITS.naturalPerson).toBe(NP_PANEL_UNITS);
     expect(String(unitRowStyle("naturalPerson").width)).toBe(String(npRowStyle().width));
-    expect(String(unitRowStyle("judicialPerson").width)).toBe("max(50.25rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))");
+    expect(String(unitRowStyle("judicialPerson").width)).toBe("max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem))"); // #37.67: 4 units
     // No JP_ twins of the unit shape.
     expect(code(read("src", "lib", "ui", "field-widths.ts"))).not.toMatch(/export const JP_(ROWS|PANEL|LIST|META)/);
   });
@@ -841,11 +834,8 @@ describe("tables at fixed column widths (#37.16)", () => {
     ["Acte", APP("documents", "list-view.tsx")],
     ["Proprietăți", APP("properties", "list-view.tsx")],
     ["Căutare globală", APP("(all-roles)", "admin", "global-search", "_components", "global-search-view.tsx")],
-    ["a person's Asocieri", APP("natural-persons", "_components", "person-references-tab.tsx")],
-    ["a person's Acte", APP("documents", "_components", "person-document-tab.tsx")],
-    ["a person's Proprietăți", APP("properties", "_components", "person-properties-tab.tsx")],
-    // #37.64–#37.66: a document's and a property's lists are „Corelate"'s one-line rows, not tables
-    // (one-line-rows, related-tile and property-related-tile tests).
+    // #37.64–#37.67: a document's, a property's and a person's lists are „Corelate"'s one-line rows,
+    // not tables (one-line-rows, related-tile, property-related-tile and person-related-tile tests).
   ];
 
   it.each(TABLES)("%s: a fixed table from COLUMN, as wide as its columns, every header marked", (_what, src) => {

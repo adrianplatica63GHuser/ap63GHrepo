@@ -5,7 +5,8 @@
  *
  * The tab row (Detalii, Asocieri, Proprietăți, Acte, META INFO) is gone. A row
  * of checkboxes picks the tiles instead — Identitate, Carte de identitate,
- * Contact, Adrese, Asocieri, Proprietăți, Acte, META INFO — any combination at
+ * Contact, Adrese, Corelate (#37.67: Persoane, Proprietăți and Acte in one),
+ * Clasificare subiectivă, Conexiuni — any combination at
  * once, with „Toate" and „Implicit". The choice is remembered per browser
  * (`useTileChoice`); with nothing stored the screen shows the four form tiles,
  * which is exactly what the Detalii tab showed.
@@ -29,9 +30,7 @@ import { User } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { NaturalPersonForm } from "./natural-person-form";
-import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
-import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
-import { PersonReferencesTab } from "./person-references-tab";
+import { PersonRelatedTile } from "./person-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
@@ -94,9 +93,7 @@ export function PersonDetailTiles({
       idCard:       t("tiles.idCard"),
       contact:      t("tiles.contact"),
       addresses:    t("tiles.addresses"),
-      associations: t("tiles.associations"),
-      properties:   t("tiles.properties"),
-      documents:    t("tiles.documents"),
+      related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
     }),
@@ -129,19 +126,10 @@ export function PersonDetailTiles({
             versionNavSlot={navSlot}
             tiles={{ shown: choice.shown, labels, onRevealTile: choice.reveal }}
           />
-          {choice.isShown("associations") && (
-            <ListTile tile="associations" title={labels.associations} units={NP_LIST_UNITS.associations}>
-              <PersonReferencesTab personId={personId} backBase="/natural-persons" compact />
-            </ListTile>
-          )}
-          {choice.isShown("properties") && (
-            <ListTile tile="properties" title={labels.properties} units={NP_LIST_UNITS.properties}>
-              <PersonPropertiesTab personId={personId} backBase="/natural-persons" compact />
-            </ListTile>
-          )}
-          {choice.isShown("documents") && (
-            <ListTile tile="documents" title={labels.documents} units={NP_LIST_UNITS.documents}>
-              <PersonDocumentTab personId={personId} backBase="/natural-persons" compact />
+          {/* Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate". */}
+          {choice.isShown("related") && (
+            <ListTile tile="related" title={labels.related} units={NP_LIST_UNITS.related}>
+              <PersonRelatedTile personId={personId} backBase="/natural-persons" label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata

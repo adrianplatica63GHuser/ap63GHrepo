@@ -12,9 +12,7 @@ export const NP_TILES = [
   "idCard",
   "contact",
   "addresses",
-  "associations",
-  "properties",
-  "documents",
+  "related",
   "classification",
   "connections",
 ] as const;
@@ -27,7 +25,13 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   all: NP_TILES,
   defaults: NP_FORM_TILES,
   form: NP_FORM_TILES,
-  renamed: { metadata: ["classification", "connections"] },
+  // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
+  renamed: {
+    metadata: ["classification", "connections"],
+    associations: "related",
+    properties: "related",
+    documents: "related",
+  },
 };
 
 /**
@@ -36,10 +40,11 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
  */
 // Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+// Slice #37.67: the association screens' „Anulează" (?tab=related, properties, document) lands on „Corelate".
 export const NP_TILE_OF_TAB: Readonly<Record<string, NpTile | readonly NpTile[] | undefined>> = {
-  related: "associations",
-  properties: "properties",
-  document: "documents",
+  related: "related",
+  properties: "related",
+  document: "related",
   metadata: ["classification", "connections"],
 };
 

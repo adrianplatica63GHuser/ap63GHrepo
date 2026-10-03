@@ -40,8 +40,8 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
   it("?tab=metadata adds both for the visit; another tab still adds its one tile", () => {
     for (const map of [NP_TILE_OF_TAB, JP_TILE_OF_TAB, PROP_TILE_OF_TAB, DOC_TILE_OF_TAB] as const) {
       expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, "metadata")).toEqual(BOTH);
-      // #37.65/#37.66: the Document's and the Property's „related" is „Corelate"; the persons' still their associations tile.
-      expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, "related")).toEqual([map === DOC_TILE_OF_TAB || map === PROP_TILE_OF_TAB ? "related" : "associations"]);
+      // #37.65/#37.66/#37.67: on all four screens „related" is „Corelate".
+      expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, "related")).toEqual(["related"]);
       expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, "details")).toEqual([]);
       expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, undefined)).toEqual([]);
     }

@@ -16,9 +16,7 @@ export const JP_TILES = [
   "identity",
   "contactPersons",
   "addresses",
-  "associations",
-  "properties",
-  "documents",
+  "related",
   "classification",
   "connections",
 ] as const;
@@ -31,7 +29,13 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
   all: JP_TILES,
   defaults: JP_FORM_TILES,
   form: JP_FORM_TILES,
-  renamed: { metadata: ["classification", "connections"] },
+  // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
+  renamed: {
+    metadata: ["classification", "connections"],
+    associations: "related",
+    properties: "related",
+    documents: "related",
+  },
 };
 
 /**
@@ -40,10 +44,11 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
  */
 // Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+// Slice #37.67: the association screens' „Anulează" (?tab=related, properties, document) lands on „Corelate".
 export const JP_TILE_OF_TAB: Readonly<Record<string, JpTile | readonly JpTile[] | undefined>> = {
-  related: "associations",
-  properties: "properties",
-  document: "documents",
+  related: "related",
+  properties: "related",
+  document: "related",
   metadata: ["classification", "connections"],
 };
 

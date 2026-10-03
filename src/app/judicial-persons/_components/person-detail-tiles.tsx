@@ -34,9 +34,7 @@ import { Building2 } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { JudicialPersonForm } from "./judicial-person-form";
-import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
-import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
-import { PersonReferencesTab } from "../../natural-persons/_components/person-references-tab";
+import { PersonRelatedTile } from "../../natural-persons/_components/person-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
@@ -93,9 +91,7 @@ export function JudicialPersonDetailTiles({
       identity:       t("tiles.identity"),
       contactPersons: t("tiles.contactPersons"),
       addresses:      t("tiles.addresses"),
-      associations:   t("tiles.associations"),
-      properties:     t("tiles.properties"),
-      documents:      t("tiles.documents"),
+      related:        t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
     }),
@@ -127,19 +123,10 @@ export function JudicialPersonDetailTiles({
             versionNavSlot={navSlot}
             tiles={{ shown: choice.shown, labels, onRevealTile: choice.reveal }}
           />
-          {choice.isShown("associations") && (
-            <ListTile tile="associations" title={labels.associations} units={LIST_UNITS.judicialPerson.associations}>
-              <PersonReferencesTab personId={personId} backBase="/judicial-persons" compact />
-            </ListTile>
-          )}
-          {choice.isShown("properties") && (
-            <ListTile tile="properties" title={labels.properties} units={LIST_UNITS.judicialPerson.properties}>
-              <PersonPropertiesTab personId={personId} backBase="/judicial-persons" compact />
-            </ListTile>
-          )}
-          {choice.isShown("documents") && (
-            <ListTile tile="documents" title={labels.documents} units={LIST_UNITS.judicialPerson.documents}>
-              <PersonDocumentTab personId={personId} backBase="/judicial-persons" compact />
+          {/* Slice #37.67: „Persoane corelate", Proprietăți and Acte are one tile, „Corelate". */}
+          {choice.isShown("related") && (
+            <ListTile tile="related" title={labels.related} units={LIST_UNITS.judicialPerson.related}>
+              <PersonRelatedTile personId={personId} backBase="/judicial-persons" label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata

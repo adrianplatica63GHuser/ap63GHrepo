@@ -9,14 +9,10 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
-  COLUMN,
   LIST_UNITS,
-  NP_LIST_COLUMNS,
   PROPERTY_NAME_PX,
-  columnRem,
   fillColumnRem,
   tableUnits,
-  tileTableRem,
   unitsInnerRem,
   oneLineRowRem,
   RELATED_SLOTS,
@@ -26,7 +22,6 @@ import {
 
 const ROOT = join(__dirname, "..", "..");
 const read = (...p: string[]): string => readFileSync(join(ROOT, ...p), "utf8");
-const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
 const NAME_REM = PROPERTY_NAME_PX / 16;
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -67,26 +62,16 @@ describe("the association screens: Căutare, Rezultate and Asociere one under an
 });
 
 describe("a property's name on one line (Slice #37.58)", () => {
-  it("the tiles' name column holds the longest name, 273 px, inside its padding", () => {
-    expect(COLUMN.tilePropertyName.kind).toBe("fixed");
-    expect(columnRem("tilePropertyName") - CELL_PADDING_REM).toBeGreaterThanOrEqual(NAME_REM);
-  });
-
   it("the Document's „Corelate” holds the longest property name on one line (4 units, #37.65; Proprietăți was 3 in #37.64, 4 as a table)", () => {
     expect(LIST_UNITS.document.related).toBe(4);
     // The row's content takes what the radio, the icon and the four button slots leave: past 273 px.
     expect(unitsInnerRem(4) - 2 / 16 - oneLineRowRem(RELATED_SLOTS, 0, true)).toBeGreaterThanOrEqual(NAME_REM);
   });
 
-  it("rule 17: a person's Proprietăți is 5 units, the same name column; a property's related properties are „Corelate”'s rows (#37.66)", () => {
-    expect(LIST_UNITS.naturalPerson.properties).toBe(5);
-    expect(LIST_UNITS.judicialPerson.properties).toBe(5);
+  it("rule 17: a property's and a person's related properties are „Corelate”'s rows, at the Document's units (#37.66, #37.67)", () => {
     expect(LIST_UNITS.property.related).toBe(LIST_UNITS.document.related);
-    for (const k of ["properties"] as const) {
-      expect(NP_LIST_COLUMNS[k]).toContain("tilePropertyName");
-      const room = tileTableRem(5);
-      expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) <= 0.5]).toEqual([k, true]);
-    }
+    expect(LIST_UNITS.naturalPerson.related).toBe(LIST_UNITS.document.related);
+    expect(LIST_UNITS.judicialPerson.related).toBe(LIST_UNITS.document.related);
   });
 
   it("the association screens' results hold it too: the label column takes what the box leaves, past 273 px", () => {
@@ -97,7 +82,6 @@ describe("a property's name on one line (Slice #37.58)", () => {
 
   it("every cell that shows a property's name is one line, cut with „…”, whole in its title", () => {
     const files = [
-      ["src", "app", "properties", "_components", "person-properties-tab.tsx"],
       ["src", "app", "documents", "[id]", "associate-property", "associate-property-view.tsx"],
       ["src", "app", "judicial-persons", "[id]", "associate-property", "associate-property-view.tsx"],
       ["src", "app", "natural-persons", "[id]", "associate-property", "associate-property-view.tsx"],
@@ -111,11 +95,14 @@ describe("a property's name on one line (Slice #37.58)", () => {
       expect(cells[0]).not.toMatch(/WRAPS|break-words/);
     }
     // #37.64/#37.66: the Document's and the Property's related properties are one-line rows —
-    // the name their content, whole in its title.
+    // the name their content, whole in its title. #37.67: a person's, with its role after it.
     for (const f of [["documents", "document-properties-tab.tsx"], ["properties", "property-references-tab.tsx"]]) {
       const src = read("src", "app", f[0], "_components", f[1]);
       expect([f[1], /title: nameOr\(item\.label, "property"\),\s+content: <span[^>]*>\{nameOr\(item\.label, "property"\)\}<\/span>,/.test(src)]).toEqual([f[1], true]);
     }
+    const person = read("src", "app", "properties", "_components", "person-properties-tab.tsx");
+    expect(person).toMatch(/const name = nameOr\(item\.label, "property"\);/);
+    expect(person).toMatch(/title: text,\s+content: \(\s+<>\s+<span[^>]*>\{name\}<\/span>/);
     expect(read("src", "components", "tiles", "one-line-rows.tsx")).toMatch(/className="min-w-0 flex-1 truncate" title=\{title\}/);
   });
 });

@@ -638,7 +638,9 @@
       "loading": "Loading…",
       "error": "Failed to load documents",
       "qualityDefunct": "Deceased",
-      "qualityMostenitor": "Heir"
+      "qualityMostenitor": "Heir",
+      "relationship": "Relationship",
+      "roleInDocument": "Role in the document: “{role}”"
     },
     "associateDocument": {
       "title": "Associate Document",
@@ -669,7 +671,8 @@
       "view": "View",
       "loading": "Loading…",
       "error": "Failed to load references",
-      "roleHeldByViewed": "this person is „{role}”"
+      "roleHeldByViewed": "this person is „{role}”",
+      "relationship": "Relationship"
     },
     "associatePersonReference": {
       "title": "Associate Related Person",
@@ -1079,9 +1082,7 @@
       "idCard": "ID Card",
       "contact": "Contact",
       "addresses": "Addresses",
-      "associations": "Persons",
-      "properties": "Properties",
-      "documents": "Documents",
+      "related": "Related",
       "classification": "Subjective classification",
       "connections": "Connections"
     }
@@ -1188,9 +1189,7 @@
       "identity": "Judicial Person",
       "contactPersons": "Contact Persons",
       "addresses": "Addresses",
-      "associations": "Related persons",
-      "properties": "Properties",
-      "documents": "Documents",
+      "related": "Related",
       "classification": "Subjective classification",
       "connections": "Connections"
     },
@@ -1662,7 +1661,7 @@
       "linkThis": "Link this one",
       "noneOfThese": "None of these — create new",
       "roleMissingTitle": "Role not configured",
-      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then add the person from the document’s Persons tab.",
+      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then add the person from the document’s “Related”.",
       "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
       "noMatchTitle": "No existing match found",
       "noMatchBody": "A new person will be created with the extracted details.",

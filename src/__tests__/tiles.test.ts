@@ -89,13 +89,13 @@ describe("the Natural Person's tiles", () => {
   const PAGE = code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"));
 
   it("are the eight the header names, and nothing stored shows exactly the old Detalii tab", () => {
-    expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "associations", "properties", "documents", "classification", "connections"]);
+    expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections"]); // #37.67: „Corelate"
     expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses"]);
     expect(NP_TILE_REGISTRY.form).toBe(NP_FORM_TILES);
   });
 
   it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
-    expect(NP_TILE_OF_TAB).toEqual({ related: "associations", properties: "properties", document: "documents", metadata: ["classification", "connections"] });
+    expect(NP_TILE_OF_TAB).toEqual({ related: "related", properties: "related", document: "related", metadata: ["classification", "connections"] }); // #37.67
     expect(NP_TILE_OF_TAB.details).toBeUndefined();
   });
 
@@ -130,7 +130,7 @@ describe("the Natural Person's tiles", () => {
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
-    for (const tile of ["associations", "properties", "documents", "classification", "connections"]) {
+    for (const tile of ["related", "classification", "connections"]) {
       expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
     }
     expect(PAGE).not.toMatch(/role="tab/);
@@ -144,7 +144,8 @@ describe("the Natural Person's tiles", () => {
     };
     expect(NP_TILES.map((k) => ro.naturalPerson.tiles[k])).toEqual([
       // Slice #37.27: „Asocieri" is „Persoane" on the Natural Person — its people, by name and relationship.
-      "Identitate", "Carte de identitate", "Contact", "Adrese", "Persoane", "Proprietăți", "Acte", "Clasificare subiectivă", "Conexiuni",
+      // Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate".
+      "Identitate", "Carte de identitate", "Contact", "Adrese", "Corelate", "Clasificare subiectivă", "Conexiuni",
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");
@@ -167,7 +168,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   const PAGE = code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"));
 
   it("are the seven the header names, and nothing stored shows exactly the old Detalii tab", () => {
-    expect([...JP_TILES]).toEqual(["identity", "contactPersons", "addresses", "associations", "properties", "documents", "classification", "connections"]);
+    expect([...JP_TILES]).toEqual(["identity", "contactPersons", "addresses", "related", "classification", "connections"]); // #37.67: „Corelate"
     expect([...JP_TILE_REGISTRY.defaults]).toEqual(["identity", "contactPersons", "addresses"]);
     expect(JP_TILE_REGISTRY.form).toBe(JP_FORM_TILES);
   });
@@ -178,7 +179,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   });
 
   it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
-    expect(JP_TILE_OF_TAB).toEqual({ related: "associations", properties: "properties", document: "documents", metadata: ["classification", "connections"] });
+    expect(JP_TILE_OF_TAB).toEqual({ related: "related", properties: "related", document: "related", metadata: ["classification", "connections"] }); // #37.67
     expect(JP_TILE_OF_TAB.details).toBeUndefined();
   });
 
@@ -204,7 +205,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
-    for (const tile of ["associations", "properties", "documents", "classification", "connections"]) {
+    for (const tile of ["related", "classification", "connections"]) {
       expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
     }
     expect(PAGE).not.toMatch(/role="tab/);
@@ -216,7 +217,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { judicialPerson: { tiles: Record<string, string> } };
     expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
-      "Persoană juridică", "Persoane de contact", "Adrese", "Persoane corelate", "Proprietăți", "Acte", "Clasificare subiectivă", "Conexiuni",
+      "Persoană juridică", "Persoane de contact", "Adrese", "Corelate", "Clasificare subiectivă", "Conexiuni", // #37.67
     ]);
   });
 });
