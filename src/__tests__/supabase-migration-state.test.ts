@@ -28,6 +28,7 @@ import {
   parseBaselineArg,
   readMigrationsOnDisk,
   selectBaseline,
+  reapplyTarget,
   type DiskMigration,
 } from "../../scripts/migration-state";
 
@@ -235,5 +236,32 @@ describe("npm wiring", () => {
     expect(pkg.scripts["supabase:migrate"]).toContain("scripts/supabase-migrate.ts");
     // --env-file=.env, because SUPABASE_SYNC_URL lives there and nowhere else.
     expect(pkg.scripts["supabase:migrate"]).toContain("--env-file=.env");
+  });
+});
+
+describe("--reapply picks one unverified file (Slices #37.59, #37.63)", () => {
+  const disk = fakeDisk([
+    ["migration_084_person_document_cota_parte.sql", "A".repeat(32)],
+    ["migration_090_x.sql", "B".repeat(32)],
+    ["migration_091_y.sql", "C".repeat(32)],
+    ["migration_035_a.sql", "D".repeat(32)],
+    ["migration_035_b.sql", "E".repeat(32)],
+  ]);
+
+  it("runs a row recorded with no checksum — which the runner reads as \"\", not null", () => {
+    // ⚠️ The case Adrian hit on 2026-10-03: 084 a baseline row (`coalesce(checksum, '')` → ""),
+    // refused as „recorded WITH a checksum" by the inline `!== null` test.
+    const rows = [{ filename: "migration_084_person_document_cota_parte.sql", checksum: "" }];
+    const pick = reapplyTarget(disk, rows, 84);
+    expect("target" in pick && pick.target.name).toBe("migration_084_person_document_cota_parte.sql");
+  });
+
+  it("refuses a row that has a checksum, a file that is not recorded, and a number two files share", () => {
+    expect(reapplyTarget(disk, [{ filename: "migration_090_x.sql", checksum: "B".repeat(32) }], 90)).toEqual({
+      refusal: "migration_090_x.sql is recorded WITH a checksum, so it verifiably ran here. Nothing run.",
+    });
+    expect("refusal" in reapplyTarget(disk, [], 91)).toBe(true);
+    expect("refusal" in reapplyTarget(disk, [], 35)).toBe(true);
+    expect("refusal" in reapplyTarget(disk, [], 99)).toBe(true);
   });
 });

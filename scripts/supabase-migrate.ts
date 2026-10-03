@@ -98,6 +98,7 @@ import {
   parseBaselineArg,
   readMigrationsOnDisk,
   selectBaseline,
+  reapplyTarget,
   type AppliedRow,
   type DiskMigration,
 } from "./migration-state";
@@ -367,18 +368,11 @@ async function main(): Promise<number> {
   // -------------------------------------------------------------------------
 
   if (reapplyNumber !== null) {
-    const files = disk.filter((f) => f.number === reapplyNumber);
-    if (files.length !== 1) {
-      fail(`${files.length} migration file(s) on disk are numbered ${reapplyNumber}; --reapply runs exactly one. Nothing run.`, 1);
-    }
-    const target = files[0];
-    const row = appliedRows.find((r) => r.filename === target.name);
-    if (!row) {
-      fail(`${target.name} is not recorded here, so it is simply pending -- run without --reapply.`, 1);
-    }
-    if ((row as AppliedRow).checksum !== null) {
-      fail(`${target.name} is recorded WITH a checksum, so it verifiably ran here. Nothing run.`, 1);
-    }
+    // The rule is `reapplyTarget` (migration-state.ts), held by a test: an
+    // unverified row's checksum arrives as "" — `coalesce` above — never null.
+    const pick = reapplyTarget(disk, appliedRows, reapplyNumber);
+    if ("refusal" in pick) fail(pick.refusal, 1);
+    const target = (pick as { target: DiskMigration }).target;
     console.log("");
     console.log(`▶  ${target.name}  (recorded with no checksum; running it again)`);
     const sql = fs.readFileSync(target.fullPath, "utf-8").replace(/^\uFEFF/, "");

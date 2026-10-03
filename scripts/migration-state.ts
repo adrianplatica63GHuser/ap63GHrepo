@@ -244,3 +244,33 @@ export function parseBaselineArg(arg: string): number {
 export function selectBaseline(disk: DiskMigration[], through: number): DiskMigration[] {
   return disk.filter((f) => f.number <= through);
 }
+
+/**
+ * `--reapply NNN`: the one file to run again, or why not.   (Slices #37.59, #37.63)
+ *
+ * ⚠️ **AN UNVERIFIED ROW IS AN EMPTY STRING HERE, NOT `null`.** The runner
+ * reads `coalesce(checksum, '')` (see `AppliedRow`), so a baseline row arrives
+ * as "". #37.59 tested `checksum !== null` inline in supabase-migrate.ts, which
+ * is true for EVERY row — and refused 084 as „recorded WITH a checksum" on
+ * Adrian's first try (2026-10-03), though `Checksum match` on the same screen
+ * counted it among the 82 unknown. Pure, so the rule is held by a test.
+ */
+export function reapplyTarget(
+  disk: DiskMigration[],
+  appliedRows: AppliedRow[],
+  number: number,
+): { target: DiskMigration } | { refusal: string } {
+  const files = disk.filter((f) => f.number === number);
+  if (files.length !== 1) {
+    return { refusal: `${files.length} migration file(s) on disk are numbered ${number}; --reapply runs exactly one. Nothing run.` };
+  }
+  const target = files[0];
+  const row = appliedRows.find((r) => r.filename === target.name);
+  if (!row) {
+    return { refusal: `${target.name} is not recorded here, so it is simply pending -- run without --reapply.` };
+  }
+  if ((row.checksum ?? "") !== "") {
+    return { refusal: `${target.name} is recorded WITH a checksum, so it verifiably ran here. Nothing run.` };
+  }
+  return { target };
+}
