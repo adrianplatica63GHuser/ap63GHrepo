@@ -161,4 +161,5 @@ ASOCIERI, not inside it — ASOCIERI holds the document-to-document references
 
 **2026-10-02 — Slice #37.62 (the Documents list).** The „Importanță:" and „Relevanță:" filters are
 gone, and the search box now stands before „Tip document", its placeholder without the „SAU" it had
-while it came second. Step 1 reads both. The spec follows.
+while it came second. Step 1 reads both. The spec follows. Green in the runner's full run
+20261003T025703Z-24168 on 30e4903.

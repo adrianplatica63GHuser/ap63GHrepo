@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -79,3 +79,7 @@ before in steps 1–4; step 5's rest opened the bubble and moving away closed it
 **2026-10-02 — run 5, `confirmed` (Slice #37.62).** Reloaded, against the file unchanged since run
 4: the same in every step, no `DOC…` in the table; the stored choice `[]` afterwards; the document
 deleted (204). The case is confirmed, and `e2e/document/document-list.spec.ts` translates it.
+
+**2026-10-02 — `automated` (Slice #37.62).** The test runner's full run 20261003T025703Z-24168 on
+30e4903 ran `e2e/document/document-list.spec.ts` green with the other 60 specs (lint, tsc, jest and
+forms-drift green too).
