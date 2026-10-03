@@ -37,7 +37,7 @@ import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provid
 import { Eye } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
-import { PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind } from "@/lib/ui/field-widths";
+import { PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
 
 // ── Which previews are open ───────────────────────────────────────────────────
@@ -159,11 +159,12 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
     case "person": {
       const r = await getJson<{ person: Row; natural: Row | null }>(`/api/people/${id}`);
       const n = r.natural ?? {};
+      // Slice #37.60: line 1 is „Nume Prenume" — the heading — with no Nume and Prenume under it.
+      const fullName = [s(n.lastName), s(n.firstName)].filter(Boolean).join(" ");
       return {
-        title: s(r.person.displayName),
+        title: fullName || s(r.person.displayName),
         fields: {
-          lastName: s(n.lastName),
-          firstName: s(n.firstName),
+          nickname: s(n.nickname),
           cnp: s(n.cnp),
           dateOfBirth: dmy(s(n.dateOfBirth)),
           placeOfBirth: s(n.placeOfBirth),
@@ -176,7 +177,7 @@ async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
       return {
         title: s(j.name) ?? s(r.person.displayName),
         fields: {
-          name: s(j.name),
+          nickname: s(j.nickname), // Slice #37.60: „Denumire" is the heading, not a field under it
           judicialPersonTypeId: s(r.judicialPersonTypeName),
           cuiNumber: s(j.cuiNumber),
           tradeRegisterNumber: s(j.tradeRegisterNumber),
@@ -291,12 +292,19 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
     );
   }
   const data = q.data;
+  const label = (name: string) => t(`fields.${LABEL_KEY[name] ?? name}` as Parameters<typeof t>[0]);
+  // Slice #37.60: a person and a company — three compact lines (`PREVIEW_LINES`).
+  const lines = kind in PREVIEW_LINES
+    ? PREVIEW_LINES[kind as PreviewLinesKind].map((line) =>
+        line.map((name) => ({ label: label(name), value: data.fields[name] ?? null })))
+    : undefined;
   return (
     <PreviewTileBody
+      lines={lines}
       title={nameOr(data.title, UNNAMED_KIND[kind])}
       fields={PREVIEW_ROWS[kind].flatMap((row, i): PreviewField[] =>
         row.map((name) => ({
-          label: t(`fields.${LABEL_KEY[name] ?? name}` as Parameters<typeof t>[0]),
+          label: label(name),
           value: data.fields[name] ?? null,
           width: PREVIEW_WIDTHS[kind][name],
           row: i,

@@ -76,19 +76,12 @@ import { firstErrorPath } from "@/lib/ui/tiles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
+import { ageFromDob } from "@/lib/persons/person-age";
+
 type IdCardLink = { id: string; code: string; title: string | null } | null;
 
-/** Compute age in whole years from an ISO date string (YYYY-MM-DD). */
-function calculateAge(dob: string): number | null {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  if (isNaN(birth.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age >= 0 ? age : null;
-}
+/** Age in whole years — the same function the Natural Persons list's „Vârstă" reads (Slice #37.60). */
+const calculateAge = (dob: string): number | null => ageFromDob(dob);
 
 type Props = {
   /** "create" — POST /api/people; "edit" — PATCH /api/people/[personId]; "view" — read-only display */

@@ -1177,7 +1177,9 @@
       "properties": "Properties",
       "document": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
-    }
+    },
+    "chooseFields": "Choose fields",
+    "chooseFieldsHint": "Select up to {max} optional columns"
   },
   "nav": {
     "sections": {

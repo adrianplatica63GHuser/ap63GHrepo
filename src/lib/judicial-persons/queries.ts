@@ -57,6 +57,9 @@ export type JudicialPersonListItem = {
   displayName: string;
   nickname: string | null;
   cuiNumber: string | null;
+  /** Slice #37.60 — „Câmpuri afișate": the type's name and the trade-register number. */
+  judicialPersonType: string | null;
+  tradeRegisterNumber: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -125,11 +128,14 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
         displayName: person.displayName,
         nickname: judicialPerson.nickname,
         cuiNumber: judicialPerson.cuiNumber,
+        judicialPersonType: lookupJudicialPersonType.name,
+        tradeRegisterNumber: judicialPerson.tradeRegisterNumber,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
       })
       .from(person)
       .leftJoin(judicialPerson, eq(judicialPerson.personId, person.id))
+      .leftJoin(lookupJudicialPersonType, eq(lookupJudicialPersonType.id, judicialPerson.judicialPersonTypeId))
       .where(where)
       // Slice #18.18: most-recently modified/created first (consistent with
       // natural persons — previously ordered by code).

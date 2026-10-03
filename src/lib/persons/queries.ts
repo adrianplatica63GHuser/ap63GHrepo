@@ -38,6 +38,7 @@ import {
   groupMember,
   groups,
   judicialPerson,
+  lookupPersonType,
   naturalPerson,
   person,
   personVersion,
@@ -92,6 +93,16 @@ export type PersonListItem = {
   importance: string | null;
   relevance:  string | null;
   provenance: string | null;
+  /**
+   * Slice #37.60 — the „Identitate" fields „Câmpuri afișate" offers. The
+   * importance and relevance above stay in the answer (and the `importance` /
+   * `relevance` parameters keep filtering) though the list no longer asks.
+   */
+  cnp:              string | null;
+  dateOfBirth:      string | null;
+  gender:           "MALE" | "FEMALE" | null;
+  placeOfBirth:     string | null;
+  professionalType: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -174,12 +185,19 @@ export async function listPersons(opts: ListQuery): Promise<{
         importance: entityMetadata.importance,
         relevance:  entityMetadata.relevance,
         provenance: entityMetadata.provenance,
+        // Slice #37.60: „Câmpuri afișate".
+        cnp:              naturalPerson.cnp,
+        dateOfBirth:      naturalPerson.dateOfBirth,
+        gender:           naturalPerson.gender,
+        placeOfBirth:     naturalPerson.placeOfBirth,
+        professionalType: lookupPersonType.name,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
       })
       .from(person)
       .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, person.principalObjectId))
+      .leftJoin(lookupPersonType, eq(lookupPersonType.id, naturalPerson.physicalPersonTypeId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first.
       .orderBy(sql`greatest(${person.updatedAt}, ${person.createdAt}) desc`)

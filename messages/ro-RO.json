@@ -1177,7 +1177,9 @@
       "properties": "Proprietăți",
       "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
-    }
+    },
+    "chooseFields": "Câmpuri afișate",
+    "chooseFieldsHint": "Selectați până la {max} coloane opționale"
   },
   "nav": {
     "sections": {

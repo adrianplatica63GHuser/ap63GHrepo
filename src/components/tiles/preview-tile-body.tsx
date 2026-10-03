@@ -31,6 +31,17 @@ const PREVIEW_LABEL_CLASS = "self-end text-xs font-medium text-fade dark:text-zi
  */
 export type PreviewField = { label: string; value: string | null; width?: FieldWidth; row?: number };
 
+/**
+ * One value of a compact line (Slice #37.60): its label is read aloud and shown
+ * on hover, not printed — the line is the values one after the other.
+ */
+export type PreviewLineValue = { label: string; value: string | null };
+
+/** The lines to draw: each its non-empty values; a line with none is dropped. */
+export function compactLines(lines: readonly (readonly PreviewLineValue[])[]): PreviewLineValue[][] {
+  return lines.map((line) => line.filter((v) => v.value !== null && v.value.trim() !== "")).filter((line) => line.length > 0);
+}
+
 /** Consecutive fields with the same `row` together; a field without one alone. */
 function rowsOf(fields: readonly PreviewField[]): PreviewField[][] {
   const rows: PreviewField[][] = [];
@@ -53,9 +64,16 @@ export function PreviewTileBody({
   width,
   tile,
   style,
+  lines,
 }: {
   title: string;
   fields: PreviewField[];
+  /**
+   * Slice #37.60: a person's or a company's preview — the heading is line 1,
+   * these are lines 2 and 3, and the tile is as wide as its widest line needs
+   * (no panel units). `fields` is ignored when these are given.
+   */
+  lines?: readonly (readonly PreviewLineValue[])[];
   openHref: string;
   labels: { open: string; close: string; readonly: string; firstPage: string; noPage: string };
   onClose: () => void;
@@ -76,8 +94,9 @@ export function PreviewTileBody({
       data-tile={tile ? `preview:${tile}` : "preview"}
       data-preview
       aria-label={title}
-      className="rounded-md border border-dashed border-cta/50 bg-card p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
-      style={{ ...PREVIEW_STYLE[width], ...style }}
+      data-preview-compact={lines ? "" : undefined}
+      className={`rounded-md border border-dashed border-cta/50 bg-card p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900${lines ? " w-max max-w-full" : ""}`}
+      style={lines ? style : { ...PREVIEW_STYLE[width], ...style }}
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</h2>
@@ -101,8 +120,24 @@ export function PreviewTileBody({
           <IconButton icon={X} label={labels.close} variant="secondary" size="xs" onClick={onClose} />
         </span>
       </div>
-      {/* Slice #37.33: labels above their values, in the record's screen's rows and widths;
-          a value wraps inside its field's width, an empty one is „—". */}
+      {lines ? (
+        // Slice #37.60: two compact lines under the name — values only, „, " between them.
+        <div className="flex flex-col gap-0.5 text-sm text-ink dark:text-zinc-100" data-preview-lines>
+          {compactLines(lines).map((line) => (
+            <p key={line.map((v) => v.label).join("|")} className="whitespace-nowrap" data-preview-line>
+              {line.map((v, i) => (
+                <span key={v.label} title={v.label} data-preview-value>
+                  <span className="sr-only">{v.label}: </span>
+                  {v.value}
+                  {i < line.length - 1 ? ", " : ""}
+                </span>
+              ))}
+            </p>
+          ))}
+        </div>
+      ) : (
+      /* Slice #37.33: labels above their values, in the record's screen's rows and widths;
+          a value wraps inside its field's width, an empty one is „—". */
       <div className="flex flex-col gap-2 text-sm" data-preview-fields>
         {rowsOf(fields).map((row) => (
           <div key={row.map((f) => f.label).join("|")} className={STACKED_ROW_CLASS}>
@@ -115,6 +150,7 @@ export function PreviewTileBody({
           </div>
         ))}
       </div>
+      )}
       {image !== undefined && (
         <figure className="mt-3">
           <figcaption className="mb-1 text-xs font-medium uppercase tracking-wide text-fade">{labels.firstPage}</figcaption>

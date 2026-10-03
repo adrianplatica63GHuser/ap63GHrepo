@@ -938,14 +938,33 @@ export const PREVIEW_INNER_REM: Readonly<Record<PreviewWidth, number>> = {
   pages: unitsInnerRem(PREVIEW_UNITS.pages),
 };
 
-/** #37.24's short set per kind, by the screen's own field names. */
+/**
+ * #37.24's short set per kind, by the screen's own field names. Slice #37.60: a
+ * person's and a company's name is the tile's heading — „Nume Prenume",
+ * „Denumire" — so Nume, Prenume and Denumire are not fields under it.
+ */
 export const PREVIEW_FIELDS = {
-  person: ["lastName", "firstName", "cnp", "dateOfBirth", "placeOfBirth"],
-  company: ["name", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber"],
+  person: ["nickname", "cnp", "dateOfBirth", "placeOfBirth"],
+  company: ["nickname", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber"],
   property: ["nickname", "parcela", "cadastralNumber", "carteFunciara", "surfaceAreaMp"],
   document: ["documentTypeId", "title", "subject", "nrDocument", "dateDocument"],
 } as const;
 export type PreviewKind = keyof typeof PREVIEW_FIELDS;
+
+/**
+ * A PERSON'S AND A COMPANY'S PREVIEW IS THREE COMPACT LINES.   (Slice #37.60)
+ *
+ * Line 1 is the name, the tile's heading. Lines 2 and 3 are these, each its
+ * values one after the other: Poreclă, CNP — Data nașterii, Locul nașterii;
+ * or Poreclă, Tip — Nr. înregistrare (CUI), Nr. registru comerțului. An empty
+ * value is left out, and a line with none is not drawn. The tile is as wide as
+ * its widest line (and its buttons) need, not a panel's units.
+ */
+export const PREVIEW_LINES = {
+  person: [["nickname", "cnp"], ["dateOfBirth", "placeOfBirth"]],
+  company: [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
+} as const satisfies Partial<Record<keyof typeof PREVIEW_FIELDS, readonly (readonly string[])[]>>;
+export type PreviewLinesKind = keyof typeof PREVIEW_LINES;
 
 /** Each kind's rows: its screen's, filtered to the short set (a document's Date generale, then Taxe și onorarii). */
 export const PREVIEW_ROWS: Readonly<Record<PreviewKind, readonly (readonly string[])[]>> = {
@@ -1028,6 +1047,16 @@ export const COLUMN = {
   personName: { content: "XL", kind: "wraps" }, //          LIST.personDisplayName
   personNickname: { content: "L", kind: "wraps" }, //       NP.nickname, JP.nickname
   personType: { content: "S", kind: "fixed" }, //           „Fizică" / „Juridică"
+  // Slice #37.60 — „Câmpuri afișate" on the two persons' lists: their „Identitate" fields.
+  cnp: { content: "M", kind: "fixed" }, //                  13 digits, NP.cnp
+  birthDate: { content: "M", kind: "fixed" }, //            dd.mm.yyyy, NP.dateOfBirth
+  age: { content: "XS", kind: "fixed" }, //                 worked out from the date of birth
+  gender: { content: "M", kind: "fixed" }, //               „Masculin" / „Feminin"
+  birthPlace: { content: "L", kind: "wraps" }, //           NP.placeOfBirth (XL on the form) — wraps on the list
+  professionalType: { content: "L", kind: "wraps" }, //     „Tip Profesional", a lookup's name
+  companyType: { content: "M", kind: "wraps" }, //          JP „Tip": longest „Consiliu Local" (14)
+  cui: { content: "M", kind: "fixed" }, //                  „RO12345678", JP.cuiNumber
+  tradeRegister: { content: "M", kind: "fixed" }, //        „J40/12345/2020", JP.tradeRegisterNumber
   role: { content: "L", kind: "wraps" }, //                 LIST.role* — a role chip, or a certificate party's quality
   // The Natural Person's list tiles (#37.27): each table fills its tile of whole units — tileTableRem().
   tileName: { content: 12, kind: "wraps" }, //              a person's name on Persoane / Persoane corelate

@@ -11,20 +11,26 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
-/** Slice #37.16: the list's columns, each a fixed width from `COLUMN`. */
-const COLUMNS: ColumnName[] = ["selectNew", "personName", "personNickname", "openPreview"];
+/** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
+const LS_KEY  = "ga40-col-company-v1";
+const MAX_OPT = 3;
 
 type JudicialPersonListItem = {
   id:          string;
   code:        string;
   displayName: string;
   nickname:    string | null;
+  // Slice #37.60 — „Câmpuri afișate": the rest of „Persoană juridică" (Tip, CUI, Nr. Reg. Com.).
+  judicialPersonType:  string | null;
+  cuiNumber:           string | null;
+  tradeRegisterNumber: string | null;
   createdAt:   string;
   updatedAt:   string;
 };
@@ -225,6 +231,22 @@ export function JudicialPersonListView() {
     }
   }
 
+  // Slice #37.60 — „Câmpuri afișate", the same chooser the Natural Persons list draws.
+  const optionalCols: ChooserField[] = [
+    { key: "judicialPersonType",  label: t("fields.judicialType"),        column: "companyType" },
+    { key: "cuiNumber",           label: t("fields.cuiNumber"),           column: "cui" },
+    { key: "tradeRegisterNumber", label: t("fields.tradeRegisterNumber"), column: "tradeRegister" },
+  ];
+  const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT);
+  const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
+  const COLUMNS: ColumnName[] = ["selectNew", "personName", "personNickname", ...shownCols.map((c) => c.column), "openPreview"];
+  const colCount = COLUMNS.length;
+  const cellValue = (item: JudicialPersonListItem, key: string): string | null =>
+    key === "judicialPersonType" ? item.judicialPersonType
+      : key === "cuiNumber" ? item.cuiNumber
+        : key === "tradeRegisterNumber" ? item.tradeRegisterNumber
+          : null;
+
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
@@ -249,6 +271,14 @@ export function JudicialPersonListView() {
           aria-label={t("searchPlaceholder")}
           {...screenBox("listSearch")}
           className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+        />
+        <FieldChooser
+          label={t("chooseFields")}
+          hint={t("chooseFieldsHint", { max: MAX_OPT })}
+          fields={optionalCols}
+          visible={chooser.visible}
+          max={MAX_OPT}
+          onToggle={chooser.toggle}
         />
         <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (
@@ -300,27 +330,30 @@ export function JudicialPersonListView() {
                 </th>
                 <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
                 <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
+                {shownCols.map((col) => (
+                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>{col.label}</th>
+                ))}
                 <th className="px-4 py-2" {...columnHead("openPreview")} />
               </tr>
             </thead>
             <tbody className="divide-y divide-crease dark:divide-zinc-800">
               {query.isLoading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-fade">
+                  <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
                     {t("loading")}
                   </td>
                 </tr>
               )}
               {query.isError && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-red-600">
+                  <td colSpan={colCount} className="px-4 py-6 text-center text-red-600">
                     {t("error")}
                   </td>
                 </tr>
               )}
               {query.data && query.data.items.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-fade">
+                  <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
                     {t("empty")}
                   </td>
                 </tr>
@@ -356,6 +389,11 @@ export function JudicialPersonListView() {
                   <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
                     {item.nickname || <span className="italic">—</span>}
                   </td>
+                  {shownCols.map((col) => (
+                    <td key={col.key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf(col.column)}`}>
+                      {cellValue(item, col.key) ?? <span className="italic">—</span>}
+                    </td>
+                  ))}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     <span className="flex gap-2">
                       <IconButton
