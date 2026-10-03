@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -78,3 +78,5 @@ file above unchanged.
 - The three records deleted (204 ×3); the tick is off again.
   Nothing in the file changed, so the case is confirmed, and `e2e/document/role-share.spec.ts`
   translates it.
+
+**2026-10-02 — `automated` (Slice #37.59).** `e2e/document/role-share.spec.ts`. Its first full run (`20261003T001042Z-24314`) failed at step 4 — „Clicking the checkbox did not change its state" — which was run 1's „first tick did not stay" again, and a defect: the box went back until the save and the refetch had landed. Fixed in the screen (`a27c956`); the spec then found the tick left on by its own late PATCH and now sets the starting state itself. Green in `20261003T003044Z-3652`.
