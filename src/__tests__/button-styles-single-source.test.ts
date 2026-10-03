@@ -41,7 +41,6 @@ const ALLOWLIST: Record<string, string> = {
   // Slice #37.60: the Natural Persons list's „Câmpuri afișate" moved into the shared chooser,
   // whose ticks fade when the maximum is reached — the same <input type="checkbox">.
   "components/list/field-chooser.tsx": "the „Câmpuri afișate” checkbox",
-  "app/properties/list-view.tsx": "row-select checkbox",
 
   // Three <select> dropdowns (importance / relevance / provenance). A native
   // select has no `buttonClass` equivalent.
