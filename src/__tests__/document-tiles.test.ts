@@ -55,7 +55,7 @@ describe("the registry is built from the type on screen", () => {
     expect(reg.all).toEqual([
       "general", "pages",
       "tab:Instrument", "tab:Cadastru", "tab:Stare juridică", "tab:Conformitate",
-      "persons", "properties", "associations", "metadata",
+      "persons", "properties", "associations", "classification", "connections",
     ]);
     // Nothing stored shows what Detalii showed: the general data, the first notebook page, the page image.
     expect(reg.defaults).toEqual(["general", "pages", "tab:Instrument"]);
@@ -63,7 +63,7 @@ describe("the registry is built from the type on screen", () => {
 
   it("a type with no notebook: one tile for its own fields", () => {
     const reg = documentTileRegistry(PLAN);
-    expect(reg.all).toEqual(["general", "pages", FIELDS_TILE, "persons", "properties", "associations", "metadata"]);
+    expect(reg.all).toEqual(["general", "pages", FIELDS_TILE, "persons", "properties", "associations", "classification", "connections"]);
     expect(reg.defaults).toEqual(["general", "pages", FIELDS_TILE]);
     expect(tileOfTabIndex([], 0)).toBe(FIELDS_TILE);
   });
@@ -86,11 +86,11 @@ describe("the registry is built from the type on screen", () => {
   it("the form's tiles are hidden, never unmounted; the lists may unmount", () => {
     const reg = documentTileRegistry(MOSTENITOR);
     expect(reg.form).toEqual(["general", "pages", FIELDS_TILE, "succession"]);
-    for (const list of ["persons", "properties", "associations", "metadata"]) expect(reg.form).not.toContain(list);
+    for (const list of ["persons", "properties", "associations", "classification", "connections"]) expect(reg.form).not.toContain(list);
   });
 
   it("keeps every old `?tab=` working: each tab but Detalii names its tile", () => {
-    expect(DOC_TILE_OF_TAB).toEqual({ related: "associations", persons: "persons", properties: "properties", metadata: "metadata" });
+    expect(DOC_TILE_OF_TAB).toEqual({ related: "associations", persons: "persons", properties: "properties", metadata: ["classification", "connections"] });
   });
 
   it("a notebook page's tile, clamped the way the notebook clamps its active page", () => {

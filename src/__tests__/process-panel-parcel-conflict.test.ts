@@ -123,12 +123,12 @@ describe("the parcel-conflict copy", () => {
     // `tags.remove` is "Elimină eticheta" — and nothing in the shipping UI is
     // ever labelled "tag". Advice that names a control by a word the product
     // does not use sends the user looking for something that is not there. It
-    // also has to name the TAB: this panel is on Detalii and the tag editor is
-    // on META INFO.
+    // also has to name WHERE: this panel is on Detalii and the tag editor is
+    // on „Conexiuni" (META INFO until #37.63).
     expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("eticheta de dosar");
-    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("META INFO");
+    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("„Conexiuni”");
     expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("folder tag");
-    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("METADATA");
+    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("“Connections”");
     // Several matches is a different job: the archive already holds a
     // duplicate, and attaching or re-tagging fixes nothing.
     expect(String(loadCopy("ro-RO.json").parcelTakenSeveralWhatToDo)).toContain("una singură");

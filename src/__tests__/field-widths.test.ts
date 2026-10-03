@@ -33,16 +33,13 @@ import {
   ADDRESS,
   ADDRESS_ROWS,
   LIST_UNITS,
-  META_CELL_REM,
   PANEL_UNITS,
   PANEL_UNIT_INNER_REM,
   SCREEN_ROWS,
   MAP_BOX_STYLE,
   unitRowStyle,
-  META_CELL_GAP_REM,
   NP_LIST_COLUMNS,
   NP_LIST_UNITS,
-  NP_META_CELL_REM,
   NP_PANEL_UNITS,
   UNIT_GAP_REM,
   UNIT_REM,
@@ -473,18 +470,19 @@ describe("the width unit: every Natural Person tile a whole number of units (Sli
     }
     // Persoane: the name, the relationship and the buttons — no „Tip".
     expect(NP_LIST_COLUMNS.associations).not.toContain("personType");
-    expect(NP_LIST_UNITS).toEqual({ associations: 4, properties: 5, documents: 5, metadata: 5 }); // #37.58: Proprietăți 5
+    expect(NP_LIST_UNITS).toEqual({ associations: 4, properties: 5, documents: 5, classification: 2, connections: 3 }); // #37.58: Proprietăți 5; #37.63: META INFO in two
   });
 
-  it("the person's page gives every list tile its units and the compact tables, and META INFO its cells", () => {
+  it("the person's page gives every list tile its units and the compact tables, and META INFO's two halves theirs", () => {
     const page = code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"));
-    for (const k of ["associations", "properties", "documents", "metadata"]) {
+    for (const k of ["associations", "properties", "documents", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{NP_LIST_UNITS\\.${k}\\}`));
     }
     expect(page.match(/backBase="\/natural-persons" compact \/>/g) ?? []).toHaveLength(3);
-    expect(page).toMatch(/compactCellRem=\{NP_META_CELL_REM\}/);
-    // Two cells and the gap fill META INFO inside.
-    expect(2 * NP_META_CELL_REM + META_CELL_GAP_REM).toBe(unitsInnerRem(NP_LIST_UNITS.metadata));
+    // Slice #37.63: no cells any more — each half is one column of items.
+    expect(page).toMatch(/part="classification"/);
+    expect(page).toMatch(/part="connections"/);
+    expect(page).not.toMatch(/compactCellRem/);
   });
 });
 
@@ -538,15 +536,14 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/);
   });
 
-  it("the company's list tiles are the Natural Person's, at the same units (rule 17), and META INFO has its cells", () => {
+  it("the company's list tiles are the Natural Person's, at the same units (rule 17), META INFO's two halves among them", () => {
     const page = code(read("src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"));
-    for (const k of ["associations", "properties", "documents", "metadata"]) {
+    for (const k of ["associations", "properties", "documents", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.judicialPerson\\.${k}\\}`));
     }
     expect(page.match(/backBase="\/judicial-persons" compact \/>/g) ?? []).toHaveLength(3);
-    expect(page).toMatch(/compactCellRem=\{META_CELL_REM\}/);
+    expect(page).not.toMatch(/compactCellRem/);
     expect(LIST_UNITS.judicialPerson).toEqual(LIST_UNITS.naturalPerson);
-    expect(META_CELL_REM).toBe(NP_META_CELL_REM);
   });
 
   it("rule 19: one shape keyed by screen — the Natural Person's numbers did not move", () => {
@@ -604,7 +601,7 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
-  it("the list tiles are compact and fill their units: Proprietăți corelate 5 (#37.58), Persoane and Acte 4, META INFO 5", () => {
+  it("the list tiles are compact and fill their units: Proprietăți corelate 5 (#37.58), Persoane and Acte 4, Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
     const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
     const room = tileTableRem(4);
     for (const k of ["associations", "documentsWithoutRole"] as const) {
@@ -612,13 +609,13 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     }
     const room5 = tileTableRem(5);
     expect(sum(NP_LIST_COLUMNS.propertyAssociations) <= room5 && room5 - sum(NP_LIST_COLUMNS.propertyAssociations) < 0.5).toBe(true);
-    expect(LIST_UNITS.property).toEqual({ associations: 5, persons: 4, documents: 4, metadata: 5 });
+    expect(LIST_UNITS.property).toEqual({ associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 });
     const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
-    for (const k of ["associations", "persons", "documents", "metadata"]) {
+    for (const k of ["associations", "persons", "documents", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.property\\.${k}\\}`));
     }
     expect(page.match(/propertyId=\{propertyId\} compact \/>/g) ?? []).toHaveLength(3);
-    expect(page).toMatch(/compactCellRem=\{META_CELL_REM\}/);
+    expect(page).not.toMatch(/compactCellRem/);
   });
 });
 
@@ -649,20 +646,20 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
   });
 
-  it("the list tiles are compact and fill their units: Persoane 6, Proprietăți 4 (#37.58), „Acte corelate” 5, META INFO 5", () => {
+  it("the list tiles are compact and fill their units: Persoane 6, Proprietăți 4 (#37.58), „Acte corelate” 5, Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
     const sum = (cols: readonly ColumnName[]): number => cols.reduce((n, c) => n + columnRem(c), 0);
     // Each table fills its tile to within half a rem (Proprietăți leaves a quarter: 38 in 38.25).
     for (const [k, units] of [["documentPersons", 6], ["documentProperties", 4], ["documents", 5]] as const) {
       const room = tileTableRem(units);
       expect([k, sum(NP_LIST_COLUMNS[k]) <= room && room - sum(NP_LIST_COLUMNS[k]) <= 0.5]).toEqual([k, true]);
     }
-    expect(LIST_UNITS.document).toEqual({ persons: 6, properties: 4, associations: 5, metadata: 5 });
+    expect(LIST_UNITS.document).toEqual({ persons: 6, properties: 4, associations: 5, classification: 2, connections: 3 });
     const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
-    for (const k of ["persons", "properties", "associations", "metadata"]) {
+    for (const k of ["persons", "properties", "associations", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
     }
     expect(page.match(/documentId=\{documentId\} compact \/>/g) ?? []).toHaveLength(3);
-    expect(page).toMatch(/compactCellRem=\{META_CELL_REM\}/);
+    expect(page).not.toMatch(/compactCellRem/);
     expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_UNIT_STYLE\.document\.succession\}/);
   });
 });
