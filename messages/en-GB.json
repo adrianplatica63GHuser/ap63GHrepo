@@ -378,7 +378,8 @@
       "associations": "Related properties",
       "persons": "Persons",
       "documents": "Documents",
-      "metadata": "METADATA"
+      "classification": "Subjective classification",
+      "connections": "Connections"
     },
     "tabs": {
       "details": "Details",
@@ -866,8 +867,8 @@
       "saveErrorSession": "Your session expired — please sign in again and retry.",
       "sectionClassification": "Subjective classification",
       "sectionConnections": "Connections",
-      "whatDoesThisMean": "What does this mean?",
-      "hideAdd": "Hide"
+      "hideAdd": "Hide",
+      "about": "About “{title}”"
     },
     "errorBoundary": {
       "map": "The map could not be displayed.",
@@ -1058,7 +1059,8 @@
       "associations": "Persons",
       "properties": "Properties",
       "documents": "Documents",
-      "metadata": "METADATA"
+      "classification": "Subjective classification",
+      "connections": "Connections"
     }
   },
   "judicialPerson": {
@@ -1166,7 +1168,8 @@
       "associations": "Related persons",
       "properties": "Properties",
       "documents": "Documents",
-      "metadata": "METADATA"
+      "classification": "Subjective classification",
+      "connections": "Connections"
     },
     "tabs": {
       "details": "Details",
@@ -1538,7 +1541,8 @@
       "persons": "Persons",
       "properties": "Properties",
       "associations": "Related documents",
-      "metadata": "METADATA"
+      "classification": "Subjective classification",
+      "connections": "Connections"
     },
     "tabs": {
       "details": "Details",
@@ -1838,7 +1842,7 @@
       "errorSession": "Your session has expired. Please sign in again and retry.",
       "parcelTaken": "This document's tarla and parcela already belong to another property. The document was not processed and nothing was created.",
       "parcelTakenSeveral": "{count, plural, one {One property has} other {# properties have}} tarla {tarla} and parcela {parcela}, the same as this document. The document was not processed and nothing was created.",
-      "parcelTakenWhatToDo": "Open the property and add this document to it from the Documents tab, or, if this is a different parcel, correct the document's folder tag under the METADATA tab.",
+      "parcelTakenWhatToDo": "Open the property and add this document to it from the Documents tab, or, if this is a different parcel, correct the document's folder tag under “Connections”.",
       "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from the Documents tab.",
       "openPropertiesList": "Open the properties list"
     },

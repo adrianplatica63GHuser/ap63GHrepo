@@ -41,7 +41,8 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { LIST_UNITS, META_CELL_REM, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
+import { tilesOfTab } from "@/lib/ui/tiles";
+import { LIST_UNITS, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -67,8 +68,10 @@ export function JudicialPersonDetailTiles({
   const t = useTranslations("judicialPerson");
   useRegisterPage(personName, personCode, "JUDICIAL_PERSON");
 
-  const urlTile = initialTab ? JP_TILE_OF_TAB[initialTab] : undefined;
-  const choice = useTileChoice<JpTile>(JP_TILE_REGISTRY, urlTile ? [urlTile] : []);
+  // Slice #37.63: `?tab=metadata` names both halves of the old META INFO; the first is scrolled to.
+  const urlTiles = tilesOfTab(JP_TILE_OF_TAB, initialTab);
+  const urlTile = urlTiles[0];
+  const choice = useTileChoice<JpTile>(JP_TILE_REGISTRY, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
@@ -93,7 +96,8 @@ export function JudicialPersonDetailTiles({
       associations:   t("tiles.associations"),
       properties:     t("tiles.properties"),
       documents:      t("tiles.documents"),
-      metadata:       t("tiles.metadata"),
+      classification: t("tiles.classification"),
+      connections:    t("tiles.connections"),
     }),
     [t],
   );
@@ -138,14 +142,27 @@ export function JudicialPersonDetailTiles({
               <PersonDocumentTab personId={personId} backBase="/judicial-persons" compact />
             </ListTile>
           )}
-          {choice.isShown("metadata") && (
-            <ListTile tile="metadata" title={labels.metadata} units={LIST_UNITS.judicialPerson.metadata}>
+          {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
+              through the same query key — fetched once. */}
+          {choice.isShown("classification") && (
+            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.judicialPerson.classification}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
                 backHref={`/judicial-persons/${encodeURIComponent(personId)}`}
                 backEntityName={personName}
-                compactCellRem={META_CELL_REM}
+                part="classification"
+              />
+            </ListTile>
+          )}
+          {choice.isShown("connections") && (
+            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.judicialPerson.connections}>
+              <EntityMetadataTab
+                apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
+                queryKey={`entity-references-person-${personId}`}
+                backHref={`/judicial-persons/${encodeURIComponent(personId)}`}
+                backEntityName={personName}
+                part="connections"
               />
             </ListTile>
           )}

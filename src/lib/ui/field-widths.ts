@@ -737,21 +737,27 @@ export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.pr
 /**
  * The list tiles in units (#37.27). Rule 17: the same list is the same size on
  * every screen — a name, a role and the two buttons stacked are 4 units, Acte
- * (type, title, role, buttons) 5, META INFO 5, two columns of sections.
+ * (type, title, role, buttons) 5.
+ *
+ * Slice #37.63: META INFO (5 units, two columns of sections) became two tiles,
+ * each the fewest units that hold it once the explanations went into bubbles:
+ * „Clasificare subiectivă" 2 — a dropdown and „Marchează ca verificat" side by
+ * side, the widest being Proveniență's „Fișier de coordonate (.txt)" — and
+ * „Conexiuni" 3 — the tag box (`metaTag`, XL) and its „Adaugă" button.
  */
 // Slice #37.58: Proprietăți 5 — a property's name holds on one line (`tilePropertyName`).
-const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, metadata: 5 } as const;
+const PERSON_LIST_UNITS = { associations: 4, properties: 5, documents: 5, classification: 2, connections: 3 } as const;
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
   // „Proprietăți corelate": a property's name on one line, a role, the buttons — 5 (#37.58).
   // Persoane: a name, a role, the buttons — 4. Acte: a property's documents carry no role,
   // so type, title and the buttons — 4. META INFO 5.
-  property: { associations: 5, persons: 4, documents: 4, metadata: 5 },
+  property: { associations: 5, persons: 4, documents: 4, classification: 2, connections: 3 },
   // Persoane: name, role, the three share values stacked, the buttons — 6. Proprietăți: a
   // property's name on one line and the buttons — 4 (3 before #37.58, when it wrapped).
   // „Acte corelate": type, title, Tip relație, buttons — 5.
-  document: { persons: 6, properties: 4, associations: 5, metadata: 5 },
+  document: { persons: 6, properties: 4, associations: 5, classification: 2, connections: 3 },
 } as const;
 
 /**
@@ -820,10 +826,6 @@ function packAt(items: readonly PackItem[], units: number): { units: number; row
   return { units, rows };
 }
 
-/** META INFO's cell: half the 5-unit tile, less the gap between the two — the same on every screen. */
-export const META_CELL_GAP_REM = 1.5;
-export const META_CELL_REM = (unitsInnerRem(PERSON_LIST_UNITS.metadata) - META_CELL_GAP_REM) / 2;
-
 /**
  * A screen's row of tiles: a whole number of units wide (#37.27) — exactly as
  * many as fit beside the sidebar — so every tile's edge falls on the same lines
@@ -847,7 +849,6 @@ export type NpPanel = keyof typeof NP_PANEL_UNITS;
 export const NP_PANEL_INNER_REM: Readonly<Record<NpPanel, number>> = PANEL_UNIT_INNER_REM.naturalPerson;
 export const NP_PANEL_STYLE: Readonly<Record<NpPanel, CSSProperties>> = PANEL_UNIT_STYLE.naturalPerson;
 export const NP_LIST_UNITS = LIST_UNITS.naturalPerson;
-export const NP_META_CELL_REM = META_CELL_REM;
 export function npRowStyle(): CSSProperties {
   return unitRowStyle("naturalPerson");
 }

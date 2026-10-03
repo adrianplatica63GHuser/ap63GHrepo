@@ -40,8 +40,8 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { splitTiles } from "@/lib/ui/tiles";
-import { LIST_UNITS, META_CELL_REM, unitRowStyle } from "@/lib/ui/field-widths";
+import { splitTiles, tilesOfTab } from "@/lib/ui/tiles";
+import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues, type Corner } from "./form-schema";
 import { PROP_TILES, PROP_TILE_OF_TAB, PROP_TILE_REGISTRY, type PropTile } from "./property-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -71,8 +71,10 @@ export function PropertyDetailTiles({
   const t = useTranslations("property");
   useRegisterPage(propertyName, propertyCode, "PROPERTY");
 
-  const urlTile = initialTab ? PROP_TILE_OF_TAB[initialTab] : undefined;
-  const choice = useTileChoice<PropTile>(PROP_TILE_REGISTRY, urlTile ? [urlTile] : []);
+  // Slice #37.63: `?tab=metadata` names both halves of the old META INFO; the first is scrolled to.
+  const urlTiles = tilesOfTab(PROP_TILE_OF_TAB, initialTab);
+  const urlTile = urlTiles[0];
+  const choice = useTileChoice<PropTile>(PROP_TILE_REGISTRY, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
@@ -103,7 +105,8 @@ export function PropertyDetailTiles({
       associations: t("tiles.associations"),
       persons:      t("tiles.persons"),
       documents:    t("tiles.documents"),
-      metadata:     t("tiles.metadata"),
+      classification: t("tiles.classification"),
+      connections:    t("tiles.connections"),
     }),
     [t],
   );
@@ -155,15 +158,28 @@ export function PropertyDetailTiles({
               <PropertyDocumentTab propertyId={propertyId} compact />
             </ListTile>
           )}
-          {choice.isShown("metadata") && (
-            <ListTile tile="metadata" title={labels.metadata} units={LIST_UNITS.property.metadata}>
+          {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
+              through the same query key — fetched once. */}
+          {choice.isShown("classification") && (
+            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.property.classification}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}
                 backHref={`/properties/${encodeURIComponent(propertyId)}`}
                 backEntityName={propertyName}
                 calculationSourcePath={`/api/properties/${encodeURIComponent(propertyId)}/calculation-source`}
-                compactCellRem={META_CELL_REM}
+                part="classification"
+              />
+            </ListTile>
+          )}
+          {choice.isShown("connections") && (
+            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.property.connections}>
+              <EntityMetadataTab
+                apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
+                queryKey={`entity-references-property-${propertyId}`}
+                backHref={`/properties/${encodeURIComponent(propertyId)}`}
+                backEntityName={propertyName}
+                part="connections"
               />
             </ListTile>
           )}

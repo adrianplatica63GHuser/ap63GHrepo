@@ -378,7 +378,8 @@
       "associations": "Proprietăți corelate",
       "persons": "Persoane",
       "documents": "Acte",
-      "metadata": "META INFO"
+      "classification": "Clasificare subiectivă",
+      "connections": "Conexiuni"
     },
     "tabs": {
       "details": "Detalii",
@@ -866,8 +867,8 @@
       "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
       "sectionClassification": "Clasificare subiectivă",
       "sectionConnections": "Conexiuni",
-      "whatDoesThisMean": "Ce înseamnă asta?",
-      "hideAdd": "Ascunde"
+      "hideAdd": "Ascunde",
+      "about": "Despre „{title}”"
     },
     "errorBoundary": {
       "map": "Harta nu a putut fi afișată.",
@@ -1058,7 +1059,8 @@
       "associations": "Persoane",
       "properties": "Proprietăți",
       "documents": "Acte",
-      "metadata": "META INFO"
+      "classification": "Clasificare subiectivă",
+      "connections": "Conexiuni"
     }
   },
   "judicialPerson": {
@@ -1166,7 +1168,8 @@
       "associations": "Persoane corelate",
       "properties": "Proprietăți",
       "documents": "Acte",
-      "metadata": "META INFO"
+      "classification": "Clasificare subiectivă",
+      "connections": "Conexiuni"
     },
     "tabs": {
       "details": "Detalii",
@@ -1538,7 +1541,8 @@
       "persons": "Persoane",
       "properties": "Proprietăți",
       "associations": "Acte corelate",
-      "metadata": "META INFO"
+      "classification": "Clasificare subiectivă",
+      "connections": "Conexiuni"
     },
     "tabs": {
       "details": "Detalii",
@@ -1838,7 +1842,7 @@
       "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou și să reîncercați.",
       "parcelTaken": "Tarlaua și parcela acestui document aparțin deja altei proprietăți. Documentul nu a fost procesat și nu s-a creat nimic.",
       "parcelTakenSeveral": "{count, plural, one {O proprietate are} few {# proprietăți au} other {# de proprietăți au}} tarlaua {tarla} și parcela {parcela}, la fel ca acest document. Documentul nu a fost procesat și nu s-a creat nimic.",
-      "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din fila Acte, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din fila META INFO.",
+      "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din fila Acte, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din „Conexiuni”.",
       "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din fila Acte.",
       "openPropertiesList": "Deschide lista de proprietăți"
     },

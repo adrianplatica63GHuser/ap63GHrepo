@@ -19,7 +19,8 @@ export const JP_TILES = [
   "associations",
   "properties",
   "documents",
-  "metadata",
+  "classification",
+  "connections",
 ] as const;
 export type JpTile = (typeof JP_TILES)[number];
 
@@ -30,17 +31,20 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
   all: JP_TILES,
   defaults: JP_FORM_TILES,
   form: JP_FORM_TILES,
+  renamed: { metadata: ["classification", "connections"] },
 };
 
 /**
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-export const JP_TILE_OF_TAB: Readonly<Record<string, JpTile | undefined>> = {
+// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+export const JP_TILE_OF_TAB: Readonly<Record<string, JpTile | readonly JpTile[] | undefined>> = {
   related: "associations",
   properties: "properties",
   document: "documents",
-  metadata: "metadata",
+  metadata: ["classification", "connections"],
 };
 
 /**

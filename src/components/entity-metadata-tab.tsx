@@ -2,7 +2,7 @@
 
 import { useNameOr } from "@/components/record/use-name-or";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
-import { useState, useRef, type ReactNode } from "react";
+import { useId, useState, useRef } from "react";
 import { Calculator, Check, Link as LinkIcon, Plus, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
@@ -17,7 +17,8 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { META_CELL_GAP_REM, screenBox } from "@/lib/ui/field-widths";
+import { screenBox } from "@/lib/ui/field-widths";
+import { HintBubble } from "@/lib/ui/hint-bubble";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -69,12 +70,13 @@ type Props = {
    */
   calculationSourcePath?: string;
   /**
-   * Slice #37.27 — a compact layout (the Natural Person's META INFO): the
-   * sections sit two to a row, each this many rem wide — a dropdown and
-   * „Marchează ca verificat" side by side — with their explanations wrapping
-   * inside, instead of one full-width band each. Omitted, nothing changes.
+   * Slice #37.63 — which of the two tiles this is. META INFO became two tiles:
+   * „Clasificare subiectivă" (Importanță, Relevanță, Proveniență — with their
+   * versions and the Save button) and „Conexiuni" (Etichete, Grupuri, Ștampile,
+   * Vezi și). Both read the record's metadata through the same query key, so it
+   * is fetched once. Omitted, both parts are drawn, one under the other.
    */
-  compactCellRem?: number;
+  part?: "classification" | "connections";
 };
 
 // ---------------------------------------------------------------------------
@@ -131,6 +133,7 @@ function MetaSelect({
   placeholder,
   options,
   highlight,
+  describedBy,
 }: {
   value:       string;
   onChange:    (v: string) => void;
@@ -138,10 +141,13 @@ function MetaSelect({
   placeholder: string;
   options:     { value: string; label: string }[];
   highlight?:  HighlightColor | undefined;
+  /** The ids of what explains it — the item's note and the chosen value's statement (#37.63). */
+  describedBy?: string;
 }) {
   return (
     <select
       value={value}
+      aria-describedby={describedBy}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
       className={[
@@ -159,6 +165,29 @@ function MetaSelect({
         <option key={o.value} value={o.value}>{o.label}</option>
       ))}
     </select>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ItemTitle — an item's title, its explanation in a bubble      (Slice #37.63)
+// ---------------------------------------------------------------------------
+
+/**
+ * Adrian: the explanation „should show up only as a hint, a bubble on hover;
+ * it should not take up space" — and the same for every item in both tiles.
+ * So the paragraph that sat under each title is a HintBubble on the title: the
+ * mouse resting on it opens it, and the ⓘ beside it opens it for a finger or a
+ * keyboard (#37.50). The text stays in the document (`sr-only` while closed),
+ * so the control it explains can point `aria-describedby` at it.
+ */
+const ITEM_TITLE = "text-sm font-semibold text-ink dark:text-zinc-100";
+
+function ItemTitle({ id, title, note, about }: { id: string; title: string; note?: string; about: string }) {
+  if (!note) return <h3 className={ITEM_TITLE}>{title}</h3>;
+  return (
+    <HintBubble id={id} text={note} triggerLabel={about}>
+      <h3 className={`${ITEM_TITLE} mt-0.5`}>{title}</h3>
+    </HintBubble>
   );
 }
 
@@ -182,10 +211,7 @@ function MetadataSection({
   onMarkReviewed,
   readOnly,
   highlight,
-  /** When true: wraps the qualifying statement in a collapsible <details> element. */
-  collapsibleStatement,
-  /** Summary text for the collapsible, e.g. "Ce înseamnă asta?" */
-  labelWhatMeansThis,
+  about,
   children,
 }: {
   title:                 string;
@@ -208,8 +234,8 @@ function MetadataSection({
   readOnly?:             boolean;
   /** Version-diff highlight colour for this field. */
   highlight?:            HighlightColor | undefined;
-  collapsibleStatement?: boolean;
-  labelWhatMeansThis?:   string;
+  /** The ⓘ's name: „Despre „{title}"" (#37.63). */
+  about:                 string;
   children?:             React.ReactNode;
 }) {
   const [reviewing, setReviewing] = useState(false);
@@ -227,21 +253,37 @@ function MetadataSection({
   }
 
   const statement = value ? statementMap[value] : null;
+  const uid = useId();
+  const noteId = `${uid}-note`;
+  const statementId = `${uid}-statement`;
+
+  const select = (
+    <MetaSelect
+      value={value}
+      onChange={onChange}
+      disabled={readOnly}
+      placeholder={placeholder}
+      options={options}
+      highlight={highlight}
+      describedBy={statement ? `${noteId} ${statementId}` : noteId}
+    />
+  );
 
   return (
-    <section>
-      <h2 className="mb-2 text-xl font-semibold text-ink dark:text-zinc-100">{title}</h2>
-      <p className="mb-3 text-sm text-fade dark:text-zinc-400">{note}</p>
+    <section className="flex flex-col gap-1">
+      <ItemTitle id={noteId} title={title} note={note} about={about} />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <MetaSelect
-          value={value}
-          onChange={onChange}
-          disabled={readOnly}
-          placeholder={placeholder}
-          options={options}
-          highlight={highlight}
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Slice #37.63 — what the chosen value means is a bubble ON the value:
+            the mouse resting on it, or the keyboard reaching it, opens it. It
+            was a paragraph (and, for Proveniență, „Ce înseamnă asta?") under it. */}
+        {statement ? (
+          <HintBubble id={statementId} text={statement}>
+            {select}
+          </HintBubble>
+        ) : (
+          select
+        )}
         {!readOnly && (
           // #37.44 (A031): BadgeCheck, filled once reviewed.
           <MarkReviewedButton
@@ -253,33 +295,20 @@ function MetadataSection({
         )}
       </div>
 
-      {/* Qualifying statement shown once a value is selected */}
-      {statement && (
-        collapsibleStatement ? (
-          <details className="mt-2">
-            <summary className="cursor-pointer text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors select-none">
-              {labelWhatMeansThis}
-            </summary>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 italic pl-1">{statement}</p>
-          </details>
-        ) : (
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 italic">{statement}</p>
-        )
-      )}
-
-      {/* Days-since indicator (hidden on historical read-only views) */}
+      {/* What says something about THIS record stays visible: when it last
+          changed, and the review warning (hidden on historical read-only views). */}
       {!readOnly && (daysText || reviewWarning) && (
-        <div className="mt-1.5 flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5">
           {daysText && (
-            <p className="text-sm text-fade dark:text-zinc-500">{daysText}</p>
+            <p className="text-xs text-fade dark:text-zinc-500">{daysText}</p>
           )}
           {reviewWarning && (
-            <p className="text-sm font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>
+            <p className="text-xs font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>
           )}
         </div>
       )}
 
-      {children && <div className="mt-4">{children}</div>}
+      {children && <div className="mt-1">{children}</div>}
     </section>
   );
 }
@@ -293,6 +322,7 @@ function TagsSection({
   queryKey,
   labelTitle,
   labelNote,
+  labelAbout,
   labelPlaceholder,
   labelAdd,
   labelAdding,
@@ -303,6 +333,7 @@ function TagsSection({
   queryKey:          string;
   labelTitle:        string;
   labelNote:         string;
+  labelAbout:        string;
   labelPlaceholder:  string;
   labelAdd:          string;
   labelAdding:       string;
@@ -388,12 +419,12 @@ function TagsSection({
 
   // Filter out tags already applied so autocomplete doesn't suggest duplicates.
   const tagSet = new Set(tags);
+  const noteId = `${useId()}-note`;
   const suggestions = allTags.filter((t) => !tagSet.has(t.tag));
 
   return (
-    <section>
-      <h2 className="mb-2 text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
-      <p className="mb-3 text-sm text-fade dark:text-zinc-400">{labelNote}</p>
+    <section className="flex flex-col gap-1">
+      <ItemTitle id={noteId} title={labelTitle} note={labelNote} about={labelAbout} />
 
       {/* Autocomplete suggestions list — native HTML5, zero deps */}
       <datalist id={datalistId}>
@@ -403,9 +434,10 @@ function TagsSection({
       </datalist>
 
       {/* Input row */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2">
         <input
           type="text"
+          aria-describedby={noteId}
           list={datalistId}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -541,9 +573,9 @@ function InlineGroupsSection({
   }
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
+    <section className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <h3 className={ITEM_TITLE}>{labelTitle}</h3>
         {isOnLatest && (
           // #37.44 (A032): Plus while closed, ChevronUp while open („▲" before).
           <AddToggleButton
@@ -558,13 +590,13 @@ function InlineGroupsSection({
 
       {/* Add group dropdown (lazy) */}
       {showAdd && isOnLatest && (
-        <div className="mb-3 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <select
             ref={selectRef}
             defaultValue=""
             disabled={adding || availLoading}
             onChange={(e) => { void handleAdd(e.target.value); }}
-            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            className="max-w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
             <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}
@@ -699,9 +731,9 @@ function InlineStampsSection({
   }
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
+    <section className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <h3 className={ITEM_TITLE}>{labelTitle}</h3>
         {isOnLatest && (
           // #37.44 (A032): Plus while closed, ChevronUp while open („▲" before).
           <AddToggleButton
@@ -716,12 +748,12 @@ function InlineStampsSection({
 
       {/* Add stamp dropdown (lazy) */}
       {showAdd && isOnLatest && (
-        <div className="mb-3 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <select
             defaultValue=""
             disabled={adding || availLoading}
             onChange={(e) => { void handleAdd(e.target.value); }}
-            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            className="max-w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
             <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}
@@ -818,6 +850,7 @@ function CrossRefsSection({
   const nameOr      = useNameOr(); // #37.57: a peer by its name, or words — never its system ID
   const queryClient = useQueryClient();
   const crossRefKey = `${mainQueryKey}-cross-refs`;
+  const noteId      = `${useId()}-note`;
   const apiBase     = `/api/metadata/${principalObjectId}/cross-refs`;
 
   const { data, isLoading } = useQuery<{ crossRefs: CrossRefItem[] }>({
@@ -879,11 +912,14 @@ function CrossRefsSection({
   }
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">
-          {t("crossRef.title")}
-        </h2>
+    <section className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <ItemTitle
+          id={noteId}
+          title={t("crossRef.title")}
+          note={t("crossRef.note")}
+          about={t("about", { title: t("crossRef.title") })}
+        />
         {isOnLatest && (
           // #37.44 (A039): Link while closed, ChevronUp while open („▲" before).
           <AddToggleButton
@@ -896,14 +932,9 @@ function CrossRefsSection({
         )}
       </div>
 
-      {/* Clarifying note — always visible so the purpose is self-documenting */}
-      <p className="mb-3 text-sm text-fade dark:text-zinc-400 italic">
-        {t("crossRef.note")}
-      </p>
-
       {/* Add form (inline, no modal) */}
       {showAdd && isOnLatest && (
-        <div className="mb-4 rounded-md border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 p-3 flex flex-col gap-2">
+        <div className="rounded-md border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 p-3 flex flex-col gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <input
               type="text"
@@ -1116,7 +1147,9 @@ function CalculationSourceLink({
 // Main component
 // ---------------------------------------------------------------------------
 
-export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath, compactCellRem }: Props) {
+export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath, part }: Props) {
+  const showClassification = part !== "connections";
+  const showConnections    = part !== "classification";
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
   const { data: tf } = useTimeFrames();
@@ -1166,7 +1199,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
-    enabled:              !!data?.principalObjectId,
+    // Slice #37.63: the versions are the three classification values', so only
+    // that tile asks for them.
+    enabled:              showClassification && !!data?.principalObjectId,
     staleTime:            0,
     refetchOnWindowFocus: false,
   });
@@ -1436,23 +1471,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  // Slice #37.27 — the compact layout. Plain functions, not components: a
-  // component declared here would be a new type on every render and remount
-  // the sections under it, losing a half-typed tag or a pending review.
-  const cellStyle = compactCellRem ? { width: `${compactCellRem}rem` } : undefined;
-  const cell = (node: ReactNode): ReactNode => (cellStyle ? <div style={cellStyle}>{node}</div> : node);
-  const grid = (node: ReactNode): ReactNode =>
-    cellStyle ? (
-      <div
-        className="flex flex-wrap items-start [&_h2]:mb-1 [&_h2]:text-base"
-        style={{ gap: `1.5rem ${META_CELL_GAP_REM}rem` }}
-        data-metadata-grid
-      >
-        {node}
-      </div>
-    ) : (
-      node
-    );
+  const about = (title: string) => t("about", { title });
 
   return (
     <>
@@ -1471,8 +1490,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         />
       )}
 
-      <div className={`flex flex-col ${cellStyle ? "gap-5" : "gap-8"} py-2`}>
+      {/* Slice #37.63 — one column of items, each a title (its explanation a
+          bubble), its control and what is true of this record; no paragraphs
+          of help, no empty lines. With `part` the tile's own title names the
+          section; without it both sections are drawn under their subheaders. */}
+      <div className="flex flex-col gap-4" data-metadata-part={part ?? "both"}>
 
+        {showClassification && (<>
         {/* ── Version nav (only when there are multiple versions) ──────────── */}
         {totalVer > 1 && (
           <div className="flex items-center gap-2 pb-2 border-b border-card-rim dark:border-zinc-700">
@@ -1480,18 +1504,17 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           </div>
         )}
 
-        {/* ── Section subheader: Clasificare subiectivă / Subjective Classification ── */}
-        <div className="pb-1 border-b border-card-rim dark:border-zinc-700">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+        {!part && (
+          <h3 className="border-b border-card-rim pb-1 text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700 dark:text-zinc-500">
             {t("sectionClassification")}
           </h3>
-        </div>
+        )}
 
-        {grid(<>
         {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
-        {cell(<MetadataSection
+        <MetadataSection
           title={t("importance.title")}
           note={t("importance.note")}
+          about={about(t("importance.title"))}
           value={displayImportance}
           onChange={setLocalImportance}
           options={importanceOptions}
@@ -1505,12 +1528,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("importance")}
           readOnly={!isOnLatest}
           highlight={highlights.importance}
-        />)}
+        />
 
         {/* ── 2. Relevanță / Relevance ─────────────────────────────────────── */}
-        {cell(<MetadataSection
+        <MetadataSection
           title={t("relevance.title")}
           note={t("relevance.note")}
+          about={about(t("relevance.title"))}
           value={displayRelevance}
           onChange={setLocalRelevance}
           options={relevanceOptions}
@@ -1524,12 +1548,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("relevance")}
           readOnly={!isOnLatest}
           highlight={highlights.relevance}
-        />)}
+        />
 
-        {/* ── 3. Proveniență / Provenience (with history + collapsible statement) ── */}
-        {cell(<MetadataSection
+        {/* ── 3. Proveniență / Provenience, with its history ───────────────── */}
+        <MetadataSection
           title={t("provenance.title")}
           note={t("provenance.note")}
+          about={about(t("provenance.title"))}
           value={displayProvenance}
           onChange={setLocalProvenance}
           options={provenanceOptions}
@@ -1543,8 +1568,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("provenance")}
           readOnly={!isOnLatest}
           highlight={highlights.provenance}
-          collapsibleStatement
-          labelWhatMeansThis={t("whatDoesThisMean")}
         >
           {/* Slice #20.09: calculation source link (shown when provenance = ALGORITHM) */}
           {calculationSourcePath && displayProvenance === "ALGORITHM" && (
@@ -1557,14 +1580,15 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             />
           )}
 
-          {/* History — sourced from entity_provenance_log via the main query */}
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+          {/* History — sourced from entity_provenance_log via the main query.
+              It says something about THIS record, so it stays visible (#37.63). */}
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
             {t("provenance.historyTitle")}
-          </h3>
+          </h4>
           {data.provenanceHistory.length === 0 ? (
             <p className="text-xs text-fade dark:text-zinc-500">{t("provenance.historyEmpty")}</p>
           ) : (
-            <ul className="flex flex-col gap-1">
+            <ul className="flex flex-col gap-0.5">
               {data.provenanceHistory.map((entry, i) => (
                 <li key={i} className="flex items-center gap-3 text-xs text-fade dark:text-zinc-400">
                   <span className="font-mono tabular-nums">{entry.date}</span>
@@ -1573,8 +1597,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
               ))}
             </ul>
           )}
-        </MetadataSection>)}
-        </>)}
+        </MetadataSection>
 
         {/* ── Unified Save button (Task #20) ───────────────────────────────── */}
         {isOnLatest && (
@@ -1593,32 +1616,33 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             />
           </div>
         )}
+        </>)}
 
-        {/* ── Section subheader: Conexiuni / Connections ────────────────────── */}
-        <div className="pb-1 border-b border-card-rim dark:border-zinc-700">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+        {showConnections && (<>
+        {!part && (
+          <h3 className="border-b border-card-rim pb-1 text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700 dark:text-zinc-500">
             {t("sectionConnections")}
           </h3>
-        </div>
+        )}
 
-        {grid(<>
         {/* ── 4. Etichete / Tags ───────────────────────────────────────────── */}
         {data.principalObjectId && isOnLatest && (
-          cell(<TagsSection
+          <TagsSection
             principalObjectId={data.principalObjectId}
             queryKey={queryKey}
             labelTitle={t("tags.title")}
             labelNote={t("tags.note")}
+            labelAbout={about(t("tags.title"))}
             labelPlaceholder={t("tags.placeholder")}
             labelAdd={t("tags.add")}
             labelAdding={t("tags.adding")}
             labelRemove={t("tags.remove")}
             labelEmpty={t("tags.empty")}
-          />)
+          />
         )}
 
         {/* ── 5. Grupuri / Groups ──────────────────────────────────────────── */}
-        {cell(data.principalObjectId ? (
+        {data.principalObjectId ? (
           <InlineGroupsSection
             principalObjectId={data.principalObjectId}
             currentGroups={data.groups}
@@ -1633,14 +1657,14 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             withBack={withBack}
           />
         ) : (
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">{t("groups.title")}</h2>
+          <section className="flex flex-col gap-1">
+            <h3 className={ITEM_TITLE}>{t("groups.title")}</h3>
             <p className="text-sm text-fade dark:text-zinc-400">{t("groups.empty")}</p>
           </section>
-        ))}
+        )}
 
         {/* ── 6. Ștampile / Stamps ─────────────────────────────────────────── */}
-        {cell(data.principalObjectId ? (
+        {data.principalObjectId ? (
           <InlineStampsSection
             principalObjectId={data.principalObjectId}
             currentStamps={data.stamps}
@@ -1655,25 +1679,23 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             withBack={withBack}
           />
         ) : (
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">{t("stamps.title")}</h2>
+          <section className="flex flex-col gap-1">
+            <h3 className={ITEM_TITLE}>{t("stamps.title")}</h3>
             <p className="text-sm text-fade dark:text-zinc-400">{t("stamps.empty")}</p>
           </section>
-        ))}
+        )}
 
         {/* ── 7. Trimiteri / See Also ──────────────────────────────────────── */}
         {data.principalObjectId && (
-          cell(<CrossRefsSection
+          <CrossRefsSection
             principalObjectId={data.principalObjectId}
             mainQueryKey={queryKey}
             isOnLatest={isOnLatest}
             t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
             withBack={withBack}
-          />)
+          />
         )}
         </>)}
-
-
       </div>
     </>
   );

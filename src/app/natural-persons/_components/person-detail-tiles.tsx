@@ -36,7 +36,8 @@ import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { NP_LIST_UNITS, NP_META_CELL_REM, PANEL_GAP, npRowStyle } from "@/lib/ui/field-widths";
+import { tilesOfTab } from "@/lib/ui/tiles";
+import { NP_LIST_UNITS, PANEL_GAP, npRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
@@ -66,8 +67,10 @@ export function PersonDetailTiles({
   const t = useTranslations("naturalPerson");
   useRegisterPage(personName, personCode, "NATURAL_PERSON");
 
-  const urlTile = initialTab ? NP_TILE_OF_TAB[initialTab] : undefined;
-  const choice = useTileChoice<NpTile>(NP_TILE_REGISTRY, urlTile ? [urlTile] : []);
+  // Slice #37.63: `?tab=metadata` names both halves of the old META INFO; the first is scrolled to.
+  const urlTiles = tilesOfTab(NP_TILE_OF_TAB, initialTab);
+  const urlTile = urlTiles[0];
+  const choice = useTileChoice<NpTile>(NP_TILE_REGISTRY, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
@@ -94,7 +97,8 @@ export function PersonDetailTiles({
       associations: t("tiles.associations"),
       properties:   t("tiles.properties"),
       documents:    t("tiles.documents"),
-      metadata:     t("tiles.metadata"),
+      classification: t("tiles.classification"),
+      connections:    t("tiles.connections"),
     }),
     [t],
   );
@@ -140,14 +144,27 @@ export function PersonDetailTiles({
               <PersonDocumentTab personId={personId} backBase="/natural-persons" compact />
             </ListTile>
           )}
-          {choice.isShown("metadata") && (
-            <ListTile tile="metadata" title={labels.metadata} units={NP_LIST_UNITS.metadata}>
+          {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
+              through the same query key — fetched once. */}
+          {choice.isShown("classification") && (
+            <ListTile tile="classification" title={labels.classification} units={NP_LIST_UNITS.classification}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
                 backHref={`/natural-persons/${encodeURIComponent(personId)}`}
                 backEntityName={personName}
-                compactCellRem={NP_META_CELL_REM}
+                part="classification"
+              />
+            </ListTile>
+          )}
+          {choice.isShown("connections") && (
+            <ListTile tile="connections" title={labels.connections} units={NP_LIST_UNITS.connections}>
+              <EntityMetadataTab
+                apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
+                queryKey={`entity-references-person-${personId}`}
+                backHref={`/natural-persons/${encodeURIComponent(personId)}`}
+                backEntityName={personName}
+                part="connections"
               />
             </ListTile>
           )}

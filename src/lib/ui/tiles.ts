@@ -30,8 +30,10 @@ export interface TileRegistry<K extends string> {
   /**
    * A tile whose key changed, old key → current key, so a choice stored under
    * the old one is read as the new one (Slice #37.54: the CVC's renamed tiles).
+   * Since #37.63 an old key may stand for SEVERAL: META INFO („metadata") became
+   * „Clasificare subiectivă" and „Conexiuni", and a browser that showed it shows both.
    */
-  renamed?: Readonly<Record<string, K>>;
+  renamed?: Readonly<Record<string, K | readonly K[]>>;
   /**
    * Where the tiles stand when the screen opens (Slice #37.56). `right` names
    * the tiles that stand in a column at the right of the screen, top to
@@ -91,12 +93,25 @@ export function parseStoredTiles<K extends string>(raw: string | null, reg: Tile
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [...reg.defaults];
-    const keys = parsed.filter((x): x is string => typeof x === "string").map((k) => reg.renamed?.[k] ?? k);
+    const keys = parsed.filter((x): x is string => typeof x === "string").flatMap((k) => reg.renamed?.[k] ?? k);
     const known = inRegistryOrder(keys, reg.all);
     return known.length > 0 ? known : [...reg.defaults];
   } catch {
     return [...reg.defaults];
   }
+}
+
+/**
+ * The tiles a `?tab=` adds for the visit — none, one, or (since #37.63, where
+ * `?tab=metadata` names both halves of the old META INFO) several.
+ */
+export function tilesOfTab<K extends string>(
+  map: Readonly<Record<string, K | readonly K[] | undefined>>,
+  tab: string | undefined,
+): K[] {
+  const hit = tab ? map[tab] : undefined;
+  if (hit === undefined) return [];
+  return typeof hit === "string" ? [hit] : [...hit];
 }
 
 /** Tick or untick one tile. Unticking the last one changes nothing. */

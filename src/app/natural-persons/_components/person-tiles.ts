@@ -15,7 +15,8 @@ export const NP_TILES = [
   "associations",
   "properties",
   "documents",
-  "metadata",
+  "classification",
+  "connections",
 ] as const;
 export type NpTile = (typeof NP_TILES)[number];
 
@@ -26,17 +27,20 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   all: NP_TILES,
   defaults: NP_FORM_TILES,
   form: NP_FORM_TILES,
+  renamed: { metadata: ["classification", "connections"] },
 };
 
 /**
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-export const NP_TILE_OF_TAB: Readonly<Record<string, NpTile | undefined>> = {
+// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+export const NP_TILE_OF_TAB: Readonly<Record<string, NpTile | readonly NpTile[] | undefined>> = {
   related: "associations",
   properties: "properties",
   document: "documents",
-  metadata: "metadata",
+  metadata: ["classification", "connections"],
 };
 
 const IDENTITY = new Set([

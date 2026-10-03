@@ -78,7 +78,8 @@ export function tileOfTabIndex(tabs: readonly string[], index: number): string {
   return tabs.length > 0 ? tabTileKey(tabs[Math.min(Math.max(index, 0), tabs.length - 1)]) : FIELDS_TILE;
 }
 
-export const DOCUMENT_LIST_TILES = ["persons", "properties", "associations", "metadata"] as const;
+// Slice #37.63: META INFO („metadata") is two tiles — „Clasificare subiectivă" and „Conexiuni".
+export const DOCUMENT_LIST_TILES = ["persons", "properties", "associations", "classification", "connections"] as const;
 
 /** Built from the type on screen. The entity — and so the storage key — carries the type's key. */
 export function documentTileRegistry(layout: DocumentLayout): TileRegistry<string> {
@@ -109,11 +110,15 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
     ],
     // Slice #37.56: the page image stands at the right of the row, top-aligned.
     placement: { right: layout.pages ? ["pages"] : [] },
-    renamed: Object.fromEntries(
-      Object.entries(RENAMED_TABS)
-        .filter(([, now]) => layout.tabs.includes(now))
-        .map(([was, now]) => [tabTileKey(was), tabTileKey(now)]),
-    ),
+    renamed: {
+      ...Object.fromEntries(
+        Object.entries(RENAMED_TABS)
+          .filter(([, now]) => layout.tabs.includes(now))
+          .map(([was, now]) => [tabTileKey(was), tabTileKey(now)]),
+      ),
+      // A browser that stored META INFO opens with both of its halves (#37.63).
+      metadata: ["classification", "connections"],
+    },
   };
 }
 
@@ -121,11 +126,13 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-export const DOC_TILE_OF_TAB: Readonly<Record<string, string | undefined>> = {
+// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+export const DOC_TILE_OF_TAB: Readonly<Record<string, string | readonly string[] | undefined>> = {
   related: "associations",
   persons: "persons",
   properties: "properties",
-  metadata: "metadata",
+  metadata: ["classification", "connections"],
 };
 
 /**

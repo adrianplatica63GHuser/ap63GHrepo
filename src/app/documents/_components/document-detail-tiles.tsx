@@ -49,8 +49,8 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { splitTiles } from "@/lib/ui/tiles";
-import { LIST_UNITS, META_CELL_REM, unitRowStyle } from "@/lib/ui/field-widths";
+import { splitTiles, tilesOfTab } from "@/lib/ui/tiles";
+import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import {
   DOCUMENT_STATUS_CLASS,
   type DocumentStatus,
@@ -105,8 +105,10 @@ export function DocumentDetailTiles({
   const layoutKey = JSON.stringify(layout);
   const reg = useMemo(() => documentTileRegistry(JSON.parse(layoutKey) as DocumentLayout), [layoutKey]);
 
-  const urlTile = initialTab ? DOC_TILE_OF_TAB[initialTab] : undefined;
-  const choice = useTileChoice<string>(reg, urlTile ? [urlTile] : []);
+  // Slice #37.63: `?tab=metadata` names both halves of the old META INFO; the first is scrolled to.
+  const urlTiles = tilesOfTab(DOC_TILE_OF_TAB, initialTab);
+  const urlTile = urlTiles[0];
+  const choice = useTileChoice<string>(reg, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
@@ -140,7 +142,8 @@ export function DocumentDetailTiles({
       persons:      t("tiles.persons"),
       properties:   t("tiles.properties"),
       associations: t("tiles.associations"),
-      metadata:     t("tiles.metadata"),
+      classification: t("tiles.classification"),
+      connections:    t("tiles.connections"),
     };
     // A notebook tab's tile is named as its tab is: the type's own words.
     for (const label of layout.tabs) out[`tab:${label}`] = label;
@@ -230,15 +233,30 @@ export function DocumentDetailTiles({
               </ListTile>
             </div>
           )}
-          {choice.isShown("metadata") && (
-            <div className="max-w-full" style={{ order: order("metadata") }}>
-              <ListTile tile="metadata" title={labels.metadata} units={LIST_UNITS.document.metadata}>
+          {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
+              through the same query key — fetched once. */}
+          {choice.isShown("classification") && (
+            <div className="max-w-full" style={{ order: order("classification") }}>
+              <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.document.classification}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}
                   backHref={`/documents/${encodeURIComponent(documentId)}`}
                   backEntityName={documentName}
-                  compactCellRem={META_CELL_REM}
+                  part="classification"
+                />
+              </ListTile>
+            </div>
+          )}
+          {choice.isShown("connections") && (
+            <div className="max-w-full" style={{ order: order("connections") }}>
+              <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.document.connections}>
+                <EntityMetadataTab
+                  apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
+                  queryKey={`entity-references-document-${documentId}`}
+                  backHref={`/documents/${encodeURIComponent(documentId)}`}
+                  backEntityName={documentName}
+                  part="connections"
                 />
               </ListTile>
             </div>

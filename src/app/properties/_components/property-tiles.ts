@@ -13,7 +13,8 @@
  * - MAP tiles — Hartă, Street View — hold no form state (the map draws the
  *   corners it is given). AN UNTICKED MAP COSTS NOTHING: neither is mounted
  *   while unticked, so neither makes a Google Maps request of its own.
- * - LIST tiles — Asocieri, Persoane, Acte, META INFO — as on the persons.
+ * - LIST tiles — Asocieri, Persoane, Acte, Clasificare subiectivă and Conexiuni
+ *   (META INFO until #37.63) — as on the persons.
  *
  * Nothing stored shows what Detalii showed: the cadastral data, the corners,
  * the address and the map. Street View was a button there, off on open; it is
@@ -31,7 +32,8 @@ export const PROP_TILES = [
   "associations",
   "persons",
   "documents",
-  "metadata",
+  "classification",
+  "connections",
 ] as const;
 export type PropTile = (typeof PROP_TILES)[number];
 
@@ -46,17 +48,20 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
   // under that when ticked — one column; the cadastral data, the address and
   // the lists to their left.
   placement: { right: ["map", "corners", "streetView"] },
+  renamed: { metadata: ["classification", "connections"] },
 };
 
 /**
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-export const PROP_TILE_OF_TAB: Readonly<Record<string, PropTile | undefined>> = {
+// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
+export const PROP_TILE_OF_TAB: Readonly<Record<string, PropTile | readonly PropTile[] | undefined>> = {
   related: "associations",
   persons: "persons",
   document: "documents",
-  metadata: "metadata",
+  metadata: ["classification", "connections"],
 };
 
 /**
