@@ -154,7 +154,10 @@ describe("„Cotă”, the orange share button", () => {
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("group", { name: /^shareTitle/ })).toBeNull();
     await waitFor(() => expect(calls.some((c) => c.method === "PATCH")).toBe(true));
-    expect(JSON.parse(calls.find((c) => c.method === "PATCH")?.body ?? "{}").cotaSuprafataMp).toBe(120);
+    const patches = calls.filter((c) => c.method === "PATCH");
+    // One write: the box left untouched (the panel focused it first) writes nothing.
+    expect(patches).toHaveLength(1);
+    expect(JSON.parse(patches[0].body ?? "{}").cotaSuprafataMp).toBe(120);
   });
 
   it("a read-only share shows its boxes disabled, with #37.59's hint", async () => {

@@ -254,6 +254,11 @@ export function DocumentPersonsTab({ documentId, label }: Props) {
    * archive that nobody typed.
    */
   const commitNumeric = async (item: AssociatedPerson, field: "parte" | "mp") => {
+    // Nothing typed, nothing to write (#37.64): the share panel focuses its first box
+    // when it opens, so leaving a box untouched is now the ordinary case, and a PATCH
+    // of the same three values on every pass through the panel would be a write
+    // nobody made.
+    if (drafts[item.linkId]?.[field] === undefined) return;
     const raw = draftOf(item, field);
     const parsed = field === "parte" ? parseCotaParte(raw) : parseCotaSuprafataMp(raw);
     if (!parsed.ok) {
