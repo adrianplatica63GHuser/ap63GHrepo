@@ -92,4 +92,4 @@ so it does not depend on which way this is decided. In the 36.08 handover.
 **2026-10-02 — Slice #37.60 (the two persons' lists).** The Judicial Persons list gained
 „Câmpuri afișate", offering Tip, Nr. înregistrare (CUI) and Nr. registru comerțului; step 1 now
 reads its button, `0/3` in a browser that has never chosen. The CUI column is still absent until
-it is ticked. The spec follows.
+it is ticked. The spec follows, green in the runner's full `20261003T013901Z-21163`.

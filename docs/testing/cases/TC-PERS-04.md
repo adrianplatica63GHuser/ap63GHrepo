@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -75,3 +75,5 @@ company's type already „SRL"), both stored choices reset first, against the fi
 - Both choices put back (`[]`, and the company's removed); both records deleted (204 ×2).
   Nothing in the file changed, so the case is confirmed, and `e2e/person/person-lists.spec.ts`
   translates it.
+
+**2026-10-02 — `automated` (Slice #37.60).** `e2e/person/person-lists.spec.ts` green in the runner's full `20261003T012229Z-23343` and again in `20261003T013901Z-21163` (e2e 59); it also measures each preview narrower than a 3-unit panel and lower than 10 rem.
