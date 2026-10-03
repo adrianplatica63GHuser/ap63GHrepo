@@ -36,7 +36,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", a filter „Grupuri: Toate grupurile", a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column**, and no „Importanță" / „Relevanță" / „Câmpuri afișate" as on the other lists |
+| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", a filter „Grupuri: Toate grupurile", a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column** in a browser that has never chosen one, no „Importanță" or „Relevanță", and a button „Câmpuri afișate 0/3" (#37.60) |
 | 2 | Presses „Adaugă persoană juridică" | **Straight to** „Persoană juridică nouă" at `/judicial-persons/new` — no chooser dialog, as for natural persons. Its sections are „PERSOANĂ JURIDICĂ", „PERSOANE DE CONTACT", „ADRESĂ SEDIU SOCIAL", a checkbox „Aceeași cu adresa sediului social", and „ADRESĂ CORESPONDENȚĂ" |
 | 3 | Types `TC-PERS-02 Firmă de test SRL` into „Denumire" | The value appears. „Denumire" is the only required field |
 | 4 | Chooses „SRL" in „Tip" | The select offers „—", „Consiliu Local", „Instituție", „SRL", „SA", „SRL-D", „PFA", „II", „IF", „ONG", „Altele" |
@@ -88,3 +88,8 @@ person's CNP carries the same hint on the same kind of field. The case does not 
 so it does not depend on which way this is decided. In the 36.08 handover.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-02 — Slice #37.60 (the two persons' lists).** The Judicial Persons list gained
+„Câmpuri afișate", offering Tip, Nr. înregistrare (CUI) and Nr. registru comerțului; step 1 now
+reads its button, `0/3` in a browser that has never chosen. The CUI column is still absent until
+it is ticked. The spec follows.

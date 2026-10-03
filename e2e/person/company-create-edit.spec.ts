@@ -61,7 +61,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
 
     let companyId: string | undefined;
     try {
-      // Step 1 — „Persoane Juridice": no CUI column, no „Câmpuri afișate".
+      // Step 1 — „Persoane Juridice": no CUI column; „Câmpuri afișate 0/3" (#37.60).
       await page.goto("/");
       await openFromSidebar(page, "Persoane Juridice");
       await expect(page.getByRole("heading", { name: "Persoană juridică", exact: true })).toBeVisible({ timeout: 30_000 });
@@ -72,7 +72,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
         await expect(page.getByRole("columnheader", { name: col }).first()).toBeVisible();
       }
       await expect(page.getByRole("columnheader", { name: "CUI" })).toHaveCount(0);
-      await expect(page.getByRole("button", { name: /^Câmpuri afișate/ })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Câmpuri afișate 0/3", exact: true })).toBeVisible();
 
       // Step 2 — „Adaugă persoană juridică" goes STRAIGHT to the form.
       await page.getByRole("link", { name: "Adaugă persoană juridică" }).click();

@@ -106,7 +106,16 @@ export async function createNaturalPerson(
   // `gender` since Slice #37.28: a relationship's converse follows it
   // („Fiu" / „Fiică"), so TC-ASSOC-09 sets it. `cnp` since #37.50, for
   // TC-PERS-03 — always a synthetic one.
-  fields: { lastName: string; firstName: string; gender?: "MALE" | "FEMALE"; cnp?: string },
+  // `nickname`, `dateOfBirth`, `placeOfBirth` since #37.60, for TC-PERS-04's columns and preview.
+  fields: {
+    lastName: string;
+    firstName: string;
+    gender?: "MALE" | "FEMALE";
+    cnp?: string;
+    nickname?: string;
+    dateOfBirth?: string;
+    placeOfBirth?: string;
+  },
 ): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.person, {
     ...fields,
@@ -116,7 +125,11 @@ export async function createNaturalPerson(
 }
 
 /** A company with this „Denumire", the shape TC-PERS-02 creates.  (Slice #36.18) */
-export async function createCompany(request: APIRequestContext, fields: { name: string }): Promise<string> {
+export async function createCompany(
+  request: APIRequestContext,
+  // The rest since #37.60, for TC-PERS-04's columns and preview.
+  fields: { name: string; nickname?: string; cuiNumber?: string; tradeRegisterNumber?: string; judicialPersonTypeId?: string },
+): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.company, {
     ...fields,
     provenance: "MANUAL",
