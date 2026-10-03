@@ -8,9 +8,11 @@
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The records carry `TC-E2E-DOC-07` (records.ts); the two links are
  *     posted through POST /api/documents/[id]/persons, as „Asociază" does.
- *   - „Deține cotă" on the PAD's „Proiectant / Consultant" is set back to
- *     what it was in `finally`, through the PATCH the tick calls, so a failed
- *     run leaves the reference data as it found it.
+ *   - „Deține cotă" on the PAD's „Proiectant / Consultant" is set to the
+ *     case's „Before you start" (off, as migration_091 left it) through the
+ *     PATCH the tick calls — before the steps, and again in `finally` once the
+ *     page's own requests have settled — so neither an interrupted run nor a
+ *     tick still in flight leaves it on.
  *   - Slice #37.59's pictures, not steps of the case: the PAD's and the
  *     CVC's „Persoane" and „Roluri pe Document", at 1366 and 1920 px, into
  *     `playwright-report/role-share/`.
@@ -94,7 +96,7 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
     expect(vanzator, "Contract de Vânzare offers „Vânzător\" (Before you start)").toBeTruthy();
     const P = proiectant as Pair;
     const V = vanzator as Pair;
-    expect(P.holdsShare).toBe(false);
+    await setHoldsShare(page, P.id, false);
     expect(V.holdsShare).toBe(true);
 
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
@@ -155,7 +157,8 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await expect(row).toContainText("Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit.");
       await photograph(page, "pad-persons-readonly", page.getByRole("region", { name: "Persoane", exact: true }));
     } finally {
-      await setHoldsShare(page, P.id, P.holdsShare);
+      await page.waitForLoadState("networkidle").catch(() => {});
+      await setHoldsShare(page, P.id, false);
       await removeRecord(page.request, "document", padId);
       await removeRecord(page.request, "document", cvcId);
       await removeRecord(page.request, "person", personId);
