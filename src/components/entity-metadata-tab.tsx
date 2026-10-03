@@ -596,7 +596,7 @@ function InlineGroupsSection({
             defaultValue=""
             disabled={adding || availLoading}
             onChange={(e) => { void handleAdd(e.target.value); }}
-            className="max-w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
             <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}
@@ -753,7 +753,7 @@ function InlineStampsSection({
             defaultValue=""
             disabled={adding || availLoading}
             onChange={(e) => { void handleAdd(e.target.value); }}
-            className="max-w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
             <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}

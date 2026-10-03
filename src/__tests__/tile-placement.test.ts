@@ -47,7 +47,7 @@ describe("the split", () => {
   });
 
   it("keeps the left area in the registry's order whatever order the choice was stored in", () => {
-    expect(splitTiles(["metadata", "map", "cadastral", "persons"], P)).toEqual({ left: ["cadastral", "persons", "metadata"], right: ["map"] });
+    expect(splitTiles(["connections", "map", "cadastral", "persons"], P)).toEqual({ left: ["cadastral", "persons", "connections"], right: ["map"] }); // #37.63: META INFO's half
   });
 
   it("puts a Document's page image at the right, and only when the document has pages", () => {
