@@ -179,6 +179,8 @@ describe("every path that writes or offers a share reads the tick", () => {
     expect(tab.match(/disabled=\{locked \|\| savingId === item\.linkId\}/g) ?? []).toHaveLength(3);
     expect(tab).toMatch(/\{cells !== "none" && \(/);
     expect(tab).toMatch(/data-share=\{cells\}/);
+    // A value kept read-only on a role that holds no share is not summed into the per-role total.
+    expect(tab).toMatch(/\(items \?\? \[\]\)\.filter\(\(i\) => shareCells\(i\) === "edit"\)/);
   });
 
   it("the list of persons carries the pair's tick, read for the document's own type", () => {

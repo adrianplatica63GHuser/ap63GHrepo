@@ -137,7 +137,9 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
    */
   const totals = useMemo(
     () => cotaTotalsByRole(
-      (items ?? []).map((i) => ({
+      // Slice #37.59: only the roles that hold a share (or none is set) are summed — a
+      // value kept read-only on a Proiectant is not a share the deed must close to 100%.
+      (items ?? []).filter((i) => shareCells(i) === "edit").map((i) => ({
         roleId:    i.personRoleId,
         roleName:  i.roleName,
         cotaParte: i.cotaParte,
@@ -294,7 +296,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
 
   const inputClass = (invalid: boolean) =>
     [
-      "rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none",
+      "rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:bg-canvas disabled:text-fade",
       "dark:bg-zinc-950 dark:text-zinc-100",
       invalid
         ? "border-red-500 focus:border-red-600"
