@@ -44,20 +44,22 @@ Two natural persons, typed by hand, no CNP: „Nume" **`TC-ASSOC-09`**, „Prenu
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume", „Prenume", chooses „Gen", „Salvează" | Two rows badged „Nou!", with no system ID |
-| 2 | Opens `Ana TC-ASSOC-09`, tile **„Persoane"** | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Tip relație"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
+| 2 | Opens `Ana TC-ASSOC-09`, tile **„Corelate"** („Persoane" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 3 | Presses „Asociază persoană" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Tip relație"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
 | 4 | Ticks `Mihai TC-ASSOC-09`, chooses „Tip relație" **„Părinte"** | The hint goes away |
-| 5 | Presses „Asociază selecția" | Back on Ana's „Persoane" (`?tab=related`): a table Nume · Tip relație, one row — `Mihai TC-ASSOC-09`, **„Părinte"**, „Vizualizare" |
-| 6 | Opens `Mihai TC-ASSOC-09`, tile „Persoane" | One row — `Ana TC-ASSOC-09`, **„Fiică"** (not „Părinte") |
+| 5 | Presses „Asociază selecția" | Back on Ana's „Corelate" (`?tab=related`): one line, no column headings — `Mihai TC-ASSOC-09 (`**`Părinte`**`)`, „Vizualizare" |
+| 6 | Opens `Mihai TC-ASSOC-09`, tile „Corelate" | One line — `Ana TC-ASSOC-09 (`**`Fiică`**`)` (not „Părinte") |
 
 Step 6 is the other end: Mihai is Ana's „Părinte", so Ana is Mihai's „Fiică".
 
 ## At the end — leaving things as they were found
 
-On either person's „Persoane", select the row's radio and press „Dezasociază" — „Nicio persoană
-corelată". Then delete both people: open each, „Șterge" at the bottom of the form, „Da".
+On either person's „Corelate", select the row's radio and press „Dezasociază" — „Nimic corelat
+încă.". Then delete both people: open each, „Șterge" at the bottom of the form, „Da".
 
 ## Notes from the runs
+
+**2026-10-03 — Slice #37.67: a person's „Persoane", „Proprietăți" and „Acte" are one tile, „Corelate".** Steps 2, 3, 5, 6 and the cleanup read „Corelate", its one-line rows („Nume (Rol)") and „Asociază persoană"; the link and the words are unchanged. The spec follows.
 
 **2026-09-30 — rewritten for the directional role, `automated`, green (Slice #37.28).** Mihai is ticked as „Părinte" from Ana's screen; Ana's „Persoane" reads „Părinte", Mihai's reads „Fiică". Green in the test runner's `full-db` `20261001T000715Z-325` on `17d3397` (e2e 38 passed). FU-221 resolved.
 

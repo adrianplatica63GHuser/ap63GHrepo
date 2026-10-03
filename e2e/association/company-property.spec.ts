@@ -20,6 +20,8 @@
  *     (e2e/helpers/tiles.ts).
  *   - Slice #37.66: the Property's „Proprietăți corelate", Persoane and Acte are one tile,
  *     „Corelate", one line a row (the case's steps as corrected on 2026-10-03).
+ *   - Slice #37.67: so are the company's „Persoane corelate", „Proprietăți" and „Acte" — „Nume (Rol)"
+ *     on one line, with „Asociază proprietate".
  */
 
 import { test, expect } from "@playwright/test";
@@ -30,7 +32,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { lineRow, showTile } from "../helpers/tiles";
+import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-06`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -50,13 +52,13 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 
-      // Step 2 — „Proprietăți": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Proprietăți");
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      // Step 2 — „Corelate": empty, „Asociază proprietate", „Dezasociază".
+      const related = await showTile(page, "Corelate");
+      await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
+      await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere proprietate": „Căutare", Cod · Denumire, „Rol" with the four.
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await related.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}/associate-property$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(COMPANY).first()).toBeVisible();
@@ -81,17 +83,14 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       // Step 5 — the role.
       await role.selectOption({ label: ROLE });
 
-      // Step 6 — back on the company's „Proprietăți" (`?tab=properties`): Denumire · Rol.
+      // Step 6 — back on the company's „Corelate" (`?tab=properties`): one line, „Denumire (Rol)".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=properties$`), { timeout: 30_000 });
-      const onCompany = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
+      const onCompany = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PROPERTY);
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
-      await expect(onCompany).toContainText(ROLE);
+      await expect(onCompany.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
       await expect(onCompany.getByRole("link", { name: "Vizualizare" })).toBeVisible();
-      const table = page.getByRole("table").filter({ has: onCompany });
-      for (const col of ["Denumire", "Rol"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
+      await expectOneLine(onCompany);
 
       // Step 7 — the other end: the property's „Persoane", Nume · Rol, the company.
       await page.goto(`/properties/${propertyId}`);
@@ -107,11 +106,11 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       await expect(page.getByRole("button", { name: "Înapoi la listă" }).or(page.getByRole("link", { name: "Înapoi la listă" }))).toBeVisible();
       await expect(page.getByRole("button", { name: "Modifică" }).or(page.getByRole("link", { name: "Modifică" }))).toBeVisible();
 
-      // ── At the end — on the company's „Proprietăți": radio, „Dezasociază" ─
+      // ── At the end — on the company's „Corelate": radio, „Dezasociază" ─
       await page.goto(`/judicial-persons/${companyId}?tab=properties`);
       await page.getByRole("radio", { name: PROPERTY }).check({ timeout: 30_000 });
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "property", propertyId);
       await removeRecord(page.request, "company", companyId);

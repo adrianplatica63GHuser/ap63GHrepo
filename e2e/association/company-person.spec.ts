@@ -19,6 +19,8 @@
  *   - Slices #37.17 and #37.18: neither the person nor the company has a tab
  *     row; each one's „Asocieri" (steps 2 and 7) is a tile, ticked with
  *     `showTile` (e2e/helpers/tiles.ts).
+ *   - Slice #37.67: each one's „Persoane corelate" / „Persoane" is „Corelate", one line a row —
+ *     „Nume (Rol)" — with „Asociază persoană" (the case's steps as corrected on 2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
@@ -29,7 +31,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-11`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -43,15 +45,15 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
 
     try {
-      // Step 2 — the company's „Persoane corelate" (#37.29): „Nicio persoană corelată", „Asociază", „Dezasociază".
+      // Step 2 — the company's „Corelate" (#37.67): „Nimic corelat încă.", „Asociază persoană", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Persoane corelate");
-      await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      const related = await showTile(page, "Corelate");
+      await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
+      await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere persoană corelată": „Nume", „Cod", Cod · Nume · Tip, the hint.
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await related.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană corelată" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(COMPANY).first()).toBeVisible();
@@ -78,43 +80,37 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page.getByText("Selectați cel puțin o persoană")).toHaveCount(0);
       await roleSelect.selectOption({ label: "Reprezentant legal / Mandatar" });
 
-      // Step 5 — „Asociază selecția": the company's „Persoane corelate" (`?tab=related`),
-      // Nume · Tip relație — the person, „Reprezentant legal / Mandatar", „Vizualizare". Slice #37.29:
-      // the company's tile is the person's compact table, so the Fizică / Juridică column is gone.
+      // Step 5 — „Asociază selecția": the company's „Corelate" (`?tab=related`), one line —
+      // „Nume (Rol)": the person, „Reprezentant legal / Mandatar" — and „Vizualizare" (#37.67).
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=related$`), { timeout: 30_000 });
-      const onCompany = page.getByRole("row").filter({ hasText: PERSON });
+      const onCompany = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PERSON);
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
-      await expect(onCompany.getByText("Reprezentant legal / Mandatar", { exact: true })).toBeVisible();
-      const table = page.getByRole("table").filter({ has: onCompany });
-      for (const col of ["Nume", "Tip relație"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
-      await expect(table.getByRole("columnheader", { name: "Tip", exact: true })).toHaveCount(0);
+      await expect(onCompany.locator("[data-row-content]")).toHaveText(`${PERSON} (Reprezentant legal / Mandatar)`);
+      await expectOneLine(onCompany);
+      await expect(page.getByRole("columnheader")).toHaveCount(0);
 
       // Step 6 — „Vizualizare": the person, read-only.
       await onCompany.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
 
-      // Step 7 — the person's „Persoane": the company, „Reprezentat / Mandant" (the converse), „Vizualizare".
-      // The person's tile has no „Tip" column since #37.27, so „Juridică" is not on it.
-      await showTile(page, "Persoane");
-      const onPerson = page.getByRole("row").filter({ hasText: COMPANY });
+      // Step 7 — the person's „Corelate": the company, „Reprezentat / Mandant" (the converse), „Vizualizare".
+      const onPerson = lineRow(await showTile(page, "Corelate"), COMPANY);
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
-      await expect(onPerson.getByText("Reprezentat / Mandant", { exact: true })).toBeVisible();
-      await expect(onPerson.getByText("Reprezentant legal / Mandatar", { exact: true })).toHaveCount(0);
+      await expect(onPerson.locator("[data-row-content]")).toHaveText(`${COMPANY} (Reprezentat / Mandant)`);
+      await expect(onPerson).not.toContainText("Reprezentant legal / Mandatar");
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.
       await onPerson.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 
-      // ── At the end — on the company's „Persoane corelate": radio, „Dezasociază" ────
+      // ── At the end — on the company's „Corelate": radio, „Dezasociază" ────
       await page.goto(`/judicial-persons/${companyId}?tab=related`);
-      await page.getByRole("row").filter({ hasText: PERSON }).getByRole("radio").check({ timeout: 30_000 });
+      await lineRow(page, PERSON).getByRole("radio").check({ timeout: 30_000 });
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "company", companyId);
       await removeRecord(page.request, "person", personId);

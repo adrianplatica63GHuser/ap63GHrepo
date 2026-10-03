@@ -35,6 +35,8 @@
  *     „Corelate", one line a row, with „Asociază persoană" (the case's steps as corrected
  *     on 2026-10-03). #37.16's column check (`expectStableColumns`) has no table to measure
  *     on the property any more; the row is measured one line tall instead.
+ *   - Slice #37.67: so are the person's „Persoane", „Proprietăți" and „Acte" — the property on one
+ *     line, „Denumire (Rol)", with „Asociază proprietate" (steps 7–11 as corrected on 2026-10-03).
  */
 
 import { test, expect, type Request } from "@playwright/test";
@@ -114,26 +116,23 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(related.getByRole("columnheader")).toHaveCount(0);
       await expect(onProperty.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
 
-      // Step 7 — the other end: the person's „Proprietăți", Denumire · Rol.
+      // Step 7 — the other end: the person's „Corelate", one line — „Denumire (Rol)".
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Proprietăți");
-      const onPerson = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
+      const personTile = await showTile(page, "Corelate");
+      const onPerson = lineRow(personTile, PROPERTY);
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
-      await expect(onPerson).toContainText(ROLE);
-      const propsTable = page.getByRole("table").filter({ has: onPerson });
-      for (const col of ["Denumire", "Rol"]) {
-        await expect(propsTable.getByText(col, { exact: true })).toBeVisible();
-      }
+      await expect(onPerson.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
+      await expectOneLine(onPerson);
 
       // ── Undo, then from the person's end ─────────────────────────────────
-      // Step 8 — radio, „Dezasociază": „Nicio proprietate asociată".
+      // Step 8 — radio, „Dezasociază": „Nimic corelat încă.".
       await page.getByRole("radio", { name: PROPERTY }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio proprietate asociată")).toBeVisible({ timeout: 15_000 });
+      await expect(personTile.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
 
       // Step 9 — „Asociere proprietate": „Căutare", Cod · Denumire, the same four roles.
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await personTile.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}/associate-property$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
       const search = page.getByPlaceholder("Cod sau denumire…", { exact: true });
@@ -149,12 +148,12 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await page.getByRole("checkbox", { name: PROPERTY }).check();
       await role.selectOption({ label: ROLE });
 
-      // Step 11 — back on the person's „Proprietăți" (`?tab=properties`).
+      // Step 11 — back on the person's „Corelate" (`?tab=properties`).
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?tab=properties$`), { timeout: 30_000 });
-      const again = page.getByRole("row").filter({ has: page.getByRole("radio", { name: PROPERTY }) });
+      const again = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PROPERTY);
       await expect(again).toHaveCount(1, { timeout: 15_000 });
-      await expect(again).toContainText(ROLE);
+      await expect(again.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
 
       // Step 12 — „Vizualizare": the property READ-ONLY, its „Persoane" reads the person.
       await again.getByRole("link", { name: "Vizualizare" }).click();

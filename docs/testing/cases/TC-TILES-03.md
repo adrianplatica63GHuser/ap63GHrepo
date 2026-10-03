@@ -78,3 +78,8 @@ What the run measured:
 subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 1 reads ten boxes. The notes
 above keep the old name, as they were run.
+
+**2026-10-03 — Slice #37.66: „Asocieri" (since #37.30 „Proprietăți corelate"), „Persoane" and
+„Acte" are one tile, „Corelate"** (TC-PROP-07). Step 1 reads eight boxes, and step 8 ticks „Corelate"
+where it ticks „Persoane" and „Acte". The steps above keep the old names, as they were run; the next
+drive rewrites them. (Noted in #37.67, which found it missing.)

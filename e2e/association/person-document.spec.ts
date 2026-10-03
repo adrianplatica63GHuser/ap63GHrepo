@@ -29,6 +29,10 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #37.67: so are the person's „Persoane", „Proprietăți" and „Acte": its „Corelate" has the
+ *     contract on one line — „Etichetă scurtă (Tip)" — and the person's role behind „Relația".
+ *     #37.16's column check (`expectStableColumns`) has no table to measure there any more; the row
+ *     is measured one line tall instead.
  */
 
 import { test, expect } from "@playwright/test";
@@ -39,8 +43,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { expectStableColumns } from "../helpers/field-widths";
-import { lineRow, showTile, tileBox } from "../helpers/tiles";
+import { expectOneLine, lineRow, showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-03`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
@@ -55,20 +58,20 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
     const documentId = await createSaleContract(page.request, DOC_TITLE);
 
     try {
-      // Step 1 — the person's screen: the tile checkboxes (Slice #37.17; nine since #37.63).
+      // Step 1 — the person's screen: the tile checkboxes (Slice #37.17; nine since #37.63, seven since #37.67).
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Persoane", "Proprietăți", "Acte", "Clasificare subiectivă", "Conexiuni"]) {
+      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Corelate", "Clasificare subiectivă", "Conexiuni"]) {
         await expect(tileBox(page, tile)).toBeVisible();
       }
 
-      // Step 2 — „Acte": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Acte");
-      await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      // Step 2 — „Corelate": empty, „Asociază act", „Dezasociază".
+      const related = await showTile(page, "Corelate");
+      await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
+      await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
-      // Step 3 — „Asociază": „Asociere act", the name, „Căutare", Cod · Tip · Titlu, „Rol".
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      // Step 3 — „Asociază act": „Asociere act", the name, „Căutare", Cod · Tip · Titlu, „Rol".
+      await related.getByRole("button", { name: "Asociază act", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}/associate-document$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere act" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(PERSON).first()).toBeVisible();
@@ -97,18 +100,17 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       // Step 6 — „Cumpărător".
       await role.selectOption({ label: "Cumpărător" });
 
-      // Step 7 — „Asociază selecția": the person's „Acte", Tip · Titlu · Rol, one row.
+      // Step 7 — „Asociază selecția": the person's „Corelate", one line — „Etichetă scurtă (Tip)" —
+      // the role behind „Relația" (#37.67).
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?tab=document$`), { timeout: 30_000 });
-      const linked = page.getByRole("row").filter({ has: page.getByRole("radio", { name: `${DOC_TITLE} — Cumpărător` }) });
+      const linked = page.locator("li[data-one-line-row]").filter({ has: page.getByRole("radio", { name: `${DOC_TITLE} — Cumpărător` }) });
       await expect(linked).toHaveCount(1, { timeout: 15_000 });
-      await expect(linked).toContainText("Contract de Vânzare");
-      await expect(linked).toContainText("Cumpărător");
-      const table = page.getByRole("table").filter({ has: linked });
-      for (const col of ["Tip", "Titlu", "Rol"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
-      await expectStableColumns(page);
+      await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
+      await expectOneLine(linked);
+      await linked.getByRole("button", { name: "Relația", exact: true }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Rol în act" })).toHaveText("Rol în act: „Cumpărător”");
+      await page.keyboard.press("Escape");
 
       // Step 8 — „Vizualizare": the document, READ-ONLY.
       await linked.getByRole("link", { name: "Vizualizare" }).click();
@@ -123,11 +125,11 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(back.locator("[data-row-content]")).toHaveText(`${PERSON} (Cumpărător)`);
       await expect(back.getByRole("button", { name: "Cotă", exact: true })).toBeVisible();
 
-      // ── At the end — on the person's „Acte": radio, then „Dezasociază" ───
+      // ── At the end — on the person's „Corelate": radio, then „Dezasociază" ───
       await page.goto(`/natural-persons/${personId}?tab=document`);
       await page.getByRole("radio", { name: `${DOC_TITLE} — Cumpărător` }).check({ timeout: 30_000 });
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "person", personId);

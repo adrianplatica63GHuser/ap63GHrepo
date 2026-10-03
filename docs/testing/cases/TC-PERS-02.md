@@ -44,7 +44,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 | 6 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new company |
 | 7 | Looks at the top of the list | A row badged **„Nou!"**, with a code beginning `JPERS`, „DENUMIRE" `TC-PERS-02 Firmă de test SRL`, „PORECLĂ" „—" |
 | 8 | Types `0000000002` into the list's search box | The row is still there — the search matches the CUI, which is what the placeholder's „ID" means. `0000000003` empties the list („Nu există persoane juridice") |
-| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Persoane corelate" (#37.29), „Proprietăți", „Acte", „Clasificare subiectivă" and „Conexiuni" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
+| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Corelate" (#37.67: „Persoane corelate", „Proprietăți" and „Acte" in one), „Clasificare subiectivă" and „Conexiuni" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
 | 10 | Types `TC-PERS-02 editat` into „Poreclă" and presses „Salvează" at the bottom | **The screen stays on the company**, unlike step 6. The header now reads **„v 1"** with the chip **„2 versiuni"**, and „Poreclă" holds `TC-PERS-02 editat` |
 
 ## At the end — leaving things as they were found
@@ -55,6 +55,8 @@ the dialog „Ștergeți persoana juridică?" with **„Da"**. The list comes ba
 persoane juridice". A company still linked to a property must be dissociated first.
 
 ## Notes from the runs
+
+**2026-10-03 — Slice #37.67: „Persoane corelate", „Proprietăți" and „Acte" are one tile, „Corelate".** Step 9 reads six tile boxes, not eight. The spec follows.
 
 **2026-09-30 — `automated`, green (Slice #37.29).** Labels above their boxes and every tile on the width unit: the spec checks the unit grid at 1366, 1920 and 2560 px and photographs the new company, the saved one and „Toate". Green in the test runner's `full` `20261001T004412Z-9331` on `f872ab3` (e2e 38 passed). Step 9's „tabs" were the tile row since #37.18; the step now says so.
 
@@ -79,7 +81,7 @@ Written from the code before the run, and corrected by it:
 2. **Create returns to the list; edit stays on the record.** Two saves on one form, two
    destinations, and a spec needs to know which.
 3. **The company screen has no „Persoane" tab.** People reach a company through „Persoane de
-   contact", or through „Persoane corelate" (#37.29; „Asocieri" before).
+   contact", or through „Corelate" (#37.67; „Persoane corelate" before, „Asocieri" before #37.29).
 
 **Noticed, not fixed: the CUI lock is only a sentence.** In edit mode the hint says the CUI
 cannot be changed once set, but the input is neither `readOnly` nor `disabled` (checked in the

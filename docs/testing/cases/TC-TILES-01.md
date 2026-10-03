@@ -66,3 +66,10 @@ held as written below, after two corrections the run itself made:
 subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Steps 1 and 8 read nine boxes. The notes
 above keep the old name, as they were run.
+
+**2026-10-03 — Slice #37.67: „Persoane" („Asocieri" in the steps), „Proprietăți" and „Acte" are one
+tile, „Corelate"** (TC-PERS-05). Steps 1 and 8 read seven boxes — „Identitate", „Carte de
+identitate", „Contact", „Adrese", „Corelate", „Clasificare subiectivă", „Conexiuni" — and steps 2–4
+and 9 tick „Corelate" where they tick „Acte"; its empty text is „Nimic corelat încă.". A browser that
+had any of the three ticked opens with „Corelate" ticked. The steps above keep the old names, as they
+were run; the next drive rewrites them.

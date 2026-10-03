@@ -39,10 +39,10 @@ Both are deleted at the end.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates the company and the document above | „Nou! TC-ASSOC-10 Firmă de test SRL" on „Persoane Juridice"; „Nou! Contract de Vânzare TC-ASSOC-10 Contract de test" on „Acte" |
-| 2 | Opens the company and presses the tab **„Acte"** | „Niciun act asociat", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere act" at `/judicial-persons/[id]/associate-document`, the company's name under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu listing every document with a tick box on each row, and a select **„Rol"** starting at „— fără rol —" and offering every role in the system |
+| 2 | Opens the company and ticks the tile **„Corelate"** („Acte" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 3 | Presses „Asociază act" | „Asociere act" at `/judicial-persons/[id]/associate-document`, the company's name under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu listing every document with a tick box on each row, and a select **„Rol"** starting at „— fără rol —" and offering every role in the system |
 | 4 | Types `TC-ASSOC-10` into „Căutare" and ticks the one row | The row is selected, and „Rol" **narrows to the roles a Contract de Vânzare offers**: „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
-| 5 | Chooses **„Cumpărător"** and presses „Asociază selecția" | Back on the company's „Acte" (`?tab=document`): Tip · Titlu · Rol — „Contract de Vânzare", `TC-ASSOC-10 Contract de test`, „Cumpărător", and „Vizualizare" |
+| 5 | Chooses **„Cumpărător"** and presses „Asociază selecția" | Back on the company's „Corelate" (`?tab=document`): one line, no column headings — `TC-ASSOC-10 Contract de test (Contract de Vânzare)` — „Relația", „Vizualizare"; „Relația" says `Rol în act: „Cumpărător”` |
 | 6 | Presses „Vizualizare" | The document, read-only (`/documents/[id]?readonly=true`) |
 | 7 | Ticks its tile **„Corelate"**, then the company's row's „Cotă" | One row, on one line, `TC-ASSOC-10 Firmă de test SRL (Cumpărător)`; behind „Cotă" an empty „Cotă-parte" reading „— fără cotă —", an empty „Suprafață echivalentă (mp)" reading „— fără suprafață —", and „Mod de deținere" „— nespecificat —" |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen at `/judicial-persons/[id]?readonly=true` |
@@ -51,8 +51,8 @@ Step 7 is the other end; step 8 checks that the document knows what kind of pers
 
 ## At the end — leaving things as they were found
 
-On the company's „Acte", select the row's radio and press „Dezasociază" — no question is asked,
-and „Niciun act asociat" follows. Open `TC-ASSOC-10 Contract de test`, press „Șterge" at the
+On the company's „Corelate", select the row's radio and press „Dezasociază" — no question is asked,
+and „Nimic corelat încă." follows. Open `TC-ASSOC-10 Contract de test`, press „Șterge" at the
 bottom and answer „Ștergeți actul?" with **„Da"**; open the company, press „Șterge" and answer
 „Ștergeți persoana juridică?" with **„Da"**.
 
@@ -88,3 +88,8 @@ the runner's whole `full` run on the slice's commit is the run that keeps the ro
 and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
 proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
 and the runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-03 — Slice #37.67 (steps 2, 3, 5 and the cleanup rewritten).** The company's „Persoane
+corelate", „Proprietăți" and „Acte" became one tile, „Corelate", built as the Document's: the contract
+on one line, „Etichetă scurtă (Tip)", the company's role in it behind „Relația", and „Asociază act" in
+place of „Asociază". The steps say so; the spec follows.

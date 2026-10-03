@@ -74,3 +74,8 @@ Two things were seen along the way:
 subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Steps 1 and 9 read eight boxes. The notes
 above keep the old name, as they were run.
+
+**2026-10-03 — Slice #37.67: „Persoane corelate" („Asocieri" in the steps), „Proprietăți" and „Acte"
+are one tile, „Corelate"** (TC-PERS-05). Steps 1 and 9 read six boxes, and steps 2, 3, 8 and 9 mean
+„Corelate" where they say „Acte"; its empty text is „Nimic corelat încă.". The steps above keep the
+old names, as they were run; the next drive rewrites them.

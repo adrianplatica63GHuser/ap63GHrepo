@@ -24,11 +24,14 @@
  *   - Slice #37.17: a Natural Person has no tab row; the person's „Persoane"
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
  *     run clicks the tile's checkbox.
+ *   - Slice #37.67: the person's „Persoane", „Proprietăți" and „Acte" are one tile, „Corelate",
+ *     one line a row — „Nume (Rol)" — with „Asociază persoană" (the case's steps as corrected on
+ *     2026-10-03).
  */
 
 import { test, expect } from "@playwright/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-09`;
 const ANA = `Ana ${MARK}`;
@@ -43,16 +46,16 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
     const mihaiId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Mihai", gender: "MALE" });
 
     try {
-      // Step 2 — Ana's „Persoane": empty, „Asociază", „Dezasociază".
+      // Step 2 — Ana's „Corelate": empty, „Asociază persoană", „Dezasociază".
       await page.goto(`/natural-persons/${anaId}`);
       await expect(page.getByRole("heading", { name: ANA })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Persoane");
-      await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      const related = await showTile(page, "Corelate");
+      await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
+      await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere persoană corelată": „Nume", „Cod", Cod · Nume · Tip, the hint,
       // „Tip relație" with the family roles and the sentence saying whose role it is.
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await related.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${anaId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană corelată" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(ANA).first()).toBeVisible();
@@ -77,32 +80,28 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       await expect(page.getByText("Selectați cel puțin o persoană")).toHaveCount(0);
       await roleSelect.selectOption({ label: "Părinte" });
 
-      // Step 5 — back on Ana's „Persoane" (`?tab=related`): Mihai, „Părinte".
+      // Step 5 — back on Ana's „Corelate" (`?tab=related`): one line, „Mihai … (Părinte)".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${anaId}\\?tab=related$`), { timeout: 30_000 });
-      const onAna = page.getByRole("row").filter({ hasText: MIHAI });
+      const onAna = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), MIHAI);
       await expect(onAna).toHaveCount(1, { timeout: 15_000 });
-      await expect(onAna.getByText("Părinte", { exact: true })).toBeVisible();
+      await expect(onAna.locator("[data-row-content]")).toHaveText(`${MIHAI} (Părinte)`);
       await expect(onAna.getByRole("link", { name: "Vizualizare" })).toBeVisible();
-      const table = page.getByRole("table").filter({ has: onAna });
-      for (const col of ["Nume", "Tip relație"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
-      await expect(table.getByRole("columnheader", { name: "Tip", exact: true })).toHaveCount(0);
+      await expectOneLine(onAna);
+      await expect(page.getByRole("columnheader")).toHaveCount(0);
 
-      // Step 6 — the other end: Mihai's „Persoane" reads Ana as „Fiică".
+      // Step 6 — the other end: Mihai's „Corelate" reads Ana as „Fiică".
       await page.goto(`/natural-persons/${mihaiId}`);
       await expect(page.getByRole("heading", { name: MIHAI })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Persoane");
-      const onMihai = page.getByRole("row").filter({ hasText: ANA });
+      const onMihai = lineRow(await showTile(page, "Corelate"), ANA);
       await expect(onMihai).toHaveCount(1, { timeout: 30_000 });
-      await expect(onMihai.getByText("Fiică", { exact: true })).toBeVisible();
-      await expect(onMihai.getByText("Părinte", { exact: true })).toHaveCount(0);
+      await expect(onMihai.locator("[data-row-content]")).toHaveText(`${ANA} (Fiică)`);
+      await expect(onMihai).not.toContainText("Părinte");
 
       // ── At the end — radio, „Dezasociază" ────────────────────────────────
       await page.getByRole("radio", { name: ANA }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nicio persoană corelată")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "person", mihaiId);
       await removeRecord(page.request, "person", anaId);

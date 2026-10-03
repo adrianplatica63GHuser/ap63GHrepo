@@ -38,23 +38,25 @@ Both are deleted at the end.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates the company and the person above | Each on its list, badged „Nou!", with no system ID |
-| 2 | Opens the company and ticks the tile **„Persoane corelate"** („Asocieri" before #37.29) | „Nicio persoană corelată", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
+| 2 | Opens the company and ticks the tile **„Corelate"** („Persoane corelate" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 3 | Presses „Asociază persoană" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
 | 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `Ion TC-ASSOC-11`, „Fizică" — and chooses „Tip relație" **„Reprezentant legal / Mandatar"** | The hint goes away |
-| 5 | Presses „Asociază selecția" | Back on the company's „Persoane corelate" (`?tab=related`): Nume · Tip relație — `Ion TC-ASSOC-11`, **„Reprezentant legal / Mandatar"**, and „Vizualizare" (no „Tip" column since #37.29) |
+| 5 | Presses „Asociază selecția" | Back on the company's „Corelate" (`?tab=related`): one line, no column headings — `Ion TC-ASSOC-11 (`**`Reprezentant legal / Mandatar`**`)` — and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The person, read-only (`/natural-persons/[id]?readonly=true`) |
-| 7 | Ticks the person's tile **„Persoane"** („Asocieri" before #37.27) | One row: `TC-ASSOC-11 Firmă de test SRL`, **„Reprezentat / Mandant"**, „Vizualizare" (no „Tip" column on the person since #37.27) |
+| 7 | Ticks the person's tile **„Corelate"** („Persoane" before #37.67) | One line: `TC-ASSOC-11 Firmă de test SRL (`**`Reprezentat / Mandant`**`)`, „Vizualizare" |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen, `/judicial-persons/[id]?readonly=true` |
 
 Step 7 is the other end of the link: the person represents the company, so the company is the one represented.
 
 ## At the end — leaving things as they were found
 
-On the company's „Persoane corelate", select the row's radio and press „Dezasociază" — no question is
-asked, and „Nicio persoană corelată" follows. Then „Șterge" and **„Da"** on the company
+On the company's „Corelate", select the row's radio and press „Dezasociază" — no question is
+asked, and „Nimic corelat încă." follows. Then „Șterge" and **„Da"** on the company
 („Ștergeți persoana juridică?") and on the person („Ștergeți persoana?").
 
 ## Notes from the runs
+
+**2026-10-03 — Slice #37.67: a person's „Persoane", „Proprietăți" and „Acte" are one tile, „Corelate"** — on the company too (its „Persoane corelate"). Steps 2, 3, 5, 7 and the cleanup read „Corelate", its one-line rows („Nume (Rol)") and „Asociază persoană"; the links and the words are unchanged. The spec follows.
 
 **2026-09-30 — the company's tile is „Persoane corelate" (Slice #37.29),** the person's compact table, so its „Tip" column is gone. Green in `full` `20261001T004412Z-9331` on `f872ab3`.
 

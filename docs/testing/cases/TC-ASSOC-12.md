@@ -47,7 +47,7 @@ All three are deleted at the end.
 | 5 | Presses „Defunct", then „Adaugă parte" | Back on the certificate's „Detalii". „Părți" is a table Nume · Calitate with one row — `Vasile TC-ASSOC-12 Defunct`, „Defunct", „Elimină" |
 | 6 | Presses „+ Adaugă parte" again, chooses `Maria TC-ASSOC-12 Mostenitor`, presses „Moștenitor", then „Adaugă parte" | Two rows, the newest first: `Maria TC-ASSOC-12 Mostenitor` „Moștenitor", `Vasile TC-ASSOC-12 Defunct` „Defunct" |
 | 7 | Ticks the certificate's tile **„Corelate"** | Both people, one line each and no headings: „Vasile … (Defunct)" and „Maria … (Moștenitor)" — the quality, where a role would be (FU-224, fixed in #37.07) |
-| 8 | Opens `Maria TC-ASSOC-12 Mostenitor`, tab **„Acte"** | Tip · Titlu · Rol: „Certificat de Moștenitor", `TC-ASSOC-12 Certificat de test`, „Moștenitor". On `Vasile TC-ASSOC-12 Defunct` the same, with „Defunct" |
+| 8 | Opens `Maria TC-ASSOC-12 Mostenitor`, tile **„Corelate"** („Acte" before #37.67), and presses „Relația" on the certificate | One line: `TC-ASSOC-12 Certificat de test (Certificat de Moștenitor)`; the bubble `Rol în act: „Moștenitor”`. On `Vasile TC-ASSOC-12 Defunct` the same, with „Defunct" |
 
 Steps 5 and 6 are the assertion that the qualities are recorded; steps 7 and 8 are the other
 end, and since Slice #37.07 they show the quality too, under „Rol" (FU-224). The spec asserts
@@ -91,3 +91,7 @@ the runner's whole `full` run on the slice's commit is the run that keeps the ro
 and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
 proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
 and the runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-03 — Slice #37.67 (step 8 rewritten).** A person's „Persoane", „Proprietăți" and „Acte"
+became one tile, „Corelate": the certificate on one line, „Etichetă scurtă (Tip)", the person's
+quality behind „Relația". The steps say so; the spec follows.

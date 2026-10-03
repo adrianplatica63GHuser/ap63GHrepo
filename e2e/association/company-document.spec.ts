@@ -21,6 +21,9 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #37.67: so are the company's „Persoane corelate", „Proprietăți" and „Acte": its
+ *     „Corelate" has the contract on one line — „Etichetă scurtă (Tip)" — and the company's role
+ *     behind „Relația".
  */
 
 import { test, expect } from "@playwright/test";
@@ -31,7 +34,7 @@ import {
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
-import { lineRow, openShare, showTile } from "../helpers/tiles";
+import { expectOneLine, lineRow, openShare, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-10`;
 const COMPANY = `${MARK} Firmă de test SRL`;
@@ -45,16 +48,16 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
     const documentId = await createSaleContract(page.request, DOC_TITLE);
 
     try {
-      // Step 2 — the company's „Acte": empty, „Asociază", „Dezasociază".
+      // Step 2 — the company's „Corelate": empty, „Asociază act", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Acte");
-      await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      const related = await showTile(page, "Corelate");
+      await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
+      await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere act": the name, „Căutare", Cod · Tip · Titlu, „Rol" at „fără rol",
       // offering every role in the system.
-      await page.getByRole("button", { name: "Asociază", exact: true }).click();
+      await related.getByRole("button", { name: "Asociază act", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}/associate-document$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere act" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(COMPANY).first()).toBeVisible();
@@ -82,18 +85,18 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
         "Vânzător",
       ]);
 
-      // Step 5 — „Cumpărător", „Asociază selecția": the company's „Acte" (`?tab=document`).
+      // Step 5 — „Cumpărător", „Asociază selecția": the company's „Corelate" (`?tab=document`), one
+      // line — „Etichetă scurtă (Tip)" — the role behind „Relația" (#37.67).
       await role.selectOption({ label: "Cumpărător" });
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=document$`), { timeout: 30_000 });
-      const linked = page.getByRole("row").filter({ hasText: DOC_TITLE });
+      const linked = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), DOC_TITLE);
       await expect(linked).toHaveCount(1, { timeout: 15_000 });
-      await expect(linked).toContainText("Contract de Vânzare");
-      await expect(linked).toContainText("Cumpărător");
-      const table = page.getByRole("table").filter({ has: linked });
-      for (const col of ["Tip", "Titlu", "Rol"]) {
-        await expect(table.getByText(col, { exact: true })).toBeVisible();
-      }
+      await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
+      await expectOneLine(linked);
+      await linked.getByRole("button", { name: "Relația", exact: true }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Rol în act" })).toHaveText("Rol în act: „Cumpărător”");
+      await page.keyboard.press("Escape");
 
       // Step 6 — „Vizualizare": the document, read-only.
       await linked.getByRole("link", { name: "Vizualizare" }).click();
@@ -121,11 +124,11 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 
-      // ── At the end — on the company's „Acte": radio, „Dezasociază" ───────
+      // ── At the end — on the company's „Corelate": radio, „Dezasociază" ───────
       await page.goto(`/judicial-persons/${companyId}?tab=document`);
-      await page.getByRole("row").filter({ hasText: DOC_TITLE }).getByRole("radio").check({ timeout: 30_000 });
+      await lineRow(page, DOC_TITLE).getByRole("radio").check({ timeout: 30_000 });
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Niciun act asociat")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "company", companyId);

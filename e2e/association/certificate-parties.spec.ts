@@ -30,6 +30,8 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #37.67: so are each person's „Persoane", „Proprietăți" and „Acte": the certificate on one
+ *     line — „Etichetă scurtă (Tip)" — and the person's quality behind „Relația" (step 8).
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -142,15 +144,17 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       }
       await expect(personsTile.getByRole("columnheader")).toHaveCount(0);
 
-      // Step 8 — each person's „Acte": „Certificat de Moștenitor", the title, the quality (FU-224).
+      // Step 8 — each person's „Corelate": the title, „Certificat de Moștenitor", the quality behind
+      // „Relația" (FU-224; #37.67).
       for (const [id, person, quality] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
         await page.goto(`/natural-persons/${id}`);
         await expect(page.getByRole("heading", { name: person })).toBeVisible({ timeout: 30_000 });
-        await showTile(page, "Acte");
-        const r = page.getByRole("row").filter({ hasText: CERTIFICATE });
+        const r = lineRow(await showTile(page, "Corelate"), CERTIFICATE);
         await expect(r).toHaveCount(1, { timeout: 15_000 });
-        await expect(r).toContainText("Certificat de Moștenitor");
-        await expect(r.getByRole("cell", { name: quality, exact: true })).toHaveCount(1); // FU-224
+        await expect(r.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);
+        await r.getByRole("button", { name: "Relația", exact: true }).click();
+        await expect(page.getByRole("status").filter({ hasText: "Rol în act" })).toHaveText(`Rol în act: „${quality}”`); // FU-224
+        await page.keyboard.press("Escape");
       }
 
       // ── At the end — „Elimină" on each row, no question, no „Salvează"; still gone after a reload ──

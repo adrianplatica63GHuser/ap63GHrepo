@@ -30,12 +30,12 @@ role a notary writes for the buyer on a Contract de Vânzare.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `Ion TC-PERS-01` from „Persoane Fizice" | The person's screen, tabs DETALII · ASOCIERI · PROPRIETĂȚI · ACTE · META INFO |
-| 2 | Presses the tab **„Acte"** | „Niciun act asociat", with „Asociază" and „Dezasociază" |
-| 3 | Presses „Asociază" | „Asociere act" at `/natural-persons/[id]/associate-document`, the person's name under it, one filter „Căutare" (placeholder „Cod sau titlu…"), a table Tip · Titlu listing **every** document, and below it a select „Rol" with „— fără rol —" |
+| 2 | Ticks the tile **„Corelate"** („Acte" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 3 | Presses „Asociază act" | „Asociere act" at `/natural-persons/[id]/associate-document`, the person's name under it, one filter „Căutare" (placeholder „Cod sau titlu…"), a table Tip · Titlu listing **every** document, and below it a select „Rol" with „— fără rol —" |
 | 4 | Types `TC-DOC-01` into „Căutare" | One row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
 | 5 | **Ticks the row first** | The row is selected, the hint „Selectați cel puțin un act" goes away, and **„Rol" narrows to the roles of that document's type**: „— fără rol —", „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 6 | Chooses „Cumpărător" in „Rol" | The role is selected |
-| 7 | Presses „Asociază selecția" | Back on the person, on its „Acte" tab (`?tab=document`): a table Tip · Titlu · Rol with one row — „Contract de Vânzare", `TC-DOC-01 Contract de test`, „Cumpărător" — and „Vizualizare" |
+| 7 | Presses „Asociază selecția" | Back on the person, on its „Corelate" (`?tab=document`): one line, no column headings — `TC-DOC-01 Contract de test (Contract de Vânzare)` — „Relația", „Vizualizare"; „Relația" says `Rol în act: „Cumpărător”` |
 | 8 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
 | 9 | Ticks the tile „Corelate" on the document | One row, on one line: `Ion TC-PERS-01 (Cumpărător)`, with an orange „Cotă" |
 
@@ -49,8 +49,8 @@ role** — which is what the first attempt on this run did.
 
 ## At the end — leaving things as they were found
 
-On the person's „Acte" tab, **select the row's radio first**, then press „Dezasociază" (it
-asks for no confirmation). „Niciun act asociat" follows. The person and the document are left
+On the person's „Corelate", **select the row's radio first**, then press „Dezasociază" (it
+asks for no confirmation). „Nimic corelat încă." follows. The person and the document are left
 for the cases that follow.
 
 ## Notes from the runs
@@ -92,3 +92,8 @@ the runner's whole `full` run on the slice's commit is the run that keeps the ro
 and the documents, one line each, one „Dezasociază", and „Asociază persoană", „Asociază
 proprietate" and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows,
 and the runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-03 — Slice #37.67 (steps 2, 3, 7 and the cleanup rewritten).** The person's „Persoane",
+„Proprietăți" and „Acte" became one tile, „Corelate", built as the Document's: the contract on one
+line, „Etichetă scurtă (Tip)", the person's role in it behind „Relația", and „Asociază act" in
+place of „Asociază". The steps say so; the spec follows.
