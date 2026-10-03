@@ -33,7 +33,7 @@ Properties list and can be removed by hand.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Proprietăți — Listă" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), the filters „Importanță:" and „Relevanță:", „Câmpuri afișate 4/4", a button „Adaugă proprietate", and a table headed by **the four columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE |
+| 1 | Presses „Proprietăți — Listă" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), no „Importanță" or „Relevanță" filter (#37.61), „Câmpuri afișate 4/4", a button „Adaugă proprietate", and a table headed by **the four columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE |
 | 2 | Presses „Câmpuri afișate" and makes the four ticked columns „Poreclă", „Localitate", „Tarla/Solă" and „Parcelă" — **untick first** („Nr. cadastru", „Oficială (m²)", whatever else is ticked): the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
 | 3 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 12 checks it |
 | 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering four ways in: „Introducere manuală", „Din imagine scanată", „Din fișier text", „Din folder text" |
@@ -137,3 +137,7 @@ Also noted: the property detail screen reached from the list shows „Cod" as a 
 „META INFO".
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists no longer show it — „Proprietăți — Listă" has no „Cod" column. The steps above that read a code or a „Cod" column were rewritten to match; the search boxes' placeholders („caută după cod…") are unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-02 — Slice #37.61 (the Properties list).** The „Importanță:" and „Relevanță:" filters are
+gone; step 1 reads their absence. „Câmpuri afișate" is the shared chooser now, its eight fields
+unchanged and importance, relevance and provenance gone. The spec follows.

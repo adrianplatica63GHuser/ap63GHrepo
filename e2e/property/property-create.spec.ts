@@ -67,8 +67,8 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await expect(
         page.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"),
       ).toBeVisible();
-      await expect(page.getByText("Importanță:")).toBeVisible();
-      await expect(page.getByText("Relevanță:")).toBeVisible();
+      // #37.61: no „Importanță" or „Relevanță" filter.
+      await expect(page.locator("main").getByText(/^Importanță:?$|^Relevanță:?$/)).toHaveCount(0);
       const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*4\/4$/ });
       await expect(chooseFields).toBeVisible();
       // Headers are rendered upper-case by CSS; role-name matching ignores case.

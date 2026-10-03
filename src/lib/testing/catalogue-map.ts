@@ -42,7 +42,7 @@ export type CatalogueCaseId = string;
 export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCaseId[]>> = {
   "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01"],
   "/login":                                ["TC-AUTH-01"],
-  "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-AUTH-02", "TC-TILES-06", "TC-SYSID-01"],
+  "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-AUTH-02", "TC-TILES-06", "TC-SYSID-01", "TC-PROP-06"],
   "/properties/new":                       ["TC-PROP-01", "TC-PROP-05"],
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
