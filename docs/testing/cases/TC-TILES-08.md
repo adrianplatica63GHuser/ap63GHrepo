@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-02 |
 
 ## What this proves
@@ -66,3 +66,7 @@ bubble open on the rest and closed on leaving; Proveniență's bubble on „Manu
 Your stored tile choices unchanged (the same five keys, nothing written). The four records deleted
 (204 ×4). Nothing in the file changed, so the case is confirmed, and
 `e2e/tiles/meta-info-split.spec.ts` translates it.
+
+**2026-10-02 — `automated` (Slice #37.63).** The test runner's full run 20261003T040845Z-28313 on
+6897233 ran `e2e/tiles/meta-info-split.spec.ts` green with the other 61 specs (lint, tsc, jest and
+forms-drift green too).
