@@ -1582,7 +1582,8 @@
       "cotaSaveError": "Nu am putut salva cota-parte. Încercați din nou.",
       "alreadyAttached": "Această persoană este deja atașată acestui act cu acest rol — nu s-a adăugat nimic.",
       "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Moștenitor"
+      "qualityMostenitor": "Moștenitor",
+      "shareNotHeld": "Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit."
     },
     "associatePerson": {
       "title": "Asociere persoană",
@@ -2142,7 +2143,10 @@
       "empty": "Nicio asociere",
       "errorBothRequired": "Selectați atât tipul de document cât și rolul persoanei.",
       "lookupsLoading": "Se încarcă listele…",
-      "lookupsError": "Listele necesare (Tipuri de Document, Roluri Persoană) nu au putut fi încărcate, prin urmare nu se poate adăuga o asociere. Reîncărcați pagina."
+      "lookupsError": "Listele necesare (Tipuri de Document, Roluri Persoană) nu au putut fi încărcate, prin urmare nu se poate adăuga o asociere. Reîncărcați pagina.",
+      "colHoldsShare": "Deține cotă",
+      "holdsShareLabel": "Deține cotă — {docType} — {role}",
+      "holdsShareError": "Bifa „Deține cotă\" nu s-a putut salva. Încercați din nou."
     }
   },
   "adminTags": {

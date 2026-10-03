@@ -58,6 +58,7 @@ import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
 import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
 import { cotaFromDb, cotaToDb, isCotaMod, type CotaMod } from "@/lib/documents/cota-parte";
 import type { AssociateResult, CotaInput } from "@/lib/documents/queries";
+import { assertLinkMayStoreShare, assertShareMayBeStored } from "@/lib/documents/share-not-held";
 import {
   personRoleIdsAcrossDocumentTypes,
   personRoleIdsValidForPerson,
@@ -1225,6 +1226,8 @@ export async function associateDocumentsToPerson(
   cota:        CotaInput = {},
 ): Promise<AssociateResult> {
   await assertRoleMayBeAttached("person-document", personRoleId, personRoleIdsAcrossDocumentTypes);
+  // Slice #37.59: a share only where the role holds one on EVERY document's type.
+  await assertShareMayBeStored(documentIds, personRoleId, cota);
   // The conflict target and what `skipped` means are the same here as on the
   // document side; `associatePersonsToDocument` carries the note, once.
   const written = await db.insert(personDocument)
@@ -1249,6 +1252,7 @@ export async function updatePersonDocumentCota(
   linkId:     string,
   cota:       CotaInput,
 ): Promise<boolean> {
+  await assertLinkMayStoreShare(linkId, cota); // Slice #37.59
   const result = await db.update(personDocument)
     .set({
       cotaParte:       cotaToDb(cota.cotaParte ?? null),

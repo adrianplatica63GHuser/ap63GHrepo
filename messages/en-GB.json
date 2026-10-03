@@ -1582,7 +1582,8 @@
       "cotaSaveError": "The share could not be saved. Try again.",
       "alreadyAttached": "This person is already attached to this document with this role — nothing was added.",
       "qualityDefunct": "Deceased",
-      "qualityMostenitor": "Heir"
+      "qualityMostenitor": "Heir",
+      "shareNotHeld": "This role holds no share on this document type — the saved values stay, read-only."
     },
     "associatePerson": {
       "title": "Associate Person",
@@ -2142,7 +2143,10 @@
       "empty": "No associations yet",
       "errorBothRequired": "Please select both a document type and a person role.",
       "lookupsLoading": "Loading the lists…",
-      "lookupsError": "The lists this form needs (Document Types, Person Roles) could not be loaded, so an association cannot be added. Reload the page."
+      "lookupsError": "The lists this form needs (Document Types, Person Roles) could not be loaded, so an association cannot be added. Reload the page.",
+      "colHoldsShare": "Holds a share",
+      "holdsShareLabel": "Holds a share — {docType} — {role}",
+      "holdsShareError": "“Holds a share” could not be saved. Try again."
     }
   },
   "adminTags": {

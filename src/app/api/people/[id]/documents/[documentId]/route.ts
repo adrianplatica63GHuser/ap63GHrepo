@@ -10,7 +10,7 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import {
   dissociateDocumentFromPerson,
   updatePersonDocumentCota,
@@ -72,6 +72,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
     if (!ok) return Response.json({ error: "Association not found" }, { status: 404 });
     return new Response(null, { status: 204 });
   } catch (err) {
+    const noShare = shareNotHeldToResponse(err); // Slice #37.59
+    if (noShare) return noShare;
     return unexpectedError(err, "PATCH /api/people/[id]/documents/[documentId]");
   }
 }

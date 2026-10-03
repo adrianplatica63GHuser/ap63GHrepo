@@ -38,6 +38,7 @@ import { customFieldFilter } from "./custom-field-filter";
 import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
 import { cotaFromDb, cotaToDb, isCotaMod, type CotaMod } from "./cota-parte";
+import { assertLinkMayStoreShare, assertShareMayBeStored } from "./share-not-held";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -1065,6 +1066,12 @@ export type DocumentPersonItem = {
   cotaParte:       number | null;
   cotaSuprafataMp: number | null;
   cotaMod:         CotaMod | null;
+  /**
+   * Slice #37.59: the role, on this document's type, holds a share in the
+   * property (`lookup_doc_type_person_role.holds_share`). False for a link
+   * with no role — `shareCells` treats that case on its own.
+   */
+  holdsShare:      boolean;
   associatedAt:    Date;
 };
 
@@ -1082,11 +1089,18 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
       cotaParte:       personDocument.cotaParte,
       cotaSuprafataMp: personDocument.cotaSuprafataMp,
       cotaMod:         personDocument.cotaMod,
+      holdsShare:      lookupDocTypePersonRole.holdsShare,
       associatedAt:    personDocument.createdAt,
     })
     .from(personDocument)
     .innerJoin(person, eq(personDocument.personId, person.id))
+    .innerJoin(document, eq(personDocument.documentId, document.id))
     .leftJoin(lookupPersonRole, eq(personDocument.personRoleId, lookupPersonRole.id))
+    // Slice #37.59: the pair (this document's type, the link's role) — whether it holds a share.
+    .leftJoin(lookupDocTypePersonRole, and(
+      eq(lookupDocTypePersonRole.documentTypeId, document.documentTypeId),
+      eq(lookupDocTypePersonRole.personRoleId, personDocument.personRoleId),
+    ))
     .where(eq(personDocument.documentId, documentId))
     // ⚠️ **A TOTAL ORDER, WHICH `person.displayName` ALONE NO LONGER IS.** Two
     // rows for one person tie on the name, and a tie in SQL is not a stable
@@ -1109,6 +1123,7 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
     cotaParte:       cotaFromDb(r.cotaParte),
     cotaSuprafataMp: cotaFromDb(r.cotaSuprafataMp),
     cotaMod:         isCotaMod(r.cotaMod) ? r.cotaMod : null,
+    holdsShare:      r.holdsShare === true,
   }));
 }
 
@@ -1197,6 +1212,8 @@ export async function associatePersonsToDocument(
   await assertRoleMayBeAttached("document-person", personRoleId, async () =>
     (await listPersonRolesForDocument(documentId)).map((r) => r.id),
   );
+  // Slice #37.59: a share only for a role that holds one on this document's type.
+  await assertShareMayBeStored([documentId], personRoleId, cota);
   /*
    * ⚠️ **`.onConflictDoNothing()` STAYS, AND ITS MEANING CHANGED UNDER IT.**
    *                                                              (Slice #36.02)
@@ -1253,6 +1270,8 @@ export async function updateDocumentPersonCota(
   linkId:     string,
   cota:       CotaInput,
 ): Promise<boolean> {
+  // Slice #37.59: a value only where the link's role holds a share; clearing is always allowed.
+  await assertLinkMayStoreShare(linkId, cota);
   const result = await db.update(personDocument)
     .set({
       cotaParte:       cotaToDb(cota.cotaParte ?? null),
@@ -1277,7 +1296,8 @@ export async function updateDocumentPersonCota(
 // to lookup_document_type.id, and document.documentTypeId is that same FK,
 // so this is now a plain join with no name-matching hack.
 
-export type RoleItem = { id: string; name: string };
+/** Slice #37.59: `holdsShare` — this role, on this document's type, holds a share (where the type is known). */
+export type RoleItem = { id: string; name: string; holdsShare?: boolean };
 
 /**
  * „Which person roles may appear on this document?" — ONE ANSWER, WHOEVER
@@ -1415,8 +1435,9 @@ export async function listPersonRolesForDocument(documentId: string): Promise<Ro
 export async function listPersonRolesForDocumentType(documentTypeId: string): Promise<RoleItem[]> {
   return db
     .select({
-      id:   lookupPersonRole.id,
-      name: lookupPersonRole.name,
+      id:         lookupPersonRole.id,
+      name:       lookupPersonRole.name,
+      holdsShare: lookupDocTypePersonRole.holdsShare, // Slice #37.59
     })
     .from(lookupDocTypePersonRole)
     .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))

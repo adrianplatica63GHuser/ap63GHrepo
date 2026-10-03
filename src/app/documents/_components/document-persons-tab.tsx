@@ -18,6 +18,7 @@ import {
   type CotaParseError,
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
+import { shareCells } from "@/lib/documents/share-cells";
 import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import { newTabIfAsked, openThroughGuard, personPath } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
@@ -55,6 +56,8 @@ type AssociatedPerson = {
   cotaParte:       number | null;
   cotaSuprafataMp: number | null;
   cotaMod:         CotaMod | null;
+  /** Slice #37.59: the role, on this document's type, holds a share — see `shareCells`. */
+  holdsShare:      boolean;
   associatedAt:    string;
 };
 
@@ -330,6 +333,10 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
               {items.map((item) => {
                 const errors   = cellErrors[item.linkId] ?? {};
                 const selected = item.linkId === selectedId;
+                // Slice #37.59: the three share values only for a role that holds a share
+                // (or no role); a stored value on a role that holds none shows read-only.
+                const cells  = shareCells(item);
+                const locked = cells === "readonly";
                 // FU-224 (Slice #37.07): the role, else a certificate party's quality.
                 const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
                   DEFUNCT:    t("qualityDefunct"),
@@ -343,7 +350,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                         value={draftOf(item, "parte")}
                         placeholder={t("cotaPlaceholder")}
                         data-blank=""
-                        disabled={savingId === item.linkId}
+                        disabled={locked || savingId === item.linkId}
                         aria-label={`${t("colCota")} — ${item.displayName} — ${roleLabel}`}
                         aria-invalid={errors.parte ? true : undefined}
                         onChange={(e) => setDraft(item.linkId, "parte", e.target.value)}
@@ -373,7 +380,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                         value={draftOf(item, "mp")}
                         placeholder={t("cotaMpPlaceholder")}
                         data-blank=""
-                        disabled={savingId === item.linkId}
+                        disabled={locked || savingId === item.linkId}
                         aria-label={`${t("colCotaMp")} — ${item.displayName} — ${roleLabel}`}
                         aria-invalid={errors.mp ? true : undefined}
                         onChange={(e) => setDraft(item.linkId, "mp", e.target.value)}
@@ -398,7 +405,7 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                 const modCell = (
                     <select
                       value={item.cotaMod ?? ""}
-                      disabled={savingId === item.linkId}
+                      disabled={locked || savingId === item.linkId}
                       aria-label={`${t("colCotaMod")} — ${item.displayName} — ${roleLabel}`}
                       onChange={(e) => void commitMod(item, e.target.value)}
                       className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
@@ -410,9 +417,13 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                       ))}
                     </select>
                 );
+                const lockedHint = locked ? (
+                  <span className="text-xs text-fade dark:text-zinc-400" data-share-hint>{t("shareNotHeld")}</span>
+                ) : null;
                 return (
                   <tr
                     key={item.linkId}
+                    data-share={cells}
                     // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
                     onClick={(e) => {
                       if (newTabIfAsked(e, `${personPath(item.type, item.id)}?readonly=true`)) return;
@@ -444,17 +455,22 @@ export function DocumentPersonsTab({ documentId, compact = false }: Props) {
                         stack in one column (6 units); on a wide table, three columns. */}
                     {compact ? (
                       <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex flex-col gap-1">
-                          {parteCell}
-                          {mpCell}
-                          {modCell}
-                        </div>
+                        {cells !== "none" && (
+                          <div className="flex flex-col gap-1">
+                            {parteCell}
+                            {mpCell}
+                            {modCell}
+                            {lockedHint}
+                          </div>
+                        )}
                       </td>
                     ) : (
                       <>
-                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{parteCell}</td>
-                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{mpCell}</td>
-                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{modCell}</td>
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{cells !== "none" && parteCell}</td>
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>{cells !== "none" && mpCell}</td>
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                          {cells !== "none" && <div className="flex flex-col gap-0.5">{modCell}{lockedHint}</div>}
+                        </td>
                       </>
                     )}
 

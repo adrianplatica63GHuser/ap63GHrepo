@@ -18,7 +18,8 @@ import { FixedColumns, columnHead, fixedTable, wrapsIf } from "@/components/tabl
 import { columnsRem, dialogCardStyle, dialogUnits, screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 /** Slice #37.37: the associations' table, at `COLUMN`'s widths, and the card the fewest units that hold it. */
-const COLUMNS: readonly ColumnName[] = ["documentType", "valueName", "rowActions"];
+// Slice #37.59: „Deține cotă", a tick per pair (`valueFlag`), before the row's buttons.
+const COLUMNS: readonly ColumnName[] = ["documentType", "valueName", "valueFlag", "rowActions"];
 const CARD_UNITS = dialogUnits(columnsRem(COLUMNS), 1.25);
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -29,6 +30,8 @@ type AssocRow = {
   personRoleId: string;
   documentTypeName: string;
   personRoleName: string;
+  /** Slice #37.59: this role, on this type, holds a share in the property. */
+  holdsShare: boolean;
 };
 
 type LookupItem = { id: string; name: string };
@@ -111,6 +114,16 @@ async function createAssociation(data: {
   // `valueList.confirm.errors` on this side.
   if (!res.ok) await throwRequestFailed(res, true);
   return res.json();
+}
+
+/** Slice #37.59: tick or untick „Deține cotă" on one pair. */
+async function setHoldsShare(id: string, holdsShare: boolean): Promise<void> {
+  const res = await fetch(`/api/admin/doc-type-person-roles/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ holdsShare }),
+  });
+  if (!res.ok && res.status !== 204) await throwRequestFailed(res);
 }
 
 async function removeAssociation(id: string): Promise<void> {
@@ -456,6 +469,18 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
    * would take the sentence with it — and the row's own Șterge is still there
    * to try again.
    */
+  /** Slice #37.59: „Deține cotă" — saved as it is ticked; the Document's „Persoane" follows. */
+  const [shareError, setShareError] = useState<string | null>(null);
+  const shareMutation = useMutation({
+    mutationFn: ({ id, holdsShare }: { id: string; holdsShare: boolean }) => setHoldsShare(id, holdsShare),
+    onSuccess: () => {
+      setShareError(null);
+      qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
+      qc.invalidateQueries({ queryKey: ["document-persons"] });
+    },
+    onError: () => setShareError(t("holdsShareError")),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => removeAssociation(id),
     onSuccess: () => {
@@ -682,6 +707,9 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
               )}
             </div>
 
+            {/* Slice #37.59: a „Deține cotă" that did not save. */}
+            <p role="alert" className="mb-2 text-xs text-red-600 empty:mb-0 dark:text-red-400">{shareError ?? ""}</p>
+
             {/* Table */}
             <div className="w-fit max-w-full overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
               <table {...fixedTable(COLUMNS)}>
@@ -690,27 +718,28 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
                   <tr>
                     <th className="px-4 py-2" {...columnHead("documentType")}>{t("colDocType")}</th>
                     <th className="px-4 py-2" {...columnHead("valueName")}>{t("colPersonRole")}</th>
+                    <th className="px-4 py-2" {...columnHead("valueFlag")}>{t("colHoldsShare")}</th>
                     <th className="px-4 py-2" {...columnHead("rowActions")} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease bg-white dark:divide-zinc-800 dark:bg-zinc-900">
                   {assocQuery.isLoading && (
                     <tr>
-                      <td colSpan={3} className="px-4 py-6 text-center text-fade">
+                      <td colSpan={4} className="px-4 py-6 text-center text-fade">
                         {t("loading")}
                       </td>
                     </tr>
                   )}
                   {assocQuery.isError && (
                     <tr>
-                      <td colSpan={3} className="px-4 py-6 text-center text-red-600">
+                      <td colSpan={4} className="px-4 py-6 text-center text-red-600">
                         {t("error")}
                       </td>
                     </tr>
                   )}
                   {assocQuery.data?.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="px-4 py-6 text-center text-fade">
+                      <td colSpan={4} className="px-4 py-6 text-center text-fade">
                         {t("empty")}
                       </td>
                     </tr>
@@ -725,6 +754,17 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
                       </td>
                       <td className={`px-4 py-2 text-ink dark:text-zinc-300 ${wrapsIf("valueName")}`}>
                         {row.personRoleName}
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="checkbox"
+                          className="accent-cta"
+                          checked={row.holdsShare}
+                          disabled={shareMutation.isPending}
+                          aria-label={t("holdsShareLabel", { docType: row.documentTypeName, role: row.personRoleName })}
+                          data-holds-share=""
+                          onChange={(e) => shareMutation.mutate({ id: row.id, holdsShare: e.target.checked })}
+                        />
                       </td>
                       <td className="px-4 py-2">
                         <IconButton

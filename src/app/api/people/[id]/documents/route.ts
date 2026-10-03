@@ -3,7 +3,7 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { roleNotOfferedToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { roleNotOfferedToResponse, shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { listPersonDocuments, associateDocumentsToPerson } from "@/lib/persons/queries";
 import { COTA_MOD_VALUES } from "@/lib/documents/cota-parte";
 
@@ -56,6 +56,8 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     // and not the selected documents' own types.
     const refusal = roleNotOfferedToResponse(err);
     if (refusal) return refusal;
+    const noShare = shareNotHeldToResponse(err); // Slice #37.59
+    if (noShare) return noShare;
     return unexpectedError(err, "POST /api/people/[id]/documents");
   }
 }

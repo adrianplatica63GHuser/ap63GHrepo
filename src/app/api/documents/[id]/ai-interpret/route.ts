@@ -398,6 +398,8 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     roleName:           string;
     personRoleId:       string | null;
     roleMissing:        boolean;   // true if roleName didn't match a configured role — don't guess, ask the admin
+    /** Slice #37.59: the matched role holds a share on this type — the linker offers the three boxes only then. */
+    holdsShare:         boolean;
     personType:         "NATURAL" | "JUDICIAL";
     name:               string | null;
     firstName:          string | null;
@@ -490,6 +492,8 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // roleMissing=true tells the caller to surface it rather than link
     // against the wrong role or silently drop the party.
     const roleByName = new Map<string, string>(partyRoles.map((r) => [r.name.trim().toLowerCase(), r.id]));
+    // Slice #37.59: whether each role holds a share on this document's type.
+    const holdsShareById = new Map<string, boolean>(partyRoles.map((r) => [r.id, r.holdsShare === true]));
 
     for (const p of interpreted.parties) {
       const personRoleId = roleByName.get(p.roleName.toLowerCase()) ?? null;
@@ -520,7 +524,14 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
         console.warn("[ai-interpret] party match lookup failed:", err);
       }
 
-      parties.push({ ...p, personRoleId, roleMissing: personRoleId === null, matchCandidate, possibleMatches });
+      parties.push({
+        ...p,
+        personRoleId,
+        roleMissing: personRoleId === null,
+        holdsShare:  personRoleId !== null && holdsShareById.get(personRoleId) === true,
+        matchCandidate,
+        possibleMatches,
+      });
     }
 
     // ── Diagnostic log — what did the model actually extract? ────────────────

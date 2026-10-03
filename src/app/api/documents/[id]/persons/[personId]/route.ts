@@ -25,7 +25,7 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import {
   dissociatePersonFromDocument,
   updateDocumentPersonCota,
@@ -103,6 +103,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
     if (!ok) return Response.json({ error: "Association not found" }, { status: 404 });
     return new Response(null, { status: 204 });
   } catch (err) {
+    // Slice #37.59: a value for a link whose role holds no share.
+    const noShare = shareNotHeldToResponse(err);
+    if (noShare) return noShare;
     return unexpectedError(err, "PATCH /api/documents/[id]/persons/[personId]");
   }
 }

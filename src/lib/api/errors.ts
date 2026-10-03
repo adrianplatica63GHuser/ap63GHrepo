@@ -6,6 +6,7 @@
 import type { ZodError } from "zod/v4";
 import { RoleNotOfferedError } from "@/lib/admin/value-lists/role-attachment";
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
+import { ShareNotHeldError } from "@/lib/documents/share-not-held-error";
 
 /** Postgres errors come through pg with a numeric SQLSTATE code. */
 type PgError = {
@@ -306,6 +307,26 @@ export function documentNotFoundToResponse(err: unknown): Response | null {
       code:  "DOCUMENT_NOT_FOUND",
     },
     { status: 404 },
+  );
+}
+
+/**
+ * The 400 for a share on a role that holds none, or `null` for anything else.
+ *                                                              (Slice #37.59)
+ *
+ * `code` is what a screen matches, as for `ROLE_NOT_OFFERED`. Unlike the other
+ * refusals here the `error` sentence is ROMANIAN, because the slice that added
+ * it asked for a Romanian message from the route itself: the screens that can
+ * reach it (the Document's „Persoane", the AI party linker) print it as it is.
+ */
+export function shareNotHeldToResponse(err: unknown): Response | null {
+  if (!(err instanceof ShareNotHeldError)) return null;
+  return Response.json(
+    {
+      error: "Rolul ales nu deține o cotă pe acest tip de act: cota-parte, suprafața echivalentă și modul de deținere rămân necompletate.",
+      code:  "SHARE_NOT_HELD",
+    },
+    { status: 400 },
   );
 }
 

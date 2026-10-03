@@ -21,6 +21,8 @@ export type DocTypePersonRoleRow = {
   personRoleId: string;
   documentTypeName: string;
   personRoleName: string;
+  /** Slice #37.59: this role, on this type, holds a share in the property. */
+  holdsShare: boolean;
 };
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -33,6 +35,7 @@ export async function listDocTypePersonRoles(): Promise<DocTypePersonRoleRow[]> 
       personRoleId:     lookupDocTypePersonRole.personRoleId,
       documentTypeName: lookupDocumentType.name,
       personRoleName:   lookupPersonRole.name,
+      holdsShare:       lookupDocTypePersonRole.holdsShare,
     })
     .from(lookupDocTypePersonRole)
     .innerJoin(
@@ -53,6 +56,7 @@ export async function listDocTypePersonRoles(): Promise<DocTypePersonRoleRow[]> 
 export async function createDocTypePersonRole(data: {
   documentTypeId: string;
   personRoleId: string;
+  holdsShare?: boolean;
 }): Promise<DocTypePersonRoleRow> {
   const [inserted] = await db
     .insert(lookupDocTypePersonRole)
@@ -67,6 +71,7 @@ export async function createDocTypePersonRole(data: {
       personRoleId:     lookupDocTypePersonRole.personRoleId,
       documentTypeName: lookupDocumentType.name,
       personRoleName:   lookupPersonRole.name,
+      holdsShare:       lookupDocTypePersonRole.holdsShare,
     })
     .from(lookupDocTypePersonRole)
     .innerJoin(
@@ -104,6 +109,18 @@ export async function listDistinctDocPersonRoles(): Promise<DistinctDocPersonRol
     .orderBy(asc(lookupPersonRole.name));
 
   return rows;
+}
+
+// ── „Deține cotă" (Slice #37.59) ─────────────────────────────────────────────
+
+/** Tick or untick „Deține cotă" on one pair. False when the pair does not exist. */
+export async function setDocTypePersonRoleHoldsShare(id: string, holdsShare: boolean): Promise<boolean> {
+  const result = await db
+    .update(lookupDocTypePersonRole)
+    .set({ holdsShare })
+    .where(eq(lookupDocTypePersonRole.id, id))
+    .returning({ id: lookupDocTypePersonRole.id });
+  return result.length > 0;
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────

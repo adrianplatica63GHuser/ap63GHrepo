@@ -122,6 +122,12 @@ export type AiExtractedParty = {
   roleName: string;
   personRoleId: string | null;
   roleMissing: boolean;
+  /**
+   * Slice #37.59: the role holds a share on this document's type. When false
+   * the dialog offers no „Cotă-parte" boxes and posts none — the route would
+   * refuse them (`SHARE_NOT_HELD`). Absent (an older answer) reads as offered.
+   */
+  holdsShare?: boolean;
   personType: "NATURAL" | "JUDICIAL";
   name: string | null;
   firstName: string | null;
@@ -329,6 +335,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   // so it is read through the box's own parser rather than formatted as a
   // number (which gave ""), and `cotaMod` is narrowed to the four values
   // before it can reach the POST that refuses anything else.
+  /** Slice #37.59: the three boxes only for a role that holds a share, or for a party with no role. */
+  const offersShare = !party || party.personRoleId === null || party.holdsShare !== false;
   const cotaParteText = cotaDraft.parte ?? cotaTextFromAi(party?.cotaParte, "parte");
   const cotaMpText    = cotaDraft.mp    ?? cotaTextFromAi(party?.cotaSuprafataMp, "mp");
   const cotaMod       = cotaModDraft !== undefined ? cotaModDraft : cotaModFromAi(party?.cotaMod);
@@ -345,6 +353,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   const readCota = ():
     | { ok: true; value: { cotaParte: number | null; cotaSuprafataMp: number | null; cotaMod: CotaMod | null } }
     | { ok: false } => {
+    // Slice #37.59: a role that holds no share is linked without one.
+    if (!offersShare) return { ok: true, value: { cotaParte: null, cotaSuprafataMp: null, cotaMod: null } };
     const parte = parseCotaParte(cotaParteText);
     const mp    = parseCotaSuprafataMp(cotaMpText);
     if (!parte.ok || !mp.ok) {
@@ -663,6 +673,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       onSkip={() => advance("skipped", party.personType)}
       onClose={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
     >
+      {offersShare && (
       <fieldset className="mt-3 flex flex-wrap items-start gap-3 rounded-md border border-wire px-3 py-2 dark:border-zinc-700">
         <legend className="px-1 text-xs font-medium text-fade dark:text-zinc-400">
           {tCota("colCota")}
@@ -736,6 +747,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
           </select>
         </label>
       </fieldset>
+      )}
 
       {error && (
         <div

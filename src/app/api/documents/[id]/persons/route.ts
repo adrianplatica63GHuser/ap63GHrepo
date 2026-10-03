@@ -6,6 +6,7 @@ import type { NextRequest } from "next/server";
 import {
   documentNotFoundToResponse,
   roleNotOfferedToResponse,
+  shareNotHeldToResponse,
   unexpectedError,
   zodErrorToResponse,
 } from "@/lib/api/errors";
@@ -72,6 +73,9 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     // is, and this is the half that says so.
     const missing = documentNotFoundToResponse(err);
     if (missing) return missing;
+    // Slice #37.59: a share for a role that holds none on this document's type.
+    const noShare = shareNotHeldToResponse(err);
+    if (noShare) return noShare;
     // Slice #34.15: `associatePersonsToDocument` refuses a role the document's
     // own whitelist does not offer. It is the request that is wrong, not the
     // server, so it is a 400 — and it reaches this catch rather than a check
