@@ -54,7 +54,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01", "TC-ICON-07", "TC-PERS-03", "TC-SYSID-01"],
   "/documents":                            ["TC-DOC-01", "TC-AUTH-02", "TC-VER-02", "TC-TILES-06", "TC-SYSID-01"],
   "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02"],
-  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13"],
+  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01", "TC-LAYOUT-01", "TC-ASSOC-13"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02", "TC-LAYOUT-01", "TC-ASSOC-13"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04", "TC-ICON-06"],
@@ -87,7 +87,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // its case file before the run.
   "/admin/users":                          ["TC-USERS-01", "TC-LAYOUT-01"],
   "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01"],
-  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01"],
+  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07"],
   "/account/change-password":              ["TC-ACCT-01", "TC-LAYOUT-01"],
 };
 
