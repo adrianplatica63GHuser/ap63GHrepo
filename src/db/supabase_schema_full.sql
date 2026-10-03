@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-01 10:59
+-- Generated : 2026-10-03 09:44
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -559,7 +559,8 @@ CREATE TABLE public.lookup_doc_type_person_role (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     document_type_id uuid NOT NULL,
     person_role_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    holds_share boolean DEFAULT false NOT NULL
 );
 
 
