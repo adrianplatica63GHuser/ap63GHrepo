@@ -222,7 +222,8 @@ describe("every delete names the ROW, not the (person, document) pair", () => {
     "app/documents/_components/succession-parties-panel.tsx",
   ])("%s keys its rows on linkId and never on the person", (file) => {
     const src = stripComments(read(...file.split("/")));
-    expect(src).toContain("key={item.linkId}");
+    // #37.65: the Document's persons are „Corelate"'s rows, keyed `person:<linkId>`.
+    expect(src.includes("key={item.linkId}") || src.includes("key: `person:${item.linkId}`")).toBe(true);
     expect(src).not.toContain("key={item.id}");
     // The DELETE it sends must carry the row.
     expect(src).toContain("linkId=$");

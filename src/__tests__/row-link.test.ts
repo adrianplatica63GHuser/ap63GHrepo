@@ -41,18 +41,32 @@ describe("an association row", () => {
     // is the same, so the assertion moved to the component that draws it.
     expect(src).toMatch(/<IconButton\s+href=\{`[^`]*\?readonly=true`\}[\s\S]{0,300}?icon=\{ArrowRight\}\s+label=\{t\("view"\)\}/);
     expect(src).not.toMatch(/<button[^>]*>\s*\{t\("view"\)\}/);
+    if (src.includes(": RelatedRow[]")) {
+      // Slice #37.65: „Corelate"'s rows — the row gives its record's read-only address, and
+      // RelatedTile does the clicks with it (the next test).
+      expect(src).toMatch(/href: `[^`]*\?readonly=true`,/);
+      return;
+    }
     expect(src).toMatch(/onClick=\{\(e\) => \{\s*if \(newTabIfAsked\(e, `[^`]*\?readonly=true`\)\) return;/);
     expect(src).toMatch(/onAuxClick=\{\(e\) => newTabIfAsked\(e, `[^`]*\?readonly=true`\)\}/);
     // A plain double-click still opens the record here.
     expect(src).toMatch(/onDoubleClick=/);
   });
 
+  it("„Corelate” (#37.65): a row's click selects it, Ctrl/⌘ or the middle button opens a new tab, a double-click opens it through the guard", () => {
+    const src = read("src", "components", "tiles", "related-tile.tsx");
+    expect(src).toMatch(/onClick=\{\(e\) => \{\s*if \(newTabIfAsked\(e, row\.href\)\) return;/);
+    expect(src).toMatch(/onAuxClick=\{\(e\) => newTabIfAsked\(e, row\.href\)\}/);
+    expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(row\.href\)\}/);
+    expect(src).toMatch(/const \{ guardedNavigate \} = useUnsavedChanges\(\);/);
+  });
+
   it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Previzualizare\" opens the record beside this one (#37.24)", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
     expect(src).toMatch(/<PreviewButton target=\{/);
-    if (src.includes("<OneLineRow")) {
-      // Slice #37.64: a one-line row — „Previzualizare" in its own slot, after „Vizualizare".
-      expect(src).toMatch(/const SLOTS: readonly RowSlot\[\] = \[[^\]]*"view", "preview"\]/);
+    if (src.includes(": RelatedRow[]")) {
+      // Slice #37.64/#37.65: a one-line row of „Corelate" — „Previzualizare" in its own slot,
+      // after „Vizualizare" (RELATED_SLOTS).
       expect(src).toMatch(/preview: <PreviewButton target=\{/);
       return;
     }
@@ -74,8 +88,8 @@ describe("an association row leaves the screen through the unsaved-changes guard
     // The link: a plain click through the guard; Ctrl/⌘ and middle click left to the browser.
     // (#37.42: `<IconButton href=… onClick=…>`, which renders that same `<Link>`.)
     expect(src).toMatch(/<IconButton\s+href=\{`[^`]*\?readonly=true`\}\s+onClick=\{\(e\) => openThroughGuard\(e, `[^`]*\?readonly=true`, guardedNavigate\)\}/);
-    // The double-click: through the guard, never straight to the router.
-    expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(`[^`]*\?readonly=true`\)\}/);
+    // The double-click: through the guard, never straight to the router (#37.65: in RelatedTile, above).
+    if (!src.includes(": RelatedRow[]")) expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(`[^`]*\?readonly=true`\)\}/);
     expect(src).not.toMatch(/router\.push\(`[^`]*\?readonly=true`\)/);
   });
 
