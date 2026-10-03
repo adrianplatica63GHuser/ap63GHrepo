@@ -313,6 +313,15 @@ const EXPECTED_WRITERS = [
   //    header's first rule and was misdescribed here until a review round.
   "scripts/mark-bow-tie-properties.ts:property:UPDATE:1",
 
+  // ── The TypeScript dev seed (scripts/seed-dev-data). It CREATES and EDITS
+  //    every object through the create/update functions above; these two
+  //    lines are its back-dating step, which moves `created_at` alone on the
+  //    ten objects whose history it spreads over 2024–2026, so that version 0
+  //    is not younger than the row it describes. No field a user typed, no
+  //    version row, no `updated_at`.
+  "scripts/seed-dev-data/seed.ts:document:UPDATE:1",
+  "scripts/seed-dev-data/seed.ts:property:UPDATE:1",
+
   // ── The SQL dev fixture. Slice #34.07 decided to leave it as SQL rather
   //    than rewrite it around the create functions, and its own header states
   //    every field it therefore does not write. That decision is what these
