@@ -56,6 +56,17 @@ export type DocumentListItem = {
   importance:       string | null;
   relevance:        string | null;
   provenance:       string | null;
+  /**
+   * Slice #37.62 — „Câmpuri afișate" on the Documents list: fields every
+   * document has. The institution's name (the form's „Instituție / Notariat",
+   * whatever the type calls it), the subject, and how many pages, persons and
+   * properties the archive holds for it.
+   */
+  institutionName:  string | null;
+  subject:          string | null;
+  pageCount:        number;
+  personCount:      number;
+  propertyCount:    number;
   createdAt:        Date;
   updatedAt:        Date;
 };
@@ -162,11 +173,21 @@ export async function listDocument(
         importance:       entityMetadata.importance,
         relevance:        entityMetadata.relevance,
         provenance:       entityMetadata.provenance,
+        // Slice #37.62. ⚠️ Literal `document.id` in the subqueries, for the
+        // reason the groups filter above gives: a bare `id` would resolve to the
+        // inner table's. A person or property associated twice (two roles)
+        // counts once — „how many are associated", not how many links.
+        institutionName:  lookupInstitution.name,
+        subject:          document.subject,
+        pageCount:        sql<number>`(SELECT count(*)::int FROM document_page dp_c WHERE dp_c.document_id = document.id)`,
+        personCount:      sql<number>`(SELECT count(DISTINCT pd_c.person_id)::int FROM person_document pd_c WHERE pd_c.document_id = document.id)`,
+        propertyCount:    sql<number>`(SELECT count(DISTINCT prd_c.property_id)::int FROM property_document prd_c WHERE prd_c.document_id = document.id)`,
         createdAt:        document.createdAt,
         updatedAt:        document.updatedAt,
       })
       .from(document)
       .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+      .leftJoin(lookupInstitution, eq(document.institutionId, lookupInstitution.id))
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, document.principalObjectId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first.

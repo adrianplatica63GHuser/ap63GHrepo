@@ -888,17 +888,15 @@
       "FUTURE": "Future"
     },
     "listFilters": {
-      "importanceLabel": "Importance:",
-      "allImportances": "All",
-      "relevanceLabel": "Relevance:",
-      "allRelevances": "All",
       "expiringSoon": "Expiring soon",
       "customFieldLabel": "Type-specific field:",
       "allCustomFields": "All",
       "customFieldValueLabel": "Type-specific field value",
       "allCustomFieldValues": "All values",
       "customFieldValuesLoading": "Loading…",
-      "customFieldValueOption": "{value} ({count, plural, one {# document} other {# documents}})"
+      "customFieldValueOption": "{value} ({count, plural, one {# document} other {# documents}})",
+      "customFieldHint": "Filters on one of a document type's own fields — a sale contract's clauses, for example. Choose the field (those of the types chosen under “Document type”, every type's when none is), then one of the values it holds in the archive: only the documents whose field holds that value remain.",
+      "customFieldHintTrigger": "About “Type-specific field”"
     },
     "readonlyView": {
       "backToList": "Back to list",
@@ -1352,7 +1350,7 @@
   "document": {
     "listTitle": "Documents",
     "createTitle": "New Document",
-    "searchPlaceholder": "OR search by code, title, or document no.",
+    "searchPlaceholder": "search by code, title, or document no.",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Document",
@@ -1412,9 +1410,11 @@
       "nrDocument": "Document No.",
       "dateDocument": "Date",
       "institution": "Institution / Notariat",
-      "importance": "Importance",
-      "relevance": "Relevance",
-      "provenance": "Provenance"
+      "subject": "Subject",
+      "pageCount": "Pages",
+      "personCount": "Persons",
+      "propertyCount": "Properties",
+      "createdAt": "Added on"
     },
     "sections": {
       "typeSelect": "Document Type",

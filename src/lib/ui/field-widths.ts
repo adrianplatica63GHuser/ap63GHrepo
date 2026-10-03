@@ -1076,6 +1076,10 @@ export const COLUMN = {
   documentTitle: { content: "XXL", kind: "wraps" }, //      DOC.title: 105 · 151 · 73 — wraps
   nrDocument: { content: "M", kind: "fixed" }, //           DOC.nrDocument: 24 · 13 · 6
   dateDocument: { content: "M", kind: "fixed" }, //         dd.mm.yyyy
+  // Slice #37.62 — „Câmpuri afișate" on the Documents list. Nr. pagini, Persoane and
+  // Proprietăți are `count`, „Adăugat la" is `date` (below).
+  institution: { content: "XL", kind: "wraps" }, //         a lookup_institution name — „Biroul Notarial …"; XXL on the form, wraps here
+  documentSubject: { content: "XL", kind: "wraps" }, //     DOC.subject, a sentence — wraps
   // Properties
   propertyLabel: { content: "XL", kind: "wraps" }, //       „tarla / parcelă (poreclă)" or the nickname
   propertyNickname: { content: "XL", kind: "wraps" }, //    PROP.nickname: 8 · 38 · 38

@@ -888,17 +888,15 @@
       "FUTURE": "De perspectivă"
     },
     "listFilters": {
-      "importanceLabel": "Importanță:",
-      "allImportances": "Toate",
-      "relevanceLabel": "Relevanță:",
-      "allRelevances": "Toate",
       "expiringSoon": "Expiră curând",
       "customFieldLabel": "Câmp specific:",
       "allCustomFields": "Toate",
       "customFieldValueLabel": "Valoarea câmpului specific",
       "allCustomFieldValues": "Toate valorile",
       "customFieldValuesLoading": "Se încarcă…",
-      "customFieldValueOption": "{value} ({count, plural, one {# document} few {# documente} other {# de documente}})"
+      "customFieldValueOption": "{value} ({count, plural, one {# document} few {# documente} other {# de documente}})",
+      "customFieldHint": "Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (sunt cele ale tipurilor alese la „Tip document”, ale tuturor dacă nu e ales niciunul), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare.",
+      "customFieldHintTrigger": "Despre „Câmp specific”"
     },
     "readonlyView": {
       "backToList": "Înapoi la listă",
@@ -1352,7 +1350,7 @@
   "document": {
     "listTitle": "Acte",
     "createTitle": "Act nou",
-    "searchPlaceholder": "SAU caută după cod, titlu sau nr. document",
+    "searchPlaceholder": "caută după cod, titlu sau nr. document",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă act",
@@ -1412,9 +1410,11 @@
       "nrDocument": "Nr. document",
       "dateDocument": "Data",
       "institution": "Instituție / Notariat",
-      "importance": "Importanță",
-      "relevance": "Relevanță",
-      "provenance": "Proveniență"
+      "subject": "Subiect",
+      "pageCount": "Nr. pagini",
+      "personCount": "Persoane",
+      "propertyCount": "Proprietăți",
+      "createdAt": "Adăugat la"
     },
     "sections": {
       "typeSelect": "Tip document",
