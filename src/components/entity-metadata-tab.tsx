@@ -2,7 +2,7 @@
 
 import { useNameOr } from "@/components/record/use-name-or";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
-import { useId, useState, useRef } from "react";
+import { Fragment, useId, useState, useRef } from "react";
 import { Calculator, Check, Link as LinkIcon, Plus, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
@@ -1524,6 +1524,78 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   const about = (title: string) => t("about", { title });
 
+  // Slice #37.82: „Conexiuni"'s groups that are drawn, in order — the lines go between them.
+  const connectionGroups: { key: string; node: React.ReactNode }[] = [];
+  if (showConnections && data) {
+    // ── 4. Etichete / Tags
+    if (data.principalObjectId && isOnLatest) connectionGroups.push({ key: "tags", node: (
+        <TagsSection
+          principalObjectId={data.principalObjectId}
+          queryKey={queryKey}
+          labelTitle={t("tags.title")}
+          labelNote={t("tags.note")}
+          labelAbout={about(t("tags.title"))}
+          labelPlaceholder={t("tags.placeholder")}
+          labelAdd={t("tags.add")}
+          labelAdding={t("tags.adding")}
+          labelRemove={t("tags.remove")}
+          labelEmpty={t("tags.empty")}
+        />
+    ) });
+    // ── 5. Grupuri / Groups
+    connectionGroups.push({ key: "groups", node: data.principalObjectId ? (
+        <InlineGroupsSection
+          principalObjectId={data.principalObjectId}
+          currentGroups={data.groups}
+          mainQueryKey={queryKey}
+          isOnLatest={isOnLatest}
+          labelTitle={t("groups.title")}
+          labelEmpty={t("groups.empty")}
+          labelAdd={t("groups.add")}
+          labelHideAdd={t("hideAdd")}
+          labelAddPlaceholder={t("groups.addPlaceholder")}
+          labelRemove={t("groups.remove")}
+          withBack={withBack}
+        />
+    ) : (
+        <section className="flex flex-col gap-1">
+          <h3 className={ITEM_TITLE}>{t("groups.title")}</h3>
+          <p className="text-sm text-fade dark:text-zinc-400">{t("groups.empty")}</p>
+        </section>
+    ) });
+    // ── 6. Ștampile / Stamps
+    connectionGroups.push({ key: "stamps", node: data.principalObjectId ? (
+        <InlineStampsSection
+          principalObjectId={data.principalObjectId}
+          currentStamps={data.stamps}
+          mainQueryKey={queryKey}
+          isOnLatest={isOnLatest}
+          labelTitle={t("stamps.title")}
+          labelEmpty={t("stamps.empty")}
+          labelAdd={t("stamps.add")}
+          labelHideAdd={t("hideAdd")}
+          labelAddPlaceholder={t("stamps.addPlaceholder")}
+          labelRemove={t("stamps.remove")}
+          withBack={withBack}
+        />
+    ) : (
+        <section className="flex flex-col gap-1">
+          <h3 className={ITEM_TITLE}>{t("stamps.title")}</h3>
+          <p className="text-sm text-fade dark:text-zinc-400">{t("stamps.empty")}</p>
+        </section>
+    ) });
+    // ── 7. Trimiteri / See Also
+    if (data.principalObjectId) connectionGroups.push({ key: "crossRefs", node: (
+        <CrossRefsSection
+          principalObjectId={data.principalObjectId}
+          mainQueryKey={queryKey}
+          isOnLatest={isOnLatest}
+          t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
+          withBack={withBack}
+        />
+    ) });
+  }
+
   return (
     <>
       {/* "Make current" confirmation dialog */}
@@ -1696,76 +1768,19 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           </h3>
         )}
 
-        {/* ── 4. Etichete / Tags ───────────────────────────────────────────── */}
-        {data.principalObjectId && isOnLatest && (
-          <TagsSection
-            principalObjectId={data.principalObjectId}
-            queryKey={queryKey}
-            labelTitle={t("tags.title")}
-            labelNote={t("tags.note")}
-            labelAbout={about(t("tags.title"))}
-            labelPlaceholder={t("tags.placeholder")}
-            labelAdd={t("tags.add")}
-            labelAdding={t("tags.adding")}
-            labelRemove={t("tags.remove")}
-            labelEmpty={t("tags.empty")}
-          />
-        )}
-
-        {/* ── 5. Grupuri / Groups ──────────────────────────────────────────── */}
-        {data.principalObjectId ? (
-          <InlineGroupsSection
-            principalObjectId={data.principalObjectId}
-            currentGroups={data.groups}
-            mainQueryKey={queryKey}
-            isOnLatest={isOnLatest}
-            labelTitle={t("groups.title")}
-            labelEmpty={t("groups.empty")}
-            labelAdd={t("groups.add")}
-            labelHideAdd={t("hideAdd")}
-            labelAddPlaceholder={t("groups.addPlaceholder")}
-            labelRemove={t("groups.remove")}
-            withBack={withBack}
-          />
-        ) : (
-          <section className="flex flex-col gap-1">
-            <h3 className={ITEM_TITLE}>{t("groups.title")}</h3>
-            <p className="text-sm text-fade dark:text-zinc-400">{t("groups.empty")}</p>
-          </section>
-        )}
-
-        {/* ── 6. Ștampile / Stamps ─────────────────────────────────────────── */}
-        {data.principalObjectId ? (
-          <InlineStampsSection
-            principalObjectId={data.principalObjectId}
-            currentStamps={data.stamps}
-            mainQueryKey={queryKey}
-            isOnLatest={isOnLatest}
-            labelTitle={t("stamps.title")}
-            labelEmpty={t("stamps.empty")}
-            labelAdd={t("stamps.add")}
-            labelHideAdd={t("hideAdd")}
-            labelAddPlaceholder={t("stamps.addPlaceholder")}
-            labelRemove={t("stamps.remove")}
-            withBack={withBack}
-          />
-        ) : (
-          <section className="flex flex-col gap-1">
-            <h3 className={ITEM_TITLE}>{t("stamps.title")}</h3>
-            <p className="text-sm text-fade dark:text-zinc-400">{t("stamps.empty")}</p>
-          </section>
-        )}
-
-        {/* ── 7. Trimiteri / See Also ──────────────────────────────────────── */}
-        {data.principalObjectId && (
-          <CrossRefsSection
-            principalObjectId={data.principalObjectId}
-            mainQueryKey={queryKey}
-            isOnLatest={isOnLatest}
-            t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
-            withBack={withBack}
-          />
-        )}
+        {/* Slice #37.82 — a line between every two groups that are drawn, with
+            #37.81's divider: never first, never last, never two together (on an
+            older version „Etichete" is not drawn, and „Grupuri" comes first with
+            no line above it). The groups stand 0.5rem from each line, so two
+            groups are the 1rem they were apart plus the line. */}
+        <div className="flex flex-col gap-2" data-connections-groups="">
+          {connectionGroups.map((group, i) => (
+            <Fragment key={group.key}>
+              {i > 0 && <Divider />}
+              {group.node}
+            </Fragment>
+          ))}
+        </div>
         </>)}
       </div>
     </>
