@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -63,3 +63,7 @@ unchanged: the same in every step on all four — 476 px, the selects level, one
 on „Istoric"'s line at the right edge; on the person the change to „Ridicată" saved („✓ Salvat") and
 read back after reopening. The four records deleted (204 ×4). Nothing in the file changed, so the
 case is confirmed, and `e2e/tiles/classification-one-row.spec.ts` translates it.
+
+**2026-10-03 — `automated` (Slice #37.68).** The test runner's full run 20261004T020726Z-28073 on
+cfda189 ran `e2e/tiles/classification-one-row.spec.ts` green with the other 64 specs (lint, tsc,
+jest and forms-drift green too).
