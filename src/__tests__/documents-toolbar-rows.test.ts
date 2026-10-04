@@ -41,7 +41,8 @@ describe("the Documents toolbar in two rows (Slice #37.83)", () => {
   });
 
   it("the two rows are one toolbar column, the second under the first", () => {
-    expect(code).toMatch(/<div className="flex flex-col gap-3" data-toolbar="">\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">/);
+    // Slice #37.84: the column is also the list's toolbar box, as wide as the table or its controls.
+    expect(code).toMatch(/<div className=\{`flex flex-col gap-3 \$\{LIST_TOOLBAR\}`\} data-toolbar="" \{\.\.\.edge\.toolbar\}>\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">/);
     expect(code.indexOf('data-toolbar-row="first"')).toBeLessThan(code.indexOf('data-toolbar-row="second"'));
   });
 });

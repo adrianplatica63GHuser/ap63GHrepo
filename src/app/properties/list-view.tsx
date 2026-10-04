@@ -12,6 +12,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -285,12 +286,14 @@ export function PropertyListView() {
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #37.72: Poreclă always, the first after the checkbox.
   const columns: ColumnName[] = ["selectBadges", "propertyNickname", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
+  const edge = useListEdge(columns);
   const colCount = columns.length;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         <input
           type="search"
           value={searchInput}
@@ -357,7 +360,7 @@ export function PropertyListView() {
 
       {/* Table */}
       <ListPreviews>
-        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
           <table {...fixedTable(columns)}>
             <FixedColumns columns={columns} />
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
@@ -463,7 +466,7 @@ export function PropertyListView() {
       </ListPreviews>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex w-fit max-w-full items-center justify-between gap-4" {...edge.frame}>
         <div className="text-xs text-fade dark:text-zinc-400">
           {query.data
             ? t("counts", { shown: query.data.items.length, total })

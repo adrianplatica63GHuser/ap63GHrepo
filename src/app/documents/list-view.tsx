@@ -11,6 +11,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldOptionsOf, customFieldValueLabel } from "@/lib/documents/custom-field-options";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -648,6 +649,8 @@ export function DocumentListView({
   const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT, DEFAULT_COLS);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   const columns: ColumnName[] = ["selectNew", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
+  const edge = useListEdge(columns);
   const colCount = columns.length;
 
   return (
@@ -657,7 +660,7 @@ export function DocumentListView({
           choosing a field in „Câmp specific" no longer moves any of them. The
           second, under the search box, holds „Câmp specific" alone — and is not
           drawn at all when the types on screen have no such field. */}
-      <div className="flex flex-col gap-3" data-toolbar="">
+      <div className={`flex flex-col gap-3 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
       <div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">
         {/* Slice #37.62: the search first, then the type — its placeholder no
             longer begins with „SAU", which only made sense after the type. */}
@@ -827,7 +830,7 @@ export function DocumentListView({
 
       {/* No types selected — prompt the user to pick at least one */}
       {noTypesSelected ? (
-        <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="w-fit max-w-full overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900" {...edge.frame}>
           <div className="px-4 py-8 text-center text-sm text-fade">
             {t("noTypeSelected")}
           </div>
@@ -835,7 +838,7 @@ export function DocumentListView({
       ) : (
         <>
           <ListPreviews>
-            <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+            <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
               <table {...fixedTable(columns)}>
                 <FixedColumns columns={columns} />
                 <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
@@ -939,7 +942,7 @@ export function DocumentListView({
           </ListPreviews>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex w-fit max-w-full items-center justify-between gap-4" {...edge.frame}>
             <div className="text-xs text-fade dark:text-zinc-400">
               {query.data
                 ? t("counts", { shown: query.data.items.length, total })

@@ -11,6 +11,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -235,12 +236,14 @@ export function NaturalPersonListView() {
   // A stored key this build has no column for stays in storage and is not drawn.
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   const columns: ColumnName[] = ["selectNew", "personName", "personNickname", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
+  const edge = useListEdge(columns);
   const colCount = columns.length;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         <input
           type="search"
           value={searchInput}
@@ -292,7 +295,7 @@ export function NaturalPersonListView() {
 
       {/* Results table */}
       <ListPreviews>
-        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
+        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
           <table {...fixedTable(columns)}>
             <FixedColumns columns={columns} />
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
@@ -397,7 +400,7 @@ export function NaturalPersonListView() {
 
       {/* Counts + pagination */}
       {query.data && (
-        <div className="flex items-center justify-between text-sm text-fade">
+        <div className="flex w-fit max-w-full items-center justify-between text-sm text-fade" {...edge.frame}>
           <span>
             {t("counts", {
               shown: Math.min(items.length + currentPage * PAGE_SIZE, total),
