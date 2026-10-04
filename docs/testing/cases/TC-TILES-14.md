@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -65,3 +65,6 @@ stored choices removed again, the file unchanged: every colour the same in every
 removed, the document and the property deleted (204, 204). Nothing in the file changed, so the case
 is confirmed, and `e2e/tiles/pinned-tint.spec.ts` translates it.
 
+**2026-10-04 — `automated` (Slice #37.78).** The test runner's full run 20261004T191326Z-31863 on
+a2c414c ran `e2e/tiles/pinned-tint.spec.ts` green with the other 74 (lint, tsc, jest and forms-drift
+green too).
