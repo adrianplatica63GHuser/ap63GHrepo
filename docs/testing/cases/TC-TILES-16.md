@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -64,3 +64,6 @@ the buttons (FU-290). The pane renders at a device-pixel ratio under 1, so a 1-p
 corrected file unchanged: every step the same. Both deleted (204, 204). Nothing in the file changed,
 so the case is confirmed, and `e2e/tiles/classification-dividers.spec.ts` translates it.
 
+**2026-10-04 — `automated` (Slice #37.81).** The test runner's full run 20261004T204603Z-28586 on
+b6ea81f ran `e2e/tiles/classification-dividers.spec.ts` green with the other 77 (lint, tsc, jest and
+forms-drift green too).
