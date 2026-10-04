@@ -148,8 +148,11 @@ function CornerInputRow({
     "rounded border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-focus";
   const inputCls = boxCls + " w-full";
   // #37.77: a DMS box keeps its own width. With `w-full` beside `w-10` the stylesheet's
-  // `w-full` won, so in a wrapping line each box took the whole line.
-  const dmsCls = (w: "w-10" | "w-16") => boxCls + " " + w;
+  // `w-full` won, so in a wrapping line each box took the whole line. Its number spinner is
+  // hidden: Chrome reserves about 15 px for it, which left a 40-px box one digit („4" for 44).
+  // 44 px holds „180" without it; a line is then about 233 px in the cell's 240.
+  const dmsCls = (w: "w-11" | "w-16") =>
+    boxCls + " " + w + " [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
   const dirBtn = (active: boolean, onClick: () => void, label: string) => (
     <button
@@ -253,9 +256,9 @@ function CornerInputRow({
               <div className="flex flex-col gap-0.5 text-xs">
                 <span className="text-fade">{t("lat")}</span>
                 <div className="flex flex-wrap items-center gap-1">
-                  <input type="number" min={0} max={90}     step={1}   value={latDeg} onChange={(e) => setLatDeg(e.target.value)} placeholder="44"    className={dmsCls("w-10")} />
+                  <input type="number" min={0} max={90}     step={1}   value={latDeg} onChange={(e) => setLatDeg(e.target.value)} placeholder="44"    className={dmsCls("w-11")} />
                   <span className="text-fade">°</span>
-                  <input type="number" min={0} max={59}     step={1}   value={latMin} onChange={(e) => setLatMin(e.target.value)} placeholder="24"    className={dmsCls("w-10")} />
+                  <input type="number" min={0} max={59}     step={1}   value={latMin} onChange={(e) => setLatMin(e.target.value)} placeholder="24"    className={dmsCls("w-11")} />
                   <span className="text-fade">′</span>
                   <input type="number" min={0} max={59.999} step="any" value={latSec} onChange={(e) => setLatSec(e.target.value)} placeholder="59.40" className={dmsCls("w-16")} />
                   <span className="text-fade">″</span>
@@ -269,9 +272,9 @@ function CornerInputRow({
               <div className="flex flex-col gap-0.5 text-xs">
                 <span className="text-fade">{t("lon")}</span>
                 <div className="flex flex-wrap items-center gap-1">
-                  <input type="number" min={0} max={180}    step={1}   value={lonDeg} onChange={(e) => setLonDeg(e.target.value)} placeholder="25"    className={dmsCls("w-10")} />
+                  <input type="number" min={0} max={180}    step={1}   value={lonDeg} onChange={(e) => setLonDeg(e.target.value)} placeholder="25"    className={dmsCls("w-11")} />
                   <span className="text-fade">°</span>
-                  <input type="number" min={0} max={59}     step={1}   value={lonMin} onChange={(e) => setLonMin(e.target.value)} placeholder="57"    className={dmsCls("w-10")} />
+                  <input type="number" min={0} max={59}     step={1}   value={lonMin} onChange={(e) => setLonMin(e.target.value)} placeholder="57"    className={dmsCls("w-11")} />
                   <span className="text-fade">′</span>
                   <input type="number" min={0} max={59.999} step="any" value={lonSec} onChange={(e) => setLonSec(e.target.value)} placeholder="52.20" className={dmsCls("w-16")} />
                   <span className="text-fade">″</span>
