@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { RightColumn } from "@/components/tiles/tile-areas";
+import { tileSurface } from "@/lib/ui/tile-surface";
 import {
   type FieldPath,
   type FieldErrors,
@@ -1981,6 +1982,7 @@ export function DocumentForm({
                 state={pagesState}
                 onToggleBigPage={handleToggleBigPage}
                 sidebar
+                surface={tileSurface(!!tiles?.right?.has("pages"))}
               />
             </ErrorBoundary>
           </div>,

@@ -46,6 +46,7 @@ import {
 import { contentTypeOf } from "@/lib/files/file-mime";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { TILE_SURFACE } from "@/lib/ui/tile-surface";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -561,6 +562,8 @@ type Props = {
    *  column itself is narrow — and lets the panel grow/scroll to fill the
    *  stretched height instead of keeping its own shorter natural size. */
   sidebar?:         boolean;
+  /** Slice #37.78: the tile's surface — `PINNED_TILE_SURFACE` in the right column. */
+  surface?:         string;
 };
 
 export function PagesPanel({
@@ -570,6 +573,7 @@ export function PagesPanel({
   bigPage = false,
   onToggleBigPage,
   sidebar = false,
+  surface = TILE_SURFACE,
 }: Props) {
   const {
     t,
@@ -596,7 +600,7 @@ export function PagesPanel({
   return (
     <section
       className={[
-        "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+        surface,
         sidebar ? "flex h-full flex-col" : "",
       ].join(" ")}
       aria-label={t("sectionTitle")}

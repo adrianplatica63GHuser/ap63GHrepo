@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { RightColumn } from "@/components/tiles/tile-areas";
+import { tileSurface } from "@/lib/ui/tile-surface";
 import {
   type Control,
   type FieldPath,
@@ -265,6 +266,8 @@ export function PropertyForm({
   // Slice #37.56: a tile that stands in the right column is rendered here, as
   // before, and placed in its slot there; nothing until the slot exists, so
   // the map is never mounted twice.
+  // Slice #37.78: a right-column tile never moves, and is tinted to say so.
+  const surface = (tile: PropTile): string => tileSurface(!!tiles?.right?.has(tile));
   const placeTile = (tile: PropTile, node: React.ReactNode): React.ReactNode => {
     if (!tiles?.right?.has(tile)) return node;
     const slot = tiles.right.slot(tile);
@@ -1300,7 +1303,7 @@ export function PropertyForm({
           data-panel="corners"
           {...tileProps("corners")}
           className={[
-            "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+            surface("corners"),
             cornersPulse ? "ga-vpulse-red" : "",
             tileShown("corners") ? "" : "hidden",
           ].join(" ")}
@@ -1465,7 +1468,7 @@ export function PropertyForm({
           style={PANEL_UNIT_STYLE.property.map}
           data-panel="map"
           {...tileProps("map")}
-          className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className={surface("map")}
         >
           <div
             className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
@@ -1498,7 +1501,7 @@ export function PropertyForm({
             style={PANEL_UNIT_STYLE.property.streetView}
             data-panel="street-view"
             {...tileProps("streetView")}
-            className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            className={surface("streetView")}
           >
             <div
               className="overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
