@@ -28,22 +28,6 @@
       {"key":"consimtamantDatePersonale","type":"select","order":18,"tabEn":"Added clauses","tabRo":"Clauze adăugate","aiHint":null,"groupEn":"Supplemented clauses","groupRo":"Clauze completate","labelEn":"Personal-data consent","labelRo":"Consimțământ date personale","options":[{"value":"AFIRMAT","labelEn":"Asserted","labelRo":"Afirmat"},{"value":"NEMENTIONAT","labelEn":"Not stated","labelRo":"Nu e menționat"},{"value":"EXCEPTIE","labelEn":"Exception","labelRo":"Excepție"}]},
       {"key":"celelalteClauzeNemodificate","type":"select","order":19,"tabEn":"Added clauses","tabRo":"Clauze adăugate","aiHint":null,"groupEn":"Supplemented clauses","groupRo":"Clauze completate","labelEn":"Remaining parent clauses unchanged","labelRo":"Celelalte clauze nemodificate","options":[{"value":"AFIRMAT","labelEn":"Asserted","labelRo":"Afirmat"},{"value":"NEMENTIONAT","labelEn":"Not stated","labelRo":"Nu e menționat"},{"value":"EXCEPTIE","labelEn":"Exception","labelRo":"Excepție"}]}
     ],
-    "ANTECONTRACT": [
-      {"key":"cnp_1","type":"text","order":0,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"CNP 1","labelRo":"CNP 1"},
-      {"key":"ci_seria_if_nr","type":"text","order":1,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"CI seria IF nr.","labelRo":"CI seria IF nr."},
-      {"key":"nr_cad","type":"text","order":2,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"nr. cad.","labelRo":"nr. cad."},
-      {"key":"cnp_2","type":"text","order":3,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"CNP 2","labelRo":"CNP 2"},
-      {"key":"actul_de_lotizare_aut_sub_nr","type":"text","order":4,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"actul de lotizare aut. sub nr.","labelRo":"actul de lotizare aut. sub nr."},
-      {"key":"nr_cadastral","type":"text","order":5,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"nr. cadastral","labelRo":"nr. cadastral"},
-      {"key":"ci_seria_if_nr_2","type":"text","order":6,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"CI seria IF nr. 2","labelRo":"CI seria IF nr. 2"},
-      {"key":"contractul_de_vanzare_cumparare_aut_sub","type":"text","order":7,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"contractul de vanzare-cumparare aut. sub nr.","labelRo":"contractul de vanzare-cumparare aut. sub nr."},
-      {"key":"suma_de","type":"text","order":8,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"suma de","labelRo":"suma de"},
-      {"key":"diferenta_de","type":"text","order":9,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"diferența de","labelRo":"diferența de"},
-      {"key":"incheiere_de_autentificare_nr","type":"text","order":10,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"ÎNCHEIERE DE AUTENTIFICARE NR.","labelRo":"ÎNCHEIERE DE AUTENTIFICARE NR."},
-      {"key":"anul","type":"text","order":11,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Anul","labelRo":"Anul"},
-      {"key":"luna","type":"text","order":12,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"luna","labelRo":"luna"},
-      {"key":"s_a_perceput_onorariul_de","type":"text","order":13,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"S-a perceput onorariul de","labelRo":"S-a perceput onorariul de"}
-    ],
     "CONTRACT_VANZARE": [
       {"key":"pretTotal","type":"number","order":0,"tabEn":"Price and fees","tabRo":"Preț și taxe","aiHint":"suma, doar cifre și separator zecimal, fără moneda și fără punct de mie","groupEn":"Financial","groupRo":"Financiar","labelEn":"Total price","labelRo":"Preț total","options":null},
       {"key":"monedaPret","type":"select","order":1,"tabEn":"Price and fees","tabRo":"Preț și taxe","aiHint":null,"groupEn":"Financial","groupRo":"Financiar","labelEn":"Currency","labelRo":"Monedă","options":[{"value":"RON","labelEn":"Lei (RON)","labelRo":"Lei (RON)"},{"value":"EUR","labelEn":"Euro (EUR)","labelRo":"Euro (EUR)"},{"value":"USD","labelEn":"Dollars (USD)","labelRo":"Dolari (USD)"}]},
