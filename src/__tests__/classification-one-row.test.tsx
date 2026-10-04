@@ -99,7 +99,8 @@ describe("„Clasificare subiectivă”: Importanță and Relevanță on one row
     expect(line.contains(save)).toBe(true);
     expect(line.className).toMatch(/justify-between/);
     expect(line.firstElementChild?.textContent).toBe("provenance.historyTitle");
-    expect(line.lastElementChild).toBe(save);
+    // The button is the line's last element — inside its tooltip's wrapper.
+    expect(line.lastElementChild?.contains(save)).toBe(true);
     expect(screen.getAllByRole("button", { name: "save" })).toHaveLength(1);
   });
 
