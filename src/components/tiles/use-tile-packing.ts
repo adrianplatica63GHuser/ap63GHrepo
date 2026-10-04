@@ -91,8 +91,38 @@ export function findBoxes(container: HTMLElement): FoundBox[] {
     .map(({ el, id, anchor, full, rowEnd }) => ({ el, id, anchor, full, rowEnd }));
 }
 
-/** The inline styles the hook sets on a box, cleared when the row is no longer packed. */
-const BOX_STYLES = ["position", "left", "top", "margin", "width"] as const;
+/**
+ * Sets inline styles on elements React also styles, and puts back exactly
+ * what was there when the row is no longer packed.
+ *
+ * ⚠️ **NEVER REMOVE WHAT REACT SET.** A panel's width is React's inline
+ * `width` (`unitStyle`). #37.75's first cleanup removed `width` from every
+ * box; React's development run mounts, cleans up and mounts every effect
+ * once, so the panels lost their widths and shrank to their content —
+ * „Contact" 306 px, „Persoane de contact" 546 px (full 20261004T064902Z-20097,
+ * TC-PERS-01 and TC-PERS-02). So the first value of each property is kept and
+ * restored, whatever it was.
+ */
+function styleKeeper() {
+  const kept = new Map<HTMLElement, Map<string, string>>();
+  return {
+    set(el: HTMLElement, prop: string, value: string): void {
+      let props = kept.get(el);
+      if (!props) kept.set(el, (props = new Map()));
+      if (!props.has(prop)) props.set(prop, el.style.getPropertyValue(prop));
+      el.style.setProperty(prop, value);
+    },
+    restore(): void {
+      for (const [el, props] of kept) {
+        for (const [prop, value] of props) {
+          if (value) el.style.setProperty(prop, value);
+          else el.style.removeProperty(prop);
+        }
+      }
+      kept.clear();
+    },
+  };
+}
 
 function remPx(): number {
   const px = parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -121,25 +151,26 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
       return { unit: UNIT_REM * r, gap: UNIT_GAP_REM * r };
     };
 
+    const styles = styleKeeper();
+
     const apply = () => {
       const { unit, gap } = metrics();
-      container.style.position = "relative";
-      container.style.height = `${packedHeight(placed)}px`;
+      styles.set(container, "position", "relative");
+      styles.set(container, "height", `${packedHeight(placed)}px`);
       const byId = new Map(boxes.map((b) => [b.id, b]));
       let widest = 0;
       for (const p of placed) {
         const box = byId.get(p.id);
         if (!box) continue;
-        const s = box.el.style;
-        s.position = "absolute";
-        s.left = `${p.col * (unit + gap)}px`;
-        s.top = `${p.top}px`;
-        s.margin = "0";
-        if (p.rowEnd || box.full) s.width = "100%";
+        styles.set(box.el, "position", "absolute");
+        styles.set(box.el, "left", `${p.col * (unit + gap)}px`);
+        styles.set(box.el, "top", `${p.top}px`);
+        styles.set(box.el, "margin", "0");
+        if (p.rowEnd || box.full) styles.set(box.el, "width", "100%");
         else widest = Math.max(widest, box.el.offsetWidth);
         box.el.dataset.packedCol = String(p.col);
       }
-      if (fitWidest) container.style.minWidth = `${widest}px`;
+      if (fitWidest) styles.set(container, "min-width", `${widest}px`);
     };
 
     const heights = () => new Map(boxes.map((b) => [b.id, b.el.offsetHeight]));
@@ -228,11 +259,8 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
       sizes.disconnect();
       width.disconnect();
       changes.disconnect();
-      for (const b of boxes) {
-        for (const k of BOX_STYLES) b.el.style.removeProperty(k);
-        delete b.el.dataset.packedCol;
-      }
-      for (const k of ["position", "height", "min-width"]) container.style.removeProperty(k);
+      styles.restore();
+      for (const b of boxes) delete b.el.dataset.packedCol;
       container.removeEventListener("input", acted);
       container.removeEventListener("keydown", acted);
       container.removeEventListener("pointerdown", acted);

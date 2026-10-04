@@ -202,6 +202,14 @@ describe("the screens", () => {
     expect(src).toContain("grow(");
   });
 
+  it("puts back exactly the inline styles it overwrote — never removes a width React set", () => {
+    // Full 20261004T064902Z-20097: a cleanup that removed `width` from every box shrank the panels to their content.
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src).toContain("styles.restore()");
+    expect(src).not.toMatch(/\.style\.(width|left|top|position|height)\s*=/);
+    expect(src).not.toMatch(/removeProperty\(k\)/);
+  });
+
   it("„Previzualizare” remembers the tile it was pressed in, and the preview carries it", () => {
     const tiles = code(read("src", "components", "tiles", "preview-tiles.tsx"));
     expect(tiles).toContain('closest<HTMLElement>("[data-tile]")');
