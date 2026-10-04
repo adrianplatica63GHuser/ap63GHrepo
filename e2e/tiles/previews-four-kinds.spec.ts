@@ -13,7 +13,9 @@
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { E2E_MARKER, createDocumentOfType, createNaturalPerson, createProperty, removeRecord } from "../helpers/records";
+import {
+  E2E_MARKER, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord,
+} from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-11`;
 
@@ -49,6 +51,8 @@ async function rowsOf(tile: Locator): Promise<string[][]> {
 test.describe("TC-TILES-11 — cele patru previzualizări", () => {
   test("„născută:”, „(2 contacte)”, cele trei rânduri ale proprietății, actul fără „Tip document”", async ({ page }) => {
     test.slow();
+    // A run that died before its `finally` leaves its records; they would be a second match here.
+    await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const c1 = await createNaturalPerson(page.request, { lastName: `${MARK} Contact`, firstName: "Unu" });
     const c2 = await createNaturalPerson(page.request, { lastName: `${MARK} Contact`, firstName: "Doi" });

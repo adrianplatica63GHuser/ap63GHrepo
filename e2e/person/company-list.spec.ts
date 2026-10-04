@@ -13,7 +13,9 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { E2E_MARKER, createNaturalPerson, removeRecord } from "../helpers/records";
+import {
+  E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord,
+} from "../helpers/records";
 
 const MARK = `${E2E_MARKER}PERS-06`;
 const SEARCH = "caută după cod, nume, poreclă sau ID";
@@ -21,6 +23,8 @@ const SEARCH = "caută după cod, nume, poreclă sau ID";
 test.describe("TC-PERS-06 — lista persoanelor juridice", () => {
   test("fără „Grupuri”; „Persoană de contact” arată primul contact, sau al doilea când primul lipsește", async ({ page }) => {
     test.slow();
+    // A run that died before its `finally` leaves its records; they would be a second match here.
+    await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const unu = await createNaturalPerson(page.request, { lastName: `${MARK} Contact`, firstName: "Unu" });
     const doi = await createNaturalPerson(page.request, { lastName: `${MARK} Contact`, firstName: "Doi" });

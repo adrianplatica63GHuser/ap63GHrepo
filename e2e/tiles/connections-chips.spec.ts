@@ -16,7 +16,9 @@
  */
 
 import { test, expect, type Locator } from "@playwright/test";
-import { E2E_MARKER, createNaturalPerson, removeRecord } from "../helpers/records";
+import {
+  E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord,
+} from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-10`;
 const TAGS = ["tc-e2e-tiles-10 arendă", "tc-e2e-tiles-10 moștenire", "tc-e2e-tiles-10 litigiu"];
@@ -36,6 +38,8 @@ async function boxes(chips: Locator): Promise<string> {
 test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la focalizare", () => {
   test("trei etichete: niciun „×” în repaus, „×” la mouse și la focalizare, fără mișcare, și eliminarea", async ({ page }) => {
     test.slow();
+    // A run that died before its `finally` leaves its records; they would be a second match here.
+    await removeLeftovers(page.request, MARK);
     const person = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
     try {
       const refs = (await (await page.request.get(`/api/people/${person}/entity-references`)).json()) as { principalObjectId: string };
