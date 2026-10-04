@@ -41,6 +41,9 @@ export interface TileRegistry<K extends string> {
    * left area as before. Absent, every tile is in the left area. It is data,
    * not a layout, so a later slice can store a user's own arrangement in its
    * place and this becomes its default. The checkboxes keep `all`'s order.
+   * Since #37.75 the left area's boxes are packed (`./tile-packing`): each
+   * right under the box above it, its place a column in units and a top in
+   * px — the data #37.76 stores in place of what it computes.
    */
   placement?: { right: readonly K[] };
 }

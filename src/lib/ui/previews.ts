@@ -16,6 +16,12 @@ export type PreviewKind = "person" | "company" | "property" | "document";
 export interface PreviewTarget {
   kind: PreviewKind;
   id: string;
+  /**
+   * Slice #37.75: the tile („data-tile") whose „Previzualizare" opened it, so
+   * the tile row places it right under that tile. Not part of its key: the
+   * same record opened from another tile is the same preview.
+   */
+  anchor?: string;
 }
 
 export const MAX_PREVIEWS = 2;

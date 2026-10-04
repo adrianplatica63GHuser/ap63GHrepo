@@ -4,7 +4,8 @@
  * A related record, open in a tile beside the one on screen.   (Slice #37.24)
  *
  * From any association tile, „Previzualizare" opens the related record in a
- * Previzualizare tile at the end of the tile row: a sales contract and its
+ * Previzualizare tile — since #37.75 right under the tile it was pressed in
+ * (`@/lib/ui/tile-packing`), before at the end of the tile row: a sales contract and its
  * buyer, a parcel and its title deed, on screen together in ONE window.
  * #37.21's new-tab link does the same across two windows.
  *
@@ -82,7 +83,9 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
       size="xs"
       onClick={(e) => {
         e.stopPropagation();
-        open(target);
+        // Slice #37.75: the tile it was pressed in — the preview opens right under it.
+        const anchor = (e.currentTarget as HTMLElement).closest<HTMLElement>("[data-tile]")?.dataset.tile;
+        open(anchor ? { ...target, anchor } : target);
       }}
       onDoubleClick={(e) => e.stopPropagation()}
     />
@@ -194,6 +197,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
         width={width}
         tile={previewKey(target)}
         style={style}
+        anchor={target.anchor}
       />
     );
   }
@@ -232,6 +236,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
       width={width}
       tile={previewKey(target)}
       style={style}
+      anchor={target.anchor}
     />
   );
 }

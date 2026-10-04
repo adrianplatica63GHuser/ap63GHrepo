@@ -73,6 +73,7 @@ export function PreviewTileBody({
   width,
   tile,
   style,
+  anchor,
   lines,
   titleNote,
 }: {
@@ -104,11 +105,14 @@ export function PreviewTileBody({
   width: PreviewWidth;
   tile?: string;
   style?: CSSProperties;
+  /** Slice #37.75: the tile its „Previzualizare" was pressed in — the row places it right under that tile. */
+  anchor?: string;
 }) {
   return (
     <section
       data-tile={tile ? `preview:${tile}` : "preview"}
       data-preview
+      data-preview-anchor={anchor}
       aria-label={title}
       data-preview-compact={lines ? "" : undefined}
       className={`rounded-md border border-dashed border-cta/50 bg-card p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900${lines ? " w-max max-w-full" : ""}`}

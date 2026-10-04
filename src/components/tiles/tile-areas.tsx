@@ -29,7 +29,8 @@
  * Ask first). The row is still `unitRowStyle`'s whole units, and so, since the
  * column is whole units, is the left area.
  */
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useTilePacking } from "./use-tile-packing";
 import { PANEL_GAP } from "@/lib/ui/field-widths";
 
 /** What a form needs to place a tile in the right column. */
@@ -89,9 +90,14 @@ export function TileAreas({
   /** The left area's tiles. */
   children: ReactNode;
 }) {
+  // Slice #37.75: the left area's boxes each stand right under the box above
+  // them (`useTilePacking`); out of the flow, they no longer give the area its
+  // min-content width, so the hook gives it its widest box's.
+  const leftRef = useRef<HTMLDivElement>(null);
+  useTilePacking(leftRef, true);
   return (
     <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
-      <div className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">
+      <div ref={leftRef} className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">
         {children}
       </div>
       {right.length > 0 && (

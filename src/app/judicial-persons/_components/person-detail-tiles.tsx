@@ -28,7 +28,7 @@
  * `?tab=` still works: the tab it names adds its tile for this visit and
  * scrolls to it, so the association screens' „Înapoi" lands where it did.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Building2 } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
@@ -43,6 +43,7 @@ import { tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
+import { useTilePacking } from "@/components/tiles/use-tile-packing";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type Props = {
@@ -72,6 +73,8 @@ export function JudicialPersonDetailTiles({
   const choice = useTileChoice<JpTile>(JP_TILE_REGISTRY, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
+  const rowRef = useRef<HTMLDivElement>(null);
+  useTilePacking(rowRef);
   const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot.
@@ -114,7 +117,8 @@ export function JudicialPersonDetailTiles({
         <TileSelector all={JP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
-        <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
+        {/* Slice #37.75: each box right under the box above it (`useTilePacking`), not under the tallest of the line before. */}
+        <div ref={rowRef} className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
           <JudicialPersonForm
             mode={readonly ? "view" : "edit"}
             personId={personId}
