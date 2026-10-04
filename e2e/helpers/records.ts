@@ -118,6 +118,9 @@ export async function createProperty(
     parcela?: string;
     surfaceAreaMp?: number;
     corners?: { lat: number; lon: number }[];
+    // Slice #37.72: TC-PROP-06 reads both lists' names on the Properties list.
+    useCategoryId?: string;
+    propertyTypeId?: string;
   },
 ): Promise<string> {
   const body = await postJson<{ property: { id: string } }>(request, ROUTE.property, {

@@ -69,7 +69,8 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       ).toBeVisible();
       // #37.61: no „Importanță" or „Relevanță" filter.
       await expect(page.locator("main").getByText(/^Importanță:?$|^Relevanță:?$/)).toHaveCount(0);
-      const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*4\/4$/ });
+      // #37.72: Poreclă is a fixed column, not a choice — the defaults are three.
+      const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*3\/4$/ });
       await expect(chooseFields).toBeVisible();
       // Headers are rendered upper-case by CSS; role-name matching ignores case.
       // A Playwright browser has never changed „Câmpuri afișate", so step 1's
