@@ -192,6 +192,34 @@ function ItemTitle({ id, title, note, about }: { id: string; title: string; note
 }
 
 // ---------------------------------------------------------------------------
+// The remove „×" shows only under the pointer, or with focus   (Slice #37.69)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every remove „×" in „Conexiuni" — a tag's, a group's, a stamp's, a „Vezi și"
+ * link's — is drawn only while the pointer is over its chip or row, or the chip
+ * or row has keyboard focus (`focus-within`), so a tag can still be removed
+ * without a mouse. It is transparent the rest of the time, never removed: it
+ * keeps its place, its accessible name and its tab stop, so nothing moves when
+ * it appears. Where there is no hover at all (a touch screen) it is always
+ * drawn. The chip or row carries `group`.
+ */
+const REMOVE_REVEAL =
+  "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100";
+
+/**
+ * A tag's „×" overlays the chip's top-right corner, on its own small backing,
+ * rather than widening the chip — so hovering a chip never shifts a line of
+ * chips (Slice #37.69).
+ */
+const CHIP_REMOVE_PLACE =
+  "absolute -right-2.5 -top-2.5 z-10 rounded-md bg-white shadow-sm ring-1 ring-card-rim dark:bg-zinc-900 dark:ring-zinc-600";
+
+/** A tag chip: it only wraps its text — 4 px above and below, 8 px a side (Slice #37.69). */
+const TAG_CHIP =
+  "group relative inline-flex items-center rounded-full border border-slate-300 bg-slate-50 px-2 py-1 text-sm leading-tight text-ink dark:border-slate-600 dark:bg-zinc-800 dark:text-zinc-100";
+
+// ---------------------------------------------------------------------------
 // MetadataSection — one editable section (controlled select + review button)
 // ---------------------------------------------------------------------------
 
@@ -464,18 +492,17 @@ function TagsSection({
       {tags.length === 0 ? (
         <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        // Slice #37.69: small chips, closer together, the „×" over the corner on hover.
+        <div className="flex flex-wrap gap-1.5 pt-1" data-tag-chips="">
           {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-zinc-800 px-3 py-1 text-sm text-ink dark:text-zinc-100"
-            >
+            <span key={tag} className={TAG_CHIP} data-tag-chip="">
               {tag}
               <IconButton
                 icon={X}
                 label={`${labelRemove} ${tag}`}
                 variant="bare-danger"
-                size="md"
+                size="xs"
+                className={`${CHIP_REMOVE_PLACE} ${REMOVE_REVEAL}`}
                 onClick={() => handleRemove(tag)}
                 disabled={removing === tag}
               />
@@ -615,7 +642,7 @@ function InlineGroupsSection({
       ) : (
         <ul className="flex flex-col gap-2">
           {currentGroups.map((g) => (
-            <li key={g.code} className="flex items-center gap-2">
+            <li key={g.code} className="group flex items-center gap-2">
               <Link
                 href={withBack(`/admin/groups/${encodeURIComponent(g.id)}`)}
                 className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
@@ -633,7 +660,7 @@ function InlineGroupsSection({
                   label={`${labelRemove} ${g.code}`}
                   variant="bare-danger"
                   size="xs"
-                  className="ml-auto"
+                  className={`ml-auto ${REMOVE_REVEAL}`}
                   onClick={() => handleRemove(g.id)}
                   disabled={removing === g.id}
                 />
@@ -772,7 +799,7 @@ function InlineStampsSection({
       ) : (
         <ul className="flex flex-col gap-2">
           {currentStamps.map((s) => (
-            <li key={s.code} className="flex items-center gap-2">
+            <li key={s.code} className="group flex items-center gap-2">
               <Link
                 href={withBack(`/admin/stamps/${encodeURIComponent(s.id)}`)}
                 className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
@@ -790,7 +817,7 @@ function InlineStampsSection({
                   label={`${labelRemove} ${s.code}`}
                   variant="bare-danger"
                   size="xs"
-                  className="ml-auto"
+                  className={`ml-auto ${REMOVE_REVEAL}`}
                   onClick={() => handleRemove(s.id)}
                   disabled={removing === s.id}
                 />
@@ -982,7 +1009,7 @@ function CrossRefsSection({
       ) : (
         <ul className="flex flex-col gap-3">
           {crossRefs.map((ref) => (
-            <li key={ref.id} className="flex items-start gap-2">
+            <li key={ref.id} className="group flex items-start gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Slice #37.57: no system-ID badge — the peer by its type and name. */}
@@ -1022,7 +1049,7 @@ function CrossRefsSection({
                   label={t("crossRef.remove")}
                   variant="bare-danger"
                   size="xs"
-                  className="shrink-0"
+                  className={`shrink-0 ${REMOVE_REVEAL}`}
                   onClick={() => handleRemove(ref.id)}
                   disabled={removing === ref.id}
                 />
