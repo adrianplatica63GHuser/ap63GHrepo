@@ -129,7 +129,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-04](cases/TC-TILES-04.md) | Părțile unui act: pagina, datele generale și fiecare filă a caietului, alăturate | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
-| [TC-LAYOUT-02](cases/TC-LAYOUT-02.md) | Listele: „Adaugă …" se termină la marginea tabelului, nu a ferestrei | layout | happy | — | `confirmed` | 2026-10-04 | `e2e/layout/list-edge.spec.ts` |
+| [TC-LAYOUT-02](cases/TC-LAYOUT-02.md) | Listele: „Adaugă …" se termină la marginea tabelului, nu a ferestrei | layout | happy | — | `automated` | 2026-10-04 | `e2e/layout/list-edge.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 | [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tile-placement.spec.ts` |
@@ -154,8 +154,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Sixty-nine are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.83, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16 and TC-TILES-17 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Seventy are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.84, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17 and TC-LAYOUT-02 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

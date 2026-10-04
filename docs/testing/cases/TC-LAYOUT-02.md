@@ -5,7 +5,7 @@
 | **Area** | layout |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -75,3 +75,7 @@ included. With the row ticked, „Șterge selectate" stood left of „Adaugă pe
 ending at 1122. The columns put back as they were (each tick undone), the four records deleted
 (204 ×4). Nothing in the file changed, so the case is confirmed, and `e2e/layout/list-edge.spec.ts`
 translates it.
+
+**2026-10-04 — `automated` (Slice #37.84).** The test runner's full run 20261004T223457Z-20391 on
+cc1b438 ran `e2e/layout/list-edge.spec.ts` green with the other 79 (lint, tsc, jest and forms-drift
+green too).
