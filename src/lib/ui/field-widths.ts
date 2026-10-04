@@ -1028,8 +1028,10 @@ export const PREVIEW_INNER_REM: Readonly<Record<PreviewWidth, number>> = {
 export const PREVIEW_FIELDS = {
   person: ["nickname", "cnp", "dateOfBirth", "placeOfBirth"],
   company: ["nickname", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber"],
-  property: ["nickname", "parcela", "cadastralNumber", "carteFunciara", "surfaceAreaMp"],
-  document: ["documentTypeId", "title", "subject", "nrDocument", "dateDocument"],
+  // Slice #37.70: Tarla/Solă joins the property; the document loses „Tip document", and its
+  // „Etichetă scurtă" is the heading only.
+  property: ["parcela", "tarlaId", "surfaceAreaMp", "nickname", "carteFunciara", "cadastralNumber"],
+  document: ["subject", "nrDocument", "dateDocument"],
 } as const;
 export type PreviewKind = keyof typeof PREVIEW_FIELDS;
 
@@ -1048,20 +1050,33 @@ export const PREVIEW_LINES = {
 } as const satisfies Partial<Record<keyof typeof PREVIEW_FIELDS, readonly (readonly string[])[]>>;
 export type PreviewLinesKind = keyof typeof PREVIEW_LINES;
 
-/** Each kind's rows: its screen's, filtered to the short set (a document's Date generale, then Taxe și onorarii). */
+/**
+ * Each kind's rows. A person's and a company's are their screen's, filtered to
+ * the short set. Slice #37.70 — Adrian's own rows for the other two, labels
+ * above values as before, at the screen's widths:
+ *   - a property: Nr. parcelă, Tarla/Solă, Suprafață; then Poreclă; then
+ *     Carte funciară, Nr. cadastral — three M boxes and two gaps, 26.5rem, in
+ *     the 3-unit tile's 28.125 inside, so it keeps 3 units;
+ *   - a document: Subiect, Nr. document, Data on one row; Subiect takes what
+ *     the other two leave (`PREVIEW_SUBJECT_REM`) and wraps inside it.
+ */
 export const PREVIEW_ROWS: Readonly<Record<PreviewKind, readonly (readonly string[])[]>> = {
   person: keepFields(SCREEN_ROWS.naturalPerson.identity, PREVIEW_FIELDS.person),
   company: keepFields(SCREEN_ROWS.judicialPerson.identity, PREVIEW_FIELDS.company),
-  property: keepFields(SCREEN_ROWS.property.cadastral, PREVIEW_FIELDS.property),
-  document: keepFields([...SCREEN_ROWS.document.general, ...SCREEN_ROWS.document.fees], PREVIEW_FIELDS.document),
+  property: [["parcela", "tarlaId", "surfaceAreaMp"], ["nickname"], ["carteFunciara", "cadastralNumber"]],
+  document: [["subject", "nrDocument", "dateDocument"]],
 };
 
-/** Each kind's widths: its screen's. */
+/** Subiect in a document's preview: the 4-unit tile's inside less Nr. document, Data and the two gaps (#37.70). */
+export const PREVIEW_SUBJECT_REM =
+  PREVIEW_INNER_REM.pages - boxRem(DOCUMENT.nrDocument) - boxRem(DOCUMENT.dateDocument) - 2 * STACK_GAP_REM;
+
+/** Each kind's widths: its screen's — but a document's Subiect, which shares its row (#37.70). */
 export const PREVIEW_WIDTHS: Readonly<Record<PreviewKind, Readonly<Record<string, FieldWidth>>>> = {
   person: NATURAL_PERSON,
   company: JUDICIAL_PERSON,
   property: PROPERTY,
-  document: DOCUMENT,
+  document: { ...DOCUMENT, subject: { step: "TILE", kind: "grows", rem: PREVIEW_SUBJECT_REM } },
 };
 
 /** The width a preview shows a field without one at: the tile's whole inner width. */

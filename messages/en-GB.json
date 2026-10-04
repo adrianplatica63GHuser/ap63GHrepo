@@ -557,6 +557,9 @@
       "error": "The record could not be read.",
       "firstPage": "First page",
       "noPage": "No page attached",
+      "bornMale": "born:",
+      "bornFemale": "born:",
+      "contacts": "{count, plural, =0 {(no contacts)} one {(1 contact)} other {(# contacts)}}",
       "fields": {
         "code": "Code",
         "lastName": "Last name",
@@ -577,7 +580,8 @@
         "title": "Short label",
         "subject": "Subject",
         "nrDocument": "Document no.",
-        "dateDocument": "Date"
+        "dateDocument": "Date",
+        "tarla": "Tarla/Plot"
       }
     },
     "recordSync": {

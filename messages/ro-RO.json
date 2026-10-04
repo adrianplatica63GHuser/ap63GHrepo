@@ -557,6 +557,9 @@
       "error": "Înregistrarea nu a putut fi citită.",
       "firstPage": "Prima pagină",
       "noPage": "Nicio pagină atașată",
+      "bornMale": "născut:",
+      "bornFemale": "născută:",
+      "contacts": "{count, plural, =0 {(niciun contact)} one {(1 contact)} other {(# contacte)}}",
       "fields": {
         "code": "Cod",
         "lastName": "Nume",
@@ -577,7 +580,8 @@
         "title": "Etichetă scurtă",
         "subject": "Subiect",
         "nrDocument": "Nr. document",
-        "dateDocument": "Data"
+        "dateDocument": "Data",
+        "tarla": "Tarla/Solă"
       }
     },
     "recordSync": {

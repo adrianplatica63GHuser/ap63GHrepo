@@ -35,7 +35,16 @@ export type PreviewField = { label: string; value: string | null; width?: FieldW
  * One value of a compact line (Slice #37.60): its label is read aloud and shown
  * on hover, not printed — the line is the values one after the other.
  */
-export type PreviewLineValue = { label: string; value: string | null };
+export type PreviewLineValue = {
+  label: string;
+  value: string | null;
+  /**
+   * Words printed before the value, part of the line (Slice #37.70): a
+   * person's date of birth reads „născut: 12.03.1960". Dropped with an empty
+   * value, like the value itself.
+   */
+  prefix?: string;
+};
 
 /** The lines to draw: each its non-empty values; a line with none is dropped. */
 export function compactLines(lines: readonly (readonly PreviewLineValue[])[]): PreviewLineValue[][] {
@@ -65,8 +74,15 @@ export function PreviewTileBody({
   tile,
   style,
   lines,
+  titleNote,
 }: {
   title: string;
+  /**
+   * Slice #37.70: words after the heading's name, in the labels' quieter
+   * colour — a company's „(2 contacte)". Not part of the heading itself, so the
+   * tile and its heading keep the record's name as theirs.
+   */
+  titleNote?: string;
   fields: PreviewField[];
   /**
    * Slice #37.60: a person's or a company's preview — the heading is line 1,
@@ -98,11 +114,18 @@ export function PreviewTileBody({
       className={`rounded-md border border-dashed border-cta/50 bg-card p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900${lines ? " w-max max-w-full" : ""}`}
       style={lines ? style : { ...PREVIEW_STYLE[width], ...style }}
     >
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</h2>
+      {/* Slice #37.70: one row, whatever the name's length — a long name wraps inside it and
+          „Numai citire" and the two buttons stay at its right. */}
+      <div className="mb-2 flex items-start gap-2" data-preview-head>
+        <div className="min-w-0 flex-1 break-words">
+          <h2 className="inline text-sm font-semibold text-ink dark:text-zinc-100">{title}</h2>
+          {titleNote && (
+            <span className="ml-1 text-sm text-fade dark:text-zinc-400" data-preview-title-note>{titleNote}</span>
+          )}
+        </div>
         {/* Slice #37.57: no system ID — the record's own screen shows it, in its first panel's corner. */}
-        <span className="rounded-full bg-cap px-2 py-0.5 text-xs text-fade dark:bg-zinc-800 dark:text-zinc-400">{labels.readonly}</span>
-        <span className="ml-auto flex gap-2">
+        <span className="shrink-0 rounded-full bg-cap px-2 py-0.5 text-xs text-fade dark:bg-zinc-800 dark:text-zinc-400">{labels.readonly}</span>
+        <span className="flex shrink-0 gap-2">
           {/* #37.42 (A016): ArrowRight, „Deschide" its name and tooltip. */}
           <IconButton
             href={openHref}
@@ -128,6 +151,7 @@ export function PreviewTileBody({
               {line.map((v, i) => (
                 <span key={v.label} title={v.label} data-preview-value>
                   <span className="sr-only">{v.label}: </span>
+                  {v.prefix ? `${v.prefix} ` : ""}
                   {v.value}
                   {i < line.length - 1 ? ", " : ""}
                 </span>

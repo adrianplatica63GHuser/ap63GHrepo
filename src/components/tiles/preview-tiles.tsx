@@ -37,6 +37,7 @@ import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provid
 import { Eye } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
+import { loadPreview } from "./preview-data";
 import { PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
 
@@ -122,106 +123,11 @@ const LABEL_KEY: Record<string, string> = {
   judicialPersonTypeId: "companyType",
   cuiNumber: "cui",
   tradeRegisterNumber: "tradeRegister",
-  documentTypeId: "documentType",
+  tarlaId: "tarla",
 };
 
 /** The words for a preview with no name (#37.57). */
 const UNNAMED_KIND: Record<PreviewKind, UnnamedKind> = { person: "person", company: "person", property: "property", document: "document" };
-
-interface PreviewData {
-  /** The record's name; null when it has none (#37.57: never its system ID — `nameOr` words it). */
-  title: string | null;
-  /** The short set's values, by the screen's field names (`PREVIEW_FIELDS`). */
-  fields: Record<string, string | null>;
-  /** A document's first page; null when it has none; undefined for the other kinds. */
-  image?: { url: string; mimeType: string | null } | null;
-}
-
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`GET ${url.split("?")[0]} failed (${res.status})`);
-  return (await res.json()) as T;
-}
-
-/** dd.mm.yyyy, as the forms show a date. */
-function dmy(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  const [y, m, d] = iso.slice(0, 10).split("-");
-  return d && m && y ? `${d}.${m}.${y}` : iso;
-}
-
-type Row = Record<string, string | number | null | undefined>;
-const s = (v: string | number | null | undefined): string | null => (v === null || v === undefined || v === "" ? null : String(v));
-
-async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
-  const id = encodeURIComponent(target.id);
-  switch (target.kind) {
-    case "person": {
-      const r = await getJson<{ person: Row; natural: Row | null }>(`/api/people/${id}`);
-      const n = r.natural ?? {};
-      // Slice #37.60: line 1 is „Nume Prenume" — the heading — with no Nume and Prenume under it.
-      const fullName = [s(n.lastName), s(n.firstName)].filter(Boolean).join(" ");
-      return {
-        title: fullName || s(r.person.displayName),
-        fields: {
-          nickname: s(n.nickname),
-          cnp: s(n.cnp),
-          dateOfBirth: dmy(s(n.dateOfBirth)),
-          placeOfBirth: s(n.placeOfBirth),
-        },
-      };
-    }
-    case "company": {
-      const r = await getJson<{ person: Row; judicial: Row | null; judicialPersonTypeName: string | null }>(`/api/judicial-persons/${id}`);
-      const j = r.judicial ?? {};
-      return {
-        title: s(j.name) ?? s(r.person.displayName),
-        fields: {
-          nickname: s(j.nickname), // Slice #37.60: „Denumire" is the heading, not a field under it
-          judicialPersonTypeId: s(r.judicialPersonTypeName),
-          cuiNumber: s(j.cuiNumber),
-          tradeRegisterNumber: s(j.tradeRegisterNumber),
-        },
-      };
-    }
-    case "property": {
-      const r = await getJson<{ property: Row }>(`/api/properties/${id}`);
-      const p = r.property;
-      return {
-        title: s(p.nickname),
-        fields: {
-          nickname: s(p.nickname),
-          parcela: s(p.parcela),
-          cadastralNumber: s(p.cadastralNumber),
-          carteFunciara: s(p.carteFunciara),
-          surfaceAreaMp: s(p.surfaceAreaMp),
-        },
-      };
-    }
-    case "document": {
-      const [d, types, pages] = await Promise.all([
-        getJson<Row>(`/api/documents/${id}`),
-        getJson<{ items: { id: string; name: string }[] }>("/api/admin/value-lists/document-types").catch(() => ({ items: [] })),
-        getJson<{ id: string; pageNumber: number }[]>(`/api/documents/${id}/pages`).catch(() => []),
-      ]);
-      const first = [...pages].sort((a, b) => a.pageNumber - b.pageNumber)[0];
-      const image = first
-        ? await getJson<{ url: string; mimeType: string | null }>(`/api/documents/${id}/pages/${encodeURIComponent(first.id)}/view`).catch(() => null)
-        : null;
-      return {
-        title: s(d.title),
-        fields: {
-          documentTypeId: types.items.find((ty) => ty.id === d.documentTypeId)?.name ?? null,
-          title: s(d.title),
-          subject: s(d.subject),
-          nrDocument: s(d.nrDocument),
-          dateDocument: dmy(s(d.dateDocument)),
-        },
-        image,
-      };
-    }
-  }
-}
 
 /**
  * One preview's data. The key starts with "preview", not "version…", so
@@ -294,14 +200,22 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
   const data = q.data;
   const label = (name: string) => t(`fields.${LABEL_KEY[name] ?? name}` as Parameters<typeof t>[0]);
   // Slice #37.60: a person and a company — three compact lines (`PREVIEW_LINES`).
+  // Slice #37.70: a person's date of birth reads „născut: 12.03.1960" — „născută:" for a woman.
+  const born = data.gender === "FEMALE" ? t("bornFemale") : t("bornMale");
   const lines = kind in PREVIEW_LINES
     ? PREVIEW_LINES[kind as PreviewLinesKind].map((line) =>
-        line.map((name) => ({ label: label(name), value: data.fields[name] ?? null })))
+        line.map((name) => ({
+          label: label(name),
+          value: data.fields[name] ?? null,
+          prefix: kind === "person" && name === "dateOfBirth" ? born : undefined,
+        })))
     : undefined;
   return (
     <PreviewTileBody
       lines={lines}
       title={nameOr(data.title, UNNAMED_KIND[kind])}
+      // Slice #37.70: a company's contact persons, counted, after its name.
+      titleNote={data.contacts === undefined ? undefined : t("contacts", { count: data.contacts })}
       fields={PREVIEW_ROWS[kind].flatMap((row, i): PreviewField[] =>
         row.map((name) => ({
           label: label(name),

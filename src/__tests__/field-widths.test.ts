@@ -1059,19 +1059,21 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
     expect(PREVIEW_STYLE.pages.width).toBe(`${PAGES_PANEL_REM}rem`);
   });
 
-  it("lays #37.24's short set in its screen's rows — derived, never written by hand", () => {
+  it("lays #37.24's short set in its screen's rows (a person, a company) or Adrian's (a property, a document — #37.70)", () => {
     expect(PREVIEW_ROWS).toEqual({
       // Slice #37.60: the name is the heading; the person and the company draw PREVIEW_LINES.
       person: [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"]],
       company: [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
-      property: [["parcela"], ["nickname"], ["surfaceAreaMp"], ["carteFunciara", "cadastralNumber"]],
-      document: [["documentTypeId"], ["title"], ["subject"], ["nrDocument", "dateDocument"]],
+      // Slice #37.70: Adrian's rows for these two (preview-four-kinds.test.tsx).
+      property: [["parcela", "tarlaId", "surfaceAreaMp"], ["nickname"], ["carteFunciara", "cadastralNumber"]],
+      document: [["subject", "nrDocument", "dateDocument"]],
     });
     const file = code(read("src", "lib", "ui", "field-widths.ts"));
     expect(file).toMatch(/person: keepFields\(SCREEN_ROWS\.naturalPerson\.identity, PREVIEW_FIELDS\.person\)/);
     expect(file).toMatch(/company: keepFields\(SCREEN_ROWS\.judicialPerson\.identity, PREVIEW_FIELDS\.company\)/);
-    expect(file).toMatch(/property: keepFields\(SCREEN_ROWS\.property\.cadastral, PREVIEW_FIELDS\.property\)/);
-    expect(file).toMatch(/document: keepFields\(\[\.\.\.SCREEN_ROWS\.document\.general, \.\.\.SCREEN_ROWS\.document\.fees\], PREVIEW_FIELDS\.document\)/);
+    // Slice #37.70: the property's and the document's rows are Adrian's, no longer their screen's.
+    expect(file).not.toMatch(/property: keepFields\(/);
+    expect(file).not.toMatch(/document: keepFields\(/);
     // Every field of the short set is on a row, and has its screen's width.
     for (const kind of Object.keys(PREVIEW_FIELDS) as (keyof typeof PREVIEW_FIELDS)[]) {
       expect([kind, [...PREVIEW_ROWS[kind].flat()].sort()]).toEqual([kind, [...PREVIEW_FIELDS[kind]].sort()]);

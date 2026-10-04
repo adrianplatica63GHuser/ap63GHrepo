@@ -71,7 +71,8 @@ describe("a preview never changes data (#37.24)", () => {
     expect(within(region).getAllByText("—").length).toBeGreaterThan(0);
   });
 
-  it.each(["preview-tiles.tsx", "preview-tile-body.tsx"])("%s reaches no form, no version strip, no association tab and no write", (file) => {
+  // preview-data.ts since #37.70, which moved the reads there.
+  it.each(["preview-tiles.tsx", "preview-tile-body.tsx", "preview-data.ts"])("%s reaches no form, no version strip, no association tab and no write", (file) => {
     const src = readFileSync(join(process.cwd(), "src", "components", "tiles", file), "utf8");
     for (const banned of [/-form"/, /version-nav/i, /-tab"/, /entity-metadata-tab/, /method:\s*"(POST|PATCH|PUT|DELETE)"/]) {
       expect(src).not.toMatch(banned);

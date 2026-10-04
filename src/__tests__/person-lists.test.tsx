@@ -109,7 +109,8 @@ describe("a person's and a company's preview: three compact lines (Slice #37.60)
     for (const k of ["lastName", "firstName", "name", "code"]) {
       expect([k, (PREVIEW_FIELDS.person as readonly string[]).includes(k) || (PREVIEW_FIELDS.company as readonly string[]).includes(k)]).toEqual([k, false]);
     }
-    const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
+    // Slice #37.70: what a preview reads moved to preview-data.ts.
+    const tiles = read("src", "components", "tiles", "preview-data.ts");
     expect(tiles).toMatch(/const fullName = \[s\(n\.lastName\), s\(n\.firstName\)\]\.filter\(Boolean\)\.join\(" "\);/);
   });
 
