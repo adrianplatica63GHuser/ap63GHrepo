@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -52,3 +52,6 @@ viewport emulated at 1920 × 1200, against `npm run dev` on 3000; a script read 
 same on both screens. The person and the document deleted (204, 204). Nothing in the file changed,
 so the case is confirmed, and `e2e/tiles/connections-dividers.spec.ts` translates it.
 
+**2026-10-04 — `automated` (Slice #37.82).** The test runner's full run 20261004T211204Z-12473 on
+6246938 ran `e2e/tiles/connections-dividers.spec.ts` green with the other 78 (lint, tsc, jest and
+forms-drift green too).
