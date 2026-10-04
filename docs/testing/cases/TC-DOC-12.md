@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | negative |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -60,3 +60,6 @@ removed from `uploads\document-pages\<document>\`; „TC-DOC-12 Notă"'s page `t
 the same in every step. Nothing in the file changed, so the case is confirmed, and
 `e2e/document/missing-page-file.spec.ts` translates it.
 
+**2026-10-04 — `automated` (Slice #37.80).** The test runner's full run 20261004T201813Z-32658 on
+d06002c ran `e2e/document/missing-page-file.spec.ts` green with the other 76 (lint, tsc, jest and
+forms-drift green too).
