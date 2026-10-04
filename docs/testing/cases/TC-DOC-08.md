@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -142,3 +142,6 @@ chooser's boxes and, for step 5, dispatched the mouse's `pointerover`/`pointerou
 unchanged: the same in every step. The pane's stored choices put back; both documents deleted
 (204 ×2). The case is confirmed, and `e2e/document/document-list.spec.ts` follows it.
 
+**2026-10-04 — `automated` again (Slice #37.83).** The test runner's full run 20261004T215659Z-20932 on
+b7bbb4b ran `e2e/document/document-list.spec.ts`, following the corrected file, green with the other 78
+(lint, tsc, jest and forms-drift green too).
