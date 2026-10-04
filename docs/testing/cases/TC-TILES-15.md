@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -75,3 +75,6 @@ back from the stored arrangement: `classification: { col: 6, top: 808 }`). The c
 document and the property deleted (204, 204). Nothing in the file changed, so the case is confirmed,
 and `e2e/tiles/tiles-under-column.spec.ts` translates it.
 
+**2026-10-04 — `automated` (Slice #37.79).** The test runner's full run 20261004T194754Z-27320 on
+cbafeb3 ran `e2e/tiles/tiles-under-column.spec.ts` green with the other 75 (lint, tsc, jest and
+forms-drift green too).
