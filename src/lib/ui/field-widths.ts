@@ -1177,6 +1177,8 @@ export const COLUMN = {
   surfaceAreaMp: { content: "M", kind: "fixed" }, //        „1234567.89"
   calculatedAreaMp: { content: "M", kind: "fixed" }, //     „1234567.89"
   locality: { content: "L", kind: "wraps" }, //             ADDR.propertyLocality
+  useCategory: { content: "L", kind: "wraps" }, //          PROP.useCategoryId's names — „Categorie de folosință" (#37.72)
+  propertyType: { content: "L", kind: "wraps" }, //         PROP.propertyTypeId's names — „Tip proprietate" (#37.72)
   // Global search
   entityType: { content: "L", kind: "fixed" }, //           „Proprietate", or „Persoană" and „Juridic"
   searchName: { content: "XL", kind: "wraps" }, //          a name, a title or a property label

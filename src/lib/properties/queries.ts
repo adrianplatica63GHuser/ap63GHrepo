@@ -21,7 +21,7 @@ import { perSearchTerms } from "@/lib/search/per-terms";
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
 import { sameTarlaCode, tarlaLockIdentities } from "./tarla-code-guard";
 import { advisoryLockKeys, type CadastralMatch } from "./import-property-plan";
-import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
+import { entityMetadata, groupMember, groups, lookupPersonRole, lookupPropertyType, lookupTarla, lookupUseCategory, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 // Slice #34.07: the snapshot key sets come from the registry that already
 // compile-guards them — see SNAPSHOT_PROPERTY_KEYS below.
@@ -72,6 +72,9 @@ export type PropertyListItem = {
   carteFunciara:    string | null;
   surfaceAreaMp:    string | null;
   calculatedAreaMp: string | null;
+  /** Slice #37.72 — „Categorie de folosință" and „Tip proprietate", by their value-list names. */
+  useCategory:      string | null;
+  propertyType:     string | null;
   /**
    * Slice #32.14: the corner ORDER traces a self-intersecting ring, so
    * `calculatedAreaMp` beside it is meaningless. Badged on the row.
@@ -536,6 +539,8 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         carteFunciara:   property.carteFunciara,
         surfaceAreaMp:   property.surfaceAreaMp,
         calculatedAreaMp: property.calculatedAreaMp,
+        useCategory:     lookupUseCategory.name,
+        propertyType:    lookupPropertyType.name,
         cornerOrderSelfIntersects: property.cornerOrderSelfIntersects,
         locality:        propertyAddress.locality,
         county:          propertyAddress.county,
@@ -549,6 +554,9 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
       // Slice #34.03: LEFT, not inner - three of fourteen properties carry no
       // tarla and an inner join would drop them from the list entirely.
       .leftJoin(lookupTarla, eq(lookupTarla.id, property.tarlaId))
+      // Slice #37.72: the two value lists, LEFT for the same reason.
+      .leftJoin(lookupUseCategory, eq(lookupUseCategory.id, property.useCategoryId))
+      .leftJoin(lookupPropertyType, eq(lookupPropertyType.id, property.propertyTypeId))
       .leftJoin(
         propertyAddress,
         eq(propertyAddress.propertyId, property.id),

@@ -6,19 +6,38 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { act, renderHook } from "@testing-library/react";
-import { useFieldChooser } from "@/components/list/field-chooser";
+import { readStored, useFieldChooser } from "@/components/list/field-chooser";
+import { COLUMN, SCREEN_ROWS } from "@/lib/ui/field-widths";
 
 const ROOT = join(__dirname, "..", "..");
 const VIEW = readFileSync(join(ROOT, "src", "app", "properties", "list-view.tsx"), "utf8");
+const QUERIES = readFileSync(join(ROOT, "src", "lib", "properties", "queries.ts"), "utf8");
 
 describe("the Properties list (Slice #37.61)", () => {
-  it("„Câmpuri afișate” offers today's fields less importance, relevance and provenance, in order", () => {
+  it("„Câmpuri afișate” offers every field of „Date cadastrale” but Poreclă and Note, in that panel's order, then Localitate (#37.72)", () => {
     const keys = [...VIEW.matchAll(/\{ key: "(\w+)",\s+label:/g)].map((m) => m[1]);
-    expect(keys).toEqual(["nickname", "parcela", "tarlaSola", "cadastralNumber", "carteFunciara", "surfaceAreaMp", "calculatedAreaMp", "locality"]);
+    expect(keys).toEqual(["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp", "carteFunciara", "cadastralNumber", "useCategory", "propertyType", "locality"]);
+    // „Date cadastrale"'s own order, less Poreclă and Note (the keys are the stored ones: tarlaSola for tarlaId).
+    const panel = SCREEN_ROWS.property.cadastral.flat().filter((f) => f !== "nickname" && f !== "notes");
+    expect(panel).toEqual(["tarlaId", "parcela", "surfaceAreaMp", "calculatedAreaMp", "carteFunciara", "cadastralNumber", "useCategoryId", "propertyTypeId"]);
+    expect(keys).not.toContain("nickname");
+    expect(keys).not.toContain("notes");
   });
 
-  it("draws the shared chooser with its four defaults", () => {
-    expect(VIEW).toMatch(/const DEFAULT_COLS = \["nickname", "cadastralNumber", "surfaceAreaMp", "locality"\];/);
+  it("the two new fields: labelled as on the form, their own columns, the API's names (#37.72)", () => {
+    expect(VIEW).toMatch(/\{ key: "useCategory",\s+label: t\("fields\.useCategory"\),\s+column: "useCategory" \}/);
+    expect(VIEW).toMatch(/\{ key: "propertyType",\s+label: t\("fields\.propertyType"\),\s+column: "propertyType" \}/);
+    expect(COLUMN.useCategory.kind).toBe("wraps");
+    expect(COLUMN.propertyType.kind).toBe("wraps");
+    const q = QUERIES.slice(QUERIES.indexOf("export async function listProperties"));
+    expect(q).toMatch(/useCategory:\s+lookupUseCategory\.name/);
+    expect(q).toMatch(/propertyType:\s+lookupPropertyType\.name/);
+    expect(q).toMatch(/\.leftJoin\(lookupUseCategory, eq\(lookupUseCategory\.id, property\.useCategoryId\)\)/);
+    expect(q).toMatch(/\.leftJoin\(lookupPropertyType, eq\(lookupPropertyType\.id, property\.propertyTypeId\)\)/);
+  });
+
+  it("draws the shared chooser with its defaults, Poreclă no longer among them (#37.72)", () => {
+    expect(VIEW).toMatch(/const DEFAULT_COLS = \["cadastralNumber", "surfaceAreaMp", "locality"\];/);
     expect(VIEW).toMatch(/useFieldChooser\(LS_KEY, optionalCols\.map\(\(c\) => c\.key\), MAX_OPT, DEFAULT_COLS\)/);
     expect(VIEW).toMatch(/<FieldChooser\b/);
   });
@@ -29,8 +48,9 @@ describe("the Properties list (Slice #37.61)", () => {
     expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}`;/);
   });
 
-  it("has no „Cod” column", () => {
-    expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["selectBadges", \.\.\.shownCols\.map\(\(c\) => c\.column\), "openPreview"\];/);
+  it("has no „Cod” column; Poreclă is always the first after the checkbox (#37.72)", () => {
+    expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["selectBadges", "propertyNickname", \.\.\.shownCols\.map\(\(c\) => c\.column\), "openPreview"\];/);
+    expect(VIEW).toMatch(/\{\.\.\.columnHead\("propertyNickname"\)\}>\s*\{t\("table\.nickname"\)\}/);
     expect(VIEW).not.toMatch(/columnHead\("code"\)/);
   });
 });
@@ -53,5 +73,15 @@ describe("the shared chooser's defaults", () => {
     const old = renderHook(() => useFieldChooser("r", ["a", "b"], 4, ["a"]));
     await act(async () => { await new Promise((r) => setTimeout(r, 5)); });
     expect(old.result.current.visible).toEqual(["b"]);
+  });
+});
+
+describe("a stored choice that names Poreclă (Slice #37.72)", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("reads back without it — the column is drawn anyway", () => {
+    const offered = [...VIEW.matchAll(/\{ key: "(\w+)",\s+label:/g)].map((m) => m[1]);
+    localStorage.setItem("ga40-col-property-v2", JSON.stringify(["nickname", "locality", "tarlaSola", "parcela"]));
+    expect(readStored("ga40-col-property-v2", offered, ["cadastralNumber"])).toEqual(["locality", "tarlaSola", "parcela"]);
   });
 });

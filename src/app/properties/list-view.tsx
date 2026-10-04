@@ -21,7 +21,8 @@ import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/l
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-property-v2";
 const MAX_OPT   = 4;
-const DEFAULT_COLS = ["nickname", "cadastralNumber", "surfaceAreaMp", "locality"];
+// Slice #37.72: Poreclă is always shown, so it is no longer a default — or a choice.
+const DEFAULT_COLS = ["cadastralNumber", "surfaceAreaMp", "locality"];
 
 type PropertyListItem = {
   id:               string;
@@ -39,6 +40,9 @@ type PropertyListItem = {
   carteFunciara:    string | null;
   surfaceAreaMp:    string | null;
   calculatedAreaMp: string | null;
+  /** Slice #37.72 — the value lists' names, not their ids. */
+  useCategory:      string | null;
+  propertyType:     string | null;
   // Slice #32.14: the corner order self-intersects, so calculatedAreaMp above
   // is meaningless. Badged beside the checkbox, never a toggleable column.
   cornerOrderSelfIntersects: boolean;
@@ -234,19 +238,26 @@ export function PropertyListView() {
   // Slice #37.16: each carries the `COLUMN` that gives its width. The KEY is
   // what localStorage stores and stays as it was — "nickname" is drawn in the
   // `propertyNickname` column, which is the only one whose name differs.
+  // Slice #37.72: Poreclă is a fixed column (the first after the checkbox) and
+  // is not offered; the chooser lists every field of „Date cadastrale" but
+  // Poreclă and Note, in that panel's order (SCREEN_ROWS.property.cadastral),
+  // then Localitate. A browser whose stored choice names "nickname" simply
+  // loses it from the choice (`field-chooser.tsx`); the column is there anyway.
   const optionalCols: ChooserField[] = [
-    { key: "nickname",         label: t("table.nickname"),         column: "propertyNickname" },
-    { key: "parcela",          label: t("table.parcela"),          column: "parcela" },
     // ⚠️ The column KEY stays "tarlaSola" while the field beside it is now
     // `tarla`, and that is deliberate rather than an oversight: these keys are
     // persisted per user in localStorage (`LS_KEY` above), so renaming one
     // silently drops that column from the saved choices of anyone who had it
     // on. The key is a UI identifier; the field is the data.  (Slice #34.03)
     { key: "tarlaSola",        label: t("table.tarlaSola"),        column: "tarlaSola" },
-    { key: "cadastralNumber",  label: t("table.cadastralNumber"),  column: "cadastralNumber" },
-    { key: "carteFunciara",    label: t("table.carteFunciara"),    column: "carteFunciara" },
+    { key: "parcela",          label: t("table.parcela"),          column: "parcela" },
     { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp"),    column: "surfaceAreaMp" },
     { key: "calculatedAreaMp", label: t("table.calculatedAreaMp"), column: "calculatedAreaMp" },
+    { key: "carteFunciara",    label: t("table.carteFunciara"),    column: "carteFunciara" },
+    { key: "cadastralNumber",  label: t("table.cadastralNumber"),  column: "cadastralNumber" },
+    // Slice #37.72: the two the chooser lacked, labelled as on the form.
+    { key: "useCategory",      label: t("fields.useCategory"),     column: "useCategory" },
+    { key: "propertyType",     label: t("fields.propertyType"),    column: "propertyType" },
     { key: "locality",         label: t("table.locality"),         column: "locality" },
     // Slice #37.61: importance, relevance and provenance are no longer offered; a
     // browser that remembers one simply loses it (`field-chooser.tsx`).
@@ -254,13 +265,14 @@ export function PropertyListView() {
 
   function cellValue(item: PropertyListItem, key: string): React.ReactNode {
     switch (key) {
-      case "nickname":         return item.nickname ?? <span className="text-fade italic">—</span>;
       case "parcela":          return item.parcela ?? "";
       case "tarlaSola":        return item.tarla ?? "";
       case "cadastralNumber":  return item.cadastralNumber ?? "";
       case "carteFunciara":    return item.carteFunciara ?? "";
       case "surfaceAreaMp":    return formatArea(item.surfaceAreaMp);
       case "calculatedAreaMp": return formatArea(item.calculatedAreaMp);
+      case "useCategory":      return item.useCategory ?? "";
+      case "propertyType":     return item.propertyType ?? "";
       case "locality":         return [item.locality, item.county].filter(Boolean).join(", ");
       default:                 return null;
     }
@@ -271,7 +283,8 @@ export function PropertyListView() {
   // stored key this build has no column for stays in storage and is not drawn.
   const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT, DEFAULT_COLS);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const columns: ColumnName[] = ["selectBadges", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #37.72: Poreclă always, the first after the checkbox.
+  const columns: ColumnName[] = ["selectBadges", "propertyNickname", ...shownCols.map((c) => c.column), "openPreview"];
   const colCount = columns.length;
 
   return (
@@ -360,6 +373,9 @@ export function PropertyListView() {
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
                 </th>
+                <th className="px-4 py-2" {...columnHead("propertyNickname")}>
+                  {t("table.nickname")}
+                </th>
                 {shownCols.map((col) => (
                   <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
                     {col.label}
@@ -415,6 +431,9 @@ export function PropertyListView() {
                       <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                       <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
                     </span>
+                  </td>
+                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf("propertyNickname")}`} data-col="nickname">
+                    {item.nickname ?? <span className="text-fade italic">—</span>}
                   </td>
                   {shownCols.map((col) => (
                     <td

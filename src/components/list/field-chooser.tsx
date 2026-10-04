@@ -24,7 +24,8 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 
 export type ChooserField = { key: string; label: string; column: ColumnName };
 
-function readStored(storageKey: string, offered: readonly string[], defaults: readonly string[]): string[] {
+/** The stored choice, filtered to the fields offered; `defaults` when none is stored or it cannot be read. Exported for its test. */
+export function readStored(storageKey: string, offered: readonly string[], defaults: readonly string[]): string[] {
   try {
     const raw = localStorage.getItem(storageKey);
     if (raw === null) return [...defaults];

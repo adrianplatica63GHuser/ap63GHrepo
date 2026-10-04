@@ -862,8 +862,10 @@ describe("tables at fixed column widths (#37.16)", () => {
     expect(APP("natural-persons", "list-view.tsx")).toContain('"ga40-col-person-v2"');
     expect(APP("properties", "list-view.tsx")).toContain('"ga40-col-property-v2"');
     expect(APP("documents", "list-view.tsx")).toContain('"ga40-col-document-v2"');
-    // The property list's optional keys are still the stored ones, "nickname" and "tarlaSola" included.
-    for (const key of ["nickname", "parcela", "tarlaSola", "cadastralNumber", "carteFunciara", "surfaceAreaMp", "calculatedAreaMp", "locality"]) {
+    // The property list's optional keys are still the stored ones, "tarlaSola" included. Slice #37.72:
+    // "nickname" is no longer offered — Poreclă is a fixed column — so a stored "nickname" is dropped
+    // from the choice (property-list.test.tsx) while the column shows anyway.
+    for (const key of ["parcela", "tarlaSola", "cadastralNumber", "carteFunciara", "surfaceAreaMp", "calculatedAreaMp", "locality"]) {
       expect(APP("properties", "list-view.tsx")).toContain(`key: "${key}"`);
     }
   });
