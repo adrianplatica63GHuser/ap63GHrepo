@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -70,3 +70,7 @@ loaded heights (#37.75's note on hidden pages).
 **2026-10-04 — run 2, `confirmed` (Slice #37.76).** The same pane and viewport, a new person, the file
 above unchanged: the same in every step, to the pixel. Deleted (204). Nothing in the file changed, so
 the case is confirmed, and `e2e/tiles/tiles-drag.spec.ts` translates it.
+
+**2026-10-04 — `automated` (Slice #37.76).** The test runner's full run 20261004T075105Z-3824 on
+9197df6 ran `e2e/tiles/tiles-drag.spec.ts` green with the other 72 specs (lint, tsc, jest and
+forms-drift green too).

@@ -135,7 +135,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-10](cases/TC-TILES-10.md) | „Conexiuni": etichete mici, „×" doar la mouse sau la focalizare | tiles | happy | — | `automated` | 2026-10-03 | `e2e/tiles/connections-chips.spec.ts` |
 | [TC-TILES-11](cases/TC-TILES-11.md) | Cele patru previzualizări: „născută:", contactele firmei, cele trei rânduri ale proprietății, actul fără tip | tiles | happy | — | `automated` | 2026-10-03 | `e2e/tiles/previews-four-kinds.spec.ts` |
 | [TC-TILES-12](cases/TC-TILES-12.md) | Fiecare fișă chiar sub fișa de deasupra ei; previzualizarea chiar sub fișa din care a fost deschisă | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tiles-packed-under.spec.ts` |
-| [TC-TILES-13](cases/TC-TILES-13.md) | O fișă trasă de spațiul ei gol într-un loc liber rămâne acolo; peste altă fișă nu se poate | tiles | happy | — | `confirmed` | 2026-10-04 | `e2e/tiles/tiles-drag.spec.ts` |
+| [TC-TILES-13](cases/TC-TILES-13.md) | O fișă trasă de spațiul ei gol într-un loc liber rămâne acolo; peste altă fișă nu se poate | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tiles-drag.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-01 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
@@ -147,8 +147,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Sixty-two are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.75, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11 and TC-TILES-12 and took each to `automated` the same day). One is `confirmed`, TC-TILES-13, until the runner runs its spec (#37.76). What stays below `automated` is the import and AI cases, the first
+**Sixty-three are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.76, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12 and TC-TILES-13 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 
