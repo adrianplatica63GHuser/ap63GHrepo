@@ -50,7 +50,7 @@ describe("the Documents list (Slice #37.62)", () => {
   });
 
   it("puts the search box before „Tip document”, and its placeholder no longer begins with „SAU”", () => {
-    const toolbar = VIEW.slice(VIEW.indexOf("{/* Toolbar */}"));
+    const toolbar = VIEW.slice(VIEW.indexOf("{/* Toolbar"));
     expect(toolbar.indexOf('type="search"')).toBeGreaterThan(-1);
     expect(toolbar.indexOf('type="search"')).toBeLessThan(toolbar.indexOf("<DocumentTypeFilterDropdown"));
     expect(ro.document.searchPlaceholder).toBe("caută după cod, titlu sau nr. document");

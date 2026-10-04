@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `automated` |
+| **State** | `confirmed` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -25,6 +25,7 @@ offered there, or a value shown by its code is the defect this case exists to ca
   titled „TC-DOC-08 Act de test", with „Subiect" = `Subiect de test TC-DOC-08`; and a „Contract de
   vânzare" titled „TC-DOC08-CVC Contract de test" whose „Stare plată" is „Achitat integral" (its
   title does not contain `TC-DOC-08`, so step 2 still finds one row).
+- The window is 1366 px wide (since #37.83, which says the first row holds on one line there).
 
 ## What Adrian is asked for
 
@@ -34,14 +35,15 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | First the search box („caută după cod, titlu sau nr. document" — no „SAU"), then „Tip document: Toate tipurile", „Câmp specific:" with an ⓘ beside it, „Expiră curând" and „Câmpuri afișate n/4". No „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Presses „Acte" in the left sidebar | The toolbar in two rows (#37.83). The first, level, in this order: the search box („caută după cod, titlu sau nr. document" — no „SAU"), „Tip document: Toate tipurile", „Expiră curând", „Câmpuri afișate n/4", and at its end „Adaugă act". Under the search box, the second: „Câmp specific:" with an ⓘ beside it. No „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-DOC-08` into the search | One row: „Adeverință", `TC-DOC-08 Act de test` |
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Persoane, Proprietăți, Adăugat la — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
 | 5 | Presses anywhere outside the list, then rests the mouse on „Câmp specific:" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Moving the mouse away closes it. (On a touch screen the ⓘ beside it opens and closes it.) |
 | 6 | With „Tip document: Toate tipurile", looks at what „Câmp specific:" offers | „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
-| 7 | Chooses „Stare plată" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL` |
+| 7 | Chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box, „Tip document", „Expiră curând" and „Câmpuri afișate" where step 1 had them |
 | 8 | Chooses „Toate" in „Câmp specific:" again | The second list is gone |
+| 9 | Opens „Tip document", unticks „Toate tipurile", ticks only „Adeverință" | No „Câmp specific:" and no second row: the table starts right under the first row, and it lists only „Adeverință" rows |
 
 ## At the end — leaving things as they were found
 
@@ -114,3 +116,29 @@ follows it.
 **2026-10-04 — `automated` again (Slice #37.73).** The test runner's full run 20261004T051504Z-32198
 on 385db0c ran the extended `e2e/document/document-list.spec.ts` green with the other 67 specs (lint,
 tsc, jest and forms-drift green too).
+
+**2026-10-04 — run 5, `driven` (Slice #37.83).** The toolbar became two rows, so step 1 was corrected,
+step 7 gained a value and „nothing on the first row moved", step 9 was added, and the window fixed at
+1366 px: back to `driven`. Driven in the desktop app's browser pane, its viewport emulated at
+1366 × 900, against `npm run dev` on 3000; a script read the toolbar, filled the search, ticked the
+chooser's boxes and, for step 5, dispatched the mouse's `pointerover`/`pointerout` on „Câmp specific:"
+(the emulated viewport drops the real hover, FU-290). The pane's stored chooser held two fields.
+- Step 1: the first row level — the search box 248–504, „Tip document: Toate tipurile" 516–737,
+  „Expiră curând" 749–783, „Câmpuri afișate 2/4" 795–829 — and „Adaugă act" at its end (1199–1327);
+  the second row under it from x 248, „Câmp specific:" and its ⓘ; neither „Importanță" nor „Relevanță".
+- Step 2: one row, „Adeverință · TC-DOC-08 Act de test".
+- Steps 3–4: the eight fields; TIP · TITLU · NR. DOCUMENT · DATA · SUBIECT · ADĂUGAT LA, the subject
+  and 04.10.2026.
+- Step 5: the bubble open (224 × 182 px) on the rest, `sr-only` again on leaving.
+- Step 6 (the search box emptied first): „Toate" and 41 fields, Monedă, Stare plată, Modalitate plată
+  among them; none of the five.
+- Step 7: „Toate valorile", „Achitat integral (7 documente)", „Achitat parțial (1 document)"; with
+  „Achitat integral" only „Contract de Vânzare" rows (7); the four first-row controls where step 1 had
+  them, to the pixel.
+- Step 8: the second select gone.
+- Step 9: no „Câmp specific:", no second row; the table 17 px under the first row; only „Adeverință".
+
+**2026-10-04 — run 6, `confirmed` (Slice #37.83).** The same pane and documents, the corrected file
+unchanged: the same in every step. The pane's stored choices put back; both documents deleted
+(204 ×2). The case is confirmed, and `e2e/document/document-list.spec.ts` follows it.
+

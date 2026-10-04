@@ -12,6 +12,8 @@
  *   - A Playwright browser has never chosen, so the columns start as the two
  *     defaults, Nr. document and Data: „Câmpuri afișate 2/4", and step 4's two
  *     headers follow theirs.
+ *   - Before step 6 the search box is emptied, as the hand runs of #37.83 did:
+ *     step 2's text would otherwise hide every contract from step 7's filter.
  *   - Step 5 checks the bubble's opening and closing and the start of its text;
  *     the jest suite `document-list.test.tsx` holds the rest.
  *   - Slice #37.62's pictures, not steps of the case: the toolbar, and the list
@@ -58,14 +60,24 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(search).toBeVisible({ timeout: 30_000 });
       const typeFilter = main.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ });
       await expect(typeFilter).toBeVisible();
-      const [s, t] = [await search.boundingBox(), await typeFilter.boundingBox()];
-      expect(s && t && (s.y + s.height <= t.y || s.x + s.width <= t.x)).toBeTruthy();
       await expect(main.getByText("Câmp specific:")).toBeVisible();
       const about = main.getByRole("button", { name: "Despre „Câmp specific”" });
       await expect(about).toBeVisible();
-      await expect(main.getByRole("button", { name: "Expiră curând" })).toBeVisible();
+      const expiring = main.getByRole("button", { name: "Expiră curând" });
+      await expect(expiring).toBeVisible();
       const chooserButton = main.getByRole("button", { name: /^Câmpuri afișate \d\/4$/ });
       await expect(chooserButton).toBeVisible();
+      // #37.83: the first row, level and in order, „Adaugă act" at its end; „Câmp specific:" under the search box.
+      const addNew = main.getByRole("link", { name: "Adaugă act" });
+      const firstRow = async () => Promise.all([search, typeFilter, expiring, chooserButton].map(async (l) => (await l.boundingBox())!));
+      const row1 = await firstRow();
+      const add = (await addNew.boundingBox())!;
+      const centres = row1.map((r) => r.y + r.height / 2);
+      expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(1);
+      expect([...row1.map((r) => r.x), add.x]).toEqual([...row1.map((r) => r.x), add.x].sort((a, b) => a - b));
+      const field = (await main.getByText("Câmp specific:").boundingBox())!;
+      expect(field.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
+      expect(Math.abs(field.x - row1[0].x)).toBeLessThanOrEqual(24);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row: „Adeverință", the title.
@@ -116,6 +128,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(bubble).toHaveClass(/sr-only/);
 
       // Step 6 — „Câmp specific:" with every type: closed lists only, no Antecontract field, no „Temei preț".
+      // The search box emptied first, as the hand runs did, so step 7's filter has contracts to show.
+      await search.fill("");
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
       const keys = await key.locator("option").allTextContents();
       expect(keys[0]).toBe("Toate");
@@ -128,10 +142,27 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(value).toBeEnabled({ timeout: 30_000 });
       await expect(value.locator("option").filter({ hasText: /^Achitat integral \(\d+ (document|documente|de documente)\)$/ })).toHaveCount(1);
       expect((await value.locator("option").allTextContents()).some((t) => /ACHITAT_/.test(t))).toBe(false);
+      // „Achitat integral": only such contracts; nothing on the first row moved (#37.83).
+      await value.selectOption({ label: (await value.locator("option").filter({ hasText: /^Achitat integral/ }).textContent())! });
+      await expect(table.locator("tbody tr").first()).toContainText("Contract de Vânzare", { timeout: 30_000 });
+      expect(new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents())).toEqual(new Set(["Contract de Vânzare"]));
+      const moved = await firstRow();
+      expect(moved.map((r) => [Math.round(r.x), Math.round(r.y)])).toEqual(row1.map((r) => [Math.round(r.x), Math.round(r.y)]));
 
       // Step 8 — „Toate" again: the second list is gone.
       await key.selectOption({ label: "Toate" });
       await expect(value).toHaveCount(0);
+
+      // Step 9 — only „Adeverință": no „Câmp specific:", no second row, the table right under the first row.
+      await typeFilter.click();
+      await main.getByRole("checkbox", { name: "Toate tipurile", exact: true }).click();
+      await main.getByRole("checkbox", { name: "Adeverință", exact: true }).click();
+      await expect(main.getByText("Câmp specific:")).toHaveCount(0, { timeout: 30_000 });
+      await expect(main.locator('[data-toolbar-row="second"]')).toHaveCount(0);
+      await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));
+      const rowBox = (await main.locator('[data-toolbar-row="first"]').boundingBox())!;
+      const tableBox = (await table.boundingBox())!;
+      expect(tableBox.y - (rowBox.y + rowBox.height)).toBeLessThanOrEqual(20);
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "document", contractId);
