@@ -73,9 +73,9 @@ const SAMPLES: Record<string, string> = { nrDocument: DOCUMENT.nrDocument.sample
  * The seeded types with fields of their own (the six `measure-fields` read),
  * and the Certificat de Moștenitor for its parties panel. (Slice #37.15)
  */
+// Slice #37.74: no ANTECONTRACT — its form („discover"'s 14 fields) was taken off; it has no fields of its own.
 const TYPES_WITH_FIELDS = [
   "ACT_ADITIONAL",
-  "ANTECONTRACT",
   "CONTRACT_VANZARE",
   "FISA_CORPULUI_PROPRIETATE",
   "PLAN_AMPLASAMENT_DELIMITARE",

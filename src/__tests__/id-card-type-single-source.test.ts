@@ -415,6 +415,7 @@ const VL_PUT_ROUTE = "src/app/api/admin/value-lists/[list]/[id]/route.ts";
 const VL_POST_ROUTE = "src/app/api/admin/value-lists/[list]/route.ts";
 /** Slice #37.05: the forms file's SQL generator. Its guard is on the file itself. */
 const FORMS_FILE_WRITER = "src/lib/documents/document-type-forms-file.ts";
+const SUPABASE_FORMS_WRITER = "src/lib/documents/forms-on-supabase.ts";
 
 /**
  * Every path that can put a row into `lookup_document_type.template_fields`,
@@ -558,8 +559,16 @@ describe("every server door that writes template_fields consults the predicate",
     // in `document-type-forms-file.test.ts` („is not a form on a type that may
     // never hold one"), which is red the moment an identity-card or catch-all
     // key holds a form there.
+    //
+    // ⚠️ **A FOURTH, ARGUED FOR THE SAME WAY.** (Slice #37.74.)
+    // `forms-on-supabase.ts` holds the one UPDATE Adrian's
+    // `npm run supabase:forms -- clear KEY` runs: it sets `template_fields`
+    // to NULL — it can only REMOVE a form, never write one — and
+    // `clearRefusal` refuses it for any key the forms file still holds a form
+    // for, so the database can only be brought closer to the file. Nothing in
+    // the app imports it; it runs only from the script, only by Adrian.
     expect(writers.sort()).toEqual(
-      [DOC_QUERIES, VL_QUERIES, FORMS_FILE_WRITER].map((p) => p.split("/").join(sep)).sort(),
+      [DOC_QUERIES, VL_QUERIES, FORMS_FILE_WRITER, SUPABASE_FORMS_WRITER].map((p) => p.split("/").join(sep)).sort(),
     );
   });
 
