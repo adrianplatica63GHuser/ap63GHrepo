@@ -1510,6 +1510,11 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           </h3>
         )}
 
+        {/* Slice #37.68 — Importanță and Relevanță are two columns of one row,
+            each with its title and bubble, its select and review button, and
+            its „Actualizat …" and warning under its own select. Proveniență,
+            the wider select, keeps a row of its own under them. */}
+        <div className="flex flex-wrap items-start gap-4" data-classification-pair="">
         {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
         <MetadataSection
           title={t("importance.title")}
@@ -1549,6 +1554,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           readOnly={!isOnLatest}
           highlight={highlights.relevance}
         />
+        </div>
 
         {/* ── 3. Proveniență / Provenience, with its history ───────────────── */}
         <MetadataSection
@@ -1582,9 +1588,28 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
           {/* History — sourced from entity_provenance_log via the main query.
               It says something about THIS record, so it stays visible (#37.63). */}
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
-            {t("provenance.historyTitle")}
-          </h4>
+          {/* Slice #37.68 — the save button stands on „Istoric"'s line, against
+              the tile's right edge; on a version that is not the latest there
+              is no save button and „Istoric" is alone on its line. */}
+          <div className="flex items-center justify-between gap-3" data-history-line="">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+              {t("provenance.historyTitle")}
+            </h4>
+            {isOnLatest && (
+              // #37.42/#37.43 (A022): Save; while „✓ Salvat" shows, a Check in its
+              // place, then Save again — the after-save confirmation stays.
+              <IconButton
+                icon={saved ? Check : Save}
+                label={saved ? t("saved") : t("save")}
+                busy={saving}
+                busyLabel={t("saving")}
+                variant="primary"
+                size="lg"
+                onClick={saveAll}
+                disabled={saving || saved || !isDirty}
+              />
+            )}
+          </div>
           {data.provenanceHistory.length === 0 ? (
             <p className="text-xs text-fade dark:text-zinc-500">{t("provenance.historyEmpty")}</p>
           ) : (
@@ -1599,23 +1624,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           )}
         </MetadataSection>
 
-        {/* ── Unified Save button (Task #20) ───────────────────────────────── */}
-        {isOnLatest && (
-          <div className="flex items-center gap-3">
-            {/* #37.42/#37.43 (A022): Save; while „✓ Salvat" shows, a Check in its
-                place, then Save again — the after-save confirmation stays. */}
-            <IconButton
-              icon={saved ? Check : Save}
-              label={saved ? t("saved") : t("save")}
-              busy={saving}
-              busyLabel={t("saving")}
-              variant="primary"
-              size="lg"
-              onClick={saveAll}
-              disabled={saving || saved || !isDirty}
-            />
-          </div>
-        )}
         </>)}
 
         {showConnections && (<>

@@ -466,7 +466,7 @@ describe("the width unit: every Natural Person tile a whole number of units (Sli
 
   it("a person's list tiles: „Corelate” at the Document's units, META INFO's two halves at theirs (#37.67)", () => {
     // #37.67: Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" — no tables, so no column sets.
-    expect(NP_LIST_UNITS).toEqual({ related: RELATED_UNITS, classification: 2, connections: 3 });
+    expect(NP_LIST_UNITS).toEqual({ related: RELATED_UNITS, classification: 3, connections: 3 }); // #37.68: Importanță and Relevanță on one row
     expect(RELATED_UNITS).toBe(4);
   });
 
@@ -598,8 +598,8 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
-  it("the list tiles: „Corelate” the Document's 4 units (#37.66, rule 17), Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
-    expect(LIST_UNITS.property).toEqual({ related: RELATED_UNITS, classification: 2, connections: 3 });
+  it("the list tiles: „Corelate” the Document's 4 units (#37.66, rule 17), Clasificare subiectivă 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
+    expect(LIST_UNITS.property).toEqual({ related: RELATED_UNITS, classification: 3, connections: 3 }); // #37.68
     expect(LIST_UNITS.property.related).toBe(LIST_UNITS.document.related);
     const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
     for (const k of ["related", "classification", "connections"]) {
@@ -637,10 +637,10 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
   });
 
-  it("the list tiles: „Corelate” 4 units (#37.65), Clasificare subiectivă 2 and Conexiuni 3 (#37.63)", () => {
+  it("the list tiles: „Corelate” 4 units (#37.65), Clasificare subiectivă 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
     // #37.65: the fewest units that hold its widest row — the icon, the longest property name, all four slots (rule 17).
     expect(LIST_UNITS.document.related).toBe(oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true));
-    expect(LIST_UNITS.document).toEqual({ related: 4, classification: 2, connections: 3 });
+    expect(LIST_UNITS.document).toEqual({ related: 4, classification: 3, connections: 3 }); // #37.68
     const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
     for (const k of ["related", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));

@@ -808,18 +808,34 @@ export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "view", "
  */
 export const RELATED_UNITS = oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true);
 
+/**
+ * „Clasificare subiectivă" with Importanță and Relevanță on one row  (Slice #37.68).
+ *
+ * Each of the two is its select and „Marchează ca verificat" side by side, and
+ * the two stand 1rem apart (`gap-4`). Measured on 2026-10-04 in the desktop
+ * app's browser pane against `npm run dev`: Importanță's select 104 px,
+ * Relevanță's 131 px (its widest option, „De perspectivă"), the review button
+ * 34 px, 8 px between a select and its button — 146 + 16 + 173 = 335 px. Inside
+ * 2 units there are 286 px, so the tile takes 3 (450 px inside). Proveniență's
+ * select (197 px) and its button keep a row of their own and fit either way.
+ * Native selects size to their widest option, so these numbers are the
+ * browser's, not ours — re-measure if an option's wording changes.
+ */
+export const CLASSIFICATION_PAIR_REM = (104 + 8 + 34 + 16 + 131 + 8 + 34) / 16;
+export const CLASSIFICATION_UNITS = unitsFor(panelRem(CLASSIFICATION_PAIR_REM));
+
 // Slice #37.67: a person's Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" —
 // the Document's `RELATED_UNITS`, 4 (rule 17), on both person screens.
-const PERSON_LIST_UNITS = { related: RELATED_UNITS, classification: 2, connections: 3 } as const;
+const PERSON_LIST_UNITS = { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3 } as const;
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
   // Slice #37.66: „Proprietăți corelate" (5), Persoane (4) and Acte (4) are one tile, „Corelate" —
   // the Document's `RELATED_UNITS`, 4 (rule 17).
-  property: { related: RELATED_UNITS, classification: 2, connections: 3 },
+  property: { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3 },
   // Slice #37.65: Persoane, Proprietăți and „Acte corelate" (3 units each since #37.64) are one
   // tile, „Corelate" — `RELATED_UNITS`, 4.
-  document: { related: RELATED_UNITS, classification: 2, connections: 3 },
+  document: { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3 },
 } as const;
 
 /** The share panel (#37.64): the three boxes at L, under one another, inside its padding. */
