@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -51,3 +51,7 @@ script (visible labels only). The file was written from the code first and neede
 **2026-10-04 — run 2, `confirmed` (Slice #37.74).** The same pane, two new documents, the file above
 unchanged: the same in both steps. Both deleted (204 ×2). Nothing in the file changed, so the case is
 confirmed, and `e2e/document/antecontract-form.spec.ts` translates it.
+
+**2026-10-04 — `automated` (Slice #37.74).** The test runner's full run 20261004T060512Z-13298 ran
+`e2e/document/antecontract-form.spec.ts` green with the other specs (lint, tsc, jest and forms-drift
+green too).
