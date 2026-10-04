@@ -825,8 +825,12 @@ export const RELATED_UNITS = oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.prop
  * select (197 px) and its button keep a row of their own and fit either way.
  * Native selects size to their widest option, so these numbers are the
  * browser's, not ours — re-measure if an option's wording changes.
+ *
+ * Slice #37.81: the two are two EQUAL cells with a 1-px divider between them,
+ * 1rem either side — so each cell is as wide as the wider of the two (173 px):
+ * 2 × 173 + 2 × 16 + 1 = 379 px, still inside 3 units (450 px). Unchanged size.
  */
-export const CLASSIFICATION_PAIR_REM = (104 + 8 + 34 + 16 + 131 + 8 + 34) / 16;
+export const CLASSIFICATION_PAIR_REM = (2 * (131 + 8 + 34) + 2 * 16 + 1) / 16;
 export const CLASSIFICATION_UNITS = unitsFor(panelRem(CLASSIFICATION_PAIR_REM));
 
 // Slice #37.67: a person's Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" —

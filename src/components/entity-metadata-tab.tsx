@@ -19,6 +19,7 @@ import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance"
 import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
+import { Divider } from "@/lib/ui/divider";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -182,6 +183,12 @@ function MetaSelect({
  */
 const ITEM_TITLE = "text-sm font-semibold text-ink dark:text-zinc-100";
 
+/** Slice #37.81: Importanță | the vertical divider | Relevanță — two equal cells. */
+const CLASSIFICATION_PAIR_GRID: React.CSSProperties = { gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" };
+
+/** Slice #37.81: in a centred cell, the select in the middle track, its review button in the right one. */
+const CENTRED_SELECT_ROW: React.CSSProperties = { gridTemplateColumns: "1fr auto 1fr" };
+
 function ItemTitle({ id, title, note, about }: { id: string; title: string; note?: string; about: string }) {
   if (!note) return <h3 className={ITEM_TITLE}>{title}</h3>;
   return (
@@ -240,6 +247,7 @@ function MetadataSection({
   readOnly,
   highlight,
   about,
+  centred = false,
   children,
 }: {
   title:                 string;
@@ -264,6 +272,8 @@ function MetadataSection({
   highlight?:            HighlightColor | undefined;
   /** The ⓘ's name: „Despre „{title}"" (#37.63). */
   about:                 string;
+  /** Slice #37.81: everything centred across, in its own cell. */
+  centred?:              boolean;
   children?:             React.ReactNode;
 }) {
   const [reviewing, setReviewing] = useState(false);
@@ -298,10 +308,14 @@ function MetadataSection({
   );
 
   return (
-    <section className="flex flex-col gap-1">
+    <section className={centred ? "flex flex-col items-center gap-1 text-center" : "flex flex-col gap-1"} data-centred={centred ? "" : undefined}>
       <ItemTitle id={noteId} title={title} note={note} about={about} />
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Slice #37.81: centred, the SELECT stands at the cell's centre — an empty
+          track on its left as wide as the review button's on its right. At 4 px
+          apart Relevanță's row is 131 + 2 × (34 + 4) = 207 px in its 208-px cell. */}
+      <div className={centred ? "grid items-center gap-1" : "flex flex-wrap items-center gap-2"} style={centred ? CENTRED_SELECT_ROW : undefined}>
+        {centred && <span aria-hidden="true" />}
         {/* Slice #37.63 — what the chosen value means is a bubble ON the value:
             the mouse resting on it, or the keyboard reaching it, opens it. It
             was a paragraph (and, for Proveniență, „Ce înseamnă asta?") under it. */}
@@ -312,7 +326,17 @@ function MetadataSection({
         ) : (
           select
         )}
-        {!readOnly && (
+        {!readOnly && centred && (
+          <span style={{ justifySelf: "start" }}>
+            <MarkReviewedButton
+              reviewed={reviewed}
+              reviewing={reviewing}
+              labels={{ mark: labelMarkReviewed, marking: labelMarkingReviewed, marked: labelMarkedReviewed }}
+              onClick={handleMarkReviewed}
+            />
+          </span>
+        )}
+        {!readOnly && !centred && (
           // #37.44 (A031): BadgeCheck, filled once reviewed.
           <MarkReviewedButton
             reviewed={reviewed}
@@ -1525,11 +1549,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
         {showClassification && (<>
         {/* ── Version nav (only when there are multiple versions) ──────────── */}
-        {totalVer > 1 && (
-          <div className="flex items-center gap-2 pb-2 border-b border-card-rim dark:border-zinc-700">
+        {/* Slice #37.81: the line under it is the shared divider, as the tile's other two are. */}
+        {totalVer > 1 && (<>
+          <div className="flex items-center gap-2">
             <VersionNavControls nav={navView} labels={navLabels} />
           </div>
-        )}
+          <Divider />
+        </>)}
 
         {!part && (
           <h3 className="border-b border-card-rim pb-1 text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700 dark:text-zinc-500">
@@ -1540,8 +1566,11 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         {/* Slice #37.68 — Importanță and Relevanță are two columns of one row,
             each with its title and bubble, its select and review button, and
             its „Actualizat …" and warning under its own select. Proveniență,
-            the wider select, keeps a row of its own under them. */}
-        <div className="flex flex-wrap items-start gap-4" data-classification-pair="">
+            the wider select, keeps a row of its own under them.
+            Slice #37.81 — two equal cells with the vertical divider between
+            them; each one's content centred across, the shorter centred down
+            against the taller. */}
+        <div className="grid items-center gap-4" style={CLASSIFICATION_PAIR_GRID} data-classification-pair="">
         {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
         <MetadataSection
           title={t("importance.title")}
@@ -1560,7 +1589,10 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("importance")}
           readOnly={!isOnLatest}
           highlight={highlights.importance}
+          centred
         />
+
+        <Divider vertical />
 
         {/* ── 2. Relevanță / Relevance ─────────────────────────────────────── */}
         <MetadataSection
@@ -1580,8 +1612,12 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("relevance")}
           readOnly={!isOnLatest}
           highlight={highlights.relevance}
+          centred
         />
         </div>
+
+        {/* Slice #37.81: the line between the pair and Proveniență. */}
+        <Divider />
 
         {/* ── 3. Proveniență / Provenience, with its history ───────────────── */}
         <MetadataSection
