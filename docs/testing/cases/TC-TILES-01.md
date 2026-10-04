@@ -73,3 +73,9 @@ identitate", „Contact", „Adrese", „Corelate", „Clasificare subiectivă",
 and 9 tick „Corelate" where they tick „Acte"; its empty text is „Nimic corelat încă.". A browser that
 had any of the three ticked opens with „Corelate" ticked. The steps above keep the old names, as they
 were run; the next drive rewrites them.
+
+**2026-10-04 — Slice #37.75: the boxes are packed, not wrapped into lines.** Each box takes its
+columns as the wrapping row gave them and then stands right under the box above it (16 px), not
+under the tallest box of the line before; a „Previzualizare" opens right under the tile it was
+pressed in. A step that reads where a box stands („on the next line", „under …") reads it that way
+now (TC-TILES-12). The steps above are not rewritten here, as no one has driven them since (FU-292).

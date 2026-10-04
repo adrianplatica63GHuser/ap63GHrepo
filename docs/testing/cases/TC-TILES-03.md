@@ -83,3 +83,9 @@ above keep the old name, as they were run.
 „Acte" are one tile, „Corelate"** (TC-PROP-07). Step 1 reads eight boxes, and step 8 ticks „Corelate"
 where it ticks „Persoane" and „Acte". The steps above keep the old names, as they were run; the next
 drive rewrites them. (Noted in #37.67, which found it missing.)
+
+**2026-10-04 — Slice #37.75: the boxes are packed, not wrapped into lines.** Each box takes its
+columns as the wrapping row gave them and then stands right under the box above it (16 px), not
+under the tallest box of the line before; a „Previzualizare" opens right under the tile it was
+pressed in. A step that reads where a box stands („on the next line", „under …") reads it that way
+now (TC-TILES-12). The steps above are not rewritten here, as no one has driven them since (FU-292).

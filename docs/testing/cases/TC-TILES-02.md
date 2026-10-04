@@ -79,3 +79,9 @@ above keep the old name, as they were run.
 are one tile, „Corelate"** (TC-PERS-05). Steps 1 and 9 read six boxes, and steps 2, 3, 8 and 9 mean
 „Corelate" where they say „Acte"; its empty text is „Nimic corelat încă.". The steps above keep the
 old names, as they were run; the next drive rewrites them.
+
+**2026-10-04 — Slice #37.75: the boxes are packed, not wrapped into lines.** Each box takes its
+columns as the wrapping row gave them and then stands right under the box above it (16 px), not
+under the tallest box of the line before; a „Previzualizare" opens right under the tile it was
+pressed in. A step that reads where a box stands („on the next line", „under …") reads it that way
+now (TC-TILES-12). The steps above are not rewritten here, as no one has driven them since (FU-292).
