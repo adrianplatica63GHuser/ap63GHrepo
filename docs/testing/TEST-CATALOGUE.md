@@ -140,6 +140,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-13](cases/TC-TILES-13.md) | O fișă trasă de spațiul ei gol într-un loc liber rămâne acolo; peste altă fișă nu se poate | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tiles-drag.spec.ts` |
 | [TC-TILES-14](cases/TC-TILES-14.md) | Fișele care nu se mută sunt mov deschis: harta, colțurile, Street View, paginile | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/pinned-tint.spec.ts` |
 | [TC-TILES-15](cases/TC-TILES-15.md) | O fișă trasă în spațiul liber de sub coloana din dreapta rămâne acolo; coloana nu se mișcă | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tiles-under-column.spec.ts` |
+| [TC-TILES-16](cases/TC-TILES-16.md) | „Clasificare subiectivă": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei | tiles | happy | — | `confirmed` | 2026-10-04 | `e2e/tiles/classification-dividers.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-01 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
