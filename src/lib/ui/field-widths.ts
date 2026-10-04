@@ -1153,6 +1153,7 @@ export const COLUMN = {
   companyType: { content: "M", kind: "wraps" }, //          JP „Tip": longest „Consiliu Local" (14)
   cui: { content: "M", kind: "fixed" }, //                  „RO12345678", JP.cuiNumber
   tradeRegister: { content: "M", kind: "fixed" }, //        „J40/12345/2020", JP.tradeRegisterNumber
+  contactPerson: { content: "L", kind: "wraps" }, //        JP „Persoană de contact" (#37.71): a person's display name, wraps like one
   role: { content: "L", kind: "wraps" }, //                 LIST.role* — a role chip, or a certificate party's quality
   cota: { content: "L", kind: "fixed" }, //                 an input showing „fără cotă" (italic) when empty
   cotaMp: { content: "L", kind: "fixed" }, //               „fără suprafață"

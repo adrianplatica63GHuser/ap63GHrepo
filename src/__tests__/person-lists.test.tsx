@@ -35,7 +35,9 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
       .map((f) => (f === "judicialPersonTypeId" ? "judicialPersonType" : f));
     expect(panel).toEqual(["judicialPersonType", "cuiNumber", "tradeRegisterNumber"]);
     const src = read("src", "app", "judicial-persons", "list-view.tsx");
-    expect(keysOf(src)).toEqual(panel);
+    // Slice #37.71: then „Persoană de contact", and room for all four.
+    expect(keysOf(src)).toEqual([...panel, "contactPerson"]);
+    expect(src).toMatch(/const MAX_OPT = 4;/);
     for (const f of ["natural-persons", "judicial-persons"]) {
       const view = read("src", "app", f, "list-view.tsx");
       expect([f, /<FieldChooser\b/.test(view), /useFieldChooser\(LS_KEY,/.test(view)]).toEqual([f, true, true]);

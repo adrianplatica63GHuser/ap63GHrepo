@@ -1146,6 +1146,7 @@
       "tradeRegisterNumber": "Trade Register No.",
       "contactPerson1": "Contact Person 1",
       "contactPerson2": "Contact Person 2",
+      "contactPerson": "Contact person",
       "sameAsRegistered": "Same as registered address",
       "notes": "Notes"
     },

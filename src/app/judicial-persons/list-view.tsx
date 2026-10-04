@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { GroupsFilter, GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -20,7 +19,8 @@ import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
 const LS_KEY  = "ga40-col-company-v1";
-const MAX_OPT = 3;
+// Slice #37.71: four, so all four fields can be shown, as on the other lists.
+const MAX_OPT = 4;
 
 type JudicialPersonListItem = {
   id:          string;
@@ -31,6 +31,8 @@ type JudicialPersonListItem = {
   judicialPersonType:  string | null;
   cuiNumber:           string | null;
   tradeRegisterNumber: string | null;
+  /** Slice #37.71 — the first filled contact slot's name: slot 1, or slot 2 when the first is empty. */
+  contactPerson:       string | null;
   createdAt:   string;
   updatedAt:   string;
 };
@@ -42,29 +44,15 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchJudicialPersons(
-  q: string,
-  page: number,
-  filter?: GroupsFilter,
-): Promise<ListResponse> {
+// Slice #37.71: no „Grupuri" filter — the search box is the list's only filter.
+async function fetchJudicialPersons(q: string, page: number): Promise<ListResponse> {
   const url = new URL("/api/judicial-persons", window.location.origin);
   if (q) url.searchParams.set("q", q);
-  if (filter !== undefined) {
-    url.searchParams.set("groupCodes", filter.codes.join(","));
-    if (!filter.includeUngrouped) url.searchParams.set("includeUngrouped", "false");
-  }
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
-}
-
-async function fetchJudicialPersonGroupCodes(): Promise<string[]> {
-  const res = await fetch("/api/groups?targetType=JUDICIAL_PERSON");
-  if (!res.ok) return [];
-  const body = await res.json();
-  return ((body.items ?? []) as { code: string }[]).map((g) => g.code).sort();
 }
 
 async function callBatchDelete(ids: string[]): Promise<void> {
@@ -137,19 +125,10 @@ export function JudicialPersonListView() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
 
-  const [groupFilter,       setGroupFilter]       = useState<GroupsFilter>(undefined);
-  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
-
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
-
-  const { data: availableGroupCodes = [] } = useQuery<string[]>({
-    queryKey: ["groups", "codes", "JUDICIAL_PERSON"],
-    queryFn:  fetchJudicialPersonGroupCodes,
-    staleTime: 5 * 60 * 1000,
-  });
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -159,18 +138,9 @@ export function JudicialPersonListView() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  const groupFilterKey = groupFilter === undefined
-    ? "__all__"
-    : `${groupFilter.includeUngrouped ? "1" : "0"}:${groupFilter.codes.join(",")}`;
-  const [prevGroupKey, setPrevGroupKey] = useState(groupFilterKey);
-  if (prevGroupKey !== groupFilterKey) {
-    setPrevGroupKey(groupFilterKey);
-    setCurrentPage(0);
-  }
-
   const query = useQuery<ListResponse>({
-    queryKey: ["judicial-persons", "list", debouncedSearch, currentPage, groupFilterKey],
-    queryFn:  () => fetchJudicialPersons(debouncedSearch, currentPage, groupFilter),
+    queryKey: ["judicial-persons", "list", debouncedSearch, currentPage],
+    queryFn:  () => fetchJudicialPersons(debouncedSearch, currentPage),
   });
 
   const total      = query.data?.total ?? 0;
@@ -178,7 +148,7 @@ export function JudicialPersonListView() {
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  const pageKey = `${debouncedSearch}|${currentPage}|${groupFilterKey}`;
+  const pageKey = `${debouncedSearch}|${currentPage}`;
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
@@ -236,6 +206,8 @@ export function JudicialPersonListView() {
     { key: "judicialPersonType",  label: t("fields.judicialType"),        column: "companyType" },
     { key: "cuiNumber",           label: t("fields.cuiNumber"),           column: "cui" },
     { key: "tradeRegisterNumber", label: t("fields.tradeRegisterNumber"), column: "tradeRegister" },
+    // Slice #37.71: the company's contact person — the first, when it has two.
+    { key: "contactPerson",       label: t("fields.contactPerson"),       column: "contactPerson" },
   ];
   const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
@@ -245,24 +217,13 @@ export function JudicialPersonListView() {
     key === "judicialPersonType" ? item.judicialPersonType
       : key === "cuiNumber" ? item.cuiNumber
         : key === "tradeRegisterNumber" ? item.tradeRegisterNumber
-          : null;
+          : key === "contactPerson" ? item.contactPerson
+            : null;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        {availableGroupCodes.length > 0 && (
-          <GroupsFilterDropdown
-            availableCodes={availableGroupCodes}
-            selectedFilter={groupFilter}
-            label={t("groupsFilterLabel")}
-            allLabel={t("groupsFilterAll")}
-            ungroupedLabel={t("groupsFilterUngrouped")}
-            open={groupDropdownOpen}
-            onOpenChange={setGroupDropdownOpen}
-            onChange={(f) => setGroupFilter(f)}
-          />
-        )}
         <input
           type="search"
           value={searchInput}

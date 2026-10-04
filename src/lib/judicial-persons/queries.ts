@@ -60,9 +60,20 @@ export type JudicialPersonListItem = {
   /** Slice #37.60 — „Câmpuri afișate": the type's name and the trade-register number. */
   judicialPersonType: string | null;
   tradeRegisterNumber: string | null;
+  /**
+   * Slice #37.71 — „Persoană de contact": the first filled slot's display
+   * name — contactPerson1, or contactPerson2 when the first is empty — read by
+   * this query itself (two LEFT JOINs), never a query per row.
+   */
+  contactPerson: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
+
+/** „Persoană de contact" on the list (Slice #37.71): slot 1's name, or slot 2's when the first is empty. */
+export function firstFilledContact(slot1: string | null, slot2: string | null): string | null {
+  return slot1 ?? slot2 ?? null;
+}
 
 export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
   items: JudicialPersonListItem[];
@@ -120,7 +131,9 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
       : undefined,
   );
 
-  const [items, totals] = await Promise.all([
+  const contact1 = alias(person, "contact1");
+  const contact2 = alias(person, "contact2");
+  const [rows, totals] = await Promise.all([
     db
       .select({
         id: person.id,
@@ -130,12 +143,16 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
         cuiNumber: judicialPerson.cuiNumber,
         judicialPersonType: lookupJudicialPersonType.name,
         tradeRegisterNumber: judicialPerson.tradeRegisterNumber,
+        contact1Name: contact1.displayName,
+        contact2Name: contact2.displayName,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
       })
       .from(person)
       .leftJoin(judicialPerson, eq(judicialPerson.personId, person.id))
       .leftJoin(lookupJudicialPersonType, eq(lookupJudicialPersonType.id, judicialPerson.judicialPersonTypeId))
+      .leftJoin(contact1, eq(contact1.id, judicialPerson.contactPerson1Id))
+      .leftJoin(contact2, eq(contact2.id, judicialPerson.contactPerson2Id))
       .where(where)
       // Slice #18.18: most-recently modified/created first (consistent with
       // natural persons — previously ordered by code).
@@ -149,6 +166,10 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
       .where(where),
   ]);
 
+  const items = rows.map(({ contact1Name, contact2Name, ...rest }) => ({
+    ...rest,
+    contactPerson: firstFilledContact(contact1Name, contact2Name),
+  }));
   return { items, total: totals[0]?.total ?? 0 };
 }
 
