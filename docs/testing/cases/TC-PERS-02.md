@@ -36,7 +36,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", a filter „Grupuri: Toate grupurile", a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column** in a browser that has never chosen one, no „Importanță" or „Relevanță", and a button „Câmpuri afișate 0/3" (#37.60) |
+| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", no „Grupuri" filter (#37.71), a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column** in a browser that has never chosen one, no „Importanță" or „Relevanță", and a button „Câmpuri afișate 0/4" (#37.60, #37.71) |
 | 2 | Presses „Adaugă persoană juridică" | **Straight to** „Persoană juridică nouă" at `/judicial-persons/new` — no chooser dialog, as for natural persons. Its sections are „PERSOANĂ JURIDICĂ", „PERSOANE DE CONTACT", „ADRESĂ SEDIU SOCIAL", a checkbox „Aceeași cu adresa sediului social", and „ADRESĂ CORESPONDENȚĂ" |
 | 3 | Types `TC-PERS-02 Firmă de test SRL` into „Denumire" | The value appears. „Denumire" is the only required field |
 | 4 | Chooses „SRL" in „Tip" | The select offers „—", „Consiliu Local", „Instituție", „SRL", „SA", „SRL-D", „PFA", „II", „IF", „ONG", „Altele" |
@@ -100,3 +100,8 @@ it is ticked. The spec follows, green in the runner's full `20261003T013901Z-211
 subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 9 reads the two, and its spec counts eight boxes. The notes
 above keep the old name, as they were run.
+
+**2026-10-03 — Slice #37.71 changed what step 1 reads.** The Judicial Persons list has no „Grupuri"
+filter any more, and „Câmpuri afișate" offers four fields („Persoană de contact" the fourth), so it
+reads `0/4`. Step 1 now says so and `e2e/person/company-create-edit.spec.ts` follows; TC-PERS-06
+drives the list's new shape.

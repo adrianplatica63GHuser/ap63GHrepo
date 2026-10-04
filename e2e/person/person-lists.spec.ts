@@ -114,12 +114,12 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       expect(np.height).toBeLessThan(10 * rem);
       await photograph(page, "natural-person-preview", page.locator("[data-preview]"));
 
-      // Step 5 — „Persoane Juridice": „Câmpuri afișate 0/3", its three fields.
+      // Step 5 — „Persoane Juridice": „Câmpuri afișate 0/4", its four fields (#37.71: „Persoană de contact").
       await page.goto("/judicial-persons");
       await expect(main.getByPlaceholder("caută după cod, nume, poreclă sau ID")).toBeVisible({ timeout: 30_000 });
-      await main.getByRole("button", { name: "Câmpuri afișate 0/3", exact: true }).click();
+      await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
       const jpPicker = main.locator("[data-field-chooser]");
-      await expect(jpPicker.locator("label")).toHaveText(["Tip", "Nr. înregistrare (CUI)", "Nr. registru comerțului"]);
+      await expect(jpPicker.locator("label")).toHaveText(["Tip", "Nr. înregistrare (CUI)", "Nr. registru comerțului", "Persoană de contact"]);
 
       // Step 6 — Nr. înregistrare (CUI); the search; the row.
       await jpPicker.getByRole("checkbox", { name: "Nr. înregistrare (CUI)" }).check();
@@ -129,7 +129,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await expect(jpRow).toHaveCount(1, { timeout: 30_000 });
       await expect(main.getByRole("columnheader", { name: "NR. ÎNREGISTRARE (CUI)" })).toBeVisible();
       await expect(jpRow).toContainText("RO99999990");
-      await main.getByRole("button", { name: "Câmpuri afișate 1/3", exact: true }).click();
+      await main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
       await photograph(page, "judicial-persons-chooser", main);
       await page.getByRole("heading", { level: 1 }).first().click();
 

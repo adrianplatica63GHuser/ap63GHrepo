@@ -40,7 +40,7 @@ Nothing.
 | 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Locul nașterii, Tip Profesional — in that order |
 | 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
 | 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
-| 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/3`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului |
+| 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/4`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact |
 | 6 | Ticks Nr. înregistrare (CUI), presses outside, types `TC-PERS-04` into the search | The table headed DENUMIRE · PORECLĂ · NR. ÎNREGISTRARE (CUI); one row with `RO99999990` |
 | 7 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Firmă de test SRL` followed by „(niciun contact)", then „Firma TC, SRL" and „RO99999990, J99/9999/2026"; no system ID |
 
@@ -83,3 +83,8 @@ after „născut:" (no gender is recorded for Ion, so the masculine), and a comp
 followed by its count of contact persons, „(niciun contact)" here. Both steps now say so, and
 `e2e/person/person-lists.spec.ts` follows. The rest of the case is unchanged; TC-TILES-11 drives the
 four previews themselves.
+
+**2026-10-03 — Slice #37.71 changed what step 5 reads.** „Câmpuri afișate" on „Persoane Juridice"
+offers a fourth field, „Persoană de contact", and room for all four: it reads `0/4`, and `1/4` after
+step 6. The step now says so and `e2e/person/person-lists.spec.ts` follows; TC-PERS-06 drives the
+new field.

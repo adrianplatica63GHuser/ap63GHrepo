@@ -59,7 +59,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/documents/[id]/associate-property":    ["TC-ASSOC-02", "TC-LAYOUT-01", "TC-ASSOC-13"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04", "TC-ICON-06"],
   "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03", "TC-GRP-01", "TC-TAG-01", "TC-AUTH-02"],
-  "/judicial-persons":                     ["TC-PERS-02", "TC-TILES-06", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11"],
+  "/judicial-persons":                     ["TC-PERS-02", "TC-TILES-06", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-PERS-06"],
   "/judicial-persons/new":                 ["TC-PERS-02", "TC-ASSOC-10", "TC-ASSOC-11"],
   "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06", "TC-ASSOC-10", "TC-ASSOC-11", "TC-TILES-02", "TC-ICON-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05"],
   "/natural-persons/[id]/associate-document": ["TC-ASSOC-03", "TC-LAYOUT-01"],
