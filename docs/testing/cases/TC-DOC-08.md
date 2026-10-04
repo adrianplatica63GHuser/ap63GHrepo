@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -110,3 +110,7 @@ unchanged: the same in every step („Achitat integral (7 documente)" — two le
 contracts of this slice's picture runs had been deleted in between). Both documents deleted (204 ×2).
 Nothing in the file changed, so the case is confirmed, and `e2e/document/document-list.spec.ts`
 follows it.
+
+**2026-10-04 — `automated` again (Slice #37.73).** The test runner's full run 20261004T051504Z-32198
+on 385db0c ran the extended `e2e/document/document-list.spec.ts` green with the other 67 specs (lint,
+tsc, jest and forms-drift green too).

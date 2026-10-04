@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-04, Slice #37.71 — 293 entries. Rows are status, columns are impact.
+As of 2026-10-04, Slice #37.73 — 294 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 60 | 63 | 16 | 156 |
+| open | 17 | 61 | 63 | 16 | 157 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 55 | 26 | 3 | 121 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 58 | 121 | 93 | 21 | 293 |
+| **total** | 58 | 122 | 93 | 21 | 294 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -377,3 +377,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-291 | 2026-10-03 #37.65 (runner jest 20261003T171618Z-7527) | debt | UI shell | `IconButton` wraps a DISABLED button in a `<span>` (`cursor-not-allowed`) and renders an enabled one bare, so the `<button>` element is unmounted and a new one mounted every time `disabled` flips. A test holding the element, or a caller holding a `ref` to it, then points at a detached node; it cost #37.65 a red jest run („Dezasociază" captured before a row was selected). | src/lib/ui/icon-button.tsx — `if (!tooltip) { return wrapClass ? <span …>{control}</span> : <>{control}</>; }` | dev | XS | open | Always render the wrapper span (an empty class when enabled), so the element tree does not change with `disabled`. | 2026-10-03 |
 | FU-292 | 2026-10-03 #37.67 | test gap | Tests & e2e | TC-TILES-01, -02 and -03 — the three record screens' tile boxes, `driven`, no spec — still read the boxes of #37.17–#37.19 („Asocieri", nine or ten boxes): since then the tiles were renamed (#37.27, #37.29, #37.30), META INFO split in two (#37.63) and the lists merged into „Corelate" (#37.66, #37.67). Each now carries a dated note naming the current boxes; the steps are not rewritten, since no one has driven them. | docs/testing/cases/TC-TILES-01.md, TC-TILES-02.md, TC-TILES-03.md — „Notes from the runs", 2026-10-03 | dev | S | open | Drive the three again on the current screens, rewrite their steps from the run, and translate them into specs (they are the catalogue's natural next `automated` cases). | 2026-10-03 |
 | FU-293 | 2026-10-04 #37.71 | debt | Groups & tags | Since #37.71 `GroupsFilterDropdown` has no mount site anywhere (the Judicial Persons list was its last), and the people and judicial-persons list APIs still parse `groupCodes` / `includeUngrouped` that no screen sends; the `judicialPerson.groupsFilter*` and `naturalPerson.groupsFilter*` strings are pinned by romanian-diacritics.test.ts for a dropdown nobody draws. | src/components/groups-filter-dropdown.tsx (no importer); src/app/api/judicial-persons/route.ts:29 groupCodes; src/lib/judicial-persons/queries.ts listJudicialPersons groupFilter | dev | S | open | Remove the component, the two routes' group parameters and their query branches, and the pinned strings, in one slice — or keep them if a grouped view of the lists is coming back. | 2026-10-04 |
+| FU-294 | 2026-10-04 #37.73 | recommendation | Documents | Since #37.73 „Câmp specific" offers only `select` fields; on the local archive 30 text, number and date fields it dropped hold a value two or more documents share (e.g. CVC „Temei autentificare" 1 value × 4 documents, „Plan de amplasament" „SISTEM DE PROIECTIE" 2 values, up to 6) — #37.73's handover lists all 30 with their counts. Adrian may name any he wants back. | Handover.37.73.md, „The fields the rule drops whose values repeat" (counts from GET /api/documents/custom-field-values, 2026-10-04) | user | XS | open | Name the fields; the fix is either turning that field into a `select` with its values as options (its values then group properly), or an allow-list beside the rule in custom-field-options.ts. | 2026-10-04 |
