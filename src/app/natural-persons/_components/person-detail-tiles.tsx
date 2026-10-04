@@ -74,7 +74,7 @@ export function PersonDetailTiles({
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const rowRef = useRef<HTMLDivElement>(null);
-  useTilePacking(rowRef);
+  useTilePacking(rowRef, { entity: NP_TILE_REGISTRY.entity });
   const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot. A ref-callback into state so the portal target is available

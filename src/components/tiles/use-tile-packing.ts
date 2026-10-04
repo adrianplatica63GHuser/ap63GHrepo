@@ -27,13 +27,49 @@
  * „when the screen opens". After that a box that grows pushes the boxes under
  * it down (`grow`) and one that shrinks leaves its place, so nothing jumps
  * while the user types.
+ *
+ * DRAGGED BY ITS EMPTY SPACE (Slice #37.76). A left-button press on a tile's
+ * unused space (`isDragSurface` — never text, a label, a field, a button, a
+ * link, an image, a map or the page viewer) that moves more than
+ * `DRAG_THRESHOLD_PX` drags the tile; less is a click, so nothing that worked
+ * before changes. Over that space the pointer shows „grab". While it moves
+ * every other tile stays where it is; an outline shows where it would land —
+ * snapped to whole units across and `ROW_STEP` down — dashed in the accent
+ * colour where that place is free, in red where it is not (`canDrop`).
+ * Released on a free place it stays there (`dropAt`) and the arrangement is
+ * stored per browser under `tilePositionsKey(entity)`; released anywhere
+ * else, or on Esc, it goes back. Near the window's top or bottom the page
+ * scrolls. A form tile stays in the form: only where it is drawn changes. A
+ * preview can be dragged too, its place kept for the visit only. The stored
+ * arrangement is read back at every fresh layout (`placeWithStored`), and
+ * „Implicit" forgets it (`TILE_POSITIONS_RESET`).
  */
 import { useLayoutEffect, type RefObject } from "react";
 import { UNIT_GAP_REM, UNIT_REM } from "@/lib/ui/field-widths";
-import { columnsIn, grow, packTiles, packedHeight, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
+import { columnsIn, grow, packedHeight, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
+import {
+  TILE_POSITIONS_RESET,
+  canDrop,
+  dropAt,
+  isStorable,
+  parseStoredPlaces,
+  placeWithStored,
+  placesToStore,
+  snapPlace,
+  tilePositionsKey,
+  type StoredPlace,
+  type StoredPlaces,
+} from "@/lib/ui/tile-positions";
+import { isDragSurface } from "./tile-drag-surface";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
 export const SETTLE_MS = 2000;
+
+/** A press that moves less than this is a click, not a drag (px). */
+export const DRAG_THRESHOLD_PX = 5;
+
+/** How near the window's top or bottom edge the page scrolls while a tile is dragged (px). */
+const EDGE_PX = 48;
 
 interface FoundBox {
   el: HTMLElement;
@@ -55,7 +91,7 @@ export function findBoxes(container: HTMLElement): FoundBox[] {
   const counts = new Map<string, number>();
   const walk = (parent: Element, tile: string | null) => {
     for (const child of Array.from(parent.children)) {
-      if (!(child instanceof HTMLElement) || child.hidden) continue;
+      if (!(child instanceof HTMLElement) || child.hidden || child.dataset.tileOutline !== undefined) continue;
       const display = getComputedStyle(child).display;
       if (display === "none") continue;
       const own = child.dataset.tile ?? null;
@@ -124,27 +160,77 @@ function styleKeeper() {
   };
 }
 
+function readPlaces(key: string | null): StoredPlaces {
+  if (!key) return {};
+  try {
+    return parseStoredPlaces(localStorage.getItem(key));
+  } catch {
+    return {};
+  }
+}
+
+function writePlaces(key: string | null, places: StoredPlaces): void {
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(places));
+  } catch {
+    // Private windows and full storage: the arrangement holds for this visit.
+  }
+}
+
+/** What scrolls the page the row is on: its nearest scrolling ancestor, or the document. */
+function scrollerOf(el: HTMLElement): HTMLElement {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p).overflowY;
+    if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) return p;
+  }
+  return (document.scrollingElement as HTMLElement | null) ?? document.documentElement;
+}
+
 function remPx(): number {
   const px = parseFloat(getComputedStyle(document.documentElement).fontSize);
   return Number.isFinite(px) && px > 0 ? px : 16;
 }
 
 /**
- * Packs the boxes of the row `ref` points at. `fitWidest`: give the row a
- * min-width of its widest box — for #37.56's left area, a flex item that
- * would otherwise shrink to nothing once its boxes are out of the flow.
+ * Packs the boxes of the row `ref` points at, and lets the user drag them.
+ * `fitWidest`: give the row a min-width of its widest box — for #37.56's left
+ * area, a flex item that would otherwise shrink to nothing once its boxes are
+ * out of the flow. `entity`: the tile choice's (`TileRegistry.entity`, per
+ * document type), under which the arrangement is stored; none, nothing is.
  */
-export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = false): void {
+export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest = false, entity }: { fitWidest?: boolean; entity?: string } = {}): void {
   useLayoutEffect(() => {
     const container = ref.current;
     // jsdom (jest) has no layout and no ResizeObserver: the row stays a flex-wrap there.
     if (!container || typeof ResizeObserver === "undefined") return;
+    const key = entity ? tilePositionsKey(entity) : null;
     let placed: Placed[] = [];
     let boxes: FoundBox[] = [];
     let columns = 0;
     let settleUntil = 0;
     let interacted = false;
     let frame = 0;
+    let stored: StoredPlaces = {};
+    let fallback: string[] = [];
+    let lead = 0;
+    // Previews dragged this visit: their places are never stored.
+    let visit: Record<string, StoredPlace> = {};
+    // The tile being dragged (#37.76): nothing lays the row out under it.
+    interface Drag {
+      box: FoundBox;
+      from: Placed;
+      x0: number;
+      y0: number;
+      x: number;
+      y: number;
+      scroller: HTMLElement;
+      scroll0: number;
+      active: boolean;
+      place: StoredPlace | null;
+      free: boolean;
+    }
+    let drag: Drag | null = null;
 
     const metrics = () => {
       const r = remPx();
@@ -176,6 +262,7 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
     const heights = () => new Map(boxes.map((b) => [b.id, b.el.offsetHeight]));
 
     const layout = () => {
+      if (drag?.active) return;
       const { unit, gap } = metrics();
       boxes = findBoxes(container);
       columns = columnsIn(container.clientWidth, unit, gap);
@@ -188,7 +275,11 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
         full: b.full,
         rowEnd: b.rowEnd,
       }));
-      placed = packTiles(items, columns, gap);
+      stored = readPlaces(key);
+      const r = placeWithStored(items, { ...stored, ...visit }, columns, gap);
+      placed = r.placed;
+      fallback = r.fallback;
+      lead = r.lead;
       apply();
       sizes.disconnect();
       for (const b of boxes) sizes.observe(b.el);
@@ -203,6 +294,7 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
     const onSizes = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
+        if (drag?.active) return;
         const { unit, gap } = metrics();
         if (columnsIn(container.clientWidth, unit, gap) !== columns) return fresh();
         // A ResizeObserver also reports every box once when it starts observing it:
@@ -243,7 +335,6 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
     };
     container.addEventListener("input", acted);
     container.addEventListener("keydown", acted);
-    container.addEventListener("pointerdown", acted);
     // A page opened in a hidden tab gets no ResizeObserver callbacks and no
     // frames until it is shown, so its first layout used the heights of the
     // first render („Se încarcă…"): shown before anyone acted, it is still „the
@@ -253,8 +344,166 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
     };
     document.addEventListener("visibilitychange", shown);
 
+    // ── Dragging (Slice #37.76) ───────────────────────────────────────────
+    let outline: HTMLDivElement | null = null;
+    let edge = 0;
+    let hovered: HTMLElement | null = null;
+
+    const boxAt = (target: EventTarget | null): FoundBox | undefined =>
+      target instanceof Node ? boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target)) : undefined;
+
+    const follow = () => {
+      if (!drag?.active) return;
+      const { unit, gap } = metrics();
+      const dy = drag.y - drag.y0 + (drag.scroller.scrollTop - drag.scroll0);
+      const left = drag.from.col * (unit + gap) + (drag.x - drag.x0);
+      const top = drag.from.top + dy;
+      styles.set(drag.box.el, "left", `${left}px`);
+      styles.set(drag.box.el, "top", `${top}px`);
+      const place = snapPlace(left, top, unit, gap);
+      drag.place = place;
+      drag.free = canDrop(placed, drag.box.id, place, columns, gap);
+      if (outline) {
+        Object.assign(outline.style, {
+          left: `${place.col * (unit + gap)}px`,
+          top: `${place.top}px`,
+          width: `${drag.box.el.offsetWidth}px`,
+          height: `${drag.from.height}px`,
+          borderColor: drag.free ? "var(--color-accent, #2563eb)" : "#dc2626",
+          background: drag.free ? "rgba(37, 99, 235, 0.08)" : "rgba(220, 38, 38, 0.10)",
+        });
+        outline.dataset.free = drag.free ? "true" : "false";
+      }
+      // The space under the lowest tile is always free: the row grows to hold the outline.
+      styles.set(container, "height", `${Math.max(packedHeight(placed), place.top + drag.from.height)}px`);
+    };
+
+    const start = () => {
+      if (!drag) return;
+      drag.active = true;
+      styles.set(drag.box.el, "z-index", "30");
+      styles.set(drag.box.el, "opacity", "0.92");
+      styles.set(drag.box.el, "box-shadow", "0 8px 24px rgba(0, 0, 0, 0.18)");
+      styles.set(drag.box.el, "cursor", "grabbing");
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "grabbing";
+      window.getSelection()?.removeAllRanges();
+      outline = document.createElement("div");
+      outline.dataset.tileOutline = "";
+      outline.setAttribute("aria-hidden", "true");
+      Object.assign(outline.style, { position: "absolute", border: "2px dashed", borderRadius: "0.375rem", pointerEvents: "none", zIndex: "20" });
+      container.appendChild(outline);
+      // Near the window's top or bottom the page scrolls, and the tile with it.
+      edge = window.setInterval(() => {
+        if (!drag?.active) return;
+        const by = drag.y < EDGE_PX ? -16 : drag.y > window.innerHeight - EDGE_PX ? 16 : 0;
+        if (by === 0) return;
+        drag.scroller.scrollTop += by;
+        follow();
+      }, 16);
+    };
+
+    const end = (keep: boolean) => {
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", onCancel, true);
+      window.removeEventListener("keydown", onKey, true);
+      const d = drag;
+      drag = null;
+      if (!d?.active) return;
+      window.clearInterval(edge);
+      outline?.remove();
+      outline = null;
+      document.body.style.removeProperty("user-select");
+      document.body.style.removeProperty("cursor");
+      styles.set(d.box.el, "z-index", "");
+      styles.set(d.box.el, "opacity", "");
+      styles.set(d.box.el, "box-shadow", "");
+      styles.set(d.box.el, "cursor", "");
+      if (keep && d.place && d.free) {
+        const { gap } = metrics();
+        placed = dropAt(placed, d.box.id, d.place, gap);
+        if (isStorable(d.box.id)) {
+          stored = placesToStore(placed, stored, fallback, d.box.id, lead);
+          fallback = fallback.filter((id) => id !== d.box.id);
+          writePlaces(key, stored);
+        } else {
+          visit = { ...visit, [d.box.id]: d.place };
+        }
+      }
+      // Dropped: where it now stands. Refused or Esc: back where it was.
+      apply();
+      // The click that ends a drag is not a click on what lies under the pointer.
+      const swallow = (e: MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      window.addEventListener("click", swallow, { capture: true, once: true });
+      window.setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 0);
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (!drag) return;
+      drag.x = e.clientX;
+      drag.y = e.clientY;
+      if (!drag.active) {
+        if (Math.hypot(drag.x - drag.x0, drag.y - drag.y0) < DRAG_THRESHOLD_PX) return;
+        start();
+      }
+      e.preventDefault();
+      follow();
+    };
+    const onUp = () => end(true);
+    const onCancel = () => end(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !drag?.active) return;
+      e.preventDefault();
+      e.stopPropagation();
+      end(false);
+    };
+
+    const onPress = (e: PointerEvent) => {
+      interacted = true;
+      if (drag || e.button !== 0 || !e.isPrimary) return;
+      const box = boxAt(e.target);
+      const from = box && placed.find((p) => p.id === box.id);
+      if (!box || !from || !isDragSurface(e.target, e.clientX, e.clientY, box.el)) return;
+      const scroller = scrollerOf(container);
+      drag = { box, from, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, scroller, scroll0: scroller.scrollTop, active: false, place: null, free: false };
+      window.addEventListener("pointermove", onMove, true);
+      window.addEventListener("pointerup", onUp, true);
+      window.addEventListener("pointercancel", onCancel, true);
+      window.addEventListener("keydown", onKey, true);
+    };
+
+    // „grab" over a tile's unused space, and only there.
+    const onHover = (e: PointerEvent) => {
+      if (drag) return;
+      const box = boxAt(e.target);
+      const el = box && isDragSurface(e.target, e.clientX, e.clientY, box.el) ? box.el : null;
+      if (hovered && hovered !== el) styles.set(hovered, "cursor", "");
+      if (el) styles.set(el, "cursor", "grab");
+      hovered = el;
+    };
+    const onLeave = () => {
+      if (!drag && hovered) styles.set(hovered, "cursor", "");
+      hovered = null;
+    };
+    container.addEventListener("pointerdown", onPress);
+    container.addEventListener("pointermove", onHover);
+    container.addEventListener("pointerleave", onLeave);
+
+    // „Implicit" forgot the arrangement: lay the row out afresh even if no tile came or went.
+    const onReset = (e: Event) => {
+      if ((e as CustomEvent<string>).detail !== entity) return;
+      visit = {};
+      fresh();
+    };
+    window.addEventListener(TILE_POSITIONS_RESET, onReset);
+
     fresh();
     return () => {
+      end(false);
       cancelAnimationFrame(frame);
       sizes.disconnect();
       width.disconnect();
@@ -263,8 +512,11 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, fitWidest = f
       for (const b of boxes) delete b.el.dataset.packedCol;
       container.removeEventListener("input", acted);
       container.removeEventListener("keydown", acted);
-      container.removeEventListener("pointerdown", acted);
+      container.removeEventListener("pointerdown", onPress);
+      container.removeEventListener("pointermove", onHover);
+      container.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener(TILE_POSITIONS_RESET, onReset);
       document.removeEventListener("visibilitychange", shown);
     };
-  }, [ref, fitWidest]);
+  }, [ref, fitWidest, entity]);
 }

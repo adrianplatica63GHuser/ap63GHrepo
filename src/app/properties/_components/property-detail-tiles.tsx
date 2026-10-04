@@ -123,7 +123,7 @@ export function PropertyDetailTiles({
         <TileSelector all={PROP_TILES} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
-        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs}>
+        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>
           <PropertyForm
             mode={readonly ? "view" : "edit"}
             propertyId={propertyId}

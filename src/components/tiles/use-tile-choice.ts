@@ -15,6 +15,7 @@
  * screen into the stored choice.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
 import {
   parseStoredTiles,
   shownTiles,
@@ -39,7 +40,7 @@ export interface TileChoice<K extends string> {
   toggle: (key: K) => void;
   /** „Toate". */
   showAll: () => void;
-  /** „Implicit": back to the defaults, and the stored choice forgotten. */
+  /** „Implicit": back to the defaults, the stored choice forgotten — and since #37.76 the dragged arrangement too. */
   reset: () => void;
   /** Show a tile for this visit (an error in it, a `?tab=`). */
   reveal: (key: K) => void;
@@ -85,7 +86,10 @@ export function useTileChoice<K extends string>(reg: TileRegistry<K>, initialVis
     setStored([...reg.defaults]);
     setVisit([]);
     write(storageKey, null);
-  }, [reg.defaults, storageKey]);
+    // Slice #37.76 (its Ask first): „Implicit" returns the screen to how it first was — #37.75's places.
+    write(tilePositionsKey(reg.entity), null);
+    window.dispatchEvent(new CustomEvent(TILE_POSITIONS_RESET, { detail: reg.entity }));
+  }, [reg.defaults, reg.entity, storageKey]);
 
   const reveal = useCallback((key: K) => {
     setVisit((v) => (v.includes(key) ? v : [...v, key]));

@@ -80,6 +80,7 @@ export function TileAreas({
   right,
   shownRight,
   slotRefs,
+  entity,
   children,
 }: {
   /** Every tile that may stand in the right column, top to bottom. */
@@ -87,6 +88,8 @@ export function TileAreas({
   /** How many of them are shown; none, and the column is not drawn. */
   shownRight: number;
   slotRefs: Readonly<Record<string, (el: HTMLElement | null) => void>>;
+  /** The tile choice's entity (per document type): the dragged arrangement is stored under it (#37.76). */
+  entity: string;
   /** The left area's tiles. */
   children: ReactNode;
 }) {
@@ -94,7 +97,7 @@ export function TileAreas({
   // them (`useTilePacking`); out of the flow, they no longer give the area its
   // min-content width, so the hook gives it its widest box's.
   const leftRef = useRef<HTMLDivElement>(null);
-  useTilePacking(leftRef, true);
+  useTilePacking(leftRef, { fitWidest: true, entity });
   return (
     <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
       <div ref={leftRef} className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">

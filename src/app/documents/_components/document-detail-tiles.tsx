@@ -192,7 +192,7 @@ export function DocumentDetailTiles({
         )}
 
         <PreviewOpenerProvider previews={previews}>
-        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs}>
+        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={reg.entity}>
           <DocumentForm
             mode={readonly ? "view" : "edit"}
             documentId={documentId}

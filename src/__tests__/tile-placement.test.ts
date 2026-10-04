@@ -75,7 +75,7 @@ describe("the screens draw it", () => {
   it("both detail screens draw their row as two areas, the column from the registry's placement", () => {
     for (const [dir, file] of [["properties", "property-detail-tiles.tsx"], ["documents", "document-detail-tiles.tsx"]]) {
       const page = code(read("src", "app", dir, "_components", file));
-      expect([file, /<TileAreas right=\{rightAll\} shownRight=\{shownRight\} slotRefs=\{slotRefs\}>/.test(page)]).toEqual([file, true]);
+      expect([file, /<TileAreas right=\{rightAll\} shownRight=\{shownRight\} slotRefs=\{slotRefs\}( entity=\{[\w.]+\})?>/.test(page)]).toEqual([file, true]);
       expect([file, /placement\?\.right/.test(page), /splitTiles\(choice\.shown,/.test(page), /right: column,/.test(page)]).toEqual([file, true, true, true]);
     }
   });

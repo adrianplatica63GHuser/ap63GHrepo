@@ -178,14 +178,14 @@ describe("the screens", () => {
   it("the Natural and the Judicial Person pack their tile row", () => {
     for (const f of ["src/app/natural-persons/_components/person-detail-tiles.tsx", "src/app/judicial-persons/_components/person-detail-tiles.tsx"]) {
       const src = code(read(...f.split("/")));
-      expect(src).toContain("useTilePacking(rowRef)");
+      expect(src).toContain("useTilePacking(rowRef");
       expect(src).toMatch(/<div ref=\{rowRef\}[^>]*data-tile-row/);
     }
   });
 
   it("the Property and the Document pack their left area (`TileAreas`), the right column kept", () => {
     const src = code(read("src", "components", "tiles", "tile-areas.tsx"));
-    expect(src).toContain("useTilePacking(leftRef, true)");
+    expect(src).toContain("useTilePacking(leftRef, { fitWidest: true");
     expect(src).toMatch(/<div ref=\{leftRef\}[^>]*data-tile-area="left"/);
     expect(src).toContain('data-tile-area="right"');
     for (const f of ["src/app/properties/_components/property-detail-tiles.tsx", "src/app/documents/_components/document-detail-tiles.tsx"]) {
@@ -195,10 +195,14 @@ describe("the screens", () => {
 
   it("the hook measures and places, and never moves an element: the DOM's order stays the reading order", () => {
     const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
-    expect(src).not.toMatch(/\.(appendChild|insertBefore|prepend|append|replaceChildren)\(/);
+    expect(src).not.toMatch(/\.(insertBefore|prepend|append|replaceChildren)\(/);
+    // #37.76: the one element it adds is the drag outline, after the boxes, and it never counts as a box.
+    expect(src.match(/\.appendChild\([^)]*\)/g) ?? []).toEqual([".appendChild(outline)"]);
+    expect(src).toContain("container.appendChild(outline)");
+    expect(src).toContain("child.dataset.tileOutline !== undefined");
     expect(src).not.toContain("createPortal");
     expect(src).toContain('typeof ResizeObserver === "undefined"');
-    expect(src).toContain("packTiles(");
+    expect(src).toContain("placeWithStored("); // #37.75's packTiles, around the stored places (#37.76)
     expect(src).toContain("grow(");
   });
 
