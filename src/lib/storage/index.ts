@@ -256,3 +256,40 @@ export async function getFileUrl(filePath: string): Promise<string> {
     return `/api/files/${filePath}`;
   }
 }
+
+/**
+ * A URL that serves the file, or `null` when the stored file is not there.
+ *                                                              (Slice #37.80)
+ *
+ * The page viewer needs to tell a MISSING file — a record whose upload never
+ * reached this storage, as on a database synced to Supabase without its files
+ * — from any other failure, and to do it on the server rather than guess in
+ * the browser. `getFileUrl` cannot: locally it hands back `/api/files/…`
+ * without looking, and on Supabase `createSignedUrl` throws for a missing
+ * object exactly as it throws for an outage.
+ *
+ * Local: the file under `uploads/` is looked for. Supabase: `createSignedUrl`'s
+ * error is read — „Object not found" (`statusCode` "404") is missing, anything
+ * else is still thrown.
+ */
+export async function fileUrlIfPresent(filePath: string): Promise<string | null> {
+  if (isProduction) {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.storage
+      .from(SUPABASE_BUCKET)
+      .createSignedUrl(filePath, 60);
+    if (error) {
+      const e = error as { message?: string; statusCode?: string; status?: number };
+      if (e.statusCode === "404" || e.status === 404 || /not.?found/i.test(e.message ?? "")) return null;
+      throw new Error(`Failed to create signed URL: ${e.message}`);
+    }
+    if (!data?.signedUrl) throw new Error("Failed to create signed URL: no URL");
+    return data.signedUrl;
+  }
+  try {
+    await fs.access(path.join(LOCAL_UPLOADS_DIR, filePath));
+  } catch {
+    return null;
+  }
+  return `/api/files/${filePath}`;
+}

@@ -36,7 +36,7 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, Maximize2, Minimize2, Printer, Save, Trash2, Upload, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Printer, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import {
@@ -130,6 +130,8 @@ export function usePagesPanelState(documentId: string | undefined) {
   const [viewData,       setViewData]       = useState<ViewData | null>(null);
   const [viewLoading,    setViewLoading]    = useState(false);
   const [viewError,      setViewError]      = useState<string | null>(null);
+  // Slice #37.80: the page's stored file is not there (the view route's 404 { missing }).
+  const [viewMissing,    setViewMissing]    = useState(false);
 
   const [dialogOpen,   setDialogOpen]   = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Page | null>(null);
@@ -162,11 +164,20 @@ export function usePagesPanelState(documentId: string | undefined) {
       setSelectedPageId(page.id);
       setViewData(null);
       setViewError(null);
+      setViewMissing(false);
       setViewLoading(true);
       try {
         const res = await fetch(
           `/api/documents/${encodeURIComponent(documentId)}/pages/${encodeURIComponent(page.id)}/view`,
         );
+        // #37.80: a file that is not there is a quiet picture, not an error.
+        if (res.status === 404) {
+          const body = (await res.json().catch(() => null)) as { missing?: boolean } | null;
+          if (body?.missing) {
+            setViewMissing(true);
+            return;
+          }
+        }
         if (!res.ok) throw new Error("Failed to load file");
         const data = (await res.json()) as ViewData;
         setViewData(data);
@@ -275,6 +286,7 @@ export function usePagesPanelState(documentId: string | undefined) {
     viewData,
     viewLoading,
     viewError,
+    viewMissing,
     loadView,
     currentIndex,
     canGoPrev,
@@ -309,7 +321,7 @@ export function PagesViewerBox({
   /** When true, fills 100% of its parent's height instead of using a fixed min-height. Used in "Show Big Page" mode. */
   fill?: boolean;
 }) {
-  const { t, viewLoading, viewError, viewData, selectedPageId } = state;
+  const { t, viewLoading, viewError, viewMissing, viewData, selectedPageId } = state;
 
   // --- Zoom (mouse wheel) + pan (click-and-drag) — "Show Big Page" only ---
   //
@@ -484,7 +496,15 @@ export function PagesViewerBox({
           </span>
         </Centred>
       )}
-      {!viewLoading && !viewError && !viewData && (
+      {/* Slice #37.80: the page's file is not there — a muted picture, no red, no sentence. */}
+      {!viewLoading && !viewError && viewMissing && (
+        <Centred fill={fill}>
+          <span role="img" aria-label={t("viewer.missing")} title={t("viewer.missing")} data-page-missing>
+            <ImageOff aria-hidden="true" size={64} className="text-fade" strokeWidth={1.5} />
+          </span>
+        </Centred>
+      )}
+      {!viewLoading && !viewError && !viewMissing && !viewData && (
         <Centred fill={fill}>
           <span className="text-sm text-fade">{t("viewer.placeholder")}</span>
         </Centred>

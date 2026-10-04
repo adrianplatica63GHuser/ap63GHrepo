@@ -1843,7 +1843,8 @@
         "previewFailed": "Această pagină nu a putut fi afișată aici. O puteți descărca.",
         "download": "Descarcă",
         "loading": "Se încarcă…",
-        "error": "Eroare la încărcarea fișierului"
+        "error": "Eroare la încărcarea fișierului",
+        "missing": "Fișierul paginii nu este disponibil"
       },
       "deleteConfirm": {
         "title": "Ștergeți pagina?",

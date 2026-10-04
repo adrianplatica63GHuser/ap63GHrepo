@@ -1843,7 +1843,8 @@
         "previewFailed": "This page could not be displayed here. You can download it instead.",
         "download": "Download",
         "loading": "Loading…",
-        "error": "Failed to load file"
+        "error": "Failed to load file",
+        "missing": "The page's file is not available"
       },
       "deleteConfirm": {
         "title": "Delete page?",
