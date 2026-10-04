@@ -5,8 +5,8 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `automated` |
-| **Last green** | 2026-10-02 |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-04 |
 
 ## What this proves
 
@@ -16,7 +16,8 @@ Document's page image („Pagini") is that column. A Property's column is „Har
 under it and, when ticked, „Street View" under that. An unticked tile leaves no gap; with nothing
 in the column ticked it is not drawn and the left area takes the whole row. On a window too narrow
 for the column beside the left area's widest tile, the column goes under the left area — the form
-first.
+first. Since #37.77 the Property's column is 3 units, so at 1366 px it still stands beside the
+3-unit „Date cadastrale".
 
 ## Before you start
 
@@ -45,7 +46,7 @@ its top on the row's top. Nothing is saved.
 | 3 | Ticks „Street View" | „Street View" under „Puncte de contur", at the right |
 | 4 | Unticks „Hartă" | „Puncte de contur" at the top of the column, level with the row; „Street View" under it |
 | 5 | Unticks „Puncte de contur" and „Street View" | No column: only „Date cadastrale" and „Adresă", side by side from the left |
-| 6 | Ticks „Hartă" and „Puncte de contur" again, and narrows the window to 1366 px | The row is 6 units (968 px). „Date cadastrale" and „Adresă" on the first line; under them the column: „Hartă", then „Puncte de contur" |
+| 6 | Ticks „Hartă" and „Puncte de contur" again, and narrows the window to 1366 px | The row is 6 units (968 px). „Date cadastrale" at the left, top level with the row; beside it the column: „Hartă" at the right, top level with the row, „Puncte de contur" under it. „Adresă" under „Date cadastrale" |
 
 ## At the end — leaving things as they were found
 
@@ -82,3 +83,22 @@ area on the defaults: **1404 px** for both screens (at 1366 the column is under 
 first run, `20261002T200409Z-28873`, was green; that `full` was red on two other specs the new
 layout moved a button under (TC-PROP-04, TC-ASSOC-04), fixed in `9eedadb`–`c0a2896`. Green in the
 whole run `20261002T204206Z-23356` on `c0a2896`.
+
+**2026-10-04 — run 3, `driven` (Slice #37.77).** „Puncte de contur" became 3 units, so at 1366 px
+the 3-unit column stands beside „Date cadastrale" and „Adresă" goes under it; step 6 was corrected
+to say so, which sent the case back to `driven`. Driven in the desktop app's browser pane, its
+viewport emulated at 1920 × 1080 (a 1624 px row) and then 1366 × 900, against `npm run dev` on 3000,
+a script ticking the boxes; both stored choices set aside.
+- Step 1: ticked „Date generale", „Pagini", „Preț și taxe"; pages x984 y0, 0 from the right; Preț
+  și taxe x492 y0.
+- Step 2: the four ticked, „Street View" not; map x1148 y0, 0 from the right; corners x1148 y394,
+  0 from the right; cadastral x0 y0, address x492 y0.
+- Step 3: streetView x1148 y750. Step 4: corners y0, streetView y357. Step 5: no column; cadastral
+  x0, address x492, both y0.
+- Step 6: row 968; cadastral x0 y0; map x492 y0, 0 from the right; corners x492 y394; address x0
+  y465, under cadastral.
+
+**2026-10-04 — run 4, `confirmed` (Slice #37.77).** The same pane and records, both stored choices
+set aside again, the corrected file unchanged: every step to the pixel as run 3. The two choices put
+back; the document and the property deleted (204, 204). The spec's step 6 follows.
+

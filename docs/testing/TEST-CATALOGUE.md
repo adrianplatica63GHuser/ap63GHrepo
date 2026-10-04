@@ -130,7 +130,7 @@ fixed fixture where the existing one will do.
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
-| [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-02 | `e2e/tiles/tile-placement.spec.ts` |
+| [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `confirmed` | 2026-10-04 | `e2e/tiles/tile-placement.spec.ts` |
 | [TC-TILES-08](cases/TC-TILES-08.md) | META INFO în două: „Clasificare subiectivă" și „Conexiuni", explicațiile în bule | tiles | happy | — | `automated` | 2026-10-02 | `e2e/tiles/meta-info-split.spec.ts` |
 | [TC-TILES-09](cases/TC-TILES-09.md) | „Clasificare subiectivă": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric" | tiles | happy | — | `automated` | 2026-10-03 | `e2e/tiles/classification-one-row.spec.ts` |
 | [TC-TILES-10](cases/TC-TILES-10.md) | „Conexiuni": etichete mici, „×" doar la mouse sau la focalizare | tiles | happy | — | `automated` | 2026-10-03 | `e2e/tiles/connections-chips.spec.ts` |

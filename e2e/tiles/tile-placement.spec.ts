@@ -156,19 +156,22 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
       expect((await at(page, "cadastral")).x).toBe(0);
       expect((await at(page, "address")).y).toBe(0);
 
-      // Step 6 — „Hartă" and „Puncte de contur" again, at 1366: 968 px; the column under the left area.
+      // Step 6 — „Hartă" and „Puncte de contur" again, at 1366: 968 px; the 3-unit column (#37.77)
+      // beside „Date cadastrale", „Adresă" under it.
       await showTile(page, "Hartă");
       await showTile(page, "Puncte de contur");
       await page.setViewportSize({ width: 1366, height: 900 });
       await settle(page);
       expect(await rowWidth(page)).toBe(968);
-      const cad = await at(page, "cadastral");
-      const addr = await at(page, "address");
-      expect([cad.y, addr.y]).toEqual([0, 0]);
-      const m6 = await at(page, "map");
-      const c6 = await at(page, "corners");
-      expect(m6.y).toBeGreaterThan(Math.max(cad.bottom, addr.bottom));
-      expect(c6.y).toBeGreaterThan(m6.bottom);
+      await expect.poll(async () => {
+        const [cad, addr, m6, c6] = await Promise.all([at(page, "cadastral"), at(page, "address"), at(page, "map"), at(page, "corners")]);
+        return {
+          cadastral: [cad.x, cad.y],
+          mapAtTheRight: Math.abs(m6.re) <= 1 && Math.abs(m6.y) <= 1,
+          cornersUnderMap: Math.abs(c6.re) <= 1 && c6.y > m6.bottom,
+          addressUnderCadastral: addr.x === 0 && addr.y > cad.bottom,
+        };
+      }, { timeout: 20_000 }).toEqual({ cadastral: [0, 0], mapAtTheRight: true, cornersUnderMap: true, addressUnderCadastral: true });
     } finally {
       fs.mkdirSync(SHOTS, { recursive: true });
       fs.writeFileSync(`${SHOTS}/breakpoints.json`, JSON.stringify(breakpoints, null, 2));
