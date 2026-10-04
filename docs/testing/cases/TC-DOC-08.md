@@ -1,26 +1,30 @@
-# TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat
+# TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
 
 | | |
 |---|---|
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `automated` |
-| **Last green** | 2026-10-02 |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-04 |
 
 ## What this proves
 
 „Acte" opens on its search box, then „Tip document"; it has no „Importanță" or „Relevanță" filter;
 „Câmpuri afișate" offers the fields every document has — and no importance, relevance or
-provenance — and a ticked one shows its value; „Câmp specific" explains itself in a bubble on hover. A filter
+provenance — and a ticked one shows its value; „Câmp specific" explains itself in a bubble on hover,
+offers only fields with a closed list of values, and shows each value by its label (#37.73). A filter
 back on the toolbar, the search after the type, one of the three in the chooser, an empty cell under
-a ticked field or a „Câmp specific" with no explanation is the defect this case exists to catch.
+a ticked field, a „Câmp specific" with no explanation, a text field such as the Antecontract's „CNP 1"
+offered there, or a value shown by its code is the defect this case exists to catch.
 
 ## Before you start
 
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: an „Adeverință"
-  titled „TC-DOC-08 Act de test", with „Subiect" = `Subiect de test TC-DOC-08`.
+  titled „TC-DOC-08 Act de test", with „Subiect" = `Subiect de test TC-DOC-08`; and a „Contract de
+  vânzare" titled „TC-DOC08-CVC Contract de test" whose „Stare plată" is „Achitat integral" (its
+  title does not contain `TC-DOC-08`, so step 2 still finds one row).
 
 ## What Adrian is asked for
 
@@ -35,11 +39,14 @@ Nothing.
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Persoane, Proprietăți, Adăugat la — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
 | 5 | Presses anywhere outside the list, then rests the mouse on „Câmp specific:" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Moving the mouse away closes it. (On a touch screen the ⓘ beside it opens and closes it.) |
+| 6 | With „Tip document: Toate tipurile", looks at what „Câmp specific:" offers | „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
+| 7 | Chooses „Stare plată" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL` |
+| 8 | Chooses „Toate" in „Câmp specific:" again | The second list is gone |
 
 ## At the end — leaving things as they were found
 
-Untick „Subiect" and „Adăugat la" (and tick back anything unticked at step 4). Delete the document
-(`DELETE` on its route).
+Untick „Subiect" and „Adăugat la" (and tick back anything unticked at step 4). Delete the two
+documents (`DELETE` on each route).
 
 ## Notes from the runs
 
@@ -83,3 +90,23 @@ deleted (204). The case is confirmed, and `e2e/document/document-list.spec.ts` t
 **2026-10-02 — `automated` (Slice #37.62).** The test runner's full run 20261003T025703Z-24168 on
 30e4903 ran `e2e/document/document-list.spec.ts` green with the other 60 specs (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-04 — run 3, `driven` (Slice #37.73).** The case gained a contract and steps 6–8 for
+„Câmp specific"'s closed lists, then was driven in the desktop app's browser pane at its own width
+against `npm run dev` on 3000, read with a script; step 5's rest by the pane's hover. The pane's
+browser had never chosen fields on this list (no stored key).
+- Steps 1–4: as before — the search first, „Tip document:", „Câmp specific:"; one row „Adeverință
+  TC-DOC-08 Act de test"; the eight fields; SUBIECT · ADĂUGAT LA after TIP · TITLU · NR. DOCUMENT ·
+  DATA, the subject and 04.10.2026.
+- Step 5: the bubble open on the rest (its text now says „cele cu o listă închisă de valori"),
+  closed on leaving.
+- Step 6: „Toate" and 41 fields (105 before this slice); Monedă, Stare plată, Modalitate plată among
+  them; none of „CNP 1", „Anul", „luna", „suma de", „Temei preț".
+- Step 7: „Toate valorile", „Achitat integral (9 documente)", „Achitat parțial (1 document)" — no code.
+- Step 8: the second select gone. The stored key removed; both documents deleted (204 ×2).
+
+**2026-10-04 — run 4, `confirmed` (Slice #37.73).** The same pane, two new documents, the file above
+unchanged: the same in every step („Achitat integral (7 documente)" — two leftover synthetic
+contracts of this slice's picture runs had been deleted in between). Both documents deleted (204 ×2).
+Nothing in the file changed, so the case is confirmed, and `e2e/document/document-list.spec.ts`
+follows it.

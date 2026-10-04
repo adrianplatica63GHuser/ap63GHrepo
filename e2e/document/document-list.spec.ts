@@ -1,12 +1,14 @@
 /**
- * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat
- * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-02
+ * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
+ * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-04
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
- *   - The document carries `TC-E2E-DOC-08` (records.ts).
+ *   - The documents carry `TC-E2E-DOC-08` and `TC-E2E-DOC08-CVC` (records.ts).
+ *   - Steps 6–7 read the two selects' options, which is what the open list
+ *     shows; a native list's popup is not part of the page.
  *   - A Playwright browser has never chosen, so the columns start as the two
  *     defaults, Nr. document and Data: „Câmpuri afișate 2/4", and step 4's two
  *     headers follow theirs.
@@ -23,6 +25,8 @@ import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from 
 const MARK = `${E2E_MARKER}DOC-08`;
 const TITLE = `${MARK} Act de test`;
 const SUBJECT = "Subiect de test TC-DOC-08";
+// Slice #37.73: the contract's title does not contain MARK, so step 2 still finds one row.
+const CVC_MARK = `${E2E_MARKER}DOC08-CVC`;
 const SHOTS = "playwright-report/document-list";
 
 /** `target` alone, or — with none — the window, so an open list that hangs below the table is in the picture whole. */
@@ -40,8 +44,12 @@ test.describe("TC-DOC-08 — lista actelor", () => {
   test("căutarea întâi, fără importanță și relevanță, „Câmpuri afișate” cu câmpurile oricărui act, „Câmp specific” explicat", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
+    await removeLeftovers(page.request, CVC_MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const documentId = await createDocumentOfType(page.request, "ADEVERINTA", TITLE, { subject: SUBJECT });
+    const contractId = await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${CVC_MARK} Contract de test`, {
+      customFields: { starePlata: "ACHITAT_INTEGRAL" },
+    });
     try {
       // Step 1 — the search box first, then „Tip document"; no „Importanță" or „Relevanță".
       await page.goto("/documents");
@@ -106,8 +114,27 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(bubble).not.toHaveClass(/sr-only/);
       await page.mouse.move(5, 5);
       await expect(bubble).toHaveClass(/sr-only/);
+
+      // Step 6 — „Câmp specific:" with every type: closed lists only, no Antecontract field, no „Temei preț".
+      const key = main.getByRole("combobox", { name: "Câmp specific:" });
+      const keys = await key.locator("option").allTextContents();
+      expect(keys[0]).toBe("Toate");
+      for (const kept of ["Monedă", "Stare plată", "Modalitate plată"]) expect(keys).toContain(kept);
+      for (const gone of ["CNP 1", "Anul", "luna", "suma de", "Temei preț"]) expect(keys).not.toContain(gone);
+
+      // Step 7 — „Stare plată": its values by label with a count, no code.
+      await key.selectOption({ label: "Stare plată" });
+      const value = main.getByRole("combobox", { name: "Valoarea câmpului specific" });
+      await expect(value).toBeEnabled({ timeout: 30_000 });
+      await expect(value.locator("option").filter({ hasText: /^Achitat integral \(\d+ (document|documente|de documente)\)$/ })).toHaveCount(1);
+      expect((await value.locator("option").allTextContents()).some((t) => /ACHITAT_/.test(t))).toBe(false);
+
+      // Step 8 — „Toate" again: the second list is gone.
+      await key.selectOption({ label: "Toate" });
+      await expect(value).toHaveCount(0);
     } finally {
       await removeRecord(page.request, "document", documentId);
+      await removeRecord(page.request, "document", contractId);
     }
   });
 });
