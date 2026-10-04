@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -102,3 +102,5 @@ a script ticking the boxes; both stored choices set aside.
 set aside again, the corrected file unchanged: every step to the pixel as run 3. The two choices put
 back; the document and the property deleted (204, 204). The spec's step 6 follows.
 
+**2026-10-04 — `automated` (Slice #37.77).** The test runner's full run 20261004T184042Z-22698 on
+ed466ff ran its spec green with the other 73 (lint, tsc, jest and forms-drift green too).

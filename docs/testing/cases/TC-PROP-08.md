@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -77,3 +77,6 @@ unchanged, 1366 (a fresh load) then 1920: the same in every step — widths 476,
 (1216, 1872), one line of buttons, „Șterge" 11 px, nothing outside the tile, DMS on one line clear of
 „Salvează" with every value whole, nothing to scroll. Deleted (204). The spec checks step 4's new
 clause too.
+
+**2026-10-04 — `automated` (Slice #37.77).** The test runner's full run 20261004T184042Z-22698 on
+ed466ff ran its spec green with the other 73 (lint, tsc, jest and forms-drift green too).
