@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -72,3 +72,8 @@ afresh — a visible page does this by itself (the runner's picture run, 2026100
 **2026-10-04 — run 2, `confirmed` (Slice #37.75).** The same pane and viewport, fourteen new records,
 the file above unchanged: the same in every step, to the pixel. All deleted (204 ×14). Nothing in the
 file changed, so the case is confirmed, and `e2e/tiles/tiles-packed-under.spec.ts` translates it.
+
+**2026-10-04 — `automated` (Slice #37.75).** The test runner's full run 20261004T070906Z-9528 on
+a8974a9 ran `e2e/tiles/tiles-packed-under.spec.ts` green with the other 71 specs (lint, tsc, jest and
+forms-drift green too). Its first full, 20261004T064902Z-20097, had failed TC-PERS-01 and TC-PERS-02
+on the hook's cleanup (the panels' widths removed), fixed in a8974a9.
