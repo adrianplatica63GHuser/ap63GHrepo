@@ -905,7 +905,7 @@
       "allCustomFieldValues": "Toate valorile",
       "customFieldValuesLoading": "Se încarcă…",
       "customFieldValueOption": "{value} ({count, plural, one {# document} few {# documente} other {# de documente}})",
-      "customFieldHint": "Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (sunt cele ale tipurilor alese la „Tip document”, ale tuturor dacă nu e ales niciunul), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare.",
+      "customFieldHint": "Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (cele cu o listă închisă de valori ale tipurilor alese la „Tip document”, ale tuturor dacă nu e ales niciunul), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare.",
       "customFieldHintTrigger": "Despre „Câmp specific”"
     },
     "readonlyView": {

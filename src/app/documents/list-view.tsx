@@ -12,7 +12,7 @@ import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
-import { parseTemplateFields } from "@/lib/documents/template-fields";
+import { customFieldOptionsOf, customFieldValueLabel } from "@/lib/documents/custom-field-options";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
@@ -446,17 +446,17 @@ export function DocumentListView({
    * it the other way would empty this control on the default view — the one
    * where the whole archive is on screen and grouping is most useful.
    */
-  const customFieldOptions = useMemo(() => {
-    const wanted = initialDocumentTypeIds;
-    const seen = new Map<string, string>();
-    for (const type of typeOptions) {
-      if (wanted !== undefined && !wanted.includes(type.id)) continue;
-      for (const field of parseTemplateFields(type.templateFields)) {
-        if (!seen.has(field.key)) seen.set(field.key, field.labelRo || field.labelEn || field.key);
-      }
-    }
-    return [...seen].map(([key, label]) => ({ key, label }));
-  }, [typeOptions, initialDocumentTypeIds]);
+  //
+  // ⚠️ **ONLY FIELDS WITH A CLOSED LIST OF VALUES — `select` fields.** (Slice #37.73)
+  // A text, number or date field holds a value per document, so a filter on it
+  // finds one document, which the search box does better; and the Antecontract's
+  // prose-made fields („suma de", „Anul") were all text. The rule and the value
+  // labels are `custom-field-options.ts`.
+  const customFieldOptions = useMemo(
+    () => customFieldOptionsOf(typeOptions, initialDocumentTypeIds),
+    [typeOptions, initialDocumentTypeIds],
+  );
+  const chosenCustomField = customFieldOptions.find((o) => o.key === customFieldKey);
 
   /**
    * ⚠️ **A chosen key that the types on screen no longer define is CLEARED.**
@@ -753,7 +753,8 @@ export function DocumentListView({
                 </option>
                 {valueOptions.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {tFilter("customFieldValueOption", { value: o.value, count: o.count })}
+                    {/* Slice #37.73: the option's Romanian label, not its code; the value sent is unchanged. */}
+                    {tFilter("customFieldValueOption", { value: customFieldValueLabel(chosenCustomField, o.value), count: o.count })}
                   </option>
                 ))}
               </select>

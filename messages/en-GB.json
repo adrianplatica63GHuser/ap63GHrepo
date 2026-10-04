@@ -905,7 +905,7 @@
       "allCustomFieldValues": "All values",
       "customFieldValuesLoading": "Loading…",
       "customFieldValueOption": "{value} ({count, plural, one {# document} other {# documents}})",
-      "customFieldHint": "Filters on one of a document type's own fields — a sale contract's clauses, for example. Choose the field (those of the types chosen under “Document type”, every type's when none is), then one of the values it holds in the archive: only the documents whose field holds that value remain.",
+      "customFieldHint": "Filters on one of a document type's own fields — a sale contract's clauses, for example. Choose the field (those with a closed list of values, of the types chosen under “Document type”, every type's when none is), then one of the values it holds in the archive: only the documents whose field holds that value remain.",
       "customFieldHintTrigger": "About “Type-specific field”"
     },
     "readonlyView": {
