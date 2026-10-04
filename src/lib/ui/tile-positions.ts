@@ -30,9 +30,19 @@
  * Previews are never stored. „Implicit" forgets the arrangement with the
  * tile choice (#37.76's Ask first).
  *
+ * UNDER THE RIGHT COLUMN (Slice #37.79). The right column's tiles are FIXED
+ * boxes (`PackBox.fixed`, id `fixed:<tile>`): placed where they stand, moved by
+ * nothing, never stored. `columns` is the row's whole width and
+ * `flowColumns` the left area's, so the flow places tiles as before and a drag
+ * may put one in the free space under the column — or, a tile wider than the
+ * column, under it and reaching into the left area. A stored place under the
+ * column that this visit cannot hold (the column wrapped under the left area,
+ * so there is no space beside it, or fewer units) falls back, not written
+ * over; one a grown fixed tile now reaches into is pushed down.
+ *
  * PURE — no DOM, no React; `tile-positions.test.ts` covers it.
  */
-import { freeUnder, overlaps, packTiles, topUnder, type PackBox, type Placed } from "./tile-packing";
+import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, topUnder, type PackBox, type Placed } from "./tile-packing";
 
 /** A box's stored place: its first column (0-based) and its top in px. */
 export interface StoredPlace {
@@ -58,8 +68,11 @@ export const TILE_POSITIONS_RESET = "ga40-tile-positions-reset";
 
 /** Is this box's place ever stored? A preview's is not, nor a banner's (a box of no tile, „box#n"). */
 export function isStorable(id: string): boolean {
-  return !id.startsWith("preview") && !id.startsWith("box#");
+  return !id.startsWith("preview") && !id.startsWith("box#") && !id.startsWith(FIXED_PREFIX);
 }
+
+/** A right-column tile's box id (Slice #37.79): `fixed:<tile>`. */
+export const FIXED_PREFIX = "fixed:";
 
 /** The stored places, each checked; anything corrupt or out of range is left out. */
 export function parseStoredPlaces(raw: string | null | undefined): Record<string, StoredPlace> {
@@ -90,7 +103,7 @@ export function snapPlace(x: number, y: number, unitPx: number, gapPx: number, s
 /** May box `id` stand at `place`? Its whole rectangle free, inside the row's units. */
 export function canDrop(placed: readonly Placed[], id: string, place: StoredPlace, columns: number, gap: number): boolean {
   const me = placed.find((p) => p.id === id);
-  if (!me) return false;
+  if (!me || me.fixed || me.rowEnd) return false;
   if (place.col < 0 || place.top < 0 || place.col + me.units > columns) return false;
   const rect = { col: place.col, units: me.units, top: place.top, height: me.height };
   return placed.every((p) => p.id === id || p.rowEnd || !overlaps(p, rect, gap));
@@ -104,7 +117,7 @@ export function dropAt(placed: readonly Placed[], id: string, place: StoredPlace
 
 /** The row-end boxes (the action bar) re-placed under everything. */
 function withRowEnds(placed: Placed[], gap: number): Placed[] {
-  let top = Math.max(0, ...placed.filter((p) => !p.rowEnd).map((p) => p.top + p.height + gap));
+  let top = endsTop(placed, gap);
   for (const end of placed.filter((p) => p.rowEnd)) {
     end.top = top;
     top += end.height + gap;
@@ -123,15 +136,19 @@ function firstFree(placed: readonly Placed[], col: number, units: number, height
  * Every box placed, the stored ones at their stored places, the rest by
  * #37.75's rule around them. `fallback` names the boxes whose stored place
  * could not be used this visit — a later drop must not write over it.
- * With nothing stored this is exactly `packTiles`.
+ * With nothing stored this is exactly `packTiles`. `columns` is the row's
+ * width, `flowColumns` the left area's (#37.79): the flow keeps to the left
+ * area, a stored place may stand anywhere in the row that is free.
  */
 export function placeWithStored(
   boxes: readonly PackBox[],
   stored: StoredPlaces,
   columns: number,
   gap: number,
+  flowColumns = columns,
 ): { placed: Placed[]; fallback: string[]; lead: number } {
   const cols = Math.max(1, Math.floor(columns));
+  const fcols = Math.max(1, Math.min(cols, Math.floor(flowColumns)));
   // The banners before every tile: at the top, the stored places counted from under them.
   const leading: PackBox[] = [];
   for (const b of boxes) {
@@ -139,17 +156,19 @@ export function placeWithStored(
     else if (!b.rowEnd) break;
   }
   const lead = leading.reduce((h, b) => h + b.height + gap, 0);
-  const usable = boxes.filter((b) => !b.rowEnd && !b.full && stored[b.id] && stored[b.id].col + Math.min(Math.round(b.units), cols) <= cols);
+  const usable = boxes.filter((b) => !b.rowEnd && !b.full && !b.fixed && stored[b.id] && stored[b.id].col + Math.min(Math.round(b.units), cols) <= cols);
   if (usable.length === 0) {
-    return { placed: packTiles(boxes, cols, gap), fallback: boxes.filter((b) => stored[b.id]).map((b) => b.id), lead };
+    return { placed: packTiles(boxes, cols, gap, fcols), fallback: boxes.filter((b) => stored[b.id]).map((b) => b.id), lead };
   }
   const fallback = new Set(boxes.filter((b) => stored[b.id] && !usable.includes(b)).map((b) => b.id));
   const placed: Placed[] = [];
   let bannerTop = 0;
   for (const b of leading) {
-    placed.push({ id: b.id, col: 0, units: cols, top: bannerTop, height: b.height });
+    placed.push({ id: b.id, col: 0, units: fcols, top: bannerTop, height: b.height });
     bannerTop += b.height + gap;
   }
+  // The right column's tiles, where they stand: nothing moves them (#37.79).
+  placed.push(...fixedBoxes(boxes));
   // The stored ones first, top to bottom: each at its place, pushed down when a taller tile above now reaches into it.
   for (const box of [...usable].sort((a, b) => stored[a.id].top - stored[b.id].top || stored[a.id].col - stored[b.id].col)) {
     const units = Math.max(1, Math.min(Math.round(box.units), cols));
@@ -175,27 +194,27 @@ export function placeWithStored(
       ends.push(box);
       continue;
     }
-    const units = box.full ? cols : Math.max(1, Math.min(Math.round(box.units), cols));
+    const units = box.full ? fcols : Math.max(1, Math.min(Math.round(box.units), fcols));
     const all = [...placed, ...flow];
     const anchor = box.anchor ? all.find((p) => p.id === box.anchor) : undefined;
     if (anchor) {
-      const at = freeUnder(all, anchor, units, box.height, cols, gap);
+      const at = freeUnder(all, anchor, units, box.height, fcols, gap);
       flow.push({ id: box.id, col: at.col, units, top: at.top, height: box.height });
       continue;
     }
-    if (next > 0 && next + units > cols) next = 0;
+    if (next > 0 && next + units > fcols) next = 0;
     const col = next;
     const top = firstFree(all, col, units, box.height, topUnder(flow, col, units, gap), gap);
     flow.push({ id: box.id, col, units, top, height: box.height });
-    next = col + units >= cols ? 0 : col + units;
+    next = col + units >= fcols ? 0 : col + units;
   }
   const out = [...placed, ...flow];
   // Back in the boxes' order, so the DOM's order and the placed order agree.
   const order = new Map(boxes.map((b, i) => [b.id, i]));
   out.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-  let top = out.length ? Math.max(...out.map((p) => p.top + p.height)) + gap : 0;
+  let top = endsTop(out, gap);
   for (const box of ends) {
-    out.push({ id: box.id, col: 0, units: cols, top, height: box.height, rowEnd: true });
+    out.push({ id: box.id, col: 0, units: fcols, top, height: box.height, rowEnd: true });
     top += box.height + gap;
   }
   return { placed: out, fallback: [...fallback], lead };
@@ -210,7 +229,7 @@ export function placeWithStored(
 export function placesToStore(placed: readonly Placed[], previous: StoredPlaces, fallback: readonly string[], dropped: string, lead = 0): Record<string, StoredPlace> {
   const out: Record<string, StoredPlace> = { ...previous };
   for (const p of placed) {
-    if (p.rowEnd || !isStorable(p.id)) continue;
+    if (p.rowEnd || p.fixed || !isStorable(p.id)) continue;
     if (fallback.includes(p.id) && p.id !== dropped) continue;
     out[p.id] = { col: p.col, top: Math.max(0, Math.round(p.top - lead)) };
   }

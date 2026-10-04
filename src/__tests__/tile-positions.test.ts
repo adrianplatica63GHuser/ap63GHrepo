@@ -8,8 +8,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { packTiles, type PackBox, type Placed } from "@/lib/ui/tile-packing";
+import { grow, packTiles, settle, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 import {
+  FIXED_PREFIX,
   ROW_STEP,
   canDrop,
   dropAt,
@@ -192,7 +193,7 @@ describe("the screens", () => {
     for (const f of ["src/app/natural-persons/_components/person-detail-tiles.tsx", "src/app/judicial-persons/_components/person-detail-tiles.tsx"]) {
       expect(code(read(...f.split("/")))).toMatch(/useTilePacking\(rowRef, \{ entity: [A-Z_]+_TILE_REGISTRY\.entity \}\)/);
     }
-    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(leftRef, { fitWidest: true, entity })");
+    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(leftRef, { fitWidest: true, entity, rightRef })");
     expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{/);
     expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{reg\.entity\}/);
   });
@@ -205,3 +206,90 @@ describe("the screens", () => {
     expect(src).toContain('"Escape"');
   });
 });
+
+/**
+ * Slice #37.79 — the Property at 1920 px: the row 10 units, the left area 7,
+ * „Hartă" and „Puncte de contur" fixed in the 3-unit column (col 7), as
+ * measured in the browser pane on a synthetic property.
+ */
+const PROPERTY: PackBox[] = [
+  { id: `${FIXED_PREFIX}map`, units: 3, height: 378, fixed: { col: 7, top: 0 } },
+  { id: `${FIXED_PREFIX}corners`, units: 3, height: 341, fixed: { col: 7, top: 394 } },
+  { id: "cadastral", units: 3, height: 449 },
+  { id: "address", units: 3, height: 391 },
+  { id: "connections", units: 3, height: 363 },
+  { id: "actions", units: 1, height: 63, rowEnd: true },
+];
+const placeOf = (placed: readonly Placed[], id: string) => placed.find((p) => p.id === id)!;
+
+describe("the free space under the right column (#37.79)", () => {
+  it("a screen opens as before: the flow keeps to the left area, the column's tiles where they stand", () => {
+    const placed = packTiles(PROPERTY, 10, GAP, 7);
+    expect(placeOf(placed, "cadastral")).toMatchObject({ col: 0, top: 0 });
+    expect(placeOf(placed, "address")).toMatchObject({ col: 3, top: 0 });
+    expect(placeOf(placed, "connections")).toMatchObject({ col: 0, top: 465 });
+    expect(placeOf(placed, `${FIXED_PREFIX}map`)).toMatchObject({ col: 7, top: 0, fixed: true });
+    expect(placeOf(placed, `${FIXED_PREFIX}corners`)).toMatchObject({ col: 7, top: 394, fixed: true });
+    // The action bar under every tile that is not fixed, the left area's width.
+    expect(placeOf(placed, "actions")).toMatchObject({ col: 0, units: 7, top: 465 + 363 + GAP });
+    expect(placeWithStored(PROPERTY, {}, 10, GAP, 7).placed).toEqual(placed);
+  });
+
+  it("a drop under the column is accepted where free, refused onto a fixed tile or within PANEL_GAP of one", () => {
+    const placed = packTiles(PROPERTY, 10, GAP, 7);
+    expect(canDrop(placed, "connections", { col: 7, top: 792 }, 10, GAP)).toBe(true);
+    // „Puncte de contur" ends at 394 + 341 = 735: PANEL_GAP under it is 751.
+    expect(canDrop(placed, "connections", { col: 7, top: 752 }, 10, GAP)).toBe(true);
+    expect(canDrop(placed, "connections", { col: 7, top: 744 }, 10, GAP)).toBe(false);
+    expect(canDrop(placed, "connections", { col: 7, top: 400 }, 10, GAP)).toBe(false);
+    expect(canDrop(placed, "connections", { col: 6, top: 792 }, 10, GAP)).toBe(true); // wider than the gap: reaches into the left area
+    expect(canDrop(placed, "connections", { col: 8, top: 792 }, 10, GAP)).toBe(false); // past the row's edge
+    // A fixed tile is never dropped anywhere.
+    expect(canDrop(placed, `${FIXED_PREFIX}corners`, { col: 7, top: 900 }, 10, GAP)).toBe(false);
+  });
+
+  it("a drop moves no fixed tile, and the fixed tiles are never stored", () => {
+    const placed = dropAt(packTiles(PROPERTY, 10, GAP, 7), "connections", { col: 7, top: 792 }, GAP);
+    expect(placeOf(placed, `${FIXED_PREFIX}map`)).toMatchObject({ col: 7, top: 0 });
+    expect(placeOf(placed, `${FIXED_PREFIX}corners`)).toMatchObject({ col: 7, top: 394 });
+    const stored = placesToStore(placed, {}, [], "connections");
+    expect(stored.connections).toEqual({ col: 7, top: 792 });
+    expect(Object.keys(stored).some((id) => id.startsWith(FIXED_PREFIX))).toBe(false);
+    expect(isStorable(`${FIXED_PREFIX}map`)).toBe(false);
+  });
+
+  it("read back beside the column, a place under it holds; with the column wrapped it falls back and is not written over", () => {
+    const beside = placeWithStored(PROPERTY, { connections: { col: 7, top: 792 } }, 10, GAP, 7);
+    expect(placeOf(beside.placed, "connections")).toMatchObject({ col: 7, top: 792 });
+    expect(beside.fallback).toEqual([]);
+    // Wrapped (a narrow window): no fixed tiles, the row is the left area.
+    const wrapped = placeWithStored(PROPERTY.filter((b) => !b.fixed), { connections: { col: 7, top: 792 } }, 6, GAP, 6);
+    expect(placeOf(wrapped.placed, "connections").col).toBeLessThan(6);
+    expect(wrapped.fallback).toEqual(["connections"]);
+    expect(placesToStore(wrapped.placed, { connections: { col: 7, top: 792 } }, wrapped.fallback, "address").connections).toEqual({ col: 7, top: 792 });
+  });
+
+  it("a fixed tile that grows, or is pushed down, pushes the tiles under it down; nothing moves a fixed tile", () => {
+    const placed = dropAt(packTiles(PROPERTY, 10, GAP, 7), "connections", { col: 7, top: 792 }, GAP);
+    const grown = grow(placed, `${FIXED_PREFIX}corners`, 500, GAP); // a corner added
+    expect(placeOf(grown, "connections").top).toBe(394 + 500 + GAP);
+    const pushed = settle(placed, `${FIXED_PREFIX}corners`, 450, 341, GAP); // the map above grew
+    expect(placeOf(pushed, `${FIXED_PREFIX}corners`).top).toBe(450);
+    expect(placeOf(pushed, "connections").top).toBe(450 + 341 + GAP);
+    // A left tile that grows never moves a fixed one.
+    const tall = grow(packTiles(PROPERTY, 10, GAP, 7), "address", 2000, GAP);
+    expect(placeOf(tall, `${FIXED_PREFIX}corners`)).toMatchObject({ col: 7, top: 394 });
+    // „Street View" ticked: a new fixed tile where „Conexiuni" was stored pushes it under.
+    const withSv = [...PROPERTY.slice(0, 2), { id: `${FIXED_PREFIX}streetView`, units: 3, height: 378, fixed: { col: 7, top: 750 } }, ...PROPERTY.slice(2)];
+    const read = placeWithStored(withSv, { connections: { col: 7, top: 792 } }, 10, GAP, 7);
+    expect(placeOf(read.placed, "connections")).toMatchObject({ col: 7, top: 750 + 378 + GAP });
+  });
+
+  it("the hook measures the column's tiles as fixed boxes while the column stands beside the left area", () => {
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src).toMatch(/r\.left < c\.right - 0\.5\) return \[\]/);
+    expect(src).toContain("placeWithStored(items, { ...stored, ...visit }, columns, gap, flowColumns)");
+    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toMatch(/ref=\{rightRef\}[\s\S]*?data-tile-area="right"/);
+  });
+});
+

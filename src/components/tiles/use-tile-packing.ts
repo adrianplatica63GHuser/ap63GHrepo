@@ -43,11 +43,24 @@
  * preview can be dragged too, its place kept for the visit only. The stored
  * arrangement is read back at every fresh layout (`placeWithStored`), and
  * „Implicit" forgets it (`TILE_POSITIONS_RESET`).
+ *
+ * UNDER THE RIGHT COLUMN (Slice #37.79). `rightRef` names the right column
+ * (#37.56's `TileAreas`). While it stands beside the left area its tiles are
+ * measured as FIXED boxes, in this row's coordinates — against the row's right
+ * edge, one under another — and the row is the whole width: the flow still
+ * keeps to the left area (`flowColumns`), so a screen opens as before, but a
+ * tile dropped in the free space under the column stays there, drawn past the
+ * left area's right edge (the boxes are absolute, nothing clips them). A
+ * column tile that grows, or that a tile above it pushes down, pushes the
+ * tiles under it down (`settle`); one ticked or unticked lays the row out
+ * afresh. While the column is wrapped under the left area there are no fixed
+ * boxes and the row is the left area, so a place under the column falls back.
  */
 import { useLayoutEffect, type RefObject } from "react";
 import { UNIT_GAP_REM, UNIT_REM } from "@/lib/ui/field-widths";
-import { columnsIn, grow, packedHeight, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
+import { columnsIn, grow, packedHeight, settle, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 import {
+  FIXED_PREFIX,
   TILE_POSITIONS_RESET,
   canDrop,
   dropAt,
@@ -214,7 +227,10 @@ function ownWidth(el: HTMLElement): number {
  * out of the flow. `entity`: the tile choice's (`TileRegistry.entity`, per
  * document type), under which the arrangement is stored; none, nothing is.
  */
-export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest = false, entity }: { fitWidest?: boolean; entity?: string } = {}): void {
+export function useTilePacking(
+  ref: RefObject<HTMLElement | null>,
+  { fitWidest = false, entity, rightRef }: { fitWidest?: boolean; entity?: string; rightRef?: RefObject<HTMLElement | null> } = {},
+): void {
   useLayoutEffect(() => {
     const container = ref.current;
     // jsdom (jest) has no layout and no ResizeObserver: the row stays a flex-wrap there.
@@ -222,7 +238,9 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
     const key = entity ? tilePositionsKey(entity) : null;
     let placed: Placed[] = [];
     let boxes: FoundBox[] = [];
+    // The row's units (#37.79: the whole row while the right column stands beside the left area), and the left area's.
     let columns = 0;
+    let flowColumns = 0;
     let settleUntil = 0;
     let interacted = false;
     let frame = 0;
@@ -254,6 +272,43 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
 
     const styles = styleKeeper();
 
+    /**
+     * The right column's tiles, as fixed boxes in this row's coordinates — or
+     * none while the column is hidden, empty or wrapped under the left area.
+     */
+    const fixedNow = (): (PackBox & { el: HTMLElement; fixed: { col: number; top: number } })[] => {
+      const right = rightRef?.current;
+      if (!right || right.hidden) return [];
+      const c = container.getBoundingClientRect();
+      const r = right.getBoundingClientRect();
+      if (r.width === 0 || r.left < c.right - 0.5) return [];
+      const { unit, gap } = metrics();
+      const out: (PackBox & { el: HTMLElement; fixed: { col: number; top: number } })[] = [];
+      const walk = (parent: Element) => {
+        for (const child of Array.from(parent.children)) {
+          if (!(child instanceof HTMLElement) || child.hidden) continue;
+          const display = getComputedStyle(child).display;
+          if (display === "none") continue;
+          if (display === "contents") {
+            walk(child);
+            continue;
+          }
+          const b = child.getBoundingClientRect();
+          if (b.width === 0) continue;
+          out.push({
+            id: `${FIXED_PREFIX}${child.dataset.tile ?? child.dataset.panel ?? out.length}`,
+            el: child,
+            units: unitsOf(b.width, unit, gap),
+            height: b.height,
+            fixed: { col: Math.max(0, Math.round((b.left - c.left) / (unit + gap))), top: Math.round(b.top - c.top) },
+          });
+        }
+      };
+      walk(right);
+      return out;
+    };
+    const fixedIds = (list: readonly { id: string }[]) => list.map((f) => f.id).join("|");
+
     const apply = () => {
       const { unit, gap } = metrics();
       styles.set(container, "position", "relative");
@@ -280,24 +335,31 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
       if (drag?.active) return;
       const { unit, gap } = metrics();
       boxes = findBoxes(container);
-      columns = columnsIn(container.clientWidth, unit, gap);
+      const fixed = fixedNow();
+      flowColumns = columnsIn(container.clientWidth, unit, gap);
+      const rowWidth = container.parentElement?.clientWidth ?? container.clientWidth;
+      columns = fixed.length ? Math.max(flowColumns, columnsIn(rowWidth, unit, gap)) : flowColumns;
       const h = heights();
-      const items: PackBox[] = boxes.map((b) => ({
-        id: b.id,
-        units: b.rowEnd || b.full ? columns : Math.min(unitsOf(ownWidth(b.el), unit, gap), columns),
-        height: h.get(b.id) ?? 0,
-        anchor: b.anchor,
-        full: b.full,
-        rowEnd: b.rowEnd,
-      }));
+      const items: PackBox[] = [
+        ...fixed.map(({ id, units, height, fixed: at }) => ({ id, units, height, fixed: at })),
+        ...boxes.map((b) => ({
+          id: b.id,
+          units: b.rowEnd || b.full ? flowColumns : Math.min(unitsOf(ownWidth(b.el), unit, gap), flowColumns),
+          height: h.get(b.id) ?? 0,
+          anchor: b.anchor,
+          full: b.full,
+          rowEnd: b.rowEnd,
+        })),
+      ];
       stored = readPlaces(key);
-      const r = placeWithStored(items, { ...stored, ...visit }, columns, gap);
+      const r = placeWithStored(items, { ...stored, ...visit }, columns, gap, flowColumns);
       placed = r.placed;
       fallback = r.fallback;
       lead = r.lead;
       apply();
       sizes.disconnect();
       for (const b of boxes) sizes.observe(b.el);
+      for (const f of fixed) sizes.observe(f.el);
     };
 
     const fresh = () => {
@@ -311,17 +373,26 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
       frame = requestAnimationFrame(() => {
         if (drag?.active) return;
         const { unit, gap } = metrics();
-        if (columnsIn(container.clientWidth, unit, gap) !== columns) return fresh();
+        if (columnsIn(container.clientWidth, unit, gap) !== flowColumns) return fresh();
+        // The right column came beside the left area or went under it, or a tile of it came or went (#37.79).
+        const fixed = fixedNow();
+        if (fixedIds(fixed) !== fixedIds(placed.filter((p) => p.fixed))) return fresh();
         // A ResizeObserver also reports every box once when it starts observing it:
         // only a height that differs from the one placed is a change.
         // A box whose width in units changed (a preview past „Se încarcă…") needs a new place.
         const byId = new Map(boxes.map((b) => [b.id, b]));
-        if (placed.some((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full && Math.min(unitsOf(ownWidth(byId.get(p.id)!.el), unit, gap), columns) !== p.units)) return layout();
+        if (placed.some((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full && Math.min(unitsOf(ownWidth(byId.get(p.id)!.el), unit, gap), flowColumns) !== p.units)) return layout();
         const now = heights();
         const changed = placed.some((p) => now.has(p.id) && Math.abs(now.get(p.id)! - p.height) > 0.5);
-        if (!changed) return;
+        // A column tile that grew, or that the one above it pushed down (#37.79).
+        const moved = fixed.filter((f) => {
+          const p = placed.find((x) => x.id === f.id);
+          return p && (p.top !== f.fixed.top || Math.abs(p.height - f.height) > 0.5);
+        });
+        if (!changed && moved.length === 0) return;
         if (!interacted && Date.now() < settleUntil) return layout();
         let next = placed;
+        for (const f of moved) next = settle(next, f.id, f.fixed.top, f.height, gap);
         for (const [id, height] of now) {
           const p = next.find((x) => x.id === id);
           if (p && Math.abs(p.height - height) > 0.5) next = grow(next, id, height, gap);
@@ -336,6 +407,13 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
     const sizes = new ResizeObserver(onSizes);
     const width = new ResizeObserver(onSizes);
     width.observe(container);
+    // #37.79: the right column — its width tells beside from wrapped; its tiles come and go.
+    const right = rightRef?.current ?? null;
+    if (right) width.observe(right);
+    const rightChanges = new MutationObserver(() => {
+      if (fixedIds(fixedNow()) !== fixedIds(placed.filter((p) => p.fixed))) fresh();
+    });
+    if (right) rightChanges.observe(right, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class"] });
 
     // A box came or went, or React replaced one: lay the row out afresh.
     const changes = new MutationObserver(() => {
@@ -523,6 +601,7 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
       sizes.disconnect();
       width.disconnect();
       changes.disconnect();
+      rightChanges.disconnect();
       styles.restore();
       for (const b of boxes) delete b.el.dataset.packedCol;
       container.removeEventListener("input", acted);
@@ -533,5 +612,5 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
       window.removeEventListener(TILE_POSITIONS_RESET, onReset);
       document.removeEventListener("visibilitychange", shown);
     };
-  }, [ref, fitWidest, entity]);
+  }, [ref, fitWidest, entity, rightRef]);
 }

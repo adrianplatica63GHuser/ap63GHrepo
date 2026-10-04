@@ -38,6 +38,16 @@
  * the only way a box moves by itself; one that shrinks leaves its place, so
  * nothing jumps while the user types.
  *
+ * A FIXED BOX (Slice #37.79) is a tile of the right column — the Property's
+ * map, corners and Street View, the Document's page image — standing where it
+ * stands, against the row's right edge: it is placed exactly there, and no
+ * flow, no growth and no stored place ever moves it. The FLOW keeps to the
+ * left area's columns (`flowColumns`), so a screen opens as before, the column
+ * alone on the right; the space under the lowest fixed box is free for a
+ * DRAGGED tile (`canDrop` sees the row's whole width). A fixed box that grows
+ * pushes the boxes under it down, as any box does. The action bar stands under
+ * every box that is not fixed: the column beside it is not in its way.
+ *
  * POSITIONS ARE DATA: a column in units and a place down the screen in px.
  * The screens measure and draw (`use-tile-packing.ts`); #37.76 stores
  * positions in place of what this computes, and falls back to it.
@@ -56,6 +66,8 @@ export interface PackBox {
   full?: boolean;
   /** The row's last line, full width, under everything (the action bar). */
   rowEnd?: boolean;
+  /** Slice #37.79: a right-column tile, at this place and never moved. */
+  fixed?: { col: number; top: number };
 }
 
 /** A placed box: its first column (0-based), its units, its top and height in px. */
@@ -66,6 +78,8 @@ export interface Placed {
   top: number;
   height: number;
   rowEnd?: boolean;
+  /** Slice #37.79: a right-column tile — never moved, never stored. */
+  fixed?: boolean;
 }
 
 type Rect = Pick<Placed, "col" | "units" | "top" | "height">;
@@ -105,12 +119,13 @@ export function freeUnder(placed: readonly Placed[], anchor: Placed, units: numb
  * Every box placed by the rule, in the order given (the registry's — the
  * DOM's, or the CSS `order` a screen gives its tiles). Row-end boxes last.
  */
-export function packTiles(boxes: readonly PackBox[], columns: number, gap: number): Placed[] {
-  const cols = Math.max(1, Math.floor(columns));
-  const placed: Placed[] = [];
+export function packTiles(boxes: readonly PackBox[], columns: number, gap: number, flowColumns = columns): Placed[] {
+  const cols = Math.max(1, Math.floor(Math.min(flowColumns, columns)));
+  const placed: Placed[] = fixedBoxes(boxes);
   const ends: PackBox[] = [];
   let next = 0; // the first free column of the current line
   for (const box of boxes) {
+    if (box.fixed) continue;
     if (box.rowEnd) {
       ends.push(box);
       continue;
@@ -127,12 +142,25 @@ export function packTiles(boxes: readonly PackBox[], columns: number, gap: numbe
     placed.push({ id: box.id, col, units, top: topUnder(placed, col, units, gap), height: box.height });
     next = col + units >= cols ? 0 : col + units;
   }
-  let top = placed.length ? Math.max(...placed.map(bottom)) + gap : 0;
+  let top = endsTop(placed, gap);
   for (const box of ends) {
     placed.push({ id: box.id, col: 0, units: cols, top, height: box.height, rowEnd: true });
     top += box.height + gap;
   }
   return placed;
+}
+
+/** The fixed boxes, at their places (Slice #37.79). */
+export function fixedBoxes(boxes: readonly PackBox[]): Placed[] {
+  return boxes
+    .filter((b) => b.fixed)
+    .map((b) => ({ id: b.id, col: b.fixed!.col, units: Math.max(1, Math.round(b.units)), top: b.fixed!.top, height: b.height, fixed: true }));
+}
+
+/** Where the row-end boxes start: under every box but the fixed ones and the row ends. */
+export function endsTop(placed: readonly Placed[], gap: number): number {
+  const body = placed.filter((p) => !p.rowEnd && !p.fixed);
+  return body.length ? Math.max(...body.map(bottom)) + gap : 0;
 }
 
 /**
@@ -141,18 +169,30 @@ export function packTiles(boxes: readonly PackBox[], columns: number, gap: numbe
  * Row-end boxes always stay under everything.
  */
 export function grow(placed: readonly Placed[], id: string, height: number, gap: number): Placed[] {
+  const me = placed.find((p) => p.id === id);
+  return me ? settle(placed, id, me.top, height, gap) : placed.map((p) => ({ ...p }));
+}
+
+/**
+ * A box now stands at `top`, `height` tall (Slice #37.79: a fixed tile that a
+ * tile above it in the column pushed down, or that grew). Reaching lower than
+ * it did, it pushes the boxes it now overlaps down, and so on down the screen;
+ * a fixed box is never pushed.
+ */
+export function settle(placed: readonly Placed[], id: string, top: number, height: number, gap: number): Placed[] {
   const next = placed.map((p) => ({ ...p }));
   const me = next.find((p) => p.id === id);
   if (!me) return next;
-  const grew = height > me.height;
+  const lower = top + height > bottom(me);
+  me.top = top;
   me.height = height;
-  if (grew) {
+  if (lower) {
     // Settle top to bottom: a moved box can push the ones under it in turn.
     const queue: Placed[] = [me];
     while (queue.length) {
       const mover = queue.shift()!;
       for (const other of next) {
-        if (other === mover || other.rowEnd || other.top < mover.top) continue;
+        if (other === mover || other.rowEnd || other.fixed || other.top < mover.top) continue;
         if (overlaps(mover, other, gap)) {
           other.top = bottom(mover) + gap;
           queue.push(other);
@@ -160,17 +200,17 @@ export function grow(placed: readonly Placed[], id: string, height: number, gap:
       }
     }
   }
-  let top = Math.max(0, ...next.filter((p) => !p.rowEnd).map((p) => bottom(p) + gap));
+  let endTop = endsTop(next, gap);
   for (const end of next.filter((p) => p.rowEnd)) {
-    end.top = top;
-    top += end.height + gap;
+    end.top = endTop;
+    endTop += end.height + gap;
   }
   return next;
 }
 
-/** How tall the row must be to hold every box. */
-export function packedHeight(placed: readonly Placed[]): number {
-  return placed.reduce((m, p) => Math.max(m, bottom(p)), 0);
+/** How tall the row must be to hold every box. The fixed boxes stand outside it (#37.79) unless `withFixed`. */
+export function packedHeight(placed: readonly Placed[], withFixed = false): number {
+  return placed.reduce((m, p) => (p.fixed && !withFixed ? m : Math.max(m, bottom(p))), 0);
 }
 
 /** How many whole units a row of `width` px holds, a unit being `unitPx` and the gap `gapPx`. */

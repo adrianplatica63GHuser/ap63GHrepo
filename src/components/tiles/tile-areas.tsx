@@ -97,7 +97,9 @@ export function TileAreas({
   // them (`useTilePacking`); out of the flow, they no longer give the area its
   // min-content width, so the hook gives it its widest box's.
   const leftRef = useRef<HTMLDivElement>(null);
-  useTilePacking(leftRef, { fitWidest: true, entity });
+  // Slice #37.79: the column's tiles are fixed boxes of the row, and the space under them is free.
+  const rightRef = useRef<HTMLDivElement>(null);
+  useTilePacking(leftRef, { fitWidest: true, entity, rightRef });
   return (
     <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
       <div ref={leftRef} className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">
@@ -105,6 +107,7 @@ export function TileAreas({
       </div>
       {right.length > 0 && (
         <div
+          ref={rightRef}
           className={shownRight > 0 ? "flex flex-col items-end" : "hidden"}
           hidden={shownRight === 0}
           style={{ gap: PANEL_GAP }}
