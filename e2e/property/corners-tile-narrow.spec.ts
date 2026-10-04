@@ -80,6 +80,9 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
   const lat = [...(await editing.locator("input").all()).slice(0, 3),
     editing.getByRole("button", { name: "N", exact: true }), editing.getByRole("button", { name: "S", exact: true })];
   const latBoxes = await Promise.all(lat.map(boxOf));
+  const cut = await editing.locator("input").evaluateAll((els) =>
+    (els as HTMLInputElement[]).filter((i) => i.scrollWidth > i.clientWidth).map((i) => i.value));
+  expect(cut, `${width}: each DMS box shows its whole value`).toEqual([]);
   expect(new Set(latBoxes.map((b) => Math.round((b.t + b.b) / 2))).size, `${width}: the latitude on one line`).toBe(1);
   const save = await boxOf(editing.getByRole("button", { name: "Salvează", exact: true }));
   expect(Math.max(...latBoxes.map((b) => b.r)), `${width}: left of „Salvează"`).toBeLessThan(save.l);
