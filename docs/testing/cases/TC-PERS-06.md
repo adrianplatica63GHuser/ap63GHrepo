@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -60,3 +60,7 @@ from the code first and needed no correction.
 unchanged: the same in every step. The stored key removed again; the four records deleted (204 ×4).
 Nothing in the file changed, so the case is confirmed, and `e2e/person/company-list.spec.ts`
 translates it.
+
+**2026-10-04 — `automated` (Slice #37.71).** The test runner's full run 20261004T041635Z-19845 on
+efa4454 ran `e2e/person/company-list.spec.ts` green with the other 67 specs (lint, tsc, jest and
+forms-drift green too).
