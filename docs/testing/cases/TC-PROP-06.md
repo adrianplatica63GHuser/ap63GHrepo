@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-04 |
 
 ## What this proves
@@ -85,3 +85,7 @@ browser had never chosen (no stored key), so it opened at the three defaults, �
 unchanged: the same in every step. The stored key removed again; the property deleted (204).
 Nothing in the file changed, so the case is confirmed, and `e2e/property/property-list.spec.ts`
 follows it.
+
+**2026-10-04 — `automated` again (Slice #37.72).** The test runner's full run 20261004T044252Z-16792
+on 88f753b ran the rewritten `e2e/property/property-list.spec.ts` green with the other 67 specs
+(lint, tsc, jest and forms-drift green too).
