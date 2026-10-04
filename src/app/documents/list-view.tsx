@@ -652,8 +652,13 @@ export function DocumentListView({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Toolbar — Slice #37.83: two rows. The first: the search, „Tip document",
+          „Expiră curând", „Câmpuri afișate" and, at its end, „Adaugă act"'s group;
+          choosing a field in „Câmp specific" no longer moves any of them. The
+          second, under the search box, holds „Câmp specific" alone — and is not
+          drawn at all when the types on screen have no such field. */}
+      <div className="flex flex-col gap-3" data-toolbar="">
+      <div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">
         {/* Slice #37.62: the search first, then the type — its placeholder no
             longer begins with „SAU", which only made sense after the type. */}
         <input
@@ -671,8 +676,58 @@ export function DocumentListView({
           allTypesLabel={t("allTypes")}
         />
 
+        {/* Expiring-soon toggle */}
+        {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong
+            `primary` fill and `aria-pressed`, so the state is a colour and a
+            name, not the amber tint the hand-written class used to carry. */}
+        <IconButton
+          icon={CalendarClock}
+          label={tFilter("expiringSoon")}
+          variant={expiringSoon ? "primary" : "secondary"}
+          size="md"
+          aria-pressed={expiringSoon}
+          onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
+        />
+
+        {/* Slice #37.62: the shared chooser, as on the other three lists — its list
+            hanging from the right, the button being near the toolbar's end. */}
+        <FieldChooser
+          label={t("chooseFields")}
+          hint={t("chooseFieldsHint", { max: MAX_OPT })}
+          fields={optionalCols}
+          visible={chooser.visible}
+          max={MAX_OPT}
+          onToggle={chooser.toggle}
+          align="right"
+        />
+
+        <div className="ml-auto flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <IconButton
+              icon={Trash2}
+              label={tBulk("deleteSelected", { count: selectedIds.size })}
+              count={selectedIds.size}
+              variant="danger"
+              size="lg"
+              onClick={() => setConfirmOpen(true)}
+            />
+          )}
+          <HelpHint hintKey="select-all-page-only" />
+          <IconButton
+            href="/documents/new"
+            icon={Plus}
+            label={t("addNew")}
+            showLabel
+            variant="primary"
+            size="lg"
+          />
+        </div>
+      </div>
+      {/* ── The second row: „Câmp specific" ─────── (Slice #37.83) ── */}
+      {customFieldOptions.length > 0 && (
+      <div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">
         {/* Slice #37.62: no „Importanță" or „Relevanță" filter. The
-            Expiring-soon toggle below filters on the document's own
+            Expiring-soon toggle on the first row filters on the document's own
             date_valid_until — a business question, not a curation value — and
             stays; its threshold is in Settings → Time frames. */}
         {/* ── Custom-field filter ─────────────── (Slice #34.10) ─────────
@@ -708,7 +763,6 @@ export function DocumentListView({
         {/* Slice #37.62 — Adrian asked how „Câmp specific" is meant to be used,
             so the control says it itself: an ⓘ beside it opens the answer as a
             bubble (HintBubble, #37.50), and the key select is described by it. */}
-        {customFieldOptions.length > 0 && (
           <HintBubble
             id="custom-field-hint"
             text={tFilter("customFieldHint")}
@@ -761,54 +815,8 @@ export function DocumentListView({
             )}
           </div>
           </HintBubble>
-        )}
-
-        {/* Expiring-soon toggle */}
-        {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong
-            `primary` fill and `aria-pressed`, so the state is a colour and a
-            name, not the amber tint the hand-written class used to carry. */}
-        <IconButton
-          icon={CalendarClock}
-          label={tFilter("expiringSoon")}
-          variant={expiringSoon ? "primary" : "secondary"}
-          size="md"
-          aria-pressed={expiringSoon}
-          onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
-        />
-
-        {/* Slice #37.62: the shared chooser, as on the other three lists — its list
-            hanging from the right, the button being near the toolbar's end. */}
-        <FieldChooser
-          label={t("chooseFields")}
-          hint={t("chooseFieldsHint", { max: MAX_OPT })}
-          fields={optionalCols}
-          visible={chooser.visible}
-          max={MAX_OPT}
-          onToggle={chooser.toggle}
-          align="right"
-        />
-
-        <div className="ml-auto flex items-center gap-2">
-          {selectedIds.size > 0 && (
-            <IconButton
-              icon={Trash2}
-              label={tBulk("deleteSelected", { count: selectedIds.size })}
-              count={selectedIds.size}
-              variant="danger"
-              size="lg"
-              onClick={() => setConfirmOpen(true)}
-            />
-          )}
-          <HelpHint hintKey="select-all-page-only" />
-          <IconButton
-            href="/documents/new"
-            icon={Plus}
-            label={t("addNew")}
-            showLabel
-            variant="primary"
-            size="lg"
-          />
-        </div>
+      </div>
+      )}
       </div>
 
       {deleteError && (
