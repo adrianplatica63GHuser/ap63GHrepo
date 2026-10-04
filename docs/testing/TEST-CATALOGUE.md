@@ -131,6 +131,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-08](cases/TC-TILES-08.md) | META INFO în două: „Clasificare subiectivă" și „Conexiuni", explicațiile în bule | tiles | happy | — | `automated` | 2026-10-02 | `e2e/tiles/meta-info-split.spec.ts` |
 | [TC-TILES-09](cases/TC-TILES-09.md) | „Clasificare subiectivă": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric" | tiles | happy | — | `automated` | 2026-10-03 | `e2e/tiles/classification-one-row.spec.ts` |
 | [TC-TILES-10](cases/TC-TILES-10.md) | „Conexiuni": etichete mici, „×" doar la mouse sau la focalizare | tiles | happy | — | `automated` | 2026-10-03 | `e2e/tiles/connections-chips.spec.ts` |
+| [TC-TILES-11](cases/TC-TILES-11.md) | Cele patru previzualizări: „născută:", contactele firmei, cele trei rânduri ale proprietății, actul fără tip | tiles | happy | — | `confirmed` | 2026-10-03 | `e2e/tiles/previews-four-kinds.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-01 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |

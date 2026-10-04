@@ -39,10 +39,10 @@ Nothing.
 | 1 | Opens „Persoane Fizice" | A search box („caută după cod, nume, email sau telefon"), no „Importanță" or „Relevanță" filter, and „Câmpuri afișate 0/4" |
 | 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Locul nașterii, Tip Profesional — in that order |
 | 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
-| 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
+| 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
 | 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/3`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului |
 | 6 | Ticks Nr. înregistrare (CUI), presses outside, types `TC-PERS-04` into the search | The table headed DENUMIRE · PORECLĂ · NR. ÎNREGISTRARE (CUI); one row with `RO99999990` |
-| 7 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Firmă de test SRL`, then „Firma TC, SRL" and „RO99999990, J99/9999/2026"; no system ID |
+| 7 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Firmă de test SRL` followed by „(niciun contact)", then „Firma TC, SRL" and „RO99999990, J99/9999/2026"; no system ID |
 
 ## At the end — leaving things as they were found
 
@@ -77,3 +77,9 @@ company's type already „SRL"), both stored choices reset first, against the fi
   translates it.
 
 **2026-10-02 — `automated` (Slice #37.60).** `e2e/person/person-lists.spec.ts` green in the runner's full `20261003T012229Z-23343` and again in `20261003T013901Z-21163` (e2e 59); it also measures each preview narrower than a 3-unit panel and lower than 10 rem.
+
+**2026-10-03 — Slice #37.70 changed what steps 4 and 7 read.** A person's date of birth is printed
+after „născut:" (no gender is recorded for Ion, so the masculine), and a company's heading is
+followed by its count of contact persons, „(niciun contact)" here. Both steps now say so, and
+`e2e/person/person-lists.spec.ts` follows. The rest of the case is unchanged; TC-TILES-11 drives the
+four previews themselves.

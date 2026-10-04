@@ -98,3 +98,10 @@ the API and removed at the end through the DELETE routes.
   `expectUnitGrid` found every tile, the preview among them, a whole number of units, with the row
   10 units at 1920 and 14 at 2560. It found the same with a property preview open beside the buyer's.
   Step 10 now says so.
+
+**2026-10-03 — note from Slice #37.70, not a run.** The previews this case reads in step 2 changed:
+a person's date of birth reads „născut: …", a company's heading is followed by its count of contact
+persons, a property shows Nr. parcelă, Tarla/Solă and Suprafață on one row, then Poreclă, then Carte
+funciară and Nr. cadastral, and a document shows no „Tip document" and no second „Etichetă scurtă" —
+Subiect, Nr. document and Data on one row. TC-TILES-11 drives those four. This case was not driven
+again, so its steps are left as last driven; the next run corrects them.

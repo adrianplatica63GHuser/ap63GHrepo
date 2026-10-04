@@ -106,7 +106,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await npRow.getByRole("button", { name: "Previzualizare", exact: true }).click();
       const np = await previewOf(page);
       expect(np.title).toBe(`${MARK} Ion`);
-      expect(np.lines).toEqual([`Ionel TC, ${CNP}`, "01.01.1980, Localitatea Exemplu"]);
+      expect(np.lines).toEqual([`Ionel TC, ${CNP}`, "născut: 01.01.1980, Localitatea Exemplu"]); // #37.70: „născut:"
       await expect(page.locator("[data-preview]")).not.toContainText(/PPERS\d+/);
       await expect(page.locator("[data-preview]")).not.toContainText("Prenume");
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
@@ -137,6 +137,8 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await jpRow.getByRole("button", { name: "Previzualizare", exact: true }).click();
       const jp = await previewOf(page);
       expect(jp.title).toBe(`${MARK} Firmă de test SRL`);
+      // #37.70: the count of its contact persons after the heading.
+      await expect(page.locator("[data-preview] [data-preview-title-note]")).toHaveText("(niciun contact)");
       expect(jp.lines).toEqual(["Firma TC, SRL", "RO99999990, J99/9999/2026"]);
       await expect(page.locator("[data-preview]")).not.toContainText(/JPERS\d+/);
       await photograph(page, "judicial-person-preview", page.locator("[data-preview]"));
