@@ -193,6 +193,21 @@ function remPx(): number {
 }
 
 /**
+ * A box's own width, in px (Slice #37.77): its inline `width` when it declares
+ * one — a fixed panel or a list tile of whole units — or what it renders at,
+ * whichever is wider. `max-w-full` lets a 4-unit tile render at 3 units in a
+ * 3-unit area, and measured as rendered it then held the area at 3 units: on
+ * the Property at 1366 px „Corelate" was squeezed beside the 3-unit right
+ * column, its buttons on two lines (TC-PROP-07), and the screen came out
+ * differently after a load than after narrowing the window.
+ */
+function ownWidth(el: HTMLElement): number {
+  const w = el.style.width;
+  const declared = w.endsWith("rem") ? parseFloat(w) * remPx() : w.endsWith("px") ? parseFloat(w) : 0;
+  return Math.max(declared || 0, el.offsetWidth);
+}
+
+/**
  * Packs the boxes of the row `ref` points at, and lets the user drag them.
  * `fitWidest`: give the row a min-width of its widest box — for #37.56's left
  * area, a flex item that would otherwise shrink to nothing once its boxes are
@@ -253,7 +268,7 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
         styles.set(box.el, "top", `${p.top}px`);
         styles.set(box.el, "margin", "0");
         if (p.rowEnd || box.full) styles.set(box.el, "width", "100%");
-        else widest = Math.max(widest, box.el.offsetWidth);
+        else widest = Math.max(widest, ownWidth(box.el));
         box.el.dataset.packedCol = String(p.col);
       }
       if (fitWidest) styles.set(container, "min-width", `${widest}px`);
@@ -269,7 +284,7 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
       const h = heights();
       const items: PackBox[] = boxes.map((b) => ({
         id: b.id,
-        units: b.rowEnd || b.full ? columns : unitsOf(b.el.offsetWidth, unit, gap),
+        units: b.rowEnd || b.full ? columns : Math.min(unitsOf(ownWidth(b.el), unit, gap), columns),
         height: h.get(b.id) ?? 0,
         anchor: b.anchor,
         full: b.full,
@@ -301,7 +316,7 @@ export function useTilePacking(ref: RefObject<HTMLElement | null>, { fitWidest =
         // only a height that differs from the one placed is a change.
         // A box whose width in units changed (a preview past „Se încarcă…") needs a new place.
         const byId = new Map(boxes.map((b) => [b.id, b]));
-        if (placed.some((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full && Math.min(unitsOf(byId.get(p.id)!.el.offsetWidth, unit, gap), columns) !== p.units)) return layout();
+        if (placed.some((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full && Math.min(unitsOf(ownWidth(byId.get(p.id)!.el), unit, gap), columns) !== p.units)) return layout();
         const now = heights();
         const changed = placed.some((p) => now.has(p.id) && Math.abs(now.get(p.id)! - p.height) > 0.5);
         if (!changed) return;

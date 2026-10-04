@@ -193,6 +193,16 @@ describe("the screens", () => {
     }
   });
 
+  it("a box is measured by its own width, not the width `max-w-full` squeezed it to (#37.77)", () => {
+    // A 4-unit „Corelate" in a 3-unit left area rendered at 3 units and, measured
+    // as rendered, held the area at 3: the right column then stood beside it.
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src).toMatch(/function ownWidth\(el: HTMLElement\): number \{[\s\S]*?el\.style\.width[\s\S]*?el\.offsetWidth/);
+    expect(src).toContain("widest = Math.max(widest, ownWidth(box.el))");
+    expect(src).toContain("unitsOf(ownWidth(b.el), unit, gap)");
+    expect(src).not.toMatch(/unitsOf\([^)]*\.offsetWidth/);
+  });
+
   it("the hook measures and places, and never moves an element: the DOM's order stays the reading order", () => {
     const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
     expect(src).not.toMatch(/\.(insertBefore|prepend|append|replaceChildren)\(/);
