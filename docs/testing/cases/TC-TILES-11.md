@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-03 |
 
 ## What this proves
@@ -63,3 +63,7 @@ the named record's row.
 **2026-10-03 — run 2, `confirmed` (Slice #37.70).** The same pane, six new records, the corrected
 file unchanged: the same in every step. The six records deleted (204 ×6). Nothing in the file
 changed, so the case is confirmed, and `e2e/tiles/previews-four-kinds.spec.ts` translates it.
+
+**2026-10-03 — `automated` (Slice #37.70).** The test runner's full run 20261004T031247Z-23758 on
+1c9014f ran `e2e/tiles/previews-four-kinds.spec.ts` green with the other 66 specs (lint, tsc, jest
+and forms-drift green too); `e2e/person/person-lists.spec.ts` (TC-PERS-04) green in the same run.
