@@ -144,8 +144,12 @@ function CornerInputRow({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally runs once on mount only
 
-  const inputCls =
-    "rounded border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-focus w-full";
+  const boxCls =
+    "rounded border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-focus";
+  const inputCls = boxCls + " w-full";
+  // #37.77: a DMS box keeps its own width. With `w-full` beside `w-10` the stylesheet's
+  // `w-full` won, so in a wrapping line each box took the whole line.
+  const dmsCls = (w: "w-10" | "w-16") => boxCls + " " + w;
 
   const dirBtn = (active: boolean, onClick: () => void, label: string) => (
     <button
@@ -213,9 +217,10 @@ function CornerInputRow({
   return (
     <tr className="bg-card dark:bg-blue-950/30">
       <td className="px-3 py-2 text-fade text-xs">—</td>
-      <td className="px-3 py-2 text-fade text-xs">—</td>
 
-      <td colSpan={2} className="px-3 py-2">
+      {/* Slice #37.77: the inputs span „Nr. orig.", N and E (16.5rem) — a DMS line is about
+          15rem — and each line wraps downward, never sideways into the buttons. */}
+      <td colSpan={3} className="px-3 py-2">
         <div className="flex flex-col gap-2">
           {mode === "DD" ? (
             <div className="grid grid-cols-2 gap-2">
@@ -244,32 +249,36 @@ function CornerInputRow({
             </div>
           ) : mode === "DMS" ? (
             <div className="flex flex-col gap-1.5">
-              {/* Latitude row */}
-              <div className="flex items-center gap-1 text-xs">
-                <span className="w-16 shrink-0 text-fade">{t("lat")}</span>
-                <input type="number" min={0} max={90}     step={1}   value={latDeg} onChange={(e) => setLatDeg(e.target.value)} placeholder="44"    className={inputCls + " w-10"} />
-                <span className="text-fade">°</span>
-                <input type="number" min={0} max={59}     step={1}   value={latMin} onChange={(e) => setLatMin(e.target.value)} placeholder="24"    className={inputCls + " w-10"} />
-                <span className="text-fade">′</span>
-                <input type="number" min={0} max={59.999} step="any" value={latSec} onChange={(e) => setLatSec(e.target.value)} placeholder="59.40" className={inputCls + " w-16"} />
-                <span className="text-fade">″</span>
-                <div className="flex gap-0.5 ml-1">
-                  {dirBtn(latDir === "N", () => setLatDir("N"), "N")}
-                  {dirBtn(latDir === "S", () => setLatDir("S"), "S")}
+              {/* Latitude row — its label above, as DD and Stereo 70 have theirs (#37.77) */}
+              <div className="flex flex-col gap-0.5 text-xs">
+                <span className="text-fade">{t("lat")}</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  <input type="number" min={0} max={90}     step={1}   value={latDeg} onChange={(e) => setLatDeg(e.target.value)} placeholder="44"    className={dmsCls("w-10")} />
+                  <span className="text-fade">°</span>
+                  <input type="number" min={0} max={59}     step={1}   value={latMin} onChange={(e) => setLatMin(e.target.value)} placeholder="24"    className={dmsCls("w-10")} />
+                  <span className="text-fade">′</span>
+                  <input type="number" min={0} max={59.999} step="any" value={latSec} onChange={(e) => setLatSec(e.target.value)} placeholder="59.40" className={dmsCls("w-16")} />
+                  <span className="text-fade">″</span>
+                  <div className="flex gap-0.5">
+                    {dirBtn(latDir === "N", () => setLatDir("N"), "N")}
+                    {dirBtn(latDir === "S", () => setLatDir("S"), "S")}
+                  </div>
                 </div>
               </div>
               {/* Longitude row */}
-              <div className="flex items-center gap-1 text-xs">
-                <span className="w-16 shrink-0 text-fade">{t("lon")}</span>
-                <input type="number" min={0} max={180}    step={1}   value={lonDeg} onChange={(e) => setLonDeg(e.target.value)} placeholder="25"    className={inputCls + " w-10"} />
-                <span className="text-fade">°</span>
-                <input type="number" min={0} max={59}     step={1}   value={lonMin} onChange={(e) => setLonMin(e.target.value)} placeholder="57"    className={inputCls + " w-10"} />
-                <span className="text-fade">′</span>
-                <input type="number" min={0} max={59.999} step="any" value={lonSec} onChange={(e) => setLonSec(e.target.value)} placeholder="52.20" className={inputCls + " w-16"} />
-                <span className="text-fade">″</span>
-                <div className="flex gap-0.5 ml-1">
-                  {dirBtn(lonDir === "E", () => setLonDir("E"), "E")}
-                  {dirBtn(lonDir === "W", () => setLonDir("W"), "W")}
+              <div className="flex flex-col gap-0.5 text-xs">
+                <span className="text-fade">{t("lon")}</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  <input type="number" min={0} max={180}    step={1}   value={lonDeg} onChange={(e) => setLonDeg(e.target.value)} placeholder="25"    className={dmsCls("w-10")} />
+                  <span className="text-fade">°</span>
+                  <input type="number" min={0} max={59}     step={1}   value={lonMin} onChange={(e) => setLonMin(e.target.value)} placeholder="57"    className={dmsCls("w-10")} />
+                  <span className="text-fade">′</span>
+                  <input type="number" min={0} max={59.999} step="any" value={lonSec} onChange={(e) => setLonSec(e.target.value)} placeholder="52.20" className={dmsCls("w-16")} />
+                  <span className="text-fade">″</span>
+                  <div className="flex gap-0.5">
+                    {dirBtn(lonDir === "E", () => setLonDir("E"), "E")}
+                    {dirBtn(lonDir === "W", () => setLonDir("W"), "W")}
+                  </div>
                 </div>
               </div>
             </div>
@@ -308,9 +317,10 @@ function CornerInputRow({
         </div>
       </td>
 
-      {/* Slice #37.14: may wrap under the fixed columns — the row grows downward. */}
+      {/* Slice #37.14: may wrap under the fixed columns — the row grows downward.
+          #37.77: against the cell's right edge, as the row buttons are. */}
       <td className="px-3 py-2">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <IconButton
             icon={Save}
             label={t("save")}
@@ -481,7 +491,8 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
+      {/* #37.77: wraps downward in a 3-unit tile rather than widening it. */}
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-fade dark:text-zinc-400">{t("displayLabel")}</span>
         {(["DD", "DMS", "S70"] as DisplayFormat[]).map((f) => (
           <button
@@ -533,7 +544,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
               <th className="px-3 py-2">{t("originalIndex")}</th>
               <th className="px-3 py-2">{col1Label}</th>
               <th className="px-3 py-2">{col2Label}</th>
-              {!readOnly && <th className="px-3 py-2" />}
+              {!readOnly && <th className="px-3 py-2 text-right" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -585,8 +596,10 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   {!readOnly && (
                   // Slice #37.14: the buttons wrap onto a second line when the fixed
                   // columns leave them too little room — the row grows downward.
+                  // #37.77: right-aligned, so „Șterge" stands against the table's edge;
+                  // at 3 units the four (116 px) fit the cell's 120 px on one line.
                   <td className={cellCls}>
-                    <div className="flex flex-wrap gap-1 items-center">
+                    <div className="flex flex-wrap justify-end gap-1 items-center">
                       {/* #37.45 (A068): ArrowUp / ArrowDown. The bare „↑" / „↓"
                           were the names; the hint they carried („Mută mai sus" /
                           „Mută mai jos") is the name and the tooltip now. */}

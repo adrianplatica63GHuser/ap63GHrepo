@@ -695,12 +695,17 @@ export const PANEL_UNITS = {
   //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
   judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), address: ADDRESS_PANEL_UNITS },
   //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Stradă, 24rem.
-  //  corners 4: the four fixed columns are 19rem and a row's ↑ ↓ „Editează" „Șterge" need about
-  //  15rem more to stay on one line; 3 units leave 9rem. map and streetView 3 (rule 20; Adrian's
-  //  Ask first): 28.1rem inside, about the 30.4 they were, and beside Date cadastrale at 1366 px.
+  //  corners 3 (#37.77): the four fixed columns are 19rem; 3 units leave the actions column
+  //  about 9rem (144 px, 120 inside its padding), and a row's four buttons — „Mută mai sus",
+  //  „Mută mai jos", „Editează", „Șterge", 26-px icon squares at xs since #37.45 — need
+  //  4 × 26 + 3 × 4 = 116 px on one line, right-aligned. (It was 4 while they were words, about
+  //  15rem.) Measured at 1920 px on 2026-10-04. The edit row's DMS line wraps downward
+  //  inside its cell. map and streetView 3 (rule 20; Adrian's Ask first): 28.1rem inside,
+  //  about the 30.4 they were, and beside Date cadastrale at 1366 px — so the right column is
+  //  3 units, all three tiles flush right.
   property: {
     ...panelUnitsOf(SCREEN_ROWS.property, { ...PROPERTY, ...PROPERTY_ADDRESS }),
-    corners: 4,
+    corners: 3,
     map: 3,
     streetView: 3,
   },

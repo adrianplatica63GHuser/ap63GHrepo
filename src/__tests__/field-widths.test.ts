@@ -588,12 +588,12 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(PROP_FORM).not.toMatch(/LABEL_INDENT|LABEL_STYLE/);
   });
 
-  it("each tile is whole units: Date cadastrale 3, Adresă 3, Puncte de contur 4, Hartă and Street View 3", () => {
+  it("each tile is whole units: Date cadastrale 3, Adresă 3, Puncte de contur, Hartă and Street View 3 (#37.77)", () => {
     // #37.57: the system ID left the first row for the heading's corner; the panel stays 3.
     expect(rowRem([PROPERTY.tarlaId, PROPERTY.parcela])).toBe(17.5);
     expect("code" in PROPERTY).toBe(false);
     expect(SCREEN_ROWS.property.cadastral[0]).toEqual(["tarlaId", "parcela"]);
-    expect(PANEL_UNITS.property).toEqual({ cadastral: 3, address: 3, corners: 4, map: 3, streetView: 3 });
+    expect(PANEL_UNITS.property).toEqual({ cadastral: 3, address: 3, corners: 3, map: 3, streetView: 3 });
     expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(3));
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
