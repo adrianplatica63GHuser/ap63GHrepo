@@ -97,8 +97,16 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
  *
  * The four entity lists (Persoane fizice, Persoane juridice, Proprietăți,
  * Acte) have no tile row, so the list's table and its open previews share one
- * wrapping row: the table first, then at most two previews, each at its fixed
- * width, dropping below the table when the window is narrower than both.
+ * wrapping row: the table first, then the previews.
+ *
+ * Slice #38.05: the open previews (two at most) stand in ONE COLUMN of their
+ * own beside the table — the first at the top, the second under it — and that
+ * column drops below the table only when the window cannot hold the table and
+ * one preview side by side. It used to be the previews themselves in the row,
+ * each at its fixed width, so a wide table and two previews did not fit one
+ * line and the second wrapped onto the next — under the table, not under the
+ * first (Adrian's bug, on Proprietăți at 1920 px: measured, the first at the
+ * table's right, x 1162, the second at x 248 under the table).
  * „Previzualizare" on a row opens one there. The same body, the same
  * two-at-most rule and the same read-only guarantee as on a detail screen; a
  * list has no „Părți afișate", so „Închide" is how one is closed. Changing the
@@ -110,7 +118,11 @@ export function ListPreviews({ children }: { children: ReactNode }) {
     <PreviewOpenerProvider previews={previews}>
       <div data-list-previews className="flex flex-wrap items-start gap-4">
         {children}
-        <PreviewTiles previews={previews} />
+        {previews.open.length > 0 && (
+          <div data-list-preview-column className="flex flex-col items-start gap-4">
+            <PreviewTiles previews={previews} />
+          </div>
+        )}
       </div>
     </PreviewOpenerProvider>
   );
