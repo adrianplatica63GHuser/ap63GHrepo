@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -64,3 +64,7 @@ unchanged: every step the same, to the pixel — A at x 1162, y 188–384; B at 
 1366 both below the table, x 248, y 327 and 538; no sideways scroll. Both deleted (204, 204).
 Nothing in the file changed, so the case is confirmed, and `e2e/tiles/list-second-preview.spec.ts`
 translates it.
+
+**2026-10-05 — `automated` (Slice #38.05).** The test runner's full run 20261005T213827Z-4294 on
+3b80dd0 ran `e2e/tiles/list-second-preview.spec.ts` green with the other 90 (lint, tsc, jest and
+forms-drift green too).
