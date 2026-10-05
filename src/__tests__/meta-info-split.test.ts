@@ -20,8 +20,10 @@ const DOC_REG = documentTileRegistry({ typeKey: "ADEVERINTA", tabs: [], successi
 
 describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
   it("each registry lists both and no „metadata”", () => {
+    // #37.88: side by side in the yellow group — last but the fixed right-hand column.
     for (const all of [NP_TILES, JP_TILES, PROP_TILES, DOCUMENT_LIST_TILES, DOC_REG.all] as readonly (readonly string[])[]) {
-      expect(all.slice(-2)).toEqual(BOTH);
+      const at = all.indexOf("classification");
+      expect(all.slice(at, at + 2)).toEqual(BOTH);
       expect(all).not.toContain("metadata");
     }
   });
@@ -30,7 +32,7 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
     const stored = JSON.stringify(["associations", "metadata"]);
     for (const reg of [NP_TILE_REGISTRY, JP_TILE_REGISTRY, PROP_TILE_REGISTRY, DOC_REG] as const) {
       const shown = parseStoredTiles(stored, reg as typeof DOC_REG);
-      expect(shown.slice(-2)).toEqual(BOTH);
+      expect(shown.filter((k) => BOTH.includes(k))).toEqual(BOTH);
       expect(shown).not.toContain("metadata");
     }
     // Alone, it is still a choice — not an empty one that would fall back to the defaults.
@@ -45,7 +47,7 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
       expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, "details")).toEqual([]);
       expect(tilesOfTab(map as typeof DOC_TILE_OF_TAB, undefined)).toEqual([]);
     }
-    expect(shownTiles(PROP_TILE_REGISTRY.defaults, tilesOfTab(PROP_TILE_OF_TAB, "metadata"), PROP_TILES).slice(-2)).toEqual(BOTH);
+    expect(shownTiles(PROP_TILE_REGISTRY.defaults, tilesOfTab(PROP_TILE_OF_TAB, "metadata"), PROP_TILES).filter((k) => BOTH.includes(k))).toEqual(BOTH);
   });
 
   it("the tiles are named in both languages", () => {

@@ -228,7 +228,8 @@ describe("the Property's tiles (Slice #37.19)", () => {
 
   it("are the nine the header names, and nothing stored shows exactly the old Detalii tab", () => {
     expect([...PROP_TILES]).toEqual([
-      "cadastral", "corners", "address", "map", "streetView", "related", "classification", "connections", // #37.66: „Corelate"
+      // #37.66: „Corelate"; #37.88: in the groups' order — the record, „Corelate", the two yellow, the fixed column.
+      "cadastral", "address", "related", "classification", "connections", "map", "corners", "streetView",
     ]);
     // Detalii showed the four panels; Street View was a button, off on open.
     expect([...PROP_TILE_REGISTRY.defaults]).toEqual(["cadastral", "corners", "address", "map"]);
@@ -293,7 +294,8 @@ describe("the Property's tiles (Slice #37.19)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { property: { tiles: Record<string, string> } };
     expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
-      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Corelate", "Clasificări", "Conexiuni", // #37.66: three tiles became „Corelate"
+      // #37.66: three tiles became „Corelate"; #37.88: the groups' order.
+      "Date cadastrale", "Adresă", "Corelate", "Clasificări", "Conexiuni", "Hartă", "Puncte de contur", "Street View",
     ]);
   });
 });

@@ -4,7 +4,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { PINNED_TILE_SURFACE, TILE_SURFACE, tileSurface } from "@/lib/ui/tile-surface";
+import { META_TILE_SURFACE, PINNED_TILE_SURFACE, RELATED_TILE_SURFACE, TILE_SURFACE, groupStrip, groupSurface, tileSurface } from "@/lib/ui/tile-surface";
 import { PROP_TILE_REGISTRY } from "@/app/properties/_components/property-tiles";
 
 const ROOT = process.cwd();
@@ -69,5 +69,42 @@ describe("the right column's tiles are tinted (#37.78)", () => {
     const panel = code(read("src", "app", "documents", "_components", "pages-panel.tsx"));
     expect(panel).toContain("surface = TILE_SURFACE,");
     expect(panel).toMatch(/className=\{\[\s*surface,/);
+  });
+});
+
+describe("the four groups' colours (#37.88)", () => {
+  it("each group has its surface, the same box otherwise", () => {
+    expect(groupSurface("record")).toBe(TILE_SURFACE);
+    expect(groupSurface("related")).toBe(RELATED_TILE_SURFACE);
+    expect(groupSurface("meta")).toBe(META_TILE_SURFACE);
+    expect(groupSurface("fixed")).toBe(PINNED_TILE_SURFACE);
+    for (const [surface, name] of [[RELATED_TILE_SURFACE, "related"], [META_TILE_SURFACE, "meta"]] as const) {
+      expect(surface.replace(new RegExp(`card-${name}(-rim)?(-dark)?`, "g"), "x")).toBe(PINNED_TILE_SURFACE.replace(/card-pinned(-rim)?(-dark)?/g, "x"));
+      expect(groupStrip(name)).toContain(`bg-card-${name}`);
+    }
+  });
+
+  it("the four fills share one lightness, and the four rims another, in light and dark (OKLCH L within 0.002)", () => {
+    for (const name of ["card-pinned", "card-related", "card-meta"]) {
+      expect(Math.abs(lightness(token(name)) - lightness(token("card")))).toBeLessThan(0.002);
+      expect(Math.abs(lightness(token(`${name}-rim`)) - lightness(token("card-rim")))).toBeLessThan(0.002);
+      expect(Math.abs(lightness(token(`${name}-dark`)) - lightness("#18181B"))).toBeLessThan(0.002);
+      expect(Math.abs(lightness(token(`${name}-rim-dark`)) - lightness("#27272A"))).toBeLessThan(0.002);
+    }
+  });
+
+  it("every detail screen colours its list tiles and its bar from the registry's groups", () => {
+    for (const file of [
+      ["properties", "_components", "property-detail-tiles.tsx"],
+      ["natural-persons", "_components", "person-detail-tiles.tsx"],
+      ["judicial-persons", "_components", "person-detail-tiles.tsx"],
+      ["documents", "_components", "document-detail-tiles.tsx"],
+    ]) {
+      const src = code(read("src", "app", ...file));
+      for (const tile of ["related", "classification", "connections"]) {
+        expect(src).toMatch(new RegExp(`<ListTile tile="${tile}"[^>]*surface=\\{groupSurface\\(tileGroupOf\\(`));
+      }
+      expect(src).toMatch(/<TileSelector [^>]*groups=\{groupedTiles\(/);
+    }
   });
 });

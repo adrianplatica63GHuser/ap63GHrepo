@@ -21,6 +21,9 @@ const MARK = `${E2E_MARKER}TILES-14`;
 const PAGE_FILE = path.join(process.cwd(), "e2e", "fixtures", "tc-e2e-pagina.png");
 const PINNED = "rgb(246, 240, 254) / rgb(218, 203, 238)";
 const CARD = "rgb(238, 244, 250) / rgb(198, 212, 232)";
+// Slice #37.88: „Clasificări" is the yellow group's, „Corelate" the green one's (TC-TILES-18).
+const META = "rgb(248, 243, 229) / rgb(221, 211, 174)";
+const RELATED = "rgb(235, 247, 237) / rgb(187, 221, 194)";
 
 /** „Its colour": the computed background and top border colour. */
 const colour = (l: Locator) =>
@@ -56,7 +59,8 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       const cls = await showTile(page, "Clasificări");
       const right = ["map", "corners", "street-view"].map((p) => page.locator(`[data-panel="${p}"]`));
       for (const t of right) await expect.poll(() => colour(t), { timeout: 20_000 }).toBe(PINNED);
-      for (const t of [page.locator('[data-panel="cadastral"]'), page.locator('[data-panel="address"]'), cls]) expect(await colour(t)).toBe(CARD);
+      for (const t of [page.locator('[data-panel="cadastral"]'), page.locator('[data-panel="address"]')]) expect(await colour(t)).toBe(CARD);
+      expect(await colour(cls)).toBe(META);
       expect(await page.locator('[data-panel="map"] [data-width-field="map"]').evaluate((e) => getComputedStyle(e).borderTopColor)).toBe("rgb(198, 212, 232)");
       expect(await page.locator('[data-panel="corners"] table').evaluate((t) => getComputedStyle(t.parentElement!).backgroundColor)).toBe("rgb(255, 255, 255)");
 
@@ -65,7 +69,7 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       await page.setViewportSize({ width: 1366, height: 1080 });
       await expect.poll(() => columnUnderLeft(page), { timeout: 20_000 }).toBe(true);
       for (const t of right) expect(await colour(t)).toBe(PINNED);
-      expect(await colour(related)).toBe(CARD);
+      expect(await colour(related)).toBe(RELATED);
 
       // Step 3 — the document at 1920: „Pagini" purple, „Date generale" and „Preț și taxe" the card's.
       await page.setViewportSize({ width: 1920, height: 1080 });

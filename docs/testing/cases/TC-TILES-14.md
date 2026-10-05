@@ -36,8 +36,8 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificări" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Date cadastrale", „Adresă" and „Clasificări": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
-| 2 | Ticks „Corelate" and narrows the window to 1366 px | The column stands under the left area; „Hartă", „Puncte de contur" and „Street View" are still `rgb(246, 240, 254)`, „Corelate" `rgb(238, 244, 250)` |
+| 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificări" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Date cadastrale" and „Adresă": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`; „Clasificări" the yellow group's (#37.88): fill `rgb(248, 243, 229)`, rim `rgb(221, 211, 174)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
+| 2 | Ticks „Corelate" and narrows the window to 1366 px | The column stands under the left area; „Hartă", „Puncte de contur" and „Street View" are still `rgb(246, 240, 254)`, „Corelate" the green group's (#37.88), `rgb(235, 247, 237)` |
 | 3 | Widens the window to 1920 px and opens „TC-TILES-14 Act" | „Pagini": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Date generale" and „Preț și taxe": `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)` |
 
 ## At the end — leaving things as they were found
@@ -68,3 +68,8 @@ is confirmed, and `e2e/tiles/pinned-tint.spec.ts` translates it.
 **2026-10-04 — `automated` (Slice #37.78).** The test runner's full run 20261004T191326Z-31863 on
 a2c414c ran `e2e/tiles/pinned-tint.spec.ts` green with the other 74 (lint, tsc, jest and forms-drift
 green too).
+
+**2026-10-05 — Slice #37.88.** The tiles took their group's colour: „Clasificări" (step 1) is light
+yellow and „Corelate" (step 2) light green, at the card's lightness. Steps 1 and 2 and the spec
+changed together; the purple column, the map's frame and the corner table are as they were.
+TC-TILES-18 holds the four groups.

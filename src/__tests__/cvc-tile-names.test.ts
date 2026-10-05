@@ -80,7 +80,8 @@ describe("a remembered tile choice survives the rename (#37.54)", () => {
 
   it("reads a choice stored under the old keys as the new tiles, in registry order", () => {
     const stored = JSON.stringify(["pages", tabTileKey("Conformitate"), tabTileKey("Instrument"), tabTileKey("Stare juridică")]);
-    expect(parseStoredTiles(stored, reg)).toEqual(["pages", tabTileKey("Preț și taxe"), tabTileKey("Stare juridică"), tabTileKey("Formalități")]);
+    // #37.88: „Pagini" is the purple group's, after the lists.
+    expect(parseStoredTiles(stored, reg)).toEqual([tabTileKey("Preț și taxe"), tabTileKey("Stare juridică"), tabTileKey("Formalități"), "pages"]);
   });
 
   it("maps nothing for a type that does not have the new tab", () => {

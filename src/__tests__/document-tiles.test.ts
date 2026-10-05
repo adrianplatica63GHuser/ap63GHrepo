@@ -50,12 +50,13 @@ describe("HIGHLIGHTS ARE NOT LOST IN A HIDDEN TILE — the marker", () => {
 });
 
 describe("the registry is built from the type on screen", () => {
-  it("a CVC: one tile per notebook tab, in the notebook's order, between the page image and the lists", () => {
+  it("a CVC: one tile per notebook tab, in the notebook's order, after the general data; the lists, then the page image (#37.88's groups)", () => {
     const reg = documentTileRegistry(CVC);
     expect(reg.all).toEqual([
-      "general", "pages",
+      "general",
       "tab:Instrument", "tab:Cadastru", "tab:Stare juridică", "tab:Conformitate",
       "related", "classification", "connections",
+      "pages",
     ]);
     // Nothing stored shows what Detalii showed: the general data, the first notebook page, the page image.
     expect(reg.defaults).toEqual(["general", "pages", "tab:Instrument"]);
@@ -63,7 +64,7 @@ describe("the registry is built from the type on screen", () => {
 
   it("a type with no notebook: one tile for its own fields", () => {
     const reg = documentTileRegistry(PLAN);
-    expect(reg.all).toEqual(["general", "pages", FIELDS_TILE, "related", "classification", "connections"]);
+    expect(reg.all).toEqual(["general", FIELDS_TILE, "related", "classification", "connections", "pages"]);
     expect(reg.defaults).toEqual(["general", "pages", FIELDS_TILE]);
     expect(tileOfTabIndex([], 0)).toBe(FIELDS_TILE);
   });
