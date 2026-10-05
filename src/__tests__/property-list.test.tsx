@@ -37,8 +37,8 @@ describe("the Properties list (Slice #37.61)", () => {
   });
 
   it("draws the shared chooser with its defaults, Poreclă no longer among them (#37.72)", () => {
-    expect(VIEW).toMatch(/const DEFAULT_COLS = \["cadastralNumber", "surfaceAreaMp", "locality"\];/);
-    expect(VIEW).toMatch(/useFieldChooser\(LS_KEY, optionalCols\.map\(\(c\) => c\.key\), MAX_OPT, DEFAULT_COLS\)/);
+    // Slice #37.94: the defaults are Tarla/Solă and Parcelă, in list-columns.ts (list-default-fields.test.ts).
+    expect(VIEW).toContain("useFieldChooser(LIST_COLUMN_CHOICE.property.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.property.defaults)");
     expect(VIEW).toMatch(/<FieldChooser\b/);
   });
 
@@ -81,7 +81,7 @@ describe("a stored choice that names Poreclă (Slice #37.72)", () => {
 
   it("reads back without it — the column is drawn anyway", () => {
     const offered = [...VIEW.matchAll(/\{ key: "(\w+)",\s+label:/g)].map((m) => m[1]);
-    localStorage.setItem("ga40-col-property-v2", JSON.stringify(["nickname", "locality", "tarlaSola", "parcela"]));
-    expect(readStored("ga40-col-property-v2", offered, ["cadastralNumber"])).toEqual(["locality", "tarlaSola", "parcela"]);
+    localStorage.setItem("ga40-col-property-v3", JSON.stringify(["nickname", "locality", "tarlaSola", "parcela"]));
+    expect(readStored("ga40-col-property-v3", offered, ["tarlaSola", "parcela"])).toEqual(["locality", "tarlaSola", "parcela"]);
   });
 });

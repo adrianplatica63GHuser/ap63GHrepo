@@ -36,8 +36,8 @@ describe("the Documents list (Slice #37.62)", () => {
   });
 
   it("draws the shared chooser, Nr. document and Data still shown by default", () => {
-    expect(VIEW).toMatch(/const DEFAULT_COLS = \["nrDocument", "dateDocument"\];/);
-    expect(VIEW).toMatch(/useFieldChooser\(LS_KEY, optionalCols\.map\(\(c\) => c\.key\), MAX_OPT, DEFAULT_COLS\)/);
+    // Slice #37.94: no field ticked by default, in list-columns.ts (list-default-fields.test.ts).
+    expect(VIEW).toContain("useFieldChooser(LIST_COLUMN_CHOICE.document.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.document.defaults)");
     expect(VIEW).toMatch(/<FieldChooser\b/);
     expect(VIEW).not.toMatch(/readStoredCols|setShowColPicker/);
   });

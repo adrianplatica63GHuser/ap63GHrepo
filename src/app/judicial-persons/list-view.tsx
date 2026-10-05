@@ -15,11 +15,12 @@ import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
+import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
-const LS_KEY  = "ga40-col-company-v1";
+// Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.company.
 // Slice #37.71: four, so all four fields can be shown, as on the other lists.
 const MAX_OPT = 4;
 
@@ -210,7 +211,7 @@ export function JudicialPersonListView() {
     // Slice #37.71: the company's contact person — the first, when it has two.
     { key: "contactPerson",       label: t("fields.contactPerson"),       column: "contactPerson" },
   ];
-  const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT);
+  const chooser = useFieldChooser(LIST_COLUMN_CHOICE.company.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.company.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   const COLUMNS: ColumnName[] = ["selectNew", "personName", "personNickname", ...shownCols.map((c) => c.column), "openPreview"];
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.

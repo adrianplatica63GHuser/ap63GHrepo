@@ -17,13 +17,13 @@ import { customFieldOptionsOf, customFieldValueLabel } from "@/lib/documents/cus
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
+import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { dmyFromIso } from "@/lib/persons/person-age";
 
 const PAGE_SIZE   = 15;
-const LS_KEY      = "ga40-col-document-v2";
+// Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.document.
 const MAX_OPT     = 4;
-const DEFAULT_COLS = ["nrDocument", "dateDocument"];
 
 // ---------------------------------------------------------------------------
 // Document-type filter dropdown (URL-based, unchanged from pre-refactor)
@@ -614,7 +614,7 @@ export function DocumentListView({
   // since #21.03, so a column of it would show a value no screen lets a person
   // see or correct.
   //
-  // ⚠️ The keys are persisted per browser (`LS_KEY`); renaming one silently
+  // ⚠️ The keys are persisted per browser (`LIST_COLUMN_CHOICE.document`); renaming one silently
   // drops it from every stored choice.
   const optionalCols: ChooserField[] = [
     { key: "nrDocument",    label: t("table.nrDocument"),    column: "nrDocument" },
@@ -646,7 +646,7 @@ export function DocumentListView({
   // Slice #37.16: the columns shown, in order, each a fixed width from
   // `COLUMN` — a ticked optional column widens the table. A stored key this
   // build has no column for is dropped on read (`useFieldChooser`).
-  const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT, DEFAULT_COLS);
+  const chooser = useFieldChooser(LIST_COLUMN_CHOICE.document.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.document.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   const columns: ColumnName[] = ["selectNew", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "openPreview"];
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.

@@ -18,12 +18,12 @@ import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
+import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 
 const PAGE_SIZE = 15;
-const LS_KEY    = "ga40-col-property-v2";
+// Slice #37.94: the key and the defaults (Tarla/Solă, Parcelă) are LIST_COLUMN_CHOICE.property.
 const MAX_OPT   = 4;
 // Slice #37.72: Poreclă is always shown, so it is no longer a default — or a choice.
-const DEFAULT_COLS = ["cadastralNumber", "surfaceAreaMp", "locality"];
 
 type PropertyListItem = {
   id:               string;
@@ -247,7 +247,7 @@ export function PropertyListView() {
   const optionalCols: ChooserField[] = [
     // ⚠️ The column KEY stays "tarlaSola" while the field beside it is now
     // `tarla`, and that is deliberate rather than an oversight: these keys are
-    // persisted per user in localStorage (`LS_KEY` above), so renaming one
+    // persisted per user in localStorage (`LIST_COLUMN_CHOICE.property`), so renaming one
     // silently drops that column from the saved choices of anyone who had it
     // on. The key is a UI identifier; the field is the data.  (Slice #34.03)
     { key: "tarlaSola",        label: t("table.tarlaSola"),        column: "tarlaSola" },
@@ -282,7 +282,7 @@ export function PropertyListView() {
   // Slice #37.16: the columns shown, in order — checkbox, code, the ticked
   // optionals, open — each a fixed width, so ticking one widens the table. A
   // stored key this build has no column for stays in storage and is not drawn.
-  const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT, DEFAULT_COLS);
+  const chooser = useFieldChooser(LIST_COLUMN_CHOICE.property.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.property.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #37.72: Poreclă always, the first after the checkbox.
   const columns: ColumnName[] = ["selectBadges", "propertyNickname", ...shownCols.map((c) => c.column), "openPreview"];

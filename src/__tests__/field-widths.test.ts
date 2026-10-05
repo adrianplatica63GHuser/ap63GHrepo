@@ -859,9 +859,10 @@ describe("tables at fixed column widths (#37.16)", () => {
   });
 
   it("A STORED COLUMN CHOICE SURVIVES: the „Câmpuri afișate” keys are the ones stored before this slice", () => {
-    expect(APP("natural-persons", "list-view.tsx")).toContain('"ga40-col-person-v2"');
-    expect(APP("properties", "list-view.tsx")).toContain('"ga40-col-property-v2"');
-    expect(APP("documents", "list-view.tsx")).toContain('"ga40-col-document-v2"');
+    // Slice #37.94 moved each key once, on purpose (list-columns.ts); the lists read them from there.
+    expect(APP("natural-persons", "list-view.tsx")).toContain("LIST_COLUMN_CHOICE.person.storageKey");
+    expect(APP("properties", "list-view.tsx")).toContain("LIST_COLUMN_CHOICE.property.storageKey");
+    expect(APP("documents", "list-view.tsx")).toContain("LIST_COLUMN_CHOICE.document.storageKey");
     // The property list's optional keys are still the stored ones, "tarlaSola" included. Slice #37.72:
     // "nickname" is no longer offered — Poreclă is a fixed column — so a stored "nickname" is dropped
     // from the choice (property-list.test.tsx) while the column shows anyway.

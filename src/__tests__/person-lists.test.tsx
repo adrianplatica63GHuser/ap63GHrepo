@@ -40,7 +40,7 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
     expect(src).toMatch(/const MAX_OPT = 4;/);
     for (const f of ["natural-persons", "judicial-persons"]) {
       const view = read("src", "app", f, "list-view.tsx");
-      expect([f, /<FieldChooser\b/.test(view), /useFieldChooser\(LS_KEY,/.test(view)]).toEqual([f, true, true]);
+      expect([f, /<FieldChooser\b/.test(view), /useFieldChooser\(LIST_COLUMN_CHOICE\.(person|company)\.storageKey,/.test(view)]).toEqual([f, true, true]);
     }
   });
 

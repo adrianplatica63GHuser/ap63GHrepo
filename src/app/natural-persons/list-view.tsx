@@ -16,10 +16,11 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
+import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { ageFromDob, dmyFromIso } from "@/lib/persons/person-age";
 
 const PAGE_SIZE = 15;
-const LS_KEY    = "ga40-col-person-v2";
+// Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.person.
 const MAX_OPT   = 4;
 
 type NaturalPersonListItem = {
@@ -140,7 +141,7 @@ export function NaturalPersonListView() {
     { key: "placeOfBirth",     label: t("fields.placeOfBirth"),         column: "birthPlace" },
     { key: "professionalType", label: t("fields.physicalPersonTypeId"), column: "professionalType" },
   ];
-  const chooser = useFieldChooser(LS_KEY, optionalCols.map((c) => c.key), MAX_OPT);
+  const chooser = useFieldChooser(LIST_COLUMN_CHOICE.person.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.person.defaults);
 
   useEffect(() => {
     const handle = setTimeout(() => {
