@@ -16,6 +16,7 @@
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { hideTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-13`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -70,6 +71,8 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
 
       // Step 1 — „Toate": every tile, each where #37.75 puts it.
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      // #37.89: „Interacțiuni"'s right-hand column is TC-PERS-07's subject; here it is unticked, so the row keeps the whole width this case measures.
+      await hideTile(page, "Interacțiuni");
       await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
       await expect(region("Corelate")).toContainText("Nimic corelat încă.", { timeout: 30_000 });
       await page.waitForTimeout(2500); // past the first layout's settling
@@ -122,6 +125,7 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
       await page.getByRole("button", { name: "Implicit", exact: true }).click();
       await expect(region("Conexiuni")).toBeHidden();
       await page.getByRole("button", { name: "Toate", exact: true }).click();
+      await hideTile(page, "Interacțiuni"); // #37.89, as in step 1
       await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => (await boxes(page)).connections, { timeout: 20_000 }).toEqual(rule.connections);
       expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toBeNull();

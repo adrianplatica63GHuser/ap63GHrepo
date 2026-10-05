@@ -12,7 +12,7 @@
 
 Since Slice #37.57 a record's system ID (PPERS…, JPERS…, PROP…, DOC…) is shown in exactly one
 place: the top-right corner of its screen's first panel — „Identitate" on a Natural Person,
-„Persoană juridică" on a Judicial Person, „Date cadastrale" on a Property, „Date generale" on a
+„Identitate" on a Judicial Person (#37.89; „Persoană juridică" before), „Date cadastrale" on a Property, „Date generale" on a
 Document — small, monospaced, on the heading's line, read aloud as „ID sistem …". It is nowhere
 else on the screen, and the four lists show no code at all.
 
@@ -37,7 +37,7 @@ its right end (13 px from the panel's edge, its padding), and the heading stays 
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens the natural person | One code on the screen, in the corner of „Identitate"; its accessible text „ID sistem PPERS…" |
-| 2 | Opens the company | One code, in the corner of „Persoană juridică"; no „ID" field among the panel's boxes |
+| 2 | Opens the company | One code, in the corner of „Identitate"; no „ID" field among the panel's boxes |
 | 3 | Opens the property | One code, in the corner of „Date cadastrale"; no „Cod" field among the panel's boxes |
 | 4 | Opens the document | One code, in the corner of „Date generale" |
 | 5 | Opens Persoane Fizice, Persoane Juridice, Proprietăți — Listă and Acte | Each list's table: no „Cod" column, no code in any row, the record of this case among its rows; no code in the sidebar's „Recente" |
@@ -70,3 +70,5 @@ the file above unchanged; each screen loaded in turn and read with the same scri
   `e2e/ui/system-id.spec.ts` translates it.
 
 **2026-10-02 — `automated` (Slice #37.57).** `e2e/ui/system-id.spec.ts` green in the runner's full `20261002T222558Z-906` (e2e 56), on the commit that also carries the fixes below it; the slice's pictures are its own.
+
+**2026-10-05 — Slice #37.89.** The Judicial Person's first panel is called „Identitate", as the Natural Person's is. Step 2 and the spec read the new name; nothing else moved.

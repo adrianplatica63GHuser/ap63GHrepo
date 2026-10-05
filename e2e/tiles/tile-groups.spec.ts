@@ -14,6 +14,7 @@
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { hideTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-18`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -74,11 +75,13 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
           ["record", ["Identitate", "Carte de identitate", "Contact", "Adrese"]],
           ["related", ["Corelate"]],
           ["meta", ["Clasificări", "Conexiuni"]],
+          ["fixed", ["Interacțiuni"]], // #37.89
         ]);
         await expectForm(page, `/judicial-persons/${jp}`, [
-          ["record", ["Persoană juridică", "Persoane de contact", "Adrese"]],
+          ["record", ["Identitate", "Persoane de contact", "Adrese"]], // #37.89: „Identitate"
           ["related", ["Corelate"]],
           ["meta", ["Clasificări", "Conexiuni"]],
+          ["fixed", ["Interacțiuni"]], // #37.89
         ]);
         await expectForm(page, `/documents/${doc}`, [
           ["record", ["Date generale", "Preț și taxe", "Cadastru și carte funciară", "Stare juridică", "Formalități"]],
@@ -103,6 +106,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
       await page.evaluate((k) => localStorage.removeItem(k), KEY);
       await page.reload();
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await hideTile(page, "Interacțiuni"); // #37.89: TC-TILES-13's layout, without the right-hand column
       const conn = page.getByRole("region", { name: "Conexiuni", exact: true });
       const related = page.getByRole("region", { name: "Corelate", exact: true });
       await expect(related).toContainText("Nimic corelat încă.", { timeout: 30_000 });

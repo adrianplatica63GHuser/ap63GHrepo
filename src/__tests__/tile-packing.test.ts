@@ -175,11 +175,11 @@ describe("the row's lines", () => {
 });
 
 describe("the screens", () => {
-  it("the Natural and the Judicial Person pack their tile row", () => {
+  it("the Natural and the Judicial Person pack their left area too (`TileAreas`, since #37.89's right column)", () => {
     for (const f of ["src/app/natural-persons/_components/person-detail-tiles.tsx", "src/app/judicial-persons/_components/person-detail-tiles.tsx"]) {
       const src = code(read(...f.split("/")));
-      expect(src).toContain("useTilePacking(rowRef");
-      expect(src).toMatch(/<div ref=\{rowRef\}[^>]*data-tile-row/);
+      expect(src).toMatch(/<TileAreas right=\{rightAll\}[^>]*entity=\{[A-Z_]+_TILE_REGISTRY\.entity\}/);
+      expect(src).not.toContain("useTilePacking(");
     }
   });
 

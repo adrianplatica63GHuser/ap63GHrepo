@@ -74,3 +74,5 @@ the case is confirmed, and `e2e/tiles/tiles-drag.spec.ts` translates it.
 **2026-10-04 — `automated` (Slice #37.76).** The test runner's full run 20261004T075105Z-3824 on
 9197df6 ran `e2e/tiles/tiles-drag.spec.ts` green with the other 72 specs (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-05 — Slice #37.89.** A person has a right-hand column now, „Interacțiuni", ticked by default and by „Toate"; at 1920 px it narrows the row this case measures. Right after „Toate" the case unticks „Interacțiuni" (TC-PERS-07 holds the column), so every number above stands. The spec follows.

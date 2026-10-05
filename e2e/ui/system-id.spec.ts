@@ -114,7 +114,7 @@ test.describe("TC-SYSID-01 — ID-ul de sistem într-un singur loc", () => {
       // Steps 1–4 — one code on each screen, in the corner of its first panel.
       await stepScreen(page, `/natural-persons/${np}`, "Identitate", "PPERS");
       await photographPanel(page, "natural-person");
-      await stepScreen(page, `/judicial-persons/${jp}`, "Persoană juridică", "JPERS");
+      await stepScreen(page, `/judicial-persons/${jp}`, "Identitate", "JPERS"); // #37.89: the first panel is „Identitate"
       await photographPanel(page, "judicial-person");
       await stepScreen(page, `/properties/${pr}`, "Date cadastrale", "PROP");
       await photographPanel(page, "property");

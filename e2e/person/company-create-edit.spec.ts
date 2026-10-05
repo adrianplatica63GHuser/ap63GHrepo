@@ -136,8 +136,8 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page.getByRole("heading", { name: NAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
       const tiles = page.getByRole("group", { name: TILE_GROUP });
-      await expect(tiles.getByRole("checkbox")).toHaveCount(6, { timeout: 30_000 }); // #37.63: META INFO is two; #37.67: three lists are „Corelate"
-      for (const tile of ["Persoană juridică", "Persoane de contact", "Adrese"]) {
+      await expect(tiles.getByRole("checkbox")).toHaveCount(7, { timeout: 30_000 }); // #37.63: META INFO is two; #37.67: three lists are „Corelate"; #37.89: „Interacțiuni"
+      for (const tile of ["Identitate", "Persoane de contact", "Adrese", "Interacțiuni"]) {
         await expect(tileBox(page, tile)).toBeChecked();
       }
       for (const tile of ["Corelate", "Clasificări", "Conexiuni"]) {

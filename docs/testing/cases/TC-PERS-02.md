@@ -44,7 +44,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 | 6 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new company |
 | 7 | Looks at the top of the list | A row badged **„Nou!"**, with a code beginning `JPERS`, „DENUMIRE" `TC-PERS-02 Firmă de test SRL`, „PORECLĂ" „—" |
 | 8 | Types `0000000002` into the list's search box | The row is still there — the search matches the CUI, which is what the placeholder's „ID" means. `0000000003` empties the list („Nu există persoane juridice") |
-| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Corelate" (#37.67: „Persoane corelate", „Proprietăți" and „Acte" in one), „Clasificări" and „Conexiuni" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
+| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Identitate" (#37.89; „Persoană juridică" before), „Persoane de contact", „Adrese" and „Interacțiuni" (#37.89) ticked, „Corelate" (#37.67: „Persoane corelate", „Proprietăți" and „Acte" in one), „Clasificări" and „Conexiuni" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
 | 10 | Types `TC-PERS-02 editat` into „Poreclă" and presses „Salvează" at the bottom | **The screen stays on the company**, unlike step 6. The header now reads **„v 1"** with the chip **„2 versiuni"**, and „Poreclă" holds `TC-PERS-02 editat` |
 
 ## At the end — leaving things as they were found
@@ -104,3 +104,5 @@ above keep the old name, as they were run.
 filter any more, and „Câmpuri afișate" offers four fields („Persoană de contact" the fourth), so it
 reads `0/4`. Step 1 now says so and `e2e/person/company-create-edit.spec.ts` follows; TC-PERS-06
 drives the list's new shape.
+
+**2026-10-05 — Slice #37.89.** The company's first tile is „Identitate", as the Natural Person's is, and a fourth box, „Interacțiuni", stands at the right of the bar, ticked by default. Step 9 reads seven tile boxes. The spec follows.

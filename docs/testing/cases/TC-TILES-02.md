@@ -84,3 +84,5 @@ columns as the wrapping row gave them and then stands right under the box above 
 under the tallest box of the line before; a „Previzualizare" opens right under the tile it was
 pressed in. A step that reads where a box stands („on the next line", „under …") reads it that way
 now (TC-TILES-12). The steps above are not rewritten here, as no one has driven them since (FU-292).
+
+**2026-10-05 — Slice #37.89.** The first box and panel are called „Identitate" (they read „Persoană juridică"), and an eighth box, „Interacțiuni", stands at the right of the bar, ticked by default. TC-PERS-07 holds both.

@@ -75,3 +75,5 @@ file changed, so the case is confirmed, and `e2e/tiles/tiles-packed-under.spec.t
 a8974a9 ran `e2e/tiles/tiles-packed-under.spec.ts` green with the other 71 specs (lint, tsc, jest and
 forms-drift green too). Its first full, 20261004T064902Z-20097, had failed TC-PERS-01 and TC-PERS-02
 on the hook's cleanup (the panels' widths removed), fixed in a8974a9.
+
+**2026-10-05 — Slice #37.89.** A person has a right-hand column now, „Interacțiuni", ticked by default and by „Toate"; at 1920 px it narrows the row this case measures. Right after „Toate" (step 1), and with „Conexiuni" on the company (step 3), the case unticks „Interacțiuni" (TC-PERS-07 holds the column), so every number above stands. The spec follows.

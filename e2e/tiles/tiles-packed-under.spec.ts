@@ -80,6 +80,8 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
       // Step 1 — the person; „Toate": every tile, „Corelate" with the twelve contracts.
       await page.goto(`/natural-persons/${person}`);
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      // #37.89: „Interacțiuni"'s right-hand column is TC-PERS-07's subject; here it is unticked, so the row keeps the whole width this case measures.
+      await hideTile(page, "Interacțiuni");
       const region = (name: string) => page.getByRole("region", { name, exact: true });
       await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
       await expect(region("Corelate").locator("li")).toHaveCount(12, { timeout: 30_000 });
@@ -114,6 +116,7 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
       const related = await showTile(page, "Corelate");
       const cls = await showTile(page, "Clasificări");
       await hideTile(page, "Conexiuni");
+      await hideTile(page, "Interacțiuni"); // #37.89, as in step 1
       await expect(related.locator("li")).toHaveCount(1, { timeout: 30_000 });
       await expect.poll(async () => {
         const [r, c] = await Promise.all([boxOf(related), boxOf(cls)]);

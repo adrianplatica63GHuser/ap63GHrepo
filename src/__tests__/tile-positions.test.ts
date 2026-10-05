@@ -190,8 +190,9 @@ describe("the screens", () => {
   });
 
   it("each screen packs its row under its tile choice's entity", () => {
+    // #37.89: the persons draw their row through `TileAreas` too, for „Interacțiuni"'s column.
     for (const f of ["src/app/natural-persons/_components/person-detail-tiles.tsx", "src/app/judicial-persons/_components/person-detail-tiles.tsx"]) {
-      expect(code(read(...f.split("/")))).toMatch(/useTilePacking\(rowRef, \{ entity: [A-Z_]+_TILE_REGISTRY\.entity \}\)/);
+      expect(code(read(...f.split("/")))).toMatch(/<TileAreas[^>]*entity=\{[A-Z_]+_TILE_REGISTRY\.entity\}/);
     }
     expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(leftRef, { fitWidest: true, entity, rightRef })");
     expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{/);
