@@ -93,6 +93,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-10](cases/TC-DOC-10.md) | „Corelate" pe un act: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, un singur „Dezasociază" | document | happy | — | `automated` | 2026-10-03 | `e2e/document/related-tile.spec.ts` |
 | [TC-DOC-11](cases/TC-DOC-11.md) | Antecontractul fără câmpurile făcute de „discover"; contractul de vânzare își păstrează formularul | document | happy | — | `automated` | 2026-10-04 | `e2e/document/antecontract-form.spec.ts` |
 | [TC-DOC-12](cases/TC-DOC-12.md) | O pagină al cărei fișier lipsește arată o imagine discretă, nu o eroare | document | negative | — | `automated` | 2026-10-04 | `e2e/document/missing-page-file.spec.ts` |
+| [TC-DOC-13](cases/TC-DOC-13.md) | Un tip fără formular: fără „Descoperire AI”; superuserul vede unde se face formularul, nu pe o carte de identitate | document | happy | — | `confirmed` | 2026-10-05 | `e2e/document/no-form-line.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/person-document.spec.ts` |
