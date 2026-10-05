@@ -90,6 +90,9 @@ describe("„Clasificări”: Importanță and Relevanță on one row (Slice #37
     expect(provenance).not.toBeNull();
     expect(pair().contains(provenance)).toBe(false);
     expect(pair().compareDocumentPosition(provenance!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Slice #38.01: Proveniență starts on the shared left line, the pair row's two cells do not.
+    expect(provenance).toHaveAttribute("data-aligned-left");
+    for (const s of sections) expect(s).not.toHaveAttribute("data-aligned-left");
   });
 
   it("the save button is on „Istoric”'s line, after the title (the line's right end), and nowhere else", async () => {

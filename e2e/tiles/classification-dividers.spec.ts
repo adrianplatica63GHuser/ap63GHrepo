@@ -1,6 +1,6 @@
 /**
- * Case:   TC-TILES-16 — „Clasificări": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei
- * Source: docs/testing/cases/TC-TILES-16.md, „Last green" 2026-10-04
+ * Case:   TC-TILES-16 — „Clasificări": linii între cele trei, Importanță și Relevanță fiecare în celula ei, Proveniență pe linia Importanței
+ * Source: docs/testing/cases/TC-TILES-16.md, „Last green" 2026-10-04 (steps 1 and 5 follow Slice #38.01)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -26,6 +26,10 @@ async function read(tile: Locator) {
     const v = pair.querySelector<HTMLElement>('[data-divider="vertical"]')!;
     const sel = cells.map((c) => c.querySelector("select")!.getBoundingClientRect());
     const cr = cells.map((c) => c.getBoundingClientRect());
+    // Slice #38.01: Proveniență's title, select and „Istoric" against Importanță's select's left edge.
+    const prov = t.querySelector<HTMLElement>("[data-aligned-left]")!;
+    const provLefts = [prov.querySelector("h3")!, prov.querySelector("select")!, prov.querySelector("[data-history-line] h4")!]
+      .map((e) => e.getBoundingClientRect().left);
     const vr = v.getBoundingClientRect();
     const lines = [...t.querySelectorAll<HTMLElement>("[data-divider]")].map((d) => {
       const r = d.getBoundingClientRect();
@@ -39,7 +43,9 @@ async function read(tile: Locator) {
     });
     return {
       level: Math.round(sel[0].top) === Math.round(sel[1].top),
-      centred: sel.every((s, i) => Math.abs((s.left + s.right) / 2 - (cr[i].left + cr[i].right) / 2) <= 1),
+      // Slice #38.01: each select 0.75 × its centred gap from its cell's left edge — (cell − select) × 3/8.
+      shifted: sel.every((s, i) => Math.abs((s.left - cr[i].left) - 0.375 * (cr[i].width - s.width)) <= 1),
+      aligned: provLefts.every((x) => Math.abs(x - sel[0].left) <= 1),
       between: vr.left >= cr[0].right && vr.right <= cr[1].left,
       spans: Math.abs(vr.top - Math.min(cr[0].top, cr[1].top)) <= 1 && Math.abs(Math.max(cr[0].bottom, cr[1].bottom) - vr.bottom) <= 1,
       kinds: lines.map((l) => l.kind),
@@ -50,12 +56,12 @@ async function read(tile: Locator) {
 }
 
 async function steps(page: Page, url: string, olderToo: boolean) {
-  // Step 1 — one version: two lines; the two cells centred, level; inside the padding.
+  // Step 1 — one version: two lines; the two selects shifted, level; Proveniență on Importanță's line; inside the padding.
   await page.goto(url);
   const tile = await showTile(page, "Clasificări");
   await expect(tile.locator("[data-classification-pair] select")).toHaveCount(2, { timeout: 30_000 });
   const one = await read(tile);
-  expect(one).toMatchObject({ level: true, centred: true, between: true, spans: true, kinds: ["vertical", "horizontal"], inside: true });
+  expect(one).toMatchObject({ level: true, shifted: true, aligned: true, between: true, spans: true, kinds: ["vertical", "horizontal"], inside: true });
   expect(one.looks).toHaveLength(1);
 
   // Step 2 — an Importanță value, „Salvează": the version controls, a third line of the same look.
@@ -63,15 +69,15 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   await tile.getByRole("button", { name: "Salvează", exact: true }).click();
   await expect(tile.getByRole("button", { name: "Versiunea anterioară", exact: true })).toBeVisible({ timeout: 15_000 });
   const two = await read(tile);
-  expect(two).toMatchObject({ level: true, centred: true, between: true, kinds: ["horizontal", "vertical", "horizontal"], inside: true });
+  expect(two).toMatchObject({ level: true, shifted: true, aligned: true, between: true, kinds: ["horizontal", "vertical", "horizontal"], inside: true });
   expect(two.looks).toEqual(one.looks);
 
-  // Step 3 — the older version: the same three lines, the cells centred and level.
+  // Step 3 — the older version: the same three lines, the selects shifted and level, Proveniență on the line.
   if (olderToo) {
     await tile.getByRole("button", { name: "Versiunea anterioară", exact: true }).click();
     await expect(tile.getByRole("button", { name: "Marchează ca verificat" })).toHaveCount(0);
     const older = await read(tile);
-    expect(older).toMatchObject({ level: true, centred: true, between: true, kinds: ["horizontal", "vertical", "horizontal"], inside: true });
+    expect(older).toMatchObject({ level: true, shifted: true, aligned: true, between: true, kinds: ["horizontal", "vertical", "horizontal"], inside: true });
     expect(older.looks).toEqual(one.looks);
   }
 }
@@ -85,6 +91,13 @@ test.describe("TC-TILES-16 — „Clasificări”: liniile și cele două celule
     const doc = await createSaleContract(page.request, `${MARK} Act`);
     try {
       await steps(page, `/natural-persons/${person}`, true);
+      // Step 5 — the person at 1366 px: the selects shifted, Proveniență on Importanță's line.
+      await page.setViewportSize({ width: 1366, height: 900 });
+      await page.goto(`/natural-persons/${person}`);
+      const narrow = await showTile(page, "Clasificări");
+      await expect(narrow.locator("[data-classification-pair] select")).toHaveCount(2, { timeout: 30_000 });
+      expect(await read(narrow)).toMatchObject({ level: true, shifted: true, aligned: true, between: true, inside: true });
+      await page.setViewportSize({ width: 1920, height: 1200 });
       // Step 4 — the document, steps 1–2.
       await steps(page, `/documents/${doc}`, false);
     } finally {
