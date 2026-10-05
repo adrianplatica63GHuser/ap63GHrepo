@@ -379,7 +379,7 @@
       "persons": "Persoane",
       "documents": "Acte",
       "related": "Corelate",
-      "classification": "Clasificare subiectivă",
+      "classification": "Clasificări",
       "connections": "Conexiuni"
     },
     "tabs": {
@@ -874,7 +874,7 @@
       "saving": "Se salvează…",
       "saved": "✓ Salvat",
       "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
-      "sectionClassification": "Clasificare subiectivă",
+      "sectionClassification": "Clasificări",
       "sectionConnections": "Conexiuni",
       "hideAdd": "Ascunde",
       "about": "Despre „{title}”"
@@ -1087,7 +1087,7 @@
       "contact": "Contact",
       "addresses": "Adrese",
       "related": "Corelate",
-      "classification": "Clasificare subiectivă",
+      "classification": "Clasificări",
       "connections": "Conexiuni"
     }
   },
@@ -1195,7 +1195,7 @@
       "contactPersons": "Persoane de contact",
       "addresses": "Adrese",
       "related": "Corelate",
-      "classification": "Clasificare subiectivă",
+      "classification": "Clasificări",
       "connections": "Conexiuni"
     },
     "tabs": {
@@ -1566,7 +1566,7 @@
       "properties": "Proprietăți",
       "associations": "Acte corelate",
       "related": "Corelate",
-      "classification": "Clasificare subiectivă",
+      "classification": "Clasificări",
       "connections": "Conexiuni"
     },
     "tabs": {

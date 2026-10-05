@@ -746,7 +746,7 @@ export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.pr
  *
  * Slice #37.63: META INFO (5 units, two columns of sections) became two tiles,
  * each the fewest units that hold it once the explanations went into bubbles:
- * „Clasificare subiectivă" 2 — a dropdown and „Marchează ca verificat" side by
+ * „Clasificări" 2 — a dropdown and „Marchează ca verificat" side by
  * side, the widest being Proveniență's „Fișier de coordonate (.txt)" — and
  * „Conexiuni" 3 — the tag box (`metaTag`, XL) and its „Adaugă" button.
  */
@@ -814,7 +814,7 @@ export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "view", "
 export const RELATED_UNITS = oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true);
 
 /**
- * „Clasificare subiectivă" with Importanță and Relevanță on one row  (Slice #37.68).
+ * „Clasificări" with Importanță and Relevanță on one row  (Slice #37.68).
  *
  * Each of the two is its select and „Marchează ca verificat" side by side, and
  * the two stand 1rem apart (`gap-4`). Measured on 2026-10-04 in the desktop

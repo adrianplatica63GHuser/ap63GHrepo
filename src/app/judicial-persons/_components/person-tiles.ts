@@ -42,7 +42,7 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// Slice #37.63: META INFO is two tiles — „Clasificări" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
 // Slice #37.67: the association screens' „Anulează" (?tab=related, properties, document) lands on „Corelate".
 export const JP_TILE_OF_TAB: Readonly<Record<string, JpTile | readonly JpTile[] | undefined>> = {

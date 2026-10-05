@@ -72,7 +72,7 @@ type Props = {
   calculationSourcePath?: string;
   /**
    * Slice #37.63 — which of the two tiles this is. META INFO became two tiles:
-   * „Clasificare subiectivă" (Importanță, Relevanță, Proveniență — with their
+   * „Clasificări" (Importanță, Relevanță, Proveniență — with their
    * versions and the Save button) and „Conexiuni" (Etichete, Grupuri, Ștampile,
    * Vezi și). Both read the record's metadata through the same query key, so it
    * is fetched once. Omitted, both parts are drawn, one under the other.

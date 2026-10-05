@@ -7,7 +7,7 @@
  *   Date generale · Pagini · one tile per notebook tab of the type (or, for a
  *   type with none, one tile for its own fields) · Părți (a Certificat de
  *   Moștenitor only) · Corelate (#37.65: Persoane, Proprietăți and Asocieri in
- *   one) · Clasificare subiectivă · Conexiuni (#37.63: META INFO in two)
+ *   one) · Clasificări · Conexiuni (#37.63: META INFO in two)
  *
  * Unlike the other three screens, the SET OF TILES DEPENDS ON THE TYPE. A
  * Contract de vânzare-cumpărare has Instrument, Cadastru, Stare juridică and
@@ -79,7 +79,7 @@ export function tileOfTabIndex(tabs: readonly string[], index: number): string {
   return tabs.length > 0 ? tabTileKey(tabs[Math.min(Math.max(index, 0), tabs.length - 1)]) : FIELDS_TILE;
 }
 
-// Slice #37.63: META INFO („metadata") is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// Slice #37.63: META INFO („metadata") is two tiles — „Clasificări" and „Conexiuni".
 // Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate" („related").
 export const DOCUMENT_LIST_TILES = ["related", "classification", "connections"] as const;
 
@@ -141,7 +141,7 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// Slice #37.63: META INFO is two tiles — „Clasificări" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
 // Slice #37.65: the association screens' „Înapoi" (?tab=persons, properties, related) all land on „Corelate".
 export const DOC_TILE_OF_TAB: Readonly<Record<string, string | readonly string[] | undefined>> = {

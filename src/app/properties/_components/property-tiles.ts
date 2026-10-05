@@ -14,7 +14,7 @@
  *   corners it is given). AN UNTICKED MAP COSTS NOTHING: neither is mounted
  *   while unticked, so neither makes a Google Maps request of its own.
  * - LIST tiles — Corelate (#37.66: „Proprietăți corelate", Persoane and Acte
- *   in one), Clasificare subiectivă and Conexiuni (META INFO until #37.63).
+ *   in one), Clasificări and Conexiuni (META INFO until #37.63).
  *
  * Nothing stored shows what Detalii showed: the cadastral data, the corners,
  * the address and the map. Street View was a button there, off on open; it is
@@ -59,7 +59,7 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
  * `?tab=` still works: the tab it named adds its tile for this visit and
  * scrolls to it. The association screens' „Înapoi" links carry these values.
  */
-// Slice #37.63: META INFO is two tiles — „Clasificare subiectivă" and „Conexiuni".
+// Slice #37.63: META INFO is two tiles — „Clasificări" and „Conexiuni".
 // A browser that stored „metadata" opens with both ticked; `?tab=metadata` adds both.
 // Slice #37.66: the association screens' „Anulează" (?tab=related, persons, document) lands on „Corelate".
 export const PROP_TILE_OF_TAB: Readonly<Record<string, PropTile | readonly PropTile[] | undefined>> = {

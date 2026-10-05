@@ -31,7 +31,7 @@ export interface TileRegistry<K extends string> {
    * A tile whose key changed, old key → current key, so a choice stored under
    * the old one is read as the new one (Slice #37.54: the CVC's renamed tiles).
    * Since #37.63 an old key may stand for SEVERAL: META INFO („metadata") became
-   * „Clasificare subiectivă" and „Conexiuni", and a browser that showed it shows both.
+   * „Clasificări" and „Conexiuni", and a browser that showed it shows both.
    */
   renamed?: Readonly<Record<string, K | readonly K[]>>;
   /**

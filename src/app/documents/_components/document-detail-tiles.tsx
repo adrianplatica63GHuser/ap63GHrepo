@@ -26,7 +26,7 @@
  * `unitRowStyle("document")`: Date generale 3, Pagini 4 (its 40rem is exactly
  * four units), each notebook tile ONE frame as wide as its widest panel, and
  * the list tiles one line a row since #37.64 — „Corelate" 4 (#37.65: Persoane,
- * Proprietăți and „Acte corelate" in one), Clasificare subiectivă 2, Conexiuni
+ * Proprietăți and „Acte corelate" in one), Clasificări 2, Conexiuni
  * 3. Every tile carries
  * `order`, its place in the registry, because the form's tiles and the page's
  * list tiles come from two components and the row must read in one order.

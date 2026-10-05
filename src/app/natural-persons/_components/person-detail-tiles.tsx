@@ -6,7 +6,7 @@
  * The tab row (Detalii, Asocieri, Proprietăți, Acte, META INFO) is gone. A row
  * of checkboxes picks the tiles instead — Identitate, Carte de identitate,
  * Contact, Adrese, Corelate (#37.67: Persoane, Proprietăți and Acte in one),
- * Clasificare subiectivă, Conexiuni — any combination at
+ * Clasificări, Conexiuni — any combination at
  * once, with „Toate" and „Implicit". The choice is remembered per browser
  * (`useTileChoice`); with nothing stored the screen shows the four form tiles,
  * which is exactly what the Detalii tab showed.

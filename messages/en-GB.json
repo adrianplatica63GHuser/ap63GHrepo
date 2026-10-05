@@ -379,7 +379,7 @@
       "persons": "Persons",
       "documents": "Documents",
       "related": "Related",
-      "classification": "Subjective classification",
+      "classification": "Classifications",
       "connections": "Connections"
     },
     "tabs": {
@@ -874,7 +874,7 @@
       "saving": "Saving…",
       "saved": "✓ Saved",
       "saveErrorSession": "Your session expired — please sign in again and retry.",
-      "sectionClassification": "Subjective classification",
+      "sectionClassification": "Classifications",
       "sectionConnections": "Connections",
       "hideAdd": "Hide",
       "about": "About “{title}”"
@@ -1087,7 +1087,7 @@
       "contact": "Contact",
       "addresses": "Addresses",
       "related": "Related",
-      "classification": "Subjective classification",
+      "classification": "Classifications",
       "connections": "Connections"
     }
   },
@@ -1195,7 +1195,7 @@
       "contactPersons": "Contact Persons",
       "addresses": "Addresses",
       "related": "Related",
-      "classification": "Subjective classification",
+      "classification": "Classifications",
       "connections": "Connections"
     },
     "tabs": {
@@ -1566,7 +1566,7 @@
       "properties": "Properties",
       "associations": "Related documents",
       "related": "Related",
-      "classification": "Subjective classification",
+      "classification": "Classifications",
       "connections": "Connections"
     },
     "tabs": {

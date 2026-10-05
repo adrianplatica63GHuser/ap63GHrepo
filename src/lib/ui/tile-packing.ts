@@ -4,7 +4,7 @@
  * The tile row used to be a flex-wrap: tiles in the registry's order wrapped
  * into lines, each line as tall as its tallest tile, so a short tile left a
  * hole under it and the next line started under the tallest — on a Natural
- * Person „Clasificare subiectivă" waited under „Corelate" instead of standing
+ * Person „Clasificări" waited under „Corelate" instead of standing
  * under the two address boxes; on a company a preview opened far below the
  * „Corelate" it came from (Adrian, 2026-10-03).
  *
@@ -18,7 +18,7 @@
  * ⚠️ **NOT „THE HIGHEST FREE PLACE ANYWHERE".** That reading of #37.75's
  * header moves a box to whatever column ends highest: at 1920 px it put
  * „Adresă domiciliu" under „Contact" on the far right, „Adresă
- * corespondență" back on the left, and „Clasificare subiectivă" under the
+ * corespondență" back on the left, and „Clasificări" under the
  * identity card rather than under the address boxes — the opposite of the
  * header's own expected result. Measured on #37.75's synthetic person, and
  * `tile-packing.test.ts` keeps both fixtures.
