@@ -928,6 +928,11 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   id:        uuid("id").primaryKey().defaultRandom(),
   key:       text("key").notNull().unique(),
   name:      text("name").notNull(),
+  // Slice #37.95 (migration_092): what the Documents list's „Tip" shows — an
+  // abbreviation (CVC, PAD…) or the name's meaningful last words. NULL is
+  // normal: the list then shows the rule's (src/lib/documents/type-short-name.ts).
+  // A partial unique index on lower(btrim(short_name)) refuses a duplicate.
+  shortName: text("short_name"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
