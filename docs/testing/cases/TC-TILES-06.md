@@ -46,7 +46,7 @@ Nothing else is written: a preview only reads.
 |---|---|---|
 | 1 | „Persoane fizice", searches `TC-TILES-06` | The three persons. Each row's last column has „Deschide" and „Previzualizare" |
 | 2 | „Previzualizare" on „Ion TC-TILES-06-A" | Still on the list. A tile with a dashed border, beside the table and level with its top, headed with his name, his `PPERS…` code and „Numai citire". It lists Nume, Prenume, CNP, Data nașterii and Locul nașterii (empty ones as „—") and has „Deschide" and „Închide". **No box, no „Modifică", nothing else** |
-| 3 | „Previzualizare" on „Maria TC-TILES-06-B" | A second preview after the first: beside the table if the window has room, otherwise below it |
+| 3 | „Previzualizare" on „Maria TC-TILES-06-B" | A second preview under the first, in the same column: beside the table if the window has room for the table and one preview, otherwise both below it (#38.05, TC-TILES-19) |
 | 4 | „Previzualizare" on „Dan TC-TILES-06-C" | Still two: **Ion's is gone**, and Maria's and Dan's are there, in that order |
 | 5 | „Previzualizare" on „Maria TC-TILES-06-B" again | Nothing changes |
 | 6 | „Închide" on Maria's preview | Hers closes; Dan's stays |
@@ -82,3 +82,7 @@ persons, a property shows Nr. parcelă, Tarla/Solă and Suprafață on one row, 
 funciară and Nr. cadastral, and a document shows no „Tip document" and no second „Etichetă scurtă" —
 Subiect, Nr. document and Data on one row. TC-TILES-11 drives those four. This case was not driven
 again, so its steps are left as last driven; the next run corrects them.
+
+**2026-10-05 — note from Slice #38.05, not a run.** A list's open previews now stand in one column
+beside the table, the second under the first; step 3 says so. TC-TILES-19 drives it on Proprietăți.
+This case was not driven again.
