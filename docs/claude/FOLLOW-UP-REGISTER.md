@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-05, Slice #37.92 — 306 entries. Rows are status, columns are impact.
+As of 2026-10-05, Slice #38.03 — 307 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 68 | 67 | 16 | 168 |
+| open | 17 | 68 | 68 | 16 | 169 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 26 | 3 | 122 |
 | ignored | 4 | 3 | 3 | 2 | 12 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 58 | 130 | 97 | 21 | 306 |
+| **total** | 58 | 130 | 98 | 21 | 307 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -390,3 +390,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-304 | 2026-10-05 #37.86 | recommendation | AI | The engine offers a repeating group as separate fields: on 13 CVCs „CNP" became 22 clusters (up to 3 from one deed) and the IDs 26, so a save mints `cnp`, `cnp_2`, … — and parties, property, title and certificates, which the CVC keeps as associations, are proposed as flat fields. | Report.37.86.md §3, §5 | user | M | open | Mark a cluster repeated when one sample contributes twice, merge clusters with one normalised caption, and show party/property/title/certificate captions as „captured by an association", never as fields. | 2026-10-05 |
 | FU-305 | 2026-10-05 #37.86 | recommendation | AI | The engine's labels and hints miss the bar #36.01's form met: 5 of 25 labels at 50 % are sentence fragments the screen warns about but saves, none is the short official term, and 20 hints read „printed on the document as '…'" rather than a value's shape. | Report.37.86.md §4; src/lib/documents/field-distillation.ts distilledLabel, distilledHint | user | S | open | Refuse to save a flagged label or one ending in „nr."/„de" until edited; derive a shape hint from the run's values; show fill-rate and value consistency per row. | 2026-10-05 |
 | FU-306 | 2026-10-05 #37.92 | next-slice idea | Map | Nothing on screen opens the whole map on a Property any more: #37.38 sent `/properties/map?focus=<id>&z=<zoom>` from the sidebar's „Proprietăți — Hartă" pressed on a Property's form, and #37.92 made the sidebar's two property items one, so the map page's focus and blink are reached only by typing the address. | src/lib/geo/map-focus.ts propertyMapHref (now unused outside its test); src/app/properties/map/property-map.tsx `?focus=`; TC-MAP-01 rewritten to type the address | user | S | open | A door on the Property itself — e.g. a „Hartă completă" beside the „Hartă" tile's „Hartă extinsă", sending `propertyMapHref(pathname)` after the unsaved-changes question — and TC-MAP-01's old steps 4–6 back. | 2026-10-05 |
+| FU-307 | 2026-10-05 #38.03 20261005T202219Z-23160 | tooling | Tooling & CI | On the push of 5406f1e the `DB rebuild` workflow (#217) sat queued for about 15 minutes and was then cancelled by GitHub without running a step, while `CI` (#334) on the same commit passed; the runner's `ci` step reports that as a failure with „log not available", and nothing says why the job never started (a GitHub queue limit, or the account's Actions minutes, are the candidates). | .test-runner/logs/20261005T202219Z-23160/ci.log (queued 20:22–20:37 UTC, then `failure`, job „rebuild" cancelled); https://github.com/adrianplatica63GHuser/ap63GHrepo/actions/runs/37369305935 | dev | XS | open | Unverified: whether the Actions minutes or a queue limit cancelled it needs the repository's Actions settings, which only Adrian can open. If it recurs, have `ciVerdict` name a job cancelled before its first step as its own verdict rather than a red run. | 2026-10-05 |
