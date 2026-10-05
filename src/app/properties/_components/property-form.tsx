@@ -32,6 +32,7 @@ import {
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
 import { ArrowLeft, ArrowRight, Camera, Minimize, Pencil, Save, Trash2, X } from "lucide-react";
+import type { PropertyTypeProfile } from "@/lib/properties/type-profile";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -182,6 +183,13 @@ type Props = {
   // controls into, so they render centered on the property-title line.
   versionNavSlot?:   HTMLElement | null;
   /**
+   * Slice #38.03: told the type chosen on the form NOW — its name and its three
+   * flags, or null with none — so the page's heading names it and explains
+   * what it shows (and #38.04's tile boxes follow it). Called again whenever
+   * the choice, or the type's flags, change.
+   */
+  onTypeChange?:     (type: PropertyTypeProfile | null) => void;
+  /**
    * Slice #37.19: the screen's tiles, when the form is drawn as tiles (the
    * saved property's page). Absent on „Adaugă proprietate", which keeps its
    * plain panel row. The Natural Person's rules (#37.17), plus one of this
@@ -248,6 +256,7 @@ export function PropertyForm({
   initialCorners = [],
   onBigMapChange,
   versionNavSlot,
+  onTypeChange,
   tiles,
 }: Props) {
   const t       = useTranslations("property");
@@ -570,6 +579,24 @@ export function PropertyForm({
     hideAddress:      selectedType ? !selectedType.showAddress      : false,
     hideStreetView:   selectedType ? !selectedType.showStreetView   : false,
   };
+
+  // Slice #38.03: the type on the form now, reported to the page's heading.
+  const typeProfile = useMemo<PropertyTypeProfile | null>(
+    () =>
+      selectedType
+        ? {
+            id: selectedType.id,
+            name: selectedType.name,
+            showTarlaParcela: selectedType.showTarlaParcela,
+            showAddress: selectedType.showAddress,
+            showStreetView: selectedType.showStreetView,
+          }
+        : null,
+    [selectedType],
+  );
+  useEffect(() => {
+    onTypeChange?.(typeProfile);
+  }, [onTypeChange, typeProfile]);
 
   // Slice #19.02: close the Street View panel when the selected type hides it.
   useEffect(() => {

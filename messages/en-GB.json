@@ -161,6 +161,15 @@
     }
   },
   "property": {
+    "heading": {
+      "typeAbout": "About the property type",
+      "typeTileQuoted": "“{name}”",
+      "typeShownHidden": "This type shows {shown}; it does not show {hidden}.",
+      "typeShownOnly": "This type shows {shown}.",
+      "typeHiddenOnly": "This type does not show {hidden}.",
+      "typeTarlaShown": "Tarla/Solă and Parcelă appear in “{cadastral}”.",
+      "typeTarlaHidden": "Tarla/Solă and Parcelă do not appear in “{cadastral}”."
+    },
     "listTitle": "Properties",
     "searchPlaceholder": "search by code, nickname, cadastral no., carte funciara, tarla or parcela",
     "chooseFields": "Choose fields",

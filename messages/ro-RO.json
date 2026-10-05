@@ -161,6 +161,15 @@
     }
   },
   "property": {
+    "heading": {
+      "typeAbout": "Despre tipul proprietății",
+      "typeTileQuoted": "„{name}”",
+      "typeShownHidden": "Pentru acest tip se afișează {shown}; nu se afișează {hidden}.",
+      "typeShownOnly": "Pentru acest tip se afișează {shown}.",
+      "typeHiddenOnly": "Pentru acest tip nu se afișează {hidden}.",
+      "typeTarlaShown": "Tarla/Solă și Parcelă apar în „{cadastral}”.",
+      "typeTarlaHidden": "Tarla/Solă și Parcelă nu apar în „{cadastral}”."
+    },
     "listTitle": "Proprietăți",
     "searchPlaceholder": "caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă",
     "chooseFields": "Câmpuri afișate",

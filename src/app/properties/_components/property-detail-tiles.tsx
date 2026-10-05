@@ -25,11 +25,13 @@
  * Adresă and the lists to their left (`PROP_TILE_REGISTRY.placement`,
  * `<TileAreas>`).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 // `Map` shadows the global Map constructor, hence the alias.
 import { Map as MapIcon } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
+import { sameProfile, type PropertyTypeProfile } from "@/lib/properties/type-profile";
+import { PropertyTypeHeading } from "./property-type-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { PropertyForm } from "./property-form";
 import { PropertyRelatedTile } from "./property-related-tile";
@@ -84,6 +86,12 @@ export function PropertyDetailTiles({
   // Slice #18.UX.04: the details form portals its version-nav controls into
   // this header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
+  // Slice #38.03: the type on the form now — the heading names it and explains it.
+  const [type, setType] = useState<PropertyTypeProfile | null>(null);
+  const onTypeChange = useCallback(
+    (next: PropertyTypeProfile | null) => setType((prev) => (sameProfile(prev, next) ? prev : next)),
+    [],
+  );
 
   // The tile a `?tab=` named is drawn from the first render; bring it into view.
   useEffect(() => {
@@ -114,6 +122,7 @@ export function PropertyDetailTiles({
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center">
         <RecordHeading icon={MapIcon} name={propertyName} />
+        <PropertyTypeHeading type={type} />
         <div
           ref={setNavSlot}
           className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
@@ -132,6 +141,7 @@ export function PropertyDetailTiles({
             initialValues={initialValues}
             initialCorners={initialCorners}
             versionNavSlot={navSlot}
+            onTypeChange={onTypeChange}
             tiles={{
               shown: choice.shown,
               labels,
