@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-01 |
+| **Last green** | 2026-10-05 |
 
 ## What this proves
 
@@ -79,3 +79,6 @@ button, so a second `hover()` moved nothing. The spec now moves away first. Gree
 between „Desenează" and „HARTĂ" „SATELIT"; „Arată Street View" left the tile too (its checkbox opens
 it). Step 1 says where the toggle now is; steps 2–3 press the same button. The spec finds it on the
 page, so it follows unchanged but for its comment.
+
+**2026-10-05 — `automated` (Slice #38.09).** The test runner's full run 20261005T232754Z-19458 on
+68fbe1a ran the changed spec green with the other 91 (lint, tsc, jest and forms-drift green too).

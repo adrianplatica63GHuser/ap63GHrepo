@@ -160,7 +160,7 @@ fixed fixture where the existing one will do.
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
 | [TC-ICON-02](cases/TC-ICON-02.md) | Creionul, Salvarea și Coșul pe o proprietate: modificată, păstrată, ștearsă | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-actions.spec.ts` |
 | [TC-ICON-03](cases/TC-ICON-03.md) | „Asociază” și „Dezasociază” cu pictogramă și cuvinte, și un pas înapoi printre versiuni | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-associations.spec.ts` |
-| [TC-ICON-04](cases/TC-ICON-04.md) | Unghiurile pornite și oprite, un punct adăugat și mutat mai sus, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-property-tools.spec.ts` |
+| [TC-ICON-04](cases/TC-ICON-04.md) | Unghiurile pornite și oprite, un punct adăugat și mutat mai sus, cu pictograme | ui | happy | — | `automated` | 2026-10-05 | `e2e/ui/icon-property-tools.spec.ts` |
 | [TC-ICON-05](cases/TC-ICON-05.md) | O etichetă redenumită cu creionul, două fuzionate, o ștampilă aplicată, cu pictograme | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-admin.spec.ts` |
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |

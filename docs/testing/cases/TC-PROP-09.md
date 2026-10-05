@@ -81,3 +81,6 @@ TC-ICON-04's, TC-MAP-01's and TC-TILES-14's).
 **2026-10-05 — Slice #38.09.** „Arată Unghiuri" stands on the map's top row, between „Desenează" and
 „HARTĂ" „SATELIT", on the tile's map and on the full-screen one; the corners tile keeps only „+ Adaugă
 punct". Steps 1–3 name it. The spec follows.
+
+**2026-10-05 — `automated` (Slice #38.09).** The test runner's full run 20261005T232754Z-19458 on
+68fbe1a ran the changed spec green with the other 91 (lint, tsc, jest and forms-drift green too).
