@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -64,3 +64,6 @@ file: every step as written. Step 4: „Stare plată" chosen — the value list 
 ticked: „2 tipuri afișate", italic, the key back on „Toate" and disabled, the value list gone. The
 other steps as in run 1, word for word. Both deleted (204, 204). Nothing in the file needed
 correcting, so the case is confirmed, and `e2e/document/document-type-filter.spec.ts` translates it.
+
+**2026-10-05 — `automated` (Slice #38.07).** The test runner's full run 20261005T223454Z-10117 on
+bc8e7c6 ran `e2e/document/document-type-filter.spec.ts` green with the other 91 (lint, tsc, jest and forms-drift green too).

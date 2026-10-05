@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-04 |
+| **Last green** | 2026-10-05 |
 
 ## What this proves
 
@@ -155,3 +155,6 @@ closed-list fields, and is drawn disabled otherwise. So step 6 reads it disabled
 narrows to „Contract de Vânzare" before reading the fields, step 7 clears the search first (as the
 spec always did), and step 9 sees the row still drawn, disabled, for „Adeverință". TC-DOC-16 drives
 the rule. The spec follows.
+
+**2026-10-05 — `automated` (Slice #38.07).** The test runner's full run 20261005T223454Z-10117 on
+bc8e7c6 ran the changed spec green with the other 91 (lint, tsc, jest and forms-drift green too).
