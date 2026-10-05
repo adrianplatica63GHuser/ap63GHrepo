@@ -10,7 +10,7 @@
  *   - The widest choice is selected with Playwright's `selectOption`, a real
  *     change; nothing is saved, as in the case.
  *   - Slice #37.53's pictures, not steps of the case: the CVC's four tiles
- *     („Preț și taxe", „Cadastru și carte funciară", „Stare juridică",
+ *     („Preț și taxe", „Cadastru și CF", „Stare juridică",
  *     „Formalități" since #37.54) at 1366 and 1920 px, into
  *     `playwright-report/template-dropdowns/`, the page from „Preț și taxe"
  *     down, the sidebar's „Recente" list painted over.
@@ -64,7 +64,8 @@ async function clipped(page: Page): Promise<string[]> {
 
 /** Boxes per row in the panel headed `name`, top to bottom. */
 async function boxesPerRow(page: Page, name: string): Promise<number[]> {
-  const panel = page.locator("section").filter({ has: page.getByRole("heading", { name, exact: true }) }).last();
+  // #37.90: inside a tile a panel's heading is its name in square brackets.
+  const panel = page.locator("section").filter({ has: page.getByRole("heading", { name: `[${name}]`, exact: true }) }).last();
   return panel.locator("[data-width-field]").evaluateAll((els) => {
     const tops = new Map<number, number>();
     for (const el of els) {

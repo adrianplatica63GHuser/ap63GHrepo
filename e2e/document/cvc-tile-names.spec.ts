@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-05 — Filele și panourile unui CVC, fiecare cu un singur nume; „Taxă timbru și publicitate" ultima
- * Source: docs/testing/cases/TC-DOC-05.md, „Last green" 2026-10-02
+ * Source: docs/testing/cases/TC-DOC-05.md, „Last green" 2026-10-02 (steps rewritten by Slice #37.90)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -24,11 +24,11 @@ const STORE = "ga40-tiles-document-CONTRACT_VANZARE-v1";
 
 const TILES: [string, string[]][] = [
   ["Preț și taxe", ["Financiar", "Taxe și onorarii"]],
-  ["Cadastru și carte funciară", ["Dosar și exemplar", "Excepție cadastru", "Obiect declarat"]],
+  ["Cadastru și CF", ["Dosar și exemplar", "Excepție cadastru", "Obiect declarat"]],
   ["Stare juridică", ["Declarații și garanții"]],
   ["Formalități", ["Declarații și obligații legale"]],
 ];
-const OLD = ["Instrument", "Antet instrument", "Stare juridică afirmată", "Conformitate", "Conformitate și formalități"];
+const OLD = ["Instrument", "Antet instrument", "Stare juridică afirmată", "Conformitate", "Conformitate și formalități", "Cadastru și carte funciară"];
 
 const recent = (page: Page) =>
   page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) });
@@ -50,19 +50,25 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
       id = await createSaleContract(page.request, `${MARK} CVC`);
       // Before you start — a choice remembered under the old key.
       await page.goto("/documents");
-      await page.evaluate((key) => localStorage.setItem(key, JSON.stringify(["general", "pages", "tab:Conformitate"])), STORE);
+      await page.evaluate(
+        (key) => localStorage.setItem(key, JSON.stringify(["general", "pages", "tab:Conformitate", "tab:Cadastru și carte funciară"])),
+        STORE,
+      );
 
-      // Step 1 — Date generale, Pagini and Formalități ticked; the other three not.
+      // Step 1 — Date generale, Pagini, Cadastru și CF and Formalități ticked; the other two not.
       await page.goto(`/documents/${id}`);
-      for (const name of ["Date generale", "Pagini", "Formalități"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
-      for (const name of ["Preț și taxe", "Cadastru și carte funciară", "Stare juridică"]) await expect(tileBox(page, name)).not.toBeChecked();
+      for (const name of ["Date generale", "Pagini", "Cadastru și CF", "Formalități"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
+      for (const name of ["Preț și taxe", "Stare juridică"]) await expect(tileBox(page, name)).not.toBeChecked();
 
-      // Step 2 — „Toate": the four tiles and their panels, none of the old names.
+      // Step 2 — „Toate": the four tiles and their panels, each in brackets (#37.90), none of the old names.
       await page.getByRole("button", { name: "Toate", exact: true }).click();
       for (const [tile, panels] of TILES) {
         const region = page.getByRole("region", { name: tile, exact: true });
         await expect(region).toBeVisible({ timeout: 30_000 });
-        for (const panel of panels) await expect(region.getByRole("heading", { name: panel, exact: true })).toBeVisible();
+        for (const panel of panels) {
+          await expect(region.getByRole("heading", { name: `[${panel}]`, exact: true })).toBeVisible();
+          await expect(region.getByRole("heading", { name: panel, exact: true })).toHaveCount(0);
+        }
       }
       for (const old of OLD) {
         await expect(page.getByRole("region", { name: old, exact: true })).toHaveCount(0);

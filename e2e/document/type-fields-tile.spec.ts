@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-03 — Un PAD: „Detalii act", „Date de emitere", fără „Câmpuri specifice tipului de document", „Data autentificării" pe un rând
- * Source: docs/testing/cases/TC-DOC-03.md, „Last green" 2026-10-02
+ * Source: docs/testing/cases/TC-DOC-03.md, „Last green" 2026-10-02 (headings bracketed by Slice #37.90)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim, and every English one.
@@ -66,7 +66,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act”, „Date de emitere”", 
       let tile = page.getByRole("region", { name: "Detalii act", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("checkbox", { name: "Detalii act", exact: true })).toBeVisible();
-      await expect(tile.getByRole("heading", { name: "Date de emitere", exact: true })).toBeVisible();
+      await expect(tile.getByRole("heading", { name: "[Date de emitere]", exact: true })).toBeVisible();
       await expect(page.getByText("Câmpuri specifice")).toHaveCount(0);
       await expect(tile.getByText("Taxe și onorarii")).toHaveCount(0);
       await expect(dateLabel(page)).toHaveText("Data autentificării");
@@ -78,7 +78,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act”, „Date de emitere”", 
       await page.goto(`/documents/${padId}`);
       tile = page.getByRole("region", { name: "Document details", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
-      await expect(tile.getByRole("heading", { name: "Issue details", exact: true })).toBeVisible();
+      await expect(tile.getByRole("heading", { name: "[Issue details]", exact: true })).toBeVisible();
       for (const old of ["Type fields", "Document-type-specific fields"]) await expect(page.getByText(old)).toHaveCount(0);
       await expect(tile.getByText(/\bFees\b/)).toHaveCount(0);
       await expect(dateLabel(page)).toHaveText("Authentication date");
@@ -90,14 +90,14 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act”, „Date de emitere”", 
       await allTiles(page, "All");
       const fees = () => page.locator("section").filter({ has: page.locator('[data-width-field="dateDocument"]') }).last();
       await expect(dateLabel(page)).toHaveText("Authentication date", { timeout: 30_000 });
-      await expect(fees().getByRole("heading", { name: "Taxe și onorarii", exact: true })).toBeVisible();
+      await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
 
       // Step 4 — back in Romanian: „Taxe și onorarii", „Data autentificării" on one line.
       await language(page, "ro-RO");
       await page.goto(`/documents/${cvcId}`);
       await allTiles(page, "Toate");
       await expect(dateLabel(page)).toHaveText("Data autentificării", { timeout: 30_000 });
-      await expect(fees().getByRole("heading", { name: "Taxe și onorarii", exact: true })).toBeVisible();
+      await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
       await oneLine(dateLabel(page));
       await photograph(page, "cvc-fees-ro", fees);
     } finally {

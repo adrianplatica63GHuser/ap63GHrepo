@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -45,7 +45,7 @@ Nothing.
 | 1 | Opens „TC-TILES-18 Teren", presses „Toate" | Four strips, left to right: [Date cadastrale, Adresă] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Hartă, Puncte de contur, Street View] purple. Each tile in its group's colour |
 | 2 | Opens „TC-TILES-18 Ion", presses „Toate" | Four strips: [Identitate, Carte de identitate, Contact, Adrese] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Interacțiuni] purple. Each tile in its group's colour |
 | 3 | Opens „TC-TILES-18 SRL", presses „Toate" | Four strips: [Identitate, Persoane de contact, Adrese] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Interacțiuni] purple. Each tile in its group's colour |
-| 4 | Opens „TC-TILES-18 Act", presses „Toate" | Four strips: [Date generale, Preț și taxe, Cadastru și carte funciară, Stare juridică, Formalități] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Pagini] purple. Each tile in its group's colour |
+| 4 | Opens „TC-TILES-18 Act", presses „Toate" | Four strips: [Date generale, Preț și taxe, Cadastru și CF, Stare juridică, Formalități] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Pagini] purple. Each tile in its group's colour |
 | 5 | Steps 1–4 at 1920 px | The same |
 | 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is green |
 | 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Conexiuni" by its empty space to under „Corelate" | It stands there, still yellow |
@@ -80,3 +80,11 @@ the test runner's own `next dev` on 3100, which builds fresh, while it was up fo
   the person's stored arrangement. `e2e/tiles/tile-groups.spec.ts` translates the case.
 
 **2026-10-05 — Slice #37.89.** The two persons gained a purple strip, [Interacțiuni], and the Judicial Person's first tile reads „Identitate". Steps 2 and 3 and the spec changed together.
+
+**2026-10-05 — `automated`.** `e2e/tiles/tile-groups.spec.ts` translates the case; green in the runner's
+full run `20261005T040740Z-29747` on `9ca4cd2` (Slice #37.88).
+
+**2026-10-05 — Slice #37.90.** The CVC's tab „Cadastru și carte funciară" is „Cadastru și CF" (renamed in the
+form on both databases; a remembered tick carries over), and inside a tile a panel's subtitle reads in
+square brackets. The steps above name the tab by its new name; nothing else in them changed, and the
+spec reads the same name.

@@ -185,8 +185,8 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
 
       // Step 3 — „Contract de Vânzare (are formular)": the notebook tabs and „FINANCIAR".
       await type.selectOption({ label: "Contract de Vânzare (are formular)" });
-      // #37.54: the CVC's tabs renamed — „Preț și taxe", „Cadastru și carte funciară", „Formalități".
-      for (const tab of ["Preț și taxe", "Cadastru și carte funciară", "Stare juridică", "Formalități"]) {
+      // #37.54: the CVC's tabs renamed — „Preț și taxe", „Cadastru și CF", „Formalități".
+      for (const tab of ["Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"]) {
         await expect(page.getByRole("tab", { name: tab, exact: true })).toBeVisible();
       }
       await expect(page.getByText("FINANCIAR").first()).toBeVisible();
@@ -231,7 +231,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"
       for (const tile of ["Date generale", "Pagini", "Preț și taxe"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Cadastru și carte funciară", "Stare juridică", "Formalități", "Corelate", "Clasificări", "Conexiuni"]) {
+      for (const tile of ["Cadastru și CF", "Stare juridică", "Formalități", "Corelate", "Clasificări", "Conexiuni"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(page.getByRole("tab")).toHaveCount(0);
@@ -274,11 +274,11 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       const pagesBox = await pages.boundingBox();
       expect(Math.round(pagesBox?.width ?? 0)).toBe(PAGES_PANEL_REM * 16);
       // Slice #37.20 — the page image and all four notebook tiles on one screen.
-      for (const tile of ["Cadastru și carte funciară", "Stare juridică", "Formalități"]) await showTile(page, tile);
+      for (const tile of ["Cadastru și CF", "Stare juridică", "Formalități"]) await showTile(page, tile);
       // 1440 px high: the four notebook tiles run to a second and third row.
       await photograph(page, "document-cvc-notebook-tiles", [1920, 2560], 1440);
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
-      await expect(tileBox(page, "Cadastru și carte funciară")).not.toBeChecked();
+      await expect(tileBox(page, "Cadastru și CF")).not.toBeChecked();
 
       // Step 10 — „Pagini extinse": the full-window view headed „Pagini".
       // (That the page is readable is the hand run's to judge — see the header.)

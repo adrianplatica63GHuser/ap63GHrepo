@@ -39,10 +39,10 @@ back at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-03 PAD` | A tile „Detalii act" (and its tick in „Părți afișate"), inside it one panel, „Date de emitere"; nowhere „Câmpuri specifice" nor „Taxe și onorarii"; „Data autentificării" on one line |
-| 2 | Switches the interface to English and opens it again | „Document details", „Issue details"; nowhere „Type fields", „Document-type-specific fields" nor „Fees"; „Authentication date" on one line |
-| 3 | Opens `TC-DOC-03 CVC`, in English, „All" tiles | The panel with „Authentication date" is titled „Taxe și onorarii" — the CVC's own fees group, whose label the form keeps as the type writes it |
-| 4 | Switches back to Romanian and opens it again | The same panel is „Taxe și onorarii", „Data autentificării" on one line |
+| 1 | Opens `TC-DOC-03 PAD` | A tile „Detalii act" (and its tick in „Părți afișate"), inside it one panel, „[Date de emitere]"; nowhere „Câmpuri specifice" nor „Taxe și onorarii"; „Data autentificării" on one line |
+| 2 | Switches the interface to English and opens it again | „Document details", „[Issue details]"; nowhere „Type fields", „Document-type-specific fields" nor „Fees"; „Authentication date" on one line |
+| 3 | Opens `TC-DOC-03 CVC`, in English, „All" tiles | The panel with „Authentication date" is titled „[Taxe și onorarii]" — the CVC's own fees group, whose label the form keeps as the type writes it |
+| 4 | Switches back to Romanian and opens it again | The same panel is „[Taxe și onorarii]", „Data autentificării" on one line |
 
 ## At the end — leaving things as they were found
 
@@ -83,3 +83,7 @@ unchanged.
 **2026-10-02 — `automated`.** `e2e/document/type-fields-tile.spec.ts` translates the case and takes
 #37.52's pictures. Green on its first runner run, `20261002T140319Z-4705` on `c86c0f6` (the spec,
 lint, tsc; jest `20261002T140544Z-22944`, 206 suites).
+
+**2026-10-05 — Slice #37.90.** Inside a tile a panel's subtitle reads in square brackets, so steps 1–4
+name the panel „[Date de emitere]", „[Issue details]" and „[Taxe și onorarii]"; the stored names and
+everything else in the steps are unchanged, and the spec reads the bracketed headings.

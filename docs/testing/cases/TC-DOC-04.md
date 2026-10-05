@@ -73,3 +73,8 @@ TC-DOC-01's spec, whose unit grid holds the wider panels, lint, tsc and the thre
 **2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. The spec reads them too.
 
 **2026-10-02 — Slice #37.55.** The blank choice lost its dashes („— fără valoare —" → „fără valoare", in italics), so the clauses are 9 rem and step 3's two panels hold three boxes to a row: 3,3,3,3,2 and 2,3,3,2 (measured in TC-DOC-06's runs, in Chrome). The title, the opening paragraph and step 3 say so; the notes above keep the old counts, as they were run. The spec reads the new rows.
+
+**2026-10-05 — Slice #37.90.** The CVC's tab „Cadastru și carte funciară" is „Cadastru și CF" (renamed in the
+form on both databases; a remembered tick carries over), and inside a tile a panel's subtitle reads in
+square brackets. The steps above name the tab by its new name; nothing else in them changed. The
+spec reads the same name and finds the two panels by their bracketed headings.

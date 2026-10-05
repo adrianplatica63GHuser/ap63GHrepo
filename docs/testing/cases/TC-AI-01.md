@@ -55,7 +55,7 @@ proposed four after reading pages 1 and 3 on screen (Slice #36.07), and they are
 |---|---|---|
 | 1 | Opens `Contract de Vânzare-Cumpărare Costache S 2008 TC-IMP-01` | Its detail screen, tabs „Detalii", „Asocieri", „Persoane", „Proprietăți", „Meta info"; „Tip document" = „Contract de Vânzare (are formular)" |
 | 2 | Looks at „Stare procesare" | „Procesat cu AI" |
-| 3 | Looks at the tab „Detalii" | The form is a notebook labelled „Secțiunile formularului", with the tabs **„Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități"**, and not one long scroll. „Cadastru și carte funciară" holds the panels „DOSAR ȘI EXEMPLAR", „EXCEPȚIE CADASTRU" and „OBIECT DECLARAT" |
+| 3 | Looks at the tab „Detalii" | The form is a notebook labelled „Secțiunile formularului", with the tabs **„Preț și taxe", „Cadastru și CF", „Stare juridică", „Formalități"**, and not one long scroll. „Cadastru și CF" holds the panels „DOSAR ȘI EXEMPLAR", „EXCEPȚIE CADASTRU" and „OBIECT DECLARAT" |
 | 4 | Goes through the tabs | The four fields in the table above carry the values shown |
 | 5 | Finds „Note extinse" | **A note, not the deed**: the line „[AI] Text neasociat unui câmp:", then six short facts the form has no field for (the lei equivalent of the price, the tax base, and so on), then „Titlul tipărit pe document". About 1,200 characters in all, against three dense pages of deed |
 | 6 | Opens the tab „Persoane" | „Nicio persoană asociată acestui act". The five people the AI found were offered **once, in the import's own dialog** („Confirmați persoanele din acest document"), and TC-IMP-01 skips them. After that dialog closes the document does not offer them again. The import says so itself: „După ce închideți, nu mai există unde." |
@@ -87,3 +87,8 @@ Nothing of its own. The rows belong to TC-IMP-01 and are cleaned up there.
   conținutului" is meant to carry the date of the deed, the extraction misses it.
 
 **2026-10-02 — Slice #37.54.** The CVC's tiles and panels were renamed: „Instrument" → „Preț și taxe", „Cadastru" → „Cadastru și carte funciară", „Conformitate" → „Formalități"; „Antet instrument" → „Dosar și exemplar", „Stare juridică afirmată" → „Declarații și garanții", „Conformitate și formalități" → „Declarații și obligații legale". The steps read the new names; the notes above keep the old ones, as they were run. Not driven again; the case stays where it was.
+
+**2026-10-05 — Slice #37.90.** The CVC's tab „Cadastru și carte funciară" is „Cadastru și CF" (renamed in the
+form on both databases; a remembered tick carries over), and inside a tile a panel's subtitle reads in
+square brackets. The steps above name the tab by its new name; nothing else in them changed (the case has no
+spec).

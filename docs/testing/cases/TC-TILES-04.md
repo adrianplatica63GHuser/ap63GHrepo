@@ -64,8 +64,8 @@ What the run measured:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „Clasificări", „Conexiuni". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale and Instrument's panels, Financiar and Taxe și onorarii, with the page panel at the right of the row (#37.56). The type's form puts „Antet instrument” on Cadastru |
-| 2 | Ticks „Cadastru și carte funciară", „Stare juridică" and „Formalități" | Their panels appear, in that order, after Preț și taxe's. All four notebook tabs' panels and the page image are on one screen |
+| 1 | Opens „TC-TILES-04 Contract de test" | Under the name, no tab row, and no notebook strip either. Instead, the checkboxes „Date generale", „Pagini", „Preț și taxe", „Cadastru și CF", „Stare juridică", „Formalități", „Persoane", „Proprietăți", „Asocieri", „Clasificări", „Conexiuni". The first three are ticked. Then come „Toate" and „Implicit". Below: Date generale and Instrument's panels, Financiar and Taxe și onorarii, with the page panel at the right of the row (#37.56). The type's form puts „Antet instrument” on Cadastru |
+| 2 | Ticks „Cadastru și CF", „Stare juridică" and „Formalități" | Their panels appear, in that order, after Preț și taxe's. All four notebook tabs' panels and the page image are on one screen |
 | 3 | Reloads the page | The same arrangement |
 | 4 | Types `TC` into a field of „Formalități", unticks „Formalități" | The panels go; „Modificări nesalvate" stays at the top |
 | 5 | Presses „Salvează" | „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Formalități": the field reads `TC` |
@@ -84,3 +84,8 @@ What the run measured:
 **2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 1 reads the two. The notes
 above keep the old name, as they were run.
+
+**2026-10-05 — Slice #37.90.** The CVC's tab „Cadastru și carte funciară" is „Cadastru și CF" (renamed in the
+form on both databases; a remembered tick carries over), and inside a tile a panel's subtitle reads in
+square brackets. The steps above name the tab by its new name; nothing else in them changed (the case has no
+spec).

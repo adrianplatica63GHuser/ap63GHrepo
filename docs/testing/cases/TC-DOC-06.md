@@ -87,3 +87,7 @@ as run 2 left it, unchanged.
 **2026-10-02 — `automated`.** `e2e/document/blank-choice.spec.ts` translates the case and takes
 #37.55's pictures. Green on its first runner run, `20261002T191704Z-32333` on `876cea0` (a whole
 `full`: e2e 54 passed, lint, tsc, jest 208 suites).
+
+**2026-10-05 — Slice #37.90.** Inside a tile a panel's subtitle reads in square brackets („[Declarații și
+garanții]"). The steps name the panels, not their headings, so nothing in them changed; the spec finds
+the two panels by their bracketed headings.

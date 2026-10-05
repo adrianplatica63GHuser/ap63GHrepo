@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -62,3 +62,6 @@ choices cleared again: the same in every step (1232, 163, 640 × 420 for both ti
 column under the left area at 1366; the seven boxes and „Identitate" on the company). The three
 records were deleted (204 ×3) and the two stored choices removed. `e2e/person/interactions-tile.spec.ts`
 translates the case.
+
+**2026-10-05 — `automated`.** `e2e/person/interactions-tile.spec.ts` translates the case; green in the
+runner's full run `20261005T044813Z-14028` on `d2752d7` (Slice #37.89).

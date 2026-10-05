@@ -84,7 +84,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
           ["fixed", ["Interacțiuni"]], // #37.89
         ]);
         await expectForm(page, `/documents/${doc}`, [
-          ["record", ["Date generale", "Preț și taxe", "Cadastru și carte funciară", "Stare juridică", "Formalități"]],
+          ["record", ["Date generale", "Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"]],
           ["related", ["Corelate"]],
           ["meta", ["Clasificări", "Conexiuni"]],
           ["fixed", ["Pagini"]],

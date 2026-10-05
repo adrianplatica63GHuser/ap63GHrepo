@@ -38,7 +38,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 |---|---|---|
 | 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with a search box („caută după cod, titlu sau nr. document") before the filter „Tip document: Toate tipurile", then „Câmp specific:" — no „Importanță" or „Relevanță" filter (#37.62) — and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
 | 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „DATE DE EMITERE". „Tip document" is a field inside „Date generale", and it starts **empty** |
-| 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și carte funciară", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
+| 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și CF", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
 | 5 | Scrolls down and presses „Salvează" | **The screen returns to „Acte"**, not to the new document. At the top, a row badged „Nou!", with no system ID, „Tip" = „Contract de Vânzare", „Titlu" = `TC-DOC-01 Contract de test`. The count at the foot goes up by one |
 | 6 | Presses „Deschide" on that row | The document's own screen, headed `TC-DOC-01 Contract de test` with the chip „Neprocesat", and the tabs DETALII · ASOCIERI · PERSOANE · PROPRIETĂȚI · META INFO (since #37.63 two tiles, „Clasificări" and „Conexiuni"; since #37.65 one tile, „Corelate", for ASOCIERI, PERSOANE and PROPRIETĂȚI). On „Detalii" there is a panel „Pagini" reading „Nicio pagină adăugată", with „Pagini extinse" and „+ Adaugă pagină". On a wide window „Pagini" sits to the right of the form; on a narrow one, below it |
@@ -170,3 +170,8 @@ above keep the old name, as they were run.
 
 **2026-10-03 — Slice #37.65 (step 6).** The Document's „Persoane", „Proprietăți" and „Acte corelate"
 are one tile, „Corelate": nine checkboxes on a CVC where there were eleven. The spec follows.
+
+**2026-10-05 — Slice #37.90.** The CVC's tab „Cadastru și carte funciară" is „Cadastru și CF" (renamed in the
+form on both databases; a remembered tick carries over), and inside a tile a panel's subtitle reads in
+square brackets. The steps above name the tab by its new name; nothing else in them changed, and the
+spec reads the same name.

@@ -57,7 +57,8 @@ async function listOf(page: Page): Promise<string[]> {
 
 /** Boxes per row in the panel headed `name`, top to bottom. */
 async function boxesPerRow(page: Page, name: string): Promise<number[]> {
-  const panel = page.locator("section").filter({ has: page.getByRole("heading", { name, exact: true }) }).last();
+  // #37.90: inside a tile a panel's heading is its name in square brackets.
+  const panel = page.locator("section").filter({ has: page.getByRole("heading", { name: `[${name}]`, exact: true }) }).last();
   return panel.locator("[data-width-field]").evaluateAll((els) => {
     const tops = new Map<number, number>();
     for (const el of els) {
