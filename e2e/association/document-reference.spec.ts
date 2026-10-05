@@ -94,7 +94,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(CERTIFICATE, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
-      await expect(top).toContainText("Certificat de Moștenitor");
+      await expect(top).toContainText("Moștenitor"); // #37.95: the type by its short name
       const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
       certificateId = href?.split("/").pop();
 

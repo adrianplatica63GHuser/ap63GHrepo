@@ -209,7 +209,8 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(top).toContainText(TITLE, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
       await expect(top).not.toContainText(/DOC\d+/); // #37.57: no system ID here
-      await expect(top).toContainText("Contract de Vânzare");
+      await expect(top).toContainText("CVC"); // #37.95: the type by its short name
+      await expect(top.locator("td").nth(1)).toHaveAttribute("title", "Contract de Vânzare");
       await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${totalBefore + 1}$`))).toBeVisible();
       // Slice #37.16: the list's fixed columns, on the archive's real rows; then
       // its pictures, narrowed to this spec's own row first — the other rows

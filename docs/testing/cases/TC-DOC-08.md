@@ -145,3 +145,7 @@ unchanged: the same in every step. The pane's stored choices put back; both docu
 **2026-10-04 — `automated` again (Slice #37.83).** The test runner's full run 20261004T215659Z-20932 on
 b7bbb4b ran `e2e/document/document-list.spec.ts`, following the corrected file, green with the other 78
 (lint, tsc, jest and forms-drift green too).
+
+**2026-10-05 — Slice #37.95.** The Documents list's „Tip" shows
+each type by its short name (TC-DOC-15), so step 7's contracts read „CVC" in that column; the spec
+reads it so. The steps did not name the type's text and are unchanged. Adrian confirmed migration_092 the same day; the runner's e2e run 20261005T114448Z-6750 ran this case's spec green against the migrated database.

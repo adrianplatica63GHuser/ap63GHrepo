@@ -46,7 +46,7 @@ A document, created by hand: „Tip document" **„Certificat de Moștenitor"**,
 | # | A person does | And sees |
 |---|---|---|
 | 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Date generale", „Date de emitere" — with the line „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.", „Distilare Tipizate" a link (a superuser's line) |
-| 2 | Types `TC-ASSOC-07 Titlu anterior` into „Etichetă scurtă", presses „Salvează", then „Acte" in the sidebar | The new document opens (since #37.93); then on „Acte", a new row badged „Nou!", „Certificat de Moștenitor", `TC-ASSOC-07 Titlu anterior` |
+| 2 | Types `TC-ASSOC-07 Titlu anterior` into „Etichetă scurtă", presses „Salvează", then „Acte" in the sidebar | The new document opens (since #37.93); then on „Acte", a new row badged „Nou!", „Moștenitor" (the type's short name, #37.95), `TC-ASSOC-07 Titlu anterior` |
 | 3 | Opens it, and ticks the tile **„Corelate"** („Acte corelate" before #37.65, „Asocieri" before #37.31) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază", and beside them „Înscrisuri citate", which unfolds the panel „Înscrisuri citate în acest document" and folds it again |
 | 4 | Presses „Asociază act" | „Asociază Document" at `/documents/[id]/associate-reference`, the document's title under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu, and a select **„Tip relație"** with „— fără relație —", „Înlocuiește", „Modifică", „Prelungește", „Anulează", „Consolidat cu", „Versiune anterioară a", „Anexă la", „Corecție a", „Titlu anterior al", „Înscris doveditor pentru", „Act adițional la", „Antecontract al" |
 | 5 | Types `TC-DOC-01` into „Căutare", ticks the one row, chooses **„Titlu anterior al"** | Both selected |
@@ -148,3 +148,7 @@ and the runner's whole `full` run on the slice's commit keeps the row `automated
 **2026-10-05 — Slice #37.93.** „Salvează" on a new document now opens it (its own screen, where its
 pages are seen — TC-DOC-14) instead of returning to „Acte". The step reads so, and goes on through
 „Acte" in the sidebar to the list it read before; nothing else in the steps changed.
+
+**2026-10-05 — Slice #37.95.** The Documents list's „Tip" shows
+each type by its short name, the full name in the cell's tooltip (TC-DOC-15); the steps name the
+short name. Nothing else in them changed. Adrian confirmed migration_092 the same day; the runner's e2e run 20261005T114448Z-6750 ran this case's spec green against the migrated database.

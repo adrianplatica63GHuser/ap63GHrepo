@@ -144,8 +144,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect((await value.locator("option").allTextContents()).some((t) => /ACHITAT_/.test(t))).toBe(false);
       // „Achitat integral": only such contracts; nothing on the first row moved (#37.83).
       await value.selectOption({ label: (await value.locator("option").filter({ hasText: /^Achitat integral/ }).textContent())! });
-      await expect(table.locator("tbody tr").first()).toContainText("Contract de Vânzare", { timeout: 30_000 });
-      expect(new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents())).toEqual(new Set(["Contract de Vânzare"]));
+      await expect(table.locator("tbody tr").first()).toContainText("CVC", { timeout: 30_000 }); // #37.95: the short name
+      expect(new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents())).toEqual(new Set(["CVC"]));
       const moved = await firstRow();
       expect(moved.map((r) => [Math.round(r.x), Math.round(r.y)])).toEqual(row1.map((r) => [Math.round(r.x), Math.round(r.y)]));
 
