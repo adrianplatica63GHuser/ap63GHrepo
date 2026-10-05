@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, DraftingCompass, MapPinPlus, Pencil, PersonStanding, Save, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, MapPinPlus, Pencil, PersonStanding, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -36,12 +36,12 @@ type Props = {
   onCornerHover?:    (idx: number | null) => void;
   // Slice #37.91: „Hartă extinsă" left this toolbar — the map's own top row
   // opens the full-screen map, its one door (`property-mini-map-inner.tsx`).
-  // Slice #18.03b — Street View panel toggle.
+  // Slice #18.03b — Street View panel toggle. Since #38.09 given only on
+  // „Adaugă proprietate"; a saved property's Street View opens from its tile box.
   streetView?:       boolean;
   onToggleStreetView?: () => void;
-  // Slice #19.05 — angle overlay toggle on the mini-map.
-  showAngles?:       boolean;
-  onToggleAngles?:   () => void;
+  // Slice #19.05's angle toggle left this toolbar in #38.09 — it stands on the
+  // map's top row now (`property-mini-map-inner.tsx`).
   // Slice #18.02 — when set (read-only historical version view), the table
   // renders from this diff: added/changed corners framed red, removed corners
   // shown as a thick red line at their former position.
@@ -363,7 +363,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, showAngles = false, onToggleAngles, cornerDiff }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, cornerDiff }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -656,8 +656,10 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {((!adding && editingIdx === null) || onToggleStreetView || onToggleAngles) && (
-        // Toolbar: Add ↔ Show/Hide Street View ↔ Show/Hide Angles.
+      {((!adding && editingIdx === null) || onToggleStreetView) && (
+        // Toolbar: Add, and — on „Adaugă proprietate" only — Show/Hide Street View.
+        // Slice #38.09: on a saved property Street View opens from its tile
+        // checkbox alone, and the angles toggle stands on the map's top row.
         // Version-nav controls moved to the page header in Slice #18.UX.04.
         <div className="flex flex-wrap items-center gap-y-2">
           {!adding && editingIdx === null && (
@@ -684,20 +686,6 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
               className="ml-4 first:ml-0"
               aria-pressed={streetView}
               onClick={onToggleStreetView}
-            />
-          )}
-          {onToggleAngles && corners.length >= 3 && (
-            // #37.45 (A058): DraftingCompass, a toggle — the cta fill and
-            // `aria-pressed` while the angles show (it was green); the name
-            // and tooltip follow the state, as the words did.
-            <IconButton
-              icon={DraftingCompass}
-              label={showAngles ? t("hideAngles") : t("showAngles")}
-              variant={showAngles ? "primary" : "secondary"}
-              size="sm"
-              className="ml-4 first:ml-0"
-              aria-pressed={showAngles}
-              onClick={onToggleAngles}
             />
           )}
         </div>

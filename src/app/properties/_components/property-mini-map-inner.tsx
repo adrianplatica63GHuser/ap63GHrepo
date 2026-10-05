@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Maximize, PenTool } from "lucide-react";
+import { Check, DraftingCompass, Maximize, PenTool } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -158,13 +158,21 @@ type Props = {
    * it, so it draws no second door: „Restrânge" and Escape close it.
    */
   onFullScreen?:     () => void;
+  /**
+   * Slice #38.09: „Arată Unghiuri" / „Ascunde Unghiuri" stands in the map's top
+   * row, between „Desenează" and „Străzi | Satelit" — it was in the corners
+   * tile's toolbar. Given by both maps, the tile's and „Hartă extinsă"'s, so one
+   * state (`showAngles`, the form's) drives it wherever it is drawn. Drawn from
+   * three corners, and in view mode too: it changes no data.
+   */
+  onToggleAngles?:   () => void;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen, onToggleAngles }: Props) {
   // Slice #32.16: this file had no translator at all, so every one of its
   // controls was English on the Romanian interface. The namespace is
   // `property` rather than `property.map.miniMap` because the STR/SAT toggle
@@ -363,6 +371,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
 
       {/* ------------------------------------------------------------------ */}
       {/* The top row, right-aligned (Slice #37.91): [full screen] [draw]     */}
+      {/* [angles] (#38.09)                                                   */}
       {/* [Străzi | Satelit]. While drawing, „Gata" takes „Desenează"'s place */}
       {/* and its hint stands right under the row, which a 440 px tile could  */}
       {/* not hold on one line with it.                                       */}
@@ -406,6 +415,19 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               onClick={exitDraw}
             />
           ))}
+          {/* Slice #38.09 — #37.45 (A058): DraftingCompass, a toggle — the cta fill
+              and `aria-pressed` while the angles show; the name and tooltip follow
+              the state. It moved here from the corners tile, with its 3-corner rule. */}
+          {onToggleAngles && corners.length >= 3 && (
+            <IconButton
+              icon={DraftingCompass}
+              label={showAngles ? t("corners.hideAngles") : t("corners.showAngles")}
+              variant={showAngles ? "primary" : "secondary"}
+              size="sm"
+              aria-pressed={showAngles}
+              onClick={onToggleAngles}
+            />
+          )}
           <div className="flex overflow-hidden rounded shadow border border-wire">
             {/* The loop variable is `id`, not `t`: `t` is the translator now, and a
                 `t("…")` written in here against the old name would have compiled

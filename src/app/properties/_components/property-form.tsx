@@ -370,6 +370,8 @@ export function PropertyForm({
   const [bigMap,           setBigMap]           = useState(false);
   const [showStreetView,   setShowStreetView]   = useState(false);
   const [showAngles,       setShowAngles]       = useState(false);
+  // Slice #38.09: one state, drawn on both maps' top row.
+  const toggleAngles = useCallback(() => setShowAngles((v) => !v), []);
 
   // Slice #20.16: Theater overlay — opens a portal full-screen map overlay.
   // No layout shift; the inline right-column map stays at 440px always.
@@ -1344,10 +1346,11 @@ export function PropertyForm({
             readOnly={effectiveMode === "view"}
             hoveredCornerIdx={hoveredCornerIdx}
             onCornerHover={setHoveredCornerIdx}
+            // Slice #38.09: as tiles, Street View opens from its checkbox alone and
+            // the angles toggle is on the map; „Adaugă proprietate", which has no
+            // tile checkboxes, keeps its Street View button here.
             streetView={streetViewOpen && !typeConfig.hideStreetView}
-            onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
-            showAngles={showAngles}
-            onToggleAngles={() => setShowAngles((v) => !v)}
+            onToggleStreetView={tiled || typeConfig.hideStreetView ? undefined : handleToggleStreetView}
             cornerDiff={cornerDiff ?? undefined}
           />
         </section>,
@@ -1508,6 +1511,7 @@ export function PropertyForm({
                   hoveredCornerIdx={hoveredCornerIdx}
                   onCornerHover={setHoveredCornerIdx}
                   showAngles={showAngles}
+                  onToggleAngles={toggleAngles}
                   onZoomChange={handleMiniMapZoom}
                   onFullScreen={handleOpenTheaterMap}
                 />
@@ -1582,6 +1586,7 @@ export function PropertyForm({
                     hoveredCornerIdx={hoveredCornerIdx}
                     onCornerHover={setHoveredCornerIdx}
                     showAngles={showAngles}
+                    onToggleAngles={toggleAngles}
                   />
                 </ErrorBoundary>
               </div>
