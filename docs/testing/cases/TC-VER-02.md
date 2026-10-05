@@ -32,7 +32,7 @@ because it is the title the list shows. Deleted at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates the document above | On „Acte" (Tip · Titlu): „Nou!", „Adeverință", `TC-VER-02 Unu` |
+| 1 | Creates the document above, then „Acte" in the sidebar | The new document opens (since #37.93); then on „Acte" (Tip · Titlu): „Nou!", „Adeverință", `TC-VER-02 Unu` |
 | 2 | Opens it | Headed `TC-VER-02 Unu`, „Stare procesare: Neprocesat", **„v 0"**, „Fă curentă" disabled |
 | 3 | Changes „Etichetă scurtă" to `TC-VER-02 Doi` and presses „Salvează" | Stays on the document: `TC-VER-02 Doi`, **„v 1"**, „2 versiuni" |
 | 4 | Changes it to `TC-VER-02 Trei` and presses „Salvează" | `TC-VER-02 Trei`, **„v 2"**, „3 versiuni" |
@@ -59,3 +59,6 @@ on an older version the fields stay editable-looking — only the missing „Sal
 can be written there.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-05 — Slice #37.93.** „Salvează" on a new document now opens it instead of returning to
+„Acte"; step 1 reads so and goes on through „Acte" to the row it read before. Nothing else changed.

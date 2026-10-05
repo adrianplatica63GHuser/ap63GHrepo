@@ -39,6 +39,10 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       await page.getByLabel("Etichetă scurtă").fill(titled("Unu"));
       await expect(page.getByLabel("Etichetă scurtă")).toHaveValue(titled("Unu"));
       await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      // #37.93: the new document opens; „Acte" is where the case reads its row.
+      await expect(page).toHaveURL(/\/documents\/[0-9a-f-]{36}$/, { timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: titled("Unu") })).toBeVisible({ timeout: 30_000 });
+      await openFromSidebar(page, "Acte");
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
       const row = page.getByRole("row").filter({ hasText: titled("Unu") });
       await expect(row).toHaveCount(1, { timeout: 15_000 });

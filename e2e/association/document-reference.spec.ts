@@ -84,9 +84,12 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByRole("link", { name: "Distilare Tipizate", exact: true })).toBeVisible();
       await expect(page.getByRole("tab", { name: "Instrument", exact: true })).toHaveCount(0);
 
-      // Step 2 — „Etichetă scurtă", „Salvează": back on „Acte", the new row.
+      // Step 2 — „Etichetă scurtă", „Salvează": the new document opens (#37.93); „Acte": the new row.
       await page.getByLabel(/^Etichetă scurtă/).fill(CERTIFICATE);
       await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      await expect(page).toHaveURL(/\/documents\/[0-9a-f-]{36}$/, { timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
+      await openFromSidebar(page, "Acte");
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(CERTIFICATE, { timeout: 15_000 });

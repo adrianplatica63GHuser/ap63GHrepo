@@ -40,7 +40,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 | 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „DATE DE EMITERE". „Tip document" is a field inside „Date generale", and it starts **empty** |
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și CF", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
-| 5 | Scrolls down and presses „Salvează" | **The screen returns to „Acte"**, not to the new document. At the top, a row badged „Nou!", with no system ID, „Tip" = „Contract de Vânzare", „Titlu" = `TC-DOC-01 Contract de test`. The count at the foot goes up by one |
+| 5 | Scrolls down and presses „Salvează", then „Acte" in the sidebar | The new document opens, headed `TC-DOC-01 Contract de test` (since #37.93); then on „Acte", at the top, a row badged „Nou!", with no system ID, „Tip" = „Contract de Vânzare", „Titlu" = `TC-DOC-01 Contract de test`. The count at the foot goes up by one |
 | 6 | Presses „Deschide" on that row | The document's own screen, headed `TC-DOC-01 Contract de test` with the chip „Neprocesat", and the tabs DETALII · ASOCIERI · PERSOANE · PROPRIETĂȚI · META INFO (since #37.63 two tiles, „Clasificări" and „Conexiuni"; since #37.65 one tile, „Corelate", for ASOCIERI, PERSOANE and PROPRIETĂȚI). On „Detalii" there is a panel „Pagini" reading „Nicio pagină adăugată", with „Pagini extinse" and „+ Adaugă pagină". On a wide window „Pagini" sits to the right of the form; on a narrow one, below it |
 | 7 | Presses „+ Adaugă pagină" | **The application's own dialog** „Adaugă pagină" — not the operating system's — with „Număr pagină" (already `1`), „Denumire pagină", „Note pagină", a button „Încarcă", and „Anulează" / „Salvează". „Salvează" stays disabled until a file is in |
 | 8 | Puts `530.jpg` into the dialog's file input **without pressing „Încarcă"** — see the section below | „✓ 530.jpg" appears beside „Încarcă" |
@@ -175,3 +175,7 @@ are one tile, „Corelate": nine checkboxes on a CVC where there were eleven. Th
 form on both databases; a remembered tick carries over), and inside a tile a panel's subtitle reads in
 square brackets. The steps above name the tab by its new name; nothing else in them changed, and the
 spec reads the same name.
+
+**2026-10-05 — Slice #37.93.** „Salvează" on a new document now opens it (its own screen, where its
+pages are seen — TC-DOC-14) instead of returning to „Acte". The step reads so, and goes on through
+„Acte" in the sidebar to the list it read before; nothing else in the steps changed.

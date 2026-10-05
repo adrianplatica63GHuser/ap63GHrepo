@@ -199,8 +199,11 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await photograph(page, "document-new", [1366, 1920, 2560], 1200);
       await page.getByLabel(/^Subiect/).fill("");
 
-      // Step 5 — „Salvează"; back to „Acte", the new row on top, count + 1.
+      // Step 5 — „Salvează": the new document opens (#37.93); „Acte": the new row on top, count + 1.
       await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      await expect(page).toHaveURL(/\/documents\/[0-9a-f-]{36}$/, { timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: TITLE })).toBeVisible({ timeout: 30_000 });
+      await openFromSidebar(page, "Acte");
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(TITLE, { timeout: 15_000 });
