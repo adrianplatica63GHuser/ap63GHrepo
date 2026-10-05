@@ -13,6 +13,13 @@
  * names, or one a validation error brings back, is added for THIS VISIT only
  * (`visit`) and never written; ticking or unticking anything turns what is on
  * screen into the stored choice.
+ *
+ * Slice #38.04: `disabled` names tiles the record cannot show now (a Property
+ * whose type hides „Adresă" and „Street View"). Their part of the stored choice
+ * is KEPT, never rewritten — switching back to a type that allows the tile
+ * brings it back as the user had it — so „Toate" ticks every enabled tile and
+ * „Implicit" resets the enabled ones only. Which of them is on screen is the
+ * caller's (`shown` still says what is stored).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
@@ -46,7 +53,13 @@ export interface TileChoice<K extends string> {
   reveal: (key: K) => void;
 }
 
-export function useTileChoice<K extends string>(reg: TileRegistry<K>, initialVisit: readonly K[] = []): TileChoice<K> {
+const NONE: readonly never[] = [];
+
+export function useTileChoice<K extends string>(
+  reg: TileRegistry<K>,
+  initialVisit: readonly K[] = [],
+  disabled: readonly K[] = NONE,
+): TileChoice<K> {
   const storageKey = tileStorageKey(reg.entity);
   const [stored, setStored] = useState<K[]>(() => [...reg.defaults]);
   const [visit, setVisit] = useState<K[]>(() => [...initialVisit]);
@@ -77,19 +90,28 @@ export function useTileChoice<K extends string>(reg: TileRegistry<K>, initialVis
   );
 
   const showAll = useCallback(() => {
-    setStored([...reg.all]);
+    // #38.04: a disabled tile keeps what was stored for it.
+    const next = reg.all.filter((k) => !disabled.includes(k) || stored.includes(k));
+    setStored(next);
     setVisit([]);
-    write(storageKey, [...reg.all]);
-  }, [reg.all, storageKey]);
+    write(storageKey, next);
+  }, [reg.all, storageKey, disabled, stored]);
 
   const reset = useCallback(() => {
-    setStored([...reg.defaults]);
+    if (disabled.length === 0) {
+      setStored([...reg.defaults]);
+      write(storageKey, null);
+    } else {
+      // #38.04: the enabled tiles back to the defaults, the disabled ones as stored.
+      const next = reg.all.filter((k) => (disabled.includes(k) ? stored.includes(k) : reg.defaults.includes(k)));
+      setStored(next);
+      write(storageKey, next);
+    }
     setVisit([]);
-    write(storageKey, null);
     // Slice #37.76 (its Ask first): „Implicit" returns the screen to how it first was — #37.75's places.
     write(tilePositionsKey(reg.entity), null);
     window.dispatchEvent(new CustomEvent(TILE_POSITIONS_RESET, { detail: reg.entity }));
-  }, [reg.defaults, reg.entity, storageKey]);
+  }, [reg.all, reg.defaults, reg.entity, storageKey, disabled, stored]);
 
   const reveal = useCallback((key: K) => {
     setVisit((v) => (v.includes(key) ? v : [...v, key]));

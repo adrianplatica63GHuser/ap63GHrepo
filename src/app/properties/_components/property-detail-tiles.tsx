@@ -30,7 +30,7 @@ import { useTranslations } from "next-intl";
 // `Map` shadows the global Map constructor, hence the alias.
 import { Map as MapIcon } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
-import { sameProfile, type PropertyTypeProfile } from "@/lib/properties/type-profile";
+import { sameProfile, typeShows, type PropertyTypeProfile } from "@/lib/properties/type-profile";
 import { PropertyTypeHeading } from "./property-type-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { PropertyForm } from "./property-form";
@@ -75,23 +75,31 @@ export function PropertyDetailTiles({
   // Slice #37.63: `?tab=metadata` names both halves of the old META INFO; the first is scrolled to.
   const urlTiles = tilesOfTab(PROP_TILE_OF_TAB, initialTab);
   const urlTile = urlTiles[0];
-  const choice = useTileChoice<PropTile>(PROP_TILE_REGISTRY, urlTiles);
-  // Slice #37.24 — related records open beside this one, read-only.
-  const previews = usePreviews();
-  const previewEntries = usePreviewSelectorEntries(previews);
-  // Slice #37.56 — the right-hand column, and the slots the form places its tiles in.
-  const rightAll = PROP_TILE_REGISTRY.placement?.right ?? NO_RIGHT;
-  const { column, slotRefs } = useRightColumn(rightAll);
-  const shownRight = splitTiles(choice.shown, PROP_TILE_REGISTRY).right.length;
-  // Slice #18.UX.04: the details form portals its version-nav controls into
-  // this header slot.
-  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
   // Slice #38.03: the type on the form now — the heading names it and explains it.
   const [type, setType] = useState<PropertyTypeProfile | null>(null);
   const onTypeChange = useCallback(
     (next: PropertyTypeProfile | null) => setType((prev) => (sameProfile(prev, next) ? prev : next)),
     [],
   );
+  // Slice #38.04: the tiles that type does not show — their boxes disabled, their stored choice kept.
+  const offTiles = useMemo<readonly PropTile[]>(() => typeShows(type).hidden, [type]);
+  const choice = useTileChoice<PropTile>(PROP_TILE_REGISTRY, urlTiles, offTiles);
+  const offReasons = useMemo<Partial<Record<PropTile, string>>>(
+    () => Object.fromEntries(offTiles.map((k) => [k, t("heading.typeDisablesTile", { type: type?.name ?? "" })])),
+    [offTiles, type, t],
+  );
+  // What is on screen: the choice, less what the type cannot show (#38.04).
+  const shown = useMemo(() => choice.shown.filter((k) => !offTiles.includes(k)), [choice.shown, offTiles]);
+  // Slice #37.24 — related records open beside this one, read-only.
+  const previews = usePreviews();
+  const previewEntries = usePreviewSelectorEntries(previews);
+  // Slice #37.56 — the right-hand column, and the slots the form places its tiles in.
+  const rightAll = PROP_TILE_REGISTRY.placement?.right ?? NO_RIGHT;
+  const { column, slotRefs } = useRightColumn(rightAll);
+  const shownRight = splitTiles(shown, PROP_TILE_REGISTRY).right.length;
+  // Slice #18.UX.04: the details form portals its version-nav controls into
+  // this header slot.
+  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
 
   // The tile a `?tab=` named is drawn from the first render; bring it into view.
   useEffect(() => {
@@ -130,7 +138,7 @@ export function PropertyDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("property")}>
-        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} />
+        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} />
 
         <PreviewOpenerProvider previews={previews}>
         <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>
@@ -143,7 +151,7 @@ export function PropertyDetailTiles({
             versionNavSlot={navSlot}
             onTypeChange={onTypeChange}
             tiles={{
-              shown: choice.shown,
+              shown,
               labels,
               onRevealTile: choice.reveal,
               onToggleTile: choice.toggle,

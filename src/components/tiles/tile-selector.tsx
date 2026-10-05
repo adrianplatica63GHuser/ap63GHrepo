@@ -12,6 +12,12 @@
  * look at (a highlighted field on a Document). Their box gets a dot and a
  * title saying so. The dot sits OUTSIDE the <label>, so a marked checkbox keeps
  * exactly its tile's name — the name `showTile` ticks it by.
+ *
+ * Slice #38.04: `disabled` names tiles the record cannot show now, each with
+ * the reason (a Property's type). Such a box is drawn unticked and disabled,
+ * its label greyed and in italics, the reason its tooltip; „Toate" and
+ * „Implicit" leave it alone (`useTileChoice`), and it never counts as the last
+ * ticked box.
  */
 import { useTranslations } from "next-intl";
 import { HelpHint } from "@/components/help/help-hint";
@@ -27,6 +33,7 @@ export function TileSelector<K extends string>({
   choice,
   marked = [],
   extra = [],
+  disabled,
 }: {
   all: readonly K[];
   /**
@@ -45,21 +52,37 @@ export function TileSelector<K extends string>({
    * Each is a ticked box after the screen's own; unticking it closes the tile.
    */
   extra?: readonly { key: string; label: string; onRemove: () => void }[];
+  /** Slice #38.04: tiles the record cannot show now, each with its reason (the tooltip). */
+  disabled?: Readonly<Partial<Record<K, string>>>;
 }) {
   const t = useTranslations("shared.tiles");
-  const lastOne = choice.shown.length === 1;
+  const isOff = (key: K): boolean => disabled?.[key] !== undefined;
+  // #38.04: a disabled box is never „the last ticked box".
+  const lastOne = choice.shown.filter((k) => !isOff(k)).length === 1;
   const box = (key: K) => {
-    const checked = choice.isShown(key);
-    const isMarked = !checked && marked.includes(key);
+    const off = isOff(key);
+    const checked = choice.isShown(key) && !off;
+    const isMarked = !checked && !off && marked.includes(key);
+    const reason = off ? disabled?.[key] : checked && lastOne ? t("lastOne") : undefined;
     return (
       <span key={key} className="flex items-center gap-1">
-      <label className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-ink dark:text-zinc-200">
+      <label
+        className={
+          off
+            ? "flex cursor-not-allowed items-center gap-1.5 text-sm font-medium italic text-fade dark:text-zinc-500"
+            : "flex cursor-pointer items-center gap-1.5 text-sm font-medium text-ink dark:text-zinc-200"
+        }
+        title={off ? reason : undefined}
+        data-tile-disabled={off ? key : undefined}
+      >
         <input
           type="checkbox"
           checked={checked}
-          disabled={checked && lastOne}
-          title={checked && lastOne ? t("lastOne") : undefined}
-          onChange={() => choice.toggle(key)}
+          disabled={off || (checked && lastOne)}
+          title={reason}
+          onChange={() => {
+            if (!off) choice.toggle(key);
+          }}
           className="h-4 w-4 rounded border-wire accent-cta"
         />
         {labels[key]}

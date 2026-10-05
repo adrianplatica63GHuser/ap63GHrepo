@@ -162,6 +162,7 @@
   },
   "property": {
     "heading": {
+      "typeDisablesTile": "Tipul „{type}” nu afișează această fișă.",
       "typeAbout": "Despre tipul proprietății",
       "typeTileQuoted": "„{name}”",
       "typeShownHidden": "Pentru acest tip se afișează {shown}; nu se afișează {hidden}.",

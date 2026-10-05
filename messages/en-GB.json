@@ -162,6 +162,7 @@
   },
   "property": {
     "heading": {
+      "typeDisablesTile": "The type “{type}” does not show this tile.",
       "typeAbout": "About the property type",
       "typeTileQuoted": "“{name}”",
       "typeShownHidden": "This type shows {shown}; it does not show {hidden}.",
