@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-03 09:44
+-- Generated : 2026-10-05 07:39
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -591,6 +591,7 @@ CREATE TABLE public.lookup_document_type (
     key text NOT NULL,
     template_fields jsonb,
     origin text DEFAULT 'MANUAL'::text NOT NULL,
+    short_name text,
     CONSTRAINT chk_ldt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
 );
 
@@ -1922,6 +1923,13 @@ CREATE UNIQUE INDEX lookup_document_type_name_normalised_unique ON public.lookup
 --
 
 COMMENT ON INDEX public.lookup_document_type_name_normalised_unique IS 'Two document types may not share one display name (Slice #34.09, migration_080). The expression is normaliseDocumentTypeName() from src/lib/documents/document-type-match.ts - NFD-decompose, strip the combining marks, lowercase, drop everything outside [a-z0-9] - written as the exact inline expansion of pg_temp.ga40_norm_name in scripts/decision-checks.sql, which is the fold the archive was measured under. PARTIAL, excluding the empty normalised form, because sameDocumentTypeName() refuses to call two empty forms equal: a name of "-" or of a single space normalises to nothing, and a total index would let the first such row take the empty slot and refuse every other one. The application-level refusal that produces a Romanian sentence instead of a 23505 is documentTypeNameTakenBy() in src/lib/documents/document-type-name-guard.ts; this index is what makes the rule true of a direct caller, a script, psql, and the race that a read-then-write refusal cannot close.';
+
+
+--
+-- Name: lookup_document_type_short_name_uq; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX lookup_document_type_short_name_uq ON public.lookup_document_type USING btree (lower(btrim(short_name))) WHERE ((short_name IS NOT NULL) AND (btrim(short_name) <> ''::text));
 
 
 --
