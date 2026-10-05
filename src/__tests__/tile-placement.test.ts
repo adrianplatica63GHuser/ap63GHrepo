@@ -76,7 +76,9 @@ describe("the screens draw it", () => {
     for (const [dir, file] of [["properties", "property-detail-tiles.tsx"], ["documents", "document-detail-tiles.tsx"]]) {
       const page = code(read("src", "app", dir, "_components", file));
       expect([file, /<TileAreas right=\{rightAll\} shownRight=\{shownRight\} slotRefs=\{slotRefs\}( entity=\{[\w.]+\})?>/.test(page)]).toEqual([file, true]);
-      expect([file, /placement\?\.right/.test(page), /splitTiles\(choice\.shown,/.test(page), /right: column,/.test(page)]).toEqual([file, true, true, true]);
+      // Slice #38.04: the Property splits what is on screen — its choice less what its type cannot show (`shown`).
+      const split = file === "property-detail-tiles.tsx" ? /splitTiles\(shown,/ : /splitTiles\(choice\.shown,/;
+      expect([file, /placement\?\.right/.test(page), split.test(page), /right: column,/.test(page)]).toEqual([file, true, true, true]);
     }
   });
 
