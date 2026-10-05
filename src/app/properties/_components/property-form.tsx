@@ -31,7 +31,7 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
-import { ArrowLeft, ArrowRight, Camera, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Minimize, Pencil, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -364,11 +364,9 @@ export function PropertyForm({
 
   // Slice #20.16: Theater overlay — opens a portal full-screen map overlay.
   // No layout shift; the inline right-column map stays at 440px always.
-  const handleToggleBigMap = () => {
-    const next = !bigMap;
-    setBigMap(next);
-    onBigMapChange?.(next);
-  };
+  // Slice #37.91: its one door is the „Hartă" tile's own top row
+  // (`onFullScreen`); the corners tile's „Hartă extinsă" is gone.
+  const handleOpenTheaterMap = () => { setBigMap(true); onBigMapChange?.(true); };
   const handleCloseTheaterMap = () => { setBigMap(false); onBigMapChange?.(false); };
 
   // Close theater overlay on Escape key.
@@ -1319,8 +1317,6 @@ export function PropertyForm({
             readOnly={effectiveMode === "view"}
             hoveredCornerIdx={hoveredCornerIdx}
             onCornerHover={setHoveredCornerIdx}
-            bigMap={bigMap}
-            onToggleBigMap={handleToggleBigMap}
             streetView={streetViewOpen && !typeConfig.hideStreetView}
             onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
             showAngles={showAngles}
@@ -1459,8 +1455,8 @@ export function PropertyForm({
             it fills a small tile), with or without a polygon, so nothing jumps
             when the first corner is added. The polygon is fitted into it with
             fitBounds (property-mini-map-inner.tsx), so a parcel of any size
-            fits at the default zoom. „Hartă extinsă" still opens the
-            full-screen theater overlay. */}
+            fits at the default zoom. Its top row's „Hartă extinsă" opens the
+            full-screen theater overlay (#37.91). */}
         {/* Slice #37.19: as tiles, the map is mounted only while „Hartă" is
             ticked — an unticked map makes no Google Maps request of its own. */}
         {tileShown("map") && placeTile("map",
@@ -1486,6 +1482,7 @@ export function PropertyForm({
                   onCornerHover={setHoveredCornerIdx}
                   showAngles={showAngles}
                   onZoomChange={handleMiniMapZoom}
+                  onFullScreen={handleOpenTheaterMap}
                 />
               </ErrorBoundary>
             </div>
@@ -1543,8 +1540,9 @@ export function PropertyForm({
               <span className="text-sm font-semibold text-ink dark:text-zinc-200">
                 {t("corners.theaterTitle")}
               </span>
-              {/* #37.44 (A028): Minimize2 in place of „✕ Restrânge"; „Restrânge" its name and tooltip. */}
-              <IconButton icon={Minimize2} label={t("corners.theaterClose")} variant="secondary" size="sm" onClick={handleCloseTheaterMap} />
+              {/* #37.44 (A028): an icon in place of „✕ Restrânge"; „Restrânge" its name and tooltip.
+                  #37.91: Minimize — corner brackets, Street View's exit — matching the map's Maximize. */}
+              <IconButton icon={Minimize} label={t("corners.theaterClose")} variant="secondary" size="sm" onClick={handleCloseTheaterMap} />
             </div>
             {/* Map fills the rest */}
             <div className="relative flex-1 min-h-0">

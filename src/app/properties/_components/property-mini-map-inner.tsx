@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, PenTool } from "lucide-react";
+import { Check, Maximize, PenTool } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -151,13 +151,20 @@ type Props = {
    * so „Proprietăți — Hartă" opens the big map at the tile's zoom.
    */
   onZoomChange?:     (zoom: number | null) => void;
+  /**
+   * Slice #37.91: given only by the form's „Hartă" tile — the full-screen map
+   * opens from the button it draws at the left of the top row, and is the
+   * theater overlay in property-form.tsx. The overlay's own map is not given
+   * it, so it draws no second door: „Restrânge" and Escape close it.
+   */
+  onFullScreen?:     () => void;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen }: Props) {
   // Slice #32.16: this file had no translator at all, so every one of its
   // controls was English on the Romanian interface. The namespace is
   // `property` rather than `property.map.miniMap` because the STR/SAT toggle
@@ -355,39 +362,34 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
       </Map>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Map-type toggle — top-right                                        */}
+      {/* The top row, right-aligned (Slice #37.91): [full screen] [draw]     */}
+      {/* [Străzi | Satelit]. While drawing, „Gata" takes „Desenează"'s place */}
+      {/* and its hint stands right under the row, which a 440 px tile could  */}
+      {/* not hold on one line with it.                                       */}
       {/* ------------------------------------------------------------------ */}
-      <div className="absolute top-2 right-2 z-10 flex overflow-hidden rounded shadow border border-wire">
-        {/* The loop variable is `id`, not `t`: `t` is the translator now, and a
-            `t("…")` written in here against the old name would have compiled
-            and called a MapTypeId. */}
-        {(["roadmap", "hybrid"] as MapTypeId[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setMapType(id)}
-            className={[
-              "px-2 py-1 text-xs font-semibold tracking-wide transition-colors",
-              mapType === id
-                ? "bg-cta text-white"
-                : "bg-white text-ink hover:bg-canvas",
-            ].join(" ")}
-          >
-            {id === "roadmap" ? t("map.typeStreet") : t("map.typeSatellite")}
-          </button>
-        ))}
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Draw mode controls — bottom-left (hidden in read-only view)         */}
-      {/* ------------------------------------------------------------------ */}
-      {!readOnly && (
-      <div className="absolute bottom-2 left-2 z-10 flex items-center gap-2">
-        {!drawing ? (
-          <>
-            {/* #37.45 (A066): PenTool / Check, icon-only, the words as the
-                name and tooltip. „✏" and „✓" were glyphs in the messages,
-                standing in for the icons; the messages lost them. */}
+      <div className="absolute top-2 right-2 z-10 flex max-w-[calc(100%-1rem)] flex-col items-end gap-1" data-map-top-row>
+        <div className="flex items-center gap-2">
+          {/* The help bubbles first, so the three controls stand together. */}
+          {!readOnly && !drawing && (
+            <>
+              <HelpHint hintKey="map-draw-corners" />
+              {corners.length > 0 && <HelpHint hintKey="map-drag-corner" />}
+            </>
+          )}
+          {!readOnly && drawing && corners.length >= 3 && <HelpHint hintKey="map-close-polygon" />}
+          {/* Lucide's Maximize — corner brackets, Street View's full-screen look. */}
+          {onFullScreen && (
+            <IconButton
+              icon={Maximize}
+              label={t("map.miniMap.fullScreen")}
+              variant="secondary"
+              size="sm"
+              onClick={onFullScreen}
+            />
+          )}
+          {/* #37.45 (A066): PenTool / Check, icon-only, the words as the name
+              and tooltip. Hidden in read-only view. */}
+          {!readOnly && (!drawing ? (
             <IconButton
               icon={PenTool}
               label={t("map.miniMap.draw")}
@@ -395,11 +397,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               size="sm"
               onClick={() => setDrawing(true)}
             />
-            <HelpHint hintKey="map-draw-corners" />
-            {corners.length > 0 && <HelpHint hintKey="map-drag-corner" />}
-          </>
-        ) : (
-          <>
+          ) : (
             <IconButton
               icon={Check}
               label={t("map.miniMap.done")}
@@ -407,18 +405,38 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               size="sm"
               onClick={exitDraw}
             />
-            <span className="rounded bg-black/50 px-2 py-0.5 text-xs text-white select-none">
-              {corners.length === 0
-                ? t("map.miniMap.hintFirst")
-                : corners.length < 3
-                  ? t("map.miniMap.hintMore")
-                  : t("map.miniMap.hintClose")}
-            </span>
-            {corners.length >= 3 && <HelpHint hintKey="map-close-polygon" />}
-          </>
+          ))}
+          <div className="flex overflow-hidden rounded shadow border border-wire">
+            {/* The loop variable is `id`, not `t`: `t` is the translator now, and a
+                `t("…")` written in here against the old name would have compiled
+                and called a MapTypeId. */}
+            {(["roadmap", "hybrid"] as MapTypeId[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMapType(id)}
+                className={[
+                  "px-2 py-1 text-xs font-semibold tracking-wide transition-colors",
+                  mapType === id
+                    ? "bg-cta text-white"
+                    : "bg-white text-ink hover:bg-canvas",
+                ].join(" ")}
+              >
+                {id === "roadmap" ? t("map.typeStreet") : t("map.typeSatellite")}
+              </button>
+            ))}
+          </div>
+        </div>
+        {!readOnly && drawing && (
+          <span className="rounded bg-black/50 px-2 py-0.5 text-right text-xs text-white select-none" data-map-draw-hint>
+            {corners.length === 0
+              ? t("map.miniMap.hintFirst")
+              : corners.length < 3
+                ? t("map.miniMap.hintMore")
+                : t("map.miniMap.hintClose")}
+          </span>
         )}
       </div>
-      )}
     </div>
   );
 }

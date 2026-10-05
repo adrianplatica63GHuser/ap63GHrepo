@@ -203,6 +203,7 @@
       "selectEnterTitle": "Enter selection mode — drag to select properties for deletion",
       "selectExitTitle": "Exit selection mode",
       "miniMap": {
+        "fullScreen": "Expand map",
         "draw": "Draw",
         "done": "Done",
         "hintFirst": "Click map to place first corner",
@@ -294,8 +295,6 @@
       "converting": "Converting…",
       "convertError": "Conversion failed — check coordinates",
       "empty": "No corners yet",
-      "showBigMap": "Expand Map",
-      "showSmallMap": "Collapse",
       "theaterTitle": "Map — expanded",
       "theaterClose": "Collapse",
       "versionLabel": "v {n}",

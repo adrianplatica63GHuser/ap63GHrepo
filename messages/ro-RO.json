@@ -203,6 +203,7 @@
       "selectEnterTitle": "Intră în modul de selecție — trage un dreptunghi pentru a selecta proprietăți de șters",
       "selectExitTitle": "Ieși din modul de selecție",
       "miniMap": {
+        "fullScreen": "Hartă extinsă",
         "draw": "Desenează",
         "done": "Gata",
         "hintFirst": "Apasă pe hartă pentru a plasa primul punct",
@@ -294,8 +295,6 @@
       "converting": "Se convertește…",
       "convertError": "Conversia a eșuat — verificați coordonatele",
       "empty": "Niciun punct de contur",
-      "showBigMap": "Hartă extinsă",
-      "showSmallMap": "Restrânge",
       "theaterTitle": "Hartă extinsă",
       "theaterClose": "Restrânge",
       "versionLabel": "v {n}",

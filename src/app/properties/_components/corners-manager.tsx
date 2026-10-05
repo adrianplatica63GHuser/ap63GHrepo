@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, DraftingCompass, MapPinPlus, Maximize2, Minimize2, Pencil, PersonStanding, Save, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, DraftingCompass, MapPinPlus, Pencil, PersonStanding, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -34,9 +34,9 @@ type Props = {
   readOnly?:         boolean;
   hoveredCornerIdx?: number | null;
   onCornerHover?:    (idx: number | null) => void;
-  bigMap?:           boolean;
-  onToggleBigMap?:   () => void;
-  // Slice #18.03b — Street View panel toggle, rendered beside Show Big Map.
+  // Slice #37.91: „Hartă extinsă" left this toolbar — the map's own top row
+  // opens the full-screen map, its one door (`property-mini-map-inner.tsx`).
+  // Slice #18.03b — Street View panel toggle.
   streetView?:       boolean;
   onToggleStreetView?: () => void;
   // Slice #19.05 — angle overlay toggle on the mini-map.
@@ -363,7 +363,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, streetView = false, onToggleStreetView, showAngles = false, onToggleAngles, cornerDiff }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, showAngles = false, onToggleAngles, cornerDiff }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -656,8 +656,8 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {((!adding && editingIdx === null) || onToggleBigMap || onToggleStreetView || onToggleAngles) && (
-        // Toolbar: Add ↔ Show Big/Small Map ↔ Show/Hide Street View ↔ Show/Hide Angles.
+      {((!adding && editingIdx === null) || onToggleStreetView || onToggleAngles) && (
+        // Toolbar: Add ↔ Show/Hide Street View ↔ Show/Hide Angles.
         // Version-nav controls moved to the page header in Slice #18.UX.04.
         <div className="flex flex-wrap items-center gap-y-2">
           {!adding && editingIdx === null && (
@@ -670,18 +670,6 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
               size="sm"
               onClick={() => setAdding(true)}
               disabled={readOnly}
-            />
-          )}
-          {onToggleBigMap && (
-            // #37.44 (A028): Maximize2 to open „Hartă extinsă", Minimize2 to „Restrânge".
-            <IconButton
-              icon={bigMap ? Minimize2 : Maximize2}
-              label={bigMap ? t("showSmallMap") : t("showBigMap")}
-              variant="secondary"
-              size="sm"
-              className="ml-4 first:ml-0"
-              aria-pressed={bigMap}
-              onClick={onToggleBigMap}
             />
           )}
           {onToggleStreetView && (
