@@ -69,25 +69,21 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       ).toBeVisible();
       // #37.61: no „Importanță" or „Relevanță" filter.
       await expect(page.locator("main").getByText(/^Importanță:?$|^Relevanță:?$/)).toHaveCount(0);
-      // #37.72: Poreclă is a fixed column, not a choice — the defaults are three.
-      const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*3\/4$/ });
+      // #37.72: Poreclă is a fixed column, not a choice; #37.94: the defaults are Tarla/Solă and Parcelă.
+      const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*2\/4$/ });
       await expect(chooseFields).toBeVisible();
       // Headers are rendered upper-case by CSS; role-name matching ignores case.
       // A Playwright browser has never changed „Câmpuri afișate", so step 1's
       // columns are the defaults the case names.
-      for (const col of ["PORECLĂ", "NR. CADASTRU", "OFICIALĂ (M²)", "LOCALITATE"]) {
+      for (const col of ["PORECLĂ", "TARLA/SOLĂ", "PARCELĂ"]) {
         await expect(page.getByRole("columnheader", { name: col })).toBeVisible();
       }
 
-      // Step 2 — „Câmpuri afișate": untick first (four at most), then tick
-      // „Tarla/Solă" and „Parcelă"; press outside it.
+      // Step 2 — „Câmpuri afișate": tick „Localitate"; press outside it.
       await chooseFields.click({ force: true });
       const picker = page.getByText("Selectați până la 4 coloane opționale").locator("..");
       await expect(picker).toBeVisible();
-      await picker.getByRole("checkbox", { name: "Nr. cadastru" }).uncheck({ force: true });
-      await picker.getByRole("checkbox", { name: "Oficială (m²)" }).uncheck({ force: true });
-      await picker.getByRole("checkbox", { name: "Tarla/Solă" }).check({ force: true });
-      await picker.getByRole("checkbox", { name: "Parcelă" }).check({ force: true });
+      await picker.getByRole("checkbox", { name: "Localitate" }).check({ force: true });
       await page.getByRole("heading", { name: "Proprietăți", exact: true }).click({ force: true });
       await expect(picker).toHaveCount(0);
       for (const col of ["PORECLĂ", "LOCALITATE", "TARLA/SOLĂ", "PARCELĂ"]) {

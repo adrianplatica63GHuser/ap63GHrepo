@@ -9,9 +9,9 @@
  *   - The documents carry `TC-E2E-DOC-08` and `TC-E2E-DOC08-CVC` (records.ts).
  *   - Steps 6–7 read the two selects' options, which is what the open list
  *     shows; a native list's popup is not part of the page.
- *   - A Playwright browser has never chosen, so the columns start as the two
- *     defaults, Nr. document and Data: „Câmpuri afișate 2/4", and step 4's two
- *     headers follow theirs.
+ *   - A Playwright browser has never chosen, so the columns start as the
+ *     defaults — since #37.94 none: „Câmpuri afișate 0/4" — and step 4's
+ *     headers follow them.
  *   - Before step 6 the search box is emptied, as the hand runs of #37.83 did:
  *     step 2's text would otherwise hide every contract from step 7's filter.
  *   - Step 5 checks the bubble's opening and closing and the start of its text;

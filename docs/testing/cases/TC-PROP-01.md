@@ -33,8 +33,8 @@ Properties list and can be removed by hand.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Proprietăți" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), no „Importanță" or „Relevanță" filter (#37.61), „Câmpuri afișate 3/4" (#37.72), a button „Adaugă proprietate", and a table headed by **Poreclă, always, then the columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · NR. CADASTRU · OFICIALĂ (M²) · LOCALITATE |
-| 2 | Presses „Câmpuri afișate" and makes the ticked columns „Localitate", „Tarla/Solă" and „Parcelă" (Poreclă is always shown, #37.72) — **untick first** („Nr. cadastru", „Oficială (m²)", whatever else is ticked): the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
+| 1 | Presses „Proprietăți" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), no „Importanță" or „Relevanță" filter (#37.61), „Câmpuri afișate 2/4" (#37.72, #37.94), a button „Adaugă proprietate", and a table headed by **Poreclă, always, then the columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · TARLA/SOLĂ · PARCELĂ |
+| 2 | Presses „Câmpuri afișate" and makes the ticked columns „Localitate", „Tarla/Solă" and „Parcelă" (Poreclă is always shown, #37.72) — in a browser that has never changed them, tick „Localitate"; otherwise **untick first** whatever else is ticked: the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
 | 3 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 12 checks it |
 | 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering four ways in: „Introducere manuală", „Din imagine scanată", „Din fișier text", „Din folder text" |
 | 5 | Presses „Introducere manuală" („Completați detaliile proprietății manual") | The heading „Proprietate nouă" at `/properties/new`, with the sections „DATE CADASTRALE", „PUNCTE DE CONTUR", „ADRESĂ" and a map |
@@ -151,3 +151,7 @@ follows (it accepts 3/4 or 4/4 at step 1, since a browser that ticked a fourth k
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-05 — Slice #37.94.** A browser that has never changed „Câmpuri afișate" now opens this list
+with Tarla/Solă and Parcelă (TC-LAYOUT-03), so step 1 reads „2/4" and those headers, and step 2
+ticks „Localitate" to reach the same three columns. The rest is unchanged; the spec follows.
