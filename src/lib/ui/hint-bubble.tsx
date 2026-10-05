@@ -61,8 +61,7 @@
  * the import bar's two ticks keep their ⓘ.
  */
 
-import { useRef, type ReactNode } from "react";
-import { Info } from "lucide-react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 
 import { buttonClass } from "@/lib/ui/button-styles";
 import { useTooltipTriggers } from "@/lib/ui/use-tooltip";
@@ -105,6 +104,15 @@ type Props = {
    */
   align?: "start" | "end";
 };
+
+/**
+ * The ⓘ's glyph (Slice #38.08): a bold italic serif „i", as large as the 24-px
+ * circle holds with clear space around it. Measured in the browser: the
+ * letter's ink is about 4 × 11 px at 16 px; an italic leans right, so it is
+ * nudged half a pixel left to stand at the circle's centre by eye.
+ */
+export const INFO_GLYPH = "pointer-events-none select-none text-[16px] font-bold italic leading-none -translate-x-[0.5px]";
+export const INFO_GLYPH_FONT: CSSProperties = { fontFamily: 'Georgia, "Times New Roman", ui-serif, serif' };
 
 export function HintBubble({
   id,
@@ -178,10 +186,14 @@ export function HintBubble({
             className: "mt-0.5 h-6 w-6 shrink-0 leading-none",
           })}
         >
-          {/* Lucide's Info since #37.42 (A007) — it was a letter „i" while the
-              repo had no icon set. The accessible name is on the button, so
-              the icon is decoration; `aria-hidden` keeps a screen reader from
-              reading anything after the label.
+          {/* Slice #38.08: ONE circle — the button's own — holding a large, bold,
+              italic lower-case „i" in a serif face (Georgia, then the system
+              serif), which reads as „information" at a glance. It was Lucide's
+              Info (#37.42, A007), itself a circle with an „i", so the user saw a
+              circle inside a circle — and the 14-px icon was squeezed to the
+              6-px content box (measured: 6 × 14 px). The glyph is decoration:
+              the button's accessible name is its `aria-label`, so it is
+              `aria-hidden`. It is centred by eye, not by box (`INFO_GLYPH`).
 
               ⚠️ **NO `aria-describedby` AND NO `aria-expanded` HERE, both
               removed by an adversarial round.** The paragraph is already the
@@ -191,7 +203,9 @@ export function HintBubble({
               named by `aria-controls` — a `role="tooltip"` that is present in
               the document either way is not one, so it announced
               "collapsed"/"expanded" about a paragraph that never leaves. */}
-          <Info size={14} strokeWidth={2.5} aria-hidden="true" />
+          <span aria-hidden="true" data-info-glyph="" className={INFO_GLYPH} style={INFO_GLYPH_FONT}>
+            i
+          </span>
         </button>
         )}
       </div>
