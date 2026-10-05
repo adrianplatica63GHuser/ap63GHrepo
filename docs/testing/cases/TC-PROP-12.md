@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -71,3 +71,7 @@ tooltip; „Toate" and „Implicit" leaving them so; after „Teren Construit" b
 and its tile on screen, „Street View" unticked. Deleted (204), the pane's choice put back. Nothing in
 the file changed, so the case is confirmed, and `e2e/property/property-tiles-by-type.spec.ts`
 translates it.
+
+**2026-10-05 — `automated` (Slice #38.04).** The test runner's full run 20261005T210427Z-8996 on
+fe9ee19 ran `e2e/property/property-tiles-by-type.spec.ts` green with the other 89 (lint, tsc, jest and
+forms-drift green too).
