@@ -61,6 +61,8 @@ import {
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
+import { NewPagesPanel } from "./new-pages-panel";
+import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
@@ -366,6 +368,11 @@ export function DocumentForm({
   });
 
   const [submitting,        setSubmitting]        = useState(false);
+  // Slice #37.93: a new document's pages, held here until its first Save
+  // creates it and uploads them (new-pages-panel.tsx, new-document-pages.ts).
+  const [stagedPages,       setStagedPages]       = useState<StagedPage[]>([]);
+  /** The id the create POST answered with, read by the save that uploads the pages. */
+  const createdIdRef = useRef<string | null>(null);
   const [submitError,       setSubmitError]       = useState<string | null>(null);
   const [confirmDelete,     setConfirmDelete]     = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
@@ -714,6 +721,14 @@ export function DocumentForm({
         t,
       );
       await recordSync.remember(saved);
+      if (mode === "create") {
+        try {
+          const body = (await saved.clone().json()) as { id?: unknown };
+          createdIdRef.current = typeof body.id === "string" ? body.id : null;
+        } catch {
+          createdIdRef.current = null;
+        }
+      }
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
       // Slice #18.06: a save appended a new version — drop the cached list so
       // reopening shows it (and the ◀/▶ nav enables / advances).
@@ -752,15 +767,49 @@ export function DocumentForm({
     }
   };
 
-  const onSubmit = async (values: FormValues) => {
-    const saved = await doSave(values);
-    if (!saved) return;
+  /**
+   * Slice #37.93: a new document's save — the document first, then its staged
+   * pages, in order, numbered from 1 (`saveNewDocument`). A page that did not
+   * arrive is named on the document's own screen; the document is never undone
+   * for it. Returns the new id, or null when the document was not created.
+   */
+  const saveCreate = async (values: FormValues): Promise<string | null> => {
+    createdIdRef.current = null;
+    const result = await saveNewDocument(
+      stagedPages,
+      async () => ((await doSave(values)) ? createdIdRef.current : null),
+      async (id, file, pageNumber) => {
+        setSubmitting(true);
+        const fd = new FormData();
+        fd.append("pageNumber", String(pageNumber));
+        fd.append("pageName", "");
+        fd.append("pageNotes", "");
+        fd.append("file", file);
+        const res = await fetch(`/api/documents/${encodeURIComponent(id)}/pages`, { method: "POST", body: fd });
+        return res.ok && !res.redirected;
+      },
+    );
+    setSubmitting(false);
+    if (!result.ok) return null;
+    rememberUnsavedPages(result.id, result.unsaved);
+    setStagedPages([]);
+    return result.id;
+  };
 
+  const onSubmit = async (values: FormValues) => {
     if (mode === "create") {
-      router.push("/documents");
+      const id = await saveCreate(values);
+      if (id === null) return;
+      // Slice #37.93 (Ask first): the new document opens — its own screen,
+      // where its pages are seen — rather than the list.
+      form.reset(values);
+      router.push(`/documents/${encodeURIComponent(id)}`);
       router.refresh();
       return;
     }
+
+    const saved = await doSave(values);
+    if (!saved) return;
 
     // Slice #18.06: edit mode stays on the document so the freshly-appended
     // version is visible. Reset the clean baseline to the just-saved state (so
@@ -797,16 +846,18 @@ export function DocumentForm({
   // Page uploads/deletes save immediately via their own API calls (see
   // PagesPanel), so they don't need this guard — only unsaved React Hook
   // Form field edits do. A read-only historical version is never dirty.
+  // Slice #37.93: chosen pages are unsaved work too — leaving with them asks.
   useUnsavedChangesGuard({
     isDirty:
       effectiveMode === "view"
         ? false
         : isCreate
-          ? form.formState.isDirty
+          ? form.formState.isDirty || stagedPages.length > 0
           : editDirty,
     onSave: async () => {
       const valid = await form.trigger();
       if (!valid) return false;
+      if (isCreate) return (await saveCreate(form.getValues())) !== null;
       return (await doSave(form.getValues())) !== null;
     },
   });
@@ -1552,6 +1603,22 @@ export function DocumentForm({
           </div>,
         )}
       </>
+    ) : isCreate ? (
+      // Slice #37.93: „Pagini" on a new document stands where it stands on a
+      // saved one — beside the form, purple — holding the chosen files.
+      <div className="flex flex-wrap items-stretch" style={{ gap: PANEL_GAP }}>
+        <div className="min-w-0">{formElement}</div>
+        <div className="flex flex-col" style={PAGES_PANEL_STYLE} data-panel="pages">
+          <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
+            <NewPagesPanel
+              pages={stagedPages}
+              onChange={setStagedPages}
+              surface={tileSurface(true)}
+              disabled={submitting}
+            />
+          </ErrorBoundary>
+        </div>
+      </div>
     ) : showPagesPanel ? (
       <div className="flex flex-wrap items-stretch" style={{ gap: PANEL_GAP }}>
         <div className="min-w-0">{formElement}</div>

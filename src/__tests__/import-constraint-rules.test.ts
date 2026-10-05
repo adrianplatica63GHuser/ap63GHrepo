@@ -319,13 +319,16 @@ describe("the size limit is the upload route's limit", () => {
     // "20 MB" from a locale string that said it in words. A user who met the
     // dialog's limit and the wizard's CON-05 limit was reading two numbers
     // that happened to agree.
+    // Slice #37.93: the dialog's size check is `pageRefusal`'s now, shared
+    // with a new document's „Pagini"; the dialog still prints MAX_UPLOAD_MB.
     const panel = fs.readFileSync(
-      path.join(process.cwd(), "src/app/documents/_components/pages-panel.tsx"),
+      path.join(process.cwd(), "src/lib/documents/new-document-pages.ts"),
       "utf8",
     );
     const code = stripComments(panel);
     expect(code).toContain('from "@/lib/import/constraint-rules"');
-    expect(code).toMatch(/file\.size > MAX_UPLOAD_BYTES\s/);
+    expect(code).toMatch(/file\.size > MAX_UPLOAD_BYTES\b/);
+    expect(stripComments(fs.readFileSync(path.join(process.cwd(), "src/app/documents/_components/pages-panel.tsx"), "utf8"))).toContain("MAX_UPLOAD_MB");
     expect(code).not.toMatch(/\d+\s*\*\s*1024\s*\*\s*1024/);
     expect(code).not.toMatch(/1024\s*\*\s*1024\s*\*\s*\d+/);
     expect(code).not.toMatch(/\b\d+\s*MB\b/);

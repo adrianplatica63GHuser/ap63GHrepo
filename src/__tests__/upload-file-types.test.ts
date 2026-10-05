@@ -204,9 +204,13 @@ describe("the picker offers exactly the uploadable set", () => {
     // ⚠️ ANCHORED. `toContain("isUploadableFileName")` is satisfied by the
     // IMPORT line, so deleting the check from `handleFileChange` left this test
     // green while the Goal sentence it claims to enforce was gone.
-    const code = codeOf("app/documents/_components/pages-panel.tsx");
+    // Slice #37.93: the dialog's two checks moved into `pageRefusal`, which a
+    // new document's „Pagini" asks too; the dialog calls it on the chosen file.
+    const code = codeOf("lib/documents/new-document-pages.ts");
     expect(code).toContain("!isUploadableFileName(file.name)");
     expect(code).toContain("fileTypeNotAllowed");
+    expect(codeOf("app/documents/_components/pages-panel.tsx")).toContain("pageRefusal(file)");
+    expect(codeOf("app/documents/_components/new-pages-panel.tsx")).toContain("pageRefusal(file)");
   });
 });
 
@@ -550,7 +554,8 @@ describe("a wrong format is refused for its format, never for its size", () => {
   const SIZE_CHECK = "file.size > MAX_UPLOAD_BYTES";
 
   it.each([
-    "app/documents/_components/pages-panel.tsx",
+    // Slice #37.93: the page dialog's checks live here now (`pageRefusal`).
+    "lib/documents/new-document-pages.ts",
     "app/api/documents/[id]/pages/route.ts",
   ])("%s decides type before size", (rel) => {
     const code = codeOf(rel);

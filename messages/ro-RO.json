@@ -1850,6 +1850,20 @@
         "body": "Sigur doriți să ștergeți această pagină? Acțiunea nu poate fi anulată.",
         "yes": "Șterge",
         "no": "Anulează"
+      },
+      "staged": {
+        "choose": "Alege fișierele paginilor",
+        "hint": "Paginile alese se salvează odată cu actul, în ordinea de aici.",
+        "listLabel": "Paginile alese",
+        "moveUp": "Mută mai sus",
+        "moveDown": "Mută mai jos",
+        "remove": "Elimină pagina",
+        "refused": "{name}: {reason}"
+      },
+      "unsaved": {
+        "title": "Unele pagini nu au fost salvate",
+        "body": "Actul a fost salvat, dar aceste pagini nu: {names}. Le puteți adăuga din nou cu „+ Adaugă pagină”.",
+        "dismiss": "Închide"
       }
     },
     "groupsFilterLabel": "Grupuri:",

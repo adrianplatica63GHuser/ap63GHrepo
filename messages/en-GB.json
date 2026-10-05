@@ -1850,6 +1850,20 @@
         "body": "Are you sure you want to delete this page? This cannot be undone.",
         "yes": "Delete",
         "no": "Cancel"
+      },
+      "staged": {
+        "choose": "Choose the pages' files",
+        "hint": "The chosen pages are saved with the document, in this order.",
+        "listLabel": "Chosen pages",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove page",
+        "refused": "{name}: {reason}"
+      },
+      "unsaved": {
+        "title": "Some pages were not saved",
+        "body": "The document was saved, but these pages were not: {names}. You can add them again with “+ Add Page”.",
+        "dismiss": "Close"
       }
     },
     "groupsFilterLabel": "Groups:",

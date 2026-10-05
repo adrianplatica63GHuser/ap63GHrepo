@@ -24,7 +24,8 @@
  * in sync.
  *
  * Rules:
- *  - In "create" mode (no documentId) the panel is never rendered.
+ *  - In "create" mode (no documentId) the panel is never rendered; since
+ *    Slice #37.93 a new document holds its chosen files in NewPagesPanel.
  *  - In "view"   mode the Add Page and Delete buttons are hidden.
  *  - Clicking a table row or the View button loads the file into the viewer.
  *  - The Print button opens the file URL in a new browser tab.
@@ -39,14 +40,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Printer, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
-import {
-  UPLOAD_ACCEPT_ATTRIBUTE,
-  isUploadableFileName,
-} from "@/lib/files/file-kinds";
+import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
 import { contentTypeOf } from "@/lib/files/file-mime";
-import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
+import { MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { TILE_SURFACE } from "@/lib/ui/tile-surface";
+import { pageRefusal, takeUnsavedPages } from "@/lib/documents/new-document-pages";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -617,6 +616,18 @@ export function PagesPanel({
     nextPageNumber,
   } = state;
 
+  // Slice #37.93: the pages a new document's first Save could not upload,
+  // named here once (the save kept them in session storage). Read after the
+  // first render — the server has no session storage — as use-tile-choice.ts does.
+  const [unsaved, setUnsaved] = useState<string[]>([]);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const names = takeUnsavedPages(documentId);
+      if (names.length > 0) setUnsaved(names);
+    }, 0);
+    return () => clearTimeout(id);
+  }, [documentId]);
+
   return (
     <section
       className={[
@@ -686,6 +697,16 @@ export function PagesPanel({
           )}
         </div>
       </div>
+
+      {unsaved.length > 0 && (
+        <div role="alert" className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200" data-unsaved-pages>
+          <p className="font-medium">{t("unsaved.title")}</p>
+          <p>{t("unsaved.body", { names: unsaved.join(", ") })}</p>
+          <div className="mt-2 flex justify-end">
+            <IconButton icon={X} label={t("unsaved.dismiss")} variant="secondary" size="xs" onClick={() => setUnsaved([])} />
+          </div>
+        </div>
+      )}
 
       {/* Loading / error states */}
       {isLoading && (
@@ -1122,13 +1143,10 @@ function AddPageDialog({
     // Type before size, because a `.heic` burst at 30 MB is refused for being
     // a `.heic` and telling the user to rescan it smaller would be a fix that
     // cannot work.
-    const reason =
-      file === null                     ? null
-      : !isUploadableFileName(file.name) ? t("dialog.fileTypeNotAllowed")
-      : file.size > MAX_UPLOAD_BYTES     ? t("dialog.fileTooLarge", {
-                                             limitMb: MAX_UPLOAD_MB,
-                                           })
-      : null;
+    // Slice #37.93: the two checks live in `pageRefusal`, which a new
+    // document's „Pagini" asks too — one rule, two doors.
+    const refusal = file === null ? null : pageRefusal(file);
+    const reason = refusal === null ? null : t(`dialog.${refusal}`, { limitMb: MAX_UPLOAD_MB });
 
     if (reason !== null) {
       setError(reason);
