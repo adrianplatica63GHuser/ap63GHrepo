@@ -14,7 +14,8 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
-import { customFieldOptionsOf, customFieldValueLabel } from "@/lib/documents/custom-field-options";
+import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
+import { customFieldFilter, typeFilterTrigger } from "@/lib/documents/type-filter";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
@@ -121,11 +122,17 @@ function DocumentTypeFilterDropdown({
   initialDocumentTypeIds,
   label,
   allTypesLabel,
+  noTypesLabel,
+  typesShownLabel,
 }: {
   types: DocumentTypeOption[];
   initialDocumentTypeIds?: string[];
   label: string;
   allTypesLabel: string;
+  /** Slice #38.07: „Niciun tip". */
+  noTypesLabel: string;
+  /** Slice #38.07: „{count} tipuri afișate". */
+  typesShownLabel: (count: number) => string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -168,7 +175,8 @@ function DocumentTypeFilterDropdown({
     router.push(buildDocumentsUrl(next, allTypeIds));
   }
 
-  const triggerText = allChecked ? allTypesLabel : `${checkedIds.size}/${allTypeIds.length}`;
+  // Slice #38.07: all — „Toate tipurile"; one — its name; several — „{n} tipuri afișate"; none — „Niciun tip".
+  const trigger = typeFilterTrigger(types, initialDocumentTypeIds);
 
   return (
     <div ref={containerRef} className="relative">
@@ -180,7 +188,17 @@ function DocumentTypeFilterDropdown({
         className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
       >
         <span className="text-fade">{label}</span>
-        <span className="font-medium text-ink dark:text-zinc-100">{triggerText}</span>
+        {trigger.kind === "one" ? (
+          <span className="max-w-56 truncate font-medium text-ink dark:text-zinc-100" title={trigger.name} data-type-trigger="one">
+            {trigger.name}
+          </span>
+        ) : trigger.kind === "all" ? (
+          <span className="font-medium text-ink dark:text-zinc-100" data-type-trigger="all">{allTypesLabel}</span>
+        ) : (
+          <span className="font-medium italic text-ink dark:text-zinc-100" data-type-trigger={trigger.kind}>
+            {trigger.kind === "none" ? noTypesLabel : typesShownLabel(trigger.count)}
+          </span>
+        )}
         {/* #37.42 (A015): Lucide's ChevronDown in place of the „▾" glyph —
             decoration inside a button that has its words, so no name of its own. */}
         <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-fade" />
@@ -455,10 +473,16 @@ export function DocumentListView({
   // finds one document, which the search box does better; and the Antecontract's
   // prose-made fields („suma de", „Anul") were all text. The rule and the value
   // labels are `custom-field-options.ts`.
-  const customFieldOptions = useMemo(
-    () => customFieldOptionsOf(typeOptions, initialDocumentTypeIds),
+  //
+  // ⚠️ **Slice #38.07: ONLY FOR EXACTLY ONE TYPE, AND ONLY ONE THAT HAS SUCH A
+  // FIELD** (`customFieldFilter`). With every type, several, or one without a
+  // closed-list field, the control is drawn disabled and offers nothing — so a
+  // chosen key is cleared by the reconciliation below, as before.
+  const customField = useMemo(
+    () => customFieldFilter(typeOptions, initialDocumentTypeIds),
     [typeOptions, initialDocumentTypeIds],
   );
+  const customFieldOptions = customField.options;
   const chosenCustomField = customFieldOptions.find((o) => o.key === customFieldKey);
 
   /**
@@ -660,8 +684,9 @@ export function DocumentListView({
       {/* Toolbar — Slice #37.83: two rows. The first: the search, „Tip document",
           „Expiră curând", „Câmpuri afișate" and, at its end, „Adaugă act"'s group;
           choosing a field in „Câmp specific" no longer moves any of them. The
-          second, under the search box, holds „Câmp specific" alone — and is not
-          drawn at all when the types on screen have no such field. */}
+          second, under the search box, holds „Câmp specific" alone. Since #38.07
+          it is always drawn once the types have loaded, its control disabled
+          unless exactly one type with a closed-list field is ticked. */}
       <div className={`flex flex-col gap-3 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
       <div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">
         {/* Slice #37.62: the search first, then the type — its placeholder no
@@ -679,6 +704,8 @@ export function DocumentListView({
           initialDocumentTypeIds={initialDocumentTypeIds}
           label={t("typeFilterLabel")}
           allTypesLabel={t("allTypes")}
+          noTypesLabel={t("noTypes")}
+          typesShownLabel={(count) => t("typesShown", { count })}
         />
 
         {/* Expiring-soon toggle */}
@@ -729,7 +756,7 @@ export function DocumentListView({
         </div>
       </div>
       {/* ── The second row: „Câmp specific" ─────── (Slice #37.83) ── */}
-      {customFieldOptions.length > 0 && (
+      {typeOptions.length > 0 && (
       <div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">
         {/* Slice #37.62: no „Importanță" or „Relevanță" filter. The
             Expiring-soon toggle on the first row filters on the document's own
@@ -743,12 +770,11 @@ export function DocumentListView({
             read `custom_fields` for search or for filtering, so a flavour could
             be captured and never grouped by.
 
-            ⚠️ **DRAWN ONLY WHEN THE TYPES ON SCREEN HAVE A CUSTOM FIELD AT
-            ALL.** Most of this archive's types have no template, and a pair of
-            permanently empty dropdowns on the one list every user opens daily
-            would be two controls that never do anything — the shape #34.02
-            argued against for the review checkbox on lists that can never fill
-            it.
+            ⚠️ **ALWAYS DRAWN SINCE #38.07, DISABLED UNLESS EXACTLY ONE TYPE
+            WITH A CLOSED-LIST FIELD IS TICKED.** It used to be drawn only when
+            the types on screen had such a field, offering every type's at once;
+            Adrian asked for one type at a time, and for the control to stay in
+            sight, its ⓘ saying how to turn it on (the header's Ask first).
 
             ⚠️ **TWO CONTROLS, THE SECOND APPEARING ONLY AFTER THE FIRST.** A
             value alone is meaningless (which field?) and a key alone is a
@@ -771,6 +797,7 @@ export function DocumentListView({
           <HintBubble
             id="custom-field-hint"
             text={tFilter("customFieldHint")}
+            note={tFilter("customFieldWhenActive")}
             triggerLabel={tFilter("customFieldHintTrigger")}
           >
           <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -787,7 +814,10 @@ export function DocumentListView({
                 setCurrentPage(0);
               }}
               aria-label={tFilter("customFieldLabel")}
-              className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
+              // Slice #38.07: works only for exactly one type with a closed-list field.
+              disabled={!customField.enabled}
+              data-custom-field-enabled={customField.enabled ? "true" : "false"}
+              className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
             >
               <option value="">{tFilter("allCustomFields")}</option>
               {customFieldOptions.map((o) => (

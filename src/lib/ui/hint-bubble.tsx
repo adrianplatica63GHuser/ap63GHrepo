@@ -77,6 +77,11 @@ type Props = {
   /** The explanation itself. */
   text: string;
   /**
+   * Slice #38.07: a sentence after the explanation, drawn in italics — what a
+   * disabled control needs before it works. Part of the same tooltip text.
+   */
+  note?: string;
+  /**
    * The accessible name of the ⓘ button. Never defaulted: a default would be an
    * English string in a Romanian-first app. Left out, there is no ⓘ at all —
    * for a text box, whose own focus opens the bubble (#37.50, note above).
@@ -104,6 +109,7 @@ type Props = {
 export function HintBubble({
   id,
   text,
+  note,
   triggerLabel,
   disabled = false,
   children,
@@ -229,6 +235,12 @@ export function HintBubble({
         }
       >
         {text}
+        {note && (
+          <>
+            {" "}
+            <em className="italic" data-hint-note="">{note}</em>
+          </>
+        )}
       </p>
     </div>
   );

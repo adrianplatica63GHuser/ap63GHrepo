@@ -916,7 +916,8 @@
       "allCustomFieldValues": "Toate valorile",
       "customFieldValuesLoading": "Se încarcă…",
       "customFieldValueOption": "{value} ({count, plural, one {# document} few {# documente} other {# de documente}})",
-      "customFieldHint": "Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (cele cu o listă închisă de valori ale tipurilor alese la „Tip document”, ale tuturor dacă nu e ales niciunul), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare.",
+      "customFieldHint": "Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (unul cu o listă închisă de valori, al tipului ales la „Tip document”), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare.",
+      "customFieldWhenActive": "Câmpul specific este activ numai când la „Tip document” este ales un singur tip, iar acel tip are un formular cu câmpuri cu listă închisă de valori.",
       "customFieldHintTrigger": "Despre „Câmp specific”"
     },
     "readonlyView": {
@@ -1421,6 +1422,8 @@
     },
     "typeFilterLabel": "Tip document:",
     "allTypes": "Toate tipurile",
+    "typesShown": "{count, plural, one {# tip afișat} few {# tipuri afișate} other {# de tipuri afișate}}",
+    "noTypes": "Niciun tip",
     "noTypeSelected": "Selectați cel puțin un tip de document",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",
