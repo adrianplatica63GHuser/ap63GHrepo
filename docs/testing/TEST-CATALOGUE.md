@@ -93,7 +93,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-10](cases/TC-DOC-10.md) | „Corelate" pe un act: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, un singur „Dezasociază" | document | happy | — | `automated` | 2026-10-03 | `e2e/document/related-tile.spec.ts` |
 | [TC-DOC-11](cases/TC-DOC-11.md) | Antecontractul fără câmpurile făcute de „discover"; contractul de vânzare își păstrează formularul | document | happy | — | `automated` | 2026-10-04 | `e2e/document/antecontract-form.spec.ts` |
 | [TC-DOC-12](cases/TC-DOC-12.md) | O pagină al cărei fișier lipsește arată o imagine discretă, nu o eroare | document | negative | — | `automated` | 2026-10-04 | `e2e/document/missing-page-file.spec.ts` |
-| [TC-DOC-13](cases/TC-DOC-13.md) | Un tip fără formular: fără „Descoperire AI”; superuserul vede unde se face formularul, nu pe o carte de identitate | document | happy | — | `confirmed` | 2026-10-05 | `e2e/document/no-form-line.spec.ts` |
+| [TC-DOC-13](cases/TC-DOC-13.md) | Un tip fără formular: fără „Descoperire AI”; superuserul vede unde se face formularul, nu pe o carte de identitate | document | happy | — | `automated` | 2026-10-05 | `e2e/document/no-form-line.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/person-document.spec.ts` |
@@ -155,8 +155,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Seventy are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-03 (Slices
-#37.38, #37.40, #37.42–#37.47 and #37.49–#37.84, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17 and TC-LAYOUT-02 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Seventy-one are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-05 (Slices
+#37.38, #37.40, #37.42–#37.47 and #37.49–#37.85, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02 and TC-DOC-13 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

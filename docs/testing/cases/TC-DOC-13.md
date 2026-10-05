@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -59,3 +59,7 @@ description. Records created through `POST /api/documents`.
 **2026-10-05 — run 2, `confirmed` (Slice #37.85).** The same pane and records, the file unchanged:
 the same in every step. Both documents deleted (204, 204). `e2e/document/no-form-line.spec.ts`
 translates the case.
+
+**2026-10-05 — `automated` (Slice #37.85).** The test runner's full run 20261005T015805Z-23220 on
+3235a3d ran `e2e/document/no-form-line.spec.ts` green with the other 80 (lint, tsc, jest and
+forms-drift green too).
