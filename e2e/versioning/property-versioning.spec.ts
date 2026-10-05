@@ -182,7 +182,7 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
     const propertyId = await createProperty(page.request, { nickname, surfaceAreaMp: 1000 });
 
     try {
-      // Step 1 — „Deschide" on the row in „Proprietăți — Listă"; „DETALII".
+      // Step 1 — „Deschide" on the row in „Proprietăți"; „DETALII".
       await page.goto("/properties");
       const row = page.getByRole("row").filter({ hasText: nickname });
       // `force`: on the first run this click resolved the link, the screenshot

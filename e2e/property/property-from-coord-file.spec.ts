@@ -58,9 +58,9 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
 
     let propertyId: string | undefined;
     try {
-      // Step 1 — „Proprietăți — Listă", the count.
+      // Step 1 — „Proprietăți", the count.
       await page.goto("/");
-      await openFromSidebar(page, "Proprietăți — Listă");
+      await openFromSidebar(page, "Proprietăți");
       await expect(page.getByRole("heading", { name: "Proprietăți", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(/^Se afișează \d+ din \d+$/)).toBeVisible({ timeout: 15_000 });
       const before = await readTotal(page);

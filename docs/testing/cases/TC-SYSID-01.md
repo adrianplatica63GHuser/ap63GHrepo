@@ -40,7 +40,7 @@ its right end (13 px from the panel's edge, its padding), and the heading stays 
 | 2 | Opens the company | One code, in the corner of „Identitate"; no „ID" field among the panel's boxes |
 | 3 | Opens the property | One code, in the corner of „Date cadastrale"; no „Cod" field among the panel's boxes |
 | 4 | Opens the document | One code, in the corner of „Date generale" |
-| 5 | Opens Persoane Fizice, Persoane Juridice, Proprietăți — Listă and Acte | Each list's table: no „Cod" column, no code in any row, the record of this case among its rows; no code in the sidebar's „Recente" |
+| 5 | Opens Persoane Fizice, Persoane Juridice, Proprietăți and Acte | Each list's table: no „Cod" column, no code in any row, the record of this case among its rows; no code in the sidebar's „Recente" |
 
 ## At the end — leaving things as they were found
 
@@ -72,3 +72,7 @@ the file above unchanged; each screen loaded in turn and read with the same scri
 **2026-10-02 — `automated` (Slice #37.57).** `e2e/ui/system-id.spec.ts` green in the runner's full `20261002T222558Z-906` (e2e 56), on the commit that also carries the fixes below it; the slice's pictures are its own.
 
 **2026-10-05 — Slice #37.89.** The Judicial Person's first panel is called „Identitate", as the Natural Person's is. Step 2 and the spec read the new name; nothing else moved.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

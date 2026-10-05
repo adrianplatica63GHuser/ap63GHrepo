@@ -27,7 +27,7 @@ Nothing. There is no role on this link, from either end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți — Listă" | The property's screen |
+| 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți" | The property's screen |
 | 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază act" | „Asociere act" at `/properties/[id]/associate-document`, the property's name under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu listing every document. **There is no „Rol"** — the same as TC-ASSOC-02 from the other end |
 | 4 | Types `TC-DOC-01` into „Căutare" | One row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
@@ -78,3 +78,7 @@ and the runner's whole `full` run on the slice's commit keeps the row `automated
 relationship behind „Relația", one „Dezasociază", and „Asociază persoană", „Asociază proprietate"
 and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows, and the
 runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

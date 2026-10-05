@@ -1,12 +1,13 @@
 /**
  * Case:   TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de pe care vii
- * Source: docs/testing/cases/TC-MAP-01.md, „Last green" 2026-10-01
+ * Source: docs/testing/cases/TC-MAP-01.md, „Last green" 2026-10-01 (rewritten by Slice #37.92: the
+ *         address typed, the sidebar link it came from being gone)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim, and the centre and zoom are read where the case
  * reads them: `data-map-center` / `data-map-zoom` on `[data-property-map]` and
- * on the tile's `[data-mini-map]`, and `data-focus-blink`. The address the link
- * sent is read from Playwright's `framenavigated` events, which fire for a
+ * on the tile's `[data-mini-map]`, and `data-focus-blink`. The address the map
+ * went to is read from Playwright's `framenavigated` events, which fire for a
  * history push as for a load, because the map removes it from the address bar
  * as soon as it arrives. (Not by patching `history.pushState` in an init
  * script: the first run did, and Next's dev overlay counted an issue.)
@@ -116,9 +117,9 @@ test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de
       await expect(tileMap(page)).toHaveAttribute("data-map-center", CENTER);
       await page.screenshot({ path: `${SHOTS}/01-form-1920.png`, mask: [recent(page)] });
 
-      // Step 2 — „Proprietăți — Hartă": the map on the rectangle, at the tile's zoom, blinking.
+      // Step 2 — the address the sidebar's „Proprietăți — Hartă" used to send (#37.92: FU-306).
       nav.clear();
-      await openFromSidebar(page, "Proprietăți — Hartă");
+      await page.goto(`/properties/map?focus=${id}&z=${zoom}`);
       await expectFocused(page, nav, id, zoom, true);
 
       // Step 3 — a reload is the ordinary map.
@@ -127,48 +128,11 @@ test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de
       await expect(bigMap(page)).not.toHaveAttribute("data-focus-blink", /.*/);
       expect(await bigMap(page).getAttribute("data-map-center")).not.toBe(CENTER);
 
-      // Step 4 — an unsaved „Poreclă": „Modificări nesalvate" first, the address unchanged.
-      await openProperty(page, id);
-      await page.locator('textarea[name="nickname"]').press("End");
-      await page.locator('textarea[name="nickname"]').pressSequentially(" x");
-      nav.clear();
-      await openFromSidebar(page, "Proprietăți — Hartă");
-      const dialog = page.getByRole("dialog").filter({ hasText: "Modificări nesalvate" });
-      await expect(dialog).toBeVisible();
-      for (const b of ["Anulează", "Renunță", "Salvează"]) {
-        await expect(dialog.getByRole("button", { name: b, exact: true })).toBeVisible();
-      }
-      expect(nav.list()).toEqual([]);
-
-      // Step 5 — „Renunță": as step 2, and the nickname was not saved.
-      await dialog.getByRole("button", { name: "Renunță", exact: true }).click();
-      await expectFocused(page, nav, id, zoom);
-
-      // Step 6 — „Hartă" unticked: the link still carries the zoom a fit gives the tile's box.
-      await openProperty(page, id);
-      await expect(page.locator('textarea[name="nickname"]')).toHaveValue(NICKNAME);
-      const mapTick = page.getByRole("checkbox", { name: "Hartă", exact: true });
-      await mapTick.uncheck();
-      await expect(tileMap(page)).toHaveCount(0);
-      nav.clear();
-      await openFromSidebar(page, "Proprietăți — Hartă");
-      await expectFocused(page, nav, id, zoom);
-      await page.goto(`/properties/${id}`);
-      await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
-      // The first render shows the default ticks and the remembered choice
-      // lands after it (use-tile-choice.ts): wait for „Hartă" to read unticked,
-      // or `check()` finds the default already ticked, does nothing, and the
-      // remembered „unticked" arrives a moment later (#37.44's full run).
-      const tickAgain = page.getByRole("checkbox", { name: "Hartă", exact: true });
-      await expect(tickAgain).not.toBeChecked();
-      await tickAgain.check();
-      await expect(tileMap(page)).toHaveCount(1);
-
-      // Step 7 — from „Proprietăți — Listă", the ordinary map.
-      await openFromSidebar(page, "Proprietăți — Listă");
+      // Step 4 — „Proprietăți", then „Hartă completă": the ordinary map.
+      await openFromSidebar(page, "Proprietăți");
       await expect(page).toHaveURL(/\/properties$/);
       nav.clear();
-      await openFromSidebar(page, "Proprietăți — Hartă");
+      await page.getByRole("button", { name: "Hartă completă", exact: true }).click();
       await expect(bigMap(page)).toHaveAttribute("data-map-zoom", /\d/, { timeout: 30_000 });
       expect(nav.list()).toEqual(["/properties/map"]);
       await expect(bigMap(page)).not.toHaveAttribute("data-focus-blink", /.*/);

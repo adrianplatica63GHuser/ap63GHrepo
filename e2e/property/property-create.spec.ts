@@ -60,9 +60,9 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
 
     let propertyId: string | undefined;
     try {
-      // Step 1 — „Proprietăți — Listă" in the left sidebar.
+      // Step 1 — „Proprietăți" in the left sidebar.
       await page.goto("/");
-      await openFromSidebar(page, "Proprietăți — Listă");
+      await openFromSidebar(page, "Proprietăți");
       await expect(page.getByRole("heading", { name: "Proprietăți", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(
         page.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"),

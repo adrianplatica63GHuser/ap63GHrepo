@@ -10,7 +10,7 @@
 
 ## What this proves
 
-„Proprietăți — Listă" keeps its search and its chosen columns, and has no „Importanță" or „Relevanță"
+„Proprietăți" keeps its search and its chosen columns, and has no „Importanță" or „Relevanță"
 filter and no „Cod" column. Since #37.72 Poreclă is always shown — the first column after the tick
 box, whatever is ticked — and is no longer offered in „Câmpuri afișate", which offers every field of
 „Date cadastrale" but Poreclă and Note, then Localitate: „Categorie de folosință" and „Tip
@@ -35,7 +35,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Proprietăți — Listă" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate n/4"; no „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Opens „Proprietăți" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate n/4"; no „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-PROP-06` into the search | One row, `TC-PROP-06 Teren de test`; the first header after the tick box is „PORECLĂ", the rest are the chosen columns — no „Cod" — and no system ID in the table |
 | 3 | Presses „Câmpuri afișate" | Tarla/Solă, Parcelă, Oficială (m²), Calculată (m²), Nr. CF, Nr. cadastru, Categorie de folosință, Tip proprietate, Localitate — and no Poreclă, Note, Importanță, Relevanță or Proveniență |
 | 4 | Unticks every ticked field | „Câmpuri afișate 0/4"; between the tick box and the buttons one header, „PORECLĂ", and the row still reads `TC-PROP-06 Teren de test` |
@@ -89,3 +89,7 @@ follows it.
 **2026-10-04 — `automated` again (Slice #37.72).** The test runner's full run 20261004T044252Z-16792
 on 88f753b ran the rewritten `e2e/property/property-list.spec.ts` green with the other 67 specs
 (lint, tsc, jest and forms-drift green too).
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

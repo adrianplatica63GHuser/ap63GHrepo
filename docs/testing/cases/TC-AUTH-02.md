@@ -41,7 +41,7 @@ browser Claude drives: Claude never types a password. Claude does every other st
 | Sidebar: „Admin-Operațiuni", „Admin-Configurare" | shown | **absent** |
 | `/admin/value-lists` typed by hand | opens | **sent to `/`, the dashboard** |
 | `/admin/users` typed by hand | opens | **sent to `/`, the dashboard** |
-| „Proprietăți — Listă", „Persoane Fizice", „Acte" | open | **open** |
+| „Proprietăți", „Persoane Fizice", „Acte" | open | **open** |
 | Căutare globală (`/admin/global-search`, and the sidebar's quick search) | opens | **opens** (since #36.20) |
 
 **Writes**, which only the spec makes — one per guarded family, each marked `TC-E2E-AUTH-02`:
@@ -71,10 +71,10 @@ caller left is DocTypeEngine, a superuser's screen. Closing both routes is FU-29
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Adrian signs in as the `user` account | „Tablou de bord", and at the top of the sidebar „Autentificat ca" and the account's name |
-| 2 | Reads the sidebar | „Persoane Fizice", „Persoane Juridice", „Proprietăți — Listă", „Proprietăți — Hartă", „Acte", and the quick search „Nume, cod…" — and **no** „Admin-Operațiuni" or „Admin-Configurare" |
+| 2 | Reads the sidebar | „Persoane Fizice", „Persoane Juridice", „Proprietăți", „Acte", and the quick search „Nume, cod…" — and **no** „Admin-Operațiuni" or „Admin-Configurare" |
 | 3 | Types `/admin/value-lists` into the address bar | The address becomes `/` and the screen is „Tablou de bord". Nothing says why |
 | 4 | Types `/admin/users` into the address bar | The same: `/`, „Tablou de bord" |
-| 5 | Presses „Proprietăți — Listă", then „Persoane Fizice", then „Acte" | Each list, headed „Proprietăți", „Persoană fizică", „Acte", with its „Adaugă…" button |
+| 5 | Presses „Proprietăți", then „Persoane Fizice", then „Acte" | Each list, headed „Proprietăți", „Persoană fizică", „Acte", with its „Adaugă…" button |
 | 6 | Types `PROP` into the sidebar's quick search and presses Enter | Căutare globală at `/admin/global-search?search=PROP`, with its results — not the dashboard |
 
 ## At the end — leaving things as they were found
@@ -98,3 +98,7 @@ admin layout; it now lives in the `(all-roles)` route group. Steps 3–4's „no
 read from `src/app/admin/layout.tsx` (`redirect("/")`) and `admin/users/page.tsx`, and the first
 run confirms or corrects it. The spec is written and parked as `e2e/auth/user-role.parked.ts`,
 outside Playwright's match, until two unchanged runs confirm this file.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

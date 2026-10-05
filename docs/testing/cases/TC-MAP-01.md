@@ -6,15 +6,20 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-01 |
+| **Last green** | 2026-10-05 |
 
 ## What this proves
 
-With a Property's screen open, „Proprietăți — Hartă" in the left sidebar opens the properties map
-**on that Property**: centred on it, at the same zoom as its „Hartă" tile, with its polygon
-blinking green three times before it turns blue again (Slice #37.38). The focus travels in the
-address once and is then removed, so a reload is the ordinary map. The unsaved-changes question
-still comes first, and from anywhere else the link opens the ordinary map, as before.
+The properties map opened **on a Property** — by the address `/properties/map?focus=<id>&z=<zoom>` —
+is centred on it at that zoom, with its polygon blinking green three times before it turns blue
+again (Slice #37.38). The focus travels in the address once and is then removed, so a reload is the
+ordinary map, and the map opened from the list's „Hartă completă" is the ordinary map.
+
+Until Slice #37.92 that address was sent by the sidebar's „Proprietăți — Hartă" pressed on a
+Property's screen, with the zoom of its „Hartă" tile, after the unsaved-changes question. #37.92
+made the sidebar's two property items one, „Proprietăți", and the whole map opens from the list,
+so nothing on screen sends the address any more (FU-306); the case types it, and keeps what the
+map page still does with it. The old steps 4–6 (the question, an unticked tile) went with the link.
 
 ## Before you start
 
@@ -33,31 +38,27 @@ Nothing.
 
 ## Shared state — what the case writes, and what it cannot give back
 
-The property, deleted at the end. Step 6 unticks the „Hartă" tile, which the browser remembers
-for every Property (`ga40-tiles-property-v1`); step 6 ticks it again.
+The property, deleted at the end.
 
 ## Steps
 
 The map's centre and zoom are not printed on the screen. A run reads them from the map's box:
 `[data-property-map]` carries `data-map-center="<lat>,<lng>"` and `data-map-zoom`, and the tile's
 `[data-mini-map]` the same; `[data-property-map]`'s `data-focus-blink` reads `on` while the
-polygon blinks and `done` after. The address the link sent is read from the browser's history.
+polygon blinks and `done` after.
 
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-MAP-01 Teren pe hartă` (`/properties/<id>`) | Its screen, headed `TC-MAP-01 Teren pe hartă`; the „Hartă" tile shows the rectangle, fitted, centred on 44.3702, 25.9804 — at a zoom of **19** at 1920 px |
-| 2 | Presses „Proprietăți — Hartă" in the left sidebar | The address goes to `/properties/map?focus=<id>&z=19` and then reads `/properties/map`. The map is centred on **44.3702, 25.9804** at zoom **19** — the tile's — and the rectangle blinks green three times (about 2.4 s), then is blue like the others |
+| 2 | Goes to `/properties/map?focus=<id>&z=19` (the tile's zoom) | The address then reads `/properties/map`. The map is centred on **44.3702, 25.9804** at zoom **19**, and the rectangle blinks green three times (about 2.4 s), then is blue like the others |
 | 3 | Reloads the page | The ordinary map: every property fitted, nothing blinking |
-| 4 | Opens the property again, types ` x` at the end of „Poreclă", presses „Proprietăți — Hartă" | The dialog „Modificări nesalvate", with „Anulează", „Renunță" and „Salvează"; the address has not changed |
-| 5 | Presses „Renunță" | As step 2: the map on the rectangle at zoom 19, blinking green, the address back to `/properties/map`. The nickname was not saved |
-| 6 | Opens the property again, unticks „Hartă", presses „Proprietăți — Hartă"; then opens the property once more and ticks „Hartă" again | The tile is gone, and the link still carries `z=19` — the zoom a fit gives the tile's box — and the map opens as in step 2 |
-| 7 | „Proprietăți — Listă", then „Proprietăți — Hartă" | The ordinary map, as in step 3: the address was `/properties/map`, with no `focus` |
+| 4 | „Proprietăți" in the sidebar, then „Hartă completă" | The ordinary map, as in step 3: the address is `/properties/map`, with no `focus` |
 
-Steps 2, 5 and 6 are the assertion.
+Step 2 is the assertion.
 
 ## At the end — leaving things as they were found
 
-Open `TC-MAP-01 Teren pe hartă`, press „Șterge" and answer „Ștergeți proprietatea?" with **„Da"**.
+Delete the property (`DELETE /api/properties/<id>`).
 
 ## Notes from the runs
 
@@ -105,3 +106,24 @@ photographs the form, the map mid-blink and the map after it, for #37.38's hando
   which has no WebGL (FU-275).
 - SwiftShader did not stop it, so that one message is let through.
 - Green as `20261001T120030Z-32347`.
+
+**2026-10-05 — run 3, `driven` (Slice #37.92).** The case rewritten: the sidebar's „Proprietăți — Hartă"
+left in #37.92, so step 2 types the address it used to send, and the old steps 4–6 (the unsaved-changes
+question, an unticked tile) went with the link. Driven in the browser pane, emulated at 1920 × 1080,
+against `npm run dev` on 3000; the pane was hidden, so a screenshot was taken before each reading to
+let the maps draw.
+- Step 1: the tile at 44.3702000, 25.9804000, zoom 19.
+- Step 2: the address read `/properties/map` at once; the map at 44.3702000, 25.9804000, zoom 19;
+  `data-focus-blink` `on`, the rectangle green, then `done`, blue.
+- Step 3: no blink, the ordinary map at 44.3747338, 25.9583923, zoom 14.
+- Step 4: „Proprietăți" → `/properties`, „Hartă completă" → `/properties/map`, no blink, zoom 14.
+
+**2026-10-05 — run 4, `confirmed` (Slice #37.92).** A new `TC-MAP-01 Teren pe hartă`, the same way,
+against the file above unchanged: step 1 the tile at 44.3702000, 25.9804000, zoom 19; step 2 the
+address `/properties/map` at once, the map at 44.3702000, 25.9804000, zoom 19, `on` then `done`;
+step 3 no blink, zoom 14; step 4 `/properties` then `/properties/map`, no blink, zoom 14. Both
+properties deleted (204). Nothing in the file changed, so the case is confirmed, and
+`e2e/map/property-map-focus.spec.ts` follows it.
+
+**2026-10-05 — `automated`.** `e2e/map/property-map-focus.spec.ts` follows the rewritten steps; green on the runner,
+`20261005T070356Z-19469` on `7a65f19` with the slice's tree (with TC-AUTH-01's, TC-PROP-01's, TC-PROP-03's, TC-VER's, TC-ICON-07's and TC-PROP-06's specs).

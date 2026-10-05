@@ -48,7 +48,7 @@ the left — then press „Dezasociază", which is disabled while no row is sele
 
 **If the property is later deleted from the document's screen**, the application refuses
 with „Nu se poate șterge de aici" — dissociate first, then open the property from
-„Proprietăți — Listă" and delete it there. That refusal is correct behaviour, not a
+„Proprietăți" and delete it there. That refusal is correct behaviour, not a
 failure of this case.
 
 ## Notes from the runs
@@ -97,3 +97,7 @@ and the runner's whole `full` run on the slice's commit keeps the row `automated
 relationship behind „Relația", one „Dezasociază", and „Asociază persoană", „Asociază proprietate"
 and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows, and the
 runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

@@ -40,7 +40,7 @@ Two properties, typed by hand, „Poreclă" only: **`TC-ASSOC-08 Teren întreg`*
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Creates both properties: „Proprietăți — Listă" → „Adaugă proprietate" → „Introducere manuală", types the „Poreclă", „Salvează" | Two rows badged „Nou!" |
+| 1 | Creates both properties: „Proprietăți" → „Adaugă proprietate" → „Introducere manuală", types the „Poreclă", „Salvează" | Two rows badged „Nou!" |
 | 2 | Opens `TC-ASSOC-08 Parcelă inclusă`, tile **„Corelate"** („Proprietăți corelate" before #37.66, „Asocieri" before #37.30) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază proprietate" | „Asociere proprietate corelată" at `/properties/[id]/associate-reference`, the property's name under it, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every other property, and a select „Tip relație": „— fără relație —", „Adiacent", „Inclus în", „Contiguu", „Subdiviziune a", „Suprapus cu", „Acces prin", „Alipit de" |
 | 4 | Types `TC-ASSOC-08` into „Căutare", ticks `TC-ASSOC-08 Teren întreg`, chooses **„Inclus în"** | Both selected |
@@ -106,3 +106,7 @@ through `DELETE /api/properties/[id]`, the route „Șterge" → „Da" calls.
 relationship behind „Relația", one „Dezasociază", and „Asociază persoană", „Asociază proprietate"
 and „Asociază act" in place of the three „Asociază". The steps say so; the spec follows, and the
 runner's whole `full` run on the slice's commit keeps the row `automated`.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

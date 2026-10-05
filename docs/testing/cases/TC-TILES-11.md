@@ -39,7 +39,7 @@ Nothing.
 |---|---|---|
 | 1 | „Persoane Fizice": searches `TC-TILES-11`, presses „Previzualizare" on Ioana's row | A tile headed `TC-TILES-11 Ioana`, then „Ioni" and „născută: 12.03.1960, Bragadiru" |
 | 2 | „Persoane Juridice": searches `TC-TILES-11`, presses „Previzualizare" on its row | A tile headed `TC-TILES-11 Firmă SRL` followed by „(2 contacte)", then „Firma" |
-| 3 | „Proprietăți — Listă": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Teren`; under it, labels above values, three rows: „Nr. parcelă" `77/1`, „Tarla/Solă" (the tarla's indicativ), „Suprafață (mp)" 1234.00 on the first; „Poreclă" on the second; „Carte funciară" and „Nr. cadastral" („—") on the third |
+| 3 | „Proprietăți": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Teren`; under it, labels above values, three rows: „Nr. parcelă" `77/1`, „Tarla/Solă" (the tarla's indicativ), „Suprafață (mp)" 1234.00 on the first; „Poreclă" on the second; „Carte funciară" and „Nr. cadastral" („—") on the third |
 | 4 | „Acte": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Act`; no „Tip document" and no „Etichetă scurtă" in it; one row „Subiect", „Nr. document", „Data" with „Adeverință de rol fiscal", `123/2020`, `04.05.2020`; then „Prima pagină" |
 
 ## At the end — leaving things as they were found
@@ -67,3 +67,7 @@ changed, so the case is confirmed, and `e2e/tiles/previews-four-kinds.spec.ts` t
 **2026-10-03 — `automated` (Slice #37.70).** The test runner's full run 20261004T031247Z-23758 on
 1c9014f ran `e2e/tiles/previews-four-kinds.spec.ts` green with the other 66 specs (lint, tsc, jest
 and forms-drift green too); `e2e/person/person-lists.spec.ts` (TC-PERS-04) green in the same run.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

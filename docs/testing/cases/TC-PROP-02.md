@@ -48,7 +48,7 @@ that is a defect, not a step to work around.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Deschide" on the `TC-PROP-01 Teren de test` row in „Proprietăți — Listă" | The detail screen, headed with the property's own nickname, on the tab „DETALII" |
+| 1 | Presses „Deschide" on the `TC-PROP-01 Teren de test` row in „Proprietăți" | The detail screen, headed with the property's own nickname, on the tab „DETALII" |
 | 2 | Looks at the **top right of the page header**, beside the heading | „◀ v 0 ▶" and, next to it, a button „Setează ca actuală" |
 | 3 | Scrolls to the bottom and looks at „Salvează" | It is **pale** — nothing has changed yet. „Șterge" (red) and „Anulează" sit beside it |
 | 4 | Changes „Suprafață oficială (m²)" from `1000.00` to `1100`, then leaves the field | A banner **„✏ Modificări nesalvate"** appears **at the top of the form**, above „DATE CADASTRALE", and stays pinned to the top of the window as you scroll down. „Salvează", at the bottom, turns **dark** |
@@ -116,3 +116,7 @@ the chip „2 versiuni", and the accessibility tree still exposes „v 1" alongs
 `e2e/versioning/property-versioning.spec.ts` already asserts, and nothing here needs a
 fixture the existing `auth.setup.ts` does not provide. One more unchanged run moves it
 to `confirmed`.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

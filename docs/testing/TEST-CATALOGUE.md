@@ -76,6 +76,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-07](cases/TC-PROP-07.md) | „Corelate" pe o proprietate: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, relația după „Relația" | property | happy | — | `automated` | 2026-10-03 | `e2e/property/related-tile.spec.ts` |
 | [TC-PROP-08](cases/TC-PROP-08.md) | „Puncte de contur" cât „Hartă", butoanele unui rând lângă marginea din dreapta | property | happy | — | `automated` | 2026-10-04 | `e2e/property/corners-tile-narrow.spec.ts` |
 | [TC-PROP-09](cases/TC-PROP-09.md) | „Hartă": desenarea și harta extinsă pe rândul de sus; harta extinsă se închide și păstrează desenul | property | happy | — | `automated` | 2026-10-05 | `e2e/property/map-top-row.spec.ts` |
+| [TC-PROP-10](cases/TC-PROP-10.md) | Un singur „Proprietăți" în bara laterală; „Hartă completă" din lista proprietăților | property | happy | — | `automated` | 2026-10-05 | `e2e/property/properties-nav.spec.ts` |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-02 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-02 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
@@ -147,7 +148,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-16](cases/TC-TILES-16.md) | „Clasificări": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/classification-dividers.spec.ts` |
 | [TC-TILES-17](cases/TC-TILES-17.md) | „Conexiuni": o linie între fiecare două grupuri, ca în „Clasificări" | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/connections-dividers.spec.ts` |
 | [TC-TILES-18](cases/TC-TILES-18.md) | Bifele fișelor în patru grupuri colorate, fiecare fișă în culoarea grupului ei | tiles | happy | — | `automated` | 2026-10-05 | `e2e/tiles/tile-groups.spec.ts` |
-| [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-01 | `e2e/map/property-map-focus.spec.ts` |
+| [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-05 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
 | [TC-ICON-02](cases/TC-ICON-02.md) | Creionul, Salvarea și Coșul pe o proprietate: modificată, păstrată, ștearsă | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-actions.spec.ts` |
@@ -158,8 +159,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Seventy-four are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-05 (Slices
-#37.38, #37.40, #37.42–#37.47, #37.49–#37.85, #37.88, #37.89 and #37.91, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02, TC-DOC-13, TC-TILES-18, TC-PERS-07 and TC-PROP-09 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Seventy-five are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-05 (Slices
+#37.38, #37.40, #37.42–#37.47, #37.49–#37.85, #37.88, #37.89, #37.91 and #37.92, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02, TC-DOC-13, TC-TILES-18, TC-PERS-07, TC-PROP-09 and TC-PROP-10 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

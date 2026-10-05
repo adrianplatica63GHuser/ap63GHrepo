@@ -36,7 +36,7 @@ describes a party to a sale, which belongs on the contract (TC-ASSOC-01), not on
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți — Listă" | The property's screen, tabs DETALII · ASOCIERI · PERSOANE · ACTE · META INFO |
+| 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți" | The property's screen, tabs DETALII · ASOCIERI · PERSOANE · ACTE · META INFO |
 | 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază persoană" | „Asociere persoană" at `/properties/[id]/associate-person`, the property's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing natural **and** judicial persons, and a select „Rol" with „— fără rol —" and the four roles above |
 | 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
@@ -93,3 +93,7 @@ runner's whole `full` run on the slice's commit keeps the row `automated`.
 **2026-10-03 — Slice #37.67 (steps 7–9 and 11 rewritten).** The person's „Persoane", „Proprietăți"
 and „Acte" became one tile, „Corelate": the property on one line, „Denumire (Rol)", and „Asociază
 proprietate" in place of „Asociază". The steps say so; the spec follows.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

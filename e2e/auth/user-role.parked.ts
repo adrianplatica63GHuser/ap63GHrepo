@@ -21,7 +21,7 @@
  *     send them. Each is marked `TC-E2E-AUTH-02`, and each has its undo, run
  *     as the superuser through a second request context, for the day one of
  *     them wrongly succeeds.
- *   - The sidebar is found as the <nav> that holds „Proprietăți — Listă", not by
+ *   - The sidebar is found as the <nav> that holds „Proprietăți", not by
  *     „Admin-Operațiuni" as helpers/sidebar.ts does — that section is exactly
  *     what a `user` does not have.
  */
@@ -48,8 +48,8 @@ test.describe("TC-AUTH-02 — Un cont „user\" lucrează zilnic și nu poate ad
     await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
 
     // Step 2 — the sidebar: the daily sections, and no administration.
-    const nav = page.locator("nav").filter({ hasText: /Proprietăți — Listă/ });
-    for (const section of ["Persoane Fizice", "Persoane Juridice", "Proprietăți — Listă", "Proprietăți — Hartă", "Acte"]) {
+    const nav = page.locator("nav").filter({ hasText: /Persoane Fizice[\s\S]*Persoane Juridice/ });
+    for (const section of ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]) {
       await expect(nav.getByText(section, { exact: true })).toBeVisible();
     }
     await expect(nav.getByText("Admin-Operațiuni", { exact: true })).toHaveCount(0);
@@ -66,7 +66,7 @@ test.describe("TC-AUTH-02 — Un cont „user\" lucrează zilnic și nu poate ad
 
     // Step 5 — the three lists open, each with its „Adaugă…".
     for (const [label, heading, add] of [
-      ["Proprietăți — Listă", "Proprietăți", "Adaugă proprietate"],
+      ["Proprietăți", "Proprietăți", "Adaugă proprietate"],
       ["Persoane Fizice", "Persoană fizică", "Adaugă persoană"],
       ["Acte", "Acte", "Adaugă act"],
     ] as const) {

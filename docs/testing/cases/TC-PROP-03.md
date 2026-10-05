@@ -38,7 +38,7 @@ moved; the archive is not touched.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Proprietăți — Listă" and notes the count at the foot | „Se afișează N din N" |
+| 1 | Presses „Proprietăți" and notes the count at the foot | „Se afișează N din N" |
 | 2 | Presses „Adaugă proprietate" | The dialog „Adaugă Proprietate" with four ways in. „Din fișier text" reads „Încărcați un fișier .txt cu coloane index, X (Northing), Y (Easting)" and carries the warning „Fără tarla și fără parcelă — proprietatea nu va avea identitate cadastrală." |
 | 3 | Presses „Din fișier text" | „Încarcă fișier cu coordonate", a drop zone „Selectați fișierul cu coordonate" with the hint about the file's rows, a note that the file window shows only .txt files, and „Înapoi" / „Importă" |
 | 4 | Puts the data file into the dialog's file input **without pressing the drop zone** — the same way TC-DOC-01 puts a page in (see the catalogue's „A file into a page, without the dialog") | The drop zone shows `TC-PROP-03 Teren din fisier.txt` |
@@ -85,3 +85,7 @@ Corrections to what was written from the code before the run:
    say that lines which are not coordinates are ignored.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

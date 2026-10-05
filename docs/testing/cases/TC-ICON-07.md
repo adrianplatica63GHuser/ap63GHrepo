@@ -12,7 +12,7 @@
 
 Since Slice #37.49 the name at the top of a Natural Person, a Judicial Person, a Property and a
 Document is preceded by the icon the app already uses for that kind of record — Lucide's User,
-Building2, Map (the folded map of „Proprietăți — Hartă") and FileText — as tall as the name's
+Building2, Map (the folded map — since #37.92 also the sidebar's one „Proprietăți") and FileText — as tall as the name's
 letters, two spaces' width before the name. The icon is hidden from a screen reader, so the
 heading is still named by the record's name alone. A Document's long name still ends in „…",
 and its icon stays whole.
@@ -87,3 +87,7 @@ unchanged.
 bounding boxes and takes #37.49's pictures. Green in the runner's `full` run
 `20261002T122536Z-11225` on `1e34ce3` (48 passed); the run before it, `20261002T121942Z-1353`, never
 reached it — the setup's login timed out on a cold server (FU-256).
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.

@@ -75,8 +75,7 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     for (const section of [
       "Persoane Fizice",
       "Persoane Juridice",
-      "Proprietăți — Listă",
-      "Proprietăți — Hartă",
+      "Proprietăți", // #37.92: one item, where „Proprietăți — Listă" and „— Hartă" were
       "Acte",
       "Admin-Operațiuni",
       "Admin-Configurare",
@@ -101,7 +100,9 @@ const ADMIN_SECTIONS = ["Admin-Operațiuni", "Admin-Configurare"] as const;
 
 /** The <nav> that holds the daily sections — present for every role. */
 function mainNav(page: Page) {
-  return page.locator("nav").filter({ hasText: /Proprietăți — Listă/ });
+  // #37.92: „Proprietăți — Listă" is gone; the two persons' items are in every role's sidebar
+  // and in no breadcrumb together.
+  return page.locator("nav").filter({ hasText: /Persoane Fizice[\s\S]*Persoane Juridice/ });
 }
 
 /** Fill the real form on the page that is already open, and wait for „/". */

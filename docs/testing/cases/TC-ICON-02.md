@@ -41,7 +41,7 @@ the button.
 | 5 | Presses it | The form is read-only again (← and the pencil); the property's „Poreclă" is `TC-ICON-02 Teren modificat` |
 | 6 | Opens the property as usual (`/properties/<id>`) | Under the form: a floppy disk „Salvează", a bin „Șterge", an X „Anulează" |
 | 7 | Moves the mouse over the bin, then presses it | A tooltip `Șterge`; then the question „Ștergeți proprietatea?" with **„Nu"** and **„Da"** — words, no icons |
-| 8 | Presses „Da" | „Proprietăți — Listă"; the property is gone (its address answers 404) |
+| 8 | Presses „Da" | „Proprietăți"; the property is gone (its address answers 404) |
 
 ## At the end — leaving things as they were found
 
@@ -70,3 +70,7 @@ above unchanged.
 
 **2026-10-01 — `automated`.** `e2e/ui/icon-actions.spec.ts` translates the case with Playwright's
 real mouse, and takes #37.43's pictures. Green on its first runner run, `20261001T172458Z-22140`.
+
+**2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
+„Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
+the sidebar item by its new name; nothing else in them changed.
