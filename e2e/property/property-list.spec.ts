@@ -1,15 +1,15 @@
 /**
  * Case:   TC-PROP-06 — Lista proprietăților: fără filtre, fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale
- * Source: docs/testing/cases/TC-PROP-06.md, „Last green" 2026-10-04
+ * Source: docs/testing/cases/TC-PROP-06.md, „Last green" 2026-10-04 (steps 1 and 2 follow Slice #38.02)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The property carries `TC-E2E-PROP-06` (records.ts).
- *   - A Playwright browser has never chosen, so the columns are the three
- *     defaults and the button reads „Câmpuri afișate 3/4"; it has no choice to
- *     put back at the end.
+ *   - A Playwright browser has never chosen, so the column is the default,
+ *     Tip proprietate, and the button reads „Câmpuri afișate 1/4"; it has no
+ *     choice to put back at the end.
  *   - The two values' names are read from the same lists the property was
  *     given its ids from.
  *   - Slice #37.61's pictures, not steps of the case: the list filtered to
@@ -53,8 +53,8 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       const main = page.locator("main");
       const search = main.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă");
       await expect(search).toBeVisible({ timeout: 30_000 });
-      // #37.94: nothing stored in this browser, so the list's defaults — Tarla/Solă and Parcelă.
-      await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
+      // #38.02: nothing stored in this browser, so the list's default — Tip proprietate.
+      await expect(main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true })).toBeVisible();
       await expect(main.locator("select")).toHaveCount(0);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
@@ -62,7 +62,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await search.fill(MARK);
       const table = main.locator("table").first();
       await expect(table.locator("tbody tr").filter({ hasText: NAME })).toHaveCount(1, { timeout: 30_000 });
-      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Tarla/Solă", "Parcelă", ""]);
+      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Tip proprietate", ""]);
       await expect(table.getByRole("columnheader", { name: /^cod$/i })).toHaveCount(0);
       expect((await table.innerText()).match(/\bPROP\d{3,}\b/g) ?? []).toEqual([]);
 

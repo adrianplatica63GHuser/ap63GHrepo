@@ -81,7 +81,7 @@ describe("a stored choice that names Poreclă (Slice #37.72)", () => {
 
   it("reads back without it — the column is drawn anyway", () => {
     const offered = [...VIEW.matchAll(/\{ key: "(\w+)",\s+label:/g)].map((m) => m[1]);
-    localStorage.setItem("ga40-col-property-v3", JSON.stringify(["nickname", "locality", "tarlaSola", "parcela"]));
-    expect(readStored("ga40-col-property-v3", offered, ["tarlaSola", "parcela"])).toEqual(["locality", "tarlaSola", "parcela"]);
+    localStorage.setItem("ga40-col-property-v4", JSON.stringify(["nickname", "locality", "tarlaSola", "parcela"]));
+    expect(readStored("ga40-col-property-v4", offered, ["propertyType"])).toEqual(["locality", "tarlaSola", "parcela"]);
   });
 });

@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PROP-01 — Proprietate creată manual, vizibilă în listă
- * Source: docs/testing/cases/TC-PROP-01.md, „Last green" 2026-09-25
+ * Source: docs/testing/cases/TC-PROP-01.md, „Last green" 2026-09-25 (steps 1 and 2 follow Slice #38.02)
  *
  * Un-parked in Slice #36.18, unchanged in its steps: it was written in #36.06
  * from the corrected case file, parked as `property-create.parked.ts` while
@@ -69,21 +69,22 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       ).toBeVisible();
       // #37.61: no „Importanță" or „Relevanță" filter.
       await expect(page.locator("main").getByText(/^Importanță:?$|^Relevanță:?$/)).toHaveCount(0);
-      // #37.72: Poreclă is a fixed column, not a choice; #37.94: the defaults are Tarla/Solă and Parcelă.
-      const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*2\/4$/ });
+      // #37.72: Poreclă is a fixed column, not a choice; #38.02: the default is Tip proprietate.
+      const chooseFields = page.getByRole("button", { name: /^Câmpuri afișate\s*1\/4$/ });
       await expect(chooseFields).toBeVisible();
       // Headers are rendered upper-case by CSS; role-name matching ignores case.
       // A Playwright browser has never changed „Câmpuri afișate", so step 1's
       // columns are the defaults the case names.
-      for (const col of ["PORECLĂ", "TARLA/SOLĂ", "PARCELĂ"]) {
+      for (const col of ["PORECLĂ", "TIP PROPRIETATE"]) {
         await expect(page.getByRole("columnheader", { name: col })).toBeVisible();
       }
 
-      // Step 2 — „Câmpuri afișate": tick „Localitate"; press outside it.
+      // Step 2 — „Câmpuri afișate": untick „Tip proprietate", tick „Localitate", „Tarla/Solă", „Parcelă"; press outside it.
       await chooseFields.click({ force: true });
       const picker = page.getByText("Selectați până la 4 coloane opționale").locator("..");
       await expect(picker).toBeVisible();
-      await picker.getByRole("checkbox", { name: "Localitate" }).check({ force: true });
+      await picker.getByRole("checkbox", { name: "Tip proprietate" }).uncheck({ force: true });
+      for (const box of ["Localitate", "Tarla/Solă", "Parcelă"]) await picker.getByRole("checkbox", { name: box }).check({ force: true });
       await page.getByRole("heading", { name: "Proprietăți", exact: true }).click({ force: true });
       await expect(picker).toHaveCount(0);
       for (const col of ["PORECLĂ", "LOCALITATE", "TARLA/SOLĂ", "PARCELĂ"]) {

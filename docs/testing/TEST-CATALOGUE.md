@@ -136,7 +136,7 @@ fixed fixture where the existing one will do.
 | [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
 | [TC-LAYOUT-02](cases/TC-LAYOUT-02.md) | Listele: „Adaugă …" se termină la marginea tabelului, nu a ferestrei | layout | happy | — | `automated` | 2026-10-04 | `e2e/layout/list-edge.spec.ts` |
-| [TC-LAYOUT-03](cases/TC-LAYOUT-03.md) | „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tarla/Solă și Parcelă, celelalte liste doar coloanele fixe | layout | happy | — | `automated` | 2026-10-05 | `e2e/layout/list-default-fields.spec.ts` |
+| [TC-LAYOUT-03](cases/TC-LAYOUT-03.md) | „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe | layout | happy | — | `automated` | 2026-10-05 | `e2e/layout/list-default-fields.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 | [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tile-placement.spec.ts` |

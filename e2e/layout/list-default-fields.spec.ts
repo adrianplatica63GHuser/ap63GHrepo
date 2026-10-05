@@ -1,6 +1,6 @@
 /**
- * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tarla/Solă și Parcelă, celelalte liste doar coloanele fixe
- * Source: docs/testing/cases/TC-LAYOUT-03.md, „Last green" 2026-10-05
+ * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe
+ * Source: docs/testing/cases/TC-LAYOUT-03.md, „Last green" 2026-10-05 (steps 1 and 5 follow Slice #38.02)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -16,7 +16,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { openFromSidebar } from "../helpers/sidebar";
 
-const KEYS = ["ga40-col-property-v3", "ga40-col-document-v3", "ga40-col-person-v3", "ga40-col-company-v2"];
+const KEYS = ["ga40-col-property-v4", "ga40-col-document-v3", "ga40-col-person-v3", "ga40-col-company-v2"];
 
 async function expectList(page: Page, chooser: string, headers: string[]): Promise<void> {
   const main = page.locator("main");
@@ -25,14 +25,14 @@ async function expectList(page: Page, chooser: string, headers: string[]): Promi
 }
 
 test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorată", () => {
-  test("Proprietăți cu Tarla/Solă și Parcelă, celelalte trei doar coloanele fixe; o alegere nouă rămâne", async ({ page }) => {
+  test("Proprietăți cu Tip proprietate, celelalte trei doar coloanele fixe; o alegere nouă rămâne", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page.goto("/");
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);
 
-    // Step 1 — „Proprietăți": 2/4, Tarla/Solă and Parcelă after „Poreclă".
+    // Step 1 — „Proprietăți": 1/4, Tip proprietate after „Poreclă" (#38.02).
     await openFromSidebar(page, "Proprietăți");
-    await expectList(page, "Câmpuri afișate 2/4", ["", "Poreclă", "Tarla/Solă", "Parcelă", ""]);
+    await expectList(page, "Câmpuri afișate 1/4", ["", "Poreclă", "Tip proprietate", ""]);
 
     // Steps 2–4 — the other three lists: 0/4, their fixed columns only.
     await openFromSidebar(page, "Acte");
@@ -44,10 +44,10 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
 
     // Step 5 — „Localitate" ticked on „Proprietăți", kept across a reload.
     await openFromSidebar(page, "Proprietăți");
-    await page.locator("main").getByRole("button", { name: "Câmpuri afișate 2/4", exact: true }).click();
+    await page.locator("main").getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
     await page.locator("[data-field-chooser]").getByRole("checkbox", { name: "Localitate" }).check();
     await page.reload();
-    await expectList(page, "Câmpuri afișate 3/4", ["", "Poreclă", "Tarla/Solă", "Parcelă", "Localitate", ""]);
+    await expectList(page, "Câmpuri afișate 2/4", ["", "Poreclă", "Tip proprietate", "Localitate", ""]);
 
     // At the end — the keys removed (the context goes with the test too).
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);

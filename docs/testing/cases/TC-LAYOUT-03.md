@@ -1,4 +1,4 @@
-# TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tarla/Solă și Parcelă, celelalte liste doar coloanele fixe
+# TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe
 
 | | |
 |---|---|
@@ -11,15 +11,17 @@
 ## What this proves
 
 Since Slice #37.94 a browser that has stored no „Câmpuri afișate" choice opens the Properties list
-with Tarla/Solă and Parcelă ticked and nothing else, and the Documents, Natural Persons and Judicial
+with one field ticked — Tip proprietate since #38.02 (Tarla/Solă and Parcelă before it, still
+offered) — and nothing else, and the Documents, Natural Persons and Judicial
 Persons lists with nothing ticked — only their fixed columns. Each list's stored choice moved to a
-new key once, so every browser starts there; a choice made afterwards is kept. A list opening with
+new key once (the Properties list's once more, in #38.02), so every browser starts there; a choice
+made afterwards is kept. A list opening with
 other fields ticked, or a choice not kept across a reload, is the defect.
 
 ## Before you start
 
 - TC-AUTH-01 is green.
-- In this browser, nothing is stored under the four lists' keys — `ga40-col-property-v3`,
+- In this browser, nothing is stored under the four lists' keys — `ga40-col-property-v4`,
   `ga40-col-document-v3`, `ga40-col-person-v3`, `ga40-col-company-v2` (`localStorage`). Whatever
   was there is kept to put back at the end.
 
@@ -34,11 +36,11 @@ The window is 1366 × 900. „The headers" are the list table's column headers, 
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Proprietăți" | „Câmpuri afișate 2/4"; the headers „", „Poreclă", „Tarla/Solă", „Parcelă", „" |
+| 1 | Opens „Proprietăți" | „Câmpuri afișate 1/4"; the headers „", „Poreclă", „Tip proprietate", „" |
 | 2 | Opens „Acte" | „Câmpuri afișate 0/4"; the headers „", „Tip", „Titlu", „" |
 | 3 | Opens „Persoane Fizice" | „Câmpuri afișate 0/4"; the headers „", „Nume", „Poreclă", „" |
 | 4 | Opens „Persoane Juridice" | „Câmpuri afișate 0/4"; the headers „", „Denumire", „Poreclă", „" |
-| 5 | Opens „Proprietăți", „Câmpuri afișate", ticks „Localitate", reloads | „Câmpuri afișate 3/4"; the headers „", „Poreclă", „Tarla/Solă", „Parcelă", „Localitate", „" |
+| 5 | Opens „Proprietăți", „Câmpuri afișate", ticks „Localitate", reloads | „Câmpuri afișate 2/4"; the headers „", „Poreclă", „Tip proprietate", „Localitate", „" |
 
 ## At the end — leaving things as they were found
 
@@ -64,3 +66,9 @@ the case is confirmed, and `e2e/layout/list-default-fields.spec.ts` translates i
 **2026-10-05 — `automated`.** `e2e/layout/list-default-fields.spec.ts` translates the case; green on its
 first runner run, `20261005T082209Z-27119` on `72893df` with the slice's tree (with TC-PROP-06's,
 TC-DOC-08's, TC-PERS-04's and TC-LAYOUT-02's specs).
+
+**2026-10-05 — Slice #38.02.** The Properties list's default is Tip proprietate alone, under the
+new key `ga40-col-property-v4`, so steps 1 and 5 read „1/4" and „2/4" with „Tip proprietate" where
+„Tarla/Solă" and „Parcelă" were; the other three lists are unchanged. Seen in the runner's browser
+before and after (20261005T192746Z-12656, 20261005T193041Z-18703): the list, storage cleared,
+headed „Poreclă" · „Tip proprietate". The spec follows.
