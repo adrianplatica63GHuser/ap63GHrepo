@@ -147,7 +147,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "{item.displayName}"],
   ],
   "src/app/documents/list-view.tsx": [
-    ["A015", "<span className=\"text-fade\">{label}</span> <span classNa"],
+    ["A015", "<span className=\"text-fade\">{label}</span> {trigger.kind"], // #38.07: the trigger names one type, or says how many
     ["A110", "{noLabel}"],
     ["A110", "{yesLabel}"],
   ],

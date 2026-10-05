@@ -32,8 +32,9 @@ describe("the Documents toolbar in two rows (Slice #37.83)", () => {
     expect(first).not.toMatch(/customFieldKey|custom-field-hint/);
   });
 
-  it("the second row holds „Câmp specific” alone, and is drawn only when there is such a field", () => {
-    expect(code).toMatch(/\{customFieldOptions\.length > 0 && \(\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">/);
+  // #38.07: drawn once the types have loaded, its control disabled unless exactly one type with a closed-list field is ticked.
+  it("the second row holds „Câmp specific” alone, and is drawn once the types have loaded", () => {
+    expect(code).toMatch(/\{typeOptions\.length > 0 && \(\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">/);
     expect(second).toContain('id="custom-field-hint"');
     expect(second).toContain("setCustomFieldKey(");
     expect(second).toContain("setCustomFieldValue(");

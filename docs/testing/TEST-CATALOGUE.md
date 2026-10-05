@@ -101,6 +101,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-13](cases/TC-DOC-13.md) | Un tip fără formular: fără „Descoperire AI”; superuserul vede unde se face formularul, nu pe o carte de identitate | document | happy | — | `automated` | 2026-10-05 | `e2e/document/no-form-line.spec.ts` |
 | [TC-DOC-14](cases/TC-DOC-14.md) | Un act nou primește paginile înainte de prima salvare | document | happy | `e2e/fixtures/tc-e2e-pagina-*` | `automated` | 2026-10-05 | `e2e/document/new-document-pages.spec.ts` |
 | [TC-DOC-15](cases/TC-DOC-15.md) | Lista actelor arată tipul prin denumirea lui scurtă; denumirea întreagă în bulă | document | happy | — | `automated` | 2026-10-05 | `e2e/document/type-short-name.spec.ts` |
+| [TC-DOC-16](cases/TC-DOC-16.md) | „Tip document:" numește tipul ales; „Câmp specific" merge doar pentru un singur tip cu formular | document | happy | — | `confirmed` | 2026-10-05 | `e2e/document/document-type-filter.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/person-document.spec.ts` |

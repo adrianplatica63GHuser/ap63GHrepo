@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
- * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-04
+ * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-04 (steps 6, 7 and 9 follow Slice #38.07)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -58,8 +58,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       const main = page.locator("main");
       const search = main.getByRole("searchbox", { name: "caută după cod, titlu sau nr. document" });
       await expect(search).toBeVisible({ timeout: 30_000 });
-      const typeFilter = main.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ });
-      await expect(typeFilter).toBeVisible();
+      const typeFilter = main.getByRole("button", { name: /^Tip document:/ });
+      await expect(main.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ })).toBeVisible();
       await expect(main.getByText("Câmp specific:")).toBeVisible();
       const about = main.getByRole("button", { name: "Despre „Câmp specific”" });
       await expect(about).toBeVisible();
@@ -127,14 +127,30 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await page.mouse.move(5, 5);
       await expect(bubble).toHaveClass(/sr-only/);
 
-      // Step 6 — „Câmp specific:" with every type: closed lists only, no Antecontract field, no „Temei preț".
+      // Step 6 — #38.07: with every type „Câmp specific:" is disabled, „Toate" only; with only
+      // „Contract de Vânzare" it is enabled — closed lists only, no Antecontract field, no „Temei preț".
       // The search box emptied first, as the hand runs did, so step 7's filter has contracts to show.
       await search.fill("");
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
+      await expect(key).toBeDisabled();
+      expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
+      // A tick reloads the address; the list is opened again whenever it is not showing.
+      const tick = async (name: string) => {
+        const box = main.getByRole("checkbox", { name, exact: true });
+        if (!(await box.isVisible())) await typeFilter.click();
+        await box.click();
+      };
+      await tick("Toate tipurile");
+      await tick("Contract de Vânzare");
+      await expect(main.getByRole("button", { name: /^Tip document:\s*Contract de Vânzare/ })).toBeVisible({ timeout: 30_000 });
+      await expect(key).toBeEnabled({ timeout: 30_000 });
       const keys = await key.locator("option").allTextContents();
       expect(keys[0]).toBe("Toate");
       for (const kept of ["Monedă", "Stare plată", "Modalitate plată"]) expect(keys).toContain(kept);
       for (const gone of ["CNP 1", "Anul", "luna", "suma de", "Temei preț"]) expect(keys).not.toContain(gone);
+      await page.getByRole("heading", { level: 1 }).first().click();
+      // #38.07: the button now names the type, so step 7 compares the first row with it as it stands here.
+      const row6 = await firstRow();
 
       // Step 7 — „Stare plată": its values by label with a count, no code.
       await key.selectOption({ label: "Stare plată" });
@@ -147,22 +163,19 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(table.locator("tbody tr").first()).toContainText("CVC", { timeout: 30_000 }); // #37.95: the short name
       expect(new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents())).toEqual(new Set(["CVC"]));
       const moved = await firstRow();
-      expect(moved.map((r) => [Math.round(r.x), Math.round(r.y)])).toEqual(row1.map((r) => [Math.round(r.x), Math.round(r.y)]));
+      expect(moved.map((r) => [Math.round(r.x), Math.round(r.y)])).toEqual(row6.map((r) => [Math.round(r.x), Math.round(r.y)]));
 
       // Step 8 — „Toate" again: the second list is gone.
       await key.selectOption({ label: "Toate" });
       await expect(value).toHaveCount(0);
 
-      // Step 9 — only „Adeverință": no „Câmp specific:", no second row, the table right under the first row.
-      await typeFilter.click();
-      await main.getByRole("checkbox", { name: "Toate tipurile", exact: true }).click();
-      await main.getByRole("checkbox", { name: "Adeverință", exact: true }).click();
-      await expect(main.getByText("Câmp specific:")).toHaveCount(0, { timeout: 30_000 });
-      await expect(main.locator('[data-toolbar-row="second"]')).toHaveCount(0);
+      // Step 9 — only „Adeverință": its name on the button; „Câmp specific:" still drawn, disabled (#38.07).
+      await tick("Contract de Vânzare");
+      await tick("Adeverință");
+      await expect(main.getByRole("button", { name: /^Tip document:\s*Adeverință/ })).toBeVisible({ timeout: 30_000 });
+      await expect(main.locator('[data-toolbar-row="second"]')).toHaveCount(1);
+      await expect(key).toBeDisabled();
       await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));
-      const rowBox = (await main.locator('[data-toolbar-row="first"]').boundingBox())!;
-      const tableBox = (await table.boundingBox())!;
-      expect(tableBox.y - (rowBox.y + rowBox.height)).toBeLessThanOrEqual(20);
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "document", contractId);

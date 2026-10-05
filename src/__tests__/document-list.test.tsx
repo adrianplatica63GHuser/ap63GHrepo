@@ -58,7 +58,8 @@ describe("the Documents list (Slice #37.62)", () => {
   });
 
   it("explains „Câmp specific” in a bubble that describes its field select", () => {
-    expect(VIEW).toMatch(/<HintBubble\s+id="custom-field-hint"\s+text=\{tFilter\("customFieldHint"\)\}\s+triggerLabel=\{tFilter\("customFieldHintTrigger"\)\}/);
+    // #38.07: the bubble also says, in italics, when the control works.
+    expect(VIEW).toMatch(/<HintBubble\s+id="custom-field-hint"\s+text=\{tFilter\("customFieldHint"\)\}\s+note=\{tFilter\("customFieldWhenActive"\)\}\s+triggerLabel=\{tFilter\("customFieldHintTrigger"\)\}/);
     expect(VIEW).toMatch(/value=\{customFieldKey\}\s+aria-describedby="custom-field-hint"/);
     expect(ro.shared.listFilters.customFieldHint).toMatch(/Tip document/);
     expect(en.shared.listFilters.customFieldHint).toMatch(/Document type/);

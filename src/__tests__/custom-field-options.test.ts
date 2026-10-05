@@ -60,7 +60,9 @@ describe("„Câmp specific” offers only closed lists (Slice #37.73)", () => {
   });
 
   it("the list draws the rule and the labels; the value sent stays the stored one", () => {
-    expect(VIEW).toMatch(/customFieldOptionsOf\(typeOptions, initialDocumentTypeIds\)/);
+    // #38.07: through customFieldFilter (exactly one type), which calls customFieldOptionsOf.
+    expect(VIEW).toMatch(/customFieldFilter\(typeOptions, initialDocumentTypeIds\)/);
+    expect(readFileSync(join(ROOT, "src", "lib", "documents", "type-filter.ts"), "utf8")).toMatch(/customFieldOptionsOf\(types, checked\)/);
     expect(VIEW).toMatch(/value: customFieldValueLabel\(chosenCustomField, o\.value\)/);
     expect(VIEW).toMatch(/<option key=\{o\.value\} value=\{o\.value\}>/);
   });

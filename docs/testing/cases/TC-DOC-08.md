@@ -40,10 +40,10 @@ Nothing.
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Persoane, Proprietăți, Adăugat la — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
 | 5 | Presses anywhere outside the list, then rests the mouse on „Câmp specific:" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Moving the mouse away closes it. (On a touch screen the ⓘ beside it opens and closes it.) |
-| 6 | With „Tip document: Toate tipurile", looks at what „Câmp specific:" offers | „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
-| 7 | Chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box, „Tip document", „Expiră curând" and „Câmpuri afișate" where step 1 had them |
+| 6 | With „Tip document: Toate tipurile", looks at „Câmp specific:", then opens „Tip document", unticks „Toate tipurile" and ticks only „Contract de Vânzare" | With every type the field list is disabled, offering only „Toate" (#38.07). With only „Contract de Vânzare" the button reads „Contract de Vânzare" and the list is enabled: „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
+| 7 | Clears the search, chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box, „Tip document", „Expiră curând" and „Câmpuri afișate" where step 1 had them |
 | 8 | Chooses „Toate" in „Câmp specific:" again | The second list is gone |
-| 9 | Opens „Tip document", unticks „Toate tipurile", ticks only „Adeverință" | No „Câmp specific:" and no second row: the table starts right under the first row, and it lists only „Adeverință" rows |
+| 9 | Opens „Tip document", unticks „Contract de Vânzare" and ticks only „Adeverință" | The button reads „Adeverință"; „Câmp specific:" is still drawn, under the search box, its list disabled — Adeverință has no form (#38.07); the table lists only „Adeverință" rows |
 
 ## At the end — leaving things as they were found
 
@@ -149,3 +149,9 @@ b7bbb4b ran `e2e/document/document-list.spec.ts`, following the corrected file, 
 **2026-10-05 — Slice #37.95.** The Documents list's „Tip" shows
 each type by its short name (TC-DOC-15), so step 7's contracts read „CVC" in that column; the spec
 reads it so. The steps did not name the type's text and are unchanged. Adrian confirmed migration_092 the same day; the runner's e2e run 20261005T114448Z-6750 ran this case's spec green against the migrated database.
+
+**2026-10-05 — Slice #38.07.** „Câmp specific" works only for exactly one type that has a form with
+closed-list fields, and is drawn disabled otherwise. So step 6 reads it disabled with every type and
+narrows to „Contract de Vânzare" before reading the fields, step 7 clears the search first (as the
+spec always did), and step 9 sees the row still drawn, disabled, for „Adeverință". TC-DOC-16 drives
+the rule. The spec follows.
