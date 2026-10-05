@@ -36,6 +36,19 @@
   --color-card-pinned-rim:      #DACBEE;   /* border-card-pinned-rim         */
   --color-card-pinned-dark:     #1C1523;   /* dark:bg-card-pinned-dark       */
   --color-card-pinned-rim-dark: #2C2237;   /* dark:border-card-pinned-rim-dark */
+  /* Slice #37.88 — „Corelate" light green and „Clasificări"/„Conexiuni" light
+     yellow, made as the purple was: fill and rim at the card's lightness, dark
+     at zinc-900's and zinc-800's, chroma as close to the purple's as the hue
+     allows, so none reads stronger. `src/lib/ui/tile-surface.ts` decides by
+     the registry's group which tiles take them.                              */
+  --color-card-related:          #EBF7ED;  /* bg-card-related                */
+  --color-card-related-rim:      #BBDDC2;  /* border-card-related-rim        */
+  --color-card-related-dark:     #0F1C11;  /* dark:bg-card-related-dark      */
+  --color-card-related-rim-dark: #182D1D;  /* dark:border-card-related-rim-dark */
+  --color-card-meta:             #F8F3E5;  /* bg-card-meta                   */
+  --color-card-meta-rim:         #DDD3AE;  /* border-card-meta-rim           */
+  --color-card-meta-dark:        #1D1808;  /* dark:bg-card-meta-dark         */
+  --color-card-meta-rim-dark:    #2E270D;  /* dark:border-card-meta-rim-dark */
 
   --color-cta:       #334155;   /* bg-cta / text-cta — primary buttons         */
   --color-cta-d:     #1e293b;   /* bg-cta-d  — primary button :hover           */

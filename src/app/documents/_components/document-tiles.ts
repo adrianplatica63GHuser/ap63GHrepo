@@ -97,13 +97,11 @@ export const RELATED_WAS: Readonly<Record<string, "related">> = {
 /** Built from the type on screen. The entity — and so the storage key — carries the type's key. */
 export function documentTileRegistry(layout: DocumentLayout): TileRegistry<string> {
   const typeTiles = layout.tabs.length > 0 ? layout.tabs.map(tabTileKey) : [FIELDS_TILE];
-  const all = [
-    "general",
-    ...(layout.pages ? ["pages"] : []),
-    ...typeTiles,
-    ...(layout.succession ? ["succession"] : []),
-    ...DOCUMENT_LIST_TILES,
-  ];
+  // Slice #37.88: in the groups' order — the record's own data (with „Părți"),
+  // „Corelate", „Clasificări" and „Conexiuni", then „Pagini" at the right.
+  const record = ["general", ...typeTiles, ...(layout.succession ? ["succession"] : [])];
+  const fixed = layout.pages ? ["pages"] : [];
+  const all = [...record, ...DOCUMENT_LIST_TILES, ...fixed];
   return {
     entity: `document-${layout.typeKey ?? "untyped"}`,
     all,
@@ -122,7 +120,8 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       ...(layout.succession ? ["succession"] : []),
     ],
     // Slice #37.56: the page image stands at the right of the row, top-aligned.
-    placement: { right: layout.pages ? ["pages"] : [] },
+    placement: { right: fixed },
+    groups: { record, related: ["related"], meta: ["classification", "connections"], fixed },
     renamed: {
       ...Object.fromEntries(
         Object.entries(RENAMED_TABS)

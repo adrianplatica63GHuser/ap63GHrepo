@@ -29,6 +29,13 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
   all: JP_TILES,
   defaults: JP_FORM_TILES,
   form: JP_FORM_TILES,
+  // Slice #37.88: the coloured groups (the purple one arrives with #37.89).
+  groups: {
+    record: ["identity", "contactPersons", "addresses"],
+    related: ["related"],
+    meta: ["classification", "connections"],
+    fixed: [],
+  },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
   renamed: {
     metadata: ["classification", "connections"],

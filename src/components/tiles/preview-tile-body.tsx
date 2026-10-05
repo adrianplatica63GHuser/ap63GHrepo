@@ -115,7 +115,9 @@ export function PreviewTileBody({
       data-preview-anchor={anchor}
       aria-label={title}
       data-preview-compact={lines ? "" : undefined}
-      className={`rounded-md border border-dashed border-cta/50 bg-card p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900${lines ? " w-max max-w-full" : ""}`}
+      // Slice #37.88: „Corelate"'s light green — a preview is what „Corelate" opens. The dashed
+      // rim still says it is a look, not the record's own tile.
+      className={`rounded-md border border-dashed border-card-related-rim bg-card-related p-3 shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-dark${lines ? " w-max max-w-full" : ""}`}
       style={lines ? style : { ...PREVIEW_STYLE[width], ...style }}
     >
       {/* Slice #37.70: one row, whatever the name's length — a long name wraps inside it and

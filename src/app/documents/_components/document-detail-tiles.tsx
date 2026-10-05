@@ -45,10 +45,11 @@ import { DocumentRelatedTile } from "./document-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ProcessPanel } from "./process-panel";
 import { ListTile } from "@/components/tiles/list-tile";
+import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { splitTiles, tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, splitTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import {
   DOCUMENT_STATUS_CLASS,
@@ -191,7 +192,7 @@ export function DocumentDetailTiles({
         {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
             made before would be stored under a key the type then replaces. */}
         {layout.ready !== false && (
-          <TileSelector all={reg.all} labels={labels} choice={choice} marked={marked} extra={previewEntries} />
+          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} />
         )}
 
         <PreviewOpenerProvider previews={previews}>
@@ -216,7 +217,7 @@ export function DocumentDetailTiles({
           {/* Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate". */}
           {choice.isShown("related") && (
             <div className="max-w-full" style={{ order: order("related") }}>
-              <ListTile tile="related" title={labels.related} units={LIST_UNITS.document.related}>
+              <ListTile tile="related" title={labels.related} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "related"))}>
                 <DocumentRelatedTile documentId={documentId} label={labels.related} />
               </ListTile>
             </div>
@@ -225,7 +226,7 @@ export function DocumentDetailTiles({
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
             <div className="max-w-full" style={{ order: order("classification") }}>
-              <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.document.classification}>
+              <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"))}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}
@@ -238,7 +239,7 @@ export function DocumentDetailTiles({
           )}
           {choice.isShown("connections") && (
             <div className="max-w-full" style={{ order: order("connections") }}>
-              <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.document.connections}>
+              <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"))}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}

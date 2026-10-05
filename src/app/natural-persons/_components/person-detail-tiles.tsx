@@ -33,9 +33,10 @@ import { NaturalPersonForm } from "./natural-person-form";
 import { PersonRelatedTile } from "./person-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
+import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { NP_LIST_UNITS, PANEL_GAP, npRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
@@ -116,7 +117,7 @@ export function PersonDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={npRowStyle()}>
-        <TileSelector all={NP_TILES} labels={labels} choice={choice} extra={previewEntries} />
+        <TileSelector all={NP_TILES} groups={groupedTiles(NP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
         {/* Slice #37.75: each box right under the box above it (`useTilePacking`), not under the tallest of the line before. */}
@@ -132,14 +133,14 @@ export function PersonDetailTiles({
           />
           {/* Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate". */}
           {choice.isShown("related") && (
-            <ListTile tile="related" title={labels.related} units={NP_LIST_UNITS.related}>
+            <ListTile tile="related" title={labels.related} units={NP_LIST_UNITS.related} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related"))}>
               <PersonRelatedTile personId={personId} backBase="/natural-persons" label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} units={NP_LIST_UNITS.classification}>
+            <ListTile tile="classification" title={labels.classification} units={NP_LIST_UNITS.classification} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
@@ -150,7 +151,7 @@ export function PersonDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} units={NP_LIST_UNITS.connections}>
+            <ListTile tile="connections" title={labels.connections} units={NP_LIST_UNITS.connections} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "connections"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}

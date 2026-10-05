@@ -35,10 +35,11 @@ import { PropertyForm } from "./property-form";
 import { PropertyRelatedTile } from "./property-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
+import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { splitTiles, tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, splitTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues, type Corner } from "./form-schema";
 import { PROP_TILES, PROP_TILE_OF_TAB, PROP_TILE_REGISTRY, type PropTile } from "./property-tiles";
@@ -120,7 +121,7 @@ export function PropertyDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("property")}>
-        <TileSelector all={PROP_TILES} labels={labels} choice={choice} extra={previewEntries} />
+        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
         <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>
@@ -141,14 +142,14 @@ export function PropertyDetailTiles({
           />
           {/* Slice #37.66: „Proprietăți corelate", Persoane and Acte are one tile, „Corelate" — the Document's (#37.65). */}
           {choice.isShown("related") && (
-            <ListTile tile="related" title={labels.related} units={LIST_UNITS.property.related}>
+            <ListTile tile="related" title={labels.related} units={LIST_UNITS.property.related} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "related"))}>
               <PropertyRelatedTile propertyId={propertyId} label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.property.classification}>
+            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.property.classification} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}
@@ -160,7 +161,7 @@ export function PropertyDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.property.connections}>
+            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.property.connections} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "connections"))}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}

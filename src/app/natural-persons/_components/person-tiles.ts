@@ -25,6 +25,13 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   all: NP_TILES,
   defaults: NP_FORM_TILES,
   form: NP_FORM_TILES,
+  // Slice #37.88: the coloured groups (the purple one arrives with #37.89).
+  groups: {
+    record: ["identity", "idCard", "contact", "addresses"],
+    related: ["related"],
+    meta: ["classification", "connections"],
+    fixed: [],
+  },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
   renamed: {
     metadata: ["classification", "connections"],

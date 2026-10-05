@@ -23,15 +23,17 @@
  */
 import type { TileRegistry } from "@/lib/ui/tiles";
 
+// Slice #37.88: in the groups' order — the record's own data, „Corelate",
+// „Clasificări" and „Conexiuni", then the fixed right-hand column.
 export const PROP_TILES = [
   "cadastral",
-  "corners",
   "address",
-  "map",
-  "streetView",
   "related",
   "classification",
   "connections",
+  "map",
+  "corners",
+  "streetView",
 ] as const;
 export type PropTile = (typeof PROP_TILES)[number];
 
@@ -46,6 +48,13 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
   // under that when ticked — one column; the cadastral data, the address and
   // the lists to their left.
   placement: { right: ["map", "corners", "streetView"] },
+  // Slice #37.88: the four coloured groups of the checkbox bar and the tiles.
+  groups: {
+    record: ["cadastral", "address"],
+    related: ["related"],
+    meta: ["classification", "connections"],
+    fixed: ["map", "corners", "streetView"],
+  },
   // #37.63: META INFO is two tiles; #37.66: the three lists are „Corelate".
   renamed: {
     metadata: ["classification", "connections"],

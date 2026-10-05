@@ -18,6 +18,21 @@
  * document notebook's pages are (#36.01). This module only decides WHICH.
  */
 
+/**
+ * The four groups a screen's tiles fall into, left to right.     (Slice #37.88)
+ *
+ * `record` — the record's own data, in the cards' grey-blue; `related` —
+ * „Corelate" (and the previews it opens), light green; `meta` — „Clasificări"
+ * and „Conexiuni", light yellow; `fixed` — the right-hand column that never
+ * moves, light purple (#37.78). The checkbox bar draws each group in a strip of
+ * its colour, and a tile wears its group's colour wherever it is dragged
+ * (`src/lib/ui/tile-surface.ts`).
+ */
+export type TileGroup = "record" | "related" | "meta" | "fixed";
+
+/** The groups' order on the bar and on the page. */
+export const TILE_GROUPS: readonly TileGroup[] = ["record", "related", "meta", "fixed"];
+
 export interface TileRegistry<K extends string> {
   /** The localStorage key's entity part: `ga40-tiles-<entity>-v1`. */
   entity: string;
@@ -46,6 +61,28 @@ export interface TileRegistry<K extends string> {
    * px — the data #37.76 stores in place of what it computes.
    */
   placement?: { right: readonly K[] };
+  /**
+   * Slice #37.88: every tile in exactly one group. `all` is the groups
+   * flattened in `TILE_GROUPS` order, and `fixed` is `placement.right` —
+   * `tiles.test.ts` holds both, so the bar, the page and the colours agree.
+   * Absent on the home page, whose tiles are all one kind.
+   */
+  groups?: Readonly<Record<TileGroup, readonly K[]>>;
+}
+
+/** The group a tile is in — `record` for a key the registry does not group (never, by the test). */
+export function tileGroupOf<K extends string>(reg: Pick<TileRegistry<K>, "groups">, tile: K): TileGroup {
+  for (const g of TILE_GROUPS) if (reg.groups?.[g].includes(tile)) return g;
+  return "record";
+}
+
+/** The non-empty groups in bar order, each with its tiles in the registry's order. */
+export function groupedTiles<K extends string>(
+  reg: Pick<TileRegistry<K>, "groups">,
+): { group: TileGroup; tiles: readonly K[] }[] {
+  const groups = reg.groups;
+  if (!groups) return [];
+  return TILE_GROUPS.filter((g) => groups[g].length > 0).map((g) => ({ group: g, tiles: groups[g] }));
 }
 
 /**

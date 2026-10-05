@@ -12,6 +12,7 @@
  */
 import type { ReactNode } from "react";
 import { PANEL_STYLE, WIDE_TILE_STYLE, unitStyle } from "@/lib/ui/field-widths";
+import { TILE_SURFACE } from "@/lib/ui/tile-surface";
 
 export function ListTile({
   tile,
@@ -19,6 +20,7 @@ export function ListTile({
   wide = false,
   units,
   panel,
+  surface = TILE_SURFACE,
   children,
 }: {
   tile: string;
@@ -29,6 +31,8 @@ export function ListTile({
   units?: number;
   /** Slice #37.36: also a `data-panel`, for the screens whose width checks read that mark (the home page). */
   panel?: string;
+  /** Slice #37.88: the tile's group's surface (`groupSurface`) — the card's grey-blue when absent. */
+  surface?: string;
   children: ReactNode;
 }) {
   return (
@@ -36,7 +40,7 @@ export function ListTile({
       data-tile={tile}
       data-panel={panel}
       aria-label={title}
-      className={`${wide || units ? "" : "w-fit "}max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}
+      className={`${wide || units ? "" : "w-fit "}max-w-full ${surface}`}
       style={units ? unitStyle(units) : wide ? WIDE_TILE_STYLE : { minWidth: PANEL_STYLE.width }}
     >
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{title}</h2>

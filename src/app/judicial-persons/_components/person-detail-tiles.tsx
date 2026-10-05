@@ -37,9 +37,10 @@ import { JudicialPersonForm } from "./judicial-person-form";
 import { PersonRelatedTile } from "../../natural-persons/_components/person-related-tile";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { ListTile } from "@/components/tiles/list-tile";
+import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
@@ -114,7 +115,7 @@ export function JudicialPersonDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("judicialPerson")}>
-        <TileSelector all={JP_TILES} labels={labels} choice={choice} extra={previewEntries} />
+        <TileSelector all={JP_TILES} groups={groupedTiles(JP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
         {/* Slice #37.75: each box right under the box above it (`useTilePacking`), not under the tallest of the line before. */}
@@ -129,14 +130,14 @@ export function JudicialPersonDetailTiles({
           />
           {/* Slice #37.67: „Persoane corelate", Proprietăți and Acte are one tile, „Corelate". */}
           {choice.isShown("related") && (
-            <ListTile tile="related" title={labels.related} units={LIST_UNITS.judicialPerson.related}>
+            <ListTile tile="related" title={labels.related} units={LIST_UNITS.judicialPerson.related} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "related"))}>
               <PersonRelatedTile personId={personId} backBase="/judicial-persons" label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.judicialPerson.classification}>
+            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.judicialPerson.classification} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
@@ -147,7 +148,7 @@ export function JudicialPersonDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.judicialPerson.connections}>
+            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.judicialPerson.connections} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "connections"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
