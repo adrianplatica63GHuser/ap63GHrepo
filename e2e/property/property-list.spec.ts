@@ -53,7 +53,8 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       const main = page.locator("main");
       const search = main.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă");
       await expect(search).toBeVisible({ timeout: 30_000 });
-      await expect(main.getByRole("button", { name: /^Câmpuri afișate \d\/4$/ })).toBeVisible();
+      // #37.94: nothing stored in this browser, so the list's defaults — Tarla/Solă and Parcelă.
+      await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
       await expect(main.locator("select")).toHaveCount(0);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
@@ -61,7 +62,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await search.fill(MARK);
       const table = main.locator("table").first();
       await expect(table.locator("tbody tr").filter({ hasText: NAME })).toHaveCount(1, { timeout: 30_000 });
-      await expect(table.locator("thead th").nth(1)).toHaveText("Poreclă");
+      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Tarla/Solă", "Parcelă", ""]);
       await expect(table.getByRole("columnheader", { name: /^cod$/i })).toHaveCount(0);
       expect((await table.innerText()).match(/\bPROP\d{3,}\b/g) ?? []).toEqual([]);
 

@@ -35,8 +35,8 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Proprietăți" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate n/4"; no „Importanță" or „Relevanță" anywhere on the list |
-| 2 | Types `TC-PROP-06` into the search | One row, `TC-PROP-06 Teren de test`; the first header after the tick box is „PORECLĂ", the rest are the chosen columns — no „Cod" — and no system ID in the table |
+| 1 | Opens „Proprietăți" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate 2/4" — the choice set aside, the list's defaults (#37.94); no „Importanță" or „Relevanță" anywhere on the list |
+| 2 | Types `TC-PROP-06` into the search | One row, `TC-PROP-06 Teren de test`; the first header after the tick box is „PORECLĂ", then „TARLA/SOLĂ" and „PARCELĂ" — no „Cod" — and no system ID in the table |
 | 3 | Presses „Câmpuri afișate" | Tarla/Solă, Parcelă, Oficială (m²), Calculată (m²), Nr. CF, Nr. cadastru, Categorie de folosință, Tip proprietate, Localitate — and no Poreclă, Note, Importanță, Relevanță or Proveniență |
 | 4 | Unticks every ticked field | „Câmpuri afișate 0/4"; between the tick box and the buttons one header, „PORECLĂ", and the row still reads `TC-PROP-06 Teren de test` |
 | 5 | Ticks „Categorie de folosință" and „Tip proprietate", presses outside | „Câmpuri afișate 2/4"; the headers PORECLĂ · CATEGORIE DE FOLOSINȚĂ · TIP PROPRIETATE; the row shows the two values' names, not ids |
@@ -93,3 +93,7 @@ on 88f753b ran the rewritten `e2e/property/property-list.spec.ts` green with the
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-05 — Slice #37.94.** A browser with no stored choice now opens this list with Tarla/Solă
+and Parcelă ticked (TC-LAYOUT-03), so steps 1 and 2 name them: „Câmpuri afișate 2/4", and the two
+headers after „PORECLĂ". Nothing else changed; the spec, whose browser stores nothing, reads them.
