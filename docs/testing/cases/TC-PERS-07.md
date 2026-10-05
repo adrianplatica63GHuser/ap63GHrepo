@@ -69,3 +69,6 @@ runner's full run `20261005T044813Z-14028` on `d2752d7` (Slice #37.89).
 **2026-10-05 — Slice #38.06.** The tile's sentence reads in italics and in parentheses; the
 parentheses are drawn around the message, which stays a plain sentence in both message files. Step 2
 says so; nothing else changed. The spec follows.
+
+**2026-10-05 — `automated` (Slice #38.06).** The test runner's full run 20261005T220302Z-26924 on
+6310565 ran the changed spec green with the other 90 (lint, tsc, jest and forms-drift green too).
