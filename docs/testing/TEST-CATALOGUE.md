@@ -67,12 +67,12 @@ fixed fixture where the existing one will do.
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-10-01 | `e2e/auth/login-dashboard.spec.ts` |
 | [TC-AUTH-02](cases/TC-AUTH-02.md) | Un cont „user" lucrează zilnic și nu poate administra | auth | authz | — | `draft` | — | — |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-02 | `e2e/property/property-create.spec.ts` |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-10-02 | `e2e/property/property-from-coord-file.spec.ts` |
 | [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
 | [TC-PROP-05](cases/TC-PROP-05.md) | A doua proprietate pentru aceeași parcelă este refuzată | property | negative | — | `driven` | 2026-09-27 | — |
-| [TC-PROP-06](cases/TC-PROP-06.md) | Lista proprietăților: fără filtre, fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale | property | happy | — | `automated` | 2026-10-04 | `e2e/property/property-list.spec.ts` |
+| [TC-PROP-06](cases/TC-PROP-06.md) | Lista proprietăților: fără filtre, fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-list.spec.ts` |
 | [TC-PROP-07](cases/TC-PROP-07.md) | „Corelate" pe o proprietate: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, relația după „Relația" | property | happy | — | `automated` | 2026-10-03 | `e2e/property/related-tile.spec.ts` |
 | [TC-PROP-08](cases/TC-PROP-08.md) | „Puncte de contur" cât „Hartă", butoanele unui rând lângă marginea din dreapta | property | happy | — | `automated` | 2026-10-04 | `e2e/property/corners-tile-narrow.spec.ts` |
 | [TC-PROP-09](cases/TC-PROP-09.md) | „Hartă": desenarea și harta extinsă pe rândul de sus; harta extinsă se închide și păstrează desenul | property | happy | — | `automated` | 2026-10-05 | `e2e/property/map-top-row.spec.ts` |

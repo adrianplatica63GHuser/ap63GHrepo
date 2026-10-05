@@ -72,3 +72,6 @@ new key `ga40-col-property-v4`, so steps 1 and 5 read „1/4" and „2/4" with �
 „Tarla/Solă" and „Parcelă" were; the other three lists are unchanged. Seen in the runner's browser
 before and after (20261005T192746Z-12656, 20261005T193041Z-18703): the list, storage cleared,
 headed „Poreclă" · „Tip proprietate". The spec follows.
+
+**2026-10-05 — `automated` (Slice #38.02).** The test runner's full run 20261005T193605Z-29374 on
+7505a33 ran the changed spec green with the other 87 (lint, tsc, jest and forms-drift green too).

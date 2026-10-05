@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-04 |
+| **Last green** | 2026-10-05 |
 
 ## What this proves
 
@@ -101,3 +101,6 @@ headers after „PORECLĂ". Nothing else changed; the spec, whose browser stores
 **2026-10-05 — Slice #38.02.** A browser with no stored choice now opens this list with Tip
 proprietate alone (TC-LAYOUT-03), so steps 1 and 2 read „Câmpuri afișate 1/4" and the header TIP
 PROPRIETATE. Steps 3–5 are unchanged: step 4 unticks it with the rest. The spec follows.
+
+**2026-10-05 — `automated` (Slice #38.02).** The test runner's full run 20261005T193605Z-29374 on
+7505a33 ran the changed spec green with the other 87 (lint, tsc, jest and forms-drift green too).

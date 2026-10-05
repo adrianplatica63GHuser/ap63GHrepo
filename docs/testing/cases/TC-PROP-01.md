@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-02 |
+| **Last green** | 2026-10-05 |
 
 ## What this proves
 
@@ -160,3 +160,6 @@ ticks „Localitate" to reach the same three columns. The rest is unchanged; the
 list with Tip proprietate alone (TC-LAYOUT-03), so step 1 reads „1/4" and PORECLĂ · TIP PROPRIETATE,
 and step 2 unticks it and ticks Localitate, Tarla/Solă and Parcelă to reach the same columns. The
 rest is unchanged; the spec follows.
+
+**2026-10-05 — `automated` (Slice #38.02).** The test runner's full run 20261005T193605Z-29374 on
+7505a33 ran the changed spec green with the other 87 (lint, tsc, jest and forms-drift green too).
