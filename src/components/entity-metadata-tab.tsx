@@ -20,6 +20,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
+import { SHARED_LEFT_INSET, SHIFTED_SELECT_ROW, useSharedLeftLine } from "@/lib/ui/classification-left-line";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -186,9 +187,6 @@ const ITEM_TITLE = "text-sm font-semibold text-ink dark:text-zinc-100";
 /** Slice #37.81: Importanță | the vertical divider | Relevanță — two equal cells. */
 const CLASSIFICATION_PAIR_GRID: React.CSSProperties = { gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" };
 
-/** Slice #37.81: in a centred cell, the select in the middle track, its review button in the right one. */
-const CENTRED_SELECT_ROW: React.CSSProperties = { gridTemplateColumns: "1fr auto 1fr" };
-
 function ItemTitle({ id, title, note, about }: { id: string; title: string; note?: string; about: string }) {
   if (!note) return <h3 className={ITEM_TITLE}>{title}</h3>;
   return (
@@ -248,6 +246,7 @@ function MetadataSection({
   highlight,
   about,
   centred = false,
+  alignedLeft = false,
   children,
 }: {
   title:                 string;
@@ -272,8 +271,10 @@ function MetadataSection({
   highlight?:            HighlightColor | undefined;
   /** The ⓘ's name: „Despre „{title}"" (#37.63). */
   about:                 string;
-  /** Slice #37.81: everything centred across, in its own cell. */
+  /** Slice #37.81: everything centred across, in its own cell — the select row shifted left (#38.01). */
   centred?:              boolean;
+  /** Slice #38.01: inset to the shared left line — Importanță's select's left edge. */
+  alignedLeft?:          boolean;
   children?:             React.ReactNode;
 }) {
   const [reviewing, setReviewing] = useState(false);
@@ -308,13 +309,23 @@ function MetadataSection({
   );
 
   return (
-    <section className={centred ? "flex flex-col items-center gap-1 text-center" : "flex flex-col gap-1"} data-centred={centred ? "" : undefined}>
+    <section
+      className={centred ? "flex flex-col items-center gap-1 text-center" : "flex flex-col gap-1"}
+      data-centred={centred ? "" : undefined}
+      data-aligned-left={alignedLeft ? "" : undefined}
+      style={alignedLeft ? SHARED_LEFT_INSET : undefined}
+    >
       <ItemTitle id={noteId} title={title} note={note} about={about} />
 
-      {/* Slice #37.81: centred, the SELECT stands at the cell's centre — an empty
-          track on its left as wide as the review button's on its right. At 4 px
-          apart Relevanță's row is 131 + 2 × (34 + 4) = 207 px in its 208-px cell. */}
-      <div className={centred ? "grid items-center gap-1" : "flex flex-wrap items-center gap-2"} style={centred ? CENTRED_SELECT_ROW : undefined}>
+      {/* Slice #38.01: centred, the row is the cell's width — an empty track, the
+          SELECT, and the review button's track, the free width shared 0.75 : 1.25,
+          so the select stands 0.75 × its centred gap from the cell's left edge
+          (classification-left-line.ts). The title and the notes stay centred. */}
+      <div
+        className={centred ? "grid w-full items-center" : "flex flex-wrap items-center gap-2"}
+        style={centred ? SHIFTED_SELECT_ROW : undefined}
+        data-select-row={centred ? "shifted" : undefined}
+      >
         {centred && <span aria-hidden="true" />}
         {/* Slice #37.63 — what the chosen value means is a bubble ON the value:
             the mouse resting on it, or the keyboard reaching it, opens it. It
@@ -327,7 +338,7 @@ function MetadataSection({
           select
         )}
         {!readOnly && centred && (
-          <span style={{ justifySelf: "start" }}>
+          <span className="ml-1" style={{ justifySelf: "start" }}>
             <MarkReviewedButton
               reviewed={reviewed}
               reviewing={reviewing}
@@ -1203,6 +1214,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   const showConnections    = part !== "classification";
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
+  // Slice #38.01: Proveniență's left line is Importanță's select's, measured.
+  const sharedLeftLine = useSharedLeftLine();
   const { data: tf } = useTimeFrames();
 
   const backLabel = t("backTo", { name: backEntityName });
@@ -1617,7 +1630,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           bubble), its control and what is true of this record; no paragraphs
           of help, no empty lines. With `part` the tile's own title names the
           section; without it both sections are drawn under their subheaders. */}
-      <div className="flex flex-col gap-4" data-metadata-part={part ?? "both"}>
+      <div className="flex flex-col gap-4" data-metadata-part={part ?? "both"} ref={sharedLeftLine}>
 
         {showClassification && (<>
         {/* ── Version nav (only when there are multiple versions) ──────────── */}
@@ -1692,6 +1705,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         <Divider />
 
         {/* ── 3. Proveniență / Provenience, with its history ───────────────── */}
+        {/* Slice #38.01: its title, select and „Istoric" start on Importanță's
+            select's left edge — measured by `sharedLeftLine`, on the column above. */}
         <MetadataSection
           title={t("provenance.title")}
           note={t("provenance.note")}
@@ -1709,6 +1724,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           onMarkReviewed={() => touchField("provenance")}
           readOnly={!isOnLatest}
           highlight={highlights.provenance}
+          alignedLeft
         >
           {/* Slice #20.09: calculation source link (shown when provenance = ALGORITHM) */}
           {calculationSourcePath && displayProvenance === "ALGORITHM" && (
