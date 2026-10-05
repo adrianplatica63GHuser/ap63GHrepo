@@ -37,7 +37,7 @@ describe("the CVC's tiles and panels (#37.54)", () => {
     expect(layout(CVC)).toEqual([
       { tab: "Preț și taxe", tabEn: "Price and fees", panels: [["Financiar", "Financial"], ["Taxe și onorarii", "Fees"]] },
       {
-        tab: "Cadastru și carte funciară",
+        tab: "Cadastru și CF", // #37.90
         tabEn: "Cadastre and land book",
         panels: [["Dosar și exemplar", "File and copy"], ["Excepție cadastru", "Cadastre exception"], ["Obiect declarat", "Declared object"]],
       },
@@ -48,7 +48,7 @@ describe("the CVC's tiles and panels (#37.54)", () => {
 
   it("keeps none of the old names", () => {
     const names = new Set(CVC.flatMap((f) => [f.tabRo, f.groupRo]));
-    for (const old of ["Instrument", "Cadastru", "Conformitate", "Antet instrument", "Stare juridică afirmată", "Conformitate și formalități"]) {
+    for (const old of ["Instrument", "Cadastru", "Cadastru și carte funciară", "Conformitate", "Antet instrument", "Stare juridică afirmată", "Conformitate și formalități"]) {
       expect([old, names.has(old)]).toEqual([old, false]);
     }
   });
@@ -64,18 +64,19 @@ describe("the CVC's tiles and panels (#37.54)", () => {
 });
 
 describe("a remembered tile choice survives the rename (#37.54)", () => {
-  const TABS = ["Preț și taxe", "Cadastru și carte funciară", "Stare juridică", "Formalități"];
+  const TABS = ["Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"];
   const reg = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: TABS, succession: false, pages: true });
 
   it("maps each old tab key to its new one, for the tabs the type has", () => {
     expect(reg.renamed).toEqual({
       [tabTileKey("Instrument")]: tabTileKey("Preț și taxe"),
-      [tabTileKey("Cadastru")]: tabTileKey("Cadastru și carte funciară"),
+      [tabTileKey("Cadastru")]: tabTileKey("Cadastru și CF"),
+      [tabTileKey("Cadastru și carte funciară")]: tabTileKey("Cadastru și CF"), // #37.90
       [tabTileKey("Conformitate")]: tabTileKey("Formalități"),
       metadata: ["classification", "connections"], // #37.63
       persons: "related", properties: "related", associations: "related", // #37.65: „Corelate"
     });
-    expect(Object.keys(RENAMED_TABS)).toHaveLength(3);
+    expect(Object.keys(RENAMED_TABS)).toHaveLength(4);
   });
 
   it("reads a choice stored under the old keys as the new tiles, in registry order", () => {

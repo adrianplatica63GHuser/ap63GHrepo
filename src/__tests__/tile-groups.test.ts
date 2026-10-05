@@ -9,7 +9,7 @@ import { NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles
 import { JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
 import { documentTileRegistry, type DocumentLayout } from "@/app/documents/_components/document-tiles";
 
-const CVC: DocumentLayout = { typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe", "Cadastru și carte funciară"], succession: false, pages: true };
+const CVC: DocumentLayout = { typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe", "Cadastru și CF"], succession: false, pages: true };
 const MOSTENITOR: DocumentLayout = { typeKey: "CERTIFICAT_MOSTENITOR", tabs: [], succession: true, pages: true };
 const UNSAVED: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: false };
 

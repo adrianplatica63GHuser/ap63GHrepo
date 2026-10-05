@@ -64,10 +64,15 @@ export function tabTileKey(label: string): string {
  * A tile's key IS its tab's label, so without this a renamed tab would drop
  * every browser's remembered choice of that tile. The registry passes it on
  * as `renamed`, for the tabs the type on screen still has.
+ *
+ * Each old label maps straight to today's — `parseStoredTiles` follows one
+ * step, not a chain — so #37.90's „Cadastru și CF" is the target of both
+ * „Cadastru" and „Cadastru și carte funciară".
  */
 export const RENAMED_TABS: Readonly<Record<string, string>> = {
   Instrument: "Preț și taxe",
-  Cadastru: "Cadastru și carte funciară",
+  Cadastru: "Cadastru și CF",
+  "Cadastru și carte funciară": "Cadastru și CF",
   Conformitate: "Formalități",
 };
 

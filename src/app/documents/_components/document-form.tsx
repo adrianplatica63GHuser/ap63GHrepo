@@ -87,6 +87,7 @@ import {
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { firstErrorPath } from "@/lib/ui/tiles";
+import { panelSubtitle } from "@/lib/ui/panel-subtitle";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
@@ -1829,7 +1830,8 @@ function Section({
   const framed = useContext(FrameContext);
   const heading = title === undefined ? null : (
     <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-      {title}
+      {/* Slice #37.90: inside a tile, a panel's subtitle reads in square brackets. */}
+      {framed ? panelSubtitle(title) : title}
       {/* Slice #37.57: the system ID's one place — this corner. */}
       {code && <SystemIdCorner code={code} />}
     </h2>
