@@ -77,6 +77,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-08](cases/TC-PROP-08.md) | „Puncte de contur" cât „Hartă", butoanele unui rând lângă marginea din dreapta | property | happy | — | `automated` | 2026-10-04 | `e2e/property/corners-tile-narrow.spec.ts` |
 | [TC-PROP-09](cases/TC-PROP-09.md) | „Hartă": desenarea și harta extinsă pe rândul de sus; harta extinsă se închide și păstrează desenul | property | happy | — | `automated` | 2026-10-05 | `e2e/property/map-top-row.spec.ts` |
 | [TC-PROP-10](cases/TC-PROP-10.md) | Un singur „Proprietăți" în bara laterală; „Hartă completă" din lista proprietăților | property | happy | — | `automated` | 2026-10-05 | `e2e/property/properties-nav.spec.ts` |
+| [TC-PROP-11](cases/TC-PROP-11.md) | Titlul proprietății numește tipul ei și explică ce fișe arată acel tip | property | happy | — | `confirmed` | 2026-10-05 | `e2e/property/property-heading-type.spec.ts` |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-02 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-02 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
