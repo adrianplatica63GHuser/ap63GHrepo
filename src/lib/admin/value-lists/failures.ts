@@ -26,6 +26,7 @@
  *   SECOND `useTranslations("valueList.confirm.errors")` hook for these.
  */
 
+import { DOCUMENT_TYPE_SHORT_NAME_TAKEN_CODE } from "@/lib/documents/type-short-name";
 import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
@@ -135,6 +136,10 @@ export const FAILURE_CODES = [
   // covering both would send half the people who see it to the wrong field.
   "documentTypeNameTaken",
   "documentTypeKeyTaken",
+  // Slice #37.95 — the short name the Documents list shows, taken by another
+  // type (stored, or the rule's). Its own sentence, for the same reason the two
+  // above are not `duplicate`: one field is wrong, and it says which.
+  "documentTypeShortNameTaken",
   // The other two things the key field can be told, added in the same slice
   // after an adversarial round found the second of them.
   //
@@ -266,6 +271,7 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   // would send an administrator to check a field that is filled in correctly.
   // That is #32.07's lesson, and it is why the code is read first.
   if (code === DOCUMENT_TYPE_NAME_TAKEN_CODE) return "documentTypeNameTaken";
+  if (code === DOCUMENT_TYPE_SHORT_NAME_TAKEN_CODE) return "documentTypeShortNameTaken";
   if (code === DOCUMENT_TYPE_KEY_TAKEN_CODE) return "documentTypeKeyTaken";
   if (code === DOCUMENT_TYPE_KEY_INVALID_CODE) return "documentTypeKeyInvalid";
   if (code === DOCUMENT_TYPE_KEY_RESERVED_CODE) return "documentTypeKeyReserved";

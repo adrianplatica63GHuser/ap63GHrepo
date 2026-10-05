@@ -9,6 +9,7 @@
  * POST — insert a new row; validates body against the per-list Zod schema
  */
 
+import { DOCUMENT_TYPE_SHORT_NAME_TAKEN_CODE, DOCUMENT_TYPE_SHORT_NAME_UNIQUE_INDEX, asDocumentTypeShortNameTaken } from "@/lib/documents/type-short-name";
 import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 
@@ -145,6 +146,20 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     // named 400 whose `code` the Reference Data screens turn into a Romanian
     // sentence. The `error` string is the English wire, never rendered; see
     // `@/lib/admin/value-lists/failures.ts`.
+    // Slice #37.95: two types may not read as one short name on the Documents
+    // list. The read in the query layer, then migration_092's index for a race;
+    // both answer the same named 400 the Reference Data modal turns into its
+    // own sentence (failures.ts).
+    const shortTaken = asDocumentTypeShortNameTaken(err);
+    if (shortTaken !== null || (pgErrorCode(err) === "23505" && pgErrorConstraint(err) === DOCUMENT_TYPE_SHORT_NAME_UNIQUE_INDEX)) {
+      return Response.json(
+        {
+          error: `Another document type already reads as this short name${shortTaken ? `: "${shortTaken.takenBy}"` : ""}.`,
+          code: DOCUMENT_TYPE_SHORT_NAME_TAKEN_CODE,
+        },
+        { status: 400 },
+      );
+    }
     const nameTaken = asDocumentTypeNameTaken(err);
     if (nameTaken !== null) {
       return Response.json(

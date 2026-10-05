@@ -1932,7 +1932,8 @@
       "converseName": "Rol invers",
       "converseNameMale": "Rol invers — bărbat",
       "converseNameFemale": "Rol invers — femeie",
-      "status": "Stare"
+      "status": "Stare",
+      "shortName": "Denumire scurtă"
     },
     "documentTypeStatus": {
       "new": "Adăugat manual",
@@ -2062,7 +2063,8 @@
         "documentTypeNameTaken": "Există deja un tip de document cu această denumire. Denumirile se compară fără diacritice, fără majuscule și fără semne de punctuație, așa că „Contract de Vânzare” și „contract de vanzare” sunt aceeași denumire. Alegeți alta, sau folosiți tipul care există deja.",
         "documentTypeKeyTaken": "Cheia introdusă aparține deja altui tip de document. Cheia se stabilește o singură dată și nu se mai schimbă, deci nu i se adaugă un număr la sfârșit — alegeți altă cheie, sau lăsați câmpul gol și se va genera una din denumire.",
         "documentTypeKeyInvalid": "Cheia introdusă nu poate fi folosită: nu conține nimic care să devină o cheie, sau este prea lungă. O cheie poate conține litere și cifre; spațiile și semnele devin „_”. Lăsați câmpul gol dacă doriți ca ea să fie generată din denumire.",
-        "documentTypeKeyReserved": "Această cheie este rezervată: sistemul o folosește el însuși, pentru tipul de rezervă al documentelor neclasificate sau pentru cartea de identitate. Un rând o poate primi doar dacă și denumirea lui spune același lucru. Alegeți altă cheie."
+        "documentTypeKeyReserved": "Această cheie este rezervată: sistemul o folosește el însuși, pentru tipul de rezervă al documentelor neclasificate sau pentru cartea de identitate. Un rând o poate primi doar dacă și denumirea lui spune același lucru. Alegeți altă cheie.",
+        "documentTypeShortNameTaken": "Alt tip de document se citește deja cu această denumire scurtă în lista actelor. Alegeți alta — sau lăsați câmpul gol, iar lista va scurta singură denumirea."
       },
       "roleWhitelistGranted": "Rolul ales a fost bifat automat acolo unde asocierile mutate aveau nevoie:",
       "roleWhitelistPending": "Rolul ales nu a putut fi bifat automat pentru toate tipurile de document ale asocierilor mutate: tipurile fără o listă de roluri configurată sunt lăsate neatinse. Bifați-l în „Roluri pe Document” pentru tipurile potrivite, altfel asocierile Persoană–Document mutate vor arăta un rol care nu mai poate fi ales din listă pe acele tipuri.",

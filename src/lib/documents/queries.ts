@@ -49,6 +49,8 @@ export type DocumentListItem = {
   code:             string;
   documentTypeId:   string;
   documentTypeName: string | null;
+  /** Slice #37.95: the type's stored short name — NULL means the rule's (type-short-name.ts). */
+  documentTypeShortName: string | null;
   title:            string | null;
   nrDocument:       string | null;
   dateDocument:     string | null;
@@ -167,6 +169,7 @@ export async function listDocument(
         code:             document.code,
         documentTypeId:   document.documentTypeId,
         documentTypeName: lookupDocumentType.name,
+        documentTypeShortName: lookupDocumentType.shortName,
         title:            document.title,
         nrDocument:       document.nrDocument,
         dateDocument:     document.dateDocument,

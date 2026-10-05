@@ -391,7 +391,8 @@ describe("the create form's key field", () => {
    * `document-types` had no such pin at all before this slice.
    */
   it("⚠️ is the whole field list, in order", () => {
-    expect(LIST_META["document-types"].fields.map((f) => f.key)).toEqual(["name", "key"]);
+    // Slice #37.95: „Denumire scurtă" after them — the short name the Documents list shows.
+    expect(LIST_META["document-types"].fields.map((f) => f.key)).toEqual(["name", "key", "shortName"]);
   });
 
   it("⚠️ is createOnly, and is the only field on any list that is", () => {

@@ -17,6 +17,7 @@
  *          those objects onto another value of the same list (POST ./reassign).
  */
 
+import { DOCUMENT_TYPE_SHORT_NAME_TAKEN_CODE, DOCUMENT_TYPE_SHORT_NAME_UNIQUE_INDEX, asDocumentTypeShortNameTaken } from "@/lib/documents/type-short-name";
 import { requireSuperuser } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import {
@@ -161,6 +162,20 @@ export async function PUT(
     // layer, for the reason the identity-card and catch-all pairs above both
     // grew a rename half: a guard on the create door alone is a lock on a door
     // with the window open beside it.
+    // Slice #37.95: two types may not read as one short name on the Documents
+    // list. The read in the query layer, then migration_092's index for a race;
+    // both answer the same named 400 the Reference Data modal turns into its
+    // own sentence (failures.ts).
+    const shortTaken = asDocumentTypeShortNameTaken(err);
+    if (shortTaken !== null || (pgErrorCode(err) === "23505" && pgErrorConstraint(err) === DOCUMENT_TYPE_SHORT_NAME_UNIQUE_INDEX)) {
+      return Response.json(
+        {
+          error: `Another document type already reads as this short name${shortTaken ? `: "${shortTaken.takenBy}"` : ""}.`,
+          code: DOCUMENT_TYPE_SHORT_NAME_TAKEN_CODE,
+        },
+        { status: 400 },
+      );
+    }
     const nameTaken = asDocumentTypeNameTaken(err);
     if (nameTaken !== null) {
       return Response.json(

@@ -237,6 +237,8 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     fields: [
       { key: "name", labelKey: "name", required: true },
       { key: "key",  labelKey: "key",  required: false, createOnly: true },
+      // Slice #37.95: the short name the Documents list shows; blank = the rule's.
+      { key: "shortName", labelKey: "shortName", required: false },
     ],
   },
   institutions: {

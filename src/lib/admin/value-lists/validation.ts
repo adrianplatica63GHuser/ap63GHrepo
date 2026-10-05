@@ -5,6 +5,7 @@
  * lists that have it — `person-roles` has none at all since Slice #34.01).
  */
 
+import { storedShortName } from "@/lib/documents/type-short-name";
 import { z } from "zod/v4";
 import type { ListKey } from "./config";
 import {
@@ -295,6 +296,14 @@ export const documentTemplateFieldSchema = z.object({
 export const documentTypeSchema = z.object({
   name:      z.string().min(1, "required"),
   sortOrder,
+  // Slice #37.95 (migration_092): the short name the Documents list shows.
+  // Optional, so the form editor's PUT (name + form) leaves it alone; a blank
+  // is stored as NULL, which the list reads as the rule's (type-short-name.ts).
+  shortName: z
+    .string()
+    .max(40, "at most 40 characters")
+    .nullish()
+    .transform((v) => (v === undefined ? undefined : storedShortName(v))),
   // Optional — omitted entirely by the admin UI's name/sortOrder-only edit
   // form (see LIST_META["document-types"]), so a plain rename never touches
   // this column. Only a caller that explicitly sends `templateFields` (e.g.

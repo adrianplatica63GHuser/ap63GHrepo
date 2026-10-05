@@ -50,6 +50,7 @@
  * feature in Slice #18.07 — see src/lib/groups/.)
  */
 
+import { DocumentTypeShortNameTakenError, shortNameClash } from "@/lib/documents/type-short-name";
 import { asc, count, eq, getTableName, like, sql } from "drizzle-orm";
 import { nextFreeKey, requestedDocumentTypeKey, slugifyLookupKey } from "./keys";
 import { db, type DbTransaction } from "@/db";
@@ -735,10 +736,15 @@ export async function createDocumentTypeRow(
   // TypeScript. A SQL predicate restating the fold would be a second opinion
   // about the rule, which is the shape this slice exists to remove.
   const existing = await conn
-    .select({ id: lookupDocumentType.id, key: lookupDocumentType.key, name: lookupDocumentType.name })
+    .select({ id: lookupDocumentType.id, key: lookupDocumentType.key, name: lookupDocumentType.name, shortName: lookupDocumentType.shortName })
     .from(lookupDocumentType);
   const nameTakenBy = documentTypeNameTakenBy(data.name, existing);
   if (nameTakenBy !== null) throw new DocumentTypeNameTakenError(nameTakenBy.name);
+  // Slice #37.95: two types may not read as one short name on the Documents
+  // list — stored or the rule's, so a new type whose name derives „Vânzare"
+  // is refused beside one that stores it.
+  const shortClash = shortNameClash({ id: null, name: data.name, shortName: (data as { shortName?: string | null }).shortName }, existing);
+  if (shortClash !== null) throw new DocumentTypeShortNameTakenError(shortClash.name);
   // Slice #29.07: the canonical key, when the classifier offered one this
   // codebase defines.
   //
@@ -1133,6 +1139,24 @@ export async function updateValue(
             .from(lookupDocumentType);
           const takenBy = documentTypeNameTakenBy(values.name, others, id);
           if (takenBy !== null) throw new DocumentTypeNameTakenError(takenBy.name);
+        }
+        // Slice #37.95: a write that names the short name, or renames the type
+        // (whose derived short name then moves), may not land on another
+        // type's — stored or the rule's.
+        if (typeof values.name === "string" || values.shortName !== undefined) {
+          const others = await db
+            .select({ id: lookupDocumentType.id, name: lookupDocumentType.name, shortName: lookupDocumentType.shortName })
+            .from(lookupDocumentType);
+          const own = others.find((o) => o.id === id);
+          const clash = shortNameClash(
+            {
+              id,
+              name: typeof values.name === "string" ? values.name : stored.name,
+              shortName: values.shortName !== undefined ? (values.shortName as string | null) : own?.shortName ?? null,
+            },
+            others,
+          );
+          if (clash !== null) throw new DocumentTypeShortNameTakenError(clash.name);
         }
       }
       // ⚠️ **THE COMPARE AND THE WRITE ARE ONE TRANSACTION, THE ROW LOCKED

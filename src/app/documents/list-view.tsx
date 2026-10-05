@@ -1,5 +1,6 @@
 "use client";
 
+import { documentTypeShortName } from "@/lib/documents/type-short-name";
 import { useNameOr } from "@/components/record/use-name-or";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -226,6 +227,7 @@ type DocumentListItem = {
   code:             string;
   documentTypeId:   string;
   documentTypeName: string | null;
+  documentTypeShortName: string | null;
   title:            string | null;
   nrDocument:       string | null;
   dateDocument:     string | null;
@@ -909,8 +911,15 @@ export function DocumentListView({
                           <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                         </span>
                       </td>
-                      <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
-                        {item.documentTypeName ?? "—"}
+                      {/* Slice #37.95: the type by its short name (CVC, PAD…, or the rule's),
+                          the full name in its tooltip. */}
+                      <td
+                        className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}
+                        title={item.documentTypeName ?? undefined}
+                      >
+                        {item.documentTypeName
+                          ? documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })
+                          : "—"}
                       </td>
                       <td className={`px-4 py-2 font-medium ${WRAPS}`}>
                         {item.title ?? (
