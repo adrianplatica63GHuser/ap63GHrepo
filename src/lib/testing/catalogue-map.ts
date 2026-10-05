@@ -47,7 +47,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01", "TC-PROP-10"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12", "TC-GRP-02"],
   // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
   "/natural-persons":                      ["TC-PERS-01", "TC-AUTH-02", "TC-VER-01", "TC-TILES-06", "TC-ICON-01", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01"],
