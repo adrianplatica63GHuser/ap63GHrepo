@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -66,3 +66,7 @@ at 24 px, the bubble open and italic; „(Teren Arabil)" and its sentence; the c
 Construit and to „niciunul" seen at once, the `<h1>` unchanged. Both deleted (204, 204). Nothing in
 the file changed, so the case is confirmed, and `e2e/property/property-heading-type.spec.ts`
 translates it.
+
+**2026-10-05 — `automated` (Slice #38.03).** The test runner's full run 20261005T200656Z-867 on
+5406f1e ran `e2e/property/property-heading-type.spec.ts` green with the other 88 (lint, tsc, jest and
+forms-drift green too).
