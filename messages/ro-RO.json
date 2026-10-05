@@ -845,7 +845,10 @@
         "empty": "Nu face parte din niciun grup",
         "add": "+ Adaugă în grup",
         "addPlaceholder": "selectează un grup",
-        "remove": "Elimină din grup"
+        "remove": "Elimină din grup",
+        "limit": "Un element poate face parte din cel mult {max} grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.",
+        "limitReached": "Cel mult {max} grupuri",
+        "noneAvailable": "niciun grup disponibil"
       },
       "stamps": {
         "title": "Ștampile",

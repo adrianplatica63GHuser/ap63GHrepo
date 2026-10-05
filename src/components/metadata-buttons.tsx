@@ -55,6 +55,8 @@ export function AddToggleButton({
   labelAdd,
   labelHide,
   onClick,
+  disabled = false,
+  labelDisabled,
 }: {
   open: boolean;
   /** The closed state's icon: Plus, or Link for a cross-reference. */
@@ -63,15 +65,19 @@ export function AddToggleButton({
   /** The name of the open state, which showed a bare „▲". */
   labelHide: string;
   onClick: () => void;
+  /** Slice #38.10: nothing can be added — the „+" disabled, its name and tooltip saying why. */
+  disabled?: boolean;
+  labelDisabled?: string;
 }) {
   return (
     <IconButton
-      icon={open ? ChevronUp : icon}
-      label={open ? labelHide : labelAdd}
+      icon={open && !disabled ? ChevronUp : icon}
+      label={disabled && labelDisabled ? labelDisabled : open ? labelHide : labelAdd}
       variant="bare"
       size="md"
-      aria-expanded={open}
+      aria-expanded={open && !disabled}
       onClick={onClick}
+      disabled={disabled}
     />
   );
 }

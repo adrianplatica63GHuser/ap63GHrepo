@@ -20,6 +20,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
+import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
 import { SHARED_LEFT_INSET, SHIFTED_SELECT_ROW, useSharedLeftLine } from "@/lib/ui/classification-left-line";
 
 // ---------------------------------------------------------------------------
@@ -565,6 +566,10 @@ function InlineGroupsSection({
   labelAddPlaceholder,
   labelRemove,
   withBack,
+  cap,
+  labelLimit,
+  labelLimitReached,
+  labelNoneAvailable,
 }: {
   principalObjectId: string;
   currentGroups:     GroupTag[];
@@ -578,6 +583,18 @@ function InlineGroupsSection({
   labelAddPlaceholder: string;
   labelRemove:       string;
   withBack:          (href: string) => string;
+  /**
+   * Slice #38.10: how many groups this record may belong to — the server's own
+   * limit (`MAX_GROUPS_PER_PROPERTY` / `MAX_GROUPS_PER_ITEM`, validation.ts),
+   * never a second number written here.
+   */
+  cap:               number;
+  /** The italic line under the list at the cap. */
+  labelLimit:        string;
+  /** The disabled „+"'s name and tooltip at the cap. */
+  labelLimitReached: string;
+  /** The picker's placeholder when no group is left to join under the cap. */
+  labelNoneAvailable: string;
 }) {
   const queryClient  = useQueryClient();
   const availKey     = `${mainQueryKey}-avail-groups`;
@@ -601,6 +618,10 @@ function InlineGroupsSection({
   });
 
   const available = availData?.groups ?? [];
+  // Slice #38.10: at the cap the „+" is disabled and a line says why; a picker
+  // open when the cap is reached closes (it is drawn only under the cap).
+  const atCap = currentGroups.length >= cap;
+  const pickerOpen = showAdd && !atCap;
 
   async function handleAdd(groupId: string) {
     if (!groupId) return;
@@ -641,17 +662,19 @@ function InlineGroupsSection({
         {isOnLatest && (
           // #37.44 (A032): Plus while closed, ChevronUp while open („▲" before).
           <AddToggleButton
-            open={showAdd}
+            open={pickerOpen}
             icon={Plus}
             labelAdd={labelAdd}
             labelHide={labelHideAdd}
-            onClick={() => setShowAdd((v) => !v)}
+            onClick={() => setShowAdd(!pickerOpen)}
+            disabled={atCap}
+            labelDisabled={labelLimitReached}
           />
         )}
       </div>
 
       {/* Add group dropdown (lazy) */}
-      {showAdd && isOnLatest && (
+      {pickerOpen && isOnLatest && (
         <div className="flex items-center gap-2">
           <select
             ref={selectRef}
@@ -661,7 +684,7 @@ function InlineGroupsSection({
             className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
           >
             <option value="" disabled data-blank="">
-              {availLoading ? "…" : labelAddPlaceholder}
+              {availLoading ? "…" : available.length === 0 ? labelNoneAvailable : labelAddPlaceholder}
             </option>
             {available.map((g) => (
               <option key={g.id} value={g.id}>
@@ -703,6 +726,13 @@ function InlineGroupsSection({
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Slice #38.10: at the cap, said in words — a disabled „+" cannot be pressed to explain itself. */}
+      {atCap && isOnLatest && (
+        <p className="text-xs italic text-fade dark:text-zinc-400" data-groups-limit="">
+          {labelLimit}
+        </p>
       )}
     </section>
   );
@@ -1214,6 +1244,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   const showConnections    = part !== "classification";
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
+  // Slice #38.10: the server's own limit — a property's, or a person's and a document's.
+  const groupCap = apiPath.startsWith("/api/properties/") ? MAX_GROUPS_PER_PROPERTY : MAX_GROUPS_PER_ITEM;
   // Slice #38.01: Proveniență's left line is Importanță's select's, measured.
   const sharedLeftLine = useSharedLeftLine();
   const { data: tf } = useTimeFrames();
@@ -1569,6 +1601,10 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelAddPlaceholder={t("groups.addPlaceholder")}
           labelRemove={t("groups.remove")}
           withBack={withBack}
+          cap={groupCap}
+          labelLimit={t("groups.limit", { max: groupCap })}
+          labelLimitReached={t("groups.limitReached", { max: groupCap })}
+          labelNoneAvailable={t("groups.noneAvailable")}
         />
     ) : (
         <section className="flex flex-col gap-1">

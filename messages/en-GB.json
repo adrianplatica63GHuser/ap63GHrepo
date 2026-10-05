@@ -845,7 +845,10 @@
         "empty": "Not a member of any group",
         "add": "+ Add to group",
         "addPlaceholder": "select a group",
-        "remove": "Remove from group"
+        "remove": "Remove from group",
+        "limit": "A record can belong to at most {max} groups. Remove it from one to add it to another.",
+        "limitReached": "At most {max} groups",
+        "noneAvailable": "no group available"
       },
       "stamps": {
         "title": "Stamps",
