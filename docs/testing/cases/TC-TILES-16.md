@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-04 |
+| **Last green** | 2026-10-05 |
 
 ## What this proves
 
@@ -83,3 +83,7 @@ the runner's browser before and after (20261005T185820Z-28557, 20261005T190111Z-
 208.5 px, selects 105 px (Importanță) and 132 px (Relevanță); their gaps 51.75 and 38.25 px before,
 38.81 and 28.69 px after (0.75 × each, to 0.01 px); Proveniență's title, select and „Istoric" at
 0 px before and at 38.81 px after — on Importanță's select's edge. The spec follows.
+
+**2026-10-05 — `automated` (Slice #38.01).** The test runner's full run 20261005T190755Z-21923 on
+c53d919 ran the changed `e2e/tiles/classification-dividers.spec.ts` green with the other 87 (lint,
+tsc, jest and forms-drift green too).
