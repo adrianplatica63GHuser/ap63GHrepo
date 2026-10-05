@@ -42,7 +42,7 @@ Nothing.
 | 3 | Reloads the page | „Conexiuni" where step 2 put it |
 | 4 | Ticks „Street View"; then unticks it | „Street View" under „Puncte de contur", and „Conexiuni" pushed down to 16 px under „Street View"; unticked, „Conexiuni" is back where step 2 put it |
 | 5 | Narrows the window to 1366 px; then widens it to 1920 | At 1366 „Conexiuni" stands in the left area, the column beside it; at 1920 it is back under „Puncte de contur" |
-| 6 | Opens „TC-TILES-15 Act", ticks „Clasificare subiectivă", drags it by its padding until its top-left corner is 40 px under „Pagini", on its left edge; releases | „Clasificare subiectivă" stays there, its left edge on „Pagini"'s; „Pagini" where it was |
+| 6 | Opens „TC-TILES-15 Act", ticks „Clasificări", drags it by its padding until its top-left corner is 40 px under „Pagini", on its left edge; releases | „Clasificări" stays there, its left edge on „Pagini"'s; „Pagini" where it was |
 | 7 | Back on the property: „Implicit", then ticks „Conexiuni" | „Conexiuni" under „Date cadastrale", where step 1 had it; the browser holds no arrangement for the property |
 
 ## At the end — leaving things as they were found
@@ -65,7 +65,7 @@ relative to the row.
   1148,792.
 - Step 5: at 1366 cadastral 0,0, address 0,465, „Conexiuni" 0,872, map and corners at 492; the stored
   entry unchanged. At 1920 „Conexiuni" back at 1148,792.
-- Step 6: „Clasificare subiectivă" from 0,298 to 984,808 — „Pagini"'s left edge (984), „Pagini" at
+- Step 6: „Clasificări" from 0,298 to 984,808 — „Pagini"'s left edge (984), „Pagini" at
   984,0 as before.
 - Step 7: after „Implicit" and „Conexiuni" ticked, „Conexiuni" at 0,465; no arrangement stored.
 

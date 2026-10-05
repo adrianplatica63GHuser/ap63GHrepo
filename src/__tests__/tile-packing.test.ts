@@ -6,7 +6,7 @@
  * their heights in px as measured on #37.75's synthetic records (the runner's
  * picture run, `screens\before\before-boxes.json`): a Natural Person with
  * every tile and twelve related documents; a company with „Corelate" holding
- * a document, „Clasificare subiectivă" beside it and a document's preview
+ * a document, „Clasificări" beside it and a document's preview
  * open. 1366 px gives the row 6 units, 1920 px 10. The browser half — the
  * hook measuring and drawing on the four screens — is TC-TILES-12.
  */
@@ -63,7 +63,7 @@ function expectNoOverlap(placed: readonly Placed[], columns: number): void {
   }
 }
 
-describe("Adrian's Natural Person — „Clasificare subiectivă” under the address boxes", () => {
+describe("Adrian's Natural Person — „Clasificări” under the address boxes", () => {
   it("at 1920 px: under the two addresses, not under „Corelate”", () => {
     const placed = packTiles(PERSON, 10, GAP);
     expectNoOverlap(placed, 10);
@@ -95,7 +95,7 @@ describe("Adrian's Natural Person — „Clasificare subiectivă” under the ad
 });
 
 describe("Adrian's company — the preview under „Corelate”", () => {
-  it("at 1920 px: right under „Corelate”, in its columns, not under „Clasificare subiectivă”", () => {
+  it("at 1920 px: right under „Corelate”, in its columns, not under „Clasificări”", () => {
     const placed = packTiles(COMPANY, 10, GAP);
     expectNoOverlap(placed, 10);
     const related = at(placed, "related");

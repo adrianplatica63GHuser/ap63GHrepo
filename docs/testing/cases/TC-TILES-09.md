@@ -1,4 +1,4 @@
-# TC-TILES-09 — „Clasificare subiectivă": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric"
+# TC-TILES-09 — „Clasificări": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric"
 
 | | |
 |---|---|
@@ -10,7 +10,7 @@
 
 ## What this proves
 
-On every record screen „Clasificare subiectivă" shows Importanță and Relevanță side by side on one
+On every record screen „Clasificări" shows Importanță and Relevanță side by side on one
 row, Proveniență on a row of its own under them, and the save button on the line of „Istoric",
 against the tile's right edge — no longer on a row of its own. The button still does its job: it
 stays disabled until a value changes, and a save writes. A Relevanță under Importanță, a save
@@ -32,7 +32,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the natural person with `?tab=metadata` on its address | „CLASIFICARE SUBIECTIVĂ" is 476 px wide (3 units). Importanță and Relevanță stand side by side: Relevanță's select is level with Importanță's (the same top, to the pixel) and to its right. Proveniență's select is under both |
+| 1 | Opens the natural person with `?tab=metadata` on its address | „CLASIFICĂRI" is 476 px wide (3 units). Importanță and Relevanță stand side by side: Relevanță's select is level with Importanță's (the same top, to the pixel) and to its right. Proveniență's select is under both |
 | 2 | Looks at the line of „ISTORIC" | The save button „Salvează" is on it, disabled: its middle is within the height of „ISTORIC", and its right edge is the tile's right edge less its padding (12 px), to the pixel. There is no other „Salvează" in the tile |
 | 3 | Changes Importanță to „Ridicată" and presses „Salvează" | The button turns into „✓ Salvat", still on „Istoric"'s line. Opened again, the person's Importanță reads „Ridicată" |
 | 4 | Opens the company, the property and the document the same way (`?tab=metadata`) | On each, steps 1 and 2 read the same |
@@ -47,7 +47,7 @@ Nothing.
 **2026-10-03 — run 1, `driven` (Slice #37.68).** Driven in the desktop app's browser pane against
 `npm run dev` on 3000, the tab emulating 1366 × 900, read with a script. This file was written from
 the code first and needed no correction.
-- Step 1: on the person „CLASIFICARE SUBIECTIVĂ" 476 × 279 px (it was 312 × 392 in 2 units);
+- Step 1: on the person „CLASIFICĂRI" 476 × 279 px (it was 312 × 392 in 2 units);
   Importanță's and Relevanță's selects both at top 938, Relevanță's to the right; Proveniență's under
   both.
 - Step 2: one „Salvează", disabled; its middle at 1098, „ISTORIC" from 1090 to 1106; its right edge

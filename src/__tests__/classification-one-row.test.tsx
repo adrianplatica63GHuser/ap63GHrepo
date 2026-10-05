@@ -1,5 +1,5 @@
 /**
- * Slice #37.68 — „Clasificare subiectivă" on the four record screens:
+ * Slice #37.68 — „Clasificări" on the four record screens:
  * Importanță and Relevanță are two columns of one row, and the save button
  * stands on „Istoric"'s line, against the tile's right edge. One component
  * draws the tile on all four screens, so it is tested once here; the units are
@@ -71,7 +71,7 @@ const historyLine = (): HTMLElement => {
   return el;
 };
 
-describe("„Clasificare subiectivă”: Importanță and Relevanță on one row (Slice #37.68)", () => {
+describe("„Clasificări”: Importanță and Relevanță on one row (Slice #37.68)", () => {
   it("the row holds exactly Importanță and Relevanță, each with its select and review button; Proveniență is under it", async () => {
     renderTile();
     await screen.findByRole("heading", { name: "importance.title" });

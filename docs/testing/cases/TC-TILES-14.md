@@ -36,7 +36,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificare subiectivă" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Date cadastrale", „Adresă" and „Clasificare subiectivă": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
+| 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificări" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Date cadastrale", „Adresă" and „Clasificări": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
 | 2 | Ticks „Corelate" and narrows the window to 1366 px | The column stands under the left area; „Hartă", „Puncte de contur" and „Street View" are still `rgb(246, 240, 254)`, „Corelate" `rgb(238, 244, 250)` |
 | 3 | Widens the window to 1920 px and opens „TC-TILES-14 Act" | „Pagini": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Date generale" and „Preț și taxe": `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)` |
 
@@ -53,7 +53,7 @@ not rebuilt its stylesheet, so its tiles drew the new classes with no colour. On
 had no stored choice, so both screens opened on their defaults. A script ticked the boxes and read
 the computed colours.
 - Step 1: „Hartă", „Puncte de contur", „Street View" `rgb(246, 240, 254)` / `rgb(218, 203, 238)`;
-  „Date cadastrale", „Adresă", „Clasificare subiectivă" `rgb(238, 244, 250)` / `rgb(198, 212, 232)`;
+  „Date cadastrale", „Adresă", „Clasificări" `rgb(238, 244, 250)` / `rgb(198, 212, 232)`;
   the map's frame rim `rgb(198, 212, 232)`; the corner table's body `rgb(255, 255, 255)`.
 - Step 2: at 1366 the column under the left area; the three still `rgb(246, 240, 254)`, „Corelate"
   `rgb(238, 244, 250)`.

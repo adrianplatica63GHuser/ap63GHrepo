@@ -1,5 +1,5 @@
 /**
- * Slice #37.63 — META INFO is two tiles, „Clasificare subiectivă" and
+ * Slice #37.63 — META INFO is two tiles, „Clasificări" and
  * „Conexiuni", on the four record screens; every explanation is a bubble.
  */
 import { readFileSync } from "node:fs";
@@ -52,8 +52,8 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
     for (const ns of ["naturalPerson", "judicialPerson", "property", "document"] as const) {
       const r = ro[ns].tiles as Record<string, string>;
       const e = en[ns].tiles as Record<string, string>;
-      expect([r.classification, r.connections, r.metadata]).toEqual(["Clasificare subiectivă", "Conexiuni", undefined]);
-      expect([e.classification, e.connections]).toEqual(["Subjective classification", "Connections"]);
+      expect([r.classification, r.connections, r.metadata]).toEqual(["Clasificări", "Conexiuni", undefined]);
+      expect([e.classification, e.connections]).toEqual(["Classifications", "Connections"]);
     }
   });
 

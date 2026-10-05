@@ -1,4 +1,4 @@
-# TC-TILES-16 — „Clasificare subiectivă": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei
+# TC-TILES-16 — „Clasificări": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei
 
 | | |
 |---|---|
@@ -10,7 +10,7 @@
 
 ## What this proves
 
-In „Clasificare subiectivă" (Slice #37.81) a vertical line separates Importanță from Relevanță, and a
+In „Clasificări" (Slice #37.81) a vertical line separates Importanță from Relevanță, and a
 horizontal one separates the two from Proveniență; with two versions the version controls' line is
 the same line. Every line is 1 px in the rim colour and stops inside the tile's padding. Importanță
 and Relevanță each stand centred in a cell of their own, their selects level. A cell's content
@@ -22,7 +22,7 @@ border is the defect this case exists to catch; a change and a save still write.
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a natural person
   „Ion TC-TILES-16" and a Contract de Vânzare „TC-TILES-16 Act".
-- The window is 1920 px wide. „Clasificare subiectivă" is ticked on both screens.
+- The window is 1920 px wide. „Clasificări" is ticked on both screens.
 
 ## What Adrian is asked for
 

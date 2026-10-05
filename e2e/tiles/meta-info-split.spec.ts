@@ -1,5 +1,5 @@
 /**
- * Case:   TC-TILES-08 — META INFO în două: „Clasificare subiectivă" și „Conexiuni", explicațiile în bule
+ * Case:   TC-TILES-08 — META INFO în două: „Clasificări" și „Conexiuni", explicațiile în bule
  * Source: docs/testing/cases/TC-TILES-08.md, „Last green" 2026-10-02
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -24,7 +24,7 @@ import { tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-08`;
 const SHOTS = "playwright-report/meta-info-split";
-const CLASSIFICATION = "Clasificare subiectivă";
+const CLASSIFICATION = "Clasificări";
 const CONNECTIONS = "Conexiuni";
 
 /** Step 1's reading, on any record's screen opened with `?tab=metadata`. */
@@ -71,7 +71,7 @@ async function photograph(page: Page, kind: string, cls: Locator, con: Locator, 
 }
 
 test.describe("TC-TILES-08 — META INFO în două", () => {
-  test("„Clasificare subiectivă” și „Conexiuni” pe cele patru ecrane, explicațiile în bule", async ({ page }) => {
+  test("„Clasificări” și „Conexiuni” pe cele patru ecrane, explicațiile în bule", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     fs.mkdirSync(SHOTS, { recursive: true });

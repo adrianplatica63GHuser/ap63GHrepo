@@ -598,7 +598,7 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
-  it("the list tiles: „Corelate” the Document's 4 units (#37.66, rule 17), Clasificare subiectivă 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
+  it("the list tiles: „Corelate” the Document's 4 units (#37.66, rule 17), Clasificări 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
     expect(LIST_UNITS.property).toEqual({ related: RELATED_UNITS, classification: 3, connections: 3 }); // #37.68
     expect(LIST_UNITS.property.related).toBe(LIST_UNITS.document.related);
     const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
@@ -637,7 +637,7 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
   });
 
-  it("the list tiles: „Corelate” 4 units (#37.65), Clasificare subiectivă 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
+  it("the list tiles: „Corelate” 4 units (#37.65), Clasificări 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
     // #37.65: the fewest units that hold its widest row — the icon, the longest property name, all four slots (rule 17).
     expect(LIST_UNITS.document.related).toBe(oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true));
     expect(LIST_UNITS.document).toEqual({ related: 4, classification: 3, connections: 3 }); // #37.68

@@ -140,7 +140,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       for (const tile of ["Persoană juridică", "Persoane de contact", "Adrese"]) {
         await expect(tileBox(page, tile)).toBeChecked();
       }
-      for (const tile of ["Corelate", "Clasificare subiectivă", "Conexiuni"]) {
+      for (const tile of ["Corelate", "Clasificări", "Conexiuni"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(tiles.getByRole("button", { name: "Toate", exact: true })).toBeVisible();

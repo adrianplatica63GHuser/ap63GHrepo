@@ -145,7 +145,7 @@ describe("the Natural Person's tiles", () => {
     expect(NP_TILES.map((k) => ro.naturalPerson.tiles[k])).toEqual([
       // Slice #37.27: „Asocieri" is „Persoane" on the Natural Person — its people, by name and relationship.
       // Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate".
-      "Identitate", "Carte de identitate", "Contact", "Adrese", "Corelate", "Clasificare subiectivă", "Conexiuni",
+      "Identitate", "Carte de identitate", "Contact", "Adrese", "Corelate", "Clasificări", "Conexiuni",
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");
@@ -217,7 +217,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { judicialPerson: { tiles: Record<string, string> } };
     expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
-      "Persoană juridică", "Persoane de contact", "Adrese", "Corelate", "Clasificare subiectivă", "Conexiuni", // #37.67
+      "Persoană juridică", "Persoane de contact", "Adrese", "Corelate", "Clasificări", "Conexiuni", // #37.67
     ]);
   });
 });
@@ -293,7 +293,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
   it("are named in Romanian exactly as the specs tick them", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { property: { tiles: Record<string, string> } };
     expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
-      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Corelate", "Clasificare subiectivă", "Conexiuni", // #37.66: three tiles became „Corelate"
+      "Date cadastrale", "Puncte de contur", "Adresă", "Hartă", "Street View", "Corelate", "Clasificări", "Conexiuni", // #37.66: three tiles became „Corelate"
     ]);
   });
 });

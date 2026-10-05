@@ -74,7 +74,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(8, { timeout: 30_000 }); // #37.63: META INFO is two; #37.66: the three lists are „Corelate"
       for (const tile of ["Date cadastrale", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Street View", "Corelate", "Clasificare subiectivă", "Conexiuni"]) await expect(tileBox(page, tile)).not.toBeChecked();
+      for (const tile of ["Street View", "Corelate", "Clasificări", "Conexiuni"]) await expect(tileBox(page, tile)).not.toBeChecked();
       await expect(page.getByRole("tab")).toHaveCount(0);
 
       // Step 2 — „Corelate" (#37.66): empty, „Asociază persoană", „Dezasociază".

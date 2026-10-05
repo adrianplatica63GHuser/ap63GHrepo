@@ -48,7 +48,7 @@ describe("a tile's unused space", () => {
   });
 
   it("text under the pointer does not; beside it, in the same element, does", () => {
-    const box = tile("<h2>Clasificare subiectivă</h2>");
+    const box = tile("<h2>Clasificări</h2>");
     const h2 = box.querySelector("h2")!;
     Range.prototype.getClientRects = function () {
       return [{ left: 10, right: 200, top: 10, bottom: 30 }] as unknown as DOMRectList;

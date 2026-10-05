@@ -49,11 +49,11 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       });
       expect(up.ok(), `the page upload failed (${up.status()})`).toBeTruthy();
 
-      // Step 1 — the property, „Street View" and „Clasificare subiectivă" ticked.
+      // Step 1 — the property, „Street View" and „Clasificări" ticked.
       await page.goto(`/properties/${propId}`);
       await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
       await showTile(page, "Street View");
-      const cls = await showTile(page, "Clasificare subiectivă");
+      const cls = await showTile(page, "Clasificări");
       const right = ["map", "corners", "street-view"].map((p) => page.locator(`[data-panel="${p}"]`));
       for (const t of right) await expect.poll(() => colour(t), { timeout: 20_000 }).toBe(PINNED);
       for (const t of [page.locator('[data-panel="cadastral"]'), page.locator('[data-panel="address"]'), cls]) expect(await colour(t)).toBe(CARD);

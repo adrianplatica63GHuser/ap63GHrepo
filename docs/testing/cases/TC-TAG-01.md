@@ -38,8 +38,8 @@ it.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Admin-Configurare" → „Etichete" and notes „N etichete distincte" | The heading „Etichete", the cloud „Nor de etichete" and the table „Toate etichetele" (Etichetă · Utilizări · Acțiuni) |
-| 2 | Opens `TC-PROP-01 Teren de test`, tiles **„Clasificare subiectivă"** and **„Conexiuni"** | „Clasificare subiectivă" (Importanță, Relevanță, Proveniență), and „Conexiuni": „Etichete / Cuvinte cheie" with an input „Introduceți o etichetă…", „Adaugă", and „Nicio etichetă adăugată încă" |
-| 3 | Types `TC-TAG-01` and presses „Adaugă" | A chip **`tc-tag-01`** with „×". It is saved at once — the „Salvează" under „Clasificare subiectivă" is not needed, and the chip is still there after a reload |
+| 2 | Opens `TC-PROP-01 Teren de test`, tiles **„Clasificări"** and **„Conexiuni"** | „Clasificări" (Importanță, Relevanță, Proveniență), and „Conexiuni": „Etichete / Cuvinte cheie" with an input „Introduceți o etichetă…", „Adaugă", and „Nicio etichetă adăugată încă" |
+| 3 | Types `TC-TAG-01` and presses „Adaugă" | A chip **`tc-tag-01`** with „×". It is saved at once — the „Salvează" under „Clasificări" is not needed, and the chip is still there after a reload |
 | 4 | Returns to „Etichete" | „N+1 etichete distincte", `tc-tag-01` in the cloud as „tc-tag-01 ×1", and in the table with „Utilizări" 1 and „Redenumește" |
 | 5 | On Căutare globală, types `tc-tag-01` into „Etichetă" and presses „Caută" | „1 rezultat": the property, with no system ID |
 | 6 | Back on the property's „Conexiuni", presses „×" on the chip | „Nicio etichetă adăugată încă" |
@@ -69,7 +69,6 @@ code „ex. PERS00001", a shape no record has had since the PPERS/JPERS split �
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
 
-**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
-subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Steps 2 and 6 (and the abandoned-run line) read the new tiles, and the spec follows. The notes
 above keep the old name, as they were run.

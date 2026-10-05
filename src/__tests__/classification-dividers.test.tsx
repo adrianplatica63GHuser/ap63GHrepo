@@ -1,5 +1,5 @@
 /**
- * Slice #37.81 — „Clasificare subiectivă": one divider for every line in the
+ * Slice #37.81 — „Clasificări": one divider for every line in the
  * tile. A vertical one between Importanță's and Relevanță's cells, a
  * horizontal one before Proveniență, and the version controls' line — all the
  * shared `Divider` (src/lib/ui/divider.tsx), 1 px in the rim colour inside the
@@ -72,7 +72,7 @@ const pair = (): HTMLElement => {
 
 const dividers = (root: ParentNode = document) => [...root.querySelectorAll<HTMLElement>("[data-divider]")];
 
-describe("„Clasificare subiectivă”: the dividers and the two cells (Slice #37.81)", () => {
+describe("„Clasificări”: the dividers and the two cells (Slice #37.81)", () => {
   it("the shared divider is one look: 1 px in the rim colour, horizontal or vertical", () => {
     const { container } = render(<><Divider /><Divider vertical /></>);
     const [h, v] = [...container.querySelectorAll<HTMLElement>("[role=separator]")];

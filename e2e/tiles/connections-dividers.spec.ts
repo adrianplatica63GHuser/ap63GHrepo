@@ -1,5 +1,5 @@
 /**
- * Case:   TC-TILES-17 — „Conexiuni": o linie între fiecare două grupuri, ca în „Clasificare subiectivă"
+ * Case:   TC-TILES-17 — „Conexiuni": o linie între fiecare două grupuri, ca în „Clasificări"
  * Source: docs/testing/cases/TC-TILES-17.md, „Last green" 2026-10-04
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -19,7 +19,7 @@ const GROUPS = ["Etichete / Cuvinte cheie", "Grupuri", "Ștampile", "Vezi și"];
 async function check(page: Page, url: string) {
   await page.goto(url);
   const conn = await showTile(page, "Conexiuni");
-  const cls = await showTile(page, "Clasificare subiectivă");
+  const cls = await showTile(page, "Clasificări");
   await expect(conn.locator("[data-connections-groups] > [data-divider]")).toHaveCount(3, { timeout: 30_000 });
   await expect(cls.locator('[data-divider="horizontal"]').first()).toBeVisible();
   const ref = await cls.locator('[data-divider="horizontal"]').first().evaluate((d) => {
@@ -52,7 +52,7 @@ async function check(page: Page, url: string) {
 }
 
 test.describe("TC-TILES-17 — „Conexiuni”: linii între grupuri", () => {
-  test("pe persoană și pe act: trei linii, ca în „Clasificare subiectivă”", async ({ page }) => {
+  test("pe persoană și pe act: trei linii, ca în „Clasificări”", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1200 });

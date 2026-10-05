@@ -77,7 +77,6 @@ list, and saving stays there; „Aplică" is the way into the stamp's own screen
 separate „open"); and applying is **staged** until „Salvează ștampilele", like a group's members
 (TC-GRP-01).
 
-**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
-subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 9 ticks „Conexiuni", and the spec follows. The notes
 above keep the old name, as they were run.

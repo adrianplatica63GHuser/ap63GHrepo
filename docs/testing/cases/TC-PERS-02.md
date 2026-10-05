@@ -44,7 +44,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 | 6 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new company |
 | 7 | Looks at the top of the list | A row badged **„Nou!"**, with a code beginning `JPERS`, „DENUMIRE" `TC-PERS-02 Firmă de test SRL`, „PORECLĂ" „—" |
 | 8 | Types `0000000002` into the list's search box | The row is still there — the search matches the CUI, which is what the placeholder's „ID" means. `0000000003` empties the list („Nu există persoane juridice") |
-| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Corelate" (#37.67: „Persoane corelate", „Proprietăți" and „Acte" in one), „Clasificare subiectivă" and „Conexiuni" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
+| 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Persoană juridică", „Persoane de contact" and „Adrese" ticked, „Corelate" (#37.67: „Persoane corelate", „Proprietăți" and „Acte" in one), „Clasificări" and „Conexiuni" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
 | 10 | Types `TC-PERS-02 editat` into „Poreclă" and presses „Salvează" at the bottom | **The screen stays on the company**, unlike step 6. The header now reads **„v 1"** with the chip **„2 versiuni"**, and „Poreclă" holds `TC-PERS-02 editat` |
 
 ## At the end — leaving things as they were found
@@ -96,8 +96,7 @@ so it does not depend on which way this is decided. In the 36.08 handover.
 reads its button, `0/3` in a browser that has never chosen. The CUI column is still absent until
 it is ticked. The spec follows, green in the runner's full `20261003T013901Z-21163`.
 
-**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
-subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 9 reads the two, and its spec counts eight boxes. The notes
 above keep the old name, as they were run.
 

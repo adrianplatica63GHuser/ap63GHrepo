@@ -62,7 +62,7 @@ async function places(page: Page): Promise<string[]> {
 }
 
 test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", () => {
-  test("„Clasificare subiectivă” sub „Adresă domiciliu”; previzualizarea sub „Corelate”", async ({ page }) => {
+  test("„Clasificări” sub „Adresă domiciliu”; previzualizarea sub „Corelate”", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1200 });
@@ -90,7 +90,7 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
       await expect.poll(async () => {
         const [identity, idCard, contact, h, c, related, cls, conn] = await Promise.all([
           boxOf(region("Identitate")), boxOf(region("Carte de identitate")), boxOf(region("Contact")),
-          boxOf(home), boxOf(corr), boxOf(region("Corelate")), boxOf(region("Clasificare subiectivă")), boxOf(region("Conexiuni")),
+          boxOf(home), boxOf(corr), boxOf(region("Corelate")), boxOf(region("Clasificări")), boxOf(region("Conexiuni")),
         ]);
         return {
           firstLine: new Set([identity.t, idCard.t, contact.t]).size,
@@ -109,10 +109,10 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
         .filter((e) => !e.classList.contains("order-last")).map((e) => Math.round(e.getBoundingClientRect().bottom))));
       expect((await boxOf(actionBar(page))).t - lowest).toBe(GAP);
 
-      // Step 3 — the company: „Corelate" and „Clasificare subiectivă", not „Conexiuni".
+      // Step 3 — the company: „Corelate" and „Clasificări", not „Conexiuni".
       await page.goto(`/judicial-persons/${company}`);
       const related = await showTile(page, "Corelate");
-      const cls = await showTile(page, "Clasificare subiectivă");
+      const cls = await showTile(page, "Clasificări");
       await hideTile(page, "Conexiuni");
       await expect(related.locator("li")).toHaveCount(1, { timeout: 30_000 });
       await expect.poll(async () => {

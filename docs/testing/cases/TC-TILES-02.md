@@ -59,7 +59,7 @@ Two things were seen along the way:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-02 Firmă de test SRL" | Under the name, no tab row. Instead, the checkboxes „Persoană juridică", „Persoane de contact", „Adrese", „Asocieri", „Proprietăți", „Acte", „Clasificare subiectivă", „Conexiuni", with the first three ticked, then „Toate" and „Implicit". Below them: the panels Persoană juridică, Persoane de contact, Adresă sediu social and the correspondence panel, then „Salvează", „Șterge", „Anulează" |
+| 1 | Opens „TC-TILES-02 Firmă de test SRL" | Under the name, no tab row. Instead, the checkboxes „Persoană juridică", „Persoane de contact", „Adrese", „Asocieri", „Proprietăți", „Acte", „Clasificări", „Conexiuni", with the first three ticked, then „Toate" and „Implicit". Below them: the panels Persoană juridică, Persoane de contact, Adresă sediu social and the correspondence panel, then „Salvează", „Șterge", „Anulează" |
 | 2 | Ticks „Acte", unticks „Persoane de contact" | A tile „Acte" after the panels: „Niciun act asociat", „Asociază", „Dezasociază". The Persoane de contact panel goes; the others close up behind it |
 | 3 | Reloads the page | The same arrangement: „Acte" shown, „Persoane de contact" not ticked and not shown |
 | 4 | Types `TC` into „Poreclă" (Persoană juridică), then unticks „Persoană juridică" | The panel goes; „Modificări nesalvate" stays at the top; „Salvează" is enabled |
@@ -67,11 +67,10 @@ Two things were seen along the way:
 | 6 | Clears „Denumire", unticks „Persoană juridică". „Salvează" stays enabled: as tiles, an invalid form does not disable it. Presses „Salvează" | „Persoană juridică" is ticked and shown again, for this visit only (the stored choice is unchanged). The page has scrolled to „Denumire", the box has the focus, its row pulses red, and beneath it is „Name is required" (English in either language, as TC-TILES-01's FU-261). Nothing is saved (still „v 1") |
 | 7 | „Anulează" | Back on „Persoane Juridice"; the cleared name is dropped, nothing saved |
 | 8 | Opens any natural person | Its own row: „Identitate", „Carte de identitate", „Contact", „Adrese" ticked, „Acte" not. The company's choice did not reach it |
-| 9 | Opens the company again: „Toate", then „Implicit" | „Toate": all eight boxes ticked, and „Asocieri", „Proprietăți", „Acte", „Clasificare subiectivă" and „Conexiuni" shown after the panels. „Implicit": back to the three form tiles, and „Acte" is gone |
+| 9 | Opens the company again: „Toate", then „Implicit" | „Toate": all eight boxes ticked, and „Asocieri", „Proprietăți", „Acte", „Clasificări" and „Conexiuni" shown after the panels. „Implicit": back to the three form tiles, and „Acte" is gone |
 | — | At the end: on the company „Șterge" → „Da", then on the natural person „Șterge" → „Da" | Back on each list; both are gone |
 
-**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificare
-subiectivă" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
+**2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Steps 1 and 9 read eight boxes. The notes
 above keep the old name, as they were run.
 

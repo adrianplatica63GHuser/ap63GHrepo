@@ -1,5 +1,5 @@
 /**
- * Case:   TC-TILES-09 — „Clasificare subiectivă": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric"
+ * Case:   TC-TILES-09 — „Clasificări": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric"
  * Source: docs/testing/cases/TC-TILES-09.md, „Last green" 2026-10-03
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -20,7 +20,7 @@ import {
 } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-09`;
-const CLASSIFICATION = "Clasificare subiectivă";
+const CLASSIFICATION = "Clasificări";
 
 async function tile(page: Page, url: string): Promise<Locator> {
   await page.goto(url);

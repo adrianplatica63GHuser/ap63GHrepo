@@ -231,7 +231,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"
       for (const tile of ["Date generale", "Pagini", "Preț și taxe"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Cadastru și carte funciară", "Stare juridică", "Formalități", "Corelate", "Clasificare subiectivă", "Conexiuni"]) {
+      for (const tile of ["Cadastru și carte funciară", "Stare juridică", "Formalități", "Corelate", "Clasificări", "Conexiuni"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(page.getByRole("tab")).toHaveCount(0);

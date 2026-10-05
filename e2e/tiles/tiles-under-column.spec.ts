@@ -45,7 +45,7 @@ async function dragTo(page: Page, tile: Locator, x: number, y: number): Promise<
 }
 
 test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
-  test("„Conexiuni” sub „Puncte de contur” rămâne după reîncărcare; „Street View” o împinge; „Clasificare subiectivă” sub „Pagini”; „Implicit”", async ({ page }) => {
+  test("„Conexiuni” sub „Puncte de contur” rămâne după reîncărcare; „Street View” o împinge; „Clasificări” sub „Pagini”; „Implicit”", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1200 });
@@ -95,11 +95,11 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await page.setViewportSize({ width: 1920, height: 1200 });
       await expect.poll(async () => place(page, conn), { timeout: 20_000 }).toEqual(c2);
 
-      // Step 6 — the document: „Clasificare subiectivă" 40 px under „Pagini", on its left edge.
+      // Step 6 — the document: „Clasificări" 40 px under „Pagini", on its left edge.
       await page.goto(`/documents/${docId}`);
       const pages = page.locator('[data-tile="pages"]');
       await expect(pages).toBeVisible({ timeout: 30_000 });
-      const cls = await showTile(page, "Clasificare subiectivă");
+      const cls = await showTile(page, "Clasificări");
       await page.waitForTimeout(1500);
       const p1 = await place(page, pages);
       const pBox = (await pages.boundingBox())!;

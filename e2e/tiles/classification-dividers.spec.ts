@@ -1,5 +1,5 @@
 /**
- * Case:   TC-TILES-16 — „Clasificare subiectivă": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei
+ * Case:   TC-TILES-16 — „Clasificări": linii între cele trei, Importanță și Relevanță centrate fiecare în celula ei
  * Source: docs/testing/cases/TC-TILES-16.md, „Last green" 2026-10-04
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -52,7 +52,7 @@ async function read(tile: Locator) {
 async function steps(page: Page, url: string, olderToo: boolean) {
   // Step 1 — one version: two lines; the two cells centred, level; inside the padding.
   await page.goto(url);
-  const tile = await showTile(page, "Clasificare subiectivă");
+  const tile = await showTile(page, "Clasificări");
   await expect(tile.locator("[data-classification-pair] select")).toHaveCount(2, { timeout: 30_000 });
   const one = await read(tile);
   expect(one).toMatchObject({ level: true, centred: true, between: true, spans: true, kinds: ["vertical", "horizontal"], inside: true });
@@ -76,7 +76,7 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   }
 }
 
-test.describe("TC-TILES-16 — „Clasificare subiectivă”: liniile și cele două celule", () => {
+test.describe("TC-TILES-16 — „Clasificări”: liniile și cele două celule", () => {
   test("pe persoană și pe act: o versiune, două, cea anterioară", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
