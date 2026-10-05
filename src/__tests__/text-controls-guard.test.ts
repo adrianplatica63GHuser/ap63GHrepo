@@ -29,7 +29,9 @@
  *  - A096 a link in a sentence that opens in the same tab — #37.46 gave the
  *    new-tab ones their ExternalLink and left this one as it was;
  *  - FOLD „Arată mai mult…" (#37.40), out of scope for icons;
- *  - ICONBUTTON IconButton itself, whose children are its icon and words.
+ *  - ICONBUTTON IconButton itself, whose children are its icon and words;
+ *  - INFO the ⓘ's „i" (#38.08): a glyph drawn as a letter, aria-hidden — the
+ *    button is named by its aria-label, so it shows no words.
  * A text link carrying `LeadingIcon` / `TrailingIcon` has its icon and is not
  * listed (#37.46, #37.47).
  */
@@ -251,6 +253,9 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A020", "{t(\"all\")}"],
     ["A020", "{t(\"defaults\")}"],
   ],
+  "src/lib/ui/hint-bubble.tsx": [
+    ["INFO", "<span aria-hidden=\"true\" data-info-glyph=\"\" className={INFO_GLYPH} style={INFO_G"], // #38.08
+  ],
   "src/lib/ui/icon-button.tsx": [
     ["ICONBUTTON", "{inner}"],
     ["ICONBUTTON", "{inner}"],
@@ -282,7 +287,7 @@ describe("every control showing words is on the list (#37.48)", () => {
   });
 
   it("every entry names a decision", () => {
-    const known = /^(A0(01|15|20|43|54|55|56|62|69|70|71|75|85|91|96)|A10[78]|A11[0-3]|FOLD|ICONBUTTON)$/;
+    const known = /^(A0(01|15|20|43|54|55|56|62|69|70|71|75|85|91|96)|A10[78]|A11[0-3]|FOLD|ICONBUTTON|INFO)$/;
     for (const entries of Object.values(ALLOW)) for (const [id] of entries) expect(id).toMatch(known);
   });
 });
