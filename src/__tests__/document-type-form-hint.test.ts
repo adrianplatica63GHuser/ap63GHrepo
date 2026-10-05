@@ -9,17 +9,18 @@
  * can have are not crashes; they are all cases where the screen keeps rendering
  * and says something untrue:
  *
- *   1. **The hint names a button that is no longer called that.** It says
- *      "Descoperire AI" in prose. Rename `buttons.aiDiscover` and the sentence
- *      points at a control the user cannot find, in the one place they are
- *      being told to go and use it. Pinned per locale, against the button's own
- *      message rather than against a literal repeated here.
+ *   1. **The hint names a door that is not there.** Slice #37.85 took
+ *      „Descoperire AI" off the document form: one document is never evidence
+ *      for a type's form. The sentence now names „Distilare Tipizate", the
+ *      engine that builds a form from 10–20 samples, and links to it — and it
+ *      must not mention the button that is gone.
  *
- *   2. **"Has no form" starts reading as a fault.** It is the correct and
- *      PERMANENT answer for CARTE_IDENTITATE (its data comes from the
- *      identity-card step) and for any type whose content is the scan itself.
- *      A red span, a warning word, or a "yet" turns a settled fact into a chore
- *      the user cannot discharge — and nothing would fail.
+ *   2. **The sentence reaches a reader who cannot act on it, or a type that
+ *      may not hold a form.** Only a superuser can build a form, so only a
+ *      superuser reads it; and never on the identity card or the catch-all,
+ *      whose permanent answer is „no form" (`typeMayHoldAForm` decides, as it
+ *      does for the engine's picker). That is also why „încă" / „yet" is
+ *      allowed now: the sentence is only drawn where a form can still come.
  *
  *   3. **A second computation of "has a form".** `templateFields.length > 0` is
  *      right here and now, and drifts from `parseTemplateFields` the day the
@@ -154,29 +155,30 @@ describe("both locales carry the same two messages", () => {
   });
 });
 
-describe("the hint names the button by the name the button actually has", () => {
-  // Risk 1. Against `buttons.aiDiscover` itself, not a literal — a rename that
-  // updates only the button fails here, which is the point.
-  it.each(LOCALES)("%s spells it exactly as the button does", (file) => {
-    const buttonName = text(file, "document.buttons.aiDiscover");
-    expect(text(file, "document.typeForm.noFormHint")).toContain(buttonName);
+describe("the hint names the engine, and not the button that left", () => {
+  // Risk 1. Slice #37.85.
+  it.each([
+    ["ro-RO.json", "<link>Distilare Tipizate</link>"],
+    ["en-GB.json", "<link>DocTypeEngine</link>"],
+  ])("%s links the engine by its name", (file, linked) => {
+    expect(text(file, "document.typeForm.noFormHint")).toContain(linked);
   });
 
-  // ⚠️ `toContain` above passes a rename that SHORTENS the name into a substring
-  // of the old one — "Descoperire AI" -> "Descoperire" leaves the hint saying
-  // "Descoperire AI", which still contains "Descoperire". A review round found
-  // that, and this is the backstop: the literal is pinned in both locales, so
-  // any rename fails HERE, two lines under the assertion it would have slipped
-  // past, and whoever renames has to update the hint in the same breath.
   it.each([
     ["ro-RO.json", "Descoperire AI"],
     ["en-GB.json", "AI Discover"],
-  ])("%s calls the button exactly %s", (file, name) => {
-    expect(text(file, "document.buttons.aiDiscover")).toBe(name);
+  ])("%s no longer mentions %s", (file, gone) => {
+    expect(text(file, "document.typeForm.noFormHint")).not.toContain(gone);
+  });
+
+  it("the Romanian sentence is the one Adrian's header recommended", () => {
+    expect(text("ro-RO.json", "document.typeForm.noFormHint")).toBe(
+      "Acest tip nu are încă formular; formularul se construiește în <link>Distilare Tipizate</link>.",
+    );
   });
 });
 
-describe("the hint states the consequence, in one sentence, without alarm", () => {
+describe("the hint is one sentence, without alarm", () => {
   it.each(LOCALES)("%s is a single sentence", (file) => {
     const message = text(file, "document.typeForm.noFormHint");
     expect(message.endsWith(".")).toBe(true);
@@ -190,34 +192,16 @@ describe("the hint states the consequence, in one sentence, without alarm", () =
     expect(text(file, "document.typeForm.optionHasForm")).not.toMatch(/[\r\n]/);
   });
 
-  // Risk 2, in the copy. Each word here would reframe a permanent, correct
-  // state as something wrong or unfinished.
+  // Risk 2, in the copy. „încă" / „yet" left this list in #37.85 — see the
+  // header: the sentence is drawn only where a form can still come.
   const ALARM: Record<string, string[]> = {
-    "ro-RO.json": ["eroare", "atenție", "atentie", "avertis", "încă", "inca", "trebuie", "lipse"],
-    "en-GB.json": ["error", "warning", "yet", "must", "missing", "should"],
+    "ro-RO.json": ["eroare", "atenție", "atentie", "avertis", "trebuie", "lipse"],
+    "en-GB.json": ["error", "warning", "must", "missing", "should"],
   };
 
   it.each(LOCALES)("%s does not describe it as a fault", (file) => {
     const message = text(file, "document.typeForm.noFormHint").toLowerCase();
     for (const word of ALARM[file]) expect(message).not.toContain(word);
-  });
-
-  // The consequence the slice asks for: the fields land on the TYPE, so they
-  // appear on every document of that type. Pinned as "the hint says something
-  // about the type, and about all its documents" rather than as a sentence.
-  // ⚠️ The EN phrase is "added to the document type", not "document type". A
-  // review round caught the loose version: "document type" also occurs in the
-  // OPENING clause ("This document type has no form of its own"), so a rewrite
-  // that dropped the where-the-fields-land claim entirely still passed. The RO
-  // phrase was only safe by accident — the articulated "tipul de document"
-  // happens not to match the opening "Acest tip de document" — and two locales
-  // guarded at different strengths is the same bug waiting for a translator.
-  it.each([
-    ["ro-RO.json", ["se adaugă la tipul de document", "toate documentele"]],
-    ["en-GB.json", ["added to the document type", "every document"]],
-  ] as const)("%s says the fields land on the type", (file, phrases) => {
-    const message = text(file, "document.typeForm.noFormHint").toLowerCase();
-    for (const phrase of phrases) expect(message).toContain(phrase);
   });
 });
 
@@ -283,31 +267,27 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
   // `document-status.test.ts` pins its polarity over every template_fields
   // shape — and what is left to pin here is that the component asks it, and
   // adds only the two questions that are about the SCREEN.
-  it("gates the hint on the shared predicate, plus the screen facts", () => {
+  it("gates the hint on the shared predicate, the reader and the type", () => {
     const stmt = statement(FORM_CODE, "const showNoFormHint");
-    // ⚠️ **The SHAPE, not the substring.** Round three showed that
-    // `toContain("documentTypeNeedsFormHint(selectedType)")` is satisfied by
+    // ⚠️ **The SHAPE, not the substring.** `toContain(...)` is satisfied by
     // `&& !documentTypeNeedsFormHint(selectedType)` — one character that
-    // inverts the entire slice, showing the hint on exactly the types that
-    // HAVE a form, with both suites green. Moving the inversion into
-    // `status.ts` guarded the function; this guards the call.
+    // inverts the rule, showing the hint on exactly the types that HAVE a form.
     expect(stmt).toMatch(/&&\s*documentTypeNeedsFormHint\(selectedType\)/);
     expect(stmt).not.toMatch(/!\s*documentTypeNeedsFormHint/);
-    // `effectiveMode`, not `mode`: the read-only states are the ones where the
-    // feature is unreachable, and `mode !== "view"` was subsumed in five of the
-    // six states and wrong in the sixth (an associated record after Modifică is
-    // an editable picker — it was marking the options and withholding the
-    // sentence). Round three.
+    // Slice #37.85: a superuser only, and only where a form may come.
+    expect(stmt).toMatch(/^const showNoFormHint = isSuperuser\s*&&/);
+    expect(stmt).toMatch(/&&\s*typeMayHoldAForm\(\{/);
+    expect(stmt).toContain("typeIsIdCard: documentTypeIsIdCard(selectedType)");
+    // `effectiveMode`, not `mode`: an associated record after Modifică is an
+    // editable picker, and a read-only screen is not one.
     expect(stmt).toContain('effectiveMode !== "view"');
-    // ⚠️ A lookbehind, not `not.toContain('mode !== "view" ')`. Round four
-    // reproduced the trailing-space version missing entirely: this statement is
-    // written one conjunct per line, so a re-added `mode !== "view"` is followed
-    // by a NEWLINE. The lookbehind is what keeps `effectiveMode` from matching.
     expect(stmt).not.toMatch(/(?<![A-Za-z])mode\s*!==\s*"view"/);
-    // Until the pages arrive, "not text-only" is a guess.
-    expect(stmt).toContain("!pagesState.isLoading");
-    expect(stmt).toContain("!hasTextOnlyPages");
     expect(stmt).not.toMatch(/\.\s*length/);
+  });
+
+  it("links the engine with this type already chosen", () => {
+    expect(FORM_CODE).toContain('t.rich("typeForm.noFormHint", {');
+    expect(FORM_CODE).toContain("href={`/admin/doc-type-engine?type=${encodeURIComponent(selectedType.id)}`}");
   });
 
   // …and it has to be declared where `effectiveMode` already exists. Reading a
@@ -318,11 +298,12 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
       .toBeLessThan(FORM_CODE.indexOf("const showNoFormHint"));
   });
 
-  // The hint names Descoperire AI, so it may only appear where that button can.
-  // One declaration of the fact, read by both.
-  it("reads the same page fact the Descoperire AI button reads", () => {
-    expect(FORM_CODE.match(/const hasTextOnlyPages/g)).toHaveLength(1);
-    expect(FORM_CODE).toContain("if (hasTextOnlyPages) return null;");
+  // Slice #37.85: the button is gone, and so is everything it needed.
+  it("has no Descoperire AI left in it", () => {
+    for (const gone of ["handleAiDiscover", "DiscoverReviewDialog", "discover-review-dialog", "hasTextOnlyPages", "aiDiscover", "typeMoveUnresolved", "justAcceptedKeysRef"]) {
+      expect({ gone, present: FORM_CODE.includes(gone) }).toEqual({ gone, present: false });
+    }
+    expect(fs.existsSync(path.join(SRC, "app/documents/_components/discover-review-dialog.tsx"))).toBe(false);
   });
 
   // …and the comment that says why none of this is recomputed is still there.
@@ -331,7 +312,7 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
   // review round caught the first version asserting on "#26.12", which this
   // file has carried in an unrelated JSDoc since a previous slice.
   it("keeps the reasoning the stripper hides from the assertions", () => {
-    expect(FORM_SRC).toContain("is the same answer computed a second time");
+    expect(FORM_SRC).toContain("a type's form is never made from ONE document");
   });
 
   // Risk 4 — the property itself is pinned in document-status.test.ts; this is
@@ -346,7 +327,7 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     // `opt.name` in a ternary arm one line above. Round four.
     expect(field).toMatch(/documentTypeOptionLabel\(\s*opt\.name,\s*opt\.templateFields,/);
     expect(field).toContain('t("typeForm.optionHasForm"');
-    expect(field).toContain('t("typeForm.noFormHint")');
+    expect(field).toContain('t.rich("typeForm.noFormHint"');
     // No carve-out on which options are marked. Both that were tried made the
     // picker inconsistent — see the component's comment, which records them.
     expect(field).not.toContain("opt.id === selectedDocumentTypeId");
@@ -356,7 +337,7 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     // than literal spaces: round five reproduced the literal version failing on
     // a pure line-wrap of the ternary, which is a red build for no behaviour
     // change — the one thing a guard must never do.
-    expect(field).toMatch(/hint=\{\s*showNoFormHint\s*\?/);
+    expect(field).toMatch(/hint=\{\s*showNoFormHint(\s*&&\s*selectedType)?\s*\?/);
   });
 
   // ⚠️ **The invariant the whole slice rests on, and until a review round asked,

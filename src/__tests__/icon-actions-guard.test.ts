@@ -47,7 +47,6 @@ const FILES = [
   "src/app/documents/[id]/associate-property/associate-property-view.tsx",
   "src/app/documents/[id]/associate-reference/associate-reference-view.tsx",
   "src/app/documents/_components/ai-reference-linker-dialog.tsx",
-  "src/app/documents/_components/discover-review-dialog.tsx",
   "src/app/documents/_components/document-form.tsx",
   "src/app/documents/_components/pages-panel.tsx",
   "src/app/judicial-persons/[id]/associate-document/associate-document-view.tsx",

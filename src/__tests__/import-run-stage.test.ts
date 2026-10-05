@@ -375,10 +375,10 @@ describe("the Scanning and Import stages' copy", () => {
     expect(panel).not.toContain("chooseAnotherFolder");
   });
 
-  it("⚠️ keeps the two keys AI Discover still needs", () => {
-    // The other half of the same commit: AI Discover shares this feedback strip
-    // and #26.11 is about to make it the visible action on a document page.
-    // Deleting one button's copy must not take its neighbour's with it.
+  it("⚠️ leaves no copy behind for the per-document AI buttons", () => {
+    // Slice #37.85: „Descoperire AI" left the document form, the last of the
+    // two buttons this strip once served. Its copy went with it — a key with
+    // no reader is a sentence nobody can see or test.
     for (const file of LOCALES) {
       const m = loadMessages(file);
       for (const key of [
@@ -386,10 +386,10 @@ describe("the Scanning and Import stages' copy", () => {
         "document.hints.aiInterpretNoPages",
         "document.aiDiscoverError",
       ] as const) {
-        expect({ file, key, present: typeof at(m, key) === "string" }).toEqual({
+        expect({ file, key, present: at(m, key) !== undefined }).toEqual({
           file,
           key,
-          present: true,
+          present: false,
         });
       }
     }

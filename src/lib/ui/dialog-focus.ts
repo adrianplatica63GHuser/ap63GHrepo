@@ -21,7 +21,7 @@
  * the panel is indifferent to where the rest of the page lives.
  *
  * ⚠️ **NO VISIBILITY FILTER, AND THE OMISSION IS DELIBERATE.**
- * `discover-review-dialog.tsx:559` filters its candidates on
+ * `document-type-form-editor.tsx` filters its candidates on
  * `el.offsetParent !== null || el === document.activeElement`, because its panel
  * renders controls that are conditionally hidden. ⚠️ **QUOTE BOTH HALVES — an
  * adversarial round caught this paragraph quoting only the first.** The `||` is
@@ -40,17 +40,12 @@
 /**
  * What counts as reachable by Tab.
  *
- * ⚠️ **THIS IS THE THIRD COPY OF THIS STRING, AND CENTRALISING IT IS A JOB THIS
- * SLICE DID NOT DO.** `discover-review-dialog.tsx:557` and
- * `document-type-form-editor.tsx:365` carry it byte-identically, each beside its
- * own `offsetParent !== null || el === document.activeElement` filter — which is
- * the half this module omits, for the reason written above. `C:\dev\CLAUDE.md`
- * says to centralise at the THIRD copy site, which is here; a sixth review round
- * called that, and the answer was that moving two unrelated dialogs onto a
- * constant whose filter differs from theirs is a slice of its own rather than a
- * line in this one. What #34.28 does instead is stop the drift:
- * `confirm-dialog-focus.test.ts` asserts this string appears verbatim in both
- * other files, so the day one of them changes, one of them fails.
+ * ⚠️ **A SECOND COPY OF THIS STRING LIVES IN `document-type-form-editor.tsx`**,
+ * byte-identical, beside its own `offsetParent !== null ||
+ * el === document.activeElement` filter — the half this module omits, for the
+ * reason written above. (A third, `discover-review-dialog.tsx`, went with that
+ * dialog in Slice #37.85.) `confirm-dialog-focus.test.ts` asserts the string
+ * appears verbatim in the other file, so the day one of them changes, one fails.
  */
 export const DIALOG_FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';

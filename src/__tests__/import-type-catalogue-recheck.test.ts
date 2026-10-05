@@ -1,15 +1,15 @@
 /**
- * A discovery refused on an unread catalogue leaves a type nothing mentions —
- * and the free way back.                                        (Slice #34.24)
+ * A retry on an unread catalogue leaves a type nothing mentions — and the free
+ * way back.                                                     (Slice #34.24)
  *
  * WHAT THIS PINS
  * --------------
- * #34.11 gave the retry's catalogue read a witness and made two decisions
- * refuse to answer when it did not come back: the billed discovery is not
- * spent, and `typeFormMissing` is not written. Both are right — silence is the
- * one answer that is never a false claim — and the second has a price that
- * slice named rather than hid: with no flag the row drops out of
- * `handleDiscoverSaved`'s sweep, out of `formArrivedElsewhere` and out of
+ * #34.11 gave the retry's catalogue read a witness and made the row's
+ * `typeFormMissing` write refuse to answer when it did not come back (until
+ * #37.85 a billed discovery read was refused on the same witness; that read is
+ * gone). Silence is the one answer that is never a false claim — and it has a
+ * price that slice named rather than hid: with no flag the row drops out of
+ * `formArrivedElsewhere` and out of
  * `summariseImportRun.typesWithoutForm`, so for a type whose ONLY document took
  * that path the run reports CLEAN over a type that has no form. The row cannot
  * be retried again either: a retry whose model call succeeded patches
@@ -26,9 +26,8 @@
  * retries." This row's document was READ. What failed was a GET, and a GET is
  * free — so the recovery re-runs the catalogue read and the decision that hangs
  * off it, and buys nothing. Everything below that looks like a negative
- * assertion is that sentence, pinned: no second `runAiInterpret`, no third
- * `discoverForType`, no third claim in `discoverClaimedRef`, and not one term
- * added to `canRetryReads`, `!aiRefused` or `!refillRefused`.
+ * assertion is that sentence, pinned: no second `runAiInterpret`, and not one
+ * term added to `canRetryReads`, `!aiRefused` or `!refillRefused`.
  *
  * Nothing in `src/__tests__/` renders `bulk-import-dialog.tsx`, so the half of
  * this that lives inside a `useCallback` is held the way this suite already
@@ -207,9 +206,8 @@ describe("the witness the retry leaves behind", () => {
    */
   it("⚠️ says nothing on a row that already answers the question", () => {
     // Both halves the call site folds in: the `typeFormMissing` the run loop
-    // wrote and this failed read left standing, and the `typeFormAdded` a
-    // mid-run acceptance wrote on a row whose retry then lost the catalogue.
-    // Either way the row already says something true, one span away.
+    // wrote and this failed read left standing, and a `false` from
+    // `awaitsForm`. Either way the row already says something true.
     expect(witness({ alreadyAnswered: true }).typeCatalogueUnread).toBeUndefined();
   });
 
@@ -411,31 +409,13 @@ describe("what the re-check writes", () => {
 describe("⚠️ the recovery costs nothing, and the retry's contract is untouched", () => {
   it("⚠️ makes no billed call of any kind", () => {
     const handler = handlerBody();
-    // The two things in this file that cost money, neither of them reachable
-    // from a press that is advertised as free. `runAiInterpret` re-reads the
-    // DOCUMENT; `discoverForType` reads it to propose a form for its type.
+    // The one thing in this file that costs money, not reachable from a press
+    // that is advertised as free. (The import's discovery read was the other
+    // until #37.85 removed it.)
     expect(handler).not.toContain("runAiInterpret(");
-    expect(handler).not.toContain("discoverForType(");
-    // …and the spending rule is not even asked, which is the decision
-    // `type-form-witness.ts` writes out: acting on a yes costs a read, and a
-    // yes nobody may act on is a value no reader has.
-    expect(handler).not.toContain("shouldDiscoverType(");
-    // Structurally, too: the file still holds exactly the call sites #34.11 and
-    // #32.05 counted.
-    expect([...dialog.matchAll(/shouldDiscoverType\(\{/g)]).toHaveLength(2);
+    // Structurally, too: the file still holds exactly the call sites counted
+    // before — the run loop, the re-read walk and the retry.
     expect([...dialog.matchAll(/runAiInterpret\(/g)]).toHaveLength(3);
-    expect([...dialog.matchAll(/discoverForType\(/g)]).toHaveLength(2);
-  });
-
-  it("⚠️ leaves `discoverClaimedRef` exactly as #34.11 left it", () => {
-    // That ref keeps a failed DISCOVERY claimed on purpose, so one rate limit
-    // cannot buy three more attempts inside a run. This handler makes no
-    // discovery to claim — and must not release one either, which is what a
-    // `delete` here would be.
-    expect(handlerBody()).not.toContain("discoverClaimedRef");
-    expect([...dialog.matchAll(/discoverClaimedRef\.current\.add\(/g)]).toHaveLength(2);
-    expect([...dialog.matchAll(/claimedTypeIds: discoverClaimedRef\.current/g)]).toHaveLength(2);
-    expect(dialog).not.toContain("discoverClaimedRef.current.delete(");
   });
 
   it("⚠️ adds no fourth term to the retry button", () => {
@@ -455,14 +435,12 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
     expect(dialog).toMatch(/canRecheckTypeCatalogue\(result\) &&\s*canRecheckTypeForm && \(/);
   });
 
-  it("⚠️ keeps `!preflight.sessionLost` standing beside `!preflight.readFailed`", () => {
-    // Every lost session is a failed read, so the wider term does subsume the
-    // narrower — but the narrower is the fact the lines above it act on, two
-    // reviewers rejected `abortRef` as its witness, and a reader who finds one
-    // term where two arguments are written down deletes whichever he read
-    // second. Nothing in this slice may collapse them.
-    expect(dialog).toContain("!preflight.sessionLost &&");
-    expect(dialog).toContain("!preflight.readFailed &&");
+  it("⚠️ keeps the preflight's lost session apart from its failed read", () => {
+    // Every lost session is a failed read, but only the lost session raises
+    // the banner; the failed read only withholds the claim. (Until #37.85 both
+    // also guarded the retry's discovery read, which is gone.)
+    expect(dialog).toContain("if (preflight.sessionLost) {");
+    expect(dialog).toContain("...(preflight.readFailed");
   });
 
   it("⚠️ asks the same questions the retry asks, of a fresh list", () => {
@@ -470,7 +448,7 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
     // The free GET, through the one function that owes the follow-ups — the
     // refs `typeAwaitsForm` reads, the identity-card clear, the run's names and
     // the re-read queue.
-    expect(handler).toContain("await enrichDiscoverSteps(discoverStepsRef.current)");
+    expect(handler).toContain("await readTypeCatalogue()");
     expect(handler).toContain("absorbTypeList(fresh)");
     expect(handler).toContain("typeAwaitsForm({");
     // …and it refuses to answer on a read that did not come back, exactly as
@@ -482,8 +460,7 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
     expect(handler).toContain("fresh.idCardTypeIds.includes(typeId) || row.hasForm");
     // ⚠️ **The list's answer and nothing else.** A round-3 draft compared it
     // against `docTypeFormRef`, which every catalogue read in the dialog raises,
-    // so the second row of a type — and any row re-checked after its type's form
-    // was accepted in the review — was dropped from the queue its siblings were
+    // so the second row of a type was dropped from the queue its siblings were
     // put in. The witness already IS the record that this run had never seen a
     // form for this type when this document was read.
     expect(handler).toContain("formArrivedSinceRead: row.hasForm,");
@@ -491,7 +468,7 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
     expect(handler).toContain(
       "canQueueRefill: result.docId !== undefined && result.refill === undefined",
     );
-    expect([...dialog.matchAll(/\.typeRows\?\.some\(/g)]).toHaveLength(3);
+    expect([...dialog.matchAll(/\.typeRows\?\.some\(/g)]).toHaveLength(2);
     // …and a list that came back WITHOUT this type claims nothing at all, which
     // is the one place this slice answers a race the retry does not — see
     // `typeFormPatchForDeletedType`.
@@ -515,9 +492,9 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
       "(result.typeFormMissing === true && interpreted.documentTypeId === null) ||",
     );
     // ⚠️ **`!awaitsForm` as the second half, not a list of flags.** Three rounds
-    // enumerated them — `typeFormAdded`, then the `refill: "pending"`
-    // `formArrivedElsewhere` writes while deliberately setting no flag at all —
-    // and each found one more row drawing two sentences at once. On this path a
+    // enumerated them — then the `refill: "pending"` `formArrivedElsewhere`
+    // writes while deliberately setting no flag at all — and each found one more
+    // row drawing two sentences at once. On this path a
     // `false` from `awaitsForm` can only come from `typeHasForm`, `typeIsIdCard`
     // or the catch-all's id, all read from refs this run only ever raises.
     expect(dialog).toMatch(/alreadyAnswered:[\s\S]{0,160}!awaitsForm,/);
@@ -529,20 +506,18 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
     expect(dialog.slice(spreadAt, at)).not.toContain("typeFormMissing: true");
   });
 
-  it("⚠️ cannot race the run, the retry, the review, or itself", () => {
+  it("⚠️ cannot race the run, the retry, or itself", () => {
     // `canRetryReads`' three terms, read rather than rewritten — the run has
-    // settled, no follow-up is open, no billed call is in flight — plus
-    // `canRefill`'s `!reviewingTypes` for its own reason, plus this control's
-    // own one-at-a-time claim. The synchronous halves are inside the handler,
-    // because render-time state is one commit behind.
+    // settled, no follow-up is open, no billed call is in flight — plus this
+    // control's own one-at-a-time claim. The synchronous halves are inside the
+    // handler, because render-time state is one commit behind. (The import's
+    // discovery review was a fourth party to this until #37.85 removed it.)
     const handler = handlerBody();
-    expect(dialog).toContain("canRetry && !reviewingTypes && recheckingPath === null");
+    expect(dialog).toContain("const canRecheckTypeForm = canRetry && recheckingPath === null;");
+    expect(dialog).not.toContain("reviewingTypes");
     expect(handler).toContain("if (readRunningRef.current) return;");
     expect(handler).toContain("if (followUpsOpenRef.current) return;");
     expect(handler).toContain("if (recheckingRef.current !== null) return;");
-    // The review's own direction, with the one-frame window #27.05 priced and
-    // accepted — what is not acceptable is only one of the two being guarded.
-    expect(handler).toContain("if (reviewingTypes) return;");
     // Released whichever way it returned — a claim left standing makes every
     // later press a no-op, which is the shape this file has already paid for.
     expect(handler).toContain("recheckingRef.current = null;");
@@ -556,14 +531,14 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
    * then writes `typeFormMissing` earned about the OLD type onto a row that now
    * carries the new one — the exact claim the retry's own re-type arm exists to
    * prevent, and unfixable afterwards because both controls are gone by then.
-   * All three of the other async handlers read the claim.
+   * Both of the other async handlers read the claim (three until #37.85
+   * removed the import's discovery review).
    */
-  it("⚠️ is a SHARED claim: the retry, the re-read walk and the review all read it", () => {
-    // Its own guard plus one in each of the three handlers that can write a row
-    // or replace the queue underneath it.
-    expect([...dialog.matchAll(/if \(recheckingRef\.current !== null\) return;/g)]).toHaveLength(4);
+  it("⚠️ is a SHARED claim: the retry and the re-read walk both read it", () => {
+    // Its own guard plus one in each of the two handlers that can write a row
+    // underneath it.
+    expect([...dialog.matchAll(/if \(recheckingRef\.current !== null\) return;/g)]).toHaveLength(3);
     for (const owner of [
-      "const handleReviewTypes = useCallback(",
       "const handleRefill = useCallback(",
       "const handleRetryInterpret = useCallback(",
     ]) {
@@ -581,21 +556,21 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
       ]);
     }
     // ⚠️ **AND EVERY CONTROL THAT REFUSES TO RUN ALSO REFUSES TO BE DRAWN.**
-    // Three handlers now return early while a free GET is in flight, so three
-    // render-time gates carry the same fact — otherwise an enabled button
+    // The handlers that return early while a free GET is in flight have
+    // render-time gates that carry the same fact — otherwise an enabled button
     // returns silently for the length of a GET, which is the broken-button
     // failure this file names, and the header sentence goes on offering a retry
     // the buttons will not perform, which is the pair `canRetryReads` exists to
     // keep in step. It is fed in at `canRetryReads`' INPUT, never as a term of
     // the function itself.
     expect(dialog).toContain("retryRunning: readRunning || recheckingPath !== null,");
-    expect([...dialog.matchAll(/recheckingPath === null/g)].length).toBeGreaterThanOrEqual(3);
+    expect([...dialog.matchAll(/recheckingPath === null/g)].length).toBeGreaterThanOrEqual(2);
     // ⚠️ **And the guards it was written beside are still there.** A first draft
     // of this slice wrote its own guard OVER `handleRetryInterpret`'s
     // follow-up-modal one, leaving the retry the only handler on the screen that
     // could start underneath an open stepper — one billed call, and the
     // duplicate person the 26.xx redesign exists to prevent.
-    expect([...dialog.matchAll(/if \(followUpsOpenRef\.current\) return;/g)]).toHaveLength(4);
+    expect([...dialog.matchAll(/if \(followUpsOpenRef\.current\) return;/g)]).toHaveLength(3);
     expect([...dialog.matchAll(/if \(readRunningRef\.current\) return;/g)].length)
       .toBeGreaterThanOrEqual(4);
     // ⚠️ **AND THE TWO CONTROLS THAT WRITE OR END THE RUN'S ARTEFACTS TAKE IT
@@ -612,22 +587,6 @@ describe("⚠️ the recovery costs nothing, and the retry's contract is untouch
       ),
     ]).toHaveLength(2);
     expect(dialog).not.toContain("disabled={currentFollowUp !== null || readRunning}");
-    // ⚠️ **And `reviewingTypes`, which gates this control, can no longer stick
-    // `true` for the life of the dialog** — fixed in passing, because #34.24 is
-    // what made that pre-existing hole reach a row with no retry left.
-    const review = dialog.slice(
-      dialog.indexOf("const handleReviewTypes = useCallback("),
-      dialog.indexOf("const applyPendingNewType"),
-    );
-    expect(review).toMatch(
-      /try \{\s*enriched = await enrichDiscoverSteps\([\s\S]{0,80}\} finally \{\s*if \(mountedRef\.current\) \{?\s*setReviewingTypes\(false\);/,
-    );
-    // …and the backlog with it: that loop deletes as it walks, so a throw
-    // half-way through otherwise leaves the header offering a review over a
-    // queue that has already shrunk, with the control just given back.
-    expect(review).toMatch(
-      /\} finally \{[\s\S]{0,400}setDiscoverBacklog\(discoverStepsRef\.current\.size\);/,
-    );
     // ⚠️ **And it is NOT `readRunningRef`.** That ref means "a BILLED read on a
     // settled row is in flight" and every reader of it is entitled to that
     // meaning. Close and Save-report are disabled here too, by their own term
@@ -655,24 +614,21 @@ describe("⚠️ the recovered row is reached by everything it was dropping out 
     docId: "doc-1",
   };
 
-  it("is not skipped by `handleDiscoverSaved`'s sweep, which skips on the flag", () => {
-    expect(dialog).toContain("if (r.typeFormMissing !== true) return r;");
-    expect(recovered.typeFormMissing !== true).toBe(false);
-    // …and the sweep's own `docId` term, which is what `awaitsRefill` is
-    // allowed to assume: a recovered row has one, because `typeFormMissing` is
-    // only ever written on a row the run READ.
-    expect(dialog).toContain(
-      'r.docId !== undefined ? { refill: "pending", refillErrorDetail: undefined } : {}',
-    );
-    expect(recovered.docId).toBeDefined();
-  });
-
-  it("`formArrivedElsewhere` matches on the same flag, and this row now carries it", () => {
+  it("`formArrivedElsewhere` matches on the flag, and this row now carries it", () => {
+    // Since #37.85 this is the only sweep: the import's own form review, which
+    // swept on the same flag, is gone.
     expect(dialog).toMatch(
       /r\.typeFormMissing === true &&\s*r\.documentTypeId !== undefined &&\s*withForm\.has\(r\.documentTypeId\)/,
     );
     expect(recovered.typeFormMissing).toBe(true);
     expect(recovered.documentTypeId).toBeDefined();
+    // …and its own `docId` term, which is what `awaitsRefill` is allowed to
+    // assume: a recovered row has one, because `typeFormMissing` is only ever
+    // written on a row the run READ.
+    expect(dialog).toMatch(
+      /r\.docId !== undefined\s*\?\s*\{ refill: "pending" as const, refillErrorDetail: undefined \}/,
+    );
+    expect(recovered.docId).toBeDefined();
   });
 
   it("`summariseImportRun` counts it — which is the whole of the goal", () => {
@@ -680,17 +636,13 @@ describe("⚠️ the recovered row is reached by everything it was dropping out 
   });
 
   /**
-   * ⚠️ **AND `typeFormAdded` IS STILL UNREACHABLE IN THE HARMFUL DIRECTION.**
-   * #34.11 traced it and left it alone; this slice does not make it reachable.
-   * The flag is only ever SET in `handleDiscoverSaved`, on a row that carried
-   * `typeFormMissing === true` — so a recovered row can gain it only by the
-   * user accepting a form for the type the row is actually on, which is the
-   * sentence being true rather than false. What this slice adds writes the flag
-   * nowhere, and both of its existing set sites are still where they were.
+   * ⚠️ **AND `typeFormAdded` IS UNREACHABLE.** Its only set sites were in the
+   * import's discovery review, which #37.85 removed — so no row of this dialog
+   * can claim its type "gained a form in this import" at all.
    */
-  it("⚠️ writes `typeFormAdded` nowhere, so the harmful direction stays closed", () => {
+  it("⚠️ writes `typeFormAdded` nowhere", () => {
     expect(handlerBody()).not.toContain("typeFormAdded");
-    expect([...dialog.matchAll(/typeFormAdded: true/g)]).toHaveLength(2);
+    expect(dialog).not.toMatch(/typeFormAdded: true/);
   });
 });
 
@@ -741,8 +693,9 @@ describe("⚠️ the row says what happened and what the press costs", () => {
     expect(ro.typeCatalogueUnread).not.toContain("nu are încă formular");
     // ⚠️ **And the failed-press sentence names no CAUSE, because its two
     // writers do not share one.** The `readFailed` branch knows the list did not
-    // come back; the `catch` is reached only when the GET DID come back and the
-    // prune loop threw. "The check did not succeed" is true of both; "the list
+    // come back; the `catch` is reached only when the GET DID come back and
+    // something after it threw. "The check did not succeed" is true of both;
+    // "the list
     // could not be read" was true of one, and was drawn on the other.
     expect(ro.typeCatalogueStillUnread).not.toContain("nu a putut fi citită");
     expect(ro.typeCatalogueStillUnread).toContain("Nu s-a trimis nimic către AI");

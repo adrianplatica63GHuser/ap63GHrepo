@@ -4071,11 +4071,9 @@ export function ImportWizard() {
           // here with a flag.
           preexistingByPath={preexistingDecisions}
           // Slice #32.05 — the user pressed "continue without forms" on the
-          // stop screen. The run then buys NO discovery read for a type that is
-          // waiting for one, and opens no form-review dialog at the end. It
-          // still reports those types as waiting, on every row and in the
-          // header: the waiver is a decision about spending, not a different
-          // verdict. See `shouldDiscoverType`.
+          // stop screen. Since #37.85 (no discovery read left to skip) it only
+          // picks the result header's wording; the run still reports those
+          // types as waiting, on every row and in the header.
           formsWaived={typeFormsWaived}
           cornerSourceByPath={
             // Slice #23.06.Import, per-folder since #26.07 — which coordinate

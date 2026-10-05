@@ -313,14 +313,14 @@ describe("buildFieldHint", () => {
   });
 
   it("keeps the refusal in the module, not at the call site", () => {
-    // The dialog still CALLS it rather than writing `aiHint: null`, so the rule
-    // and the six values above have one home. A literal at the call site would
-    // leave the next reader to rediscover why.
-    const dialog = readFileSync(
-      join(process.cwd(), "src", "app", "documents", "_components", "discover-review-dialog.tsx"),
+    // The engine's distillation CALLS it rather than writing `aiHint: null`, so
+    // the rule and the six values above have one home. (Its other caller, the
+    // one-document review dialog, went in Slice #37.85.)
+    const distil = readFileSync(
+      join(process.cwd(), "src", "lib", "documents", "field-distillation.ts"),
       "utf8",
     );
-    expect(dialog).toContain("buildFieldHint");
+    expect(distil).toContain("buildFieldHint");
   });
 
   it("leaves nothing on the prompt line for a field proposed from one document", () => {
@@ -1209,97 +1209,16 @@ function loadDocumentCopy(file: string): Record<string, unknown> {
   return (JSON.parse(raw) as { document: Record<string, unknown> }).document;
 }
 
-function loadReviewCopy(file: string): Record<string, unknown> {
-  return loadDocumentCopy(file).discoverReview as Record<string, unknown>;
-}
-
-describe("review-step copy", () => {
-  it.each(LOCALES)("%s carries the whole namespace", (file) => {
-    const copy = loadReviewCopy(file);
-    for (const key of [
-      "title", "intro", "warnSkipped", "warnTruncated", "nothingNew",
-      "tableCaption", "colInclude", "colLabel", "colType", "colSample",
-      "includeAria", "labelAria", "typeAria", "lowConfidence", "sampleEmpty",
-      "alreadyTitle", "alreadyBody", "selectedCount", "needSelection",
-      "nothingToAddFooter", "typeFull", "cancel", "close", "save", "saving",
-      "overLimit", "errorSession", "errorChanged", "errorNotFound",
-      "errorTooMany", "errorSave",
-      // Slice #29.10.
-      "noHintNote", "fragmentName", "longName", "rowNameRequired",
-      "rowNameDuplicate", "rowIssuesFooter",
-    ]) {
-      expect(typeof copy[key]).toBe("string");
-    }
-    const types = copy.types as Record<string, unknown>;
-    for (const t of ["text", "textarea", "date", "number"]) {
-      expect(typeof types[t]).toBe("string");
-    }
-  });
-
-  it("both locales define exactly the same keys", () => {
-    // A key present in en-GB and missing from ro-RO renders as a raw key path
-    // in the shipping locale — the failure #26.02 recorded.
-    const ro = Object.keys(loadReviewCopy("ro-RO.json")).sort();
-    const en = Object.keys(loadReviewCopy("en-GB.json")).sort();
-    expect(ro).toEqual(en);
-  });
-
-  it("Romanian plurals carry one/few/other", () => {
-    // Romanian has a `few` form (2..19) that English does not. Omitting it
-    // makes "5 câmpuri" render through the `other` rule, which is the
-    // "de câmpuri" form and reads wrong.
-    const review = loadReviewCopy("ro-RO.json");
-    // ⚠️ `errorTooMany` joined the list in #29.10. Its `{max}` is whatever the
-    // ROUTE sends, not the local constant, and Romanian takes „de" only from 20
-    // upward — a hard-coded „de" renders „cel mult 15 de câmpuri" the day the
-    // ceiling moves.
-    for (const key of ["warnSkipped", "alreadyTitle", "selectedCount", "errorTooMany"]) {
-      const msg = String(review[key]);
-      expect(msg).toContain("one {");
-      expect(msg).toContain("few {");
-      expect(msg).toContain("other {");
-    }
-    const doc = loadDocumentCopy("ro-RO.json");
-    for (const key of ["aiDiscoverSaved", "aiDiscoverSkipped"]) {
-      const msg = String(doc[key]);
-      expect(msg).toContain("one {");
-      expect(msg).toContain("few {");
-      expect(msg).toContain("other {");
-    }
-  });
-
-  it("carries a localised message for every failure the run can report", () => {
-    // The route serves an API and most of its failures are English, some of
-    // them Anthropic's own. None of them may reach this screen verbatim.
-    for (const file of LOCALES) {
-      const doc = loadDocumentCopy(file);
-      for (const key of [
-        "aiDiscoverError", "aiDiscoverErrorBusy", "aiDiscoverErrorNoPages",
-        "aiDiscoverErrorUnreadable", "aiDiscoverErrorNotConfigured",
-      ]) {
-        expect(typeof doc[key]).toBe("string");
-      }
-    }
-  });
-
-  it("no AI-Discovery string sends a business user to the server console", () => {
-    // The button's whole point changed in this slice: the report is not a
-    // developer diagnostic any more, and every string on its path — the hint,
-    // and the two that ride along with the nothing-found message — must not
-    // mention a terminal the user does not have.
-    for (const file of LOCALES) {
-      const doc = loadDocumentCopy(file);
-      const strings = [
-        String((doc.hints as Record<string, string>).aiDiscover),
-        ...Object.entries(doc)
-          .filter(([k, v]) => k.startsWith("aiDiscover") && typeof v === "string")
-          .map(([, v]) => String(v)),
-      ];
-      for (const s of strings) {
-        expect(s.toLowerCase()).not.toContain("console");
-        expect(s.toLowerCase()).not.toContain("consol");
-      }
-    }
+describe("the one-document review's copy", () => {
+  // Slice #37.85: „Descoperire AI" and its review dialog left the document form
+  // — one document is never evidence for a type's form — and their copy left
+  // with them. A key with no reader is a sentence nobody can see or test.
+  it.each(LOCALES)("%s carries none of it", (file) => {
+    const doc = loadDocumentCopy(file);
+    expect(doc.discoverReview).toBeUndefined();
+    expect(Object.keys(doc).filter((k) => k.startsWith("aiDiscover"))).toEqual([]);
+    expect((doc.buttons as Record<string, unknown>).aiDiscover).toBeUndefined();
+    expect((doc.hints as Record<string, unknown>).aiDiscover).toBeUndefined();
   });
 });
 

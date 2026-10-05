@@ -10,10 +10,11 @@
  * afterwards, as a summary of something the user could not see happening.
  *
  * ⚠️ **NO SAMPLE IS EVER LOST QUIETLY. THIS IS THE FILE'S WHOLE JOB.**
- * `discoverForType` collapses every non-ok answer into one `reason: "failed"`,
- * and its own comment defends that: a discovery that did not happen is reported
- * by the ABSENCE of a review step. That is a fine answer when the output is one
- * screen and a fatal one here, because here the COUNT is the answer. Every
+ * The import's `discoverForType` (removed in #37.85) collapsed every non-ok
+ * answer into one `reason: "failed"` and defended it: a discovery that did not
+ * happen was reported by the ABSENCE of a review step. That was a fine answer
+ * when the output was one screen and a fatal one here, because here the COUNT
+ * is the answer. Every
  * outcome below therefore lands in the returned array — read or unread, with a
  * reason — and `readSampleCount` divides by what actually came back.
  *
@@ -67,9 +68,10 @@ export const MAX_SAMPLES_PER_RUN = 50;
 /**
  * The client's own budget, above the route's `maxDuration = 60`.
  *
- * ⚠️ The SERVER's ceiling is the one that decides, exactly as `discover-run.ts`
- * records about its own 120 s: a function killed at sixty seconds answers, and
- * on Vercel it answers HTML. This timer exists for the case where nothing
+ * ⚠️ The SERVER's ceiling is the one that decides, exactly as the import's
+ * removed `discoverForType` recorded about its own 120 s: a function killed at
+ * sixty seconds answers, and on Vercel it answers HTML. This timer exists for
+ * the case where nothing
  * answers at all, so a run cannot hang with no count and no Cancel.
  */
 const SAMPLE_TIMEOUT_MS = 120_000;
@@ -239,8 +241,8 @@ export async function readSamples(input: {
       starts.push(slotAt);
       try {
         // ⚠️ No Content-Type header: a FormData body must be allowed to write
-        // its own multipart boundary, and setting the header by hand — which
-        // `discoverForType` correctly does for its JSON body — produces a
+        // its own multipart boundary, and setting the header by hand — right
+        // for a JSON body — produces a
         // request the route cannot parse at all.
         // ⚠️ **THE RUN'S SIGNAL IS DELIBERATELY NOT PASSED HERE, AND A THIRD
         // ROUND IS WHY.** Round two relayed it — `fetchWithTimeout` had been
@@ -273,7 +275,7 @@ export async function readSamples(input: {
 
       // `servesHtml` is asked of a 2xx ONLY — a 504 from a killed function is
       // HTML too, and reading that as a lost session would abandon the run for
-      // an infrastructure hiccup. The same order `discoverForType` uses.
+      // an infrastructure hiccup. The same order `runAiInterpret` uses.
       if (isSessionLoss(res) || (res.ok && servesHtml(res))) {
         sessionLost = true;
         reads.push({
@@ -377,9 +379,8 @@ export async function readSamples(input: {
         break;
       }
 
-      // The same filter the review dialog and `discoverForType` apply to the
-      // same payload, so three clients of one shape cannot come to disagree
-      // about what a usable pair is.
+      // The filter the other clients of this payload shape apply, so they
+      // cannot come to disagree about what a usable pair is.
       const pairs = (Array.isArray(data.recognised) ? data.recognised : []).filter(
         (p): p is DiscoverPair =>
           !!p &&

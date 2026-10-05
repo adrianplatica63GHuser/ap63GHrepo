@@ -652,7 +652,7 @@ describe("every server door that writes template_fields consults the predicate",
 
   it("the wizard only ever UPGRADES the map, never writes a false into it", () => {
     // An absent entry means "not known" and falls back to the scan; a stored
-    // `false` erases a `true` the type list or `enrichDiscoverSteps` put there.
+    // `false` erases a `true` the type list or `readTypeCatalogue` put there.
     // Either witness is enough and neither may cancel the other, which is what
     // the reader's `||` says.
     const wizard = stripComments(
@@ -703,7 +703,7 @@ describe("the scan-aware variants still add the scan's own signal", () => {
     expect(body).not.toContain("documentTypeIsIdCard(");
   });
 
-  it("the wizard's discover step still ORs the scan's signal", () => {
+  it("the wizard's type-form step still ORs the scan's signal", () => {
     const code = stripComments(
       read("src/app/admin/import/_components/bulk-import-dialog.tsx"),
     );
@@ -989,8 +989,6 @@ describe("migration_073's SQL predicate is the TypeScript one", () => {
  */
 const COPY_KEYS = [
   "docTypeEngine.save.idCardType",
-  "document.discoverReview.errorIdCardType",
-  "document.discoverReview.errorIdCardTypeCreated",
   "valueList.templateFields.errorIdCardType",
 ];
 
@@ -1022,12 +1020,11 @@ describe("the refusals a user can see are translated", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. The four screens branch on the shared codes, not on literals
+// 7. The three screens branch on the shared codes, not on literals
 // ---------------------------------------------------------------------------
 
 const READERS = [
   ["doc-type-engine", "src/app/admin/doc-type-engine/_components/doc-type-engine.tsx"],
-  ["discover-review-dialog", "src/app/documents/_components/discover-review-dialog.tsx"],
   [
     "document-type-form-editor",
     "src/app/admin/value-lists/_components/document-type-form-editor.tsx",

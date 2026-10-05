@@ -12,10 +12,10 @@
  *
  * `document-type-form-editor.tsx` states the rule at the top of itself and has
  * always been the only screen bound by it. It is not any more: DocTypeEngine
- * (#29.09) writes its approved form through the SAME additive
- * `template-fields` PUT, with the same ordered-key concurrency check, as the
- * AI-Discovery review dialog. A key rule relaxed in one of the three is
- * relaxed for the type either of the others is standing on.
+ * (#29.09) writes its approved form through the additive `template-fields`
+ * PUT, with an ordered-key concurrency check. A key rule relaxed in one of the
+ * two is relaxed for the type the other is standing on. (The AI-Discovery
+ * review dialog was a third writer until Slice #37.85 deleted it.)
  *
  * #29.10 changes what a NEW row's key is derived from on the discovery dialog —
  * it follows the name as the user types it, instead of freezing at proposal
@@ -42,16 +42,18 @@ import type { DocumentTemplateField } from "@/lib/documents/template-fields";
 
 const SRC = process.cwd();
 
-const DIALOG = join(SRC, "src", "app", "documents", "_components", "discover-review-dialog.tsx");
 const ENGINE = join(SRC, "src", "app", "admin", "doc-type-engine", "_components", "doc-type-engine.tsx");
 const EDITOR = join(SRC, "src", "app", "admin", "value-lists", "_components", "document-type-form-editor.tsx");
 const ROUTE  = join(SRC, "src", "app", "api", "document-types", "[id]", "template-fields", "route.ts");
 
 const read = (p: string) => readFileSync(p, "utf8");
 
-/** Every screen that can put a row into `template_fields`. */
+/**
+ * Every screen that can put a row into `template_fields`. Slice #37.85 took
+ * „Descoperire AI"'s review dialog out: the engine and the Form editor are the
+ * only two left.
+ */
 const WRITERS: Array<[string, string]> = [
-  ["discover-review-dialog", DIALOG],
   ["doc-type-engine", ENGINE],
   ["document-type-form-editor", EDITOR],
 ];
@@ -144,9 +146,8 @@ describe("no writer of template_fields offers an editable key", () => {
 // One door, one concurrency check
 // ---------------------------------------------------------------------------
 
-describe("both AI writers go through the same additive PUT", () => {
+describe("the AI writer goes through the additive PUT", () => {
   const AI_WRITERS: Array<[string, string]> = [
-    ["discover-review-dialog", DIALOG],
     ["doc-type-engine", ENGINE],
   ];
 
@@ -167,109 +168,15 @@ describe("both AI writers go through the same additive PUT", () => {
 });
 
 // ---------------------------------------------------------------------------
-// #29.10: the discovery dialog's key follows the name the user typed
+// #37.85: the discovery dialog, gone
 // ---------------------------------------------------------------------------
 
-/**
- * ⚠️ **THE BEHAVIOUR ITSELF IS PINNED IN `discover-to-template.test.ts`, over
- * `keysForReviewRows` and `reviewRowIssues`, with real rows and real renames.**
- * A review round found the first version of this file asserting the live key by
- * calling `uniqueFieldKey(slugifyFieldKey("Preț vânzare"), new Set())` — which
- * passes byte-for-byte on the pre-slice code, because neither of those two
- * functions changed. Nine assertions here were vacuous for the same reason.
- *
- * What is left in this file is what belongs here and nowhere else: that the
- * dialog is WIRED to those functions rather than to a private copy, and that
- * the three writers still agree about keys. Those are source facts, and a
- * source scan is the honest way to state them.
- */
-describe("the dialog is wired to the shared key derivation", () => {
-  it("takes its keys and its guards from the pure module, not from a local copy", () => {
-    const src = read(DIALOG);
-    expect(src).toContain("keysForReviewRows");
-    expect(src).toContain("reviewRowIssues");
-    // ⚠️ And the SET they are measured against comes from the same function
-    // `proposeTemplateFields` uses. A review round found the dialog assembling
-    // its own — the stored keys plus whatever discovery surfaced as captured —
-    // which carried neither the generic columns, nor the label aliases, nor the
-    // person roles, so a rename to „Notar" or „Data" went straight through it.
-    expect(src).toContain("capturedFieldNames(activeBaseline, roles)");
-    // ⚠️ …and both inputs are FROZEN. `partyRoleNames` comes off the same
-    // react-query cache with `refetchOnWindowFocus` that `baseline` is frozen
-    // against: a round found a role added mid-review silently re-minting an
-    // untouched row from `notar` to `notar_2`, which inside the
-    // `fieldsUnresolved` window changes the retry's payload.
-    expect(src).toContain("useState<readonly string[]>(partyRoleNames)");
-    expect(src).not.toMatch(/proposeTemplateFields\([^)]*partyRoleNames/);
-    // Displayed and stored from ONE computation. A screen that showed one key
-    // and saved another is worse than one that showed none.
-    expect(src).toMatch(/key:\s*keyForRow\(r\)/);
-    expect(src).toMatch(/\{keyForRow\(row\)\}/);
-    // No second derivation left behind in the component.
-    expect(src).not.toMatch(/uniqueFieldKey\(/);
-  });
-
-  it("reads one name for the key, the save, the warning and the labels", () => {
-    // A review round found four call sites reading three different expressions
-    // (`row.label || row.key`, `row.label || row.labelRo`, `row.label.trim() ||
-    // row.labelRo`), so a single typed space made the fragment warning vanish
-    // while the fragment was still what got stored.
-    const src = read(DIALOG);
-    expect(src).not.toMatch(/row\.label \|\| row\.key/);
-    expect(src).not.toMatch(/row\.label \|\| row\.labelRo/);
-    expect(src).toContain("rowName(row)");
-  });
-
-  it("blocks Save on both issues the live key opened", () => {
-    const src = read(DIALOG);
-    expect(src).toMatch(/!unnamedRow/);
-    expect(src).toMatch(/!duplicateRow/);
-    // …and says so where it can be acted on. A review round found both
-    // sentences in the FOOTER only — "a ticked field has no name", on a screen
-    // showing thirty-six rows — while the two advisory warnings sat on the row.
-    // The row says which problem it has; the footer says to go and look.
-    expect(src).toContain("reviewRowIssue(row, captured)");
-    expect(src).toContain("rowNameRequired");
-    expect(src).toContain("rowNameDuplicate");
-    expect(src).toContain("rowIssuesFooter");
-  });
-
-  it("keeps the two name warnings as two separate sentences", () => {
-    // A review round found one rule and one message doing both jobs, so an
-    // ordinary long caption was told it read like a piece of prose while the
-    // thing that was true of it — its key is about to be cut mid-word — went
-    // unsaid. Same evidence, two complaints, two sentences.
-    const src = read(DIALOG);
-    expect(src).toContain("looksLikeSentenceFragment(rowName(row))");
-    expect(src).toContain("nameTooLongForKey(rowName(row))");
-    expect(src).toContain("fragmentName");
-    expect(src).toContain("longName");
-  });
-
-  it("freezes the rows once a field write's outcome is unknown", () => {
-    // ⚠️ `errorFieldsUnknown` asks the user to press Save again, and the 409
-    // recovery only fires when the retry asks for the SAME keys. With the key
-    // following the name, a rename between the two presses breaks it — and the
-    // banner is on screen exactly when the fragment warning has just told the
-    // user to rename something. A review round found this.
-    const src = read(DIALOG);
-    expect(src).toContain("fieldsUnresolved");
-    expect(src).toMatch(/const rowsLocked = saving \|\| fieldsUnresolved/);
-    // ⚠️ And it is CLEARED at the top of every attempt. A round found it set
-    // and never unset, so every outcome proving the write did not land — a 409
-    // that reseeds the list and says "check it and press Save again", a 404,
-    // `errorTooMany`'s "untick a few and try again" — left the user reading an
-    // instruction beside a table with every control dead.
-    expect(src).toContain("setFieldsUnresolved(false)");
-    expect(src).toContain("setFieldsUnresolved(true)");
-    // The new-type controls take the freeze too: toggling that box reseeds the
-    // rows and re-points the save at a type that does not exist yet, which is
-    // the one thing a frozen table must not be able to do underneath itself.
-    expect(src.split("|| unresolved || fieldsUnresolved")).toHaveLength(3);
-    // All three row controls take the lock: the checkbox, the name box and the
-    // type select. Counted, because "at least one of them does" is the version
-    // that ships a half-frozen table.
-    expect(src.split("disabled={rowsLocked}")).toHaveLength(4);
+describe("the one-document review dialog is gone, and nothing replaced it", () => {
+  // Slice #37.85: one document is never evidence for a type's form. The review
+  // dialog that turned one read into fields on the TYPE was deleted with
+  // „Descoperire AI"; the engine and the Form editor are the writers left.
+  it("the file no longer exists", () => {
+    expect(() => read(join(SRC, "src", "app", "documents", "_components", "discover-review-dialog.tsx"))).toThrow();
   });
 });
 
@@ -345,19 +252,21 @@ describe("the two aiHint producers cross-reference each other", () => {
 // Copy that names another screen
 // ---------------------------------------------------------------------------
 
-describe("the no-hint sentence points at a screen that exists", () => {
-  it.each(["ro-RO.json", "en-GB.json"] as const)("%s names DocTypeEngine as it is titled", (file) => {
+describe("the no-form sentence points at a screen that exists", () => {
+  // Slice #37.85: the review dialog's no-hint note went with the dialog; the
+  // sentence under „Tip document" is the one that names the engine now.
+  it.each(["ro-RO.json", "en-GB.json"] as const)("%s links DocTypeEngine as it is titled", (file) => {
     const messages = JSON.parse(
       readFileSync(join(SRC, "messages", file), "utf8"),
     ) as {
-      document: { discoverReview: Record<string, string> };
+      document: { typeForm: Record<string, string> };
       docTypeEngine: { pageTitle: string };
     };
     // Pinned against the screen's own title rather than a literal repeated
     // here: rename the screen and this sentence sends the user somewhere that
     // no longer exists, in the one place they are told to go and use it.
-    expect(messages.document.discoverReview.noHintNote).toContain(
-      messages.docTypeEngine.pageTitle,
+    expect(messages.document.typeForm.noFormHint).toContain(
+      `<link>${messages.docTypeEngine.pageTitle}</link>`,
     );
   });
 });

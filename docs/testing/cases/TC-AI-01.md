@@ -23,11 +23,10 @@ The removal is recorded in the comments of
 `src/app/documents/_components/document-form.tsx`, around lines 169 and 881. A document
 created by hand is never read.
 
-So this case **cannot be run on its own**. It reads the result of TC-IMP-01. The two
-buttons that do exist on a document do something else, and neither is this case:
+So this case **cannot be run on its own**. It reads the result of TC-IMP-01. The one
+button that does exist on a document does something else, and is not this case
+(„Descoperire AI", which proposed form fields from one document, left in Slice #37.85):
 
-- **„Descoperire AI"** proposes *form fields for a document type that has none*. It is
-  not a read of this document into this document's fields.
 - **„Recitește documentul"** re-reads only the *instruments this document cites*, and
   replaces that list. It sends every page again and is paid for.
 

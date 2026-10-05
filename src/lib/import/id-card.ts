@@ -145,8 +145,8 @@ export function isIdCardLabel(label: string | null | undefined): boolean {
  * archive's type list, where "Buletin de analiză", "Buletin de încercare" and
  * "Copie CI" are ordinary names and `VETO_PATTERNS` — which only knows about
  * vehicles — does not save them. A false positive here is silent and costs a
- * whole type its form: #27.05 excludes it from discovery for the run and its
- * rows never say a form is missing.
+ * whole type its form: `typeMayHoldAForm` refuses it a form, DocTypeEngine will
+ * not offer it, and its rows never say a form is missing.
  *
  * So only the unambiguous wordings — but ALL of them, and a fifth adversarial
  * round is why that second half matters as much as the first. A first draft

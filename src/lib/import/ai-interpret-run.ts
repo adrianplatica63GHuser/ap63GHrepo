@@ -151,9 +151,8 @@ export type AiInterpretRunResult =
        * header calls that out, and says it is also the path that auto-creates
        * `lookup_document_type` rows — so the type the import loop RESOLVED
        * before creating the document is not necessarily the type the document
-       * is on afterwards. A discovery queued against the resolved id would then
-       * open a review screen naming one type, over pairs read out of a document
-       * that now sits on another, and write the fields onto the wrong one.
+       * is on afterwards. A row keyed on the resolved id would then say "no
+       * form" about a type the document no longer sits on.
        *
        * ⚠️ **Null means "not changed", NOT "unknown".** It is the same
        * expression the patch is built from (`retyped`), so it is null in all
@@ -171,8 +170,8 @@ export type AiInterpretRunResult =
        * is the one that auto-creates rows — so `docTypeIdCardRef` has no entry
        * for it and the caller's only remaining witness is the scan's own
        * signal, which is precisely the signal that is false on a card the scan
-       * mislabelled. A billed discovery read on an identity-card type is what
-       * that costs, every time.
+       * mislabelled. A row saying "this type has no form yet" on an identity
+       * card is what that costs.
        *
        * `null` in every case `documentTypeId` is null: this call moved nothing,
        * so it has nothing to say about the type the caller is standing on.
@@ -451,9 +450,10 @@ const sessionFailure = (): AiInterpretRunResult => ({
  * touched.
  *
  * ⚠️ **EXPORTED SINCE #27.05, and the export is what stops a second copy.**
- * `discover-run.ts` makes the same call to the same route and needs the same
- * three tests; every one of them was wrong once and was fixed by an adversarial
- * round (401-but-not-403 here, HTML-on-a-2xx-only below, headers-not-body on
+ * Other clients of ai-interpret-shaped routes (`sample-read-run.ts`; until
+ * #37.85 also `discover-run.ts`) need the same three tests; every one of them
+ * was wrong once and was fixed by an adversarial round (401-but-not-403 here,
+ * HTML-on-a-2xx-only below, headers-not-body on
  * the timer). A copy would carry today's version of those fixes and none of
  * tomorrow's — which is the argument this file's own header makes about two
  * paths to one result.
@@ -513,8 +513,8 @@ const RECORD_TIMEOUT_MS = 30_000;
  * `fetch` that gives up rather than hanging the whole import.
  *
  * ⚠️ **Exported since #27.05**, with the MS as an argument rather than a
- * constant inside — `discover-run.ts` has its own budget (the route asks the
- * model for twice the output tokens in discover mode) and shares this wrapper.
+ * constant inside — other callers (`document-type-catalogue.ts`,
+ * `sample-read-run.ts`) have their own budgets and share this wrapper.
  */
 export async function fetchWithTimeout(
   url: string,

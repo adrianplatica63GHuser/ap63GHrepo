@@ -1484,7 +1484,8 @@ describe("the result screen's copy", () => {
 
   /**
    * The header sentences #27.05 added, which nothing else in this file walks.
-   *                                                              (Slice #27.05)
+   *                                                  (Slice #27.05; two since
+   *                                                  #37.85)
    *
    * ⚠️ **The note and summary catalogues are pinned by the two tests above
    * because they have ID CONSTANTS to walk; these have none**, and an
@@ -1497,54 +1498,26 @@ describe("the result screen's copy", () => {
   it.each(LOCALES)("%s carries every sentence the type-form header draws", (locale) => {
     const messages = loadMessages(locale);
     const plural = ["one", "few", "other"];
-    for (const key of [
-      "doneTypesNoForm",
-      "doneTypesNoFormWaiting",
-      "doneTypesNoFormLocked",
-      "doneTypesNoFormNothing",
-      // ⚠️ Slice #32.05 — the fifth, drawn ahead of the other four when the
-      // user pressed "continue without forms". It is here for the reason this
-      // list exists at all: the five have no id constant to walk, so a Romanian
-      // `few` arm dropped from the newest of them renders the raw key path on
-      // the one screen a business user reads.
-      "doneTypesNoFormWaived",
-    ]) {
+    // Slice #37.85 removed the import's discovery review, and with it the four
+    // sentences written for a read that ran (`doneTypesNoForm`, `…Waiting`,
+    // `…Locked`, `…Nothing`). Two are left: the waived run's (#32.05) and the
+    // ordinary run's, which points at DocTypeEngine and the Form editor.
+    for (const key of ["doneTypesNoFormWaived", "doneTypesNoFormBuild"]) {
       const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
       expect(typeof value).toBe("string");
-      // The count is the only argument the four call sites pass.
+      // The count is the only argument the call sites pass.
       expect([...scanIcu(value).args]).toEqual(["count"]);
       const needed = locale === "ro-RO.json" ? plural : ["one", "other"];
       for (const form of needed) expect(value).toContain(`${form} {`);
     }
-    for (const key of ["reviewTypesButton", "typeListUnavailable", "importStartFailed"]) {
+    // `reviewTypesButton`, `typeListUnavailable` and #27.04's new-type endings
+    // (`typeNewType*`, `typeIdCardNoForm`, `typeCatchAllNoForm`) went with the
+    // import's discovery review in #37.85.
+    for (const key of ["importStartFailed"]) {
       const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
       expect(typeof value).toBe("string");
       expect(value.trim()).not.toBe("");
       expect([...scanIcu(value).args]).toEqual([]);
-    }
-    // The endings of #27.04's new-type path, as the IMPORT dialog words them —
-    // each names the type it left on the server, and nothing else. Slice #32.07
-    // added a sixth, `typeIdCardNoForm`, which is reported on the ORDINARY path
-    // too: the fields were refused permanently, so the step leaves the backlog
-    // rather than being offered again.
-    for (const key of [
-      "typeNewTypeNoFields",
-      "typeNewTypeNotMoved",
-      "typeNewTypeMoveUnknown",
-      "typeNewTypeFieldsUnknown",
-      "typeNewTypeUnresolved",
-      "typeIdCardNoForm",
-      // Slice #32.19 added a seventh. The permanent-refusal ending now carries a
-      // `reason`, because "this type is an identity card" printed over a
-      // catch-all row is false. It is the RESULTS BANNER these six sentences
-      // reach, not the saved report — the report's type notes come from
-      // `summariseImportRun` — so what the second sentence buys is a true
-      // ending on the screen the user is standing in front of.
-      "typeCatchAllNoForm",
-    ]) {
-      const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
-      expect(typeof value).toBe("string");
-      expect([...scanIcu(value).args]).toEqual(["type"]);
     }
   });
 

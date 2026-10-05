@@ -97,8 +97,8 @@ type Props = {
    * `documentCount` across it. This panel counts nothing.
    *
    * ⚠️ **It is NOT a cost line, so it does not wear `COST_NOTE_CLASS`.** The
-   * waiver spends LESS: no discovery read is bought for a waived type. What it
-   * is is a statement about what the archive will hold afterwards, which is the
+   * waiver spends nothing extra. What it is is a statement about what the
+   * archive will hold afterwards, which is the
    * other thing this screen must not be vague about.
    */
   waived: { types: number; documents: number } | null;

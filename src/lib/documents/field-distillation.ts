@@ -78,11 +78,11 @@ export function isMatchingPercent(value: number): value is MatchingPercent {
  * Why a picked sample was not read.
  *
  * Every one of these leaves the sample in the DENOMINATOR of nothing and in the
- * "picked but not read" count that the screen prints. `discoverForType` folds
- * every non-ok response into one `"failed"`, and its own comment says a
- * discovery that did not happen is reported by the absence of a review step —
- * a fine answer when the output is one screen and a fatal one here, because
- * here the count IS the answer.
+ * "picked but not read" count that the screen prints. The import's
+ * `discoverForType` (removed in #37.85) folded every non-ok response into one
+ * `"failed"`, reporting a discovery that did not happen by the absence of a
+ * review step — a fine answer when the output was one screen and a fatal one
+ * here, because here the count IS the answer.
  */
 export type SampleFailure =
   | "failed"      // the route answered, and not with a reading

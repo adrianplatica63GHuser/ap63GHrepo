@@ -13,7 +13,9 @@ import Link from "next/link";
  * has run. It found a document type with no form to put a document's
  * information into — either one the archive holds without a form, or one that
  * does not exist yet and that the run would have created without a form. So the
- * import stops here, names them, and sends the user to DocTypeEngine.
+ * import stops here, names them, and sends the user to DocTypeEngine or to the
+ * Form editor in Reference Data — since #37.85 the only two places a type's
+ * form is ever written.
  *
  * ⚠️ **A FORK, NOT AN EXIT — AND THIS HEADER SAID THE OPPOSITE UNTIL #32.05.**
  * It read: "AN EXIT, NOT A PAUSE… There is no 'carry on anyway', no resume, and
@@ -38,8 +40,7 @@ import Link from "next/link";
  *    verdict. The run carries on to the Evaluation screen with these types
  *    exactly as they are: the documents are created, their scans uploaded and
  *    linked, their properties and tags attached, and nothing is asked about a
- *    form. No discovery read is bought for a waived type and no form-review
- *    dialog opens for one.
+ *    form.
  *
  * ⚠️ **AND THE OFFER IS DRAWN ONLY ON THE VERDICT BRANCH.** `verdict === null`
  * covers three causes — `unreadable`, `session` and `unusable` — and every one
@@ -197,11 +198,14 @@ const NO_FOLDS_OPEN: ReadonlySet<string> = Object.freeze(new Set<string>());
  * engine, then start the import again from the beginning. The one link that
  * joined these three screens pointed the other way (catalogue 33.04 item 63).
  *
- * ⚠️ **ONE LINK PER ROW, AND WHICH ONE IS DECIDED BY `kind` — because the two
- * kinds of row need different screens and the difference is the whole reason
+ * ⚠️ **WHICH LINKS A ROW GETS IS DECIDED BY `kind` — because the two kinds of
+ * row need different screens and the difference is the whole reason
  * `rowSentence` says two different things.** A type the archive already HOLDS
  * exists and is only missing its form, so it goes straight to „Distilare
- * Tipizate", pre-selected. A type the run would CREATE does not exist yet, so
+ * Tipizate", pre-selected — or, since #37.85, to the Form editor in Reference
+ * Data, the other writer of a form (Adrian's decision: the stop screen offers
+ * exactly these two and "continue without forms"). A type the run would CREATE
+ * does not exist yet, so
  * the engine has nothing to select and cannot be the first stop: it goes to
  * Reference Data with its name, where the row is made. Sending both to the same
  * screen would have made one of the two links a dead end the user discovers
@@ -219,6 +223,8 @@ const NO_FOLDS_OPEN: ReadonlySet<string> = Object.freeze(new Set<string>());
  */
 const REFERENCE_DATA_HREF = "/admin/value-lists";
 const DOC_TYPE_ENGINE_HREF = "/admin/doc-type-engine";
+/** Reference Data opened on the document-type list, where its Form editor is. (#37.85) */
+const FORM_EDITOR_HREF = `${REFERENCE_DATA_HREF}?list=document-types`;
 
 export function ImportTypesBlockedStage({
   folderName,
@@ -658,17 +664,33 @@ export function ImportTypesBlockedStage({
                     one step further along rather than removing it. */}
                 <p className="mt-1.5">
                   {type.kind === "existing" && type.id !== null ? (
-                    <Link
-                      href={`${DOC_TYPE_ENGINE_HREF}?type=${encodeURIComponent(type.id)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
-                    >
-                      {t("goToEngine")}
-                      <span className="sr-only"> {t("opensInNewTab")}</span>
-                      {/* #37.46 (A096): a new tab says so with its icon, after the words. */}
-                      <TrailingIcon icon={ExternalLink} />
-                    </Link>
+                    <>
+                      <Link
+                        href={`${DOC_TYPE_ENGINE_HREF}?type=${encodeURIComponent(type.id)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
+                      >
+                        {t("goToEngine")}
+                        <span className="sr-only"> {t("opensInNewTab")}</span>
+                        {/* #37.46 (A096): a new tab says so with its icon, after the words. */}
+                        <TrailingIcon icon={ExternalLink} />
+                      </Link>{" "}
+                      {/* Slice #37.85 — the other writer of a form, beside the
+                          engine. The list, not the row: the Form editor opens
+                          from the type's row there, and the name is on screen
+                          here. */}
+                      <Link
+                        href={FORM_EDITOR_HREF}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
+                      >
+                        {t("goToFormEditor")}
+                        <span className="sr-only"> {t("opensInNewTab")}</span>
+                        <TrailingIcon icon={ExternalLink} />
+                      </Link>
+                    </>
                   ) : (
                     <Link
                       href={`${REFERENCE_DATA_HREF}?list=document-types&add=${encodeURIComponent(type.name)}`}

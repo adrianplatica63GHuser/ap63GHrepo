@@ -417,17 +417,18 @@ describe("the two endpoints, their keys and their panels are gone", () => {
         if (!/res\.redirected \|\| !res\.ok/.test(after)) offenders.push(`${rel} :: ${m[0]}`);
       }
     }
-    // THIRTEEN call sites today, across NINE files — counted, not estimated,
+    // ELEVEN call sites today, across EIGHT files (Slice #37.85 deleted
+    // `discover-review-dialog.tsx` and its two) — counted, not estimated,
     // because the first version of this floor was set three low from the files
     // the slice happened to touch and would have tolerated three sites dropping
     // silently out of the scan, which is the exact drift a floor is for. The
-    // nine: the five that read a shared `["value-list", …]` entry, plus
+    // eight: the five that read a shared `["value-list", …]` entry, plus
     // `documents/list-view.tsx` and `documents/_components/document-form.tsx`
     // (same endpoint under BARE keys — and those two share `["document-types"]`
     // with each other, so the shared-entry argument applies between them too),
-    // plus `id-card-person-dialog.tsx` and `discover-review-dialog.tsx`, which
-    // were already guarded and are why they never surfaced as offenders.
-    expect(sites).toBeGreaterThan(12);
+    // plus `id-card-person-dialog.tsx`, which was already guarded and is why
+    // it never surfaced as an offender.
+    expect(sites).toBeGreaterThan(10);
     expect(offenders).toEqual([]);
   });
 

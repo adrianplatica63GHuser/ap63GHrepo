@@ -263,8 +263,9 @@ describe("the refusal on the wire", () => {
 // ⚠️ **THIS BLOCK EXISTS BECAUSE ITS ABSENCE LET A DOOR SHIP OPEN.** The slice
 // first guarded only the two value-lists doors, on the belief that the
 // template-fields PUT was refused upstream by `typeMayHoldAForm`. It is not:
-// that function is consulted by the discovery run and by the DocTypeEngine
-// screen, never by the route. `id-card-type-single-source.test.ts` has carried
+// that function was consulted by the import's discovery run (removed in
+// #37.85) and is by the DocTypeEngine screen, never by the route.
+// `id-card-type-single-source.test.ts` has carried
 // exactly this table since #32.07 — its own comment calls it "the half that
 // fails when a NEW write path appears" — and an adversarial round pointed out
 // that a copy of it here would have failed on the missing door before the

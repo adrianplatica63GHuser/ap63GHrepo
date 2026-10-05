@@ -302,7 +302,7 @@ export type OutcomeRow = {
    * nothing went to Notes. Saying "this type has no form" on either would turn
    * a correct and permanent state into a to-do the user cannot close.
    *
-   * ⚠️ **The fallback type is excluded too** — see `shouldDiscoverType` in
+   * ⚠️ **The fallback type is excluded too** — see `typeMayHoldAForm` in
    * `src/lib/import/discover-run.ts` for the argument. A document on the
    * catch-all is
    * not a document whose type lacks a form; it is a document whose type is
@@ -336,6 +336,10 @@ export type OutcomeRow = {
   /**
    * …and the type GAINED one during this run, because the user accepted a
    * discovery review for it.                                   (Slice #27.05)
+   *
+   * ⚠️ **No live writer since #37.85**, which removed the import's discovery
+   * review; the bulk-import dialog no longer sets it. Kept so the note, its
+   * tone and its tests stay one contract until a slice retires the sentence.
    *
    * A separate flag rather than the absence of the one above, because the row
    * has to stop saying "waiting for a form" the moment the form exists — a

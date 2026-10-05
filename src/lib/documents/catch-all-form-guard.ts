@@ -51,8 +51,9 @@
  * The first draft left the third door out, on the reasoning that it is
  * DocTypeEngine's and the discovery dialog's and is "already refused upstream by
  * `typeMayHoldAForm`". That is false as a statement about the WRITE, and the
- * round that measured it is worth recording: `typeMayHoldAForm` is consulted by
- * the discovery run and by the DocTypeEngine screen, never by the route, which
+ * round that measured it is worth recording: `typeMayHoldAForm` was consulted by
+ * the import's discovery run (removed in #37.85) and is by the DocTypeEngine
+ * screen, never by the route, which
  * imports `idCardFormRefusal` and nothing else. So the two guards would have
  * disagreed about the same row in opposite directions — Reference Data hiding
  * its Form button and refusing the write while DocTypeEngine offered it and
@@ -64,12 +65,9 @@
  * row's own key AND name, so it also covers the second row an archive can hold
  * keyed `NECLASIFICAT` and any row named "Neclasificat" or "Unclassified".
  * DocTypeEngine's picker asks both questions since this slice, so the screen and
- * the route agree; the IMPORT's own discovery loop (`typeAwaitsForm`, and
- * `shouldDiscoverType` beneath it) still asks only the narrow one, so a run over
- * such a row can still spend a billed read and then be refused at the save.
- * Closing that means widening `typeMayHoldAForm`'s input to carry the row's key
- * and name, which changes `typeAwaitsForm` and its six import call sites and
- * their tests — the import's gate, not Reference Data's. It is in the handover.
+ * the route agree. The IMPORT's `typeAwaitsForm` asked only the narrow one until
+ * Slice #34.10 widened `typeMayHoldAForm` to carry the row's key and name; the
+ * billed discovery read that gap could waste was removed in #37.85.
  *
  * ⚠️ **AND THE RENAME HALF IS NOT AN EXTRA HERE EITHER.** The value-lists PUT
  * carries `name` and `templateFields` in one payload, so a guard on the fields

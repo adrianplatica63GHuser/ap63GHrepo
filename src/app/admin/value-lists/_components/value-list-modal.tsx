@@ -1055,7 +1055,7 @@ export function ValueListModal({
    * forbids.** `documentTypeAwaitsForm` is still the only thing deciding
    * whether a type has a form, and every row still paints exactly what
    * `documentTypeStatus` says. What is added is an orthogonal fact about ONE
-   * type, taken from the same one function `enrichDiscoverSteps` uses —
+   * type, taken from the same one function the import's catalogue read uses —
    * `documentTypeIsIdCard`, the seeded key or the NAME test — rather than
    * restated here.                                    (one answer since #32.07)
    *

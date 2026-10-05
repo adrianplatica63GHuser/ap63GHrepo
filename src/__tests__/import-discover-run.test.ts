@@ -1,22 +1,15 @@
 /**
- * Which document types an import spends a schema-free read on.  (Slice #27.05)
+ * Which document types may have a form, and which are waiting for one.
+ *                                                  (Slice #27.05, #29.09, #37.85)
  *
- * The run now reads one document of every type it meets that has no custom
- * form, and offers the fields for review once the rows have settled. Two
- * questions decide that, they differ by exactly one term, and both of them are
- * asked inside a loop with three tasks in flight — which is the one place a
- * test cannot reach. So they live in `discover-run.ts` and are held here:
- *
- *  1. **Should the run PAY for this type?** One read per type per run, never on
- *     a type that already has a form, and never on the fallback type — that one
- *     is not a type whose form is missing, it is the type that means "we do not
- *     know", and every unclassified document in the archive shares it.
- *  2. **Should the ROW say the type is waiting for a form?** The same question
- *     without the per-run claim: the second, third and fortieth document of a
- *     new type all report a type that is waiting, and only the first is read.
- *
- * Nothing here makes a network call. `discoverForType` is a fetch wrapper and is
- * covered by the same argument `runAiInterpret`'s own suite makes about its.
+ * Until Slice #37.85 the import also read one document of every type it met
+ * without a form and offered the fields for review — `discoverForType`, and
+ * `shouldDiscoverType` deciding when to pay for it. #37.85 removed both: one
+ * document is never evidence for a type's form. What is held here now is the
+ * REPORTING rule that stayed (`typeAwaitsForm`: should the row say the type is
+ * waiting for a form?), the wider rule beneath it (`typeMayHoldAForm`), the
+ * import's call sites of the first, and a guard that the discovery stage does
+ * not come back.
  */
 
 import { readFileSync } from "node:fs";
@@ -33,11 +26,8 @@ import { join } from "node:path";
 // disagree on 105 of 566 files under `src/`, by up to 8,817 characters.
 import { stripComments } from "@/lib/dev/strip-comments";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
-import {
-  shouldDiscoverType,
-  typeAwaitsForm,
-  typeMayHoldAForm,
-} from "@/lib/import/discover-run";
+import * as discoverRun from "@/lib/import/discover-run";
+import { typeAwaitsForm, typeMayHoldAForm } from "@/lib/import/discover-run";
 
 const FALLBACK = "type-altul";
 
@@ -54,12 +44,11 @@ const PLAIN = { typeKey: "CONTRACT_ARENDA", typeName: "Contract de arendă" };
  * them as the gap it was leaving open: a row keyed `NECLASIFICAT` rather than
  * `UNCLASSIFIED`, and a row that carries neither key and is merely NAMED
  * "Neclasificat" or "Unclassified". `catchAllType` resolves the key
- * `UNCLASSIFIED` alone, so the import's id-only rule reached none of them —
- * spent a billed discovery read on each and was then refused at the save.
+ * `UNCLASSIFIED` alone, so the import's id-only rule reached none of them.
  *
  * ⚠️ **`null`/`null` is in here on purpose and is NOT a catch-all row.** It is
- * "the caller has no row", which is what the two import call sites pass for a
- * type `runAiInterpret` invented mid-run. It must behave exactly as an ordinary
+ * "the caller has no row", which is what the run loop passes for a type
+ * `runAiInterpret` invented mid-run. It must behave exactly as an ordinary
  * type does, or the widening would have silently stopped the import reporting
  * every such type.
  */
@@ -71,233 +60,94 @@ const CATCH_ALL_FIXTURE = [
   { what: "a slugged key, named Neclasificat", typeKey: "NECLASIFICAT_2", typeName: "Neclasificat", isCatchAll: true },
 ] as const;
 
-const ask = (over: Partial<Parameters<typeof shouldDiscoverType>[0]> = {}) =>
-  shouldDiscoverType({
+const awaits = (over: Partial<Parameters<typeof typeAwaitsForm>[0]> = {}) =>
+  typeAwaitsForm({
     typeId: "type-arenda",
     ...PLAIN,
     fallbackTypeId: FALLBACK,
     typeHasForm: false,
     typeIsIdCard: false,
-    claimedTypeIds: new Set<string>(),
-    // Slice #32.05 — the ordinary run. Every test below that does not say
-    // otherwise is a run nobody waived.
-    formsWaived: false,
     ...over,
   });
 
-describe("whether the run spends a discovery read on a type", () => {
-  it("reads a type it has never met that has no form", () => {
-    expect(ask()).toBe(true);
+describe("whether the ROW says the type is waiting for a form", () => {
+  it("says so for a type that has no form", () => {
+    expect(awaits()).toBe(true);
   });
 
-  it("does not read a type that already has a form", () => {
-    // A discovery on a type WITH a form is a perfectly normal thing to do by
-    // hand — it is how you find what is still unrecognised — and exactly the
-    // wrong thing to do unasked, forty times, at a model call each.
-    expect(ask({ typeHasForm: true })).toBe(false);
+  it("is silent about a type that has a form, and about the fallback", () => {
+    expect(awaits({ typeHasForm: true })).toBe(false);
+    expect(awaits({ typeId: FALLBACK })).toBe(false);
+    expect(awaits({ typeId: FALLBACK, typeHasForm: true })).toBe(false);
   });
 
-  it("reads a type ONCE per run, however many documents of it arrive", () => {
-    const claimed = new Set<string>();
-    expect(ask({ claimedTypeIds: claimed })).toBe(true);
-    claimed.add("type-arenda");
-    expect(ask({ claimedTypeIds: claimed })).toBe(false);
-  });
-
-  it("⚠️ buys nothing at all once the run's forms are waived", () => {
-    // Slice #32.05. The user pressed "continue without forms" on the stop
-    // screen, which is a decision about what the run SPENDS. It holds for every
-    // type the run meets afterwards, including the types the stop screen could
-    // not name — a `new` type has no id there, and `runAiInterpret` can invent
-    // one mid-run — which is exactly why the waiver is one boolean and not a
-    // set of ids.
-    expect(ask({ formsWaived: true })).toBe(false);
-    expect(ask({ formsWaived: true, typeHasForm: true })).toBe(false);
-    expect(ask({ formsWaived: true, typeId: "type-invented-mid-run" })).toBe(false);
-  });
-
-  it("⚠️ the waiver overrides every other input, and only in one direction", () => {
-    // Slice #32.05, and the mirror of the test above it: with the waiver on,
-    // the spending answer is NO over the whole input space, whatever the
-    // reporting answer is. A waiver that let one combination through would be a
-    // billed read the user has just declined to pay for, and the combination it
-    // would let through is the one nobody constructs by hand.
-    for (const typeId of ["type-arenda", FALLBACK, ""]) {
-      for (const typeHasForm of [true, false]) {
-        for (const fallbackTypeId of [FALLBACK, null]) {
-          for (const typeIsIdCard of [true, false]) {
-            expect(
-              shouldDiscoverType({
-                typeId,
-                ...PLAIN,
-                fallbackTypeId,
-                typeHasForm,
-                typeIsIdCard,
-                claimedTypeIds: new Set<string>(),
-                formsWaived: true,
-              }),
-            ).toBe(false);
-          }
-        }
-      }
-    }
-  });
-
-  it("⚠️ refuses the fallback type outright", () => {
-    // The trap #27.04 was opened to close, rebuilt inside an unattended loop:
-    // one unclassified document's fields, proposed for the catch-all every
-    // unclassified document in the archive shares, with the ticks pre-set.
-    expect(ask({ typeId: FALLBACK })).toBe(false);
-  });
-
-  it("still refuses a claimed fallback, and a formed one", () => {
-    // Order of the terms must not matter — each is a veto on its own.
-    expect(ask({ typeId: FALLBACK, typeHasForm: true })).toBe(false);
-    expect(ask({ typeId: FALLBACK, claimedTypeIds: new Set([FALLBACK]) })).toBe(false);
-  });
-
-  it("⚠️ never reads the identity-card TYPE, whatever the bucket or the scan says", () => {
-    // Two rounds. The first: `interpretSkipReason` answers `id-card` only when
-    // the person action is on offer, which needs exactly one Property — so a
-    // card under `common` or `floating` is read by the general extract, its
-    // type has no form, and it is not the fallback, and every other term said
-    // yes. The second: the fix then asked the SCAN, and this rule is about the
-    // TYPE — a mislabelled card the model re-types onto CARTE_IDENTITATE has a
-    // false scan signal, and a document the model correctly re-types AWAY from
-    // a card has a true one. The caller answers from the type's key or name.
-    expect(ask({ typeIsIdCard: true })).toBe(false);
+  it("⚠️ is silent about the identity-card TYPE, whatever the bucket or the scan says", () => {
+    // The caller answers `typeIsIdCard` from the type's key or name, with the
+    // scan only as the fallback for a type invented mid-run. A card's type must
+    // never print "this type has no form yet" — its data comes from the
+    // import's identity-card step.
+    expect(awaits({ typeIsIdCard: true })).toBe(false);
     expect(
-      typeAwaitsForm({
+      awaits({
         typeId: "type-carte-identitate",
         typeKey: "CARTE_IDENTITATE",
         typeName: "Carte de identitate",
-        fallbackTypeId: FALLBACK,
-        typeHasForm: false,
         typeIsIdCard: true,
       }),
     ).toBe(false);
   });
 
   it("refuses an empty type id", () => {
-    // Cannot happen — `document_type_id` is NOT NULL and the loop resolves one
-    // before it creates the row — but the value that reaches here comes out of
-    // a JSON response, and an empty one would claim a queue slot no dialog
-    // could ever be opened for.
-    expect(ask({ typeId: "" })).toBe(false);
+    // Cannot happen — `document_type_id` is NOT NULL — but the value comes out
+    // of a JSON response.
+    expect(awaits({ typeId: "" })).toBe(false);
   });
 
-  it("reads normally when the fallback type is not known", () => {
+  it("answers normally when the fallback type is not known", () => {
     // `fallbackTypeId: null` must not make every type look like the fallback.
-    expect(ask({ fallbackTypeId: null })).toBe(true);
-    expect(ask({ typeId: "", fallbackTypeId: null })).toBe(false);
+    expect(awaits({ fallbackTypeId: null })).toBe(true);
+    expect(awaits({ typeId: "", fallbackTypeId: null })).toBe(false);
+  });
+
+  it("⚠️ takes no waiver: a waived run still SAYS the type is waiting", () => {
+    // Slice #32.05. `typeAwaitsForm` is what the ROW reports, and a waived type
+    // is still a type with no form. `formsWaived` is not one of its inputs —
+    // this is a statement about the signature as much as about the answer.
+    expect(awaits()).toBe(true);
   });
 });
 
-describe("whether the ROW says the type is waiting for a form", () => {
-  it("says so for every document of a formless type, not just the read one", () => {
-    // The one term that differs, and the whole reason these are two functions:
-    // a claim stops the second read, and must not stop the second sentence.
-    const claimed = new Set(["type-arenda"]);
-    expect(ask({ claimedTypeIds: claimed })).toBe(false);
-    expect(
-      typeAwaitsForm({
-        typeId: "type-arenda",
-        ...PLAIN,
-        fallbackTypeId: FALLBACK,
-        typeHasForm: false,
-        typeIsIdCard: false,
-      }),
-    ).toBe(true);
+describe("⚠️ the import has no one-document discovery stage — Slice #37.85", () => {
+  it("exports no spending rule and no discovery read", () => {
+    // The module keeps only the two shared predicates.
+    expect("discoverForType" in discoverRun).toBe(false);
+    expect("shouldDiscoverType" in discoverRun).toBe(false);
+    expect(typeof discoverRun.typeAwaitsForm).toBe("function");
+    expect(typeof discoverRun.typeMayHoldAForm).toBe("function");
   });
 
-  it("is silent about a type that has a form, and about the fallback", () => {
-    expect(
-      typeAwaitsForm({
-        typeId: "type-arenda",
-        ...PLAIN,
-        fallbackTypeId: FALLBACK,
-        typeHasForm: true,
-        typeIsIdCard: false,
-      }),
-    ).toBe(false);
-    expect(
-      typeAwaitsForm({
-        typeId: FALLBACK,
-        ...PLAIN,
-        fallbackTypeId: FALLBACK,
-        typeHasForm: false,
-        typeIsIdCard: false,
-      }),
-    ).toBe(false);
-  });
-
-  it("⚠️ still SAYS the type is waiting for a form on a waived run", () => {
-    // The half of the split that must not move, and it belongs in THIS describe
-    // — the reporting one — because that is the question it answers.
-    // `typeAwaitsForm` is what the ROW reports, and a waived type is still a
-    // type with no form: the archive now holds documents on it, which is the
-    // honest thing to say, and the one thing a waiver must never do is silence
-    // it. If this ever goes false, the result screen starts reporting a fully
-    // landed import over documents whose values have nowhere to go. Note the
-    // shape of the guard: `typeAwaitsForm` takes NO `formsWaived`, so this test
-    // is a statement about the signature as much as about the answer.
-    expect(
-      typeAwaitsForm({
-        typeId: "type-arenda",
-        ...PLAIN,
-        fallbackTypeId: FALLBACK,
-        typeHasForm: false,
-        typeIsIdCard: false,
-      }),
-    ).toBe(true);
-  });
-
-  it("agrees with the spending rule everywhere the claim is empty", () => {
-    // The invariant that keeps a screen from describing a decision the loop did
-    // not make: with nothing claimed, the two answers are the same answer.
-    //
-    // ⚠️ **Slice #34.10 widened the space to the row's two columns**, which is
-    // where the two rules could newly come apart: `typeAwaitsForm` reads them
-    // and `shouldDiscoverType` only passes them on, so a term added to one and
-    // forgotten in the other shows up here as a spending decision the row does
-    // not describe. 3 × 2 × 2 × 2 × 5 = 240 combinations.
-    for (const typeId of ["type-arenda", FALLBACK, ""]) {
-      for (const typeHasForm of [true, false]) {
-        for (const fallbackTypeId of [FALLBACK, null]) {
-          for (const typeIsIdCard of [true, false]) {
-            for (const row of CATCH_ALL_FIXTURE) {
-              const { typeKey, typeName } = row;
-              expect([
-                row.what,
-                shouldDiscoverType({
-                  typeId,
-                  typeKey,
-                  typeName,
-                  fallbackTypeId,
-                  typeHasForm,
-                  typeIsIdCard,
-                  claimedTypeIds: new Set<string>(),
-                  formsWaived: false,
-                }),
-              ]).toEqual([
-                row.what,
-                typeAwaitsForm({
-                  typeId,
-                  typeKey,
-                  typeName,
-                  fallbackTypeId,
-                  typeHasForm,
-                  typeIsIdCard,
-                }),
-              ]);
-            }
-          }
-        }
-      }
+  it("the bulk import neither reads a type for a form nor opens a review of one", () => {
+    // Comments stripped: the dialog's comments may name the removed stage to
+    // say it is gone; what must not exist is the CODE.
+    const dialog = stripComments(
+      readFileSync(
+        join(process.cwd(), "src/app/admin/import/_components/bulk-import-dialog.tsx"),
+        "utf8",
+      ),
+    );
+    for (const gone of [
+      "discoverForType",
+      "shouldDiscoverType",
+      "DiscoverReviewDialog",
+      "discover-review-dialog",
+      "discoverClaimedRef",
+      "discoverStepsRef",
+      'kind: "discover"',
+    ]) {
+      expect([gone, dialog.includes(gone)]).toEqual([gone, false]);
     }
   });
 });
-
 
 describe("⚠️ one rule at every door — Slice #34.10", () => {
   it("gives the SAME answer as the write door's predicate on every row", () => {
@@ -305,7 +155,8 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
     // two lists that happen to match. `documentTypeIsCatchAll` is what the
     // value-lists write door (`catchAllFormRefusal`) and Reference Data's
     // backlog filter already ask; `typeMayHoldAForm` is what the import's
-    // discovery loop and DocTypeEngine's picker ask. Before this slice the
+    // rows (through `typeAwaitsForm`) and DocTypeEngine's picker ask. Before
+    // this slice the
     // second was narrower than the first on three of these five rows.
     for (const row of CATCH_ALL_FIXTURE) {
       const byRow = documentTypeIsCatchAll({ key: row.typeKey, name: row.typeName });
@@ -353,8 +204,7 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
     ).toBe(false);
     // ⚠️ And the row the id witness alone would MISS — the archive's second
     // catch-all, sitting beside a correctly-resolved fallback that is not it.
-    // This is the exact input the slice exists for: before it, this was `true`,
-    // the import bought a read, and the save was refused.
+    // This is the exact input the slice exists for: before it, this was `true`.
     expect(
       typeMayHoldAForm({
         typeId: "some-other-uuid",
@@ -368,9 +218,9 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
 
   it("⚠️ narrows nothing for a type whose row is simply absent", () => {
     // The direction that would be a REGRESSION rather than the intended
-    // widening: two import call sites pass `null`/`null` for a type
-    // `runAiInterpret` invented, and if that read as "catch-all" the run would
-    // silently stop reporting and stop reading every such type.
+    // widening: the run loop passes `null`/`null` for a type `runAiInterpret`
+    // invented, and if that read as "catch-all" the run would silently stop
+    // reporting every such type.
     expect(
       typeAwaitsForm({
         typeId: "type-invented-mid-run",
@@ -419,22 +269,15 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
       expect([what, pattern.test(code)]).toEqual([what, true]);
     }
 
-    // The import dialog's five sites all read the row they looked up, and the
-    // `?? null` is the mid-run-invented type the module header argues about.
-    //
-    // ⚠️ **FIVE SINCE #34.24, AND THE FIFTH SPELLS IT DIFFERENTLY ON PURPOSE.**
-    // `handleRecheckTypeForm` returns before this call when its fresh list does
-    // not hold the type (`if (row === null)`), so at the call it HAS a row and
-    // says so — `typeKey: row.key` — where the other four carry a `?? null` for
-    // the type `runAiInterpret` can invent mid-run. That is this test's own rule
-    // being followed, not bent: the shape it exists to catch is a site with a
-    // row in a local variable passing `null` anyway, which is the opposite. So
-    // the assertion is "both columns, read from a row" rather than one
-    // variable's name.
-    // ⚠️ **Comments stripped: this counts CALLS, so it must not see the
-    // eighteen places that file discusses these two functions by name.** None
-    // of them currently spells `({`, so the raw version passed — and would go
-    // red the day somebody wrote one that did, over code that is correct.
+    // The import dialog's THREE sites (five until #37.85 removed the two
+    // `shouldDiscoverType` calls) all read the row they looked up. The run loop
+    // and the retry carry a `?? null` for the type `runAiInterpret` can invent
+    // mid-run; `handleRecheckTypeForm` returns before its call when its fresh
+    // list does not hold the type, so at the call it HAS a row and says so —
+    // `typeKey: row.key`. The shape this test exists to catch is a site with a
+    // row in a local variable passing `null` anyway.
+    // ⚠️ **Comments stripped: this counts CALLS, so it must not see the places
+    // that file discusses the function by name.**
     const dialog = stripComments(
       readFileSync(
         join(process.cwd(), "src/app/admin/import/_components/bulk-import-dialog.tsx"),
@@ -442,12 +285,12 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
       ),
     );
     const calls = [
-      ...dialog.matchAll(/(?:typeAwaitsForm|shouldDiscoverType)\(\{[\s\S]*?\}\)/g),
+      ...dialog.matchAll(/typeAwaitsForm\(\{[\s\S]*?\}\)/g),
     ].map((m) => m[0]);
-    expect(calls).toHaveLength(5);
+    expect(calls).toHaveLength(3);
     for (const call of calls) {
       // Both columns, each read from a row — either the nullable lookup the
-      // four older sites share, or the narrowed one #34.24's site has after its
+      // two older sites share, or the narrowed one #34.24's site has after its
       // own null branch has returned.
       expect([call, /typeKey: (?:finalTypeRow\?\.key \?\? null|row\.key),/.test(call)]).toEqual([
         call,
@@ -498,31 +341,21 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
 });
 
 /**
- * ⚠️ **What a RETRY may spend, once the catalogue read behind it has failed.**
+ * ⚠️ **What a RETRY may claim, once the catalogue read behind it has failed.**
  *                                                              (Slice #34.11)
  *
- * `enrichDiscoverSteps` said "no rows" in one field for two unrelated reasons:
- * the catalogue read did not come back (it threw, or it answered a 200 whose
- * JSON carried no `items` array), or — one `?.find` later, on a list that DID
- * come back — this id is not in it. The retry handler's docblock asserted the
- * second, in writing, and answered accordingly: on a 502 between its two reads
- * it bought a billed discovery on the narrow, id-only answer #34.10 widened
- * both predicates precisely to stop them giving.
+ * The catalogue read said "no rows" in one field for two unrelated reasons:
+ * the read did not come back (it threw, or it answered a 200 whose JSON carried
+ * no `items` array), or — one `?.find` later, on a list that DID come back —
+ * this id is not in it. #34.11 named the first `readFailed`. (Until #37.85 it
+ * also gated a billed discovery read on it; that read is gone, and what is
+ * pinned now is the row's `typeFormMissing` write.)
  *
- * ⚠️ **And the sentence it asserted was the RUN LOOP's, which is where the
- * ordering makes it true.** There the list is `docTypeItems`, read at the start
- * of the run, so a type the re-classify route invents mid-run is genuinely
- * missing from it. In the retry handler the same GET runs AFTER
- * `runAiInterpret`, so that type is present — which is why `readFailed` is
- * asked here and why the two sites are pinned separately below.
- *
- * Everything below is source inspection, and the reason is the same one the
- * `every call site hands the predicate the row's two columns` test gives above:
- * the handler is 200 lines inside a 7,000-line client component, behind a
- * billed model call, three refs and a mounted guard. What can be pinned cheaply
- * is that the terms are there, that they are the terms the argument was made
- * about, and that the readers this slice deliberately did NOT change are still
- * shaped the way that makes them safe.
+ * Everything below is source inspection: the handler is inside a large client
+ * component, behind a billed model call, three refs and a mounted guard. What
+ * can be pinned cheaply is that the terms are there, and that the readers this
+ * slice deliberately did NOT change are still shaped the way that makes them
+ * safe.
  */
 describe("⚠️ the retry path's witness for the catalogue read — Slice #34.11", () => {
   const DIALOG = "src/app/admin/import/_components/bulk-import-dialog.tsx";
@@ -536,38 +369,7 @@ describe("⚠️ the retry path's witness for the catalogue read — Slice #34.1
    */
   const dialog = stripComments(readFileSync(join(process.cwd(), DIALOG), "utf8"));
 
-  /**
-   * The retry's own guard: from the `if (` that opens it to the billed call it
-   * gates, claim included.
-   *
-   * ⚠️ **Bounded by `discoverForType` rather than by `shouldDiscoverType`**, so
-   * it holds the whole condition whichever order the terms are written in —
-   * they are all pure reads and reordering them changes nothing — and it holds
-   * the branch's first statement, which is where the claim has to be. It still
-   * starts below the `if (preflight.sessionLost)` block a few lines above,
-   * which mentions `abortRef` and is entitled to.
-   */
-  const guardOf = (code: string) => {
-    // ⚠️ The SECOND anchor is searched from the preflight, because the run
-    // loop sixteen hundred lines above spells `const discovered = await
-    // discoverForType(` too — and taking the first match put the window in the
-    // wrong handler, where it matched nothing and passed every negative
-    // assertion in this block. (The first anchor needs no such guard: it occurs
-    // exactly once in the file.)
-    //
-    // ⚠️ **The opening `if (` is found by looking BACK from the call it gates,
-    // not forward from the preflight.** Taking the last `if (` in the whole
-    // window meant an ordinary `if (!mountedRef.current) return;` added between
-    // the claim and the billed read — this file does one on every await —
-    // moved the window past the condition and turned four assertions red over
-    // a guard nobody had touched.
-    const start = code.indexOf("const preflight = await");
-    const call = code.indexOf("const discovered = await discoverForType(", start);
-    const region = code.slice(start, call);
-    return region.slice(region.lastIndexOf("if (", region.indexOf("shouldDiscoverType({")));
-  };
-
-  it("⚠️ says WHY it has no rows, on every return `enrichDiscoverSteps` has", () => {
+  it("⚠️ says WHY it has no rows, on every return `readTypeCatalogue` has", () => {
     // The field itself. `boolean` and not `boolean | undefined`: a reader that
     // can forget to ask is the state this slice is removing, not adding.
     expect(dialog).toContain("readFailed: boolean;");
@@ -575,83 +377,33 @@ describe("⚠️ the retry path's witness for the catalogue read — Slice #34.1
     // Both returns, counted rather than named, so a third one added later
     // cannot ship without an answer. The body is taken to the first
     // column-zero `}` after the declaration, which is this function's own end.
-    const from = dialog.indexOf("async function enrichDiscoverSteps(");
+    const from = dialog.indexOf("async function readTypeCatalogue(");
     expect(from).toBeGreaterThan(-1);
     const body = dialog.slice(from, dialog.indexOf("\n}", from));
     const returns = [...body.matchAll(/return \{/g)].length;
     expect(returns).toBe(2);
     expect([...body.matchAll(/readFailed: (?:true|false)/g)]).toHaveLength(returns);
 
-    // ⚠️ **…and an EMPTY list still takes the failed-read return**, which is
-    // half of what three comments in this slice now promise and what the flag
-    // gates a billed call on. Narrowing this to `fresh === null` leaves every
-    // other assertion here green while `readFailed` quietly stops covering the
-    // 200 whose JSON carried no `items` — the case the function's own header
-    // spends a paragraph on.
+    // ⚠️ **…and an EMPTY list still takes the failed-read return.** Narrowing
+    // this to `fresh === null` leaves every other assertion here green while
+    // `readFailed` quietly stops covering the 200 whose JSON carried no `items`.
     expect(body).toContain("if (fresh === null || fresh.length === 0) {");
 
     // …and each one carries the answer that belongs to it: the early return is
-    // the failed read, the tail return is the list that arrived. Both written
-    // to survive a reflow — the early return is one 93-character line today and
-    // a fifth field would break it across four.
-    expect(body).toMatch(/names: null,[\s\S]{0,200}readFailed: true,[\s\S]{0,200}typeRows: null/);
-    expect(body).toMatch(/names: fresh\.map\([\s\S]{0,200}readFailed: false,/);
+    // the failed read, the tail return is the list that arrived.
+    expect(body).toMatch(/readFailed: true,[\s\S]{0,200}typeRows: null/);
+    expect(body).toMatch(/sessionLost: false,[\s\S]{0,200}readFailed: false,/);
   });
 
-  it("⚠️ refuses the retry's discovery on a failed read, BESIDE the lost session", () => {
-    // The retry's call is the second of the two in the file; the first is the
-    // run loop's, which decides from `docTypeItems` and is out of this slice's
-    // scope. Structurally proven rather than assumed: `preflight` does not
-    // exist yet where the run loop asks.
-    const calls = [...dialog.matchAll(/shouldDiscoverType\(\{/g)].map((m) => m.index ?? -1);
-    expect(calls).toHaveLength(2);
-    expect(dialog.indexOf("const preflight = await enrichDiscoverSteps(")).toBeGreaterThan(
-      calls[0],
-    );
-
-    // Both terms guard the retry's call, and both are negations of a fact the
-    // preflight reported — never of `abortRef`, the one-way latch two reviewers
-    // rejected for the `sessionLost` term and which would fail the same way
-    // here.
-    //
-    // ⚠️ **Cut at the guard's own `if (` rather than a fixed number of
-    // characters back.** `stripComments` replaces a comment with its own
-    // newlines so line numbers survive, and this slice's argument runs to
-    // thirty lines of them — a window wide enough to hold both terms today
-    // narrows to one the moment somebody adds a sentence. The window ends at
-    // the billed call rather than at `shouldDiscoverType`, so reordering the
-    // terms — which changes nothing, they are all pure reads — does not turn
-    // this red.
-    const guard = guardOf(dialog);
-    // ⚠️ **The two `not`s below read the CONDITION, not the whole window.** The
-    // window runs on to the billed call so the claim can be pinned inside it,
-    // and both of these are statements about the terms: `||` is an ordinary
-    // default in the statements between, and an `if (abortRef.current) return;`
-    // ahead of the spend would be an improvement rather than the witness this
-    // guard rejected twice. A round found each of them red over such a line,
-    // with a message pointing at a condition nobody had touched.
-    const condition = guard.slice(0, guard.indexOf(") {"));
-    expect(guard).toContain("!preflight.sessionLost &&");
-    expect(guard).toContain("!preflight.readFailed &&");
-    expect(guard).toContain("shouldDiscoverType({");
-    expect(condition).not.toContain("abortRef");
-
-    // ⚠️ **AND the terms are ANDed.** `toContain` says a term is present, not
-    // that it can refuse: `… && shouldDiscoverType({…}) || somethingElse` keeps
-    // every assertion above green and puts the billed call back on a failed
-    // read. Anything that genuinely needs an `||` in this condition is a
-    // widening of what the archive spends, and going red here is the correct
-    // way to find that out.
-    expect(condition.replace(/shouldDiscoverType\(\{[\s\S]*?\}\)/, "")).not.toContain("||");
-
-    // ⚠️ …and it asks the NAMED fact, not the null it happens to equal.
+  it("⚠️ asks the NAMED fact, not the null it happens to equal", () => {
     // `readFailed` and `typeRows === null` are the same boolean — the two
     // returns set them together — so this pins a spelling, deliberately: the
-    // null test says "there happen to be no rows" where the archive's money is
-    // being decided on "the read did not come back", and the two stop being the
-    // same thing the day a third return is written.
+    // null test says "there happen to be no rows" where the decision is about
+    // "the read did not come back".
     expect(dialog).not.toContain("preflight.typeRows !== null");
     expect(dialog).toMatch(/preflight\.typeRows\?\.find\(\(\w+\) => \w+\.id === finalTypeId\)/);
+    // The preflight is the retry's own read, after its model call.
+    expect(dialog).toContain("const preflight = await readTypeCatalogue();");
   });
 
   it("⚠️ withholds the `typeFormMissing` write on a failed read — and clears it on a re-type", () => {
@@ -677,9 +429,7 @@ describe("⚠️ the retry path's witness for the catalogue read — Slice #34.1
     // written `documentTypeId: finalTypeId`, and every reader downstream reads
     // the flag against that column — so a `true` earned about the OLD type
     // would name the new one, which may be the most complete type in the
-    // archive, as still waiting for a form. The re-type half of the test the
-    // `typeFormAdded` clear beside it uses — not the whole of it, which also
-    // fires on `awaitsForm`, the answer this branch exists to distrust.
+    // archive, as still waiting for a form.
     //
     // ⚠️ **Matched as ONE expression, through BOTH arms of the outer ternary,
     // and each half of that is a round's worth of learning.** Two `toContain`s
@@ -718,39 +468,16 @@ describe("⚠️ the retry path's witness for the catalogue read — Slice #34.1
     // refreshes no ref and absolves no type.
     expect(dialog).toMatch(/for \(const \w+ of \w+\.typeRows \?\? \[\]\)/);
 
-    // The other two named readers ask it a question instead of walking it —
-    // and so does the second enrichment's widening of `typeAbsolved`, which is
-    // why the count below is three and not two. `=== true` is what makes
-    // `undefined` — the answer `?.some` gives on a null — read as "no". A
-    // truthiness test would answer the same today and stop doing so the day
-    // somebody negates it; this is the property, pinned rather than
-    // inherited.
+    // The retry's two flags ask it a question instead of walking it (a third,
+    // the second enrichment's widening of `typeAbsolved`, went with #37.85's
+    // discovery read). `=== true` is what makes `undefined` — the answer
+    // `?.some` gives on a null — read as "no". A truthiness test would answer
+    // the same today and stop doing so the day somebody negates it.
     const asks = [...dialog.matchAll(/\.typeRows\?\.some\(/g)].map((m) => m.index ?? -1);
-    expect(asks).toHaveLength(3);
+    expect(asks).toHaveLength(2);
     for (const at of asks) {
       expect([at, /\)\s*===\s*true/.test(dialog.slice(at, at + 200))]).toEqual([at, true]);
     }
     expect(dialog).not.toMatch(/!\s*\w+\.typeRows\?\.some\(/);
-  });
-
-  it("⚠️ consults `discoverClaimedRef` no differently on either path", () => {
-    // The ref keeps a failed DISCOVERY claimed on purpose — one rate limit must
-    // not buy three more attempts inside a run — and this slice does not touch
-    // that. A failed CATALOGUE read is a different thing entirely: no discovery
-    // is made, so there is nothing to claim, and the type stays discoverable by
-    // the next retry once the archive can be read again.
-    expect([...dialog.matchAll(/claimedTypeIds: discoverClaimedRef\.current/g)]).toHaveLength(2);
-    expect([...dialog.matchAll(/discoverClaimedRef\.current\.add\(/g)]).toHaveLength(2);
-
-    // ⚠️ **Inside the branch the guard opens AND ahead of the billed call** —
-    // which is what the window says, since it runs from the guard's own `if (`
-    // to `discoverForType`. Both halves are load-bearing. A round found the
-    // first draft of this test green under the mutation it exists to stop:
-    // hoisting the `add` out of the branch claims the type on a failed
-    // catalogue read, nothing ever lowers that ref, and the type is then
-    // unreachable for the rest of the run — including after the archive becomes
-    // readable again. And a claim made AFTER the `await` lets a second press
-    // land while the first read is still in flight, buying it twice.
-    expect(guardOf(dialog)).toContain("discoverClaimedRef.current.add(finalTypeId);");
   });
 });

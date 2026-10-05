@@ -65,10 +65,6 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
     reason: "„Adaugă pagină” is a dialog: its boxes fill its fixed card.",
   },
   {
-    file: "src/app/documents/_components/discover-review-dialog.tsx",
-    reason: "The review of a distilled form is a dialog: its boxes fill its fixed card.",
-  },
-  {
     file: "src/app/admin/tags/_components/tag-manager.tsx",
     region: ["function RenameModal(", "export function TagManager("],
     reason: "Renaming and merging tags happen in dialogs: their boxes fill their fixed cards.",

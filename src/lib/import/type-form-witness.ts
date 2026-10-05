@@ -5,16 +5,16 @@
  * WHAT THIS IS FOR
  * ----------------
  * `handleRetryInterpret` reads the document type catalogue once, between the
- * model call and the row's patch, and decides two things off it: whether to
- * SPEND a billed discovery on the type, and whether the row should say the type
- * is still waiting for a form. Slice #34.11 gave both decisions a witness —
- * `EnrichResult.readFailed` — and made each of them refuse to answer when the
- * catalogue read did not come back. That is the right answer for both: silence
- * is the one answer that is never a false claim, and the discovery is money.
+ * model call and the row's patch, and decides off it whether the row should say
+ * the type is still waiting for a form. (Until #37.85 it also decided whether
+ * to spend a billed discovery read on the type.) Slice #34.11 gave that
+ * decision a witness — `TypeCatalogueRead.readFailed` — and made it refuse to
+ * answer when the catalogue read did not come back: silence is the one answer
+ * that is never a false claim.
  *
  * ⚠️ **AND SILENCE HAS A PRICE, WHICH #34.11 NAMED RATHER THAN HID.** With no
- * `typeFormMissing` the row drops out of `handleDiscoverSaved`'s sweep, out of
- * `formArrivedElsewhere` and out of `summariseImportRun.typesWithoutForm` — so
+ * `typeFormMissing` the row drops out of `formArrivedElsewhere` and out of
+ * `summariseImportRun.typesWithoutForm` — so
  * for a type whose ONLY document took that path, the run reports clean over a
  * type that has no form. The row cannot be retried again either: a retry whose
  * model call succeeded patches `aiStatus: "done"` with `aiPartialWrite` false,
@@ -35,22 +35,18 @@
  * is the wrong thing bought for the right reason. The re-check re-runs the
  * catalogue read and the decision that hangs off it, and buys nothing.
  *
- * ⚠️ **SO `shouldDiscoverType` IS DELIBERATELY NOT ASKED AGAIN, and that is a
- * decision rather than an omission.** Acting on a yes costs a billed discovery
- * read; computing a yes nobody may act on is a value no reader has. What the
- * re-check restores is the run's REPORTING — the row's sentence, the sweep, the
- * count and the names in the saved report — and the discovery the refused run
- * never bought stays unbought. A type recovered this way is reported as one
- * still waiting for a form, which is exactly what it is, and #27.04's
- * "Descoperire AI" on the document itself is the deliberate, priced way to
- * propose one.
+ * What the re-check restores is the run's REPORTING — the row's sentence, the
+ * re-read queue, the count and the names in the saved report. A type recovered
+ * this way is reported as one still waiting for a form, which is exactly what
+ * it is; DocTypeEngine and the Form editor in Reference Data are where a form
+ * is built. (Until #37.85 this paragraph also explained why the import's
+ * discovery read was not re-asked here; that read is gone.)
  *
  * WHY THE RULE IS HERE AND NOT INLINE
  * -----------------------------------
  * The decision is taken inside a `useCallback` in a 7,500-line component that
- * nothing in `src/__tests__/` renders, which is the same argument
- * `discover-run.ts` makes about `shouldDiscoverType`: a rule a test cannot
- * reach is a rule that drifts. What is pinned from here is the whole of it —
+ * nothing in `src/__tests__/` renders: a rule a test cannot reach is a rule
+ * that drifts. What is pinned from here is the whole of it —
  * which key is written, which is withheld, and the difference between the two.
  *
  * ⚠️ **THE RETRY'S OWN `typeFormMissing` TERNARY IS NOT MOVED IN HERE, AND

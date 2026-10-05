@@ -79,7 +79,9 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByText("DATE GENERALE").first()).toBeVisible();
       // #37.52: a type with no fees group titles that panel „Date de emitere".
       await expect(page.getByText("DATE DE EMITERE").first()).toBeVisible();
-      await expect(page.getByText("Acest tip de document nu are formular propriu", { exact: false })).toBeVisible();
+      // #37.85: the superuser's line, the engine's name a link.
+      await expect(page.getByText("Acest tip nu are încă formular; formularul se construiește în", { exact: false })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Distilare Tipizate", exact: true })).toBeVisible();
       await expect(page.getByRole("tab", { name: "Instrument", exact: true })).toHaveCount(0);
 
       // Step 2 — „Etichetă scurtă", „Salvează": back on „Acte", the new row.

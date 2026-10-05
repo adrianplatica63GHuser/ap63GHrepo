@@ -63,7 +63,8 @@ beside it — stays open to a `user`, because the feature lives on the document 
 works on every day. It extends that document type's form for every document of the type. The spec
 checks that neither answers 403 (with an id that exists nowhere, so nothing is written). Adrian can
 overturn this in one line; then both routes require a superuser and the accept step is hidden for
-a `user`.
+a `user`. **Slice #37.85 removed „Descoperire AI"**, the reason for this decision; the PUT's only
+caller left is DocTypeEngine, a superuser's screen. Closing both routes is FU-298.
 
 ## Steps
 

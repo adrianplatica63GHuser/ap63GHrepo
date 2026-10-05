@@ -59,8 +59,8 @@
  * disagreeing about when two names are one name produced two types from one
  * document. And a gate that tested `!hasForm` by hand would be a second opinion
  * about which types are waiting for one - which is `typeAwaitsForm` in
- * `discover-run.ts`, the rule the run itself uses to decide both whether to
- * spend a discovery read and whether a row may say "this type has no form yet".
+ * `discover-run.ts`, the rule the run itself uses to decide whether a row may
+ * say "this type has no form yet".
  * This codebase's own rule says it in a sentence: a validator that disagrees
  * with the executor is worse than no validator, because it is believed.
  *
@@ -736,9 +736,9 @@ function newTypeOf(
       // label like "Acte de identitate" passes that test and fails
       // `isIdCardLabel`, and `isIdCardEntry` short-circuits to false on any
       // non-card key without ever reading the label. The gate would have
-      // promised no form was needed and the run would have spent a billed
-      // discovery read on one. Agreement with the executor, again, over the
-      // tidier rule.
+      // promised no form was needed and the run's rows would then have said
+      // one was missing. Agreement with the executor, again, over the tidier
+      // rule.
       typeIsIdCard: entry.isIdCard === true,
     }),
     documentCount: 1,

@@ -133,6 +133,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A054", "{t(\"leave\")}"],
   ],
   "src/app/documents/_components/document-form.tsx": [
+    ["A096", "{chunks}"], // #37.85: „Distilare Tipizate" in the no-form line, same tab
     ["A111", "{label}"],
     ["A110", "{noLabel}"],
     ["A110", "{yesLabel}"],

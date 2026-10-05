@@ -122,8 +122,9 @@ export const UNCLASSIFIED_DOCUMENT_TYPE_KEY = "UNCLASSIFIED";
  * UNCLASSIFIED key, so it writes "Neclasificat" — which matches neither the
  * sentinel nor the row — and the resolver CREATES a `lookup_document_type` row
  * named "Neclasificat", origin IMPORT, files the document on it, draws no note
- * because the outcome is `created`, and then spends a billed discovery read
- * looking for a form for a type that means "unclassified". Findings F1 and F7,
+ * because the outcome is `created`, and then (in #27.05's import, since
+ * removed) spent a billed discovery read looking for a form for a type that
+ * means "unclassified". Findings F1 and F7,
  * rebuilt inside the fix for them. The list covers the names the row is known
  * to have; the row read covers the name Adrian gives it tomorrow.
  *
@@ -154,8 +155,8 @@ const UNCLASSIFIED_LABELS = [
  * `NECLASIFICAT`, not `UNCLASSIFIED`, so the key guard does not cover it, and
  * without this test the name pass would match it and report an ordinary
  * `matched`: every declining document filed silently under a type meaning
- * "unclassified", and then given a billed discovery read. Finding F1, on the
- * exact archive this slice was written for.
+ * "unclassified" (and, until #37.85, given a billed discovery read). Finding
+ * F1, on the exact archive this slice was written for.
  *
  * ⚠️ **The cost is stated rather than hidden: a type a person deliberately
  * named "Neclasificat" cannot be reached by a CLASSIFIER answer.** It can still

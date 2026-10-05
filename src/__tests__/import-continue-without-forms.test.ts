@@ -8,8 +8,10 @@
  * `bulk-import-dialog.tsx` — the two largest files in the import path, neither
  * of which anything in `src/__tests__/` renders — so the guard available for
  * both is a source scan. The rules themselves are pinned properly elsewhere:
- * `shouldDiscoverType`'s waiver is a pure function with its own suite in
- * `import-discover-run.test.ts`, and the stop screen's copy and placement are
+ * `typeAwaitsForm`, which the waiver deliberately leaves alone, is a pure
+ * function with its own suite in `import-discover-run.test.ts` (the spending
+ * rule the waiver used to switch off went with #37.85's removal of the
+ * import's discovery read), and the stop screen's copy and placement are
  * pinned in `import-types-blocked-copy.test.ts`. What is left over is the
  * WIRING, and wiring is exactly what a source scan can hold.
  *
@@ -137,21 +139,15 @@ describe("the press that continues without forms", () => {
 });
 
 describe("what a waived run does and does not buy", () => {
-  it("⚠️ passes the waiver at BOTH call sites of shouldDiscoverType", () => {
-    // One of the two is the run loop and the other is the retry a user presses.
-    // Passing `false` at the second would undo the waiver one row at a time:
-    // the press means "read this DOCUMENT again", not "propose a form for its
-    // type", and the first row anybody retried would open the very dialog the
-    // waiver declined.
+  it("⚠️ gates no read since #37.85, and picks only the header sentence", () => {
+    // Until #37.85 the waiver switched off the import's one-document discovery
+    // read (`shouldDiscoverType`). That read is gone, so a waived run and an
+    // ordinary one do the same work; what is left is the wording. Three
+    // mentions in code: the prop's type, the destructure, and the header.
     const dialog = withoutComments(read(DIALOG));
-    const calls = [...dialog.matchAll(/shouldDiscoverType\(\{[\s\S]*?\}\)/g)].map((m) => m[0]);
-    expect(calls).toHaveLength(2);
-    for (const call of calls) {
-      expect(call).toContain("formsWaived,");
-      // Never a literal at one site and the prop at the other.
-      expect(call).not.toContain("formsWaived: false");
-      expect(call).not.toContain("formsWaived: true");
-    }
+    expect(dialog).not.toContain("shouldDiscoverType(");
+    expect([...dialog.matchAll(/\bformsWaived\b/g)]).toHaveLength(3);
+    expect(dialog).toContain("{formsWaived");
   });
 
   it("⚠️ does NOT hand the waiver to typeAwaitsForm", () => {
@@ -167,39 +163,30 @@ describe("what a waived run does and does not buy", () => {
     for (const call of calls) expect(call).not.toContain("formsWaived");
   });
 
-  it("⚠️ does not pre-seed the per-run claim with the waived types", () => {
-    // `discoverClaimedRef` means "this run has already bought a read for this
-    // type". A waived type has not, and a claim that says otherwise is a lie
-    // that would survive into the retry handler — where the user pressing a
-    // button IS asking for the read.
+  it("⚠️ has its own result-header sentence, beside the one for an ordinary run", () => {
+    // Two branches since #37.85: a waived run says the user chose to carry on
+    // without forms; any other run points at DocTypeEngine and the Form editor.
+    // The four variants written for a discovery read that ran are gone.
     const dialog = withoutComments(read(DIALOG));
-    const adds = [...dialog.matchAll(/discoverClaimedRef\.current\.add\([^)]*\)/g)];
-    expect(adds).toHaveLength(2);
-    for (const add of adds) expect(add[0]).toContain("finalTypeId");
-  });
-
-  it("⚠️ has its own result-header sentence, ahead of the four written for a read that ran", () => {
-    // On a waived run `discoverBacklog` is 0 by construction, so without a
-    // branch of its own the header draws `doneTypesNoFormNothing` — "there are
-    // no fields to review here" — which reports a read that found nothing over
-    // a read nobody bought.
-    const dialog = read(DIALOG);
     const start = dialog.indexOf("{formsWaived");
     expect(start).toBeGreaterThan(0);
-    const chain = dialog.slice(start, dialog.indexOf("}", dialog.indexOf("doneTypesNoFormWaiting")));
-    const waived = chain.indexOf("doneTypesNoFormWaived");
-    const locked = chain.indexOf("doneTypesNoFormLocked");
-    const nothing = chain.indexOf("doneTypesNoFormNothing");
-    // ⚠️ **EACH ANCHOR IS PROVED PRESENT FIRST, and a second adversarial round
-    // is why.** A missing needle is `-1`, and `-1` is smaller than everything —
-    // so a typo in the code-side key alone (`doneTypesNoFormWaive`) left both
-    // orderings satisfied, the locale test still found the JSON key, and ro-RO
-    // rendered the raw key path on the one screen a business user reads. The
-    // sibling assertion in `import-types-blocked-copy.test.ts` already guards
-    // exactly this; this one did not.
-    expect(Math.min(waived, locked, nothing)).toBeGreaterThanOrEqual(0);
-    expect(waived).toBeLessThan(locked);
-    expect(locked).toBeLessThan(nothing);
+    const chain = dialog.slice(start, dialog.indexOf("</span>", start));
+    const waived = chain.indexOf('t("doneTypesNoFormWaived"');
+    const build = chain.indexOf('t("doneTypesNoFormBuild"');
+    // ⚠️ **EACH ANCHOR IS PROVED PRESENT FIRST.** A missing needle is `-1`,
+    // and `-1` is smaller than everything — so a typo in the code-side key
+    // would leave the ordering satisfied over a raw key path on screen.
+    expect(Math.min(waived, build)).toBeGreaterThanOrEqual(0);
+    expect(waived).toBeLessThan(build);
+    for (const gone of [
+      '"doneTypesNoForm"',
+      '"doneTypesNoFormLocked"',
+      '"doneTypesNoFormNothing"',
+      '"doneTypesNoFormWaiting"',
+      '"reviewTypesButton"',
+    ]) {
+      expect([gone, dialog.includes(gone)]).toEqual([gone, false]);
+    }
   });
 
   it("carries the waived sentences in both locales, with a Romanian few", () => {
@@ -225,6 +212,8 @@ describe("what a waived run does and does not buy", () => {
         // `import-types-blocked-copy.test.ts`'s panel scrape, and pinned here.
         "adminImport.typesBlocked.continueWithoutForms.announce",
         "adminImport.wizard.importDialog.doneTypesNoFormWaived",
+        // Slice #37.85 — the ordinary run's sentence beside it.
+        "adminImport.wizard.importDialog.doneTypesNoFormBuild",
         "adminImport.wizard.importDialog.pagesPartial",
         "adminImport.wizard.importDialog.emptyDocumentRemoved",
         "adminImport.wizard.importDialog.emptyDocumentLeft",
@@ -263,6 +252,7 @@ describe("what a waived run does and does not buy", () => {
       if (file === "ro-RO.json") {
         for (const key of [
           "adminImport.wizard.importDialog.doneTypesNoFormWaived",
+          "adminImport.wizard.importDialog.doneTypesNoFormBuild",
           "adminImport.wizard.importDialog.pagesPartial",
           "adminImport.wizard.forecast.waivedNote",
           "adminImport.importRun.waivedNote",

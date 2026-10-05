@@ -69,8 +69,8 @@
  * identity card", and a SIXTH showed that is not true either.**
  * `interpretSkipReason` answers `"id-card"` only for a card that can produce a
  * person — `scan.isIdCard && scan.canCreatePerson` — and `canCreatePerson` is
- * false for a card under `common` or `floating`, which `discover-run.ts` has
- * recorded since #27.05. So:
+ * false for a card under `common` or `floating`, which `ai-interpret-run.ts`
+ * records. So:
  *
  *  - a card with a sole Property is skipped by the AI read and backed up by the
  *    IDENTITY-CARD STEP, which is the only refusal standing between a scan and

@@ -164,6 +164,9 @@ const REQUIRED_KEYS = [
   // below cannot see `t(`goTo${kind}`)`.
   "goToReferenceData",
   "goToEngine",
+  // Slice #37.85 — the second door on an EXISTING row: the Form editor in
+  // Reference Data, the other writer of a type's form beside the engine.
+  "goToFormEditor",
   // ⚠️ **`opensInNewTab` — the `sr-only` half, and it is a separate key from
   // `linksHint` on purpose.** `linksHint` is the visible sentence, drawn once
   // under `whatNext`; this one is spoken inside EACH link, because a reader
@@ -561,6 +564,13 @@ describe("the stop screen's copy", () => {
     expect(refData).toBeGreaterThan(0);
     // The engine link is the true arm of that ternary, so it comes first.
     expect(engine).toBeLessThan(refData);
+    // Slice #37.85 — and the Form editor sits beside the engine, in the SAME
+    // (existing-type) arm: after the engine, before the new-type link.
+    const formEditor = code.indexOf("goToFormEditor");
+    expect(formEditor).toBeGreaterThan(engine);
+    expect(formEditor).toBeLessThan(refData);
+    expect(source).toContain("const FORM_EDITOR_HREF = `${REFERENCE_DATA_HREF}?list=document-types`");
+    expect(source).toContain("href={FORM_EDITOR_HREF}");
 
     // …and each carries the type it is talking about. A link that lands on the
     // right screen and leaves the user to find the row again has moved the
@@ -568,13 +578,14 @@ describe("the stop screen's copy", () => {
     expect(source).toContain("?type=${encodeURIComponent(type.id)}");
     expect(source).toContain("?list=document-types&add=${encodeURIComponent(type.name)}");
 
-    // ⚠️ **A new tab, on BOTH.** The wizard registers no unsaved-changes guard,
+    // ⚠️ **A new tab, on ALL THREE** (two until #37.85 added the Form editor).
+    // The wizard registers no unsaved-changes guard,
     // so an in-place navigation takes the run with it — and this screen is
     // reached only after the classification, which `leaveHint` says twice has
     // been paid for and will be paid for again. It would also destroy the list
     // of names the user is navigating in order to act on.
     const links = [...source.matchAll(/<Link[\s\S]*?>/g)].map((m) => m[0]);
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     for (const link of links) {
       expect(link).toContain('target="_blank"');
       expect(link).toContain('rel="noreferrer"');

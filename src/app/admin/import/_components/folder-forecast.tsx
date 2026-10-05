@@ -418,9 +418,9 @@ export function FolderForecast({
           `writesNote`, because those are the two places the run is described
           before the press that writes.
 
-          Not in the cost treatment: this decision SAVES money — no discovery
-          read is bought for a waived type — so a warning-coloured line about
-          spending would be the wrong sentence in the right place. */}
+          Not in the cost treatment: this decision spends nothing extra, so a
+          warning-coloured line about spending would be the wrong sentence in
+          the right place. */}
       {waived !== null && (
         <p className="mt-2 text-sm text-ink dark:text-zinc-200">
           {t("waivedNote", { types: waived.types, documents: waived.documents })}

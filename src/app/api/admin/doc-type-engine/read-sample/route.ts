@@ -13,8 +13,9 @@
  * There is no id to give that route, and threading an "or read these bytes
  * instead" branch through it would put a conditional in front of the page load,
  * the type resolve, the party-role lookup and the extract path, all of which
- * exist for a document that exists. `discover-run.ts`'s own header made the
- * same call for the same reason and is the precedent followed here.
+ * exist for a document that exists. The import's `discoverForType` (#27.05,
+ * removed in #37.85) made the same call for the same reason and was the
+ * precedent followed here.
  *
  * ⚠️ **NO RASTERISATION, ANYWHERE.** The obvious precedent for reading a picked
  * file is `scanEntry` in the import wizard, which rasterises page 1 with pdf.js

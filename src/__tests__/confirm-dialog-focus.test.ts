@@ -218,7 +218,7 @@ function confirmDialogSource(): string {
 }
 
 describe("DIALOG_FOCUSABLE", () => {
-  it("is still the list both other copies use", () => {
+  it("is still the list the other copy uses", () => {
     /**
      * ⚠️ **THE CONSTANT IS EXPORTED AND WAS GUARDED BY NOTHING.** Reducing it to
      * `button:not([disabled])` — dropping links, inputs, selects, textareas and
@@ -235,8 +235,8 @@ describe("DIALOG_FOCUSABLE", () => {
      * of its own, and it is in the handover); this is the drift guard in the
      * meantime.
      */
+    // Slice #37.85 deleted `discover-review-dialog.tsx`, the first of the two.
     for (const copy of [
-      ["app", "documents", "_components", "discover-review-dialog.tsx"],
       ["app", "admin", "value-lists", "_components", "document-type-form-editor.tsx"],
     ]) {
       const other = stripComments(

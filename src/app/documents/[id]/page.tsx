@@ -5,6 +5,7 @@ import {
   getDocumentWithSurveyor,
 } from "@/lib/documents/queries";
 import { documentStatus } from "@/lib/documents/status";
+import { canConfigureRoles } from "@/lib/auth/can-configure-roles";
 import { DocumentDetailTiles } from "../_components/document-detail-tiles";
 import { fromApiRecord } from "../_components/form-schema";
 
@@ -46,6 +47,8 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
     aiInterpretedAt:    record.aiInterpretedAt,
     typeTemplateFields: typeTemplate?.fields ?? null,
   });
+  // Slice #37.85: only a superuser is told a type has no form, and where to build one.
+  const isSuperuser = await canConfigureRoles();
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -57,6 +60,7 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           initialValues={initialValues}
           aiInterpretedAt={record.aiInterpretedAt ? record.aiInterpretedAt.toISOString() : null}
           status={status}
+          isSuperuser={isSuperuser}
           readonly={readonly === "true"}
           // Slice #37.20: a `?tab=` adds its tile for this visit
           // (DOC_TILE_OF_TAB); `details`, or anything unknown, adds nothing.

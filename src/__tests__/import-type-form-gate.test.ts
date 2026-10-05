@@ -282,8 +282,9 @@ describe("checkTypeForms — the identity card", () => {
     // CREATES, `docTypeIdCardRef` has no entry — it is built once from the
     // start-of-run list — so the run's expression collapses to
     // `isIdCardEntry(sr)` and nothing else. An extra `isIdCardTypeName(label)`
-    // term here excused types the run would then flag, spending a billed
-    // discovery read on a type the gate had promised needed no form.
+    // term here excused types the run would then flag as awaiting a form
+    // (and, until #37.85, buy a discovery read for) — a type the gate had
+    // promised needed no form.
     const byScanSignal = checkTypeForms({
       entries: [entry("x.jpg", { typeKey: null, label: "CI Popescu Ion" }, true)],
       catalogue: [CATCH_ALL, WITH_FORM],
@@ -307,7 +308,7 @@ describe("checkTypeForms — the identity card", () => {
 
   it("⚠️ lets the scan's signal excuse a STORED type too, because the RUN does", () => {
     // ⚠️ **THE FIRST DRAFT ASSERTED THE OPPOSITE, AND THE ADVERSARIAL ROUND
-    // SHOWED WHY THAT WAS THE WRONG READING.** `discover-run.ts` argues that
+    // SHOWED WHY THAT WAS THE WRONG READING.** `discover-run.ts` argued that
     // the TYPE should answer for a stored row, and it is right about what ought
     // to be asked — but the run asks
     // `docTypeIdCardRef.get(id) === true || isIdCardEntry(sr)`, where the left

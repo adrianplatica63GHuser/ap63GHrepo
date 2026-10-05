@@ -15,7 +15,7 @@
  *     out the remembered choice (TC-MAP-01, #37.44) — the case's „the default".
  *   - Slice #37.45's pictures, not steps of the case: the corners manager with
  *     the angles on, the mini-map in drawing mode, the properties map's
- *     toolbar, a document's pages panel, and its „Descoperire AI", at 1366 and
+ *     toolbar and a document's pages panel („Descoperire AI" left in #37.85), at 1366 and
  *     1920 px, into `playwright-report/icon-property-tools/`. The sidebar's
  *     „Recente" list is painted over.
  */
@@ -165,25 +165,19 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       }
       await photograph(page, "properties-map-toolbar", () => moveAway(page));
 
-      // Picture (#37.45), not a step: a document's pages panel and „Descoperire AI".
+      // Picture (#37.45), not a step: a document's pages panel. („Descoperire AI"
+      // and its picture left with the button, Slice #37.85.)
       const documentId = await createSaleContract(page.request, DOCUMENT);
       made.push({ kind: "document", id: documentId });
       await page.goto(`/documents/${documentId}`);
-      const discover = page.getByRole("button", { name: "Descoperire AI", exact: true });
-      await expect(discover).toBeVisible({ timeout: 30_000 });
-      expect(await iconOf(discover)).toBe("lucide-sparkles");
       const addPage = page.getByRole("button", { name: "+ Adaugă pagină", exact: true });
+      await expect(addPage).toBeVisible({ timeout: 30_000 });
       expect(await iconOf(addPage)).toBe("lucide-file-plus");
       // The pages panel and the sidebar's menus load after the form.
       await expect(page.getByText("Se încarcă…")).toHaveCount(0, { timeout: 30_000 });
       await expect(page.getByText("Autentificat ca", { exact: false })).toBeVisible({ timeout: 30_000 });
-      // Two pictures: at 1080 px the pages panel and the bottom bar do not fit together.
       await photograph(page, "document-pages", async () => {
         await addPage.scrollIntoViewIfNeeded();
-        await moveAway(page);
-      });
-      await photograph(page, "document-tools", async () => {
-        await discover.scrollIntoViewIfNeeded();
         await moveAway(page);
       });
     } finally {

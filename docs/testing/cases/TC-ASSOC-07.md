@@ -45,7 +45,7 @@ A document, created by hand: „Tip document" **„Certificat de Moștenitor"**,
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Date generale", „Date de emitere" — with the note that this type has no form of its own |
+| 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Date generale", „Date de emitere" — with the line „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.", „Distilare Tipizate" a link (a superuser's line) |
 | 2 | Types `TC-ASSOC-07 Titlu anterior` into „Etichetă scurtă" and presses „Salvează" | Back on „Acte", a new row badged „Nou!", „Certificat de Moștenitor", `TC-ASSOC-07 Titlu anterior` |
 | 3 | Opens it, and ticks the tile **„Corelate"** („Acte corelate" before #37.65, „Asocieri" before #37.31) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază", and beside them „Înscrisuri citate", which unfolds the panel „Înscrisuri citate în acest document" and folds it again |
 | 4 | Presses „Asociază act" | „Asociază Document" at `/documents/[id]/associate-reference`, the document's title under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu, and a select **„Tip relație"** with „— fără relație —", „Înlocuiește", „Modifică", „Prelungește", „Anulează", „Consolidat cu", „Versiune anterioară a", „Anexă la", „Corecție a", „Titlu anterior al", „Înscris doveditor pentru", „Act adițional la", „Antecontract al" |
@@ -125,6 +125,8 @@ corrected to „Asociază selecția" in `messages/ro-RO.json`, as #36.06 did for
 „Asociere persoană". And „Asociază selecția" returned to `?tab=references`, which the document
 screen does not know, so it landed on „Detalii" rather than „Asocieri"; corrected to
 `?tab=related` in the same slice, on this screen and the three like it.
+
+**2026-10-05 — Slice #37.85.** „Descoperire AI" left the document form, and with it the sentence under „Tip document" that advertised it. A superuser — the account every run of this case signs in as — now reads „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.", the engine's name a link. Step 1 and the spec changed together; nothing else in the case moved.
 
 **2026-10-02 — Slice #37.52.** Step 1's second panel is „Date de emitere", no longer „Taxe și onorarii": the Certificat de Moștenitor has no fees group, and #37.52 names that panel for what it holds. The spec reads the new title; nothing else in the case changed.
 

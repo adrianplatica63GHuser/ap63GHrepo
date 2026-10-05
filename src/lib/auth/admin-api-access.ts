@@ -91,7 +91,7 @@ export const OUTSIDE_ADMIN_OPEN_READS: Readonly<Record<string, string>> = {
  */
 export const OUTSIDE_ADMIN_OPEN_WRITES: Readonly<Record<string, string>> = {
   "document-types/[id]/template-fields":
-    "PUT — „Descoperire AI\" → accepting the fields found on a document (discover-review-dialog.tsx), open to a `user` by FU-223's decision.",
+    "PUT — the DocTypeEngine's save (doc-type-engine.tsx). Open to a `user` by FU-223's decision, whose reason — „Descoperire AI\" on the document screen — left with Slice #37.85; closing it is FU-298.",
   "document-types/resolve":
     "POST — turns a classifier's answer into a lookup_document_type row. Kept open with template-fields by FU-223's decision (#37.03 header), although its only caller today is the import wizard (bulk-import-dialog.tsx, an admin screen).",
 };
