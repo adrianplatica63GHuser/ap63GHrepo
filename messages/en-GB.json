@@ -165,6 +165,7 @@
     "searchPlaceholder": "search by code, nickname, cadastral no., carte funciara, tarla or parcela",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
+    "wholeMap": "Full map",
     "addNew": "Add new Property",
     "open": "Open",
     "loading": "Loading…",
@@ -1215,8 +1216,7 @@
     "sections": {
       "naturalPeople": "Natural Persons",
       "judicialPeople": "Judicial Persons",
-      "propertyList": "Properties List",
-      "propertyMap": "Properties Map",
+      "propertyList": "Properties",
       "document": "Documents",
       "administrationOperations": "Admin-Ops",
       "administrationSetup": "Admin-Setup"
@@ -3501,7 +3501,7 @@
       "naturalPersons": "Natural persons",
       "judicialPersons": "Judicial persons",
       "properties": "Properties",
-      "propertiesMap": "Map",
+      "propertiesMap": "Full map",
       "documents": "Documents",
       "admin": "Admin",
       "groups": "Groups",

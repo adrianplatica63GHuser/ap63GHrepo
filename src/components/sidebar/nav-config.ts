@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   User,
   Building2,
-  List,
   Map,
   FileText,
   LayoutDashboard,
@@ -40,7 +39,7 @@ export type NavSection = {
   items: NavItem[];
   // When set (and items is empty), the section header itself is a direct
   // link — no accordion/chevron, no expandable children. Used by "document"
-  // (Slice #15.08), "people" (Slice #15.09), and "propertyList"/"propertyMap"
+  // (Slice #15.08), "people" (Slice #15.09), and "propertyList"
   // (Slice #15.09.2): each of these is a single plain link, styled exactly
   // like any other top-level page link.
   href?: string;
@@ -62,20 +61,13 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [],
   },
   {
-    // Plain direct link (Slice #15.09.2). Property used to be a single
-    // accordion-shaped section (header + 2 always-visible sub-items); this
-    // is now two independent flat-link buttons — "Properties List" and
-    // "Properties Map" — with no enclosing "Property" header at all,
-    // mirroring the "people"/"document" flat-link pattern exactly.
+    // Plain direct link (Slice #15.09.2). Slice #37.92: ONE property item,
+    // „Proprietăți", with the map's icon. The whole-properties map
+    // (/properties/map) is no longer in the sidebar: it opens from the list's
+    // „Hartă completă", and while it is open this item is the active one.
     key: "propertyList",
-    icon: List,
-    href: "/properties",
-    items: [],
-  },
-  {
-    key: "propertyMap",
     icon: Map,
-    href: "/properties/map",
+    href: "/properties",
     items: [],
   },
   {

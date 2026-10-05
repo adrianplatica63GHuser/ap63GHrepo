@@ -9,7 +9,7 @@ import { RecencyBadge } from "@/components/recency-badge";
 import { BowTieBadge } from "@/components/bow-tie-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Map as MapIcon, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
@@ -315,6 +315,17 @@ export function PropertyListView() {
         />
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Slice #37.92: the whole-properties map's door, now the sidebar
+              has one „Proprietăți" — at the left of the group, the Map icon
+              with its words shown, like „Adaugă proprietate". */}
+          <IconButton
+            icon={MapIcon}
+            label={t("wholeMap")}
+            showLabel
+            variant="secondary"
+            size="lg"
+            onClick={() => router.push("/properties/map")}
+          />
           {selectedIds.size > 0 && (
             <IconButton
               icon={Trash2}

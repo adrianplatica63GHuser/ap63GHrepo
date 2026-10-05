@@ -165,6 +165,7 @@
     "searchPlaceholder": "caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
+    "wholeMap": "Hartă completă",
     "addNew": "Adaugă proprietate",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -1215,8 +1216,7 @@
     "sections": {
       "naturalPeople": "Persoane Fizice",
       "judicialPeople": "Persoane Juridice",
-      "propertyList": "Proprietăți — Listă",
-      "propertyMap": "Proprietăți — Hartă",
+      "propertyList": "Proprietăți",
       "document": "Acte",
       "administrationOperations": "Admin-Operațiuni",
       "administrationSetup": "Admin-Configurare"
@@ -3501,7 +3501,7 @@
       "naturalPersons": "Persoane fizice",
       "judicialPersons": "Persoane juridice",
       "properties": "Proprietăți",
-      "propertiesMap": "Hartă",
+      "propertiesMap": "Hartă completă",
       "documents": "Acte",
       "admin": "Admin",
       "groups": "Grupuri",

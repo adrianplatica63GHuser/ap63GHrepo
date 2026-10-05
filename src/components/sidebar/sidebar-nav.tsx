@@ -20,7 +20,6 @@ import {
   fetchMe,
 } from "@/lib/auth/me-query";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
-import { propertyMapHref } from "@/lib/geo/map-focus";
 import {
   getActiveHref,
   getActiveSectionKey,
@@ -181,7 +180,7 @@ function NavSectionRow({
 // ---------------------------------------------------------------------------
 //
 // Used for sections with no expandable children — "document" (Slice #15.08),
-// "people" (Slice #15.09), and "propertyList"/"propertyMap" (Slice #15.09.2):
+// "people" (Slice #15.09), and "propertyList" (Slice #15.09.2):
 // no chevron, no accordion toggle — clicking it navigates straight to its
 // href, same single-click behaviour as any other page link, just rendered
 // with the larger section-header styling/icon size.
@@ -213,6 +212,9 @@ function NavFlatSectionRow({
       // #37.42 (A001): collapsed, the name is the section's and the shared
       // tooltip shows it.
       aria-label={isCollapsed ? sectionLabel : undefined}
+      // Slice #37.92: the active item says so, not only by its colour — the
+      // one „Proprietăți" is active on the whole map too.
+      aria-current={isActive ? "page" : undefined}
       className={[
         "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isCollapsed ? "justify-center" : "justify-between",
@@ -281,15 +283,9 @@ export function SidebarNav() {
   // ── Quick-search ──────────────────────────────────────────────────────────
   const [quickSearch, setQuickSearch] = useState("");
 
-  // Slice #37.38: „Proprietăți — Hartă" pressed on a Property's form opens the
-  // map on that Property. The unsaved-changes guard still goes first, and the
-  // href is worked out only once the user has chosen to leave — so the
-  // mini-map's zoom is the one shown then. Anywhere else it is the plain map.
-  function navigateToPropertyMap() {
-    guardedAction(() => {
-      router.push(propertyMapHref(pathname));
-    });
-  }
+  // Slice #37.38's „Proprietăți — Hartă", which opened the map on the
+  // Property whose form was open, left the sidebar in Slice #37.92 (FU-306):
+  // the whole map opens from the list's „Hartă completă" now.
 
   function handleQuickSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -339,18 +335,13 @@ export function SidebarNav() {
     document: ["/documents"],
     naturalPeople: ["/natural-persons"],
     judicialPeople: ["/judicial-persons"],
-    propertyMap: ["/properties/map"],
   };
   function isFlatSectionActive(key: string): boolean {
-    // "propertyList" and "propertyMap" share the /properties prefix (the map
-    // route is nested under it: /properties/map). Check propertyMap's own
-    // prefix first and exclude it from propertyList's match so a visit to
-    // the map page doesn't light up both buttons at once.
+    // Slice #37.92: „Proprietăți" is active on every /properties page — the
+    // list, a Property, „Adaugă proprietate" and the whole map
+    // (/properties/map), which has no sidebar item of its own any more.
     if (key === "propertyList") {
-      return (
-        (pathname === "/properties" || pathname.startsWith("/properties/")) &&
-        !isFlatSectionActive("propertyMap")
-      );
+      return pathname === "/properties" || pathname.startsWith("/properties/");
     }
     const prefixes = FLAT_SECTION_ACTIVE_PREFIXES[key] ?? [];
     return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -384,7 +375,6 @@ export function SidebarNav() {
     naturalPeople: t("sections.naturalPeople"),
     judicialPeople: t("sections.judicialPeople"),
     propertyList: t("sections.propertyList"),
-    propertyMap: t("sections.propertyMap"),
     document: t("sections.document"),
     // Slice #22.05: the former single "administration" section is now two —
     // see nav-config.ts.
@@ -516,8 +506,8 @@ export function SidebarNav() {
           .map((section) => {
             // Flat-link sections are identified structurally (no items, has a
             // direct href) rather than by a hardcoded key list — "document"
-            // (Slice #15.08), "people" (Slice #15.09), and "propertyList" /
-            // "propertyMap" (Slice #15.09.2) all qualify.
+            // (Slice #15.08), "people" (Slice #15.09), and "propertyList"
+            // (Slice #15.09.2) all qualify.
             const isFlatLinkSection =
               section.items.length === 0 && !!section.href;
 
@@ -528,7 +518,7 @@ export function SidebarNav() {
                 isActive={isFlatSectionActive(section.key)}
                 isCollapsed={isCollapsed}
                 sectionLabel={sectionLabels[section.key] ?? section.key}
-                onNavigate={section.key === "propertyMap" ? navigateToPropertyMap : guardedNavigate}
+                onNavigate={guardedNavigate}
               />
             ) : (
               <NavSectionRow
