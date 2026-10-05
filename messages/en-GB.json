@@ -725,7 +725,8 @@
       "all": "All",
       "defaults": "Default",
       "lastOne": "At least one part stays shown.",
-      "marked": "Has highlighted fields — tick to see them"
+      "marked": "Has highlighted fields — tick to see them",
+      "interactionsPlaceholder": "The interaction-management module will be developed in the future."
     },
     "bulkDelete": {
       "selectAll": "Select all on this page",
@@ -1088,7 +1089,8 @@
       "addresses": "Addresses",
       "related": "Related",
       "classification": "Classifications",
-      "connections": "Connections"
+      "connections": "Connections",
+      "interactions": "Interactions"
     }
   },
   "judicialPerson": {
@@ -1131,7 +1133,7 @@
     "groupsFilterAll": "All groups",
     "groupsFilterUngrouped": "Ungrouped",
     "sections": {
-      "identity": "Judicial Person",
+      "identity": "Identity",
       "contactPersons": "Contact Persons",
       "officeAddress": "Office Address",
       "registeredAddress": "Registered Address",
@@ -1191,12 +1193,13 @@
       "contactPersonNotInSystem": "If the person is not in the system, they must be entered first using the Natural Person functionality."
     },
     "tiles": {
-      "identity": "Judicial Person",
+      "identity": "Identity",
       "contactPersons": "Contact Persons",
       "addresses": "Addresses",
       "related": "Related",
       "classification": "Classifications",
-      "connections": "Connections"
+      "connections": "Connections",
+      "interactions": "Interactions"
     },
     "tabs": {
       "details": "Details",

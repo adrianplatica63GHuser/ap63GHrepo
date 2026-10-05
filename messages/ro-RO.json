@@ -725,7 +725,8 @@
       "all": "Toate",
       "defaults": "Implicit",
       "lastOne": "Cel puțin o parte rămâne afișată.",
-      "marked": "Are câmpuri evidențiate — bifați pentru a le vedea"
+      "marked": "Are câmpuri evidențiate — bifați pentru a le vedea",
+      "interactionsPlaceholder": "Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor."
     },
     "bulkDelete": {
       "selectAll": "Selectează tot pe această pagină",
@@ -1088,7 +1089,8 @@
       "addresses": "Adrese",
       "related": "Corelate",
       "classification": "Clasificări",
-      "connections": "Conexiuni"
+      "connections": "Conexiuni",
+      "interactions": "Interacțiuni"
     }
   },
   "judicialPerson": {
@@ -1131,7 +1133,7 @@
     "groupsFilterAll": "Toate grupurile",
     "groupsFilterUngrouped": "Fără grup",
     "sections": {
-      "identity": "Persoană juridică",
+      "identity": "Identitate",
       "contactPersons": "Persoane de contact",
       "officeAddress": "Adresă sediu",
       "registeredAddress": "Adresă sediu social",
@@ -1191,12 +1193,13 @@
       "contactPersonNotInSystem": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
     },
     "tiles": {
-      "identity": "Persoană juridică",
+      "identity": "Identitate",
       "contactPersons": "Persoane de contact",
       "addresses": "Adrese",
       "related": "Corelate",
       "classification": "Clasificări",
-      "connections": "Conexiuni"
+      "connections": "Conexiuni",
+      "interactions": "Interacțiuni"
     },
     "tabs": {
       "details": "Detalii",

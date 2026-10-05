@@ -19,6 +19,8 @@ export const JP_TILES = [
   "related",
   "classification",
   "connections",
+  // Slice #37.89: a placeholder, fixed at the right like „Hartă" and „Pagini".
+  "interactions",
 ] as const;
 export type JpTile = (typeof JP_TILES)[number];
 
@@ -27,14 +29,16 @@ export const JP_FORM_TILES: readonly JpTile[] = ["identity", "contactPersons", "
 export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
   entity: "judicial-person",
   all: JP_TILES,
-  defaults: JP_FORM_TILES,
+  // Slice #37.89: „Interacțiuni" ticked by default, as „Hartă" and „Pagini" are.
+  defaults: [...JP_FORM_TILES, "interactions"],
   form: JP_FORM_TILES,
-  // Slice #37.88: the coloured groups (the purple one arrives with #37.89).
+  placement: { right: ["interactions"] },
+  // Slice #37.88: the coloured groups; #37.89 the purple one.
   groups: {
     record: ["identity", "contactPersons", "addresses"],
     related: ["related"],
     meta: ["classification", "connections"],
-    fixed: [],
+    fixed: ["interactions"],
   },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
   renamed: {

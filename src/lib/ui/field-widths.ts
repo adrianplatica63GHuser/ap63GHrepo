@@ -453,6 +453,14 @@ export const DOCUMENT = {
 export const PAGES_PANEL_REM = 40; // = unitsRem(4): the page image joins the width unit unchanged (#37.31, rule 20)
 export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
 
+/**
+ * Slice #37.89: „Interacțiuni" on the two person forms is as large as a
+ * Document's „Pagini": its width, and the height „Pagini" has before a page is
+ * added (420 px at 1366 and 1920, measured 2026-10-05; TC-PERS-07 compares the two).
+ */
+export const PAGES_TILE_EMPTY_HEIGHT_PX = 420;
+export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, minHeight: PAGES_TILE_EMPTY_HEIGHT_PX };
+
 // Slice #37.31: `documentRowStyle` and `fieldsBesidePagesStyle` gave way to
 // `unitRowStyle("document")` — the page image is a 4-unit tile like any other.
 

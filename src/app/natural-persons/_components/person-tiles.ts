@@ -15,6 +15,8 @@ export const NP_TILES = [
   "related",
   "classification",
   "connections",
+  // Slice #37.89: a placeholder, fixed at the right like „Hartă" and „Pagini".
+  "interactions",
 ] as const;
 export type NpTile = (typeof NP_TILES)[number];
 
@@ -23,14 +25,16 @@ export const NP_FORM_TILES: readonly NpTile[] = ["identity", "idCard", "contact"
 export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   entity: "natural-person",
   all: NP_TILES,
-  defaults: NP_FORM_TILES,
+  // Slice #37.89: „Interacțiuni" ticked by default, as „Hartă" and „Pagini" are.
+  defaults: [...NP_FORM_TILES, "interactions"],
   form: NP_FORM_TILES,
-  // Slice #37.88: the coloured groups (the purple one arrives with #37.89).
+  placement: { right: ["interactions"] },
+  // Slice #37.88: the coloured groups; #37.89 the purple one.
   groups: {
     record: ["identity", "idCard", "contact", "addresses"],
     related: ["related"],
     meta: ["classification", "connections"],
-    fixed: [],
+    fixed: ["interactions"],
   },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
   renamed: {

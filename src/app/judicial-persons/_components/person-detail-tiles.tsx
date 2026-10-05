@@ -28,7 +28,8 @@
  * `?tab=` still works: the tab it names adds its tile for this visit and
  * scrolls to it, so the association screens' „Înapoi" lands where it did.
  */
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Building2 } from "lucide-react";
 import { RecordHeading } from "@/lib/ui/record-heading";
@@ -40,11 +41,12 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
-import { LIST_UNITS, PANEL_GAP, unitRowStyle } from "@/lib/ui/field-widths";
+import { groupedTiles, splitTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
+import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
-import { useTilePacking } from "@/components/tiles/use-tile-packing";
+import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
+import { InteractionsTile } from "@/components/tiles/interactions-tile";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type Props = {
@@ -74,8 +76,11 @@ export function JudicialPersonDetailTiles({
   const choice = useTileChoice<JpTile>(JP_TILE_REGISTRY, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
-  const rowRef = useRef<HTMLDivElement>(null);
-  useTilePacking(rowRef, { entity: JP_TILE_REGISTRY.entity });
+  // Slice #37.89: „Interacțiuni" stands in the right-hand column (`placement.right`), as „Hartă" and „Pagini" do.
+  const rightAll = JP_TILE_REGISTRY.placement?.right ?? [];
+  const { column, slotRefs } = useRightColumn(rightAll);
+  const shownRight = splitTiles(choice.shown, JP_TILE_REGISTRY).right.length;
+  const interactionsSlot = column.slot("interactions");
   const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot.
@@ -98,6 +103,7 @@ export function JudicialPersonDetailTiles({
       related:        t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
+      interactions:   t("tiles.interactions"),
     }),
     [t],
   );
@@ -118,8 +124,8 @@ export function JudicialPersonDetailTiles({
         <TileSelector all={JP_TILES} groups={groupedTiles(JP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} />
 
         <PreviewOpenerProvider previews={previews}>
-        {/* Slice #37.75: each box right under the box above it (`useTilePacking`), not under the tallest of the line before. */}
-        <div ref={rowRef} className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
+        {/* Slice #37.75: each box right under the box above it; #37.89: the right-hand column (`TileAreas`). */}
+        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={JP_TILE_REGISTRY.entity}>
           <JudicialPersonForm
             mode={readonly ? "view" : "edit"}
             personId={personId}
@@ -159,7 +165,11 @@ export function JudicialPersonDetailTiles({
             </ListTile>
           )}
           <PreviewTiles previews={previews} />
-        </div>
+          {choice.isShown("interactions") && interactionsSlot && createPortal(
+            <InteractionsTile title={labels.interactions} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"))} />,
+            interactionsSlot,
+          )}
+        </TileAreas>
         </PreviewOpenerProvider>
       </div>
     </>
