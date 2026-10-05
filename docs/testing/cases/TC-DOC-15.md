@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -68,3 +68,7 @@ shown on the list, `CVC` refused with the quoted sentence and nothing saved, the
 and shown „–", the list back to „Intabulare". The short name put back to „Intabulare", both documents
 deleted (404 after). Nothing in the file changed, so the case is confirmed, and
 `e2e/document/type-short-name.spec.ts` translates it.
+
+**2026-10-05 — `automated` (Slice #37.95).** The test runner's full-db run 20261005T115205Z-11715 on
+6f30fc5 ran `e2e/document/type-short-name.spec.ts` green with the other 87 (lint, tsc, jest,
+verify-rebuild and forms-drift green too).
