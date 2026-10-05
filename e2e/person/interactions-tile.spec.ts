@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-07 — „Interacțiuni”, o fișă fixă la dreapta pe persoane; prima fișă a persoanei juridice se numește „Identitate”
- * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-05
+ * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-05 (step 2 follows Slice #38.06)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -58,6 +58,10 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(page.locator('[data-tile-group="fixed"] label')).toHaveText(["Interacțiuni"]);
       expect(await page.locator('[data-tile-group="fixed"]').evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(PURPLE);
       await expect(tile).toContainText(TEXT);
+      // Slice #38.06: the sentence in italics and in parentheses.
+      const note = tile.locator("[data-interactions-note]");
+      await expect(note).toHaveText(`(${TEXT})`);
+      await expect(note).toHaveCSS("font-style", "italic");
       expect(await tile.evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).borderTopColor])).toEqual([PURPLE, RIM]);
       await expect.poll(async () => {
         const s = await size(tile);

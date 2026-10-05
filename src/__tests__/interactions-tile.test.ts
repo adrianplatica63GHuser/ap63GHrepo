@@ -40,3 +40,15 @@ describe("the Judicial Person's first tile is „Identitate”", () => {
     expect([en.judicialPerson.tiles.identity, en.judicialPerson.sections.identity]).toEqual(["Identity", "Identity"]);
   });
 });
+
+describe("„Interacțiuni”'s sentence, in italics and in parentheses (#38.06)", () => {
+  const src = fs.readFileSync(path.join(process.cwd(), "src", "components", "tiles", "interactions-tile.tsx"), "utf8");
+  it("is drawn in italics, the parentheses around the message", () => {
+    expect(src).toMatch(/<p className="[^"]*\bitalic\b[^"]*" data-interactions-note="">\s*\(\{t\("interactionsPlaceholder"\)\}\)\s*<\/p>/);
+  });
+  it("the message itself stays a plain sentence, with no parentheses, in both files", () => {
+    for (const f of ["ro-RO.json", "en-GB.json"]) {
+      expect(msg(f).shared.tiles.interactionsPlaceholder).not.toMatch(/[()]/);
+    }
+  });
+});
