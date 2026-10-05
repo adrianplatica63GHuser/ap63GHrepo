@@ -1,6 +1,6 @@
 /**
  * Case:   TC-ICON-04 — Unghiurile pornite și oprite, un punct adăugat și mutat mai sus, cu pictograme
- * Source: docs/testing/cases/TC-ICON-04.md, „Last green" 2026-10-01
+ * Source: docs/testing/cases/TC-ICON-04.md, „Last green" 2026-10-01 (step 1 follows Slice #38.09)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim; an icon is read as the case reads it, the Lucide
@@ -75,7 +75,7 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       made.push({ kind: "property", id: propertyId });
 
       // Step 1 — three rows with their arrows, the ends inactive; MapPinPlus; „Arată Unghiuri"
-      // not pressed, not filled; the mini-map's „HARTĂ" / „SATELIT" in words.
+      // — on „Hartă"'s top row since #38.09 — not pressed, not filled; „HARTĂ" / „SATELIT" in words.
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
       const corners = await showTile(page, "Puncte de contur");
@@ -94,7 +94,7 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       await expect(downs.last()).toBeDisabled();
       const add = corners.getByRole("button", { name: "+ Adaugă punct", exact: true });
       expect(await iconOf(add)).toBe("lucide-map-pin-plus");
-      const showAngles = page.getByRole("button", { name: "Arată Unghiuri", exact: true });
+      const showAngles = map.getByRole("button", { name: "Arată Unghiuri", exact: true });
       expect(await iconOf(showAngles)).toBe("lucide-drafting-compass");
       await expect(showAngles).toHaveAttribute("aria-pressed", "false");
       expect(await filled(showAngles)).toBe(false);
@@ -103,7 +103,7 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
 
       // Step 2 — „Arată Unghiuri": now „Ascunde Unghiuri", pressed, filled, its tooltip the new name.
       await showAngles.click();
-      const hideAngles = page.getByRole("button", { name: "Ascunde Unghiuri", exact: true });
+      const hideAngles = map.getByRole("button", { name: "Ascunde Unghiuri", exact: true });
       await expect(hideAngles).toHaveAttribute("aria-pressed", "true");
       expect(await iconOf(hideAngles)).toBe("lucide-drafting-compass");
       expect(await filled(hideAngles)).toBe(true);

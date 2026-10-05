@@ -36,7 +36,7 @@ An icon is the Lucide one on the button: `drafting-compass`, `map-pin-plus`, `ar
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the property | „Puncte de contur": three rows, each with „Mută mai sus" (arrow up) and „Mută mai jos" (arrow down) — the first row's up and the last row's down inactive — then „+ Adaugă punct" (a map pin with a plus) and „Arată Unghiuri" (a drafting compass), not pressed, not filled. The mini-map's „HARTĂ" and „SATELIT" are words |
+| 1 | Opens the property | „Puncte de contur": three rows, each with „Mută mai sus" (arrow up) and „Mută mai jos" (arrow down) — the first row's up and the last row's down inactive — then „+ Adaugă punct" (a map pin with a plus) — the corners tile's only tool (#38.09). On „Hartă"'s top row „Arată Unghiuri" (a drafting compass), not pressed, not filled; the mini-map's „HARTĂ" and „SATELIT" are words |
 | 2 | Presses „Arată Unghiuri" | The same button, now named „Ascunde Unghiuri", pressed and filled; its tooltip reads `Ascunde Unghiuri` |
 | 3 | Presses „Ascunde Unghiuri" | „Arată Unghiuri" again, not pressed, not filled |
 | 4 | Presses „+ Adaugă punct", types Nord (m) `319340.00`, Est (m) `578240.00`, presses the row's „Salvează" | A fourth row, `319340.00` / `578240.00`; its „Mută mai sus" active |
@@ -74,3 +74,8 @@ Playwright's real mouse and takes #37.45's pictures. Its first runner run failed
 tooltip, the spec's own fault: the press closes the tooltip and the pointer never left the
 button, so a second `hover()` moved nothing. The spec now moves away first. Green on
 `20261001T185646Z-26051`, and again on `20261001T185922Z-14262`.
+
+**2026-10-05 — Slice #38.09.** „Arată / Ascunde Unghiuri" left the corners tile for „Hartă"'s top row,
+between „Desenează" and „HARTĂ" „SATELIT"; „Arată Street View" left the tile too (its checkbox opens
+it). Step 1 says where the toggle now is; steps 2–3 press the same button. The spec finds it on the
+page, so it follows unchanged but for its comment.

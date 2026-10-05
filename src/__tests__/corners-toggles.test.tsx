@@ -31,7 +31,7 @@ beforeEach(() => {
   global.fetch = jest.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })) as unknown as typeof fetch;
 });
 
-function renderManager(props: { streetView?: boolean; showAngles?: boolean } = {}) {
+function renderManager(props: { streetView?: boolean } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -39,7 +39,6 @@ function renderManager(props: { streetView?: boolean; showAngles?: boolean } = {
         corners={CORNERS}
         onChange={() => undefined}
         onToggleStreetView={() => undefined}
-        onToggleAngles={() => undefined}
         {...props}
       />
     </QueryClientProvider>,
@@ -56,9 +55,10 @@ function iconClass(button: HTMLElement): string {
   return button.querySelector("svg")?.getAttribute("class") ?? "";
 }
 
+// Slice #38.09: only „Adaugă proprietate" still gives the corners section its Street View
+// toggle; the angles toggle left it for the map's top row (map-top-row-angles.test.ts).
 describe.each([
   ["Street View", "streetView", "showStreetView", "hideStreetView", "lucide-person-standing"],
-  ["angles", "showAngles", "showAngles", "hideAngles", "lucide-drafting-compass"],
 ] as const)("the %s toggle", (_what, prop, offName, onName, icon) => {
   it("off: its icon, not pressed, the name and tooltip saying what a press does", () => {
     renderManager({ [prop]: false });
@@ -99,5 +99,14 @@ describe("the rows' arrows and the add button", () => {
   it("„+ Adaugă punct” is MapPinPlus, keeping its name", () => {
     renderManager();
     expect(iconClass(screen.getByRole("button", { name: "+ add" }))).toContain("lucide-map-pin-plus");
+  });
+});
+
+describe("no angles button in the corners tile (#38.09)", () => {
+  it("whatever the form passes, the corners toolbar draws no DraftingCompass", () => {
+    renderManager();
+    expect(screen.queryByRole("button", { name: "showAngles" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "hideAngles" })).toBeNull();
+    expect(document.querySelector(".lucide-drafting-compass")).toBeNull();
   });
 });

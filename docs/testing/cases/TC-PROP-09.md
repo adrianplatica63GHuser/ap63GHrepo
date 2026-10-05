@@ -36,9 +36,9 @@ right edge within 16 px of the map's and its top within 16 px of the map's.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the property, the window 1920 × 1080 | In „Hartă", at the top right and on one line, left to right: „Hartă extinsă" (the Maximize icon), „Desenează" (the PenTool icon), „HARTĂ" „SATELIT". Nothing of these at the bottom left. „Puncte de contur" has no „Hartă extinsă" |
-| 2 | The window 1366 × 900 | The same three, on one line at the top right of „Hartă" |
-| 3 | Presses „Hartă extinsă" | The full-screen map „Hartă extinsă": its header's „Restrânge" (the Minimize icon); on the map, at the top right, „Desenează" and „HARTĂ" „SATELIT", and no second „Hartă extinsă" |
+| 1 | Opens the property, the window 1920 × 1080 | In „Hartă", at the top right and on one line, left to right: „Hartă extinsă" (the Maximize icon), „Desenează" (the PenTool icon), „Arată Unghiuri" (the DraftingCompass icon, #38.09 — the property has three corners), „HARTĂ" „SATELIT". Nothing of these at the bottom left. „Puncte de contur" has no „Hartă extinsă", no „Arată Unghiuri" and no „Arată Street View" — only „+ Adaugă punct" |
+| 2 | The window 1366 × 900 | The same four, on one line at the top right of „Hartă" |
+| 3 | Presses „Hartă extinsă" | The full-screen map „Hartă extinsă": its header's „Restrânge" (the Minimize icon); on the map, at the top right, „Desenează", „Arată Unghiuri" and „HARTĂ" „SATELIT", and no second „Hartă extinsă" |
 | 4 | Presses „Restrânge" | The full-screen map is gone; „Hartă" shows its map in the tile |
 | 5 | Presses „Hartă extinsă", then Escape | The full-screen map opens, and Escape closes it |
 | 6 | Presses „Hartă extinsă", „Desenează", clicks the map once away from the triangle, presses „Gata", then „Restrânge" | „Gata" in „Desenează"'s place while drawing, a hint under the row; after „Restrânge", „Puncte de contur" lists four corners |
@@ -77,3 +77,7 @@ so the case is confirmed, and `e2e/property/map-top-row.spec.ts` translates it.
 **2026-10-05 — `automated`.** `e2e/property/map-top-row.spec.ts` translates the case; green on its first
 runner run, `20261005T062231Z-22072` on `ca47ee5` with the slice's tree (with the other property specs,
 TC-ICON-04's, TC-MAP-01's and TC-TILES-14's).
+
+**2026-10-05 — Slice #38.09.** „Arată Unghiuri" stands on the map's top row, between „Desenează" and
+„HARTĂ" „SATELIT", on the tile's map and on the full-screen one; the corners tile keeps only „+ Adaugă
+punct". Steps 1–3 name it. The spec follows.
