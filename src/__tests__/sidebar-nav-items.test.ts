@@ -208,33 +208,20 @@ describe("the nav is the same on a build without developer tools", () => {
     }
   });
 
-  it("⚠️ the locale toggle is still gated, and deliberately", () => {
-    // The split, stated where a future reader will look for it. Every user of
-    // this archive is Romanian; a flag that puts the whole interface into
-    // English — on the sign-in page, before anyone has authenticated — is not a
-    // developer diagnostic, it is a control that can only do harm on Ciprian's
-    // box. #20.10's Settings checkbox was removed for the same reason, and
-    // Settings is a business screen again, so there is nowhere else it could go.
-    expect(SIDEBAR).toContain("<DevOnly>");
+  it("⚠️ the locale toggle is on every build, and the developer-notes panel on none (Slice #38.22)", () => {
+    // Until #38.22 these were the two deliberate exceptions, behind <DevOnly>. #38.22 retired
+    // the flag: Adrian and Ciprian both check the English wording, so the toggle is shown
+    // everywhere; the panel's hard-coded English note was for developers, so it is gone from
+    // every build and lives in docs/claude/DEVELOPER-NOTES.md.
+    expect(SIDEBAR).not.toContain("<DevOnly>");
     expect(SIDEBAR).toContain("<LocaleToggle />");
     for (const page of ["login", "signup"]) {
       expect([page, stripComments(source("app", page, "page.tsx")).includes("<DevOnly>")])
-        .toEqual([page, true]);
+        .toEqual([page, false]);
     }
-  });
-
-  it("⚠️ …and so is the Settings page's developer-notes panel — the other exception", () => {
-    // The second exception, found by an adversarial round rather than chosen up
-    // front. Revealing the Settings ROUTE puts it in front of Ciprian — the UAT
-    // box reports as a superuser, so admin/layout.tsx admits him — and the panel
-    // renders a hard-coded ENGLISH note about this application's multi-user
-    // model not being production-ready, under a translated Romanian heading.
-    // Time frames, which is what a person comes to that screen for, is revealed.
     const view = stripComments(source("app", "admin", "settings", "_components", "settings-view.tsx"));
-    expect(view).toContain("<DevOnly>");
-    expect(view).toContain("<DeveloperPanel />");
+    expect(view).not.toContain("<DevOnly>");
+    expect(view).not.toContain("<DeveloperPanel />");
     expect(view).toContain("<TimeFramesPanel />");
-    // The time-frames panel must NOT be the one inside the wrapper.
-    expect(view.indexOf("<TimeFramesPanel />")).toBeLessThan(view.indexOf("<DevOnly>"));
   });
 });

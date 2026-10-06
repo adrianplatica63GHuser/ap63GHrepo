@@ -24,7 +24,6 @@ jest.mock("@/app/login/login-form", () => ({ LoginForm: () => null }));
 jest.mock("@/app/signup/signup-form", () => ({ SignupForm: () => null }));
 jest.mock("@/app/account/change-password/change-password-form", () => ({ ChangePasswordForm: () => null }));
 jest.mock("@/components/locale-toggle", () => ({ LocaleToggle: () => null }));
-jest.mock("@/components/dev-only", () => ({ DevOnly: () => null }));
 
 describe("FU-072: the auth screens' tab titles", () => {
   it.each([

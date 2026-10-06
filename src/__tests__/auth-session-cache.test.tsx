@@ -68,7 +68,6 @@ jest.mock("@/lib/supabase/client", () => ({
 }));
 
 jest.mock("@/components/locale-toggle", () => ({ LocaleToggle: () => null }));
-jest.mock("@/components/dev-only", () => ({ DevOnly: () => null }));
 jest.mock("@/components/recently-viewed-panel", () => ({ RecentlyViewedPanel: () => null }));
 jest.mock("@/components/providers/unsaved-changes-provider", () => ({
   useUnsavedChanges: () => ({
