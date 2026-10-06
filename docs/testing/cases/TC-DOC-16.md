@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -108,3 +108,7 @@ type's words change width). Deleted (204, 204). Nothing in the file needed corre
 confirmed, and `e2e/document/document-type-filter.spec.ts` follows it — the sign's state, colour, name
 and tooltip in every step, the row's order and the disabled look in step 1; #38.18's pictures with the
 tooltip open in each state.
+
+**2026-10-06 — `automated` again (Slice #38.18).** The test runner's full run 20261006T164649Z-7548 on
+320819f ran `e2e/document/document-type-filter.spec.ts`, as corrected, green with the other 97 specs (lint, tsc, jest and forms-drift
+green too).

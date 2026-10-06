@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -186,3 +186,7 @@ the two documents created through the API as the file says.
 column choice back at its default („Câmpuri afișate 0/4"), the file above unchanged: every step as in
 run 1, to the pixel. Deleted (204, 204). Nothing in the file needed correcting, so the case is
 confirmed, and `e2e/document/document-list.spec.ts` follows it.
+
+**2026-10-06 — `automated` again (Slice #38.18).** The test runner's full run 20261006T164649Z-7548 on
+320819f ran `e2e/document/document-list.spec.ts`, as corrected, green with the other 97 specs (lint, tsc, jest and forms-drift
+green too).
