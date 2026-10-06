@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | `e2e/fixtures/tc-e2e-pagina-peisaj.png` (1200 × 600, a red arrow pointing to the top edge and „SUS") |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -71,3 +71,7 @@ was created through the API, its page an image drawn in the page itself to the f
 
 **2026-10-06 — run 2, `confirmed`.** The same pane, window and steps, unchanged: the same answers at
 every step.
+
+**2026-10-06 — `automated`.** `e2e/document/page-rotate.spec.ts`, translated from this file, green inside
+a whole `npm run e2e`: the runner's full-db run 20261006T214933Z-30615 on 504d71d (98 passed; the one red
+there was TC-PERS-07's FU-312, fixed after).
