@@ -67,7 +67,7 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
   {
     file: "src/app/admin/tags/_components/tag-manager.tsx",
     region: ["function MergeModal(", "export function TagManager("],
-    reason: "Merging tags happens in a dialog: its boxes fill its fixed card. (#38.14: renaming moved into the chip, on the rule.)",
+    reason: "Merging tags happens in a dialog: its boxes fill its fixed card; since #38.14 a tag is renamed in its chip, on the rule.",
   },
   {
     file: "src/components/sidebar/sidebar-nav.tsx",
