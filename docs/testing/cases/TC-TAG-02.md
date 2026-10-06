@@ -5,7 +5,7 @@
 | **Area** | tag |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -71,3 +71,7 @@ Escape — `tc-tag-02-c` back, pressed; „Fuzionare etichete" with `-b` and `-d
 merged — `tc-tag-02-c×1`, `tc-tag-02-d×1`, none pressed. Tags removed (200 × 2), the property
 deleted (204), none left. Nothing in the file changed, so the case is confirmed, and
 `e2e/tag/tag-cloud.spec.ts` translates it.
+
+**2026-10-06 — `automated` (Slice #38.14).** The test runner's full run 20261006T021842Z-32461 on
+5124cee ran `e2e/tag/tag-cloud.spec.ts` green with the other 96 (lint, tsc, jest and forms-drift green
+too).
