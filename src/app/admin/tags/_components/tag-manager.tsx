@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
+import { useFitToWindow } from "@/lib/ui/use-fit-to-window";
 
 /** Slice #37.35: the cloud is 6 units (#37.22's two panels). */
 const CLOUD_UNITS = 6;
@@ -261,6 +262,12 @@ export function TagManager() {
   // Escape unmounts the box: the blur that may follow is not „leaving it".
   const cancelled = useRef(false);
 
+  // Slice #38.19: only the chips scroll. Their box takes the height the window leaves under the
+  // header and the explanation and over the refusal line, so the page itself never scrolls and
+  // „Redenumește etichetă" and „Fuzionează etichete" stay in sight however many tags there are.
+  const cloudRef = useRef<HTMLDivElement>(null);
+  const cloudHeight = useFitToWindow(cloudRef, [renameError !== null, tags.length > 0]);
+
   // Only tags still in the cloud count (a refetch may have taken one away).
   const chosen  = tags.filter((r) => selected.has(r.tag)).map((r) => r.tag);
   const actions = cloudActions(chosen.length);
@@ -365,7 +372,9 @@ export function TagManager() {
       <UnitRow units={[CLOUD_UNITS]}>
       {/* ── Tag Cloud ──────────────────────────────────────────────────────── */}
       {/* Slice #37.22: the cloud is two panels wide and wraps downward. Slice
-          #38.14: it is the page; its two buttons stand at its top right. */}
+          #38.14: it is the page; its two buttons stand at its top right. Slice
+          #38.19: the header and the explanation stay put; only the chips' box
+          under them scrolls (`data-tag-cloud-scroll`). */}
       <section {...screenPanel("tag-cloud", CLOUD_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-0.5">
@@ -401,7 +410,14 @@ export function TagManager() {
         </div>
         <p className="mb-4 text-sm text-fade dark:text-zinc-400">{t("cloud.note")}</p>
 
-        <div className="flex flex-wrap gap-2">
+        {/* #38.19: the chips' own box, the cloud's only scroller — the chips stay in tab order,
+            and a chip focused from the keyboard is scrolled into view by the browser. */}
+        <div
+          ref={cloudRef}
+          data-tag-cloud-scroll
+          className="-m-1 flex flex-wrap content-start gap-2 overflow-y-auto p-1"
+          style={cloudHeight !== null ? { maxHeight: `${cloudHeight}px` } : undefined}
+        >
           {tags.map((row) =>
             editing === row.tag ? (
               <input
@@ -412,6 +428,8 @@ export function TagManager() {
                 title={t("rename.hint")}
                 value={draft}
                 autoFocus
+                // #38.19: the chip being renamed is brought into the box's view.
+                ref={(el) => el?.scrollIntoView({ block: "nearest" })}
                 disabled={renaming}
                 onChange={(e) => setDraft(e.target.value.toLowerCase())}
                 onKeyDown={(e) => {
