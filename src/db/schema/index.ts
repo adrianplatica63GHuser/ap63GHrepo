@@ -1897,7 +1897,8 @@ export const entityTag = pgTable("entity_tag", {
 // app_users: links a Supabase Auth UID to an app-level username + role.
 //   supabase_uid is unique (one app record per auth identity).
 //   username is unique.
-//   role: "superuser" | "user"
+//   role: "superuser" | "user" — since #38.21 every row and the default are "superuser";
+//   the application reads no role (one kind of user), the enum stays for the Portal.
 //   approved_by: username of the admin who approved this account (null for
 //   the seeded superuser).
 
@@ -1942,7 +1943,8 @@ export const appUsers = pgTable(
     supabaseUid: text("supabase_uid").unique(),
     email:       text("email").notNull().unique(),
     username:    text("username").notNull().unique(),
-    role:        appUserRoleEnum("role").notNull().default("user"),
+    // Slice #38.21 (migration 094): every account is a superuser; the application reads no role (the Portal will).
+    role:        appUserRoleEnum("role").notNull().default("superuser"),
     approvedBy:  text("approved_by"),   // null for the seeded superuser
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
