@@ -5,7 +5,7 @@
 | **Area** | stamp |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -70,3 +70,7 @@ persons, the file as written: step 1 at 1366 — (0, 0), (492, 0), „Elemente d
 the bottom bar's padding, the outline dashed and free, dropped at (984, 0), the others unmoved; step 4 —
 (984, 0) after the reload; step 5 — (0, 325), the key gone. All four deleted (204 × 4). Nothing in the
 file changed, so the case is confirmed, and `e2e/stamp/stamp-screen-tiles.spec.ts` translates it.
+
+**2026-10-05 — `automated` (Slice #38.13).** The test runner's full run 20261006T013539Z-15574 on
+24e3ca7 ran `e2e/stamp/stamp-screen-tiles.spec.ts` green with the other 95 (lint, tsc, jest and
+forms-drift green too).

@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-05, Slice #38.11 — 308 entries. Rows are status, columns are impact.
+As of 2026-10-06, Slice #38.13 — 309 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 69 | 67 | 16 | 169 |
+| open | 17 | 69 | 68 | 16 | 170 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 26 | 3 | 122 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 58 | 131 | 98 | 21 | 308 |
+| **total** | 58 | 131 | 99 | 21 | 309 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -392,3 +392,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-306 | 2026-10-05 #37.92 | next-slice idea | Map | Nothing on screen opens the whole map on a Property any more: #37.38 sent `/properties/map?focus=<id>&z=<zoom>` from the sidebar's „Proprietăți — Hartă" pressed on a Property's form, and #37.92 made the sidebar's two property items one, so the map page's focus and blink are reached only by typing the address. | src/lib/geo/map-focus.ts propertyMapHref (now unused outside its test); src/app/properties/map/property-map.tsx `?focus=`; TC-MAP-01 rewritten to type the address | user | S | open | A door on the Property itself — e.g. a „Hartă completă" beside the „Hartă" tile's „Hartă extinsă", sending `propertyMapHref(pathname)` after the unsaved-changes question — and TC-MAP-01's old steps 4–6 back. | 2026-10-05 |
 | FU-307 | 2026-10-05 #38.03 20261005T202219Z-23160 | tooling | Tooling & CI | On the push of 5406f1e the `DB rebuild` workflow (#217) sat queued for about 15 minutes and was then cancelled by GitHub without running a step, while `CI` (#334) on the same commit passed; the runner's `ci` step reports that as a failure with „log not available", and nothing says why the job never started (a GitHub queue limit, or the account's Actions minutes, are the candidates). | .test-runner/logs/20261005T202219Z-23160/ci.log (queued 20:22–20:37 UTC, then `failure`, job „rebuild" cancelled); https://github.com/adrianplatica63GHuser/ap63GHrepo/actions/runs/37369305935 | dev | XS | ignored | Transient, on GitHub's side: the next push (fe9ee19, #38.04) ran DB rebuild #218 green, and nothing in the slice touched what it covers. Reopen if a rebuild is cancelled while queued again — then have `ciVerdict` name a job cancelled before its first step as its own verdict. | 2026-10-05 |
 | FU-308 | 2026-10-05 #38.11 | defect | Groups | „Căutare globală" still shows a group as its code and the record's position in it — „GRP-001 12" (`String(g.position).padStart(2, "0")`) — the high-water counter #38.11 took off „Conexiuni" → „Grupuri", where the bracket is now the group's member count. The group editor's „[nn]" beside each member is that position too, and is what it means there. | src/app/(all-roles)/admin/global-search/_components/global-search-view.tsx:190; Handover.38.11.md „Noticed, not fixed" | user | XS | open | Decide whether global search should read „GRP-001 [2]" (the member count, as „Conexiuni" now does) or drop the number; the editor's position stays. | 2026-10-05 |
+| FU-309 | 2026-10-06 #38.13 auto-20261006T013432Z-restore-drill | tooling | Tooling & CI | The runner's automatic restore drill failed on the newest backup (2026-10-05T114732Z) over one file: `seed-dev-data.manifest.json` is in the backup's files but has no row, so the reconciliation counts it as a „file without a row" — while every table (49, 4881 rows), every page file (167/167 SHA-256) and the app's four lists came back right. The first drill (#37.11) had no such file. Either the manifest is not a page file and the drill should not count it, or it is one the seed writes without a row. | .test-runner/logs/auto-20261006T013432Z-restore-drill/restore-drill.log („PROBLEM file without a row: seed-dev-data.manifest.json"); scripts/backup/archive.ts drill | dev | XS | open | Find what writes `seed-dev-data.manifest.json` into the archived files; if it is the dev seed's bookkeeping, leave it out of the files the drill reconciles (or out of the backup), and re-run the drill. | 2026-10-06 |
