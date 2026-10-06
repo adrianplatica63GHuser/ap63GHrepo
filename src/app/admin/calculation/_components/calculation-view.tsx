@@ -1,11 +1,9 @@
 "use client";
 
-import { useNameOr } from "@/components/record/use-name-or";
 import { useState, useEffect } from "react";
-import { History, PackagePlus, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
@@ -16,20 +14,32 @@ import { HelpHint } from "@/components/help/help-hint";
 // same value so the copy cannot outlive it.
 import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { screenBox, screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
+// Pure, and the same rule the server applies: a drop is a swap (Ask first 2).
+import { swapped } from "@/lib/calculation/geometry";
+import type { FileProblem } from "@/lib/calculation/parse";
 
 /**
- * Slice #37.35: the calculation is one tile of 7 units — it holds the 6-unit map
- * (rule 20), the figures' grid (four L) and the owners' table inside its padding;
- * the commit form inside it is 3 units, and the success panel 6.
+ * „Calcul drum lateral", steps 1 and 2                            (Slice #38.23)
+ *
+ * Step 1 is the file picker, with the text above it describing the three-section
+ * file. Step 2: the parcel drawn from its numbered corners, cut into one slice
+ * per owner in a random order, which the user rearranges by dropping one slice
+ * on another — or, from the keyboard, with ↑ ↓ in the owners' table. The road
+ * (step 3) is #38.24; „Creează proprietățile" is #38.25, so this screen offers
+ * no commit until then (Ask first 1).
+ *
+ * The geometry is the server's: every change of order posts the file's text
+ * and the new order to /api/calculation/preview and draws what comes back.
+ *
+ * Slice #37.35: the calculation is one tile of 7 units — it holds the 6-unit
+ * map (rule 20), the figures' grid (four L) and the owners' table.
  */
 const CALC_UNITS = 7;
-const COMMIT_UNITS = 3;
-const COMMITTED_UNITS = 6;
 
-/** The owners' shares, at #37.16's column widths (Slice #37.22). */
-const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
+/** The owners' slices: order, name, share, area, and ↑ ↓. 38.24 adds the road's columns. */
+const OWNER_COLUMNS: readonly ColumnName[] = ["count", "personName", "percent", "area", "feOrder"];
 
 // ---------------------------------------------------------------------------
 // Types (mirror src/lib/calculation/compute.ts — redeclared so this client
@@ -38,39 +48,29 @@ const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "
 
 type Corner = { lat: number; lon: number; north: number; east: number };
 
-type ComputedOwner = {
+type Slice = {
+  owner: number;
   name: string;
-  rawLabel: string;
   percent: number;
-  fraction: number;
-  originalArea: number;
-  roadParticipation: number;
-  finalArea: number;
-  computedArea: number;
+  targetArea: number;
+  area: number;
   corners: Corner[];
 };
 
 type Computation = {
-  orientation: "HORIZONTAL" | "VERTICAL";
-  declaredOrientation: "HORIZONTAL" | "VERTICAL";
-  roadCorner: string;
+  corners: (Corner & { number: string })[];
+  sides: { from: string; to: string; length: number }[];
+  parcelArea: number;
   roadWidth: number;
-  totalArea: number;
-  lengthSide: number;
-  widthSide: number;
   percentTotal: number;
-  bigPolygon: Corner[];
-  owners: ComputedOwner[];
-  road: { area: number; length: number; corners: Corner[] };
+  remainderToLast: boolean;
+  order: number[];
+  slices: Slice[];
 };
 
-type CommitResult = {
-  groupId:    string;
-  groupCode:  string;
-  runId:      string;
-  runCode:    string;
-  properties: { id: string; code: string; nickname: string | null }[];
-};
+type PreviewAnswer =
+  | { kind: "ok"; computation: Computation }
+  | { kind: "rejected"; problems: FileProblem[] };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -91,17 +91,15 @@ function fmtLen(n: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Re-run payload  (Slice #20.09)
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Re-run payload helpers  (Slice #20.09)
-// ---------------------------------------------------------------------------
-
-type RerunPayload = {
-  text:    string;
-  options: { groupDescription: string; includeRoad: boolean; roadNickname: string };
-};
+/**
+ * „Istoricul calculelor" → a run → „Reia" puts the run's file here. A run
+ * stored before #38.23 holds the five-section file, which this screen now
+ * rejects with its reasons; #38.25 settles how the history treats old runs.
+ */
+type RerunPayload = { text: string };
 
 /** Read + consume the calc_rerun sessionStorage entry on the client side. */
 function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
@@ -110,7 +108,12 @@ function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
   const raw = sessionStorage.getItem("calc_rerun");
   if (!raw) return null;
   sessionStorage.removeItem("calc_rerun");
-  try { return JSON.parse(raw) as RerunPayload; } catch { return null; }
+  try {
+    const parsed = JSON.parse(raw) as { text?: unknown };
+    return typeof parsed.text === "string" ? { text: parsed.text } : null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -128,11 +131,11 @@ function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
 const COORDINATE_PICKER_OFFER_ID = "calculation-coordinate-picker-offer";
 
 export function CalculationView() {
-  const t            = useTranslations("calculation");
-  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
+  const t = useTranslations("calculation");
+  const format = useFormatter();
   // Slice #34.23 — the picker sentence is `shared` because two screens make the
   // same offer; see `picker-accept.ts`.
-  const tShared      = useTranslations("shared");
+  const tShared = useTranslations("shared");
   const searchParams = useSearchParams();
 
   // Slice #20.09: parse a re-run payload from sessionStorage during the first
@@ -142,72 +145,87 @@ export function CalculationView() {
     consumeRerunPayload(searchParams.get("rerun") === "1"),
   );
 
-  const [fileName, setFileName] = useState<string | null>(
-    rerunPayload ? t("rerun.fileName") : null,
-  );
-  const [fileText, setFileText] = useState<string | null>(
-    rerunPayload?.text ?? null,
-  );
+  const [fileName, setFileName] = useState<string | null>(rerunPayload ? t("rerun.fileName") : null);
+  const [fileText, setFileText] = useState<string | null>(rerunPayload?.text ?? null);
 
   const [computation, setComputation] = useState<Computation | null>(null);
+  const [problems, setProblems] = useState<FileProblem[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
-
-  const [groupDescription, setGroupDescription] = useState(
-    rerunPayload?.options.groupDescription ?? "",
-  );
-  const [includeRoad, setIncludeRoad] = useState(
-    rerunPayload?.options.includeRoad ?? true,
-  );
-  const [roadNickname, setRoadNickname] = useState(
-    rerunPayload?.options.roadNickname ?? t("road.defaultNickname"),
-  );
+  /** What the last reorder did, for the screen reader (aria-live). */
+  const [announcement, setAnnouncement] = useState("");
 
   // Kick off preview automatically when re-running — the effect only calls the
-  // async doPreview function; no setState calls in the effect body.
+  // async function; no setState calls in the effect body.
   useEffect(() => {
-    if (rerunPayload) {
-      doPreview(rerunPayload.text, t("rerun.fileName"));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (rerunPayload) void readFile(rerunPayload.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const [committing, setCommitting] = useState(false);
-  const [commitError, setCommitError] = useState<string | null>(null);
-  const [committed, setCommitted] = useState<CommitResult | null>(null);
 
   function resetAll() {
     setFileName(null);
     setFileText(null);
     setComputation(null);
+    setProblems(null);
     setPreviewError(null);
-    setGroupDescription("");
-    setIncludeRoad(true);
-    setRoadNickname(t("road.defaultNickname"));
-    setCommitError(null);
-    setCommitted(null);
+    setAnnouncement("");
   }
 
-  async function doPreview(text: string, name: string) {
+  async function preview(text: string, order?: number[]): Promise<PreviewAnswer> {
+    const res = await fetch("/api/calculation/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order ? { text, order } : { text }),
+    });
+    if (res.redirected) throw new Error(t("errors.session"));
+    const data = (await res.json().catch(() => ({}))) as {
+      computation?: Computation;
+      problems?: FileProblem[];
+      error?: string;
+    };
+    if (res.ok && data.computation) return { kind: "ok", computation: data.computation };
+    if (Array.isArray(data.problems)) return { kind: "rejected", problems: data.problems };
+    throw new Error(data.error ?? `Error ${res.status}`);
+  }
+
+  /** Step 1 → 2: read the file; the server picks the random first order. */
+  async function readFile(text: string) {
     setPreviewing(true);
     setPreviewError(null);
+    setProblems(null);
     setComputation(null);
-    setCommitted(null);
+    setAnnouncement("");
     try {
-      const res = await fetch("/api/calculation/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (res.redirected) throw new Error(t("errors.session"));
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
-      setComputation((data as { computation: Computation }).computation);
-      setGroupDescription(t("group.defaultDescription", { file: name }));
+      const answer = await preview(text);
+      if (answer.kind === "ok") setComputation(answer.computation);
+      else setProblems(answer.problems);
     } catch (err) {
       setPreviewError(err instanceof Error ? err.message : String(err));
     } finally {
       setPreviewing(false);
+    }
+  }
+
+  /** Swap the slices at positions a and b; the map keeps showing the old cut until the new one arrives. */
+  async function swap(a: number, b: number) {
+    if (!fileText || !computation || reordering) return;
+    if (a < 0 || b < 0 || a >= computation.order.length || b >= computation.order.length || a === b) return;
+    const names = [computation.slices[a].name, computation.slices[b].name];
+    setReordering(true);
+    setPreviewError(null);
+    try {
+      const answer = await preview(fileText, swapped(computation.order, a, b));
+      if (answer.kind === "ok") {
+        setComputation(answer.computation);
+        setAnnouncement(t("map.swapped", { a: names[0], b: names[1] }));
+      } else {
+        setProblems(answer.problems);
+      }
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setReordering(false);
     }
   }
 
@@ -218,98 +236,53 @@ export function CalculationView() {
     const text = await file.text();
     setFileName(file.name);
     setFileText(text);
-    await doPreview(text, file.name);
+    await readFile(text);
   }
 
-  async function doCommit() {
-    if (!fileText) return;
-    setCommitting(true);
-    setCommitError(null);
-    try {
-      const res = await fetch("/api/calculation/commit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: fileText,
-          groupDescription: groupDescription.trim(),
-          includeRoad,
-          roadNickname: roadNickname.trim(),
-        }),
-      });
-      if (res.redirected) throw new Error(t("errors.session"));
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`);
-      setCommitted(data as CommitResult);
-    } catch (err) {
-      setCommitError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setCommitting(false);
+  /** One rejection, in the screen's language. */
+  function problemText(p: FileProblem): string {
+    const pct = (n: number) => format.number(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const metres = (n: number) => format.number(n, { maximumFractionDigits: 2 });
+    switch (p.code) {
+      case "missingSection":
+      case "repeatedSection":
+        return t(`problems.${p.code}`, { section: t(`problems.section.${p.values.section}`) });
+      case "cornerCount":
+      case "ownerCount":
+      case "widthCount":
+        return t(`problems.${p.code}`, { count: p.values.count });
+      case "repeatedCorner":
+        return t("problems.repeatedCorner", { number: p.values.number });
+      case "cornersCross":
+        return t("problems.cornersCross");
+      case "percentTotal":
+        return t("problems.percentTotal", { total: pct(p.values.total) });
+      case "roadWidth":
+        return t("problems.roadWidth", { width: metres(p.values.width) });
+      case "unreadableLine":
+        return t("problems.unreadableLine", {
+          lineNumber: p.values.lineNumber,
+          line: p.values.line,
+          expected: t(`problems.expected.${p.values.section}`),
+        });
     }
   }
 
-  // ---- Committed (success) -------------------------------------------------
-
-  if (committed) {
-    return (
-      <div className="flex flex-col gap-4">
-        <UnitRow units={[COMMITTED_UNITS]}>
-        <div {...screenPanel("committed", COMMITTED_UNITS)} className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
-          <p className="font-semibold text-green-800 dark:text-green-300">
-            {t("success.title", { code: committed.groupCode })}
-          </p>
-          <p className="mt-1 text-xs text-green-700 dark:text-green-400">
-            {t("success.runCode", { code: committed.runCode })}
-            {" · "}
-            {/* #37.46 (A087): History, icon-only; „Vezi istoricul calculului"
-                is its name and tooltip. */}
-            <IconButton
-              href={`/admin/calculation/history/${committed.runId}`}
-              icon={History}
-              label={t("success.viewRun")}
-              variant="secondary"
-              size="xs"
-              className="ml-1 align-middle"
-            />
-          </p>
-          <ul className="mt-2 flex flex-col gap-1">
-            {committed.properties.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/properties/${p.id}`}
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  {/* #37.57: the property by its nickname, never its system ID. */}
-                  {nameOr(p.nickname, "property")}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        </UnitRow>
-        <div>
-          <IconButton
-            icon={RotateCcw}
-            label={t("buttons.startOver")}
-            variant="primary"
-            size="sm"
-            onClick={resetAll}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  const percentOff = computation
-    ? Math.abs(computation.percentTotal - 100) > 0.001
-    : false;
-
-  // ---- Main ----------------------------------------------------------------
+  const lastName = computation?.slices[computation.slices.length - 1]?.name ?? "";
 
   return (
     <UnitRow units={[CALC_UNITS]}>
     <section {...screenPanel("calculation", CALC_UNITS)} className="flex flex-col gap-5 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Intro / reasoning */}
-      <p className="text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
+      {/* Step 1 — what the file is (#38.23: three sections, three rules) */}
+      <div className="flex flex-col gap-1 text-sm text-fade dark:text-zinc-400">
+        <p>{t("intro.lead")}</p>
+        <ul className="list-disc pl-5">
+          <li>{t("intro.corners")}</li>
+          <li>{t("intro.owners")}</li>
+          <li>{t("intro.width")}</li>
+        </ul>
+        <p>{t("intro.then")}</p>
+      </div>
 
       {/* Upload */}
       <div className="flex flex-wrap items-center gap-3">
@@ -347,16 +320,9 @@ export function CalculationView() {
       </div>
 
       {/*
-        Slice #34.23 — what the file window will and will not show.
-
-        The button above opens a dialog filtered to `COORDINATE_FILE_ACCEPT`,
-        and until this line a user whose export was named something else met a
-        window that simply did not list it and said nothing. The list of
-        extensions is `COORDINATE_FILE_OFFER`, derived from that same `accept`
-        value, so widening one widens the other.
-
-        ⚠️ Worded as what the WINDOW shows, never as what this screen accepts:
-        `accept` filters a dialog and decides nothing about the parse. See
+        Slice #34.23 — what the file window will and will not show. Worded as
+        what the WINDOW shows, never as what this screen accepts: `accept`
+        filters a dialog and decides nothing about the parse. See
         `picker-accept.ts`.
       */}
       <p
@@ -368,179 +334,109 @@ export function CalculationView() {
       </p>
 
       {previewing && (
-        <p className="text-sm text-fade dark:text-zinc-400">{t("status.computing")}</p>
+        <p className="text-sm text-fade dark:text-zinc-400" role="status">{t("status.computing")}</p>
       )}
       {previewError && (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+        <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
           {previewError}
         </p>
       )}
 
+      {/* A rejected file: every reason at once (#38.23) */}
+      {problems && (
+        <div role="alert" data-panel="file-problems" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <p className="font-medium">{t("problems.title")}</p>
+          <ul className="mt-1 list-disc pl-5">
+            {problems.map((p, i) => (
+              <li key={i}>{problemText(p)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {computation && (
         <>
-          {/* Summary */}
+          {/* Step 2 — the map: numbered corners, named slices, drag to swap */}
+          <PreviewMap
+            bigPolygon={computation.corners}
+            numberedCorners={computation.corners}
+            owners={computation.slices.map((s) => ({ label: s.name, corners: s.corners }))}
+            onSwap={(a, b) => void swap(a, b)}
+            label={t("map.label")}
+          />
+          <div className="flex items-center gap-2 text-xs text-fade dark:text-zinc-400">
+            <span>{t("map.dragHint")}</span>
+            <HelpHint hintKey="calc-preview-not-saved" />
+          </div>
+          <p className="sr-only" role="status" aria-live="polite">
+            {reordering ? t("status.recomputing") : announcement}
+          </p>
+
+          {/* The figures */}
           <div className="text-sm" style={stepGridStyle("L", 4)}>
-            <Stat label={t("summary.orientation")} value={t(`orientation.${computation.orientation}`)} />
-            <Stat label={t("summary.totalArea")} value={`${fmtArea(computation.totalArea)} m²`} />
-            <Stat label={t("summary.roadCorner")} value={computation.roadCorner} />
-            <Stat label={t("summary.roadWidth")} value={`${fmtLen(computation.roadWidth)} m`} />
-            <Stat label={t("summary.lengthSide")} value={`${fmtLen(computation.lengthSide)} m`} />
-            <Stat label={t("summary.widthSide")} value={`${fmtLen(computation.widthSide)} m`} />
-            <Stat label={t("summary.roadLength")} value={`${fmtLen(computation.road.length)} m`} />
-            <Stat label={t("summary.roadArea")} value={`${fmtArea(computation.road.area)} m²`} />
+            <Stat label={t("figures.parcelArea")} value={`${fmtArea(computation.parcelArea)} m²`} />
+            <Stat label={t("figures.roadWidth")} value={`${fmtLen(computation.roadWidth)} m`} />
+            {computation.sides.map((s) => (
+              <Stat
+                key={`${s.from}-${s.to}`}
+                label={t("figures.side", { from: s.from, to: s.to })}
+                value={`${fmtLen(s.length)} m`}
+              />
+            ))}
           </div>
 
-          {percentOff && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-              {t("summary.percentWarning", {
-                total: computation.percentTotal.toLocaleString(undefined, {
-                  maximumFractionDigits: 2,
-                }),
-              })}
-            </p>
-          )}
-
-          {/* Owners table */}
+          {/* The owners' slices, in order — with the keyboard's reorder */}
           <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
             <table {...fixedTable(OWNER_COLUMNS)}>
               <FixedColumns columns={OWNER_COLUMNS} />
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                 <tr>
+                  <th className="px-3 py-2 text-right" {...columnHead("count")}>{t("table.order")}</th>
                   <th className="px-3 py-2" {...columnHead("personName")}>{t("table.owner")}</th>
                   <th className="px-3 py-2 text-right" {...columnHead("percent")}>{t("table.percent")}</th>
-                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.originalArea")}</th>
-                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.roadParticipation")}</th>
-                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.finalArea")}</th>
-                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.computedArea")}</th>
+                  <th className="px-3 py-2 text-right" {...columnHead("area")}>{t("table.area")}</th>
+                  <th className="px-3 py-2" {...columnHead("feOrder")}>{t("table.move")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-crease dark:divide-zinc-800">
-                {computation.owners.map((o, i) => (
-                  <tr key={i}>
-                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
-                      {o.name}
-                      {o.rawLabel !== o.name && (
-                        <span className="ml-1 text-xs text-fade dark:text-zinc-500">
-                          ({o.rawLabel})
-                        </span>
-                      )}
+                {computation.slices.map((s, i) => (
+                  <tr key={s.owner}>
+                    <td className="px-3 py-2 text-right tabular-nums">{i + 1}</td>
+                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>{s.name}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {format.number(s.percent, { maximumFractionDigits: 3 })}%
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{o.percent}%</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{fmtArea(o.originalArea)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{fmtArea(o.roadParticipation)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{fmtArea(o.finalArea)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums font-medium">{fmtArea(o.computedArea)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums font-medium">{fmtArea(s.area)}</td>
+                    <td className="px-2 py-1">
+                      <span className="flex gap-1">
+                        {/* #37.45 (A068)'s ArrowUp / ArrowDown, as in the form editor. */}
+                        <IconButton
+                          icon={ArrowUp}
+                          label={t("table.moveUp", { name: s.name })}
+                          variant="secondary"
+                          size="xs"
+                          onClick={() => void swap(i, i - 1)}
+                          disabled={reordering || i === 0}
+                        />
+                        <IconButton
+                          icon={ArrowDown}
+                          label={t("table.moveDown", { name: s.name })}
+                          variant="secondary"
+                          size="xs"
+                          onClick={() => void swap(i, i + 1)}
+                          disabled={reordering || i === computation.slices.length - 1}
+                        />
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Map */}
-          <PreviewMap
-            bigPolygon={computation.bigPolygon}
-            owners={computation.owners.map((o) => ({ label: o.name, corners: o.corners }))}
-            road={computation.road.corners}
-          />
-
-          {/* Commit form */}
-          <div {...screenPanel("commit", COMMIT_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
-            <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
-              {t("commit.title", { count: computation.owners.length })}
-            </h3>
-
-            {/* ⚠️ **THE OWNER NAMES ARE TEXT, AND THIS SCREEN READ AS THOUGH
-                THEY WERE OWNERSHIP.**   (Slice #34.08, D-20a.)
-
-                There is no Person anywhere in the calculation subsystem — grep
-                „person" over `src/lib/calculation/` and `src/app/api/calculation/`
-                and nothing comes back. `ParsedOwner.name` is a cleaned nickname
-                with an „owner N" prefix stripped off it, and the commit route
-                writes it to `nickname` on the property and nowhere else: no
-                `person` row, no `property_person` link, no natural/judicial
-                distinction. Yet the table above this form is headed with those
-                names beside computed areas, and the button below says „create
-                the properties and a group" — so a business user reading the
-                screen concludes the archive now records who owns each parcel.
-                It does not, and the difference matters the first time somebody
-                searches the archive for one of those people and finds nothing.
-
-                ⚠️ **ONE SENTENCE, AND IT IS THE WHOLE OF D-20.** Resolving each
-                label to a real Person during the commit — reusing the import's
-                party queue — is (b), a feature, and a slice of its own. Saying
-                so here costs nothing and stops the screen making a claim it
-                cannot back; leaving it unsaid until (b) ships is the archive
-                being trusted for something it does not hold.
-
-                Plain body text rather than amber: nothing here is a fault or a
-                thing to fix. It is what the calculation is FOR. */}
-            <p className="text-xs text-fade dark:text-zinc-400">
-              {t("commit.ownersAreNicknames")}
-            </p>
-
-            <div className="flex flex-col gap-1">
-              <label className="flex items-center gap-1 text-xs font-medium text-ink dark:text-zinc-400">
-                {t("commit.groupDescription")}
-                <span className="text-red-500">*</span>
-                <HelpHint hintKey="calc-group-description-autofill" />
-              </label>
-              <input
-                {...screenBox("calcGroupDescription")}
-                type="text"
-                value={groupDescription}
-                onChange={(e) => setGroupDescription(e.target.value)}
-                maxLength={500}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-              />
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-ink dark:text-zinc-300">
-              <input
-                type="checkbox"
-                checked={includeRoad}
-                onChange={(e) => setIncludeRoad(e.target.checked)}
-                className="h-4 w-4 rounded border-wire accent-cta"
-              />
-              {t("commit.includeRoad")}
-            </label>
-
-            {includeRoad && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-ink dark:text-zinc-400">
-                  {t("commit.roadNickname")}
-                </label>
-                <input
-                  {...screenBox("calcRoadNickname")}
-                  type="text"
-                  value={roadNickname}
-                  onChange={(e) => setRoadNickname(e.target.value)}
-                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-                />
-              </div>
-            )}
-
-            {commitError && (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-                {commitError}
-              </p>
-            )}
-
-            <div>
-              {/* #37.46 (A089): PackagePlus + „Creează proprietăți + grup";
-                  working, „Se creează…" with the spinner in the icon's place. */}
-              <IconButton
-                icon={PackagePlus}
-                label={committing ? t("buttons.creating") : t("buttons.confirm")}
-                busy={committing}
-                showLabel
-                variant="primary"
-                size="lg"
-                onClick={doCommit}
-                disabled={committing || groupDescription.trim().length === 0}
-              />
-              <HelpHint hintKey="calc-preview-not-saved" />
-            </div>
-          </div>
+          {computation.remainderToLast && (
+            <p className="text-xs text-fade dark:text-zinc-400">{t("remainder", { name: lastName })}</p>
+          )}
         </>
       )}
     </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Map, Polygon, AdvancedMarker, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { CALC_MAP_STYLE } from "@/lib/ui/field-widths";
 
@@ -15,10 +15,23 @@ export type PreviewOwner = {
   corners: Corner[];
 };
 
+/** A corner of the parcel with the number the data file gave it (#38.23). */
+export type NumberedCorner = Corner & { number: string };
+
 type Props = {
   bigPolygon: Corner[];
   owners: PreviewOwner[];
-  road: Corner[];
+  /** The road, where there is one: #18.10's stored runs have it; #38.23's step 2 has none yet. */
+  road?: Corner[];
+  /** Write each corner's number beside it (#38.23). */
+  numberedCorners?: NumberedCorner[];
+  /**
+   * Dropping slice `from` on slice `to` (#38.23, drag-to-swap). Given, the
+   * owner polygons can be dragged; left out (the history's map), they cannot.
+   */
+  onSwap?: (from: number, to: number) => void;
+  /** The map's accessible name. */
+  label?: string;
 };
 
 // Distinct fill colours for the owner parcels (cycled if there are more).
@@ -48,6 +61,22 @@ function centroid(corners: Corner[]): { lat: number; lng: number } | null {
     lng += c.lon;
   }
   return { lat: lat / corners.length, lng: lng / corners.length };
+}
+
+/**
+ * Ray casting, in degrees: over a parcel a few kilometres wide the plane is
+ * exact enough to tell which slice a drop landed in.
+ */
+export function containsPoint(corners: Corner[], lat: number, lon: number): boolean {
+  let inside = false;
+  for (let i = 0, j = corners.length - 1; i < corners.length; j = i++) {
+    const a = corners[i];
+    const b = corners[j];
+    if (a.lat > lat !== b.lat > lat && lon < ((b.lon - a.lon) * (lat - a.lat)) / (b.lat - a.lat) + a.lon) {
+      inside = !inside;
+    }
+  }
+  return inside;
 }
 
 // ---------------------------------------------------------------------------
@@ -80,15 +109,36 @@ function FitBounds({ corners }: { corners: Corner[] }) {
 // Preview map
 // ---------------------------------------------------------------------------
 
-export function PreviewMap({ bigPolygon, owners, road }: Props) {
-  const allCorners = [
-    ...bigPolygon,
-    ...owners.flatMap((o) => o.corners),
-    ...road,
-  ];
+export function PreviewMap({ bigPolygon, owners, road = [], numberedCorners = [], onSwap, label }: Props) {
+  // Fit to the PARCEL only: a reorder redraws the slices inside the same
+  // outline, and refitting on every swap would jump the map under the user.
+  const fitCorners = bigPolygon.length > 0 ? bigPolygon : owners.flatMap((o) => o.corners);
+
+  // ⚠️ **A DRAGGED POLYGON KEEPS WHERE IT WAS DROPPED** — google.maps moves
+  // its path itself, and `paths` only re-applies when the prop changes. A drop
+  // that lands nowhere (outside every slice, or back on itself) changes no
+  // prop, so the slice would stay displaced. Bumping this remounts the
+  // polygons at their computed paths after every drop.
+  const [dropCount, setDropCount] = useState(0);
+  const [dragging, setDragging] = useState<number | null>(null);
+
+  function drop(from: number, e: google.maps.MapMouseEvent) {
+    setDragging(null);
+    setDropCount((n) => n + 1);
+    const at = e.latLng;
+    if (!onSwap || !at) return;
+    const to = owners.findIndex((o) => containsPoint(o.corners, at.lat(), at.lng()));
+    if (to >= 0 && to !== from) onSwap(from, to);
+  }
 
   return (
-    <div style={CALC_MAP_STYLE} data-panel="preview-map" className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-700">
+    <div
+      style={CALC_MAP_STYLE}
+      data-panel="preview-map"
+      role="region"
+      aria-label={label}
+      className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-700"
+    >
       <div className="absolute inset-0">
         <Map
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
@@ -99,7 +149,7 @@ export function PreviewMap({ bigPolygon, owners, road }: Props) {
           gestureHandling="greedy"
           style={{ width: "100%", height: "100%" }}
         >
-          <FitBounds corners={allCorners} />
+          <FitBounds corners={fitCorners} />
 
           {/* Big polygon outline (no fill) */}
           {bigPolygon.length >= 3 && (
@@ -109,6 +159,7 @@ export function PreviewMap({ bigPolygon, owners, road }: Props) {
               strokeOpacity={0.9}
               strokeWeight={2}
               fillOpacity={0}
+              clickable={false}
             />
           )}
 
@@ -124,18 +175,22 @@ export function PreviewMap({ bigPolygon, owners, road }: Props) {
             />
           )}
 
-          {/* Owner parcels */}
+          {/* Owner parcels — draggable onto one another when onSwap is given */}
           {owners.map((o, i) => {
             const color = OWNER_COLORS[i % OWNER_COLORS.length];
             return o.corners.length >= 3 ? (
               <Polygon
-                key={i}
+                key={`${i}-${dropCount}`}
                 paths={toPaths(o.corners)}
                 strokeColor={color}
                 strokeOpacity={1}
                 strokeWeight={2}
                 fillColor={color}
-                fillOpacity={0.35}
+                fillOpacity={dragging === i ? 0.6 : 0.35}
+                draggable={Boolean(onSwap)}
+                zIndex={dragging === i ? 2 : 1}
+                onDragStart={() => setDragging(i)}
+                onDragEnd={(e) => drop(i, e)}
               />
             ) : null;
           })}
@@ -163,6 +218,28 @@ export function PreviewMap({ bigPolygon, owners, road }: Props) {
               </AdvancedMarker>
             ) : null;
           })}
+
+          {/* The parcel's corners, by the numbers the file gave them (#38.23) */}
+          {numberedCorners.map((c) => (
+            <AdvancedMarker key={`corner-${c.number}`} position={{ lat: c.lat, lng: c.lon }}>
+              <div
+                style={{
+                  transform: "translate(-50%, -50%)",
+                  background: "white",
+                  color: "#111827",
+                  border: "2px solid #111827",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "1px 5px",
+                  borderRadius: 9999,
+                  whiteSpace: "nowrap",
+                  pointerEvents: "none",
+                }}
+              >
+                {c.number}
+              </div>
+            </AdvancedMarker>
+          ))}
         </Map>
       </div>
     </div>

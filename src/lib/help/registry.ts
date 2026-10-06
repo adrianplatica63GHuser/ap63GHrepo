@@ -247,10 +247,8 @@ export const HELP_HINTS = [
     hintKey: "calc-preview-not-saved",
     screens: ["admin-calculation"],
   },
-  {
-    hintKey: "calc-group-description-autofill",
-    screens: ["admin-calculation"],
-  },
+  // #38.23: „calc-group-description-autofill" left with the commit form, which
+  // „Calcul drum lateral" does not offer until #38.25 brings it back.
 
   // ── List views (all four share this) ────────────────────────────────────
   {

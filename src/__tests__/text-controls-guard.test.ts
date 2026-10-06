@@ -58,9 +58,8 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/account/change-password/change-password-form.tsx": [
     ["A108", "{state === \"saving\" ? t(\"buttonSaving\") : t(\"buttonSave\""],
   ],
-  "src/app/admin/calculation/_components/calculation-view.tsx": [
-    ["A113", "{nameOr(p.nickname, \"property\")}"], // #37.57: no system ID
-  ],
+  // #38.23: „Calcul drum lateral"'s success panel — the created properties as
+  // links — left with the commit form; #38.25 brings both back.
   "src/app/admin/groups/_components/groups-list-view.tsx": [
     ["A110", "{deleteMutation.isPending ? t(\"confirm.deleting\") : t(\"c"],
     ["A110", "{t(\"confirm.cancel\")}"],

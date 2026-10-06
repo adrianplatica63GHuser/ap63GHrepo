@@ -1,200 +1,204 @@
 /**
- * Diviz — 5-section data-file parser  (Slice #18.10.diviz)
+ * „Calcul drum lateral" — the three-section data file            (Slice #38.23)
  *
- * Pure parser (no I/O) for the division input file. The file has five sections,
- * each introduced by a "Section #n" header (any case; the "#" is optional):
+ * Pure parser (no I/O). Replaces the five-section, English-headed file of
+ * #18.10 (corners, H/V, „Name - 33%", SW/NW/SE/NE, width): none of that is kept.
  *
- *   Section #1   — big-polygon corners, one per line, tab/space/comma separated:
- *                    <index> <X> <Y>      (X = Northing, Y = Easting — the
- *                    Romanian geodetic convention; see the axis-order gotcha in
- *                    CLAUDE.md). <index> is the file's original corner label.
- *   Section #2   — orientation confirmation: "H" (horizontal) or "V" (vertical).
- *                    The polygon's orientation is also deduced from the corners;
- *                    this section just confirms a shared understanding.
- *   Section #3   — owners, one per line:  "<label> - <percent>%"
- *                    e.g. "Owner1 Platica - 33.33%". The nickname is the label
- *                    with any leading "OwnerN" positional prefix stripped
- *                    ("Platica"). Percentages are used exactly as written
- *                    (decimals allowed); NOT normalised — owner N absorbs any
- *                    remainder.
- *   Section #4   — road corner: SW / NW / SE / NE — the corner of the big polygon
- *                    the road shares and starts from. S/N picks the long side the
- *                    road runs along; W/E picks the end it starts from.
- *   Section #5   — road width in metres, e.g. "7 m".
+ * The file, as Adrian's request gives it (src/lib/calculation/side-road-sample.txt
+ * is the same corners and shares under `TC-` names):
  *
- * Owners are taken in file order; owner 1 is the one nearest the road's start
- * corner.
+ *   Sectiunea de Colturi (numai 4 colturi, nu 3, nu 5)
+ *   121	321015.423	572425.587          <number> <X = North> <Y = East>
+ *   …
+ *   Sectiunea de Proprietari (…)
+ *   Mateescu	24,33%                      <name, spaces allowed> <percent>
+ *   …
+ *   Sectiunea de Latime Drum (in metri)
+ *   7                                     <metres>, „7" or „7 m"
+ *
+ * - A header is a line starting „Sectiunea de" / „Secțiunea de" and naming the
+ *   section; case and diacritics do not matter, and anything else on the line
+ *   (the sample's notes in brackets) is ignored.
+ * - Blank lines and lines made only of „*" are ignored. Every other line must
+ *   be read — a line before the first header too.
+ * - Columns are tabs or spaces; every number may use a decimal comma or point.
+ *
+ * ⚠️ **THE RESULT IS EITHER A FILE OR EVERY PROBLEM IN IT, NEVER THE FIRST
+ * ONE.** The header asks for all of them at once, so `parseSideRoadFile` keeps
+ * reading after a bad line and throws `FileRejected` with the whole list at the
+ * end. A problem is a code and its values, not a sentence: the screen words it
+ * in Romanian or English (`calculation.problems.*`), and the jest suite asserts
+ * codes, so rewording a message never breaks a test.
  */
 
-import type { CornerCode, S70Point } from "./geometry";
-// Slice #23.03.Import: this module used to carry its own private `isStereo`,
-// byte-identical to the one in the shared Stereo 70 parser. It was the THIRD
-// copy in the repo (the other two were consolidated into stereo70-parse.ts
-// earlier); a range that lives in three places is a range that drifts in two.
 import { isStereo } from "@/lib/geo/stereo70-parse";
+import { quadIsSimple, type S70Point } from "./geometry";
 
-export class ParseError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ParseError";
+export type SectionKey = "corners" | "owners" | "width";
+
+export type FileProblem =
+  | { code: "missingSection"; values: { section: SectionKey } }
+  | { code: "repeatedSection"; values: { section: SectionKey } }
+  | { code: "cornerCount"; values: { count: number } }
+  | { code: "ownerCount"; values: { count: number } }
+  | { code: "percentTotal"; values: { total: number } }
+  | { code: "roadWidth"; values: { width: number } }
+  | { code: "widthCount"; values: { count: number } }
+  | { code: "repeatedCorner"; values: { number: string } }
+  | { code: "cornersCross" }
+  | { code: "unreadableLine"; values: { section: SectionKey | "none"; lineNumber: number; line: string } };
+
+export class FileRejected extends Error {
+  constructor(readonly problems: FileProblem[]) {
+    super(`The data file was rejected: ${problems.map((p) => p.code).join(", ")}`);
+    this.name = "FileRejected";
   }
 }
 
-export type ParsedOwner = {
-  /** Full label as written, e.g. "Owner1 Platica". */
-  rawLabel: string;
-  /** Cleaned nickname used for the property, e.g. "Platica". */
-  name: string;
-  /** Percentage as written (e.g. 33 or 33.33). */
-  percent: number;
-  /** Fraction of 1 (percent / 100). */
-  fraction: number;
+export type FileCorner = S70Point & {
+  /** The corner's number as written in the file — „121". Kept as text: it is a label. */
+  number: string;
 };
 
-export type ParsedDivisionFile = {
-  corners: (S70Point & { originalIndex: number | null })[];
-  /** Declared orientation from Section #2 (confirmed against the coordinates). */
-  declaredOrientation: "HORIZONTAL" | "VERTICAL";
-  owners: ParsedOwner[];
-  /** Road corner / start corner from Section #4. */
-  roadCorner: CornerCode;
+export type FileOwner = {
+  /** As written, spaces kept. */
+  name: string;
+  /** As written, e.g. 24.33. */
+  percent: number;
+};
+
+export type SideRoadFile = {
+  /** Exactly four, in file order: the ring the parcel is drawn from. */
+  corners: FileCorner[];
+  /** In file order; at least two. */
+  owners: FileOwner[];
+  /** Metres, above 0 and under 15. */
   roadWidth: number;
-  /** Sum of the owner percentages as written (for the preview's transparency). */
+  /** The shares summed to two decimals: 100 or 99.99. */
   percentTotal: number;
 };
 
+/** The widest road the file may ask for, exclusive (the request: „under 15 metres"). */
+export const MAX_ROAD_WIDTH = 15;
+
+/** A number with a decimal comma or point — and nothing else. */
+const NUMBER = String.raw`[0-9]+(?:[.,][0-9]+)?`;
+
 function num(token: string): number {
-  return parseFloat(token.replace(",", "."));
+  return Number(token.replace(",", "."));
 }
 
-/** Split the raw text into the numbered sections. */
-function splitSections(text: string): Map<number, string[]> {
-  const sections = new Map<number, string[]>();
-  let current: number | null = null;
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    const header = line.match(/^section\s*#?\s*(\d+)/i);
+/** Lower case, diacritics gone (ș/ş/ț/ţ/ă/â/î and the rest), spaces folded. */
+function fold(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Which section a header line opens, or null when the line is not a header. */
+export function sectionOf(line: string): SectionKey | null {
+  const f = fold(line);
+  if (!f.startsWith("sectiunea de ")) return null;
+  const rest = f.slice("sectiunea de ".length);
+  if (rest.startsWith("colturi")) return "corners";
+  if (rest.startsWith("proprietari")) return "owners";
+  if (rest.startsWith("latime drum")) return "width";
+  return null;
+}
+
+const CORNER_LINE = new RegExp(String.raw`^(\S+)\s+(${NUMBER})\s+(${NUMBER})$`);
+const OWNER_LINE = new RegExp(String.raw`^(.*\S)\s+(${NUMBER})\s*%?$`);
+const WIDTH_LINE = new RegExp(String.raw`^(${NUMBER})\s*(?:m|metri)?$`, "i");
+
+
+export function parseSideRoadFile(text: string): SideRoadFile {
+  const problems: FileProblem[] = [];
+  const seen = new Set<SectionKey>();
+  const corners: FileCorner[] = [];
+  const owners: FileOwner[] = [];
+  const widths: number[] = [];
+  let current: SectionKey | "none" = "none";
+
+  const lines = text.replace(/^﻿/, "").split(/\r?\n/);
+  lines.forEach((raw, i) => {
+    const line = raw.trim();
+    if (line === "" || /^\*+$/.test(line)) return;
+    const lineNumber = i + 1;
+
+    const header = sectionOf(line);
     if (header) {
-      current = parseInt(header[1], 10);
-      sections.set(current, []);
-      continue;
+      if (seen.has(header)) problems.push({ code: "repeatedSection", values: { section: header } });
+      seen.add(header);
+      current = header;
+      return;
     }
-    if (current != null) sections.get(current)!.push(line);
-  }
-  return sections;
-}
 
-function parseCorners(lines: string[]): ParsedDivisionFile["corners"] {
-  const corners: ParsedDivisionFile["corners"] = [];
-  for (const line of lines) {
-    const tokens = line.split(/[\s,;|\t]+/).filter(Boolean);
-    if (tokens.length < 2) continue;
+    const unreadable = () =>
+      problems.push({ code: "unreadableLine", values: { section: current, lineNumber, line } });
 
-    // 3-column: <index> <X=North> <Y=East>
-    if (tokens.length >= 3) {
-      const idx = num(tokens[0]);
-      const north = num(tokens[1]);
-      const east = num(tokens[2]);
-      if (Number.isFinite(idx) && idx < 1_000 && isStereo(north) && isStereo(east)) {
-        corners.push({ north, east, originalIndex: idx });
-        continue;
-      }
+    if (current === "corners") {
+      const m = line.match(CORNER_LINE);
+      const north = m ? num(m[2]) : NaN;
+      const east = m ? num(m[3]) : NaN;
+      if (!m || !isStereo(north) || !isStereo(east)) return void unreadable();
+      corners.push({ number: m[1], north, east });
+    } else if (current === "owners") {
+      const m = line.match(OWNER_LINE);
+      const percent = m ? num(m[2]) : NaN;
+      if (!m || !(percent > 0)) return void unreadable();
+      owners.push({ name: m[1].trim(), percent });
+    } else if (current === "width") {
+      const m = line.match(WIDTH_LINE);
+      if (!m) return void unreadable();
+      widths.push(num(m[1]));
+    } else {
+      unreadable();
     }
-    // 2-column: <X=North> <Y=East>
-    const a = num(tokens[0]);
-    const b = num(tokens[1]);
-    if (isStereo(a) && isStereo(b)) {
-      corners.push({ north: a, east: b, originalIndex: null });
-    }
-  }
-  if (corners.length < 3) {
-    throw new ParseError(
-      `Section #1: expected at least 3 corner lines, found ${corners.length}.`,
-    );
-  }
-  return corners;
-}
+  });
 
-function parseOrientation(lines: string[]): "HORIZONTAL" | "VERTICAL" {
-  const w = (lines[0] ?? "").trim().toUpperCase();
-  if (w === "H" || w === "HORIZONTAL" || w === "ORIZONTAL") return "HORIZONTAL";
-  if (w === "V" || w === "VERTICAL") return "VERTICAL";
-  throw new ParseError(
-    `Section #2: orientation "${lines[0] ?? ""}" not recognised — use H (horizontal) or V (vertical).`,
+  for (const section of ["corners", "owners", "width"] as const) {
+    if (!seen.has(section)) problems.push({ code: "missingSection", values: { section } });
+  }
+
+  // A section with a line that could not be read is not counted or summed:
+  // „the file has 3 corners" beside „line 4 cannot be read" names one fault
+  // twice, and the second time wrongly — the file HAS four corner lines.
+  const unread = new Set(
+    problems.flatMap((p) => (p.code === "unreadableLine" ? [p.values.section] : [])),
   );
-}
 
-function parseOwners(lines: string[]): ParsedOwner[] {
-  const owners: ParsedOwner[] = [];
-  for (const line of lines) {
-    // Split off the trailing "… - 33%" (last dash before the percentage).
-    const m = line.match(/^(.*?)[-–—]\s*([\d.,]+)\s*%?\s*$/);
-    if (!m) {
-      throw new ParseError(
-        `Section #3: could not read owner / percentage from "${line}". Expected "Name - 33%".`,
-      );
-    }
-    const rawLabel = m[1].trim();
-    const percent = num(m[2]);
-    if (!Number.isFinite(percent) || percent <= 0) {
-      throw new ParseError(`Section #3: invalid percentage in "${line}".`);
-    }
-    // Strip a leading "OwnerN" positional prefix to get the real name.
-    const name = rawLabel.replace(/^owner\s*\d+\s*/i, "").trim() || rawLabel;
-    owners.push({ rawLabel, name, percent, fraction: percent / 100 });
+  if (seen.has("corners") && !unread.has("corners") && corners.length !== 4) {
+    problems.push({ code: "cornerCount", values: { count: corners.length } });
   }
-  if (owners.length < 2) {
-    throw new ParseError(`Section #3: at least two owners are required, found ${owners.length}.`);
+  const numbers = new Set<string>();
+  for (const c of corners) {
+    if (numbers.has(c.number)) problems.push({ code: "repeatedCorner", values: { number: c.number } });
+    numbers.add(c.number);
   }
-  return owners;
-}
+  if (corners.length === 4 && !unread.has("corners") && !quadIsSimple(corners)) problems.push({ code: "cornersCross" });
 
-const CORNER_CODES: Record<string, CornerCode> = {
-  SW: "SW",
-  WS: "SW",
-  NW: "NW",
-  WN: "NW",
-  SE: "SE",
-  ES: "SE",
-  NE: "NE",
-  EN: "NE",
-};
-
-function parseRoadCorner(lines: string[]): CornerCode {
-  const w = (lines[0] ?? "").trim().toUpperCase().replace(/[^A-Z]/g, "");
-  const corner = CORNER_CODES[w];
-  if (!corner) {
-    throw new ParseError(
-      `Section #4: road corner "${lines[0] ?? ""}" not recognised — use SW, NW, SE or NE.`,
-    );
+  if (seen.has("owners") && !unread.has("owners") && owners.length < 2) {
+    problems.push({ code: "ownerCount", values: { count: owners.length } });
   }
-  return corner;
-}
-
-function parseRoadWidth(lines: string[]): number {
-  const m = (lines[0] ?? "").match(/([\d.,]+)/);
-  const width = m ? num(m[1]) : NaN;
-  if (!Number.isFinite(width) || width <= 0) {
-    throw new ParseError(`Section #5: could not read a positive road width from "${lines[0] ?? ""}".`);
+  // Summed, THEN rounded to two decimals — so 24.33 + 25.66 + 15 + 35, which is
+  // 99.99000000000001 in floating point, is 9999 hundredths, and three shares
+  // of 33.333 are 100 rather than three roundings' 99.99.
+  const totalHundredths = Math.round(owners.reduce((s, o) => s + o.percent, 0) * 100);
+  if (owners.length > 0 && !unread.has("owners") && totalHundredths !== 10000 && totalHundredths !== 9999) {
+    problems.push({ code: "percentTotal", values: { total: totalHundredths / 100 } });
   }
-  return width;
-}
 
-export function parseDivisionFile(text: string): ParsedDivisionFile {
-  const sections = splitSections(text);
-  for (const n of [1, 2, 3, 4, 5]) {
-    if (!sections.has(n)) {
-      throw new ParseError(`Missing "Section #${n}" in the data file.`);
-    }
+  if (seen.has("width") && !unread.has("width") && widths.length !== 1) {
+    problems.push({ code: "widthCount", values: { count: widths.length } });
   }
-  const owners = parseOwners(sections.get(3)!);
-  return {
-    corners: parseCorners(sections.get(1)!),
-    declaredOrientation: parseOrientation(sections.get(2)!),
-    owners,
-    roadCorner: parseRoadCorner(sections.get(4)!),
-    roadWidth: parseRoadWidth(sections.get(5)!),
-    percentTotal: owners.reduce((s, o) => s + o.percent, 0),
-  };
+  const roadWidth = widths[0] ?? NaN;
+  if (widths.length === 1 && !(roadWidth > 0 && roadWidth < MAX_ROAD_WIDTH)) {
+    problems.push({ code: "roadWidth", values: { width: roadWidth } });
+  }
+
+  if (problems.length > 0) throw new FileRejected(problems);
+  return { corners, owners, roadWidth, percentTotal: totalHundredths / 100 };
 }

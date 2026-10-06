@@ -1,0 +1,16 @@
+********************************************************************
+Sectiunea de Colturi (numai 4 colturi, nu 3, nu 5)
+121	321015.423	572425.587
+122	322135.856	573339.077
+123	321372.274	574609.524
+124	320175.100	572897.684
+
+Sectiunea de Proprietari (total cote-parti sa fie 100% sau 99.99%, nimic altceva)
+TC-Alfa	24,33%
+TC-Beta	25,66%
+TC-Gama		15%
+TC-Delta		35%
+
+Sectiunea de Latime Drum (in metri)
+7
+********************************************************************
