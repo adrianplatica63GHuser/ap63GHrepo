@@ -41,10 +41,18 @@
      at zinc-900's and zinc-800's, chroma as close to the purple's as the hue
      allows, so none reads stronger. `src/lib/ui/tile-surface.ts` decides by
      the registry's group which tiles take them.                              */
-  --color-card-related:          #EBF7ED;  /* bg-card-related                */
-  --color-card-related-rim:      #BBDDC2;  /* border-card-related-rim        */
-  --color-card-related-dark:     #0F1C11;  /* dark:bg-card-related-dark      */
-  --color-card-related-rim-dark: #182D1D;  /* dark:border-card-related-rim-dark */
+  /* Slice #38.15 — „Corelate" one step stronger than #37.88's #EBF7ED (OKLCH
+     L 0.964 → 0.937, chroma 0.018 → 0.028), its rim as far below it as the
+     card's rim is below the card (ΔL 0.099); dark the same step up from
+     zinc-900. Its rows a new, calmer green: lighter than the old tile in
+     light mode (L 0.981), nearer zinc-900 in dark. The checkbox bar's
+     „Corelate" strip and a related preview share the tile's token.        */
+  --color-card-related:          #DDF0E1;  /* bg-card-related                */
+  --color-card-related-rim:      #AFD5B7;  /* border-card-related-rim        */
+  --color-card-related-dark:     #0F2314;  /* dark:bg-card-related-dark      */
+  --color-card-related-rim-dark: #183520;  /* dark:border-card-related-rim-dark */
+  --color-card-related-row:      #F4FBF5;  /* bg-card-related-row — the rows inside „Corelate" */
+  --color-card-related-row-dark: #101711;  /* dark:bg-card-related-row-dark  */
   --color-card-meta:             #F8F3E5;  /* bg-card-meta                   */
   --color-card-meta-rim:         #DDD3AE;  /* border-card-meta-rim           */
   --color-card-meta-dark:        #1D1808;  /* dark:bg-card-meta-dark         */

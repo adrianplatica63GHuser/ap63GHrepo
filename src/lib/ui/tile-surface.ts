@@ -23,6 +23,14 @@
  * „Conexiuni" light yellow, the right column purple — all four at one lightness:
  *   green  `--color-card-related`  #EBF7ED / rim #BBDDC2 / dark #0F1C11 / dark rim #182D1D (h 151)
  *   yellow `--color-card-meta`     #F8F3E5 / rim #DDD3AE / dark #1D1808 / dark rim #2E270D (h 93)
+ * Slice #38.15 makes „Corelate" one step stronger and gives its rows their own,
+ * calmer green (Adrian: „a slightly stronger green… the rows a green a little
+ * lighter than the tile's current colour"):
+ *   tile  `--color-card-related`      #DDF0E1 L 0.937 / rim #AFD5B7 L 0.837 (the card's rim step, ΔL 0.099)
+ *   dark  `--color-card-related-dark` #0F2314 L 0.234 / rim #183520 L 0.299
+ *   rows  `--color-card-related-row`  #F4FBF5 L 0.981 / dark #101711 L 0.195 (`RELATED_ROWS_SURFACE`)
+ * so the green is no longer at the other groups' lightness; text keeps at least
+ * 4.5:1 on all three (`tile-surface.test.ts`).
  * Only the tile's own surface changes: the map's and Street View's frames,
  * the corner table's white body and the page viewer's white box keep theirs.
  */
@@ -40,6 +48,10 @@ export const PINNED_TILE_SURFACE =
 /** Slice #37.88: „Corelate", the same box in light green. */
 export const RELATED_TILE_SURFACE =
   "rounded-md border border-card-related-rim bg-card-related p-3 shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-dark";
+
+/** Slice #38.15: the rows inside „Corelate" — a calmer green, rimmed with the tile's green. */
+export const RELATED_ROWS_SURFACE =
+  "rounded-md border border-card-related-rim bg-card-related-row shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-row-dark";
 
 /** Slice #37.88: „Clasificări" and „Conexiuni", the same box in light yellow. */
 export const META_TILE_SURFACE =

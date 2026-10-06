@@ -43,6 +43,7 @@ import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provid
 import { IconButton } from "@/lib/ui/icon-button";
 import { RELATED_SLOTS, type RowSlot } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
+import { RELATED_ROWS_SURFACE } from "@/lib/ui/tile-surface";
 
 export type RelatedKind = "natural" | "judicial" | "property" | "document";
 
@@ -159,7 +160,8 @@ export function RelatedTile({
           role="group"
           aria-label={label}
           data-related-rows=""
-          className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          // Slice #38.15: the rows on their own, calmer green, inside the tile's stronger one.
+          className={RELATED_ROWS_SURFACE}
         >
           {groups.map((g, i) => (
             <div
