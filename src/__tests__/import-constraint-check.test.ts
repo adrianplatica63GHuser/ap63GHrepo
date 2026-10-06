@@ -671,7 +671,12 @@ describe("a folder near the walk's own ceiling", () => {
       large: Math.round(large),
       ratio: Number(ratio.toFixed(2)),
       measured: small > 0,
-      growsQuadratically: ratio >= 3,
+      // ⚠️ FU-286 (Slice #38.19): the ratio is only evidence when the large folder took long
+      // enough to be measured above the machine's noise. The quadratic version takes ~6 000 ms
+      // at these sizes (above), the linear one 33–43 ms; a ratio of 3.03 at 11 vs 35 ms — the
+      // runner's whole jest run, 20261006T175824Z-4470 — is load on a 35 ms timing, not code.
+      // So a large run under 200 ms cannot be quadratic, whatever the ratio of two small numbers.
+      growsQuadratically: ratio >= 3 && large >= 200,
       unusablySlow: large >= 5_000,
     }).toEqual({
       small: Math.round(small),
