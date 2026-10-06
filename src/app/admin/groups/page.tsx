@@ -2,8 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { GroupsListView } from "./_components/groups-list-view";
 import { screenPanel } from "@/lib/ui/field-widths";
 
-// Slice #20.17: BackLink removed — BreadcrumbBar shows "Admin > Grupuri"
-// with "Admin" linking to /admin/value-lists.
+// Slice #20.17: BackLink removed — BreadcrumbBar shows the trail. Slice #38.20:
+// „Acasă › Administrare › Grupuri", the section as text (it has no screen).
 
 export default async function GroupsPage() {
   const t = await getTranslations("group");

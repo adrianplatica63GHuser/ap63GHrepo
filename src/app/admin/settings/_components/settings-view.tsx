@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Group, Save, Stamp, Tags, X } from "lucide-react";
+import { Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { DevOnly } from "@/components/dev-only";
 import { useTranslations } from "next-intl";
@@ -295,25 +295,13 @@ function DeveloperPanel() {
 // ---------------------------------------------------------------------------
 
 export function SettingsView() {
-  const t = useTranslations("settings");
-
   return (
     // Slice #37.22: three panels in a row that wraps — the window decides how
     // many sit side by side, never how wide one is. Slice #37.35: three tiles of
     // whole units on the screen's unit row.
     <UnitRow units={[SETTINGS_TILE_UNITS]}>
-      {/* ── Others ── */}
-      <section {...screenPanel("others", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-ink">{t("sectionOthers")}</h2>
-        <div className="flex flex-wrap gap-3">
-          {/* #37.46 (A084): Group / Stamp / Tags + the words, on linkClass's
-              primary rather than a hand-written cta class. */}
-          <IconButton href="/admin/groups" icon={Group} label={t("othersGroups")} showLabel variant="primary" size="md" />
-          <IconButton href="/admin/stamps" icon={Stamp} label={t("othersStamps")} showLabel variant="primary" size="md" />
-          <IconButton href="/admin/tags" icon={Tags} label={t("othersTags")} showLabel variant="primary" size="md" />
-        </div>
-      </section>
-
+      {/* Slice #38.20: no „Altele" — Grupuri, Ștampile and Etichete are in the sidebar's
+          „Administrare", which is where a screen is found. */}
       {/* ── Time Frames ── */}
       <TimeFramesPanel />
 

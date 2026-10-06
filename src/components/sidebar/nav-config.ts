@@ -1,36 +1,47 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  User,
+  BarChart3,
+  Bot,
+  BookOpen,
+  BookOpenText,
   Building2,
-  Map,
-  FileText,
-  LayoutDashboard,
-  UserCog,
-  Database,
-  Upload,
-  ClipboardList,
-  Wrench,
-  Settings,
-  HelpCircle,
   Calculator,
-  Search,
+  ClipboardCheck,
+  Construction,
+  Database,
+  FileText,
+  FileUp,
+  FolderInput,
+  Folders,
+  GitCompareArrows,
+  GraduationCap,
+  HelpCircle,
+  LayoutDashboard,
+  LifeBuoy,
   Lightbulb,
-  Users,
+  Map,
+  Network,
+  Search,
+  Settings,
+  ShieldCheck,
   Stamp,
   Tags,
+  Trophy,
+  Upload,
+  User,
+  UserCog,
+  Users,
+  Workflow,
 } from "lucide-react";
 
 export type NavItem = {
   key: string;
-  href?: string;  // undefined = coming soon (rendered disabled)
+  href?: string;  // undefined = coming soon (rendered disabled, „În curând" as its tooltip)
   icon: LucideIcon;
   // Slice #32.19 removed the `devOnly` field that used to sit here. Adrian
   // asked for the developer-only screen items to be revealed, so Help
-  // information and Settings are ordinary Admin-Setup entries now and nothing
-  // in this file is gated by the build flag. Both routes also dropped the
-  // matching server-side redirect in their own page.tsx in the same commit —
-  // a nav entry whose route still refuses is a dead link, which is the shape
-  // Groups/Stamps/Tags were in before this slice.
+  // information and Settings are ordinary entries now and nothing in this
+  // file is gated by the build flag.
 };
 
 export type NavSection = {
@@ -38,117 +49,115 @@ export type NavSection = {
   icon: LucideIcon;
   items: NavItem[];
   // When set (and items is empty), the section header itself is a direct
-  // link — no accordion/chevron, no expandable children. Used by "document"
-  // (Slice #15.08), "people" (Slice #15.09), and "propertyList"
-  // (Slice #15.09.2): each of these is a single plain link, styled exactly
-  // like any other top-level page link.
+  // link — no accordion/chevron, no expandable children. Since #38.20:
+  // „Tablou de bord" and „Setări".
   href?: string;
 };
 
+/**
+ * THE LEFT NAVIGATION IN NINE SECTIONS.                          (Slice #38.20)
+ *
+ * Top to bottom: Tablou de bord, Domeniu, Funcții, Import, Rapoarte,
+ * Administrare, Setări, Studiu, Ajutor. Every screen that exists is reachable
+ * from it; an item whose screen does not exist yet has no `href` and is drawn
+ * disabled, „În curând" as its tooltip (#38.20's Ask first 3). An item moved,
+ * its URL did not. Each section has its own icon — a collapsed sidebar shows
+ * section icons only (#37.42).
+ *
+ * „Informații de ajutor" is the last item of „Administrare" (Ask first 1).
+ * „Raport post-import", a placeholder with no screen, is gone; when it is
+ * built, its place is under „Rapoarte" (Ask first 2).
+ *
+ * WHO SEES WHAT — until #38.21: a non-superuser keeps exactly the reach he
+ * had, matched by an explicit list of hrefs (`USER_HREFS`, sidebar-helpers.ts)
+ * rather than the „administration" key prefix, which no longer exists. The
+ * server-side guard on /admin/* (src/app/admin/layout.tsx) is unchanged.
+ */
 export const NAV_SECTIONS: NavSection[] = [
   {
-    // Plain direct link (Slice #18.18): dedicated Natural Persons list.
-    key: "naturalPeople",
-    icon: User,
-    href: "/natural-persons",
-    items: [],
-  },
-  {
-    // Plain direct link (Slice #18.18): dedicated Judicial Persons list.
-    key: "judicialPeople",
-    icon: Building2,
-    href: "/judicial-persons",
-    items: [],
-  },
-  {
-    // Plain direct link (Slice #15.09.2). Slice #37.92: ONE property item,
-    // „Proprietăți", with the map's icon. The whole-properties map
-    // (/properties/map) is no longer in the sidebar: it opens from the list's
-    // „Hartă completă", and while it is open this item is the active one.
-    key: "propertyList",
-    icon: Map,
-    href: "/properties",
-    items: [],
-  },
-  {
-    // Plain direct link (Slice #15.08) — the per-type checkbox filter now
-    // lives on the Documents list page itself, not in the sidebar.
-    key: "document",
-    icon: FileText,
-    href: "/documents",
-    items: [],
-  },
-  {
-    // Slice #22.05: the former single "Administration" accordion is now two
-    // — "Administration Operations" (the day-to-day workflows: search,
-    // import pipeline, road calculation) and "Administration Setup" (the
-    // configuration/reference screens, below). Both stay gated by the exact
-    // same superuser-only rule "administration" used — see the
-    // isSuperuser filter in sidebar-nav.tsx and the server-side guard in
-    // src/app/admin/layout.tsx (route-based, so it needs no change here).
-    key: "administrationOperations",
+    // The home page is the dashboard (#22.01).
+    key: "dashboard",
     icon: LayoutDashboard,
+    href: "/",
+    items: [],
+  },
+  {
+    // The archive's own records, and the lists they are described with.
+    key: "domain",
+    icon: Database,
     items: [
-      { key: "globalSearch", href: "/admin/global-search", icon: Search },
-      // "Post-import report" doesn't have a page yet — rendered as a disabled
-      // "coming soon" placeholder (no href), same convention the old "export"
-      // item used, until a future slice builds it out.
-      //
-      // Slice #24.02a removed the "pre-import verification" placeholder that
-      // used to sit above /admin/import. Verification is not a screen you can
-      // visit beside the import; it IS the import's first phase, and a second
-      // nav entry would have been a second door to a picker that must have
-      // exactly one.
-      //
-      // ⚠️ **Slice #29.09 adds a SECOND folder picker to this section, and it
-      // does not break the rule above — but only because that rule is about the
-      // IMPORT.** „Distilare Tipizate" picks a folder of sample documents,
-      // reads them, and writes `template_fields` onto one document type. It
-      // imports nothing: no `document` row is created, no page is uploaded,
-      // nothing reaches the archive, and there is no path from it into the
-      // import. The thing #24.02a forbade was a second DOOR TO THE IMPORT'S OWN
-      // PICKER — a user who could start the same run from two places. This is a
-      // different run with a different output, and the import's stop screen
-      // (#29.08's `typesBlocked.whatNext`) is what sends people to it. Said
-      // here because the comment above, left alone, reads as forbidding this
-      // entry.
-      { key: "import", href: "/admin/import", icon: Upload },
-      { key: "docTypeEngine", href: "/admin/doc-type-engine", icon: Lightbulb },
-      { key: "postImportReport", icon: ClipboardList },
-      { key: "calculation", href: "/admin/calculation", icon: Calculator },
+      { key: "naturalPeople", href: "/natural-persons", icon: User },
+      { key: "judicialPeople", href: "/judicial-persons", icon: Building2 },
+      // Slice #37.92: ONE property item, with the map's icon; the whole map
+      // (/properties/map) opens from the list, and this item is active there.
+      { key: "propertyList", href: "/properties", icon: Map },
+      { key: "document", href: "/documents", icon: FileText },
+      { key: "referenceData", href: "/admin/value-lists", icon: BookOpen },
     ],
   },
   {
-    key: "administrationSetup",
-    icon: Wrench,
+    // What the archive can work out: search, reading sample documents into a
+    // type's form (#29.09 — it imports nothing), the road calculation.
+    key: "functions",
+    icon: Workflow,
+    items: [
+      { key: "globalSearch", href: "/admin/global-search", icon: Search },
+      { key: "docTypeEngine", href: "/admin/doc-type-engine", icon: Lightbulb },
+      { key: "checkCorrelations", icon: GitCompareArrows },
+      { key: "calculation", href: "/admin/calculation", icon: Calculator },
+      { key: "inheritanceTrees", icon: Network },
+    ],
+  },
+  {
+    // ⚠️ One door to the import's own picker (#24.02a): „Dosare de
+    // proprietăți" is today's /admin/import wizard. The two others are
+    // placeholders for imports that do not exist yet.
+    key: "importSection",
+    icon: Upload,
+    items: [
+      { key: "import", href: "/admin/import", icon: FolderInput },
+      { key: "miscFolders", icon: Folders },
+      { key: "singleFile", icon: FileUp },
+    ],
+  },
+  {
+    key: "reports",
+    icon: BarChart3,
+    items: [{ key: "reportsInProgress", href: "/reports", icon: Construction }],
+  },
+  {
+    key: "administration",
+    icon: ShieldCheck,
     items: [
       { key: "users", href: "/admin/users", icon: UserCog },
-      { key: "referenceData", href: "/admin/value-lists", icon: Database },
-      // ⚠️ **Slice #32.19: these three pages existed for slices and appeared in
-      // NO nav at all.** Item 17 of the 32.11 report read their absence as a
-      // consequence of Settings being developer-only, and that was wrong twice
-      // over: /admin/groups, /admin/stamps and /admin/tags carry no dev-tools
-      // guard of their own, and they were never listed here, so removing the
-      // `devOnly` flags reveals Help information and Settings and does nothing
-      // whatever for them. Typing the URL was the only way in; Settings' own
-      // "Related screens" links were the only pointer to them.
-      //
-      // They sit in "administrationSetup" rather than Operations because each
-      // one configures a vocabulary the rest of the archive then uses. The
-      // superuser gate they need is the one this section already has —
-      // sidebar-nav.tsx filters every key starting "administration", and
-      // src/app/admin/layout.tsx redirects the same set server-side — so a
-      // non-superuser sees neither these entries nor the routes behind them,
-      // and no per-item role field was added.
       { key: "groups", href: "/admin/groups", icon: Users },
       { key: "stamps", href: "/admin/stamps", icon: Stamp },
       { key: "tags", href: "/admin/tags", icon: Tags },
-      // Slice #23.10.dev made these two developer-only; Slice #32.19 took that
-      // back at Adrian's request. Help information authors the Background/
-      // How-To copy the "?" buttons show; Settings holds the time-frame
-      // thresholds and the developer options panel.
+      // It edits the texts the „?" buttons show (#38.20's Ask first 1).
       { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
-      { key: "settings", href: "/admin/settings", icon: Settings },
+    ],
+  },
+  {
+    key: "settings",
+    icon: Settings,
+    href: "/admin/settings",
+    items: [],
+  },
+  {
+    key: "study",
+    icon: GraduationCap,
+    items: [
+      { key: "courses", icon: BookOpenText },
+      { key: "quizzes", icon: ClipboardCheck },
+      { key: "score", icon: Trophy },
+    ],
+  },
+  {
+    key: "helpSection",
+    icon: LifeBuoy,
+    items: [
+      { key: "userManual", icon: BookOpen },
+      { key: "askAi", icon: Bot },
     ],
   },
 ];

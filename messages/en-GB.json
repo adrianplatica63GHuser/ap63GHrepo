@@ -1237,12 +1237,15 @@
   },
   "nav": {
     "sections": {
-      "naturalPeople": "Natural Persons",
-      "judicialPeople": "Judicial Persons",
-      "propertyList": "Properties",
-      "document": "Documents",
-      "administrationOperations": "Admin-Ops",
-      "administrationSetup": "Admin-Setup"
+      "dashboard": "Dashboard",
+      "domain": "Domain",
+      "functions": "Functions",
+      "importSection": "Import",
+      "reports": "Reports",
+      "administration": "Administration",
+      "settings": "Settings",
+      "study": "Study",
+      "helpSection": "Help"
     },
     "items": {
       "naturalPerson": "Natural Person",
@@ -1269,16 +1272,28 @@
       "titluProprietate": "Property Title",
       "users": "Users & Access",
       "referenceData": "Reference Data",
-      "import": "Import to the System",
+      "import": "Property folders",
       "docTypeEngine": "DocTypeEngine",
-      "postImportReport": "Post-Import Report",
       "calculation": "Calculation of a Side Road",
       "globalSearch": "Global Search",
       "groups": "Groups",
       "stamps": "Stamps",
       "tags": "Tags",
       "helpContent": "Help Information",
-      "settings": "Settings"
+      "naturalPeople": "Natural Persons",
+      "judicialPeople": "Judicial Persons",
+      "propertyList": "Properties",
+      "document": "Documents",
+      "checkCorrelations": "Correlation check",
+      "inheritanceTrees": "Inheritance trees",
+      "miscFolders": "Miscellaneous folders",
+      "singleFile": "Single file",
+      "reportsInProgress": "In progress",
+      "courses": "Courses",
+      "quizzes": "Quizzes",
+      "score": "Score",
+      "userManual": "User manual",
+      "askAi": "Ask AI"
     },
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
@@ -1286,7 +1301,9 @@
     "changePassword": "Change password",
     "signOut": "Sign out",
     "quickSearch": "Quick search",
-    "quickSearchPlaceholder": "Name, code…"
+    "quickSearchPlaceholder": "Name, code…",
+    "comingSoon": "Coming soon",
+    "mainNavigation": "Main navigation"
   },
   "welcome": {
     "title": "GA40",
@@ -3503,10 +3520,6 @@
   },
   "settings": {
     "pageTitle": "Settings",
-    "sectionOthers": "Others",
-    "othersGroups": "Groups",
-    "othersStamps": "Stamps",
-    "othersTags": "Tags",
     "sectionTimeFrames": "Time frames",
     "timeFrames": {
       "loading": "Loading…",
@@ -3535,7 +3548,12 @@
       "properties": "Properties",
       "propertiesMap": "Full map",
       "documents": "Documents",
-      "admin": "Admin",
+      "sections": {
+        "domain": "Domain",
+        "functions": "Functions",
+        "importSection": "Import",
+        "administration": "Administration"
+      },
       "groups": "Groups",
       "stamps": "Stamps",
       "calculation": "Calculation",
@@ -3561,7 +3579,8 @@
       "associatePartyOfDocument": "Add Party to Certificate",
       "associatePersonOfProperty": "Associate Person",
       "associateDocumentOfProperty": "Associate Document",
-      "associateReferenceOfProperty": "Associate Related Property"
+      "associateReferenceOfProperty": "Associate Related Property",
+      "reports": "Reports"
     },
     "recentlyViewed": {
       "title": "Recently viewed",
@@ -3719,5 +3738,13 @@
       "impozitRepartizare": "Tax apportionment",
       "chitantaTaxaAutentificare": "Authentication fee receipt"
     }
+  },
+  "reports": {
+    "title": "Reports — in progress",
+    "intro": "Here you will be able to ask the archive business questions and get the answers as tables and charts.",
+    "questions": "Reports will look at people, companies, properties and documents together, and at the links between them — for example: which properties changed owner most often, which documents expire soon and whose they are, how the properties divide by area, type and size, which people are linked by inheritances or shared contracts.",
+    "analysis": "You will be able to filter and group by period, place, type or person, compare one period with another, follow how a figure changes over time to see the trends, and find the exceptions — the records that do not fit the usual pattern. Starting from a total, you will be able to drill down to the records behind it.",
+    "results": "The results will come as tables you can sort and export, and as a wide range of charts: bars, lines, pie charts, maps, timelines and link diagrams.",
+    "noSkills": "No technical knowledge is needed: choose what you want to find out, and the system does the analysis."
   }
 }

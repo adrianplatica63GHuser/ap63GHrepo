@@ -23,6 +23,8 @@ import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
   getActiveHref,
   getActiveSectionKey,
+  isFlatSectionActive as flatActive,
+  sectionsFor,
 } from "./sidebar-helpers";
 
 // ---------------------------------------------------------------------------
@@ -53,10 +55,13 @@ function NavSubItem({
   item,
   isActive,
   label,
+  comingSoon,
 }: {
   item: NavItem;
   isActive: boolean;
   label: string;
+  /** Slice #38.20: a placeholder's tooltip, „În curând". */
+  comingSoon: string;
 }) {
   const Icon = item.icon;
   const base =
@@ -64,14 +69,20 @@ function NavSubItem({
   const { guardedNavigate } = useUnsavedChanges();
 
   if (!item.href) {
+    // Slice #38.20: a screen that does not exist yet — drawn disabled, „În curând" as its
+    // tooltip (on hover and on keyboard focus), so the items Adrian listed are seen.
     return (
-      <div
-        className={`${base} text-fade cursor-not-allowed opacity-60`}
-        aria-disabled="true"
-      >
-        <Icon size={14} className="shrink-0" aria-hidden="true" />
-        <span className="truncate">{label}</span>
-      </div>
+      <IconTooltip label={comingSoon} fill>
+        <div
+          className={`${base} w-full text-fade cursor-not-allowed opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+          aria-disabled="true"
+          tabIndex={0}
+          data-nav-placeholder={item.key}
+        >
+          <Icon size={14} className="shrink-0" aria-hidden="true" />
+          <span className="truncate">{label}</span>
+        </div>
+      </IconTooltip>
     );
   }
 
@@ -85,6 +96,8 @@ function NavSubItem({
         e.preventDefault();
         guardedNavigate(href);
       }}
+      // Slice #38.20: the active item says so, not only by its colour (as #37.92's flat link did).
+      aria-current={isActive ? "page" : undefined}
       className={`${base} ${
         isActive
           ? "bg-slate-100 text-slate-700 font-medium dark:bg-slate-800 dark:text-slate-200"
@@ -108,6 +121,7 @@ function NavSectionRow({
   activeHref,
   sectionLabel,
   itemLabels,
+  comingSoon,
   onToggle,
   onExpandSidebar,
 }: {
@@ -117,6 +131,7 @@ function NavSectionRow({
   activeHref: string | null;
   sectionLabel: string;
   itemLabels: Record<string, string>;
+  comingSoon: string;
   onToggle: () => void;
   onExpandSidebar: () => void;
 }) {
@@ -167,6 +182,7 @@ function NavSectionRow({
               item={item}
               isActive={!!(item.href && item.href === activeHref)}
               label={itemLabels[item.key] ?? item.key}
+              comingSoon={comingSoon}
             />
           ))}
         </div>
@@ -252,6 +268,9 @@ export function SidebarNav() {
     staleTime: AUTH_ME_STALE_TIME_MS, // re-fetch in background
   });
   const isSuperuser = me?.role === "superuser";
+  // Slice #38.20: what this user's sidebar shows — everything for a superuser; for anyone else
+  // exactly the reach he had (`USER_HREFS`), until #38.21 removes the gate.
+  const sections = useMemo(() => sectionsFor(NAV_SECTIONS, isSuperuser), [isSuperuser]);
   // UAT mode (Ciprian's local box) has no real Supabase session — hide the
   // Sign Out / Change Password controls, which would otherwise dead-end at
   // a login screen that can't actually authenticate anyone there.
@@ -331,20 +350,11 @@ export function SidebarNav() {
   // A flat-link section highlights as active for its list page and any of
   // its detail/sub-pages, independent of the accordion-driven
   // activeSectionKey above.
-  const FLAT_SECTION_ACTIVE_PREFIXES: Record<string, string[]> = {
-    document: ["/documents"],
-    naturalPeople: ["/natural-persons"],
-    judicialPeople: ["/judicial-persons"],
-  };
-  function isFlatSectionActive(key: string): boolean {
-    // Slice #37.92: „Proprietăți" is active on every /properties page — the
-    // list, a Property, „Adaugă proprietate" and the whole map
-    // (/properties/map), which has no sidebar item of its own any more.
-    if (key === "propertyList") {
-      return pathname === "/properties" || pathname.startsWith("/properties/");
-    }
-    const prefixes = FLAT_SECTION_ACTIVE_PREFIXES[key] ?? [];
-    return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  // Slice #38.20: the flat sections are „Tablou de bord" (/ alone) and „Setări". The four lists
+  // are items of „Domeniu" now; „Proprietăți" stays active on every /properties page — the map's
+  // included (#37.92) — by the item's own prefix match.
+  function isFlatSectionActive(section: NavSection): boolean {
+    return flatActive(section, pathname);
   }
 
   // Single-open accordion — at most one section is open at a time.
@@ -371,18 +381,25 @@ export function SidebarNav() {
   );
 
   // ── i18n label maps (explicit keys — required for next-intl type safety) ──
+  // Slice #38.20: the nine sections (nav-config.ts).
   const sectionLabels: Record<string, string> = {
-    naturalPeople: t("sections.naturalPeople"),
-    judicialPeople: t("sections.judicialPeople"),
-    propertyList: t("sections.propertyList"),
-    document: t("sections.document"),
-    // Slice #22.05: the former single "administration" section is now two —
-    // see nav-config.ts.
-    administrationOperations: t("sections.administrationOperations"),
-    administrationSetup: t("sections.administrationSetup"),
+    dashboard:      t("sections.dashboard"),
+    domain:         t("sections.domain"),
+    functions:      t("sections.functions"),
+    importSection:  t("sections.importSection"),
+    reports:        t("sections.reports"),
+    administration: t("sections.administration"),
+    settings:       t("sections.settings"),
+    study:          t("sections.study"),
+    helpSection:    t("sections.helpSection"),
   };
 
   const itemLabels: Record<string, string> = {
+    // Slice #38.20: the four lists are items of „Domeniu".
+    naturalPeople:             t("items.naturalPeople"),
+    judicialPeople:            t("items.judicialPeople"),
+    propertyList:              t("items.propertyList"),
+    document:                  t("items.document"),
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
@@ -393,15 +410,24 @@ export function SidebarNav() {
     // does — src/__tests__/sidebar-nav-items.test.ts — which is what that
     // sentence was asking for.
     docTypeEngine:             t("items.docTypeEngine"),
-    postImportReport:          t("items.postImportReport"),
     calculation:               t("items.calculation"),
+    // Slice #38.20 — the new items; those with no href are placeholders.
+    checkCorrelations:         t("items.checkCorrelations"),
+    inheritanceTrees:          t("items.inheritanceTrees"),
+    miscFolders:               t("items.miscFolders"),
+    singleFile:                t("items.singleFile"),
+    reportsInProgress:         t("items.reportsInProgress"),
+    courses:                   t("items.courses"),
+    quizzes:                   t("items.quizzes"),
+    score:                     t("items.score"),
+    userManual:                t("items.userManual"),
+    askAi:                     t("items.askAi"),
     globalSearch:              t("items.globalSearch"),
     // Slice #32.19 — the three screens that had no sidebar entry at all.
     groups:                    t("items.groups"),
     stamps:                    t("items.stamps"),
     tags:                      t("items.tags"),
     helpContent:               t("items.helpContent"),
-    settings:                  t("items.settings"),
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -479,25 +505,15 @@ export function SidebarNav() {
       {/* ── Nav sections ───────────────────────────────────────────────── */}
       <nav
         className="flex-1 overflow-y-auto py-2 px-2 flex flex-col gap-0.5"
-        aria-label="Main navigation"
+        // Slice #38.20: its name in the user's language (it was „Main navigation" in both).
+        aria-label={t("mainNavigation")}
+        data-sidebar-nav
       >
-        {NAV_SECTIONS
-          // Slice #22.01 (extended by #22.05's Operations/Setup split): BOTH
-          // "administrationOperations" and "administrationSetup" sections are
-          // superuser-only — matched by prefix so this doesn't need updating
-          // again if the split changes further. Previously only the "users"
-          // item was filtered out for regular users, leaving Reference Data /
-          // Import / Calculation / Global Search / Help Content / Settings
-          // reachable by anyone. The server-side guard at
-          // src/app/admin/layout.tsx enforces the same rule for direct
-          // navigation / deep links.
-          .filter((section) => !section.key.startsWith("administration") || isSuperuser)
-          // Slice #21.11.uat.auth: Users & Access approves Supabase Auth
-          // sign-up requests through the Admin API, which does not exist on a
-          // UAT box with no Supabase project. Strip the item there rather than
-          // let it dead-end — the same reasoning as hiding Sign Out / Change
-          // Password below. The server-side guard in
-          // src/app/admin/users/page.tsx still catches a hand-typed URL.
+        {sections
+          // Slice #38.20: `sections` is already this user's (`sectionsFor`) — the
+          // „administration" key prefix it used to filter by no longer exists; the
+          // server-side guard at src/app/admin/layout.tsx still refuses every /admin/
+          // address to anyone else.
           .map((section) =>
             isUatMode && section.items.some((i) => i.key === "users")
               ? { ...section, items: section.items.filter((i) => i.key !== "users") }
@@ -515,7 +531,7 @@ export function SidebarNav() {
               <NavFlatSectionRow
                 key={section.key}
                 section={section}
-                isActive={isFlatSectionActive(section.key)}
+                isActive={isFlatSectionActive(section)}
                 isCollapsed={isCollapsed}
                 sectionLabel={sectionLabels[section.key] ?? section.key}
                 onNavigate={guardedNavigate}
@@ -529,6 +545,7 @@ export function SidebarNav() {
                 activeHref={activeHref}
                 sectionLabel={sectionLabels[section.key] ?? section.key}
                 itemLabels={itemLabels}
+                comingSoon={t("comingSoon")}
                 onToggle={() => toggleSection(section.key)}
                 onExpandSidebar={expandSidebar}
               />

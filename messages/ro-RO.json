@@ -1237,12 +1237,15 @@
   },
   "nav": {
     "sections": {
-      "naturalPeople": "Persoane Fizice",
-      "judicialPeople": "Persoane Juridice",
-      "propertyList": "Proprietăți",
-      "document": "Acte",
-      "administrationOperations": "Admin-Operațiuni",
-      "administrationSetup": "Admin-Configurare"
+      "dashboard": "Tablou de bord",
+      "domain": "Domeniu",
+      "functions": "Funcții",
+      "importSection": "Import",
+      "reports": "Rapoarte",
+      "administration": "Administrare",
+      "settings": "Setări",
+      "study": "Studiu",
+      "helpSection": "Ajutor"
     },
     "items": {
       "naturalPerson": "Persoană Fizică",
@@ -1269,16 +1272,28 @@
       "titluProprietate": "Titlu de Proprietate",
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
-      "import": "Import în sistem",
+      "import": "Dosare de proprietăți",
       "docTypeEngine": "Distilare Tipizate",
-      "postImportReport": "Raport post-import",
       "calculation": "Calcul drum lateral",
       "globalSearch": "Căutare globală",
       "groups": "Grupuri",
       "stamps": "Ștampile",
       "tags": "Etichete",
       "helpContent": "Informații de ajutor",
-      "settings": "Setări"
+      "naturalPeople": "Persoane Fizice",
+      "judicialPeople": "Persoane Juridice",
+      "propertyList": "Proprietăți",
+      "document": "Acte",
+      "checkCorrelations": "Verificare corelări",
+      "inheritanceTrees": "Arbori de moștenire",
+      "miscFolders": "Dosare diverse",
+      "singleFile": "Fișier individual",
+      "reportsInProgress": "În lucru",
+      "courses": "Cursuri",
+      "quizzes": "Chestionare",
+      "score": "Punctaj",
+      "userManual": "Manual de utilizare",
+      "askAi": "Întreabă AI"
     },
     "collapse": "Restrânge bara laterală",
     "expand": "Extinde bara laterală",
@@ -1286,7 +1301,9 @@
     "changePassword": "Schimbă parola",
     "signOut": "Ieșire",
     "quickSearch": "Căutare rapidă",
-    "quickSearchPlaceholder": "Nume, cod…"
+    "quickSearchPlaceholder": "Nume, cod…",
+    "comingSoon": "În curând",
+    "mainNavigation": "Navigare principală"
   },
   "welcome": {
     "title": "GA40",
@@ -3503,10 +3520,6 @@
   },
   "settings": {
     "pageTitle": "Setări",
-    "sectionOthers": "Altele",
-    "othersGroups": "Grupuri",
-    "othersStamps": "Ștampile",
-    "othersTags": "Etichete",
     "sectionTimeFrames": "Intervale de timp",
     "timeFrames": {
       "loading": "Se încarcă…",
@@ -3535,7 +3548,12 @@
       "properties": "Proprietăți",
       "propertiesMap": "Hartă completă",
       "documents": "Acte",
-      "admin": "Admin",
+      "sections": {
+        "domain": "Domeniu",
+        "functions": "Funcții",
+        "importSection": "Import",
+        "administration": "Administrare"
+      },
       "groups": "Grupuri",
       "stamps": "Ștampile",
       "calculation": "Calcul",
@@ -3561,7 +3579,8 @@
       "associatePartyOfDocument": "Adaugă parte la certificat",
       "associatePersonOfProperty": "Asociere persoană",
       "associateDocumentOfProperty": "Asociere act",
-      "associateReferenceOfProperty": "Asociere proprietate corelată"
+      "associateReferenceOfProperty": "Asociere proprietate corelată",
+      "reports": "Rapoarte"
     },
     "recentlyViewed": {
       "title": "Recente",
@@ -3719,5 +3738,13 @@
       "impozitRepartizare": "Repartizarea impozitului",
       "chitantaTaxaAutentificare": "Chitanță taxă de autentificare"
     }
+  },
+  "reports": {
+    "title": "Rapoarte — în lucru",
+    "intro": "Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice.",
+    "questions": "Rapoartele vor privi împreună persoanele, firmele, proprietățile și actele și legăturile dintre ele — de exemplu: ce proprietăți și-au schimbat proprietarul cel mai des, ce acte expiră în perioada următoare și ale cui sunt, cum se împart proprietățile pe zone, tipuri și suprafețe, ce persoane sunt legate prin moșteniri sau contracte comune.",
+    "analysis": "Veți putea filtra și grupa după perioadă, loc, tip sau persoană, compara o perioadă cu alta, urmări cum evoluează o cifră în timp pentru a vedea tendințele, și găsi excepțiile — înregistrările care nu se potrivesc tiparului obișnuit. Pornind de la un total, veți putea coborî până la înregistrările din spatele lui.",
+    "results": "Rezultatele vor veni ca tabele pe care le puteți sorta și exporta și ca o varietate largă de grafice: bare, linii, diagrame circulare, hărți, axe de timp și diagrame de legături.",
+    "noSkills": "Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza."
   }
 }

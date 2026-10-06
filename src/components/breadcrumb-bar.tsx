@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
+import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
 
 // ---------------------------------------------------------------------------
 // Route segment map
@@ -68,7 +69,23 @@ export const ASSOCIATE_CRUMB: Readonly<Record<string, Readonly<Record<string, st
 
 interface Segment {
   label: string;
-  href:  string;
+  /** Slice #38.20: none for a sidebar section, which has no screen of its own — drawn as text. */
+  href:  string | null;
+}
+
+/**
+ * The sidebar section that holds the screen `/admin/<part>` (Slice #38.20) — its key, or null for a
+ * screen that is a section by itself („Setări") or in none. The crumb that was „Admin", named after
+ * the two „Admin-…" sections that no longer exist, now names this one: „Domeniu" for „Date de
+ * referință", „Funcții" for „Căutare globală", „Administrare" for „Etichete".
+ */
+export function sectionOfAdminScreen(part: string | undefined): string | null {
+  if (!part) return null;
+  const href = `/admin/${part}`;
+  for (const s of NAV_SECTIONS) {
+    if (s.items.some((i) => i.href === href || i.href?.startsWith(href + "/"))) return s.key;
+  }
+  return null;
 }
 
 export function buildSegments(
@@ -84,6 +101,8 @@ export function buildSegments(
   const parts = pathname.split("/").filter(Boolean); // ["properties", "abc-123", "associate-person"]
 
   let accumulated = "";
+  /** Where the section crumb went (Slice #38.20), for the ?from= origin below. */
+  let sectionIdx = -1;
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
@@ -116,9 +135,16 @@ export function buildSegments(
       segments.push({ label: t("documents"), href: accumulated });
       continue;
     }
+    // Slice #38.20: the reports page.
+    if (part === "reports") { segments.push({ label: t("reports"), href: accumulated }); continue; }
     if (part === "admin") {
-      // No bare /admin page exists — link to the value-lists hub instead.
-      segments.push({ label: t("admin"), href: "/admin/value-lists" });
+      // Slice #38.20: no bare /admin page exists, and no „Admin" section either — the crumb names
+      // the sidebar section that holds the screen, as text (a section has no screen to link to).
+      const section = sectionOfAdminScreen(parts[i + 1]);
+      if (section) {
+        sectionIdx = segments.length;
+        segments.push({ label: t(`sections.${section}`), href: null });
+      }
       continue;
     }
 
@@ -166,6 +192,12 @@ export function buildSegments(
     // (breadcrumb will show the parent only; label arrives once the page hydrates)
   }
 
+  // Slice #38.20: „Import › Import" says nothing twice — a section named as its screen is dropped.
+  if (sectionIdx !== -1 && segments[sectionIdx + 1]?.label === segments[sectionIdx].label) {
+    segments.splice(sectionIdx, 1);
+    sectionIdx = -1;
+  }
+
   // --- ?from= enrichment: insert origin entity before admin section ---
   // When navigating from an entity's References tab → Group/Stamp editor,
   // the URL carries ?from=/properties/abc&fromLabel=Teren Nord-Vest.
@@ -173,11 +205,8 @@ export function buildSegments(
   if (fromHref && fromLabel) {
     const decodedHref  = decodeURIComponent(fromHref);
     const decodedLabel = decodeURIComponent(fromLabel);
-    // Find the index of "admin" in the breadcrumb and insert before it
-    const adminIdx = segments.findIndex((s) => s.label === t("admin"));
-    if (adminIdx !== -1) {
-      segments.splice(adminIdx, 0, { label: decodedLabel, href: decodedHref });
-    }
+    // Insert it before the section crumb (Slice #38.20: it was before „Admin").
+    if (sectionIdx !== -1) segments.splice(sectionIdx, 0, { label: decodedLabel, href: decodedHref });
   }
 
   return segments;
@@ -249,7 +278,7 @@ function BreadcrumbBarInner() {
       {segments.map((seg, idx) => {
         const isLast = idx === segments.length - 1;
         return (
-          <span key={seg.href + idx} className="flex items-center gap-1 min-w-0">
+          <span key={`${seg.href ?? seg.label}-${idx}`} className="flex items-center gap-1 min-w-0">
             {idx > 0 && (
               <svg
                 width="12"
@@ -266,7 +295,11 @@ function BreadcrumbBarInner() {
                 <path d="M9 18 15 12 9 6" />
               </svg>
             )}
-            {isLast ? (
+            {!isLast && seg.href === null ? (
+              <span className="truncate max-w-[200px]" title={seg.label} data-crumb-section="">
+                {seg.label}
+              </span>
+            ) : isLast ? (
               <span
                 className="truncate max-w-[240px] font-medium text-zinc-700 dark:text-zinc-200"
                 aria-current="page"
@@ -276,7 +309,7 @@ function BreadcrumbBarInner() {
               </span>
             ) : (
               <Link
-                href={seg.href}
+                href={seg.href ?? "/"}
                 className="truncate max-w-[200px] hover:text-zinc-800 hover:underline dark:hover:text-zinc-200 transition-colors"
                 title={seg.label}
               >
