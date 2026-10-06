@@ -68,10 +68,10 @@ export type NavSection = {
  * „Raport post-import", a placeholder with no screen, is gone; when it is
  * built, its place is under „Rapoarte" (Ask first 2).
  *
- * WHO SEES WHAT — until #38.21: a non-superuser keeps exactly the reach he
- * had, matched by an explicit list of hrefs (`USER_HREFS`, sidebar-helpers.ts)
- * rather than the „administration" key prefix, which no longer exists. The
- * server-side guard on /admin/* (src/app/admin/layout.tsx) is unchanged.
+ * WHO SEES WHAT — since #38.21 every account with an app_users row sees all of
+ * it (`hasFullAccess`); one without a row sees the dashboard and the four lists
+ * (`USER_HREFS`, sidebar-helpers.ts), as a `user` did before. The server-side
+ * guard on /admin/* (src/app/admin/layout.tsx) asks the same predicate.
  */
 export const NAV_SECTIONS: NavSection[] = [
   {

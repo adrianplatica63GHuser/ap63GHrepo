@@ -223,11 +223,11 @@ type Props = {
    */
   aiInterpretedAt?: string | null;
   /**
-   * Slice #37.85: the reader is a superuser — the one reader told that a type
+   * Slice #37.85: the reader can configure types (full access since #38.21) — the one reader told that a type
    * has no form, and where to build one. Decided on the server
    * (`canConfigureRoles()`), as the role-configuration note decides its own.
    */
-  isSuperuser?:     boolean;
+  canConfigure?:     boolean;
   /** Notified whenever the "Show Big Page" toggle changes, so the parent
    *  (DocumentDetailTiles) can widen the page's outer container — mirrors
    *  PropertyForm's onBigMapChange. */
@@ -277,7 +277,7 @@ export function DocumentForm({
   documentId,
   documentCode,
   initialValues,
-  isSuperuser = false,
+  canConfigure = false,
   onBigPageChange,
   versionNavSlot,
   tiles,
@@ -517,14 +517,14 @@ export function DocumentForm({
   // deed has no printed labels, so a one-document read names fields after its
   // prose. „Descoperire AI" left this form, and the sentence that advertised it
   // left with it. Under „Tip document" a type with no form says so only to a
-  // superuser, the one reader who can act on it, with the way to build one
+  // reader who can configure types, the one who can act on it, with the way to build one
   // („Distilare Tipizate", 10–20 samples); and never on a type that may not hold
   // a form at all — the identity card and the catch-all, which
   // `typeMayHoldAForm` decides, as it does for the engine's picker.
   //
   // `documentTypeNeedsFormHint` keeps its own rule: a MISSING row (the list
   // still loading) is not a formless one.
-  const showNoFormHint = isSuperuser
+  const showNoFormHint = canConfigure
     && effectiveMode !== "view"
     && selectedType !== undefined
     && documentTypeNeedsFormHint(selectedType)
@@ -1312,7 +1312,7 @@ export function DocumentForm({
           highlight={displayHighlights?.documentTypeId}
           width={DOC.documentTypeId}
           watchValue={watchedValues.documentTypeId}
-          // Slice #37.85: see `showNoFormHint` — a superuser only, linking to
+          // Slice #37.85: see `showNoFormHint` — a reader who can configure types only, linking to
           // the engine with this type already chosen.
           hint={
             showNoFormHint && selectedType

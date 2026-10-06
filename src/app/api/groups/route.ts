@@ -13,7 +13,7 @@ import {
 } from "@/lib/api/errors";
 import { createGroup, listGroups } from "@/lib/groups/queries";
 import { groupCreateSchema, type GroupTargetType } from "@/lib/groups/validation";
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 
 const VALID_TARGET_TYPES = new Set<string>([
   "PROPERTY",
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest): Promise<Response> {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Grupuri" (/admin/groups).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Grupuri" (/admin/groups).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   let body: unknown;

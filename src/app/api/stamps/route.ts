@@ -13,11 +13,11 @@ import {
 } from "@/lib/api/errors";
 import { createStamp, listStamps } from "@/lib/stamps/queries";
 import { stampCreateSchema } from "@/lib/stamps/validation";
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 
 export async function GET(): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Ștampile" (/admin/stamps).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Ștampile" (/admin/stamps).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   try {
@@ -29,8 +29,8 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Ștampile" (/admin/stamps).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Ștampile" (/admin/stamps).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   let body: unknown;

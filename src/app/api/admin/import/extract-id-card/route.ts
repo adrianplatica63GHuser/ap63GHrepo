@@ -66,7 +66,7 @@ import {
   type ModelImageMimeType,
 } from "@/lib/files/file-mime";
 import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
-import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
+import { getCurrentUserIdAndAccess } from "@/lib/auth/current-role";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
 import {
   identityPersonCountOf,
@@ -238,8 +238,8 @@ function extractJson(text: string): unknown {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // ── Rate limiting (per user, per role: see @/lib/rate-limit/ocr) ──────────
-  const { userId, role, degraded } = await getCurrentUserIdAndRole();
+  // ── Rate limiting (per user: see @/lib/rate-limit/ocr) ─────────────────────
+  const { userId, fullAccess, degraded } = await getCurrentUserIdAndAccess();
 
   // 503, not 403, when nobody could read the caller — a role lookup that threw
   // (`degraded`) or an auth round trip that did, which leaves `userId` as
@@ -252,17 +252,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  // Superuser-only, checked HERE rather than inherited from /admin: a page
-  // layout does not run for a Route Handler. See the read-sample route for the
+  // Full access only (`hasFullAccess` — since Slice #38.21 a signed-in account with an
+  // app_users row; superuser-only before), checked HERE rather than inherited from
+  // /admin: a page layout does not run for a Route Handler. See the read-sample route for the
   // full note (Slice #29.09a).
-  if (role !== "superuser") {
+  if (!fullAccess) {
     return NextResponse.json(
       { error: "Nu aveți dreptul să folosiți această funcție.", code: "forbidden" },
       { status: 403 },
     );
   }
 
-  const rl = checkOcrRateLimit(userId, role);
+  const rl = checkOcrRateLimit(userId);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

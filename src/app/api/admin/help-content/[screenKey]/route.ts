@@ -1,4 +1,4 @@
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 import { NextResponse } from "next/server";
 import { helpContentUpsertSchema } from "@/lib/help/validation";
 import { isHelpScreenKey } from "@/lib/help/registry";
@@ -18,8 +18,8 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ screenKey: string }> },
 ) {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   try {
@@ -36,8 +36,8 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ screenKey: string }> },
 ) {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   try {

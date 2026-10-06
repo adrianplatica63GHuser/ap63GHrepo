@@ -1,4 +1,4 @@
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 import { NextResponse } from "next/server";
 import { listHelpContent } from "@/lib/help/queries";
 
@@ -11,8 +11,8 @@ import { listHelpContent } from "@/lib/help/queries";
  * badges for every registered screen — including ones with no row here yet.
  */
 export async function GET() {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   try {

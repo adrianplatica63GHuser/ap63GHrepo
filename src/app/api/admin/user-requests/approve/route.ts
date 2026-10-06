@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/user-requests/approve
  *
- * Approves a pending user request. Superuser-only.
+ * Approves a pending user request. Full access, and not the UAT box (`canManageAccounts`).
  *
  * Body: { requestId: string }
  *
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const caller = await getCurrentAppUser();
   if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify the caller may administer accounts (superuser, and not the UAT box —
+  // Verify the caller may administer accounts (full access, and not the UAT box —
   // this route calls the Supabase Admin API, which does not exist there).
   // Slice #29.09a: the role query this route used to run itself now lives in
   // @/lib/auth/current-role, so UAT and a missing app_users row are decided in
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     email: req.email,
     password: tempPassword,
     email_confirm: true,
-    user_metadata: { username: req.username, role: "user" },
+    user_metadata: { username: req.username, role: "superuser" },
   });
   if (createError) {
     console.error("[approve] Supabase createUser failed:", createError);
@@ -97,7 +97,8 @@ export async function POST(request: Request) {
     supabaseUid,
     email: req.email,
     username: req.username,
-    role: "user",
+    // Slice #38.21: one kind of user — every approved account is a superuser.
+    role: "superuser",
     approvedBy: caller.username,
   });
 

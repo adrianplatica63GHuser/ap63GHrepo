@@ -2,8 +2,9 @@
  * „Who is signed in, and what may they see?" — the browser's one question, and
  * the rule that keeps its answer from outliving the session.   (Slice #37.01)
  *
- * The sidebar asks `/api/auth/me` for the signed-in account's name and role,
- * and shows „Admin-Operațiuni" and „Admin-Configurare" only to a `superuser`.
+ * The sidebar asks `/api/auth/me` for the signed-in account's name and whether
+ * it has the whole application (Slice #38.21: `fullAccess`, no role), and shows
+ * an account without it only the dashboard and the four lists.
  * Until this slice the question lived inside `sidebar-nav.tsx`, and two things
  * about it hid both sections from an administrator who had signed out and back
  * in (Adrian, 2026-09-26):
@@ -25,7 +26,7 @@
  * sign-in; `clearRecentlyViewed()` does the same for „RECENTE".
  *
  * Only the sidebar reads `["auth-me"]`. The two other places that ask whether
- * the reader is a superuser — `associate-person-view.tsx` and
+ * the reader has full access — `associate-person-view.tsx` and
  * `no-roles-for-type-note.tsx` — ask the server, through `canConfigureRoles()`,
  * and deliberately not through a second `queryFn` under this key.
  *
@@ -34,12 +35,12 @@
  */
 
 import type { QueryClient } from "@tanstack/react-query";
-import { isAppRole, type AppRole } from "@/lib/auth/roles";
 
 /** What `GET /api/auth/me` answers with a 200. */
 export type Me = {
   username: string;
-  role: AppRole;
+  /** `hasFullAccess` on the server (Slice #38.21): the whole application, or the four lists. */
+  fullAccess: boolean;
   /** Ciprian's UAT box: no real Supabase session, so no „Ieșire". */
   uatMode?: boolean;
 };
@@ -61,11 +62,12 @@ export async function fetchMe(): Promise<Me> {
   const res = await fetch("/api/auth/me");
   if (!res.ok) throw new MeUnavailableError(res.status);
   const body = (await res.json()) as Partial<Me> | null;
-  // A 200 whose role this build does not know is no more a role than a 401.
-  if (!body || !isAppRole(body.role)) throw new MeUnavailableError(res.status);
+  // A 200 that does not say whether the account has the whole application is no
+  // more an answer than a 401.
+  if (!body || typeof body.fullAccess !== "boolean") throw new MeUnavailableError(res.status);
   return {
     username: typeof body.username === "string" ? body.username : "",
-    role: body.role,
+    fullAccess: body.fullAccess,
     ...(body.uatMode === true ? { uatMode: true } : {}),
   };
 }

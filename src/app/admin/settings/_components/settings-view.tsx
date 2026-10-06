@@ -309,7 +309,7 @@ export function SettingsView() {
           ⚠️ **THE ONE THING ON THIS PAGE SLICE #32.19 DID NOT REVEAL, and an
           adversarial round is why.** That slice removed the developer gate from
           the Settings ROUTE and from its sidebar entry, so Ciprian reaches this
-          screen — and `getCurrentAppUser()` reports the UAT box as a superuser,
+          screen — and `hasFullAccess()` lets the UAT box in by a clause of its own,
           so `admin/layout.tsx` lets him through. The panel's own label and
           checkbox are translated, so it reads as an ordinary Romanian setting;
           ticking it renders a hard-coded ENGLISH engineering note about this

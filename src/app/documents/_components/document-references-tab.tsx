@@ -129,7 +129,7 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
    * ⚠️ **ONE DOCUMENT, ON DEMAND, NEVER A SWEEP — AND THE COST IS ON THE
    * BUTTON.** Every press is a billed vision call over EVERY page of this
    * document. `src/lib/rate-limit/ocr.ts` caps six Anthropic-backed routes at
-   * five calls a minute for an ordinary user and twenty for a superuser, from
+   * twenty calls a minute for every account (one allowance since #38.21), from
    * one shared bucket, so a handful of these in a row will start refusing — and
    * the refusal is reported rather than swallowed. A migration that re-read
    * three hundred documents would be a bill and an outage, which is why this is

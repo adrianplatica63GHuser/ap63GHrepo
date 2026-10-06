@@ -21,7 +21,7 @@
  *   }
  */
 
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
 import {
@@ -64,8 +64,8 @@ function extractJson(text: string): unknown {
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

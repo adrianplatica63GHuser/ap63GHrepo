@@ -1,10 +1,14 @@
 /**
- * The GET handlers under `src/app/api/admin` that every signed-in role may
+ * The GET handlers under `src/app/api/admin` that every signed-in account may
  * call, and the screen that needs each one.                    (Slice #36.20)
  *
+ * Since Slice #38.21 every account with an app_users row has full access, so
+ * this list and the guard differ only for an account WITHOUT a row — the
+ * screens below still work for it, as they did for a `user` before.
+ *
  * WHY A LIST AND NOT A RULE
- *   Every POST, PUT, PATCH and DELETE under `/api/admin` requires a superuser
- *   (`requireSuperuser()` in `current-role.ts`). A GET is guarded the same way
+ *   Every POST, PUT, PATCH and DELETE under `/api/admin` requires full access
+ *   (`requireFullAccess()` in `current-role.ts`). A GET is guarded the same way
  *   UNLESS an ordinary screen — one a `user` works on — reads it: Căutare
  *   globală is `/api/admin/global-search`, and the role and value pickers on the
  *   record forms and association screens read their lists from here. A blanket
@@ -44,7 +48,7 @@ export const ADMIN_API_OPEN_READS: Readonly<Record<string, string>> = {
  * delete a stamp, rename a tag across every record, change the dashboard's
  * time frames or commit a calculation by request, with no screen offering it.
  * So the guard walks these files too, by name, and holds them to the same rule:
- * every POST, PUT, PATCH and DELETE requires a superuser, and a GET does unless
+ * every POST, PUT, PATCH and DELETE requires full access, and a GET does unless
  * it is in `OUTSIDE_ADMIN_OPEN_READS` below.
  *
  * The list was made from a grep of every `fetch` of these routes in `src/`
@@ -86,7 +90,7 @@ export const OUTSIDE_ADMIN_OPEN_READS: Readonly<Record<string, string>> = {
  * the type. The feature lives on the document screen a `user` works on every
  * day; closing these two routes would break that screen for the very person
  * the guard protects. If the decision is overturned, both get
- * `requireSuperuser()`, the accept step is hidden for a `user`, and they leave
+ * `requireFullAccess()`, the accept step is hidden for a `user`, and they leave
  * this list — the guard then holds them like the rest.
  */
 export const OUTSIDE_ADMIN_OPEN_WRITES: Readonly<Record<string, string>> = {

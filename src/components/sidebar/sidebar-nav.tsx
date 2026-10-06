@@ -260,17 +260,19 @@ export function SidebarNav() {
   // ── Auth — username + role for sidebar display ────────────────────────────
   // Slice #37.01: `fetchMe` throws on an answer that is not ok, so a 401 or a
   // 500 is a failed, retried query with no role — never a cached `user`. While
-  // the role is unknown `isSuperuser` is false. `@/lib/auth/me-query` says why.
+  // the answer is unknown `fullAccess` is false. `@/lib/auth/me-query` says why.
   const queryClient = useQueryClient();
   const { data: me } = useQuery({
     queryKey: AUTH_ME_QUERY_KEY,
     queryFn: fetchMe,
     staleTime: AUTH_ME_STALE_TIME_MS, // re-fetch in background
   });
-  const isSuperuser = me?.role === "superuser";
-  // Slice #38.20: what this user's sidebar shows — everything for a superuser; for anyone else
-  // exactly the reach he had (`USER_HREFS`), until #38.21 removes the gate.
-  const sections = useMemo(() => sectionsFor(NAV_SECTIONS, isSuperuser), [isSuperuser]);
+  // Slice #38.21: one kind of user — every account with an app_users row has the whole
+  // application (`hasFullAccess` on the server); only an account without one sees less.
+  const fullAccess = me?.fullAccess === true;
+  // Slice #38.20: what this account's sidebar shows — everything with full access; for an
+  // account without an app_users row the dashboard and the four lists (`USER_HREFS`).
+  const sections = useMemo(() => sectionsFor(NAV_SECTIONS, fullAccess), [fullAccess]);
   // UAT mode (Ciprian's local box) has no real Supabase session — hide the
   // Sign Out / Change Password controls, which would otherwise dead-end at
   // a login screen that can't actually authenticate anyone there.

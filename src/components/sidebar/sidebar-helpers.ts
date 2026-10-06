@@ -59,22 +59,24 @@ export function isFlatSectionActive(section: NavSectionMin, pathname: string): b
 }
 
 /**
- * What a NON-SUPERUSER may open from the sidebar — exactly the reach he had
- * before #38.20 (the four lists), plus the dashboard he could always open at
- * `/`. Everything else — the administration screens, which
- * src/app/admin/layout.tsx refuses him server-side, the new „Rapoarte" page
- * and every placeholder — stays out of his sidebar until #38.21 removes the
- * gate. An explicit list rather than a key prefix: the sections were renamed.
+ * What an account WITHOUT FULL ACCESS may open from the sidebar — since #38.21
+ * only an account with no app_users row (every other account has the whole
+ * application, `hasFullAccess` in src/lib/auth/current-role.ts). It is the reach
+ * a `user` had before #38.20 (the four lists) plus the dashboard at `/`.
+ * Everything else — the administration screens, which src/app/admin/layout.tsx
+ * refuses such an account server-side, „Rapoarte" and every placeholder —
+ * stays out of its sidebar. An explicit list rather than a key prefix.
  */
 export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"];
 
 /**
- * The sections a user sees: a superuser all of them; anyone else only the
- * hrefs in `USER_HREFS` — a flat section whose href is listed, the listed
- * items of the others, and no section left empty.
+ * The sections an account sees: with full access (#38.21: every account with an
+ * app_users row) all of them; otherwise only the hrefs in `USER_HREFS` — a flat
+ * section whose href is listed, the listed items of the others, and no section
+ * left empty.
  */
-export function sectionsFor<S extends NavSectionMin>(sections: readonly S[], isSuperuser: boolean): S[] {
-  if (isSuperuser) return [...sections];
+export function sectionsFor<S extends NavSectionMin>(sections: readonly S[], fullAccess: boolean): S[] {
+  if (fullAccess) return [...sections];
   const out: S[] = [];
   for (const s of sections) {
     if (s.items.length === 0) {

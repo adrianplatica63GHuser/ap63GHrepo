@@ -5,7 +5,7 @@ import { UsersAccessClient } from "./users-access-client";
 import { PROSE_STYLE } from "@/lib/ui/field-widths";
 
 /**
- * Server component — verifies the caller is a superuser, then hands off to
+ * Server component — verifies the caller may manage accounts (`canManageAccounts`), then hands off to
  * the client component for interactive approve/reject UI.
  */
 export default async function UsersAccessPage() {
@@ -13,9 +13,9 @@ export default async function UsersAccessPage() {
 
   if (!appUser) redirect("/login");
 
-  // Superuser AND not the UAT box — `canManageAccounts` carries the reason for
-  // the second half (Slice #21.11.uat.auth, revised #29.09a). Defense-in-depth:
-  // admin/layout.tsx has already checked the role. The sidebar hides the nav
+  // Full access AND not the UAT box — `canManageAccounts` carries the reason for
+  // the second half (Slice #21.11.uat.auth, revised #29.09a, #38.21). Defense-in-depth:
+  // admin/layout.tsx has already asked `hasFullAccess`. The sidebar hides the nav
   // item in UAT mode; this redirect only catches a hand-typed URL.
   if (!canManageAccounts(appUser)) redirect("/");
 

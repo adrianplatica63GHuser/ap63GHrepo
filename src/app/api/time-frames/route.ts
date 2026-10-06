@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { getAllTimeFrameRows, upsertTimeFrameSettings } from "@/lib/time-frames/queries";
 import { z } from "zod/v4";
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 
 // ---------------------------------------------------------------------------
 // GET
@@ -36,8 +36,8 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(req: Request) {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Setări" (/admin/settings).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Setări" (/admin/settings).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   let body: unknown;

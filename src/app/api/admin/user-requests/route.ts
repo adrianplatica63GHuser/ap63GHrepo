@@ -1,7 +1,7 @@
 /**
  * GET /api/admin/user-requests
  *
- * Returns user_requests rows. Superuser-only.
+ * Returns user_requests rows. Full access, and not the UAT box (`canManageAccounts`).
  *
  * ⚠️ **The role check was MISSING until Slice #29.09a**, and the comment below
  * claimed it was there. Any signed-in account could read every applicant's
@@ -23,7 +23,7 @@ import { canManageAccounts, getCurrentAppUser } from "@/lib/auth/current-role";
 import { desc, eq } from "drizzle-orm";
 
 export async function GET(request: Request) {
-  // Auth check — must be able to administer accounts (superuser, and not the
+  // Auth check — must be able to administer accounts (full access, and not the
   // UAT box, whose /admin/users screen does not exist).
   const caller = await getCurrentAppUser();
   if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

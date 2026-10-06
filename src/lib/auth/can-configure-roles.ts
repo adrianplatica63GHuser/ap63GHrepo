@@ -7,13 +7,14 @@
  * door on the association itself is `assertRoleMayBeAttached` in the query
  * layer (#34.15); neither of them trusts this.
  *
- * ⚠️ **`superuser`, SPELLED THE WAY THAT LAYOUT SPELLS IT.** The question is
+ * ⚠️ **THE LAYOUT'S OWN PREDICATE, `hasFullAccess`** (Slice #38.21 — it was
+ * `superuser`, spelled the way that layout spelled it). The question is
  * „will this link work", and the only thing that decides that is the redirect
  * in `app/admin/layout.tsx`. A cleverer predicate would be a second opinion
  * about one redirect, and the day that rule changes only one of the two would
- * move. `getCurrentAppUser` reports UAT mode (Ciprian's box, which has no
- * `app_users` rows) as a superuser, which is exactly whom that layout admits,
- * so the link is offered where it works.
+ * move. `hasFullAccess` admits UAT mode (Ciprian's box, which has no
+ * `app_users` rows) by a clause of its own, exactly as that layout does, so
+ * the link is offered where it works.
  *
  * ⚠️ **IT SWALLOWS THE THROW, AND THAT IS THE WHOLE REASON THIS IS A FUNCTION
  * RATHER THAN ONE LINE IN EACH PAGE.** `getCurrentAppUser` deliberately does
@@ -40,12 +41,12 @@
  */
 
 import { cache } from "react";
-import { getCurrentAppUser } from "./current-role";
+import { getCurrentAppUser, hasFullAccess } from "./current-role";
 
 export const canConfigureRoles = cache(async (): Promise<boolean> => {
   try {
     const appUser = await getCurrentAppUser();
-    return appUser?.role === "superuser";
+    return appUser ? hasFullAccess(appUser) : false;
   } catch {
     return false;
   }

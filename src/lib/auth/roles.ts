@@ -1,6 +1,13 @@
 /**
  * The application's user roles — the two names, and nothing else.
- *                                                              (Slice #29.09a)
+ *                                                  (Slice #29.09a, #38.21)
+ *
+ * ⚠️ **THIS APPLICATION READS NO ROLE SINCE SLICE #38.21.** There is one kind
+ * of user: every account with an `app_users` row has the whole application
+ * (`hasFullAccess` in `src/lib/auth/current-role.ts`), and every account is
+ * written as `superuser`. The names stay — here, in the database enum, and in
+ * the column — for the future Portal application, which will need a role
+ * again; its rule goes beside `hasFullAccess`, not back into thirty modules.
  *
  * WHY THIS FILE HAS NO IMPORTS, AND MUST NOT ACQUIRE ANY
  * ------------------------------------------------------

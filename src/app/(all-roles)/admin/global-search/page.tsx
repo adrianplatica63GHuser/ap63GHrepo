@@ -3,10 +3,10 @@
  *
  * ⚠️ **THIS PAGE LIVES IN THE `(all-roles)` ROUTE GROUP ON PURPOSE.** Its URL
  * is still `/admin/global-search`, but it sits outside `src/app/admin/`, so
- * `admin/layout.tsx` — which sends every non-superuser to `/` — does not wrap
+ * `admin/layout.tsx` — which sends every account without full access to `/` — does not wrap
  * it. Until #36.20 it did: a `user` who opened Căutare globală, or typed into
  * the sidebar's quick search (which every role sees and which lands here), was
- * sent home. Every other `/admin` screen stays superuser-only.
+ * sent home. Every other `/admin` screen needs full access (`hasFullAccess`; superuser-only until #38.21).
  *
  * Why a route group and not an exception in the layout: a layout does not
  * re-run on client-side navigation between pages it wraps, so a path check in

@@ -24,7 +24,7 @@
  * everything will be imported.
  *
  * Session-only, like `POST /api/admin/import/property` and unlike
- * `GET /api/admin/import/preflight`, which checks superuser explicitly. The
+ * `GET /api/admin/import/preflight`, which checks full access explicitly. The
  * difference is what leaks: preflight reports infrastructure state, and this
  * returns document codes and titles that any signed-in user can already list at
  * /documents. Recorded rather than assumed, so a future reader does not read
@@ -34,7 +34,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // a cached "already in the archive" is a lie
 
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 
@@ -80,8 +80,8 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   let raw: unknown;

@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod/v4";
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import {
@@ -23,8 +23,8 @@ export async function DELETE(
   _req: NextRequest,
   ctx: Ctx,
 ): Promise<Response> {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   const { id } = await ctx.params;
@@ -46,8 +46,8 @@ export async function PATCH(
   req: NextRequest,
   ctx: Ctx,
 ): Promise<Response> {
-  // Superuser only, as DELETE above.
-  const denied = await requireSuperuser();
+  // Full access only, as DELETE above.
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   const { id } = await ctx.params;

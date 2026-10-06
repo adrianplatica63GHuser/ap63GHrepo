@@ -8,7 +8,7 @@ import { DocTypeEngine } from "./_components/doc-type-engine";
  * kebab-case like every other admin route (`global-search`, `help-content`,
  * `value-lists`, `complex-query`).
  *
- * No guard of its own: every page under /admin/* is superuser-only, checked
+ * No guard of its own: every page under /admin/* needs full access, checked
  * server-side once in `src/app/admin/layout.tsx`. The sidebar hides the whole
  * Administration section for everyone else, but that is UI — the layout is what
  * blocks a typed-in URL.

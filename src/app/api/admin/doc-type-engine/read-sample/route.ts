@@ -32,7 +32,7 @@
  *
  * ⚠️ **ONE SAMPLE PER CALL, NEVER A BATCH.** Twenty samples is twenty calls
  * against `checkOcrRateLimit`, plus one for the clustering that follows — and a
- * superuser's allowance is twenty a minute (Slice #29.09a), so the twenty-first
+ * the allowance is twenty a minute (every account's since #38.21), so the twenty-first
  * WILL be refused. Keeping one sample per request is what lets the
  * PACING live on the client, where the user can watch it, and what lets a
  * refused or timed-out sample be counted as unread rather than taking the other
@@ -49,11 +49,11 @@
  * the worst bug this slice could ship.
  *
  * Auth: middleware requires a session for everything outside /api/auth; the
- * handler then refuses anyone who is not a superuser (Slice #29.09a — a page
- * layout does not guard a Route Handler), and the rate limiter caps what is
- * left at the per-role allowance. `extract-id-card` and `cluster` take the same
- * posture; `ai-interpret` is rate-limited but NOT superuser-only, because it is
- * a document action a normal user performs.
+ * handler then refuses anyone without full access (`hasFullAccess`; until #38.21
+ * anyone not a superuser — a page layout does not guard a Route Handler), and
+ * the rate limiter caps what is left at the one allowance. `extract-id-card` and `cluster` take the same
+ * posture; `ai-interpret` is rate-limited but asks no access question, because
+ * it is a document action every screen user performs.
  */
 
 import type { NextRequest } from "next/server";
@@ -61,7 +61,7 @@ import { NextResponse } from "next/server";
 
 import { unexpectedError } from "@/lib/api/errors";
 import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
-import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
+import { getCurrentUserIdAndAccess } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
 import { buildDiscoverSystemPrompt } from "@/lib/import/classify-prompts";
 import { parseDiscoverPayload, type SkippedPage } from "@/lib/documents/discover-log";
@@ -153,17 +153,16 @@ export async function POST(request: NextRequest): Promise<Response> {
   // ── Rate limiting ─────────────────────────────────────────────────────────
   // The same bucket as ai-interpret, scan-image, parse-text, extract-id-card
   // and this route's own clustering call
-  // — shared, per user, and sized by the caller's role (Slice #29.09a): twenty
-  // a minute for a superuser, five for everyone else. This screen is inside
-  // /admin, which `admin/layout.tsx` makes superuser-only server-side, so a run
-  // here is always paced against the twenty. The client paces itself against
+  // — shared, per user, twenty a minute for every account (one allowance since
+  // Slice #38.21; it was sized by role from #29.09a), so a run here is always
+  // paced against the twenty. The client paces itself against
   // those same numbers (`sample-read-pacing.ts`) so this branch is the backstop
   // rather than the mechanism, and `Retry-After` is what it retries on.
-  const { userId, role, degraded } = await getCurrentUserIdAndRole();
+  const { userId, fullAccess, degraded } = await getCurrentUserIdAndAccess();
 
   // ⚠️ **503, NOT 403, WHEN NOBODY COULD READ THE CALLER.** `degraded` means
   // the role below is a fallback, not an answer — the lookup's database read
-  // threw. Answering 403 there would tell a superuser they are not one, and a
+  // threw. Answering 403 there would tell an account it may not, and a
   // 403 is not retried by anything: `sample-read-run.ts` files it as `reason:
   // "failed"` and moves on, so one pooler hiccup would fail an entire twenty
   // sample run in seconds. A round found that in the fix for the missing guard.
@@ -189,15 +188,16 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  // ⚠️ **SUPERUSER-ONLY, HERE, IN THE ROUTE — NOT BY BEING UNDER /admin.**
+  // ⚠️ **FULL ACCESS ONLY, HERE, IN THE ROUTE — NOT BY BEING UNDER /admin.** (Superuser-only
+  // until Slice #38.21; since then `hasFullAccess`: a signed-in account with an app_users row.)
   // `src/app/admin/layout.tsx` is a PAGE layout: it never runs for a Route
   // Handler, so before Slice #29.09a any authenticated user could POST straight
   // to this URL and spend Anthropic-billed calls the screen would never have
   // let them start. Two adversarial rounds found the same hole, and the second
   // pointed out that this slice had resolved the role two lines up and used it
   // only to WIDEN the allowance. It is also what makes the client's pacing
-  // honest: `sample-read-pacing.ts` paces against the superuser number because
-  // the only caller that gets past this line is a superuser.
+  // honest: since #38.21 every account that gets past this line has the one
+  // allowance `sample-read-pacing.ts` paces against.
   //
   // ⚠️ **THIS IS NOT THE WHOLE CLASS, AND SAYING SO PRECISELY IS THE POINT.**
   // Seven handlers under `/api/admin/*` check the role: these three, plus
@@ -208,14 +208,14 @@ export async function POST(request: NextRequest): Promise<Response> {
   // "Noticed, not fixed"; they are a sweep of their own, not lines to add here
   // quietly. (An earlier draft of this comment said every other handler was
   // unguarded, which was wrong in both directions.)
-  if (role !== "superuser") {
+  if (!fullAccess) {
     return NextResponse.json(
       { error: "Nu aveți dreptul să folosiți această funcție.", code: "forbidden" },
       { status: 403 },
     );
   }
 
-  const rl = checkOcrRateLimit(userId, role);
+  const rl = checkOcrRateLimit(userId);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

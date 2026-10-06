@@ -38,7 +38,7 @@
  *   }
  */
 
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
@@ -64,8 +64,8 @@ const bodySchema = z.object({
 const clean = (v: string | null | undefined): string => (v ?? "").trim();
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // Superuser only — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-002, Slice #36.20 (src/lib/auth/current-role.ts).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   let raw: unknown;

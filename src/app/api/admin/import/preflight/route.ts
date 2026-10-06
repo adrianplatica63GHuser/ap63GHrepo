@@ -4,7 +4,7 @@
  * "Is this system in a state where an import can succeed?" — asked before the
  * folder picker exists, so a run that could never work costs nothing.
  *
- * Superuser-only, checked HERE and not inherited. `middleware.ts` proves only
+ * Full access only (superuser-only until #38.21), checked HERE and not inherited. `middleware.ts` proves only
  * that some session exists; it performs no role check at all, and most routes
  * under /api/admin/ rely on it alone. This one follows the two that do it
  * properly (user-requests/approve, user-requests/reject) rather than the
@@ -13,7 +13,7 @@
  * Response:
  *   200 { documentTypes, classification, storage, database }  — booleans
  *   401 { error: "Unauthorized" }   — no session          (precondition 2 failed)
- *   403 { error: "Forbidden" }      — not a superuser     (precondition 3 failed)
+ *   403 { error: "Forbidden" }      — no full access      (precondition 3 failed)
  *   500 { error: "Internal server error" }
  *
  * The body carries booleans and nothing else — no environment variable names,
@@ -48,7 +48,7 @@ import * as path from "path";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupDocumentType } from "@/db/schema";
-import { getCurrentAppUser } from "@/lib/auth/current-role";
+import { getCurrentAppUser, hasFullAccess } from "@/lib/auth/current-role";
 import { unexpectedError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { PreflightServerReport } from "@/lib/import/preflight";
@@ -210,14 +210,15 @@ export async function GET(): Promise<Response> {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Superuser-only, like every other import-screen route. The UAT special case
+  // Full access only (`hasFullAccess`, Slice #38.21 — superuser-only before), like every
+  // other import-screen route. The UAT special case
   // this block used to spell out — a synthetic identity with no `app_users` row
   // would have been 403'd out of Ciprian's own import screen — is now decided
-  // inside `getCurrentAppUser()`, which reports UAT as a superuser exactly as
+  // by `hasFullAccess()`, which admits UAT by a clause of its own exactly as
   // `admin/layout.tsx` and `api/auth/me` always have. Account administration is
   // the one thing UAT still may not reach, and that lives in
   // `canManageAccounts()` beside it (Slice #29.09a).
-  if (caller.role !== "superuser") {
+  if (!hasFullAccess(caller)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

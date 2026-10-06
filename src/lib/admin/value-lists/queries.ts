@@ -1564,7 +1564,7 @@ export type ReassignOutcome =
  *
  * `actor` exists for callers that already know who is acting: tests, and the
  * route, which holds a `CurrentUser` already and should hand it down rather
- * than pay a second round trip for it (see `getCurrentUserIdAndRole` in
+ * than pay a second round trip for it (see `getCurrentUserIdAndAccess` in
  * @/lib/auth/current-role for the round that made resolving-once a rule). That
  * is a follow-up on the route, named in the handover; until then this resolves
  * it, and refuses rather than guesses.

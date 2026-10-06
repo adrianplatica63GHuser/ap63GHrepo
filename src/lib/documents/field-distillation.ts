@@ -20,8 +20,8 @@
  *
  * ⚠️ **THE DENOMINATOR IS SAMPLES *READ*, NEVER SAMPLES *PICKED*, AND THAT IS
  * THE MOST LOAD-BEARING SENTENCE IN THE FILE.** Twenty samples is twenty calls
- * against a limiter that allows twenty a minute to a superuser and five to
- * everyone else (`checkOcrRateLimit`), plus one more call to cluster them — so
+ * against a limiter that allows every account twenty a minute (`checkOcrRateLimit`,
+ * one allowance since Slice #38.21), plus one more call to cluster them — so
  * a run CAN meet a 429, and a page that has already timed out or been refused is a
  * sample whose pairs nobody has. Dividing by the number picked would quietly
  * raise every share — a field present in 7 of 14 actually-read samples would

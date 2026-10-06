@@ -8,7 +8,7 @@ export default async function HelpContentPage() {
   // request.) The two halves are one gate: a sidebar entry whose route still
   // refuses is a link that goes home without saying why, and a route that
   // still refuses with the entry gone is a screen nobody can reach. The
-  // superuser rule that remains is src/app/admin/layout.tsx's, which covers
+  // full-access rule that remains is src/app/admin/layout.tsx's, which covers
   // every /admin/* route including this one.
 
   const t = await getTranslations("help.admin");

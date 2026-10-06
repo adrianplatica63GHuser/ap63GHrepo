@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/user-requests/reject
  *
- * Rejects a pending user request. Superuser-only.
+ * Rejects a pending user request. Full access, and not the UAT box (`canManageAccounts`).
  *
  * Body: { requestId: string }
  *
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const caller = await getCurrentAppUser();
   if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify the caller may administer accounts (superuser, and not the UAT box).
+  // Verify the caller may administer accounts (full access, and not the UAT box).
   // Slice #29.09a: the role query lives in @/lib/auth/current-role now.
   if (!canManageAccounts(caller)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -22,7 +22,7 @@ import {
   updateStamp,
 } from "@/lib/stamps/queries";
 import { stampUpdateSchema, type StampTargetType } from "@/lib/stamps/validation";
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -39,8 +39,8 @@ function resolveTargetType(raw: string | null): StampTargetType {
 }
 
 export async function GET(request: NextRequest, ctx: Ctx): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   const { id } = await ctx.params;
@@ -59,8 +59,8 @@ export async function GET(request: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   const { id } = await ctx.params;
@@ -94,8 +94,8 @@ export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is „Aplică ștampila" (/admin/stamps/[id]) and „Ștampile".
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   const { id } = await ctx.params;

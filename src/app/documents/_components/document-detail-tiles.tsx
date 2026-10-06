@@ -74,8 +74,8 @@ type Props = {
   aiInterpretedAt?:  string | null;
   /** Slice #26.12 — New / Imported / AI processed, derived on the server. */
   status?:           DocumentStatus;
-  /** Slice #37.85: passed to the form, which tells only a superuser that a type has no form. */
-  isSuperuser?:      boolean;
+  /** Slice #37.85: passed to the form, which tells only a reader who can configure types (full access, #38.21) that a type has no form. */
+  canConfigure?:      boolean;
   readonly?:         boolean;
   /** The `?tab=` the page was opened with, if any. */
   initialTab?:       string;
@@ -93,7 +93,7 @@ export function DocumentDetailTiles({
   initialValues,
   aiInterpretedAt,
   status,
-  isSuperuser = false,
+  canConfigure = false,
   readonly,
   initialTab,
 }: Props) {
@@ -203,7 +203,7 @@ export function DocumentDetailTiles({
             documentCode={documentCode}
             initialValues={initialValues}
             aiInterpretedAt={aiInterpretedAt ?? null}
-            isSuperuser={isSuperuser}
+            canConfigure={canConfigure}
             versionNavSlot={navSlot}
             tiles={{
               shown: choice.shown,

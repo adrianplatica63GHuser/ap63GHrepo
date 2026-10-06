@@ -38,8 +38,8 @@
  * key would be three Romanian sentences to keep in step.
  *
  * ⚠️ **THE LINK IS GATED AND THE SENTENCE IS NOT.** `app/admin/layout.tsx`
- * admits superusers only — a signed-in reader of any other role is redirected
- * to the home page, and one whose session has lapsed to `/login` — so a link
+ * admits full access only (`hasFullAccess`, Slice #38.21 — superusers before) — a
+ * signed-in reader without an app_users row is redirected to the home page, and one whose session has lapsed to `/login` — so a link
  * offered to either would read as the page being broken. The FACT — the type has
  * no roles, and „Roluri pe Document" is where that is fixed — is useful to
  * everyone, and the sentence names the path in words for the reader who cannot

@@ -9,11 +9,11 @@ export const runtime = "nodejs";
 
 import { unexpectedError } from "@/lib/api/errors";
 import { listCalculationRuns } from "@/lib/calculation/runs";
-import { requireSuperuser } from "@/lib/auth/current-role";
+import { requireFullAccess } from "@/lib/auth/current-role";
 
 export async function GET(): Promise<Response> {
-  // Superuser only — FU-222, Slice #37.03: its only screen is the calculation history (/admin/calculation/history).
-  const denied = await requireSuperuser();
+  // Full access only (superuser-only until #38.21) — FU-222, Slice #37.03: its only screen is the calculation history (/admin/calculation/history).
+  const denied = await requireFullAccess();
   if (denied) return denied;
 
   try {

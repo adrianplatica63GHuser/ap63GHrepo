@@ -21,23 +21,17 @@
  * ⚠️ **THE TWO NUMBERS ARE IMPORTED, NOT RETYPED.** A client that believed the
  * window was 60 s while the server had moved to 30 would pace into a wall and
  * report a run of failures as a run of readings. `OCR_WINDOW_MS` and the
- * per-role allowance table are exported from the limiter itself for this one
+ * allowance are exported from the limiter itself for this one
  * reason; importing them pulls no behaviour into the client bundle, only
  * numbers.
  *
- * ⚠️ **WHY THE SUPERUSER ALLOWANCE, AND WHY THAT IS A FACT RATHER THAN A HOPE
- * (Slice #29.09a).** The allowance now depends on the caller's role — twenty a
- * minute for a superuser, five for everyone else — and this module has no
- * session to ask. It does not need one: every screen that runs this pacing
- * lives under `/admin`, and `src/app/admin/layout.tsx` redirects a
- * non-superuser away from `/admin/*` server-side before any of this loads. So
- * the only user who can reach the DocTypeEngine run IS a superuser, and the
- * superuser number is the one the server will apply to their requests. If that
- * ever stops being true — a non-admin screen reusing this pacing, or /admin
- * opening up to another role — this constant becomes a lie and the run starts
- * paying a 429 on every sixth sample. The `Retry-After` path below still
- * recovers each of them, which is the safety net; the pacing is what keeps it
- * from being needed.
+ * ⚠️ **ONE ALLOWANCE, EVERY ACCOUNT'S (Slice #38.21).** From #29.09a to #38.21
+ * the allowance depended on the caller's role, and this module paced against
+ * the superuser's because only a superuser could reach /admin. Since #38.21
+ * there is one kind of user and one number, `OCR_MAX_REQUESTS`, so the pacing
+ * is right for whoever runs it. The `Retry-After` path below still recovers a
+ * refusal, which is the safety net; the pacing is what keeps it from being
+ * needed.
  *
  * ⚠️ **PACING IS A COURTESY, `Retry-After` IS THE FACT.** The limiter is
  * in-memory per Node process and its bucket is shared with `ai-interpret`,
@@ -50,17 +44,14 @@
  * request past the allowance.
  */
 
-import { OCR_MAX_REQUESTS_BY_ROLE, OCR_WINDOW_MS } from "@/lib/rate-limit/ocr";
+import { OCR_MAX_REQUESTS, OCR_WINDOW_MS } from "@/lib/rate-limit/ocr";
 
 /**
- * The allowance this screen's user actually has — see the header for why the
- * superuser row is the right one to read and what enforces it.
+ * The allowance every account has — the limiter's own number (Slice #38.21).
+ * The name is older than that slice and kept: the DocTypeEngine screen and its
+ * tests read it as before.
  */
-// ⚠️ The table, not `ocrMaxRequests("superuser")`. That function takes
-// `unknown` so it can absorb a role the database invented, which means a typo
-// here would have compiled and silently paced a twenty-request run at five.
-// `OCR_MAX_REQUESTS_BY_ROLE.superuser` is checked by the compiler.
-export const OCR_MAX_REQUESTS_ADMIN = OCR_MAX_REQUESTS_BY_ROLE.superuser;
+export const OCR_MAX_REQUESTS_ADMIN = OCR_MAX_REQUESTS;
 
 export { OCR_WINDOW_MS };
 
