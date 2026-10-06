@@ -37,7 +37,7 @@ Nothing.
 | 3 | Presses each link in turn: „Tablou de bord", the five of „Domeniu", „Căutare globală", „Distilare Tipizate", „Calcul drum lateral", „Dosare de proprietăți", „În lucru", the five of „Administrare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Date de referință", „Căutare globală", „Distilare Tipizate", „Calcul", „Import", „Rapoarte — în lucru", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Setări" — and the item pressed is the sidebar's active one |
 | 4 | Points at each of the nine placeholders (Verificare corelări, Arbori de moștenire, Dosare diverse, Fișier individual, Cursuri, Chestionare, Punctaj, Manual de utilizare, Întreabă AI), then presses it | Each drawn faded, the cursor „not allowed"; the tooltip „În curând"; pressing it leaves the page where it was |
 | 5 | „Rapoarte" → „În lucru" | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte" |
-| 6 | „Setări" | „Setări" with „Intervale de timp" and „Opțiuni pentru dezvoltator"; no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
+| 6 | „Setări" | „Setări" with „Intervale de timp" alone (#38.22 removed „Opțiuni pentru dezvoltator"); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
 | 7 | „Restrânge bara laterală" | Nine icons, one per section, each named by its section; then „Extinde bara laterală" |
 | 8 | „Administrare" → „Etichete"; „Funcții" → „Căutare globală"; „Domeniu" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section, not „Admin": „Acasă › Administrare › Etichete", „Acasă › Funcții › Căutare globală", „Acasă › Domeniu › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
 
@@ -81,3 +81,9 @@ the same both times.
 
 **2026-10-06 — `automated`.** `e2e/ui/sidebar-nine-sections.spec.ts`, translated from this file, green
 inside a whole `npm run e2e`: the runner's full run 20261006T194613Z-28897 on 6712163 (100 passed).
+
+**2026-10-06 — Slice #38.22, step 6 driven twice.** The developer-notes panel is gone from every
+build, so Settings holds „Intervale de timp" alone. Driven twice in the browser pane by script
+(„Tablou de bord", then „Setări"): headings „Setări" and „Intervale de timp", no „dezvoltator", no
+„Altele", no link in the page body — the same both times. The spec asserted only „Intervale de
+timp" and no „Altele", so it is unchanged.
