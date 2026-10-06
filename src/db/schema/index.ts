@@ -9,6 +9,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -1561,6 +1562,9 @@ export const documentPage = pgTable(
     filePath:   text("file_path").notNull(),
     fileSize:   integer("file_size"),     // bytes
     mimeType:   text("mime_type"),
+    // Slice #38.17 (migration 093): how far to the right the viewer turns the page — 0, 90, 180 or 270.
+    // A viewing aid: the stored file is never rewritten, and a turn is not a new version of the document.
+    rotation:   smallint("rotation").notNull().default(0),
     createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:  timestamp("updated_at",  { withTimezone: true }).notNull().defaultNow(),
   },
@@ -1569,6 +1573,7 @@ export const documentPage = pgTable(
       t.documentId,
       t.pageNumber,
     ),
+    check("document_page_rotation_check", sql`${t.rotation} IN (0, 90, 180, 270)`),
   ],
 );
 
