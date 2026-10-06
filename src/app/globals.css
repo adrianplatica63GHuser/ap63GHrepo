@@ -68,6 +68,14 @@
   --color-danger:    #B91C1C;   /* bg-danger   — delete / remove buttons       */
   --color-danger-d:  #991B1B;   /* bg-danger-d — destructive button :hover     */
 
+  /* Slice #38.18 — a state sign (the Documents list's „Câmp specific" sign):
+     green when a control can be used, the danger red when it cannot. Light on
+     white: #15803D 5.0 : 1, #B91C1C 6.5 : 1. Dark on zinc-900: #4ADE80 10 : 1,
+     #F87171 6.0 : 1 — an icon needs 3 : 1, these clear text's 4.5 too.       */
+  --color-success:      #15803D;   /* text-success                            */
+  --color-success-dark: #4ADE80;   /* dark:text-success-dark                  */
+  --color-danger-dark:  #F87171;   /* dark:text-danger-dark                   */
+
   --color-focus:     #1A5296;   /* border-focus — input focus border           */
   --color-navy:      #1E3A8A;   /* text-navy — back-navigation arrows + labels */
 

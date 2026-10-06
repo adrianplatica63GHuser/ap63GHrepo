@@ -15,7 +15,8 @@ import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/comp
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
-import { customFieldFilter, typeFilterTrigger } from "@/lib/documents/type-filter";
+import { customFieldFilter, customFieldState, typeFilterTrigger } from "@/lib/documents/type-filter";
+import { CustomFieldSign } from "@/components/documents/custom-field-sign";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
@@ -482,6 +483,11 @@ export function DocumentListView({
     () => customFieldFilter(typeOptions, initialDocumentTypeIds),
     [typeOptions, initialDocumentTypeIds],
   );
+  // Slice #38.18: the same rule with its reason, for the sign between „Tip document:" and „Câmp specific:".
+  const fieldState = useMemo(
+    () => customFieldState(typeOptions, initialDocumentTypeIds),
+    [typeOptions, initialDocumentTypeIds],
+  );
   const customFieldOptions = customField.options;
   const chosenCustomField = customFieldOptions.find((o) => o.key === customFieldKey);
 
@@ -689,8 +695,9 @@ export function DocumentListView({
           unless exactly one type with a closed-list field is ticked. */}
       <div className={`flex flex-col gap-3 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
       <div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">
-        {/* Slice #37.62: the search first, then the type — its placeholder no
-            longer begins with „SAU", which only made sense after the type. */}
+        {/* Slice #37.62: the search first — its placeholder no longer begins
+            with „SAU", which only made sense after the type. Since #38.18 the
+            type stands on the second row, in front of „Câmp specific". */}
         <input
           type="search"
           value={searchInput}
@@ -698,14 +705,6 @@ export function DocumentListView({
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
           className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
-        />
-        <DocumentTypeFilterDropdown
-          types={typeOptions}
-          initialDocumentTypeIds={initialDocumentTypeIds}
-          label={t("typeFilterLabel")}
-          allTypesLabel={t("allTypes")}
-          noTypesLabel={t("noTypes")}
-          typesShownLabel={(count) => t("typesShown", { count })}
         />
 
         {/* Expiring-soon toggle */}
@@ -755,9 +754,39 @@ export function DocumentListView({
           />
         </div>
       </div>
-      {/* ── The second row: „Câmp specific" ─────── (Slice #37.83) ── */}
-      {typeOptions.length > 0 && (
+      {/* ── The second row: „Tip document:", the sign, „Câmp specific:" ── (Slices #37.83, #38.18) ──
+          #38.18: the type moved here, in front of the field it decides; between
+          them a green or red sign says whether „Câmp specific" can be used, and
+          its tooltip why. The row is always drawn — the type filter is on it —
+          and the sign and the field join it once the types have loaded. */}
       <div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">
+        <DocumentTypeFilterDropdown
+          types={typeOptions}
+          initialDocumentTypeIds={initialDocumentTypeIds}
+          label={t("typeFilterLabel")}
+          allTypesLabel={t("allTypes")}
+          noTypesLabel={t("noTypes")}
+          typesShownLabel={(count) => t("typesShown", { count })}
+        />
+        {typeOptions.length > 0 && (
+        <>
+        <CustomFieldSign
+          state={fieldState}
+          title={fieldState.enabled ? tFilter("customFieldSignOn") : tFilter("customFieldSignOff")}
+          note={
+            fieldState.enabled
+              ? tFilter("customFieldSignOffers", { type: fieldState.typeName ?? "" })
+              : fieldState.reason === "all"
+                ? tFilter("customFieldSignAll")
+                : fieldState.reason === "none"
+                  ? tFilter("customFieldSignNone")
+                  : fieldState.reason === "several"
+                    ? tFilter("customFieldSignSeveral", { count: fieldState.count })
+                    : fieldState.reason === "noForm"
+                      ? tFilter("customFieldSignNoForm", { type: fieldState.typeName ?? "" })
+                      : tFilter("customFieldSignNoClosedList", { type: fieldState.typeName ?? "" })
+          }
+        />
         {/* Slice #37.62: no „Importanță" or „Relevanță" filter. The
             Expiring-soon toggle on the first row filters on the document's own
             date_valid_until — a business question, not a curation value — and
@@ -800,8 +829,17 @@ export function DocumentListView({
             note={tFilter("customFieldWhenActive")}
             triggerLabel={tFilter("customFieldHintTrigger")}
           >
-          <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <span className="text-fade">{tFilter("customFieldLabel")}</span>
+          {/* #38.18: disabled, it looks it — the label greyed and in italics, as #38.04's
+              disabled boxes; the box faded, its border dashed, the cursor not-allowed. */}
+          <div
+            data-custom-field-box={customField.enabled ? "enabled" : "disabled"}
+            className={
+              customField.enabled
+                ? "inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+                : "inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-wire bg-cta-pale px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800/60"
+            }
+          >
+            <span className={customField.enabled ? "text-fade" : "italic text-fade dark:text-zinc-500"}>{tFilter("customFieldLabel")}</span>
             <select
               value={customFieldKey}
               aria-describedby="custom-field-hint"
@@ -817,7 +855,7 @@ export function DocumentListView({
               // Slice #38.07: works only for exactly one type with a closed-list field.
               disabled={!customField.enabled}
               data-custom-field-enabled={customField.enabled ? "true" : "false"}
-              className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
+              className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:cursor-not-allowed disabled:italic disabled:text-fade dark:text-zinc-100 dark:disabled:text-zinc-500"
             >
               <option value="">{tFilter("allCustomFields")}</option>
               {customFieldOptions.map((o) => (
@@ -850,8 +888,9 @@ export function DocumentListView({
             )}
           </div>
           </HintBubble>
+        </>
+        )}
       </div>
-      )}
       </div>
 
       {deleteError && (

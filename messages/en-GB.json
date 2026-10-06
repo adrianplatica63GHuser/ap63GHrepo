@@ -922,6 +922,14 @@
       "customFieldValueOption": "{value} ({count, plural, one {# document} other {# documents}})",
       "customFieldHint": "Filters on one of a document type's own fields — a sale contract's clauses, for example. Choose the field (one with a closed list of values, of the type chosen under “Document type”), then one of the values it holds in the archive: only the documents whose field holds that value remain.",
       "customFieldWhenActive": "“Type-specific field” works only when exactly one type is chosen under “Document type”, and that type has a form with closed-list fields.",
+      "customFieldSignOn": "“Type-specific field” can be used",
+      "customFieldSignOff": "“Type-specific field” cannot be used",
+      "customFieldSignOffers": "It offers the closed-list fields of “{type}”.",
+      "customFieldSignAll": "Every type is ticked — choose a single type under “Document type”.",
+      "customFieldSignNone": "No type is ticked — choose a single type under “Document type”.",
+      "customFieldSignSeveral": "{count, plural, one {# type is ticked} other {# types are ticked}} — choose a single type under “Document type”.",
+      "customFieldSignNoForm": "The type “{type}” has no form.",
+      "customFieldSignNoClosedList": "The form of “{type}” has no closed-list fields.",
       "customFieldHintTrigger": "About “Type-specific field”"
     },
     "readonlyView": {

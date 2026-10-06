@@ -16,9 +16,16 @@
  * types on screen have a field", which offered the fields of every type at
  * once.
  *
+ * WHY, FOR THE SIGN (Slice #38.18). `customFieldState` says the same thing with
+ * its reason: every type ticked, none, several, the one type has no form, or
+ * its form has no closed-list field — and, when it works, which type's fields
+ * it offers. The green or red sign between „Tip document:" and „Câmp
+ * specific:" says it in its tooltip and its name.
+ *
  * PURE — no React; `document-type-filter.test.ts` covers it.
  */
 import { customFieldOptionsOf, type CustomFieldOption } from "@/lib/documents/custom-field-options";
+import { parseTemplateFields } from "@/lib/documents/template-fields";
 
 export type TypeFilterTrigger =
   | { kind: "all" }
@@ -47,4 +54,38 @@ export function customFieldFilter(
   if (checked === undefined || checked.length !== 1) return { enabled: false, options: [] };
   const options = customFieldOptionsOf(types, checked);
   return { enabled: options.length > 0, options };
+}
+
+/** Why „Câmp specific" cannot be used now (#38.18). */
+export type CustomFieldReason = "all" | "none" | "several" | "noForm" | "noClosedList";
+
+export interface CustomFieldState {
+  enabled: boolean;
+  /** Set exactly when `enabled` is false. */
+  reason: CustomFieldReason | null;
+  /** The one type ticked, when there is one — the type whose fields it offers, or that has none. */
+  typeName: string | null;
+  /** How many types are ticked, for „several". */
+  count: number;
+}
+
+/**
+ * „Câmp specific" with its reason (#38.18) — the same rule as
+ * `customFieldFilter`, which it agrees with on `enabled` for every input
+ * (`document-type-filter.test.tsx`).
+ */
+export function customFieldState(
+  types: readonly { id: string; name?: string; templateFields?: unknown }[],
+  checked: readonly string[] | undefined,
+): CustomFieldState {
+  const off = (reason: CustomFieldReason, typeName: string | null = null, count = 0): CustomFieldState => ({ enabled: false, reason, typeName, count });
+  if (checked === undefined) return off("all", null, types.length);
+  const on = types.filter((t) => checked.includes(t.id));
+  if (checked.length > 1) return on.length === types.length && types.length > 1 ? off("all", null, on.length) : off("several", null, checked.length);
+  if (on.length === 0) return off("none");
+  const one = on[0];
+  const name = one.name ?? null;
+  if (parseTemplateFields(one.templateFields).length === 0) return off("noForm", name, 1);
+  if (customFieldOptionsOf(types, [one.id]).length === 0) return off("noClosedList", name, 1);
+  return { enabled: true, reason: null, typeName: name, count: 1 };
 }
