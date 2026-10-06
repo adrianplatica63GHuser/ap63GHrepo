@@ -5,7 +5,7 @@
 | **Area** | group |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -69,3 +69,7 @@ reports itself hidden, so it draws no animation frames, and a window widened aft
 not laid out afresh until a reload — the step 3 drop was first refused there. A shown browser lays the
 row out on the resize; the spec widens the window and drags in one. Nothing in the file changed, so the
 case is confirmed, and `e2e/group/group-screen-tiles.spec.ts` translates it.
+
+**2026-10-05 — `automated` (Slice #38.12).** The test runner's full run 20261006T005902Z-25087 on
+05e5ee2 ran `e2e/group/group-screen-tiles.spec.ts` green with the other 94 (lint, tsc, jest and
+forms-drift green too).
