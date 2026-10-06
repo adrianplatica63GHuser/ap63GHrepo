@@ -38,6 +38,9 @@ export const HELP_OPTED_OUT: readonly string[] = [
   // the route needs an explicit decision rather than a deleted rule.
   // Same shape as /admin/import-legacy in Slice #22.06.
   "/admin/complex-query",
+  // Slice #38.20: „Rapoarte — în lucru" is itself the explanation — five paragraphs on what
+  // reports will offer, and nothing to operate yet. Its help comes with the reports.
+  "/reports",
 ];
 
 /** True when a pathname is explicitly excluded from the help system. */

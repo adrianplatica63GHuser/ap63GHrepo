@@ -123,8 +123,10 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await page.getByRole("button", { name: "Restrânge bara laterală" }).click();
       await photograph(page, "sidebar-collapsed", async () => {
         await moveAway(page);
-        await page.locator("aside").getByRole("link", { name: "Persoane Fizice" }).hover();
-        await expect(tooltip(page)).toHaveText("Persoane Fizice");
+        // Slice #38.20: collapsed, the sidebar shows its nine sections' icons; „Persoane Fizice"
+        // is inside „Domeniu", whose icon carries the tooltip.
+        await page.locator("nav[data-sidebar-nav]").getByRole("button", { name: "Domeniu" }).hover();
+        await expect(tooltip(page)).toHaveText("Domeniu");
       });
       await page.getByRole("button", { name: "Extinde bara laterală" }).click();
       await page.goto(`/natural-persons/${ids[0]}?readonly=true`);

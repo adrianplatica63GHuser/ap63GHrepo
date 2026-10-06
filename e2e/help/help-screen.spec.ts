@@ -88,7 +88,12 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
       }
       await tagsLink.click();
       await expect(page).toHaveURL(/\/admin\/tags$/, { timeout: 30_000 });
-      await page.getByRole("button", { name: "Ajutor", exact: true }).first().click({ timeout: 30_000 });
+      // Slice #38.20: the sidebar has a section „Ajutor" too — the screen's „?" is the one outside it.
+      await page
+        .getByRole("button", { name: "Ajutor", exact: true })
+        .and(page.locator(":not(nav[data-sidebar-nav] *)"))
+        .first()
+        .click({ timeout: 30_000 });
       // The innermost block holding both the „Ajutor" heading and „Cum se folosește" is the panel.
       const panel = page
         .locator("div")
