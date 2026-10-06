@@ -26,7 +26,7 @@ jest.mock("next/link", () => ({
 
 const META = {
   principalObjectId: "po-1",
-  groups: [{ id: "g1", code: "GRP-001", position: 1, description: "Moștenirea Ionescu" }],
+  groups: [{ id: "g1", code: "GRP-001", position: 1, description: "Moștenirea Ionescu", memberCount: 2 }],
   stamps: [{ id: "s1", code: "URGENT", shortDescription: "De rezolvat" }],
   importance: null, relevance: null, provenance: "MANUAL", provenanceHistory: [],
   importanceUpdatedAt: null, relevanceUpdatedAt: null, provenanceUpdatedAt: null,
