@@ -40,6 +40,23 @@
  * so there is no space beside it, or fewer units) falls back, not written
  * over; one a grown fixed tile now reaches into is pushed down.
  *
+ * RISEN INTO THE GAPS (Slice #38.16). A stored arrangement is laid out on
+ * records it was not made on: a tile above may be unticked, shorter or empty,
+ * and its stored places then leave holes — a tile the user put under two
+ * tiles kept its top when one of those two was gone. So once the stored
+ * places and the fallbacks are placed, `riseIntoGaps` moves every tile up, in
+ * its own columns, to right under the tile above it (PANEL_GAP below it) or to
+ * the top of the row, under the banners (`lead`) — the place #37.75's flow
+ * gives a freshly opened screen. Top to bottom, so each column keeps its
+ * order; never sideways, never lower. Every gap closes, not only large ones
+ * (#38.16's Ask first 1). Fixed boxes, banners and the action bar never rise;
+ * the action bar is then placed under everything. With nothing stored
+ * `placeWithStored` is `packTiles` and nothing rises: the flow already stands
+ * each tile right under the one above it. The STORED places are not rewritten
+ * by a layout — the rise is what this visit shows; a drop stores the places
+ * as they stand after it, the dropped tile risen too (#38.16's Ask first 2),
+ * so the next visit shows what the user saw on letting go.
+ *
  * PURE — no DOM, no React; `tile-positions.test.ts` covers it.
  */
 import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, topUnder, type PackBox, type Placed } from "./tile-packing";
@@ -125,6 +142,26 @@ function withRowEnds(placed: Placed[], gap: number): Placed[] {
   return placed;
 }
 
+/**
+ * Every box that is not fixed, not a banner (`still`) and not a row end
+ * risen, top to bottom (then left to right), to the highest place in its own
+ * columns: right under the lowest box already settled there, PANEL_GAP below
+ * it, or the top of the row under the banners (`lead`). Never lower than it
+ * stood, never sideways; the row ends then go under everything. (#38.16)
+ */
+export function riseIntoGaps(placed: readonly Placed[], gap: number, lead = 0, still: ReadonlySet<string> = new Set()): Placed[] {
+  const out = placed.map((p) => ({ ...p }));
+  const moves = (p: Placed): boolean => !p.fixed && !p.rowEnd && !still.has(p.id);
+  const settled = out.filter((p) => !p.rowEnd && !moves(p));
+  for (const me of out.filter(moves).sort((a, b) => a.top - b.top || a.col - b.col)) {
+    // Only what stands above it counts: a fixed tile lower in its columns is not a ceiling.
+    const above = settled.filter((p) => p.top < me.top);
+    me.top = Math.min(me.top, Math.max(lead, topUnder(above, me.col, me.units, gap)));
+    settled.push(me);
+  }
+  return withRowEnds(out, gap);
+}
+
 /** The first top at or below `from` where a box of `units` × `height` at `col` is free. */
 function firstFree(placed: readonly Placed[], col: number, units: number, height: number, from: number, gap: number): number {
   const tops = [...new Set([from, ...placed.map((p) => p.top + p.height + gap).filter((t) => t >= from)])].sort((a, b) => a - b);
@@ -178,7 +215,9 @@ export function placeWithStored(
     const blockers = placed.filter((p) => overlaps(p, rect, gap));
     if (blockers.length === 0) {
       placed.push({ id: box.id, col, units, top, height: box.height });
-    } else if (blockers.every((p) => p.top < top)) {
+    } else if (blockers.every((p) => p.fixed || p.top < top)) {
+      // A fixed tile is never „taken" ground: one that now reaches into the place pushes the tile under it —
+      // also when it starts exactly where the tile does, which a risen tile under the column always does (#38.16).
       placed.push({ id: box.id, col, units, top: firstFree(placed, col, units, box.height, top, gap), height: box.height });
     } else {
       fallback.add(box.id); // its place is taken
@@ -208,7 +247,8 @@ export function placeWithStored(
     flow.push({ id: box.id, col, units, top, height: box.height });
     next = col + units >= fcols ? 0 : col + units;
   }
-  const out = [...placed, ...flow];
+  // #38.16: then every tile rises into the empty space above it; the banners stay where they stand.
+  const out = riseIntoGaps([...placed, ...flow], gap, lead, new Set(boxes.filter((b) => b.full).map((b) => b.id)));
   // Back in the boxes' order, so the DOM's order and the placed order agree.
   const order = new Map(boxes.map((b, i) => [b.id, i]));
   out.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));

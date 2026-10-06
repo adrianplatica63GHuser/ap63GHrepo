@@ -44,6 +44,14 @@
  * arrangement is read back at every fresh layout (`placeWithStored`), and
  * „Implicit" forgets it (`TILE_POSITIONS_RESET`).
  *
+ * RISEN INTO THE GAPS (Slice #38.16). A stored arrangement read back on
+ * another record leaves holes where a tile above is unticked, shorter or
+ * empty; `placeWithStored` closes them (`riseIntoGaps`), at every fresh layout
+ * — so also on a height change in the two seconds after one, still „when the
+ * screen opens", and never after (#38.16's Ask first 3). A drop rises at once:
+ * the outline shows where the tile is released, it then slides up from there,
+ * and what is stored is what the user then sees (#38.16's Ask first 2).
+ *
  * UNDER THE RIGHT COLUMN (Slice #37.79). `rightRef` names the right column
  * (#37.56's `TileAreas`). While it stands beside the left area its tiles are
  * measured as FIXED boxes, in this row's coordinates — against the row's right
@@ -74,6 +82,7 @@ import {
   parseStoredPlaces,
   placeWithStored,
   placesToStore,
+  riseIntoGaps,
   snapPlace,
   tilePositionsKey,
   type StoredPlace,
@@ -530,13 +539,15 @@ export function useTilePacking(
       styles.set(d.box.el, "cursor", "");
       if (keep && d.place && d.free) {
         const { gap } = metrics();
-        placed = dropAt(placed, d.box.id, d.place, gap);
+        // #38.16: the dropped tile, and the tiles under where it was, rise at once.
+        placed = riseIntoGaps(dropAt(placed, d.box.id, d.place, gap), gap, lead, new Set(boxes.filter((b) => b.full).map((b) => b.id)));
+        const at = placed.find((p) => p.id === d.box.id);
         if (isStorable(d.box.id)) {
           stored = placesToStore(placed, stored, fallback, d.box.id, lead);
           fallback = fallback.filter((id) => id !== d.box.id);
           writePlaces(key, stored);
         } else {
-          visit = { ...visit, [d.box.id]: d.place };
+          visit = { ...visit, [d.box.id]: at ? { col: at.col, top: at.top } : d.place };
         }
       }
       // Dropped: where it now stands. Refused or Esc: back where it was.
