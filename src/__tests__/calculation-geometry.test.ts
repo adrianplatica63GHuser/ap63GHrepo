@@ -1,332 +1,162 @@
 /**
- * Unit tests for the Diviz geometry core (Slice #18.10.diviz).
+ * „Calcul drum lateral" — the slices without a road                (Slice #38.23)
  *
- * Pure function — no DB / React. Numbers cross-checked against a standalone
- * reference implementation run on the same sample input.
+ * Pure module. On the request's sample (far from a rectangle) and on a
+ * near-rectangle: the slices sum to the parcel, each is its share to 0.01 m²,
+ * the cuts are parallel, and a reorder keeps every area.
  */
 
 import {
-  computeDivision,
+  cutIntoSlices,
   DivisionError,
-  type DivisionInput,
+  isOrderOf,
+  longestSide,
+  polygonArea,
+  quadIsSimple,
+  randomOrder,
+  swapped,
+  type S70Point,
 } from "@/lib/calculation/geometry";
 
-// The sample big polygon (Stereo 70 north/east) from Adrian's data file.
-const SAMPLE_CORNERS = [
+const SAMPLE: S70Point[] = [
+  { north: 321015.423, east: 572425.587 },
+  { north: 322135.856, east: 573339.077 },
+  { north: 321372.274, east: 574609.524 },
+  { north: 320175.1, east: 572897.684 },
+];
+const SAMPLE_SHARES = [0.2433, 0.2566, 0.15, 0.35];
+
+/** #18.10's old sample: 25 m × 265 m, almost a rectangle. */
+const NEAR_RECTANGLE: S70Point[] = [
   { north: 321839.5, east: 578826.01 },
   { north: 321863.241, east: 578810.34 },
   { north: 321986.114, east: 579044.036 },
   { north: 321963.18, east: 579061.26 },
 ];
 
-function sumAreas(owners: { computedArea: number }[], roadArea: number): number {
-  return owners.reduce((s, o) => s + o.computedArea, 0) + roadArea;
+/** Shoelace in exact-ish arithmetic, independent of the module's own frame. */
+function referenceArea(poly: S70Point[]): number {
+  const n0 = poly[0].north;
+  const e0 = poly[0].east;
+  let a = 0;
+  poly.forEach((p, i) => {
+    const q = poly[(i + 1) % poly.length];
+    a += (p.east - e0) * (q.north - n0) - (q.east - e0) * (p.north - n0);
+  });
+  return Math.abs(a) / 2;
 }
 
-describe("computeDivision — sample file", () => {
-  const input: DivisionInput = {
-    corners: SAMPLE_CORNERS,
-    owners: [
-      { name: "Platica", fraction: 0.33 },
-      { name: "Prisecaru", fraction: 0.33 },
-      { name: "Radoi", fraction: 0.33 },
-    ],
-    declaredOrientation: "HORIZONTAL",
-    roadCorner: "SW",
-    roadWidth: 7,
-  };
+/** The shared edge between slice k and k+1: the vertices both polygons carry. */
+function cutDirection(a: S70Point[], b: S70Point[]): { east: number; north: number } {
+  const near = (p: S70Point, q: S70Point) => Math.hypot(p.north - q.north, p.east - q.east) < 1e-6;
+  const shared = a.filter((p) => b.some((q) => near(p, q)));
+  expect(shared).toHaveLength(2);
+  const [p, q] = shared;
+  const len = Math.hypot(q.east - p.east, q.north - p.north);
+  const d = { east: (q.east - p.east) / len, north: (q.north - p.north) / len };
+  return d.east < 0 || (d.east === 0 && d.north < 0) ? { east: -d.east, north: -d.north } : d;
+}
 
-  const result = computeDivision(input);
+describe.each([
+  ["the request's sample", SAMPLE, SAMPLE_SHARES],
+  ["a near-rectangle", NEAR_RECTANGLE, [0.3333, 0.3333, 0.3334]],
+])("%s", (_what, corners, shares) => {
+  const result = cutIntoSlices(corners, shares);
 
-  it("detects a horizontal polygon", () => {
-    expect(result.orientation).toBe("HORIZONTAL");
+  it("the parcel's area is the shoelace's", () => {
+    expect(result.parcelArea).toBeCloseTo(referenceArea(corners), 4);
+    expect(polygonArea(corners)).toBeCloseTo(referenceArea(corners), 4);
   });
 
-  it("computes the total area (~7499.5 m²)", () => {
-    expect(result.totalArea).toBeCloseTo(7499.54, 1);
+  it("the slices sum to the parcel", () => {
+    const sum = result.slices.reduce((s, x) => s + x.area, 0);
+    expect(Math.abs(sum - result.parcelArea)).toBeLessThan(0.01);
   });
 
-  it("identifies the long and short sides", () => {
-    expect(result.lengthSide).toBeGreaterThan(result.widthSide);
-    expect(result.lengthSide).toBeCloseTo(264.9, 0);
-    expect(result.widthSide).toBeCloseTo(28.5, 0);
-  });
-
-  it("computes a road that fits within the polygon length", () => {
-    expect(result.roadLength).toBeGreaterThan(0);
-    expect(result.roadLength).toBeLessThan(result.lengthSide);
-    expect(result.roadLength).toBeCloseTo(189.39, 0);
-    expect(result.roadArea).toBeCloseTo(1328.14, 0);
-  });
-
-  it("makes the last owner border a perpendicular straight extension of the road cap", () => {
-    // Every inter-owner border is perpendicular to the road; the border between
-    // owner N-1 and owner N coincides with the road's perpendicular end cap, so
-    // owner N is a clean quad (not a slanted pentagon).
-    const ownerN = result.owners[result.owners.length - 1];
-    expect(ownerN.polygon.length).toBe(4);
-  });
-
-  it("ends the road with a right-angle (perpendicular) cap", () => {
-    // IMPORTANT invariant (Slice #18.10.diviz): the road's end side where it
-    // meets owner N is perpendicular to the road's long sides. The OTHER end (the
-    // start corner) just follows the polygon's slanted side. So exactly one of
-    // the two short edges is perpendicular — assert the minimum is ~0. Keep this.
-    const road = result.roadPolygon;
-    expect(road.length).toBe(4); // clean strip
-
-    const n = road.length;
-    const edges = road.map((_, i) => {
-      const a = road[i];
-      const b = road[(i + 1) % n];
-      return {
-        dx: b.east - a.east,
-        dy: b.north - a.north,
-        len: Math.hypot(b.east - a.east, b.north - a.north),
-      };
+  it("each slice is its share to 0.01 m², measured on its own polygon", () => {
+    result.slices.forEach((s, k) => {
+      expect(Math.abs(referenceArea(s.polygon) - s.area)).toBeLessThan(0.001);
+      if (k < shares.length - 1) expect(Math.abs(s.area - shares[k] * result.parcelArea)).toBeLessThan(0.01);
     });
-    const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
-    const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
-    const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
-    // Perpendicular ⇒ the cap edge's component along the road direction is ~0.
-    const capDot = Math.min(
-      ...shorts.map((e) => Math.abs((e.dx * dir.x + e.dy * dir.y) / e.len)),
-    );
-    expect(capDot).toBeLessThan(0.02); // < ~1.1° off perpendicular
   });
 
-  it("gives owners 1..N-1 exactly their final area", () => {
-    for (let i = 0; i < result.owners.length - 1; i++) {
-      expect(result.owners[i].computedArea).toBeCloseTo(result.owners[i].finalArea, 1);
+  it("the cuts are parallel, and perpendicular to the longest side", () => {
+    const dirs = result.slices.slice(0, -1).map((s, k) => cutDirection(s.polygon, result.slices[k + 1].polygon));
+    for (const d of dirs) {
+      expect(Math.abs(d.east * dirs[0].north - d.north * dirs[0].east)).toBeLessThan(1e-9);
+      expect(Math.abs(d.east * result.axis.east + d.north * result.axis.north)).toBeLessThan(1e-9);
     }
+    const i = longestSide(corners);
+    const a = corners[i];
+    const b = corners[(i + 1) % 4];
+    const len = Math.hypot(b.east - a.east, b.north - a.north);
+    expect(result.axis.east).toBeCloseTo((b.east - a.east) / len, 12);
+    expect(result.axis.north).toBeCloseTo((b.north - a.north) / len, 12);
   });
 
-  it("lets owner N absorb the remainder (slightly more than its final area)", () => {
-    const last = result.owners[result.owners.length - 1];
-    // 33%*3 = 99% → last owner gets ~1% more than its nominal final area.
-    expect(last.computedArea).toBeGreaterThan(last.finalArea);
-  });
-
-  it("tiles the whole polygon (owners + road = total)", () => {
-    expect(sumAreas(result.owners, result.roadArea)).toBeCloseTo(result.totalArea, 3);
-  });
-
-  it("relates original / road participation / final areas correctly", () => {
-    for (const o of result.owners) {
-      expect(o.roadParticipation).toBeCloseTo(o.fraction * result.roadArea, 6);
-      // finalArea = fraction·(A_total − A_road) equals originalArea − roadParticipation
-      // mathematically, but the two are computed in a different multiply/subtract
-      // order, so compare at a tolerance that ignores float round-off.
-      expect(o.finalArea).toBeCloseTo(o.originalArea - o.roadParticipation, 4);
-    }
-  });
-
-  it("produces a valid polygon (>=3 corners) for every owner and the road", () => {
-    for (const o of result.owners) expect(o.polygon.length).toBeGreaterThanOrEqual(3);
-    expect(result.roadPolygon.length).toBeGreaterThanOrEqual(3);
+  it("a reorder keeps every area, and moves the cuts", () => {
+    const reversed = cutIntoSlices(corners, shares.slice().reverse());
+    reversed.slices.forEach((s, k) => {
+      const j = shares.length - 1 - k;
+      if (k < shares.length - 1) expect(Math.abs(s.area - shares[j] * result.parcelArea)).toBeLessThan(0.01);
+    });
+    expect(reversed.slices[0].polygon).not.toEqual(result.slices[0].polygon);
   });
 });
 
-describe("computeDivision — perfect rectangle", () => {
-  // 300 m (E-W) x 30 m (N-S) rectangle, three equal owners, road south, 6 m.
-  const input: DivisionInput = {
-    corners: [
-      { north: 320000, east: 575000 },
-      { north: 320000, east: 575300 },
-      { north: 320030, east: 575300 },
-      { north: 320030, east: 575000 },
-    ],
-    owners: [
-      { name: "A", fraction: 1 / 3 },
-      { name: "B", fraction: 1 / 3 },
-      { name: "C", fraction: 1 / 3 },
-    ],
-    declaredOrientation: "HORIZONTAL",
-    roadCorner: "SW",
-    roadWidth: 6,
-  };
-  const result = computeDivision(input);
-
-  it("has total area 9000 m² and is horizontal", () => {
-    expect(result.orientation).toBe("HORIZONTAL");
-    expect(result.totalArea).toBeCloseTo(9000, 3);
+describe("the remainder", () => {
+  it("at 99.99% the last slice takes the missing 0.01%", () => {
+    const r = cutIntoSlices(SAMPLE, SAMPLE_SHARES);
+    const last = r.slices[3];
+    expect(last.targetArea).toBeCloseTo(0.35 * r.parcelArea, 6);
+    expect(Math.abs(last.area - 0.3501 * r.parcelArea)).toBeLessThan(0.01);
   });
 
-  it("tiles exactly with equal fractions", () => {
-    expect(sumAreas(result.owners, result.roadArea)).toBeCloseTo(9000, 3);
-  });
-
-  it("gives each of the first two owners their final area", () => {
-    expect(result.owners[0].computedArea).toBeCloseTo(result.owners[0].finalArea, 2);
-    expect(result.owners[1].computedArea).toBeCloseTo(result.owners[1].finalArea, 2);
+  it("a swap keeps every slice's area, the last one's remainder included", () => {
+    const order = [0, 1, 2, 3];
+    const swappedOrder = swapped(order, 0, 2);
+    expect(swappedOrder).toEqual([2, 1, 0, 3]);
+    const before = cutIntoSlices(SAMPLE, order.map((k) => SAMPLE_SHARES[k]));
+    const after = cutIntoSlices(SAMPLE, swappedOrder.map((k) => SAMPLE_SHARES[k]));
+    swappedOrder.forEach((owner, pos) => {
+      const was = order.indexOf(owner);
+      expect(Math.abs(after.slices[pos].area - before.slices[was].area)).toBeLessThan(0.01);
+    });
   });
 });
 
-describe("computeDivision — road corner (Section #4)", () => {
-  const owners = [
-    { name: "O1", fraction: 0.3333 },
-    { name: "O2", fraction: 0.3333 },
-    { name: "O3", fraction: 0.3333 },
-  ];
-
-  it("places owner 1 at the named start corner (SW)", () => {
-    // The road shares the start corner (so the corner itself is on the common
-    // road), and owner 1 — the first listed owner — sits right at it: owner 1 is
-    // the owner nearest the Section-#4 corner.
-    const SW = { north: 321839.5, east: 578826.01 }; // corner 101 of the sample
-    const centroid = (poly: { north: number; east: number }[]) => {
-      const n = poly.length;
-      return {
-        north: poly.reduce((s, p) => s + p.north, 0) / n,
-        east: poly.reduce((s, p) => s + p.east, 0) / n,
-      };
-    };
-    const distToSW = (poly: { north: number; east: number }[]) => {
-      const c = centroid(poly);
-      return Math.hypot(c.north - SW.north, c.east - SW.east);
-    };
-
-    const r = computeDivision({
-      corners: SAMPLE_CORNERS,
-      owners,
-      declaredOrientation: "HORIZONTAL",
-      roadCorner: "SW",
-      roadWidth: 7,
-    });
-    const dists = r.owners.map((o) => distToSW(o.polygon));
-    // Owner 1 (index 0) is the closest owner to the SW start corner.
-    expect(Math.min(...dists)).toBe(dists[0]);
-
-    // And with an EAST start corner (SE) owner 1 flips to the east end.
-    const SE = { north: 321963.18, east: 579061.26 }; // corner 104
-    const rSE = computeDivision({
-      corners: SAMPLE_CORNERS,
-      owners,
-      declaredOrientation: "HORIZONTAL",
-      roadCorner: "SE",
-      roadWidth: 7,
-    });
-    const distsSE = rSE.owners.map((o) => {
-      const c = centroid(o.polygon);
-      return Math.hypot(c.north - SE.north, c.east - SE.east);
-    });
-    expect(Math.min(...distsSE)).toBe(distsSE[0]);
+describe("refusals", () => {
+  it("a bow tie is not a quadrilateral", () => {
+    const bowTie = [SAMPLE[0], SAMPLE[2], SAMPLE[1], SAMPLE[3]];
+    expect(quadIsSimple(SAMPLE)).toBe(true);
+    expect(quadIsSimple(bowTie)).toBe(false);
+    expect(() => cutIntoSlices(bowTie, [0.5, 0.5])).toThrow(DivisionError);
   });
 
-  it("tiles and keeps a perpendicular cap for every start corner", () => {
-    for (const corner of ["SW", "SE", "NW", "NE"] as const) {
-      const r = computeDivision({
-        corners: SAMPLE_CORNERS,
-        owners,
-        declaredOrientation: "HORIZONTAL",
-        roadCorner: corner,
-        roadWidth: 7,
-      });
-      expect(sumAreas(r.owners, r.roadArea)).toBeCloseTo(r.totalArea, 3);
-      // Owners 1..N-1 get their exact final area regardless of which end starts.
-      for (let i = 0; i < r.owners.length - 1; i++) {
-        expect(r.owners[i].computedArea).toBeCloseTo(r.owners[i].finalArea, 1);
-      }
-      // The cap (one of the two short road edges) is perpendicular.
-      const road = r.roadPolygon;
-      const edges = road.map((_, i) => {
-        const a = road[i];
-        const b = road[(i + 1) % road.length];
-        return { dx: b.east - a.east, dy: b.north - a.north, len: Math.hypot(b.east - a.east, b.north - a.north) };
-      });
-      const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
-      const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
-      const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
-      const capDot = Math.min(
-        ...shorts.map((e) => Math.abs((e.dx * dir.x + e.dy * dir.y) / e.len)),
-      );
-      expect(capDot).toBeLessThan(0.02);
-    }
+  it("one share, or a share of 0", () => {
+    expect(() => cutIntoSlices(SAMPLE, [1])).toThrow(DivisionError);
+    expect(() => cutIntoSlices(SAMPLE, [0.5, 0, 0.5])).toThrow(DivisionError);
   });
 });
 
-describe("computeDivision — guards", () => {
-  it("rejects fewer than two owners", () => {
-    expect(() =>
-      computeDivision({
-        corners: SAMPLE_CORNERS,
-        owners: [{ name: "Solo", fraction: 1 }],
-        declaredOrientation: "HORIZONTAL",
-        roadCorner: "SW",
-        roadWidth: 7,
-      }),
-    ).toThrow(DivisionError);
+describe("the order", () => {
+  it("a random order is a permutation, and follows the generator it is given", () => {
+    let seed = 7;
+    const rng = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+    const order = randomOrder(6, rng);
+    expect(isOrderOf(order, 6)).toBe(true);
+    expect(randomOrder(4, () => 0)).toEqual([1, 2, 3, 0]);
   });
 
-  it("rejects an orientation mismatch (Section #2 disagrees with the coordinates)", () => {
-    expect(() =>
-      computeDivision({
-        corners: SAMPLE_CORNERS, // actually horizontal
-        owners: [
-          { name: "A", fraction: 0.5 },
-          { name: "B", fraction: 0.5 },
-        ],
-        declaredOrientation: "VERTICAL",
-        roadCorner: "SW",
-        roadWidth: 7,
-      }),
-    ).toThrow(DivisionError);
-  });
-
-});
-
-describe("computeDivision — vertical polygon", () => {
-  // A near-rectangular VERTICAL parcel: long sides ≈ N-S (~265 m), short sides
-  // ≈ E-W (~28 m), slightly tilted. Long edges are the West/East sides.
-  const VERTICAL_CORNERS = [
-    { north: 320000, east: 575000 }, // SW
-    { north: 320265, east: 575010 }, // NW
-    { north: 320263, east: 575038 }, // NE
-    { north: 319998, east: 575028 }, // SE
-  ];
-  const owners = [
-    { name: "O1", fraction: 0.3333 },
-    { name: "O2", fraction: 0.3333 },
-    { name: "O3", fraction: 0.3333 },
-  ];
-
-  it("is detected as vertical", () => {
-    const r = computeDivision({
-      corners: VERTICAL_CORNERS,
-      owners,
-      declaredOrientation: "VERTICAL",
-      roadCorner: "SW",
-      roadWidth: 6,
-    });
-    expect(r.orientation).toBe("VERTICAL");
-  });
-
-  it("tiles, keeps a perpendicular cap and exact owner areas for every corner", () => {
-    for (const corner of ["SW", "NW", "SE", "NE"] as const) {
-      const r = computeDivision({
-        corners: VERTICAL_CORNERS,
-        owners,
-        declaredOrientation: "VERTICAL",
-        roadCorner: corner,
-        roadWidth: 6,
-      });
-      expect(sumAreas(r.owners, r.roadArea)).toBeCloseTo(r.totalArea, 3);
-      for (let i = 0; i < r.owners.length - 1; i++) {
-        expect(r.owners[i].computedArea).toBeCloseTo(r.owners[i].finalArea, 1);
-      }
-      const road = r.roadPolygon;
-      const edges = road.map((_, i) => {
-        const a = road[i];
-        const b = road[(i + 1) % road.length];
-        return { dx: b.east - a.east, dy: b.north - a.north, len: Math.hypot(b.east - a.east, b.north - a.north) };
-      });
-      const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
-      const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
-      const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
-      const capDot = Math.min(
-        ...shorts.map((e) => Math.abs((e.dx * dir.x + e.dy * dir.y) / e.len)),
-      );
-      expect(capDot).toBeLessThan(0.02);
-    }
+  it.each([
+    [[0, 1, 2], 3, true],
+    [[2, 0, 1], 3, true],
+    [[0, 1], 3, false],
+    [[0, 0, 1], 3, false],
+    [[0, 1, 3], 3, false],
+    [[0, 1.5, 2], 3, false],
+    ["0,1,2", 3, false],
+  ])("%j is an order of %i: %s", (order, n, ok) => {
+    expect(isOrderOf(order, n)).toBe(ok);
   });
 });
