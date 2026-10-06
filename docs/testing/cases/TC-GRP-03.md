@@ -5,7 +5,7 @@
 | **Area** | group |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -58,3 +58,7 @@ properties, the corrected file: every step as written — „[3]" / „3 membri"
 „[2]" / „2 membri"; C added back: C's chip „[3]" with its position 4 (read from the route), A's „[3]".
 All four deleted (204 × 4). Nothing in the file needed correcting, so the case is confirmed, and
 `e2e/group/group-member-count.spec.ts` translates it.
+
+**2026-10-05 — `automated` (Slice #38.11).** The test runner's full run 20261006T002256Z-24005 on
+91e62bd ran `e2e/group/group-member-count.spec.ts` green with the other 93 (lint, tsc, jest and
+forms-drift green too).
