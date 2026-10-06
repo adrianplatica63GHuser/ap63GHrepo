@@ -76,3 +76,5 @@ the case is confirmed, and `e2e/tiles/tiles-drag.spec.ts` translates it.
 forms-drift green too).
 
 **2026-10-05 — Slice #37.89.** A person has a right-hand column now, „Interacțiuni", ticked by default and by „Toate"; at 1920 px it narrows the row this case measures. Right after „Toate" the case unticks „Interacțiuni" (TC-PERS-07 holds the column), so every number above stands. The spec follows.
+
+**2026-10-06 — Slice #38.16.** A drop now rises at once: released 60 px under „Corelate", „Conexiuni" slides up to 16 px under it (every tile rises into the empty space above it, #38.16). Step 2's „at least 16 px under" holds — it is exactly 16 — and every other box stays where step 1 had it, since nothing stood under „Conexiuni"'s old place. Nothing in the steps changes; the spec ran green on it (runner 20261006T153636Z-12188).

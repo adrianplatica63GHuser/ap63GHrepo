@@ -84,7 +84,9 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await expect.poll(async () => place(page, conn), { timeout: 30_000 }).toEqual(c2);
 
       // Step 4 — „Street View" pushes it under itself; unticked, it is back.
-      const sv = await showTile(page, "Street View");
+      await showTile(page, "Street View");
+      // The tile's own section: once Google draws the panorama, its scene is a second region named „Street View" (#38.16, a strict-mode violation).
+      const sv = page.locator('section[data-tile="streetView"]');
       await expect.poll(async () => (await place(page, conn)).y - (await place(page, sv)).b, { timeout: 20_000 }).toBe(GAP);
       await hideTile(page, "Street View");
       await expect.poll(async () => place(page, conn), { timeout: 20_000 }).toEqual(c2);

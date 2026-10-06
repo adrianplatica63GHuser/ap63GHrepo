@@ -78,3 +78,5 @@ and `e2e/tiles/tiles-under-column.spec.ts` translates it.
 **2026-10-04 — `automated` (Slice #37.79).** The test runner's full run 20261004T194754Z-27320 on
 cbafeb3 ran `e2e/tiles/tiles-under-column.spec.ts` green with the other 75 (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-06 — Slice #38.16.** A drop now rises at once: „Conexiuni" released 60 px under „Puncte de contur" slides up to 16 px under it, which step 2's „at least 16 px" allows; step 4's „Street View", opening exactly there, pushes it under itself (a column tile is never „taken" ground — `placeWithStored`). The spec reads „Street View"'s own `section`: once Google draws the panorama its scene is a second region named „Street View", a strict-mode violation the runner met in 20261006T153636Z-12188. Nothing in the steps changes; green in 20261006T154250Z-10015.

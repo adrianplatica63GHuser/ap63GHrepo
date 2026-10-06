@@ -18,6 +18,7 @@ import {
   parseStoredPlaces,
   placeWithStored,
   placesToStore,
+  riseIntoGaps,
   snapPlace,
   tilePositionsKey,
 } from "@/lib/ui/tile-positions";
@@ -101,7 +102,9 @@ describe("remembered", () => {
   });
 
   it("an arrangement reads back as it was stored", () => {
-    const placed = dropAt(rule(), "connections", { col: 6, top: 904 }, GAP);
+    // #38.16: a drop rises at once, as the hook does — 904 is 3 px under „Corelate"'s PANEL_GAP.
+    const placed = riseIntoGaps(dropAt(rule(), "connections", { col: 6, top: 904 }, GAP), GAP);
+    expect(at(placed, "connections").top).toBe(bottom(at(placed, "related")) + GAP);
     const stored = placesToStore(placed, {}, [], "connections");
     const back = placeWithStored(PERSON, parseStoredPlaces(JSON.stringify(stored)), 10, GAP);
     expect(back.fallback).toEqual([]);
@@ -157,7 +160,7 @@ describe("remembered", () => {
   });
 
   it("a banner over a stored arrangement stands at the top and moves every tile down by its height, and back", () => {
-    const stored = placesToStore(dropAt(rule(), "connections", { col: 6, top: 904 }, GAP), {}, [], "connections");
+    const stored = placesToStore(riseIntoGaps(dropAt(rule(), "connections", { col: 6, top: 904 }, GAP), GAP), {}, [], "connections");
     const withBanner = placeWithStored([{ id: "box#0", units: 1, height: 40, full: true }, ...PERSON], stored, 10, GAP);
     expect(withBanner.lead).toBe(40 + GAP);
     expect(at(withBanner.placed, "box#0")).toMatchObject({ col: 0, units: 10, top: 0 });
@@ -261,7 +264,8 @@ describe("the free space under the right column (#37.79)", () => {
 
   it("read back beside the column, a place under it holds; with the column wrapped it falls back and is not written over", () => {
     const beside = placeWithStored(PROPERTY, { connections: { col: 7, top: 792 } }, 10, GAP, 7);
-    expect(placeOf(beside.placed, "connections")).toMatchObject({ col: 7, top: 792 });
+    // #38.16: under the column, and risen right under „Puncte de contur" (394 + 341 + PANEL_GAP).
+    expect(placeOf(beside.placed, "connections")).toMatchObject({ col: 7, top: 394 + 341 + GAP });
     expect(beside.fallback).toEqual([]);
     // Wrapped (a narrow window): no fixed tiles, the row is the left area.
     const wrapped = placeWithStored(PROPERTY.filter((b) => !b.fixed), { connections: { col: 7, top: 792 } }, 6, GAP, 6);
@@ -294,3 +298,127 @@ describe("the free space under the right column (#37.79)", () => {
   });
 });
 
+
+/**
+ * Slice #38.16 — after the stored arrangement is laid out, every tile rises
+ * into the empty space above it. A 10-unit row; A over B over C in the first
+ * three units, each 100 px, as stored on the record the user arranged.
+ */
+describe("every tile rises into the empty space above it (#38.16)", () => {
+  const A: PackBox = { id: "a", units: 3, height: 100 };
+  const B: PackBox = { id: "b", units: 3, height: 100 };
+  const C: PackBox = { id: "c", units: 3, height: 100 };
+  const BAR: PackBox = { id: "actions", units: 1, height: 63, rowEnd: true };
+  const STACK = { a: { col: 0, top: 0 }, b: { col: 0, top: 116 }, c: { col: 0, top: 232 } };
+  const deepFreeze = <T,>(o: T): T => {
+    for (const v of Object.values(o as object)) if (v && typeof v === "object") deepFreeze(v);
+    return Object.freeze(o);
+  };
+
+  it("A over B over C, B no longer shown: C rises right under A", () => {
+    const { placed } = placeWithStored([A, C, BAR], STACK, 10, GAP);
+    expect(at(placed, "c")).toMatchObject({ col: 0, top: 100 + GAP });
+    expect(at(placed, "actions").top).toBe(100 + GAP + 100 + GAP);
+  });
+
+  it("B shorter than when the arrangement was made: C rises by the difference", () => {
+    const { placed } = placeWithStored([A, { ...B, height: 60 }, C, BAR], STACK, 10, GAP);
+    expect(at(placed, "b").top).toBe(116);
+    expect(at(placed, "c").top).toBe(232 - 40);
+  });
+
+  it("the arrangement as made, on the record it was made on, does not move", () => {
+    const { placed } = placeWithStored([A, B, C, BAR], STACK, 10, GAP);
+    expect(placed.filter((p) => !p.rowEnd).map((p) => [p.id, p.col, p.top])).toEqual([["a", 0, 0], ["b", 0, 116], ["c", 0, 232]]);
+  });
+
+  it("a tile stored under two side-by-side tiles, one of them gone, rises under the one that is left", () => {
+    const L: PackBox = { id: "left", units: 3, height: 100 };
+    const R: PackBox = { id: "right", units: 3, height: 300 };
+    const T: PackBox = { id: "under", units: 3, height: 80 };
+    const stored = { left: { col: 0, top: 0 }, right: { col: 3, top: 0 }, under: { col: 1, top: 316 } };
+    // Both shown: under the taller, where the user put it.
+    expect(at(placeWithStored([L, R, T], stored, 10, GAP).placed, "under")).toMatchObject({ col: 1, top: 316 });
+    // „right" not shown: under „left", in the same columns.
+    expect(at(placeWithStored([L, T], stored, 10, GAP).placed, "under")).toMatchObject({ col: 1, top: 100 + GAP });
+    // „left" not shown: still under „right", which is still there.
+    expect(at(placeWithStored([R, T], stored, 10, GAP).placed, "under")).toMatchObject({ col: 1, top: 300 + GAP });
+  });
+
+  it("a tile with nothing above it rises to the top, under the banners' lead", () => {
+    const banner: PackBox = { id: "box#0", units: 1, height: 40, full: true };
+    // Beside the flow's six units the banner does not reach it: the lead is still its ceiling.
+    const r = placeWithStored([banner, A, C], { a: { col: 0, top: 0 }, c: { col: 6, top: 400 } }, 10, GAP, 6);
+    expect(r.lead).toBe(40 + GAP);
+    expect(at(r.placed, "box#0")).toMatchObject({ col: 0, top: 0 });
+    expect(at(r.placed, "c")).toMatchObject({ col: 6, top: r.lead });
+    expect(at(r.placed, "a")).toMatchObject({ col: 0, top: r.lead });
+    // No banner: the row's top.
+    expect(at(placeWithStored([A, C], { a: { col: 0, top: 0 }, c: { col: 6, top: 400 } }, 10, GAP).placed, "c").top).toBe(0);
+  });
+
+  it("each column keeps its order; a tile never moves sideways or lower", () => {
+    const placed = dropAt(rule(), "connections", { col: 6, top: 2000 }, GAP);
+    const risen = riseIntoGaps(placed, GAP);
+    for (const p of placed.filter((x) => !x.rowEnd)) {
+      expect({ id: p.id, col: at(risen, p.id).col, lower: at(risen, p.id).top > p.top }).toEqual({ id: p.id, col: p.col, lower: false });
+    }
+    expect(at(risen, "connections").top).toBe(bottom(at(risen, "related")) + GAP);
+    // Nothing overlaps or comes nearer than PANEL_GAP.
+    const body = risen.filter((p) => !p.rowEnd);
+    for (const [a, b] of body.flatMap((p, i) => body.slice(i + 1).map((q) => [p, q] as const))) {
+      expect([a.id, b.id, a.col < b.col + b.units && b.col < a.col + a.units && a.top < b.top + b.height + GAP && b.top < a.top + a.height + GAP]).toEqual([a.id, b.id, false]);
+    }
+  });
+
+  it("fixed boxes and the action bar never move by the rise; a fixed tile lower in the columns is no ceiling", () => {
+    const placed = packTiles(PROPERTY, 10, GAP, 7);
+    // „Conexiuni" left 300 px under „Puncte de contur": it rises; the column does not move.
+    const moved = dropAt(placed, "connections", { col: 7, top: 1040 }, GAP);
+    const risen = riseIntoGaps(moved, GAP);
+    expect(placeOf(risen, "connections")).toMatchObject({ col: 7, top: 394 + 341 + GAP });
+    expect(placeOf(risen, `${FIXED_PREFIX}map`)).toMatchObject({ col: 7, top: 0 });
+    expect(placeOf(risen, `${FIXED_PREFIX}corners`)).toMatchObject({ col: 7, top: 394 });
+    expect(placeOf(risen, "actions").top).toBe(Math.max(...risen.filter((p) => !p.rowEnd && !p.fixed).map((p) => p.top + p.height)) + GAP);
+    // A tile above the column's lowest tile, in its columns, rises past nothing below it.
+    const high: Placed[] = [
+      { id: `${FIXED_PREFIX}low`, col: 7, units: 3, top: 600, height: 100, fixed: true },
+      { id: "t", col: 7, units: 3, top: 200, height: 100 },
+    ];
+    expect(placeOf(riseIntoGaps(high, GAP), "t").top).toBe(0);
+    // A row end handed in is never taken for a tile.
+    expect(placeOf(riseIntoGaps([...high, { id: "bar", col: 0, units: 7, top: 5, height: 63, rowEnd: true }], GAP), "bar").top).toBe(100 + GAP);
+  });
+
+  it("the stored value is left untouched: a layout only reads it, and only a drop writes", () => {
+    const stored = deepFreeze({ ...STACK, a: { ...STACK.a }, b: { ...STACK.b }, c: { ...STACK.c } });
+    const before = JSON.stringify(stored);
+    placeWithStored([A, C, BAR], stored, 10, GAP);
+    expect(JSON.stringify(stored)).toBe(before);
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src.match(/writePlaces\(key, /g)).toHaveLength(1); // in `end`, on a free drop
+  });
+
+  it("the hook rises a dropped tile at once, and lays the row out — so rises — at every fresh layout", () => {
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src).toContain("riseIntoGaps(dropAt(placed, d.box.id, d.place, gap), gap, lead,");
+    // A height change inside the settling window lays the row out afresh; after it, only `grow`.
+    expect(src).toContain("if (!interacted && Date.now() < settleUntil) return layout();");
+    expect(code(read("src", "lib", "ui", "tile-positions.ts"))).toContain("riseIntoGaps([...placed, ...flow], gap, lead,");
+  });
+
+  it("a column tile ticked exactly where a risen tile stands pushes it under itself, never out of the column (TC-TILES-15 step 4)", () => {
+    // Risen right under „Puncte de contur" (751); „Street View" then opens at that same top.
+    const withSv = [...PROPERTY.slice(0, 2), { id: `${FIXED_PREFIX}streetView`, units: 3, height: 378, fixed: { col: 7, top: 751 } }, ...PROPERTY.slice(2)];
+    const r = placeWithStored(withSv, { connections: { col: 7, top: 751 } }, 10, GAP, 7);
+    expect(r.fallback).toEqual([]);
+    expect(placeOf(r.placed, "connections")).toMatchObject({ col: 7, top: 751 + 378 + GAP });
+    // Unticked again, it is back right under „Puncte de contur".
+    expect(placeOf(placeWithStored(PROPERTY, { connections: { col: 7, top: 751 } }, 10, GAP, 7).placed, "connections")).toMatchObject({ col: 7, top: 751 });
+  });
+
+  it("with nothing stored nothing rises: #37.75's flow, untouched", () => {
+    expect(placeWithStored(PERSON, {}, 10, GAP).placed).toEqual(rule());
+    expect(riseIntoGaps(rule(), GAP)).toEqual(rule());
+  });
+});
