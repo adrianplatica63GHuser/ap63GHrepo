@@ -8,8 +8,11 @@
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The property and the tags carry `TC-E2E-TAG-03` (records.ts): the tags
  *     are `tc-e2e-tag-03-001` … `-200`.
- *   - Playwright's mouse wheels the cloud to its end and double-clicks; the hand
- *     runs set the box's scroll by script (FU-290).
+ *   - Playwright's mouse wheels the cloud until `…-200` is in sight, and
+ *     double-clicks; the hand runs set the box's scroll by script (FU-290).
+ *     „The last chip" is not asserted: the archive's own tags used once sort
+ *     by name, and one after `tc-e2e-tag-03-…` would come after it — the
+ *     runner's database is Adrian's local one (measured: a leftover tag did).
  *   - Slice #38.19's pictures, not steps of the case: the cloud at the top and
  *     at the bottom of its scroll, at 1366 and 1920 px, into
  *     `playwright-report/tag-cloud-scroll/`.
@@ -97,8 +100,7 @@ test.describe("TC-TAG-03 — doar norul de etichete se derulează", () => {
         await page.mouse.wheel(0, 2000);
         return inSight(page, last);
       }, { timeout: 20_000 }).toBe(true);
-      expect(await box.evaluate((b) => Math.abs(b.scrollHeight - b.clientHeight - b.scrollTop) <= 2)).toBe(true);
-      expect(await box.locator("[data-tag-chip]").last().getAttribute("data-tag-chip")).toBe(LAST);
+      expect(await box.evaluate((b) => b.scrollTop > 0)).toBe(true);
       for (const l of [title, rename, merge, note]) expect(await inSight(page, l)).toBe(true);
       expect(await pageScroll(page)).toEqual({ top: 0, more: 0 });
 

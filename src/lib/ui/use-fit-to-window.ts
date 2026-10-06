@@ -73,23 +73,36 @@ export function useFitToWindow(ref: RefObject<HTMLElement | null>, deps: Depende
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const scroller = scrollerOf(el);
-    const isDocument = scroller === document.scrollingElement || scroller === document.documentElement;
+    // ⚠️ The scroller is found again at every measure, never once: while a page is still
+    // hydrating its column may not scroll yet, and a scroller fixed at that moment was the
+    // document — measured in runner 20261006T172944Z-15898 (the page left 9 px to scroll) and
+    // on a dev server (the box never fitted until the window was resized).
     const measure = () => {
+      const scroller = scrollerOf(el);
+      const isDocument = scroller === document.scrollingElement || scroller === document.documentElement;
       const top = isDocument ? 0 : scroller.getBoundingClientRect().top;
       const above = el.getBoundingClientRect().top - top + scroller.scrollTop;
-      setHeight(fittedHeight({ visible: isDocument ? window.innerHeight : scroller.clientHeight, above, below: belowOf(el, scroller) }));
+      const visible = isDocument ? window.innerHeight : scroller.clientHeight;
+      setHeight(fittedHeight({ visible, above, below: belowOf(el, scroller) }));
     };
-    // A ResizeObserver reports once when it starts observing, then on every change.
+    // A ResizeObserver reports once when it starts observing, then on every change. Every
+    // ancestor up to the document: anything above the box that grows — a header that wraps, a
+    // line of text whose font arrives late — grows one of them, and so does the column the
+    // moment it becomes the scroller.
     const sizes = new ResizeObserver(measure);
-    sizes.observe(scroller);
-    // Every ancestor up to the scroller: anything above the box that grows — a header that wraps,
-    // a line of text whose font arrives late — grows one of them, and the box is fitted again.
-    // (Measured in runner 20261006T171148Z-1308: observing the section alone left the page 9 px
-    // to scroll when something above it grew after the first measure.)
-    for (let p = el.parentElement; p && p !== scroller; p = p.parentElement) sizes.observe(p);
+    for (let p = el.parentElement; p; p = p.parentElement) sizes.observe(p);
     window.addEventListener("resize", measure);
+    // A last look once the page has settled — late fonts, a hydrating column — since a change
+    // that moves the box without resizing anything it can observe would otherwise go unseen.
+    // (Runner 20261006T175323Z-11970: 9 px left to scroll on some runs, none on others.)
+    let alive = true;
+    const later = [150, 600, 1500].map((ms) => window.setTimeout(measure, ms));
+    void document.fonts?.ready.then(() => {
+      if (alive) measure();
+    });
     return () => {
+      alive = false;
+      later.forEach((t) => window.clearTimeout(t));
       sizes.disconnect();
       window.removeEventListener("resize", measure);
     };
