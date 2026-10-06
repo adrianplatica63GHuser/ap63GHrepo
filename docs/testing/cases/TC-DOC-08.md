@@ -5,8 +5,8 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `automated` |
-| **Last green** | 2026-10-05 |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-06 |
 
 ## What this proves
 
@@ -35,15 +35,15 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | The toolbar in two rows (#37.83). The first, level, in this order: the search box („caută după cod, titlu sau nr. document" — no „SAU"), „Tip document: Toate tipurile", „Expiră curând", „Câmpuri afișate n/4", and at its end „Adaugă act". Under the search box, the second: „Câmp specific:" with an ⓘ beside it. No „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Presses „Acte" in the left sidebar | The toolbar in two rows (#37.83, #38.18). The first, level, in this order: the search box („caută după cod, titlu sau nr. document" — no „SAU"), „Expiră curând", „Câmpuri afișate n/4", and at its end „Adaugă act". Under the search box, the second, in this order: „Tip document: Toate tipurile", a red sign (a circle with a bar), „Câmp specific:" with an ⓘ beside it. No „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-DOC-08` into the search | One row: „Adeverință", `TC-DOC-08 Act de test` |
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Persoane, Proprietăți, Adăugat la — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
 | 5 | Presses anywhere outside the list, then rests the mouse on „Câmp specific:" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Moving the mouse away closes it. (On a touch screen the ⓘ beside it opens and closes it.) |
-| 6 | With „Tip document: Toate tipurile", looks at „Câmp specific:", then opens „Tip document", unticks „Toate tipurile" and ticks only „Contract de Vânzare" | With every type the field list is disabled, offering only „Toate" (#38.07). With only „Contract de Vânzare" the button reads „Contract de Vânzare" and the list is enabled: „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
-| 7 | Clears the search, chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box, „Tip document", „Expiră curând" and „Câmpuri afișate" where step 1 had them |
+| 6 | With „Tip document: Toate tipurile", looks at „Câmp specific:", then opens „Tip document", unticks „Toate tipurile" and ticks only „Contract de Vânzare" | With every type the field list is disabled, offering only „Toate" (#38.07), and the sign is red. With only „Contract de Vânzare" the button reads „Contract de Vânzare", the sign turns green (a circle with a check), and the list is enabled: „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
+| 7 | Clears the search, chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box, „Expiră curând" and „Câmpuri afișate" where step 1 had them |
 | 8 | Chooses „Toate" in „Câmp specific:" again | The second list is gone |
-| 9 | Opens „Tip document", unticks „Contract de Vânzare" and ticks only „Adeverință" | The button reads „Adeverință"; „Câmp specific:" is still drawn, under the search box, its list disabled — Adeverință has no form (#38.07); the table lists only „Adeverință" rows |
+| 9 | Opens „Tip document", unticks „Contract de Vânzare" and ticks only „Adeverință" | The button reads „Adeverință"; the sign is red; „Câmp specific:" is still drawn, on the second row, its list disabled — Adeverință has no form (#38.07); the table lists only „Adeverință" rows |
 
 ## At the end — leaving things as they were found
 
@@ -158,3 +158,31 @@ the rule. The spec follows.
 
 **2026-10-05 — `automated` (Slice #38.07).** The test runner's full run 20261005T223454Z-10117 on
 bc8e7c6 ran the changed spec green with the other 91 (lint, tsc, jest and forms-drift green too).
+
+**2026-10-06 — run 1, `driven` (Slice #38.18).** Steps 1, 6, 7 and 9 corrected first for #38.18 („Tip
+document" on the second row, in front of a sign; the sign red or green). Driven in the desktop app's
+browser pane, its viewport emulated at 1366 × 900, against `npm run dev` on 3000, by script (FU-290);
+the two documents created through the API as the file says.
+- Step 1: the first row level (centres within 1 px) at x 248 (search), 516 („Expiră curând"), 562
+  („Câmpuri afișate 0/4"), 1170 („Adaugă act"), no type on it; the second, under the search box, at
+  248 („Tip document: Toate tipurile"), 481 (the sign, red, a circle with a bar), 522 („Câmp
+  specific:"), 691 (its ⓘ). No „Importanță" or „Relevanță".
+- Step 2: one row, „Adeverință", `TC-DOC-08 Act de test`.
+- Step 3: „Selectați până la 4 coloane opționale" and the eight fields, none of the three.
+- Step 4: TIP · TITLU · SUBIECT · ADĂUGAT LA; `Subiect de test TC-DOC-08`, 06.10.2026.
+- Step 5: resting on „Câmp specific:" opened the bubble („Filtrează după unul dintre câmpurile proprii
+  ale unui tip de act …"); moving away closed it.
+- Step 6: every type: disabled, „Toate" only, the sign red. Only „Contract de Vânzare": its name on the
+  button, the sign green (a circle with a check), enabled — „Monedă", „Stare plată", „Modalitate
+  plată" among the fields, none of the Antecontract's and no „Temei preț".
+- Step 7: the values „Toate valorile | Achitat integral (7 documente) | Achitat parțial (1
+  document)" — no code; „Achitat integral" left only CVC rows; the first row at the same places as in
+  step 1.
+- Step 8: „Toate" — the values list gone.
+- Step 9: „Adeverință"; the sign red (no form); disabled, on the second row; only „Adeverință" rows.
+- Both documents deleted (204, 204); the pane's column choice (`ga40-col-document-v3`) removed.
+
+**2026-10-06 — run 2, `confirmed` (Slice #38.18).** The same pane and viewport, two new documents, the
+column choice back at its default („Câmpuri afișate 0/4"), the file above unchanged: every step as in
+run 1, to the pixel. Deleted (204, 204). Nothing in the file needed correcting, so the case is
+confirmed, and `e2e/document/document-list.spec.ts` follows it.

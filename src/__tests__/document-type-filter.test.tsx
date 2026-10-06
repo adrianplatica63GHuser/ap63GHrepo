@@ -4,12 +4,17 @@
  * none; „Câmp specific" works only for exactly one type that has a form with a
  * closed-list field, and its ⓘ says so in italics. Driven in the browser by
  * TC-DOC-16.
+ *
+ * Slice #38.18 — „Tip document:" moved to the second row, in front of „Câmp
+ * specific:", with a green or red sign between them whose tooltip says why;
+ * a disabled „Câmp specific:" looks disabled.
  */
 import { readFileSync } from "fs";
 import { join } from "path";
-import { render, screen } from "@testing-library/react";
+import { act, createEvent, fireEvent, render, screen } from "@testing-library/react";
 
-import { customFieldFilter, typeFilterTrigger } from "@/lib/documents/type-filter";
+import { customFieldFilter, customFieldState, typeFilterTrigger } from "@/lib/documents/type-filter";
+import { CustomFieldSign } from "@/components/documents/custom-field-sign";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
@@ -76,8 +81,8 @@ describe("„Câmp specific” — when it works (#38.07)", () => {
     expect(customFieldFilter(TYPES, [])).toEqual({ enabled: false, options: [] });
   });
 
-  it("the screen: the row is drawn once the types load, the field select disabled by the rule", () => {
-    expect(VIEW).toMatch(/\{typeOptions\.length > 0 && \(\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">/);
+  it("the screen: the field joins the second row once the types load, its select disabled by the rule", () => {
+    expect(VIEW).toMatch(/\{typeOptions\.length > 0 && \(\s*<>\s*<CustomFieldSign/);
     expect(VIEW).toContain("disabled={!customField.enabled}");
     expect(VIEW).toContain("customFieldFilter(typeOptions, initialDocumentTypeIds)");
   });
@@ -103,5 +108,92 @@ describe("„Câmp specific” — when it works (#38.07)", () => {
     const em = tip.querySelector("em[data-hint-note]")!;
     expect(em.textContent).toBe("Activ numai așa.");
     expect(em.className).toMatch(/\bitalic\b/);
+  });
+});
+
+describe("the sign between „Tip document:” and „Câmp specific:” (#38.18)", () => {
+  const ROF = ro.shared.listFilters;
+  const all = customFieldState(TYPES, undefined);
+  const cases: [string, ReturnType<typeof customFieldState>, string, string][] = [
+    ["every type (no choice in the URL)", all, "off", "all"],
+    ["every type, ticked one by one", customFieldState(TYPES, ["cvc", "txt", "adv"]), "off", "all"],
+    ["none", customFieldState(TYPES, []), "off", "none"],
+    ["two", customFieldState(TYPES, ["cvc", "adv"]), "off", "several"],
+    ["one without a form", customFieldState(TYPES, ["adv"]), "off", "noForm"],
+    ["one whose form has no closed-list field", customFieldState(TYPES, ["txt"]), "off", "noClosedList"],
+    ["one with a closed-list form", customFieldState(TYPES, ["cvc"]), "on", "—"],
+  ];
+
+  it.each(cases)("%s: the state and its reason", (_label, state, sign, reason) => {
+    expect(state.enabled).toBe(sign === "on");
+    expect(state.reason ?? "—").toBe(reason);
+  });
+
+  it("agrees with „Câmp specific”'s own rule on every input", () => {
+    for (const checked of [undefined, [], ["cvc"], ["txt"], ["adv"], ["cvc", "adv"], ["cvc", "txt", "adv"], ["nobody"]]) {
+      expect({ checked, on: customFieldState(TYPES, checked).enabled }).toEqual({ checked, on: customFieldFilter(TYPES, checked).enabled });
+    }
+  });
+
+  it("names the one type, and counts several", () => {
+    expect(customFieldState(TYPES, ["cvc"]).typeName).toBe("Contract de Vânzare");
+    expect(customFieldState(TYPES, ["adv"]).typeName).toBe("Adeverință");
+    expect(customFieldState(TYPES, ["cvc", "adv"]).count).toBe(2);
+  });
+
+  const note = (s: ReturnType<typeof customFieldState>): string =>
+    s.enabled
+      ? ROF.customFieldSignOffers.replace("{type}", s.typeName)
+      : ({ all: ROF.customFieldSignAll, none: ROF.customFieldSignNone, several: "Sunt bifate 2 tipuri — alegeți la „Tip document” un singur tip.", noForm: ROF.customFieldSignNoForm.replace("{type}", s.typeName), noClosedList: ROF.customFieldSignNoClosedList.replace("{type}", s.typeName) } as Record<string, string>)[s.reason!];
+
+  it.each(cases)("%s: the icon, its colour, its name, and its tooltip on hover and on keyboard focus", (_label, state, sign) => {
+    const title = state.enabled ? ROF.customFieldSignOn : ROF.customFieldSignOff;
+    render(<CustomFieldSign state={state} title={title} note={note(state)} />);
+    const el = screen.getByRole("img", { name: `${title}. ${note(state)}` });
+    expect(el).toHaveAttribute("data-custom-field-sign", sign);
+    expect(el).toHaveAttribute("tabindex", "0");
+    const svg = el.querySelector("svg")!;
+    // Colour is not the only carrier: two different shapes.
+    expect(svg.getAttribute("class")).toMatch(state.enabled ? /lucide-circle-check/ : /lucide-ban/);
+    expect(svg.getAttribute("class")).toMatch(state.enabled ? /\btext-success\b.*\bdark:text-success-dark\b/ : /\btext-danger\b.*\bdark:text-danger-dark\b/);
+    // Hover opens the tooltip; it says the state and the reason (as icon-button.test.tsx hovers).
+    const over = createEvent.pointerOver(el);
+    Object.defineProperty(over, "pointerType", { value: "mouse" });
+    fireEvent(el, over);
+    const tip = screen.getByRole("tooltip");
+    expect(tip).toHaveTextContent(title);
+    expect(tip).toHaveTextContent(note(state));
+    const out = createEvent.pointerOut(el);
+    Object.defineProperty(out, "pointerType", { value: "mouse" });
+    fireEvent(el, out);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    // A keyboard focus opens it too.
+    const real = Element.prototype.matches;
+    const spy = jest.spyOn(Element.prototype, "matches").mockImplementation(function (this: Element, sel: string) {
+      return sel === ":focus-visible" ? true : real.call(this, sel);
+    });
+    act(() => el.focus());
+    expect(screen.getByRole("tooltip")).toHaveTextContent(note(state));
+    spy.mockRestore();
+  });
+
+  it("the words, in both languages — several as an ICU plural; the colours are theme tokens", () => {
+    for (const k of ["customFieldSignOn", "customFieldSignOff", "customFieldSignOffers", "customFieldSignAll", "customFieldSignNone", "customFieldSignSeveral", "customFieldSignNoForm", "customFieldSignNoClosedList"]) {
+      expect([k, typeof ro.shared.listFilters[k], typeof en.shared.listFilters[k]]).toEqual([k, "string", "string"]);
+    }
+    expect(ro.shared.listFilters.customFieldSignSeveral).toMatch(/\{count, plural, one \{.*\} few \{.*\} other \{.*\}\}/);
+    expect(en.shared.listFilters.customFieldSignSeveral).toMatch(/\{count, plural, one \{.*\} other \{.*\}\}/);
+    const css = read("src", "app", "globals.css");
+    expect(css).toMatch(/--color-success:\s+#15803D/);
+    expect(css).toMatch(/--color-success-dark:\s+#4ADE80/);
+    expect(css).toMatch(/--color-danger-dark:\s+#F87171/);
+  });
+
+  it("a disabled „Câmp specific:” looks it: the label greyed and in italics, the box faded and dashed, the cursor not-allowed", () => {
+    const box = VIEW.slice(VIEW.indexOf("data-custom-field-box="), VIEW.indexOf('aria-describedby="custom-field-hint"'));
+    expect(box).toMatch(/customField\.enabled\s*\?\s*"inline-flex items-center gap-1\.5 rounded-md border border-wire bg-white/);
+    expect(box).toMatch(/: "inline-flex cursor-not-allowed items-center gap-1\.5 rounded-md border border-dashed border-wire bg-cta-pale/);
+    expect(box).toContain('customField.enabled ? "text-fade" : "italic text-fade dark:text-zinc-500"');
+    expect(VIEW).toMatch(/disabled=\{!customField\.enabled\}[\s\S]{0,200}disabled:cursor-not-allowed disabled:italic disabled:text-fade/);
   });
 });

@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
- * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-04 (steps 6, 7 and 9 follow Slice #38.07)
+ * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-06 (steps 1, 6, 7 and 9 follow Slice #38.18)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -67,17 +67,23 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(expiring).toBeVisible();
       const chooserButton = main.getByRole("button", { name: /^Câmpuri afișate \d\/4$/ });
       await expect(chooserButton).toBeVisible();
-      // #37.83: the first row, level and in order, „Adaugă act" at its end; „Câmp specific:" under the search box.
+      // #37.83/#38.18: the first row, level and in order, „Adaugă act" at its end — no „Tip document" on it.
       const addNew = main.getByRole("link", { name: "Adaugă act" });
-      const firstRow = async () => Promise.all([search, typeFilter, expiring, chooserButton].map(async (l) => (await l.boundingBox())!));
+      const firstRow = async () => Promise.all([search, expiring, chooserButton].map(async (l) => (await l.boundingBox())!));
       const row1 = await firstRow();
       const add = (await addNew.boundingBox())!;
       const centres = row1.map((r) => r.y + r.height / 2);
       expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(1);
       expect([...row1.map((r) => r.x), add.x]).toEqual([...row1.map((r) => r.x), add.x].sort((a, b) => a - b));
-      const field = (await main.getByText("Câmp specific:").boundingBox())!;
-      expect(field.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
-      expect(Math.abs(field.x - row1[0].x)).toBeLessThanOrEqual(24);
+      await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: /^Tip document:/ })).toHaveCount(0);
+      // #38.18: the second row, under the search box: „Tip document: Toate tipurile", a red sign, „Câmp specific:" with its ⓘ.
+      const sign = main.locator("[data-custom-field-sign]");
+      await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
+      await expect(sign.locator("svg")).toHaveClass(/lucide-ban/);
+      const [typeAt, signAt, field, aboutAt] = await Promise.all([typeFilter, sign, main.getByText("Câmp specific:"), about].map(async (l) => (await l.boundingBox())!));
+      expect([typeAt.x, signAt.x, field.x, aboutAt.x]).toEqual([typeAt.x, signAt.x, field.x, aboutAt.x].sort((a, b) => a - b));
+      expect(typeAt.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
+      expect(Math.abs(typeAt.x - row1[0].x)).toBeLessThanOrEqual(24);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row: „Adeverință", the title.
@@ -134,6 +140,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
       await expect(key).toBeDisabled();
       expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
+      await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       // A tick reloads the address; the list is opened again whenever it is not showing.
       const tick = async (name: string) => {
         const box = main.getByRole("checkbox", { name, exact: true });
@@ -144,12 +151,13 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await tick("Contract de Vânzare");
       await expect(main.getByRole("button", { name: /^Tip document:\s*Contract de Vânzare/ })).toBeVisible({ timeout: 30_000 });
       await expect(key).toBeEnabled({ timeout: 30_000 });
+      await expect(sign).toHaveAttribute("data-custom-field-sign", "on");
+      await expect(sign.locator("svg")).toHaveClass(/lucide-circle-check/);
       const keys = await key.locator("option").allTextContents();
       expect(keys[0]).toBe("Toate");
       for (const kept of ["Monedă", "Stare plată", "Modalitate plată"]) expect(keys).toContain(kept);
       for (const gone of ["CNP 1", "Anul", "luna", "suma de", "Temei preț"]) expect(keys).not.toContain(gone);
       await page.getByRole("heading", { level: 1 }).first().click();
-      // #38.07: the button now names the type, so step 7 compares the first row with it as it stands here.
       const row6 = await firstRow();
 
       // Step 7 — „Stare plată": its values by label with a count, no code.
@@ -175,6 +183,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(main.getByRole("button", { name: /^Tip document:\s*Adeverință/ })).toBeVisible({ timeout: 30_000 });
       await expect(main.locator('[data-toolbar-row="second"]')).toHaveCount(1);
       await expect(key).toBeDisabled();
+      await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));
     } finally {
       await removeRecord(page.request, "document", documentId);

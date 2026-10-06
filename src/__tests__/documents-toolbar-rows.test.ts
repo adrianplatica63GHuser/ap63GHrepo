@@ -1,10 +1,10 @@
 /**
- * Slice #37.83 — the Documents list's toolbar in two rows. The first: the
- * search box, „Tip document:", „Expiră curând", „Câmpuri afișate", and at its
- * end the group with „Adaugă act". The second: „Câmp specific:" alone — drawn
- * only when the types on screen have such a field, so an empty row never
- * pushes the list down. Read from the source, as `document-status.test.ts`
- * reads this file; the browser half is TC-DOC-08.
+ * Slice #37.83 — the Documents list's toolbar in two rows. Since #38.18 the
+ * first holds the search box, „Expiră curând", „Câmpuri afișate", and at its
+ * end the group with „Adaugă act"; the second, „Tip document:", the green or
+ * red sign, then „Câmp specific:" with its values select and its ⓘ. Read from
+ * the source, as `document-status.test.ts` reads this file; the browser half
+ * is TC-DOC-08 and TC-DOC-16.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -24,21 +24,30 @@ describe("the Documents toolbar in two rows (Slice #37.83)", () => {
   const first = between('data-toolbar-row="first"', 'data-toolbar-row="second"');
   const second = between('data-toolbar-row="second"', "deleteError &&");
 
-  it("the first row: search, „Tip document”, „Expiră curând”, „Câmpuri afișate”, then the group at its end", () => {
-    const order = ['type="search"', "<DocumentTypeFilterDropdown", "icon={CalendarClock}", "<FieldChooser", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
+  it("the first row: search, „Expiră curând”, „Câmpuri afișate”, then the group at its end — no „Tip document” (#38.18)", () => {
+    const order = ['type="search"', "icon={CalendarClock}", "<FieldChooser", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
     const at = order.map((m) => first.indexOf(m));
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((x, y) => x - y)).toEqual(at);
-    expect(first).not.toMatch(/customFieldKey|custom-field-hint/);
+    expect(first).not.toMatch(/customFieldKey|custom-field-hint|<DocumentTypeFilterDropdown|<CustomFieldSign/);
   });
 
-  // #38.07: drawn once the types have loaded, its control disabled unless exactly one type with a closed-list field is ticked.
-  it("the second row holds „Câmp specific” alone, and is drawn once the types have loaded", () => {
-    expect(code).toMatch(/\{typeOptions\.length > 0 && \(\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">/);
+  // #38.18: „Tip document:" → the sign → „Câmp specific:" → its values select → the ⓘ (the HintBubble's trigger, after its children).
+  it("the second row, left to right: „Tip document:”, the sign, „Câmp specific:”, its values select, the ⓘ", () => {
+    const order = ["<DocumentTypeFilterDropdown", "<CustomFieldSign", "<HintBubble", 'aria-label={tFilter("customFieldLabel")}', 'aria-label={tFilter("customFieldValueLabel")}', "</HintBubble>"];
+    const at = order.map((m) => second.indexOf(m));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect([...at].sort((x, y) => x - y)).toEqual(at);
+    expect(second).not.toMatch(/icon=\{CalendarClock\}|<FieldChooser|\/documents\/new/);
+  });
+
+  // #38.07/#38.18: the row is always drawn (the type filter is on it); the sign and the field once the types have loaded.
+  it("the second row is always drawn; the sign and „Câmp specific” join it once the types have loaded", () => {
+    expect(code).toMatch(/<div className="flex flex-wrap items-center gap-3" data-toolbar-row="second">\s*<DocumentTypeFilterDropdown/);
+    expect(code).toMatch(/\/>\s*\{typeOptions\.length > 0 && \(\s*<>\s*<CustomFieldSign/);
     expect(second).toContain('id="custom-field-hint"');
     expect(second).toContain("setCustomFieldKey(");
     expect(second).toContain("setCustomFieldValue(");
-    expect(second).not.toMatch(/<DocumentTypeFilterDropdown|icon=\{CalendarClock\}|<FieldChooser|\/documents\/new/);
   });
 
   it("the two rows are one toolbar column, the second under the first", () => {
