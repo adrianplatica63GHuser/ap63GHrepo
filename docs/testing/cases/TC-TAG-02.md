@@ -75,3 +75,5 @@ deleted (204), none left. Nothing in the file changed, so the case is confirmed,
 **2026-10-06 — `automated` (Slice #38.14).** The test runner's full run 20261006T021842Z-32461 on
 5124cee ran `e2e/tag/tag-cloud.spec.ts` green with the other 96 (lint, tsc, jest and forms-drift green
 too).
+
+**2026-10-06 — Slice #38.19.** The chips now scroll in a box of their own under the header (TC-TAG-03); with three tags nothing scrolls, and every step here stands. The spec ran green beside TC-TAG-03 (runner 20261006T170744Z-10136).
