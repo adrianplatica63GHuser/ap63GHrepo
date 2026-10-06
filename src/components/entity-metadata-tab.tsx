@@ -37,7 +37,7 @@ const RELEVANCE_VALUES  = ["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"] as con
 // Types
 // ---------------------------------------------------------------------------
 
-type GroupTag     = { id: string; code: string; position: number; description: string };
+type GroupTag     = { id: string; code: string; position: number; description: string; memberCount: number };
 type StampTag     = { id: string; code: string; shortDescription: string };
 type HistoryEntry = { method: string; date: string };
 type AvailableGroup = { id: string; code: string; description: string };
@@ -570,6 +570,7 @@ function InlineGroupsSection({
   labelLimit,
   labelLimitReached,
   labelNoneAvailable,
+  labelMembers,
 }: {
   principalObjectId: string;
   currentGroups:     GroupTag[];
@@ -595,6 +596,8 @@ function InlineGroupsSection({
   labelLimitReached: string;
   /** The picker's placeholder when no group is left to join under the cap. */
   labelNoneAvailable: string;
+  /** Slice #38.11: a chip's tooltip — „2 membri". */
+  labelMembers:      (count: number) => string;
 }) {
   const queryClient  = useQueryClient();
   const availKey     = `${mainQueryKey}-avail-groups`;
@@ -705,8 +708,15 @@ function InlineGroupsSection({
                 href={withBack(`/admin/groups/${encodeURIComponent(g.id)}`)}
                 className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
               >
-                <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                  {g.code}&nbsp;[{String(g.position).padStart(2, "0")}]
+                {/* Slice #38.11: how many members the group has now — not this
+                    record's position in it, a high-water counter (11 and 12 in a
+                    group of two). Unpadded, its words as the tooltip. */}
+                <span
+                  className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+                  title={labelMembers(g.memberCount)}
+                  data-group-member-count={g.memberCount}
+                >
+                  {g.code}&nbsp;[{g.memberCount}]
                 </span>
                 <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
                   {g.description}
@@ -1605,6 +1615,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelLimit={t("groups.limit", { max: groupCap })}
           labelLimitReached={t("groups.limitReached", { max: groupCap })}
           labelNoneAvailable={t("groups.noneAvailable")}
+          labelMembers={(count) => t("groups.members", { count })}
         />
     ) : (
         <section className="flex flex-col gap-1">

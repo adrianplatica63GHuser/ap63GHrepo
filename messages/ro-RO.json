@@ -848,7 +848,8 @@
         "remove": "Elimină din grup",
         "limit": "Un element poate face parte din cel mult {max} grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.",
         "limitReached": "Cel mult {max} grupuri",
-        "noneAvailable": "niciun grup disponibil"
+        "noneAvailable": "niciun grup disponibil",
+        "members": "{count, plural, one {# membru} few {# membri} other {# de membri}}"
       },
       "stamps": {
         "title": "Ștampile",

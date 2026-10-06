@@ -621,7 +621,13 @@ export async function listPropertyGroupTags(principalObjectId: string): Promise<
 // Returns { code, position, description } for all groups the item belongs to.
 // ---------------------------------------------------------------------------
 
-export type GroupEntityTag = { id: string; code: string; position: number; description: string };
+/**
+ * A record's group, as „Conexiuni" draws it. `position` is THIS record's place
+ * in the group (a high-water counter, never reused — so a group of two can
+ * hold 11 and 12); `memberCount` is how many members the group has now, which
+ * is what the chip shows since #38.11.
+ */
+export type GroupEntityTag = { id: string; code: string; position: number; description: string; memberCount: number };
 
 export async function listEntityGroupTags(principalObjectId: string): Promise<GroupEntityTag[]> {
   const rows = await db
@@ -630,6 +636,9 @@ export async function listEntityGroupTags(principalObjectId: string): Promise<Gr
       code:        groups.code,
       position:    groupMember.position,
       description: groups.description,
+      // Slice #38.11: each group's members now, counted in this same query —
+      // never one request per group.
+      memberCount: sql<number>`(SELECT count(*)::int FROM "group_member" AS gm WHERE gm.group_id = ${groups.id})`,
     })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
