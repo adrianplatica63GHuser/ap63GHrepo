@@ -33,7 +33,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare" → „Etichete" | Only „Nor de etichete" — no table; the three tags among its chips, each „×1"; at its top right „Redenumește etichetă" and „Fuzionează etichete", both inactive; the explanation ends „…fără nicio etichetă selectată, ambele sunt inactive." |
+| 1 | Opens „Administrare" → „Etichete" | Only „Nor de etichete" — no table; the three tags among its chips, each „×1"; at its top right „Redenumește etichetă" and „Fuzionează etichete", both inactive; the explanation ends „…fără nicio etichetă selectată, ambele sunt inactive." |
 | 2 | Double-clicks `tc-tag-02-a` | The chip drawn pressed; „Redenumește etichetă" active, „Fuzionează etichete" inactive |
 | 3 | Double-clicks `tc-tag-02-b` | Both pressed; „Fuzionează etichete" active, „Redenumește etichetă" inactive |
 | 4 | Double-clicks `tc-tag-02-b` again | Only `tc-tag-02-a` pressed; „Redenumește etichetă" active again |
@@ -77,3 +77,5 @@ deleted (204), none left. Nothing in the file changed, so the case is confirmed,
 too).
 
 **2026-10-06 — Slice #38.19.** The chips now scroll in a box of their own under the header (TC-TAG-03); with three tags nothing scrolls, and every step here stands. The spec ran green beside TC-TAG-03 (runner 20261006T170744Z-10136).
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Etichete". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

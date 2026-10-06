@@ -37,7 +37,7 @@ it.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare" → „Etichete" and notes „N etichete distincte" | The heading „Etichete" and the cloud „Nor de etichete" — the page's only tile since #38.14 — with „Redenumește etichetă" and „Fuzionează etichete" at its top right, both inactive |
+| 1 | Opens „Administrare" → „Etichete" and notes „N etichete distincte" | The heading „Etichete" and the cloud „Nor de etichete" — the page's only tile since #38.14 — with „Redenumește etichetă" and „Fuzionează etichete" at its top right, both inactive |
 | 2 | Opens `TC-PROP-01 Teren de test`, tiles **„Clasificări"** and **„Conexiuni"** | „Clasificări" (Importanță, Relevanță, Proveniență), and „Conexiuni": „Etichete / Cuvinte cheie" with an input „Introduceți o etichetă…", „Adaugă", and „Nicio etichetă adăugată încă" |
 | 3 | Types `TC-TAG-01` and presses „Adaugă" | A chip **`tc-tag-01`** with „×". It is saved at once — the „Salvează" under „Clasificări" is not needed, and the chip is still there after a reload |
 | 4 | Returns to „Etichete" | „N+1 etichete distincte", `tc-tag-01` in the cloud as „tc-tag-01 ×1" |
@@ -76,3 +76,5 @@ code „ex. PERS00001", a shape no record has had since the PPERS/JPERS split �
 **2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Steps 2 and 6 (and the abandoned-run line) read the new tiles, and the spec follows. The notes
 above keep the old name, as they were run.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Etichete". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

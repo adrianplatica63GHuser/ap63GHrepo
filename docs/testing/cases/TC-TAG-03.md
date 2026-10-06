@@ -36,7 +36,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare" → „Etichete" | „Nor de etichete", its count, „Redenumește etichetă" and „Fuzionează etichete" (both inactive) and the explanation, all in sight at the top. The chips in a box with a scroll bar of its own, its bottom inside the window; the page does not scroll |
+| 1 | Opens „Administrare" → „Etichete" | „Nor de etichete", its count, „Redenumește etichetă" and „Fuzionează etichete" (both inactive) and the explanation, all in sight at the top. The chips in a box with a scroll bar of its own, its bottom inside the window; the page does not scroll |
 | 2 | Scrolls the cloud to its end (the wheel over the chips) | `tc-tag-03-200`, the last chip, in sight. The title, both buttons and the explanation still in sight; the page has not scrolled |
 | 3 | Double-clicks `tc-tag-03-200` | The chip drawn pressed; „Redenumește etichetă" in sight and active; the page has not scrolled |
 | 4 | Presses „Redenumește etichetă"; then Escape | The chip becomes the box „Noul nume pentru „tc-tag-03-200”", the cursor in it, inside the cloud's visible part, the page still unscrolled; after Escape the chip again, still pressed |
@@ -69,3 +69,5 @@ confirmed, and `e2e/tag/tag-cloud-scroll.spec.ts` translates it.
 1c57167 ran `e2e/tag/tag-cloud-scroll.spec.ts` green with the other 98 specs (lint, tsc and forms-drift
 green; jest's one red was FU-286's timing guard, fixed in the next commit). The spec wheels until
 `…-200` is in sight rather than asserting it is the last chip — the runner's database is the local one.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Etichete". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

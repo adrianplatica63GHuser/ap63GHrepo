@@ -19,7 +19,7 @@ before „Deja în sistem", so nothing is written, read or paid for.
 
 ## Before you start
 
-- TC-AUTH-01 is green, on an account that can reach „Admin-Operațiuni".
+- TC-AUTH-01 is green, on an account that can reach „Import".
 - „Oprește-te după fiecare pas" and „Începe fiecare pas cu regulile la vedere" ticked (the
   defaults).
 - **The folder is made in the browser, not picked.** The folder picker is a native dialog no
@@ -88,3 +88,5 @@ file above unchanged.
 real mouse and takes #37.47's pictures, the sign-in pages from a second, signed-out test. Its first
 runner run, `20261001T200514Z-6710`, failed on the spec's own fault: „Structura folderului este în
 regulă." is on the page twice (the panel and its status line). Green on `20261001T200655Z-20674`.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Import" → „Dosare de proprietăți". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

@@ -29,14 +29,14 @@ A group is seen by every user of the archive, in every group picker. **The case 
 the end, and it is not optional.** Its „Descriere" is `TC-GRP-01 Grup de test`, so an
 abandoned run is visible on „Grupuri" and in the „Grupuri" filters.
 
-**If a run is abandoned:** „Admin-Configurare" → „Grupuri", „Șterge" on the row whose
+**If a run is abandoned:** „Administrare" → „Grupuri", „Șterge" on the row whose
 description is `TC-GRP-01 Grup de test`, answer „Șterge". The properties are not affected.
 
 ## Steps
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare" → „Grupuri" | The heading „Grupuri", the panel „Ce este un Grup?", „+ Adaugă", the count „N grupuri", and a table COD · DESCRIERE; each row shows its code, its member count in brackets, its target type, „Editează" and „Șterge" |
+| 1 | Opens „Administrare" → „Grupuri" | The heading „Grupuri", the panel „Ce este un Grup?", „+ Adaugă", the count „N grupuri", and a table COD · DESCRIERE; each row shows its code, its member count in brackets, its target type, „Editează" and „Șterge" |
 | 2 | Presses „+ Adaugă" | An inline form „Adaugă grup nou" with „Țintă" (already „Proprietate") and „Descriere" (required) |
 | 3 | Types `TC-GRP-01 Grup de test` into „Descriere" and presses „Salvează" | **Stays on the list**: a new first row `GRP-0nn` „(0)", „Proprietate", `TC-GRP-01 Grup de test`; the count is N+1. The code is allocated on save |
 | 4 | Presses „Editează" on that row | „Grup GRP-0nn" at `/admin/groups/[id]`: „Țintă" and „Cod" read-only, „Descriere" with „22/500 caractere" in the tile „Identitatea grupului", and two list tiles — „Membri disponibili pentru includere" listing every property **by nickname only, no code**, and „Deja în grup" reading „Niciun element în acest grup încă" |
@@ -77,3 +77,5 @@ Corrections to what was written from the code before the run: „+ Adaugă" open
 form** on the list, not a page, and saving stays on the list; membership changes are
 **staged** until „Salvează grupul" — the help system's own hint says so
 (`group-staged-members`), and the case now names both states.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Grupuri". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

@@ -2,40 +2,37 @@ import {
   isItemActive,
   getActiveHref,
   getActiveSectionKey,
+  isFlatSectionActive,
+  sectionsFor,
+  USER_HREFS,
 } from "@/components/sidebar/sidebar-helpers";
 
-// Minimal nav structure that mirrors the real NAV_SECTIONS shape — no
-// lucide-react icons required here, keeping the test dependency-free.
-//
-// "people", "document", "propertyList", and "propertyMap" are flat-link
-// sections (Slices #15.08 / #15.09 / #15.09.2): they have no expandable
-// items, so getActiveHref/getActiveSectionKey never resolve them — that
-// active-state is computed separately in sidebar-nav.tsx via
-// isFlatSectionActive, which isn't covered by these pure helpers.
+// Minimal nav structure that mirrors the real NAV_SECTIONS shape (Slice
+// #38.20's nine sections, cut down) — no lucide-react icons required here,
+// keeping the test dependency-free. „Tablou de bord" and „Setări" are flat
+// links; the four lists are items of „Domeniu".
 const MOCK_SECTIONS = [
+  { key: "dashboard", href: "/", items: [] },
   {
-    key: "people",
-    items: [],
-  },
-  {
-    key: "propertyList",
-    items: [],
-  },
-  {
-    key: "propertyMap",
-    items: [],
-  },
-  {
-    key: "document",
-    items: [],
-  },
-  {
-    key: "administration",
+    key: "domain",
     items: [
-      { key: "users" },
+      { key: "naturalPeople", href: "/natural-persons" },
+      { key: "judicialPeople", href: "/judicial-persons" },
+      { key: "propertyList", href: "/properties" },
+      { key: "document", href: "/documents" },
       { key: "referenceData", href: "/admin/value-lists" },
     ],
   },
+  {
+    key: "functions",
+    items: [
+      { key: "globalSearch", href: "/admin/global-search" },
+      { key: "checkCorrelations" },
+    ],
+  },
+  { key: "reports", items: [{ key: "reportsInProgress", href: "/reports" }] },
+  { key: "settings", href: "/admin/settings", items: [] },
+  { key: "study", items: [{ key: "courses" }] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -44,26 +41,28 @@ const MOCK_SECTIONS = [
 
 describe("isItemActive", () => {
   it("matches an exact path", () => {
-    expect(isItemActive("/natural-persons", "/natural-persons")).toBe(true);
+    expect(isItemActive("/properties", "/properties")).toBe(true);
   });
 
   it("matches a sub-path (detail page)", () => {
-    expect(
-      isItemActive("/natural-persons", "/natural-persons/some-uuid"),
-    ).toBe(true);
+    expect(isItemActive("/properties", "/properties/abc-123")).toBe(true);
   });
 
   it("matches a sub-path (new page)", () => {
-    expect(isItemActive("/properties", "/properties/new")).toBe(true);
+    expect(isItemActive("/documents", "/documents/new")).toBe(true);
   });
 
   it("does NOT match an unrelated path", () => {
-    expect(isItemActive("/natural-persons", "/properties")).toBe(false);
+    expect(isItemActive("/properties", "/documents")).toBe(false);
   });
 
   it("does NOT match a path that shares a prefix but lacks the separator", () => {
-    // /properties must NOT activate for /properties-extra
     expect(isItemActive("/properties", "/properties-extra")).toBe(false);
+  });
+
+  it("#38.20: „/” matches the dashboard alone, not every path", () => {
+    expect(isItemActive("/", "/")).toBe(true);
+    expect(isItemActive("/", "/documents")).toBe(false);
   });
 });
 
@@ -72,30 +71,26 @@ describe("isItemActive", () => {
 // ---------------------------------------------------------------------------
 
 describe("getActiveHref", () => {
-  it("returns null for /properties/map ('propertyMap' is a flat-link section with no items)", () => {
-    expect(getActiveHref("/properties/map", MOCK_SECTIONS)).toBeNull();
+  it("„Proprietăți” is the active item on the whole map, and on a property (#37.92)", () => {
+    expect(getActiveHref("/properties/map", MOCK_SECTIONS)).toBe("/properties");
+    expect(getActiveHref("/properties/some-uuid", MOCK_SECTIONS)).toBe("/properties");
   });
 
-  it("returns null for /properties ('propertyList' is a flat-link section with no items)", () => {
-    expect(getActiveHref("/properties", MOCK_SECTIONS)).toBeNull();
-  });
-
-  it("returns null for a detail page under /properties/", () => {
-    expect(getActiveHref("/properties/some-uuid", MOCK_SECTIONS)).toBeNull();
-  });
-
-  it("returns null for /natural-persons (flat-link 'people' section has no items)", () => {
-    expect(getActiveHref("/natural-persons/abc", MOCK_SECTIONS)).toBeNull();
+  it("a person's page activates its list", () => {
+    expect(getActiveHref("/natural-persons/abc", MOCK_SECTIONS)).toBe("/natural-persons");
   });
 
   it("returns /admin/value-lists for the reference-data page", () => {
-    expect(getActiveHref("/admin/value-lists", MOCK_SECTIONS)).toBe(
-      "/admin/value-lists",
-    );
+    expect(getActiveHref("/admin/value-lists", MOCK_SECTIONS)).toBe("/admin/value-lists");
   });
 
-  it("returns null for a route not in the nav", () => {
+  it("returns /reports for the reports page", () => {
+    expect(getActiveHref("/reports", MOCK_SECTIONS)).toBe("/reports");
+  });
+
+  it("returns null for a route not in the nav, and for a flat link's own page", () => {
     expect(getActiveHref("/unknown/route", MOCK_SECTIONS)).toBeNull();
+    expect(getActiveHref("/admin/settings", MOCK_SECTIONS)).toBeNull();
   });
 });
 
@@ -104,25 +99,49 @@ describe("getActiveHref", () => {
 // ---------------------------------------------------------------------------
 
 describe("getActiveSectionKey", () => {
-  it("returns null for /natural-persons (flat-link 'people' section has no items)", () => {
-    expect(getActiveSectionKey("/natural-persons", MOCK_SECTIONS)).toBeNull();
+  it("„Domeniu” for the four lists and their records, and for Date de referință", () => {
+    for (const p of ["/natural-persons", "/judicial-persons/x", "/properties/map", "/documents/new", "/admin/value-lists"]) {
+      expect([p, getActiveSectionKey(p, MOCK_SECTIONS)]).toEqual([p, "domain"]);
+    }
   });
 
-  it("returns null for /properties/map ('propertyMap' is a flat-link section with no items)", () => {
-    expect(getActiveSectionKey("/properties/map", MOCK_SECTIONS)).toBeNull();
-  });
-
-  it("returns null for /properties ('propertyList' is a flat-link section with no items)", () => {
-    expect(getActiveSectionKey("/properties", MOCK_SECTIONS)).toBeNull();
-  });
-
-  it("identifies the administration section for /admin/value-lists", () => {
-    expect(getActiveSectionKey("/admin/value-lists", MOCK_SECTIONS)).toBe(
-      "administration",
-    );
+  it("„Funcții” for global search; „Rapoarte” for the reports page", () => {
+    expect(getActiveSectionKey("/admin/global-search", MOCK_SECTIONS)).toBe("functions");
+    expect(getActiveSectionKey("/reports", MOCK_SECTIONS)).toBe("reports");
   });
 
   it("returns null for an unknown route", () => {
     expect(getActiveSectionKey("/unknown", MOCK_SECTIONS)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The flat links, and who sees what (#38.20)
+// ---------------------------------------------------------------------------
+
+describe("isFlatSectionActive", () => {
+  it("„Tablou de bord” on / alone; „Setări” on /admin/settings", () => {
+    expect(isFlatSectionActive(MOCK_SECTIONS[0], "/")).toBe(true);
+    expect(isFlatSectionActive(MOCK_SECTIONS[0], "/documents")).toBe(false);
+    expect(isFlatSectionActive(MOCK_SECTIONS[4], "/admin/settings")).toBe(true);
+    expect(isFlatSectionActive(MOCK_SECTIONS[1], "/natural-persons")).toBe(false); // not a flat section
+  });
+});
+
+describe("sectionsFor — the reach of a non-superuser is unchanged", () => {
+  it("a superuser sees every section", () => {
+    expect(sectionsFor(MOCK_SECTIONS, true).map((s) => s.key)).toEqual(MOCK_SECTIONS.map((s) => s.key));
+  });
+
+  it("anyone else: the dashboard and the four lists — no administration screen, no reports page, no placeholder", () => {
+    const seen = sectionsFor(MOCK_SECTIONS, false);
+    expect(seen.map((s) => s.key)).toEqual(["dashboard", "domain"]);
+    expect(seen[1].items.map((i) => i.href)).toEqual(["/natural-persons", "/judicial-persons", "/properties", "/documents"]);
+    expect(USER_HREFS).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"]);
+  });
+
+  it("does not change the sections it was given", () => {
+    sectionsFor(MOCK_SECTIONS, false);
+    expect(MOCK_SECTIONS[1].items).toHaveLength(5);
   });
 });

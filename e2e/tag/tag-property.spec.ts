@@ -55,12 +55,12 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
     const propertyId = await createProperty(page.request, { nickname: PROPERTY });
 
     try {
-      // Step 1 — „Admin-Configurare" → „Etichete": the count, the cloud, the table.
+      // Step 1 — „Administrare" → „Etichete": the count, the cloud, the table.
       await page.goto("/");
       const nav = sidebar(page);
       const tagsLink = nav.getByRole("link", { name: "Etichete", exact: true });
       if (!(await tagsLink.isVisible())) {
-        await nav.getByRole("button", { name: "Admin-Configurare" }).click();
+        await nav.getByRole("button", { name: "Administrare", exact: true }).click();
       }
       await tagsLink.click();
       await expect(page).toHaveURL(/\/admin\/tags$/, { timeout: 30_000 });

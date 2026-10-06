@@ -18,7 +18,7 @@ and again after the cleanup. A dropped page is exactly what a long import would 
 
 ## Before you start
 
-- TC-AUTH-01 is green, on an account that can reach „Admin-Operațiuni".
+- TC-AUTH-01 is green, on an account that can reach „Import".
 - The data folder is `10.big.tc.marker`: a copy of `05.big` with `TC-IMP-03` added to the end
   of every property folder's name, every page folder's name and every loose file's name. Page
   files (`1363.jpg` …) and `desktop.ini` keep their names. `05.big` is not touched.
@@ -87,3 +87,5 @@ all 48 deleted, and the check after the cleanup found nothing from the folder.
 Corrections to what was written before the run: the stop for types without a form (step 4) was
 not foreseen, nor the tick that clears when an observation is expanded (step 3), nor the
 retitling that makes a `TC-IMP-03` search miss four documents at cleanup.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Import" → „Dosare de proprietăți". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

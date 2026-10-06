@@ -40,7 +40,7 @@ If `90` ever stops being the stored value, this file is updated first.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare” → „Setări” | „Setări”, then „Altele” (Grupuri · Ștampile · Etichete), „Intervale de timp” with ten settings, each a label, a sentence and a number with its unit, and „Salvează” |
+| 1 | Opens „Setări” in the left sidebar | „Setări” — no „Altele” any more (#38.20: Grupuri, Ștampile and Etichete are in „Administrare”), „Intervale de timp” with ten settings, each a label, a sentence and a number with its unit, and „Salvează” |
 | 2 | Reads „Prag CI expiră curând” | `90` zile — the value above |
 | 3 | Types `91` — „Anulează” appears beside „Salvează” — and presses „Salvează” | „Salvat cu succes.” |
 | 4 | Reloads the page | `91` |
@@ -64,3 +64,6 @@ that the run showed only the changed setting is written.
 **One finding, not a step (FU-249):** the ten number boxes have no accessible name — each label is
 beside its box, not tied to it — so a screen reader announces ten unnamed numbers. The run found
 the box by its position under „Prag CI expiră curând”.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Setări", a section that is itself a link, and the page has lost „Altele". The screen and every step on it are unchanged, and nothing else changed (`e2e/helpers/sidebar.ts` opens the section that holds an item).
+

@@ -63,16 +63,16 @@ PowerShell window.**
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
 | 6a | In „Părți afișate" above the sections, unticks „Metadate care necesită atenție", reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
-| 7 | Looks at the left sidebar | The sections „Persoane Fizice", „Persoane Juridice", „Proprietăți", „Acte", then „Admin-Operațiuni" and „Admin-Configurare" — and below them, **once anything has been opened in this browser**, a „RECENTE" list of recently-opened records. A browser that has opened nothing shows no „RECENTE" at all (the list lives in the browser's own storage) |
+| 7 | Looks at the left sidebar | The nine sections (#38.20) „Tablou de bord", „Domeniu", „Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu" and „Ajutor" — and below them, **once anything has been opened in this browser**, a „RECENTE" list of recently-opened records. A browser that has opened nothing shows no „RECENTE" at all (the list lives in the browser's own storage) |
 | 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
 | 9 | Presses „Ieșire" at the bottom of the sidebar | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
 | 10 | In the same tab, without reloading, signs in again with the same account (steps 2–4) | The address becomes `http://localhost:3000/` and „Tablou de bord" is back |
-| 11 | Looks at the left sidebar | „Admin-Operațiuni" and „Admin-Configurare" are there, as in step 7, and „Autentificat ca" still names the account — no reload needed |
+| 11 | Looks at the left sidebar | All nine sections are there, as in step 7, and „Autentificat ca" still names the account — no reload needed |
 
 **When a `user` account exists** (TC-AUTH-02's), steps 9–11 are also run the other way
 round: the administrator signs out and the `user` signs in, in the same tab — and then the
-sidebar shows the five daily sections and **neither** „Admin-Operațiuni" nor
-„Admin-Configurare".
+sidebar shows „Tablou de bord" and „Domeniu" (the four lists inside it) and **none** of the other
+seven sections (#38.20, until #38.21).
 
 **Nothing is written by this case.** A failed login shows „Utilizator sau parolă
 incorectă" under the form and stays on `/login`.
@@ -132,3 +132,5 @@ unticked and gone, and ticks it back (e2e 20261001T035419Z-27044).
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-06 — Slice #38.20.** Steps 7 and 11 and the `user` paragraph name the nine sections; the old „Admin-Operațiuni" and „Admin-Configurare" are gone. The spec follows; its run is this case's proof, as for every run of it (`PROMOTED_WITHOUT_DRIVING`).

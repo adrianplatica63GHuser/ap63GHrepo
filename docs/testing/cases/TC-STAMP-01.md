@@ -35,7 +35,7 @@ reused (`src/lib/stamps/queries.ts`), so each run spends one of the 17,576 codes
 `STMP-ZZZ`, and the next stamp anyone creates gets the code after it. Harmless, and the case says
 so rather than hiding it.
 
-**If a run is abandoned:** „Admin-Configurare" → „Ștampile", „Șterge" on the row
+**If a run is abandoned:** „Administrare" → „Ștampile", „Șterge" on the row
 `TC-STAMP-01 Ștampilă de test`, answer „Șterge" — the stamp comes off every record with it. Then
 delete `Ion TC-STAMP-01` if it is still there.
 
@@ -44,7 +44,7 @@ delete `Ion TC-STAMP-01` if it is still there.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates the person above | `Ion TC-STAMP-01` on „Persoane Fizice", badged „Nou!" |
-| 2 | Opens „Admin-Configurare" → „Ștampile" and notes „N ștampile" | The heading „Ștampile", the panel „Ce este o Ștampilă?", „+ Creare ștampilă", and a table Ștampilă · Elemente; each row reads `STMP-…— <descriere>`, its note, its count, „Aplică" and „Șterge" |
+| 2 | Opens „Administrare" → „Ștampile" and notes „N ștampile" | The heading „Ștampile", the panel „Ce este o Ștampilă?", „+ Creare ștampilă", and a table Ștampilă · Elemente; each row reads `STMP-…— <descriere>`, its note, its count, „Aplică" and „Șterge" |
 | 3 | Presses „+ Creare ștampilă" | An inline form „Creare ștampilă": „Descriere scurtă*" with a counter „0/200 caractere", „Note", „Cod — Atribuit automat la salvare", „Salvează" / „Anulează" |
 | 4 | Types `TC-STAMP-01 Ștampilă de test` into „Descriere scurtă" (the counter reads „28/200 caractere"), `Creată de cazul de test TC-STAMP-01; se șterge la final.` into „Note", and presses „Salvează" | **Stays on the list**: a new first row `STMP-…— TC-STAMP-01 Ștampilă de test`, count 0; „N+1 ștampile" |
 | 5 | Presses „Aplică" on that row | „Aplică ștampila: STMP-… - TC-STAMP-01 Ștampilă de test" at `/admin/stamps/[id]`: „Cod" and „Note" in the tile „Descrierea ștampilei"; the tile **„Tip element"**, its select (Persoană fizică · Persoană juridică · Proprietate · Document) named by that title, and the note „Sunt afișate doar elementele de tipul selectat…"; and two list tiles — „Elemente disponibile pentru ștampilare", with „Caută…", „Aplică ștampila (0)", and „Elemente deja ștampilate", „Niciun element ștampilat încă", „Elimină ștampila (0)" — and „Salvează ștampilele" |
@@ -85,3 +85,5 @@ separate „open"); and applying is **staged** until „Salvează ștampilele", 
 **2026-10-02 — Slice #37.63 (META INFO in two).** The „META INFO" tile is two tiles now, „Clasificări" (Importanță, Relevanță, Proveniență) and „Conexiuni" (Etichete / Cuvinte cheie,
 Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title. Step 9 ticks „Conexiuni", and the spec follows. The notes
 above keep the old name, as they were run.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Ștampile". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

@@ -38,7 +38,7 @@ starts with `TC-VL-01`.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare” → „Date de referință” | Sections PROPRIETATE, PERSOANĂ, DOCUMENT, ROLURI, RELAȚIE ÎNTRE OBIECTE, each with its lists |
+| 1 | Opens „Domeniu” → „Date de referință” | Sections PROPRIETATE, PERSOANĂ, DOCUMENT, ROLURI, RELAȚIE ÎNTRE OBIECTE, each with its lists |
 | 2 | Presses „Cetățenie” | A panel „Cetățenie” with „✕”, „+ Adaugă”, „8 înregistrări” and a DENUMIRE column: Română, Moldoveană, Americană, Germană, Franceză, Italiană, Spaniolă, Engleză, each with „Editează” and „Șterge” |
 | 3 | „+ Adaugă” — „Adaugă înregistrare nouă”, „Denumire*”, „Salvează”, „Anulează” — types `TC-VL-01 Cetățenie de test`, „Salvează” | „9 înregistrări”; the new value is the **last** row, after Engleză |
 | 4 | „Editează” on it — „Editează înregistrarea”, the name in „Denumire*” — changes it to `TC-VL-01 Cetățenie redenumită`, „Salvează” | The row reads the new name, still last |
@@ -71,3 +71,5 @@ list's card was the same width (1,296 px, 8 units) at all three widths and on al
 „Roluri pe Document" was 968 px (6 units); the Form editor 1,624 px (10 units) at 1920 and 2560,
 and the window's width at 1366, where its table scrolls with the dialog. No fixed column's cell
 was wider than its column. The steps above were not re-run; the case stays `driven`.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Domeniu" → „Date de referință". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

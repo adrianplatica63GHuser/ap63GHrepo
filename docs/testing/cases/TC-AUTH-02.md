@@ -38,7 +38,7 @@ browser Claude drives: Claude never types a password. Claude does every other st
 
 | Where | `superuser` | `user` |
 |---|---|---|
-| Sidebar: „Admin-Operațiuni", „Admin-Configurare" | shown | **absent** |
+| Sidebar: „Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu", „Ajutor" (#38.20) | shown | **absent** |
 | `/admin/value-lists` typed by hand | opens | **sent to `/`, the dashboard** |
 | `/admin/users` typed by hand | opens | **sent to `/`, the dashboard** |
 | „Proprietăți", „Persoane Fizice", „Acte" | open | **open** |
@@ -71,7 +71,7 @@ caller left is DocTypeEngine, a superuser's screen. Closing both routes is FU-29
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Adrian signs in as the `user` account | „Tablou de bord", and at the top of the sidebar „Autentificat ca" and the account's name |
-| 2 | Reads the sidebar | „Persoane Fizice", „Persoane Juridice", „Proprietăți", „Acte", and the quick search „Nume, cod…" — and **no** „Admin-Operațiuni" or „Admin-Configurare" |
+| 2 | Reads the sidebar | „Persoane Fizice", „Persoane Juridice", „Proprietăți", „Acte", and the quick search „Nume, cod…" — and **none** of „Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu", „Ajutor" (#38.20) |
 | 3 | Types `/admin/value-lists` into the address bar | The address becomes `/` and the screen is „Tablou de bord". Nothing says why |
 | 4 | Types `/admin/users` into the address bar | The same: `/`, „Tablou de bord" |
 | 5 | Presses „Proprietăți", then „Persoane Fizice", then „Acte" | Each list, headed „Proprietăți", „Persoană fizică", „Acte", with its „Adaugă…" button |
@@ -102,3 +102,5 @@ outside Playwright's match, until two unchanged runs confirm this file.
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-06 — Slice #38.20.** The admin-only sections are named as the sidebar names them now; the `user` sees „Tablou de bord" and „Domeniu" (the four lists).

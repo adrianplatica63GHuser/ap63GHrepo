@@ -37,6 +37,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { NAV_SECTIONS, type NavItem } from "@/components/sidebar/nav-config";
+import { sectionsFor } from "@/components/sidebar/sidebar-helpers";
 
 const SRC = path.join(process.cwd(), "src");
 
@@ -146,28 +147,25 @@ describe("Groups, Stamps and Tags are in the sidebar", () => {
       .toBe(true);
   });
 
-  it.each(EXPECTED)("$key sits in a section the superuser filter covers", ({ key }) => {
+  it.each(EXPECTED)("$key sits in „Administrare”, which a non-superuser does not see", ({ key }) => {
     // ⚠️ **A nav entry is not by itself reachability.** src/app/admin/layout.tsx
     // redirects anyone whose role is not `superuser` away from all of /admin/*,
     // so these three would ship as dead links to a non-superuser if the sidebar
-    // showed them to one. They need no per-item role field because they sit in
-    // "administrationSetup", and sidebar-nav filters every section key starting
-    // "administration" — the same set the layout guards, matched by the same
-    // prefix. This test is what keeps the two matched.
+    // showed them to one. Since #38.20 the sidebar filters by an explicit list
+    // of what such a user may open (`USER_HREFS`, `sectionsFor`) instead of the
+    // old „administration" key prefix; this test keeps the three out of it.
     const section = NAV_SECTIONS.find((s) => s.items.some((i) => i.key === key));
-    expect([key, section?.key.startsWith("administration")]).toEqual([key, true]);
-    // Two fragments rather than the whole 88-character line: a reformat must not
-    // fail a test titled "Groups sits in a section the superuser filter covers"
-    // and send the next reader hunting through nav-config.
-    expect(SIDEBAR).toContain('startsWith("administration")');
-    expect(SIDEBAR).toContain("isSuperuser");
+    expect([key, section?.key]).toEqual([key, "administration"]);
+    const userHrefs = sectionsFor(NAV_SECTIONS, false).flatMap((s) => s.items.map((i) => i.href));
+    expect([key, userHrefs.includes(EVERY_ITEM.find((i) => i.key === key)?.href)]).toEqual([key, false]);
+    expect(SIDEBAR).toContain("sectionsFor(NAV_SECTIONS, isSuperuser)");
   });
 
-  it("every admin nav item is under /admin/, which is what the layout guards", () => {
-    const stray = NAV_SECTIONS.filter((s) => s.key.startsWith("administration"))
-      .flatMap((s) => s.items)
-      .filter((i) => i.href !== undefined && !i.href.startsWith("/admin/"))
-      .map((i) => `${i.key} -> ${i.href}`);
+  it("every address a non-superuser does not see is under /admin/, which the layout guards — or the static reports page", () => {
+    const user = new Set(sectionsFor(NAV_SECTIONS, false).flatMap((s) => [s.href, ...s.items.map((i) => i.href)]));
+    const stray = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)])
+      .filter((h): h is string => h !== undefined && !user.has(h))
+      .filter((h) => !h.startsWith("/admin/") && h !== "/reports");
     expect(stray).toEqual([]);
   });
 });

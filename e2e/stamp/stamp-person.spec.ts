@@ -55,12 +55,12 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
 
     try {
-      // Step 2 — „Admin-Configurare" → „Ștampile": the heading, the panel, „+ Creare ștampilă", N.
+      // Step 2 — „Administrare" → „Ștampile": the heading, the panel, „+ Creare ștampilă", N.
       await page.goto("/");
       const nav = sidebar(page);
       const stampsLink = nav.getByRole("link", { name: "Ștampile", exact: true });
       if (!(await stampsLink.isVisible())) {
-        await nav.getByRole("button", { name: "Admin-Configurare" }).click();
+        await nav.getByRole("button", { name: "Administrare", exact: true }).click();
       }
       await stampsLink.click();
       await expect(page).toHaveURL(/\/admin\/stamps$/, { timeout: 30_000 });

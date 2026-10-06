@@ -42,13 +42,13 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
     expect(before.howToRo).toBe(ORIGINAL_HOW_TO_RO);
 
     try {
-      // Step 1 — „Admin-Configurare" → „Informații de ajutor": the heading, „Ecrane", „Sfaturi rapide",
+      // Step 1 — „Administrare" → „Informații de ajutor": the heading, „Ecrane", „Sfaturi rapide",
       // every screen „Complet" once the list has loaded (FU-227).
       await page.goto("/");
       const nav = sidebar(page);
       const helpLink = nav.getByRole("link", { name: "Informații de ajutor", exact: true });
       if (!(await helpLink.isVisible())) {
-        await nav.getByRole("button", { name: "Admin-Configurare" }).click();
+        await nav.getByRole("button", { name: "Administrare", exact: true }).click();
       }
       await helpLink.click();
       await expect(page).toHaveURL(/\/admin\/help-content$/, { timeout: 30_000 });
@@ -84,7 +84,7 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
       // Step 6 — „Etichete", „?": „Ajutor" with „×", „Context" unchanged, „Cum se folosește" the new text.
       const tagsLink = nav.getByRole("link", { name: "Etichete", exact: true });
       if (!(await tagsLink.isVisible())) {
-        await nav.getByRole("button", { name: "Admin-Configurare" }).click();
+        await nav.getByRole("button", { name: "Administrare", exact: true }).click();
       }
       await tagsLink.click();
       await expect(page).toHaveURL(/\/admin\/tags$/, { timeout: 30_000 });

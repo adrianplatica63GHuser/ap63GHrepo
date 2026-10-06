@@ -89,9 +89,11 @@ const PERSONS_LIST = ["natural-persons", { offset: 0 }] as const;
 const SUPERUSER = { username: "Adrian", role: "superuser" };
 const PLAIN_USER = { username: "test-user", role: "user" };
 
+// Slice #38.20: the two administration sections („Operațiuni" and „Configurare") became
+// „Administrare" and „Setări" — the two a `user` never sees, as before.
 const ADMIN_SECTIONS = [
-  "sections.administrationOperations",
-  "sections.administrationSetup",
+  "sections.administration",
+  "sections.settings",
 ] as const;
 
 function answer(status: number, body: unknown): Response {

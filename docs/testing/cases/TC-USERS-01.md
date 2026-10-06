@@ -54,7 +54,7 @@ the database, so a run cannot start while an earlier one is still pending.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare” → „Utilizatori & Acces” | Breadcrumb „Acasă › Admin › Utilizatori & Acces”; the heading „Utilizatori & Acces”, „Revizuiți și gestionați cererile de cont. Aprobarea creează un cont și trimite solicitantului parola temporară pe email.”, the tabs „Cereri în așteptare” (with a count, **1**) and „Istoric”; under the first, Utilizator · Email · Trimis la · Acțiuni and the row `TC-USERS-01` · `tc-users-01@example.com` · today's date and time, with „Aprobă” and „Respinge” |
+| 1 | Opens „Administrare” → „Utilizatori & Acces” | Breadcrumb „Acasă › Administrare › Utilizatori & Acces”; the heading „Utilizatori & Acces”, „Revizuiți și gestionați cererile de cont. Aprobarea creează un cont și trimite solicitantului parola temporară pe email.”, the tabs „Cereri în așteptare” (with a count, **1**) and „Istoric”; under the first, Utilizator · Email · Trimis la · Acțiuni and the row `TC-USERS-01` · `tc-users-01@example.com` · today's date and time, with „Aprobă” and „Respinge” |
 | 2 | Checks nothing else is pending that is not his | Only `TC-USERS-01` |
 | 3 | Presses „Respinge” on `TC-USERS-01` — **not** „Aprobă” | A green line: „Cerere respinsă (trimiterea emailului a eșuat — verificați RESEND_API_KEY).” (or „Cerere respinsă și solicitantul notificat.” where mail is configured); the row leaves the list, the count goes, and „Nu există cereri în așteptare.” |
 | 4 | Opens „Istoric” | Utilizator · Email · Trimis la · Stare · Procesat la · De; `TC-USERS-01` · `tc-users-01@example.com` · the time it was sent · „Respins” · today · „Adrian”, above `test-user` „Aprobat” (and one more `TC-USERS-01` „Respins” per earlier run) |
@@ -80,3 +80,5 @@ listed — until a reload showed it refused. A second request made at once and r
 server gave the line and emptied the list in under a second. So the case was driven twice, and
 „Istoric” holds two `TC-USERS-01` rows from 2026-09-27. Times on this screen are in the browser's
 time zone.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Utilizatori & Acces". The screen and every step on it are unchanged but one: the breadcrumb's middle crumb, „Admin", now names the section, „Administrare", as text. The spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

@@ -12,10 +12,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { Map as MapIcon } from "lucide-react";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
+import { getActiveHref } from "@/components/sidebar/sidebar-helpers";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 type Messages = {
-  nav: { sections: Record<string, string> };
+  nav: { sections: Record<string, string>; items: Record<string, string> };
   navigation: { breadcrumb: Record<string, string> };
   property: Record<string, unknown>;
 };
@@ -31,23 +32,25 @@ describe("the sidebar's one property item (#37.92)", () => {
     expect(NAV_SECTIONS.map((s) => s.key)).not.toContain("propertyMap");
   });
 
-  it('is „Proprietăți" / „Properties", with the map\'s icon', () => {
-    const item = NAV_SECTIONS.find((s) => s.href === "/properties");
+  // #38.20: an item of „Domeniu" now, no longer a section of its own.
+  it('is „Proprietăți" / „Properties", with the map\'s icon, in „Domeniu"', () => {
+    const domain = NAV_SECTIONS.find((s) => s.key === "domain");
+    const item = domain?.items.find((i) => i.href === "/properties");
     expect(item?.key).toBe("propertyList");
     expect(item?.icon).toBe(MapIcon);
-    expect(RO.nav.sections.propertyList).toBe("Proprietăți");
-    expect(EN.nav.sections.propertyList).toBe("Properties");
+    expect(RO.nav.items.propertyList).toBe("Proprietăți");
+    expect(EN.nav.items.propertyList).toBe("Properties");
   });
 
   it("drops the map item's words", () => {
     expect(RO.nav.sections.propertyMap).toBeUndefined();
     expect(EN.nav.sections.propertyMap).toBeUndefined();
+    expect(RO.nav.items.propertyMap).toBeUndefined();
   });
 
   it("is the active item on every /properties page, the map's included", () => {
-    const nav = read("src/components/sidebar/sidebar-nav.tsx");
-    expect(nav).toContain('return pathname === "/properties" || pathname.startsWith("/properties/");');
-    expect(nav).not.toMatch(/propertyMap|propertyMapHref/);
+    for (const p of ["/properties", "/properties/map", "/properties/new", "/properties/abc"]) expect([p, getActiveHref(p, NAV_SECTIONS)]).toEqual([p, "/properties"]);
+    expect(read("src/components/sidebar/sidebar-nav.tsx")).not.toMatch(/propertyMap|propertyMapHref/);
   });
 });
 

@@ -49,12 +49,12 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
     const secondId = await createProperty(page.request, { nickname: SECOND });
 
     try {
-      // Step 1 — „Admin-Configurare" → „Grupuri".
+      // Step 1 — „Administrare" → „Grupuri".
       await page.goto("/");
       const nav = sidebar(page);
       const groupsLink = nav.getByRole("link", { name: "Grupuri", exact: true });
       if (!(await groupsLink.isVisible())) {
-        await nav.getByRole("button", { name: "Admin-Configurare" }).click();
+        await nav.getByRole("button", { name: "Administrare", exact: true }).click();
       }
       await groupsLink.click();
       await expect(page).toHaveURL(/\/admin\/groups$/, { timeout: 30_000 });

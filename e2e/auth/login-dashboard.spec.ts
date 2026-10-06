@@ -72,16 +72,13 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 
     // Step 7 — the sidebar's sections, scoped to the sidebar (helpers/sidebar.ts).
     const nav = sidebar(page);
-    for (const section of [
-      "Persoane Fizice",
-      "Persoane Juridice",
-      "Proprietăți", // #37.92: one item, where „Proprietăți — Listă" and „— Hartă" were
-      "Acte",
-      "Admin-Operațiuni",
-      "Admin-Configurare",
-    ]) {
+    // #38.20: the nine sections, in order.
+    const NINE = ["Tablou de bord", "Domeniu", "Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"];
+    for (const section of NINE) {
       await expect(nav.getByText(section, { exact: true })).toBeVisible();
     }
+    const tops = await Promise.all(NINE.map(async (s) => (await nav.getByText(s, { exact: true }).boundingBox())!.y));
+    expect(tops).toEqual([...tops].sort((a, b) => a - b));
     // Step 7's „RECENTE" list is NOT asserted: it renders only once a record
     // has been opened in this browser (`recently-viewed-panel.tsx` returns null
     // on an empty history, which lives in localStorage), and the session
@@ -96,13 +93,12 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 
 // ── Step 9 ───────────────────────────────────────────────────────────────────
 
-const ADMIN_SECTIONS = ["Admin-Operațiuni", "Admin-Configurare"] as const;
+// #38.20: the sections only a superuser sees, until #38.21.
+const ADMIN_SECTIONS = ["Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"] as const;
 
-/** The <nav> that holds the daily sections — present for every role. */
+/** The sidebar's own <nav> — present for every role (#38.20: `data-sidebar-nav`). */
 function mainNav(page: Page) {
-  // #37.92: „Proprietăți — Listă" is gone; the two persons' items are in every role's sidebar
-  // and in no breadcrumb together.
-  return page.locator("nav").filter({ hasText: /Persoane Fizice[\s\S]*Persoane Juridice/ });
+  return page.locator("nav[data-sidebar-nav]");
 }
 
 /** Fill the real form on the page that is already open, and wait for „/". */
@@ -167,7 +163,9 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
 
     await signOutHere(page);
     await signInHere(page, process.env.E2E_USER_EMAIL!, process.env.E2E_USER_PASSWORD!);
-    await expect(mainNav(page).getByText("Acte", { exact: true })).toBeVisible();
+    // #38.20: „Tablou de bord" and „Domeniu" (the four lists inside it), and none of the others.
+    await expect(mainNav(page).getByText("Tablou de bord", { exact: true })).toBeVisible();
+    await expect(mainNav(page).getByText("Domeniu", { exact: true })).toBeVisible();
     for (const section of ADMIN_SECTIONS) {
       await expect(mainNav(page).getByText(section, { exact: true })).toHaveCount(0);
     }

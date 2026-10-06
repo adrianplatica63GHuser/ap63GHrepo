@@ -40,7 +40,7 @@ export type CatalogueCaseId = string;
  * document screen, so `/documents/[id]` carries several.
  */
 export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCaseId[]>> = {
-  "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01"],
+  "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01", "TC-NAV-01"],
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-AUTH-02", "TC-TILES-06", "TC-SYSID-01", "TC-PROP-06", "TC-TILES-11", "TC-LAYOUT-02", "TC-PROP-10", "TC-LAYOUT-03", "TC-TILES-19"],
   "/properties/new":                       ["TC-PROP-01", "TC-PROP-05"],
@@ -86,7 +86,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.08 — the last four that need a cleanup rule, each written into
   // its case file before the run.
   "/admin/users":                          ["TC-USERS-01", "TC-LAYOUT-01"],
-  "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01"],
+  "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01", "TC-NAV-01"],
+  "/reports":                              ["TC-NAV-01"],
   "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07", "TC-DOC-15"],
   "/account/change-password":              ["TC-ACCT-01", "TC-LAYOUT-01"],
 };

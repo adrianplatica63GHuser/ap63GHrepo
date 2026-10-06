@@ -83,7 +83,7 @@ stays with „Nicio parcelă înregistrată." once its parcels are gone.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Operațiuni" → „Calcul" | „Calcul" and „Istoricul calculelor" at the top, a sentence „Încărcați un fișier de date în 5 secțiuni (colțuri; orientare H/V; proprietari + procente; colțul drumului SW/NW/SE/NE; lățime drum). …", and „Alegeți fișierul de date…" |
+| 1 | Opens „Funcții" → „Calcul drum lateral" | „Calcul" and „Istoricul calculelor" at the top, a sentence „Încărcați un fișier de date în 5 secțiuni (colțuri; orientare H/V; proprietari + procente; colțul drumului SW/NW/SE/NE; lățime drum). …", and „Alegeți fișierul de date…" |
 | 2 | Chooses the data file | The parameters — „Orientare" Orizontal, „Suprafață totală" **611.87 m²**, „Colțul drumului / Proprietar 1" SW, „Lățime drum" 3.0 m, „Lungime (latura lungă)" 29.8 m, „Lățime (latura scurtă)" 20.5 m, „Lungime drum" **16.0 m**, „Suprafață drum" **48.00 m²** — and a table Proprietar · Cotă · Suprafață inițială (m²) · Participare la drum (m²) · Suprafață finală (m²) · Suprafață calculată (m²): `TC-CALC-01 A` and `TC-CALC-01 B`, each **50%, 305.94, 24.00, 281.94, 281.94** |
 | 3 | Under „Creează 2 proprietăți și un grup", replaces „Descrierea grupului" with `TC-CALC-01 Grup de test`; leaves „Creează și drumul comun ca proprietate și adaugă-l în grup" ticked and replaces „Poreclă drum" with `TC-CALC-01 Drum comun` | The note that owners' names are saved only as nicknames and no person is created |
 | 4 | Presses „Creează proprietăți + grup" | Stays on „Calcul": „S-a creat grupul GRP-… cu următoarele proprietăți:", „Calculul înregistrat: CALC… · Vezi istoricul calculului", and three lines `TC-CALC-01 A`, `TC-CALC-01 B`, `TC-CALC-01 Drum comun` — each a link to its property, with no system ID |
@@ -119,3 +119,5 @@ the form's „Șterge" calls (the list back to 13). Afterwards the run still rea
 no group and „Nicio parcelă înregistrată." (FU-225).
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the calculation's result lines no longer show it. The steps above that read a code or a „Cod" column were rewritten to match; the search boxes' placeholders („caută după cod…") are unchanged — they still search by code. No spec — the case stays where it was; its next run reads the new step 4.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Funcții" → „Calcul drum lateral". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

@@ -27,7 +27,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Admin-Operațiuni" → „Căutare globală" in the left sidebar | The heading „Căutare globală" and, under it, „Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. …" |
+| 1 | Presses „Funcții" → „Căutare globală" in the left sidebar | The heading „Căutare globală" and, under it, „Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. …" |
 | 2 | Types `TC-` into „Căutare nume / cod" (placeholder „ex. Popescu sau PPERS00012") | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „3 rezultate", and the address bar carries `?search=TC-` |
@@ -88,3 +88,5 @@ Corrections:
    Step 4 now asserts the count, which is what a spec can wait for.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Funcții" → „Căutare globală". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

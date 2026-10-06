@@ -16,7 +16,7 @@ folder that still has every ingredient in it.
 
 ## Before you start
 
-- TC-AUTH-01 is green, on an account that can reach „Admin-Operațiuni".
+- TC-AUTH-01 is green, on an account that can reach „Import".
 - The data folder is `07.smoke.tc.marker`, and it contains exactly:
 
   ```
@@ -58,7 +58,7 @@ folder that still has every ingredient in it.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Admin-Operațiuni" → „Import în sistem" | The heading „Import", two rows of steps (PREGĂTIRE ȘI VERIFICARE: Informare › Precondiții › Structură › Restricții › Duplicate; CLASIFICARE ȘI IMPORT: Deja în sistem › Scanare › Evaluare › Import › Rezultat), and the box „Cum decurge importul" |
+| 1 | Presses „Import" → „Dosare de proprietăți" | The heading „Import", two rows of steps (PREGĂTIRE ȘI VERIFICARE: Informare › Precondiții › Structură › Restricții › Duplicate; CLASIFICARE ȘI IMPORT: Deja în sistem › Scanare › Evaluare › Import › Rezultat), and the box „Cum decurge importul" |
 | 2 | Presses „Am înțeles" | „Precondiții" runs eight checks by itself, then: „Cele opt precondiții au fost verificate una câte una și toate sunt îndeplinite." |
 | 3 | Presses „Continuă la pasul „Structură"", reads the rules (STR-01 … STR-15), ticks „Respect regulile de structură" and presses „Alege folderul…" | The operating system's folder dialog. `07.smoke.tc.marker` is chosen there (by Adrian, above) |
 | 4 | Waits | „Regulile de aranjare a folderelor au fost verificate toate și niciuna nu a fost încălcată." The summary reads: rules checked 14, broken 0, folders read 3, property folders 1, files kept 5, documents 3, of which page groups 1, files ignored 0 |
@@ -188,3 +188,5 @@ documents and go with them.
     1 set aside, 3 in archive, 2 missing.
   - Fixed in passing: the Structure screen's sentence on how a name is read said „„per” între
     două cifre se citește ca bară de fracție", the rule before #37.39.
+
+**2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Import" → „Dosare de proprietăți". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).
