@@ -546,7 +546,7 @@ describe("a document type with no person roles configured", () => {
 
   /**
    * ⚠️ **THE LINK IS GATED AND THE SENTENCE IS NOT, WHICH IS THE WHOLE OF THE
-   * ACCESS QUESTION.** `/admin/*` redirects every non-superuser to the home
+   * ACCESS QUESTION.** `/admin/*` redirects every account without full access to the home
    * page (`app/admin/layout.tsx`), so a link offered to one would read as the
    * page being broken; the FACT is useful to everyone. Decided on the server —
    * and it must not throw: `getCurrentAppUser` deliberately does not fail
@@ -559,7 +559,7 @@ describe("a document type with no person roles configured", () => {
     expect(note.indexOf('t("noRolesForType")')).toBeLessThan(note.indexOf("canConfigureRoles && ("));
 
     const helper = stripComments(read("lib", "auth", "can-configure-roles.ts"));
-    expect(helper).toContain('appUser?.role === "superuser"');
+    expect(helper).toContain("appUser ? hasFullAccess(appUser) : false");
     expect(helper).toMatch(/catch\s*\{\s*return false;\s*\}/);
   });
 

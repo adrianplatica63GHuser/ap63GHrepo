@@ -1,199 +1,61 @@
 /**
- * Case:   TC-AUTH-02 — Un cont „user" lucrează zilnic și nu poate administra
- * Source: docs/testing/cases/TC-AUTH-02.md, „Last green" — (not yet driven)
+ * Case:   TC-AUTH-02 — Contul care era „user" are toată aplicația, ca administratorul
+ * Source: docs/testing/cases/TC-AUTH-02.md, „Last green" — (never driven: Adrian's sign-in)
  *
- * ⚠️ **PARKED — NOT RUN, BY THE CATALOGUE'S RULE.** (Slice #36.20) Its case is
- * `draft`: it waits for an account whose role is `user`, which is Adrian's to
- * create (the case's „What Adrian is asked for"). The name `.parked.ts` keeps
- * it out of Playwright's `*.spec.ts` match and out of the coverage guard, and
- * inside `tsc`. TO PROMOTE: drive TC-AUTH-02 twice unchanged (→ `confirmed`),
- * rename this to `user-role.spec.ts`, put the path in the catalogue's `Spec`
- * column, update the `Source:` date above.
+ * PARKED — outside Playwright's match (`*.spec.ts`) until two unchanged hand runs
+ * confirm the case, which waits for Adrian to sign in as `test-user`.
  *
- * It runs as the `user` account — `test.use({ storageState: USER_STATE })`,
- * saved by `auth.setup.ts` from E2E_USER_EMAIL — inside the one `chromium`
- * project, and skips itself when that account is not configured.
+ * Slice #38.21 rewrote it. Until then it asserted that a `user` was refused —
+ * the sidebar without administration, `/admin/*` sending it to `/`, and a 403
+ * for one write per guarded family of routes. Since #38.21 every account with
+ * an `app_users` row has the whole application (`hasFullAccess`,
+ * src/lib/auth/current-role.ts), so each of those refusals would now be an
+ * allowed write; the spec follows the case's new steps instead, and writes
+ * nothing.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - Step 1's sign-in is `auth.setup.ts`'s, from `.env`; the spec asserts what
  *     follows it.
- *   - The writes in the case's matrix are the spec's alone: a person cannot
- *     send them. Each is marked `TC-E2E-AUTH-02`, and each has its undo, run
- *     as the superuser through a second request context, for the day one of
- *     them wrongly succeeds.
- *   - The sidebar is found as the <nav> that holds „Proprietăți", not by
- *     „Admin-Operațiuni" as helpers/sidebar.ts does — that section is exactly
- *     what a `user` does not have.
  */
 
 import fs from "fs";
-import { randomUUID } from "crypto";
-import { test, expect, request as playwrightRequest, type APIRequestContext } from "@playwright/test";
-import { SUPERUSER_STATE, USER_STATE } from "../helpers/auth-state";
-import { E2E_MARKER, removeGroupLeftovers, removeStampLeftovers } from "../helpers/records";
+import { test, expect } from "@playwright/test";
+import { USER_STATE } from "../helpers/auth-state";
+import { openFromSidebar, sidebar } from "../helpers/sidebar";
 
-const MARK = `${E2E_MARKER}AUTH-02`;
+const NINE = ["Tablou de bord", "Domeniu", "Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"];
 
 test.use({ storageState: fs.existsSync(USER_STATE) ? USER_STATE : undefined });
 
-test.describe("TC-AUTH-02 — Un cont „user\" lucrează zilnic și nu poate administra", () => {
+test.describe("TC-AUTH-02 — Contul care era „user\" are toată aplicația, ca administratorul", () => {
   test.skip(!fs.existsSync(USER_STATE), "No `user` account: E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env.");
 
-  test("ecranele zilnice se deschid; administrarea nu se deschide", async ({ page }) => {
-    test.slow();
-
-    // Step 1 — the dashboard, signed in as the `user`.
+  test("nouă secțiuni, Utilizatori & Acces, Date de referință, Etichete", async ({ page }) => {
+    // Step 1 — the dashboard, signed in as the account that was a `user`.
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
 
-    // Step 2 — the sidebar: the daily sections, and no administration.
-    const nav = page.locator("nav").filter({ hasText: /Persoane Fizice[\s\S]*Persoane Juridice/ });
-    for (const section of ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]) {
-      await expect(nav.getByText(section, { exact: true })).toBeVisible();
-    }
-    await expect(nav.getByText("Admin-Operațiuni", { exact: true })).toHaveCount(0);
-    await expect(nav.getByText("Admin-Configurare", { exact: true })).toHaveCount(0);
-    const quickSearch = page.getByPlaceholder("Nume, cod…");
-    await expect(quickSearch).toBeVisible();
+    // Step 2 — all nine sections.
+    const rows = sidebar(page).locator(":scope > *");
+    await expect(rows).toHaveCount(9);
+    expect((await rows.allInnerTexts()).map((t) => t.trim().split("\n")[0])).toEqual(NINE);
 
-    // Steps 3–4 — an admin address typed by hand lands on the dashboard.
-    for (const address of ["/admin/value-lists", "/admin/users"]) {
-      await page.goto(address);
-      await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
-      await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
-    }
+    // Step 3 — „Administrare" → „Utilizatori & Acces", no role on the screen.
+    await openFromSidebar(page, "Utilizatori & Acces", "Administrare");
+    await expect(page).toHaveURL(/\/admin\/users$/, { timeout: 30_000 });
+    await expect(page.getByRole("button", { name: /Cereri în așteptare/ })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: "Istoric", exact: true })).toBeVisible();
+    await expect(page.getByText(/\b(superuser|rol)\b/i)).toHaveCount(0);
 
-    // Step 5 — the three lists open, each with its „Adaugă…".
-    for (const [label, heading, add] of [
-      ["Proprietăți", "Proprietăți", "Adaugă proprietate"],
-      ["Persoane Fizice", "Persoană fizică", "Adaugă persoană"],
-      ["Acte", "Acte", "Adaugă act"],
-    ] as const) {
-      await nav.getByRole("link", { name: label, exact: true }).click();
-      await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText(add, { exact: true }).first()).toBeVisible();
-    }
+    // Step 4 — an administration address typed by hand opens.
+    await page.goto("/admin/value-lists");
+    await expect(page).toHaveURL(/\/admin\/value-lists$/);
+    await expect(page.getByRole("heading", { name: "Date de referință" })).toBeVisible({ timeout: 30_000 });
 
-    // Step 6 — the quick search reaches Căutare globală, not the dashboard.
-    await quickSearch.fill("PROP");
-    await quickSearch.press("Enter");
-    await expect(page).toHaveURL(/\/admin\/global-search\?search=PROP$/, { timeout: 30_000 });
-    await expect(page.getByRole("heading", { name: "Căutare globală" })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/^\d+ rezultat/).first()).toBeVisible({ timeout: 30_000 });
-  });
-
-  test("scrierile din /api/admin răspund 403 și nu schimbă nimic", async ({ page, baseURL }) => {
-    test.slow();
-    const admin: APIRequestContext = await playwrightRequest.newContext({ baseURL, storageState: SUPERUSER_STATE });
-    const valueName = `${MARK} Relație`;
-    const helpBefore = await admin.get("/api/admin/help-content/dashboard");
-    expect(helpBefore.ok(), `GET help-content/dashboard as superuser failed (${helpBefore.status()})`).toBeTruthy();
-    const helpSnapshot = ((await helpBefore.json()) as { item?: Record<string, string | null> | null }).item ?? null;
-
-    try {
-      // A value in a closed list.
-      const value = await page.request.post("/api/admin/value-lists/property-property-roles", {
-        data: { name: valueName, description: MARK },
-      });
-      expect(value.status()).toBe(403);
-
-      // A role pair — ids that exist nowhere, so even a wrong success writes nothing.
-      const pair = await page.request.post("/api/admin/doc-type-person-roles", {
-        data: { documentTypeId: randomUUID(), personRoleId: randomUUID() },
-      });
-      expect(pair.status()).toBe(403);
-
-      // Help text.
-      const help = await page.request.put("/api/admin/help-content/dashboard", {
-        data: { howToRo: `${MARK} — nu trebuie să ajungă aici` },
-      });
-      expect(help.status()).toBe(403);
-
-      // …and nothing changed.
-      const list = (await (await admin.get("/api/admin/value-lists/property-property-roles")).json()) as { items: { name: string }[] };
-      expect(list.items.filter((i) => i.name === valueName)).toHaveLength(0);
-      const helpAfter = ((await (await admin.get("/api/admin/help-content/dashboard")).json()) as { item?: unknown }).item ?? null;
-      expect(helpAfter).toEqual(helpSnapshot);
-    } finally {
-      // The undo for a write that wrongly succeeded, as the superuser.
-      const list = (await (await admin.get("/api/admin/value-lists/property-property-roles")).json()) as { items: { id: string; name: string }[] };
-      for (const i of list.items.filter((x) => x.name === valueName)) {
-        await admin.delete(`/api/admin/value-lists/property-property-roles/${i.id}`);
-      }
-      const now = ((await (await admin.get("/api/admin/help-content/dashboard")).json()) as { item?: Record<string, string | null> | null }).item ?? null;
-      if (JSON.stringify(now) !== JSON.stringify(helpSnapshot) && helpSnapshot) {
-        await admin.put("/api/admin/help-content/dashboard", {
-          data: {
-            backgroundEn: helpSnapshot.backgroundEn ?? null,
-            backgroundRo: helpSnapshot.backgroundRo ?? null,
-            howToEn: helpSnapshot.howToEn ?? null,
-            howToRo: helpSnapshot.howToRo ?? null,
-          },
-        });
-      }
-      await admin.dispose();
-    }
-  });
-
-  // ── Slice #37.03 — the admin-only families OUTSIDE /api/admin (FU-222), and FU-223 ──
-  test("scrierile ecranelor de administrare din afara /api/admin răspund 403; „Descoperire AI” rămâne deschisă", async ({ page, baseURL }) => {
-    test.slow();
-    const admin: APIRequestContext = await playwrightRequest.newContext({ baseURL, storageState: SUPERUSER_STATE });
-    const groupName = `${MARK} Grup`;
-    const stampName = `${MARK} Ștampilă`;
-    const tagFrom = `${MARK}-eticheta-care-nu-exista`;
-    const timeFramesBefore = (await (await admin.get("/api/time-frames")).json()) as { items: { key: string; value: number }[] };
-
-    try {
-      // A group — „Grupuri".
-      const group = await page.request.post("/api/groups", {
-        data: { targetType: "PROPERTY", description: groupName },
-      });
-      expect(group.status()).toBe(403);
-
-      // A stamp — „Ștampile".
-      const stamp = await page.request.post("/api/stamps", {
-        data: { shortDescription: stampName, notes: MARK },
-      });
-      expect(stamp.status()).toBe(403);
-
-      // A tag renamed across every record — „Etichete". From a tag that exists nowhere,
-      // so even a wrong success renames nothing.
-      const tag = await page.request.patch("/api/tags", { data: { from: tagFrom, to: `${MARK}-tinta` } });
-      expect(tag.status()).toBe(403);
-
-      // A time-frame setting — „Setări". Its own current value, so a wrong success changes nothing.
-      const first = timeFramesBefore.items[0] ?? { key: "dashboard_recent_days", value: 7 };
-      const frames = await page.request.patch("/api/time-frames", {
-        data: { settings: [{ key: first.key, value: first.value }] },
-      });
-      expect(frames.status()).toBe(403);
-
-      // A calculation commit — „Calcul". No text, so a wrong success could not commit anything either.
-      const commit = await page.request.post("/api/calculation/commit", { data: { groupDescription: groupName } });
-      expect(commit.status()).toBe(403);
-
-      // FU-223, decided open: accepting „Descoperire AI"'s fields is a `user`'s to do. A type id that
-      // exists nowhere and an empty body — the answer is a validation or not-found, never 403.
-      const accept = await page.request.put(`/api/document-types/${randomUUID()}/template-fields`, { data: {} });
-      expect(accept.status()).not.toBe(403);
-      const resolve = await page.request.post("/api/document-types/resolve", { data: {} });
-      expect(resolve.status()).not.toBe(403);
-
-      // …and nothing changed.
-      const groups = (await (await admin.get("/api/groups")).json()) as { items: { description: string | null }[] };
-      expect(groups.items.filter((g) => (g.description ?? "").startsWith(MARK))).toHaveLength(0);
-      const stamps = (await (await admin.get("/api/stamps")).json()) as { items: { shortDescription: string }[] };
-      expect(stamps.items.filter((st) => st.shortDescription.startsWith(MARK))).toHaveLength(0);
-      const after = (await (await admin.get("/api/time-frames")).json()) as { items: unknown };
-      expect(after.items).toEqual(timeFramesBefore.items);
-    } finally {
-      // The undo for a write that wrongly succeeded, as the superuser.
-      await removeGroupLeftovers(admin, MARK);
-      await removeStampLeftovers(admin, MARK);
-      await admin.dispose();
-    }
+    // Step 5 — „Administrare" → „Etichete".
+    await openFromSidebar(page, "Etichete", "Administrare");
+    await expect(page).toHaveURL(/\/admin\/tags$/, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Etichete" })).toBeVisible({ timeout: 30_000 });
   });
 });
-

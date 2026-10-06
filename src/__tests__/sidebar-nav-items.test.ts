@@ -158,7 +158,7 @@ describe("Groups, Stamps and Tags are in the sidebar", () => {
     expect([key, section?.key]).toEqual([key, "administration"]);
     const userHrefs = sectionsFor(NAV_SECTIONS, false).flatMap((s) => s.items.map((i) => i.href));
     expect([key, userHrefs.includes(EVERY_ITEM.find((i) => i.key === key)?.href)]).toEqual([key, false]);
-    expect(SIDEBAR).toContain("sectionsFor(NAV_SECTIONS, isSuperuser)");
+    expect(SIDEBAR).toContain("sectionsFor(NAV_SECTIONS, fullAccess)");
   });
 
   it("every address a non-superuser does not see is under /admin/, which the layout guards — or the static reports page", () => {

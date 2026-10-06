@@ -69,10 +69,10 @@ PowerShell window.**
 | 10 | In the same tab, without reloading, signs in again with the same account (steps 2–4) | The address becomes `http://localhost:3000/` and „Tablou de bord" is back |
 | 11 | Looks at the left sidebar | All nine sections are there, as in step 7, and „Autentificat ca" still names the account — no reload needed |
 
-**When a `user` account exists** (TC-AUTH-02's), steps 9–11 are also run the other way
-round: the administrator signs out and the `user` signs in, in the same tab — and then the
-sidebar shows „Tablou de bord" and „Domeniu" (the four lists inside it) and **none** of the other
-seven sections (#38.20, until #38.21).
+**When the account created as a `user` exists** (TC-AUTH-02's `test-user`), steps 9–11 are also
+run the other way round: the administrator signs out and that account signs in, in the same tab —
+and then the sidebar shows **all nine sections**, as the administrator's does, and „Administrare" →
+„Utilizatori & Acces" opens (Slice #38.21: one kind of user).
 
 **Nothing is written by this case.** A failed login shows „Utilizator sau parolă
 incorectă" under the form and stays on `/login`.
@@ -134,3 +134,7 @@ unticked and gone, and ticks it back (e2e 20261001T035419Z-27044).
 the sidebar item by its new name; nothing else in them changed.
 
 **2026-10-06 — Slice #38.20.** Steps 7 and 11 and the `user` paragraph name the nine sections; the old „Admin-Operațiuni" and „Admin-Configurare" are gone. The spec follows; its run is this case's proof, as for every run of it (`PROMOTED_WITHOUT_DRIVING`).
+
+**2026-10-06 — Slice #38.21.** One kind of user: the reverse run's account, created as a `user`, now
+sees all nine sections and opens „Utilizatori & Acces". The spec follows, and takes #38.21's pictures
+of that account's sidebar and of „Utilizatori & Acces" (rows that are not a test's own painted over).

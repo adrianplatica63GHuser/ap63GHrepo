@@ -274,8 +274,9 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     // inverts the rule, showing the hint on exactly the types that HAVE a form.
     expect(stmt).toMatch(/&&\s*documentTypeNeedsFormHint\(selectedType\)/);
     expect(stmt).not.toMatch(/!\s*documentTypeNeedsFormHint/);
-    // Slice #37.85: a superuser only, and only where a form may come.
-    expect(stmt).toMatch(/^const showNoFormHint = isSuperuser\s*&&/);
+    // Slice #37.85: a reader who can configure types only (a superuser until #38.21, every
+    // account with a row since), and only where a form may come.
+    expect(stmt).toMatch(/^const showNoFormHint = canConfigure\s*&&/);
     expect(stmt).toMatch(/&&\s*typeMayHoldAForm\(\{/);
     expect(stmt).toContain("typeIsIdCard: documentTypeIsIdCard(selectedType)");
     // `effectiveMode`, not `mode`: an associated record after Modifică is an

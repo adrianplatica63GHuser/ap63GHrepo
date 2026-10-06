@@ -17,11 +17,11 @@
  *   E2E_PASSWORD  — password for the test user account
  *
  * Optional (Slice #36.20), for the specs that act as a `user`:
- *   E2E_USER_EMAIL, E2E_USER_PASSWORD — an approved account whose role is
- *   `user`. A second setup logs it in and saves e2e/.auth/user-session.json
+ *   E2E_USER_EMAIL, E2E_USER_PASSWORD — a second approved account, created as
+ *   a `user` (since #38.21 the role makes no difference; the specs prove it). A second setup logs it in and saves e2e/.auth/user-session.json
  *   (`USER_STATE`, e2e/helpers/auth-state.ts). Without the pair it is skipped,
  *   and so is every spec that needs it — and so it is when the pair does not
- *   sign in, or signs in as another role (Slice #36.23): the reason is in the
+ *   sign in, or signs in without an app_users row (Slice #36.23, #38.21): the reason is in the
  *   skip, and the superuser's specs run regardless.
  */
 
@@ -234,13 +234,13 @@ setup("autentificare si pregatire fixture E2E", async ({ page, baseURL }) => {
 });
 
 /**
- * The second account: role `user`.                             (Slice #36.20)
+ * The second account: created as a `user`.            (Slice #36.20, #38.21)
  *
  * The same real form as above — `#identity`, `#password`, „Conectare" — so the
  * password is typed by the runner from `.env`, never by Claude and never into
- * a case. It then ASKS the application what the account is, because a spec
- * that proves a `user` is refused is worthless run as a superuser: it would
- * fail for the wrong reason, or pass for none.
+ * a case. It then ASKS the application whether the account is one of its own
+ * (an app_users row). Until #38.21 it asked for the role `user`, because the
+ * specs proved a `user` was refused; since #38.21 they prove it is not.
  */
 async function loginAs(page: Page, email: string, password: string): Promise<void> {
   await page.goto("/login");
@@ -307,11 +307,12 @@ setup("autentificare cont cu rol user (TC-AUTH-02)", async ({ page }) => {
 
   const me = await page.request.get("/api/auth/me");
   expect(me.ok(), `GET /api/auth/me failed (${me.status()})`).toBeTruthy();
-  const { role } = (await me.json()) as { role?: string };
-  // The TC-AUTH-02 spec proves what a `user` is refused; run as anything else
-  // it proves nothing — so no state is saved, and it skips.
-  if (role !== "user") {
-    skipBecause(`E2E_USER_EMAIL (${email}) signs in as role "${role}", not "user" — the \`user\` specs are skipped. Point E2E_USER_EMAIL at an account whose role is user.`);
+  const { fullAccess } = (await me.json()) as { fullAccess?: boolean };
+  // Slice #38.21: the application reads no role any more — the account created as a `user`
+  // must simply be an account of this application (an app_users row), which is what proves
+  // that one kind of user sees everything. Anything else proves nothing, so it skips.
+  if (fullAccess !== true) {
+    skipBecause(`E2E_USER_EMAIL (${email}) signs in without an app_users row (fullAccess ${String(fullAccess)}) — the \`user\` specs are skipped. Point E2E_USER_EMAIL at an approved account.`);
   }
   await page.context().storageState({ path: USER_STATE });
 });

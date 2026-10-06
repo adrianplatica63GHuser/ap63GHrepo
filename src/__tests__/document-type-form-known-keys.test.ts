@@ -17,7 +17,7 @@
  * Red on the code before the fix: the update schema dropped `knownKeys`, and
  * nothing answered 409.
  */
-jest.mock("@/lib/auth/current-role", () => ({ requireSuperuser: jest.fn(async () => null) }));
+jest.mock("@/lib/auth/current-role", () => ({ requireFullAccess: jest.fn(async () => null) }));
 
 const mockUpdateValue = jest.fn();
 jest.mock("@/lib/admin/value-lists/queries", () => ({

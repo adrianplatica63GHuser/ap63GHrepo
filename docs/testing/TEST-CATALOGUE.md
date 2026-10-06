@@ -66,7 +66,7 @@ fixed fixture where the existing one will do.
 | ID | Title | Area | Kind | Data folder | State | Last green | Spec |
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-10-01 | `e2e/auth/login-dashboard.spec.ts` |
-| [TC-AUTH-02](cases/TC-AUTH-02.md) | Un cont „user" lucrează zilnic și nu poate administra | auth | authz | — | `draft` | — | — |
+| [TC-AUTH-02](cases/TC-AUTH-02.md) | Contul care era „user" are toată aplicația, ca administratorul | auth | authz | — | `draft` | — | — |
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-10-02 | `e2e/property/property-from-coord-file.spec.ts` |

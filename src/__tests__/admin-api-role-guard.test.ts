@@ -16,11 +16,11 @@
  *     (`src/lib/auth/admin-api-access.ts`) with a reason.
  * No server, no database — so it runs in CI, on every push.
  *
- * What counts as a role check is a short, closed list: `requireSuperuser()`,
+ * What counts as a role check is a short, closed list: `requireFullAccess()`,
  * the one helper; `canManageAccounts(`, the account screens' stricter rule;
- * and the rate-limited handlers' own `role !== "superuser"` after
- * `getCurrentUserIdAndRole()` (read-sample, cluster, extract-id-card), which
- * need the role anyway to size their bucket. `import/preflight` answers its own
+ * and the rate-limited handlers' own `!fullAccess` (Slice #38.21; `role !== "superuser"` before) after
+ * `getCurrentUserIdAndAccess()` (read-sample, cluster, extract-id-card), which
+ * resolve the caller anyway to key their bucket. `import/preflight` answers its own
  * question about the role and is named below with its reason.
  *
  * ⚠️ **AND THE ADMIN-ONLY ROUTES OUTSIDE /api/admin, SINCE #37.03 (FU-222).**
@@ -30,7 +30,7 @@
  * (`ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API`), and a sweep finds the next one: any
  * route outside `/api/admin` whose every `/api/…` caller in `src/` is under
  * `src/app/admin/` must be on that list. Red once, on a scratch copy with
- * `requireSuperuser()` taken out of `groups/[id]`'s DELETE — quoted in the
+ * `requireFullAccess()` taken out of `groups/[id]`'s DELETE — quoted in the
  * #37.03 handover.
  */
 
@@ -100,9 +100,9 @@ function handlerBody(source: string, method: string): string | null {
 
 function checksRole(body: string): boolean {
   return (
-    /\brequireSuperuser\(\)/.test(body) ||
+    /\brequireFullAccess\(\)/.test(body) ||
     /\bcanManageAccounts\(/.test(body) ||
-    (/\bgetCurrentUserIdAndRole\(\)/.test(body) && /role\s*!==\s*"superuser"/.test(body))
+    (/\bgetCurrentUserIdAndAccess\(\)/.test(body) && /!\s*fullAccess\b/.test(body))
   );
 }
 
@@ -130,7 +130,7 @@ describe("the /api/admin role guard", () => {
           `${h.file}: ${h.method} writes under /api/admin and checks no role.\n\n` +
             `A route handler is not guarded by being under /admin — the page layout never runs for it.\n` +
             `Start the handler with\n\n` +
-            `  const denied = await requireSuperuser();\n  if (denied) return denied;\n\n` +
+            `  const denied = await requireFullAccess();\n  if (denied) return denied;\n\n` +
             `and import it from "@/lib/auth/current-role".\n`,
         );
       }
@@ -146,7 +146,7 @@ describe("the /api/admin role guard", () => {
         throw new Error(
           `${h.file}: GET checks no role, and is not in ADMIN_API_OPEN_READS.\n\n` +
             `If only /admin screens read it, start the handler with\n` +
-            `  const denied = await requireSuperuser();\n  if (denied) return denied;\n` +
+            `  const denied = await requireFullAccess();\n  if (denied) return denied;\n` +
             `If a screen a \`user\` works on reads it, add\n` +
             `  "${h.key}": "<the screen that needs it>",\n` +
             `to ADMIN_API_OPEN_READS in src/lib/auth/admin-api-access.ts.\n`,
@@ -167,10 +167,10 @@ describe("the /api/admin role guard", () => {
 
   it("recognises the one helper, and not a mention of it", () => {
     const body = (src: string) => handlerBody(src, "POST") ?? "";
-    expect(checksRole(body("export async function POST() {\n  const denied = await requireSuperuser();\n  if (denied) return denied;\n}"))).toBe(true);
-    expect(checksRole(body("export async function POST() {\n  // requireSuperuser()\n  return ok;\n}"))).toBe(false);
-    expect(checksRole(body('export async function POST() {\n  const m = "image/*";\n  const denied = await requireSuperuser();\n}'))).toBe(true);
-    expect(checksRole(body("export async function POST() {\n  const r = await getCurrentUserIdAndRole();\n  return r;\n}"))).toBe(false);
+    expect(checksRole(body("export async function POST() {\n  const denied = await requireFullAccess();\n  if (denied) return denied;\n}"))).toBe(true);
+    expect(checksRole(body("export async function POST() {\n  // requireFullAccess()\n  return ok;\n}"))).toBe(false);
+    expect(checksRole(body('export async function POST() {\n  const m = "image/*";\n  const denied = await requireFullAccess();\n}'))).toBe(true);
+    expect(checksRole(body("export async function POST() {\n  const r = await getCurrentUserIdAndAccess();\n  return r;\n}"))).toBe(false);
     expect(handlerBody("async function POST() {}", "POST")).toBeNull();
   });
 });
@@ -242,7 +242,7 @@ describe("the admin-only routes outside /api/admin (FU-222)", () => {
           `${h.file}: ${h.method} writes, its only screen is an admin screen ` +
             `(${ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API[h.key]}), and it checks no role.\n\n` +
             `Start the handler with\n\n` +
-            `  const denied = await requireSuperuser();\n  if (denied) return denied;\n\n` +
+            `  const denied = await requireFullAccess();\n  if (denied) return denied;\n\n` +
             `and import it from "@/lib/auth/current-role".\n`,
         );
       }
@@ -257,7 +257,7 @@ describe("the admin-only routes outside /api/admin (FU-222)", () => {
       if (!guarded && !listed) {
         throw new Error(
           `${h.file}: GET checks no role, and is not in OUTSIDE_ADMIN_OPEN_READS.\n\n` +
-            `If only admin screens read it, guard it with requireSuperuser(); if a screen a \`user\` ` +
+            `If only admin screens read it, guard it with requireFullAccess(); if a screen a \`user\` ` +
             `works on reads it, add "${h.key}" to OUTSIDE_ADMIN_OPEN_READS in src/lib/auth/admin-api-access.ts.\n`,
         );
       }

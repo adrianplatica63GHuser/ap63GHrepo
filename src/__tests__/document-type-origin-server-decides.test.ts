@@ -18,7 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-jest.mock("@/lib/auth/current-role", () => ({ requireSuperuser: jest.fn(async () => null) }));
+jest.mock("@/lib/auth/current-role", () => ({ requireFullAccess: jest.fn(async () => null) }));
 
 const mockCreateValue = jest.fn(async (_list: string, data: Record<string, unknown>) => ({
   id: "00000000-0000-4000-8000-000000000001",

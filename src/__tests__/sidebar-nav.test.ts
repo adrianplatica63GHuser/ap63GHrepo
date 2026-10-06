@@ -128,8 +128,8 @@ describe("isFlatSectionActive", () => {
   });
 });
 
-describe("sectionsFor — the reach of a non-superuser is unchanged", () => {
-  it("a superuser sees every section", () => {
+describe("sectionsFor — full access sees every section; an account without a row, the four lists", () => {
+  it("full access sees every section", () => {
     expect(sectionsFor(MOCK_SECTIONS, true).map((s) => s.key)).toEqual(MOCK_SECTIONS.map((s) => s.key));
   });
 

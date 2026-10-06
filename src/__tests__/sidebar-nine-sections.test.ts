@@ -4,8 +4,8 @@
  *
  * Every screen that exists is reachable from it; an item whose screen does not
  * exist yet is a disabled „În curând" placeholder; „Rapoarte" → „În lucru"
- * opens /reports; Settings has no „Altele"; a non-superuser's reach is what it
- * was. The browser half is TC-NAV-01.
+ * opens /reports; Settings has no „Altele"; since #38.21 every account with an
+ * app_users row sees it all, one without a row the dashboard and the four lists. The browser half is TC-NAV-01.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -101,21 +101,21 @@ describe("the active section and item for every route", () => {
   });
 });
 
-describe("a non-superuser's reach is what it was, until #38.21", () => {
+describe("an account without an app_users row sees what a `user` saw before #38.21", () => {
   it("the dashboard and the four lists, nothing else", () => {
     const seen = sectionsFor(NAV_SECTIONS, false);
     const hrefs = seen.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter(Boolean);
     expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"]);
   });
 
-  it("the sidebar renders `sectionsFor(NAV_SECTIONS, isSuperuser)`, not every section", () => {
+  it("the sidebar renders `sectionsFor(NAV_SECTIONS, fullAccess)`", () => {
     const src = code(read("src", "components", "sidebar", "sidebar-nav.tsx"));
-    expect(src).toContain("sectionsFor(NAV_SECTIONS, isSuperuser)");
+    expect(src).toContain("sectionsFor(NAV_SECTIONS, fullAccess)");
     expect(src).not.toContain('startsWith("administration")');
     expect(src).toMatch(/\{sections\s*\.map/);
   });
 
-  it("every other address is an /admin/ screen the layout refuses to a non-superuser, or the static reports page", () => {
+  it("every other address is an /admin/ screen the layout refuses to an account without a row, or the static reports page", () => {
     const user = new Set(sectionsFor(NAV_SECTIONS, false).flatMap((s) => [s.href, ...s.items.map((i) => i.href)]));
     const rest = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter((h): h is string => !!h && !user.has(h));
     expect(rest.filter((h) => !h.startsWith("/admin/") && h !== "/reports")).toEqual([]);

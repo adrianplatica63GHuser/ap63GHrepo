@@ -30,14 +30,15 @@
  * still drops its session exactly as it would (supabase-js removes it on any
  * successful logout answer), which is all the case is about.
  *
- * The reverse — the superuser signs out and a `user` signs in — runs only
- * when `auth.setup.ts` could save the `user` account's session (E2E_USER_EMAIL,
- * TC-AUTH-02), and skips with that reason otherwise.
+ * The reverse — the superuser signs out and the account created as a `user`
+ * signs in — runs only when `auth.setup.ts` could save that account's session
+ * (E2E_USER_EMAIL, TC-AUTH-02), and skips with that reason otherwise. Since
+ * Slice #38.21 it sees everything the administrator sees (one kind of user).
  */
 
 import fs from "fs";
 import { test, expect, type Page } from "@playwright/test";
-import { sidebar } from "../helpers/sidebar";
+import { openSection, sidebar } from "../helpers/sidebar";
 import { USER_STATE } from "../helpers/auth-state";
 import { fillLoginForm } from "../helpers/login-form";
 import { tileBox } from "../helpers/tiles";
@@ -93,12 +94,34 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 
 // ── Step 9 ───────────────────────────────────────────────────────────────────
 
-// #38.20: the sections only a superuser sees, until #38.21.
+// #38.20: the sections that were a superuser's until #38.21 — every account's since.
 const ADMIN_SECTIONS = ["Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"] as const;
 
 /** The sidebar's own <nav> — present for every role (#38.20: `data-sidebar-nav`). */
 function mainNav(page: Page) {
   return page.locator("nav[data-sidebar-nav]");
+}
+
+const SHOTS = "playwright-report/one-kind-of-user";
+
+/**
+ * Slice #38.21's pictures, at 1366 and 1920 px. Synthetic accounts only: the
+ * „Recente" list is painted over, and so is every row of „Utilizatori & Acces"
+ * that is not a test's own (an `@example.com` address), and the „De" column
+ * — the local archive's requests and their approver are real people.
+ */
+async function photographUser(page: Page, name: string): Promise<void> {
+  fs.mkdirSync(SHOTS, { recursive: true });
+  const recent = page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) });
+  // A row is a test's own only with an @example.com address; „De" names a real person.
+  const realRows = page.locator("tbody tr").filter({ hasNotText: /@example\.com/ });
+  const byWhom = page.locator("tbody td:last-child");
+  for (const width of [1366, 1920]) {
+    await page.setViewportSize({ width, height: width === 1366 ? 768 : 1080 });
+    await page.mouse.move(width - 10, 10);
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, mask: [recent, realRows, byWhom] });
+  }
 }
 
 /** Fill the real form on the page that is already open, and wait for „/". */
@@ -149,7 +172,7 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
     await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
   });
 
-  test("după administrator, un cont „user” nu vede nicio secțiune de administrare", async ({ page }) => {
+  test("după administrator, contul care era „user” vede toate cele nouă secțiuni și Utilizatori & Acces", async ({ page }) => {
     test.skip(
       !fs.existsSync(USER_STATE),
       "No `user` account signs in: E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env, or auth.setup.ts skipped them.",
@@ -163,11 +186,20 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
 
     await signOutHere(page);
     await signInHere(page, process.env.E2E_USER_EMAIL!, process.env.E2E_USER_PASSWORD!);
-    // #38.20: „Tablou de bord" and „Domeniu" (the four lists inside it), and none of the others.
+    // Slice #38.21: one kind of user — the account created as a `user` has every section, from the
+    // first render after its sign-in, and the administrator's screens.
     await expect(mainNav(page).getByText("Tablou de bord", { exact: true })).toBeVisible();
     await expect(mainNav(page).getByText("Domeniu", { exact: true })).toBeVisible();
     for (const section of ADMIN_SECTIONS) {
-      await expect(mainNav(page).getByText(section, { exact: true })).toHaveCount(0);
+      await expect(mainNav(page).getByText(section, { exact: true })).toBeVisible();
     }
+    // Slice #38.21's pictures, not steps of the case: this account's sidebar with „Administrare"
+    // open, and „Utilizatori & Acces" — whose rows are masked unless they are a test's own.
+    await openSection(page, "Administrare");
+    await photographUser(page, "user-sidebar");
+    await mainNav(page).getByRole("link", { name: "Utilizatori & Acces", exact: true }).click();
+    await expect(page).toHaveURL(/\/admin\/users$/, { timeout: 30_000 });
+    await expect(page.getByRole("button", { name: /Cereri în așteptare/ })).toBeVisible({ timeout: 30_000 });
+    await photographUser(page, "user-users-access");
   });
 });

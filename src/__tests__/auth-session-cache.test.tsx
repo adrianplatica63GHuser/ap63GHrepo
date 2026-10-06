@@ -86,11 +86,14 @@ const AUTH_ME = ["auth-me"] as const;
 /** Any other query a signed-in screen holds — a list, a record. */
 const PERSONS_LIST = ["natural-persons", { offset: 0 }] as const;
 
-const SUPERUSER = { username: "Adrian", role: "superuser" };
-const PLAIN_USER = { username: "test-user", role: "user" };
+// Slice #38.21: /api/auth/me answers `fullAccess`, not a role. Every account with an app_users
+// row has the whole application; the one that sees less is an account WITHOUT a row — the
+// fixture keeps the old name for the old story the tests tell.
+const SUPERUSER = { username: "Adrian", fullAccess: true };
+const PLAIN_USER = { username: "test-user", fullAccess: false };
 
 // Slice #38.20: the two administration sections („Operațiuni" and „Configurare") became
-// „Administrare" and „Setări" — the two a `user` never sees, as before.
+// „Administrare" and „Setări" — the two an account without an app_users row never sees.
 const ADMIN_SECTIONS = [
   "sections.administration",
   "sections.settings",
@@ -191,7 +194,7 @@ describe("the role query — an answer that is not ok is never cached as a role"
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("a superuser's answer shows both sections; a user's shows neither", async () => {
+  it("a full-access answer shows both sections; a no-row account's shows neither", async () => {
     fetchMock.mockImplementation(async () => answer(200, SUPERUSER));
     const first = withClient(newClient(), <SidebarNav />);
     expect(await screen.findByText(ADMIN_SECTIONS[0])).toBeInTheDocument();
@@ -296,7 +299,7 @@ describe("sign out, sign back in, in the same tab", () => {
     expectAdminSections(true);
   });
 
-  it("a `user` signing in after the superuser sees neither section — from the first render", async () => {
+  it("an account without an app_users row signing in after the superuser sees neither section — from the first render", async () => {
     const client = newClient();
     client.setQueryData(AUTH_ME, SUPERUSER);
     await signOutThenIn(client);
