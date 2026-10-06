@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-06 17:33
+-- Generated : 2026-10-06 17:46
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -219,7 +219,7 @@ CREATE TABLE public.app_users (
     supabase_uid text,
     email text NOT NULL,
     username text NOT NULL,
-    role public.app_user_role DEFAULT 'user'::public.app_user_role NOT NULL,
+    role public.app_user_role DEFAULT 'superuser'::public.app_user_role NOT NULL,
     approved_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
