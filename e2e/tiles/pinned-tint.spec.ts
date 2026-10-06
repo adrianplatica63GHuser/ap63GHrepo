@@ -23,7 +23,7 @@ const PINNED = "rgb(246, 240, 254) / rgb(218, 203, 238)";
 const CARD = "rgb(238, 244, 250) / rgb(198, 212, 232)";
 // Slice #37.88: „Clasificări" is the yellow group's, „Corelate" the green one's (TC-TILES-18).
 const META = "rgb(248, 243, 229) / rgb(221, 211, 174)";
-const RELATED = "rgb(235, 247, 237) / rgb(187, 221, 194)";
+const RELATED = "rgb(221, 240, 225) / rgb(175, 213, 183)"; // #38.15: one step stronger
 
 /** „Its colour": the computed background and top border colour. */
 const colour = (l: Locator) =>

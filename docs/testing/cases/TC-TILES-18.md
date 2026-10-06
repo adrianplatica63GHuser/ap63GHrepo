@@ -34,7 +34,7 @@ Nothing.
 | Group | Fill | Rim |
 |---|---|---|
 | record (grey-blue) | rgb(238, 244, 250) | rgb(198, 212, 232) |
-| related (green) | rgb(235, 247, 237) | rgb(187, 221, 194) |
+| related (green) | rgb(221, 240, 225) | rgb(175, 213, 183) |
 | meta (yellow) | rgb(248, 243, 229) | rgb(221, 211, 174) |
 | fixed (purple) | rgb(246, 240, 254) | rgb(218, 203, 238) |
 
@@ -55,6 +55,10 @@ Nothing.
 Delete the four records (`DELETE`) and the natural person's stored tile arrangement.
 
 ## Notes from the runs
+
+**2026-10-06 — „Corelate" a stronger green (Slice #38.15).** The green group's fill is now
+`rgb(221, 240, 225)` (#DDF0E1) and its rim `rgb(175, 213, 183)` (#AFD5B7), one step stronger than
+#37.88's; the colours table and the spec follow. The runs below read the old green.
 
 **2026-10-05 — run 1, `driven` (Slice #37.88).** Driven in the desktop app's browser pane, its viewport
 emulated at 1920 × 1080, against `npm run dev` on 3000; a script read the bar's strips

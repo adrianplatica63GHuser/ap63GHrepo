@@ -18,7 +18,7 @@ import { hideTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-18`;
 const KEY = "ga40-tile-positions-natural-person-v1";
-const FILL = { record: "rgb(238, 244, 250)", related: "rgb(235, 247, 237)", meta: "rgb(248, 243, 229)", fixed: "rgb(246, 240, 254)" } as const;
+const FILL = { record: "rgb(238, 244, 250)", related: "rgb(221, 240, 225)" /* #38.15 */, meta: "rgb(248, 243, 229)", fixed: "rgb(246, 240, 254)" } as const;
 type Group = keyof typeof FILL;
 
 /** The bar's strips, left to right: each group and the names of its boxes. */

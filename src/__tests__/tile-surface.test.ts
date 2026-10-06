@@ -4,7 +4,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { META_TILE_SURFACE, PINNED_TILE_SURFACE, RELATED_TILE_SURFACE, TILE_SURFACE, groupStrip, groupSurface, tileSurface } from "@/lib/ui/tile-surface";
+import { META_TILE_SURFACE, PINNED_TILE_SURFACE, RELATED_ROWS_SURFACE, RELATED_TILE_SURFACE, TILE_SURFACE, groupStrip, groupSurface, tileSurface } from "@/lib/ui/tile-surface";
 import { PROP_TILE_REGISTRY } from "@/app/properties/_components/property-tiles";
 
 const ROOT = process.cwd();
@@ -84,8 +84,8 @@ describe("the four groups' colours (#37.88)", () => {
     }
   });
 
-  it("the four fills share one lightness, and the four rims another, in light and dark (OKLCH L within 0.002)", () => {
-    for (const name of ["card-pinned", "card-related", "card-meta"]) {
+  it("the fills share one lightness, and the rims another, in light and dark (OKLCH L within 0.002) — all but „Corelate” since #38.15", () => {
+    for (const name of ["card-pinned", "card-meta"]) {
       expect(Math.abs(lightness(token(name)) - lightness(token("card")))).toBeLessThan(0.002);
       expect(Math.abs(lightness(token(`${name}-rim`)) - lightness(token("card-rim")))).toBeLessThan(0.002);
       expect(Math.abs(lightness(token(`${name}-dark`)) - lightness("#18181B"))).toBeLessThan(0.002);
@@ -106,5 +106,61 @@ describe("the four groups' colours (#37.88)", () => {
       }
       expect(src).toMatch(/<TileSelector [^>]*groups=\{groupedTiles\(/);
     }
+  });
+});
+
+/** WCAG contrast of two sRGB hex colours. */
+function contrast(a: string, b: string): number {
+  const lum = (hex: string) => {
+    const lin = (c: number) => {
+      const v = c / 255;
+      return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    };
+    const [r, g, bl] = [1, 3, 5].map((i) => lin(parseInt(hex.slice(i, i + 2), 16)));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => p - q);
+  return (y + 0.05) / (x + 0.05);
+}
+
+describe("„Corelate” a stronger green, its rows a lighter one (#38.15)", () => {
+  // #37.88's green, which the rows must be lighter than.
+  const OLD_FILL = "#EBF7ED";
+  const OLD_DARK = "#0F1C11";
+
+  it("the tile one step stronger than #37.88's green; its rim as far below it as the card's rim is below the card", () => {
+    expect(token("card-related")).toBe("#DDF0E1");
+    expect(lightness(token("card-related"))).toBeLessThan(lightness(OLD_FILL) - 0.02);
+    const cardStep = lightness(token("card")) - lightness(token("card-rim"));
+    expect(Math.abs(lightness(token("card-related")) - lightness(token("card-related-rim")) - cardStep)).toBeLessThan(0.003);
+  });
+
+  it("dark keeps the relation: the tile a step further from zinc-900, its rows nearer it", () => {
+    expect(lightness(token("card-related-dark"))).toBeGreaterThan(lightness(OLD_DARK) + 0.015);
+    expect(lightness(token("card-related-row-dark"))).toBeLessThan(lightness(OLD_DARK));
+    expect(lightness(token("card-related-rim-dark"))).toBeGreaterThan(lightness(token("card-related-dark")));
+  });
+
+  it("the rows' green is lighter than the tile's old colour, in light mode", () => {
+    expect(token("card-related-row")).toBe("#F4FBF5");
+    expect(lightness(token("card-related-row"))).toBeGreaterThan(lightness(OLD_FILL) + 0.01);
+  });
+
+  it("text keeps at least 4.5:1 on the tile and on the rows, light and dark", () => {
+    for (const bg of [token("card-related"), token("card-related-row")]) {
+      for (const fg of [token("ink"), token("fade")]) expect({ fg, bg, ok: contrast(fg, bg) >= 4.5 }).toEqual({ fg, bg, ok: true });
+    }
+    for (const bg of [token("card-related-dark"), token("card-related-row-dark")]) {
+      for (const fg of ["#D4D4D8", "#A1A1AA"]) expect({ fg, bg, ok: contrast(fg, bg) >= 4.5 }).toEqual({ fg, bg, ok: true }); // zinc-300, zinc-400
+    }
+  });
+
+  it("the rows' container takes the rows' token; the tile, its strip and a preview keep sharing the tile's", () => {
+    expect(RELATED_ROWS_SURFACE.split(" ")).toEqual(expect.arrayContaining(["bg-card-related-row", "dark:bg-card-related-row-dark", "border-card-related-rim"]));
+    const tile = code(read("src", "components", "tiles", "related-tile.tsx"));
+    expect(tile).toMatch(/data-related-rows=""\s*className=\{RELATED_ROWS_SURFACE\}/);
+    expect(tile).not.toMatch(/data-related-rows=""\s*className="[^"]*bg-card\b/);
+    expect(groupStrip("related")).toContain("bg-card-related ");
+    expect(code(read("src", "components", "tiles", "preview-tile-body.tsx"))).toContain("bg-card-related p-3");
   });
 });
