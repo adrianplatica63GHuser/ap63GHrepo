@@ -5,7 +5,7 @@ import { Eraser, Save, Stamp } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   GROUP_TARGET_TYPES,
   type StampTargetType,
@@ -13,10 +13,12 @@ import {
 import { HelpHint } from "@/components/help/help-hint";
 import { NOTE_FOLD_LINES, SCREEN, boxStyle, screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { GrowingText } from "@/components/forms/growing-text";
-import { UnitRow } from "@/components/screen/unit-row";
+import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { TileTitle } from "@/components/screen/tile-title";
+import { STAMP_SCREEN } from "@/lib/ui/screen-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
-const EDITOR_UNITS = 3;
+const EDITOR_UNITS = STAMP_SCREEN.units;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +99,9 @@ export function StampApplicator({
   const t  = useTranslations("stamp");
   const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
+  // Slice #38.13: the two tiles that are not lists are regions named by their titles.
+  const descriptionTitleId = useId();
+  const typeTitleId = useId();
 
   // Which target type is currently being viewed / edited.
   const [selectedType, setSelectedType] = useState<StampTargetType>(
@@ -316,118 +321,178 @@ export function StampApplicator({
     (stagedForType?.toRemove.size ?? 0) > 0;
 
   return (
-    <UnitRow units={[EDITOR_UNITS]}>
-      {/* Area A — code (read-only), short description (read-only), notes (editable) */}
-      <section {...screenPanel("stamp", EDITOR_UNITS)} className="flex flex-col gap-4 rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-wrap items-start gap-4">
-          {/* Code + short description */}
-          <div className="flex flex-col gap-1" style={boxStyle(SCREEN.groupTarget)}>
-            <span className="text-xs font-medium text-fade dark:text-zinc-400">
-              {t("fields.code")}
-            </span>
-            <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
-              {detail?.code ?? initialDetail.code}
+    // Slice #38.13: the four tiles on the record forms' packing and drag
+    // (`TileUnitRow`, #38.12), under the stamp screen's own key. In reading
+    // order — „Descrierea ștampilei", „Tip element" where they stood, then
+    // „Elemente deja ștampilate" under the first and „Elemente disponibile
+    // pentru ștampilare" under the second (`STAMP_SCREEN.flowUnits`).
+    <TileUnitRow screen={STAMP_SCREEN}>
+      {/* „Descrierea ștampilei" — code (read-only), short description (read-only), notes (editable) */}
+      <section
+        aria-labelledby={descriptionTitleId}
+        {...screenPanel("stamp", EDITOR_UNITS)}
+        data-tile="description"
+        className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <TileTitle id={descriptionTitleId} title={t("applicator.descriptionTile")} />
+        <div className="flex flex-col gap-4 p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            {/* Code + short description */}
+            <div className="flex flex-col gap-1" style={boxStyle(SCREEN.groupTarget)}>
+              <span className="text-xs font-medium text-fade dark:text-zinc-400">
+                {t("fields.code")}
+              </span>
+              <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+                {detail?.code ?? initialDetail.code}
+              </div>
+              <div className="mt-1 text-sm text-ink dark:text-zinc-300">
+                {detail?.shortDescription ?? initialDetail.shortDescription}
+              </div>
             </div>
-            <div className="mt-1 text-sm text-ink dark:text-zinc-300">
-              {detail?.shortDescription ?? initialDetail.shortDescription}
+
+            {/* Notes (editable) */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-fade dark:text-zinc-400">
+                {t("fields.notes")}
+              </span>
+              {/* Slice #37.40: a „Note" box the header did not list — a GrowingText
+                  now, folding at five lines like the others. It keeps the width
+                  it had (the group description's), and names itself. */}
+              <GrowingText
+                value={notes}
+                onValueChange={setNotes}
+                width={String(screenBox("groupDescription").style.width)}
+                lines
+                minRows={2}
+                fold={NOTE_FOLD_LINES}
+                maxLength={NOTES_MAX}
+                aria-label={t("fields.notes")}
+                data-width-field="groupDescription"
+                data-width-kind={SCREEN.groupDescription.kind}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
             </div>
           </div>
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+              {error}
+            </p>
+          )}
 
-          {/* Notes (editable) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-fade dark:text-zinc-400">
-              {t("fields.notes")}
-            </span>
-            {/* Slice #37.40: a „Note" box the header did not list — a GrowingText
-                now, folding at five lines like the others. It keeps the width
-                it had (the group description's), and names itself. */}
-            <GrowingText
-              value={notes}
-              onValueChange={setNotes}
-              width={String(screenBox("groupDescription").style.width)}
-              lines
-              minRows={2}
-              fold={NOTE_FOLD_LINES}
-              maxLength={NOTES_MAX}
-              aria-label={t("fields.notes")}
-              data-width-field="groupDescription"
-              data-width-kind={SCREEN.groupDescription.kind}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          {/* Save */}
+          <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
+            <IconButton
+              icon={Save}
+              label={t("applicator.saveStamps")}
+              busy={mutation.isPending}
+              busyLabel={t("saving")}
+              variant="primary"
+              size="lg"
+              onClick={() => mutation.mutate()}
+              disabled={!dirty || mutation.isPending}
             />
+            <HelpHint hintKey="stamp-staged-changes" />
+            {dirty && (
+              <span className="text-xs text-fade dark:text-zinc-500">
+                {t("unsavedChanges")}
+              </span>
+            )}
           </div>
         </div>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {error}
+      </section>
+
+      {/* „Tip element" — the target type selector, named by the tile's title (#38.13: no label over it) */}
+      <section
+        aria-labelledby={typeTitleId}
+        {...screenPanel("stamp-target", EDITOR_UNITS)}
+        data-tile="type"
+        className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <TileTitle id={typeTitleId} title={t("applicator.targetTypeLabel")} />
+        <div className="p-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <select
+              {...screenBox("groupTarget")}
+              id="stamp-target-type"
+              aria-labelledby={typeTitleId}
+              value={selectedType}
+              onChange={(e) => switchType(e.target.value as StampTargetType)}
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              {GROUP_TARGET_TYPES.map((tt) => (
+                <option key={tt} value={tt}>
+                  {t(`targets.${tt}`)}
+                </option>
+              ))}
+            </select>
+            <HelpHint hintKey="stamp-type-switch-keeps-changes" />
+
+            {hasStagedForType && (
+              <span className="text-xs italic text-amber-600 dark:text-amber-400">
+                {t("applicator.unsavedChangesForType")}
+              </span>
+            )}
+          </div>
+
+          {/* Info note */}
+          <p className="mt-2 text-xs italic text-fade dark:text-zinc-500">
+            {t("applicator.typeNote")}
           </p>
-        )}
-
-        {/* Save */}
-        <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-          <IconButton
-            icon={Save}
-            label={t("applicator.saveStamps")}
-            busy={mutation.isPending}
-            busyLabel={t("saving")}
-            variant="primary"
-            size="lg"
-            onClick={() => mutation.mutate()}
-            disabled={!dirty || mutation.isPending}
-          />
-          <HelpHint hintKey="stamp-staged-changes" />
-          {dirty && (
-            <span className="text-xs text-fade dark:text-zinc-500">
-              {t("unsavedChanges")}
-            </span>
+          {isLoading && (
+            <p className="text-sm text-fade dark:text-zinc-400">{t("applicator.loading")}</p>
+          )}
+          {isError && (
+            <p className="text-sm text-red-600 dark:text-red-400">{t("applicator.loadError")}</p>
           )}
         </div>
       </section>
 
-      {/* Area B — target type selector */}
-      <section {...screenPanel("stamp-target", EDITOR_UNITS)} className="rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <label htmlFor="stamp-target-type" className="basis-full text-sm font-medium text-ink dark:text-zinc-300">
-            {t("applicator.targetTypeLabel")}
-          </label>
-          <select
-            {...screenBox("groupTarget")}
-            id="stamp-target-type"
-            value={selectedType}
-            onChange={(e) => switchType(e.target.value as StampTargetType)}
-            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-          >
-            {GROUP_TARGET_TYPES.map((tt) => (
-              <option key={tt} value={tt}>
-                {t(`targets.${tt}`)}
-              </option>
-            ))}
-          </select>
-          <HelpHint hintKey="stamp-type-switch-keeps-changes" />
-
-          {hasStagedForType && (
-            <span className="text-xs italic text-amber-600 dark:text-amber-400">
-              {t("applicator.unsavedChangesForType")}
-            </span>
-          )}
-        </div>
-
-        {/* Info note */}
-        <p className="mt-2 text-xs italic text-fade dark:text-zinc-500">
-          {t("applicator.typeNote")}
-        </p>
-        {isLoading && (
-          <p className="text-sm text-fade dark:text-zinc-400">{t("applicator.loading")}</p>
-        )}
-        {isError && (
-          <p className="text-sm text-red-600 dark:text-red-400">{t("applicator.loadError")}</p>
-        )}
-      </section>
-
-      {/* Areas C + D — Available / Stamped panels */}
+      {/* The two lists: in reading order „Elemente deja ștampilate", then „Elemente disponibile…" (#38.13) */}
 
       {!isLoading && !isError && (
         <>
-          {/* Panel C — Available */}
+          {/* „Elemente deja ștampilate" — under „Descrierea ștampilei" by default (#38.13) */}
+          <Panel
+            name="stamped"
+            title={t("applicator.stamped")}
+            count={stampedRows.length}
+            toolbar={
+              <input
+                type="search"
+                value={searchStamped}
+                onChange={(e) => setSearchStamped(e.target.value)}
+                placeholder={t("applicator.searchPlaceholder")}
+                aria-label={t("applicator.searchStamped")}
+                {...screenBox("memberSearch")}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            }
+            rows={stampedRows}
+            renderRow={(id) => (
+              <ItemRow
+                key={id}
+                label={label(id)}
+                checked={selStamped.has(id)}
+                onToggle={() => toggleStamped(id)}
+                staged={staged.toRemove.has(id) ? "remove" : undefined}
+              />
+            )}
+            empty={t("applicator.stampedEmpty")}
+            footer={
+              // #37.46 (A081): Eraser + „Elimină ștampila (n)".
+              <IconButton
+                icon={Eraser}
+                label={t("applicator.removeStamp", { count: selStamped.size })}
+                showLabel
+                variant="danger"
+                size="sm"
+                onClick={removeSelected}
+                disabled={selStamped.size === 0}
+              />
+            }
+          />
+
+          {/* „Elemente disponibile pentru ștampilare" — under „Tip element" by default (#38.13) */}
           <Panel
             name="available"
             title={t("applicator.available")}
@@ -468,51 +533,10 @@ export function StampApplicator({
               />
             }
           />
-
-          {/* Panel D — Stamped */}
-          <Panel
-            name="stamped"
-            title={t("applicator.stamped")}
-            count={stampedRows.length}
-            toolbar={
-              <input
-                type="search"
-                value={searchStamped}
-                onChange={(e) => setSearchStamped(e.target.value)}
-                placeholder={t("applicator.searchPlaceholder")}
-                aria-label={t("applicator.searchStamped")}
-                {...screenBox("memberSearch")}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
-              />
-            }
-            rows={stampedRows}
-            renderRow={(id) => (
-              <ItemRow
-                key={id}
-                label={label(id)}
-                checked={selStamped.has(id)}
-                onToggle={() => toggleStamped(id)}
-                staged={staged.toRemove.has(id) ? "remove" : undefined}
-              />
-            )}
-            empty={t("applicator.stampedEmpty")}
-            footer={
-              // #37.46 (A081): Eraser + „Elimină ștampila (n)".
-              <IconButton
-                icon={Eraser}
-                label={t("applicator.removeStamp", { count: selStamped.size })}
-                showLabel
-                variant="danger"
-                size="sm"
-                onClick={removeSelected}
-                disabled={selStamped.size === 0}
-              />
-            }
-          />
         </>
       )}
 
-    </UnitRow>
+    </TileUnitRow>
   );
 }
 
@@ -538,12 +562,16 @@ function Panel({
   empty:      string;
   footer:     React.ReactNode;
 }) {
+  // Slice #38.13: a region named by its title, and a tile of the screen's packed row.
+  const titleId = useId();
   return (
-    <section {...screenPanel(name, EDITOR_UNITS)} className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between border-b border-card-rim px-4 py-2 dark:border-zinc-800">
-        <span className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
-        <span className="text-xs text-fade dark:text-zinc-400">{count}</span>
-      </div>
+    <section
+      aria-labelledby={titleId}
+      {...screenPanel(name, EDITOR_UNITS)}
+      data-tile={name}
+      className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+    >
+      <TileTitle id={titleId} title={title} count={count} />
       {toolbar && (
         <div className="border-b border-card-rim p-3 dark:border-zinc-800">{toolbar}</div>
       )}

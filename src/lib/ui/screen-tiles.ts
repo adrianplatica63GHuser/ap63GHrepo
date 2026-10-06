@@ -14,7 +14,11 @@
  * window does not put the three in one row; the free space at the right is the
  * row's, and a tile may be dragged there (`useTilePacking`'s `flowUnits`).
  *
- * #38.13 reuses this for the stamp applicator.
+ * #38.13 — the stamp applicator (Administrare → Ștampile → „Aplică"): four
+ * tiles, „Descrierea ștampilei" and „Tip element" where they stood, „Elemente
+ * deja ștampilate" under the first and „Elemente disponibile pentru
+ * ștampilare" under the second — the same rule, the tiles in that reading
+ * order.
  *
  * PURE — `group-screen-tiles.test.tsx` covers it; the stored places are
  * `tilePositionsKey(GROUP_SCREEN.entity)`.
@@ -38,3 +42,10 @@ export const GROUP_SCREEN: ScreenTiles = {
   flowUnits: 2 * 3,
 };
 
+/** Administrare → Ștampile → „Aplică" (#38.13). */
+export const STAMP_SCREEN: ScreenTiles = {
+  entity: "admin-stamp",
+  tiles: ["description", "type", "stamped", "available"],
+  units: 3,
+  flowUnits: 2 * 3,
+};

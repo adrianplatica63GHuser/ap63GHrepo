@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { getStampDetail } from "@/lib/stamps/queries";
 import { stampDisplayName } from "@/lib/stamps/code";
 import { StampApplicator } from "../_components/stamp-applicator";
+import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
+import { STAMP_SCREEN } from "@/lib/ui/screen-tiles";
 
 // Slice #20.17: BackLink removed — the BreadcrumbBar now handles back
 // navigation universally.  ?from= / ?fromLabel= searchParams are still
@@ -29,10 +31,12 @@ export default async function StampApplicatorPage({ params, searchParams }: Prop
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="w-full px-6 py-8 flex flex-col gap-6">
-        <header className="flex flex-col gap-1">
+        {/* Slices #38.12–#38.13: „Implicit" at the screen's top right puts the dragged tiles back in their default places. */}
+        <header className="flex flex-wrap items-start justify-between gap-4">
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("applicator.pageTitle", { stamp: title })}
           </h1>
+          <TilePositionsReset entity={STAMP_SCREEN.entity} />
         </header>
 
         <StampApplicator stampId={id} initialDetail={detail} />

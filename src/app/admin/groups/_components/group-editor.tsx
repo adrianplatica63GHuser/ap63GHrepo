@@ -10,6 +10,7 @@ import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { TileTitle } from "@/components/screen/tile-title";
 import { GROUP_SCREEN } from "@/lib/ui/screen-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
@@ -243,7 +244,7 @@ export function GroupEditor({
         data-tile="identity"
         className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <PanelTitle id={identityTitleId} title={t("panels.identity")} />
+        <TileTitle id={identityTitleId} title={t("panels.identity")} />
         <div className="flex flex-col gap-4 p-4">
           <div className="flex flex-wrap items-start gap-4">
             {/* Target (read-only) */}
@@ -439,7 +440,7 @@ function Panel({
   footer: React.ReactNode;
 }) {
   // FU-219 (Slice #37.07): the panel is a region named by its own title, so
-  // „Disponibile" and „În grup" can be reached as landmarks.
+  // „Membri disponibili pentru includere" and „Deja în grup" (#38.12; „Disponibile" and „În grup" then) can be reached as landmarks.
   const titleId = useId();
   return (
     <section
@@ -449,7 +450,7 @@ function Panel({
       data-tile={name}
       className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <PanelTitle id={titleId} title={title} count={rows.length} />
+      <TileTitle id={titleId} title={title} count={rows.length} />
       {toolbar && <div className="border-b border-card-rim p-3 dark:border-zinc-800">{toolbar}</div>}
       <ul className="max-h-[360px] flex-1 divide-y divide-crease overflow-y-auto dark:divide-zinc-800">
         {rows.length === 0 ? (
@@ -460,16 +461,6 @@ function Panel({
       </ul>
       <div className="border-t border-card-rim p-3 dark:border-zinc-800">{footer}</div>
     </section>
-  );
-}
-
-/** A tile's title row: its name (what the region is named by) and, for a list, its count. */
-function PanelTitle({ id, title, count }: { id: string; title: React.ReactNode; count?: number }) {
-  return (
-    <div className="flex items-center justify-between gap-2 border-b border-card-rim px-4 py-2 dark:border-zinc-800">
-      <span id={id} className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
-      {count !== undefined && <span className="text-xs text-fade dark:text-zinc-400">{count}</span>}
-    </div>
   );
 }
 
