@@ -5,7 +5,7 @@
 | **Area** | nav |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -78,3 +78,6 @@ crumb now names the section that holds the screen. Driven twice in the same pane
 script: „Acasă › Administrare › Etichete", „Acasă › Funcții › Căutare globală", „Acasă › Domeniu ›
 Date de referință" — the middle crumb a `<span>`, not a link — „Acasă › Setări" and „Acasă › Import",
 the same both times.
+
+**2026-10-06 — `automated`.** `e2e/ui/sidebar-nine-sections.spec.ts`, translated from this file, green
+inside a whole `npm run e2e`: the runner's full run 20261006T194613Z-28897 on 6712163 (100 passed).

@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-06, Slice #38.19 — 311 entries. Rows are status, columns are impact.
+As of 2026-10-06, Slice #38.20 — 313 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 70 | 68 | 16 | 171 |
+| open | 17 | 71 | 69 | 16 | 173 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 27 | 3 | 123 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 3 | 0 | 0 | 3 |
-| **total** | 58 | 132 | 100 | 21 | 311 |
+| **total** | 58 | 133 | 101 | 21 | 313 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -395,3 +395,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-309 | 2026-10-06 #38.13 auto-20261006T013432Z-restore-drill | tooling | Tooling & CI | The runner's automatic restore drill failed on the newest backup (2026-10-05T114732Z) over one file: `seed-dev-data.manifest.json` is in the backup's files but has no row, so the reconciliation counts it as a „file without a row" — while every table (49, 4881 rows), every page file (167/167 SHA-256) and the app's four lists came back right. The first drill (#37.11) had no such file. Either the manifest is not a page file and the drill should not count it, or it is one the seed writes without a row. | .test-runner/logs/auto-20261006T013432Z-restore-drill/restore-drill.log („PROBLEM file without a row: seed-dev-data.manifest.json"); scripts/backup/archive.ts drill | dev | XS | open | Find what writes `seed-dev-data.manifest.json` into the archived files; if it is the dev seed's bookkeeping, leave it out of the files the drill reconciles (or out of the backup), and re-run the drill. | 2026-10-06 |
 | FU-310 | 2026-10-06 #38.16 20261006T153247Z-5846 | test gap | Tests & e2e | `hideTile` (e2e/helpers/tiles.ts) passes once the box reads unticked and the region hidden, but a click made while the page still hydrates can be undone a moment later — measured on a freshly opened Natural Person at 1366 px: „Clasificări" ticked again and visible after the helper returned. `showTile` repeats its click for the same race; neither re-checks after a pause. | e2e/helpers/tiles.ts:52-60; e2e/tiles/tiles-rise.spec.ts `setTile` (re-checks after 1 s) | dev | XS | open | Give both helpers `setTile`'s second look (still so 1 s later), then use them in tiles-rise.spec.ts. | 2026-10-06 |
 | FU-311 | 2026-10-06 #38.16 Handover.38.16.md | recommendation | UI shell | Since #38.16 a drop stores the arrangement as it stands after the rise; while a tile is unticked the tiles under its place have risen into it, so a drop then stores them there, and the unticked tile, ticked again, finds its place taken and is placed by #37.75's rule (`fallback`) instead of where the user left it. Before #38.16 nothing moved into its place. | src/lib/ui/tile-positions.ts placeWithStored (`fallback.add`), use-tile-packing.ts `end` (placesToStore after riseIntoGaps) | user | S | open | If it matters in use: at a drop, keep a risen tile's previous stored place when it was not the dropped tile (store only the dropped tile's place and the tiles it displaced). | 2026-10-06 |
+| FU-312 | 2026-10-06 #38.20 20261006T192645Z-22191 | test gap | Tests & e2e | TC-PERS-07's spec measured „Interacțiuni" 9 px lower than the document's „Pagini" (y 164 against 155) once, in a full run, and passed in the full runs before and after it and alone; it reads „Pagini"'s place once, right after the tile is visible, and compares the person's tile to that one number. | e2e/person/interactions-tile.spec.ts:47 (`size(pages)` once) against :66 (`expect.poll`) | dev | XS | open | Poll „Pagini"'s place until it holds still before reading it, as the person's tile is polled; if the 9 px returns, find what grows above the tiles late (the 9 px of #38.19's tag cloud was a scroller looked up while the page hydrated). | 2026-10-06 |
+| FU-313 | 2026-10-06 #38.20 Handover.38.20.md | recommendation | Accessibility | Since #38.20 the sidebar has a section „Ajutor", and every screen's „?" button is also named „Ajutor": a screen reader lists two „Ajutor" buttons with different jobs, and a locator by name finds the sidebar's first (TC-HELP-01 now excludes the sidebar). | src/components/help/screen-help-button.tsx (its label); messages ro-RO nav.sections.helpSection | user | XS | open | Name the „?" for what it opens — e.g. „Ajutor pentru acest ecran" — in both languages; TC-HELP-01's locator can then go back to a plain name. | 2026-10-06 |
