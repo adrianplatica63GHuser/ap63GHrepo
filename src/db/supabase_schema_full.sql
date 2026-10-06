@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-05 07:39
+-- Generated : 2026-10-06 17:33
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -358,7 +358,9 @@ CREATE TABLE public.document_page (
     file_size integer,
     mime_type text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    rotation smallint DEFAULT 0 NOT NULL,
+    CONSTRAINT document_page_rotation_check CHECK ((rotation = ANY (ARRAY[0, 90, 180, 270])))
 );
 
 
