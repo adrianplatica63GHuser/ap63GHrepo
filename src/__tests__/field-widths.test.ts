@@ -984,7 +984,8 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
     for (const [what, src] of VIEWS.filter(([w]) => w.startsWith("/") || ["Grupuri", "a group", "Ștampile", "a stamp", "Utilizatori & Acces", "Texte de ajutor", "Calcul", "one calculation"].includes(w))) {
       // Slices #37.34 and #37.35: an „Asociază …" screen and every administration screen
       // is a row of unit tiles instead (`AssociateRow`, `UnitRow`).
-      const column = /associate-/.test(what) ? /<AssociateRow units=/.test(src) : /<UnitRow units=/.test(src);
+      // #38.12: the group screen's row is `TileUnitRow` — `UnitRow`'s, packed and dragged.
+      const column = /associate-/.test(what) ? /<AssociateRow units=/.test(src) : /<(UnitRow units|TileUnitRow screen)=/.test(src);
       expect([what, column]).toEqual([what, true]);
     }
   });
@@ -1191,7 +1192,7 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
       expect([what, m[1], /,\s*(?!true\b)[A-Za-z0-9_]+(\[[a-z]+\])?\s*$/.test(m[1])]).toEqual([what, m[1], true]);
     }
     expect(src).not.toMatch(/SCREEN_COLUMN|WIDE_COLUMN_STYLE|HELP_NAV_STYLE|CAPTION_STYLE|data-panel-row/);
-    if (!/— the page$/.test(what)) expect([what, /<UnitRow units=/.test(src)]).toEqual([what, true]);
+    if (!/— the page$/.test(what)) expect([what, /<(UnitRow units|TileUnitRow screen)=/.test(src)]).toEqual([what, true]); // #38.12: TileUnitRow
   });
 
   // The lists whose table IS the tile; Calcul's owners and parcels sit in a 7-unit tile beside its map and figures.

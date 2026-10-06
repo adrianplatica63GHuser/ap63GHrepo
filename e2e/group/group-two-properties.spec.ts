@@ -90,11 +90,13 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
       await expect(page.getByRole("heading", { name: `Grup ${code}` })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(`${DESCRIPTION.length}/500 caractere`)).toBeVisible();
       // Each panel is a region named by its title (FU-219).
-      const available = page.getByRole("region", { name: "Disponibile", exact: true });
-      const inGroup = page.getByRole("region", { name: "În grup", exact: true });
+      // #38.12: the tiles' names — „Identitatea grupului" holds the code.
+      await expect(page.getByRole("region", { name: "Identitatea grupului", exact: true })).toContainText(code);
+      const available = page.getByRole("region", { name: "Membri disponibili pentru includere", exact: true });
+      const inGroup = page.getByRole("region", { name: "Deja în grup", exact: true });
       await expect(inGroup.getByText("Niciun element în acest grup încă")).toBeVisible();
 
-      // Step 5 — „Caută…" over „Disponibile": two rows, by nickname only.
+      // Step 5 — „Caută…" over „Membri disponibili pentru includere": two rows, by nickname only.
       await available.getByPlaceholder("Caută…").fill(MARK);
       await expect(available.getByRole("checkbox")).toHaveCount(2, { timeout: 15_000 });
 

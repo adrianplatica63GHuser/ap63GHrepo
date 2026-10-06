@@ -39,9 +39,9 @@ description is `TC-GRP-01 Grup de test`, answer „Șterge". The properties are 
 | 1 | Opens „Admin-Configurare" → „Grupuri" | The heading „Grupuri", the panel „Ce este un Grup?", „+ Adaugă", the count „N grupuri", and a table COD · DESCRIERE; each row shows its code, its member count in brackets, its target type, „Editează" and „Șterge" |
 | 2 | Presses „+ Adaugă" | An inline form „Adaugă grup nou" with „Țintă" (already „Proprietate") and „Descriere" (required) |
 | 3 | Types `TC-GRP-01 Grup de test` into „Descriere" and presses „Salvează" | **Stays on the list**: a new first row `GRP-0nn` „(0)", „Proprietate", `TC-GRP-01 Grup de test`; the count is N+1. The code is allocated on save |
-| 4 | Presses „Editează" on that row | „Grup GRP-0nn" at `/admin/groups/[id]`: „Țintă" and „Cod" read-only, „Descriere" with „22/500 caractere", and two panels — „Disponibile" listing every property **by nickname only, no code**, and „În grup" reading „Niciun element în acest grup încă" |
-| 5 | Types `TC-PROP` into „Caută…" over „Disponibile" | Two rows: `TC-PROP-01 Teren de test`, `TC-PROP-03 Teren din fisier` |
-| 6 | Ticks both and presses „Adaugă în grup (2)" | Both move to „În grup", each marked „[nou]", and „Modificări nesalvate" appears beside „Salvează grupul" — **nothing is written yet** |
+| 4 | Presses „Editează" on that row | „Grup GRP-0nn" at `/admin/groups/[id]`: „Țintă" and „Cod" read-only, „Descriere" with „22/500 caractere" in the tile „Identitatea grupului", and two list tiles — „Membri disponibili pentru includere" listing every property **by nickname only, no code**, and „Deja în grup" reading „Niciun element în acest grup încă" |
+| 5 | Types `TC-PROP` into „Caută…" over „Membri disponibili pentru includere" | Two rows: `TC-PROP-01 Teren de test`, `TC-PROP-03 Teren din fisier` |
+| 6 | Ticks both and presses „Adaugă în grup (2)" | Both move to „Deja în grup", each marked „[nou]", and „Modificări nesalvate" appears beside „Salvează grupul" — **nothing is written yet** |
 | 7 | Presses „Salvează grupul" | „[nou]" becomes „[01]" and „[02]"; „Modificări nesalvate" goes away |
 | 8 | Returns to „Grupuri" | The row now reads „(2)" |
 | 9 | On Căutare globală, types the group's code into „Cod grup" and presses „Caută" | „2 rezultate": both properties, each with „Grupuri" = the code and its position, 01 and 02 |
@@ -55,6 +55,10 @@ nu poate fi anulată." and „Șterge" / „Anulează"; **„Șterge"**. The cou
 both properties are still there — a group's members exist independently.
 
 ## Notes from the runs
+
+**2026-10-05 — the tiles' names (Slice #38.12).** The group screen's tiles are named „Identitatea
+grupului", „Membri disponibili pentru includere" and „Deja în grup" (they were an untitled area,
+„Disponibile" and „În grup"); steps 4–6 and the spec follow. Nothing else in the steps changed.
 
 **2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
 result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.

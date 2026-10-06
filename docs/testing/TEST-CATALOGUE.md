@@ -124,6 +124,7 @@ fixed fixture where the existing one will do.
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
 | [TC-GRP-02](cases/TC-GRP-02.md) | O proprietate în trei grupuri: limita spusă în cuvinte, „+" inactiv | group | happy | — | `automated` | 2026-10-05 | `e2e/group/groups-limit.spec.ts` |
 | [TC-GRP-03](cases/TC-GRP-03.md) | „Grupuri" arată câți membri are grupul, nu locul înregistrării în el | group | happy | — | `automated` | 2026-10-05 | `e2e/group/group-member-count.spec.ts` |
+| [TC-GRP-04](cases/TC-GRP-04.md) | Ecranul unui grup: trei fișe cu nume, „Deja în grup" sub identitate, trase ca pe formulare | group | happy | — | `confirmed` | 2026-10-05 | `e2e/group/group-screen-tiles.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-10-02 | `e2e/tag/tag-property.spec.ts` |
 | [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `automated` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |

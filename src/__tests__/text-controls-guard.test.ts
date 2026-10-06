@@ -244,6 +244,9 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{t(\"confirmNo\")}"],
     ["A110", "{t(\"confirmYes\")}"],
   ],
+  "src/components/screen/tile-positions-reset.tsx": [
+    ["A020", "{t(\"defaults\")}"], // #38.12: the forms' „Implicit", for a screen with no checkbox bar
+  ],
   "src/components/sidebar/sidebar-nav.tsx": [
     ["A001", "<Icon size={14} className=\"shrink-0\" aria-hidden=\"true\" "],
     ["A001", "<span className={`flex items-center ${isCollapsed ? \"\" :"],
