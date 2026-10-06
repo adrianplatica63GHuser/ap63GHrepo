@@ -298,6 +298,8 @@ describe("what next dev's output says", () => {
     ["Persisting failed: Unable to write SST file 00000039.sst\n  2: Insufficient system resources exist (os error 1450)", false, "os-error-1450"],
     ["thread 'tokio-runtime-worker' panicked: Failed to restore task data (corrupted database or bug)", false, "corrupt-cache"],
     ["FATAL: An unexpected Turbopack error occurred", false, "corrupt-cache"],
+    // #38.23: the same restored-cache panic in other words — no FATAL line followed it.
+    ["thread 'tokio-runtime-worker' (16080) panicked at turbopack\\crates\\turbo-tasks-backend\\src\\backend\\operation\\mod.rs:966:13:\nEvery task must have a task type TaskGuard { task_id: TaskId { id: 2147489111 } }", false, "corrupt-cache"],
     ["⨯ Another next dev server is already running in this directory.", false, "lock-held"],
     ["Error: listen EADDRINUSE: address already in use :::3100", false, "port-in-use"],
     ["✓ Ready in 2.1s\n...\nos error 1450", true, "os-error-1450"],

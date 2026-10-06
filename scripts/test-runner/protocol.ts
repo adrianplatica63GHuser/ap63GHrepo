@@ -548,7 +548,10 @@ export type DevServerTell = "lock-held" | "port-in-use" | "os-error-1450" | "cor
  *                  the remedy is: stop, clear the runner's `dev` cache, restart
  *                  with `--webpack`, which builds no SST database at all.
  *   corrupt-cache  the panic that follows it — "Failed to restore task data
- *                  (corrupted database or bug)". Stop, clear, restart.
+ *                  (corrupted database or bug)". Stop, clear, restart. #38.23
+ *                  met a second wording of the same restored-cache panic,
+ *                  "Every task must have a task type", which matched nothing,
+ *                  so the server hung on its first compile with no recovery.
  *   lock-held      another `next dev` holds `<distDir>/dev/lock`; with the
  *                  runner's own distDir that should never be Adrian's, so it
  *                  is reported, never worked around.
@@ -567,7 +570,7 @@ export function classifyDevServerOutput(text: string): { ready: boolean; tell: D
   } else if (/os error 1450/i.test(t)) {
     tell = "os-error-1450";
   } else if (
-    /Failed to restore task data|corrupted database|Unable to open static sorted file|An unexpected Turbopack error occurred/i.test(t)
+    /Failed to restore task data|corrupted database|Unable to open static sorted file|An unexpected Turbopack error occurred|Every task must have a task type/i.test(t)
   ) {
     tell = "corrupt-cache";
   }
