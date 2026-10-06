@@ -88,6 +88,23 @@ export async function createDocumentPage(
 }
 
 /** Hard-delete a page row by its UUID. */
+/**
+ * Store a page's turn (Slice #38.17) — how far to the right the viewer draws
+ * it. The file is not touched. Returns the row, or undefined when the page is
+ * gone.
+ */
+export async function updateDocumentPageRotation(
+  pageId: string,
+  rotation: number,
+): Promise<DocumentPageRow | undefined> {
+  const [row] = await db
+    .update(documentPage)
+    .set({ rotation, updatedAt: new Date() })
+    .where(eq(documentPage.id, pageId))
+    .returning();
+  return row;
+}
+
 export async function deleteDocumentPage(pageId: string): Promise<void> {
   await db.delete(documentPage).where(eq(documentPage.id, pageId));
 }

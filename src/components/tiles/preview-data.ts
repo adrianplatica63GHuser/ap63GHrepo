@@ -7,6 +7,7 @@
  * and returns the short set of `PREVIEW_FIELDS` by the screen's field names.
  */
 import type { PreviewTarget } from "@/lib/ui/previews";
+import { rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
 
 export interface PreviewData {
   /** The record's name; null when it has none (#37.57: never its system ID — `nameOr` words it). */
@@ -14,7 +15,7 @@ export interface PreviewData {
   /** The short set's values, by the screen's field names (`PREVIEW_FIELDS`). */
   fields: Record<string, string | null>;
   /** A document's first page; null when it has none; undefined for the other kinds. */
-  image?: { url: string; mimeType: string | null } | null;
+  image?: { url: string; mimeType: string | null; rotation?: PageRotation } | null;
   /** A natural person's gender, for „născut:" / „născută:" (#37.70); undefined for the other kinds. */
   gender?: "MALE" | "FEMALE" | null;
   /** A company's filled contact-person slots, 0, 1 or 2 (#37.70); undefined for the other kinds. */
@@ -94,12 +95,14 @@ export async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
     case "document": {
       const [d, pages] = await Promise.all([
         getJson<Row>(`/api/documents/${id}`),
-        getJson<{ id: string; pageNumber: number }[]>(`/api/documents/${id}/pages`).catch(() => []),
+        getJson<{ id: string; pageNumber: number; rotation?: number }[]>(`/api/documents/${id}/pages`).catch(() => []),
       ]);
       const first = [...pages].sort((a, b) => a.pageNumber - b.pageNumber)[0];
-      const image = first
+      const view = first
         ? await getJson<{ url: string; mimeType: string | null }>(`/api/documents/${id}/pages/${encodeURIComponent(first.id)}/view`).catch(() => null)
         : null;
+      // Slice #38.17: drawn with the page's stored turn.
+      const image = view && first ? { ...view, rotation: rotationOf(first.rotation) } : null;
       // Slice #37.70: no „Tip document", and „Etichetă scurtă" only as the heading.
       return {
         title: s(d.title),

@@ -18,6 +18,8 @@ import {
   type PreviewWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { RotatedImage } from "@/components/documents/rotated-image";
+import { rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
 
 /** A stacked label (`self-end`, rule 16), quieter than the value it names: the value is what a preview is for. */
 const PREVIEW_LABEL_CLASS = "self-end text-xs font-medium text-fade dark:text-zinc-400";
@@ -100,7 +102,7 @@ export function PreviewTileBody({
    * Ctrl/⌘-click or a middle-click still opens the link in a new tab.
    */
   onOpen?: (href: string) => void;
-  image?: { url: string; mimeType: string | null } | null;
+  image?: { url: string; mimeType: string | null; rotation?: PageRotation } | null;
   /** Slice #37.33: whole width units — 3 for a person, a company or a property, 4 for a document. */
   width: PreviewWidth;
   tile?: string;
@@ -187,8 +189,14 @@ export function PreviewTileBody({
           {image === null ? (
             <p className="text-sm text-fade">{labels.noPage}</p>
           ) : image.mimeType?.startsWith("image/") ? (
-            // eslint-disable-next-line @next/next/no-img-element -- a signed storage URL, as the Pagini panel shows it
-            <img src={image.url} alt={labels.firstPage} className="block max-w-full rounded border border-card-rim" />
+            // Slice #38.17: with the page's stored turn, fitted to the preview's width.
+            <RotatedImage
+              src={image.url}
+              alt={labels.firstPage}
+              rotation={rotationOf(image.rotation)}
+              className="block max-w-full rounded border border-card-rim"
+              frameClassName="rounded border border-card-rim"
+            />
           ) : (
             <iframe src={image.url} title={labels.firstPage} className="block w-full rounded border border-card-rim" style={{ height: "32rem" }} />
           )}

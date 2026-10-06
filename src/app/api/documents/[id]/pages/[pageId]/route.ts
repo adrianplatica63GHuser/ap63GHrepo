@@ -2,17 +2,58 @@
  * /api/documents/[id]/pages/[pageId]
  *
  * DELETE — remove the page record and its associated stored file.
+ * PATCH  — store the page's turn, `{ rotation: 0 | 90 | 180 | 270 }` (Slice #38.17):
+ *          how far to the right the viewer draws it. The file is never touched,
+ *          and a turn is not a new version of the document.
  */
 
 import type { NextRequest } from "next/server";
+import { z } from "zod/v4";
 import { unexpectedError } from "@/lib/api/errors";
 import {
   deleteDocumentPage,
   getDocumentPage,
+  updateDocumentPageRotation,
 } from "@/lib/documents/pages-queries";
 import { deleteFile } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ id: string; pageId: string }> };
+
+/** The one field a page's update takes. Anything else, or another number, is refused. */
+const PageUpdate = z
+  .object({ rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]) })
+  .strict();
+
+export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
+  const { id: documentId, pageId } = await ctx.params;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "Expected a JSON body" }, { status: 400 });
+  }
+  const parsed = PageUpdate.safeParse(body);
+  if (!parsed.success) {
+    return Response.json(
+      { error: "rotation must be 0, 90, 180 or 270", code: "invalid_rotation" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const page = await getDocumentPage(pageId);
+    // A page of another document is not this document's page to turn.
+    if (!page || page.documentId !== documentId) {
+      return Response.json({ error: "Page not found" }, { status: 404 });
+    }
+    const row = await updateDocumentPageRotation(pageId, parsed.data.rotation);
+    if (!row) return Response.json({ error: "Page not found" }, { status: 404 });
+    return Response.json(row);
+  } catch (err) {
+    return unexpectedError(err, "PATCH /api/documents/[id]/pages/[pageId]");
+  }
+}
 
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { pageId } = await ctx.params;

@@ -27,6 +27,12 @@
  *  - In "create" mode (no documentId) the panel is never rendered; since
  *    Slice #37.93 a new document holds its chosen files in NewPagesPanel.
  *  - In "view"   mode the Add Page and Delete buttons are hidden.
+ *  - Slice #38.17: „Rotește la dreapta" turns the image page shown by 90°, and
+ *    „Salvează rotirea" (enabled only while the turn shown differs from the
+ *    stored one) stores it on the page — in view mode too, the turn being how a
+ *    page is read, not what the document says. A PDF or other page is never
+ *    turned (both buttons disabled, their names saying why). Another page, or
+ *    leaving, drops an unsaved turn without asking. The file is never changed.
  *  - Clicking a table row or the View button loads the file into the viewer.
  *  - The Print button opens the file URL in a new browser tab.
  *  - The file is staged locally until Save is confirmed (no orphan uploads).
@@ -37,7 +43,7 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Printer, Save, Trash2, Upload, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
@@ -46,6 +52,8 @@ import { MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { TILE_SURFACE } from "@/lib/ui/tile-surface";
 import { pageRefusal, takeUnsavedPages } from "@/lib/documents/new-document-pages";
+import { nextRotation, rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
+import { RotatedImage } from "@/components/documents/rotated-image";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,6 +68,8 @@ type Page = {
   fileName:   string;
   fileSize:   number | null;
   mimeType:   string | null;
+  /** Slice #38.17: the stored turn, 0/90/180/270 (absent from an older answer: 0). */
+  rotation?:  number;
   createdAt:  string;
   updatedAt:  string;
 };
@@ -135,6 +145,11 @@ export function usePagesPanelState(documentId: string | undefined) {
   const [dialogOpen,   setDialogOpen]   = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Page | null>(null);
 
+  // Slice #38.17: the turn SHOWN for the selected page. The stored one is the
+  // page's `rotation`; `loadView` starts every page at it, so another page — or
+  // leaving — drops an unsaved turn.
+  const [turn, setTurn] = useState<PageRotation>(0);
+
   const pagesQueryKey = ["document-pages", documentId ?? "none"];
 
   // ── Fetch page list ──────────────────────────────────────────────────────
@@ -161,6 +176,7 @@ export function usePagesPanelState(documentId: string | undefined) {
     async (page: Page) => {
       if (!documentId) return;
       setSelectedPageId(page.id);
+      setTurn(rotationOf(page.rotation));
       setViewData(null);
       setViewError(null);
       setViewMissing(false);
@@ -267,6 +283,41 @@ export function usePagesPanelState(documentId: string | undefined) {
     },
   });
 
+  // ── The turn (Slice #38.17) ──────────────────────────────────────────────
+
+  const selectedPage = pages.find((p) => p.id === selectedPageId) ?? null;
+  const storedTurn = rotationOf(selectedPage?.rotation);
+  // Images only (#38.17's Ask first 1): a turned <iframe> turns the PDF viewer's own toolbar with it.
+  const canTurn = selectedPage !== null && viewData !== null && isImage(viewerMimeType(viewData));
+  const turnChanged = selectedPage !== null && turn !== storedTurn;
+
+  const rotateRight = useCallback(() => setTurn((r) => nextRotation(r)), []);
+
+  const saveTurnMutation = useMutation({
+    mutationFn: async ({ pageId, rotation }: { pageId: string; rotation: PageRotation }) => {
+      if (!documentId) throw new Error("No document");
+      const res = await fetch(
+        `/api/documents/${encodeURIComponent(documentId)}/pages/${encodeURIComponent(pageId)}`,
+        { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rotation }) },
+      );
+      if (!res.ok) throw new Error("Save failed");
+      return (await res.json()) as Page;
+    },
+    onSuccess: (row) => {
+      queryClient.setQueryData<Page[]>(pagesQueryKey, (old) =>
+        old?.map((p) => (p.id === row.id ? { ...p, rotation: rotationOf(row.rotation) } : p)),
+      );
+      queryClient.invalidateQueries({ queryKey: pagesQueryKey });
+      // A preview of this document draws its first page with the stored turn.
+      queryClient.invalidateQueries({ queryKey: ["preview", "document", documentId] });
+    },
+  });
+
+  const saveTurn = useCallback(() => {
+    if (!selectedPage) return;
+    saveTurnMutation.mutate({ pageId: selectedPage.id, rotation: turn });
+  }, [selectedPage, turn, saveTurnMutation]);
+
   // ── Compute next page number default ────────────────────────────────────
 
   const nextPageNumber =
@@ -298,6 +349,14 @@ export function usePagesPanelState(documentId: string | undefined) {
     deleteTarget,
     setDeleteTarget,
     nextPageNumber,
+    turn,
+    storedTurn,
+    canTurn,
+    turnChanged,
+    rotateRight,
+    saveTurn,
+    saveTurnPending: saveTurnMutation.isPending,
+    saveTurnFailed: saveTurnMutation.isError,
   };
 }
 
@@ -321,6 +380,8 @@ export function PagesViewerBox({
   fill?: boolean;
 }) {
   const { t, viewLoading, viewError, viewMissing, viewData, selectedPageId } = state;
+  // Slice #38.17: the turn shown (a state built by hand in a test may not carry one).
+  const turn = rotationOf(state.turn);
 
   // --- Zoom (mouse wheel) + pan (click-and-drag) — "Show Big Page" only ---
   //
@@ -370,7 +431,7 @@ export function PagesViewerBox({
   // documented "adjust state during render when a prop changes" pattern
   // (same precedent as the Admin Import preview-reset logic) rather than a
   // useEffect, so it never trips the `react-hooks/set-state-in-effect` rule.
-  const pageKey = `${selectedPageId ?? ""}:${viewData?.url ?? ""}`;
+  const pageKey = `${selectedPageId ?? ""}:${viewData?.url ?? ""}:${turn}`;
   const [resolvedFor, setResolvedFor] = useState(pageKey);
   if (pageKey !== resolvedFor) {
     setResolvedFor(pageKey);
@@ -520,6 +581,7 @@ export function PagesViewerBox({
           <PageViewer
             viewData={viewData}
             fill={fill}
+            rotation={turn}
             imageFailed={imageFailed}
             onImageError={() => {
               setImageFailed(true);
@@ -614,6 +676,12 @@ export function PagesPanel({
     deleteTarget,
     setDeleteTarget,
     nextPageNumber,
+    canTurn,
+    turnChanged,
+    rotateRight,
+    saveTurn,
+    saveTurnPending,
+    saveTurnFailed,
   } = state;
 
   // Slice #37.93: the pages a new document's first Save could not upload,
@@ -668,6 +736,30 @@ export function PagesPanel({
                 onClick={() => goToPage(1)}
                 disabled={!canGoNext}
               />
+            </div>
+          )}
+          {/* Slice #38.17: turn the image page shown, and store the turn. RotateCw / Save, by #37.41–#37.49's icon rules. */}
+          {pages.length > 0 && (
+            <div className="flex items-center gap-1.5" data-page-turn>
+              <IconButton
+                icon={RotateCw}
+                label={canTurn ? t("rotateRight") : t("rotateRightImagesOnly")}
+                variant="secondary"
+                size="xs"
+                onClick={rotateRight}
+                disabled={!canTurn}
+              />
+              <IconButton
+                icon={Save}
+                label={canTurn ? t("saveRotation") : t("saveRotationImagesOnly")}
+                variant="secondary"
+                size="xs"
+                onClick={saveTurn}
+                disabled={!canTurn || !turnChanged || saveTurnPending}
+              />
+              {saveTurnFailed && (
+                <span role="alert" className="text-xs text-red-600 dark:text-red-400">{t("saveRotationError")}</span>
+              )}
             </div>
           )}
         </div>
@@ -939,11 +1031,13 @@ function viewerMimeType(viewData: ViewData): string | null {
 function ImagePane({
   viewData,
   fill,
+  rotation,
   failed,
   onError,
 }: {
   viewData: ViewData;
   fill: boolean;
+  rotation: PageRotation;
   failed: boolean;
   onError: () => void;
 }) {
@@ -961,11 +1055,14 @@ function ImagePane({
           : "flex min-h-[320px] items-center justify-center p-3"
       }
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {/* Slice #38.17: turned by the turn shown, fitted into the same box, never cropped. */}
+      <RotatedImage
         src={viewData.url}
         alt={viewData.fileName}
+        rotation={rotation}
         onError={onError}
+        fill={fill}
+        maxHeight={600}
         className={
           fill
             ? "max-h-full max-w-full object-contain"
@@ -979,11 +1076,14 @@ function ImagePane({
 function PageViewer({
   viewData,
   fill = false,
+  rotation = 0,
   imageFailed,
   onImageError,
 }: {
   viewData: ViewData;
   fill?: boolean;
+  /** Slice #38.17: the turn shown; an image is drawn turned, a PDF never. */
+  rotation?: PageRotation;
   /**
    * Owned by `PagesViewerBox` — see `ImagePane`. REQUIRED, both of them: a
    * default of `false` plus a no-op handler would let a future caller mount an
@@ -1000,6 +1100,7 @@ function PageViewer({
       <ImagePane
         viewData={viewData}
         fill={fill}
+        rotation={rotation}
         failed={imageFailed}
         onError={onImageError}
       />
