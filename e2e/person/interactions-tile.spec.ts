@@ -24,6 +24,21 @@ async function size(l: Locator): Promise<{ x: number; y: number; w: number; h: n
   const r = await l.boundingBox();
   return { x: Math.round(r?.x ?? -1), y: Math.round(r?.y ?? -1), w: Math.round(r?.width ?? -1), h: Math.round(r?.height ?? -1) };
 }
+/**
+ * FU-312: a tile's place once it holds still — the same box read twice, 500 ms apart. The document's
+ * „Pagini" was read once, right after it became visible, and was caught at y 109 and 155 while the
+ * screen above it was still settling (164 once settled), so the person's tile, polled, never matched.
+ */
+async function settledSize(l: Locator): Promise<{ x: number; y: number; w: number; h: number }> {
+  let last = await size(l);
+  for (let i = 0; i < 40; i++) {
+    await l.page().waitForTimeout(500);
+    const now = await size(l);
+    if (JSON.stringify(now) === JSON.stringify(last)) return now;
+    last = now;
+  }
+  return last;
+}
 const clearChoices = (page: Page) =>
   page.evaluate(() => { localStorage.removeItem("ga40-tiles-natural-person-v1"); localStorage.removeItem("ga40-tiles-judicial-person-v1"); });
 
@@ -41,7 +56,7 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       const pages = page.locator('[data-tile="pages"]');
       await expect(pages).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Nicio pagină adăugată")).toBeVisible({ timeout: 30_000 });
-      const pages1920 = await size(pages);
+      const pages1920 = await settledSize(pages);
       // 420 px in the pane, 422 on the runner's server: the text's line height. Within 4 px is „Pagini"'s height.
       expect(pages1920.w).toBe(640);
       expect(Math.abs(pages1920.h - 420)).toBeLessThanOrEqual(4);
