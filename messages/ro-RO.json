@@ -1303,7 +1303,8 @@
     "quickSearch": "Căutare rapidă",
     "quickSearchPlaceholder": "Nume, cod…",
     "comingSoon": "În curând",
-    "mainNavigation": "Navigare principală"
+    "mainNavigation": "Navigare principală",
+    "uatNoAccounts": "Instalare fără conturi (UAT): nu există parolă de schimbat și nici ieșire din cont."
   },
   "welcome": {
     "title": "GA40",
@@ -3209,7 +3210,8 @@
       "approvedNoEmail": "Cont creat (trimiterea emailului a eșuat — verificați RESEND_API_KEY).",
       "rejectedWithEmail": "Cerere respinsă și solicitantul notificat.",
       "rejectedNoEmail": "Cerere respinsă (trimiterea emailului a eșuat — verificați RESEND_API_KEY)."
-    }
+    },
+    "uatNoAccounts": "Această instalare (UAT) nu are serviciul de conturi, așa că aici nu se pot primi, aproba sau respinge cereri de acces."
   },
   "auth": {
     "appSubtitle": "Persoane · Documente · Proprietăți",
@@ -3257,7 +3259,8 @@
       "successRedirect": "Te ducem la pagina principală…",
       "buttonSave": "Schimbă parola",
       "buttonSaving": "Se salvează…",
-      "buttonCancel": "Anulează"
+      "buttonCancel": "Anulează",
+      "uatNoAccounts": "Această instalare (UAT) nu are conturi, deci nici parole de schimbat."
     }
   },
   "stamp": {
@@ -3536,9 +3539,7 @@
         "minutes": "minute",
         "months": "luni"
       }
-    },
-    "sectionDeveloper": "Opțiuni pentru dezvoltator",
-    "showDevNotes": "Afișează note pentru dezvoltatori"
+    }
   },
   "navigation": {
     "breadcrumb": {

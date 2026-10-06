@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { AuthLink } from "@/components/auth-link";
 import { LocaleToggle } from "@/components/locale-toggle";
-import { DevOnly } from "@/components/dev-only";
 import { SignupForm } from "./signup-form";
 
 // FU-072 (Slice #37.07): the browser tab says the page's name in the user's
@@ -17,17 +16,12 @@ export default async function SignupPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-base p-4">
-      {/* Locale toggle — top-right corner.
-          Slice #23.10.dev: developer-only. Every user of this application is
-          Romanian, so an English flag on the sign-in page is a control that can
-          only do harm there. It stays on a developer build because checking the
-          English rendering of the auth screens needs a switch that works before
-          anyone is signed in. */}
-      <DevOnly>
-        <div className="absolute top-4 right-4">
-          <LocaleToggle />
-        </div>
-      </DevOnly>
+      {/* Locale toggle — top-right corner. Slice #38.22: shown everywhere (it was
+          developer-only from #23.10.dev): Adrian and Ciprian both check the English
+          wording, and it must work before anyone is signed in. */}
+      <div className="absolute top-4 right-4">
+        <LocaleToggle />
+      </div>
 
       <div className="w-full max-w-sm">
         {/* Wordmark */}

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { ChangePasswordForm } from "./change-password-form";
+import { isUatNoAuth } from "@/lib/auth/current-user";
 
 // FU-072 (Slice #37.07): the browser tab in the user's language.
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,7 +24,12 @@ export default async function ChangePasswordPage() {
       {/* Slice #37.35: the card is a 3-unit tile on the screen's unit row. */}
       <UnitRow units={[3]}>
         <div {...screenPanel("change-password", 3)} className="bg-surface rounded-xl border border-wire shadow-sm p-6">
-          <ChangePasswordForm />
+          {/* Slice #38.22: UAT has no accounts — said, instead of a form that cannot work. */}
+          {isUatNoAuth() ? (
+            <p className="text-sm text-fade" role="note" data-uat-no-accounts="password">{t("uatNoAccounts")}</p>
+          ) : (
+            <ChangePasswordForm />
+          )}
         </div>
       </UnitRow>
     </div>

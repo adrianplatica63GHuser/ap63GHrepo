@@ -1303,7 +1303,8 @@
     "quickSearch": "Quick search",
     "quickSearchPlaceholder": "Name, code…",
     "comingSoon": "Coming soon",
-    "mainNavigation": "Main navigation"
+    "mainNavigation": "Main navigation",
+    "uatNoAccounts": "An installation without accounts (UAT): there is no password to change and no signing out."
   },
   "welcome": {
     "title": "GA40",
@@ -3209,7 +3210,8 @@
       "approvedNoEmail": "Account created (email sending failed — check RESEND_API_KEY).",
       "rejectedWithEmail": "Request rejected and applicant notified.",
       "rejectedNoEmail": "Request rejected (email sending failed — check RESEND_API_KEY)."
-    }
+    },
+    "uatNoAccounts": "This installation (UAT) has no account service, so access requests cannot be received, approved or rejected here."
   },
   "auth": {
     "appSubtitle": "People · Documents · Properties",
@@ -3257,7 +3259,8 @@
       "successRedirect": "Taking you to the home page…",
       "buttonSave": "Change password",
       "buttonSaving": "Saving…",
-      "buttonCancel": "Cancel"
+      "buttonCancel": "Cancel",
+      "uatNoAccounts": "This installation (UAT) has no accounts, so there is no password to change."
     }
   },
   "stamp": {
@@ -3536,9 +3539,7 @@
         "minutes": "minutes",
         "months": "months"
       }
-    },
-    "sectionDeveloper": "Developer options",
-    "showDevNotes": "Show developer notes"
+    }
   },
   "navigation": {
     "breadcrumb": {

@@ -9,7 +9,6 @@ import { ChevronDown, LogOut, KeyRound, PanelLeftClose, PanelLeftOpen, Search } 
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
 import { LocaleToggle } from "@/components/locale-toggle";
-import { DevOnly } from "@/components/dev-only";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
@@ -464,7 +463,8 @@ export function SidebarNav() {
 
             Collapsed sidebars still hide them: two flags do not fit a 3rem
             rail, which is why the original carried the same !isCollapsed. */}
-        <DevOnly>{!isCollapsed && <LocaleToggle />}</DevOnly>
+        {/* Slice #38.22: the language toggle is shown on every build (it was developer-only). */}
+        {!isCollapsed && <LocaleToggle />}
         {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
         <IconButton
           icon={isCollapsed ? PanelLeftOpen : PanelLeftClose}
@@ -516,11 +516,7 @@ export function SidebarNav() {
           // „administration" key prefix it used to filter by no longer exists; the
           // server-side guard at src/app/admin/layout.tsx still refuses every /admin/
           // address to anyone else.
-          .map((section) =>
-            isUatMode && section.items.some((i) => i.key === "users")
-              ? { ...section, items: section.items.filter((i) => i.key !== "users") }
-              : section,
-          )
+          // Slice #38.22: „Utilizatori & Acces" stays on UAT too — its page says why it cannot work there.
           .map((section) => {
             // Flat-link sections are identified structurally (no items, has a
             // direct href) rather than by a hardcoded key list — "document"
@@ -558,8 +554,14 @@ export function SidebarNav() {
       {/* ── Recently viewed — Slice #20.17 ────────────────────────────────── */}
       <RecentlyViewedPanel isCollapsed={isCollapsed} />
 
-      {/* ── Bottom strip — change password + logout (hidden in UAT mode, */}
-      {/*    which has no real Supabase session to change or sign out of) */}
+      {/* ── UAT (Slice #38.22): no Supabase session to change or sign out of — said, not hidden ── */}
+      {isUatMode && !isCollapsed && (
+        <p className="border-t border-wire shrink-0 px-3 py-2 text-xs text-fade" role="note" data-uat-no-accounts="sidebar">
+          {t("uatNoAccounts")}
+        </p>
+      )}
+
+      {/* ── Bottom strip — change password + logout ── */}
       {!isUatMode && (
         // #37.42 (A003, A004): „Schimbă parola" and „Ieșire" are KeyRound and
         // LogOut, side by side when the sidebar is open and one above the other

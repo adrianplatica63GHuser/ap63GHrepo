@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { DevOnly } from "@/components/dev-only";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
@@ -226,71 +225,6 @@ function TimeFramesPanel() {
 }
 
 // ---------------------------------------------------------------------------
-// Developer options panel
-// ---------------------------------------------------------------------------
-
-/**
- * Slice #23.10.dev removed the "Use English language" checkbox that used to
- * open this panel, and with it DEV_ENGLISH_KEY ("dev-use-english"),
- * setLocaleCookie and useRouter — none of which had another consumer here.
- *
- * WHY IT WENT
- *   Slice #20.10 introduced it as the replacement for the sidebar's EN/RO
- *   flags. The flags are back now (dev-only, in sidebar-nav.tsx), so keeping
- *   the checkbox would leave two controls writing the same NEXT_LOCALE cookie
- *   by different means — and this one also wrote localStorage, so the two could
- *   disagree about what the current locale was.
- *
- *   Its state initialiser additionally called setLocaleCookie as a SIDE EFFECT,
- *   which meant merely opening this page re-asserted the locale from a
- *   localStorage key the user may have set months earlier. That is gone too.
- *
- * A STALE "dev-use-english" IN localStorage IS HARMLESS
- *   Nothing reads that key any more, so it is inert. next-intl reads the
- *   NEXT_LOCALE cookie, and the flags write the cookie — so anyone left in
- *   English by the old checkbox is one click from Romanian, and no migration
- *   or cleanup pass is needed. It is deliberately not removed on mount: that
- *   would be code whose only purpose is to delete a value nobody reads.
- */
-function DeveloperPanel() {
-  const t = useTranslations("settings");
-
-  const [showDevNotes, setShowDevNotes] = useState(false);
-
-  return (
-    <section {...screenPanel("developer", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-ink">{t("sectionDeveloper")}</h2>
-
-      <label className="flex items-center gap-3 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={showDevNotes}
-          onChange={(e) => setShowDevNotes(e.target.checked)}
-          className="h-4 w-4 rounded border-wire accent-blue-600"
-        />
-        <span className="text-sm text-ink">{t("showDevNotes")}</span>
-      </label>
-
-      {showDevNotes && (
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100 flex flex-col gap-3">
-          <p className="font-semibold">Multi-user model is not production-ready</p>
-          <p>
-            There are only two roles (superuser, user) with no granular permissions.
-            The Ciprian scenario is handled via a separate UAT environment rather than
-            a proper multi-user production model. If more users are coming (which the
-            user request flow implies), you need to define: can a &quot;user&quot; create
-            persons? edit properties? delete documents? approve other users? The current
-            system gives &quot;user&quot; role access to everything except presumably the
-            admin screens — but this is undocumented and likely not enforced at the route
-            level with any granularity.
-          </p>
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Root component
 // ---------------------------------------------------------------------------
 
@@ -305,26 +239,8 @@ export function SettingsView() {
       {/* ── Time Frames ── */}
       <TimeFramesPanel />
 
-      {/* ── Developer options ──
-          ⚠️ **THE ONE THING ON THIS PAGE SLICE #32.19 DID NOT REVEAL, and an
-          adversarial round is why.** That slice removed the developer gate from
-          the Settings ROUTE and from its sidebar entry, so Ciprian reaches this
-          screen — and `hasFullAccess()` lets the UAT box in by a clause of its own,
-          so `admin/layout.tsx` lets him through. The panel's own label and
-          checkbox are translated, so it reads as an ordinary Romanian setting;
-          ticking it renders a hard-coded ENGLISH engineering note about this
-          application's multi-user model not being production-ready. That is a
-          note for Adrian, and Adrian's build has the flag on.
-
-          It is not the item-17 exception the locale toggle is — it is the same
-          exception for the same reason: what Adrian asked to reveal are screen
-          items a business user has a use for, and internal notes about the
-          product's own shortcomings, in a language he does not read, are not
-          one. Time frames above it, which is what a person actually comes to
-          this screen to change, is revealed. */}
-      <DevOnly>
-        <DeveloperPanel />
-      </DevOnly>
+      {/* Slice #38.22: the developer-notes panel is gone from every build; its note is in
+          docs/claude/DEVELOPER-NOTES.md. */}
     </UnitRow>
   );
 }
