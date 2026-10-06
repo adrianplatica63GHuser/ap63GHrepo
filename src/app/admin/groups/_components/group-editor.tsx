@@ -9,10 +9,11 @@ import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
-import { UnitRow } from "@/components/screen/unit-row";
+import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { GROUP_SCREEN } from "@/lib/ui/screen-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
-const EDITOR_UNITS = 3;
+const EDITOR_UNITS = GROUP_SCREEN.units;
 
 // ── Types (mirror GroupDetail from src/lib/groups/queries.ts) ────────────────
 // Normalised shapes: memberId is the FK id for the group's target type.
@@ -84,6 +85,7 @@ export function GroupEditor({
   const qc = useQueryClient();
   // FU-219 (Slice #37.07): the description's caption is its label.
   const descriptionId = useId();
+  const identityTitleId = useId();
 
   const { data: detail } = useQuery<GroupDetail>({
     queryKey: ["group", groupId],
@@ -229,92 +231,104 @@ export function GroupEditor({
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <UnitRow units={[EDITOR_UNITS]}>
-      {/* Area A — read-only target + code, editable description, Add items */}
-      <section {...screenPanel("group", EDITOR_UNITS)} className="flex flex-col gap-4 rounded-md border border-card-rim bg-card p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-wrap items-start gap-4">
-          {/* Target (read-only) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-fade dark:text-zinc-400">
-              {t("fields.target")}
-            </span>
-            <div {...screenBox("groupTarget")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {t(`targets.${detail.targetType}`)}
+    // Slice #38.12: the three tiles on the record forms' packing and drag
+    // (`TileUnitRow`), under the group screen's own key; by default „Deja în
+    // grup" under „Identitatea grupului", „Membri disponibili pentru includere"
+    // at their right (`GROUP_SCREEN.flowUnits`).
+    <TileUnitRow screen={GROUP_SCREEN}>
+      {/* „Identitatea grupului" — read-only target + code, editable description, Add items */}
+      <section
+        aria-labelledby={identityTitleId}
+        {...screenPanel("group", EDITOR_UNITS)}
+        data-tile="identity"
+        className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <PanelTitle id={identityTitleId} title={t("panels.identity")} />
+        <div className="flex flex-col gap-4 p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            {/* Target (read-only) */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-fade dark:text-zinc-400">
+                {t("fields.target")}
+              </span>
+              <div {...screenBox("groupTarget")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                {t(`targets.${detail.targetType}`)}
+              </div>
+            </div>
+
+            {/* Code (read-only) */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-fade dark:text-zinc-400">
+                {t("fields.code")}
+              </span>
+              <div {...screenBox("groupCode")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+                {detail.code}
+              </div>
+            </div>
+
+            {/* Description (editable) */}
+            <div className="flex flex-col gap-1">
+              <label htmlFor={descriptionId} className="text-xs font-medium text-fade dark:text-zinc-400">
+                {t("fields.description")}
+                <span className="ml-0.5 text-red-500">*</span>
+              </label>
+              <textarea
+                {...screenBox("groupDescription")}
+                id={descriptionId}
+                rows={2}
+                maxLength={DESCRIPTION_MAX}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
+              />
+              <span className="text-xs text-fade dark:text-zinc-500">
+                {t("descriptionCount", {
+                  count: description.trim().length,
+                  max: DESCRIPTION_MAX,
+                })}
+              </span>
+            </div>
+
+            {/* Add items toggle */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-transparent select-none">.</span>
+              {/* #37.44 (A040): Plus while the picker is hidden, ChevronUp while it
+                  shows (as the META INFO toggles); the words the name and tooltip. */}
+              <IconButton
+                icon={showItems ? ChevronUp : Plus}
+                label={showItems ? t("hideItems") : t("addItems")}
+                variant="secondary"
+                size="md"
+                aria-expanded={showItems}
+                onClick={() => setShowItems((v) => !v)}
+              />
             </div>
           </div>
-
-          {/* Code (read-only) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-fade dark:text-zinc-400">
-              {t("fields.code")}
-            </span>
-            <div {...screenBox("groupCode")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
-              {detail.code}
-            </div>
-          </div>
-
-          {/* Description (editable) */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor={descriptionId} className="text-xs font-medium text-fade dark:text-zinc-400">
-              {t("fields.description")}
-              <span className="ml-0.5 text-red-500">*</span>
-            </label>
-            <textarea
-              {...screenBox("groupDescription")}
-              id={descriptionId}
-              rows={2}
-              maxLength={DESCRIPTION_MAX}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
-            />
-            <span className="text-xs text-fade dark:text-zinc-500">
-              {t("descriptionCount", {
-                count: description.trim().length,
-                max: DESCRIPTION_MAX,
-              })}
-            </span>
-          </div>
-
-          {/* Add items toggle */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-transparent select-none">.</span>
-            {/* #37.44 (A040): Plus while the picker is hidden, ChevronUp while it
-                shows (as the META INFO toggles); the words the name and tooltip. */}
-            <IconButton
-              icon={showItems ? ChevronUp : Plus}
-              label={showItems ? t("hideItems") : t("addItems")}
-              variant="secondary"
-              size="md"
-              aria-expanded={showItems}
-              onClick={() => setShowItems((v) => !v)}
-            />
-          </div>
-        </div>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {error}
-          </p>
-        )}
-
-        {/* Save */}
-        <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-          <IconButton
-            icon={Save}
-            label={t("saveGroup")}
-            busy={mutation.isPending}
-            busyLabel={t("saving")}
-            variant="primary"
-            size="lg"
-            onClick={() => mutation.mutate()}
-            disabled={!dirty || !descriptionValid || mutation.isPending}
-          />
-          <HelpHint hintKey="group-staged-members" />
-          {dirty && (
-            <span className="text-xs text-fade dark:text-zinc-500">
-              {t("unsavedChanges")}
-            </span>
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+              {error}
+            </p>
           )}
+
+          {/* Save */}
+          <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
+            <IconButton
+              icon={Save}
+              label={t("saveGroup")}
+              busy={mutation.isPending}
+              busyLabel={t("saving")}
+              variant="primary"
+              size="lg"
+              onClick={() => mutation.mutate()}
+              disabled={!dirty || !descriptionValid || mutation.isPending}
+            />
+            <HelpHint hintKey="group-staged-members" />
+            {dirty && (
+              <span className="text-xs text-fade dark:text-zinc-500">
+                {t("unsavedChanges")}
+              </span>
+            )}
+          </div>
         </div>
       </section>
 
@@ -400,7 +414,7 @@ export function GroupEditor({
         </>
       )}
 
-    </UnitRow>
+    </TileUnitRow>
   );
 }
 
@@ -431,12 +445,11 @@ function Panel({
     <section
       aria-labelledby={titleId}
       {...screenPanel(name, EDITOR_UNITS)}
+      // Slice #38.12: a tile of the screen's packed row, its place stored by this name.
+      data-tile={name}
       className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <div className="flex items-center justify-between border-b border-card-rim px-4 py-2 dark:border-zinc-800">
-        <span id={titleId} className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
-        <span className="text-xs text-fade dark:text-zinc-400">{rows.length}</span>
-      </div>
+      <PanelTitle id={titleId} title={title} count={rows.length} />
       {toolbar && <div className="border-b border-card-rim p-3 dark:border-zinc-800">{toolbar}</div>}
       <ul className="max-h-[360px] flex-1 divide-y divide-crease overflow-y-auto dark:divide-zinc-800">
         {rows.length === 0 ? (
@@ -447,6 +460,16 @@ function Panel({
       </ul>
       <div className="border-t border-card-rim p-3 dark:border-zinc-800">{footer}</div>
     </section>
+  );
+}
+
+/** A tile's title row: its name (what the region is named by) and, for a list, its count. */
+function PanelTitle({ id, title, count }: { id: string; title: React.ReactNode; count?: number }) {
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-card-rim px-4 py-2 dark:border-zinc-800">
+      <span id={id} className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</span>
+      {count !== undefined && <span className="text-xs text-fade dark:text-zinc-400">{count}</span>}
+    </div>
   );
 }
 

@@ -3357,8 +3357,9 @@
       "empty": "Niciun grup încă"
     },
     "panels": {
-      "available": "Disponibile",
-      "inGroup": "În grup",
+      "identity": "Identitatea grupului",
+      "available": "Membri disponibili pentru includere",
+      "inGroup": "Deja în grup",
       "availableEmpty": "Niciun element disponibil",
       "inGroupEmpty": "Niciun element în acest grup încă"
     },

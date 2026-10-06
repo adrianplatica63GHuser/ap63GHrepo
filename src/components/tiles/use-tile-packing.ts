@@ -55,6 +55,12 @@
  * tiles under it down (`settle`); one ticked or unticked lays the row out
  * afresh. While the column is wrapped under the left area there are no fixed
  * boxes and the row is the left area, so a place under the column falls back.
+ *
+ * THE FLOW HELD TO `flowUnits` (Slice #38.12). An administration screen with no
+ * checkbox bar (`TileUnitRow`, the group screen) opens in fixed columns — two
+ * tiles across, the third under the first — however wide the window: the flow
+ * keeps to at most `flowUnits` of the row's units, and the rest of the row is
+ * free space a tile may be dragged to. Without it, the flow takes the row.
  */
 import { useLayoutEffect, type RefObject } from "react";
 import { UNIT_GAP_REM, UNIT_REM } from "@/lib/ui/field-widths";
@@ -226,10 +232,16 @@ function ownWidth(el: HTMLElement): number {
  * area, a flex item that would otherwise shrink to nothing once its boxes are
  * out of the flow. `entity`: the tile choice's (`TileRegistry.entity`, per
  * document type), under which the arrangement is stored; none, nothing is.
+ * `flowUnits`: the most units the flow takes across (#38.12); none, the row's.
  */
 export function useTilePacking(
   ref: RefObject<HTMLElement | null>,
-  { fitWidest = false, entity, rightRef }: { fitWidest?: boolean; entity?: string; rightRef?: RefObject<HTMLElement | null> } = {},
+  {
+    fitWidest = false,
+    entity,
+    rightRef,
+    flowUnits,
+  }: { fitWidest?: boolean; entity?: string; rightRef?: RefObject<HTMLElement | null>; flowUnits?: number } = {},
 ): void {
   useLayoutEffect(() => {
     const container = ref.current;
@@ -241,6 +253,8 @@ export function useTilePacking(
     // The row's units (#37.79: the whole row while the right column stands beside the left area), and the left area's.
     let columns = 0;
     let flowColumns = 0;
+    // The units this row's own width holds (#38.12: `flowColumns` may be fewer).
+    let ownColumns = 0;
     let settleUntil = 0;
     let interacted = false;
     let frame = 0;
@@ -336,9 +350,10 @@ export function useTilePacking(
       const { unit, gap } = metrics();
       boxes = findBoxes(container);
       const fixed = fixedNow();
-      flowColumns = columnsIn(container.clientWidth, unit, gap);
+      ownColumns = columnsIn(container.clientWidth, unit, gap);
+      flowColumns = flowUnits ? Math.min(ownColumns, Math.max(1, flowUnits)) : ownColumns;
       const rowWidth = container.parentElement?.clientWidth ?? container.clientWidth;
-      columns = fixed.length ? Math.max(flowColumns, columnsIn(rowWidth, unit, gap)) : flowColumns;
+      columns = fixed.length ? Math.max(ownColumns, columnsIn(rowWidth, unit, gap)) : ownColumns;
       const h = heights();
       const items: PackBox[] = [
         ...fixed.map(({ id, units, height, fixed: at }) => ({ id, units, height, fixed: at })),
@@ -373,7 +388,7 @@ export function useTilePacking(
       frame = requestAnimationFrame(() => {
         if (drag?.active) return;
         const { unit, gap } = metrics();
-        if (columnsIn(container.clientWidth, unit, gap) !== flowColumns) return fresh();
+        if (columnsIn(container.clientWidth, unit, gap) !== ownColumns) return fresh();
         // The right column came beside the left area or went under it, or a tile of it came or went (#37.79).
         const fixed = fixedNow();
         if (fixedIds(fixed) !== fixedIds(placed.filter((p) => p.fixed))) return fresh();
@@ -612,5 +627,5 @@ export function useTilePacking(
       window.removeEventListener(TILE_POSITIONS_RESET, onReset);
       document.removeEventListener("visibilitychange", shown);
     };
-  }, [ref, fitWidest, entity, rightRef]);
+  }, [ref, fitWidest, entity, rightRef, flowUnits]);
 }
