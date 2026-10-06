@@ -2145,25 +2145,14 @@
     "empty": "Nu există etichete în sistem încă.",
     "cloud": {
       "title": "Nor de etichete",
-      "note": "Mărimea fiecărei etichete reflectă numărul de entități etichetate. Apăsați o etichetă pentru a o localiza în tabel.",
+      "note": "Mărimea fiecărei etichete reflectă numărul de entități etichetate. Faceți dublu clic pe o etichetă pentru a o selecta sau deselecta. Cu o etichetă selectată, „Redenumește etichetă” o redenumește chiar în nor; cu două sau mai multe, „Fuzionează etichete” le fuzionează, iar redenumirea este inactivă; fără nicio etichetă selectată, ambele sunt inactive.",
       "count": "{count} etichete distincte",
-      "usageHint": "Utilizată de {count} entități"
-    },
-    "list": {
-      "title": "Toate etichetele",
-      "colTag": "Etichetă",
-      "colUsage": "Utilizări",
-      "colActions": "Acțiuni",
-      "rename": "Redenumește"
+      "usageHint": "Utilizată de {count} entități",
+      "rename": "Redenumește etichetă",
+      "renameBox": "Noul nume pentru „{tag}”"
     },
     "rename": {
-      "title": "Redenumire etichetă",
-      "labelFrom": "Eticheta curentă",
-      "labelTo": "Noul nume",
       "hint": "Eticheta va fi convertită automat la litere mici. Dacă noua etichetă există deja, cele două se vor contopi.",
-      "save": "Salvează",
-      "saving": "Se salvează…",
-      "cancel": "Anulează",
       "errorSame": "Noul nume este identic cu cel curent.",
       "errorGeneric": "A apărut o eroare. Reîncercați."
     },

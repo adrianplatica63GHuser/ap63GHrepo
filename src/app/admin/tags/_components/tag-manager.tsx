@@ -1,21 +1,32 @@
 "use client";
 
+/**
+ * Administrare → Etichete: the tag cloud alone.                (Slice #38.14)
+ *
+ * Adrian: the page shows only „Nor de etichete". A DOUBLE CLICK selects or
+ * deselects a tag (a press from the keyboard — Enter or Space on the chip —
+ * does the same, since a keyboard has no double click); a selected chip is
+ * drawn pressed (`aria-pressed`, a ring). At the cloud's top right:
+ *   - „Redenumește etichetă" (the pencil before its words) — active with ONE
+ *     tag selected: that chip becomes a text box holding its name, renamed ON
+ *     THE SPOT — Enter, or leaving the box with a changed name, saves through
+ *     `doRename`; Escape cancels; a refusal shows under the cloud;
+ *   - „Fuzionează etichete" — active with TWO OR MORE: the merge dialog of
+ *     #37.46, opened with the selected tags ticked (`initialSources`).
+ * None selected, both are inactive. After a rename or a merge the selection
+ * clears. The table „Toate etichetele", its scroll-to and the rename dialog
+ * went with it (#38.14's salvage: the merge and `doRename`/`doMerge` stay).
+ */
 import { useState, useRef, useCallback } from "react";
-import { Merge, PencilLine, Save, X } from "lucide-react";
+import { Merge, PencilLine, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { tableUnits, screenPanel, type ColumnName } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
-/** The tags, at #37.16's column widths (Slice #37.22). */
-const COLUMNS: readonly ColumnName[] = ["tag", "count", "rowActions"];
-
-/** Slice #37.35: the cloud is 6 units (#37.22's two panels); the list the fewest that hold its columns, the tag taking the rest. */
+/** Slice #37.35: the cloud is 6 units (#37.22's two panels). */
 const CLOUD_UNITS = 6;
-const LIST_UNITS = tableUnits(COLUMNS);
-const LIST_FILL = { units: LIST_UNITS, column: "tag" } as const;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,129 +58,6 @@ function cloudColorClass(count: number): string {
   if (count >= 5)  return "border-slate-400 bg-slate-50 dark:border-slate-500 dark:bg-zinc-800 text-ink dark:text-zinc-200";
   if (count >= 2)  return "border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-ink dark:text-zinc-300";
   return "border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 text-fade dark:text-zinc-400";
-}
-
-// ---------------------------------------------------------------------------
-// Rename / Merge modal
-// ---------------------------------------------------------------------------
-
-function RenameModal({
-  initialFrom,
-  onClose,
-  onSave,
-}: {
-  initialFrom: string;
-  onClose:     () => void;
-  onSave:      (from: string, to: string) => Promise<void>;
-}) {
-  const t       = useTranslations("adminTags");
-  const [from]  = useState(initialFrom);
-  const [to,    setTo]    = useState(initialFrom);
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  async function handleSave() {
-    const toNorm = to.trim().toLowerCase();
-    if (!toNorm || toNorm === from) {
-      setError(t("rename.errorSame"));
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave(from, toNorm);
-      onClose();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("rename.errorGeneric"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <>
-      <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="rename-modal-title"
-        className="fixed inset-x-4 top-1/3 z-50 mx-auto max-w-sm rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <h2
-          id="rename-modal-title"
-          className="mb-4 text-lg font-semibold text-ink dark:text-zinc-100"
-        >
-          {t("rename.title")}
-        </h2>
-
-        <div className="mb-4 flex flex-col gap-3">
-          {/* From (read-only) */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-fade dark:text-zinc-400">
-              {t("rename.labelFrom")}
-            </label>
-            <div className="rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 px-2 py-1.5 text-sm font-mono text-ink dark:text-zinc-100">
-              {from}
-            </div>
-          </div>
-
-          {/* To (editable) */}
-          <div>
-            <label
-              htmlFor="rename-to"
-              className="mb-1 block text-xs font-medium text-fade dark:text-zinc-400"
-            >
-              {t("rename.labelTo")}
-            </label>
-            <input
-              id="rename-to"
-              ref={inputRef}
-              type="text"
-              value={to}
-              onChange={(e) => setTo(e.target.value.toLowerCase())}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSave(); } }}
-              disabled={saving}
-              autoFocus
-              className="w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
-            />
-            <p className="mt-1 text-xs text-fade dark:text-zinc-500">
-              {t("rename.hint")}
-            </p>
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <IconButton
-            icon={X}
-            label={t("rename.cancel")}
-            variant="secondary"
-            size="md"
-            onClick={onClose}
-            disabled={saving}
-          />
-          <IconButton
-            icon={Save}
-            label={t("rename.save")}
-            busy={saving}
-            busyLabel={t("rename.saving")}
-            variant="primary"
-            size="md"
-            onClick={handleSave}
-            disabled={saving || !to.trim() || to.trim().toLowerCase() === from}
-          />
-        </div>
-      </div>
-    </>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -341,10 +229,14 @@ function MergeModal({
 // Main component
 // ---------------------------------------------------------------------------
 
+/** What the cloud's two buttons may do with `n` tags selected (#38.14). */
+export function cloudActions(n: number): { rename: boolean; merge: boolean } {
+  return { rename: n === 1, merge: n >= 2 };
+}
+
 export function TagManager() {
   const t           = useTranslations("adminTags");
   const queryClient = useQueryClient();
-  const listRef     = useRef<HTMLTableSectionElement>(null);
 
   const { data, isLoading, isError } = useQuery<{ tags: TagRow[] }>({
     queryKey:             ["admin-tags"],
@@ -359,9 +251,19 @@ export function TagManager() {
 
   const tags = data?.tags ?? [];
 
-  const [renameTarget,  setRenameTarget]  = useState<string | null>(null);
-  const [showMerge,     setShowMerge]     = useState(false);
-  const [mergeInit,     setMergeInit]     = useState<string[]>([]);
+  // ── Selection and the rename on the spot (#38.14) ─────────────────────────
+  const [selected,    setSelected]    = useState<ReadonlySet<string>>(() => new Set());
+  const [editing,     setEditing]     = useState<string | null>(null);
+  const [draft,       setDraft]       = useState("");
+  const [renaming,    setRenaming]    = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [showMerge,   setShowMerge]   = useState(false);
+  // Escape unmounts the box: the blur that may follow is not „leaving it".
+  const cancelled = useRef(false);
+
+  // Only tags still in the cloud count (a refetch may have taken one away).
+  const chosen  = tags.filter((r) => selected.has(r.tag)).map((r) => r.tag);
+  const actions = cloudActions(chosen.length);
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -390,18 +292,60 @@ export function TagManager() {
     await queryClient.invalidateQueries({ queryKey: ["all-tags-autocomplete"] });
   }, [queryClient]);
 
-  // ── Scroll tag row into view from cloud click ─────────────────────────────
+  function toggle(tag: string) {
+    if (editing !== null) return;
+    setRenameError(null);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  }
 
-  function scrollToTag(tag: string) {
-    if (!listRef.current) return;
-    const row = listRef.current.querySelector(`[data-tag="${CSS.escape(tag)}"]`);
-    if (row) {
-      row.scrollIntoView({ behavior: "smooth", block: "center" });
-      (row as HTMLElement).classList.add("bg-yellow-50", "dark:bg-yellow-900/20");
-      setTimeout(() => {
-        (row as HTMLElement).classList.remove("bg-yellow-50", "dark:bg-yellow-900/20");
-      }, 1500);
+  function startRename() {
+    if (!actions.rename) return;
+    cancelled.current = false;
+    setRenameError(null);
+    setDraft(chosen[0]);
+    setEditing(chosen[0]);
+  }
+
+  function cancelRename() {
+    cancelled.current = true;
+    setEditing(null);
+    setRenameError(null);
+  }
+
+  async function saveRename(from: string) {
+    if (renaming) return;
+    const to = draft.trim().toLowerCase();
+    if (!to || to === from) {
+      setRenameError(t("rename.errorSame"));
+      return;
     }
+    setRenaming(true);
+    setRenameError(null);
+    try {
+      await doRename(from, to);
+      setEditing(null);
+      setSelected(new Set());
+    } catch (e) {
+      setRenameError(e instanceof Error ? e.message : t("rename.errorGeneric"));
+    } finally {
+      setRenaming(false);
+    }
+  }
+
+  /** Leaving the box saves a changed name; an unchanged one is left as it was. */
+  function leaveRename(from: string) {
+    if (cancelled.current) return;
+    if (draft.trim().toLowerCase() === from) {
+      setEditing(null);
+      setRenameError(null);
+      return;
+    }
+    void saveRename(from);
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -418,119 +362,112 @@ export function TagManager() {
 
   return (
     <>
-      <UnitRow units={[CLOUD_UNITS, LIST_UNITS]}>
+      <UnitRow units={[CLOUD_UNITS]}>
       {/* ── Tag Cloud ──────────────────────────────────────────────────────── */}
-      {/* Slice #37.22: the cloud is two panels wide and wraps downward; the
-          table under it is as wide as its columns. Slice #37.35: both are tiles
-          of the unit row, the cloud 6 units and the list as many as its columns. */}
+      {/* Slice #37.22: the cloud is two panels wide and wraps downward. Slice
+          #38.14: it is the page; its two buttons stand at its top right. */}
       <section {...screenPanel("tag-cloud", CLOUD_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
-            {t("cloud.title")}
-          </h2>
-          <span className="text-xs text-fade dark:text-zinc-500">
-            {t("cloud.count", { count: tags.length })}
-          </span>
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
+              {t("cloud.title")}
+            </h2>
+            <span className="text-xs text-fade dark:text-zinc-500">
+              {t("cloud.count", { count: tags.length })}
+            </span>
+          </div>
+          <div className="flex items-center gap-2" data-tag-actions>
+            {/* #38.14: PencilLine + „Redenumește etichetă" — one tag selected. */}
+            <IconButton
+              icon={PencilLine}
+              label={t("cloud.rename")}
+              showLabel
+              variant="secondary"
+              size="md"
+              onClick={startRename}
+              disabled={!actions.rename || editing !== null}
+            />
+            {/* #37.46 (A076): Merge + „Fuzionează etichete" — #38.14: two or more selected. */}
+            <IconButton
+              icon={Merge}
+              label={t("merge.open")}
+              showLabel
+              variant="secondary"
+              size="md"
+              onClick={() => setShowMerge(true)}
+              disabled={!actions.merge || editing !== null}
+            />
+          </div>
         </div>
         <p className="mb-4 text-sm text-fade dark:text-zinc-400">{t("cloud.note")}</p>
 
         <div className="flex flex-wrap gap-2">
-          {tags.map((row) => (
-            <button
-              key={row.tag}
-              type="button"
-              onClick={() => scrollToTag(row.tag)}
-              title={t("cloud.usageHint", { count: row.count })}
-              className={[
-                "rounded-full border px-3 py-1 transition-colors hover:opacity-80 active:scale-95",
-                cloudFontClass(row.count),
-                cloudColorClass(row.count),
-              ].join(" ")}
-            >
-              {row.tag}
-              <span className="ml-1.5 text-xs opacity-60">×{row.count}</span>
-            </button>
-          ))}
+          {tags.map((row) =>
+            editing === row.tag ? (
+              <input
+                key={row.tag}
+                type="text"
+                data-tag-chip={row.tag}
+                aria-label={t("cloud.renameBox", { tag: row.tag })}
+                title={t("rename.hint")}
+                value={draft}
+                autoFocus
+                disabled={renaming}
+                onChange={(e) => setDraft(e.target.value.toLowerCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); void saveRename(row.tag); }
+                  if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
+                }}
+                onBlur={() => leaveRename(row.tag)}
+                {...screenBox("metaTag")}
+                className={[
+                  "rounded-full border px-3 py-1 ring-2 ring-cta focus:outline-none",
+                  cloudFontClass(row.count),
+                  "border-slate-400 bg-white text-ink dark:bg-zinc-950 dark:text-zinc-100",
+                ].join(" ")}
+              />
+            ) : (
+              <button
+                key={row.tag}
+                type="button"
+                data-tag-chip={row.tag}
+                aria-pressed={selected.has(row.tag)}
+                // A mouse selects with a double click; Enter or Space (a click
+                // with no pointer, `detail` 0) selects from the keyboard.
+                onClick={(e) => { if (e.detail === 0) toggle(row.tag); }}
+                onDoubleClick={() => toggle(row.tag)}
+                title={t("cloud.usageHint", { count: row.count })}
+                className={[
+                  "select-none rounded-full border px-3 py-1 transition-colors hover:opacity-80",
+                  cloudFontClass(row.count),
+                  cloudColorClass(row.count),
+                  selected.has(row.tag) ? "ring-2 ring-cta ring-offset-1 dark:ring-offset-zinc-900" : "",
+                ].join(" ")}
+              >
+                {row.tag}
+                <span className="ml-1.5 text-xs opacity-60">×{row.count}</span>
+              </button>
+            ),
+          )}
         </div>
-      </section>
-
-      {/* ── Management table ───────────────────────────────────────────────── */}
-      <section {...screenPanel("tag-list", LIST_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
-            {t("list.title")}
-          </h2>
-          {/* #37.46 (A076): Merge + „Fuzionează etichete". */}
-          <IconButton
-            icon={Merge}
-            label={t("merge.open")}
-            showLabel
-            variant="secondary"
-            size="md"
-            onClick={() => { setMergeInit([]); setShowMerge(true); }}
-          />
-        </div>
-
-        <div className={`${TABLE_FRAME} rounded-lg border border-card-rim dark:border-zinc-800`}>
-          <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
-            <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
-            <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-fade dark:text-zinc-400">
-              <tr>
-                <th className="px-4 py-2 text-left font-semibold" {...columnHead("tag")}>{t("list.colTag")}</th>
-                <th className="px-4 py-2 text-right font-semibold" {...columnHead("count")}>{t("list.colUsage")}</th>
-                <th className="px-4 py-2 text-right font-semibold" {...columnHead("rowActions")}>{t("list.colActions")}</th>
-              </tr>
-            </thead>
-            <tbody
-              ref={listRef}
-              className="divide-y divide-card-rim dark:divide-zinc-800"
-            >
-              {tags.map((row) => (
-                <tr
-                  key={row.tag}
-                  data-tag={row.tag}
-                  className="transition-colors"
-                >
-                  <td className={`px-4 py-2 font-mono text-ink dark:text-zinc-100 ${WRAPS}`}>
-                    {row.tag}
-                  </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
-                    {row.count}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    {/* #37.46 (A077): PencilLine, icon-only; „Redenumește" is
-                        its name and tooltip. */}
-                    <IconButton
-                      icon={PencilLine}
-                      label={t("list.rename")}
-                      variant="secondary"
-                      size="xs"
-                      onClick={() => setRenameTarget(row.tag)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {renameError && (
+          <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400" data-tag-rename-error>
+            {renameError}
+          </p>
+        )}
       </section>
       </UnitRow>
 
-      {/* ── Modals ─────────────────────────────────────────────────────────── */}
-      {renameTarget !== null && (
-        <RenameModal
-          initialFrom={renameTarget}
-          onClose={() => setRenameTarget(null)}
-          onSave={doRename}
-        />
-      )}
-
+      {/* ── Merge ──────────────────────────────────────────────────────────── */}
       {showMerge && (
         <MergeModal
           tags={tags}
-          initialSources={mergeInit}
+          initialSources={chosen}
           onClose={() => setShowMerge(false)}
-          onSave={doMerge}
+          onSave={async (sources, target) => {
+            await doMerge(sources, target);
+            setSelected(new Set());
+          }}
         />
       )}
     </>

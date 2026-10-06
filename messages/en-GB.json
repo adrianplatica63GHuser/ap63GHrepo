@@ -2145,25 +2145,14 @@
     "empty": "No tags in the system yet.",
     "cloud": {
       "title": "Tag cloud",
-      "note": "Tag size reflects the number of tagged entities. Click a tag to locate it in the table below.",
+      "note": "Tag size reflects the number of tagged entities. Double-click a tag to select or deselect it. With one tag selected, \"Rename tag\" renames it right in the cloud; with two or more, \"Merge tags\" merges them and renaming is disabled; with none selected, both are disabled.",
       "count": "{count} distinct tags",
-      "usageHint": "Used by {count} entities"
-    },
-    "list": {
-      "title": "All tags",
-      "colTag": "Tag",
-      "colUsage": "Uses",
-      "colActions": "Actions",
-      "rename": "Rename"
+      "usageHint": "Used by {count} entities",
+      "rename": "Rename tag",
+      "renameBox": "New name for \"{tag}\""
     },
     "rename": {
-      "title": "Rename tag",
-      "labelFrom": "Current tag",
-      "labelTo": "New name",
       "hint": "Tag is always stored lowercase. If the new name already exists, the two will merge.",
-      "save": "Save",
-      "saving": "Saving…",
-      "cancel": "Cancel",
       "errorSame": "New name is the same as the current one.",
       "errorGeneric": "An error occurred. Please try again."
     },
