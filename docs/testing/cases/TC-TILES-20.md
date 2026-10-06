@@ -5,7 +5,7 @@
 | **Area** | tiles |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -75,3 +75,7 @@ boxes relative to the row.
 file above unchanged: the same in every step, to the pixel (the outline at 164,1128 in step 2).
 Deleted (204). Nothing in the file changed, so the case is confirmed, and
 `e2e/tiles/tiles-rise.spec.ts` translates it.
+
+**2026-10-06 — `automated` (Slice #38.16).** The test runner's full run 20261006T154851Z-356 on
+c8c9259 ran `e2e/tiles/tiles-rise.spec.ts` green with the other 97 specs (lint, tsc and forms-drift
+green; jest's one red was this case's missing route in `catalogue-map.ts`, added in the next commit).
