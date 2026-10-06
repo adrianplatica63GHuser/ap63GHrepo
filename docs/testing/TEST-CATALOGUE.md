@@ -122,7 +122,7 @@ fixed fixture where the existing one will do.
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-10-02 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
-| [TC-GRP-02](cases/TC-GRP-02.md) | O proprietate în trei grupuri: limita spusă în cuvinte, „+" inactiv | group | happy | — | `confirmed` | 2026-10-05 | `e2e/group/groups-limit.spec.ts` |
+| [TC-GRP-02](cases/TC-GRP-02.md) | O proprietate în trei grupuri: limita spusă în cuvinte, „+" inactiv | group | happy | — | `automated` | 2026-10-05 | `e2e/group/groups-limit.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-10-02 | `e2e/tag/tag-property.spec.ts` |
 | [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `automated` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
@@ -167,8 +167,8 @@ fixed fixture where the existing one will do.
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 
-**Eighty-two are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-05 (Slices
-#37.38, #37.40, #37.42–#37.47, #37.49–#37.85, #37.88, #37.89, #37.91–#37.95, #38.03–#38.05 and #38.07, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02, TC-DOC-13, TC-TILES-18, TC-PERS-07, TC-PROP-09, TC-PROP-10, TC-DOC-14, TC-LAYOUT-03, TC-DOC-15, TC-PROP-11, TC-PROP-12, TC-TILES-19 and TC-DOC-16 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
+**Eighty-three are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-05 (Slices
+#37.38, #37.40, #37.42–#37.47, #37.49–#37.85, #37.88, #37.89, #37.91–#37.95, #38.03–#38.05, #38.07 and #38.10, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02, TC-DOC-13, TC-TILES-18, TC-PERS-07, TC-PROP-09, TC-PROP-10, TC-DOC-14, TC-LAYOUT-03, TC-DOC-15, TC-PROP-11, TC-PROP-12, TC-TILES-19, TC-DOC-16 and TC-GRP-02 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
 

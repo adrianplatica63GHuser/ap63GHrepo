@@ -5,7 +5,7 @@
 | **Area** | group |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-05 |
 
 ## What this proves
@@ -60,3 +60,7 @@ group chosen by script (FU-290).
 groups (GRP-358–360), the file unchanged: every step the same, word for word; the picker offered
 „GRP-358 — TC-GRP-02 Grup A". All four deleted (204 × 4). Nothing in the file changed, so the case is
 confirmed, and `e2e/group/groups-limit.spec.ts` translates it.
+
+**2026-10-05 — `automated` (Slice #38.10).** The test runner's full run 20261005T235518Z-11121 on
+75e8a88 ran `e2e/group/groups-limit.spec.ts` green with the other 92 (lint, tsc, jest and
+forms-drift green too).
