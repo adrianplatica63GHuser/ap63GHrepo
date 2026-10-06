@@ -5,7 +5,7 @@
 | **Area** | tag |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-06 |
 
 ## What this proves
@@ -64,3 +64,8 @@ emulated at 1366 × 768, against `npm run dev` on 3000, by script (FU-290: click
 **2026-10-06 — run 2, `confirmed` (Slice #38.19).** The same pane and viewport, the page reloaded, the
 file above unchanged: every step as in run 1, to the pixel. Nothing in the file changed, so the case is
 confirmed, and `e2e/tag/tag-cloud-scroll.spec.ts` translates it.
+
+**2026-10-06 — `automated` (Slice #38.19).** The test runner's full run 20261006T175824Z-4470 on
+1c57167 ran `e2e/tag/tag-cloud-scroll.spec.ts` green with the other 98 specs (lint, tsc and forms-drift
+green; jest's one red was FU-286's timing guard, fixed in the next commit). The spec wheels until
+`…-200` is in sight rather than asserting it is the last chip — the runner's database is the local one.
