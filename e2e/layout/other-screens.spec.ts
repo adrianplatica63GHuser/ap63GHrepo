@@ -222,7 +222,8 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
         unitGrid: true,
       });
       await screen(page, "tags", "/admin/tags", heading, {
-        mask: (p) => [p.locator('[data-panel="tag-cloud"] > div').last(), p.locator("tbody")],
+        // #38.14: the cloud alone — its chips are everyone's tags.
+        mask: (p) => [p.locator("[data-tag-chip]")],
         unitGrid: true,
       });
       await screen(page, "help-content", "/admin/help-content", (p) => p.locator('[data-panel="help-nav"]'), {

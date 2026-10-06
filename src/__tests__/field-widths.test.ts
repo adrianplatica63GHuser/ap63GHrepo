@@ -1196,7 +1196,8 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
   });
 
   // The lists whose table IS the tile; Calcul's owners and parcels sit in a 7-unit tile beside its map and figures.
-  const LISTS = ["Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Istoricul calculelor"];
+  // #38.14: „Etichete" is the cloud alone — no table.
+  const LISTS = ["Utilizatori & Acces", "Grupuri", "Ștampile", "Istoricul calculelor"];
   it.each(ADMIN.filter(([w]) => LISTS.includes(w)))("%s: its table fills its tile", (what, src) => {
     expect(src).toMatch(/<table \{\.\.\.fixedTable\(/);
     for (const m of src.matchAll(/<table \{\.\.\.fixedTable\(([^)]*)\)\}/g)) {

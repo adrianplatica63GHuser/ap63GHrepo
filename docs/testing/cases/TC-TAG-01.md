@@ -37,15 +37,19 @@ it.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Admin-Configurare" → „Etichete" and notes „N etichete distincte" | The heading „Etichete", the cloud „Nor de etichete" and the table „Toate etichetele" (Etichetă · Utilizări · Acțiuni) |
+| 1 | Opens „Admin-Configurare" → „Etichete" and notes „N etichete distincte" | The heading „Etichete" and the cloud „Nor de etichete" — the page's only tile since #38.14 — with „Redenumește etichetă" and „Fuzionează etichete" at its top right, both inactive |
 | 2 | Opens `TC-PROP-01 Teren de test`, tiles **„Clasificări"** and **„Conexiuni"** | „Clasificări" (Importanță, Relevanță, Proveniență), and „Conexiuni": „Etichete / Cuvinte cheie" with an input „Introduceți o etichetă…", „Adaugă", and „Nicio etichetă adăugată încă" |
 | 3 | Types `TC-TAG-01` and presses „Adaugă" | A chip **`tc-tag-01`** with „×". It is saved at once — the „Salvează" under „Clasificări" is not needed, and the chip is still there after a reload |
-| 4 | Returns to „Etichete" | „N+1 etichete distincte", `tc-tag-01` in the cloud as „tc-tag-01 ×1", and in the table with „Utilizări" 1 and „Redenumește" |
+| 4 | Returns to „Etichete" | „N+1 etichete distincte", `tc-tag-01` in the cloud as „tc-tag-01 ×1" |
 | 5 | On Căutare globală, types `tc-tag-01` into „Etichetă" and presses „Caută" | „1 rezultat": the property, with no system ID |
 | 6 | Back on the property's „Conexiuni", presses „×" on the chip | „Nicio etichetă adăugată încă" |
 | 7 | Returns to „Etichete" | „N etichete distincte" again, and `tc-tag-01` nowhere on the page |
 
 ## Notes from the runs
+
+**2026-10-06 — the cloud alone (Slice #38.14).** „Toate etichetele" — the table, its „Redenumește" per
+row — is gone; renaming and merging start from the cloud (TC-TAG-02). Steps 1 and 4 read the cloud
+only; the spec follows. Nothing else in the steps changed.
 
 **2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
 result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.

@@ -66,10 +66,11 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       await expect(page).toHaveURL(/\/admin\/tags$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Etichete", exact: true })).toBeVisible({ timeout: 30_000 });
       const before = await readDistinct(page);
+      // #38.14: the cloud is the page; its two buttons, nothing selected, both inactive.
       await expect(page.getByText("Nor de etichete").first()).toBeVisible();
-      await expect(page.getByText("Toate etichetele").first()).toBeVisible();
-      for (const col of ["Etichetă", "Utilizări", "Acțiuni"]) {
-        await expect(page.getByRole("columnheader", { name: col })).toBeVisible();
+      await expect(page.getByText("Toate etichetele", { exact: true })).toHaveCount(0);
+      for (const name of ["Redenumește etichetă", "Fuzionează etichete"]) {
+        await expect(page.getByRole("button", { name, exact: true })).toBeDisabled();
       }
 
       // Step 2 — the property's „Clasificări" and „Conexiuni" (META INFO's
@@ -91,14 +92,10 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       await openMetaInfo(page, propertyId); // „still there after a reload"
       await expect(page.getByRole("button", { name: `Elimină eticheta ${STORED}` })).toBeVisible({ timeout: 15_000 });
 
-      // Step 4 — „Etichete": N+1, in the cloud as „×1", in the table with 1 and „Redenumește".
+      // Step 4 — „Etichete": N+1, in the cloud as „×1" (#38.14: the cloud alone).
       await page.goto("/admin/tags");
       expect(await readDistinct(page)).toBe(before + 1);
       await expect(page.getByRole("button").filter({ hasText: new RegExp(`^${STORED}\\s*×1$`) })).toBeVisible();
-      const tagRow = page.getByRole("row").filter({ hasText: STORED });
-      await expect(tagRow).toHaveCount(1);
-      await expect(tagRow.getByRole("cell", { name: "1", exact: true })).toBeVisible();
-      await expect(tagRow.getByRole("button", { name: "Redenumește" })).toBeVisible();
 
       // Step 5 — Căutare globală, „Etichetă": „1 rezultat", the property.
       await page.goto("/admin/global-search");

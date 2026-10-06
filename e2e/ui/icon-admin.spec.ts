@@ -14,8 +14,8 @@
  *     this case's.
  *   - The hand run's pane was hidden (dispatched hover, `click()`); here it is
  *     Playwright's real mouse.
- *   - Slice #37.46's pictures, not steps of the case: „Etichete" with the two
- *     rows (every other tag's row and the cloud painted over), the stamp's screen after „Aplică ștampila (1)", „Tipuri de
+ *   - Slice #37.46's pictures, not steps of the case: „Etichete" with `-a`
+ *     chosen (#38.14; every other tag's chip painted over), the stamp's screen after „Aplică ștampila (1)", „Tipuri de
  *     Document"'s modal, „Calcul" and „Distilare Tipizate", at 1366 and 1920
  *     px, into `playwright-report/icon-admin/`. The sidebar's „Recente" list is
  *     painted over.
@@ -79,54 +79,50 @@ test.describe("TC-ICON-05 — redenumită, fuzionată, ștampilată, cu pictogra
       for (const s of ["a", "b"]) await postOk(page.request, `/api/metadata/${principalObjectId}/tags`, { tag: TAG(s) });
       await postOk(page.request, "/api/stamps", { shortDescription: STAMP });
 
-      const row = (tag: string) => page.locator("tbody tr").filter({ has: page.getByRole("cell", { name: tag, exact: true }) });
+      // #38.14: the cloud alone — a chip is chosen by a double click.
+      const chip = (tag: string) => page.locator(`[data-tag-chip="${tag}"]`);
+      const rename = page.getByRole("button", { name: "Redenumește etichetă", exact: true });
+      const openMerge = page.getByRole("button", { name: "Fuzionează etichete", exact: true });
 
-      // Step 1 — „Etichete": the two rows, each used once, „Redenumește" a pencil-line with no
-      // words; „Fuzionează etichete" the merge icon and the words.
+      // Step 1 — „Etichete": the two chips, each used once; „Redenumește etichetă" the pencil-line
+      // and the words, „Fuzionează etichete" the merge icon and the words, both inactive.
       await page.goto("/admin/tags");
       await expect(page.getByRole("heading", { name: "Etichete", exact: true })).toBeVisible({ timeout: 30_000 });
-      for (const s of ["a", "b"]) {
-        await expect(row(TAG(s))).toHaveCount(1, { timeout: 30_000 });
-        await expect(row(TAG(s)).getByRole("cell", { name: "1", exact: true })).toBeVisible();
-        const rename = row(TAG(s)).getByRole("button", { name: "Redenumește", exact: true });
-        expect(await iconOf(rename)).toBe("lucide-pencil-line");
-        await expect(rename).toHaveText("");
-      }
-      const openMerge = page.getByRole("button", { name: "Fuzionează etichete", exact: true });
+      for (const s of ["a", "b"]) await expect(chip(TAG(s))).toHaveText(`${TAG(s)}×1`, { timeout: 30_000 });
+      await expect(rename).toHaveText("Redenumește etichetă");
+      expect(await iconOf(rename)).toBe("lucide-pencil-line");
       await expect(openMerge).toHaveText("Fuzionează etichete");
       expect(await iconOf(openMerge)).toBe("lucide-merge");
+      await expect(rename).toBeDisabled();
+      await expect(openMerge).toBeDisabled();
 
-      // Step 2 — the mouse over `-a`'s „Redenumește": the tooltip.
-      const renameA = row(TAG("a")).getByRole("button", { name: "Redenumește", exact: true });
-      await renameA.hover();
-      await expect(page.getByRole("tooltip")).toHaveText("Redenumește");
-      // Every other tag is somebody's data: their rows and the cloud are painted over.
-      await photograph(
-        page,
-        "tag-manager",
-        async () => {
-          await row(TAG("a")).scrollIntoViewIfNeeded();
-          await renameA.hover();
-          await expect(page.getByRole("tooltip")).toHaveText("Redenumește");
-        },
-        [page.locator("tbody tr").filter({ hasNotText: MARK.toLowerCase() }), page.getByRole("button").filter({ hasText: /×\d+$/ })],
-      );
+      // Step 2 — `-a` double-clicked: pressed; „Redenumește etichetă" active.
+      await chip(TAG("a")).dblclick();
+      await expect(chip(TAG("a"))).toHaveAttribute("aria-pressed", "true");
+      await expect(rename).toBeEnabled();
+      await expect(openMerge).toBeDisabled();
+      // Every other tag is somebody's data: the cloud's other chips are painted over.
+      await photograph(page, "tag-manager", () => moveAway(page), [page.locator("[data-tag-chip]").filter({ hasNotText: MARK.toLowerCase() })]);
 
-      // Step 3 — renamed to `-c` with the floppy disk: rows `-b` and `-c`.
-      await renameA.click();
-      const renameDialog = page.getByRole("dialog");
-      await renameDialog.getByLabel("Noul nume", { exact: true }).fill(TAG("c"));
-      await renameDialog.getByRole("button", { name: "Salvează", exact: true }).click();
-      await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 15_000 });
-      await expect(row(TAG("c"))).toHaveCount(1, { timeout: 15_000 });
-      await expect(row(TAG("a"))).toHaveCount(0);
-      await expect(row(TAG("b"))).toHaveCount(1);
+      // Step 3 — renamed in the chip to `-c`, Enter: chips `-b` and `-c`.
+      await rename.click();
+      const box = page.getByRole("textbox", { name: `Noul nume pentru „${TAG("a")}”`, exact: true });
+      await box.fill(TAG("c"));
+      await box.press("Enter");
+      await expect(chip(TAG("c"))).toHaveText(`${TAG("c")}×1`, { timeout: 15_000 });
+      await expect(chip(TAG("a"))).toHaveCount(0);
+      await expect(chip(TAG("b"))).toHaveCount(1);
+      await expect(page.locator('[data-tag-chip][aria-pressed="true"]')).toHaveCount(0);
 
-      // Step 4 — „Fuzionează etichete", `-b` and `-c` ticked, `-c` kept: the sentence, „Fuzionează" active.
+      // Step 4 — `-b` and `-c` double-clicked, „Fuzionează etichete": both ticked, `-c` kept: the sentence, „Fuzionează" active.
+      await chip(TAG("b")).dblclick();
+      await chip(TAG("c")).dblclick();
+      await expect(openMerge).toBeEnabled();
+      await expect(rename).toBeDisabled();
       await openMerge.click();
       const merge = page.getByRole("dialog");
       for (const s of ["b", "c"]) {
-        await merge.locator("label").filter({ hasText: TAG(s) }).getByRole("checkbox").first().check();
+        await expect(merge.locator("label").filter({ hasText: TAG(s) }).getByRole("checkbox").first()).toBeChecked();
       }
       await merge.locator(`input[type="radio"][value="${TAG("c")}"]`).check();
       await expect(merge.getByText(`Etichetele „${TAG("b")}” vor deveni „${TAG("c")}”.`)).toBeVisible();
@@ -135,12 +131,11 @@ test.describe("TC-ICON-05 — redenumită, fuzionată, ștampilată, cu pictogra
       expect(await iconOf(doMerge)).toBe("lucide-merge");
       await expect(doMerge).toBeEnabled();
 
-      // Step 5 — „Fuzionează": one row, `-c`, used once.
+      // Step 5 — „Fuzionează": one chip, `-c`, used once.
       await doMerge.click();
       await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 15_000 });
-      await expect(row(TAG("b"))).toHaveCount(0, { timeout: 15_000 });
-      await expect(row(TAG("c"))).toHaveCount(1);
-      await expect(row(TAG("c")).getByRole("cell", { name: "1", exact: true })).toBeVisible();
+      await expect(chip(TAG("b"))).toHaveCount(0, { timeout: 15_000 });
+      await expect(chip(TAG("c"))).toHaveText(`${TAG("c")}×1`);
 
       // Step 6 — „Ștampile": the plus, the stamp's row at 0, „Aplică" the stamp icon and the word.
       await page.goto("/admin/stamps");

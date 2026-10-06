@@ -126,6 +126,7 @@ fixed fixture where the existing one will do.
 | [TC-GRP-03](cases/TC-GRP-03.md) | „Grupuri" arată câți membri are grupul, nu locul înregistrării în el | group | happy | — | `automated` | 2026-10-05 | `e2e/group/group-member-count.spec.ts` |
 | [TC-GRP-04](cases/TC-GRP-04.md) | Ecranul unui grup: trei fișe cu nume, „Deja în grup" sub identitate, trase ca pe formulare | group | happy | — | `automated` | 2026-10-05 | `e2e/group/group-screen-tiles.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-10-02 | `e2e/tag/tag-property.spec.ts` |
+| [TC-TAG-02](cases/TC-TAG-02.md) | „Etichete": o etichetă aleasă în nor redenumită pe loc, două fuzionate | tag | happy | — | `confirmed` | 2026-10-06 | `e2e/tag/tag-cloud.spec.ts` |
 | [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `automated` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
 | [TC-STAMP-02](cases/TC-STAMP-02.md) | Aplicarea unei ștampile: patru fișe cu nume în două coloane, trase ca pe formulare | stamp | happy | — | `automated` | 2026-10-05 | `e2e/stamp/stamp-screen-tiles.spec.ts` |
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
