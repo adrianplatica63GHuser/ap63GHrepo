@@ -47,8 +47,8 @@ delete `Ion TC-STAMP-01` if it is still there.
 | 2 | Opens „Admin-Configurare" → „Ștampile" and notes „N ștampile" | The heading „Ștampile", the panel „Ce este o Ștampilă?", „+ Creare ștampilă", and a table Ștampilă · Elemente; each row reads `STMP-…— <descriere>`, its note, its count, „Aplică" and „Șterge" |
 | 3 | Presses „+ Creare ștampilă" | An inline form „Creare ștampilă": „Descriere scurtă*" with a counter „0/200 caractere", „Note", „Cod — Atribuit automat la salvare", „Salvează" / „Anulează" |
 | 4 | Types `TC-STAMP-01 Ștampilă de test` into „Descriere scurtă" (the counter reads „28/200 caractere"), `Creată de cazul de test TC-STAMP-01; se șterge la final.` into „Note", and presses „Salvează" | **Stays on the list**: a new first row `STMP-…— TC-STAMP-01 Ștampilă de test`, count 0; „N+1 ștampile" |
-| 5 | Presses „Aplică" on that row | „Aplică ștampila: STMP-… - TC-STAMP-01 Ștampilă de test" at `/admin/stamps/[id]`: „Cod", „Note", a select **„Tip element"** (Persoană fizică · Persoană juridică · Proprietate · Document), the note „Sunt afișate doar elementele de tipul selectat…", and two panels — „Disponibile", with „Caută…", „Aplică ștampila (0)", and „Ștampilate", „Niciun element ștampilat încă", „Elimină ștampila (0)" — and „Salvează ștampilele" |
-| 6 | With „Persoană fizică", ticks `Ion TC-STAMP-01` in „Disponibile" and presses „Aplică ștampila (1)" | It moves to „Ștampilate", and „Modificări nesalvate" appears — **nothing is written yet** |
+| 5 | Presses „Aplică" on that row | „Aplică ștampila: STMP-… - TC-STAMP-01 Ștampilă de test" at `/admin/stamps/[id]`: „Cod" and „Note" in the tile „Descrierea ștampilei"; the tile **„Tip element"**, its select (Persoană fizică · Persoană juridică · Proprietate · Document) named by that title, and the note „Sunt afișate doar elementele de tipul selectat…"; and two list tiles — „Elemente disponibile pentru ștampilare", with „Caută…", „Aplică ștampila (0)", and „Elemente deja ștampilate", „Niciun element ștampilat încă", „Elimină ștampila (0)" — and „Salvează ștampilele" |
+| 6 | With „Persoană fizică", ticks `Ion TC-STAMP-01` in „Elemente disponibile pentru ștampilare" and presses „Aplică ștampila (1)" | It moves to „Elemente deja ștampilate", and „Modificări nesalvate" appears — **nothing is written yet** |
 | 7 | Presses „Salvează ștampilele" | „Modificări nesalvate" goes away |
 | 8 | Returns to „Ștampile" | The row's „Elemente" reads **1** |
 | 9 | Opens `Ion TC-STAMP-01`, tile **„Conexiuni"** | „Ștampile": „+ Aplică ștampilă" and a chip `STMP-… TC-STAMP-01 Ștampilă de test` with „×" |
@@ -63,6 +63,11 @@ The count is N again, and `Ion TC-STAMP-01`'s „Ștampile" reads „Nicio ștam
 „Șterge" and **„Da"** on the person.
 
 ## Notes from the runs
+
+**2026-10-05 — the tiles' names (Slice #38.13).** The stamp screen's tiles are named „Descrierea
+ștampilei", „Tip element" (its select named by the title, no label over it), „Elemente disponibile
+pentru ștampilare" and „Elemente deja ștampilate" (they were an untitled area, a label, „Disponibile" and
+„Ștampilate"); steps 5–6 and the spec follow. Nothing else in the steps changed.
 
 **2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 

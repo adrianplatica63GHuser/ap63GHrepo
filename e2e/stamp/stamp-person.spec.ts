@@ -18,10 +18,12 @@
  *     TC-E2E- marker: `Ion TC-E2E-STAMP-01`, `TC-E2E-STAMP-01 Ștampilă de test`
  *     — 32 characters, so step 4's counter reads „32/200 caractere" where the
  *     case's reads „28/200".
- *   - The create form's „Descriere scurtă" and „Note", and the stamp screen's
- *     „Tip element", have labels that are not tied to their fields, so they
- *     are found by position on the page. Not changed here.
- *   - „Disponibile" is narrowed with its „Caută…" to this spec's person, so the
+ *   - The create form's „Descriere scurtă" and „Note" have labels that are
+ *     not tied to their fields, so they are found by position on the page.
+ *     Not changed here. (The stamp screen's „Tip element" names its select
+ *     since #38.13, and is found by that name.)
+ *   - „Elemente disponibile pentru ștampilare" („Disponibile" before #38.13) is
+ *     narrowed with its „Caută…" to this spec's person, so the
  *     tick lands on the right row on a database with many people.
  *   - Slice #37.17: a Natural Person has no tab row; the person's „META INFO" (since #37.63 „Conexiuni")
  *     is a tile, ticked with `showTile` (e2e/helpers/tiles.ts) where the hand
@@ -103,12 +105,15 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await expect(page.getByRole("heading", { name: new RegExp(`^Aplică ștampila: STMP-[A-Z]{3} - ${DESCRIPTION}$`) }))
         .toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Cod", { exact: true }).first()).toBeVisible();
+      // #38.13: the tiles' names; „Tip element" is the tile's title, and names its select.
+      await expect(page.getByRole("region", { name: "Descrierea ștampilei", exact: true })).toBeVisible();
       await expect(page.getByText("Tip element", { exact: true })).toBeVisible();
-      const targetType = page.locator("main select");
+      const targetType = page.getByRole("combobox", { name: "Tip element", exact: true });
       await expect(targetType.locator("option")).toHaveText(["Persoană fizică", "Persoană juridică", "Proprietate", "Document"]);
       await expect(targetType.locator("option:checked")).toHaveText("Persoană fizică");
       await expect(page.getByText("Sunt afișate doar elementele de tipul selectat", { exact: false })).toBeVisible();
-      await expect(page.getByText("Disponibile", { exact: true })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Elemente disponibile pentru ștampilare", exact: true })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Elemente deja ștampilate", exact: true })).toBeVisible();
       await expect(page.getByText("Niciun element ștampilat încă")).toBeVisible();
       await expect(page.getByRole("button", { name: "Aplică ștampila (0)" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Elimină ștampila (0)" })).toBeVisible();
