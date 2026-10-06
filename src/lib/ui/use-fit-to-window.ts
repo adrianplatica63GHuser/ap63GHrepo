@@ -83,7 +83,11 @@ export function useFitToWindow(ref: RefObject<HTMLElement | null>, deps: Depende
     // A ResizeObserver reports once when it starts observing, then on every change.
     const sizes = new ResizeObserver(measure);
     sizes.observe(scroller);
-    if (el.parentElement) sizes.observe(el.parentElement); // the header above may wrap
+    // Every ancestor up to the scroller: anything above the box that grows — a header that wraps,
+    // a line of text whose font arrives late — grows one of them, and the box is fitted again.
+    // (Measured in runner 20261006T171148Z-1308: observing the section alone left the page 9 px
+    // to scroll when something above it grew after the first measure.)
+    for (let p = el.parentElement; p && p !== scroller; p = p.parentElement) sizes.observe(p);
     window.addEventListener("resize", measure);
     return () => {
       sizes.disconnect();

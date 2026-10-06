@@ -49,7 +49,7 @@ describe("the chips' box is the scroller; the header and its two buttons stand o
   });
 
   it("the chip being renamed is scrolled into the box's view", () => {
-    expect(code).toContain('ref={(el) => el?.scrollIntoView({ block: "nearest" })}');
+    expect(code).toContain('ref={(el) => el?.scrollIntoView?.({ block: "nearest" })}');
   });
 });
 

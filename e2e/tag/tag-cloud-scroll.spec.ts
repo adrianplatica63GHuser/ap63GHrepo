@@ -86,7 +86,8 @@ test.describe("TC-TAG-03 — doar norul de etichete se derulează", () => {
       for (const l of [title, rename, merge, note]) expect(await inSight(page, l)).toBe(true);
       await expect.poll(() => box.evaluate((b) => b.scrollHeight > b.clientHeight + 1), { timeout: 10_000 }).toBe(true);
       expect(await inSight(page, box)).toBe(true);
-      expect(await pageScroll(page)).toEqual({ top: 0, more: 0 });
+      // Polled: the box is fitted again whenever anything above it settles.
+      await expect.poll(() => pageScroll(page), { timeout: 10_000 }).toEqual({ top: 0, more: 0 });
       await photograph(page, "top", false);
 
       // Step 2 — the wheel over the chips to the end: the last chip in sight; the header still; the page unscrolled.

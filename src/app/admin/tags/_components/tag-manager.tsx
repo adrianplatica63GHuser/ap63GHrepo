@@ -429,7 +429,7 @@ export function TagManager() {
                 value={draft}
                 autoFocus
                 // #38.19: the chip being renamed is brought into the box's view.
-                ref={(el) => el?.scrollIntoView({ block: "nearest" })}
+                ref={(el) => el?.scrollIntoView?.({ block: "nearest" })}
                 disabled={renaming}
                 onChange={(e) => setDraft(e.target.value.toLowerCase())}
                 onKeyDown={(e) => {
