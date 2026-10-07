@@ -458,8 +458,9 @@ import or AI cases, which wait on the cost Slice #36.07 measured; the second wav
 claimed none of them. It added one folder of its own, `08.tc.coord.file` — TC-PROP-03's
 coordinate file, copied out of `01.smoke.one.property` under a `TC-` name because the
 screen writes the file name into „Poreclă" — and that one is owned. The third wave (#36.21)
-added `09.tc.calc.file`, TC-CALC-01's five-section division file built on the same four corners,
-and that one is owned too. Slice #36.22 claimed `04.mixed` and `05.big` through marked copies,
+added `09.tc.calc.file`, TC-CALC-01's division file built on the same four corners,
+and that one is owned too (rewritten by #38.26 in the three-section format, with the three files
+the rules reject beside it). Slice #36.22 claimed `04.mixed` and `05.big` through marked copies,
 `11.mixed.tc.marker` (TC-IMP-04) and `10.big.tc.marker` (TC-IMP-03) — `05.big` holds five
 property folders, not the three this table used to say — and those copies are owned.
 
