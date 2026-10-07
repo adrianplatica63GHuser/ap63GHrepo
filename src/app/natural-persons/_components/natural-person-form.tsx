@@ -77,6 +77,17 @@ import { forgetRecentlyViewed } from "@/components/providers/navigation-history-
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
 import { ageFromDob } from "@/lib/persons/person-age";
+import { ParentsFold } from "@/components/persons/parents-fold";
+import { ParentsResolution } from "@/components/persons/parents-resolution";
+import {
+  blankDrafts,
+  followHolderSurname,
+  incompleteParents,
+  parentOutcomeSentences,
+  parentsToCreate,
+  type ParentDraft,
+  type ParentOutcome,
+} from "@/lib/import/id-card-parents";
 
 type IdCardLink = { id: string; code: string; title: string | null } | null;
 
@@ -182,6 +193,20 @@ export function NaturalPersonForm({
   });
 
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * Slice #38.29 — on „Adaugă nou", with a „Carte de identitate", the holder's
+   * father and mother: offered unticked, created or linked after the save, and
+   * nothing about them stored on the holder's own record.
+   */
+  const [parentDrafts, setParentDrafts] = useState<ParentDraft[]>(() => blankDrafts(""));
+  const [parentsStage, setParentsStage] = useState<{ holderId: string; parents: ParentDraft[] } | null>(null);
+  /** A parent that did not make it, said before leaving the screen. */
+  const [parentsReport, setParentsReport] = useState<ParentOutcome[] | null>(null);
+  const createdIdRef = useRef<string | null>(null);
+  const tParents = useTranslations("parentsFromIdCard") as unknown as (
+    key: string,
+    values?: Record<string, string>,
+  ) => string;
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
@@ -201,6 +226,9 @@ export function NaturalPersonForm({
   // form.watch() is intentionally not memoizable; this is the documented usage.
   // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
+  // Slice #38.29 — the parents' fold: a new person whose ID document is a „Carte de identitate".
+  const offerParents = mode === "create" && watchedValues.idDocumentType === "ID_CARD";
+  const shownParents = followHolderSurname(parentDrafts, watchedValues.lastName ?? "");
 
   // Derived display values (recalculate on every render since watchedValues is live).
   const calculatedAge = calculateAge(watchedValues.dateOfBirth);
@@ -463,6 +491,11 @@ export function NaturalPersonForm({
         t,
       );
       await recordSync.remember(saved);
+      // Slice #38.29 — the new holder's id, for its parents.
+      if (mode === "create") {
+        const created = (await saved.clone().json().catch(() => null)) as { person?: { id?: string } } | null;
+        createdIdRef.current = created?.person?.id ?? null;
+      }
       await queryClient.invalidateQueries({ queryKey: ["people"] });
       // The unified /persons list (Slice #15.09) caches under ["persons"];
       // invalidate it too so a created/edited/deleted person shows without a
@@ -512,10 +545,21 @@ export function NaturalPersonForm({
   };
 
   const onSubmit = async (values: FormValues) => {
+    // Slice #38.29 — a ticked parent without both names stops the save, and says why.
+    const parentsShown = offerParents ? followHolderSurname(parentDrafts, values.lastName ?? "") : [];
+    if (incompleteParents(parentsShown).length > 0) {
+      setSubmitError(tParents("missingName"));
+      return;
+    }
     const ok = await doSave(values);
     if (!ok) return;
 
     if (mode === "create") {
+      const ticked = parentsToCreate(parentsShown);
+      if (ticked.length > 0 && createdIdRef.current) {
+        setParentsStage({ holderId: createdIdRef.current, parents: ticked });
+        return;
+      }
       router.push("/natural-persons");
       router.refresh();
       return;
@@ -924,6 +968,14 @@ export function NaturalPersonForm({
             fillRem={NP_PANEL_INNER_REM.idCard}
             mono
           />
+          {offerParents && (
+            <ParentsFold
+              drafts={shownParents}
+              onChange={setParentDrafts}
+              hint={tParents("foldHintManual")}
+              disabled={submitting}
+            />
+          )}
           {mode !== "create" && (
             <div className="flex flex-col gap-0.5 text-sm">
               <span className="font-medium text-ink dark:text-zinc-300">
@@ -1227,6 +1279,36 @@ export function NaturalPersonForm({
       )}
       </div>{/* end the action bar's line */}
     </form>
+    {/* Slice #38.29 — the holder is saved; its ticked parents, one after the other.
+        Outside the <form>, so no button in it can submit the form again. */}
+    {parentsStage && (
+      <ParentsResolution
+        holderId={parentsStage.holderId}
+        parents={parentsStage.parents}
+        onDone={(outcomes) => {
+          setParentsStage(null);
+          if (outcomes.some((o) => o.result === "failed")) {
+            setParentsReport(outcomes);
+            return;
+          }
+          router.push("/natural-persons");
+          router.refresh();
+        }}
+      />
+    )}
+    {parentsReport && (
+      <ConfirmDialog
+        title={tParents("foldTitle")}
+        body={tParents("manualDone", { list: parentOutcomeSentences(parentsReport, tParents).join("; ") })}
+        yesLabel={tParents("ok")}
+        onYes={() => {
+          setParentsReport(null);
+          router.push("/natural-persons");
+          router.refresh();
+        }}
+        busy={false}
+      />
+    )}
     </FieldPulseContext.Provider>
   );
 }

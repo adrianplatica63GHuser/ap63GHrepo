@@ -250,6 +250,7 @@ import {
   type RunTypeNoteId,
   type SummaryRow,
 } from "@/lib/import/import-outcome";
+import { parentOutcomeSentences, type ParentOutcome } from "@/lib/import/id-card-parents";
 import { buildResultReportHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import type { ResolvedProperty } from "./property-step-dialog";
@@ -558,6 +559,12 @@ export type ImportResult = {
    * misreport what is in the database.
    */
   idCardDocFieldsFailed?: boolean;
+  /**
+   * Slice #38.29: what happened to each of the holder's parents the user
+   * ticked on this card — created, linked, skipped or failed. A failure is
+   * amber beside the person, never a failed row: the holder is in the archive.
+   */
+  idCardParents?: ParentOutcome[];
   /**
    * Slice #26.08: the archive already held this document, so the loop did not
    * create one. `linked` means the existing Document was attached to this run's
@@ -1770,6 +1777,11 @@ export function BulkImportDialog({
    * wording that gets edited in one of the two places.
    */
   const tres = useTranslations("adminImport.result");
+  /** Slice #38.29 — the holder's parents' sentences, on the row and in the report. */
+  const tParents = useTranslations("parentsFromIdCard") as unknown as (
+    key: string,
+    values?: Record<string, string>,
+  ) => string;
   const locale = useLocale();
   const router = useRouter();
 
@@ -3462,6 +3474,7 @@ export function BulkImportDialog({
           // the second can fail while the first succeeded.
           idCardDocFields: outcome.documentFieldsWritten,
           idCardDocFieldsFailed: outcome.documentFieldsFailed,
+          idCardParents: outcome.parents,
         });
       }
       advanceFollowUp(followUpIndex);
@@ -5178,6 +5191,8 @@ export function BulkImportDialog({
           : r.personId !== undefined && (r.idCardDocFields ?? 0) > 0
             ? [t("personDocFields", { count: r.idCardDocFields ?? 0 })]
             : []),
+        // Slice #38.29 — the holder's parents, in the row's own words.
+        ...(r.personId !== undefined ? parentOutcomeSentences(r.idCardParents, tParents) : []),
         // ⚠️ **THE REFUSAL, NOT `interpretFailed`, AND THE SAME SENTENCE THE
         // ROW SHOWS.** (Slice #32.08.) A refused read is not a failed one, and
         // `interpretFailed` says the fields "au rămas necompletate" without
@@ -5296,6 +5311,7 @@ export function BulkImportDialog({
     scanResults,
     summary,
     t,
+    tParents,
     tres,
   ]);
 
@@ -5931,6 +5947,7 @@ export function BulkImportDialog({
                   key={r.entry.path}
                   result={r}
                   t={t}
+                  tParents={tParents}
                   // Every sentence this row draws about the corners, the person
                   // and the read it did not do, decided in one tested place.
                   // The row renders; it does not reason. See `outcomeNotes`.
@@ -6103,6 +6120,8 @@ const PERSON_NOTES: ReadonlySet<OutcomeNoteId> = new Set<OutcomeNoteId>([
 type ResultRowProps = {
   result: ImportResult;
   t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
+  /** Slice #38.29 — `parentsFromIdCard`, for the holder's parents' sentences (this row stays hook-free). */
+  tParents: (key: string, values?: Record<string, string>) => string;
   /**
    * What this run did to this file, as ids for `note.<id>`.   (Slice #26.10)
    *
@@ -6134,6 +6153,7 @@ type ResultRowProps = {
 function ResultRow({
   result,
   t,
+  tParents,
   notes,
   confidenceNote,
   canRetryInterpret,
@@ -6152,6 +6172,7 @@ function ResultRow({
     personId,
     idCardDocFields,
     idCardDocFieldsFailed,
+    idCardParents,
     aiProcessed,
     aiFieldCount,
     aiTitleKept,
@@ -6336,6 +6357,23 @@ function ResultRow({
               · {t("personDocFields", { count: idCardDocFields ?? 0 })}
             </span>
           )}
+          {/* Slice #38.29 — the holder's parents: amber when one failed, as the
+              document half above, because the holder was created either way. */}
+          {personId &&
+            parentOutcomeSentences(idCardParents, tParents).map((sentence, i) => (
+              <span
+                key={`parent-${i}`}
+                role={idCardParents?.[i]?.result === "failed" ? "status" : undefined}
+                data-parent-outcome={idCardParents?.[i]?.result}
+                className={`text-xs font-medium ${
+                  idCardParents?.[i]?.result === "failed"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                }`}
+              >
+                · {sentence}
+              </span>
+            ))}
 
           {/* Slice #26.09 — the row DESCRIBES the AI read instead of offering
               it. The button that used to stand here is gone: the run does the

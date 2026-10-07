@@ -94,6 +94,17 @@ import {
   type ResolutionSubject,
 } from "@/components/persons/person-resolution-dialog";
 import { ActivityCue } from "@/components/activity-cue";
+import { ParentsFold } from "@/components/persons/parents-fold";
+import { ParentsResolution } from "@/components/persons/parents-resolution";
+import {
+  cardParentsFrom,
+  draftsFromCard,
+  followHolderSurname,
+  incompleteParents,
+  parentsToCreate,
+  type ParentDraft,
+  type ParentOutcome,
+} from "@/lib/import/id-card-parents";
 import { ProvenanceField } from "./provenance-field";
 import {
   ScanConfidenceWarning,
@@ -147,6 +158,8 @@ type ExtractResponse = {
    * archive already holds is the duplicate this whole path exists to avoid.
    */
   lookupUnavailable?: boolean;
+  /** Slice #38.29 — the parents' first names, `{ father, mother }`; read by `cardParentsFrom`. */
+  parents?: unknown;
   error?: string;
   code?: string;
 };
@@ -381,6 +394,12 @@ export type IdCardPersonOutcome = {
    * whole action would misreport what is now in the database.
    */
   documentFieldsFailed: boolean;
+  /**
+   * Slice #38.29 — what happened to each parent the user ticked: created,
+   * linked, skipped or failed. Absent when none was ticked. A parent that
+   * failed never undoes the holder, so the row reports it beside the person.
+   */
+  parents?: ParentOutcome[];
 };
 
 type Props = {
@@ -607,6 +626,17 @@ export function IdCardPersonDialog({
   const [citizenshipRaw, setCitizenshipRaw] = useState("");
   const [lowConfidence, setLowConfidence] = useState<Set<string>>(new Set());
   const [unmappedRaw, setUnmappedRaw] = useState<Record<string, string>>({});
+  /**
+   * Slice #38.29 — the parents the card names, as the review offers them. A
+   * surname still ASSUMED from the holder's follows the holder's as the user
+   * edits it: `followHolderSurname` at render, never an effect.
+   */
+  const [parentDrafts, setParentDrafts] = useState<ParentDraft[]>([]);
+  /** The holder is done; the ticked parents are being resolved before `onDone`. */
+  const [parentsStage, setParentsStage] = useState<
+    { personId: string; created: boolean; doc: { written: number; failed: boolean } } | null
+  >(null);
+  const tParents = useTranslations("parentsFromIdCard");
 
   const [matchCandidate, setMatchCandidate] = useState<ResolutionCandidate | null>(null);
   const [possibleMatches, setPossibleMatches] = useState<ResolutionMatch[]>([]);
@@ -704,6 +734,7 @@ export function IdCardPersonDialog({
         setCitizenshipRaw(fields.citizenshipRaw ?? "");
         setLowConfidence(new Set(data.lowConfidenceFields ?? []));
         setUnmappedRaw(data.unmappedRaw ?? {});
+        setParentDrafts(draftsFromCard(cardParentsFrom(data.parents), fields.lastName ?? ""));
         setPhase("resolving");
 
         const resolveRes = await fetch("/api/admin/import/resolve-natural-person", {
@@ -1091,6 +1122,7 @@ export function IdCardPersonDialog({
       personId: string,
       created: boolean,
       doc: { written: number; failed: boolean },
+      parents?: ParentOutcome[],
     ) => {
       await queryClient.invalidateQueries({ queryKey: ["people"] });
       await queryClient.invalidateQueries({ queryKey: ["persons"] });
@@ -1100,13 +1132,39 @@ export function IdCardPersonDialog({
         created,
         documentFieldsWritten: doc.written,
         documentFieldsFailed: doc.failed,
+        ...(parents && parents.length > 0 ? { parents } : {}),
       });
     },
     [queryClient, onDone],
   );
 
+  /**
+   * Slice #38.29 — the holder is in the archive; the ticked parents go next,
+   * through ParentsResolution, and `onDone` waits for them. With none ticked,
+   * this is `finish`.
+   */
+  const holderDone = useCallback(
+    async (personId: string, created: boolean, doc: { written: number; failed: boolean }) => {
+      const ticked = parentsToCreate(followHolderSurname(parentDrafts, getValues("lastName") ?? ""));
+      if (ticked.length === 0) {
+        await finish(personId, created, doc);
+        return;
+      }
+      setParentsStage({ personId, created, doc });
+    },
+    [finish, getValues, parentDrafts],
+  );
+
+  /** A ticked parent without both names stops the holder's write, and says why. */
+  const parentsIncomplete = useCallback((): boolean => {
+    if (incompleteParents(followHolderSurname(parentDrafts, getValues("lastName") ?? "")).length === 0) return false;
+    setError(tParents("missingName"));
+    return true;
+  }, [getValues, parentDrafts, tParents]);
+
   const handleLinkExisting = useCallback(
     async (personId: string) => {
+      if (parentsIncomplete()) return;
       setBusy(true);
       setError(null);
       try {
@@ -1115,7 +1173,7 @@ export function IdCardPersonDialog({
         // out to be new: this branch writes them too. The values are the raw
         // extraction, since the review form only renders on the create branch.
         const doc = await writeDocumentFields(getValues());
-        await finish(personId, false, doc);
+        await holderDone(personId, false, doc);
       } catch (err) {
         setBusy(false);
         // ⚠️ **The caller is told, and not only from the FATAL path.**
@@ -1127,11 +1185,12 @@ export function IdCardPersonDialog({
         setError(err instanceof Error ? err.message : t("linkError"));
       }
     },
-    [linkPerson, writeDocumentFields, getValues, finish, t],
+    [linkPerson, writeDocumentFields, getValues, holderDone, parentsIncomplete, t],
   );
 
   const doCreate = useCallback(
     async (values: FormValues) => {
+      if (parentsIncomplete()) return;
       setBusy(true);
       setError(null);
       try {
@@ -1177,7 +1236,7 @@ export function IdCardPersonDialog({
         // Fixing a misread card number in the review form fixes what lands in
         // the Document's nrDocument too, with no second set of inputs.
         const doc = await writeDocumentFields(values);
-        await finish(personId, true, doc);
+        await holderDone(personId, true, doc);
       } catch (err) {
         setBusy(false);
         // As above, and this is the sharpest case: a 201 from POST /api/people
@@ -1187,7 +1246,7 @@ export function IdCardPersonDialog({
         setError(err instanceof Error ? err.message : t("createError"));
       }
     },
-    [linkPerson, writeDocumentFields, finish, citizenshipOptions, t],
+    [linkPerson, writeDocumentFields, holderDone, parentsIncomplete, citizenshipOptions, t],
   );
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -1241,6 +1300,8 @@ export function IdCardPersonDialog({
       "idValidFrom", "idValidUntil", "citizenshipId",
     ],
   });
+  // Slice #38.29 — the parents as shown: an assumed surname follows the holder's.
+  const shownParents = followHolderSurname(parentDrafts, wLastName ?? "");
 
   // Built against an EMPTY current document on purpose: this shows what the
   // CARD offers, not a promise about which targets are still blank. The real
@@ -1632,6 +1693,18 @@ export function IdCardPersonDialog({
     );
   }
 
+  // Slice #38.29 — the holder is done; its ticked parents, one after the other.
+  if (parentsStage) {
+    return (
+      <ParentsResolution
+        holderId={parentsStage.personId}
+        documentId={documentId}
+        parents={parentsToCreate(shownParents)}
+        onDone={(outcomes) => void finish(parentsStage.personId, parentsStage.created, parentsStage.doc, outcomes)}
+      />
+    );
+  }
+
   return (
     <PersonResolutionDialog
       t={t}
@@ -1694,6 +1767,15 @@ export function IdCardPersonDialog({
           <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("docFieldsHint")}</p>
         </div>
       )}
+
+      {/* Slice #38.29 — the parents the card names. On both branches, like the
+          document preview above: confirming an existing holder offers them too. */}
+      <ParentsFold
+        drafts={shownParents}
+        onChange={setParentDrafts}
+        hint={tParents("foldHintCard")}
+        disabled={busy}
+      />
 
       {showForm && (
         <div className="mt-5 border-t border-wire pt-4 dark:border-zinc-700">

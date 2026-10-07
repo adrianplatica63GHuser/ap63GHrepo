@@ -27,6 +27,8 @@ const LOCALES = ["ro-RO", "en-GB"] as const;
 const NAMESPACES = [
   "document.aiPartyLinker",
   "adminImport.wizard.importDialog.idCard",
+  // Slice #38.29: the holder's parents, one after the other (parents-resolution.tsx).
+  "parentsFromIdCard.resolution",
 ] as const;
 
 type Messages = Record<string, unknown>;
