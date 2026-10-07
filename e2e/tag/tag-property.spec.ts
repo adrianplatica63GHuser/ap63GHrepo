@@ -42,8 +42,8 @@ async function openMetaInfo(page: Page, propertyId: string): Promise<void> {
   await page.goto(`/properties/${propertyId}`);
   await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
   // Slice #37.63: META INFO is two tiles; the case reads both.
-  await showTile(page, "Clasificări");
-  await showTile(page, "Conexiuni");
+  await showTile(page, "Clasificare");
+  await showTile(page, "Etichete și grupuri");
   await expect(page.getByPlaceholder("Introduceți o etichetă…")).toBeVisible({ timeout: 30_000 });
 }
 
@@ -76,11 +76,11 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       // Step 2 — the property's „Clasificări" and „Conexiuni" (META INFO's
       // two halves since #37.63) → „Etichete / Cuvinte cheie", empty.
       await openMetaInfo(page, propertyId);
-      await expect(page.getByText("Clasificări").first()).toBeVisible();
+      await expect(page.getByText("Clasificare").first()).toBeVisible();
       for (const field of ["Importanță", "Relevanță", "Proveniență"]) {
         await expect(page.getByText(field, { exact: true }).first()).toBeVisible();
       }
-      await expect(page.getByText("Conexiuni").first()).toBeVisible();
+      await expect(page.getByText("Etichete și grupuri").first()).toBeVisible();
       await expect(page.getByText("Etichete / Cuvinte cheie").first()).toBeVisible();
       await expect(page.getByText("Nicio etichetă adăugată încă")).toBeVisible();
 

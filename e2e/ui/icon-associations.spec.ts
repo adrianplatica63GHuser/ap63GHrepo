@@ -66,7 +66,7 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       // Step 1 — „Corelate" (#37.66): empty; „Asociază persoană" (link + words), „Dezasociază" (broken link + word, inactive).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       const associate = page.getByRole("button", { name: "Asociază persoană", exact: true });
       const dissociate = page.getByRole("button", { name: "Dezasociază", exact: true });
@@ -138,7 +138,7 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       // Picture (#37.44), not a step: „Conexiuni" (META INFO until #37.63) with the group picker open (ChevronUp).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: `${PROPERTY} v1` })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Conexiuni");
+      await showTile(page, "Etichete și grupuri");
       const addToGroup = page.getByRole("button", { name: "+ Adaugă în grup" });
       await expect(addToGroup).toBeVisible({ timeout: 30_000 });
       expect(await iconOf(addToGroup)).toBe("lucide-plus");

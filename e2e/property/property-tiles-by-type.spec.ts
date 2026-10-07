@@ -72,21 +72,21 @@ test.describe("TC-PROP-12 — căsuțele fișelor pe care tipul nu le arată", (
       await expect(page.getByRole("heading", { level: 1, name: NAME, exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator("header [data-heading-type-name]")).toHaveText("(Teren Arabil)", { timeout: 30_000 });
       await expectOff(page);
-      for (const name of ["Date cadastrale", "Hartă", "Puncte de contur"]) await expect(tileBox(page, name)).toBeChecked();
+      for (const name of ["Identificare cadastrală", "Hartă", "Puncte de contur"]) await expect(tileBox(page, name)).toBeChecked();
       await expect(page.getByRole("region", { name: "Adresă", exact: true })).toHaveCount(0);
       await photograph(page, "agricultural");
 
       // Step 2 — „Toate": every other box ticked; the two still off.
       await page.getByRole("button", { name: "Toate", exact: true }).click();
-      for (const name of ["Date cadastrale", "Corelate", "Clasificări", "Conexiuni", "Hartă", "Puncte de contur"]) {
+      for (const name of ["Identificare cadastrală", "Legături", "Clasificare", "Etichete și grupuri", "Hartă", "Puncte de contur"]) {
         await expect(tileBox(page, name)).toBeChecked();
       }
       await expectOff(page);
 
       // Step 3 — „Implicit": the defaults; the two still off.
       await page.getByRole("button", { name: "Implicit", exact: true }).click();
-      for (const name of ["Date cadastrale", "Hartă", "Puncte de contur"]) await expect(tileBox(page, name)).toBeChecked();
-      for (const name of ["Corelate", "Clasificări", "Conexiuni"]) await expect(tileBox(page, name)).not.toBeChecked();
+      for (const name of ["Identificare cadastrală", "Hartă", "Puncte de contur"]) await expect(tileBox(page, name)).toBeChecked();
+      for (const name of ["Legături", "Clasificare", "Etichete și grupuri"]) await expect(tileBox(page, name)).not.toBeChecked();
       await expectOff(page);
 
       // Step 4 — „Teren Construit" on the form, not saved: both enabled; „Adresă" ticked, its tile on screen.

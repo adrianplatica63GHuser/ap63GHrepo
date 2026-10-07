@@ -65,7 +65,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Persoane", beside „Asocieri": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible();
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -118,7 +118,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       // Step 8 — one line: „Ion TC-E2E-ASSOC-01 (Cumpărător)", no heading row, no „Cod",
       // and the orange „Cotă" — the three share values are behind it (#37.64).
       await expect(page.getByRole("radio", { name: ROW })).toBeVisible({ timeout: 15_000 });
-      const tile = page.getByRole("region", { name: "Corelate", exact: true });
+      const tile = page.getByRole("region", { name: "Legături", exact: true });
       const row = lineRow(tile, PERSON);
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Cumpărător)`);
       await expectOneLine(row);
@@ -155,7 +155,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       await mod.selectOption({ label: "indiviziune" });
       await expect(mod.locator("option:checked")).toHaveText("indiviziune");
       await page.reload();
-      panel = await openShare(lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PERSON));
+      panel = await openShare(lineRow(page.getByRole("region", { name: "Legături", exact: true }), PERSON));
       await expect(mod.locator("option:checked")).toHaveText("indiviziune", { timeout: 30_000 });
       await expect(cota).toHaveValue("50");
 

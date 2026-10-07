@@ -139,14 +139,14 @@ export function PersonDetailTiles({
           />
           {/* Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate". */}
           {choice.isShown("related") && (
-            <ListTile tile="related" title={labels.related} units={NP_LIST_UNITS.related} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related"))}>
+            <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={NP_LIST_UNITS.related} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related"))}>
               <PersonRelatedTile personId={personId} backBase="/natural-persons" label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} units={NP_LIST_UNITS.classification} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "classification"))}>
+            <ListTile tile="classification" title={labels.classification} subtitle={t("tileSubtitles.classification")} units={NP_LIST_UNITS.classification} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
@@ -157,7 +157,7 @@ export function PersonDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} units={NP_LIST_UNITS.connections} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "connections"))}>
+            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={NP_LIST_UNITS.connections} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "connections"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
@@ -169,7 +169,7 @@ export function PersonDetailTiles({
           )}
           <PreviewTiles previews={previews} />
           {choice.isShown("interactions") && interactionsSlot && createPortal(
-            <InteractionsTile title={labels.interactions} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"))} />,
+            <InteractionsTile title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"))} />,
             interactionsSlot,
           )}
         </TileAreas>

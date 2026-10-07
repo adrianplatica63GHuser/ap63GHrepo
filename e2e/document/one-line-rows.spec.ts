@@ -86,7 +86,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
 
       // Step 1 — the PAD's „Persoane": no headings, one line, no „Cotă", no box.
       await open(page, padId, PAD);
-      let persons = await showTile(page, "Corelate");
+      let persons = await showTile(page, "Legături");
       let row = lineRow(persons, PERSON);
       await expect(row).toHaveCount(1, { timeout: 30_000 });
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Proiectant / Consultant)`);
@@ -100,7 +100,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
 
       // Step 2 — the CVC's „Persoane": one line, a solid orange „Cotă".
       await open(page, cvcId, CVC);
-      persons = await showTile(page, "Corelate");
+      persons = await showTile(page, "Legături");
       row = lineRow(persons, PERSON);
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Vânzător)`, { timeout: 30_000 });
       await expectOneLine(row);
@@ -136,7 +136,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       const mp = panel.getByRole("textbox", { name: /^Suprafață echivalentă \(mp\)/ });
       await mp.click();
       await mp.fill("120");
-      await persons.getByRole("heading", { name: "Corelate" }).click();
+      await persons.getByRole("heading", { name: "Legături" }).click();
       await expect(panel).toHaveCount(0);
       await expect.poll(async () => {
         const res = await page.request.get(`/api/documents/${cvcId}/persons`);
@@ -145,7 +145,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       }, { timeout: 15_000 }).toEqual([[50, 120]]);
 
       // Step 7 — „Acte corelate": no headings, one line, the sentence not on the row.
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       const doc = lineRow(related, PAD);
       await expect(doc.locator("[data-row-content]")).toHaveText(`${PAD} (Plan de Amplasament și Delimitare)`, { timeout: 30_000 });
       await expectOneLine(doc);
@@ -165,7 +165,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       await expect(page.getByText(sentence)).toHaveCount(0);
       await doc.getByRole("button", { name: "Relația", exact: true }).click();
       await expect(page.getByText(sentence)).toBeVisible();
-      await related.getByRole("heading", { name: "Corelate" }).click();
+      await related.getByRole("heading", { name: "Legături" }).click();
       await expect(page.getByText(sentence)).toHaveCount(0);
 
       // Step 10 — „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one

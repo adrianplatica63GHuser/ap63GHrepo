@@ -160,14 +160,14 @@ export function PropertyDetailTiles({
           />
           {/* Slice #37.66: „Proprietăți corelate", Persoane and Acte are one tile, „Corelate" — the Document's (#37.65). */}
           {choice.isShown("related") && (
-            <ListTile tile="related" title={labels.related} units={LIST_UNITS.property.related} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "related"))}>
+            <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.property.related} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "related"))}>
               <PropertyRelatedTile propertyId={propertyId} label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.property.classification} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "classification"))}>
+            <ListTile tile="classification" title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.property.classification} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}
@@ -179,7 +179,7 @@ export function PropertyDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.property.connections} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "connections"))}>
+            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.property.connections} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "connections"))}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}

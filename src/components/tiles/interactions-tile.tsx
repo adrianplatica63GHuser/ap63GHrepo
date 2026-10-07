@@ -11,8 +11,9 @@
  */
 import { useTranslations } from "next-intl";
 import { INTERACTIONS_TILE_STYLE } from "@/lib/ui/field-widths";
+import { TileTitle } from "./tile-title";
 
-export function InteractionsTile({ title, surface }: { title: string; surface: string }) {
+export function InteractionsTile({ title, subtitle, surface }: { title: string; subtitle?: string; surface: string }) {
   const t = useTranslations("shared.tiles");
   return (
     <section
@@ -22,7 +23,7 @@ export function InteractionsTile({ title, surface }: { title: string; surface: s
       className={surface}
       style={INTERACTIONS_TILE_STYLE}
     >
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{title}</h2>
+      <TileTitle title={title} subtitle={subtitle} />
       {/* Slice #38.06: in italics and in parentheses. The parentheses are drawn
           here, around the message, so the message stays a plain sentence in both
           files and the locators reading it keep matching. */}

@@ -94,7 +94,7 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   await expectStableWidths(page);
   const group = page.getByRole("group", { name: TILE_GROUP });
   await group.getByRole("button", { name: "Toate", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Conexiuni", exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
   await expectStableWidths(page);
   // Slice #37.31 — every tile on the width unit: the row is 6 units at 1366 px, 10 at 1920,
   // 14 at 2560, and each tile — a notebook tile is one frame — a whole number of units.
@@ -106,7 +106,7 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   for (const n of numbers) samples[n] = TEMPLATE_FIELD.number.sample;
   await expectFixedFieldsHold(page, samples);
   await group.getByRole("button", { name: "Implicit", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Conexiuni", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
 }
 
 const TITLE = `${E2E_MARKER}DOC-01 Contract de test`;
@@ -234,8 +234,8 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // and an exact match on „Neprocesat" alone finds nothing (first run).
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"
-      for (const tile of ["Date generale", "Pagini", "Preț și taxe"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Cadastru și CF", "Stare juridică", "Formalități", "Corelate", "Clasificări", "Conexiuni"]) {
+      for (const tile of ["Identificarea actului", "Pagini", "Preț și taxe"]) await expect(tileBox(page, tile)).toBeChecked();
+      for (const tile of ["Cadastru și CF", "Stare juridică", "Formalități", "Legături", "Clasificare", "Etichete și grupuri"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(page.getByRole("tab")).toHaveCount(0);

@@ -57,7 +57,7 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
 
       // Step 1 — Date generale, Pagini, Cadastru și CF and Formalități ticked; the other two not.
       await page.goto(`/documents/${id}`);
-      for (const name of ["Date generale", "Pagini", "Cadastru și CF", "Formalități"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
+      for (const name of ["Identificarea actului", "Pagini", "Cadastru și CF", "Formalități"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
       for (const name of ["Preț și taxe", "Stare juridică"]) await expect(tileBox(page, name)).not.toBeChecked();
 
       // Step 2 — „Toate": the four tiles and their panels, each in brackets (#37.90), none of the old names.

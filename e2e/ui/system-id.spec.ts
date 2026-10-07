@@ -114,11 +114,11 @@ test.describe("TC-SYSID-01 — ID-ul de sistem într-un singur loc", () => {
       // Steps 1–4 — one code on each screen, in the corner of its first panel.
       await stepScreen(page, `/natural-persons/${np}`, "Identitate", "PPERS");
       await photographPanel(page, "natural-person");
-      await stepScreen(page, `/judicial-persons/${jp}`, "Identitate", "JPERS"); // #37.89: the first panel is „Identitate"
+      await stepScreen(page, `/judicial-persons/${jp}`, "Date de înregistrare", "JPERS"); // #37.89: the first panel is „Identitate"; #38.30: „Date de înregistrare"
       await photographPanel(page, "judicial-person");
-      await stepScreen(page, `/properties/${pr}`, "Date cadastrale", "PROP");
+      await stepScreen(page, `/properties/${pr}`, "Identificare cadastrală", "PROP");
       await photographPanel(page, "property");
-      await stepScreen(page, `/documents/${dc}`, "Date generale", "DOC");
+      await stepScreen(page, `/documents/${dc}`, "Identificarea actului", "DOC");
       await photographPanel(page, "document");
 
       // Step 5 — the four lists: no „Cod", no code, this case's record among the rows.

@@ -457,8 +457,10 @@ export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
  * Slice #37.89: „Interacțiuni" on the two person forms is as large as a
  * Document's „Pagini": its width, and the height „Pagini" has before a page is
  * added (420 px at 1366 and 1920, measured 2026-10-05; TC-PERS-07 compares the two).
+ * Slice #38.30: 436 — „Pagini" gained its subtitle line, `text-xs` at a 1rem
+ * line height, 16 px, and this follows it so the two stay the same size.
  */
-export const PAGES_TILE_EMPTY_HEIGHT_PX = 420;
+export const PAGES_TILE_EMPTY_HEIGHT_PX = 436;
 export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, minHeight: PAGES_TILE_EMPTY_HEIGHT_PX };
 
 // Slice #37.31: `documentRowStyle` and `fieldsBesidePagesStyle` gave way to

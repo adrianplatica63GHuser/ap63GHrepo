@@ -126,9 +126,10 @@ describe("the parcel-conflict copy", () => {
     // also has to name WHERE: this panel is on Detalii and the tag editor is
     // on „Conexiuni" (META INFO until #37.63).
     expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("eticheta de dosar");
-    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("„Conexiuni”");
+    // #38.30: the tile is „Etichete și grupuri” now (it was „Conexiuni”), and the sentence follows it.
+    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("„Etichete și grupuri”");
     expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("folder tag");
-    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("“Connections”");
+    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("“Tags and groups”");
     // Several matches is a different job: the archive already holds a
     // duplicate, and attaching or re-tagging fixes nothing.
     expect(String(loadCopy("ro-RO.json").parcelTakenSeveralWhatToDo)).toContain("una singură");
@@ -176,10 +177,11 @@ describe("the parcel-conflict copy", () => {
     // tabs are Detalii / Asocieri / META INFO / Persoane / Acte has to guess.
     // The META INFO half of the same sentence already set the pattern.
     // #37.66: the Property's „Acte" is part of one tile, „Corelate", and the sentence names it.
-    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("din „Corelate”");
-    expect(String(loadCopy("ro-RO.json").parcelTakenSeveralWhatToDo)).toContain("din „Corelate”");
-    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("from “Related”");
-    expect(String(loadCopy("en-GB.json").parcelTakenSeveralWhatToDo)).toContain("from “Related”");
+    // #38.30: „Corelate” is „Legături” now, and the sentence names it so.
+    expect(String(loadCopy("ro-RO.json").parcelTakenWhatToDo)).toContain("din „Legături”");
+    expect(String(loadCopy("ro-RO.json").parcelTakenSeveralWhatToDo)).toContain("din „Legături”");
+    expect(String(loadCopy("en-GB.json").parcelTakenWhatToDo)).toContain("from “Links”");
+    expect(String(loadCopy("en-GB.json").parcelTakenSeveralWhatToDo)).toContain("from “Links”");
   });
 
   it("⚠️ the whole panel says 'etichetă', which is what the app calls a tag", () => {

@@ -101,6 +101,7 @@ import { forgetRecentlyViewed } from "@/components/providers/navigation-history-
 import { propTileOfField, type PropTile } from "./property-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -1173,11 +1174,11 @@ export function PropertyForm({
             types (Slice #19.02), and, since #37.57 (the code moved to the corner), the row with them. */}
         <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_UNIT_STYLE.property.cadastral} {...tileProps("cadastral")}>
           <section data-panel="cadastral" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-              {t("sections.cadastral")}
+            {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
+            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")}>
               {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
               {propertyCode && <SystemIdCorner code={propertyCode} />}
-            </h2>
+            </TileTitle>
             <div className="flex flex-col gap-2">
               {!typeConfig.hideTarlaParcela && (
                 <div className={STACKED_ROW_CLASS}>
@@ -1335,11 +1336,7 @@ export function PropertyForm({
             tileShown("corners") ? "" : "hidden",
           ].join(" ")}
         >
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-              {t("sections.corners")}
-            </h2>
-          </div>
+          <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} />
           <CornersManager
             corners={corners}
             onChange={setCorners}
@@ -1363,9 +1360,7 @@ export function PropertyForm({
         {!typeConfig.hideAddress && (
           <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("address")}`} style={PANEL_UNIT_STYLE.property.address} {...tileProps("address")}>
             <section data-panel="address" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-                {t("sections.address")}
-              </h2>
+              <TileTitle title={t("tiles.address")} subtitle={t("tileSubtitles.address")} />
               <div className="flex flex-col gap-2">
                 <Field
                   label={t("address.streetLine")}

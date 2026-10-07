@@ -20,7 +20,7 @@ import {
 } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-09`;
-const CLASSIFICATION = "Clasificări";
+const CLASSIFICATION = "Clasificare";
 
 async function tile(page: Page, url: string): Promise<Locator> {
   await page.goto(url);

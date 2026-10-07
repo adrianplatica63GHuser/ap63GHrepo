@@ -39,6 +39,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -65,6 +66,13 @@ export type AddressErrors =
 type Props<TFormValues extends FieldValues> = {
   /** Section heading shown in uppercase at the top of the card. */
   title: string;
+  /**
+   * Slice #38.30: the grey line under the title. The two person forms pass
+   * their „Adrese" tile's subtitle to the tile's FIRST panel only — the two
+   * panels show and hide together as one tile, and a second copy of the same
+   * line under the correspondence panel would say nothing new.
+   */
+  subtitle?: string;
   /** Dotted path into the form values, e.g. "addresses.HOME". */
   prefix: string;
   register: UseFormRegister<TFormValues>;
@@ -93,6 +101,7 @@ type Props<TFormValues extends FieldValues> = {
 
 export function AddressBlock<TFormValues extends FieldValues>({
   title,
+  subtitle,
   prefix,
   register,
   errors,
@@ -137,9 +146,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   );
   return (
     <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-        {title}
-      </h2>
+      <TileTitle title={title} subtitle={subtitle} />
       <div className="flex flex-col gap-2">
         {ADDRESS_ROWS.map((row) => (
           <div key={row.join("|")} className={STACKED_ROW_CLASS}>

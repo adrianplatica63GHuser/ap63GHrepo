@@ -58,7 +58,7 @@ async function read(tile: Locator) {
 async function steps(page: Page, url: string, olderToo: boolean) {
   // Step 1 — one version: two lines; the two selects shifted, level; Proveniență on Importanță's line; inside the padding.
   await page.goto(url);
-  const tile = await showTile(page, "Clasificări");
+  const tile = await showTile(page, "Clasificare");
   await expect(tile.locator("[data-classification-pair] select")).toHaveCount(2, { timeout: 30_000 });
   const one = await read(tile);
   expect(one).toMatchObject({ level: true, shifted: true, aligned: true, between: true, spans: true, kinds: ["vertical", "horizontal"], inside: true });
@@ -94,7 +94,7 @@ test.describe("TC-TILES-16 — „Clasificări”: liniile și cele două celule
       // Step 5 — the person at 1366 px: the selects shifted, Proveniență on Importanță's line.
       await page.setViewportSize({ width: 1366, height: 900 });
       await page.goto(`/natural-persons/${person}`);
-      const narrow = await showTile(page, "Clasificări");
+      const narrow = await showTile(page, "Clasificare");
       await expect(narrow.locator("[data-classification-pair] select")).toHaveCount(2, { timeout: 30_000 });
       expect(await read(narrow)).toMatchObject({ level: true, shifted: true, aligned: true, between: true, inside: true });
       await page.setViewportSize({ width: 1920, height: 1200 });

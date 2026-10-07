@@ -28,9 +28,10 @@ function files(dir: string): string[] {
 
 describe("the corner", () => {
   it.each([
-    ["src/app/natural-persons/_components/natural-person-form.tsx", /t\("sections\.identity"\)\}[\s\S]{0,200}<SystemIdCorner code=\{personCode\} \/>/],
-    ["src/app/judicial-persons/_components/judicial-person-form.tsx", /t\("sections\.identity"\)\}[\s\S]{0,200}<SystemIdCorner code=\{personCode\} \/>/],
-    ["src/app/properties/_components/property-form.tsx", /t\("sections\.cadastral"\)\}[\s\S]{0,200}<SystemIdCorner code=\{propertyCode\} \/>/],
+    // #38.30: the heading is `<TileTitle title={t("tiles.…")} …>`, the corner its child, after the title.
+    ["src/app/natural-persons/_components/natural-person-form.tsx", /<TileTitle title=\{t\("tiles\.identity"\)\}[^>]*>[\s\S]{0,200}<SystemIdCorner code=\{personCode\} \/>/],
+    ["src/app/judicial-persons/_components/judicial-person-form.tsx", /<TileTitle title=\{t\("tiles\.identity"\)\}[^>]*>[\s\S]{0,200}<SystemIdCorner code=\{personCode\} \/>/],
+    ["src/app/properties/_components/property-form.tsx", /<TileTitle title=\{t\("tiles\.cadastral"\)\}[^>]*>[\s\S]{0,200}<SystemIdCorner code=\{propertyCode\} \/>/],
     // #37.90: the heading is `{framed ? panelSubtitle(title) : title}`, the corner still after it.
     ["src/app/documents/_components/document-form.tsx", /\btitle\}[\s\S]{0,200}<SystemIdCorner code=\{code\} \/>/],
   ])("%s draws it at the end of its first panel's heading", (file, pattern) => {

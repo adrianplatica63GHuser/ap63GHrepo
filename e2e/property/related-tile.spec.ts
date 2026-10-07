@@ -77,8 +77,8 @@ test.describe("TC-PROP-07 — „Corelate” pe o proprietate", () => {
       // Step 1 — four rows, one line each, in order, with their icons; no „Cotă"; the buttons.
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      const tile = await showTile(page, "Corelate");
-      await expect(page.locator('[data-tile-area="right"]').getByRole("region", { name: "Corelate", exact: true })).toHaveCount(0);
+      const tile = await showTile(page, "Legături");
+      await expect(page.locator('[data-tile-area="right"]').getByRole("region", { name: "Legături", exact: true })).toHaveCount(0);
       const groups = tile.locator("[data-related-group]");
       await expect(groups).toHaveCount(4, { timeout: 30_000 });
       const expected = [
@@ -110,7 +110,7 @@ test.describe("TC-PROP-07 — „Corelate” pe o proprietate", () => {
       const bubble = page.getByRole("status").filter({ hasText: RELATION });
       await expect(bubble).toHaveText(`această proprietate „${RELATION}” ${WHOLE}`);
       await photograph(page, "property-related-relation", tile);
-      await tile.getByRole("heading", { name: "Corelate" }).click();
+      await tile.getByRole("heading", { name: "Legături" }).click();
       await expect(bubble).toHaveCount(0);
 
       // Step 4 — the company's radio, „Dezasociază": its row and group go; the rest stay.
@@ -128,11 +128,11 @@ test.describe("TC-PROP-07 — „Corelate” pe o proprietate", () => {
         ["Asociază proprietate", "Asociere proprietate corelată", "related"],
         ["Asociază act", "Asociere act", "document"],
       ] as const) {
-        await page.getByRole("region", { name: "Corelate", exact: true }).getByRole("button", { name: button, exact: true }).click();
+        await page.getByRole("region", { name: "Legături", exact: true }).getByRole("button", { name: button, exact: true }).click();
         await expect(page.getByRole("heading", { name: heading })).toBeVisible({ timeout: 30_000 });
         await page.getByRole("button", { name: "Anulează", exact: true }).click();
         await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?tab=${tab}$`), { timeout: 30_000 });
-        await expect(page.getByRole("region", { name: "Corelate", exact: true }).locator("[data-related-rows]")).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByRole("region", { name: "Legături", exact: true }).locator("[data-related-rows]")).toBeVisible({ timeout: 30_000 });
       }
     } finally {
       // Bounded: the map and Street View keep a property's network busy, so an

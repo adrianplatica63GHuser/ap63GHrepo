@@ -5,6 +5,12 @@
  * („Classifications") on Property, Natural Person, Judicial Person and
  * Document. The keys stay `classification`, so a stored tile choice keeps its
  * tick; only the words changed.
+ *
+ * Slice #38.30 renamed it again, to „Clasificare" („Classification"), with the
+ * line „Importanță, relevanță, proveniență" under it. The assertions below are
+ * #37.87's, inverted in place: they used to read
+ * `toBe("Clasificări")` / `toBe("Classifications")`. „Clasificare subiectivă"
+ * is still the name that must not come back.
  */
 import fs from "fs";
 import path from "path";
@@ -22,7 +28,7 @@ describe("the old name is gone from both message files", () => {
   });
 });
 
-describe("the five places read the new name, under the old keys", () => {
+describe("the five places read the new name (#38.30), under the old keys", () => {
   const KEYS = [
     "property.tiles.classification",
     "naturalPerson.tiles.classification",
@@ -30,12 +36,12 @@ describe("the five places read the new name, under the old keys", () => {
     "document.tiles.classification",
   ];
   it.each(KEYS)("%s", (key) => {
-    expect(at(JSON.parse(read("ro-RO.json")), key)).toBe("Clasificări");
-    expect(at(JSON.parse(read("en-GB.json")), key)).toBe("Classifications");
+    expect(at(JSON.parse(read("ro-RO.json")), key)).toBe("Clasificare");
+    expect(at(JSON.parse(read("en-GB.json")), key)).toBe("Classification");
   });
 
   it("the section heading too", () => {
-    for (const [file, word] of [["ro-RO.json", "Clasificări"], ["en-GB.json", "Classifications"]] as const) {
+    for (const [file, word] of [["ro-RO.json", "Clasificare"], ["en-GB.json", "Classification"]] as const) {
       const text = read(file);
       expect(text).toContain(`"sectionClassification": "${word}"`);
     }

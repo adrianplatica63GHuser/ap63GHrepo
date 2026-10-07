@@ -56,7 +56,7 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       await page.goto(`/properties/${propId}`);
       await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
       await showTile(page, "Street View");
-      const cls = await showTile(page, "Clasificări");
+      const cls = await showTile(page, "Clasificare");
       const right = ["map", "corners", "street-view"].map((p) => page.locator(`[data-panel="${p}"]`));
       for (const t of right) await expect.poll(() => colour(t), { timeout: 20_000 }).toBe(PINNED);
       for (const t of [page.locator('[data-panel="cadastral"]'), page.locator('[data-panel="address"]')]) expect(await colour(t)).toBe(CARD);
@@ -65,7 +65,7 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       expect(await page.locator('[data-panel="corners"] table').evaluate((t) => getComputedStyle(t.parentElement!).backgroundColor)).toBe("rgb(255, 255, 255)");
 
       // Step 2 — „Corelate", 1366: the column under the left area, still purple.
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       await page.setViewportSize({ width: 1366, height: 1080 });
       await expect.poll(() => columnUnderLeft(page), { timeout: 20_000 }).toBe(true);
       for (const t of right) expect(await colour(t)).toBe(PINNED);

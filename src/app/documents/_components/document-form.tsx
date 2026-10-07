@@ -90,6 +90,7 @@ import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/l
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { panelSubtitle } from "@/lib/ui/panel-subtitle";
+import { TILE_TITLE_CLASS, TileSubtitle, TileTitle } from "@/components/tiles/tile-title";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
@@ -1013,14 +1014,16 @@ export function DocumentForm({
   // notebook — is ONE frame, titled with the tab's name, its panels sections
   // inside it in the notebook's order, the frame as wide as its widest panel.
   // Hidden, never unmounted, like every form tile (#37.20).
-  const frameBlock = (tile: string, title: string, children: React.ReactNode) => (
+  // Slice #38.30: `subtitle`, the line under the title — the fields tile's; a
+  // notebook tab's tile has none until its type's tiles are rebuilt (#38.33–#38.34).
+  const frameBlock = (tile: string, title: string, children: React.ReactNode, subtitle?: string) => (
     <section
       {...tileProps(tile)}
       data-frame={tile}
       className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}`}
       style={tiles ? { order: tiles.order(tile) } : undefined}
     >
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{title}</h2>
+      <TileTitle title={title} subtitle={subtitle} />
       <FrameContext.Provider value={true}>
         <div className="flex flex-col gap-4">{children}</div>
       </FrameContext.Provider>
@@ -1265,7 +1268,8 @@ export function DocumentForm({
       <Section
         panel="general"
         units={PANEL_UNITS.document.general}
-        title={t("sections.general")}
+        title={t("tiles.general")}
+        subtitle={t("tileSubtitles.general")}
         code={mode !== "create" ? documentCode : undefined}
       >
         <SelectField
@@ -1450,7 +1454,7 @@ export function DocumentForm({
                   {frameBlock(tileOfTabIndex(tabs, i), label, panelsOf(i))}
                 </div>
               ))
-            : frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0))}
+            : frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0), t("tileSubtitles.fields"))}
         </>
       ) : notebook ? (
         <>
@@ -1598,6 +1602,7 @@ export function DocumentForm({
                 onToggleBigPage={handleToggleBigPage}
                 sidebar
                 surface={tileSurface(!!tiles?.right?.has("pages"))}
+                subtitle={t("tileSubtitles.pages")}
               />
             </ErrorBoundary>
           </div>,
@@ -1652,6 +1657,7 @@ export function DocumentForm({
         <SuccessionPartiesPanel
           documentId={documentId}
           mode={effectiveMode === "view" ? "view" : "edit"}
+          subtitle={t("tileSubtitles.succession")}
         />
       </div>
     )}
@@ -1872,6 +1878,7 @@ export function DocumentForm({
  */
 function Section({
   title,
+  subtitle,
   code,
   panel,
   units,
@@ -1882,6 +1889,12 @@ function Section({
    * heading, the tile's own name („Detalii act") already saying whose they are.
    */
   title?:   string;
+  /**
+   * Slice #38.30: the grey line under a TILE's title — „Identificarea
+   * actului"'s. Never drawn inside a frame, where the title is a panel's
+   * bracketed subtitle (#37.90) and the frame carries the tile's own line.
+   */
+  subtitle?: string;
   /** Slice #21.06.misc: shown inline on the heading line, mirroring how
    *  Person's Identity section shows its personCode — used by General to
    *  show documentCode instead of as its own field row. */
@@ -1896,12 +1909,15 @@ function Section({
   const order = useContext(PanelOrderContext);
   const framed = useContext(FrameContext);
   const heading = title === undefined ? null : (
-    <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-      {/* Slice #37.90: inside a tile, a panel's subtitle reads in square brackets. */}
-      {framed ? panelSubtitle(title) : title}
-      {/* Slice #37.57: the system ID's one place — this corner. */}
-      {code && <SystemIdCorner code={code} />}
-    </h2>
+    <div className="mb-2 min-w-0" data-tile-title="">
+      <h2 className={TILE_TITLE_CLASS}>
+        {/* Slice #37.90: inside a tile, a panel's subtitle reads in square brackets. */}
+        {framed ? panelSubtitle(title) : title}
+        {/* Slice #37.57: the system ID's one place — this corner. */}
+        {code && <SystemIdCorner code={code} />}
+      </h2>
+      <TileSubtitle text={framed ? undefined : subtitle} />
+    </div>
   );
   if (framed) {
     return (

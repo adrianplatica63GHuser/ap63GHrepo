@@ -107,7 +107,7 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
 
       // Step 1 — the document: „Date generale", „Pagini", „Preț și taxe" ticked; „Pagini" at the right, top level with the row.
       await page.goto(`/documents/${docId}`);
-      for (const name of ["Date generale", "Pagini", "Preț și taxe"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
+      for (const name of ["Identificarea actului", "Pagini", "Preț și taxe"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
       await expect(page.locator('[data-tile="pages"]')).toBeVisible({ timeout: 30_000 });
       expect(await rowWidth(page)).toBe(1624);
       await atTheRight(page, "pages");
@@ -120,7 +120,7 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
 
       // Step 2 — the property: four ticked, „Street View" not; „Hartă" at the right, „Puncte de contur" under it.
       await page.goto(`/properties/${propId}`);
-      for (const name of ["Date cadastrale", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
+      for (const name of ["Identificare cadastrală", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
       await expect(tileBox(page, "Street View")).not.toBeChecked();
       await expect(page.locator('[data-tile="map"]')).toBeVisible({ timeout: 30_000 });
       await atTheRight(page, "map");

@@ -101,7 +101,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 3 — open it, „Asocieri": empty, the two buttons, „Înscrisuri citate…".
       await top.getByRole("link", { name: "Deschide" }).click();
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
       const cited = page.getByRole("button", { name: "Înscrisuri citate", exact: true });
@@ -137,7 +137,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
 
       // Step 7 — one line, „Etichetă scurtă (Tip)"; the relationship behind its button
       // reads FROM the certificate, and a click outside hides it.
-      const fromCertificate = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), CONTRACT);
+      const fromCertificate = lineRow(page.getByRole("region", { name: "Legături", exact: true }), CONTRACT);
       await expect(fromCertificate).toHaveCount(1, { timeout: 15_000 });
       await expect(fromCertificate.locator("[data-row-content]")).toHaveText(`${CONTRACT} (Contract de Vânzare)`);
       await expectOneLine(fromCertificate);
@@ -151,7 +151,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // Step 8 — the contract's „Acte corelate": the converse.
       await page.goto(`/documents/${contractId}`);
       await expect(page.getByRole("heading", { name: CONTRACT })).toBeVisible({ timeout: 30_000 });
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       const fromContract = lineRow(related, CERTIFICATE);
       await expect(fromContract).toHaveCount(1, { timeout: 30_000 });
       await expect(fromContract.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);

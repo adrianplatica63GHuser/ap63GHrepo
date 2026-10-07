@@ -49,7 +49,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       // Step 2 — Ana's „Corelate": empty, „Asociază persoană", „Dezasociază".
       await page.goto(`/natural-persons/${anaId}`);
       await expect(page.getByRole("heading", { name: ANA })).toBeVisible({ timeout: 30_000 });
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -83,7 +83,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       // Step 5 — back on Ana's „Corelate" (`?tab=related`): one line, „Mihai … (Părinte)".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${anaId}\\?tab=related$`), { timeout: 30_000 });
-      const onAna = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), MIHAI);
+      const onAna = lineRow(page.getByRole("region", { name: "Legături", exact: true }), MIHAI);
       await expect(onAna).toHaveCount(1, { timeout: 15_000 });
       await expect(onAna.locator("[data-row-content]")).toHaveText(`${MIHAI} (Părinte)`);
       await expect(onAna.getByRole("link", { name: "Vizualizare" })).toBeVisible();
@@ -93,7 +93,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       // Step 6 — the other end: Mihai's „Corelate" reads Ana as „Fiică".
       await page.goto(`/natural-persons/${mihaiId}`);
       await expect(page.getByRole("heading", { name: MIHAI })).toBeVisible({ timeout: 30_000 });
-      const onMihai = lineRow(await showTile(page, "Corelate"), ANA);
+      const onMihai = lineRow(await showTile(page, "Legături"), ANA);
       await expect(onMihai).toHaveCount(1, { timeout: 30_000 });
       await expect(onMihai.locator("[data-row-content]")).toHaveText(`${ANA} (Fiică)`);
       await expect(onMihai).not.toContainText("Părinte");

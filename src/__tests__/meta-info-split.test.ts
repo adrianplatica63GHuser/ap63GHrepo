@@ -54,8 +54,9 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
     for (const ns of ["naturalPerson", "judicialPerson", "property", "document"] as const) {
       const r = ro[ns].tiles as Record<string, string>;
       const e = en[ns].tiles as Record<string, string>;
-      expect([r.classification, r.connections, r.metadata]).toEqual(["Clasificări", "Conexiuni", undefined]);
-      expect([e.classification, e.connections]).toEqual(["Classifications", "Connections"]);
+      // #38.30: „Clasificări" / „Conexiuni" became „Clasificare" / „Etichete și grupuri", under the same keys.
+      expect([r.classification, r.connections, r.metadata]).toEqual(["Clasificare", "Etichete și grupuri", undefined]);
+      expect([e.classification, e.connections]).toEqual(["Classification", "Tags and groups"]);
     }
   });
 

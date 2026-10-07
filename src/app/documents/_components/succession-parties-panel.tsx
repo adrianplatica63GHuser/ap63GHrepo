@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
 import { PANEL_UNIT_STYLE } from "@/lib/ui/field-widths";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 /**
  * `linkId` is `person_document.id` (#36.02). This panel reads the same endpoint
@@ -33,6 +34,8 @@ type PartyItem = {
 type Props = {
   documentId: string;
   mode:       "edit" | "view";
+  /** Slice #38.30: the line under „Părți" saying what the tile holds. */
+  subtitle?:  string;
 };
 
 // ---------------------------------------------------------------------------
@@ -72,7 +75,7 @@ function QualityBadge({ quality, t }: { quality: string | null; t: ReturnType<ty
 // Component
 // ---------------------------------------------------------------------------
 
-export function SuccessionPartiesPanel({ documentId, mode }: Props) {
+export function SuccessionPartiesPanel({ documentId, mode, subtitle }: Props) {
   const t           = useTranslations("document.successionParties");
   const router      = useRouter();
   const queryClient = useQueryClient();
@@ -124,9 +127,7 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
       data-panel="succession-parties"
       className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-        {t("sectionTitle")}
-      </h2>
+      <TileTitle title={t("sectionTitle")} subtitle={subtitle} />
 
       {isLoading ? (
         <p className="py-2 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>

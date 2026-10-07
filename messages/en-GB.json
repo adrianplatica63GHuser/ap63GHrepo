@@ -277,9 +277,6 @@
     "saveErrorForeignKey": "A value this form refers to no longer exists. Choose another value, or reload the page.",
     "deleteError": "Could not delete",
     "sections": {
-      "cadastral": "Cadastral Data",
-      "address": "Address",
-      "corners": "Corners",
       "notes": "Notes"
     },
     "fields": {
@@ -428,7 +425,7 @@
       "provenance": "Provenance"
     },
     "tiles": {
-      "cadastral": "Cadastral Data",
+      "cadastral": "Cadastral identification",
       "corners": "Corners",
       "address": "Address",
       "map": "Map",
@@ -436,9 +433,17 @@
       "associations": "Related properties",
       "persons": "Persons",
       "documents": "Documents",
-      "related": "Related",
-      "classification": "Classifications",
-      "connections": "Connections"
+      "related": "Links",
+      "classification": "Classification",
+      "connections": "Tags and groups"
+    },
+    "tileSubtitles": {
+      "cadastral": "Tarla, parcel, land book, cadastral no., areas",
+      "address": "The property's postal address",
+      "related": "People, properties and documents linked to this record",
+      "classification": "Importance, relevance, provenance",
+      "connections": "Tags, groups, stamps, see also",
+      "corners": "The parcel's corners (Stereo 70), in order"
     },
     "tabs": {
       "details": "Details",
@@ -866,7 +871,7 @@
         "statementAlgorithm": "This item was generated automatically by an algorithm (e.g. polygon division or geometric computation).",
         "statementAiInterpreted": "This item was interpreted by an AI model from an image or document via a cloud API — the result should be reviewed by a person.",
         "statementExternalFeed": "This item arrived from an external system or data feed — verify the source and accuracy of the data.",
-        "statementRelativeIdCard": "This person was created from a relative's identity document — the father or mother of an identity card's holder, from the names printed on it or typed into the holder's „Carte de identitate” tile. The surname may be assumed; check it.",
+        "statementRelativeIdCard": "This person was created from a relative's identity document — the father or mother of an identity card's holder, from the names printed on it or typed into the holder's “Identity document” tile. The surname may be assumed; check it.",
         "algorithmSource": "Source calculation",
         "algorithmViewRun": "View calculation",
         "algorithmNotFound": "Source calculation not found (may have been deleted).",
@@ -939,8 +944,8 @@
       "saving": "Saving…",
       "saved": "✓ Saved",
       "saveErrorSession": "Your session expired — please sign in again and retry.",
-      "sectionClassification": "Classifications",
-      "sectionConnections": "Connections",
+      "sectionClassification": "Classification",
+      "sectionConnections": "Tags and groups",
       "hideAdd": "Hide",
       "about": "About “{title}”"
     },
@@ -1077,7 +1082,6 @@
       "idDocument": "ID Document",
       "idCard": "ID Card",
       "demographics": "Demographics",
-      "contact": "Contact",
       "homeAddress": "Home Address",
       "correspondenceAddress": "Correspondence Address"
     },
@@ -1157,13 +1161,23 @@
     },
     "tiles": {
       "identity": "Identity",
-      "idCard": "ID Card",
+      "idCard": "Identity document",
       "contact": "Contact",
       "addresses": "Addresses",
-      "related": "Related",
-      "classification": "Classifications",
-      "connections": "Connections",
+      "related": "Links",
+      "classification": "Classification",
+      "connections": "Tags and groups",
       "interactions": "Interactions"
+    },
+    "tileSubtitles": {
+      "identity": "Name, CNP, gender, date and place of birth",
+      "idCard": "Identity card or passport",
+      "contact": "Phone numbers and e-mail addresses",
+      "addresses": "Home and correspondence",
+      "related": "People, properties and documents linked to this record",
+      "classification": "Importance, relevance, provenance",
+      "connections": "Tags, groups, stamps, see also",
+      "interactions": "History of interactions with this person"
     }
   },
   "judicialPerson": {
@@ -1206,8 +1220,6 @@
     "groupsFilterAll": "All groups",
     "groupsFilterUngrouped": "Ungrouped",
     "sections": {
-      "identity": "Identity",
-      "contactPersons": "Contact Persons",
       "officeAddress": "Office Address",
       "registeredAddress": "Registered Address",
       "correspondenceAddress": "Correspondence Address"
@@ -1266,13 +1278,22 @@
       "contactPersonNotInSystem": "If the person is not in the system, they must be entered first using the Natural Person functionality."
     },
     "tiles": {
-      "identity": "Identity",
-      "contactPersons": "Contact Persons",
+      "identity": "Registration details",
+      "contactPersons": "Representatives and contact",
       "addresses": "Addresses",
-      "related": "Related",
-      "classification": "Classifications",
-      "connections": "Connections",
+      "related": "Links",
+      "classification": "Classification",
+      "connections": "Tags and groups",
       "interactions": "Interactions"
+    },
+    "tileSubtitles": {
+      "identity": "Name, tax ID (CUI), Trade Register",
+      "contactPersons": "The firm's representatives and contact persons",
+      "addresses": "Registered office and correspondence",
+      "related": "People, properties and documents linked to this record",
+      "classification": "Importance, relevance, provenance",
+      "connections": "Tags, groups, stamps, see also",
+      "interactions": "History of interactions with this firm"
     },
     "tabs": {
       "details": "Details",
@@ -1543,7 +1564,6 @@
     },
     "sections": {
       "typeSelect": "Document Type",
-      "general": "General",
       "titlu": "Land Title Details",
       "mostenitor": "Succession Details",
       "dateRange": "Contract Period",
@@ -1653,16 +1673,25 @@
       "ok": "OK"
     },
     "tiles": {
-      "general": "General data",
+      "general": "Document identification",
       "pages": "Pages",
       "fields": "Document details",
       "succession": "Parties",
       "persons": "Persons",
       "properties": "Properties",
       "associations": "Related documents",
-      "related": "Related",
-      "classification": "Classifications",
-      "connections": "Connections"
+      "related": "Links",
+      "classification": "Classification",
+      "connections": "Tags and groups"
+    },
+    "tileSubtitles": {
+      "general": "Type, issuer, number, date",
+      "fields": "The fields specific to this document type",
+      "succession": "The deceased and the heirs",
+      "pages": "Scans of the document's pages",
+      "related": "People, properties and documents linked to this record",
+      "classification": "Importance, relevance, provenance",
+      "connections": "Tags, groups, stamps, see also"
     },
     "tabs": {
       "details": "Details",
@@ -1758,7 +1787,7 @@
       "linkThis": "Link this one",
       "noneOfThese": "None of these — create new",
       "roleMissingTitle": "Role not configured",
-      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then add the person from the document’s “Related”.",
+      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then add the person from the document’s “Links”.",
       "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
       "noMatchTitle": "No existing match found",
       "noMatchBody": "A new person will be created with the extracted details.",
@@ -1804,10 +1833,10 @@
       "stubTypePlaceholder": "choose a type",
       "stubConfirm": "Create the stub and link",
       "stubCancel": "Cancel",
-      "alreadyAssociated": "These two documents are already associated. Nothing changed. Dissociate them from “Related” if you want a different relationship.",
-      "alreadyAssociatedAs": "These two documents are already associated, as “{roleName}”. Nothing changed. Dissociate them from “Related” if you want a different relationship.",
+      "alreadyAssociated": "These two documents are already associated. Nothing changed. Dissociate them from “Links” if you want a different relationship.",
+      "alreadyAssociatedAs": "These two documents are already associated, as “{roleName}”. Nothing changed. Dissociate them from “Links” if you want a different relationship.",
       "roleMissing": "The relationship type “{roleName}” is not in Reference Data, so the link cannot be created with the right direction. Ask an administrator to add it, then try again.",
-      "noPurpose": "It is not known what role this instrument plays on the document, so there is no relationship type to link it under. Leave the reference and associate manually from “Related”.",
+      "noPurpose": "It is not known what role this instrument plays on the document, so there is no relationship type to link it under. Leave the reference and associate manually from “Links”.",
       "referenceGone": "The list of instruments changed in the meantime. Close and reopen this dialog.",
       "selfReference": "A document cannot be linked to itself.",
       "saveError": "The operation failed. Please try again."
@@ -1892,7 +1921,7 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one document",
-      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from “Related” if you want a different relationship."
+      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from “Links” if you want a different relationship."
     },
     "pages": {
       "sectionTitle": "Pages",
@@ -1987,8 +2016,8 @@
       "errorSession": "Your session has expired. Please sign in again and retry.",
       "parcelTaken": "This document's tarla and parcela already belong to another property. The document was not processed and nothing was created.",
       "parcelTakenSeveral": "{count, plural, one {One property has} other {# properties have}} tarla {tarla} and parcela {parcela}, the same as this document. The document was not processed and nothing was created.",
-      "parcelTakenWhatToDo": "Open the property and add this document to it from “Related”, or, if this is a different parcel, correct the document's folder tag under “Connections”.",
-      "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from “Related”.",
+      "parcelTakenWhatToDo": "Open the property and add this document to it from “Links”, or, if this is a different parcel, correct the document's folder tag under “Tags and groups”.",
+      "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from “Links”.",
       "openPropertiesList": "Open the properties list"
     },
     "notebook": {

@@ -65,7 +65,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   // empty, „Asociază proprietate", „Dezasociază".
   await page.goto(`/properties/${part.id}`);
   await expect(page.getByRole("heading", { name: part.name })).toBeVisible({ timeout: 30_000 });
-  await showTile(page, "Corelate");
+  await showTile(page, "Legături");
   await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -92,7 +92,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   // Step 5 — „Asociază selecția": the part reads „această proprietate „Inclus în” <whole>".
   await page.getByRole("button", { name: "Asociază selecția" }).click();
   await expect(page).toHaveURL(new RegExp(`/properties/${part.id}\\?tab=related$`), { timeout: 30_000 });
-  const fromPart = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), WHOLE);
+  const fromPart = lineRow(page.getByRole("region", { name: "Legături", exact: true }), WHOLE);
   await expect(fromPart).toHaveCount(1, { timeout: 15_000 });
   await expect(fromPart.getByRole("radio", { name: WHOLE })).toHaveCount(1);
   await expectOneLine(fromPart);
@@ -106,12 +106,12 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   // Step 6 — the whole's „Proprietăți corelate": the converse, with the part's name.
   await page.goto(`/properties/${whole.id}`);
   await expect(page.getByRole("heading", { name: WHOLE })).toBeVisible({ timeout: 30_000 });
-  const related = await showTile(page, "Corelate");
+  const related = await showTile(page, "Legături");
   const fromWhole = related.locator("li[data-one-line-row]").filter({ has: page.getByRole("radio", { name: part.name, exact: true }) });
   await expect(fromWhole).toHaveCount(1, { timeout: 30_000 });
   await fromWhole.getByRole("button", { name: "Relația", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: ROLE })).toHaveText(`${part.name} „${ROLE}” această proprietate`);
-  await related.getByRole("heading", { name: "Corelate" }).click();
+  await related.getByRole("heading", { name: "Legături" }).click();
   await expect(page.getByRole("status").filter({ hasText: ROLE })).toHaveCount(0);
 }
 

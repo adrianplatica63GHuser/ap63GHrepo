@@ -90,7 +90,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       // „Nicio parte adăugată" and „+ Adaugă parte".
       await page.goto(`/documents/${documentId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
-      await expect(tileBox(page, "Date generale")).toBeChecked({ timeout: 30_000 });
+      await expect(tileBox(page, "Identificarea actului")).toBeChecked({ timeout: 30_000 });
       await expect(tileBox(page, "Părți")).toBeChecked({ timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Părți", exact: true })).toBeVisible({ timeout: 30_000 });
       // The panel draws its title before its list answers; under load (full
@@ -136,7 +136,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       // Step 7 — „Persoane": both people, „Rol" says each one's quality (FU-224).
       // Slice #37.20: „Părți" stays on screen beside the „Persoane" tile, and
       // both list the two people — so the rows are looked for in the tile.
-      const personsTile = await showTile(page, "Corelate");
+      const personsTile = await showTile(page, "Legături");
       for (const [person, quality] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"]] as const) {
         const r = lineRow(personsTile, person);
         await expect(r).toHaveCount(1, { timeout: 15_000 });
@@ -149,7 +149,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       for (const [id, person, quality] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
         await page.goto(`/natural-persons/${id}`);
         await expect(page.getByRole("heading", { name: person })).toBeVisible({ timeout: 30_000 });
-        const r = lineRow(await showTile(page, "Corelate"), CERTIFICATE);
+        const r = lineRow(await showTile(page, "Legături"), CERTIFICATE);
         await expect(r).toHaveCount(1, { timeout: 15_000 });
         await expect(r.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);
         await r.getByRole("button", { name: "Relația", exact: true }).click();

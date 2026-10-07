@@ -73,18 +73,18 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
       // #37.89: „Interacțiuni"'s right-hand column is TC-PERS-07's subject; here it is unticked, so the row keeps the whole width this case measures.
       await hideTile(page, "Interacțiuni");
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
-      await expect(region("Corelate")).toContainText("Nimic corelat încă.", { timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Legături")).toContainText("Nimic corelat încă.", { timeout: 30_000 });
       await page.waitForTimeout(2500); // past the first layout's settling
       const rule = await boxes(page);
 
       // Step 2 — „Conexiuni" by its padding, to under „Corelate": it stays there, nothing else moves.
-      const conn = region("Conexiuni");
+      const conn = region("Etichete și grupuri");
       const p = await padding(conn);
       await page.mouse.move(p.x, p.y);
       await expect.poll(() => conn.evaluate((e) => getComputedStyle(e).cursor)).toBe("grab");
       const related = rule.related;
-      const [r0, rr] = await Promise.all([conn.boundingBox(), region("Corelate").boundingBox()]);
+      const [r0, rr] = await Promise.all([conn.boundingBox(), region("Legături").boundingBox()]);
       // The tile's top-left corner to 60 px under „Corelate", on its left edge; the pointer keeps its place in the tile.
       const tx = (rr?.x ?? 0) + (p.x - (r0?.x ?? 0));
       const ty = (rr?.y ?? 0) + (rr?.height ?? 0) + 60 + (p.y - (r0?.y ?? 0));
@@ -98,7 +98,7 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
 
       // Step 3 — onto „Corelate": the outline says not free; released, it goes back.
       const q = await padding(conn);
-      const onto = await region("Corelate").boundingBox();
+      const onto = await region("Legături").boundingBox();
       expect(await drag(page, q.x, q.y, (onto?.x ?? 0) + 20, (onto?.y ?? 0) + 20)).toBe("false");
       await expect.poll(async () => (await boxes(page)).connections).toEqual(dropped.connections);
 
@@ -118,15 +118,15 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
 
       // Step 5 — after a reload the arrangement holds.
       await page.reload();
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => (await boxes(page)).connections, { timeout: 20_000 }).toEqual(dropped.connections);
 
       // Step 6 — „Implicit", then „Toate": #37.75's places again.
       await page.getByRole("button", { name: "Implicit", exact: true }).click();
-      await expect(region("Conexiuni")).toBeHidden();
+      await expect(region("Etichete și grupuri")).toBeHidden();
       await page.getByRole("button", { name: "Toate", exact: true }).click();
       await hideTile(page, "Interacțiuni"); // #37.89, as in step 1
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => (await boxes(page)).connections, { timeout: 20_000 }).toEqual(rule.connections);
       expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toBeNull();
     } finally {

@@ -51,7 +51,7 @@ test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la foca
       // Step 1 — three chips, no „×" drawn, padding 4–8 px every side.
       await page.setViewportSize({ width: 1366, height: 900 });
       await page.goto(`/natural-persons/${person}?tab=metadata`);
-      const con = page.getByRole("region", { name: "Conexiuni", exact: true });
+      const con = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
       const chips = con.locator("[data-tag-chip]");
       await expect(chips).toHaveText(TAGS, { timeout: 30_000 });
       // In view first, so the hovers below never scroll and every box is read from one place.

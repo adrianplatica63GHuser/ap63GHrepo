@@ -90,7 +90,7 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       // Step 1 — „Corelate" → „Asociază persoană": „Asociere persoană", the three tiles one under another.
       await page.goto(`/documents/${padId}`);
       await expect(page.getByRole("heading", { name: PAD })).toBeVisible({ timeout: 30_000 });
-      const persons = await showTile(page, "Corelate");
+      const persons = await showTile(page, "Legături");
       await persons.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană" })).toBeVisible({ timeout: 30_000 });
@@ -107,7 +107,7 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       // Step 3 — „Anulează"; „Proprietăți" → „Asociază": „Asociere proprietate", the same three.
       await page.getByRole("button", { name: "Anulează", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}`), { timeout: 30_000 });
-      const properties = await showTile(page, "Corelate");
+      const properties = await showTile(page, "Legături");
       await properties.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}/associate-property$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere proprietate" })).toBeVisible({ timeout: 30_000 });
@@ -128,7 +128,7 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       await page.getByRole("checkbox", { name: PROPERTY }).check();
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${padId}\\?tab=properties$`), { timeout: 30_000 });
-      const tile = page.getByRole("region", { name: "Corelate", exact: true });
+      const tile = page.getByRole("region", { name: "Legături", exact: true });
       const linked = tile.locator("li[data-one-line-row] [data-row-content]").filter({ hasText: PROPERTY });
       await expect(linked).toHaveCount(1, { timeout: 30_000 });
       await expectOneLine(linked);

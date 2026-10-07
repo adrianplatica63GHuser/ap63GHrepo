@@ -18,8 +18,8 @@ const GROUPS = ["Etichete / Cuvinte cheie", "Grupuri", "Ștampile", "Vezi și"];
 
 async function check(page: Page, url: string) {
   await page.goto(url);
-  const conn = await showTile(page, "Conexiuni");
-  const cls = await showTile(page, "Clasificări");
+  const conn = await showTile(page, "Etichete și grupuri");
+  const cls = await showTile(page, "Clasificare");
   await expect(conn.locator("[data-connections-groups] > [data-divider]")).toHaveCount(3, { timeout: 30_000 });
   await expect(cls.locator('[data-divider="horizontal"]').first()).toBeVisible();
   const ref = await cls.locator('[data-divider="horizontal"]').first().evaluate((d) => {

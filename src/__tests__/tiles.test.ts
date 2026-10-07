@@ -89,9 +89,10 @@ describe("the Natural Person's tiles", () => {
   const PAGE = code(read("src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"));
 
   it("are the eight the header names, and nothing stored shows exactly the old Detalii tab", () => {
-    // #37.67: „Corelate"; #37.89: „Interacțiuni", fixed at the right, ticked by default.
+    // #37.67: „Corelate"; #37.89: „Interacțiuni", fixed at the right.
+    // #38.30: „Interacțiuni" is no longer ticked by default (#37.89 had ticked it) — a placeholder until it is built.
     expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections", "interactions"]);
-    expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses", "interactions"]);
+    expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses"]);
     expect(NP_TILE_REGISTRY.placement?.right).toEqual(["interactions"]);
     expect(NP_TILE_REGISTRY.form).toBe(NP_FORM_TILES);
   });
@@ -147,7 +148,8 @@ describe("the Natural Person's tiles", () => {
     expect(NP_TILES.map((k) => ro.naturalPerson.tiles[k])).toEqual([
       // Slice #37.27: „Asocieri" is „Persoane" on the Natural Person — its people, by name and relationship.
       // Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate".
-      "Identitate", "Carte de identitate", "Contact", "Adrese", "Corelate", "Clasificări", "Conexiuni", "Interacțiuni", // #37.89
+      // #38.30: „Act de identitate", „Legături", „Clasificare", „Etichete și grupuri".
+      "Identitate", "Act de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni", // #37.89
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");
@@ -222,7 +224,8 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { judicialPerson: { tiles: Record<string, string> } };
     expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
       // #37.67; #37.89: the first tile is „Identitate", as on the Natural Person, and „Interacțiuni" at the right.
-      "Identitate", "Persoane de contact", "Adrese", "Corelate", "Clasificări", "Conexiuni", "Interacțiuni",
+      // #38.30: „Date de înregistrare", „Reprezentanți și contact", „Legături", „Clasificare", „Etichete și grupuri".
+      "Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni",
     ]);
   });
 });
@@ -300,7 +303,8 @@ describe("the Property's tiles (Slice #37.19)", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { property: { tiles: Record<string, string> } };
     expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
       // #37.66: three tiles became „Corelate"; #37.88: the groups' order.
-      "Date cadastrale", "Adresă", "Corelate", "Clasificări", "Conexiuni", "Hartă", "Puncte de contur", "Street View",
+      // #38.30: „Identificare cadastrală", „Legături", „Clasificare", „Etichete și grupuri".
+      "Identificare cadastrală", "Adresă", "Legături", "Clasificare", "Etichete și grupuri", "Hartă", "Puncte de contur", "Street View",
     ]);
   });
 });

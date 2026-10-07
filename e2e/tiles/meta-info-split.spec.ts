@@ -24,8 +24,8 @@ import { tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-08`;
 const SHOTS = "playwright-report/meta-info-split";
-const CLASSIFICATION = "Clasificări";
-const CONNECTIONS = "Conexiuni";
+const CLASSIFICATION = "Clasificare";
+const CONNECTIONS = "Etichete și grupuri";
 
 /** Step 1's reading, on any record's screen opened with `?tab=metadata`. */
 async function twoTiles(page: Page, url: string): Promise<{ cls: Locator; con: Locator }> {

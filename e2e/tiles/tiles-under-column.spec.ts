@@ -63,7 +63,7 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       // Step 1 — the property: the column at the right, „Conexiuni" under „Date cadastrale".
       await page.goto(`/properties/${propId}`);
       await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
-      const conn = await showTile(page, "Conexiuni");
+      const conn = await showTile(page, "Etichete și grupuri");
       const map = page.locator('[data-tile="map"]');
       const corners = page.locator('[data-tile="corners"]');
       const cad = page.locator('[data-tile="cadastral"]');
@@ -101,7 +101,7 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await page.goto(`/documents/${docId}`);
       const pages = page.locator('[data-tile="pages"]');
       await expect(pages).toBeVisible({ timeout: 30_000 });
-      const cls = await showTile(page, "Clasificări");
+      const cls = await showTile(page, "Clasificare");
       await page.waitForTimeout(1500);
       const p1 = await place(page, pages);
       const pBox = (await pages.boundingBox())!;
@@ -115,7 +115,7 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await page.goto(`/properties/${propId}`);
       await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
       await page.getByRole("button", { name: "Implicit", exact: true }).click();
-      await showTile(page, "Conexiuni");
+      await showTile(page, "Etichete și grupuri");
       await expect.poll(async () => (await place(page, conn)).y - (await place(page, cad)).b, { timeout: 20_000 }).toBe(GAP);
       expect((await place(page, conn)).x).toBe(k1.x);
       expect(await page.evaluate(() => localStorage.getItem("ga40-tile-positions-property-v1"))).toBeNull();

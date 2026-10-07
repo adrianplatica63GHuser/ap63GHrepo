@@ -131,7 +131,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       if (viewport) await page.setViewportSize(viewport);
       // Slice #37.17 — every tile at once („Toate"), its widths held, and its pictures; then „Implicit".
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Toate", exact: true }).click();
-      await expect(page.getByRole("region", { name: "Conexiuni", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
       // Slice #37.27 — the tiles are on a width unit: the row is 6 units at 1366 px, 10 at 1920,
       // 14 at 2560, and every tile and panel is a whole number of units (replaces #37.23's
@@ -139,7 +139,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
       await photograph(page, "natural-person-all-tiles", [1920, 2560], 1400);
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
-      await expect(page.getByRole("region", { name: "Conexiuni", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți persoana?" });
       await expect(confirm.getByRole("button", { name: "Nu", exact: true })).toBeVisible();

@@ -56,7 +56,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Proprietăți", beside „Asocieri": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible();
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -84,7 +84,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?tab=properties$`), { timeout: 30_000 });
 
       // Step 7 — one column, „Denumire" (no „Cod"), one row with „Vizualizare".
-      const propertiesTile = page.getByRole("region", { name: "Corelate", exact: true });
+      const propertiesTile = page.getByRole("region", { name: "Legături", exact: true });
       const linkedRow = lineRow(propertiesTile, PROPERTY);
       await expect(linkedRow).toHaveCount(1, { timeout: 15_000 });
       await expect(linkedRow.locator("[data-row-content]")).toHaveText(PROPERTY);
@@ -97,7 +97,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
 
       // Step 9 — the other end: „Acte" lists „Contract de Vânzare", the title.
-      const back = lineRow(await showTile(page, "Corelate"), DOC_TITLE);
+      const back = lineRow(await showTile(page, "Legături"), DOC_TITLE);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       await expect(back.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
 

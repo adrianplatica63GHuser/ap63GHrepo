@@ -13,10 +13,12 @@
 import type { ReactNode } from "react";
 import { PANEL_STYLE, WIDE_TILE_STYLE, unitStyle } from "@/lib/ui/field-widths";
 import { TILE_SURFACE } from "@/lib/ui/tile-surface";
+import { TileTitle } from "./tile-title";
 
 export function ListTile({
   tile,
   title,
+  subtitle,
   wide = false,
   units,
   panel,
@@ -25,6 +27,8 @@ export function ListTile({
 }: {
   tile: string;
   title: string;
+  /** Slice #38.30: the grey line under the title saying what the tile holds. */
+  subtitle?: string;
   /** A fixed two-panel tile, for content that is not a table of fixed columns (META INFO). */
   wide?: boolean;
   /** Slice #37.27: exactly this many width units wide (`unitsRem`). */
@@ -43,7 +47,7 @@ export function ListTile({
       className={`${wide || units ? "" : "w-fit "}max-w-full ${surface}`}
       style={units ? unitStyle(units) : wide ? WIDE_TILE_STYLE : { minWidth: PANEL_STYLE.width }}
     >
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{title}</h2>
+      <TileTitle title={title} subtitle={subtitle} />
       {children}
     </section>
   );

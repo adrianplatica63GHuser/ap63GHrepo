@@ -28,7 +28,7 @@ async function principalOf(request: APIRequestContext, propertyId: string): Prom
 /** The group's row in this screen's „Grupuri", and its chip. */
 async function groupRow(page: Page, propertyId: string): Promise<{ groups: Locator; row: Locator; chip: Locator }> {
   await page.goto(`/properties/${propertyId}`);
-  const tile = await showTile(page, "Conexiuni");
+  const tile = await showTile(page, "Etichete și grupuri");
   const groups = tile.locator("section").filter({ has: page.getByRole("heading", { name: "Grupuri", exact: true }) });
   const row = groups.locator("li").filter({ hasText: GROUP });
   return { groups, row, chip: row.locator("[data-group-member-count]") };

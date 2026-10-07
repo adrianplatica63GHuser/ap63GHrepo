@@ -73,12 +73,12 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(8, { timeout: 30_000 }); // #37.63: META INFO is two; #37.66: the three lists are „Corelate"
-      for (const tile of ["Date cadastrale", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Street View", "Corelate", "Clasificări", "Conexiuni"]) await expect(tileBox(page, tile)).not.toBeChecked();
+      for (const tile of ["Identificare cadastrală", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
+      for (const tile of ["Street View", "Legături", "Clasificare", "Etichete și grupuri"]) await expect(tileBox(page, tile)).not.toBeChecked();
       await expect(page.getByRole("tab")).toHaveCount(0);
 
       // Step 2 — „Corelate" (#37.66): empty, „Asociază persoană", „Dezasociază".
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -110,7 +110,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // Step 6 — back on „Corelate" (`?tab=persons`): one line, „Nume (Rol)", no „Cotă".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?tab=persons$`), { timeout: 30_000 });
-      const related = page.getByRole("region", { name: "Corelate", exact: true });
+      const related = page.getByRole("region", { name: "Legături", exact: true });
       const onProperty = lineRow(related, PERSON);
       await expect(onProperty).toHaveCount(1, { timeout: 15_000 });
       await expect(onProperty.locator("[data-row-content]")).toHaveText(`${PERSON} (${ROLE})`);
@@ -122,7 +122,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // Step 7 — the other end: the person's „Corelate", one line — „Denumire (Rol)".
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      const personTile = await showTile(page, "Corelate");
+      const personTile = await showTile(page, "Legături");
       const onPerson = lineRow(personTile, PROPERTY);
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
       await expect(onPerson.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
@@ -154,7 +154,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // Step 11 — back on the person's „Corelate" (`?tab=properties`).
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?tab=properties$`), { timeout: 30_000 });
-      const again = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PROPERTY);
+      const again = lineRow(page.getByRole("region", { name: "Legături", exact: true }), PROPERTY);
       await expect(again).toHaveCount(1, { timeout: 15_000 });
       await expect(again.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
 
@@ -162,7 +162,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await again.getByRole("link", { name: "Vizualizare" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      const readBackTile = await showTile(page, "Corelate");
+      const readBackTile = await showTile(page, "Legături");
       const readBack = lineRow(readBackTile, PERSON);
       await expect(readBack).toHaveCount(1, { timeout: 30_000 });
       await expect(readBack).toContainText(ROLE);
@@ -186,7 +186,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
         try {
           await page.reload();
           await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-          await expect(tileBox(page, "Date cadastrale")).toBeChecked({ timeout: 30_000 });
+          await expect(tileBox(page, "Identificare cadastrală")).toBeChecked({ timeout: 30_000 });
           await page.waitForTimeout(8_000);
         } finally {
           page.off("request", onRequest);
@@ -209,7 +209,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       console.log(`[TC-ASSOC-04 #37.19] unticked, every Google request: ${JSON.stringify([...new Set(withoutMap)])}`);
       expect(tally(withMap).mapLoads, "the control: a ticked map makes map requests").toBeGreaterThan(0);
       expect(withoutMap.filter((u) => MAP_LOAD.test(u)), "an unticked map makes no map request").toEqual([]);
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
 
       // ── At the end — on the property's „Corelate": radio, „Dezasociază" ──
       await page.getByRole("radio", { name: PERSON }).check();

@@ -51,6 +51,7 @@ import { contentTypeOf } from "@/lib/files/file-mime";
 import { MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { TILE_SURFACE } from "@/lib/ui/tile-surface";
+import { TileSubtitle } from "@/components/tiles/tile-title";
 import { pageRefusal, takeUnsavedPages } from "@/lib/documents/new-document-pages";
 import { nextRotation, rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
 import { RotatedImage } from "@/components/documents/rotated-image";
@@ -645,6 +646,8 @@ type Props = {
   sidebar?:         boolean;
   /** Slice #37.78: the tile's surface — `PINNED_TILE_SURFACE` in the right column. */
   surface?:         string;
+  /** Slice #38.30: the line under „Pagini" saying what the tile holds — passed on the record's tile row. */
+  subtitle?:        string;
 };
 
 export function PagesPanel({
@@ -655,6 +658,7 @@ export function PagesPanel({
   onToggleBigPage,
   sidebar = false,
   surface = TILE_SURFACE,
+  subtitle,
 }: Props) {
   const {
     t,
@@ -704,8 +708,9 @@ export function PagesPanel({
       ].join(" ")}
       aria-label={t("sectionTitle")}
     >
-      {/* Section header */}
-      <div className="mb-3 flex items-center justify-between gap-3">
+      {/* Section header — and, since #38.30, the tile's subtitle under it. */}
+      <div className="mb-3 min-w-0">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
             {t("sectionTitle")}
@@ -788,6 +793,8 @@ export function PagesPanel({
             />
           )}
         </div>
+      </div>
+      <TileSubtitle text={subtitle} />
       </div>
 
       {unsaved.length > 0 && (

@@ -62,12 +62,12 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       // Step 1 — the person's screen: the tile checkboxes (Slice #37.17; nine since #37.63, seven since #37.67).
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      for (const tile of ["Identitate", "Carte de identitate", "Contact", "Adrese", "Corelate", "Clasificări", "Conexiuni"]) {
+      for (const tile of ["Identitate", "Act de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri"]) {
         await expect(tileBox(page, tile)).toBeVisible();
       }
 
       // Step 2 — „Corelate": empty, „Asociază act", „Dezasociază".
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -121,7 +121,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 9 — the other end: „Persoane" reads the person as „Cumpărător".
-      const personsTile = await showTile(page, "Corelate");
+      const personsTile = await showTile(page, "Legături");
       const back = lineRow(personsTile, PERSON);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       await expect(back.getByRole("radio", { name: `${PERSON} — Cumpărător` })).toHaveCount(1);

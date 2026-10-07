@@ -54,7 +54,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Corelate" (#37.66): empty, „Asociază act", „Dezasociază".
-      await showTile(page, "Corelate");
+      await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -85,7 +85,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       // Step 6 — back on „Corelate" (`?tab=document`): one line, „Etichetă scurtă (Tip)", „Vizualizare".
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?tab=document$`), { timeout: 30_000 });
-      const related = page.getByRole("region", { name: "Corelate", exact: true });
+      const related = page.getByRole("region", { name: "Legături", exact: true });
       const linked = lineRow(related, DOC_TITLE);
       await expect(linked).toHaveCount(1, { timeout: 15_000 });
       await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
@@ -98,7 +98,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 8 — the other end: „Proprietăți", one column „Denumire", one row.
-      const props = await showTile(page, "Corelate");
+      const props = await showTile(page, "Legături");
       const back = lineRow(props, PROPERTY);
       await expect(back).toHaveCount(1, { timeout: 30_000 });
       await expect(back.getByRole("radio", { name: PROPERTY })).toHaveCount(1);

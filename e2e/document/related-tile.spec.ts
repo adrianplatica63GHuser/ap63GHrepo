@@ -78,7 +78,7 @@ test.describe("TC-DOC-10 — „Corelate” pe un act", () => {
       // Step 1 — four rows, one line each, in order, with their icons; the buttons.
       await page.goto(`/documents/${cvcId}`);
       await expect(page.getByRole("heading", { name: CVC })).toBeVisible({ timeout: 30_000 });
-      const tile = await showTile(page, "Corelate");
+      const tile = await showTile(page, "Legături");
       const groups = tile.locator("[data-related-group]");
       await expect(groups).toHaveCount(4, { timeout: 30_000 });
       const expected = [
@@ -127,11 +127,11 @@ test.describe("TC-DOC-10 — „Corelate” pe un act", () => {
         ["Asociază proprietate", "Asociere proprietate", "properties"],
         ["Asociază act", "Asociază Document", "related"],
       ] as const) {
-        await page.getByRole("region", { name: "Corelate", exact: true }).getByRole("button", { name: button, exact: true }).click();
+        await page.getByRole("region", { name: "Legături", exact: true }).getByRole("button", { name: button, exact: true }).click();
         await expect(page.getByRole("heading", { name: heading })).toBeVisible({ timeout: 30_000 });
         await page.getByRole("button", { name: "Anulează", exact: true }).click();
         await expect(page).toHaveURL(new RegExp(`/documents/${cvcId}\\?tab=${tab}$`), { timeout: 30_000 });
-        await expect(page.getByRole("region", { name: "Corelate", exact: true }).locator("[data-related-rows]")).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByRole("region", { name: "Legături", exact: true }).locator("[data-related-rows]")).toBeVisible({ timeout: 30_000 });
       }
     } finally {
       await page.waitForLoadState("networkidle").catch(() => {});

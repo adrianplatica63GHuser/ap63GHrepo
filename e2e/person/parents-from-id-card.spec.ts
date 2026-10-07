@@ -26,7 +26,7 @@ const MOTHER = `Maria ${MOTHER_SURNAME}`;
 
 /** The related tile's rows, as their text. */
 async function relatedRows(page: Page): Promise<string[]> {
-  const tile = await showTile(page, "Corelate");
+  const tile = await showTile(page, "Legături");
   const rows = tile.locator("[data-related-group] li[data-one-line-row] [data-row-content]");
   await expect(rows.first()).toBeVisible({ timeout: 30_000 });
   return (await rows.allInnerTexts()).map((s) => s.trim());

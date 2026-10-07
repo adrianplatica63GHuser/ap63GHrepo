@@ -13,10 +13,17 @@ import { INTERACTIONS_TILE_STYLE, PAGES_PANEL_STYLE } from "@/lib/ui/field-width
 const msg = (f: string) => JSON.parse(fs.readFileSync(path.join(process.cwd(), "messages", f), "utf8"));
 
 describe("„Interacțiuni” on both person registries", () => {
-  it.each([["natural person", NP_TILE_REGISTRY], ["judicial person", JP_TILE_REGISTRY]] as const)("%s: in placement.right, in the purple group, ticked by default", (_n, reg) => {
+  it.each([["natural person", NP_TILE_REGISTRY], ["judicial person", JP_TILE_REGISTRY]] as const)("%s: in placement.right, in the purple group", (_n, reg) => {
     expect(reg.placement?.right).toContain("interactions");
     expect(tileGroupOf(reg as never, "interactions" as never)).toBe("fixed");
-    expect(reg.defaults).toContain("interactions");
+  });
+
+  // #38.30 inverts #37.89 for the Natural Person: „off by default until it is built". It stays
+  // tickable. The Judicial Person keeps it ticked — the request names the Natural Person only.
+  it("is not ticked by default on the Natural Person, and still is on the Judicial Person", () => {
+    expect(NP_TILE_REGISTRY.defaults).not.toContain("interactions");
+    expect(NP_TILE_REGISTRY.all).toContain("interactions");
+    expect(JP_TILE_REGISTRY.defaults).toContain("interactions");
   });
 
   it("is as wide as „Pagini”", () => {
@@ -33,11 +40,16 @@ describe("„Interacțiuni” on both person registries", () => {
   });
 });
 
-describe("the Judicial Person's first tile is „Identitate”", () => {
-  it("as tile and as section, in both languages", () => {
+// #38.30: „Identitate” (#37.89) became „Date de înregistrare”. The panel's heading reads the tile's
+// key since #38.30, so there is no separate section key left to agree with it.
+describe("the Judicial Person's first tile is „Date de înregistrare”", () => {
+  it("in both languages, and the form's heading reads the tile's own key", () => {
     const ro = msg("ro-RO.json"), en = msg("en-GB.json");
-    expect([ro.judicialPerson.tiles.identity, ro.judicialPerson.sections.identity]).toEqual(["Identitate", "Identitate"]);
-    expect([en.judicialPerson.tiles.identity, en.judicialPerson.sections.identity]).toEqual(["Identity", "Identity"]);
+    expect(ro.judicialPerson.tiles.identity).toBe("Date de înregistrare");
+    expect(en.judicialPerson.tiles.identity).toBe("Registration details");
+    expect(ro.judicialPerson.sections.identity).toBeUndefined();
+    const form = fs.readFileSync(path.join(process.cwd(), "src", "app", "judicial-persons", "_components", "judicial-person-form.tsx"), "utf8");
+    expect(form).toContain('<TileTitle title={t("tiles.identity")}');
   });
 });
 

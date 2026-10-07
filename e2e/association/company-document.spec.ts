@@ -52,7 +52,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       // Step 2 — the company's „Corelate": empty, „Asociază act", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -87,7 +87,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await role.selectOption({ label: "Cumpărător" });
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=document$`), { timeout: 30_000 });
-      const linked = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), DOC_TITLE);
+      const linked = lineRow(page.getByRole("region", { name: "Legături", exact: true }), DOC_TITLE);
       await expect(linked).toHaveCount(1, { timeout: 15_000 });
       await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
       await expectOneLine(linked);
@@ -102,7 +102,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
 
       // Step 7 — its „Persoane": one row — the company, „Cumpărător", the two empty fields
       // reading „fără cotă" and „fără suprafață", „Mod de deținere" „nespecificat".
-      const personsTile = await showTile(page, "Corelate");
+      const personsTile = await showTile(page, "Legături");
       const back = lineRow(personsTile, COMPANY);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       await expect(back.locator("[data-row-content]")).toHaveText(`${COMPANY} (Cumpărător)`);

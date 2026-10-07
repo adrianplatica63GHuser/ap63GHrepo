@@ -48,7 +48,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       // Step 2 — the company's „Corelate" (#37.67): „Nimic corelat încă.", „Asociază persoană", „Dezasociază".
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      const related = await showTile(page, "Corelate");
+      const related = await showTile(page, "Legături");
       await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
@@ -84,7 +84,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       // „Nume (Rol)": the person, „Reprezentant legal / Mandatar" — and „Vizualizare" (#37.67).
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?tab=related$`), { timeout: 30_000 });
-      const onCompany = lineRow(page.getByRole("region", { name: "Corelate", exact: true }), PERSON);
+      const onCompany = lineRow(page.getByRole("region", { name: "Legături", exact: true }), PERSON);
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
       await expect(onCompany.locator("[data-row-content]")).toHaveText(`${PERSON} (Reprezentant legal / Mandatar)`);
       await expectOneLine(onCompany);
@@ -96,7 +96,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
 
       // Step 7 — the person's „Corelate": the company, „Reprezentat / Mandant" (the converse), „Vizualizare".
-      const onPerson = lineRow(await showTile(page, "Corelate"), COMPANY);
+      const onPerson = lineRow(await showTile(page, "Legături"), COMPANY);
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
       await expect(onPerson.locator("[data-row-content]")).toHaveText(`${COMPANY} (Reprezentat / Mandant)`);
       await expect(onPerson).not.toContainText("Reprezentant legal / Mandatar");

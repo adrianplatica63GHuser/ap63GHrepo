@@ -13,7 +13,7 @@
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox } from "../helpers/tiles";
+import { showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-07`;
 const PURPLE = "rgb(246, 240, 254)";
@@ -51,23 +51,26 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
     const doc = await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${MARK} Act`);
     try {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      // Step 1 — the document's „Pagini", no page: 640 × 420.
+      // Step 1 — the document's „Pagini", no page: 640 × 436 (420 before #38.30's subtitle line).
       await page.goto(`/documents/${doc}`);
       const pages = page.locator('[data-tile="pages"]');
       await expect(pages).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Nicio pagină adăugată")).toBeVisible({ timeout: 30_000 });
       const pages1920 = await settledSize(pages);
-      // 420 px in the pane, 422 on the runner's server: the text's line height. Within 4 px is „Pagini"'s height.
+      // 420 px in the pane, 422 on the runner's server before #38.30; + the 16 px subtitle line. Within 4 px is „Pagini"'s height.
       expect(pages1920.w).toBe(640);
-      expect(Math.abs(pages1920.h - 420)).toBeLessThanOrEqual(4);
+      expect(Math.abs(pages1920.h - 436)).toBeLessThanOrEqual(4);
 
       // Step 2 — the person: the last box ticked in the purple strip; the tile at „Pagini"'s size and place.
       await page.goto(`/natural-persons/${np}`);
       await clearChoices(page);
       await page.reload();
+      // Slice #38.30: not ticked by default any more („off by default until it is built") — tick it.
       const tile = page.getByRole("region", { name: "Interacțiuni", exact: true });
+      await expect(tileBox(page, "Interacțiuni")).not.toBeChecked({ timeout: 30_000 });
+      await expect(tile).toHaveCount(0);
+      await showTile(page, "Interacțiuni");
       await expect(tile).toBeVisible({ timeout: 30_000 });
-      await expect(tileBox(page, "Interacțiuni")).toBeChecked();
       const boxes = page.locator("[data-tile-selector] label");
       await expect(boxes.last()).toHaveText("Interacțiuni");
       await expect(page.locator('[data-tile-group="fixed"] label')).toHaveText(["Interacțiuni"]);
@@ -105,8 +108,9 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await page.setViewportSize({ width: 1920, height: 1080 });
       await page.goto(`/judicial-persons/${jp}`);
       await expect(page.getByRole("region", { name: "Interacțiuni", exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(boxes).toHaveText(["Identitate", "Persoane de contact", "Adrese", "Corelate", "Clasificări", "Conexiuni", "Interacțiuni"]);
-      await expect(page.locator('[data-panel="identity"] h2').first()).toContainText("Identitate");
+      // Slice #38.30: „Date de înregistrare" (was „Identitate"), „Reprezentanți și contact"; the Judicial Person keeps „Interacțiuni" ticked.
+      await expect(boxes).toHaveText(["Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni"]);
+      await expect(page.locator('[data-panel="identity"] h2').first()).toContainText("Date de înregistrare");
       const jpTile = await size(page.getByRole("region", { name: "Interacțiuni", exact: true }));
       expect({ x: jpTile.x, y: jpTile.y, w: jpTile.w, hClose: Math.abs(jpTile.h - pages1920.h) <= 4 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, hClose: true });
     } finally {

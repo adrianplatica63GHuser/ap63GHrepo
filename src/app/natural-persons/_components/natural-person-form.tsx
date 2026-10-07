@@ -78,6 +78,7 @@ import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sy
 
 import { ageFromDob } from "@/lib/persons/person-age";
 import { ParentsFold } from "@/components/persons/parents-fold";
+import { TileTitle } from "@/components/tiles/tile-title";
 import { ParentsResolution } from "@/components/persons/parents-resolution";
 import {
   blankDrafts,
@@ -743,11 +744,11 @@ export function NaturalPersonForm({
 
       {/* Identity — core biographical data */}
       <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.identity")}
+        {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode, so „Adaugă nou" reads as the record does. */}
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")}>
           {/* Slice #37.57: the system ID's one place — this corner. */}
           {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
-        </h2>
+        </TileTitle>
         {/* Slice #37.26 — the rows of `NP_ROWS.identity`. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>
@@ -855,9 +856,7 @@ export function NaturalPersonForm({
 
       {/* ID Card — official document data; populated manually or via scanner */}
       <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" {...tileProps("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("idCard")}`}>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.idCard")}
-        </h2>
+        <TileTitle title={t("tiles.idCard")} subtitle={t("tileSubtitles.idCard")} />
         {/* Slice #37.26 — the rows of `NP_ROWS.idCard`. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>
@@ -999,9 +998,7 @@ export function NaturalPersonForm({
 
       {/* Contact — phones and emails */}
       <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contact")}`}>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.contact")}
-        </h2>
+        <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} />
         {/* Slice #37.26 — the rows of `NP_ROWS.contact`; the panel is as wide as the two phones. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>
@@ -1064,6 +1061,7 @@ export function NaturalPersonForm({
       <div {...tileProps("addresses")} className={tileShown("addresses") ? "contents" : "hidden"}>
       <AddressBlock<FormValues>
         title={t("sections.homeAddress")}
+        subtitle={t("tileSubtitles.addresses")}
         prefix="addresses.HOME"
         register={register}
         errors={errors.addresses?.HOME}

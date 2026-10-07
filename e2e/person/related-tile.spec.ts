@@ -76,11 +76,11 @@ async function associateAndBack(page: Page, base: string): Promise<void> {
     ["Asociază proprietate", "Asociere proprietate", "properties"],
     ["Asociază act", "Asociere act", "document"],
   ] as const) {
-    await page.getByRole("region", { name: "Corelate", exact: true }).getByRole("button", { name: button, exact: true }).click();
+    await page.getByRole("region", { name: "Legături", exact: true }).getByRole("button", { name: button, exact: true }).click();
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Anulează", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${base}\\?tab=${tab}$`), { timeout: 30_000 });
-    await expect(page.getByRole("region", { name: "Corelate", exact: true }).locator("[data-related-rows]")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("region", { name: "Legături", exact: true }).locator("[data-related-rows]")).toBeVisible({ timeout: 30_000 });
   }
 }
 
@@ -112,7 +112,7 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
       // Step 1 — on Ion: four rows, one line each, in order, with their icons; no „Cotă"; the buttons.
       await page.goto(`/natural-persons/${ionId}`);
       await expect(page.getByRole("heading", { name: ION })).toBeVisible({ timeout: 30_000 });
-      const tile = await showTile(page, "Corelate");
+      const tile = await showTile(page, "Legături");
       await expectRows(tile, [
         ["natural", `${MARIA} (Soț)`, /lucide-user\b/],
         ["judicial", `${COMPANY} (Reprezentat / Mandant)`, /lucide-building-?2/],
@@ -133,7 +133,7 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
       const bubble = page.getByRole("status").filter({ hasText: "Rol în act" });
       await expect(bubble).toHaveText("Rol în act: „Vânzător”");
       await photograph(page, "natural-person-related", tile);
-      await tile.getByRole("heading", { name: "Corelate" }).click();
+      await tile.getByRole("heading", { name: "Legături" }).click();
       await expect(bubble).toHaveCount(0);
 
       // Steps 4–5 — Maria's radio, alone; the „Asociază …" not offered; „Dezasociază": her row and group go.
@@ -151,7 +151,7 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
       // Step 9 — on the company: Ion and the contract.
       await page.goto(`/judicial-persons/${companyId}`);
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
-      const onCompany = await showTile(page, "Corelate");
+      const onCompany = await showTile(page, "Legături");
       await expectRows(onCompany, [
         ["natural", `${ION} (Reprezentant legal / Mandatar)`, /lucide-user\b/],
         ["document", `${CVC} (Contract de Vânzare)`, /lucide-file-text/],

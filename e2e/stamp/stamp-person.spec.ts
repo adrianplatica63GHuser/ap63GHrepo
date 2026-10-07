@@ -140,7 +140,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       // Step 9 — the person's „Conexiuni" (META INFO until #37.63): „Ștampile", „+ Aplică ștampilă", the chip with „×".
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
-      await showTile(page, "Conexiuni");
+      await showTile(page, "Etichete și grupuri");
       await expect(page.getByRole("button", { name: "+ Aplică ștampilă" })).toBeVisible();
       await expect(page.getByText(code, { exact: true })).toBeVisible();
       await expect(page.getByText(DESCRIPTION, { exact: true })).toBeVisible();
@@ -157,7 +157,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await confirm.getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.getByText(`${before} ștampile`, { exact: true })).toBeVisible({ timeout: 15_000 });
       await page.goto(`/natural-persons/${personId}`);
-      await showTile(page, "Conexiuni");
+      await showTile(page, "Etichete și grupuri");
       await expect(page.getByText("Nicio ștampilă aplicată")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeStampLeftovers(page.request, MARK);

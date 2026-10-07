@@ -72,6 +72,7 @@ import { forgetRecentlyViewed } from "@/components/providers/navigation-history-
 import { jpTileOfField, type JpTile } from "./person-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 type Props = {
   mode: "create" | "edit" | "view";
@@ -674,11 +675,11 @@ export function JudicialPersonForm({
           box, the rows of `SCREEN_ROWS.judicialPerson.identity`, and the panel
           the fewest whole width units that hold its widest row (3). */}
       <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.identity")}
+        {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")}>
           {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
           {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
-        </h2>
+        </TileTitle>
         <div className="flex flex-col gap-2">
           <Field
             label={t("fields.name")}
@@ -746,9 +747,7 @@ export function JudicialPersonForm({
 
       {/* ── Contact Persons ──────────────────────────────────────────────── */}
       <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.contactPersons")}
-        </h2>
+        <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" />
         <div className="flex flex-col gap-3">
           <ContactPersonRow
             label={t("fields.contactPerson1")}
@@ -788,6 +787,7 @@ export function JudicialPersonForm({
           (rule 6) and the loose correspondence panel is gone. */}
       <AddressBlock<FormValues>
         title={t("sections.registeredAddress")}
+        subtitle={t("tileSubtitles.addresses")}
         prefix="addresses.HEADQUARTERS"
         register={register}
         errors={errors.addresses?.HEADQUARTERS}

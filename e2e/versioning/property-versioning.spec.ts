@@ -195,7 +195,7 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: nickname })).toBeVisible({ timeout: 30_000 });
       // Slice #37.19: no tab row — the property opens on its tile row.
-      await expect(tileBox(page, "Date cadastrale")).toBeChecked({ timeout: 30_000 });
+      await expect(tileBox(page, "Identificare cadastrală")).toBeChecked({ timeout: 30_000 });
 
       // Step 2 — top right of the header: „◀ v 0 ▶" and „Setează ca actuală".
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 30_000 });

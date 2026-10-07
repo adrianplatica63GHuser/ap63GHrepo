@@ -217,7 +217,7 @@ export function DocumentDetailTiles({
           {/* Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate". */}
           {choice.isShown("related") && (
             <div className="max-w-full" style={{ order: order("related") }}>
-              <ListTile tile="related" title={labels.related} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "related"))}>
+              <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "related"))}>
                 <DocumentRelatedTile documentId={documentId} label={labels.related} />
               </ListTile>
             </div>
@@ -226,7 +226,7 @@ export function DocumentDetailTiles({
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
             <div className="max-w-full" style={{ order: order("classification") }}>
-              <ListTile tile="classification" title={labels.classification} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"))}>
+              <ListTile tile="classification" title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"))}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}
@@ -239,7 +239,7 @@ export function DocumentDetailTiles({
           )}
           {choice.isShown("connections") && (
             <div className="max-w-full" style={{ order: order("connections") }}>
-              <ListTile tile="connections" title={labels.connections} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"))}>
+              <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"))}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}

@@ -83,16 +83,16 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
       // #37.89: „Interacțiuni"'s right-hand column is TC-PERS-07's subject; here it is unticked, so the row keeps the whole width this case measures.
       await hideTile(page, "Interacțiuni");
       const region = (name: string) => page.getByRole("region", { name, exact: true });
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
-      await expect(region("Corelate").locator("li")).toHaveCount(12, { timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Legături").locator("li")).toHaveCount(12, { timeout: 30_000 });
 
       // Step 2 — each box right under the box above it.
       const home = page.locator('[data-panel="addresses.HOME"]');
       const corr = page.locator('[data-panel="addresses.CORRESPONDENCE"]');
       await expect.poll(async () => {
         const [identity, idCard, contact, h, c, related, cls, conn] = await Promise.all([
-          boxOf(region("Identitate")), boxOf(region("Carte de identitate")), boxOf(region("Contact")),
-          boxOf(home), boxOf(corr), boxOf(region("Corelate")), boxOf(region("Clasificări")), boxOf(region("Conexiuni")),
+          boxOf(region("Identitate")), boxOf(region("Act de identitate")), boxOf(region("Contact")),
+          boxOf(home), boxOf(corr), boxOf(region("Legături")), boxOf(region("Clasificare")), boxOf(region("Etichete și grupuri")),
         ]);
         return {
           firstLine: new Set([identity.t, idCard.t, contact.t]).size,
@@ -113,9 +113,9 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
 
       // Step 3 — the company: „Corelate" and „Clasificări", not „Conexiuni".
       await page.goto(`/judicial-persons/${company}`);
-      const related = await showTile(page, "Corelate");
-      const cls = await showTile(page, "Clasificări");
-      await hideTile(page, "Conexiuni");
+      const related = await showTile(page, "Legături");
+      const cls = await showTile(page, "Clasificare");
+      await hideTile(page, "Etichete și grupuri");
       await hideTile(page, "Interacțiuni"); // #37.89, as in step 1
       await expect(related.locator("li")).toHaveCount(1, { timeout: 30_000 });
       await expect.poll(async () => {

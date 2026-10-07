@@ -277,9 +277,6 @@
     "saveErrorForeignKey": "O valoare la care se referă acest formular nu mai există. Alegeți altă valoare sau reîncărcați pagina.",
     "deleteError": "Ștergerea a eșuat",
     "sections": {
-      "cadastral": "Date cadastrale",
-      "address": "Adresă",
-      "corners": "Puncte de contur",
       "notes": "Note"
     },
     "fields": {
@@ -428,7 +425,7 @@
       "provenance": "Proveniență"
     },
     "tiles": {
-      "cadastral": "Date cadastrale",
+      "cadastral": "Identificare cadastrală",
       "corners": "Puncte de contur",
       "address": "Adresă",
       "map": "Hartă",
@@ -436,9 +433,17 @@
       "associations": "Proprietăți corelate",
       "persons": "Persoane",
       "documents": "Acte",
-      "related": "Corelate",
-      "classification": "Clasificări",
-      "connections": "Conexiuni"
+      "related": "Legături",
+      "classification": "Clasificare",
+      "connections": "Etichete și grupuri"
+    },
+    "tileSubtitles": {
+      "cadastral": "Tarla, parcelă, CF, nr. cadastral, suprafețe",
+      "address": "Adresa poștală a proprietății",
+      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "classification": "Importanță, relevanță, proveniență",
+      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "corners": "Colțurile parcelei (Stereo 70), în ordine"
     },
     "tabs": {
       "details": "Detalii",
@@ -866,7 +871,7 @@
         "statementAlgorithm": "Acest element a fost generat automat de un algoritm (ex: divizare poligon sau calcul geometric).",
         "statementAiInterpreted": "Acest element a fost interpretat de un model AI dintr-o imagine sau document prin intermediul unui API cloud — rezultatul trebuie verificat de o persoană.",
         "statementExternalFeed": "Acest element a provenit dintr-un sistem sau flux de date extern — verificați sursa și exactitatea datelor.",
-        "statementRelativeIdCard": "Această persoană a fost creată din actul de identitate al unei rude — tatăl sau mama titularului unei cărți de identitate, după numele tipărite pe ea sau introduse în fișa „Carte de identitate” a titularului. Numele de familie poate fi presupus; verificați-l.",
+        "statementRelativeIdCard": "Această persoană a fost creată din actul de identitate al unei rude — tatăl sau mama titularului unei cărți de identitate, după numele tipărite pe ea sau introduse în fișa „Act de identitate” a titularului. Numele de familie poate fi presupus; verificați-l.",
         "algorithmSource": "Calcul sursă",
         "algorithmViewRun": "Vezi calculul",
         "algorithmNotFound": "Calculul sursă nu a fost găsit (posibil șters).",
@@ -939,8 +944,8 @@
       "saving": "Se salvează…",
       "saved": "✓ Salvat",
       "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
-      "sectionClassification": "Clasificări",
-      "sectionConnections": "Conexiuni",
+      "sectionClassification": "Clasificare",
+      "sectionConnections": "Etichete și grupuri",
       "hideAdd": "Ascunde",
       "about": "Despre „{title}”"
     },
@@ -1077,7 +1082,6 @@
       "idDocument": "Document de identitate",
       "idCard": "Carte de identitate",
       "demographics": "Date personale",
-      "contact": "Contact",
       "homeAddress": "Adresă domiciliu",
       "correspondenceAddress": "Adresă corespondență"
     },
@@ -1157,13 +1161,23 @@
     },
     "tiles": {
       "identity": "Identitate",
-      "idCard": "Carte de identitate",
+      "idCard": "Act de identitate",
       "contact": "Contact",
       "addresses": "Adrese",
-      "related": "Corelate",
-      "classification": "Clasificări",
-      "connections": "Conexiuni",
+      "related": "Legături",
+      "classification": "Clasificare",
+      "connections": "Etichete și grupuri",
       "interactions": "Interacțiuni"
+    },
+    "tileSubtitles": {
+      "identity": "Nume, CNP, gen, data și locul nașterii",
+      "idCard": "Carte de identitate sau pașaport",
+      "contact": "Telefoane și adrese de e-mail",
+      "addresses": "Domiciliu și corespondență",
+      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "classification": "Importanță, relevanță, proveniență",
+      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "interactions": "Istoricul interacțiunilor cu această persoană"
     }
   },
   "judicialPerson": {
@@ -1206,8 +1220,6 @@
     "groupsFilterAll": "Toate grupurile",
     "groupsFilterUngrouped": "Fără grup",
     "sections": {
-      "identity": "Identitate",
-      "contactPersons": "Persoane de contact",
       "officeAddress": "Adresă sediu",
       "registeredAddress": "Adresă sediu social",
       "correspondenceAddress": "Adresă corespondență"
@@ -1266,13 +1278,22 @@
       "contactPersonNotInSystem": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
     },
     "tiles": {
-      "identity": "Identitate",
-      "contactPersons": "Persoane de contact",
+      "identity": "Date de înregistrare",
+      "contactPersons": "Reprezentanți și contact",
       "addresses": "Adrese",
-      "related": "Corelate",
-      "classification": "Clasificări",
-      "connections": "Conexiuni",
+      "related": "Legături",
+      "classification": "Clasificare",
+      "connections": "Etichete și grupuri",
       "interactions": "Interacțiuni"
+    },
+    "tileSubtitles": {
+      "identity": "Denumire, CUI, Registrul Comerțului",
+      "contactPersons": "Reprezentanții firmei și persoanele de contact",
+      "addresses": "Sediu social și corespondență",
+      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "classification": "Importanță, relevanță, proveniență",
+      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "interactions": "Istoricul interacțiunilor cu această firmă"
     },
     "tabs": {
       "details": "Detalii",
@@ -1543,7 +1564,6 @@
     },
     "sections": {
       "typeSelect": "Tip document",
-      "general": "Date generale",
       "titlu": "Date titlu de proprietate",
       "mostenitor": "Date succesorale",
       "dateRange": "Perioadă contract",
@@ -1653,16 +1673,25 @@
       "ok": "OK"
     },
     "tiles": {
-      "general": "Date generale",
+      "general": "Identificarea actului",
       "pages": "Pagini",
       "fields": "Detalii act",
       "succession": "Părți",
       "persons": "Persoane",
       "properties": "Proprietăți",
       "associations": "Acte corelate",
-      "related": "Corelate",
-      "classification": "Clasificări",
-      "connections": "Conexiuni"
+      "related": "Legături",
+      "classification": "Clasificare",
+      "connections": "Etichete și grupuri"
+    },
+    "tileSubtitles": {
+      "general": "Tip, emitent, număr, dată",
+      "fields": "Câmpurile proprii tipului de act",
+      "succession": "Defunctul și moștenitorii",
+      "pages": "Imaginile paginilor actului",
+      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "classification": "Importanță, relevanță, proveniență",
+      "connections": "Etichete, grupuri, ștampile, vezi și"
     },
     "tabs": {
       "details": "Detalii",
@@ -1758,7 +1787,7 @@
       "linkThis": "Asociază aceasta",
       "noneOfThese": "Niciuna dintre acestea — creează nouă",
       "roleMissingTitle": "Rol neconfigurat",
-      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Tipuri de Document → Roluri pe Document, apoi adăugați persoana din „Corelate” pe document.",
+      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Tipuri de Document → Roluri pe Document, apoi adăugați persoana din „Legături” pe document.",
       "roleMissingAfterCreate": "Persoana a fost creată, dar nu a putut fi legată de document: rolul „{roleName}” nu mai este configurat pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Tipuri de Document → Roluri pe Document, apoi apăsați din nou — persoana nu va fi creată a doua oară. Dacă omiteți această parte, persoana rămâne în arhivă nelegată de document.",
       "noMatchTitle": "Nicio potrivire găsită",
       "noMatchBody": "Se va crea o persoană nouă cu detaliile extrase.",
@@ -1804,10 +1833,10 @@
       "stubTypePlaceholder": "alegeți tipul",
       "stubConfirm": "Creează schița și leagă",
       "stubCancel": "Renunță",
-      "alreadyAssociated": "Cele două documente sunt deja asociate. Nu s-a schimbat nimic. Dezasociați-le din „Corelate” dacă doriți alt tip de relație.",
-      "alreadyAssociatedAs": "Cele două documente sunt deja asociate, ca „{roleName}”. Nu s-a schimbat nimic. Dezasociați-le din „Corelate” dacă doriți alt tip de relație.",
+      "alreadyAssociated": "Cele două documente sunt deja asociate. Nu s-a schimbat nimic. Dezasociați-le din „Legături” dacă doriți alt tip de relație.",
+      "alreadyAssociatedAs": "Cele două documente sunt deja asociate, ca „{roleName}”. Nu s-a schimbat nimic. Dezasociați-le din „Legături” dacă doriți alt tip de relație.",
       "roleMissing": "Tipul de relație „{roleName}” nu există în Date de referință, deci legătura nu poate fi creată cu sensul corect. Cereți unui administrator să-l adauge, apoi încercați din nou.",
-      "noPurpose": "Nu se știe ce rol are acest înscris pe document, deci nu există un tip de relație sub care să fie legat. Lăsați referința și creați asocierea manual din „Corelate”.",
+      "noPurpose": "Nu se știe ce rol are acest înscris pe document, deci nu există un tip de relație sub care să fie legat. Lăsați referința și creați asocierea manual din „Legături”.",
       "referenceGone": "Lista de înscrisuri s-a schimbat între timp. Închideți și redeschideți această fereastră.",
       "selfReference": "Un document nu poate fi legat de el însuși.",
       "saveError": "Operația a eșuat. Încercați din nou."
@@ -1892,7 +1921,7 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin un document",
-      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din „Corelate” dacă doriți alt tip de relație."
+      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din „Legături” dacă doriți alt tip de relație."
     },
     "pages": {
       "sectionTitle": "Pagini",
@@ -1987,8 +2016,8 @@
       "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou și să reîncercați.",
       "parcelTaken": "Tarlaua și parcela acestui document aparțin deja altei proprietăți. Documentul nu a fost procesat și nu s-a creat nimic.",
       "parcelTakenSeveral": "{count, plural, one {O proprietate are} few {# proprietăți au} other {# de proprietăți au}} tarlaua {tarla} și parcela {parcela}, la fel ca acest document. Documentul nu a fost procesat și nu s-a creat nimic.",
-      "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din „Corelate”, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din „Conexiuni”.",
-      "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din „Corelate”.",
+      "parcelTakenWhatToDo": "Deschideți proprietatea și adăugați-i acest document din „Legături”, sau, dacă este vorba despre altă parcelă, corectați eticheta de dosar a documentului din „Etichete și grupuri”.",
+      "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din „Legături”.",
       "openPropertiesList": "Deschide lista de proprietăți"
     },
     "notebook": {

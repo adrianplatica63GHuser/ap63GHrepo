@@ -98,7 +98,7 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
 
       // Step 1 — „Toate", „Interacțiuni" unticked: every tile where #37.75 puts it, „Clasificări" at the left edge.
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
       await page.waitForTimeout(2500); // past the first layout's settling
       const rule = await boxes(page);
@@ -112,7 +112,7 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       const spanned = Object.entries(rule).filter(([id, b]) => id !== "connections" && b.x < x1 && x0 < b.x + b.w);
       expect(spanned.map(([id]) => id)).toEqual(expect.arrayContaining(["classification", "addresses.CORRESPONDENCE"]));
       const y0 = Math.max(...spanned.map(([, b]) => b.y + b.h)) + 60;
-      const conn = region("Conexiuni");
+      const conn = region("Etichete și grupuri");
       const p = await padding(conn);
       const [r0, row] = await Promise.all([conn.boundingBox(), page.locator("[data-tile-row]").boundingBox()]);
       const tx = (row?.x ?? 0) + x0 + (p.x - (r0?.x ?? 0));
@@ -128,9 +128,9 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
 
       // Step 3 — the second record, „Clasificări" unticked: „Conexiuni" keeps its left edge, right under the tiles left in its columns.
       await page.goto(`/natural-persons/${second}`);
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(1500);
-      await setTile(page, "Clasificări", false);
+      await setTile(page, "Clasificare", false);
       await expect.poll(async () => {
         const now = await boxes(page);
         return { x: now.connections.x, gap: now.connections.y - rightUnder(now, "connections"), classification: "classification" in now };
@@ -139,7 +139,7 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       expect(left.connections.y).toBeLessThan(dropped.connections.y); // it rose: no empty space above it
 
       // Step 4 — „Clasificări" ticked again: where step 1 had it, and „Conexiuni" right under it again.
-      await setTile(page, "Clasificări", true);
+      await setTile(page, "Clasificare", true);
       await expect.poll(async () => {
         const now = await boxes(page);
         return { cx: now.classification?.x, cy: now.classification?.y, x: now.connections.x, under: now.classification ? now.connections.y - (now.classification.y + now.classification.h + GAP) : null };
@@ -148,7 +148,7 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
 
       // Step 5 — after a reload, where step 4 had it.
       await page.reload();
-      await expect(region("Conexiuni")).toBeVisible({ timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => {
         const now = await boxes(page);
         return now.connections ? { x: now.connections.x, y: now.connections.y } : null;

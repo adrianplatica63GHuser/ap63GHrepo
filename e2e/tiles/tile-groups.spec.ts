@@ -66,27 +66,27 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
       for (const width of [1366, 1920]) {
         await page.setViewportSize({ width, height: 1080 });
         await expectForm(page, `/properties/${prop}`, [
-          ["record", ["Date cadastrale", "Adresă"]],
-          ["related", ["Corelate"]],
-          ["meta", ["Clasificări", "Conexiuni"]],
+          ["record", ["Identificare cadastrală", "Adresă"]],
+          ["related", ["Legături"]],
+          ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Hartă", "Puncte de contur", "Street View"]],
         ]);
         await expectForm(page, `/natural-persons/${np}`, [
-          ["record", ["Identitate", "Carte de identitate", "Contact", "Adrese"]],
-          ["related", ["Corelate"]],
-          ["meta", ["Clasificări", "Conexiuni"]],
+          ["record", ["Identitate", "Act de identitate", "Contact", "Adrese"]],
+          ["related", ["Legături"]],
+          ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Interacțiuni"]], // #37.89
         ]);
         await expectForm(page, `/judicial-persons/${jp}`, [
-          ["record", ["Identitate", "Persoane de contact", "Adrese"]], // #37.89: „Identitate"
-          ["related", ["Corelate"]],
-          ["meta", ["Clasificări", "Conexiuni"]],
+          ["record", ["Date de înregistrare", "Reprezentanți și contact", "Adrese"]], // #37.89: „Identitate"; #38.30: „Date de înregistrare"
+          ["related", ["Legături"]],
+          ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Interacțiuni"]], // #37.89
         ]);
         await expectForm(page, `/documents/${doc}`, [
-          ["record", ["Date generale", "Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"]],
-          ["related", ["Corelate"]],
-          ["meta", ["Clasificări", "Conexiuni"]],
+          ["record", ["Identificarea actului", "Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"]],
+          ["related", ["Legături"]],
+          ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Pagini"]],
         ]);
       }
@@ -107,8 +107,8 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
       await page.reload();
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
       await hideTile(page, "Interacțiuni"); // #37.89: TC-TILES-13's layout, without the right-hand column
-      const conn = page.getByRole("region", { name: "Conexiuni", exact: true });
-      const related = page.getByRole("region", { name: "Corelate", exact: true });
+      const conn = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
+      const related = page.getByRole("region", { name: "Legături", exact: true });
       await expect(related).toContainText("Nimic corelat încă.", { timeout: 30_000 });
       await page.waitForTimeout(2500);
       await conn.scrollIntoViewIfNeeded();
