@@ -5,8 +5,8 @@
 | **Area** | calculation |
 | **Kind** | happy |
 | **Data** | `09.tc.calc.file` |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `driven` |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -40,9 +40,9 @@ owners in the order **A, B, C**, the hand values of:
 - each owner's own area;
 - each owner's road share.
 
-Until it arrives the row stays `draft`, and the application's result in step 7 is recorded as
-**not yet checked against a hand figure**. When it arrives it replaces those figures as the
-assertion, and the row moves to `driven`.
+**Answered on 2026-10-07: Adrian checked the result independently, and every figure is correct.**
+Step 7's figures are therefore no longer only the application's: they are the hand-checked
+assertion, and the row moved to `driven` the same day.
 
 #36.21 asked the same of the old five-section file. That question is superseded by this one: the
 old file no longer exists.
@@ -129,7 +129,7 @@ docker exec ga40prj-postgres psql -U postgres ga40db -c "DELETE FROM calculation
 | 11 | Opens „Istoricul calculelor" | The run's row: `CALC…`, „Drum lateral", 4, `GRP-…`, „Activ" |
 | 12 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul" opens on the same file, the owners in the order A, B, C and the road already from 18 along 18–19, with step 7's figures |
 
-Step 7 is the assertion — against Adrian's figure once it arrives — and step 10 checks the corner
+Step 7 is the assertion — Adrian's independently checked figure (2026-10-07) — and step 10 checks the corner
 numbers. Steps 9, 11 and 12 are the history.
 
 ## At the end — leaving things as they were found
@@ -145,13 +145,13 @@ are gone (#38.23–#38.25). The run's notes are in #36.21's handover and in git 
 **2026-10-02 — Slice #37.57; 2026-10-06 — Slice #38.20.** No system ID in the result lines, and the
 nine-section sidebar's „Funcții" → „Calcul drum lateral". Both still hold.
 
-**2026-10-07 — Slice #38.26, driven once on the new file; stays `draft` for the hand figure.** A
+**2026-10-07 — Slice #38.26, driven once on the new file; `driven` once Adrian checked it.** A
 temporary Playwright spec drove every step above:
 - the corner badge and the side names were clicked with the mouse;
 - the order was set with ↑;
 - the result was read off the screen and through `/api/properties/<id>`.
 
-Every figure in steps 2–12 is what it showed, and it is **not yet checked against a hand figure**:
+Every figure in steps 2–12 is what it showed, and Adrian **checked it independently the same day — all correct**:
 - run `CALC00007`, group `GRP-563`;
 - road **20,8 m**, **62,45 m²**;
 - A and B each **183,12** own + **20,81** road share = **203,94**;

@@ -64,7 +64,7 @@ the test runner's, whose result id is quoted, or Adrian's — see the catalogue'
 Every screen whose catalogue row is below `automated` or missing: the import wizard and AI
 interpret (TC-IMP-01, TC-IMP-02, TC-AI-01 — the folder picker has no file input to set, and each
 run spends AI budget), a directional role between two properties (TC-ASSOC-08, `draft` — FU-220), the
-lateral-road calculation (TC-CALC-01, `draft` until Adrian's hand figure arrives), the map, users,
+lateral-road calculation (TC-CALC-01, `driven` — checked by hand, no spec while runs cannot be deleted), the map, users,
 settings, reference data, and every unhappy path — empty inputs, wrong shares, two tabs at once.
 `CATALOGUE_NOT_YET` in `src/lib/testing/catalogue-map.ts` lists the routes with no case at all. Twenty-six happy paths is a floor under the ordinary
 week's work, not a safety net: a green run says those twenty-six still hold, not that the app works.

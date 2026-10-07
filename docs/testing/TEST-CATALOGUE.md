@@ -134,7 +134,7 @@ fixed fixture where the existing one will do.
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
 | [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
-| [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `draft` | — | — |
+| [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `driven` | 2026-10-07 | — |
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |
 | [TC-VL-01](cases/TC-VL-01.md) | O valoare adăugată în „Date de referință”, redenumită și ștearsă | reference-data | happy | — | `driven` | 2026-09-27 | — |
@@ -175,7 +175,7 @@ fixed fixture where the existing one will do.
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 | [TC-NAV-01](cases/TC-NAV-01.md) | Bara laterală în nouă secțiuni: fiecare legătură își deschide ecranul, fiecare „În curând" e inactiv, „Rapoarte" → „În lucru" arată textul | nav | happy | — | `automated` | 2026-10-06 | `e2e/ui/sidebar-nine-sections.spec.ts` |
 
-**Ninety-one are `automated`, sixteen are `driven`, and two are `draft`** — as of 2026-10-06 (Slices
+**Ninety-one are `automated`, seventeen are `driven`, and one is `draft`** — as of 2026-10-07 (Slices
 #37.38, #37.40, #37.42–#37.47, #37.49–#37.85, #37.88, #37.89, #37.91–#37.95, #38.03–#38.05, #38.07, #38.10–#38.14, #38.16, #38.17, #38.19 and #38.20, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02, TC-DOC-13, TC-TILES-18, TC-PERS-07, TC-PROP-09, TC-PROP-10, TC-DOC-14, TC-LAYOUT-03, TC-DOC-15, TC-PROP-11, TC-PROP-12, TC-TILES-19, TC-DOC-16, TC-GRP-02, TC-GRP-03, TC-GRP-04, TC-STAMP-02, TC-TAG-02, TC-TILES-20, TC-TAG-03, TC-NAV-01 and TC-DOC-17 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
 runs of #37.04, #37.08 and #37.10, TC-CALC-01 and TC-AUTH-02, and the reason for
 each is written here, not implied:
@@ -192,8 +192,10 @@ each is written here, not implied:
 - **`driven`, first run: TC-TILES-06** (Slice #37.25), the same preview opened from the four
   entity lists, beside the list's table. Driven once in the desktop app's browser pane on
   2026-09-29.
-- **`draft`: TC-CALC-01** (Adrian's hand figure) and **TC-AUTH-02** (the `user` account) — each
-  paragraph below or in its file.
+- **`driven`, first run: TC-CALC-01** (Slice #38.26), the side-road calculation, driven once by a
+  temporary spec on 2026-10-07 and its figures checked independently by Adrian the same day. Its
+  spec waits on a way to delete a calculation run (its file says why).
+- **`draft`: TC-AUTH-02** (the `user` account) — its paragraph below and its file.
 - **`driven`, first run: TC-TILES-01** (Slice #37.17), the Natural Person's tiles, driven once in
   Adrian's Chrome on 2026-09-28. A second run unchanged confirms it, and a spec is then a
   translation of it. **TC-TILES-02** (Slice #37.18) is its sibling for the Judicial Person, and
@@ -261,9 +263,9 @@ each is written here, not implied:
   beside a company (no role can be chosen yet, FU-221), a certificate's two parties (whose
   quality shows only on the certificate, FU-224). TC-STAMP-01 and TC-HELP-01 write shared state
   and give it back — the stamp is deleted, the help text restored byte for byte. TC-VER-01 and
-  TC-VER-02 close FU-113; TC-PROP-04 closes FU-094. **TC-CALC-01 stays `draft`** until Adrian's
-  hand figure arrives: a calculation case is worth only the figure it is checked against, and
-  the one it has is the application's own. Each was driven once, by hand, with records created
+  TC-VER-02 close FU-113; TC-PROP-04 closes FU-094. **TC-CALC-01 went to `driven`** on 2026-10-07
+  once Adrian checked its figures independently: a calculation case is worth only the figure it
+  is checked against, and that one is now a person's. Each was driven once, by hand, with records created
   under `TC-` names and deleted afterwards; none has a spec, and the next promotion wave takes
   them the way #36.18 took the second.
 
