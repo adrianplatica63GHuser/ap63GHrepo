@@ -63,7 +63,7 @@ PowerShell window.**
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
 | 6a | In „Părți afișate" above the sections, unticks „Metadate care necesită atenție", reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
-| 7 | Looks at the left sidebar | The nine sections (#38.20) „Tablou de bord", „Domeniu", „Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu" and „Ajutor" — and below them, **once anything has been opened in this browser**, a „RECENTE" list of recently-opened records. A browser that has opened nothing shows no „RECENTE" at all (the list lives in the browser's own storage) |
+| 7 | Looks at the left sidebar | The nine sections (#38.20) „Tablou de bord", „Domeniu", „Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu" and „Ajutor" — and below them, directly above „Schimbă parola" / „Ieșire", one folded bar „Recente" (#38.28; its records unfold above it on a click — TC-LAYOUT-04) |
 | 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
 | 9 | Presses „Ieșire" at the bottom of the sidebar | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
 | 10 | In the same tab, without reloading, signs in again with the same account (steps 2–4) | The address becomes `http://localhost:3000/` and „Tablou de bord" is back |
@@ -83,6 +83,10 @@ Nothing to clean up. The session cookie is the only thing created and every late
 wants it.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.28.** Step 7's „Recente" is one folded bar now, there even in a browser
+that has opened nothing, so the 2026-09-22 correction below no longer holds: the spec asserts the
+bar, folded. What it unfolds is TC-LAYOUT-04's.
 
 **2026-09-26 — steps 9–11 added (Slice #37.01).** Adrian signed out and back in, in one
 tab, and both administration sections were gone until a reload. Two defects in the browser:

@@ -80,10 +80,9 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     }
     const tops = await Promise.all(NINE.map(async (s) => (await nav.getByText(s, { exact: true }).boundingBox())!.y));
     expect(tops).toEqual([...tops].sort((a, b) => a - b));
-    // Step 7's „RECENTE" list is NOT asserted: it renders only once a record
-    // has been opened in this browser (`recently-viewed-panel.tsx` returns null
-    // on an empty history, which lives in localStorage), and the session
-    // auth.setup.ts saves has opened nothing. The case file says so.
+    // Step 7's „Recente": one folded bar, there even when nothing has been
+    // opened (#38.28). What it unfolds is TC-LAYOUT-04's.
+    await expect(page.locator("aside").getByRole("button", { name: "Recente", exact: true })).toHaveAttribute("aria-expanded", "false");
 
     // Step 8 — at the TOP of the sidebar: „Autentificat ca", and the account's
     // name. The name is whatever the account is called, so the spec asserts
