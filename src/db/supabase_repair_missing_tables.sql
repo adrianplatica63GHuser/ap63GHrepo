@@ -675,7 +675,8 @@ BEGIN
     FROM entity_metadata
    WHERE provenance IS NOT NULL
      AND provenance NOT IN ('MANUAL', 'IMAGE', 'DOC_FILE', 'COORDINATE_FILE',
-                            'ALGORITHM', 'AI_INTERPRETED', 'EXTERNAL_FEED');
+                            'ALGORITHM', 'AI_INTERPRETED', 'EXTERNAL_FEED',
+                            'RELATIVE_ID_CARD');  -- migration_095 (#38.29)
 
   IF stale > 0 THEN
     RAISE WARNING 'chk_em_provenance NOT added: % row(s) hold pre-migration_067 '
@@ -685,7 +686,8 @@ BEGIN
     ALTER TABLE entity_metadata
       ADD CONSTRAINT chk_em_provenance
         CHECK (provenance IN ('MANUAL', 'IMAGE', 'DOC_FILE', 'COORDINATE_FILE',
-                              'ALGORITHM', 'AI_INTERPRETED', 'EXTERNAL_FEED'));
+                              'ALGORITHM', 'AI_INTERPRETED', 'EXTERNAL_FEED',
+                              'RELATIVE_ID_CARD'));  -- the value set migration_095 leaves (#38.29)
   END IF;
 END $$;
 
