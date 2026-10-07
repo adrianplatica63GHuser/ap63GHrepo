@@ -58,8 +58,9 @@ async function readHolder(holderId: string, documentId: string | null): Promise<
   if (documentId) {
     const doc = await fetch(`/api/documents/${encodeURIComponent(documentId)}`);
     if (doc.ok) {
-      const body = (await doc.json()) as { code?: string | null; document?: { code?: string | null } };
-      documentCode = body.code ?? body.document?.code ?? null;
+      // The card's own DOC code, for the note — never a name's stand-in (system-id-one-place).
+      const body = (await doc.json()) as { code?: string | null };
+      documentCode = typeof body.code === "string" && body.code !== "" ? body.code : null;
     }
   }
   return { id: holderId, name, code, documentCode };
