@@ -1,28 +1,37 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// RecentlyViewedPanel  (Slice #20.17)
+// RecentlyViewedPanel  (Slice #20.17; one folded bar since #38.28)
 // ---------------------------------------------------------------------------
 //
-// A collapsible "Recente" section rendered at the bottom of the sidebar nav
-// (above the change-password / logout strip), shown only when:
-//   - the sidebar is expanded (isCollapsed=false), AND
-//   - there is at least one recently-viewed entry
+// „Recente" at the bottom of the sidebar nav, directly above the
+// change-password / logout strip, takes the space of ONE bar: the history
+// icon, the word „Recente" and a chevron. It is FOLDED by default (#38.28 —
+// Adrian: „by default it should not be expanded … it should be one bar").
+// A click unfolds the recently viewed records above the bar, like an
+// accordion — the list grows upwards and the footer does not move — and a
+// second click folds it back.
 //
-// Each entry shows:
-//   - entity type icon (User / Building2 / List / FileText)
-//   - display name (truncated)
-//   - code chip (PROP00003, etc.)
+// The panel lives in the layout, so it stays as the user left it while moving
+// between screens; a reload or a new sign-in folds it again (no storage).
+// With nothing visited yet the bar is still there, so it never appears under
+// the user's mouse, and unfolded it says „Niciun element vizitat recent".
+// With the sidebar collapsed to icons it is the history icon alone, with its
+// tooltip; a click expands the sidebar with the list unfolded — the way a
+// section's icon behaves there.
 //
-// Clicking navigates through the unsaved-changes guard (same pattern as all
-// sidebar links).  The panel itself is collapsible so it doesn't push the
-// nav items too far up.
+// Each entry shows its entity type icon and its name, and navigates through
+// the unsaved-changes guard (same pattern as every sidebar link).
+//
+// ⚠️ Ten e2e specs paint over this panel in their pictures with
+// `aside div.border-t` filtered by a button named /Recente/ — keep the outer
+// div's border-t and the button's name.
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { User, Building2, List, FileText, History } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { User, Building2, List, FileText, History, ChevronDown } from "lucide-react";
+import { IconTooltip } from "@/lib/ui/icon-button";
 import {
   useNavigationHistory,
   type EntityType,
@@ -84,41 +93,80 @@ function RecentEntry({
 // Panel
 // ---------------------------------------------------------------------------
 
-export function RecentlyViewedPanel({ isCollapsed }: { isCollapsed: boolean }) {
-  const t                = useTranslations("navigation.recentlyViewed");
-  const { recentlyViewed } = useNavigationHistory();
+export function RecentlyViewedPanel({
+  isCollapsed,
+  onExpandSidebar,
+}: {
+  isCollapsed: boolean;
+  /** Collapsed to icons, the bar's click expands the sidebar (#38.28). */
+  onExpandSidebar?: () => void;
+}) {
+  const t                    = useTranslations("navigation.recentlyViewed");
+  const { recentlyViewed }   = useNavigationHistory();
   const { guardedNavigate }  = useUnsavedChanges();
-  const [open, setOpen]  = useState(true);
+  // #38.28: folded by default; only this page load remembers an unfold.
+  const [open, setOpen]      = useState(false);
+  const listId               = useId();
 
-  // Hide when sidebar is collapsed or no entries
-  if (isCollapsed || recentlyViewed.length === 0) return null;
+  if (isCollapsed) {
+    // The history icon alone, its name in the tooltip; a click expands the
+    // sidebar with the list unfolded.
+    return (
+      <div className="border-t border-wire shrink-0 px-2 py-1 flex flex-col items-center">
+        <IconTooltip label={t("title")} fill>
+          <button
+            type="button"
+            aria-label={t("title")}
+            onClick={() => {
+              setOpen(true);
+              onExpandSidebar?.();
+            }}
+            className="w-full flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-crease transition-colors"
+          >
+            <History size={18} className="shrink-0" aria-hidden="true" />
+          </button>
+        </IconTooltip>
+      </div>
+    );
+  }
 
   return (
-    <div className="border-t border-wire px-2 py-1.5 flex flex-col gap-0.5">
-      {/* Section header — collapsible toggle */}
-      {/* #37.42 (A008): History, „Recente" its name and tooltip. It still
-          shows and hides the list under it (`aria-expanded`). */}
-      <IconButton
-        icon={History}
-        label={t("title")}
-        variant="bare"
-        size="sm"
-        className="ml-1"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-      />
-
+    <div className="border-t border-wire shrink-0 px-2 py-1 flex flex-col gap-0.5" data-recent-panel>
+      {/* Unfolded, the records sit ABOVE the bar: the list grows upwards and
+          the footer under the bar does not move. */}
       {open && (
-        <div className="flex flex-col gap-0.5">
-          {recentlyViewed.map((entry) => (
-            <RecentEntry
-              key={entry.href}
-              entry={entry}
-              onNavigate={guardedNavigate}
-            />
-          ))}
+        <div id={listId} className="flex flex-col gap-0.5 max-h-64 overflow-y-auto pt-1">
+          {recentlyViewed.length === 0 ? (
+            <p className="px-3 py-1.5 text-xs text-fade">{t("empty")}</p>
+          ) : (
+            recentlyViewed.map((entry) => (
+              <RecentEntry
+                key={entry.href}
+                entry={entry}
+                onNavigate={guardedNavigate}
+              />
+            ))
+          )}
         </div>
       )}
+
+      {/* The bar: one row, the height of a section row (#38.28). */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={listId}
+        data-recent-bar
+        className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-crease transition-colors"
+      >
+        <History size={18} className="shrink-0" aria-hidden="true" />
+        <span className="flex-1 text-left ml-2.5">{t("title")}</span>
+        <ChevronDown
+          size={14}
+          className={`shrink-0 transition-transform duration-150 ${open ? "" : "rotate-180"}`}
+          aria-hidden="true"
+        />
+      </button>
     </div>
   );
 }

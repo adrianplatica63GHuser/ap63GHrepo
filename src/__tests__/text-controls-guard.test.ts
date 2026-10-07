@@ -239,6 +239,7 @@ const ALLOW: Record<string, Allowed[]> = {
   ],
   "src/components/recently-viewed-panel.tsx": [
     ["A113", "<EntityIcon type={entry.entityType} /> <span className=\""],
+    ["A001", "<History size={18} className=\"shrink-0\" aria-hidden=\"true\" /> <span"], // #38.28: the „Recente" bar, a sidebar row
   ],
   "src/components/record-save-sync.tsx": [
     ["A110", "{t(\"confirmNo\")}"],

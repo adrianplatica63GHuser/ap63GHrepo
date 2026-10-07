@@ -552,7 +552,8 @@ export function SidebarNav() {
       </nav>
 
       {/* ── Recently viewed — Slice #20.17 ────────────────────────────────── */}
-      <RecentlyViewedPanel isCollapsed={isCollapsed} />
+      {/* #38.28: one folded bar above the footer; collapsed, its icon expands the sidebar. */}
+      <RecentlyViewedPanel isCollapsed={isCollapsed} onExpandSidebar={expandSidebar} />
 
       {/* ── UAT (Slice #38.22): no Supabase session to change or sign out of — said, not hidden ── */}
       {isUatMode && !isCollapsed && (
