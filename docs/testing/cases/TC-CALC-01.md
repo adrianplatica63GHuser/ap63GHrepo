@@ -13,7 +13,7 @@
 „Calcul drum lateral", end to end, on a known four-corner property split between three owners
 with a side road:
 - the three-section file is read, and a file breaking any of the three rules is rejected with its reason;
-- the owners are laid on the parcel and reordered;
+- the owners are laid on the parcel and reordered, each owner keeping its colour (#38.27);
 - two clicks place the road;
 - the figures add up, and are the ones **a person computes by hand**;
 - the properties are created with the parcel's corner numbers;
@@ -107,7 +107,7 @@ The run creates **four properties and a group**:
 
 The properties and the group are deleted at the end. **The run cannot be**: no screen or route
 deletes one. It stays, listing its parcels as „(ștearsă)". To remove it by hand, with its code
-from step 8:
+from step 9:
 ```powershell
 docker exec ga40prj-postgres psql -U postgres ga40db -c "DELETE FROM calculation_run WHERE code = 'CALC…';"
 ```
@@ -120,17 +120,18 @@ docker exec ga40prj-postgres psql -U postgres ga40db -c "DELETE FROM calculation
 | 2 | Chooses `TC-CALC-01 Respins 5 colturi.txt`, then `… Respins 98 la suta.txt`, then `… Respins drum 15 m.txt` | Each time „Fișierul nu poate fi folosit:" and one reason: „Fișierul are 5 colțuri; trebuie să aibă exact 4." · „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%." · „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m." — and no map |
 | 3 | Chooses `TC-CALC-01 Impartire cu drum.txt` | „Pasul 3 — drumul" with „Faceți clic pe colțul din care pornește drumul …"; the map with the parcel, its corners numbered 16–19, three slices named `TC-CALC-01 A`, `B`, `C` in a random order; „Suprafața parcelei" **611,87 m²**, „Lățime drum" 3,0 m, „Latura 16–17" 29,8 m, „17–18" 20,5 m, „18–19" 29,8 m, „19–16" 20,5 m; the table, and under it „Cotele însumează 99,99%: ultima felie din ordine (…) preia diferența de 0,01% …" |
 | 4 | Puts the owners in the order A, B, C — by dragging one slice onto another, or with ↑ ↓ in the table | The table reads A, B, C from „Nr." 1 to 3; every slice keeps its area |
-| 5 | Clicks the corner badge **18** on the map | „Colțul 18 este ales. Faceți clic pe latura pe care merge drumul: 18–19 sau 17–18."; each side's name at its middle, 18–19 and 17–18 in yellow |
-| 6 | Clicks the side name **16–17** | „Latura 16–17 nu pornește din colțul 18. Alegeți 18–19 sau 17–18."; corner 18 stays chosen |
-| 7 | Clicks the side name **18–19** | „Drumul pornește din colțul 18, pe latura 18–19. …"; the road drawn white along 18–19; „Colțul drumului" 18, „Latura drumului" 18–19, „Lungime drum" **20,8 m**, „Suprafață drum" **62,45 m²**; the table Nr. · Proprietar · Cotă · Cotă × parcelă · Cotă din drum · Suprafață proprie · Proprie + drum · Diferență: A **33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00**; B the same; C **33,33% · 204,00 · 20,82 · 183,18 · 204,00 · 0,00**; Total **99,99% · 611,87 · 62,45 · 549,42 · 611,87 · 0,00** |
-| 8 | Under „Creează 4 proprietăți — proprietarii și drumul — și un grup", replaces „Descrierea grupului" with `TC-CALC-01 Grup de test` and „Poreclă drum" with `TC-CALC-01 Drum comun`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:", „Calculul înregistrat: CALC…", and four links `TC-CALC-01 A`, `B`, `C`, `TC-CALC-01 Drum comun`, with no system ID |
-| 9 | Presses „Vezi istoricul calculului" | „Detalii calcul" at `/admin/calculation/history/[id]`: CALC…, „Activ", „Re-rulează cu acești parametri", „Parametrii calculului" (step 7's figures), „Descriere grup: TC-CALC-01 Grup de test", „Pașii calculului" (step 7's table), „Previzualizare hartă", and „Parcele create": three „Parcelă proprietar" and one „Drum comun" |
-| 10 | Presses „Vezi proprietatea" on `TC-CALC-01 A` | The property, „Suprafață calculată (m²)" **183.12** (the property screen's own format); of its corners, the one at 17 carries „Nr. orig." **17**, the others none. (The road carries 18; C carries 16 and 19.) |
-| 11 | Opens „Istoricul calculelor" | The run's row: `CALC…`, „Drum lateral", 4, `GRP-…`, „Activ" |
-| 12 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul" opens on the same file, the owners in the order A, B, C and the road already from 18 along 18–19, with step 7's figures |
+| 5 | Notes each slice's colour on the map and the swatch beside each name in the table; drags slice `TC-CALC-01 A` onto `TC-CALC-01 B` (or ↓ on A's row); then swaps them back the same way | Each swatch is its slice's colour on the map. After the swap B stands first and A second, and **each owner has kept its colour** — A's slice, in B's old place, is the colour A's was, and so are both swatches; the first slice's colour has moved with A. The swap back returns the order A, B, C and the colours as they were |
+| 6 | Clicks the corner badge **18** on the map | „Colțul 18 este ales. Faceți clic pe latura pe care merge drumul: 18–19 sau 17–18."; each side's name at its middle, 18–19 and 17–18 in yellow |
+| 7 | Clicks the side name **16–17** | „Latura 16–17 nu pornește din colțul 18. Alegeți 18–19 sau 17–18."; corner 18 stays chosen |
+| 8 | Clicks the side name **18–19** | „Drumul pornește din colțul 18, pe latura 18–19. …"; the road drawn white along 18–19; „Colțul drumului" 18, „Latura drumului" 18–19, „Lungime drum" **20,8 m**, „Suprafață drum" **62,45 m²**; the table Nr. · Proprietar · Cotă · Cotă × parcelă · Cotă din drum · Suprafață proprie · Proprie + drum · Diferență: A **33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00**; B the same; C **33,33% · 204,00 · 20,82 · 183,18 · 204,00 · 0,00**; Total **99,99% · 611,87 · 62,45 · 549,42 · 611,87 · 0,00** |
+| 9 | Under „Creează 4 proprietăți — proprietarii și drumul — și un grup", replaces „Descrierea grupului" with `TC-CALC-01 Grup de test` and „Poreclă drum" with `TC-CALC-01 Drum comun`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:", „Calculul înregistrat: CALC…", and four links `TC-CALC-01 A`, `B`, `C`, `TC-CALC-01 Drum comun`, with no system ID |
+| 10 | Presses „Vezi istoricul calculului" | „Detalii calcul" at `/admin/calculation/history/[id]`: CALC…, „Activ", „Re-rulează cu acești parametri", „Parametrii calculului" (step 8's figures), „Descriere grup: TC-CALC-01 Grup de test", „Pașii calculului" (step 8's table, each name with its owner's swatch), „Previzualizare hartă" (each slice in its owner's colour, as in step 5), and „Parcele create": three „Parcelă proprietar" and one „Drum comun" |
+| 11 | Presses „Vezi proprietatea" on `TC-CALC-01 A` | The property, „Suprafață calculată (m²)" **183.12** (the property screen's own format); of its corners, the one at 17 carries „Nr. orig." **17**, the others none. (The road carries 18; C carries 16 and 19.) |
+| 12 | Opens „Istoricul calculelor" | The run's row: `CALC…`, „Drum lateral", 4, `GRP-…`, „Activ" |
+| 13 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul" opens on the same file, the owners in the order A, B, C and the road already from 18 along 18–19, with step 8's figures |
 
-Step 7 is the assertion — Adrian's independently checked figure (2026-10-07) — and step 10 checks the corner
-numbers. Steps 9, 11 and 12 are the history.
+Step 8 is the assertion — Adrian's independently checked figure (2026-10-07) — and step 11 checks the corner
+numbers. Step 5 is the colours (#38.27). Steps 10, 12 and 13 are the history.
 
 ## At the end — leaving things as they were found
 
@@ -151,7 +152,7 @@ temporary Playwright spec drove every step above:
 - the order was set with ↑;
 - the result was read off the screen and through `/api/properties/<id>`.
 
-Every figure in steps 2–12 is what it showed, and Adrian **checked it independently the same day — all correct**:
+Every figure in steps 2–13 (then numbered 2–12) is what it showed, and Adrian **checked it independently the same day — all correct**:
 - run `CALC00007`, group `GRP-563`;
 - road **20,8 m**, **62,45 m²**;
 - A and B each **183,12** own + **20,81** road share = **203,94**;
