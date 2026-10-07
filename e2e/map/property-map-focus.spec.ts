@@ -88,16 +88,11 @@ async function expectFocused(
 }
 
 /**
- * Google's own message when a vector map finds no WebGL — it falls back to
- * the raster map, which draws the same polygons. Headless Chromium on the
- * runner has no GPU, so every map logs it as a console.error; measured nine
- * times on this spec's second runner run, and it is what Next's dev overlay
- * counted as „1 Issue" in the first run's pictures. SwiftShader
- * (`--use-angle=swiftshader --enable-unsafe-swiftshader`) did not stop it
- * (third run). Adrian's browser and the desktop app's pane log none. This one
- * message is let through; every other console error fails the run.
+ * Every console error fails the run. Until FU-275 the headless runner's „Attempted
+ * to load a Vector Map, but failed. Falling back to Raster." was let through by
+ * name; the maps now ask for raster up front where there is no WebGL 2
+ * (`src/lib/ui/map-rendering.ts`), so there is no such message to allow.
  */
-const HEADLESS_NO_WEBGL = /^Attempted to load a Vector Map, but failed\. Falling back to Raster\./;
 
 test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de pe care vii", () => {
   test("harta se deschide pe proprietate, la scara hărții ei, și o face să clipească", async ({ page }) => {
@@ -107,7 +102,7 @@ test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de
     const nav = navigations(page);
     const problems: string[] = [];
     page.on("console", (m) => {
-      if (m.type() === "error" && !HEADLESS_NO_WEBGL.test(m.text())) problems.push(`console.error: ${m.text()}`);
+      if (m.type() === "error") problems.push(`console.error: ${m.text()}`);
     });
     page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
     const id = await createProperty(page.request, { nickname: NICKNAME, corners: CORNERS });

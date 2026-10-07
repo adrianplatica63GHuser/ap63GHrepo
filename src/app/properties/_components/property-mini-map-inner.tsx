@@ -13,6 +13,7 @@ import {
   useMapsLibrary,
   type MapMouseEvent,
 } from "@vis.gl/react-google-maps";
+import { mapRenderingType } from "@/lib/ui/map-rendering";
 import type { Corner } from "./form-schema";
 import {
   computePolygonAngles,
@@ -268,6 +269,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
         mapTypeId={mapType}
         // mapId is required for AdvancedMarker; use the official Google placeholder in dev
         mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
+        // No hardware WebGL 2 → raster up front, not a failed vector attempt and a console.error (FU-275).
+        renderingType={mapRenderingType()}
         disableDefaultUI
         gestureHandling="greedy"
         // crosshair cursor signals draw mode to the user

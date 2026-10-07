@@ -10,6 +10,7 @@ import {
   useMap,
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
+import { mapRenderingType } from "@/lib/ui/map-rendering";
 import { CALC_MAP_STYLE } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
@@ -205,6 +206,8 @@ export function PreviewMap({
       <div className="absolute inset-0">
         <Map
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
+          // No WebGL 2 → raster up front, not a failed vector attempt and a console.error (FU-275).
+          renderingType={mapRenderingType()}
           defaultCenter={{ lat: 44.37, lng: 25.98 }}
           defaultZoom={15}
           mapTypeId="hybrid"

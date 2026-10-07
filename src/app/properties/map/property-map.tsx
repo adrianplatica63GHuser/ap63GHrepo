@@ -16,6 +16,7 @@ import {
   useMap,
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
+import { mapRenderingType } from "@/lib/ui/map-rendering";
 
 import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
 import { wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
@@ -1678,6 +1679,8 @@ export default function PropertyMap() {
         {/* which (like the Pegman itself) is not billed.                        */}
         <Map
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
+          // No WebGL 2 → raster up front, not a failed vector attempt and a console.error (FU-275).
+          renderingType={mapRenderingType()}
           defaultCenter={DEFAULT_CENTER}
           defaultZoom={DEFAULT_ZOOM}
           mapTypeId={mapType}
