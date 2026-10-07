@@ -6,11 +6,9 @@
  * correction grid from disk, so the geometry stays authoritative on the server
  * and the client sends only the file's text and the order of the slices.
  *
- * ⚠️ **THE `Division*` TYPES BELOW ARE #18.10'S, KEPT ONLY FOR THE RUNS ALREADY
- * STORED.** `runs.ts` reads a run's `stepsLog` as a `DivisionComputation`, and
- * „Istoricul calculelor" shows it. The function that produced them read the
- * five-section file, which #38.23 retired; #38.25 retires these types together
- * with the history's reading of old runs.
+ * #18.10's `Division*` types left with #38.25: a stored 'PARCEL_DIVISION' run
+ * is read by the history screen's own mirror of them, and nothing here makes
+ * one any more.
  */
 
 import { stereo70ToWgs84 } from "@/lib/geo/transdatRO";
@@ -33,42 +31,6 @@ export type ComputedCorner = {
   lon: number;
   north: number;
   east: number;
-};
-
-export type ComputedOwner = {
-  name: string;
-  rawLabel: string;
-  percent: number;
-  fraction: number;
-  originalArea: number;
-  roadParticipation: number;
-  finalArea: number;
-  computedArea: number;
-  corners: ComputedCorner[];
-};
-
-export type ComputedRoad = {
-  area: number;
-  length: number;
-  corners: ComputedCorner[];
-};
-
-export type DivisionComputation = {
-  orientation: "HORIZONTAL" | "VERTICAL";
-  /** Declared orientation from Section #2 (always equals `orientation` here —
-   *  a mismatch throws before we get this far). */
-  declaredOrientation: "HORIZONTAL" | "VERTICAL";
-  /** Road / owner-1 corner from Section #4 (SW / NW / SE / NE). */
-  roadCorner: string;
-  roadWidth: number;
-  totalArea: number;
-  lengthSide: number;
-  widthSide: number;
-  percentTotal: number;
-  /** The original big-polygon outline (for the map). */
-  bigPolygon: ComputedCorner[];
-  owners: ComputedOwner[];
-  road: ComputedRoad;
 };
 
 function toComputedCorner(p: S70Point): ComputedCorner {
@@ -110,6 +72,12 @@ export type SliceComputation = {
   /** The polygon's own area. */
   area: number;
   corners: ComputedCorner[];
+  /**
+   * For each of `corners`, the number the file gave it when it IS a corner of
+   * the parcel, or null (#38.25). „Creează proprietățile" keeps it on the new
+   * property's corner; every other corner has none.
+   */
+  cornerNumbers: (string | null)[];
 };
 
 /** The road, once the user has chosen its corner and side (#38.24). */
@@ -125,6 +93,8 @@ export type RoadComputation = {
   length: number;
   area: number;
   corners: ComputedCorner[];
+  /** As a slice's (#38.25). */
+  cornerNumbers: (string | null)[];
 };
 
 export type SlicesComputation = {
@@ -202,7 +172,13 @@ export function computeSlicesFromFile(
     remainderToLast: file.percentTotal !== 100,
     order: chosen,
   };
-  const sliceOf = (k: number, s: { fraction: number; targetArea: number; area: number; polygon: S70Point[] }, parcelArea: number, roadShare: number): SliceComputation => ({
+  const numbers = (indexes: (number | null)[]) => indexes.map((i) => (i === null ? null : file.corners[i].number));
+  const sliceOf = (
+    k: number,
+    s: { fraction: number; targetArea: number; area: number; polygon: S70Point[]; cornerIndex: (number | null)[] },
+    parcelArea: number,
+    roadShare: number,
+  ): SliceComputation => ({
     owner: chosen[k],
     name: file.owners[chosen[k]].name,
     percent: file.owners[chosen[k]].percent,
@@ -212,6 +188,7 @@ export function computeSlicesFromFile(
     targetArea: s.targetArea,
     area: s.area,
     corners: s.polygon.map(toComputedCorner),
+    cornerNumbers: numbers(s.cornerIndex),
   });
 
   if (road === undefined || road === null) {
@@ -248,6 +225,7 @@ export function computeSlicesFromFile(
       length: result.road.length,
       area: result.road.area,
       corners: result.road.polygon.map(toComputedCorner),
+      cornerNumbers: numbers(result.road.cornerIndex),
     },
     slices: result.slices.map((s, k) => sliceOf(k, s, result.parcelArea, s.roadShare)),
   };

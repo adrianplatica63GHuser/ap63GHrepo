@@ -11,16 +11,22 @@
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { calculationRun, calculationRunOutput, groups, property } from "@/db/schema";
-import type { DivisionComputation } from "./compute";
 
 // ---------------------------------------------------------------------------
 // Input / output types
 // ---------------------------------------------------------------------------
 
 export type CalcRunCreate = {
-  inputText:       string;
-  inputOptions:    { groupDescription: string; includeRoad: boolean; roadNickname: string };
-  computation:     DivisionComputation;
+  /**
+   * 'SIDE_ROAD' since #38.25; #18.10's runs are 'PARCEL_DIVISION'. The history
+   * reads `inputParams` and `stepsLog` by it — so it tells the two apart
+   * without parsing a file.
+   */
+  algorithmType:   string;
+  /** What re-runs it: for 'SIDE_ROAD', the file and the three choices. */
+  inputParams:     unknown;
+  /** The figures the screen showed. */
+  stepsLog:        unknown;
   resultGroupId:   string;
   /** Array of { principalObjectId, outputRole } for every created entity */
   outputs:         { principalObjectId: string; outputRole: string }[];
@@ -52,8 +58,9 @@ export type CalcRunDetail = {
   code:          string;
   algorithmType: string;
   status:        string;
-  inputParams:   { text: string; options: { groupDescription: string; includeRoad: boolean; roadNickname: string } };
-  stepsLog:      DivisionComputation;
+  /** As stored, read by `algorithmType` (see CalcRunCreate). */
+  inputParams:   unknown;
+  stepsLog:      unknown;
   resultGroupId: string | null;
   resultGroupCode: string | null;
   outputs:       CalcRunOutput[];
@@ -79,18 +86,13 @@ export async function createCalculationRun(input: CalcRunCreate): Promise<{ id: 
   );
   const code = (codeResult.rows[0] as { code: string }).code;
 
-  const inputParams = {
-    text:    input.inputText,
-    options: input.inputOptions,
-  };
-
   const [runRow] = await db
     .insert(calculationRun)
     .values({
       code,
-      algorithmType: "PARCEL_DIVISION",
-      inputParams:   inputParams as unknown as Record<string, unknown>,
-      stepsLog:      input.computation as unknown as Record<string, unknown>,
+      algorithmType: input.algorithmType,
+      inputParams:   input.inputParams as Record<string, unknown>,
+      stepsLog:      input.stepsLog as Record<string, unknown>,
       resultGroupId: input.resultGroupId,
       status:        "active",
       createdBy:     input.createdBy ?? null,
@@ -193,8 +195,8 @@ export async function getCalculationRun(id: string): Promise<CalcRunDetail | nul
     code:            run.code,
     algorithmType:   run.algorithmType,
     status:          run.status,
-    inputParams:     run.inputParams as CalcRunDetail["inputParams"],
-    stepsLog:        run.stepsLog as DivisionComputation,
+    inputParams:     run.inputParams,
+    stepsLog:        run.stepsLog,
     resultGroupId:   run.resultGroupId ?? null,
     resultGroupCode: run.resultGroupCode ?? null,
     notes:           run.notes ?? null,

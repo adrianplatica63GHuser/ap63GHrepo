@@ -77,17 +77,37 @@ function clip(poly: P[], f: (p: P) => number): P[] {
   return out;
 }
 
-/** Drop consecutive duplicates, which a clip through a vertex produces. */
-function tidy(poly: P[]): P[] {
+/**
+ * Drop consecutive duplicates, which a clip through a vertex produces. When one
+ * of the two is a corner of the parcel itself (`keep`), that one stays: the
+ * corner's identity is how its number reaches the new property (#38.25).
+ */
+function tidy(poly: P[], keep: readonly P[] = []): P[] {
+  const same = (a: P, b: P) => Math.hypot(a.x - b.x, a.y - b.y) <= 1e-9;
   const out: P[] = [];
   for (const p of poly) {
     const prev = out[out.length - 1];
-    if (!prev || Math.hypot(p.x - prev.x, p.y - prev.y) > 1e-9) out.push(p);
+    if (!prev || !same(p, prev)) out.push(p);
+    else if (keep.includes(p) && !keep.includes(prev)) out[out.length - 1] = p;
   }
-  if (out.length > 1 && Math.hypot(out[0].x - out[out.length - 1].x, out[0].y - out[out.length - 1].y) <= 1e-9) {
-    out.pop();
+  if (out.length > 1 && same(out[0], out[out.length - 1])) {
+    const last = out.pop() as P;
+    if (keep.includes(last) && !keep.includes(out[0])) out[0] = last;
   }
   return out;
+}
+
+/**
+ * For each vertex of a piece, the index of the parcel corner it IS, or null.
+ * By identity, not by distance (#38.25): a clip passes the parcel's own vertex
+ * objects through untouched and makes new ones only where it cuts, so a vertex
+ * is a parcel corner exactly when it is one of the parcel's objects.
+ */
+function cornerIndexes(piece: P[], parcel: readonly P[]): (number | null)[] {
+  return piece.map((p) => {
+    const i = parcel.indexOf(p);
+    return i >= 0 ? i : null;
+  });
 }
 
 function cross(o: P, a: P, b: P): number {
@@ -156,6 +176,8 @@ export type Slice = {
   /** The area of the polygon actually cut. The last slice: the remainder. */
   area: number;
   polygon: S70Point[];
+  /** For each vertex of `polygon`, the index of the parcel corner it is, or null (#38.25). */
+  cornerIndex: (number | null)[];
 };
 
 export type SlicesResult = {
@@ -215,12 +237,13 @@ export function cutIntoSlices(corners: S70Point[], fractions: number[]): SlicesR
   cuts.push(uMax);
 
   const slices: Slice[] = fractions.map((fraction, k) => {
-    const piece = tidy(between(cuts[k], cuts[k + 1]));
+    const piece = tidy(between(cuts[k], cuts[k + 1]), poly);
     return {
       fraction,
       targetArea: fraction * parcelArea,
       area: area(piece),
       polygon: piece.map(toS70),
+      cornerIndex: cornerIndexes(piece, poly),
     };
   });
 
@@ -301,7 +324,7 @@ export type RoadSlice = Slice & {
 
 export type RoadResult = {
   parcelArea: number;
-  road: { polygon: S70Point[]; area: number; length: number; width: number };
+  road: { polygon: S70Point[]; cornerIndex: (number | null)[]; area: number; length: number; width: number };
   /** In the order asked for: slices[0] sits at the road's start corner. */
   slices: RoadSlice[];
   /** The fixed-point iterations it took (the suite reads it). */
@@ -450,17 +473,18 @@ export function cutWithRoad(corners: S70Point[], fractions: number[], choice: Ro
     if (!(touch > TOUCH)) throw new RoadRefused({ code: "ownerMissesRoad", values: { position: k } });
   }
 
-  const roadPoly = tidy(roadUpTo(L));
+  const roadPoly = tidy(roadUpTo(L), poly);
   const slices: RoadSlice[] = fractions.map((fraction, k) => {
     const piece =
       k < N - 1
-        ? tidy(clip(clip(beyond, (p) => u(p) - (k === 0 ? uMin : cuts[k - 1])), (p) => cuts[k] - u(p)))
-        : tidy(clip(poly, (p) => u(p) - L));
+        ? tidy(clip(clip(beyond, (p) => u(p) - (k === 0 ? uMin : cuts[k - 1])), (p) => cuts[k] - u(p)), poly)
+        : tidy(clip(poly, (p) => u(p) - L), poly);
     return {
       fraction,
       targetArea: fraction * (parcelArea - roadArea),
       area: area(piece),
       polygon: piece.map(toS70),
+      cornerIndex: cornerIndexes(piece, poly),
       roadShare: fraction * roadArea,
       originalArea: fraction * parcelArea,
     };
@@ -468,7 +492,7 @@ export function cutWithRoad(corners: S70Point[], fractions: number[], choice: Ro
 
   return {
     parcelArea,
-    road: { polygon: roadPoly.map(toS70), area: roadArea, length: L, width: w },
+    road: { polygon: roadPoly.map(toS70), cornerIndex: cornerIndexes(roadPoly, poly), area: roadArea, length: L, width: w },
     slices,
     iterations,
   };

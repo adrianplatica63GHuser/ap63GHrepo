@@ -8,14 +8,23 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useRouter } from "next/navigation";
 import { PreviewMap } from "@/app/admin/calculation/_components/preview-map";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { screenPanel, stepGridStyle, type ColumnName } from "@/lib/ui/field-widths";
+import { screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
-
-/** Slice #37.35: one run is one tile of 7 units, as the calculation is — it holds the 6-unit map and the figures' grid. */
-const RUN_UNITS = 7;
 
 /** The run's two tables, at #37.16's column widths (Slice #37.22). */
 const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
+/** A side-road run's owners (#38.25): the screen's figures, without ↑ ↓. */
+const SIDE_ROAD_COLUMNS: readonly ColumnName[] = ["count", "personName", "percent", "area", "area", "area", "area", "percent"];
+
+/**
+ * Slice #37.35: one run is one tile of 7 units, as the calculation is — it
+ * holds the 6-unit map and the figures' grid. A side-road run's table is wider
+ * (#38.25), and the tile is as wide as its widest fixed piece.
+ */
+const RUN_UNITS = Math.max(7, tableUnits(SIDE_ROAD_COLUMNS));
+
+/** #38.25: the algorithm „Creează proprietățile" records since #38.23–#38.25. */
+const SIDE_ROAD = "SIDE_ROAD";
 // Slice #37.57: no „Cod" — a parcel by its nickname; its system ID is on its own screen.
 const PARCEL_COLUMNS: readonly ColumnName[] = ["propertyNickname", "outputRole", "viewLink"];
 
@@ -36,6 +45,7 @@ type ComputedOwner = {
   corners:           Corner[];
 };
 
+/** #18.10's figures, as 'PARCEL_DIVISION' runs stored them — read-only since #38.25. */
 type DivisionComputation = {
   orientation:         "HORIZONTAL" | "VERTICAL";
   roadCorner:          string;
@@ -57,13 +67,36 @@ type CalcRunOutput = {
   propertyNickname:  string | null;
 };
 
+/** A 'SIDE_ROAD' run's figures (#38.25): what the screen showed, as compute.ts's SlicesComputation. */
+type SideRoadComputation = {
+  corners:         (Corner & { number: string })[];
+  sides:           { from: string; to: string; length: number }[];
+  parcelArea:      number;
+  roadWidth:       number;
+  percentTotal:    number;
+  remainderToLast: boolean;
+  order:           number[];
+  road:            { corner: number; cornerNumber: string; side: "next" | "previous"; from: string; to: string; width: number; length: number; area: number; corners: Corner[] } | null;
+  slices:          { owner: number; name: string; percent: number; originalArea: number; roadShare: number; area: number; corners: Corner[] }[];
+};
+
+type SideRoadInput = {
+  text:    string;
+  order:   number[];
+  road:    { corner: number; side: "next" | "previous" };
+  options: { groupDescription: string; roadNickname: string };
+};
+
+type OldInput = { text: string; options: { groupDescription: string; includeRoad: boolean; roadNickname: string } };
+
 type CalcRunDetail = {
   id:              string;
   code:            string;
   algorithmType:   string;
   status:          string;
-  inputParams:     { text: string; options: { groupDescription: string; includeRoad: boolean; roadNickname: string } };
-  stepsLog:        DivisionComputation;
+  /** By algorithmType: SideRoadInput for 'SIDE_ROAD', OldInput for 'PARCEL_DIVISION'. */
+  inputParams:     SideRoadInput | OldInput;
+  stepsLog:        SideRoadComputation | DivisionComputation;
   resultGroupId:   string | null;
   resultGroupCode: string | null;
   outputs:         CalcRunOutput[];
@@ -135,6 +168,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export function CalculationRunDetail({ runId }: { runId: string }) {
   const t      = useTranslations("calculationHistory");
+  const tc     = useTranslations("calculation");
   const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   const router = useRouter();
 
@@ -155,19 +189,16 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
     );
   }
 
-  const comp = run.stepsLog;
+  const isSideRoad = run.algorithmType === SIDE_ROAD;
 
+  /** Only a side-road run re-runs (#38.25): its file, its order, its road, its options. */
   function handleRerun() {
-    if (!run) return;
-    // Encode the stored input text into sessionStorage so the calculation page
-    // can pick it up and pre-fill the form.
+    if (!run || !isSideRoad) return;
+    const input = run.inputParams as SideRoadInput;
     if (typeof window !== "undefined") {
       sessionStorage.setItem(
         "calc_rerun",
-        JSON.stringify({
-          text:    run.inputParams.text,
-          options: run.inputParams.options,
-        }),
+        JSON.stringify({ text: input.text, order: input.order, road: input.road, options: input.options }),
       );
     }
     router.push("/admin/calculation?rerun=1");
@@ -194,20 +225,90 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
             {t("detail.group")}: <span className="font-mono">{run.resultGroupCode}</span>
           </span>
         )}
-        <div className="ml-auto flex gap-2">
-          {/* #37.46 (A088): RotateCw + „Re-rulează cu acești parametri", on
-              buttonClass's primary rather than a hand-written cta class. */}
-          <IconButton
-            icon={RotateCw}
-            label={t("detail.rerun")}
-            showLabel
-            variant="primary"
-            size="sm"
-            onClick={handleRerun}
-          />
-        </div>
+        {isSideRoad && (
+          <div className="ml-auto flex gap-2">
+            {/* #37.46 (A088): RotateCw + „Re-rulează cu acești parametri", on
+                buttonClass's primary rather than a hand-written cta class. */}
+            <IconButton
+              icon={RotateCw}
+              label={t("detail.rerun")}
+              showLabel
+              variant="primary"
+              size="sm"
+              onClick={handleRerun}
+            />
+          </div>
+        )}
       </div>
+      {!isSideRoad && (
+        <p data-panel="old-run" className="text-xs text-fade dark:text-zinc-400">{t("detail.oldRunNoRerun")}</p>
+      )}
 
+      {isSideRoad ? (
+        <SideRoadRunBody comp={run.stepsLog as SideRoadComputation} input={run.inputParams as SideRoadInput} t={t} tc={tc} />
+      ) : (
+        <OldRunBody comp={run.stepsLog as DivisionComputation} input={run.inputParams as OldInput} t={t} />
+      )}
+
+      {/* ── Created parcels ────────────────────────────────────────── */}
+      <SectionCard title={t("detail.parcelsTitle")}>
+        {run.outputs.length === 0 ? (
+          <p className="text-sm text-fade dark:text-zinc-400">{t("detail.parcelsEmpty")}</p>
+        ) : (
+          <div className={TABLE_FRAME}>
+            <table {...fixedTable(PARCEL_COLUMNS)}>
+              <FixedColumns columns={PARCEL_COLUMNS} />
+              <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
+                <tr>
+                  <th className="px-3 py-2" {...columnHead("propertyNickname")}>{t("detail.parcelsCol.nickname")}</th>
+                  <th className="px-3 py-2" {...columnHead("outputRole")}>{t("detail.parcelsCol.role")}</th>
+                  <th className="px-3 py-2" {...columnHead("viewLink")} />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-crease dark:divide-zinc-800">
+                {run.outputs.map((o) => (
+                  <tr key={o.principalObjectId}>
+                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
+                      {nameOr(o.propertyNickname, "property")}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                        {t(`outputRole.${o.outputRole}`, { fallback: o.outputRole })}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {o.propertyId ? (
+                        // #37.42 (A016): ArrowRight; „Vezi proprietatea" its name and tooltip.
+                        <IconButton
+                          href={`/properties/${encodeURIComponent(o.propertyId)}`}
+                          icon={ArrowRight}
+                          label={t("detail.viewProperty")}
+                          variant="secondary"
+                          size="xs"
+                        />
+                      ) : (
+                        <span className="text-xs text-fade dark:text-zinc-500">{t("detail.deleted")}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+    </section>
+    </UnitRow>
+  );
+}
+
+type T = ReturnType<typeof useTranslations>;
+
+/** A #18.10 run, read-only (#38.25): its five-section figures as they were stored. */
+function OldRunBody({ comp, input, t }: { comp: DivisionComputation; input: OldInput; t: T }) {
+  return (
+    <>
       {/* ── Input parameters ───────────────────────────────────────── */}
       <SectionCard title={t("detail.paramsTitle")}>
         <div className="text-sm" style={stepGridStyle("L", 4)}>
@@ -222,9 +323,9 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
           <Stat label={t("detail.roadLength")}  value={`${fmtLen(comp.road.length)} m`} />
           <Stat label={t("detail.roadArea")}    value={`${fmtArea(comp.road.area)} m²`} />
         </div>
-        {run.inputParams.options.groupDescription && (
+        {input.options.groupDescription && (
           <p className="mt-3 text-xs text-fade dark:text-zinc-400">
-            {t("detail.groupDesc")}: <span className="text-ink dark:text-zinc-200">{run.inputParams.options.groupDescription}</span>
+            {t("detail.groupDesc")}: <span className="text-ink dark:text-zinc-200">{input.options.groupDescription}</span>
           </p>
         )}
       </SectionCard>
@@ -278,55 +379,97 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
         />
       </SectionCard>
 
-      {/* ── Created parcels ────────────────────────────────────────── */}
-      <SectionCard title={t("detail.parcelsTitle")}>
-        {run.outputs.length === 0 ? (
-          <p className="text-sm text-fade dark:text-zinc-400">{t("detail.parcelsEmpty")}</p>
-        ) : (
-          <div className={TABLE_FRAME}>
-            <table {...fixedTable(PARCEL_COLUMNS)}>
-              <FixedColumns columns={PARCEL_COLUMNS} />
-              <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
-                <tr>
-                  <th className="px-3 py-2" {...columnHead("propertyNickname")}>{t("detail.parcelsCol.nickname")}</th>
-                  <th className="px-3 py-2" {...columnHead("outputRole")}>{t("detail.parcelsCol.role")}</th>
-                  <th className="px-3 py-2" {...columnHead("viewLink")} />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-crease dark:divide-zinc-800">
-                {run.outputs.map((o) => (
-                  <tr key={o.principalObjectId}>
-                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
-                      {nameOr(o.propertyNickname, "property")}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                        {t(`outputRole.${o.outputRole}`, { fallback: o.outputRole })}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {o.propertyId ? (
-                        // #37.42 (A016): ArrowRight; „Vezi proprietatea" its name and tooltip.
-                        <IconButton
-                          href={`/properties/${encodeURIComponent(o.propertyId)}`}
-                          icon={ArrowRight}
-                          label={t("detail.viewProperty")}
-                          variant="secondary"
-                          size="xs"
-                        />
-                      ) : (
-                        <span className="text-xs text-fade dark:text-zinc-500">{t("detail.deleted")}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+    </>
+  );
+}
+
+/** A side-road run (#38.25): the figures the screen showed when it was created. */
+function SideRoadRunBody({ comp, input, t, tc }: { comp: SideRoadComputation; input: SideRoadInput; t: T; tc: T }) {
+  const road = comp.road;
+  const totals = comp.slices.reduce(
+    (s, x) => ({ originalArea: s.originalArea + x.originalArea, roadShare: s.roadShare + x.roadShare, area: s.area + x.area }),
+    { originalArea: 0, roadShare: 0, area: 0 },
+  );
+  const diff = (n: number) => fmtArea(Math.abs(n) < 0.005 ? 0 : n);
+  return (
+    <>
+      <SectionCard title={t("detail.paramsTitle")}>
+        <div className="text-sm" style={stepGridStyle("L", 4)}>
+          <Stat label={tc("figures.parcelArea")} value={`${fmtArea(comp.parcelArea)} m²`} />
+          <Stat label={tc("figures.roadWidth")}  value={`${fmtLen(comp.roadWidth)} m`} />
+          {comp.sides.map((s) => (
+            <Stat key={`${s.from}-${s.to}`} label={tc("figures.side", { from: s.from, to: s.to })} value={`${fmtLen(s.length)} m`} />
+          ))}
+          {road && (
+            <>
+              <Stat label={tc("figures.roadCorner")} value={road.cornerNumber} />
+              <Stat label={tc("figures.roadSide")}   value={`${road.from}–${road.to}`} />
+              <Stat label={tc("figures.roadLength")} value={`${fmtLen(road.length)} m`} />
+              <Stat label={tc("figures.roadArea")}   value={`${fmtArea(road.area)} m²`} />
+            </>
+          )}
+        </div>
+        {input.options.groupDescription && (
+          <p className="mt-3 text-xs text-fade dark:text-zinc-400">
+            {t("detail.groupDesc")}: <span className="text-ink dark:text-zinc-200">{input.options.groupDescription}</span>
+          </p>
         )}
       </SectionCard>
 
-    </section>
-    </UnitRow>
+      <SectionCard title={t("detail.stepsTitle")}>
+        <div className={TABLE_FRAME}>
+          <table {...fixedTable(SIDE_ROAD_COLUMNS)}>
+            <FixedColumns columns={SIDE_ROAD_COLUMNS} />
+            <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
+              <tr>
+                <th className="px-3 py-2 text-right" {...columnHead("count")}>{tc("table.order")}</th>
+                <th className="px-3 py-2" {...columnHead("personName")}>{tc("table.owner")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("percent")}>{tc("table.percent")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{tc("table.originalArea")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{tc("table.roadShare")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{tc("table.ownArea")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("area")}>{tc("table.sum")}</th>
+                <th className="px-3 py-2 text-right" {...columnHead("percent")}>{tc("table.difference")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-crease dark:divide-zinc-800">
+              {comp.slices.map((s, i) => (
+                <tr key={s.owner}>
+                  <td className="px-3 py-2 text-right tabular-nums">{i + 1}</td>
+                  <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>{s.name}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{s.percent.toLocaleString("ro-RO", { maximumFractionDigits: 3 })}%</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{fmtArea(s.originalArea)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{fmtArea(s.roadShare)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium">{fmtArea(s.area)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{fmtArea(s.area + s.roadShare)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{diff(s.area + s.roadShare - s.originalArea)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="border-t border-crease font-medium dark:border-zinc-800">
+              <tr>
+                <td className="px-3 py-2" />
+                <td className="px-3 py-2 text-ink dark:text-zinc-200">{tc("table.total")}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{comp.percentTotal.toLocaleString("ro-RO", { maximumFractionDigits: 3 })}%</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmtArea(totals.originalArea)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmtArea(totals.roadShare)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmtArea(totals.area)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmtArea(totals.area + totals.roadShare)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{diff(totals.area + totals.roadShare - totals.originalArea)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </SectionCard>
+
+      <SectionCard title={t("detail.mapTitle")}>
+        <PreviewMap
+          bigPolygon={comp.corners}
+          numberedCorners={comp.corners}
+          owners={comp.slices.map((s) => ({ label: s.name, corners: s.corners }))}
+          road={road?.corners ?? []}
+        />
+      </SectionCard>
+    </>
   );
 }

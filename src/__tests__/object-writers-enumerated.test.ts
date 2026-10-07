@@ -519,16 +519,14 @@ describe("every initial-provenance write is guarded at its call site", () => {
     ).map(rel);
   }
 
-  it("finds the callers by scanning, and there are seven", () => {
+  it("finds the callers by scanning, and there are eight", () => {
     // A hand-written list cannot fail for the case that matters — a brand-new
     // caller in a brand-new file. This one can.
-    //
-    // ⚠️ #38.23: `src/app/api/calculation/commit/route.ts` was the eighth. It
-    // refuses every request until #38.25 rebuilds it on the new side-road file,
-    // and writes nothing meanwhile; #38.25 puts it back on this list, with its
-    // `.catch()` (the test after next).
+    // (#38.23 took the calculation commit out while it refused everything;
+    // #38.25 rebuilt it on the side-road file and it is back.)
     expect(callers().sort()).toEqual(
       [
+        "src/app/api/calculation/commit/route.ts",
         "src/app/api/documents/[id]/process/route.ts",
         "src/app/api/documents/route.ts",
         "src/app/api/judicial-persons/route.ts",
@@ -583,9 +581,7 @@ describe("every initial-provenance write is guarded at its call site", () => {
     const src = read(ROOT, "src/app/api/calculation/commit/route.ts");
     expect(src).not.toContain("patchEntityMetadata(");
     expect(src).not.toContain("import { patchEntityMetadata }");
-    // #38.23: the route writes nothing until #38.25, which restores this line:
-    // expect(src).toContain("setInitialProvenance(");
-    expect(src).toContain("status: 409");
+    expect(src).toContain("setInitialProvenance(");
   });
 });
 

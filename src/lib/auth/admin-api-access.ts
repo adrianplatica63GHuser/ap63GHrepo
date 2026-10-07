@@ -64,7 +64,7 @@ export const ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API: Readonly<Record<string, string
   "stamps/[id]": "„Aplică ștampila\" (/admin/stamps/[id]) and „Ștampile\"'s „Șterge\".",
   tags: "„Etichete\" (/admin/tags): rename and merge a tag across every record.",
   "time-frames": "„Setări\" (/admin/settings): the dashboard's and lists' day counts.",
-  "calculation/commit": "„Calcul\" (/admin/calculation): commits the parcels and their group (refuses until #38.25).",
+  "calculation/commit": "„Calcul\" (/admin/calculation): commits the parcels, the road and their group.",
   "calculation/preview": "„Calcul\" (/admin/calculation): the preview before a commit.",
   "calculation/runs": "The calculation history (/admin/calculation/history).",
   "calculation/runs/[id]": "One calculation run (/admin/calculation/history/[id]).",

@@ -10,7 +10,11 @@
     },
     "buttons": {
       "chooseFile": "Choose data file…",
-      "reset": "Reset"
+      "reset": "Reset",
+      "confirm": "Create the properties",
+      "creating": "Creating…",
+      "startOver": "Start over",
+      "cancel": "Cancel"
     },
     "status": {
       "computing": "Computing the slices…",
@@ -70,7 +74,10 @@
       "label": "Map of the parcel, with its corners numbered and one slice per owner"
     },
     "commit": {
-      "ownersAreNicknames": "The owner names in the file are saved only as each property's nickname, as text. No people are created and nobody is linked to a property — owners are added separately, from each property's own screen."
+      "ownersAreNicknames": "The owner names in the file are saved only as each property's nickname, as text. No people are created and nobody is linked to a property — owners are added separately, from each property's own screen.",
+      "title": "Create {count} properties — the owners and the road — and a group",
+      "groupDescription": "Group description",
+      "roadNickname": "Road nickname"
     },
     "rerun": {
       "fileName": "(re-run)"
@@ -93,7 +100,16 @@
         "roadLeavesParcel": "Along side {side}, a {width} m road does not stay inside the parcel to its end. Choose another side or corner.",
         "ownerMissesRoad": "With the road along side {side}, the slice of {name} cannot reach it because of the parcel's shape. Choose another side, corner or order.",
         "noRoom": "A {width} m road along side {side} leaves no room for the owners. Choose another side or corner."
-      }
+      },
+      "defaultNickname": "Common road"
+    },
+    "group": {
+      "defaultDescription": "Diviz — {file}"
+    },
+    "success": {
+      "title": "Created group {code} with the following properties:",
+      "runCode": "Calculation recorded: {code}",
+      "viewRun": "View calculation history"
     }
   },
   "calculationHistory": {
@@ -120,7 +136,8 @@
       "superseded": "Superseded"
     },
     "algorithmType": {
-      "PARCEL_DIVISION": "Parcel division"
+      "PARCEL_DIVISION": "Parcel division",
+      "SIDE_ROAD": "Side road"
     },
     "outputRole": {
       "OWNER_PARCEL": "Owner parcel",
@@ -157,7 +174,8 @@
       "viewProperty": "View property",
       "deleted": "(deleted)",
       "group": "Group",
-      "rerun": "Re-run with these parameters"
+      "rerun": "Re-run with these parameters",
+      "oldRunNoRerun": "Made with the old five-section file, which „Calcul drum lateral” no longer reads: it can be read, not re-run."
     }
   },
   "home": {
@@ -1421,7 +1439,8 @@
         "tile-selector": "Shown parts — what the ticks do and where the choice is kept",
         "calc-file-format": "Calculation — the data file's three sections and their rules",
         "calc-preview-not-saved": "Calculation — nothing is created until you confirm",
-        "select-all-page-only": "Lists — the header tick box only selects the current page"
+        "select-all-page-only": "Lists — the header tick box only selects the current page",
+        "calc-group-description-autofill": "Calculation — loading a file overwrites the description"
       }
     }
   },

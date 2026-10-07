@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, RotateCcw, Route } from "lucide-react";
+import { ArrowDown, ArrowUp, History, PackagePlus, RotateCcw, Route, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useFormatter, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useNameOr } from "@/components/record/use-name-or";
 import { PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
 // Slice #34.20 — the coordinate picker's offer, named once for the two
@@ -30,7 +32,9 @@ import type { FileProblem } from "@/lib/calculation/parse";
  * (#38.24): a click on a corner, then on one of its two sides, lays the road
  * along that side; the slices turn to meet it, and the order can still be
  * changed with the road in place. The two select boxes under the prompt are
- * the same two clicks from the keyboard. „Creează proprietățile" is #38.25.
+ * the same two clicks from the keyboard. Step 4 (#38.25): „Creează proprietățile"
+ * sends the file and the three choices — the server recomputes and creates one
+ * property per owner and the road; „Anulează" starts over.
  *
  * The geometry is the server's: every change posts the file's text, the order
  * and the road's corner and side to /api/calculation/preview and draws what
@@ -54,6 +58,10 @@ const OWNER_COLUMNS: readonly ColumnName[] = [
   "percent",
   "feOrder",
 ];
+
+/** Slice #37.35's commit form (3 units) and success panel (6), back with step 4 (#38.25). */
+const COMMIT_UNITS = 3;
+const COMMITTED_UNITS = 6;
 
 /**
  * Slice #37.35: the calculation is one tile — the 6-unit map (rule 20), the
@@ -107,6 +115,14 @@ type Computation = {
 
 type Refusal = RoadRefusal & { name?: string };
 
+type CommitResult = {
+  groupId:    string;
+  groupCode:  string;
+  runId:      string;
+  runCode:    string;
+  properties: { id: string; code: string; nickname: string | null }[];
+};
+
 type PreviewAnswer =
   | { kind: "ok"; computation: Computation }
   | { kind: "rejected"; problems: FileProblem[] }
@@ -123,11 +139,17 @@ type RoadStep =
 // ---------------------------------------------------------------------------
 
 /**
- * „Istoricul calculelor" → a run → „Reia" puts the run's file here. A run
- * stored before #38.23 holds the five-section file, which this screen now
- * rejects with its reasons; #38.25 settles how the history treats old runs.
+ * „Istoricul calculelor" → a run → „Re-rulează" puts the run's file and its
+ * three choices here (#38.25), and the screen opens on them: the same order,
+ * the same road, the group description and the road's nickname. Only a
+ * 'SIDE_ROAD' run offers it; #18.10's runs read a file this screen no longer does.
  */
-type RerunPayload = { text: string };
+type RerunPayload = {
+  text: string;
+  order?: number[];
+  road?: { corner: number; side: RoadSide };
+  options?: { groupDescription?: string; roadNickname?: string };
+};
 
 /** Read + consume the calc_rerun sessionStorage entry on the client side. */
 function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
@@ -137,8 +159,8 @@ function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
   if (!raw) return null;
   sessionStorage.removeItem("calc_rerun");
   try {
-    const parsed = JSON.parse(raw) as { text?: unknown };
-    return typeof parsed.text === "string" ? { text: parsed.text } : null;
+    const parsed = JSON.parse(raw) as RerunPayload;
+    return typeof parsed.text === "string" ? parsed : null;
   } catch {
     return null;
   }
@@ -166,6 +188,7 @@ const COORDINATE_PICKER_OFFER_ID = "calculation-coordinate-picker-offer";
 export function CalculationView() {
   const t = useTranslations("calculation");
   const format = useFormatter();
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   // Slice #34.23 — the picker sentence is `shared` because two screens make the
   // same offer; see `picker-accept.ts`.
   const tShared = useTranslations("shared");
@@ -188,7 +211,7 @@ export function CalculationView() {
 
   const [computation, setComputation] = useState<Computation | null>(null);
   const [problems, setProblems] = useState<FileProblem[] | null>(null);
-  const [previewing, setPreviewing] = useState(false);
+  const [previewing, setPreviewing] = useState(() => rerunPayload !== null);
   const [busy, setBusy] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   /** What the last reorder did, for the screen reader (aria-live). */
@@ -197,12 +220,13 @@ export function CalculationView() {
   /** Why the last click or reorder was refused (#38.24). */
   const [roadMessage, setRoadMessage] = useState<string | null>(null);
 
-  // Kick off preview automatically when re-running — the effect only calls the
-  // async function; no setState calls in the effect body.
-  useEffect(() => {
-    if (rerunPayload) void readFile(rerunPayload.text);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Step 4 (#38.25).
+  const [groupDescription, setGroupDescription] = useState(rerunPayload?.options?.groupDescription ?? "");
+  const [roadNickname, setRoadNickname] = useState(rerunPayload?.options?.roadNickname ?? t("road.defaultNickname"));
+  const [committing, setCommitting] = useState(false);
+  const [commitError, setCommitError] = useState<string | null>(null);
+  const [committed, setCommitted] = useState<CommitResult | null>(null);
+
 
   function resetAll() {
     setFileName(null);
@@ -213,6 +237,10 @@ export function CalculationView() {
     setAnnouncement("");
     setRoadStep({ phase: "corner" });
     setRoadMessage(null);
+    setGroupDescription("");
+    setRoadNickname(t("road.defaultNickname"));
+    setCommitError(null);
+    setCommitted(null);
   }
 
   async function preview(
@@ -255,6 +283,42 @@ export function CalculationView() {
       setPreviewError(err instanceof Error ? err.message : String(err));
     } finally {
       setPreviewing(false);
+    }
+  }
+
+  /** Step 4: the server recomputes from the file and the three choices, and creates. */
+  async function doCommit() {
+    if (!fileText || !computation || roadStep.phase !== "set") return;
+    setCommitting(true);
+    setCommitError(null);
+    try {
+      const res = await fetch("/api/calculation/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: fileText,
+          order: computation.order,
+          road: { corner: roadStep.corner, side: roadStep.side },
+          groupDescription: groupDescription.trim(),
+          roadNickname: roadNickname.trim(),
+        }),
+      });
+      if (res.redirected) throw new Error(t("errors.session"));
+      const data = (await res.json().catch(() => ({}))) as Partial<CommitResult> & {
+        error?: string;
+        problems?: FileProblem[];
+        refusal?: Refusal;
+      };
+      if (!res.ok) {
+        if (Array.isArray(data.problems)) throw new Error(data.problems.map(problemText).join(" "));
+        if (data.refusal) throw new Error(refusalText(data.refusal, { corner: roadStep.corner, side: roadStep.side }));
+        throw new Error(data.error ?? `Error ${res.status}`);
+      }
+      setCommitted(data as CommitResult);
+    } catch (err) {
+      setCommitError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCommitting(false);
     }
   }
 
@@ -345,6 +409,7 @@ export function CalculationView() {
     const text = await file.text();
     setFileName(file.name);
     setFileText(text);
+    setGroupDescription(t("group.defaultDescription", { file: file.name }));
     await readFile(text);
   }
 
@@ -400,6 +465,40 @@ export function CalculationView() {
     }
   }
 
+  /** A re-run (#38.25): the file, and — when the run kept them — its order and its road. */
+  async function rerun(payload: RerunPayload) {
+    // `previewing` starts true for a re-run (its useState), so nothing is set
+    // before the first await — the effect below calls this, and a synchronous
+    // setState in an effect is the cascade react-hooks/set-state-in-effect bans.
+    try {
+      const answer = await preview(payload.text, payload.order, payload.road);
+      if (answer.kind === "ok") {
+        setComputation(answer.computation);
+        if (payload.road) setRoadStep({ phase: "set", corner: payload.road.corner, side: payload.road.side });
+      } else if (answer.kind === "rejected") {
+        setProblems(answer.problems);
+      } else {
+        // The road no longer fits (it should, for a stored run): show the parcel and say why.
+        const plain = await preview(payload.text, payload.order);
+        if (plain.kind === "ok") setComputation(plain.computation);
+        setRoadMessage(refusalText(answer.refusal, payload.road));
+      }
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
+  // Open a re-run on its file and choices (below the functions it calls: the React compiler's
+  // declared-before-used rule) — the effect only calls the
+  // async function; no setState calls in the effect body.
+  useEffect(() => {
+    // A microtask, so the effect body itself sets nothing (react-hooks/set-state-in-effect).
+    if (rerunPayload) queueMicrotask(() => void rerun(rerunPayload));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const lastName = computation?.slices[computation.slices.length - 1]?.name ?? "";
   const n = computation?.corners.length ?? 4;
   const offeredSides =
@@ -431,6 +530,58 @@ export function CalculationView() {
         { percent: 0, originalArea: 0, roadShare: 0, area: 0 },
       )
     : null;
+
+  // ---- Created (success) — as #18.10's, with the run's history link ---------
+
+  if (committed) {
+    return (
+      <div className="flex flex-col gap-4">
+        <UnitRow units={[COMMITTED_UNITS]}>
+        <div {...screenPanel("committed", COMMITTED_UNITS)} className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
+          <p className="font-semibold text-green-800 dark:text-green-300">
+            {t("success.title", { code: committed.groupCode })}
+          </p>
+          <p className="mt-1 text-xs text-green-700 dark:text-green-400">
+            {t("success.runCode", { code: committed.runCode })}
+            {" · "}
+            {/* #37.46 (A087): History, icon-only; „Vezi istoricul calculului"
+                is its name and tooltip. */}
+            <IconButton
+              href={`/admin/calculation/history/${committed.runId}`}
+              icon={History}
+              label={t("success.viewRun")}
+              variant="secondary"
+              size="xs"
+              className="ml-1 align-middle"
+            />
+          </p>
+          <ul className="mt-2 flex flex-col gap-1">
+            {committed.properties.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/properties/${p.id}`}
+                  className="text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  {/* #37.57: the property by its nickname, never its system ID. */}
+                  {nameOr(p.nickname, "property")}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        </UnitRow>
+        <div>
+          <IconButton
+            icon={RotateCcw}
+            label={t("buttons.startOver")}
+            variant="primary"
+            size="sm"
+            onClick={resetAll}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <UnitRow units={[CALC_UNITS]}>
@@ -692,6 +843,84 @@ export function CalculationView() {
 
           {computation.remainderToLast && (
             <p className="text-xs text-fade dark:text-zinc-400">{t("remainder", { name: lastName })}</p>
+          )}
+
+          {/* Step 4 — „Creează proprietățile", once the road is laid (#38.25) */}
+          {roadStep.phase === "set" && computation.road && (
+            <div {...screenPanel("commit", COMMIT_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
+              <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+                {t("commit.title", { count: computation.slices.length + 1 })}
+              </h3>
+
+              {/* ⚠️ THE OWNER NAMES ARE TEXT (Slice #34.08, D-20a): each property's
+                  nickname, no Person created, nobody linked. One sentence says so,
+                  because the table above reads like ownership. Resolving them to
+                  Persons is FU-053, a slice of its own. */}
+              <p className="text-xs text-fade dark:text-zinc-400">
+                {t("commit.ownersAreNicknames")}
+              </p>
+
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center gap-1 text-xs font-medium text-ink dark:text-zinc-400">
+                  {t("commit.groupDescription")}
+                  <span className="text-red-500">*</span>
+                  <HelpHint hintKey="calc-group-description-autofill" />
+                </label>
+                <input
+                  {...screenBox("calcGroupDescription")}
+                  type="text"
+                  value={groupDescription}
+                  onChange={(e) => setGroupDescription(e.target.value)}
+                  maxLength={500}
+                  aria-label={t("commit.groupDescription")}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-ink dark:text-zinc-400">
+                  {t("commit.roadNickname")}
+                </label>
+                <input
+                  {...screenBox("calcRoadNickname")}
+                  type="text"
+                  value={roadNickname}
+                  onChange={(e) => setRoadNickname(e.target.value)}
+                  aria-label={t("commit.roadNickname")}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                />
+              </div>
+
+              {commitError && (
+                <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+                  {commitError}
+                </p>
+              )}
+
+              <div className="flex items-center gap-2">
+                {/* #37.46 (A089): PackagePlus, its words shown; working, „Se creează…". */}
+                <IconButton
+                  icon={PackagePlus}
+                  label={committing ? t("buttons.creating") : t("buttons.confirm")}
+                  busy={committing}
+                  showLabel
+                  variant="primary"
+                  size="lg"
+                  onClick={() => void doCommit()}
+                  disabled={committing || busy || groupDescription.trim().length === 0}
+                />
+                {/* A022: X, „Anulează" its name and tooltip — starts over. */}
+                <IconButton
+                  icon={X}
+                  label={t("buttons.cancel")}
+                  variant="secondary"
+                  size="lg"
+                  onClick={resetAll}
+                  disabled={committing}
+                />
+                <HelpHint hintKey="calc-preview-not-saved" />
+              </div>
+            </div>
           )}
         </>
       )}

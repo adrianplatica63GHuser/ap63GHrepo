@@ -10,7 +10,11 @@
     },
     "buttons": {
       "chooseFile": "Alegeți fișierul de date…",
-      "reset": "Resetează"
+      "reset": "Resetează",
+      "confirm": "Creează proprietățile",
+      "creating": "Se creează…",
+      "startOver": "Reia",
+      "cancel": "Anulează"
     },
     "status": {
       "computing": "Se calculează feliile…",
@@ -70,7 +74,10 @@
       "label": "Harta parcelei, cu colțurile numerotate și câte o felie pentru fiecare proprietar"
     },
     "commit": {
-      "ownersAreNicknames": "Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni de proprietăți — proprietarii se adaugă separat, din ecranul fiecărei proprietăți."
+      "ownersAreNicknames": "Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni de proprietăți — proprietarii se adaugă separat, din ecranul fiecărei proprietăți.",
+      "title": "Creează {count} proprietăți — proprietarii și drumul — și un grup",
+      "groupDescription": "Descrierea grupului",
+      "roadNickname": "Poreclă drum"
     },
     "rerun": {
       "fileName": "(re-rulare)"
@@ -93,7 +100,16 @@
         "roadLeavesParcel": "Pe latura {side}, un drum de {width} m nu rămâne în parcelă până la capătul lui. Alegeți altă latură sau alt colț.",
         "ownerMissesRoad": "Cu drumul pe latura {side}, felia lui {name} nu ajunge la drum din cauza formei parcelei. Alegeți altă latură, alt colț sau altă ordine.",
         "noRoom": "Un drum de {width} m pe latura {side} nu lasă loc proprietarilor. Alegeți altă latură sau alt colț."
-      }
+      },
+      "defaultNickname": "Drum comun"
+    },
+    "group": {
+      "defaultDescription": "Diviz — {file}"
+    },
+    "success": {
+      "title": "S-a creat grupul {code} cu următoarele proprietăți:",
+      "runCode": "Calculul înregistrat: {code}",
+      "viewRun": "Vezi istoricul calculului"
     }
   },
   "calculationHistory": {
@@ -120,7 +136,8 @@
       "superseded": "Depășit"
     },
     "algorithmType": {
-      "PARCEL_DIVISION": "Divizare parcelă"
+      "PARCEL_DIVISION": "Divizare parcelă",
+      "SIDE_ROAD": "Drum lateral"
     },
     "outputRole": {
       "OWNER_PARCEL": "Parcelă proprietar",
@@ -157,7 +174,8 @@
       "viewProperty": "Vezi proprietatea",
       "deleted": "(ștearsă)",
       "group": "Grup",
-      "rerun": "Re-rulează cu acești parametri"
+      "rerun": "Re-rulează cu acești parametri",
+      "oldRunNoRerun": "Calcul făcut cu fișierul vechi, în cinci secțiuni, pe care „Calcul drum lateral” nu îl mai citește: se poate consulta, dar nu se poate re-rula."
     }
   },
   "home": {
@@ -1421,7 +1439,8 @@
         "tile-selector": "Părți afișate — ce arată bifele și unde se păstrează alegerea",
         "calc-file-format": "Calcul — cele trei secțiuni ale fișierului de date și regulile lor",
         "calc-preview-not-saved": "Calcul — nu se creează nimic până la confirmare",
-        "select-all-page-only": "Liste — bifa din antet selectează doar pagina curentă"
+        "select-all-page-only": "Liste — bifa din antet selectează doar pagina curentă",
+        "calc-group-description-autofill": "Calcul — încărcarea unui fișier suprascrie descrierea"
       }
     }
   },
