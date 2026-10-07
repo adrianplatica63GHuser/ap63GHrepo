@@ -26,7 +26,7 @@ import {
 // ---------------------------------------------------------------------------
 
 describe("PROVENANCE_VALUES", () => {
-  it("is exactly the 7 codes Adrian specified", () => {
+  it("is exactly the 8 codes Adrian specified (RELATIVE_ID_CARD since #38.29)", () => {
     expect([...PROVENANCE_VALUES]).toEqual([
       "MANUAL",
       "IMAGE",
@@ -35,6 +35,7 @@ describe("PROVENANCE_VALUES", () => {
       "ALGORITHM",
       "AI_INTERPRETED",
       "EXTERNAL_FEED",
+      "RELATIVE_ID_CARD",
     ]);
   });
 
@@ -72,6 +73,7 @@ describe("provenanceI18nKey", () => {
     expect(provenanceI18nKey("COORDINATE_FILE")).toBe("coordinateFile");
     expect(provenanceI18nKey("AI_INTERPRETED")).toBe("aiInterpreted");
     expect(provenanceI18nKey("EXTERNAL_FEED")).toBe("externalFeed");
+    expect(provenanceI18nKey("RELATIVE_ID_CARD")).toBe("relativeIdCard");
   });
 
   it("produces a distinct key for every code", () => {
@@ -138,6 +140,10 @@ describe("inferProvenance — the rest of the surface", () => {
     expect(inferProvenance("CALCULATION")).toBe("ALGORITHM");
   });
 
+  it("a parent read off a relative's identity card is RELATIVE_ID_CARD (#38.29)", () => {
+    expect(inferProvenance("RELATIVE_ID_CARD")).toBe("RELATIVE_ID_CARD");
+  });
+
   it("returns null for UNKNOWN — the signal to ask the user", () => {
     expect(inferProvenance("UNKNOWN")).toBeNull();
   });
@@ -145,7 +151,7 @@ describe("inferProvenance — the rest of the surface", () => {
   it("only ever returns a code that is in the value set", () => {
     const sources = [
       "MANUAL_FORM", "COORDINATE_FILE", "IMAGE_FILE",
-      "DOCUMENT_FILE", "AI_EXTRACTION", "CALCULATION", "UNKNOWN",
+      "DOCUMENT_FILE", "AI_EXTRACTION", "CALCULATION", "RELATIVE_ID_CARD", "UNKNOWN",
     ] as const;
     for (const source of sources) {
       const code = inferProvenance(source);
@@ -279,7 +285,7 @@ describe("rule coverage", () => {
   it("every code except EXTERNAL_FEED is produced by some source kind", () => {
     const sources = [
       "MANUAL_FORM", "COORDINATE_FILE", "IMAGE_FILE",
-      "DOCUMENT_FILE", "AI_EXTRACTION", "CALCULATION",
+      "DOCUMENT_FILE", "AI_EXTRACTION", "CALCULATION", "RELATIVE_ID_CARD",
     ] as const;
     const produced = new Set<ProvenanceCode>();
     for (const s of sources) {

@@ -46,6 +46,8 @@ export type ProvenanceSourceKind =
   | "AI_EXTRACTION"
   /** The Calculation (division) feature generated the record. */
   | "CALCULATION"
+  /** A parent named on someone else's identity card (Slice #38.29). */
+  | "RELATIVE_ID_CARD"
   /** Origin cannot be determined from context — the user must be asked. */
   | "UNKNOWN";
 
@@ -56,6 +58,7 @@ const RULES: Record<ProvenanceSourceKind, ProvenanceCode | null> = {
   DOCUMENT_FILE:   "DOC_FILE",
   AI_EXTRACTION:   "AI_INTERPRETED",
   CALCULATION:     "ALGORITHM",
+  RELATIVE_ID_CARD: "RELATIVE_ID_CARD",
   UNKNOWN:         null,
 };
 

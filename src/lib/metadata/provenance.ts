@@ -36,6 +36,12 @@ export const PROVENANCE_VALUES = [
   "AI_INTERPRETED",
   /** Arrived from an external system or data feed. */
   "EXTERNAL_FEED",
+  /**
+   * Created from a RELATIVE's identity card — the holder's father or mother,
+   * read off the holder's card or typed into its „Carte de identitate" tile
+   * (Slice #38.29, migration_095).
+   */
+  "RELATIVE_ID_CARD",
 ] as const;
 
 export type ProvenanceCode = (typeof PROVENANCE_VALUES)[number];

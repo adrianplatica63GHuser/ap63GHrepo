@@ -45,6 +45,11 @@
  *                                      // for the user to double-check.
  *     unmappedRaw: Record<string, string>, // anything read on the card that
  *                                      // didn't map to a known field
+ *     parents: { father, mother },     // Slice #38.29 — the parents' FIRST
+ *                                      // names as the card prints them, each
+ *                                      // a string or null. Named fields, no
+ *                                      // longer unmapped text: the review
+ *                                      // offers to create each parent.
  *   }
  *
  * Per Adrian's standing instruction: any field that the model cannot map
@@ -77,6 +82,7 @@ import {
   matchCitizenship,
   matchInstitution,
 } from "@/lib/import/lookup-name-match";
+import { cardParentsFrom, type CardParents } from "@/lib/import/id-card-parents";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -116,6 +122,8 @@ type ExtractionResult = {
   fields: ExtractedFields;
   lowConfidenceFields: string[];
   unmappedRaw: Record<string, string>;
+  /** Slice #38.29 — the parents' first names, sanitised by `cardParentsFrom`. */
+  parents: CardParents;
   /**
    * How many distinct people's identity documents the model read on this
    * image, or `null` when it did not say.                      (Slice #32.08)
@@ -219,7 +227,11 @@ Shape:
   },
   "personCount": number,              // how many DISTINCT PEOPLE's identity documents this image shows — see the rule below
   "lowConfidenceFields": string[],    // keys above where you are not confident in the OCR read (blurry, ambiguous, or guessed) — this includes any addressX field where you had to guess how to split the printed address into parts
-  "unmappedRaw": { [label: string]: string }  // any other text visibly printed on the card that does not fit one of the fields above (e.g. a parent's name, a barcode value, etc.) — key is your best label for it, value is the raw text
+  "parents": {                       // the holder's parents, as the card prints them — FIRST names only
+    "father": string | null,          // e.g. "Ion" — null when the card does not print the father
+    "mother": string | null           // e.g. "Maria" — null when the card does not print the mother
+  },
+  "unmappedRaw": { [label: string]: string }  // any other text visibly printed on the card that does not fit one of the fields above (e.g. a barcode value) — key is your best label for it, value is the raw text
 }
 
 Rules:
@@ -228,6 +240,7 @@ Rules:
 - If "personCount" is 2 or more, still fill in "fields" for the FIRST person as best you can — the caller refuses the read on the count alone and never uses those values, but a blank object would make a wrong count indistinguishable from an unreadable image.
 - Only include a field in "unmappedRaw" if it genuinely does not fit one of the named fields above. Do not duplicate a named field into unmappedRaw. In particular, the printed domiciliu/address line should always be split across addressStreetLine/addressLocality/addressCounty/addressPostalCode/addressCountry, never placed in unmappedRaw, even if you are unsure exactly how to split it (in that case, do your best and list the relevant addressX keys in lowConfidenceFields instead).
 - If you cannot read a field at all, set it to null and do NOT list it in lowConfidenceFields (null means "not found", not "uncertain"). Only list a field in lowConfidenceFields if you extracted a value but are unsure it is correct.
+- The parents: a card that prints them gives their first names, on a line such as "Prenume părinți: ION / MARIA" or "Fiul lui ION și al MARIEI" (the father first). Put the father's first name in parents.father and the mother's in parents.mother, in the nominative as a person would write the name ("MARIEI" -> "Maria"), in normal capitalisation. Never put a parent's name in unmappedRaw, and never guess a parent the card does not print — null.
 - Dates must be ISO yyyy-mm-dd or null. Never invent a date.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 
@@ -382,6 +395,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       lowConfidenceFields: Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [],
       unmappedRaw:
         raw.unmappedRaw && typeof raw.unmappedRaw === "object" ? raw.unmappedRaw : {},
+      parents: cardParentsFrom(raw.parents),
       // Sanitised by the gate's own function, so this boundary agrees with the
       // classification's and the AI read's about what a usable count is.
       personCount: identityPersonCountOf(raw.personCount),
@@ -546,5 +560,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     lookupUnavailable,
     lowConfidenceFields: parsed.lowConfidenceFields,
     unmappedRaw: parsed.unmappedRaw,
+    parents: parsed.parents,
   });
 }
