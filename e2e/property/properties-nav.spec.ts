@@ -36,9 +36,17 @@ async function mapLeftOfAdd(page: Page): Promise<Locator> {
   const add = page.getByRole("button", { name: "Adaugă proprietate", exact: true });
   await expect(full).toBeVisible({ timeout: 30_000 });
   expect(await iconOf(full)).toBe("lucide-map");
+  // Polled, not read once (#38.24): in a full run the first read came 9 px off
+  // while the row was still settling, and passed on its own a minute later
+  // (runner 20261007T010242Z-12558, then 20261007T011905Z-31822).
+  const offset = async () => {
+    const f = (await full.boundingBox())!;
+    const a = (await add.boundingBox())!;
+    return Math.abs(f.y + f.height / 2 - (a.y + a.height / 2));
+  };
+  await expect.poll(offset, { timeout: 10_000 }).toBeLessThanOrEqual(2);
   const f = (await full.boundingBox())!;
   const a = (await add.boundingBox())!;
-  expect(Math.abs(f.y + f.height / 2 - (a.y + a.height / 2))).toBeLessThanOrEqual(2);
   expect(f.x + f.width).toBeLessThanOrEqual(a.x);
   return full;
 }
