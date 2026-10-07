@@ -119,6 +119,26 @@ describe.each(CASES)("%s, corner %i", (_name, corners, shares, corner) => {
         });
       });
 
+      it(`${tag}: a vertex that is a parcel corner says which, by identity, and only those (#38.25)`, () => {
+        const pieces = [r.road, ...r.slices];
+        const seen = new Set<number>();
+        for (const piece of pieces) {
+          expect(piece.cornerIndex).toHaveLength(piece.polygon.length);
+          piece.polygon.forEach((p, v) => {
+            const k = piece.cornerIndex[v];
+            if (k === null) {
+              for (const c of corners) expect(Math.hypot(p.north - c.north, p.east - c.east)).toBeGreaterThan(0.001);
+            } else {
+              expect(p).toEqual(corners[k]);
+              seen.add(k);
+            }
+          });
+        }
+        // Every corner of the parcel lands in some new property, the road's start corner in the road.
+        expect([...seen].sort()).toEqual([0, 1, 2, 3]);
+        expect(r.road.cornerIndex).toContain(ci);
+      });
+
       it(`${tag}: own slice + road share = share × parcel, to 0.01 m²; the whole sums to the parcel`, () => {
         for (const s of r.slices) {
           expect(Math.abs(shoelace(s.polygon) - s.area)).toBeLessThan(0.001);

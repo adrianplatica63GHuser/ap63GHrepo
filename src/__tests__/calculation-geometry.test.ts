@@ -94,6 +94,17 @@ describe.each([
     expect(result.axis.north).toBeCloseTo((b.north - a.north) / len, 12);
   });
 
+  it("the parcel's corners are named in the slices that hold them, and nothing else is (#38.25)", () => {
+    const named = result.slices.flatMap((s) => s.cornerIndex.filter((k): k is number => k !== null));
+    expect([...new Set(named)].sort()).toEqual([0, 1, 2, 3]);
+    result.slices.forEach((s) =>
+      s.polygon.forEach((p, v) => {
+        const k = s.cornerIndex[v];
+        if (k !== null) expect(p).toEqual(corners[k]);
+      }),
+    );
+  });
+
   it("a reorder keeps every area, and moves the cuts", () => {
     const reversed = cutIntoSlices(corners, shares.slice().reverse());
     reversed.slices.forEach((s, k) => {
