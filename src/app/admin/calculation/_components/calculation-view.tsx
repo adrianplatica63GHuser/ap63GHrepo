@@ -301,7 +301,9 @@ export function CalculationView() {
 
   /** Step 3, first click: the corner. Another corner may be picked until the side is. */
   function pickCorner(corner: number) {
-    if (roadStep.phase === "set" || busy) return;
+    // Not held back while a recompute is in flight: choosing the corner asks
+    // the server nothing, and a click dropped in silence reads as broken.
+    if (roadStep.phase === "set") return;
     setRoadMessage(null);
     setRoadStep({ phase: "side", corner });
   }

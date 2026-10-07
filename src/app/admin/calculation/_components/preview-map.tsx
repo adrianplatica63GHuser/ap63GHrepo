@@ -211,11 +211,13 @@ export function PreviewMap({
           disableDefaultUI
           gestureHandling="greedy"
           style={{ width: "100%", height: "100%" }}
-          // Step 3's second click (#38.24) is read off the MAP, not off the
-          // side lines: the slices sit on top of the parcel's edges and take
-          // the mouse whatever the z-order, so a click aimed at a line never
-          // reached it. While a side is being chosen the slices are not
-          // clickable (no onSwap), and the nearest side within reach is it.
+          // Step 3's second click (#38.24) has two routes, because neither
+          // reaches the map alone everywhere: the side lines below take a
+          // click on themselves (while a side is chosen the slices and their
+          // names give up the mouse — they sat on the edges and took it); and
+          // a click on the map near a side counts too, within reach — but in
+          // a raster map (headless Chromium has no WebGL) the markers' layer
+          // covers the map and the map's own click never fires.
           onClick={
             onSideClick
               ? (e) => {
@@ -310,6 +312,10 @@ export function PreviewMap({
                     borderRadius: 4,
                     whiteSpace: "nowrap",
                     cursor: onSwap ? "grab" : undefined,
+                    // Only while it is a drag handle. While a side is being
+                    // chosen (#38.24) a name sitting on that side — a thin
+                    // slice's centroid can — would take the click from the map.
+                    pointerEvents: onSwap ? "auto" : "none",
                   }}
                 >
                   {o.label}
@@ -319,8 +325,8 @@ export function PreviewMap({
           })}
 
           {/* The parcel's sides while step 3's second click is awaited (#38.24):
-              the two that may be chosen thicker and yellow. They only show
-              where to click — the click itself is the map's (above). */}
+              the two that may be chosen thicker and yellow, every one of them
+              a click target (a wrong one is refused with the right two named). */}
           {onSideClick &&
             numberedCorners.map((c, i) => {
               const next = numberedCorners[(i + 1) % numberedCorners.length];
@@ -333,8 +339,43 @@ export function PreviewMap({
                   strokeOpacity={offered ? 1 : 0.6}
                   strokeWeight={offered ? 8 : 5}
                   zIndex={5}
-                  clickable={false}
+                  onClick={() => onSideClick(i)}
                 />
+              );
+            })}
+
+          {/* …and each side's name at its middle, a marker — the one click
+              target every rendering delivers: the corner badges are markers
+              too, and they were the only clicks that reached the screen in
+              both the vector and the raster map (#38.24). */}
+          {onSideClick &&
+            numberedCorners.map((c, i) => {
+              const next = numberedCorners[(i + 1) % numberedCorners.length];
+              const offered = offeredSides.includes(i);
+              return (
+                <AdvancedMarker
+                  key={`side-name-${i}`}
+                  position={{ lat: (c.lat + next.lat) / 2, lng: (c.lon + next.lon) / 2 }}
+                  anchorPoint={AdvancedMarkerAnchorPoint.CENTER}
+                  zIndex={9}
+                  onClick={() => onSideClick(i)}
+                >
+                  <div
+                    style={{
+                      background: offered ? "#facc15" : "rgba(255,255,255,0.85)",
+                      color: "#111827",
+                      border: "1px solid #111827",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "1px 6px",
+                      borderRadius: 4,
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {`${c.number}–${next.number}`}
+                  </div>
+                </AdvancedMarker>
               );
             })}
 
