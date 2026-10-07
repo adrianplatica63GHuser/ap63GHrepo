@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useNameOr } from "@/components/record/use-name-or";
-import { PreviewMap } from "./preview-map";
+import { OwnerSwatch, PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
 // Slice #34.20 — the coordinate picker's offer, named once for the two
 // screens that make it. See `picker-accept.ts` for why it is not derived
@@ -20,6 +20,7 @@ import { screenBox, screenPanel, stepGridStyle, tableUnits, type ColumnName } fr
 import { UnitRow } from "@/components/screen/unit-row";
 // Pure, and the same rule the server applies: a drop is a swap (Ask first 2).
 import { swapped, type RoadRefusal, type RoadSide } from "@/lib/calculation/geometry";
+import { ownerColor } from "@/lib/calculation/owner-colors";
 import type { FileProblem } from "@/lib/calculation/parse";
 
 /**
@@ -726,7 +727,8 @@ export function CalculationView() {
           <PreviewMap
             bigPolygon={computation.corners}
             numberedCorners={computation.corners}
-            owners={computation.slices.map((s) => ({ label: s.name, corners: s.corners }))}
+            // The owner's colour, by the owner's line in the file — it travels with a swap (#38.27).
+            owners={computation.slices.map((s) => ({ label: s.name, corners: s.corners, color: ownerColor(s.owner) }))}
             road={computation.road?.corners ?? []}
             // While the side is chosen, the slices leave the mouse to the map's click.
             onSwap={roadStep.phase === "side" ? undefined : (a, b) => void swap(a, b)}
@@ -786,7 +788,10 @@ export function CalculationView() {
                 {computation.slices.map((s, i) => (
                   <tr key={s.owner}>
                     <td className="px-3 py-2 text-right tabular-nums">{i + 1}</td>
-                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>{s.name}</td>
+                    <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
+                      <OwnerSwatch color={ownerColor(s.owner)} />
+                      {s.name}
+                    </td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {format.number(s.percent, { maximumFractionDigits: 3 })}%
                     </td>

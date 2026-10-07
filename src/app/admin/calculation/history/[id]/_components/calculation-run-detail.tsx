@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl";
 import { ArrowRight, RotateCw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useRouter } from "next/navigation";
-import { PreviewMap } from "@/app/admin/calculation/_components/preview-map";
+import { OwnerSwatch, PreviewMap } from "@/app/admin/calculation/_components/preview-map";
+import { ownerColor } from "@/lib/calculation/owner-colors";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -374,6 +375,8 @@ function OldRunBody({ comp, input, t }: { comp: DivisionComputation; input: OldI
       <SectionCard title={t("detail.mapTitle")}>
         <PreviewMap
           bigPolygon={comp.bigPolygon}
+          // A run made before #38.23 has no file order of owners: its slices keep
+          // the colour of their place in the run's output, as before (#38.27).
           owners={comp.owners.map((o) => ({ label: o.name, corners: o.corners }))}
           road={comp.road.corners}
         />
@@ -436,7 +439,10 @@ function SideRoadRunBody({ comp, input, t, tc }: { comp: SideRoadComputation; in
               {comp.slices.map((s, i) => (
                 <tr key={s.owner}>
                   <td className="px-3 py-2 text-right tabular-nums">{i + 1}</td>
-                  <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>{s.name}</td>
+                  <td className={`px-3 py-2 text-ink dark:text-zinc-200 ${WRAPS}`}>
+                    <OwnerSwatch color={ownerColor(s.owner)} />
+                    {s.name}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums">{s.percent.toLocaleString("ro-RO", { maximumFractionDigits: 3 })}%</td>
                   <td className="px-3 py-2 text-right tabular-nums">{fmtArea(s.originalArea)}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{fmtArea(s.roadShare)}</td>
@@ -466,7 +472,8 @@ function SideRoadRunBody({ comp, input, t, tc }: { comp: SideRoadComputation; in
         <PreviewMap
           bigPolygon={comp.corners}
           numberedCorners={comp.corners}
-          owners={comp.slices.map((s) => ({ label: s.name, corners: s.corners }))}
+          // The same owner, the same colour as on the screen that made the run (#38.27).
+          owners={comp.slices.map((s) => ({ label: s.name, corners: s.corners, color: ownerColor(s.owner) }))}
           road={road?.corners ?? []}
         />
       </SectionCard>

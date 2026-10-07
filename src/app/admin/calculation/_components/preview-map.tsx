@@ -12,6 +12,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import { mapRenderingType } from "@/lib/ui/map-rendering";
 import { CALC_MAP_STYLE } from "@/lib/ui/field-widths";
+import { ROAD_COLOR, ownerColor } from "@/lib/calculation/owner-colors";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,6 +23,12 @@ type Corner = { lat: number; lon: number };
 export type PreviewOwner = {
   label: string;
   corners: Corner[];
+  /**
+   * The owner's colour (#38.27), from @/lib/calculation/owner-colors — decided
+   * by the owner's line in the file, so it travels with the owner on a swap.
+   * Left out (a run made before #38.23), the slice's place decides it.
+   */
+  color?: string;
 };
 
 /** A corner of the parcel with the number the data file gave it (#38.23). */
@@ -57,19 +64,7 @@ type Props = {
   offeredSides?: number[];
 };
 
-// Distinct fill colours for the owner parcels (cycled if there are more).
-const OWNER_COLORS = [
-  "#3b82f6", // blue
-  "#22c55e", // green
-  "#f59e0b", // amber
-  "#a855f7", // purple
-  "#ec4899", // pink
-  "#14b8a6", // teal
-  "#ef4444", // red
-  "#6366f1", // indigo
-];
-
-const ROAD_COLOR = "#6b7280"; // gray
+// The owners' colours and the road's grey live in @/lib/calculation/owner-colors (#38.27).
 const ROAD_OUTLINE = "#ffffff";
 
 function toPaths(corners: Corner[]) {
@@ -130,6 +125,21 @@ export function nearestSide(corners: Corner[], lat: number, lon: number): number
     }
   });
   return bestDistance <= reach ? best : null;
+}
+
+/**
+ * The owner's colour beside the name (#38.27), so the table and the map read
+ * together. Decorative: the name beside it is what the screen reader says.
+ */
+export function OwnerSwatch({ color }: { color: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-owner-color={color}
+      className="mr-2 inline-block h-3 w-3 shrink-0 rounded-sm border border-black/20 align-middle dark:border-white/30"
+      style={{ backgroundColor: color }}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -249,7 +259,7 @@ export function PreviewMap({
 
           {/* Owner parcels — draggable onto one another when onSwap is given */}
           {owners.map((o, i) => {
-            const color = OWNER_COLORS[i % OWNER_COLORS.length];
+            const color = o.color ?? ownerColor(i);
             return o.corners.length >= 3 ? (
               <Polygon
                 key={`${i}-${dropCount}`}
