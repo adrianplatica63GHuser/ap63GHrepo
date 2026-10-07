@@ -74,7 +74,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await page.getByRole("link", { name: "Adaugă persoană" }).click();
       await expect(page).toHaveURL(/\/natural-persons\/new$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Persoană fizică nouă" })).toBeVisible({ timeout: 30_000 });
-      for (const section of ["IDENTITATE", "CARTE DE IDENTITATE", "CONTACT", "ADRESĂ DOMICILIU"]) {
+      for (const section of ["IDENTITATE", "ACT DE IDENTITATE", "CONTACT", "ADRESĂ DOMICILIU"]) {
         await expect(page.getByText(section).first()).toBeVisible();
       }
 

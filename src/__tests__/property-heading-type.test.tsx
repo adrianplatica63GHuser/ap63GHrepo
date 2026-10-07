@@ -92,10 +92,10 @@ describe("PropertyTypeHeading (#38.03)", () => {
   });
 
   it.each([
-    ["urban", URBAN, "Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Date cadastrale”."],
-    ["agricultural", RURAL, "Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Date cadastrale”."],
-    ["LINIARA", LINEAR, "Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Date cadastrale”."],
-    ["mixed", profile("X", false, false, true), "Pentru acest tip se afișează „Street View”; nu se afișează „Adresă”. Tarla/Solă și Parcelă nu apar în „Date cadastrale”."],
+    ["urban", URBAN, "Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Identificare cadastrală”."],
+    ["agricultural", RURAL, "Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”."],
+    ["LINIARA", LINEAR, "Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”."],
+    ["mixed", profile("X", false, false, true), "Pentru acest tip se afișează „Street View”; nu se afișează „Adresă”. Tarla/Solă și Parcelă nu apar în „Identificare cadastrală”."],
   ])("the explanation for a %s type, in Romanian", (_label, type, text) => {
     render(<PropertyTypeHeading type={type} />);
     expect(bubble()).toHaveTextContent(text);
@@ -104,7 +104,7 @@ describe("PropertyTypeHeading (#38.03)", () => {
   it("the same in English", () => {
     mockLocale = "en-GB";
     render(<PropertyTypeHeading type={RURAL} />);
-    expect(bubble()).toHaveTextContent("This type does not show “Address” and “Street View”. Tarla/Solă and Parcelă appear in “Cadastral Data”.");
+    expect(bubble()).toHaveTextContent("This type does not show “Address” and “Street View”. Tarla/Solă and Parcelă appear in “Cadastral identification”.");
   });
 
   it("no type: nothing after the name — no dash, no ⓘ", () => {

@@ -76,7 +76,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await page.getByRole("link", { name: "Adaugă act" }).click();
       await expect(page).toHaveURL(/\/documents\/new$/, { timeout: 30_000 });
       await page.getByLabel(/^Tip document/).selectOption({ label: "Certificat de Moștenitor" });
-      await expect(page.getByText("DATE GENERALE").first()).toBeVisible();
+      await expect(page.getByText("IDENTIFICAREA ACTULUI").first()).toBeVisible();
       // #37.52: a type with no fees group titles that panel „Date de emitere".
       await expect(page.getByText("DATE DE EMITERE").first()).toBeVisible();
       // #37.85: the superuser's line, the engine's name a link.

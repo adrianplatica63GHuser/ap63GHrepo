@@ -32,9 +32,11 @@ export const TILE_SUBTITLE_CLASS =
 export function TileSubtitle({ text }: { text: string | undefined }) {
   if (!text) return null;
   return (
-    <p className={TILE_SUBTITLE_CLASS} title={text} data-tile-subtitle="">
+    // A `div`, not a `p`: the tiles' own specs read their paragraphs as a list
+    // (TC-TILES-08's empty-state sentences), and this line is not one of them.
+    <div className={TILE_SUBTITLE_CLASS} title={text} data-tile-subtitle="">
       {text}
-    </p>
+    </div>
   );
 }
 

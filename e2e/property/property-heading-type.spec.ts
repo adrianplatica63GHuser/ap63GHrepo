@@ -27,9 +27,9 @@ const RURAL = `${MARK} Teren agricol`;
 const SHOTS = "playwright-report/property-heading-type";
 
 const URBAN_SAYS =
-  "Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Date cadastrale”.";
+  "Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Identificare cadastrală”.";
 const RURAL_SAYS =
-  "Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Date cadastrale”.";
+  "Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”.";
 
 async function typeIdOf(page: Page, key: string): Promise<string> {
   const res = await page.request.get("/api/admin/value-lists/property-types");

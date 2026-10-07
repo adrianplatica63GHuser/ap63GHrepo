@@ -81,7 +81,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await page.getByRole("link", { name: "Adaugă persoană juridică" }).click();
       await expect(page).toHaveURL(/\/judicial-persons\/new$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Persoană juridică nouă" })).toBeVisible({ timeout: 30_000 });
-      for (const section of ["PERSOANĂ JURIDICĂ", "PERSOANE DE CONTACT", "ADRESĂ SEDIU SOCIAL", "ADRESĂ CORESPONDENȚĂ"]) {
+      for (const section of ["PERSOANĂ JURIDICĂ", "REPREZENTANȚI ȘI CONTACT", "ADRESĂ SEDIU SOCIAL", "ADRESĂ CORESPONDENȚĂ"]) {
         await expect(page.getByText(section).first()).toBeVisible();
       }
       await expect(page.getByRole("checkbox", { name: "Aceeași cu adresa sediului social" })).toBeVisible();

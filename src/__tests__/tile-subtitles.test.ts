@@ -114,7 +114,7 @@ describe("each screen draws the line", () => {
   it("the line never widens a tile, is cut with an ellipsis and keeps its full text as a tooltip", () => {
     const src = read("src", "components", "tiles", "tile-title.tsx");
     expect(src).toMatch(/TILE_SUBTITLE_CLASS =\s*"w-0 min-w-full truncate /);
-    expect(src).toMatch(/<p className=\{TILE_SUBTITLE_CLASS\} title=\{text\} data-tile-subtitle="">/);
+    expect(src).toMatch(/<div className=\{TILE_SUBTITLE_CLASS\} title=\{text\} data-tile-subtitle="">/);
   });
 
   it("the list tiles, „Interacțiuni”, the addresses, „Părți” and „Pagini” take a subtitle", () => {
