@@ -65,15 +65,15 @@ test.describe("TC-PERS-08 — părinții din cartea de identitate, la „Adaugă
       const mother = fold.getByRole("checkbox", { name: "Creează și mama" });
       await expect(father).not.toBeChecked();
       await expect(mother).not.toBeChecked();
-      await expect(fold.getByLabel("Numele tatălui")).toHaveValue(MARK);
-      await expect(fold.getByLabel("Numele mamei")).toHaveValue(MARK);
+      await expect(fold.getByLabel("Numele tatălui", { exact: true })).toHaveValue(MARK);
+      await expect(fold.getByLabel("Numele mamei", { exact: true })).toHaveValue(MARK);
 
       // Step 3 — both ticked and named; the mother's surname replaced.
       await father.check();
-      await fold.getByLabel("Prenumele tatălui").fill("Ion");
+      await fold.getByLabel("Prenumele tatălui", { exact: true }).fill("Ion");
       await mother.check();
-      await fold.getByLabel("Prenumele mamei").fill("Maria");
-      await fold.getByLabel("Numele mamei").fill(MOTHER_SURNAME);
+      await fold.getByLabel("Prenumele mamei", { exact: true }).fill("Maria");
+      await fold.getByLabel("Numele mamei", { exact: true }).fill(MOTHER_SURNAME);
       await expect(fold.locator('[data-parent="FATHER"]')).toContainText("Numele titularului, presupus — verificați-l");
       await expect(fold.locator('[data-parent="MOTHER"]')).not.toContainText("Numele titularului, presupus");
 
