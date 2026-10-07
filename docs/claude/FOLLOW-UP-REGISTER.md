@@ -12,13 +12,13 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-06, Slice #38.17 — 314 entries. Rows are status, columns are impact.
+As of 2026-10-07, FU-275 resolved — 314 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 70 | 68 | 16 | 171 |
+| open | 17 | 70 | 67 | 16 | 170 |
 | planned | 0 | 0 | 1 | 0 | 1 |
-| resolved | 37 | 56 | 29 | 3 | 125 |
+| resolved | 37 | 56 | 30 | 3 | 126 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
