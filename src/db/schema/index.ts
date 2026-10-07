@@ -896,6 +896,13 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   converseName:       text("converse_name"),
   converseNameMale:   text("converse_name_male"),
   converseNameFemale: text("converse_name_female"),
+
+  // Slice #38.29, migration_095: FATHER or MOTHER on the one role each that a
+  // parent read off an identity card is linked by („Tată", „Mamă"); NULL on
+  // every other role. The code finds those two by this column, never by their
+  // names, which are Adrian's to rename. CHECK chk_lookup_person_role_parent_kind,
+  // at most one row each (uq_lookup_person_role_parent_kind).
+  parentKind: text("parent_kind"),
 });
 
 // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the

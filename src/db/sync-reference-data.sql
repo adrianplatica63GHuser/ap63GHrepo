@@ -438,7 +438,11 @@ INSERT INTO lookup_person_role (id, name, description, sort_order, created_at, u
   (gen_random_uuid(), 'Fiu', '(masculin)', 60, now(), now()),
   (gen_random_uuid(), 'Fiică', '(feminin)', 61, now(), now()),
   (gen_random_uuid(), 'Frate', '(masculin)', 62, now(), now()),
-  (gen_random_uuid(), 'Soră', '(feminin)', 63, now(), now())
+  (gen_random_uuid(), 'Soră', '(feminin)', 63, now(), now()),
+  -- Slice #38.29 (migration_095): the two a parent read off an identity card is
+  -- linked by. Same names, descriptions and sort_orders as migration_095.
+  (gen_random_uuid(), 'Tată', '(părintele, bărbat)', 64, now(), now()),
+  (gen_random_uuid(), 'Mamă', '(părintele, femeie)', 65, now(), now())
 ON CONFLICT DO NOTHING;
 
 -- ── lookup_doc_type_person_role ───────────────────────────────────────────────
@@ -636,4 +640,16 @@ UPDATE lookup_person_role r
     ('Frate',                         'Frate / Soră',          'Frate', 'Soră'),
     ('Soră',                          'Frate / Soră',          'Frate', 'Soră')
   ) AS c(name, neutral, male, female)
+ WHERE r.name = c.name;
+
+-- Slice #38.29 (migration_095): „Tată" and „Mamă" - ticked for people, found by
+-- the code through parent_kind (never by name), and read from the parent's side
+-- as „Părinte" is: „Copil", „Fiu", „Fiică".
+UPDATE lookup_person_role r
+   SET valid_for_person     = true,
+       parent_kind          = c.kind,
+       converse_name        = 'Copil',
+       converse_name_male   = 'Fiu',
+       converse_name_female = 'Fiică'
+  FROM (VALUES ('Tată', 'FATHER'), ('Mamă', 'MOTHER')) AS c(name, kind)
  WHERE r.name = c.name;
