@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-06 17:46
+-- Generated : 2026-10-07 16:53
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -409,7 +409,7 @@ CREATE TABLE public.entity_metadata (
     provenance_updated_at timestamp with time zone,
     updated_by text,
     CONSTRAINT chk_em_importance CHECK ((importance = ANY (ARRAY['LOW'::text, 'MEDIUM'::text, 'HIGH'::text]))),
-    CONSTRAINT chk_em_provenance CHECK ((provenance = ANY (ARRAY['MANUAL'::text, 'IMAGE'::text, 'DOC_FILE'::text, 'COORDINATE_FILE'::text, 'ALGORITHM'::text, 'AI_INTERPRETED'::text, 'EXTERNAL_FEED'::text]))),
+    CONSTRAINT chk_em_provenance CHECK ((provenance = ANY (ARRAY['MANUAL'::text, 'IMAGE'::text, 'DOC_FILE'::text, 'COORDINATE_FILE'::text, 'ALGORITHM'::text, 'AI_INTERPRETED'::text, 'EXTERNAL_FEED'::text, 'RELATIVE_ID_CARD'::text]))),
     CONSTRAINT chk_em_relevance CHECK ((relevance = ANY (ARRAY['INACTIVE'::text, 'HISTORICAL'::text, 'CURRENT'::text, 'FUTURE'::text])))
 );
 
@@ -656,7 +656,9 @@ CREATE TABLE public.lookup_person_role (
     valid_for_person boolean DEFAULT false NOT NULL,
     converse_name text,
     converse_name_male text,
-    converse_name_female text
+    converse_name_female text,
+    parent_kind text,
+    CONSTRAINT chk_lookup_person_role_parent_kind CHECK (((parent_kind IS NULL) OR (parent_kind = ANY (ARRAY['FATHER'::text, 'MOTHER'::text]))))
 );
 
 
@@ -693,6 +695,13 @@ COMMENT ON COLUMN public.lookup_person_role.converse_name_male IS 'The converse 
 --
 
 COMMENT ON COLUMN public.lookup_person_role.converse_name_female IS 'The converse when the person shown is FEMALE ("Fiică" for "Părinte"). NULL falls back to converse_name.';
+
+
+--
+-- Name: COLUMN lookup_person_role.parent_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.parent_kind IS 'FATHER or MOTHER on the one role each that a person created from an identity card''s parents is linked by (Slice #38.29, „Tată" and „Mamă"); NULL on every other role. The code finds those two roles by this column, never by their names, which are Adrian''s to rename. At most one row each (uq_lookup_person_role_parent_kind).';
 
 
 --
@@ -2058,6 +2067,13 @@ CREATE INDEX stamp_member_principal_object_idx ON public.stamp_member USING btre
 --
 
 CREATE UNIQUE INDEX stamp_member_stamp_principal_object_unique ON public.stamp_member USING btree (stamp_id, principal_object_id);
+
+
+--
+-- Name: uq_lookup_person_role_parent_kind; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_lookup_person_role_parent_kind ON public.lookup_person_role USING btree (parent_kind) WHERE (parent_kind IS NOT NULL);
 
 
 --
