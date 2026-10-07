@@ -73,24 +73,6 @@ type PreviewAnswer =
   | { kind: "rejected"; problems: FileProblem[] };
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function fmtArea(n: number): string {
-  return n.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function fmtLen(n: number): string {
-  return n.toLocaleString(undefined, {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Re-run payload  (Slice #20.09)
 // ---------------------------------------------------------------------------
 
@@ -136,6 +118,11 @@ export function CalculationView() {
   // Slice #34.23 — the picker sentence is `shared` because two screens make the
   // same offer; see `picker-accept.ts`.
   const tShared = useTranslations("shared");
+  // In the application's language, like the shares beside them (#38.23) —
+  // #18.10's figures followed the browser's locale, so a Romanian screen
+  // showed „24,33%" next to „501,764.41".
+  const fmtArea = (n: number) => format.number(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtLen = (n: number) => format.number(n, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const searchParams = useSearchParams();
 
   // Slice #20.09: parse a re-run payload from sessionStorage during the first

@@ -187,6 +187,10 @@ export function PreviewMap({ bigPolygon, owners, road = [], numberedCorners = []
                 strokeWeight={2}
                 fillColor={color}
                 fillOpacity={dragging === i ? 0.6 : 0.35}
+                // ⚠️ `clickable` must be said: vis.gl infers it from `onClick`
+                // alone, and a polygon that is not clickable gets no mouse at
+                // all — so `draggable` did nothing and the drag panned the map.
+                clickable={Boolean(onSwap)}
                 draggable={Boolean(onSwap)}
                 zIndex={dragging === i ? 2 : 1}
                 onDragStart={() => setDragging(i)}
@@ -195,11 +199,19 @@ export function PreviewMap({ bigPolygon, owners, road = [], numberedCorners = []
             ) : null;
           })}
 
-          {/* Owner labels at centroids */}
+          {/* Owner labels at centroids — a second handle for the same drag:
+              the name is where a hand reaches for, and the marker sits over
+              the polygon, so without this a drag started on it panned the map. */}
           {owners.map((o, i) => {
             const c = centroid(o.corners);
             return c ? (
-              <AdvancedMarker key={`lbl-${i}`} position={c}>
+              <AdvancedMarker
+                key={`lbl-${i}-${dropCount}`}
+                position={c}
+                draggable={Boolean(onSwap)}
+                onDragStart={() => setDragging(i)}
+                onDragEnd={(e) => drop(i, e)}
+              >
                 <div
                   style={{
                     transform: "translate(-50%, -50%)",
@@ -210,7 +222,7 @@ export function PreviewMap({ bigPolygon, owners, road = [], numberedCorners = []
                     padding: "2px 6px",
                     borderRadius: 4,
                     whiteSpace: "nowrap",
-                    pointerEvents: "none",
+                    cursor: onSwap ? "grab" : undefined,
                   }}
                 >
                   {o.label}
