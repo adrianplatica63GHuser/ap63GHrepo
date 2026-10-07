@@ -262,3 +262,214 @@ export function swapped(order: readonly number[], a: number, b: number): number[
   [next[a], next[b]] = [next[b], next[a]];
   return next;
 }
+
+// ---------------------------------------------------------------------------
+// Step 3 — the road, and the slices turned to meet it (#38.24)
+// ---------------------------------------------------------------------------
+
+/** Which side of the chosen corner the road runs along: to the next corner in the file, or the previous. */
+export type RoadSide = "next" | "previous";
+
+export type RoadChoice = {
+  /** Index into the corners, in file order. */
+  corner: number;
+  side: RoadSide;
+  /** Metres. */
+  width: number;
+};
+
+/** Why a road cannot be built — never drawn wrong instead. */
+export type RoadRefusal =
+  | { code: "roadTooLong"; values: { length: number; side: number } }
+  | { code: "roadLeavesParcel" }
+  | { code: "ownerMissesRoad"; values: { position: number } }
+  | { code: "noRoom" };
+
+export class RoadRefused extends Error {
+  constructor(readonly refusal: RoadRefusal) {
+    super(`The road cannot be built: ${refusal.code}`);
+    this.name = "RoadRefused";
+  }
+}
+
+export type RoadSlice = Slice & {
+  /** fraction × the road's area. */
+  roadShare: number;
+  /** fraction × the parcel's area: what own slice + road share must equal. */
+  originalArea: number;
+};
+
+export type RoadResult = {
+  parcelArea: number;
+  road: { polygon: S70Point[]; area: number; length: number; width: number };
+  /** In the order asked for: slices[0] sits at the road's start corner. */
+  slices: RoadSlice[];
+  /** The fixed-point iterations it took (the suite reads it). */
+  iterations: number;
+};
+
+/** The two corners at the ends of a side of corner i. */
+export function sideEnds(n: number, corner: number, side: RoadSide): [number, number] {
+  return [corner, side === "next" ? (corner + 1) % n : (corner + n - 1) % n];
+}
+
+/** The interval of the line v = c that lies inside the polygon (its outermost crossings). */
+function chordOn(poly: P[], v: (p: P) => number, u: (p: P) => number, c: number): [number, number] | null {
+  const hits: number[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const va = v(a) - c;
+    const vb = v(b) - c;
+    if ((va <= 0 && vb > 0) || (va > 0 && vb <= 0)) {
+      const t = va / (va - vb);
+      hits.push(u(a) + t * (u(b) - u(a)));
+    }
+  }
+  if (hits.length < 2) return null;
+  return [Math.min(...hits), Math.max(...hits)];
+}
+
+function contains(poly: P[], p: P, tolerance: number): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  if (inside) return true;
+  // On the boundary, within tolerance.
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const len2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / len2));
+    if (Math.hypot(a.x + t * (b.x - a.x) - p.x, a.y + t * (b.y - a.y) - p.y) <= tolerance) return true;
+  }
+  return false;
+}
+
+/** How close a border may come to the road's end before an owner is said to miss it. */
+const TOUCH = 0.01;
+
+/**
+ * Lay the road along `choice.side` from `choice.corner`, and cut the parcel
+ * into one slice per fraction by lines perpendicular to it.
+ *
+ * - The road is the parcel's band within `width` of the chosen side, from
+ *   wherever the parcel's own side at the corner starts it, to a cap
+ *   perpendicular to the side at distance L along it.
+ * - Owners 1…N-1 take the parcel beyond the band, cut at right angles to the
+ *   road; the last cut is the road's cap, extended across the parcel, and the
+ *   last owner takes everything beyond it, the band's end included.
+ * - Each owner's own slice is fraction × (parcel − road); the road's area
+ *   depends on L and L on the slices, so L is found by fixed-point iteration
+ *   (#18.10's step 5), which converges in a handful of rounds because the road
+ *   is a sliver of the parcel.
+ * - `fractions` must sum to 1 — the caller has already handed the last owner
+ *   any remainder (#38.23's Ask first 3).
+ */
+export function cutWithRoad(corners: S70Point[], fractions: number[], choice: RoadChoice): RoadResult {
+  if (!quadIsSimple(corners)) throw new DivisionError("The four corners do not draw a quadrilateral.");
+  if (fractions.length < 2 || fractions.some((f) => !(f > 0))) {
+    throw new DivisionError("At least two positive shares are needed.");
+  }
+  if (!(choice.width > 0)) throw new DivisionError("The road needs a width above 0.");
+  const n = corners.length;
+  if (!Number.isInteger(choice.corner) || choice.corner < 0 || choice.corner >= n) {
+    throw new DivisionError("The road's corner is not one of the parcel's.");
+  }
+
+  const { toP, toS70 } = frame(corners);
+  const poly = corners.map(toP);
+  const parcelArea = area(poly);
+  const [ci, ei] = sideEnds(n, choice.corner, choice.side);
+  const C = poly[ci];
+  const E = poly[ei];
+  const sideLength = Math.hypot(E.x - C.x, E.y - C.y);
+  const ux = (E.x - C.x) / sideLength;
+  const uy = (E.y - C.y) / sideLength;
+  // v points into the parcel: the side of the line its centroid is on.
+  const mid = { x: poly.reduce((s, p) => s + p.x, 0) / n, y: poly.reduce((s, p) => s + p.y, 0) / n };
+  const sign = Math.sign(-(mid.x - C.x) * uy + (mid.y - C.y) * ux) || 1;
+  const u = (p: P) => (p.x - C.x) * ux + (p.y - C.y) * uy;
+  const v = (p: P) => sign * (-(p.x - C.x) * uy + (p.y - C.y) * ux);
+  const fromUV = (a: number, b: number): P => ({ x: C.x + a * ux - sign * b * uy, y: C.y + a * uy + sign * b * ux });
+  const w = choice.width;
+
+  const band = clip(poly, (p) => w - v(p));
+  const beyond = clip(poly, (p) => v(p) - w);
+  const beyondArea = area(beyond);
+  const uMin = Math.min(...poly.map(u));
+  const uMax = Math.max(...poly.map(u));
+  const roadUpTo = (L: number) => clip(band, (p) => L - u(p));
+  const beyondUpTo = (c: number) => area(clip(beyond, (p) => c - u(p)));
+
+  const N = fractions.length;
+  let roadArea = 0;
+  let cuts: number[] = [];
+  let iterations = 0;
+  for (; iterations < 100; iterations++) {
+    const net = parcelArea - roadArea;
+    cuts = [];
+    let cumulative = 0;
+    for (let k = 0; k < N - 1; k++) {
+      cumulative += fractions[k] * net;
+      if (cumulative > beyondArea) throw new RoadRefused({ code: "noRoom" });
+      let lo = k === 0 ? uMin : cuts[k - 1];
+      let hi = uMax;
+      for (let it = 0; it < BISECTIONS; it++) {
+        const m = (lo + hi) / 2;
+        if (beyondUpTo(m) < cumulative) lo = m;
+        else hi = m;
+      }
+      cuts.push((lo + hi) / 2);
+    }
+    const next = area(roadUpTo(cuts[N - 2]));
+    if (Math.abs(next - roadArea) < 1e-9) {
+      roadArea = next;
+      iterations++;
+      break;
+    }
+    roadArea = next;
+  }
+  const L = cuts[N - 2];
+
+  // Refusals: the road must stay on its side, keep its width to its cap, and
+  // every owner but the last must reach it.
+  if (L > sideLength + 1e-6) {
+    throw new RoadRefused({ code: "roadTooLong", values: { length: L, side: sideLength } });
+  }
+  if (!contains(poly, fromUV(L, w), 1e-6)) throw new RoadRefused({ code: "roadLeavesParcel" });
+  const outer = chordOn(poly, v, u, w);
+  if (!outer) throw new RoadRefused({ code: "roadLeavesParcel" });
+  for (let k = 0; k < N - 1; k++) {
+    const lo = k === 0 ? uMin : cuts[k - 1];
+    const hi = cuts[k];
+    const touch = Math.min(hi, outer[1], L) - Math.max(lo, outer[0]);
+    if (!(touch > TOUCH)) throw new RoadRefused({ code: "ownerMissesRoad", values: { position: k } });
+  }
+
+  const roadPoly = tidy(roadUpTo(L));
+  const slices: RoadSlice[] = fractions.map((fraction, k) => {
+    const piece =
+      k < N - 1
+        ? tidy(clip(clip(beyond, (p) => u(p) - (k === 0 ? uMin : cuts[k - 1])), (p) => cuts[k] - u(p)))
+        : tidy(clip(poly, (p) => u(p) - L));
+    return {
+      fraction,
+      targetArea: fraction * (parcelArea - roadArea),
+      area: area(piece),
+      polygon: piece.map(toS70),
+      roadShare: fraction * roadArea,
+      originalArea: fraction * parcelArea,
+    };
+  });
+
+  return {
+    parcelArea,
+    road: { polygon: roadPoly.map(toS70), area: roadArea, length: L, width: w },
+    slices,
+    iterations,
+  };
+}

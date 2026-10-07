@@ -1364,6 +1364,8 @@ export const SCREEN = {
   // Calcul
   calcGroupDescription: { step: "XXL", kind: "fixed" }, // at most 500, one line
   calcRoadNickname: { step: "XL", kind: "fixed" }, //  a property's nickname, as PROPERTY.nickname
+  calcRoadCorner: { step: "S", kind: "select" }, //    the road's corner, by its number in the file — „121" (#38.24)
+  calcRoadSide: { step: "M", kind: "select" }, //      the road's side, by its two corners — „121–122" (#38.24)
   // Motorul de tipuri
   documentType: { step: "XXL", kind: "select" }, //    the type to distil, as DOCUMENT.documentTypeId (max-w-lg before)
   matchPercent: { step: "M", kind: "select" }, //      „Matching %" (10rem and 8rem before)

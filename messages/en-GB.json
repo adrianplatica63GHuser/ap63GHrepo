@@ -43,18 +43,27 @@
     "figures": {
       "parcelArea": "Parcel area",
       "roadWidth": "Road width",
-      "side": "Side {from}–{to}"
+      "side": "Side {from}–{to}",
+      "roadCorner": "Road corner",
+      "roadSide": "Road side",
+      "roadLength": "Road length",
+      "roadArea": "Road area"
     },
     "table": {
       "order": "No.",
       "owner": "Owner",
       "percent": "Share",
-      "area": "Area (m²)",
       "move": "Move",
       "moveUp": "Move {name}'s slice up",
-      "moveDown": "Move {name}'s slice down"
+      "moveDown": "Move {name}'s slice down",
+      "originalArea": "Share × parcel (m²)",
+      "roadShare": "Road share (m²)",
+      "ownArea": "Own area (m²)",
+      "sum": "Own + road (m²)",
+      "difference": "Difference (m²)",
+      "total": "Total"
     },
-    "remainder": "The shares add up to 99.99%: the last slice in the order ({name}) takes the missing 0.01%.",
+    "remainder": "The shares add up to 99.99%: the last slice in the order ({name}) takes the missing 0.01%, and its figures include it.",
     "map": {
       "dragHint": "Drag one slice onto another to swap them: every slice keeps its area, and the cuts move. From the keyboard, with the ↑ ↓ buttons in the table.",
       "swapped": "{a} and {b} have swapped places.",
@@ -68,6 +77,23 @@
     },
     "errors": {
       "session": "Your session expired — please sign in again and retry."
+    },
+    "road": {
+      "title": "Step 3 — the road",
+      "promptCorner": "Click the corner the road starts from (or choose it below).",
+      "promptSide": "Corner {corner} is chosen. Click the side the road runs along: {a} or {b}.",
+      "promptSet": "The road starts at corner {corner}, along side {side}. The owners can still be reordered: the road keeps its corner and side, and its length is recomputed.",
+      "wrongSide": "Side {side} does not start at corner {corner}. Choose {a} or {b}.",
+      "cornerLabel": "Road corner",
+      "sideLabel": "Road side",
+      "choose": "— choose —",
+      "another": "Choose another road",
+      "refusal": {
+        "roadTooLong": "Along side {side} the road would need to be {length} m long, but the side is only {sideLength} m. Choose another side or corner.",
+        "roadLeavesParcel": "Along side {side}, a {width} m road does not stay inside the parcel to its end. Choose another side or corner.",
+        "ownerMissesRoad": "With the road along side {side}, the slice of {name} cannot reach it because of the parcel's shape. Choose another side, corner or order.",
+        "noRoom": "A {width} m road along side {side} leaves no room for the owners. Choose another side or corner."
+      }
     }
   },
   "calculationHistory": {

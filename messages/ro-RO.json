@@ -43,18 +43,27 @@
     "figures": {
       "parcelArea": "Suprafața parcelei",
       "roadWidth": "Lățime drum",
-      "side": "Latura {from}–{to}"
+      "side": "Latura {from}–{to}",
+      "roadCorner": "Colțul drumului",
+      "roadSide": "Latura drumului",
+      "roadLength": "Lungime drum",
+      "roadArea": "Suprafață drum"
     },
     "table": {
       "order": "Nr.",
       "owner": "Proprietar",
       "percent": "Cotă",
-      "area": "Suprafață (m²)",
       "move": "Mută",
       "moveUp": "Mută felia lui {name} mai sus",
-      "moveDown": "Mută felia lui {name} mai jos"
+      "moveDown": "Mută felia lui {name} mai jos",
+      "originalArea": "Cotă × parcelă (m²)",
+      "roadShare": "Cotă din drum (m²)",
+      "ownArea": "Suprafață proprie (m²)",
+      "sum": "Proprie + drum (m²)",
+      "difference": "Diferență (m²)",
+      "total": "Total"
     },
-    "remainder": "Cotele însumează 99,99%: ultima felie din ordine ({name}) preia diferența de 0,01%.",
+    "remainder": "Cotele însumează 99,99%: ultima felie din ordine ({name}) preia diferența de 0,01%, iar cifrele ei o includ.",
     "map": {
       "dragHint": "Trageți o felie peste alta ca să le schimbați între ele: fiecare felie își păstrează suprafața, iar liniile de tăiere se mută. Din tastatură, cu butoanele ↑ ↓ din tabel.",
       "swapped": "{a} și {b} și-au schimbat locurile.",
@@ -68,6 +77,23 @@
     },
     "errors": {
       "session": "Sesiunea a expirat — autentificați-vă din nou și reîncercați."
+    },
+    "road": {
+      "title": "Pasul 3 — drumul",
+      "promptCorner": "Faceți clic pe colțul din care pornește drumul (sau alegeți-l mai jos).",
+      "promptSide": "Colțul {corner} este ales. Faceți clic pe latura pe care merge drumul: {a} sau {b}.",
+      "promptSet": "Drumul pornește din colțul {corner}, pe latura {side}. Ordinea proprietarilor se poate schimba în continuare: drumul își păstrează colțul și latura, iar lungimea lui se recalculează.",
+      "wrongSide": "Latura {side} nu pornește din colțul {corner}. Alegeți {a} sau {b}.",
+      "cornerLabel": "Colțul drumului",
+      "sideLabel": "Latura drumului",
+      "choose": "— alegeți —",
+      "another": "Alege alt drum",
+      "refusal": {
+        "roadTooLong": "Pe latura {side} drumul ar trebui să aibă {length} m, dar latura are doar {sideLength} m. Alegeți altă latură sau alt colț.",
+        "roadLeavesParcel": "Pe latura {side}, un drum de {width} m nu rămâne în parcelă până la capătul lui. Alegeți altă latură sau alt colț.",
+        "ownerMissesRoad": "Cu drumul pe latura {side}, felia lui {name} nu ajunge la drum din cauza formei parcelei. Alegeți altă latură, alt colț sau altă ordine.",
+        "noRoom": "Un drum de {width} m pe latura {side} nu lasă loc proprietarilor. Alegeți altă latură sau alt colț."
+      }
     }
   },
   "calculationHistory": {
