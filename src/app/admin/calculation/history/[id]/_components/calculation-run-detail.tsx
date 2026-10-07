@@ -241,7 +241,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
         )}
       </div>
       {!isSideRoad && (
-        <p data-panel="old-run" className="text-xs text-fade dark:text-zinc-400">{t("detail.oldRunNoRerun")}</p>
+        <p data-old-run="" className="text-xs text-fade dark:text-zinc-400">{t("detail.oldRunNoRerun")}</p>
       )}
 
       {isSideRoad ? (
