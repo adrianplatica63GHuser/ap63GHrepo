@@ -54,12 +54,12 @@ test.describe("TC-PERS-08 — părinții din cartea de identitate, la „Adaugă
       await expect(page).toHaveURL(/\/natural-persons\/new$/, { timeout: 30_000 });
       await page.getByLabel(/^Nume(\s|$)/).fill(MARK);
       await page.getByLabel(/^Prenume(\s|$)/).fill("Andrei");
-      await page.getByLabel(/^Gen(\s|$)/).selectOption("MALE");
+      await page.getByRole("combobox", { name: "Gen", exact: true }).selectOption({ label: "Masculin" });
       const fold = page.locator("[data-parents-fold]");
       await expect(fold).toHaveCount(0);
 
       // Step 2 — „Carte de identitate": the fold, both unticked, the holder's surname.
-      await page.getByLabel(/^Tip document(\s|$)/).selectOption("ID_CARD");
+      await page.getByRole("combobox", { name: "Tip document", exact: true }).selectOption({ label: "Carte de identitate" });
       await expect(fold.getByRole("heading", { name: "Părinții titularului" })).toBeVisible();
       const father = fold.getByRole("checkbox", { name: "Creează și tatăl" });
       const mother = fold.getByRole("checkbox", { name: "Creează și mama" });
