@@ -86,7 +86,7 @@
       "wrongSide": "Side {side} does not start at corner {corner}. Choose {a} or {b}.",
       "cornerLabel": "Road corner",
       "sideLabel": "Road side",
-      "choose": "— choose —",
+      "choose": "choose",
       "another": "Choose another road",
       "refusal": {
         "roadTooLong": "Along side {side} the road would need to be {length} m long, but the side is only {sideLength} m. Choose another side or corner.",

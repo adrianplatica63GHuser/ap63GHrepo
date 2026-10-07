@@ -43,6 +43,7 @@ const BLANK_KEYS = {
   "document.associateReference.roleNone": ["fără relație", "no relationship"],
   "valueList.templateFields.groupNone": ["fără panou", "no panel"],
   "adminImport.provenance.placeholder": ["selectați", "select"],
+  "calculation.road.choose": ["alegeți", "choose"], // #38.24: the road's corner and side, before either is chosen
 } as const;
 
 describe("the blank choice's words", () => {
@@ -84,7 +85,7 @@ describe("every place that draws one marks it data-blank", () => {
       }
     }
     expect(unmarked).toEqual([]);
-    expect(seen).toBeGreaterThanOrEqual(14); // the role pickers, cotaMod twice, stub type, the panel, provenance
+    expect(seen).toBeGreaterThanOrEqual(16); // the role pickers, cotaMod twice, stub type, the panel, provenance, the road's two (#38.24)
   });
 
   it("an empty share box's placeholder carries data-blank", () => {

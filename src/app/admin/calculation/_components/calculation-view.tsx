@@ -530,7 +530,7 @@ export function CalculationView() {
                   disabled={roadStep.phase === "set" || busy}
                   className="rounded-md border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
                 >
-                  <option value="">{t("road.choose")}</option>
+                  <option value="" data-blank="">{t("road.choose")}</option>
                   {computation.corners.map((c, i) => (
                     <option key={c.number} value={String(i)}>{c.number}</option>
                   ))}
@@ -545,7 +545,7 @@ export function CalculationView() {
                   disabled={roadStep.phase !== "side" || busy}
                   className="rounded-md border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
                 >
-                  <option value="">{t("road.choose")}</option>
+                  <option value="" data-blank="">{t("road.choose")}</option>
                   {(roadStep.phase === "set" ? [sideIndex(roadStep.corner, roadStep.side, n)] : offeredSides).map((i) => (
                     <option key={i} value={String(i)}>{sideName(i)}</option>
                   ))}
