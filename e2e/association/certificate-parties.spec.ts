@@ -1,13 +1,17 @@
 /**
- * Case:   TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor
+ * Case:   TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca părți pe un Certificat de Moștenitor
  * Source: docs/testing/cases/TC-ASSOC-12.md, „Last green" 2026-09-26
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
  *
- * FU-224 (fixed in Slice #37.07): the quality — „Defunct", „Moștenitor" — is
- * shown in the certificate's „Persoane" and in each person's „Acte", under
- * „Rol", where it read „—" before. The assertions marked FU-224 say so.
+ * Slice #38.38: „Defunct" and „Moștenitor" are ROLES on the certificate. They
+ * were a quality — two buttons on „Adaugă parte la certificat" and a column of
+ * their own — which FU-224 (#37.07) then showed under „Rol" elsewhere. Now the
+ * dialog offers the type's roles in a „Rol" list, „Părți" reads Nume · Rol, and
+ * the role is what every other tile shows. The case's third party, a second
+ * heir, is the slice's: one Defunct and two Moștenitori, read again after a
+ * reload.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The two people and the certificate are made through the POST routes the
@@ -47,6 +51,7 @@ import { lineRow, showTile, tileBox } from "../helpers/tiles";
 const MARK = `${E2E_MARKER}ASSOC-12`;
 const DECEASED = `Vasile ${MARK} Defunct`;
 const HEIR = `Maria ${MARK} Mostenitor`;
+const SECOND_HEIR = `Ion ${MARK} Mostenitor`;
 const CERTIFICATE = `${MARK} Certificat de test`;
 
 /**
@@ -64,30 +69,43 @@ async function openAddParty(page: Page, documentId: string) {
   }).toPass({ timeout: 90_000 });
 }
 
-/** On „Adaugă parte la certificat": pick the person, the quality, „Adaugă parte". */
-async function pickParty(page: Page, documentId: string, person: string, quality: "Defunct" | "Moștenitor") {
+/** On „Adaugă parte la certificat": pick the person, the role, „Adaugă parte". */
+async function pickParty(page: Page, documentId: string, person: string, role: "Defunct" | "Moștenitor") {
   await page.getByPlaceholder("Nume…", { exact: true }).fill(MARK);
   const row = page.getByRole("row").filter({ hasText: person });
   await expect(row).toHaveCount(1, { timeout: 15_000 });
   await row.getByRole("radio").check();
-  await expect(page.getByText("Selectați calitatea (Defunct sau Moștenitor)")).toBeVisible();
-  await page.getByRole("button", { name: quality, exact: true }).click();
+  // Slice #38.38: a role must be chosen, and the button waits for it.
+  await expect(page.getByText("Alegeți rolul persoanei în certificat", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Adaugă parte", exact: true })).toBeDisabled();
+  await page.getByRole("combobox", { name: "Rol", exact: true }).selectOption({ label: role });
   await page.getByRole("button", { name: "Adaugă parte", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/documents/${documentId}$`), { timeout: 30_000 });
 }
 
-test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor", () => {
-  test("două părți cu calitatea lor în „Părți”; legătura văzută din ambele capete", async ({ page }) => {
+/** „Părți": the table whose second column is „Rol". */
+const partiesOf = (page: Page) =>
+  page.locator('[data-panel="succession-parties"]').getByRole("table");
+
+/** The „Părți" row of one person, and the role it reads. */
+async function expectParty(page: Page, person: string, role: string) {
+  const row = partiesOf(page).locator("tbody tr").filter({ hasText: person });
+  await expect(row).toHaveCount(1, { timeout: 15_000 });
+  await expect(row.locator("[data-party-role]")).toHaveText(role);
+}
+
+test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca părți pe un Certificat de Moștenitor", () => {
+  test("trei părți cu rolul lor în „Părți”, și după reîncărcare; legătura văzută din ambele capete", async ({ page }) => {
     // Room for a first-request compile of the screen it opens (below) and for the `finally`.
-    test.setTimeout(240_000);
+    test.setTimeout(300_000);
     await removeLeftovers(page.request, MARK);
     const deceasedId = await createNaturalPerson(page.request, { lastName: `${MARK} Defunct`, firstName: "Vasile" });
     const heirId = await createNaturalPerson(page.request, { lastName: `${MARK} Mostenitor`, firstName: "Maria" });
+    const secondHeirId = await createNaturalPerson(page.request, { lastName: `${MARK} Mostenitor`, firstName: "Ion" });
     const documentId = await createDocumentOfType(page.request, "CERTIFICAT_MOSTENITOR", CERTIFICATE);
 
     try {
-      // Step 2 — the certificate: „Detalii", after „Pagini" a section „Părți",
-      // „Nicio parte adăugată" and „+ Adaugă parte".
+      // Step 2 — the certificate: a section „Părți", „Nicio parte adăugată" and „+ Adaugă parte".
       await page.goto(`/documents/${documentId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       await expect(tileBox(page, "Identificarea actului")).toBeChecked({ timeout: 30_000 });
@@ -98,8 +116,8 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "+ Adaugă parte" })).toBeVisible();
 
-      // Step 3 — „+ Adaugă parte": the screen, the title, „Nume" / „Cod", Cod · Nume · Tip with a
-      // radio per row, a pager, „Calitate" with „Defunct" / „Moștenitor", „Selectați o persoană".
+      // Step 3 — „+ Adaugă parte": the screen, the title, „Nume" / „Cod", Nume · Tip with a radio
+      // per row, a pager, „Rol" with the certificate's roles, „Selectați o persoană".
       await openAddParty(page, documentId);
       await expect(page.getByRole("heading", { name: "Adaugă parte la certificat" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(CERTIFICATE).first()).toBeVisible();
@@ -110,64 +128,76 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
       }
       await expect(page.locator("tbody input[type=checkbox]")).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Următor" })).toBeVisible();
-      await expect(page.getByText("Calitate", { exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Defunct", exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Moștenitor", exact: true })).toBeVisible();
+      const roleSelect = page.getByRole("combobox", { name: "Rol", exact: true });
+      await expect(roleSelect).toBeVisible({ timeout: 30_000 });
+      for (const offered of ["Defunct", "Moștenitor"]) {
+        await expect(roleSelect.locator("option", { hasText: offered })).toHaveCount(1);
+      }
+      // The two quality buttons are gone.
+      await expect(page.getByRole("button", { name: "Defunct", exact: true })).toHaveCount(0);
+      await expect(page.getByText("Calitate", { exact: true })).toHaveCount(0);
       await expect(page.getByText("Selectați o persoană", { exact: true })).toBeVisible();
 
-      // Steps 4–5 — the deceased (the hint asks for the quality), „Defunct", „Adaugă parte":
-      // back on „Detalii", „Părți" is Nume · Calitate, one row, „Elimină".
+      // Steps 4–5 — the deceased, „Defunct", „Adaugă parte": „Părți" is Nume · Rol, one row, „Elimină".
       await pickParty(page, documentId, DECEASED, "Defunct");
-      const parties = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Calitate" }) });
+      const parties = partiesOf(page);
+      await expect(parties.getByRole("columnheader", { name: "Rol", exact: true })).toBeVisible({ timeout: 15_000 });
+      await expect(parties.getByRole("columnheader", { name: "Calitate" })).toHaveCount(0);
       await expect(parties.locator("tbody tr")).toHaveCount(1, { timeout: 15_000 });
-      await expect(parties.locator("tbody tr").first()).toContainText(DECEASED);
-      await expect(parties.locator("tbody tr").first()).toContainText("Defunct");
+      await expectParty(page, DECEASED, "Defunct");
       await expect(parties.getByRole("button", { name: "Elimină" })).toHaveCount(1);
 
-      // Step 6 — „+ Adaugă parte" again, the heir, „Moștenitor": two rows, the newest first.
-      await openAddParty(page, documentId);
-      await pickParty(page, documentId, HEIR, "Moștenitor");
-      await expect(parties.locator("tbody tr")).toHaveCount(2, { timeout: 15_000 });
-      await expect(parties.locator("tbody tr").nth(0)).toContainText(HEIR);
-      await expect(parties.locator("tbody tr").nth(0)).toContainText("Moștenitor");
-      await expect(parties.locator("tbody tr").nth(1)).toContainText(DECEASED);
-      await expect(parties.locator("tbody tr").nth(1)).toContainText("Defunct");
+      // Step 6 — the two heirs, „Moștenitor": three rows.
+      for (const heir of [HEIR, SECOND_HEIR]) {
+        await openAddParty(page, documentId);
+        await pickParty(page, documentId, heir, "Moștenitor");
+      }
+      await expect(parties.locator("tbody tr")).toHaveCount(3, { timeout: 15_000 });
 
-      // Step 7 — „Persoane": both people, „Rol" says each one's quality (FU-224).
-      // Slice #37.20: „Părți" stays on screen beside the „Persoane" tile, and
-      // both list the two people — so the rows are looked for in the tile.
+      // …and the same three after a reload: the role is stored, not held on the screen.
+      await page.reload();
+      await expect(parties.locator("tbody tr")).toHaveCount(3, { timeout: 30_000 });
+      await expectParty(page, DECEASED, "Defunct");
+      await expectParty(page, HEIR, "Moștenitor");
+      await expectParty(page, SECOND_HEIR, "Moștenitor");
+
+      // Step 7 — „Legături": the three people, „Nume (Rol)"; an heir holds a share on the
+      // certificate (its orange „Cotă"), the deceased does not (Ask first 1, migration_099).
       const personsTile = await showTile(page, "Legături");
-      for (const [person, quality] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"]] as const) {
+      for (const [person, role] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"], [SECOND_HEIR, "Moștenitor"]] as const) {
         const r = lineRow(personsTile, person);
         await expect(r).toHaveCount(1, { timeout: 15_000 });
-        await expect(r.locator("[data-row-content]")).toHaveText(`${person} (${quality})`); // FU-224, „Nume (Rol)" since #37.64
+        await expect(r.locator("[data-row-content]")).toHaveText(`${person} (${role})`);
+        await expect(r.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(role === "Moștenitor" ? 1 : 0);
       }
       await expect(personsTile.getByRole("columnheader")).toHaveCount(0);
 
-      // Step 8 — each person's „Corelate": the title, „Certificat de Moștenitor", the quality behind
-      // „Relația" (FU-224; #37.67).
-      for (const [id, person, quality] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
+      // Step 8 — each person's „Legături": the title, „Certificat de Moștenitor", the role behind „Relația".
+      for (const [id, person, role] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
         await page.goto(`/natural-persons/${id}`);
         await expect(page.getByRole("heading", { name: person })).toBeVisible({ timeout: 30_000 });
         const r = lineRow(await showTile(page, "Legături"), CERTIFICATE);
         await expect(r).toHaveCount(1, { timeout: 15_000 });
         await expect(r.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);
         await r.getByRole("button", { name: "Relația", exact: true }).click();
-        await expect(page.getByRole("status").filter({ hasText: "Rol: „" })).toHaveText(`Rol: „${quality}”`); // FU-224
+        await expect(page.getByRole("status").filter({ hasText: "Rol: „" })).toHaveText(`Rol: „${role}”`);
         await page.keyboard.press("Escape");
       }
 
       // ── At the end — „Elimină" on each row, no question, no „Salvează"; still gone after a reload ──
       await page.goto(`/documents/${documentId}`);
-      await expect(parties.locator("tbody tr")).toHaveCount(2, { timeout: 30_000 });
-      await parties.getByRole("button", { name: "Elimină" }).first().click();
-      await expect(parties.locator("tbody tr")).toHaveCount(1, { timeout: 15_000 });
+      await expect(parties.locator("tbody tr")).toHaveCount(3, { timeout: 30_000 });
+      for (const left of [2, 1]) {
+        await parties.getByRole("button", { name: "Elimină" }).first().click();
+        await expect(parties.locator("tbody tr")).toHaveCount(left, { timeout: 15_000 });
+      }
       await parties.getByRole("button", { name: "Elimină" }).first().click();
       await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 15_000 });
       await page.reload();
       await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 30_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
+      await removeRecord(page.request, "person", secondHeirId);
       await removeRecord(page.request, "person", heirId);
       await removeRecord(page.request, "person", deceasedId);
     }

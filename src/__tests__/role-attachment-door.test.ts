@@ -710,8 +710,11 @@ describe("the role list could not be read", () => {
    * somebody made rather than a silent extension of the rules below. The list
    * is the same eight `carried-role-options.test.ts` asserts.
    */
-  it("is asked on all eight screens that hand out a role", () => {
+  it("is asked on all nine screens that hand out a role", () => {
+    // Nine since Slice #38.38: „Adaugă parte la certificat" gave up its two quality
+    // buttons for the certificate type's role list, so it hands out a role now.
     expect(ROLE_SCREEN_FILES).toEqual([
+      "app/documents/[id]/associate-party/associate-party-view.tsx",
       "app/documents/[id]/associate-person/associate-person-view.tsx",
       "app/judicial-persons/[id]/associate-document/associate-document-view.tsx",
       "app/judicial-persons/[id]/associate-person/associate-person-view.tsx",

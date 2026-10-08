@@ -16,7 +16,7 @@
  *     500–10 000 m², at a random spot inside Bragadiru) and 20 documents with
  *     dummy page files (PNG identity cards, PDF deeds, PNG scans and plans).
  *   · Relations: every new object ends with 5–15 rows on its „Corelate" tile —
- *     heirs with quality and shares, co-owners in indiviziune, a married couple
+ *     a deceased and heirs with shares, co-owners in indiviziune, a married couple
  *     in devălmășie, a mandatar, one person holding two roles on one document,
  *     a chain of title, subdivided and adjacent parcels, and links to three
  *     persons and one property that were already in the database.
@@ -905,7 +905,7 @@ async function createDocuments(): Promise<void> {
 type Share = { pct?: number; mp?: number; mod?: "NUME_PROPRIU" | "DEVALMASIE" | "INDIVIZIUNE" | "PRIN_MANDATAR" };
 const docTypeOf = new Map<string, string>(); // doc key → type key
 
-async function pd(docKey: string, personKey: string, role: string | null, share?: Share, quality?: "DEFUNCT" | "MOSTENITOR"): Promise<void> {
+async function pd(docKey: string, personKey: string, role: string | null, share?: Share): Promise<void> {
   const p = any(personKey);
   if (!p) return;
   const typeKey = docTypeOf.get(docKey)!;
@@ -915,7 +915,7 @@ async function pd(docKey: string, personKey: string, role: string | null, share?
     if (allowed) cota = { cotaParte: share.pct ?? null, cotaSuprafataMp: share.mp ?? null, cotaMod: share.mod ?? null };
     else console.warn(`  ! ${role} does not hold a share on ${typeKey}; share for ${p.code} on ${docKey} dropped`);
   }
-  await associatePersonsToDocument(obj(docKey).id, [p.id], quality ?? null, role ? need(refIds.role, role, "person role") : null, cota);
+  await associatePersonsToDocument(obj(docKey).id, [p.id], role ? need(refIds.role, role, "person role") : null, cota);
 }
 
 async function pp(propKey: string, personKey: string, role: string): Promise<void> {
@@ -1007,9 +1007,10 @@ async function createRelations(): Promise<void> {
   await pd("D4", "N9", "Titular act de identitate");
   await pd("D5", "N1", "Proprietar", { pct: 100, mp: 13500, mod: "NUME_PROPRIU" });
   await pd("D5", "J5", "Autoritate locală");
-  await pd("D6", "N1", null, undefined, "DEFUNCT");
-  await pd("D6", "N2", null, { pct: 50, mp: 6750, mod: "INDIVIZIUNE" }, "MOSTENITOR");
-  await pd("D6", "N3", null, { pct: 50, mp: 6750, mod: "INDIVIZIUNE" }, "MOSTENITOR");
+  // Slice #38.38: „Defunct" and „Moștenitor" are the certificate's roles (they were a quality).
+  await pd("D6", "N1", "Defunct");
+  await pd("D6", "N2", "Moștenitor", { pct: 50, mp: 6750, mod: "INDIVIZIUNE" });
+  await pd("D6", "N3", "Moștenitor", { pct: 50, mp: 6750, mod: "INDIVIZIUNE" });
   await pd("D6", "N7", "Notar");
   await pd("D7", "N2", "Proprietar", { pct: 50, mod: "INDIVIZIUNE" });
   await pd("D7", "N3", "Proprietar", { pct: 50, mod: "INDIVIZIUNE" });

@@ -35,7 +35,7 @@ jest.mock("@/app/documents/_components/ai-reference-linker-dialog", () => ({ AiR
 
 const person = (over: Record<string, unknown>) => ({
   linkId: "l", id: "p", code: "PPERS1", type: "NATURAL", displayName: "Ion",
-  personRoleId: "r", roleName: "Vânzător", quality: null,
+  personRoleId: "r", roleName: "Vânzător",
   cotaParte: null, cotaSuprafataMp: null, cotaMod: null, holdsShare: true, associatedAt: "",
   ...over,
 });

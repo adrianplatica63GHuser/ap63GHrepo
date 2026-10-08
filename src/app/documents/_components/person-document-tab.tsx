@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { RelatedRow } from "@/components/tiles/related-tile";
-import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import { openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
@@ -39,8 +38,6 @@ type AssociatedDocument = {
   typeName:     string | null;
   title:        string | null;
   roleName:     string | null;
-  /** FU-224: a certificate party's quality, shown where the role would be. */
-  quality?:     "DEFUNCT" | "MOSTENITOR" | null;
   associatedAt: string;
 };
 
@@ -64,8 +61,6 @@ async function fetchPersonDocuments(personId: string): Promise<AssociatedDocumen
 export function usePersonDocumentRows(personId: string, backBase: string): PersonDocumentRows {
   const t           = useTranslations("shared.document");
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
-  // FU-224 (Slice #37.07): the role, else a certificate party's quality.
-  const qualityWords = { DEFUNCT: t("qualityDefunct"), MOSTENITOR: t("qualityMostenitor") };
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
   const { guardedNavigate } = useUnsavedChanges();
@@ -99,8 +94,10 @@ export function usePersonDocumentRows(personId: string, backBase: string): Perso
     const text = item.title
       ? (item.typeName ? `${item.title} (${item.typeName})` : item.title)
       : (item.typeName ?? nameOr(item.title, "document"));
-    const role = roleOrQualityLabel(item.roleName, item.quality, qualityWords);
-    const hasRole = Boolean(item.roleName || item.quality);
+    // Slice #38.38: a certificate's „Defunct" / „Moștenitor" is its role now
+    // (FU-224 showed a quality here when there was no role).
+    const role = item.roleName || "—";
+    const hasRole = Boolean(item.roleName);
     return {
       key: `document:${item.linkId}`,
       kind: "document",

@@ -23,9 +23,8 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
 const bodySchema = z.object({
   personIds: z.array(z.string().uuid()).min(1),
-  // Optional role for Certificat de Moștenitor party links.
-  // 'DEFUNCT' | 'MOSTENITOR' — null / absent for general associations.
-  quality: z.enum(["DEFUNCT", "MOSTENITOR"]).nullable().optional(),
+  // `quality` („Defunct" / „Moștenitor" on a Certificat de moștenitor) stood
+  // here until Slice #38.38: both are roles now, sent as `personRoleId`.
   // Optional person role from the Document Persons whitelist.
   personRoleId: z.string().uuid().nullable().optional(),
   // ⚠️ **THE COTĂ ARRIVES AS A NUMBER, ALREADY PARSED.** „63,64" is Romanian
@@ -49,7 +48,6 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     const result = await associatePersonsToDocument(
       id,
       parsed.data.personIds,
-      parsed.data.quality ?? null,
       parsed.data.personRoleId ?? null,
       {
         cotaParte:       parsed.data.cotaParte ?? null,

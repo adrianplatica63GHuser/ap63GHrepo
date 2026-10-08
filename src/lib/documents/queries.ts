@@ -1065,8 +1065,6 @@ export async function dissociatePropertyFromDocument(documentId: string, propert
 // Document <-> Person
 // ---------------------------------------------------------------------------
 
-export type PersonDocumentQuality = "DEFUNCT" | "MOSTENITOR";
-
 export type DocumentPersonItem = {
   /**
    * ⚠️ **`linkId` IS THE ROW AND `id` IS THE PERSON, AND AFTER #36.02 THE
@@ -1088,7 +1086,6 @@ export type DocumentPersonItem = {
   code:            string;
   type:            "NATURAL" | "JUDICIAL";
   displayName:     string;
-  quality:         PersonDocumentQuality | null;
   /** Carried so the per-role total can group by role ID and never by name. */
   personRoleId:    string | null;
   roleName:        string | null;
@@ -1112,7 +1109,6 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
       code:            person.code,
       type:            person.type,
       displayName:     person.displayName,
-      quality:         personDocument.quality,
       personRoleId:    personDocument.personRoleId,
       roleName:        lookupPersonRole.name,
       cotaParte:       personDocument.cotaParte,
@@ -1147,7 +1143,6 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
   // one place that conversion happens.
   return rows.map((r) => ({
     ...r,
-    quality:         r.quality as PersonDocumentQuality | null,
     type:            r.type as "NATURAL" | "JUDICIAL",
     cotaParte:       cotaFromDb(r.cotaParte),
     cotaSuprafataMp: cotaFromDb(r.cotaSuprafataMp),
@@ -1195,7 +1190,6 @@ export type AssociateResult = { inserted: number; skipped: number };
 export async function associatePersonsToDocument(
   documentId:   string,
   personIds:    string[],
-  quality?:     PersonDocumentQuality | null,
   personRoleId: string | null = null,
   cota:         CotaInput = {},
 ): Promise<AssociateResult> {
@@ -1270,7 +1264,6 @@ export async function associatePersonsToDocument(
     .values(personIds.map((pid) => ({
       personId: pid,
       documentId,
-      quality: quality ?? null,
       personRoleId,
       cotaParte:       cotaToDb(cota.cotaParte ?? null),
       cotaSuprafataMp: cotaToDb(cota.cotaSuprafataMp ?? null),

@@ -409,7 +409,9 @@ INSERT INTO lookup_person_role (id, name, description, sort_order, created_at, u
   (gen_random_uuid(), 'Reprezentant legal / Mandatar', '(prin procură)', 44, now(), now()),
   (gen_random_uuid(), 'Solicitant', '(cel care cere eliberarea actului sau comandă lucrarea: beneficiarul, titularul drepturilor sau al rolului fiscal)', 45, now(), now()),
   (gen_random_uuid(), 'Succesor universal', '(cu titlu particular)', 49, now(), now()),
-  (gen_random_uuid(), 'Titular al succesiunii / Defunct', '(persoana decedată)', 52, now(), now()),
+  -- Slice #38.38 (migration_099): „Titular al succesiunii / Defunct" renamed - the
+  -- certificate's „Defunct", which was a quality until then.
+  (gen_random_uuid(), 'Defunct', '(persoana decedată, a cărei moștenire o stabilește certificatul)', 52, now(), now()),
   (gen_random_uuid(), 'Titular de drept', '(cel în favoarea căruia s-a pronunțat)', 53, now(), now()),
   (gen_random_uuid(), 'Topograf / Expert cadastral', '(cel care întocmește documentația)', 54, now(), now()),
   (gen_random_uuid(), 'Vânzător', '(Transmitent)', 56, now(), now()),
@@ -467,7 +469,7 @@ FROM (VALUES
   ('Certificat Fiscal',             'Debitor'),
   ('Certificat de Moștenitor',      'Moștenitor'),
   ('Certificat de Moștenitor',      'Solicitant'),
-  ('Certificat de Moștenitor',      'Titular al succesiunii / Defunct'),
+  ('Certificat de Moștenitor',      'Defunct'),
   ('Certificat de Moștenitor',      'Coproprietar'),
   ('Certificat de Moștenitor',      'Reprezentant legal / Mandatar'),
   ('Certificat de Moștenitor',      'Notar'),

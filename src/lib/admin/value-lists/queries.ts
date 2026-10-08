@@ -1430,7 +1430,8 @@ export type MovedRows = {
  *
  * ⚠️ **IT REFUSES; IT DOES NOT MERGE, AND THAT IS migration_080's ARGUMENT
  * REUSED.** Merging means deciding which of two real rows survives, and those
- * rows carry a `quality` and a cotă-parte that the other one does not. Picking
+ * rows carry a cotă-parte the other one may not (and carried a `quality` too,
+ * until #38.38 made it a role). Picking
  * for the user would be a data change nobody asked for, made silently, inside a
  * transaction whose purpose was something else. The business question has an
  * owner one room away, so the answer is to say how many rows are in the way and

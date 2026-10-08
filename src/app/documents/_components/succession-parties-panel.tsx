@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 // Types
 // ---------------------------------------------------------------------------
 
-import type { PersonDocumentQuality } from "@/lib/documents/queries";
 import { PANEL_UNIT_STYLE } from "@/lib/ui/field-widths";
 import { TileTitle } from "@/components/tiles/tile-title";
 
@@ -28,7 +27,13 @@ type PartyItem = {
   code:        string;
   type:        "NATURAL" | "JUDICIAL";
   displayName: string;
-  quality:     PersonDocumentQuality | null;
+  /**
+   * The party's role — „Defunct", „Moștenitor" or any role the certificate's
+   * type offers. Until Slice #38.38 this was a separate QUALITY column with a
+   * coloured badge per value; both values are roles now, so the panel reads the
+   * same field every person ↔ document link carries.
+   */
+  roleName:    string | null;
 };
 
 type Props = {
@@ -47,28 +52,6 @@ async function fetchParties(documentId: string): Promise<PartyItem[]> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return data.items as PartyItem[];
-}
-
-// ---------------------------------------------------------------------------
-// Quality badge
-// ---------------------------------------------------------------------------
-
-function QualityBadge({ quality, t }: { quality: string | null; t: ReturnType<typeof useTranslations> }) {
-  if (quality === "DEFUNCT") {
-    return (
-      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-        {t("qualityDefunct")}
-      </span>
-    );
-  }
-  if (quality === "MOSTENITOR") {
-    return (
-      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-        {t("qualityMostenitor")}
-      </span>
-    );
-  }
-  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +104,7 @@ export function SuccessionPartiesPanel({ documentId, mode, subtitle }: Props) {
   return (
     // Slice #37.15: one fixed panel, like every panel on the Document — a
     // name that does not fit wraps inside its cell. Slice #37.31: 3 width
-    // units, the fewest that hold Nume, Calitate and „Elimină".
+    // units, the fewest that hold Nume, Rol (Calitate until #38.38) and „Elimină".
     <section
       style={PANEL_UNIT_STYLE.document.succession}
       data-panel="succession-parties"
@@ -140,7 +123,7 @@ export function SuccessionPartiesPanel({ documentId, mode, subtitle }: Props) {
           <thead>
             <tr className="border-b border-card-rim dark:border-zinc-800">
               <th className="px-2 py-1.5 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
-              <th className="px-2 py-1.5 text-left font-semibold text-fade dark:text-zinc-400">{t("colQuality")}</th>
+              <th className="px-2 py-1.5 text-left font-semibold text-fade dark:text-zinc-400">{t("colRole")}</th>
               {mode === "edit" && <th className="w-20 px-2 py-1.5" />}
             </tr>
           </thead>
@@ -160,8 +143,8 @@ export function SuccessionPartiesPanel({ documentId, mode, subtitle }: Props) {
                     {item.displayName}
                   </a>
                 </td>
-                <td className="px-2 py-1.5">
-                  <QualityBadge quality={item.quality} t={t} />
+                <td className="px-2 py-1.5 text-ink dark:text-zinc-200" data-party-role>
+                  {item.roleName || "—"}
                 </td>
                 {mode === "edit" && (
                   <td className="px-2 py-1.5 text-right">

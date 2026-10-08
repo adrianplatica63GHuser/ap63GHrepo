@@ -1455,11 +1455,10 @@ export const personDocument = pgTable(
     id:         uuid("id").primaryKey().defaultRandom(),
     personId:   uuid("person_id").notNull().references(() => person.id,   { onDelete: "cascade" }),
     documentId: uuid("document_id").notNull().references(() => document.id, { onDelete: "cascade" }),
-    // Optional role tag — used by Certificat de Moștenitor.
-    // 'DEFUNCT' = the deceased person; 'MOSTENITOR' = an inheritor.
-    // NULL for persons linked via the general Persons tab on any doc type.
-    // DB-enforced by person_document_quality_check (migration_056).
-    quality:    text("quality"),
+    // `quality` stood here until Slice #38.38 (migration_099): a Certificat de
+    // moștenitor's party carried „Defunct" / „Moștenitor" as a quality INSTEAD
+    // of a role. Both are roles now, offered on the certificate like any
+    // other, so the column, its CHECK and the controls that wrote it are gone.
     // Optional person role from the Document Persons whitelist (lookup_doc_type_person_role).
     // ON DELETE SET NULL — cleared automatically if the role is removed from lookup_person_role.
     personRoleId: uuid("person_role_id")
@@ -1512,10 +1511,6 @@ export const personDocument = pgTable(
     // hidden. migration_084 records the partial-index pair that would have been
     // exactly expressible, and why it was not taken.
     uniqueIndex("person_document_unique").on(t.personId, t.documentId, t.personRoleId),
-    check(
-      "person_document_quality_check",
-      sql`${t.quality} IS NULL OR ${t.quality} IN ('DEFUNCT', 'MOSTENITOR')`,
-    ),
     check(
       "person_document_cota_mod_check",
       sql`${t.cotaMod} IS NULL OR ${t.cotaMod} IN ('NUME_PROPRIU', 'DEVALMASIE', 'INDIVIZIUNE', 'PRIN_MANDATAR')`,

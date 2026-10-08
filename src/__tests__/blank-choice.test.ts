@@ -39,6 +39,7 @@ const BLANK_KEYS = {
   "document.persons.cotaMpPlaceholder": ["fără suprafață", "no area"],
   "document.persons.cotaModPlaceholder": ["nespecificat", "unspecified"],
   "document.associatePerson.rolePlaceholder": ["fără rol", "no role"],
+  "document.associateParty.rolePlaceholder": ["alegeți rolul", "choose a role"], // #38.38: a certificate party must have one
   "document.aiReferenceLinker.stubTypePlaceholder": ["alegeți tipul", "choose a type"],
   "document.associateReference.roleNone": ["fără relație", "no relationship"],
   "valueList.templateFields.groupNone": ["fără panou", "no panel"],

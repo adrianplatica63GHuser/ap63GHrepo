@@ -1253,89 +1253,90 @@ ON CONFLICT DO NOTHING;
 -- 15. PERSON_DOCUMENT associations
 -- =============================================================================
 
-INSERT INTO person_document (id, person_id, document_id, quality, person_role_id, created_at)
-SELECT gen_random_uuid(), p.id, d.id, v.quality,
+-- Slice #38.38: no `quality` column — a certificate's „Defunct" / „Moștenitor" is its role.
+INSERT INTO person_document (id, person_id, document_id, person_role_id, created_at)
+SELECT gen_random_uuid(), p.id, d.id,
   (SELECT id FROM lookup_person_role WHERE name = v.role LIMIT 1),
   now()
 FROM (VALUES
   -- Titluri proprietate
-  ('PPERS00001','DOC00001',NULL,'Proprietar'),
-  ('PPERS00002','DOC00002',NULL,'Proprietar'),
-  ('PPERS00005','DOC00003',NULL,'Proprietar'),
-  ('PPERS00021','DOC00004',NULL,'Proprietar'),
-  ('PPERS00027','DOC00005',NULL,'Proprietar'),
-  ('PPERS00013','DOC00006',NULL,'Proprietar'),
-  ('PPERS00010','DOC00007',NULL,'Proprietar'),
-  ('PPERS00030','DOC00008',NULL,'Proprietar'),
+  ('PPERS00001','DOC00001','Proprietar'),
+  ('PPERS00002','DOC00002','Proprietar'),
+  ('PPERS00005','DOC00003','Proprietar'),
+  ('PPERS00021','DOC00004','Proprietar'),
+  ('PPERS00027','DOC00005','Proprietar'),
+  ('PPERS00013','DOC00006','Proprietar'),
+  ('PPERS00010','DOC00007','Proprietar'),
+  ('PPERS00030','DOC00008','Proprietar'),
   -- Contracte vânzare
-  ('PPERS00030','DOC00009',NULL,'Vânzător'),
-  ('PPERS00019','DOC00009',NULL,'Cumpărător'),
-  ('PPERS00007','DOC00009',NULL,'Notar'),
-  ('PPERS00030','DOC00010',NULL,'Vânzător'),
-  ('PPERS00029','DOC00010',NULL,'Cumpărător'),
-  ('PPERS00007','DOC00010',NULL,'Notar'),
-  ('PPERS00014','DOC00011',NULL,'Vânzător'),
-  ('PPERS00017','DOC00011',NULL,'Cumpărător'),
-  ('PPERS00005','DOC00012',NULL,'Vânzător'),
+  ('PPERS00030','DOC00009','Vânzător'),
+  ('PPERS00019','DOC00009','Cumpărător'),
+  ('PPERS00007','DOC00009','Notar'),
+  ('PPERS00030','DOC00010','Vânzător'),
+  ('PPERS00029','DOC00010','Cumpărător'),
+  ('PPERS00007','DOC00010','Notar'),
+  ('PPERS00014','DOC00011','Vânzător'),
+  ('PPERS00017','DOC00011','Cumpărător'),
+  ('PPERS00005','DOC00012','Vânzător'),
   -- Certificate moștenitor
-  ('PPERS00002','DOC00013','MOSTENITOR','Moștenitor'),
-  ('PPERS00020','DOC00013','MOSTENITOR','Moștenitor'),
-  ('PPERS00004','DOC00014','MOSTENITOR','Moștenitor'),
-  ('PPERS00005','DOC00014','MOSTENITOR','Moștenitor'),
-  ('PPERS00015','DOC00015','MOSTENITOR','Moștenitor'),
-  ('PPERS00027','DOC00015','DEFUNCT','Titular al succesiunii / Defunct'),
+  ('PPERS00002','DOC00013','Moștenitor'),
+  ('PPERS00020','DOC00013','Moștenitor'),
+  ('PPERS00004','DOC00014','Moștenitor'),
+  ('PPERS00005','DOC00014','Moștenitor'),
+  ('PPERS00015','DOC00015','Moștenitor'),
+  ('PPERS00027','DOC00015','Defunct'),
   -- Extras CF
-  ('PPERS00001','DOC00016',NULL,'Solicitant'),
-  ('PPERS00021','DOC00017',NULL,'Solicitant'),
+  ('PPERS00001','DOC00016','Solicitant'),
+  ('PPERS00021','DOC00017','Solicitant'),
   -- Acte cadastru
-  ('PPERS00023','DOC00019',NULL,'Topograf / Expert cadastral'),
-  ('PPERS00001','DOC00019',NULL,'Solicitant'),
-  ('PPERS00023','DOC00020',NULL,'Topograf / Expert cadastral'),
-  ('PPERS00021','DOC00020',NULL,'Solicitant'),
+  ('PPERS00023','DOC00019','Topograf / Expert cadastral'),
+  ('PPERS00001','DOC00019','Solicitant'),
+  ('PPERS00023','DOC00020','Topograf / Expert cadastral'),
+  ('PPERS00021','DOC00020','Solicitant'),
   -- CU și autorizații
-  ('PPERS00024','DOC00021',NULL,'Solicitant'),
-  ('PPERS00008','DOC00022',NULL,'Solicitant'),
-  ('PPERS00008','DOC00023',NULL,'Solicitant'),
-  ('PPERS00025','DOC00023',NULL,'Constructor / Antreprenor'),
+  ('PPERS00024','DOC00021','Solicitant'),
+  ('PPERS00008','DOC00022','Solicitant'),
+  ('PPERS00008','DOC00023','Solicitant'),
+  ('PPERS00025','DOC00023','Constructor / Antreprenor'),
   -- Contracte arendă
-  ('PPERS00021','DOC00027',NULL,'Arendator'),
-  ('PPERS00010','DOC00028',NULL,'Arendator'),
+  ('PPERS00021','DOC00027','Arendator'),
+  ('PPERS00010','DOC00028','Arendator'),
   -- Contracte închiriere
-  ('PPERS00016','DOC00029',NULL,'Locator'),
+  ('PPERS00016','DOC00029','Locator'),
   -- Certificate fiscale
-  ('PPERS00001','DOC00031',NULL,'Proprietar'),
-  ('PPERS00021','DOC00032',NULL,'Proprietar'),
-  ('PPERS00027','DOC00033',NULL,'Proprietar'),
+  ('PPERS00001','DOC00031','Proprietar'),
+  ('PPERS00021','DOC00032','Proprietar'),
+  ('PPERS00027','DOC00033','Proprietar'),
   -- Hotărâri judecătorești
-  ('PPERS00001','DOC00034',NULL,'Titular de drept'),
-  ('PPERS00013','DOC00035',NULL,'Moștenitor'),
+  ('PPERS00001','DOC00034','Titular de drept'),
+  ('PPERS00013','DOC00035','Moștenitor'),
   -- Donație
-  ('PPERS00004','DOC00036',NULL,'Proprietar'),
-  ('PPERS00020','DOC00036',NULL,'Moștenitor'),
+  ('PPERS00004','DOC00036','Proprietar'),
+  ('PPERS00020','DOC00036','Moștenitor'),
   -- Partaj
-  ('PPERS00011','DOC00037',NULL,'Coproprietar'),
-  ('PPERS00012','DOC00037',NULL,'Coproprietar'),
+  ('PPERS00011','DOC00037','Coproprietar'),
+  ('PPERS00012','DOC00037','Coproprietar'),
   -- Testament
-  ('PPERS00027','DOC00050',NULL,'Proprietar'),
-  ('PPERS00001','DOC00069',NULL,'Proprietar')
-) AS v(pers_code, doc_code, quality, role)
+  ('PPERS00027','DOC00050','Proprietar'),
+  ('PPERS00001','DOC00069','Proprietar')
+) AS v(pers_code, doc_code, role)
 JOIN person p ON p.code = v.pers_code
 JOIN document d ON d.code = v.doc_code
 ON CONFLICT DO NOTHING;
 
 -- Also link judicial persons to some documents
-INSERT INTO person_document (id, person_id, document_id, quality, person_role_id, created_at)
-SELECT gen_random_uuid(), p.id, d.id, NULL,
+INSERT INTO person_document (id, person_id, document_id, person_role_id, created_at)
+SELECT gen_random_uuid(), p.id, d.id,
   (SELECT id FROM lookup_person_role WHERE name = v.role LIMIT 1), now()
 FROM (VALUES
-  ('JPERS00005','DOC00027',NULL,'Arendaș'),
-  ('JPERS00020','DOC00028',NULL,'Arendaș'),
-  ('JPERS00003','DOC00049',NULL,'Adjudecatar'),
-  ('JPERS00003','DOC00063',NULL,'Adjudecatar'),
-  ('JPERS00009','DOC00040',NULL,'Prestator'),
-  ('JPERS00026','DOC00041',NULL,'Prestator'),
-  ('JPERS00026','DOC00062',NULL,'Prestator')
-) AS v(pers_code, doc_code, quality_unused, role)
+  ('JPERS00005','DOC00027','Arendaș'),
+  ('JPERS00020','DOC00028','Arendaș'),
+  ('JPERS00003','DOC00049','Adjudecatar'),
+  ('JPERS00003','DOC00063','Adjudecatar'),
+  ('JPERS00009','DOC00040','Prestator'),
+  ('JPERS00026','DOC00041','Prestator'),
+  ('JPERS00026','DOC00062','Prestator')
+) AS v(pers_code, doc_code, role)
 JOIN person p ON p.code = v.pers_code
 JOIN document d ON d.code = v.doc_code
 ON CONFLICT DO NOTHING;

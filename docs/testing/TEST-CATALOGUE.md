@@ -119,7 +119,7 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-09](cases/TC-ASSOC-09.md) | Două persoane corelate, citite corect din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/person-person.spec.ts` |
 | [TC-ASSOC-10](cases/TC-ASSOC-10.md) | Firmă asociată unui act, din ecranul firmei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/company-document.spec.ts` |
 | [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-person.spec.ts` |
-| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și moștenitorul adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-10-03 | `e2e/association/certificate-parties.spec.ts` |
+| [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și doi moștenitori adăugați ca părți pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-10-03 | `e2e/association/certificate-parties.spec.ts` |
 | [TC-ASSOC-13](cases/TC-ASSOC-13.md) | Ecranele de asociere: „Căutare", „Rezultate" și „Asociere" una sub alta; numele proprietății pe un rând | association | happy | — | `automated` | 2026-10-03 | `e2e/association/associate-stacked.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-10-01 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |

@@ -21,7 +21,6 @@ import {
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
 import { shareCells, storesShare } from "@/lib/documents/share-cells";
-import { roleOrQualityLabel } from "@/lib/documents/role-or-quality";
 import { openThroughGuard, personPath } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
@@ -68,8 +67,6 @@ type AssociatedPerson = {
   displayName:     string;
   personRoleId:    string | null;
   roleName:        string | null;
-  /** FU-224: a certificate party's quality, shown where the role would be. */
-  quality?:        "DEFUNCT" | "MOSTENITOR" | null;
   cotaParte:       number | null;
   cotaSuprafataMp: number | null;
   cotaMod:         CotaMod | null;
@@ -354,13 +351,11 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
     const cells  = shareCells(item);
     const locked = cells === "readonly";
     const open   = shareOpenId === item.linkId;
-    // FU-224 (Slice #37.07): the role, else a certificate party's quality.
-    const roleLabel = roleOrQualityLabel(item.roleName, item.quality, {
-      DEFUNCT:    t("qualityDefunct"),
-      MOSTENITOR: t("qualityMostenitor"),
-    });
-    // „Nume (Rol)" — a link with no role (and no quality) is the name alone.
-    const hasRole = roleLabel !== "—";
+    // „Nume (Rol)" — a link with no role is the name alone. Since Slice #38.38 a
+    // certificate's „Defunct" / „Moștenitor" is its role too (it was a quality,
+    // read here through `roleOrQualityLabel` from FU-224 until then).
+    const roleLabel = item.roleName || "—";
+    const hasRole = Boolean(item.roleName);
     const text    = hasRole ? `${item.displayName} (${roleLabel})` : item.displayName;
     const panelId = `${panelIdBase}-${item.linkId}`;
     const parteCell = (

@@ -714,8 +714,6 @@
       "view": "View",
       "loading": "Loading…",
       "error": "Failed to load documents",
-      "qualityDefunct": "Deceased",
-      "qualityMostenitor": "Heir",
       "relationship": "Relationship",
       "roleInDocument": "Role: “{role}”"
     },
@@ -1752,8 +1750,6 @@
       "cotaSaving": "Saving…",
       "cotaSaveError": "The share could not be saved. Try again.",
       "alreadyAttached": "This person is already attached to this document with this role — nothing was added.",
-      "qualityDefunct": "Deceased",
-      "qualityMostenitor": "Heir",
       "shareNotHeld": "This role holds no share on this document type — the saved values stay, read-only.",
       "share": "Share",
       "shareTitle": "Share",
@@ -1864,9 +1860,7 @@
       "loading": "Loading…",
       "error": "Failed to load parties",
       "colName": "Name",
-      "colQuality": "Quality",
-      "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Inheritor",
+      "colRole": "Role",
       "remove": "Remove",
       "removing": "Removing…",
       "removeError": "Could not remove party"
@@ -1884,14 +1878,13 @@
       "resultsEmpty": "No persons found",
       "loading": "Searching…",
       "error": "Search failed",
-      "qualityLabel": "Quality",
-      "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Inheritor",
+      "labelRole": "Role",
+      "rolePlaceholder": "choose a role",
       "confirm": "Add Party",
       "confirming": "Adding…",
       "cancel": "Cancel",
       "noSelection": "Select a person",
-      "noQuality": "Select a quality (Defunct or Inheritor)"
+      "noRole": "Choose the person's role on the certificate"
     },
     "references": {
       "empty": "No related documents",

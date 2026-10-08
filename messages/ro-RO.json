@@ -714,8 +714,6 @@
       "view": "Vizualizare",
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea actelor",
-      "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Moștenitor",
       "relationship": "Relația",
       "roleInDocument": "Rol: „{role}”"
     },
@@ -1752,8 +1750,6 @@
       "cotaSaving": "Se salvează…",
       "cotaSaveError": "Nu am putut salva cota-parte. Încercați din nou.",
       "alreadyAttached": "Această persoană este deja atașată acestui act cu acest rol — nu s-a adăugat nimic.",
-      "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Moștenitor",
       "shareNotHeld": "Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit.",
       "share": "Cotă",
       "shareTitle": "Cota-parte",
@@ -1864,9 +1860,7 @@
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea părților",
       "colName": "Nume",
-      "colQuality": "Calitate",
-      "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Moștenitor",
+      "colRole": "Rol",
       "remove": "Elimină",
       "removing": "Se elimină…",
       "removeError": "Eliminarea a eșuat"
@@ -1884,14 +1878,13 @@
       "resultsEmpty": "Nicio persoană găsită",
       "loading": "Se caută…",
       "error": "Eroare la căutare",
-      "qualityLabel": "Calitate",
-      "qualityDefunct": "Defunct",
-      "qualityMostenitor": "Moștenitor",
+      "labelRole": "Rol",
+      "rolePlaceholder": "alegeți rolul",
       "confirm": "Adaugă parte",
       "confirming": "Se adaugă…",
       "cancel": "Anulează",
       "noSelection": "Selectați o persoană",
-      "noQuality": "Selectați calitatea (Defunct sau Moștenitor)"
+      "noRole": "Alegeți rolul persoanei în certificat"
     },
     "references": {
       "empty": "Niciun document asociat",

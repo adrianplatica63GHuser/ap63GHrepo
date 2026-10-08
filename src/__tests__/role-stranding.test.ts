@@ -615,8 +615,11 @@ function roleLabelElement(src: string): string {
 }
 
 describe("the role label", () => {
-  it("is on all eight screens that hand out a person role", () => {
+  it("is on all nine screens that hand out a person role", () => {
+    // Nine since Slice #38.38: „Adaugă parte la certificat" gave up its two quality
+    // buttons for the certificate type's role list, so it hands out a role now.
     expect(ROLE_PICKER_FILES).toEqual([
+      "app/documents/[id]/associate-party/associate-party-view.tsx",
       "app/documents/[id]/associate-person/associate-person-view.tsx",
       "app/judicial-persons/[id]/associate-document/associate-document-view.tsx",
       "app/judicial-persons/[id]/associate-person/associate-person-view.tsx",

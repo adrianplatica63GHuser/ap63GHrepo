@@ -44,7 +44,7 @@ const PROPERTIES = [
 const DOCUMENTS = [
   { linkId: "l1", id: "d1", code: "DOC1", typeName: "Contract de Vânzare", title: "CVC 1", roleName: "Vânzător", associatedAt: "" },
   { linkId: "l2", id: "d1", code: "DOC1", typeName: "Contract de Vânzare", title: "CVC 1", roleName: "Martor", associatedAt: "" },
-  { linkId: "l3", id: "d2", code: "DOC2", typeName: "Certificat de moștenitor", title: "CM 1", roleName: null, quality: "DEFUNCT", associatedAt: "" },
+  { linkId: "l3", id: "d2", code: "DOC2", typeName: "Certificat de moștenitor", title: "CM 1", roleName: "Defunct", associatedAt: "" },
   { linkId: "l4", id: "d3", code: "DOC3", typeName: "Plan", title: null, roleName: null, associatedAt: "" },
 ];
 
@@ -102,9 +102,10 @@ describe("a person's „Corelate”", () => {
     expect(screen.getByRole("status")).toHaveTextContent("roleInDocument:Vânzător");
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("status")).toBeNull();
-    // A certificate party's quality stands where the role would; a document with neither has no button.
-    fireEvent.click(within(rowOf("CM 1 — qualityDefunct")).getByRole("button", { name: "relationship" }));
-    expect(screen.getByRole("status")).toHaveTextContent("roleInDocument:qualityDefunct");
+    // A certificate party's „Defunct" is its role (Slice #38.38; a quality read
+    // through `qualityDefunct` until then); a document with no role has no button.
+    fireEvent.click(within(rowOf("CM 1 — Defunct")).getByRole("button", { name: "relationship" }));
+    expect(screen.getByRole("status")).toHaveTextContent("roleInDocument:Defunct");
     expect(within(rowOf("document — —")).queryByRole("button", { name: "relationship" })).toBeNull();
   });
 

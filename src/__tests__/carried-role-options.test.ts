@@ -269,8 +269,11 @@ describe("the person-role pickers", () => {
    * #34.15 gave it the twin's picker. This line is the record that the count
    * moved on purpose; the screen's own header carries the argument.
    */
-  it("are the eight this archive has, and no ninth that was missed", () => {
+  it("are the nine this archive has, and no tenth that was missed", () => {
+    // Nine since Slice #38.38: „Adaugă parte la certificat" gave up its two quality
+    // buttons for the certificate type's role list, so it hands out a role now.
     expect(PICKER_FILES).toEqual([
+      "app/documents/[id]/associate-party/associate-party-view.tsx",
       "app/documents/[id]/associate-person/associate-person-view.tsx",
       "app/judicial-persons/[id]/associate-document/associate-document-view.tsx",
       "app/judicial-persons/[id]/associate-person/associate-person-view.tsx",
@@ -280,7 +283,7 @@ describe("the person-role pickers", () => {
       "app/natural-persons/[id]/associate-property/associate-property-view.tsx",
       "app/properties/[id]/associate-person/associate-person-view.tsx",
     ]);
-    expect(UNIONED).toHaveLength(6);
+    expect(UNIONED).toHaveLength(7);
   });
 
   it.each(UNIONED)("%s renders the merged list and not the whitelist", (file) => {
@@ -354,6 +357,8 @@ describe("the carried set is scoped to whatever the offered list is scoped to", 
     // `person-person` branch, which joins both ends for exactly this reason.
     ["app/judicial-persons/[id]/associate-person/associate-person-view.tsx", "person-person", "personId"],
     ["app/documents/[id]/associate-person/associate-person-view.tsx", "document-person", "documentId"],
+    // Slice #38.38: the certificate's party dialog, on the same document scope.
+    ["app/documents/[id]/associate-party/associate-party-view.tsx", "document-person", "documentId"],
   ])("%s asks for the %s roles its own %s carries", (file, kind, entity) => {
     // Whitespace-tolerant: a hand-rewrap of the call is not a defect.
     expect(new RegExp(`"${kind}",\\s*${entity},`).test(read(...file.split("/")))).toBe(true);
@@ -410,6 +415,7 @@ function showExpression(src: string): string {
 describe("a document type with no person roles configured", () => {
   it("is answered on every screen that reads the document-type whitelist", () => {
     expect(DOC_TYPE_ROLE_READERS).toEqual([
+      "app/documents/[id]/associate-party/associate-party-view.tsx",
       "app/documents/[id]/associate-person/associate-person-view.tsx",
       "app/judicial-persons/[id]/associate-document/associate-document-view.tsx",
       "app/natural-persons/[id]/associate-document/associate-document-view.tsx",

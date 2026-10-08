@@ -132,10 +132,6 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{deleteMutation.isPending ? t(\"confirm.deleting\") : t(\"c"],
     ["A110", "{t(\"confirm.cancel\")}"],
   ],
-  "src/app/documents/[id]/associate-party/associate-party-view.tsx": [
-    ["A043", "{t(\"qualityDefunct\")}"],
-    ["A043", "{t(\"qualityMostenitor\")}"],
-  ],
   "src/app/documents/_components/ai-reference-linker-dialog.tsx": [
     ["A054", "{t(\"stubConfirm\")}"],
     ["A054", "{t(\"stub\")}"],
