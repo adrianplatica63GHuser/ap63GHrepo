@@ -146,11 +146,22 @@ describe("getTypeConfig", () => {
     expect(getTypeConfig(undefined).labels.nrDocument).toBe("typeLabels.nrGeneric");
   });
 
+  // #38.32 (Ask first 1): the generic set is „Emitent", „Nr. document", „Data" — it was
+  // „Instituție înregistrare" and „Data autentificării" (dateAuthenticated, institutionRegistrar).
   it("returns generic labels for a type with no override (ACT_ADJUDECARE)", () => {
     const cfg = getTypeConfig("ACT_ADJUDECARE");
     expect(cfg.labels.nrDocument).toBe("typeLabels.nrGeneric");
-    expect(cfg.labels.dateDocument).toBe("typeLabels.dateAuthenticated");
-    expect(cfg.labels.institution).toBe("typeLabels.institutionRegistrar");
+    expect(cfg.labels.dateDocument).toBe("typeLabels.dateGeneric");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionIssuer");
+  });
+
+  it("gives the act adițional the notarial set (#38.32)", () => {
+    const cfg = getTypeConfig("ACT_ADITIONAL");
+    expect(cfg.labels).toEqual({
+      nrDocument: "typeLabels.nrAuthenticDeed",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution: "typeLabels.institutionNotary",
+    });
   });
 
   it("returns correct label override for CARTE_IDENTITATE", () => {

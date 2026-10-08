@@ -671,12 +671,11 @@ export const SCREEN_ROWS = {
     ],
   },
   document: {
-    // Tip document (XXL, the no-form hint under it) — Etichetă scurtă — Subiect — Note
-    // extinse, each the whole width: what the document is, what it is called, what it is about.
-    general: [["documentTypeId"], ["title"], ["subject"], ["notes"]],
-    // Instituție / Notariat — Nr. document | Data (rule 14) — then the fees group's own
-    // fields, packed (`packFieldRows`).
-    fees: [["institutionId"], ["nrDocument", "dateDocument"]],
+    // „Identificarea actului" (#38.32): Tip document (XXL, the no-form hint under it) —
+    // Emitent / Notariat — Nr. document | Data (rule 14) — then the type's identification
+    // fields, packed — then Etichetă scurtă — Subiect — Note extinse, each the whole width.
+    // The issuer, number and date sat at the top of the fees panel until #38.32.
+    general: [["documentTypeId"], ["institutionId"], ["nrDocument", "dateDocument"], ["title"], ["subject"], ["notes"]],
   },
 } as const satisfies {
   naturalPerson: Record<string, readonly (readonly NpField[])[]>;
@@ -723,11 +722,13 @@ export const PANEL_UNITS = {
     map: 3,
     streetView: 3,
   },
-  //  general 3 — Tip document at XXL, 24rem; fees 3 — Instituție at XXL (a fees group may
-  //  widen it: `packFieldRows`). pages 4 — PAGES_PANEL_REM is exactly unitsRem(4) (rule 20).
-  //  succession 3 — Nume, Calitate and „Elimină".
+  //  general 3 — Tip document and Emitent at XXL, 24rem; fees 3 — the fees group's fields,
+  //  3 units at least as before #38.32 (a wider group widens it: `packFieldRows`).
+  //  pages 4 — PAGES_PANEL_REM is exactly unitsRem(4) (rule 20). succession 3 — Nume,
+  //  Calitate and „Elimină".
   document: {
     ...panelUnitsOf(SCREEN_ROWS.document, DOCUMENT),
+    fees: 3,
     pages: 4,
     succession: 3,
   },

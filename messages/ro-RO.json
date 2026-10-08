@@ -1572,8 +1572,7 @@
       "dateRange": "Perioadă contract",
       "notes": "Observații",
       "validUntil": "Valabilitate",
-      "surveyor": "Topograf / Cadastrist",
-      "issue": "Date de emitere"
+      "surveyor": "Topograf / Cadastrist"
     },
     "status": {
       "label": "Stare procesare",
@@ -1623,6 +1622,7 @@
       "dateRuled": "Data hotărârii",
       "dateEmitted": "Data emiterii",
       "dateRegistered": "Data înregistrării",
+      "dateGeneric": "Data",
       "institutionRegistrar": "Instituție înregistrare",
       "institutionIssuer": "Emitent",
       "institutionNotary": "Notariat",

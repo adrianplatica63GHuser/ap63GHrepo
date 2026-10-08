@@ -22,9 +22,12 @@ const CVC = (
 ).forms.CONTRACT_VANZARE;
 
 /** Tile → its panels, Romanian and English, in form order. */
+const IDENTIFICATION = "Identificarea actului";
+
 function layout(fields: readonly Field[]) {
   const out: { tab: string; tabEn: string; panels: [string, string][] }[] = [];
-  for (const f of [...fields].sort((a, b) => a.order - b.order)) {
+  // #38.32: the identification group has no tab — it is drawn in „Identificarea actului".
+  for (const f of [...fields].filter((x) => x.groupRo !== IDENTIFICATION).sort((a, b) => a.order - b.order)) {
     let tile = out.find((t) => t.tab === f.tabRo);
     if (!tile) out.push((tile = { tab: f.tabRo ?? "", tabEn: f.tabEn ?? "", panels: [] }));
     if (!tile.panels.some(([ro]) => ro === f.groupRo)) tile.panels.push([f.groupRo ?? "", f.groupEn ?? ""]);
@@ -44,6 +47,13 @@ describe("the CVC's tiles and panels (#37.54)", () => {
       { tab: "Stare juridică", tabEn: "Legal status", panels: [["Declarații și garanții", "Representations and warranties"]] },
       { tab: "Formalități", tabEn: "Formalities", panels: [["Declarații și obligații legale", "Statutory declarations and duties"]] },
     ]);
+  });
+
+  // #38.32: four fields left „Dosar și exemplar" for „Identificarea actului", with no tab.
+  it("puts Calitate exemplar, Exemplare emise, Temei autentificare and Data conținutului in „Identificarea actului”, on no tab", () => {
+    const moved = CVC.filter((f) => f.groupRo === IDENTIFICATION);
+    expect(moved.map((f) => f.key)).toEqual(["calitateExemplar", "exemplareEmise", "temeiAutentificare", "dataContinut"]);
+    for (const f of moved) expect([f.key, f.groupEn, f.tabRo ?? null, f.tabEn ?? null]).toEqual([f.key, "Document identification", null, null]);
   });
 
   it("keeps none of the old names", () => {

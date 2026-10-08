@@ -32,7 +32,7 @@
  * a client-side admin dialog alike.
  */
 
-export type TemplateFieldGroupId = "financial" | "fees" | "certificates";
+export type TemplateFieldGroupId = "financial" | "fees" | "certificates" | "identification";
 
 export type TemplateFieldGroup = {
   id: TemplateFieldGroupId;
@@ -43,7 +43,7 @@ export type TemplateFieldGroup = {
 };
 
 /**
- * The three, in the order the editor offers them — which is also the order they
+ * The four (three until #38.32), in the order the editor offers them — which is also the order they
  * appear down the document form (Financiar and Taxe și onorarii share a row,
  * Certificate și referințe sits below).
  *
@@ -58,6 +58,13 @@ export const TEMPLATE_FIELD_GROUPS: readonly TemplateFieldGroup[] = [
   { id: "financial",    ro: "Financiar",                en: "Financial" },
   { id: "fees",         ro: "Taxe și onorarii",         en: "Fees" },
   { id: "certificates", ro: "Certificate și referințe", en: "Certificates and references" },
+  // Slice #38.32: a type's own fields that say WHICH act this is — on a
+  // contract de vânzare „Calitate exemplar", „Exemplare emise", „Temei
+  // autentificare", „Data conținutului". They are drawn in the document's
+  // „Identificarea actului" tile, under the issuer, number and date that every
+  // type has, on whatever notebook tab the field names. The group's Romanian
+  // name is that tile's title, so the two read as one place.
+  { id: "identification", ro: "Identificarea actului", en: "Document identification" },
 ] as const;
 
 /** Look one up by id. Returns undefined for an id that is not one of the three. */
@@ -97,4 +104,9 @@ export function isFeesGroup(label: string): boolean {
 /** `Certificate și referințe` / `Certificates and references` — full-width, auto-grow. */
 export function isCertificatesGroup(label: string): boolean {
   return templateFieldGroupOf(label) === "certificates";
+}
+
+/** `Identificarea actului` / `Document identification` — drawn in the document's first tile (#38.32). */
+export function isIdentificationGroup(label: string): boolean {
+  return templateFieldGroupOf(label) === "identification";
 }

@@ -1572,8 +1572,7 @@
       "dateRange": "Contract Period",
       "notes": "Notes",
       "validUntil": "Validity",
-      "surveyor": "Surveyor",
-      "issue": "Issue details"
+      "surveyor": "Surveyor"
     },
     "status": {
       "label": "Processing status",
@@ -1623,6 +1622,7 @@
       "dateRuled": "Ruling date",
       "dateEmitted": "Issuance date",
       "dateRegistered": "Registration date",
+      "dateGeneric": "Date",
       "institutionRegistrar": "Registering Institution",
       "institutionIssuer": "Issuer",
       "institutionNotary": "Notary Office",

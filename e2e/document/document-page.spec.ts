@@ -179,7 +179,10 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(page).toHaveURL(/\/documents\/new$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Act nou" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("IDENTIFICAREA ACTULUI").first()).toBeVisible();
-      await expect(page.getByText("DATE DE EMITERE").first()).toBeVisible();
+      // Slice #38.32: no fees group, no fees panel — the issuer, number and date are on „Identificarea actului".
+      await expect(page.getByText("DATE DE EMITERE")).toHaveCount(0);
+      await expect(page.locator('[data-panel="general"] [data-width-field="institutionId"]')).toBeVisible();
+      await expect(page.locator('[data-panel="general"] [data-width-field="dateDocument"]')).toBeVisible();
       const type = page.getByLabel(/^Tip document/);
       await expect(type).toHaveValue("");
 

@@ -37,7 +37,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with a search box („caută după cod, titlu sau nr. document") before the filter „Tip document: Toate tipurile", then „Câmp specific:" — no „Importanță" or „Relevanță" filter (#37.62) — and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
-| 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with two sections, „DATE GENERALE" and „DATE DE EMITERE". „Tip document" is a field inside „Identificarea actului", and it starts **empty** |
+| 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with one section, „IDENTIFICAREA ACTULUI", holding „Tip document", „Emitent", „Nr. document" and „Data" (since #38.32; there is no „DATE DE EMITERE"). „Tip document" starts **empty** |
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și taxe", „Cadastru și CF", „Stare juridică", „Formalități" appear above it, and a section „FINANCIAR" appears beside „Taxe și onorarii" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
 | 5 | Scrolls down and presses „Salvează", then „Acte" in the sidebar | The new document opens, headed `TC-DOC-01 Contract de test` (since #37.93); then on „Acte", at the top, a row badged „Nou!", with no system ID, „Tip" = „CVC" (its tooltip „Contract de Vânzare", #37.95), „Titlu" = `TC-DOC-01 Contract de test`. The count at the foot goes up by one |

@@ -14,7 +14,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  DOCUMENT,
   boxRem,
   packFieldRows,
   rowRem,
@@ -23,7 +22,7 @@ import {
   unitsInnerRem,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
-import { isCertificatesGroup, isFeesGroup } from "@/lib/documents/template-groups";
+import { isCertificatesGroup, isFeesGroup, isIdentificationGroup } from "@/lib/documents/template-groups";
 
 type StoredField = {
   key: string;
@@ -40,7 +39,11 @@ const FORMS = JSON.parse(
 
 /** messages/ro-RO.json → document.fields.customSelectEmpty. */
 const EMPTY = "fără valoare";
-const FEES_BASE = Math.max(rowRem([DOCUMENT.institutionId]), rowRem([DOCUMENT.nrDocument, DOCUMENT.dateDocument]));
+// Slice #38.32: the fees panel and the identification fields are packed to 3 units — the
+// width the fees panel had while Instituție and Nr. | Data topped it, and the width of
+// „Identificarea actului", where those three are now.
+const FEES_BASE = unitsInnerRem(3);
+const IDENTIFICATION_BASE = unitsInnerRem(3);
 
 function widthOf(f: StoredField, force: boolean): FieldWidth {
   if (f.type === "select" && f.options && f.options.length > 0) {
@@ -63,7 +66,7 @@ function panelsOf(fields: StoredField[]) {
       const isSelect = f.type === "select" && !!f.options && f.options.length > 0;
       return { key: f.key, width, full: !isSelect && (force || width.kind === "lines") };
     });
-    const packed = packFieldRows(items, { baseRowsRem: isFeesGroup(label) ? FEES_BASE : 0 });
+    const packed = packFieldRows(items, { baseRowsRem: isFeesGroup(label) ? FEES_BASE : isIdentificationGroup(label) ? IDENTIFICATION_BASE : 0 });
     return { label, items, ...packed };
   });
 }
@@ -145,10 +148,14 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["timbruJudiciar", "onorariuNotarial", "impozitTransfer"],
     ["taxaTimbruPublicitate"],
   ] },
+  // #38.32: Calitate exemplar, Exemplare emise, Temei autentificare and Data conținutului
+  // left for „Identificarea actului" (drawn inside that tile, packed to its 3 units).
   { label: "Dosar și exemplar", units: 3, rows: [
     ["categorieInterna"],
-    ["documentatieFinalizata", "calitateExemplar"],
-    ["exemplareEmise"],
+    ["documentatieFinalizata"],
+  ] },
+  { label: "Identificarea actului", units: 3, rows: [
+    ["calitateExemplar", "exemplareEmise"],
     ["temeiAutentificare"],
     ["dataContinut"],
   ] },

@@ -55,11 +55,15 @@ export type TypeConfig = {
 // Generic / fallback config — used for all types without a specific entry
 // ---------------------------------------------------------------------------
 
+// Slice #38.32 (Ask first 1): a type with no entry of its own reads the generic
+// set — „Emitent", „Nr. document", „Data". It read „Instituție înregistrare" and
+// „Data autentificării" before, which named a registrar and an authentication
+// on acts that have neither.
 const GENERIC: TypeConfig = {
   labels: {
     nrDocument:   "typeLabels.nrGeneric",
-    dateDocument: "typeLabels.dateAuthenticated",
-    institution:  "typeLabels.institutionRegistrar",
+    dateDocument: "typeLabels.dateGeneric",
+    institution:  "typeLabels.institutionIssuer",
   },
 };
 
@@ -133,6 +137,16 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   CONTRACT_VANZARE: {
+    labels: {
+      nrDocument:   "typeLabels.nrAuthenticDeed",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution:  "typeLabels.institutionNotary",
+    },
+  },
+
+  // Slice #38.32: an act adițional is a notarial act, like the deed it amends;
+  // with no entry it fell back to „Instituție înregistrare" / „Nr. document".
+  ACT_ADITIONAL: {
     labels: {
       nrDocument:   "typeLabels.nrAuthenticDeed",
       dateDocument: "typeLabels.dateAuthenticated",

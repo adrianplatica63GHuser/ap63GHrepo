@@ -1,4 +1,4 @@
-# TC-DOC-03 — Un PAD: „Detalii act", „Date de emitere", fără „Câmpuri specifice tipului de document", „Data autentificării" pe un rând
+# TC-DOC-03 — Un PAD: „Detalii act" fără panou de emitere; emitentul, numărul și data în „Identificarea actului", „Data" pe un rând
 
 | | |
 |---|---|
@@ -6,19 +6,19 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-02 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
-Since Slice #37.52 a Document whose type has no pages of its own names its type-fields tile and
-panels for what they hold: the tile is „Detalii act" / „Document details" (it was „Câmpuri
-specifice" / „Type fields"); the panel with the institution, number and date is „Date de emitere"
-/ „Issue details" when the type has no fees group (it was „Taxe și onorarii" / „Fees", with no fee
-in it); the type's ungrouped fields have no heading (it was „Câmpuri specifice tipului de
-document"). The date's label — the last field of its row — reads on one line, in Romanian and
-in English („Authentication date", it was „Date of Authentication"). A type with a fees group
-keeps that group's own label — in English too, since the type's
-group is labelled in Romanian (fine for the English screen, the rule in `CLAUDE.md`).
+Since Slice #37.52 a Document whose type has no pages of its own names its type-fields tile „Detalii
+act" / „Document details" (it was „Câmpuri specifice" / „Type fields"), and the type's ungrouped
+fields have no heading. **Since Slice #38.32** the issuer, the number and the date are on
+„Identificarea actului" / „Document identification", under „Tip document", on every type. A type
+with no fees group has no fees panel at all (until #38.32 it drew one, „Date de emitere", around
+those three). A type with no labels of its own reads the generic set — „Emitent", „Nr. document",
+„Data" / „Issuer", „Document No.", „Date" — and the date's label reads on one line. A contract de
+vânzare reads the notarial set („Notariat", „Nr. act autentic", „Data autentificării"), and its
+„[Taxe și onorarii]" panel holds only the fees.
 
 ## Before you start
 
@@ -39,10 +39,10 @@ back at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-03 PAD` | A tile „Detalii act" (and its tick in „Părți afișate"), inside it one panel, „[Date de emitere]"; nowhere „Câmpuri specifice" nor „Taxe și onorarii"; „Data autentificării" on one line |
-| 2 | Switches the interface to English and opens it again | „Document details", „[Issue details]"; nowhere „Type fields", „Document-type-specific fields" nor „Fees"; „Authentication date" on one line |
-| 3 | Opens `TC-DOC-03 CVC`, in English, „All" tiles | The panel with „Authentication date" is titled „[Taxe și onorarii]" — the CVC's own fees group, whose label the form keeps as the type writes it |
-| 4 | Switches back to Romanian and opens it again | The same panel is „[Taxe și onorarii]", „Data autentificării" on one line |
+| 1 | Opens `TC-DOC-03 PAD` | A tile „Detalii act" (and its tick in „Părți afișate"), with no „[Date de emitere]" and no date box in it; nowhere „Câmpuri specifice" nor „Taxe și onorarii". On „Identificarea actului": „Emitent", „Nr. document", „Data", the last on one line |
+| 2 | Switches the interface to English and opens it again | „Document details", with no „[Issue details]"; nowhere „Type fields", „Document-type-specific fields" nor „Fees"; on „Document identification" „Issuer", „Document No.", „Date" on one line |
+| 3 | Opens `TC-DOC-03 CVC`, in English, „All" tiles | On „Document identification": „Notary Office", „Authentic Deed No.", „Authentication date". The „[Taxe și onorarii]" panel — the CVC's own fees group, labelled as the type writes it — holds no date box |
+| 4 | Switches back to Romanian and opens it again | „Notariat", „Nr. act autentic", „Data autentificării" on one line, on „Identificarea actului"; „[Taxe și onorarii]" holds the four fees and no date box |
 
 ## At the end — leaving things as they were found
 
@@ -87,3 +87,7 @@ lint, tsc; jest `20261002T140544Z-22944`, 206 suites).
 **2026-10-05 — Slice #37.90.** Inside a tile a panel's subtitle reads in square brackets, so steps 1–4
 name the panel „[Date de emitere]", „[Issue details]" and „[Taxe și onorarii]"; the stored names and
 everything else in the steps are unchanged, and the spec reads the bracketed headings.
+
+**2026-10-07 — Slice #38.32, rewritten.** The issuer, number and date moved to „Identificarea
+actului", so the PAD's „[Date de emitere]" panel no longer exists. Steps 1–4 rewritten to read
+them where they are now; the spec was changed with them and its run is in #38.32's handover.

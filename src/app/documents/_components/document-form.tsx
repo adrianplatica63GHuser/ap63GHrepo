@@ -47,6 +47,7 @@ import {
   isCertificatesGroup,
   isFeesGroup,
   isFinancialGroup,
+  isIdentificationGroup,
 } from "@/lib/documents/template-groups";
 import {
   feesPairStaysTogether,
@@ -73,12 +74,10 @@ import {
   PAGES_PANEL_STYLE,
   PANEL_GAP,
   PANEL_UNITS,
-  PANEL_UNIT_INNER_REM,
   boxRem,
   boxStyle,
   packFieldRows,
   rem,
-  rowRem,
   stackedBoxStyle,
   templateFieldWidth,
   unitRowStyle,
@@ -110,8 +109,12 @@ const PanelOrderContext = createContext<number | undefined>(undefined);
  */
 const FrameContext = createContext(false);
 
-/** The fees panel's own fields — where a highlight or an error on them is shown. */
-const FEES_FIELDS: ReadonlySet<string> = new Set(["institutionId", "nrDocument", "dateDocument"]);
+/**
+ * Who issued the act, its number and its date — on „Identificarea actului"
+ * since #38.32 (they sat in the fees panel before), so a highlight or an error
+ * on one of them is shown on that tile.
+ */
+const ISSUE_FIELDS: ReadonlySet<string> = new Set(["institutionId", "nrDocument", "dateDocument"]);
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -933,8 +936,11 @@ export function DocumentForm({
   const feesGroup = customFieldGroups.find((g) => isFeesGroup(g.label));
   const financialGroup = customFieldGroups.find((g) => isFinancialGroup(g.label));
   const certificatesGroup = customFieldGroups.find((g) => isCertificatesGroup(g.label));
+  // Slice #38.32: a type's own fields that say which act this is, drawn in
+  // „Identificarea actului" on every page and tile, never as a panel of their own.
+  const identificationGroup = customFieldGroups.find((g) => isIdentificationGroup(g.label));
   const otherGroups = customFieldGroups.filter(
-    (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup,
+    (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup && g !== identificationGroup,
   );
 
   // ── The notebook ─────────────────────────────────── (Slice #36.01) ──
@@ -981,8 +987,13 @@ export function DocumentForm({
   };
   const tileOfPath = (path: string): string => {
     const [root, key] = path.split(".");
-    if (root === "customFields") return tileOfTabIndex(tabs, tabOfCustomField(key ?? ""));
-    if (FEES_FIELDS.has(root)) return tileOfTabIndex(tabs, feesUnitTab);
+    if (root === "customFields") {
+      // Slice #38.32: the identification group is on „Identificarea actului".
+      if (identificationGroup?.fields.some((f) => f.key === key)) return "general";
+      return tileOfTabIndex(tabs, tabOfCustomField(key ?? ""));
+    }
+    // Slice #38.32: the issuer, the number and the date are there too.
+    if (ISSUE_FIELDS.has(root)) return "general";
     return "general";
   };
   // What the page needs to build the row: the type on screen, and the tiles
@@ -1175,25 +1186,31 @@ export function DocumentForm({
     );
   };
 
-  // ── Taxe și onorarii — always rendered (Slice #21.06.misc): the 3 fields
-  // moved out of General (Notariat / Nr. act autentic / Data autentificării
-  // — labels per type via cfg.labels, which since Slice #32.16 hold message
-  // KEY PATHS under the `document` namespace rather than Romanian strings, so
-  // the three read the interface language like everything else on the form),
-  // in the order a business user reads
-  // them (who/what act, then when, then the fees tied to it), followed by
-  // any custom fields the active type groups under "Taxe și onorarii" /
-  // "Fees". Uses the matched group's own label when one exists (preserves
-  // the admin's exact wording); falls back to the generic i18n title for
-  // types with no such template group.
-  // Slice #37.31: Instituție / Notariat, the panel's whole width — Nr. document
-  // | Data (rule 14: a number and its date) — then the fees group's own
-  // fields, packed (rule 18). The panel is the fewest units that hold the
-  // widest of all of them: 3 with Instituție at XXL.
-  const feesBaseRem = Math.max(rowRem([DOC.institutionId]), rowRem([DOC.nrDocument, DOC.dateDocument]));
-  const feesPacked = packCustomFields(feesGroup?.fields ?? [], false, feesBaseRem);
-  const feesSection = (
-    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup?.label || t("sections.issue")}>
+  // ── Taxe și onorarii — the fees group's own fields, packed (rule 18).
+  // Slice #38.32: the issuer, the number and the date that sat at the top of
+  // this panel since #21.06.misc moved to „Identificarea actului" (`issueFields`
+  // below), so the panel holds only the fees, and a type with no fees group has
+  // no fees panel at all — it used to draw one titled „Date de emitere" around
+  // those three. The panel's label is the group's own (the admin's wording).
+  // Packed to the panel's 3 units, as when the three issue fields set its
+  // width: three fees to a row, „Taxă timbru și publicitate" alone after them.
+  const feesPacked = packCustomFields(feesGroup?.fields ?? [], false, unitsInnerRem(PANEL_UNITS.document.fees));
+  const feesSection = feesGroup && feesGroup.fields.length > 0 ? (
+    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup.label}>
+      {feesPacked.nodes}
+    </Section>
+  ) : null;
+
+  // ── Identificarea actului's own fields ─────────────── (Slice #38.32) ──
+  // Who issued the act (Notariat / Emitent / …), its number and its date —
+  // labelled per type by `cfg.labels` (`@/lib/documents/type-config`: the
+  // notarial set on the notarial types, the generic one elsewhere) — then the
+  // type's own identification fields, packed. They sit under „Tip document",
+  // so the tile reads type, issuer, number, date, as its subtitle says.
+  // Packed to the tile's own width, so two short fields share a row.
+  const identificationPacked = packCustomFields(identificationGroup?.fields ?? [], false, unitsInnerRem(PANEL_UNITS.document.general));
+  const issueFields = (
+    <>
       <SelectField
         label={t(cfg.labels.institution)}
         name="institutionId"
@@ -1223,8 +1240,8 @@ export function DocumentForm({
           width={DOC.dateDocument}
         />
       </div>
-      {feesPacked.nodes}
-    </Section>
+      {identificationPacked.nodes}
+    </>
   );
 
   // When the type also defines a "Financiar" group, the two panels sit next
@@ -1252,6 +1269,7 @@ export function DocumentForm({
   ) : (
     feesSection
   );
+  const generalUnits = Math.max(PANEL_UNITS.document.general, identificationPacked.units);
 
   // ── General ───────────────────────────────────────────────────────────
   // Code shown inline on the heading line (Slice #21.06.misc: mirrors Person's
@@ -1267,7 +1285,7 @@ export function DocumentForm({
   const generalSection = (
       <Section
         panel="general"
-        units={PANEL_UNITS.document.general}
+        units={generalUnits}
         title={t("tiles.general")}
         subtitle={t("tileSubtitles.general")}
         code={mode !== "create" ? documentCode : undefined}
@@ -1333,6 +1351,8 @@ export function DocumentForm({
               : undefined
           }
         />
+        {/* Slice #38.32: who issued it, its number, its date, and the type's own identification fields. */}
+        {issueFields}
         {/* Slice #37.31: Etichetă scurtă moves up next to Tip document — what
             the document is, then what it is called, then what it is about —
             each the panel's whole width. */}
@@ -1343,7 +1363,7 @@ export function DocumentForm({
           error={errors.title?.message}
           highlight={displayHighlights?.title}
           width={DOC.title}
-          fillRem={PANEL_UNIT_INNER_REM.document.general}
+          fillRem={unitsInnerRem(generalUnits)}
         />
         <Field
           label={t("fields.subject")}
@@ -1352,7 +1372,7 @@ export function DocumentForm({
           error={errors.subject?.message}
           highlight={displayHighlights?.subject}
           width={DOC.subject}
-          fillRem={PANEL_UNIT_INNER_REM.document.general}
+          fillRem={unitsInnerRem(generalUnits)}
         />
         <Field
           label={t("fields.notes")}
@@ -1362,7 +1382,7 @@ export function DocumentForm({
           maxLength={4000}
           highlight={displayHighlights?.notes}
           width={DOC.notes}
-          fillRem={PANEL_UNIT_INNER_REM.document.general}
+          fillRem={unitsInnerRem(generalUnits)}
         />
       </Section>
   );

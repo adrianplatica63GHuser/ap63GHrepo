@@ -1,6 +1,6 @@
 /**
- * Case:   TC-DOC-03 — Un PAD: „Detalii act", „Date de emitere", fără „Câmpuri specifice tipului de document", „Data autentificării" pe un rând
- * Source: docs/testing/cases/TC-DOC-03.md, „Last green" 2026-10-02 (headings bracketed by Slice #37.90)
+ * Case:   TC-DOC-03 — Un PAD: „Detalii act" fără panou de emitere; emitentul, numărul și data în „Identificarea actului", „Data" pe un rând
+ * Source: docs/testing/cases/TC-DOC-03.md, „Last green" 2026-10-07 (rewritten by Slice #38.32)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim, and every English one.
@@ -13,7 +13,8 @@
  *     `e2e/auth.setup.ts` pins for every spec, where the hand run removed it.
  *   - Slice #37.52's pictures, not steps of the case: the PAD's tile in
  *     Romanian and in English, and the CVC's „Taxe și onorarii" panel, at 1366
- *     and 1920 px, into `playwright-report/type-fields-tile/`.
+ *     and 1920 px, into `playwright-report/type-fields-tile/`; since #38.32 the
+ *     CVC's „Identificarea actului" with its notarial labels.
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -33,7 +34,7 @@ async function oneLine(label: Locator): Promise<void> {
   expect(height).toBeLessThanOrEqual(line + 1);
 }
 
-/** The label above the „date" box of the issue panel. */
+/** The label above the act's „date" box — on „Identificarea actului" since #38.32. */
 const dateLabel = (page: Page) => page.locator("label").filter({ has: page.locator('[data-width-field="dateDocument"]') }).locator("span").first();
 
 async function photograph(page: Page, name: string, target: () => Locator): Promise<void> {
@@ -49,57 +50,78 @@ async function allTiles(page: Page, word: "Toate" | "All"): Promise<void> {
   await page.getByRole("button", { name: word, exact: true }).click();
 }
 
-test.describe("TC-DOC-03 — un PAD: „Detalii act”, „Date de emitere”", () => {
-  test("în română și în engleză; „Taxe și onorarii” al CVC-ului rămâne", async ({ page }) => {
+test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; „Identificarea actului”", () => {
+  test("în română și în engleză; „Taxe și onorarii” al CVC-ului ține doar taxele", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const made: string[] = [];
+    const label = (field: string) => page.locator("label").filter({ has: page.locator(`[data-width-field="${field}"]`) }).locator("span").first();
     try {
       const padId = await createDocumentOfType(page.request, "PLAN_AMPLASAMENT_DELIMITARE", `${MARK} PAD`);
       made.push(padId);
       const cvcId = await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${MARK} CVC`);
       made.push(cvcId);
 
-      // Step 1 — the PAD: „Detalii act", „Date de emitere", no old names, „Data autentificării" on one line.
+      // Step 1 — the PAD: „Detalii act" with no issue panel; „Emitent", „Nr. document", „Data" on „Identificarea actului".
       await page.goto(`/documents/${padId}`);
       let tile = page.getByRole("region", { name: "Detalii act", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("checkbox", { name: "Detalii act", exact: true })).toBeVisible();
-      await expect(tile.getByRole("heading", { name: "[Date de emitere]", exact: true })).toBeVisible();
+      await expect(tile.getByRole("heading", { name: "[Date de emitere]", exact: true })).toHaveCount(0);
+      await expect(tile.locator('[data-width-field="dateDocument"]')).toHaveCount(0);
       await expect(page.getByText("Câmpuri specifice")).toHaveCount(0);
       await expect(tile.getByText("Taxe și onorarii")).toHaveCount(0);
-      await expect(dateLabel(page)).toHaveText("Data autentificării");
+      let general = page.getByRole("region", { name: "Identificarea actului", exact: true });
+      await expect(general.locator('[data-width-field="dateDocument"]')).toBeVisible();
+      await expect(label("institutionId")).toHaveText("Emitent");
+      await expect(label("nrDocument")).toHaveText("Nr. document");
+      await expect(dateLabel(page)).toHaveText("Data");
       await oneLine(dateLabel(page));
       await photograph(page, "pad-ro", () => page.getByRole("region", { name: "Detalii act", exact: true }));
 
-      // Step 2 — in English: „Document details", „Issue details", none of the old names, „Authentication date" on one line.
+      // Step 2 — in English: „Document details" with no „[Issue details]"; „Issuer", „Document No.", „Date".
       await language(page, "en-GB");
       await page.goto(`/documents/${padId}`);
       tile = page.getByRole("region", { name: "Document details", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
-      await expect(tile.getByRole("heading", { name: "[Issue details]", exact: true })).toBeVisible();
+      await expect(tile.getByRole("heading", { name: "[Issue details]", exact: true })).toHaveCount(0);
       for (const old of ["Type fields", "Document-type-specific fields"]) await expect(page.getByText(old)).toHaveCount(0);
       await expect(tile.getByText(/\bFees\b/)).toHaveCount(0);
-      await expect(dateLabel(page)).toHaveText("Authentication date");
+      general = page.getByRole("region", { name: "Document identification", exact: true });
+      await expect(general.locator('[data-width-field="dateDocument"]')).toBeVisible();
+      await expect(label("institutionId")).toHaveText("Issuer");
+      await expect(label("nrDocument")).toHaveText("Document No.");
+      await expect(dateLabel(page)).toHaveText("Date");
       await oneLine(dateLabel(page));
       await photograph(page, "pad-en", () => page.getByRole("region", { name: "Document details", exact: true }));
 
-      // Step 3 — the CVC, in English, „All": „Taxe și onorarii" over „Authentication date".
+      // Step 3 — the CVC, in English, „All": the notarial set on „Document identification"; „[Taxe și onorarii]" without a date box.
       await page.goto(`/documents/${cvcId}`);
       await allTiles(page, "All");
-      const fees = () => page.locator("section").filter({ has: page.locator('[data-width-field="dateDocument"]') }).last();
+      const fees = () => page.locator('[data-section="fees"], [data-panel="fees"]').first();
       await expect(dateLabel(page)).toHaveText("Authentication date", { timeout: 30_000 });
+      await expect(label("institutionId")).toHaveText("Notary Office");
+      await expect(label("nrDocument")).toHaveText("Authentic Deed No.");
       await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
+      await expect(fees().locator('[data-width-field="dateDocument"]')).toHaveCount(0);
 
-      // Step 4 — back in Romanian: „Taxe și onorarii", „Data autentificării" on one line.
+      // Step 4 — back in Romanian: „Notariat", „Nr. act autentic", „Data autentificării" on one line; the four fees.
       await language(page, "ro-RO");
       await page.goto(`/documents/${cvcId}`);
       await allTiles(page, "Toate");
       await expect(dateLabel(page)).toHaveText("Data autentificării", { timeout: 30_000 });
+      await expect(label("institutionId")).toHaveText("Notariat");
+      await expect(label("nrDocument")).toHaveText("Nr. act autentic");
+      await expect(page.getByRole("region", { name: "Identificarea actului", exact: true }).locator('[data-width-field="dateDocument"]')).toBeVisible();
       await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
+      await expect(fees().locator('[data-width-field="dateDocument"]')).toHaveCount(0);
+      for (const key of ["timbruJudiciar", "onorariuNotarial", "impozitTransfer", "taxaTimbruPublicitate"]) {
+        await expect(fees().locator(`[data-width-field="customFields.${key}"]`)).toBeVisible();
+      }
       await oneLine(dateLabel(page));
       await photograph(page, "cvc-fees-ro", fees);
+      await photograph(page, "cvc-identification-ro", () => page.getByRole("region", { name: "Identificarea actului", exact: true }));
     } finally {
       // At the end — Romanian again, and both documents deleted.
       await language(page, "ro-RO");

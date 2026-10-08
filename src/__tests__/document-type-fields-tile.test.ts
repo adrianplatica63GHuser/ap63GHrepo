@@ -35,10 +35,14 @@ describe("the type-fields tile's names (#37.52)", () => {
     expect(at(MSG.en, "document", "tiles", "fields")).toBe("Document details");
   });
 
-  it("titles the fees panel with the type's fees group when there is one, „Date de emitere” when there is not", () => {
-    expect(FORM).toContain('title={feesGroup?.label || t("sections.issue")}');
-    expect(at(MSG.ro, "document", "sections", "issue")).toBe("Date de emitere");
-    expect(at(MSG.en, "document", "sections", "issue")).toBe("Issue details");
+  // #38.32 inverts #37.52's second half: it read `title={feesGroup?.label || t("sections.issue")}`,
+  // „Date de emitere" over the issuer, number and date when the type had no fees group. Those
+  // three are on „Identificarea actului" now, so with no fees group there is no fees panel.
+  it("titles the fees panel with the type's fees group, and draws none without one (#38.32)", () => {
+    expect(FORM).toContain("const feesSection = feesGroup && feesGroup.fields.length > 0 ? (");
+    expect(FORM).toContain("title={feesGroup.label}>");
+    expect(at(MSG.ro, "document", "sections", "issue")).toBeUndefined();
+    expect(at(MSG.en, "document", "sections", "issue")).toBeUndefined();
   });
 
   it("puts no heading over the fields with no group", () => {
@@ -52,7 +56,7 @@ describe("the type-fields tile's names (#37.52)", () => {
       expect(at(m, "document", "sections", "fees")).toBeUndefined();
       expect(at(m, "document", "sections", "customFields")).toBeUndefined();
     }
-    expect(FORM).not.toMatch(/sections\.(fees|customFields)/);
+    expect(FORM).not.toMatch(/sections\.(fees|customFields|issue)/);
   });
 
   it("writes the English dates as „Authentication date” and its row's siblings; the Romanian stays", () => {

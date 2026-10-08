@@ -611,20 +611,25 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
 });
 
 describe("the Document: labels above, every tile on the unit, notebook tiles as one frame (Slice #37.31)", () => {
-  it("Date generale is Tip document, Etichetă scurtă, Subiect, Note extinse — 3 units, the free text filling it", () => {
-    expect(SCREEN_ROWS.document.general).toEqual([["documentTypeId"], ["title"], ["subject"], ["notes"]]);
+  // #38.32: „Date generale" is „Identificarea actului" and holds the issuer, number and date
+  // (and the type's identification fields) under Tip document; they were the fees panel's.
+  it("Identificarea actului is Tip document, Emitent, Nr. | Data, the type's identification fields, then Etichetă scurtă, Subiect, Note extinse — 3 units at least", () => {
+    expect(SCREEN_ROWS.document.general).toEqual([["documentTypeId"], ["institutionId"], ["nrDocument", "dateDocument"], ["title"], ["subject"], ["notes"]]);
     const general = region(DOC_FORM, "const generalSection = (", "const panelsOf = (");
-    const order = [...general.matchAll(/name="([a-zA-Z]+)"/g)].map((m) => m[1]);
-    expect(order).toEqual(["documentTypeId", "title", "subject", "notes"]);
+    const order = [...general.matchAll(/name="([a-zA-Z]+)"|\{(issueFields)\}/g)].map((m) => m[1] ?? m[2]);
+    expect(order).toEqual(["documentTypeId", "issueFields", "title", "subject", "notes"]);
     for (const f of ["title", "subject", "notes"]) {
-      expect(general).toMatch(new RegExp(`width=\\{DOC\\.${f}\\}\\s+fillRem=\\{PANEL_UNIT_INNER_REM\\.document\\.general\\}`));
+      expect(general).toMatch(new RegExp(`width=\\{DOC\\.${f}\\}\\s+fillRem=\\{unitsInnerRem\\(generalUnits\\)\\}`));
     }
+    const issue = region(DOC_FORM, "const issueFields = (", "const financialPacked");
+    expect(issue).toMatch(/name="institutionId"[\s\S]*<div className=\{STACKED_ROW_CLASS\}>[\s\S]*name="nrDocument"[\s\S]*name="dateDocument"[\s\S]*\{identificationPacked\.nodes\}/);
     expect(PANEL_UNITS.document.general).toBe(3);
   });
 
-  it("Taxe și onorarii: Instituție — Nr. document | Data (rule 14) — then the fees group packed, 3 units at least", () => {
-    const fees = region(DOC_FORM, "const feesSection = (", "const financialPacked");
-    expect(fees).toMatch(/name="institutionId"[\s\S]*<div className=\{STACKED_ROW_CLASS\}>[\s\S]*name="nrDocument"[\s\S]*name="dateDocument"[\s\S]*\{feesPacked\.nodes\}/);
+  it("Taxe și onorarii: only the fees group, packed, 3 units at least — and no panel without one (#38.32)", () => {
+    const fees = region(DOC_FORM, "const feesSection = ", "const issueFields");
+    expect(fees).not.toMatch(/name="(institutionId|nrDocument|dateDocument)"/);
+    expect(fees).toContain("{feesPacked.nodes}");
     expect(PANEL_UNITS.document.fees).toBe(3);
   });
 

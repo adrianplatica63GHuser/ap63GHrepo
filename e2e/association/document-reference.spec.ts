@@ -78,7 +78,10 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await page.getByLabel(/^Tip document/).selectOption({ label: "Certificat de Moștenitor" });
       await expect(page.getByText("IDENTIFICAREA ACTULUI").first()).toBeVisible();
       // #37.52: a type with no fees group titles that panel „Date de emitere".
-      await expect(page.getByText("DATE DE EMITERE").first()).toBeVisible();
+      // Slice #38.32: no fees group, no fees panel — the issuer, number and date are on „Identificarea actului".
+      await expect(page.getByText("DATE DE EMITERE")).toHaveCount(0);
+      await expect(page.locator('[data-panel="general"] [data-width-field="institutionId"]')).toBeVisible();
+      await expect(page.locator('[data-panel="general"] [data-width-field="dateDocument"]')).toBeVisible();
       // #37.85: the superuser's line, the engine's name a link.
       await expect(page.getByText("Acest tip nu are încă formular; formularul se construiește în", { exact: false })).toBeVisible();
       await expect(page.getByRole("link", { name: "Distilare Tipizate", exact: true })).toBeVisible();
