@@ -45,14 +45,14 @@ A document, created by hand: „Tip document" **„Certificat de Moștenitor"**,
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Date generale", „Date de emitere" — with the line „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.", „Distilare Tipizate" a link (a superuser's line) |
+| 1 | „Acte" → „Adaugă act"; chooses „Certificat de Moștenitor" in „Tip document" | The form stays short — „Identificarea actului", „Date de emitere" — with the line „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.", „Distilare Tipizate" a link (a superuser's line) |
 | 2 | Types `TC-ASSOC-07 Titlu anterior` into „Etichetă scurtă", presses „Salvează", then „Acte" in the sidebar | The new document opens (since #37.93); then on „Acte", a new row badged „Nou!", „Moștenitor" (the type's short name, #37.95), `TC-ASSOC-07 Titlu anterior` |
-| 3 | Opens it, and ticks the tile **„Corelate"** („Acte corelate" before #37.65, „Asocieri" before #37.31) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază", and beside them „Înscrisuri citate", which unfolds the panel „Înscrisuri citate în acest document" and folds it again |
+| 3 | Opens it, and ticks the tile **„Legături"** („Acte corelate" before #37.65, „Asocieri" before #37.31) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază", and beside them „Înscrisuri citate", which unfolds the panel „Înscrisuri citate în acest document" and folds it again |
 | 4 | Presses „Asociază act" | „Asociază Document" at `/documents/[id]/associate-reference`, the document's title under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu, and a select **„Tip relație"** with „— fără relație —", „Înlocuiește", „Modifică", „Prelungește", „Anulează", „Consolidat cu", „Versiune anterioară a", „Anexă la", „Corecție a", „Titlu anterior al", „Înscris doveditor pentru", „Act adițional la", „Antecontract al" |
 | 5 | Types `TC-DOC-01` into „Căutare", ticks the one row, chooses **„Titlu anterior al"** | Both selected |
-| 6 | Presses „Asociază selecția" | Back on the certificate's „Corelate" tile |
-| 7 | Reads the document's row on the certificate's „Corelate", and presses its „Relația" | One row, on one line: `TC-DOC-01 Contract de test (Contract de Vânzare)`; „Relația" shows **acest document „Titlu anterior al” TC-DOC-01 Contract de test** — the certificate is the earlier title of the contract, which is what was chosen — and a click outside hides it |
-| 8 | Opens `TC-DOC-01 Contract de test`, tile „Corelate", and presses the certificate's row's „Relația" | One row: `TC-ASSOC-07 Titlu anterior (Certificat de Moștenitor)`; „Relația" shows **TC-ASSOC-07 Titlu anterior „Titlu anterior al” acest document** — the converse, read from the other end — and Esc hides it |
+| 6 | Presses „Asociază selecția" | Back on the certificate's „Legături" tile |
+| 7 | Reads the document's row on the certificate's „Legături", and presses its „Relația" | One row, on one line: `TC-DOC-01 Contract de test (Contract de Vânzare)`; „Relația" shows **acest document „Titlu anterior al” TC-DOC-01 Contract de test** — the certificate is the earlier title of the contract, which is what was chosen — and a click outside hides it |
+| 8 | Opens `TC-DOC-01 Contract de test`, tile „Legături", and presses the certificate's row's „Relația" | One row: `TC-ASSOC-07 Titlu anterior (Certificat de Moștenitor)`; „Relația" shows **TC-ASSOC-07 Titlu anterior „Titlu anterior al” acest document** — the converse, read from the other end — and Esc hides it |
 
 Steps 7 and 8 are the whole assertion. Each must read the sense in which the role was
 chosen; a link that reads the same from both ends, or the other way round from both, is red.

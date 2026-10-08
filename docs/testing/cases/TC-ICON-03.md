@@ -33,7 +33,7 @@ tooltip is the element with role `tooltip`.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the property and ticks „Corelate" in „Părți afișate" | „Nimic corelat încă."; „Asociază persoană" — a link icon and the words — and „Dezasociază" — a broken link and the word, inactive |
+| 1 | Opens the property and ticks „Legături" in „Părți afișate" | „Nimic corelat încă."; „Asociază persoană" — a link icon and the words — and „Dezasociază" — a broken link and the word, inactive |
 | 2 | Presses „Asociază persoană" | „Asociere persoană" (`/properties/<id>/associate-person`), its „Anulează" an X |
 | 3 | Types `TC-ICON-03` in „Nume…", ticks `Ion TC-ICON-03`, picks „Rol": „Proprietar / Titular de drept real" | „Asociază selecția" — a link icon and the words — active |
 | 4 | Presses „Asociază selecția" | Back on the property (`?tab=persons`): one row, `Ion TC-ICON-03`, „Proprietar / Titular de drept real" |

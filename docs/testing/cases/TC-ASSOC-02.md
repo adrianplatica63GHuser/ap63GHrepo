@@ -28,14 +28,14 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
-| 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 2 | Ticks the tile **„Legături"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază proprietate" | „Asociere proprietate" at `/documents/[id]/associate-property`, the document's title under it, one filter „Căutare" (placeholder „Cod sau denumire…"), and a table Denumire listing **every** property. There is no „Rol" on this screen |
 | 4 | Types `TC-PROP-01` into „Căutare" | The table narrows to one row, „Denumire" = `TC-PROP-01 Teren de test` |
 | 5 | Ticks that row | The row is selected, and the hint „Selectați cel puțin o proprietate" under the buttons goes away |
-| 6 | Presses „Asociază selecția" | Back on the document, on its „Corelate" tile |
-| 7 | Looks at „Corelate" | No column headings and no „Cod": one row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
+| 6 | Presses „Asociază selecția" | Back on the document, on its „Legături" tile |
+| 7 | Looks at „Legături" | No column headings and no „Cod": one row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
 | 8 | Presses „Vizualizare" on that row | The property's own screen, headed `TC-PROP-01 Teren de test`, opened **read-only** (`?readonly=true`) |
-| 9 | Ticks the tile „Corelate" on the property | One line: `TC-DOC-01 Contract de test (Contract de Vânzare)` |
+| 9 | Ticks the tile „Legături" on the property | One line: `TC-DOC-01 Contract de test (Contract de Vânzare)` |
 
 Step 9 is the other end of the link, and is the whole reason this case is not just
 step 7.

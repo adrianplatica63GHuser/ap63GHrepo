@@ -37,22 +37,22 @@ describes a party to a sale, which belongs on the contract (TC-ASSOC-01), not on
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți" | The property's screen, tabs DETALII · ASOCIERI · PERSOANE · ACTE · META INFO |
-| 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 2 | Ticks the tile **„Legături"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază persoană" | „Asociere persoană" at `/properties/[id]/associate-person`, the property's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing natural **and** judicial persons, and a select „Rol" with „— fără rol —" and the four roles above |
 | 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
 | 5 | Ticks the row, then chooses **„Proprietar / Titular de drept real"** in „Rol" | Both are selected |
-| 6 | Presses „Asociază selecția" | Back on the property's „Corelate" (`?tab=persons`): one line, no headings, `Ion TC-PERS-01 (Proprietar / Titular de drept real)` — no „Cotă" here — and „Vizualizare" |
-| 7 | Opens `Ion TC-PERS-01` and ticks its tile **„Corelate"** („Proprietăți" before #37.67) | One line, no column headings: `TC-PROP-01 Teren de test (Proprietar / Titular de drept real)` |
+| 6 | Presses „Asociază selecția" | Back on the property's „Legături" (`?tab=persons`): one line, no headings, `Ion TC-PERS-01 (Proprietar / Titular de drept real)` — no „Cotă" here — and „Vizualizare" |
+| 7 | Opens `Ion TC-PERS-01` and ticks its tile **„Legături"** („Proprietăți" before #37.67) | One line, no column headings: `TC-PROP-01 Teren de test (Proprietar / Titular de drept real)` |
 
 **Undo, then from the person's end**
 
 | # | A person does | And sees |
 |---|---|---|
-| 8 | On the person's „Corelate", selects the row's radio and presses „Dezasociază" | „Nimic corelat încă." |
+| 8 | On the person's „Legături", selects the row's radio and presses „Dezasociază" | „Nimic corelat încă." |
 | 9 | Presses „Asociază proprietate" | „Asociere proprietate" at `/natural-persons/[id]/associate-property`, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every property, and the same „Rol" with the same four roles |
 | 10 | Types `TC-PROP-01` into „Căutare", ticks the one row, chooses „Proprietar / Titular de drept real" | Both are selected |
-| 11 | Presses „Asociază selecția" | Back on the person's „Corelate" (`?tab=properties`), one line with the role in parentheses |
-| 12 | Presses „Vizualizare" on that row, then the property's tile „Corelate" | The property opened **read-only**, and its „Corelate" reads `Ion TC-PERS-01`, „Proprietar / Titular de drept real" |
+| 11 | Presses „Asociază selecția" | Back on the person's „Legături" (`?tab=properties`), one line with the role in parentheses |
+| 12 | Presses „Vizualizare" on that row, then the property's tile „Legături" | The property opened **read-only**, and its „Legături" reads `Ion TC-PERS-01`, „Proprietar / Titular de drept real" |
 
 Steps 7 and 12 are the other ends, one per direction.
 

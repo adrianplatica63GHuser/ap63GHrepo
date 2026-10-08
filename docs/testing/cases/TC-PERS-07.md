@@ -34,11 +34,11 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-PERS-07 Act" at 1920 px | „Pagini", with no page, at the right: 640 × 420 px (a few px more or less with another font's line height) |
-| 2 | Opens „TC-PERS-07 Ion" at 1920 px | The bar's last box is „Interacțiuni", ticked, alone in the purple strip (`rgb(246, 240, 254)`). At the right of the screen, top-aligned with the row, the tile „Interacțiuni": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`, 640 × 420 px — „Pagini"'s size and place — reading, in italics and in parentheses (#38.06), „(Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.)" |
+| 1 | Opens „TC-PERS-07 Act" at 1920 px | „Pagini", with no page, at the right: 640 × 436 px — 420 before #38.30's subtitle line (a few px more or less with another font's line height) |
+| 2 | Opens „TC-PERS-07 Ion" at 1920 px | The bar's last box is „Interacțiuni" — not ticked since #38.30; ticks it — alone in the purple strip (`rgb(246, 240, 254)`). At the right of the screen, top-aligned with the row, the tile „Interacțiuni": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`, 640 × 420 px — „Pagini"'s size and place — reading, in italics and in parentheses (#38.06), „(Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.)" |
 | 3 | Unticks „Interacțiuni" | The tile goes, and the right-hand column with it. Ticks it again: it is back |
-| 4 | At 1366 px | The column stands under the left area; „Interacțiuni" still 640 × 420 px and purple, as „Pagini" is on „TC-PERS-07 Act" at 1366 |
-| 5 | Opens „TC-PERS-07 SRL" at 1920 px | The bar reads „Identitate", „Persoane de contact", „Adrese", „Corelate", „Clasificări", „Conexiuni", „Interacțiuni"; the first panel is headed „Identitate"; „Interacțiuni" at the right, 640 × 420 px |
+| 4 | At 1366 px | The column stands under the left area; „Interacțiuni" still 640 × 436 px and purple, as „Pagini" is on „TC-PERS-07 Act" at 1366 |
+| 5 | Opens „TC-PERS-07 SRL" at 1920 px | The bar reads „Date de înregistrare", „Reprezentanți și contact", „Adrese", „Legături", „Clasificare", „Etichete și grupuri", „Interacțiuni"; the first panel is headed „Date de înregistrare"; „Interacțiuni" at the right, 640 × 436 px |
 
 ## At the end — leaving things as they were found
 

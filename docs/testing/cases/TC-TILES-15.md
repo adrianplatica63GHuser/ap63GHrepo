@@ -37,13 +37,13 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-15 Teren" | „Hartă" and „Puncte de contur" in the column at the right; „Conexiuni" under „Date cadastrale", as the screen always opened |
-| 2 | Presses on „Conexiuni"'s padding and drags until its top-left corner is 60 px under „Puncte de contur", on its left edge; releases | While dragging the outline is marked free. „Conexiuni" stays there: its left edge on „Puncte de contur"'s, its top at least 16 px under its bottom. Every other box — „Hartă" and „Puncte de contur" included — where it was in step 1 |
-| 3 | Reloads the page | „Conexiuni" where step 2 put it |
-| 4 | Ticks „Street View"; then unticks it | „Street View" under „Puncte de contur", and „Conexiuni" pushed down to 16 px under „Street View"; unticked, „Conexiuni" is back where step 2 put it |
-| 5 | Narrows the window to 1366 px; then widens it to 1920 | At 1366 „Conexiuni" stands in the left area, the column beside it; at 1920 it is back under „Puncte de contur" |
-| 6 | Opens „TC-TILES-15 Act", ticks „Clasificări", drags it by its padding until its top-left corner is 40 px under „Pagini", on its left edge; releases | „Clasificări" stays there, its left edge on „Pagini"'s; „Pagini" where it was |
-| 7 | Back on the property: „Implicit", then ticks „Conexiuni" | „Conexiuni" under „Date cadastrale", where step 1 had it; the browser holds no arrangement for the property |
+| 1 | Opens „TC-TILES-15 Teren" | „Hartă" and „Puncte de contur" in the column at the right; „Etichete și grupuri" under „Identificare cadastrală", as the screen always opened |
+| 2 | Presses on „Etichete și grupuri"'s padding and drags until its top-left corner is 60 px under „Puncte de contur", on its left edge; releases | While dragging the outline is marked free. „Etichete și grupuri" stays there: its left edge on „Puncte de contur"'s, its top at least 16 px under its bottom. Every other box — „Hartă" and „Puncte de contur" included — where it was in step 1 |
+| 3 | Reloads the page | „Etichete și grupuri" where step 2 put it |
+| 4 | Ticks „Street View"; then unticks it | „Street View" under „Puncte de contur", and „Etichete și grupuri" pushed down to 16 px under „Street View"; unticked, „Etichete și grupuri" is back where step 2 put it |
+| 5 | Narrows the window to 1366 px; then widens it to 1920 | At 1366 „Etichete și grupuri" stands in the left area, the column beside it; at 1920 it is back under „Puncte de contur" |
+| 6 | Opens „TC-TILES-15 Act", ticks „Clasificare", drags it by its padding until its top-left corner is 40 px under „Pagini", on its left edge; releases | „Clasificare" stays there, its left edge on „Pagini"'s; „Pagini" where it was |
+| 7 | Back on the property: „Implicit", then ticks „Etichete și grupuri" | „Etichete și grupuri" under „Identificare cadastrală", where step 1 had it; the browser holds no arrangement for the property |
 
 ## At the end — leaving things as they were found
 

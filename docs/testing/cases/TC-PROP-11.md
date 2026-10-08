@@ -37,8 +37,8 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „TC-PROP-11 Teren urban" | The heading `TC-PROP-11 Teren urban`, its `<h1>` named exactly that; after it „  -  " and „(Teren Construit)" in italics, at the heading's size; then an ⓘ named „Despre tipul proprietății" |
-| 2 | Presses the ⓘ | A bubble, in italics: „Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Date cadastrale”." |
-| 3 | Opens „TC-PROP-11 Teren agricol" | After its name „(Teren Arabil)"; the ⓘ's bubble: „Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Date cadastrale”." |
+| 2 | Presses the ⓘ | A bubble, in italics: „Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Identificare cadastrală”." |
+| 3 | Opens „TC-PROP-11 Teren agricol" | After its name „(Teren Arabil)"; the ⓘ's bubble: „Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”." |
 | 4 | Chooses „Teren Construit" in „Tip proprietate", without saving | At once „(Teren Construit)", and the bubble of step 2 |
 | 5 | Chooses „niciunul" in „Tip proprietate", without saving | Nothing after the name: no dash, no type, no ⓘ |
 

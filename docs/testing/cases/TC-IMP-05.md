@@ -37,8 +37,8 @@ The invented card image, or a go-ahead to draw one.
 | 1 | Imports `12.tc.id.card.parents` to the end; the card's step opens | „Creează persoană din CI", the holder `TC-IMP-05 Andrei`, and „Părinții titularului" with „Creează și tatăl" `Ion` and „Creează și mama" `Maria`, both ticked, each surname `TC-IMP-05` marked as assumed |
 | 2 | Replaces the mother's surname with `TC-IMP-05-MAMA`; „Creează și leagă" | „Tatăl titularului", „Părintele 1 din 2", „Fără CNP, potrivirea se face doar după nume…" |
 | 3 | „Creează și leagă", then again for the mother | The row: the person, „Tatăl: creat(ă) și legat(ă)", „Mama: creat(ă) și legat(ă)" |
-| 4 | Opens `Andrei TC-IMP-05` | „Corelate": `Ion TC-IMP-05 (Tată)`, `Maria TC-IMP-05-MAMA (Mamă)`, the property and the card |
-| 5 | Opens `Ion TC-IMP-05` | „Corelate": `Andrei TC-IMP-05 (Fiu)`; „Proveniență" „Din actul de identitate al unei rude"; „Note" „Creat din cartea de identitate DOC… a lui TC-IMP-05 Andrei (PPERS…)" |
+| 4 | Opens `Andrei TC-IMP-05` | „Legături": `Ion TC-IMP-05 (Tată)`, `Maria TC-IMP-05-MAMA (Mamă)`, the property and the card |
+| 5 | Opens `Ion TC-IMP-05` | „Legături": `Andrei TC-IMP-05 (Fiu)`; „Proveniență" „Din actul de identitate al unei rude"; „Note" „Creat din cartea de identitate DOC… a lui TC-IMP-05 Andrei (PPERS…)" |
 
 ## At the end — leaving things as they were found
 

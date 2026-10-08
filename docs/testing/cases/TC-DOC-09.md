@@ -39,13 +39,13 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-09 PAD`, tile „Corelate" | No column headings. The person's row, on one line: `Ion TC-DOC-09 (Proiectant / Consultant)`, then „Vizualizare" and „Previzualizare" — no „Cotă" button and no share box |
-| 2 | Opens `TC-DOC-09 CVC`, tile „Corelate" | The person's row, on one line: `Ion TC-DOC-09 (Vânzător)`, then a solid orange „Cotă", „Vizualizare", „Previzualizare" |
+| 1 | Opens `TC-DOC-09 PAD`, tile „Legături" | No column headings. The person's row, on one line: `Ion TC-DOC-09 (Proiectant / Consultant)`, then „Vizualizare" and „Previzualizare" — no „Cotă" button and no share box |
+| 2 | Opens `TC-DOC-09 CVC`, tile „Legături" | The person's row, on one line: `Ion TC-DOC-09 (Vânzător)`, then a solid orange „Cotă", „Vizualizare", „Previzualizare" |
 | 3 | Rests the mouse on „Cotă" | A bubble: „Cotă-parte: fără cotă · Suprafață echivalentă (mp): fără suprafață · Mod de deținere: nespecificat" |
 | 4 | Presses „Cotă" | A small panel beside the row with „Cotă-parte", „Suprafață echivalentă (mp)" and „Mod de deținere", empty; the cursor in „Cotă-parte" |
 | 5 | Types `50` and presses Esc | The panel closes and `50` is saved: „Cotă" is now an orange outline, and resting on it reads „Cotă-parte: 50 · …" |
 | 6 | Presses „Cotă", types `120` into „Suprafață echivalentă (mp)", clicks outside the panel | The panel closes and `120` is saved beside `50` |
-| 7 | The documents of `TC-DOC-09 CVC`'s „Corelate" | No column headings. One row, on one line: `TC-DOC-09 PAD (Plan de Amplasament și Delimitare)`, then „Relația", „Vizualizează", „Previzualizare"; the relationship sentence is not on the row |
+| 7 | The documents of `TC-DOC-09 CVC`'s „Legături" | No column headings. One row, on one line: `TC-DOC-09 PAD (Plan de Amplasament și Delimitare)`, then „Relația", „Vizualizează", „Previzualizare"; the relationship sentence is not on the row |
 | 8 | Presses „Relația" | A bubble beside it: `TC-DOC-09 PAD „Titlu anterior al” acest document` |
 | 9 | Presses Esc; presses „Relația" again and clicks outside the bubble | Each time the bubble goes |
 | 10 | Under the rows, „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" stand in one row, „Înscrisuri citate" after them; presses „Înscrisuri citate" | The panel „Înscrisuri citate în acest document" unfolds under them, as before — „Acest document nu a fost încă citit pentru înscrisurile pe care le citează.", „Verifică înscrisurile citate", „Recitește documentul" and the cost sentence |

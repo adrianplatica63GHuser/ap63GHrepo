@@ -28,13 +28,13 @@ Nothing. There is no role on this link, from either end.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-PROP-01 Teren de test` from „Proprietăți" | The property's screen |
-| 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 2 | Ticks the tile **„Legături"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază act" | „Asociere act" at `/properties/[id]/associate-document`, the property's name under it, one filter „Căutare" („Cod sau titlu…"), a table Tip · Titlu listing every document. **There is no „Rol"** — the same as TC-ASSOC-02 from the other end |
 | 4 | Types `TC-DOC-01` into „Căutare" | One row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
 | 5 | Ticks that row | The hint „Selectați cel puțin un act" goes away |
-| 6 | Presses „Asociază selecția" | Back on the property's „Corelate" (`?tab=document`): one line, no headings — `TC-DOC-01 Contract de test (Contract de Vânzare)` — and „Vizualizare" |
+| 6 | Presses „Asociază selecția" | Back on the property's „Legături" (`?tab=document`): one line, no headings — `TC-DOC-01 Contract de test (Contract de Vânzare)` — and „Vizualizare" |
 | 7 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
-| 8 | Ticks the tile „Corelate" on the document | One row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
+| 8 | Ticks the tile „Legături" on the document | One row, on one line, `TC-PROP-01 Teren de test`, with „Vizualizare" |
 
 Step 8 is the other end of the link.
 

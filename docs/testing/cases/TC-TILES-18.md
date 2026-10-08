@@ -48,7 +48,7 @@ Nothing.
 | 4 | Opens „TC-TILES-18 Act", presses „Toate" | Four strips: [Date generale, Preț și taxe, Cadastru și CF, Stare juridică, Formalități] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Pagini] purple. Each tile in its group's colour |
 | 5 | Steps 1–4 at 1920 px | The same |
 | 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is green |
-| 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Conexiuni" by its empty space to under „Corelate" | It stands there, still yellow |
+| 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Etichete și grupuri" by its empty space to under „Legături" | It stands there, still yellow |
 
 ## At the end — leaving things as they were found
 

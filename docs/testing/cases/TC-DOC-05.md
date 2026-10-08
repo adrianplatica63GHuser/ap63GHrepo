@@ -41,7 +41,7 @@ The window is 1366 × 900. „One line" is the label 20 px high (its line height
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-05 CVC` | In „Părți afișate": „Date generale", „Pagini", „Cadastru și CF" and „Formalități" ticked; „Preț și taxe" and „Stare juridică" not |
+| 1 | Opens `TC-DOC-05 CVC` | In „Părți afișate": „Identificarea actului", „Pagini", „Cadastru și CF" and „Formalități" ticked; „Preț și taxe" and „Stare juridică" not |
 | 2 | Presses „Toate" | The tiles „Preț și taxe" (panels „[Financiar]", „[Taxe și onorarii]"), „Cadastru și CF" („[Dosar și exemplar]", „[Excepție cadastru]", „[Obiect declarat]"), „Stare juridică" („[Declarații și garanții]"), „Formalități" („[Declarații și obligații legale]"). None of „Instrument", „Antet instrument", „Stare juridică afirmată", „Conformitate", „Conformitate și formalități", „Cadastru și carte funciară", nor any panel heading without its brackets |
 | 3 | Looks at „Taxe și onorarii" | After Notariat, Nr. act autentic and Data autentificării: „Timbru judiciar", „Onorariu notarial", „Impozit transfer" on one row, then „Taxă timbru și publicitate" alone on the next, its label on one line |
 

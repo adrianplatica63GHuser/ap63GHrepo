@@ -41,8 +41,8 @@ The window is 1366 × 900.
 | 4 | „Salvează" | „Tatăl titularului", „Părintele 1 din 2", „Fără CNP, potrivirea se face doar după nume…", „Persoană nouă" |
 | 5 | „Creează și leagă" | „Mama titularului", „Părintele 2 din 2" |
 | 6 | „Creează și leagă" | The list of natural persons |
-| 7 | Opens `Andrei TC-PERS-08` | „Corelate": `Ion TC-PERS-08 (Tată)` and `Maria TC-PERS-08-MAMA (Mamă)` |
-| 8 | Opens `Ion TC-PERS-08` | „Corelate": `Andrei TC-PERS-08 (Fiu)`; „Proveniență" „Din actul de identitate al unei rude"; „Note" „Creat din cartea de identitate a lui TC-PERS-08 Andrei (PPERS…)" |
+| 7 | Opens `Andrei TC-PERS-08` | „Legături": `Ion TC-PERS-08 (Tată)` and `Maria TC-PERS-08-MAMA (Mamă)` |
+| 8 | Opens `Ion TC-PERS-08` | „Legături": `Andrei TC-PERS-08 (Fiu)`; „Proveniență" „Din actul de identitate al unei rude"; „Note" „Creat din cartea de identitate a lui TC-PERS-08 Andrei (PPERS…)" |
 
 ## At the end — leaving things as they were found
 

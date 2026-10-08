@@ -51,7 +51,7 @@ delete `Ion TC-STAMP-01` if it is still there.
 | 6 | With „Persoană fizică", ticks `Ion TC-STAMP-01` in „Elemente disponibile pentru ștampilare" and presses „Aplică ștampila (1)" | It moves to „Elemente deja ștampilate", and „Modificări nesalvate" appears — **nothing is written yet** |
 | 7 | Presses „Salvează ștampilele" | „Modificări nesalvate" goes away |
 | 8 | Returns to „Ștampile" | The row's „Elemente" reads **1** |
-| 9 | Opens `Ion TC-STAMP-01`, tile **„Conexiuni"** | „Ștampile": „+ Aplică ștampilă" and a chip `STMP-… TC-STAMP-01 Ștampilă de test` with „×" |
+| 9 | Opens `Ion TC-STAMP-01`, tile **„Etichete și grupuri"** | „Ștampile": „+ Aplică ștampilă" and a chip `STMP-… TC-STAMP-01 Ștampilă de test` with „×" |
 
 Step 9 is the other end: the record knows it carries the stamp, not only the stamp knows.
 

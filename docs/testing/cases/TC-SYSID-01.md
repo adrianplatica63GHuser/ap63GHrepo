@@ -37,9 +37,9 @@ its right end (13 px from the panel's edge, its padding), and the heading stays 
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens the natural person | One code on the screen, in the corner of „Identitate"; its accessible text „ID sistem PPERS…" |
-| 2 | Opens the company | One code, in the corner of „Identitate"; no „ID" field among the panel's boxes |
-| 3 | Opens the property | One code, in the corner of „Date cadastrale"; no „Cod" field among the panel's boxes |
-| 4 | Opens the document | One code, in the corner of „Date generale" |
+| 2 | Opens the company | One code, in the corner of „Date de înregistrare"; no „ID" field among the panel's boxes |
+| 3 | Opens the property | One code, in the corner of „Identificare cadastrală"; no „Cod" field among the panel's boxes |
+| 4 | Opens the document | One code, in the corner of „Identificarea actului" |
 | 5 | Opens Persoane Fizice, Persoane Juridice, Proprietăți and Acte | Each list's table: no „Cod" column, no code in any row, the record of this case among its rows; no code in the sidebar's „Recente" |
 
 ## At the end — leaving things as they were found

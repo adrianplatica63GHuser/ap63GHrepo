@@ -31,7 +31,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the person with `?tab=metadata` on its address, the mouse away from „Conexiuni" | Under „Etichete / Cuvinte cheie" three chips, „tc-tiles-10 arendă", „tc-tiles-10 moștenire" and „tc-tiles-10 litigiu". No „×" is drawn on any of them. Each chip's padding is between 4 and 8 px on every side |
+| 1 | Opens the person with `?tab=metadata` on its address, the mouse away from „Etichete și grupuri" | Under „Etichete / Cuvinte cheie" three chips, „tc-tiles-10 arendă", „tc-tiles-10 moștenire" and „tc-tiles-10 litigiu". No „×" is drawn on any of them. Each chip's padding is between 4 and 8 px on every side |
 | 2 | Rests the mouse on „tc-tiles-10 moștenire" | Its „×" („Elimină eticheta tc-tiles-10 moștenire") is drawn, over the chip's top-right corner; the other two still have none. No chip has moved or changed size |
 | 3 | Moves the mouse away, then reaches that „×" with the keyboard (Tab) | The „×" is drawn while it has focus; no chip has moved |
 | 4 | Clicks the „×" of „tc-tiles-10 moștenire" | That chip is gone; „tc-tiles-10 arendă" and „tc-tiles-10 litigiu" stay |

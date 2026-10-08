@@ -36,13 +36,13 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-PROP-07 Teren`, tile „Corelate" | On the left, beside the map column: four rows, each on one line, in this order, no headings, a thin line between two kinds — `Ion TC-PROP-07 (Proprietar / Titular de drept real)` with the person icon, `TC-PROP-07 Firmă SRL (Proprietar / Titular de drept real)` with the building, `TC-PROP-07 Teren întreg` with the map and a „Relația" button, `TC-PROP-07 CVC (Contract de Vânzare)` with the document. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `TC-PROP-07 Teren`, tile „Legături" | On the left, beside the map column: four rows, each on one line, in this order, no headings, a thin line between two kinds — `Ion TC-PROP-07 (Proprietar / Titular de drept real)` with the person icon, `TC-PROP-07 Firmă SRL (Proprietar / Titular de drept real)` with the building, `TC-PROP-07 Teren întreg` with the map and a „Relația" button, `TC-PROP-07 CVC (Contract de Vânzare)` with the document. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PROP-07 Teren întreg` | A bubble: `această proprietate „Inclus în” TC-PROP-07 Teren întreg` |
 | 3 | Clicks outside the bubble | It goes |
 | 4 | Selects the company's radio, presses „Dezasociază" | The company's row goes, and with it its group; the person, the other property and the contract stay |
-| 5 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the property with „Corelate" on screen |
-| 6 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate corelată"; back with „Corelate" on screen |
-| 7 | Presses „Asociază act", then „Anulează" | „Asociere act"; back with „Corelate" on screen |
+| 5 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the property with „Legături" on screen |
+| 6 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate corelată"; back with „Legături" on screen |
+| 7 | Presses „Asociază act", then „Anulează" | „Asociere act"; back with „Legături" on screen |
 
 ## At the end — leaving things as they were found
 

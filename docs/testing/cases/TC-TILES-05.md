@@ -49,7 +49,7 @@ step 7 is never saved.
 | 4 | „Previzualizare" on „Dan TC-TILES-05-C" | Still two previews: **Ion's is gone**, and Maria's and Dan's are there, in that order. Its box is gone from „Părți afișate" too |
 | 5 | „Previzualizare" on „Maria TC-TILES-05-B" again | Nothing changes: still Maria and Dan |
 | 6 | Unticks „Previzualizare: …" for Maria | Her preview closes; Dan's stays |
-| 7 | In „Date generale", types `TC-NESALVAT` into „Subiect", **without saving** | „Modificări nesalvate" |
+| 7 | In „Identificarea actului", types `TC-NESALVAT` into „Subiect", **without saving** | „Modificări nesalvate" |
 | 8 | „Închide" on Dan's preview, then „Previzualizare" on Ion again | The preview closes and Ion's opens. „Subiect" still reads `TC-NESALVAT`, „Modificări nesalvate" is still there, and no „leave the page?" question was asked |
 | 9 | „Deschide" on Ion's preview | The question about unsaved changes, because this one does leave the page. „Anulează": still on the contract, `TC-NESALVAT` still there. Then „Vizualizare" on Maria's row, and a double-click on her row: the same question each time, and „Anulează" each time leaves the contract as it was (FU-271, Slice #37.33) |
 | 10 | At a 2560-pixel window, with one preview open | The contract's tiles and the preview side by side on one row. Every tile and the preview is a whole number of width units, and the row is 14 units (10 at 1920) |

@@ -32,7 +32,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the property with `?tab=metadata` on its address, as an „Înapoi" link does | Among the checkboxes, „Clasificări" and „Conexiuni", both ticked, and no „META INFO". Two tiles. „CLASIFICĂRI" holds Importanță, Relevanță and Proveniență — under Proveniență „Actualizat azi" and „ISTORIC" with „Niciun istoric înregistrat încă" — and the save button. „CONEXIUNI" holds Etichete / Cuvinte cheie, Grupuri, Ștampile and Vezi și, each with its „nothing yet" line. No other line of text: no explanation under any title |
+| 1 | Opens the property with `?tab=metadata` on its address, as an „Înapoi" link does | Among the checkboxes, „Clasificare" and „Etichete și grupuri", both ticked, and no „META INFO". Two tiles. „CLASIFICĂRI" holds Importanță, Relevanță and Proveniență — under Proveniență „Actualizat azi" and „ISTORIC" with „Niciun istoric înregistrat încă" — and the save button. „CONEXIUNI" holds Etichete / Cuvinte cheie, Grupuri, Ștampile and Vezi și, each with its „nothing yet" line. No other line of text: no explanation under any title |
 | 2 | Rests the mouse on „Importanță" | A bubble: „Reflectă valoarea subiectivă pe care o acorzi acestui element…". Moving the mouse away closes it |
 | 3 | Rests the mouse on Proveniență's value, „Manual (Adaugă nou)" | A bubble: „Acest element a fost introdus manual…". Moving away closes it |
 | 4 | Opens the document, the natural person and the company the same way (`?tab=metadata`), and on each rests the mouse on „Importanță" | On each, the same two tiles with the same titles and lines, and the same bubble |

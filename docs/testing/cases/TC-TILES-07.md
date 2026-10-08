@@ -41,12 +41,12 @@ its top on the row's top. Nothing is saved.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-07 Act de test" | „Date generale", „Pagini" and „Preț și taxe" ticked. „Pagini" is at the right, top level with the row; „Date generale" and „Preț și taxe" to its left |
-| 2 | Opens „TC-TILES-07 Teren de test" | „Date cadastrale", „Puncte de contur", „Adresă" and „Hartă" ticked, „Street View" not. „Hartă" at the right, top level with the row; „Puncte de contur" under it, also at the right; „Date cadastrale" and „Adresă" to their left |
+| 1 | Opens „TC-TILES-07 Act de test" | „Identificarea actului", „Pagini" and „Preț și taxe" ticked. „Pagini" is at the right, top level with the row; „Identificarea actului" and „Preț și taxe" to its left |
+| 2 | Opens „TC-TILES-07 Teren de test" | „Identificare cadastrală", „Puncte de contur", „Adresă" and „Hartă" ticked, „Street View" not. „Hartă" at the right, top level with the row; „Puncte de contur" under it, also at the right; „Identificare cadastrală" and „Adresă" to their left |
 | 3 | Ticks „Street View" | „Street View" under „Puncte de contur", at the right |
 | 4 | Unticks „Hartă" | „Puncte de contur" at the top of the column, level with the row; „Street View" under it |
-| 5 | Unticks „Puncte de contur" and „Street View" | No column: only „Date cadastrale" and „Adresă", side by side from the left |
-| 6 | Ticks „Hartă" and „Puncte de contur" again, and narrows the window to 1366 px | The row is 6 units (968 px). „Date cadastrale" at the left, top level with the row; beside it the column: „Hartă" at the right, top level with the row, „Puncte de contur" under it. „Adresă" under „Date cadastrale" |
+| 5 | Unticks „Puncte de contur" and „Street View" | No column: only „Identificare cadastrală" and „Adresă", side by side from the left |
+| 6 | Ticks „Hartă" and „Puncte de contur" again, and narrows the window to 1366 px | The row is 6 units (968 px). „Identificare cadastrală" at the left, top level with the row; beside it the column: „Hartă" at the right, top level with the row, „Puncte de contur" under it. „Adresă" under „Identificare cadastrală" |
 
 ## At the end — leaving things as they were found
 

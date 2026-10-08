@@ -51,14 +51,14 @@ held as written below, after two corrections the run itself made:
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Ion TC-TILES-01" | Under the name, no tab row. Instead, the checkboxes „Identitate", „Carte de identitate", „Contact", „Adrese", „Asocieri", „Proprietăți", „Acte", „Clasificări", „Conexiuni", with the first four ticked, then „Toate" and „Implicit". Below them: the panels Identitate, Carte de identitate, Contact, Adresă domiciliu and the correspondence panel, then „Salvează", „Șterge", „Anulează" |
+| 1 | Opens „Ion TC-TILES-01" | Under the name, no tab row. Instead, the checkboxes „Identitate", „Carte de identitate", „Contact", „Adrese", „Asocieri", „Proprietăți", „Acte", „Clasificare", „Etichete și grupuri", with the first four ticked, then „Toate" and „Implicit". Below them: the panels Identitate, Carte de identitate, Contact, Adresă domiciliu and the correspondence panel, then „Salvează", „Șterge", „Anulează" |
 | 2 | Ticks „Acte" | A tile „Acte" after the panels: „Niciun act asociat", „Asociază", „Dezasociază". The panels have not moved |
 | 3 | Unticks „Contact" | The Contact panel goes; the other panels close up behind it |
 | 4 | Reloads the page | The same arrangement: „Acte" shown, „Contact" not ticked and not shown |
 | 5 | Types `TC` into „Poreclă" (Identitate), then unticks „Identitate" | The Identitate panel goes; „Modificări nesalvate" stays at the top; „Salvează" is enabled |
 | 6 | Presses „Salvează" | The page stays; „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Identitate": „Poreclă" reads `TC` |
 | 7 | Clears „Nume" and „Prenume", unticks „Identitate". „Salvează" stays enabled — as tiles, an invalid form does not disable it. Presses „Salvează" | „Identitate" is ticked and shown again, for this visit only (the stored choice is unchanged); the page has scrolled to „Nume", the box has the focus, its row pulses red, and beneath it „At least one of First Name or Last Name is required" (English in either language — FU-261); nothing is saved (still „v 1") |
-| 8 | „Toate" | All nine boxes ticked; „Asocieri", „Proprietăți", „Acte", „Clasificări" and „Conexiuni" shown after the panels. Unticking eight of them leaves the last box greyed out: it cannot be unticked („Cel puțin o parte rămâne afișată.") |
+| 8 | „Toate" | All nine boxes ticked; „Asocieri", „Proprietăți", „Acte", „Clasificare" and „Etichete și grupuri" shown after the panels. Unticking eight of them leaves the last box greyed out: it cannot be unticked („Cel puțin o parte rămâne afișată.") |
 | 9 | „Implicit" | Back to the four form tiles, „Acte" gone |
 | — | At the end: „Anulează" (the cleared names are dropped), opens the person again, „Șterge" → „Da" | Back on „Persoane Fizice"; the person is gone |
 

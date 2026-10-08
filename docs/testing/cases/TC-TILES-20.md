@@ -39,11 +39,11 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-20 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" | Every tile but „Interacțiuni", each where #37.75 places it; „Clasificări" at the left edge, under „Adresă domiciliu" |
-| 2 | Presses on „Conexiuni"'s left padding and drags until its top-left corner is one unit right of „Clasificări"'s left edge and 60 px under the lowest other tile in the columns it will span; releases | While dragging the outline is marked free. Released, „Conexiuni" rises: its left edge one unit right of „Clasificări"'s, its top right under „Clasificări" — under two tiles, „Clasificări" and „Adresă corespondență", the lower one. Every other box where it was in step 1 |
-| 3 | Opens „TC-TILES-20 Doi"; unticks „Clasificări" | „Conexiuni" keeps its left edge, and stands right under the tiles left in its columns („Adresă domiciliu" and „Adresă corespondență") — no empty space above it |
-| 4 | Ticks „Clasificări" again | „Clasificări" where step 1 had it, and „Conexiuni" right under it again, its left edge unchanged |
-| 5 | Reloads the page | „Conexiuni" where step 4 had it |
+| 1 | Opens „TC-TILES-20 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" | Every tile but „Interacțiuni", each where #37.75 places it; „Clasificare" at the left edge, under „Adresă domiciliu" |
+| 2 | Presses on „Etichete și grupuri"'s left padding and drags until its top-left corner is one unit right of „Clasificare"'s left edge and 60 px under the lowest other tile in the columns it will span; releases | While dragging the outline is marked free. Released, „Etichete și grupuri" rises: its left edge one unit right of „Clasificare"'s, its top right under „Clasificare" — under two tiles, „Clasificare" and „Adresă corespondență", the lower one. Every other box where it was in step 1 |
+| 3 | Opens „TC-TILES-20 Doi"; unticks „Clasificare" | „Etichete și grupuri" keeps its left edge, and stands right under the tiles left in its columns („Adresă domiciliu" and „Adresă corespondență") — no empty space above it |
+| 4 | Ticks „Clasificare" again | „Clasificare" where step 1 had it, and „Etichete și grupuri" right under it again, its left edge unchanged |
+| 5 | Reloads the page | „Etichete și grupuri" where step 4 had it |
 
 ## At the end — leaving things as they were found
 

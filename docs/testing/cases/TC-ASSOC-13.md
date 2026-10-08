@@ -36,11 +36,11 @@ cut („…").
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-ASSOC-13 PAD`, ticks „Corelate" and presses its „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`: the tiles „Căutare", „Rezultate" and „Asociere", one under another, „Căutare" first |
+| 1 | Opens `TC-ASSOC-13 PAD`, ticks „Legături" and presses its „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`: the tiles „Căutare", „Rezultate" and „Asociere", one under another, „Căutare" first |
 | 2 | Looks at „Asociere" | „Asociază selecția" and „Anulează" inside the window, without scrolling |
-| 3 | Presses „Anulează"; on the PAD presses „Corelate"'s „Asociază proprietate" | „Asociere proprietate" at `/documents/[id]/associate-property`: the same three tiles, one under another; „Asociere"'s buttons inside the window |
+| 3 | Presses „Anulează"; on the PAD presses „Legături"'s „Asociază proprietate" | „Asociere proprietate" at `/documents/[id]/associate-property`: the same three tiles, one under another; „Asociere"'s buttons inside the window |
 | 4 | Types `TC-ASSOC-13` into „Căutare" (placeholder „Cod sau denumire…") | One row: `TC-ASSOC-13 Parcelă de test cu un nume lung`, on one line |
-| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Corelate" is 4 units wide (#37.65; „Proprietăți" was 3 in #37.64, 4 before) and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
+| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Legături" is 4 units wide (#37.65; „Proprietăți" was 3 in #37.64, 4 before) and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
 
 ## At the end — leaving things as they were found
 

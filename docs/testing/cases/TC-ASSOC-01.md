@@ -54,13 +54,13 @@ Two consequences for the steps:
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
-| 2 | Ticks the tile **„Corelate"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
+| 2 | Ticks the tile **„Legături"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
 | 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
 | 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
 | 6 | Ticks the row for `Ion TC-PERS-01` | The row is selected |
-| 7 | Presses „Asociază selecția" | The screen returns to the document, on its „Corelate" tile |
-| 8 | Looks at „Corelate" | No column headings and no „Cod": one row, on one line, `Ion TC-PERS-01 (Cumpărător)`, then an orange „Cotă", „Vizualizare" and „Previzualizare" |
+| 7 | Presses „Asociază selecția" | The screen returns to the document, on its „Legături" tile |
+| 8 | Looks at „Legături" | No column headings and no „Cod": one row, on one line, `Ion TC-PERS-01 (Cumpărător)`, then an orange „Cotă", „Vizualizare" and „Previzualizare" |
 | 9 | Presses the row's „Cotă", types `50%` into „Cotă-parte" in the panel beside the row, and leaves the field | The value is saved and the cell then reads `50` — the percent sign is accepted and not kept |
 | 10 | Chooses „indiviziune" in the panel's **„Mod de deținere"** — a select under „Cotă-parte", offering „— nespecificat —", „în nume propriu", „devălmășie", „indiviziune", „prin mandatar" | The qualifier is recorded beside the share, and is still there after a reload |
 | 11 | Reads the one line under the table | „Cotele pentru „Cumpărător" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." **While the total is off there is no separate „Total Cumpărător: 50%" line** — the warning replaces it |

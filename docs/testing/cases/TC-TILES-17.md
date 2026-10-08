@@ -31,7 +31,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the person | In „Conexiuni": „Etichete / Cuvinte cheie", a line, „Grupuri", a line, „Ștampile", a line, „Vezi și". Each line 12 px or more inside the tile's edges; the space above a line equal to the space below it (±1 px); every line the same width and colour as „Clasificări"'s line |
+| 1 | Opens the person | In „Etichete și grupuri": „Etichete / Cuvinte cheie", a line, „Grupuri", a line, „Ștampile", a line, „Vezi și". Each line 12 px or more inside the tile's edges; the space above a line equal to the space below it (±1 px); every line the same width and colour as „Clasificare"'s line |
 | 2 | Opens the document | The same |
 
 ## At the end — leaving things as they were found

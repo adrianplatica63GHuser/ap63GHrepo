@@ -37,12 +37,12 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-10 CVC`, tile „Corelate" | Four rows, each on one line, in this order, with no headings over them and a thin line between two kinds: `Ion TC-DOC-10 (Vânzător)` with the person icon, `TC-DOC-10 Firmă SRL (Cumpărător)` with the building, `TC-DOC-10 Teren` with the map, `TC-DOC-10 PAD (Plan de Amplasament și Delimitare)` with the document. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row, „Înscrisuri citate" after them |
+| 1 | Opens `TC-DOC-10 CVC`, tile „Legături" | Four rows, each on one line, in this order, with no headings over them and a thin line between two kinds: `Ion TC-DOC-10 (Vânzător)` with the person icon, `TC-DOC-10 Firmă SRL (Cumpărător)` with the building, `TC-DOC-10 Teren` with the map, `TC-DOC-10 PAD (Plan de Amplasament și Delimitare)` with the document. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row, „Înscrisuri citate" after them |
 | 2 | Selects the property's radio, then the company's | Only the company's is selected; „Dezasociază" is active and the three „Asociază …" are not |
 | 3 | Presses „Dezasociază" | The company's row goes, and with it its group; the person, the property and the PAD stay; nothing is selected and the three „Asociază …" are active again |
-| 4 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the CVC with „Corelate" on screen |
-| 5 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate"; back on the CVC with „Corelate" on screen |
-| 6 | Presses „Asociază act", then „Anulează" | „Asociază Document"; back on the CVC with „Corelate" on screen |
+| 4 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the CVC with „Legături" on screen |
+| 5 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate"; back on the CVC with „Legături" on screen |
+| 6 | Presses „Asociază act", then „Anulează" | „Asociază Document"; back on the CVC with „Legături" on screen |
 
 ## At the end — leaving things as they were found
 

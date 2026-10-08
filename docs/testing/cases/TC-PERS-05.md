@@ -39,18 +39,18 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `Ion TC-PERS-05`, tile „Corelate" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat / Mandant)` with the building, `TC-PERS-05 Teren (Proprietar / Titular de drept real)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat / Mandant)` with the building, `TC-PERS-05 Teren (Proprietar / Titular de drept real)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PERS-05 CVC` | A bubble: `Rol în act: „Vânzător”` |
 | 3 | Clicks the tile's title, outside the bubble | It goes |
 | 4 | Selects Maria's radio | Only hers is selected; the three „Asociază …" are not offered |
 | 5 | Presses „Dezasociază" | Maria's row goes, and with it its group; the company, the property and the contract stay |
-| 6 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană corelată"; back on Ion with „Corelate" on screen |
-| 7 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate"; back with „Corelate" on screen |
-| 8 | Presses „Asociază act", then „Anulează" | „Asociere act"; back with „Corelate" on screen |
-| 9 | Opens `TC-PERS-05 Firmă SRL`, tile „Corelate" | Two rows, one line each: `Ion TC-PERS-05 (Reprezentant legal / Mandatar)` with the person icon, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and „Relația" |
+| 6 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană corelată"; back on Ion with „Legături" on screen |
+| 7 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate"; back with „Legături" on screen |
+| 8 | Presses „Asociază act", then „Anulează" | „Asociere act"; back with „Legături" on screen |
+| 9 | Opens `TC-PERS-05 Firmă SRL`, tile „Legături" | Two rows, one line each: `Ion TC-PERS-05 (Reprezentant legal / Mandatar)` with the person icon, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and „Relația" |
 | 10 | Presses „Relația" on the contract, then Esc | `Rol în act: „Cumpărător”`; Esc hides it |
 | 11 | Selects the contract's radio, presses „Dezasociază" | The contract's row and group go; Ion stays |
-| 12 | Presses each „Asociază …", then „Anulează" | The same three screens; back on the company with „Corelate" on screen each time |
+| 12 | Presses each „Asociază …", then „Anulează" | The same three screens; back on the company with „Legături" on screen each time |
 
 ## At the end — leaving things as they were found
 
