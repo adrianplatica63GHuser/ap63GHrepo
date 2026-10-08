@@ -6,8 +6,8 @@
     "npm run roles:merge is the dry run; npm run roles:merge:apply refuses while approved is false."
   ],
   "version": 1,
-  "approved": false,
-  "approvedBy": null,
+  "approved": true,
+  "approvedBy": "Adrian, 2026-10-08 — „approve the merge list as is”",
   "merges": [
     {
       "survivor": "Proprietar",
