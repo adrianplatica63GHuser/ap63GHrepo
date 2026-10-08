@@ -127,6 +127,9 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
           // listAllPersons actually matched it — so a CUI typed here found
           // nothing while the same CUI resolved from the sidebar search.
           ilike(judicialPerson.cuiNumber, searchPattern),
+          // Slice #38.31: the firm's own phone and e-mail find it too.
+          ilike(judicialPerson.phone, searchPattern),
+          ilike(judicialPerson.email, searchPattern),
         )
       : undefined,
   );
@@ -346,6 +349,8 @@ export function judicialSnapshotFromFull(full: JudicialFull): JudicialPersonSnap
       judicialPersonTypeId:   j?.judicialPersonTypeId   ?? null,
       cuiNumber:              j?.cuiNumber              ?? null,
       tradeRegisterNumber:    j?.tradeRegisterNumber    ?? null,
+      phone:                  j?.phone                  ?? null,
+      email:                  j?.email                  ?? null,
       contactPerson1Id:       j?.contactPerson1Id       ?? null,
       contactPerson2Id:       j?.contactPerson2Id       ?? null,
       correspondenceSameAsHq: j?.correspondenceSameAsHq ?? false,
@@ -417,7 +422,9 @@ function judicialSnapshotsEqual(
   if (!a.judicial || !b.judicial) return false;
   if (a.notes !== b.notes) return false;
   for (const k of JUD_FIELD_KEYS) {
-    if (a.judicial[k] !== b.judicial[k]) return false;
+    // Slice #38.31: `?? null` — a snapshot written before migration_096 has no
+    // phone or e-mail key, and a missing key is the same as an empty one.
+    if ((a.judicial[k] ?? null) !== (b.judicial[k] ?? null)) return false;
   }
   if (!jAddrEqual(a.addresses.HEADQUARTERS, b.addresses.HEADQUARTERS)) return false;
   if (!jAddrEqual(a.addresses.CORRESPONDENCE, b.addresses.CORRESPONDENCE)) return false;
@@ -601,6 +608,8 @@ export async function createJudicialPerson(
         judicialPersonTypeId: judFields.judicialPersonTypeId ?? null,
         cuiNumber: judFields.cuiNumber ?? null,
         tradeRegisterNumber: judFields.tradeRegisterNumber ?? null,
+        phone: judFields.phone ?? null,
+        email: judFields.email ?? null,
         contactPerson1Id: contactPerson1Id ?? null,
         contactPerson2Id: contactPerson2Id ?? null,
         correspondenceSameAsHq: correspondenceSameAsHq ?? false,

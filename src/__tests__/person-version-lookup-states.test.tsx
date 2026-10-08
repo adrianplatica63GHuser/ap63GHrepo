@@ -149,6 +149,8 @@ function judicialSnap(judicialPersonTypeId: string | null): JudicialPersonSnapsh
       judicialPersonTypeId,
       cuiNumber: null,
       tradeRegisterNumber: null,
+      phone: null,
+      email: null,
       contactPerson1Id: null,
       contactPerson2Id: null,
       correspondenceSameAsHq: false,

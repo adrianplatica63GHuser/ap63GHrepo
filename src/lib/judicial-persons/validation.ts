@@ -18,6 +18,13 @@
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { judicialPerson } from "@/db/schema";
+import { isEmailShape } from "@/lib/persons/email-shape";
+
+/** Slice #38.31: the firm's e-mail — free text with the shape of an address, or nothing. */
+const firmEmailSchema = z
+  .string()
+  .nullish()
+  .refine((v) => isEmailShape(v), { message: "email must look like name@domain.ro" });
 
 // ---------------------------------------------------------------------------
 // Address input — judicial persons only have HEADQUARTERS + CORRESPONDENCE
@@ -68,6 +75,9 @@ export const judicialPersonCreateSchema = judicialPersonBase.extend({
   judicialPersonTypeId: z.string().uuid().nullish(),
   // When true, no CORRESPONDENCE address row is stored.
   correspondenceSameAsHq: z.boolean().default(false),
+  // Slice #38.31: the firm's own phone (free text) and e-mail (its shape checked).
+  phone: z.string().nullish(),
+  email: firmEmailSchema,
 });
 
 export type JudicialPersonCreate = z.infer<typeof judicialPersonCreateSchema>;
@@ -89,6 +99,9 @@ export const judicialPersonUpdateSchema = judicialPersonBase
     contactPerson2Id: z.string().uuid().nullish(),
     judicialPersonTypeId: z.string().uuid().nullish(),
     correspondenceSameAsHq: z.boolean().optional(),
+    // Slice #38.31.
+    phone: z.string().nullish(),
+    email: firmEmailSchema,
   });
 
 export type JudicialPersonUpdate = z.infer<typeof judicialPersonUpdateSchema>;
@@ -129,6 +142,9 @@ export type JudicialPersonSnapshotFields = {
   judicialPersonTypeId:   string | null;
   cuiNumber:              string | null;
   tradeRegisterNumber:    string | null;
+  // Slice #38.31 (migration_096). A snapshot written before it has neither key; read it as null.
+  phone:                  string | null;
+  email:                  string | null;
   contactPerson1Id:       string | null;
   contactPerson2Id:       string | null;
   correspondenceSameAsHq: boolean;

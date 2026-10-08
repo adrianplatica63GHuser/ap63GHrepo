@@ -749,6 +749,25 @@ export function JudicialPersonForm({
       <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
         <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" />
         <div className="flex flex-col gap-3">
+          {/* Slice #38.31: the firm's own phone and e-mail, above its contact persons —
+              the rows of `SCREEN_ROWS.judicialPerson.contactPersons`. */}
+          <Field
+            label={t("fields.phone")}
+            name="phone"
+            type="tel"
+            register={register}
+            error={errors.phone?.message}
+            highlight={displayHighlights?.fields.phone}
+            width={JP.phone}
+          />
+          <Field
+            label={t("fields.email")}
+            name="email"
+            register={register}
+            error={errors.email ? t("hints.emailShape") : undefined}
+            highlight={displayHighlights?.fields.email}
+            width={JP.email}
+          />
           <ContactPersonRow
             label={t("fields.contactPerson1")}
             slot={1}

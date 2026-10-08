@@ -71,7 +71,8 @@ export const JP_TILE_OF_TAB: Readonly<Record<string, JpTile | readonly JpTile[] 
  */
 export function jpTileOfField(path: string): JpTile {
   const root = path.split(".")[0];
-  if (root.startsWith("contactPerson")) return "contactPersons";
+  // Slice #38.31: the firm's own phone and e-mail sit on „Reprezentanți și contact" too.
+  if (root.startsWith("contactPerson") || root === "phone" || root === "email") return "contactPersons";
   if (root === "addresses" || root === "correspondenceSameAsHq") return "addresses";
   return "identity";
 }

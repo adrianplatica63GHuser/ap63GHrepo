@@ -72,7 +72,7 @@ function natSnap(over: {
 
 const EMPTY_JUD: JudicialPersonSnapshot["judicial"] = {
   name: null, nickname: null, judicialPersonTypeId: null,
-  cuiNumber: null, tradeRegisterNumber: null,
+  cuiNumber: null, tradeRegisterNumber: null, phone: null, email: null,
   contactPerson1Id: null, contactPerson2Id: null,
   correspondenceSameAsHq: false,
 };

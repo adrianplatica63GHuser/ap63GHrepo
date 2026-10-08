@@ -1231,6 +1231,8 @@
       "judicialType": "Tip",
       "cuiNumber": "Nr. înregistrare (CUI)",
       "tradeRegisterNumber": "Nr. registru comerțului",
+      "phone": "Telefon firmă",
+      "email": "E-mail firmă",
       "contactPerson1": "Persoană de contact 1",
       "contactPerson2": "Persoană de contact 2",
       "contactPerson": "Persoană de contact",
@@ -1275,7 +1277,8 @@
     "hints": {
       "cuiLocked": "CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
-      "contactPersonNotInSystem": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
+      "contactPersonNotInSystem": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică.",
+      "emailShape": "Adresa de e-mail nu pare corectă — de exemplu office@firma.ro"
     },
     "tiles": {
       "identity": "Date de înregistrare",

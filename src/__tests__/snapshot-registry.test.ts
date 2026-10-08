@@ -178,6 +178,8 @@ describe("JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS", () => {
       judicialPersonTypeId:   null,
       cuiNumber:              null,
       tradeRegisterNumber:    null,
+      phone:                  null, // #38.31
+      email:                  null, // #38.31
       contactPerson1Id:       null,
       contactPerson2Id:       null,
       correspondenceSameAsHq: false,

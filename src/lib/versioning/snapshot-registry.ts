@@ -207,6 +207,9 @@ export const JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS = [
   "judicialPersonTypeId",
   "cuiNumber",
   "tradeRegisterNumber",
+  // Slice #38.31 (migration_096): the firm's own phone and e-mail.
+  "phone",
+  "email",
   "contactPerson1Id",
   "contactPerson2Id",
   "correspondenceSameAsHq",

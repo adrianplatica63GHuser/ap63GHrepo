@@ -358,6 +358,9 @@ export const JUDICIAL_PERSON = {
   judicialPersonTypeId: { step: "L", kind: "select" }, //   m: 10 options, longest „Consiliu Local" (14) — one character past M
   cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
+  // Slice #38.31: the firm's own phone and e-mail — the Natural Person's boxes (NP.personalPhone1, NP.personalEmail1).
+  phone: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0 (a new column)
+  email: { step: "XL", kind: "grows" }, //                  office@firma-exemplu.ro is 20–30; m: 0 (a new column)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.29)
   contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
 } as const satisfies Record<string, FieldWidth>;
@@ -640,8 +643,9 @@ export const SCREEN_ROWS = {
       ["cuiNumber", "tradeRegisterNumber"],
       ["notes"],
     ],
+    // Slice #38.31: the firm's own Telefon, then E-mail, each on its line.
     // Persoană de contact 1, then 2: each label above an XL box holding the name and its button.
-    contactPersons: [["contactPerson"], ["contactPerson"]],
+    contactPersons: [["phone"], ["email"], ["contactPerson"], ["contactPerson"]],
   },
   property: {
     // Nr. tarla / sola | Nr. parcelă (rule 14; not on an urban type; #37.57 took the system

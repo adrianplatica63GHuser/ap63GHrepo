@@ -20,6 +20,7 @@
  */
 
 import { z } from "zod/v4";
+import { isEmailShape } from "@/lib/persons/email-shape";
 import type {
   JudicialPersonCreate,
   JudicialPersonSnapshot,
@@ -55,6 +56,9 @@ const addressBlockSchema = z.object({
 
 export type AddressBlock = z.infer<typeof addressBlockSchema>;
 
+/** The e-mail field's error, as a key under `judicialPerson.hints` (Slice #38.31). */
+export const EMAIL_SHAPE_ERROR = "emailShape";
+
 export const formSchema = z
   .object({
     name: z.string(),
@@ -63,6 +67,9 @@ export const formSchema = z
     judicialPersonTypeId: z.string(),
     cuiNumber: z.string(),
     tradeRegisterNumber: z.string(),
+    // Slice #38.31: the firm's own phone (free text) and e-mail (its shape checked).
+    phone: z.string(),
+    email: z.string(),
     // Contact person 1: ID stored as string; empty = not linked.
     contactPerson1Id: z.string(),
     contactPerson1Name: z.string(), // read-only display; never sent to API
@@ -80,6 +87,11 @@ export const formSchema = z
   .refine((d) => d.name.trim().length > 0, {
     message: "Name is required",
     path: ["name"],
+  })
+  // Slice #38.31: the message is a key — the form shows `hints.emailShape` in the user's language.
+  .refine((d) => isEmailShape(d.email), {
+    message: EMAIL_SHAPE_ERROR,
+    path: ["email"],
   })
   // Registered-office address: if any non-Country field is filled, Country must be too
   .refine((d) => addressBlockHasCountryWhenNeeded(d.addresses.HEADQUARTERS), {
@@ -129,6 +141,8 @@ export const emptyFormValues: FormValues = {
   judicialPersonTypeId: "",
   cuiNumber: "",
   tradeRegisterNumber: "",
+  phone: "",
+  email: "",
   contactPerson1Id: "",
   contactPerson1Name: "",
   contactPerson2Id: "",
@@ -151,6 +165,9 @@ type JudicialRow = {
   judicialPersonTypeId: string | null;
   cuiNumber: string | null;
   tradeRegisterNumber: string | null;
+  // Slice #38.31: optional — a version snapshot from before migration_096 has neither.
+  phone?: string | null;
+  email?: string | null;
   contactPerson1Id: string | null;
   contactPerson2Id: string | null;
   correspondenceSameAsHq: boolean;
@@ -196,6 +213,8 @@ export function fromApiPayload(input: {
     judicialPersonTypeId: j?.judicialPersonTypeId ?? "",
     cuiNumber: j?.cuiNumber ?? "",
     tradeRegisterNumber: j?.tradeRegisterNumber ?? "",
+    phone: j?.phone ?? "",
+    email: j?.email ?? "",
     contactPerson1Id: j?.contactPerson1Id ?? "",
     contactPerson1Name: input.contactPerson1Name ?? "",
     contactPerson2Id: j?.contactPerson2Id ?? "",
@@ -259,6 +278,8 @@ export function toApiPayload(
     judicialPersonTypeId: blank(values.judicialPersonTypeId),
     cuiNumber: blank(values.cuiNumber),
     tradeRegisterNumber: blank(values.tradeRegisterNumber),
+    phone: blank(values.phone),
+    email: blank(values.email),
     contactPerson1Id: blank(values.contactPerson1Id),
     contactPerson2Id: blank(values.contactPerson2Id),
     correspondenceSameAsHq: values.correspondenceSameAsHq,
@@ -330,6 +351,9 @@ function snapshotFieldMap(
     judicialPersonTypeId: snap.judicial.judicialPersonTypeId,
     cuiNumber:            snap.judicial.cuiNumber,
     tradeRegisterNumber:  snap.judicial.tradeRegisterNumber,
+    // Slice #38.31: `?? null` — a snapshot from before migration_096 has neither key.
+    phone:                snap.judicial.phone ?? null,
+    email:                snap.judicial.email ?? null,
     contactPerson1Id:     snap.judicial.contactPerson1Id,
     contactPerson2Id:     snap.judicial.contactPerson2Id,
     notes:                snap.notes,
