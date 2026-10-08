@@ -1002,7 +1002,7 @@ export function DocumentForm({
   // nothing.
   const onTileLayout = tiles?.onLayout;
   const tileLayoutSig = JSON.stringify({
-    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched },
+    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched, ownFields: templateFields.length > 0 },
     highlighted: Object.entries(displayHighlights ?? {})
       .filter(([, colour]) => !!colour)
       .map(([field]) => tileOfPath(field)),
@@ -1474,7 +1474,7 @@ export function DocumentForm({
                   {frameBlock(tileOfTabIndex(tabs, i), label, panelsOf(i))}
                 </div>
               ))
-            : frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0), t("tileSubtitles.fields"))}
+            : templateFields.length > 0 && frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0), t("tileSubtitles.fields"))}
         </>
       ) : notebook ? (
         <>

@@ -74,7 +74,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await expect(tile.getByText("Taxe și onorarii")).toHaveCount(0);
       let general = page.getByRole("region", { name: "Identificarea actului", exact: true });
       await expect(general.locator('[data-width-field="dateDocument"]')).toBeVisible();
-      await expect(label("institutionId")).toHaveText("Emitent");
+      await expect(page.getByRole("combobox", { name: "Emitent", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Nr. document");
       await expect(dateLabel(page)).toHaveText("Data");
       await oneLine(dateLabel(page));
@@ -90,7 +90,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await expect(tile.getByText(/\bFees\b/)).toHaveCount(0);
       general = page.getByRole("region", { name: "Document identification", exact: true });
       await expect(general.locator('[data-width-field="dateDocument"]')).toBeVisible();
-      await expect(label("institutionId")).toHaveText("Issuer");
+      await expect(page.getByRole("combobox", { name: "Issuer", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Document No.");
       await expect(dateLabel(page)).toHaveText("Date");
       await oneLine(dateLabel(page));
@@ -101,7 +101,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await allTiles(page, "All");
       const fees = () => page.locator('[data-section="fees"], [data-panel="fees"]').first();
       await expect(dateLabel(page)).toHaveText("Authentication date", { timeout: 30_000 });
-      await expect(label("institutionId")).toHaveText("Notary Office");
+      await expect(page.getByRole("combobox", { name: "Notary Office", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Authentic Deed No.");
       await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
       await expect(fees().locator('[data-width-field="dateDocument"]')).toHaveCount(0);
@@ -111,7 +111,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await page.goto(`/documents/${cvcId}`);
       await allTiles(page, "Toate");
       await expect(dateLabel(page)).toHaveText("Data autentificării", { timeout: 30_000 });
-      await expect(label("institutionId")).toHaveText("Notariat");
+      await expect(page.getByRole("combobox", { name: "Notariat", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Nr. act autentic");
       await expect(page.getByRole("region", { name: "Identificarea actului", exact: true }).locator('[data-width-field="dateDocument"]')).toBeVisible();
       await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
@@ -121,7 +121,8 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       }
       await oneLine(dateLabel(page));
       await photograph(page, "cvc-fees-ro", fees);
-      await photograph(page, "cvc-identification-ro", () => page.getByRole("region", { name: "Identificarea actului", exact: true }));
+      // The region is the tile's `display: contents` wrapper; the panel is what is drawn.
+      await photograph(page, "cvc-identification-ro", () => page.locator('[data-panel="general"]'));
     } finally {
       // At the end — Romanian again, and both documents deleted.
       await language(page, "ro-RO");

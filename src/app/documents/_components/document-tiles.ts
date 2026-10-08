@@ -38,6 +38,15 @@ export interface DocumentLayout {
   tabs: readonly string[];
   /** A Certificat de Moștenitor: the parties panel is offered as a tile. */
   succession: boolean;
+  /**
+   * Slice #38.32: the type has fields of its own, so „Detalii act" (or its
+   * notebook tiles) has something to hold. Until #38.32 the fields tile always
+   * held at least the issuer, number and date; since they moved to
+   * „Identificarea actului", a type with no fields of its own (a Certificat de
+   * moștenitor, a document with no type yet) would draw an empty tile, so it is
+   * not offered. Absent means true (a layout built by hand, as the tests do).
+   */
+  ownFields?: boolean;
   /** A saved document: the page image is offered as a tile. */
   pages: boolean;
   /**
@@ -101,7 +110,7 @@ export const RELATED_WAS: Readonly<Record<string, "related">> = {
 
 /** Built from the type on screen. The entity — and so the storage key — carries the type's key. */
 export function documentTileRegistry(layout: DocumentLayout): TileRegistry<string> {
-  const typeTiles = layout.tabs.length > 0 ? layout.tabs.map(tabTileKey) : [FIELDS_TILE];
+  const typeTiles = layout.tabs.length > 0 ? layout.tabs.map(tabTileKey) : layout.ownFields === false ? [] : [FIELDS_TILE];
   // Slice #37.88: in the groups' order — the record's own data (with „Părți"),
   // „Corelate", „Clasificări" and „Conexiuni", then „Pagini" at the right.
   const record = ["general", ...typeTiles, ...(layout.succession ? ["succession"] : [])];
@@ -113,7 +122,7 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
     defaults: [
       "general",
       ...(layout.pages ? ["pages"] : []),
-      typeTiles[0],
+      ...typeTiles.slice(0, 1),
       ...(layout.succession ? ["succession"] : []),
     ],
     // Hidden, never unmounted: the form's panels, and the page image and the
