@@ -117,6 +117,12 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/admin/value-lists/_components/value-list-hub.tsx": [
     ["A085", "{label}"],
   ],
+  "src/app/admin/value-lists/_components/document-type-page.tsx": [
+    ["A111", "{t(`tabs.${key}`)}"], // #38.39: General / Formular / Roluri
+  ],
+  "src/app/admin/value-lists/document-types/[code]/page.tsx": [
+    ["A112", "{t(\"back\")}"], // #38.39: „← Tipuri de Document", the way back to the list
+  ],
   "src/app/admin/value-lists/_components/value-list-modal.tsx": [
     ["A110", "{deleteMutation.isPending ? t(\"confirm.deleting\") : t(\"c"],
     ["A110", "{t(\"confirm.cancel\")}"],

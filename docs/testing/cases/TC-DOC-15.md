@@ -37,10 +37,10 @@ The window is 1366 × 900.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Acte", types `TC-DOC-15` into the search | Two rows; „Tip" reads „CVC" on `TC-DOC-15 CVC` and „Intabulare" on `TC-DOC-15 Încheiere`; each cell's tooltip is the full name („Contract de Vânzare", „Încheiere de Intabulare") |
-| 2 | Date de referință → „Tipuri de Document"; on the row „Încheiere de Intabulare" presses „Editează" (the fields open at the top of the list: „Denumire", „Denumire scurtă"), „Denumire scurtă" `Înch. intab.`, „Salvează" | The row reads „Înch. intab." in its „Denumire scurtă" column |
+| 2 | Date de referință → „Tipuri de Document"; on the row „Încheiere de Intabulare" presses „Deschide" (the type's page, „General": „Denumire", „Denumire scurtă"), „Denumire scurtă" `Înch. intab.`, „Salvează" | „Salvat."; back on the list the row reads „Înch. intab." in its „Denumire scurtă" column |
 | 3 | Back on „Acte", the same search | `TC-DOC-15 Încheiere` reads „Înch. intab."; its tooltip still „Încheiere de Intabulare" |
-| 4 | Edits the same type: „Denumire scurtă" `CVC`, „Salvează" | Refused: „Alt tip de document se citește deja cu această denumire scurtă în lista actelor. Alegeți alta — sau lăsați câmpul gol, iar lista va scurta singură denumirea."; the fields stay open; the row still reads „Înch. intab." |
-| 5 | Empties „Denumire scurtă", „Salvează" | Saved; the column reads „–"; on „Acte" the row reads „Intabulare" — the rule's, the name without „Încheiere de" |
+| 4 | Edits the same type: „Denumire scurtă" `CVC`, „Salvează" | Refused: „Alt tip de document se citește deja cu această denumire scurtă în lista actelor. Alegeți alta — sau lăsați câmpul gol, iar lista va scurta singură denumirea."; the field keeps `CVC`; nothing is saved — the list still reads „Înch. intab." |
+| 5 | Empties „Denumire scurtă", „Salvează" | „Salvat."; the list's column reads „–"; on „Acte" the row reads „Intabulare" — the rule's, the name without „Încheiere de" |
 
 ## At the end — leaving things as they were found
 
@@ -72,3 +72,6 @@ deleted (404 after). Nothing in the file changed, so the case is confirmed, and
 **2026-10-05 — `automated` (Slice #37.95).** The test runner's full-db run 20261005T115205Z-11715 on
 6f30fc5 ran `e2e/document/type-short-name.spec.ts` green with the other 87 (lint, tsc, jest,
 verify-rebuild and forms-drift green too).
+
+**2026-10-08 — Slice #38.39 (steps 2, 4 and 5 rewritten).** A document type is edited on its own page:
+„Deschide" on the row opens it, and „Denumire scurtă" is on its „General" tab. The spec follows.
