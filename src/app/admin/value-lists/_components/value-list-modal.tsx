@@ -39,7 +39,7 @@ import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { usedFirst } from "@/lib/admin/value-lists/categories";
-import { RoleScope } from "./role-doc-types";
+import { RoleScope } from "./role-scope";
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 

@@ -1405,59 +1405,24 @@ describe("the sibling panels say their failures in Romanian", () => {
     expect([file, (body.match(/qc\.invalidateQueries\(\)/g) ?? []).length]).toEqual([file, 2]);
   });
 
-  it.each(PANELS)("%s — its confirmation cannot be re-targeted through the backdrop", (file) => {
-    // ⚠️ **The finding value-list-modal.tsx records for the list beside these
-    // three, still live here until #29.13.** The backdrop hid the list and did
-    // not disable it, and `confirmDelete` names no row — so Tab reached
-    // ANOTHER row's Șterge, Enter re-keyed the dialog onto it with nothing on
-    // screen changing, and the next press deleted a row nobody chose.
+  // Slice #38.36 replaced the three tests that stood here, which were written for the
+  // „Roluri pe Document" grid's DIALOG — „its confirmation cannot be re-targeted through the
+  // backdrop" (inert + a focused, labelled alertdialog), „cannot be closed out from under an
+  // in-flight delete" and „restores focus in an EFFECT". The grid is gone; a role's types are
+  // a list in the role's panel, with an INLINE confirmation and no backdrop. The two dangers
+  // those tests named still exist and are asserted in that shape: a second row's „Scoate"
+  // must not re-aim an open confirmation, and the confirmation must not close mid-remove.
+  it.each(PANELS)("%s — an open confirmation cannot be re-aimed at another row", (file) => {
     const source = read("app", "admin", "value-lists", "_components", file);
     const body = code(source);
-    expect([file, /inert=\{!!confirmDeleteId\}/.test(body)]).toEqual([file, true]);
-    // An `alertdialog` nobody focuses announces nothing, and `aria-modal` on a
-    // panel the user's focus is not inside is a lie told to assistive tech.
-    expect([file, /confirmPanelRef\.current\?\.focus\(\)/.test(body)]).toEqual([file, true]);
-    expect([file, source.includes("aria-labelledby={confirmTitleId}")]).toEqual([file, true]);
+    expect([file, /disabled=\{confirmRemove !== null \|\| remove\.isPending\}/.test(body)]).toEqual([file, true]);
+    // …and it names the type it is about (strings are blanked in `body`, so read the source).
+    expect([file, source.includes('role="alertdialog" aria-label={t("removeTitle", { docType: confirmRemove.documentTypeName })}')]).toEqual([file, true]);
   });
 
-  it.each(PANELS)("%s — cannot be closed out from under an in-flight delete", (file) => {
-    // ⚠️ **The mutation completes regardless — TanStack keeps `onError` on the
-    // mutation, not on the observer — so closing mid-delete unmounts the only
-    // place the refusal is ever reported, and a delete that FAILED reads as
-    // one the user cancelled. That is "fails silently" reached through the
-    // Cancel button.** value-list-modal.tsx:1240 guards its Escape for exactly
-    // this; these three did not, until an adversarial round asked.
+  it.each(PANELS)("%s — cannot be closed out from under an in-flight remove", (file) => {
     const body = code(read("app", "admin", "value-lists", "_components", file));
-    expect([file, /if \(deleteMutation\.isPending\) return;/.test(body)]).toEqual([file, true]);
-    expect([file, /onClick=\{closeConfirm\}[\s\S]{0,400}?disabled=\{deleteMutation\.isPending\}/.test(body)])
-      .toEqual([file, true]);
-  });
-
-  it.each(PANELS)("%s — restores focus in an EFFECT, not inside the handler", (file) => {
-    // ⚠️ **`focus()` on an element inside an `inert` subtree is a
-    // spec-mandated no-op.** The first version of the a11y fix called
-    // `opener.focus()` synchronously after `setConfirmDeleteId(null)`, so the
-    // list panel was still inert and focus landed on `<body>` — the state the
-    // whole rework exists to prevent, with a comment claiming the opposite.
-    // Effects run after React has removed the attribute, on every lane.
-    const body = code(read("app", "admin", "value-lists", "_components", file));
-    const effect = /useEffect\(\(\) => \{([\s\S]*?)\}, \[confirmDeleteId\]\);/.exec(body);
-    expect([file, effect !== null]).toEqual([file, true]);
-    expect([file, /wasOpenRef\.current = false;/.test(effect?.[1] ?? "")]).toEqual([file, true]);
-    expect([file, /opener\?\.isConnected/.test(effect?.[1] ?? "")]).toEqual([file, true]);
-    // ⚠️ **The `else` is unconditional.** A restore keyed on "was it a delete"
-    // fires neither branch when the row simply left the list under an open
-    // confirmation, and focus is left on `<body>`. Whatever made the opener
-    // unreachable, the list panel is where focus belongs — and it can only be
-    // announced there because it now has a name, asserted below.
-    expect([file, /else listPanelRef\.current\?\.focus\(\);/.test(effect?.[1] ?? "")])
-      .toEqual([file, true]);
-    expect([file, read("app", "admin", "value-lists", "_components", file)
-      .includes("aria-labelledby={listTitleId}")]).toEqual([file, true]);
-    // …and the close handler must NOT do it itself any more.
-    const close = /const closeConfirm = useCallback\(\(\) => \{([\s\S]*?)\}, \[\]\);/.exec(body);
-    expect([file, close !== null]).toEqual([file, true]);
-    expect([file, /focus\(\)/.test(close?.[1] ?? "")]).toEqual([file, false]);
+    expect([file, /disabled=\{remove\.isPending\} onClick=\{\(\) => setConfirmRemove\(null\)\}/.test(body)]).toEqual([file, true]);
   });
 });
 

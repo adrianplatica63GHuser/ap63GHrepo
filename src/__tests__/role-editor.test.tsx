@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import type { ReactNode } from "react";
 
-import { RoleScope } from "@/app/admin/value-lists/_components/role-doc-types";
+import { RoleScope } from "@/app/admin/value-lists/_components/role-scope";
 import {
   addPair,
   pairsOfRole,
