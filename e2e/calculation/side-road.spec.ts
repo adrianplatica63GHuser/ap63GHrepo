@@ -70,13 +70,25 @@ async function swatches(page: Page): Promise<Record<string, string>> {
   return out;
 }
 
-/** ↑ on `name` until it stands at `pos` (0-based). */
+/**
+ * ↑ on `name` until it stands at `pos` (0-based), one swap at a time.
+ *
+ * Each ↑ starts a recompute, and while it runs the arrows are disabled and the
+ * table still shows the old order. A click sent then waits for the arrows and
+ * lands on the NEW order — measured in full 20261008T133345Z-19785, where a
+ * second ↑ meant for A's old row arrived after A was already first. So every
+ * swap is followed by waiting for the order to change, before the next read.
+ */
 async function moveTo(page: Page, name: string, pos: number): Promise<void> {
-  await expect(async () => {
+  for (let guard = 0; guard < OWNERS.length; guard++) {
     const now = (await order(page)).indexOf(name);
-    if (now > pos) await page.getByRole("button", { name: `Mută felia lui ${name} mai sus`, exact: true }).click();
-    expect((await order(page)).indexOf(name)).toBe(pos);
-  }).toPass({ timeout: 30_000 });
+    if (now <= pos) break;
+    const up = page.getByRole("button", { name: `Mută felia lui ${name} mai sus`, exact: true });
+    await expect(up).toBeEnabled({ timeout: 30_000 });
+    await up.click();
+    await expect.poll(async () => (await order(page)).indexOf(name), { timeout: 30_000 }).toBe(now - 1);
+  }
+  expect((await order(page)).indexOf(name)).toBe(pos);
 }
 
 test.afterAll(async ({ playwright }) => {
