@@ -63,6 +63,7 @@ import {
 } from "@/lib/documents/status";
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { IdCardPeopleAction } from "./id-card-people-action";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { NewPagesPanel } from "./new-pages-panel";
 import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
@@ -1577,6 +1578,14 @@ export function DocumentForm({
     </form>
   );
 
+  // Slice #38.44 (Ask first 1): on an identity card already in the archive, the
+  // import's own „Creează persoană din CI" — the holder found by CNP, the
+  // parents after it. In the action bar, on the latest version only.
+  const idCardPeople =
+    isOnLatest && documentId && selectedType && documentTypeIsIdCard(selectedType) ? (
+      <IdCardPeopleAction documentId={documentId} title={initialValues?.title ?? ""} />
+    ) : null;
+
   return (
     <FieldPulseContext.Provider value={pulsing}>
     {/* Slice #37.15: THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE
@@ -1772,6 +1781,7 @@ export function DocumentForm({
               clickable and inert — setAssociatedEditing cannot beat !isOnLatest
               in the effectiveMode ternary above, so nothing unlocked. It is now
               disabled, and carries the reason in its title. */}
+          {idCardPeople}
           <IconButton
             icon={Pencil}
             label={t("buttons.modify")}
@@ -1834,6 +1844,7 @@ export function DocumentForm({
               disabled={submitting}
             />
           )}
+          {mode === "edit" && idCardPeople}
           <IconButton
             icon={X}
             label={t("buttons.cancel")}
