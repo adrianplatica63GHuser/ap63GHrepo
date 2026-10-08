@@ -53,8 +53,9 @@ async function reading(page: Page, skip: string[]) {
 
 const LISTS: { name: string; key: string; skip: string[]; sameHeight: boolean }[] = [
   { name: "Tipuri Proprietate", key: "property-types", skip: [], sameHeight: true },
-  // #38.55 puts the converse names on one line; until then that one cell is stacked.
-  { name: "Roluri Persoană", key: "person-roles", skip: ["ROL INVERS"], sameHeight: false },
+  // #38.50 had `skip: ["ROL INVERS"], sameHeight: false` — „#38.55 puts the converse names on one line; until then
+  // that one cell is stacked". #38.55 did: every cell one line, every row one height.
+  { name: "Roluri Persoană", key: "person-roles", skip: [], sameHeight: true },
   { name: "Tipuri Document", key: "document-types", skip: [], sameHeight: true },
 ];
 
