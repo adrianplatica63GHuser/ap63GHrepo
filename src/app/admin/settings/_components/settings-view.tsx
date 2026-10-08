@@ -350,6 +350,17 @@ function SystemTiles() {
       <Tile name="settings-ai" title={t("sections.ai")}>
         {status ?? (data && (
           <div className="flex flex-col gap-2 text-sm">
+            {/* Slice #38.40 (migration_100): this month's paid reads, counted since the table exists. */}
+            {data.ai.paidReads === null || data.ai.paidReads === undefined ? (
+              <p className="text-xs text-fade">{t("ai.paidReadsUnavailable")}</p>
+            ) : (
+              <div className="flex flex-col" data-ai-paid-reads={data.ai.paidReads.count}>
+                <p className="text-ink">{t("ai.paidReads", { count: data.ai.paidReads.count })}</p>
+                {data.ai.paidReads.since && (
+                  <p className="text-xs text-fade">{t("ai.since", { date: when(data.ai.paidReads.since) })}</p>
+                )}
+              </div>
+            )}
             <p className="text-xs text-fade">{t("ai.intro")}</p>
             <dl className="flex flex-col gap-1.5">
               {data.ai.models.map((m) => (

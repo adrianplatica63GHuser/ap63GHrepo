@@ -10,6 +10,7 @@ import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
 import { TIME_FRAME_GROUPS, exampleValue, groupingProblems } from "@/lib/time-frames/groups";
 import { databaseOf, environmentName, readBackupStatus } from "@/lib/settings/system-status";
 import { aiModelsInUse, CLASSIFY_MODEL, EXTRACT_MODEL, ID_CARD_MODEL_DEFAULT } from "@/lib/ai/models";
+import { monthStart } from "@/lib/ai/paid-read-month";
 
 const ROOT = path.join(__dirname, "..", "..");
 /** A hand-made environment: ProcessEnv insists on NODE_ENV, which these readers never read. */
@@ -191,5 +192,42 @@ describe("the sections' sentences", () => {
   it("are the four section titles", () => {
     expect(ro.sectionTimeFrames).toBe("Praguri de timp");
     expect(ro.sections).toEqual({ account: "Contul meu", timeFrames: "Praguri de timp", backups: "Copii de siguranță", ai: "AI", about: "Despre" });
+  });
+});
+
+describe("the paid reads (migration_100)", () => {
+  it("count from the first instant of the month, in UTC", () => {
+    expect(monthStart(new Date("2026-10-08T09:30:00Z")).toISOString()).toBe("2026-10-01T00:00:00.000Z");
+    expect(monthStart(new Date("2026-01-01T00:00:00Z")).toISOString()).toBe("2026-01-01T00:00:00.000Z");
+    expect(monthStart(new Date("2026-12-31T23:59:59Z")).toISOString()).toBe("2026-12-01T00:00:00.000Z");
+  });
+
+  it.each([
+    ["src/app/api/documents/[id]/ai-interpret/route.ts", "ai-interpret"],
+    ["src/app/api/admin/doc-type-engine/read-sample/route.ts", "read-sample"],
+    ["src/app/api/admin/doc-type-engine/cluster/route.ts", "cluster"],
+    ["src/app/api/admin/import/scan-folder/route.ts", "scan-folder"],
+    ["src/app/api/admin/import/extract-id-card/route.ts", "extract-id-card"],
+  ])("%s records every answer it gets, as %s", (file, route) => {
+    const src = read(file);
+    expect(src).toContain(`recordPaidRead({`);
+    expect(src).toContain(`route: "${route}"`);
+  });
+
+  it("no other route calls the Messages API without recording it", () => {
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(`${dir}/${e.name}`) : e.name === "route.ts" ? [`${dir}/${e.name}`] : [],
+      );
+    const calling = walk("src/app/api").filter((f) => /fetch\(ANTHROPIC_API_URL|callAnthropic\(/.test(read(f)));
+    expect(calling.filter((f) => !read(f).includes("recordPaidRead(")).sort()).toEqual([]);
+    expect(calling.length).toBe(5);
+  });
+
+  it("the words, at 0, 1, 7 and 20", () => {
+    expect(say("ro-RO", ro.ai.paidReads, { count: 0 })).toBe("Nicio citire plătită luna aceasta");
+    expect(say("ro-RO", ro.ai.paidReads, { count: 1 })).toBe("O citire plătită luna aceasta");
+    expect(say("ro-RO", ro.ai.paidReads, { count: 7 })).toBe("7 citiri plătite luna aceasta");
+    expect(say("ro-RO", ro.ai.paidReads, { count: 20 })).toBe("20 de citiri plătite luna aceasta");
   });
 });

@@ -88,6 +88,7 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
  */
 // Slice #38.40: the extraction's own constant now, not a second spelling of it.
 import { EXTRACT_MODEL } from "@/lib/ai/models";
+import { recordPaidRead } from "@/lib/ai/paid-reads";
 const DISCOVER_MAX_TOKENS = 16384;
 
 /**
@@ -377,6 +378,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   } catch (err) {
     return unexpectedError(err, "doc-type-engine:read-sample:fetch");
   }
+  // Slice #38.40: an answer came back, so the read is counted (paid when it succeeded).
+  await recordPaidRead({ route: "read-sample", model: EXTRACT_MODEL, success: anthropicRes.ok });
 
   if (!anthropicRes.ok) {
     const detail = await anthropicRes.text().catch(() => "");

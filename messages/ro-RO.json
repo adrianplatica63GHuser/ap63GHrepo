@@ -3773,6 +3773,9 @@
       }
     },
     "ai": {
+      "paidReads": "{count, plural, =0 {Nicio citire plătită luna aceasta} one {O citire plătită luna aceasta} few {# citiri plătite luna aceasta} other {# de citiri plătite luna aceasta}}",
+      "since": "numărate din {date}",
+      "paidReadsUnavailable": "Numărul citirilor plătite nu s-a putut citi.",
       "intro": "Modelele cu care aplicația face citirile plătite.",
       "uses": {
         "extract": "Extragerea datelor din acte",

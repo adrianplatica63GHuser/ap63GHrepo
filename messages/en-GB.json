@@ -3773,6 +3773,9 @@
       }
     },
     "ai": {
+      "paidReads": "{count, plural, =0 {No paid read this month} one {One paid read this month} other {# paid reads this month}}",
+      "since": "counted since {date}",
+      "paidReadsUnavailable": "The number of paid reads could not be read.",
       "intro": "The models the application makes its paid reads with.",
       "uses": {
         "extract": "Extracting a document's data",

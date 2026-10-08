@@ -61,6 +61,7 @@ export const maxDuration = 60;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 // Slice #38.40: from @/lib/ai/models, which „Setări → AI" reads.
 import { CLUSTER_MODEL } from "@/lib/ai/models";
+import { recordPaidRead } from "@/lib/ai/paid-reads";
 
 /**
  * ⚠️ **THE SAME BUDGET AS A READ, BECAUSE THE SAME SIXTY-SECOND CEILING APPLIES
@@ -257,6 +258,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   } catch (err) {
     return unexpectedError(err, "doc-type-engine:cluster:fetch");
   }
+  // Slice #38.40: an answer came back, so the read is counted (paid when it succeeded).
+  await recordPaidRead({ route: "cluster", model: CLUSTER_MODEL, success: anthropicRes.ok });
 
   if (!anthropicRes.ok) {
     const detail = await anthropicRes.text().catch(() => "");

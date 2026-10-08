@@ -90,6 +90,7 @@ export const maxDuration = 60;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 // Slice #38.40: the default and the ANTHROPIC_VISION_MODEL override, from @/lib/ai/models.
 import { idCardModel } from "@/lib/ai/models";
+import { recordPaidRead } from "@/lib/ai/paid-reads";
 
 type ExtractionField =
   | "lastName"
@@ -366,6 +367,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   } catch (err) {
     return unexpectedError(err, "extract-id-card:fetch");
   }
+  // Slice #38.40: an answer came back, so the read is counted (paid when it succeeded).
+  await recordPaidRead({ route: "extract-id-card", model: model, success: anthropicRes.ok });
 
   if (!anthropicRes.ok) {
     const detail = await anthropicRes.text().catch(() => "");

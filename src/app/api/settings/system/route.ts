@@ -12,6 +12,7 @@
 import { requireFullAccess } from "@/lib/auth/current-role";
 import { unexpectedError } from "@/lib/api/errors";
 import { readSystemStatus } from "@/lib/settings/system-status";
+import { paidReadsThisMonth } from "@/lib/ai/paid-reads";
 import pkg from "../../../../../package.json";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,8 @@ export async function GET(): Promise<Response> {
   const denied = await requireFullAccess();
   if (denied) return denied;
   try {
-    return Response.json(readSystemStatus(pkg.version));
+    const status = readSystemStatus(pkg.version);
+    return Response.json({ ...status, ai: { ...status.ai, paidReads: await paidReadsThisMonth() } });
   } catch (err) {
     return unexpectedError(err, "GET /api/settings/system");
   }

@@ -4,6 +4,7 @@ import {
   check,
   date,
   doublePrecision,
+  index,
   integer,
   jsonb,
   numeric,
@@ -2120,4 +2121,21 @@ export const propertyCornerSource = pgTable(
     // ON CONFLICT target the creation paths infer against.
     uniqueIndex("property_corner_source_document_unique").on(t.documentId),
   ],
+);
+
+// ── ai_paid_read (Slice #38.40, migration_100) ─────────────────────────────────
+// One row per answer from the Anthropic Messages API: which route, which model,
+// when, and whether it succeeded. Written by recordPaidRead
+// (src/lib/ai/paid-reads.ts) after every call; „Setări → AI" counts this
+// month's successful ones. Counted, not attributed: no user, no foreign key.
+export const aiPaidRead = pgTable(
+  "ai_paid_read",
+  {
+    id:      uuid("id").primaryKey().defaultRandom(),
+    route:   text("route").notNull(),
+    model:   text("model").notNull(),
+    success: boolean("success").notNull(),
+    at:      timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ai_paid_read_at_idx").on(t.at)],
 );

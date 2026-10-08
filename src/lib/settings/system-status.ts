@@ -107,7 +107,12 @@ export function currentCommit(env: NodeJS.ProcessEnv = process.env, cwd = proces
 
 export type SystemStatus = {
   backups: BackupStatus;
-  ai: { models: AiModelUse[] };
+  /**
+   * `paidReads` is this month's successful reads and when counting began
+   * (migration_100) — added by the route, which can await the database; null
+   * when the count could not be read.
+   */
+  ai: { models: AiModelUse[]; paidReads?: { count: number; since: string | null } | null };
   about: {
     version: string;
     commit: string | null;

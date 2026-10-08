@@ -139,6 +139,8 @@ import {
   typeHintTextFor,
   type PageBlocks,
 } from "@/lib/documents/ai-extract";
+import { recordPaidRead } from "@/lib/ai/paid-reads";
+import { EXTRACT_MODEL } from "@/lib/ai/models";
 import { resolveClassifiedDocumentType } from "@/lib/documents/resolve-document-type";
 import {
   MULTI_IDENTITY_CODE,
@@ -325,6 +327,12 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   } catch (err) {
     return unexpectedError(err, "ai-interpret:fetch");
   }
+  // Slice #38.40: an answer came back (or a refusal did), so the read is counted.
+  await recordPaidRead({
+    route: "ai-interpret",
+    model: String(body.model ?? EXTRACT_MODEL),
+    success: called.ok,
+  });
 
   if (!called.ok && called.kind === "http") {
     console.error("[ai-interpret] Anthropic error:", called.status, called.detail);
