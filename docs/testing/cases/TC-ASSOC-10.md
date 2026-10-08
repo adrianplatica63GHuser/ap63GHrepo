@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -44,7 +44,7 @@ Both are deleted at the end.
 | 4 | Types `TC-ASSOC-10` into „Căutare" and ticks the one row | The row is selected, and „Rol" **narrows to the roles a Contract de Vânzare offers**: „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 5 | Chooses **„Cumpărător"** and presses „Asociază selecția" | Back on the company's „Legături" (`?tab=document`): one line, no column headings — `TC-ASSOC-10 Contract de test (Contract de Vânzare)` — „Relația", „Vizualizare"; „Relația" says `Rol în act: „Cumpărător”` |
 | 6 | Presses „Vizualizare" | The document, read-only (`/documents/[id]?readonly=true`) |
-| 7 | Ticks its tile **„Legături"**, then the company's row's „Cotă" | One row, on one line, `TC-ASSOC-10 Firmă de test SRL (Cumpărător)`; behind „Cotă" an empty „Cotă-parte" reading „— fără cotă —", an empty „Suprafață echivalentă (mp)" reading „— fără suprafață —", and „Mod de deținere" „— nespecificat —" |
+| 7 | Looks at its tile **„Părți"**, then presses the company's row's „Cotă" | One row, on one line, `TC-ASSOC-10 Firmă de test SRL (Cumpărător)`; behind „Cotă" an empty „Cotă-parte" reading „— fără cotă —", an empty „Suprafață echivalentă (mp)" reading „— fără suprafață —", and „Mod de deținere" „— nespecificat —" |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen at `/judicial-persons/[id]?readonly=true` |
 
 Step 7 is the other end; step 8 checks that the document knows what kind of person it holds.
@@ -57,6 +57,9 @@ bottom and answer „Ștergeți actul?" with **„Da"**; open the company, press
 „Ștergeți persoana juridică?" with **„Da"**.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.33.** A Contract de Vânzare's sellers and buyers are on „Părți", so step 7
+reads the buyer there.
 
 **2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 

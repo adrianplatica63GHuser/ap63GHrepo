@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -34,7 +34,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-07 PAD`, tile „Legături" | One row, `Ion TC-DOC-07 (Proiectant / Consultant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
-| 2 | Opens `TC-DOC-07 CVC`, tile „Legături", and presses the row's „Cotă" | One row, `Ion TC-DOC-07 (Vânzător)`; behind „Cotă" the three boxes, empty |
+| 2 | Opens `TC-DOC-07 CVC`, tile „Părți", and presses the row's „Cotă" | Under the heading „Vânzător", one row, `Ion TC-DOC-07 (Vânzător)` — and none on „Legături"; behind „Cotă" the three boxes, empty |
 | 3 | Opens „Date de referință" → „Tipuri de Document" → „Roluri pe Document" | A table Tip document · Rol persoană · Deține cotă; the PAD's „Proiectant / Consultant" unticked, Contract de Vânzare's „Vânzător" ticked |
 | 4 | Ticks „Deține cotă" on the PAD's „Proiectant / Consultant" | The tick stays after the screen is opened again |
 | 5 | Opens `TC-DOC-07 PAD`, tile „Legături", and presses the row's „Cotă" | The row now has „Cotă", and behind it the three boxes, empty |
@@ -48,6 +48,9 @@ three records (`DELETE` on their routes); their links go with them. Căutare glo
 finds nothing.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.33.** A CVC's sellers and buyers are on „Părți", so step 2 reads the
+seller there. The PAD has no „Părți"; steps 1, 5 and 7 are unchanged.
 
 **2026-10-02 — run 1, `driven` (Slice #37.59).** Driven in Chrome on Windows (Claude in Chrome,
 the interface in English) against `npm run dev` on 3000, after migration_091 reached the local

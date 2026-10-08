@@ -107,11 +107,11 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
 
       // Step 1 — the document: „Date generale", „Pagini", „Preț și taxe" ticked; „Pagini" at the right, top level with the row.
       await page.goto(`/documents/${docId}`);
-      for (const name of ["Identificarea actului", "Pagini", "Preț și taxe"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
+      for (const name of ["Identificarea actului", "Pagini", "Preț și plată"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 }); // #38.33
       await expect(page.locator('[data-tile="pages"]')).toBeVisible({ timeout: 30_000 });
       expect(await rowWidth(page)).toBe(1624);
       await atTheRight(page, "pages");
-      const fees = await at(page, "tab:Preț și taxe");
+      const fees = await at(page, "tab:Preț și plată");
       expect(fees.y).toBe(0);
       expect(fees.x + 1).toBeLessThan((await at(page, "pages")).x);
       await photograph(page, "document");

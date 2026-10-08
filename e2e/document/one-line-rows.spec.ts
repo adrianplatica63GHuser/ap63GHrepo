@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-09 — „Persoane", „Proprietăți" și „Acte corelate" pe un rând: cota-parte după butonul portocaliu, relația după butonul ei, „Înscrisuri citate" pliate
- * Source: docs/testing/cases/TC-DOC-09.md, „Last green" 2026-10-03
+ * Source: docs/testing/cases/TC-DOC-09.md, „Last green" 2026-10-07
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -19,6 +19,8 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #38.33: the CVC's „Vânzător" is on its „Părți" (the case's steps 2–6 as
+ *     corrected on 2026-10-07).
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -100,7 +102,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
 
       // Step 2 — the CVC's „Persoane": one line, a solid orange „Cotă".
       await open(page, cvcId, CVC);
-      persons = await showTile(page, "Legături");
+      persons = await showTile(page, "Părți");
       row = lineRow(persons, PERSON);
       await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Vânzător)`, { timeout: 30_000 });
       await expectOneLine(row);
@@ -136,7 +138,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       const mp = panel.getByRole("textbox", { name: /^Suprafață echivalentă \(mp\)/ });
       await mp.click();
       await mp.fill("120");
-      await persons.getByRole("heading", { name: "Legături" }).click();
+      await persons.getByRole("heading", { name: "Părți" }).click();
       await expect(panel).toHaveCount(0);
       await expect.poll(async () => {
         const res = await page.request.get(`/api/documents/${cvcId}/persons`);

@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -40,7 +40,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-09 PAD`, tile „Legături" | No column headings. The person's row, on one line: `Ion TC-DOC-09 (Proiectant / Consultant)`, then „Vizualizare" and „Previzualizare" — no „Cotă" button and no share box |
-| 2 | Opens `TC-DOC-09 CVC`, tile „Legături" | The person's row, on one line: `Ion TC-DOC-09 (Vânzător)`, then a solid orange „Cotă", „Vizualizare", „Previzualizare" |
+| 2 | Opens `TC-DOC-09 CVC`, tile „Părți" | The person's row, on one line: `Ion TC-DOC-09 (Vânzător)`, then a solid orange „Cotă", „Vizualizare", „Previzualizare" |
 | 3 | Rests the mouse on „Cotă" | A bubble: „Cotă-parte: fără cotă · Suprafață echivalentă (mp): fără suprafață · Mod de deținere: nespecificat" |
 | 4 | Presses „Cotă" | A small panel beside the row with „Cotă-parte", „Suprafață echivalentă (mp)" and „Mod de deținere", empty; the cursor in „Cotă-parte" |
 | 5 | Types `50` and presses Esc | The panel closes and `50` is saved: „Cotă" is now an orange outline, and resting on it reads „Cotă-parte: 50 · …" |
@@ -57,6 +57,9 @@ Delete the three records (`DELETE` on their routes); their links go with them. C
 `TC-DOC-09` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.33.** A CVC's sellers and buyers are on „Părți", so steps 2–6 are
+there; step 7 reads the CVC's documents on „Legături" as before.
 
 **2026-10-03 — run 1, `driven` (Slice #37.64).** Driven in the Claude desktop app's browser pane on
 Windows against `npm run dev` on 3000, the records created through the API from the page, read with

@@ -39,7 +39,7 @@ saved.
 |---|---|---|
 | 1 | Opens `TC-DOC-04 CVC` in a 1366 × 900 window and presses „Toate" | 36 dropdowns of the type's own fields |
 | 2 | Selects in each its widest choice | Every one shows it whole |
-| 3 | Looks at „Declarații și garanții" and „Declarații și obligații legale" | Boxes per row 3, 3, 3, 3, 2 and 2, 3, 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
+| 3 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 3, 3, 3, 3 and 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
 | 4 | Widens the window to 1920 × 1080 | Steps 2 and 3 the same |
 
 ## At the end — leaving things as they were found

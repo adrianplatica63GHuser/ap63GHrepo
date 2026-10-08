@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -54,13 +54,13 @@ Two consequences for the steps:
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
-| 2 | Ticks the tile **„Legături"** | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
-| 3 | Presses „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
+| 2 | Looks at the tile **„Părți"** | „Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.", with „Asociază persoană" and „Dezasociază" |
+| 3 | Presses „Părți"'s „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
 | 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
 | 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
 | 6 | Ticks the row for `Ion TC-PERS-01` | The row is selected |
-| 7 | Presses „Asociază selecția" | The screen returns to the document, on its „Legături" tile |
-| 8 | Looks at „Legături" | No column headings and no „Cod": one row, on one line, `Ion TC-PERS-01 (Cumpărător)`, then an orange „Cotă", „Vizualizare" and „Previzualizare" |
+| 7 | Presses „Asociază selecția" | The screen returns to the document |
+| 8 | Looks at „Părți" | No column headings and no „Cod": under the heading „Cumpărător", one row, on one line, `Ion TC-PERS-01 (Cumpărător)`, then an orange „Cotă", „Vizualizare" and „Previzualizare" |
 | 9 | Presses the row's „Cotă", types `50%` into „Cotă-parte" in the panel beside the row, and leaves the field | The value is saved and the cell then reads `50` — the percent sign is accepted and not kept |
 | 10 | Chooses „indiviziune" in the panel's **„Mod de deținere"** — a select under „Cotă-parte", offering „— nespecificat —", „în nume propriu", „devălmășie", „indiviziune", „prin mandatar" | The qualifier is recorded beside the share, and is still there after a reload |
 | 11 | Reads the one line under the table | „Cotele pentru „Cumpărător" însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act." **While the total is off there is no separate „Total Cumpărător: 50%" line** — the warning replaces it |
@@ -95,11 +95,15 @@ appears on this screen.)
 ## At the end — leaving things as they were found
 
 **Select the row first** — its radio button at the left — and then press „Dezasociază";
-the button is disabled while no row is selected. „Nicio persoană asociată acestui act"
-follows. The person and the document are left for the cases that follow; only the link
+the button is disabled while no row is selected. „Părți" then reads
+„Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor." The person and the document are left for the cases that follow; only the link
 is removed.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.33.** A Contract de Vânzare's sellers and buyers are on „Părți",
+grouped by role, so the buyer is associated from „Părți" and read there; „Legături" keeps the
+other links. Steps 2, 3, 7, 8 and the cleanup follow.
 
 **2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
 12 passed; the spec is named in the catalogue's `Spec` column.

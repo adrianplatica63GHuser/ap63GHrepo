@@ -55,7 +55,7 @@ proposed four after reading pages 1 and 3 on screen (Slice #36.07), and they are
 |---|---|---|
 | 1 | Opens `Contract de Vânzare-Cumpărare Costache S 2008 TC-IMP-01` | Its detail screen, tabs „Detalii", „Asocieri", „Persoane", „Proprietăți", „Meta info"; „Tip document" = „Contract de Vânzare (are formular)" |
 | 2 | Looks at „Stare procesare" | „Procesat cu AI" |
-| 3 | Looks at the tab „Detalii" | The form is a notebook labelled „Secțiunile formularului", with the tabs **„Preț și taxe", „Cadastru și CF", „Stare juridică", „Formalități"**, and not one long scroll. „Cadastru și CF" holds the panels „DOSAR ȘI EXEMPLAR", „EXCEPȚIE CADASTRU" and „OBIECT DECLARAT" |
+| 3 | Looks at the tab „Detalii" | The form is a notebook labelled „Secțiunile formularului", with the tabs **„Preț și plată", „Carte funciară", „Declarații și garanții", „Taxe și cheltuieli"**, and not one long scroll. „Carte funciară" holds the panels „DOSAR ȘI EXEMPLAR", „EXCEPȚIE CADASTRU" and „OBIECT DECLARAT" |
 | 4 | Goes through the tabs | The four fields in the table above carry the values shown |
 | 5 | Finds „Note extinse" | **A note, not the deed**: the line „[AI] Text neasociat unui câmp:", then six short facts the form has no field for (the lei equivalent of the price, the tax base, and so on), then „Titlul tipărit pe document". About 1,200 characters in all, against three dense pages of deed |
 | 6 | Opens the tab „Persoane" | „Nicio persoană asociată acestui act". The five people the AI found were offered **once, in the import's own dialog** („Confirmați persoanele din acest document"), and TC-IMP-01 skips them. After that dialog closes the document does not offer them again. The import says so itself: „După ce închideți, nu mai există unde." |

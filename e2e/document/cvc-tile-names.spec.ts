@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-05 — Filele și panourile unui CVC, fiecare cu un singur nume; „Taxă timbru și publicitate" ultima
- * Source: docs/testing/cases/TC-DOC-05.md, „Last green" 2026-10-02 (steps rewritten by Slice #37.90)
+ * Source: docs/testing/cases/TC-DOC-05.md, „Last green" 2026-10-07 (steps rewritten by Slice #37.90, then #38.33)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -22,13 +22,18 @@ const MARK = `${E2E_MARKER}DOC-05`;
 const SHOTS = "playwright-report/cvc-tile-names";
 const STORE = "ga40-tiles-document-CONTRACT_VANZARE-v1";
 
+// Slice #38.33: five type tiles and their panels.
 const TILES: [string, string[]][] = [
-  ["Preț și taxe", ["Financiar", "Taxe și onorarii"]],
-  ["Cadastru și CF", ["Dosar și exemplar", "Excepție cadastru", "Obiect declarat"]],
-  ["Stare juridică", ["Declarații și garanții"]],
-  ["Formalități", ["Declarații și obligații legale"]],
+  ["Preț și plată", ["Preț", "Plată"]],
+  ["Obiectul vânzării", ["Scop și predare", "Obiect declarat"]],
+  ["Carte funciară", ["Dosar cadastral", "Situația în cartea funciară", "Excepția de la cadastru"]],
+  ["Declarații și garanții", ["Declarațiile vânzătorului", "Garanții", "Declarații legale"]],
+  ["Taxe și cheltuieli", ["Taxe și onorarii", "Cheltuieli"]],
 ];
-const OLD = ["Instrument", "Antet instrument", "Stare juridică afirmată", "Conformitate", "Conformitate și formalități", "Cadastru și carte funciară"];
+const OLD = [
+  "Instrument", "Antet instrument", "Stare juridică afirmată", "Conformitate", "Conformitate și formalități", "Cadastru și carte funciară",
+  "Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități", "Financiar", "Dosar și exemplar", "Excepție cadastru", "Declarații și obligații legale",
+];
 
 const recent = (page: Page) =>
   page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) });
@@ -55,12 +60,15 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
         STORE,
       );
 
-      // Step 1 — Date generale, Pagini, Cadastru și CF and Formalități ticked; the other two not.
+      // Step 1 — #38.33: the old „Conformitate" is „Declarații și garanții" and „Taxe și cheltuieli",
+      // the old „Cadastru și carte funciară" „Carte funciară" and „Obiectul vânzării"; all ticked.
       await page.goto(`/documents/${id}`);
-      for (const name of ["Identificarea actului", "Pagini", "Cadastru și CF", "Formalități"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
-      for (const name of ["Preț și taxe", "Stare juridică"]) await expect(tileBox(page, name)).not.toBeChecked();
+      for (const name of ["Identificarea actului", "Pagini", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"]) {
+        await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 });
+      }
+      for (const name of ["Preț și plată", "Părți"]) await expect(tileBox(page, name)).not.toBeChecked();
 
-      // Step 2 — „Toate": the four tiles and their panels, each in brackets (#37.90), none of the old names.
+      // Step 2 — „Toate": the five tiles and their panels, each in brackets (#37.90), none of the old names.
       await page.getByRole("button", { name: "Toate", exact: true }).click();
       for (const [tile, panels] of TILES) {
         const region = page.getByRole("region", { name: tile, exact: true });

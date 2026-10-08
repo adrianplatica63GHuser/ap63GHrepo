@@ -41,7 +41,7 @@ its top on the row's top. Nothing is saved.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-07 Act de test" | „Identificarea actului", „Pagini" and „Preț și taxe" ticked. „Pagini" is at the right, top level with the row; „Identificarea actului" and „Preț și taxe" to its left |
+| 1 | Opens „TC-TILES-07 Act de test" | „Identificarea actului", „Pagini" and „Preț și plată" ticked. „Pagini" is at the right, top level with the row; „Identificarea actului" and „Preț și plată" to its left |
 | 2 | Opens „TC-TILES-07 Teren de test" | „Identificare cadastrală", „Puncte de contur", „Adresă" and „Hartă" ticked, „Street View" not. „Hartă" at the right, top level with the row; „Puncte de contur" under it, also at the right; „Identificare cadastrală" and „Adresă" to their left |
 | 3 | Ticks „Street View" | „Street View" under „Puncte de contur", at the right |
 | 4 | Unticks „Hartă" | „Puncte de contur" at the top of the column, level with the row; „Street View" under it |

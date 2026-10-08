@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -23,8 +23,9 @@ the defect this case exists to catch.
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a natural person
   „Ion TC-DOC-10", a company „TC-DOC-10 Firmă SRL", a property „TC-DOC-10 Teren", a Contract de
-  Vânzare „TC-DOC-10 CVC" and a PAD „TC-DOC-10 PAD"; on the CVC the person as „Vânzător", the
-  company as „Cumpărător" and the property; the PAD associated to the CVC as „Titlu anterior al"
+  Vânzare „TC-DOC-10 CVC" and a PAD „TC-DOC-10 PAD"; on the CVC the person as „Notar", the
+  company as „Reprezentant legal / Mandatar" and the property (a seller or a buyer would be on
+  „Părți", not here — Slice #38.33); the PAD associated to the CVC as „Titlu anterior al"
   (posted from the PAD).
 - The CVC is opened with `?tab=related`, which shows „Corelate" for the visit without changing
   which tiles you keep ticked.
@@ -37,7 +38,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-10 CVC`, tile „Legături" | Four rows, each on one line, in this order, with no headings over them and a thin line between two kinds: `Ion TC-DOC-10 (Vânzător)` with the person icon, `TC-DOC-10 Firmă SRL (Cumpărător)` with the building, `TC-DOC-10 Teren` with the map, `TC-DOC-10 PAD (Plan de Amplasament și Delimitare)` with the document. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row, „Înscrisuri citate" after them |
+| 1 | Opens `TC-DOC-10 CVC`, tile „Legături" | Four rows, each on one line, in this order, with no headings over them and a thin line between two kinds: `Ion TC-DOC-10 (Notar)` with the person icon, `TC-DOC-10 Firmă SRL (Reprezentant legal / Mandatar)` with the building, `TC-DOC-10 Teren` with the map, `TC-DOC-10 PAD (Plan de Amplasament și Delimitare)` with the document. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row, „Înscrisuri citate" after them |
 | 2 | Selects the property's radio, then the company's | Only the company's is selected; „Dezasociază" is active and the three „Asociază …" are not |
 | 3 | Presses „Dezasociază" | The company's row goes, and with it its group; the person, the property and the PAD stay; nothing is selected and the three „Asociază …" are active again |
 | 4 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the CVC with „Legături" on screen |
@@ -50,6 +51,10 @@ Delete the five records (`DELETE` on their routes); their links go with them. C�
 `TC-DOC-10` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.33.** A CVC's sellers and buyers moved to „Părți", so the person and
+the company are now the CVC's „Notar" and „Reprezentant legal / Mandatar", which hold no share and
+stay on „Legături". The spec follows; nothing else in the case changed.
 
 **2026-10-03 — run 1, `driven` (Slice #37.65).** Driven in the Claude desktop app's browser pane on
 Windows against `npm run dev` on 3000, at the pane's own width (FU-290), the records created

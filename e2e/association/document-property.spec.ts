@@ -56,9 +56,9 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
       // Step 2 — „Proprietăți", beside „Asocieri": empty, „Asociază", „Dezasociază".
-      await showTile(page, "Legături");
-      await expect(page.getByText("Nimic corelat încă.")).toBeVisible();
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      const links = await showTile(page, "Legături"); // #38.33: „Părți" has its own „Dezasociază"
+      await expect(links.getByText("Nimic corelat încă.")).toBeVisible();
+      await expect(links.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociază": „Asociere proprietate", one filter, no „Rol".
       await page.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
@@ -104,7 +104,7 @@ test.describe("TC-ASSOC-02 — Proprietate asociată actului", () => {
       // ── At the end — back on the document: radio, then „Dezasociază" ─────
       await page.goto(`/documents/${documentId}?tab=properties`);
       await page.getByRole("radio", { name: PROPERTY }).check({ timeout: 30_000 });
-      await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
+      await links.getByRole("button", { name: "Dezasociază", exact: true }).click();
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);

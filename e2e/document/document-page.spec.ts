@@ -188,11 +188,11 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
 
       // Step 3 — „Contract de Vânzare (are formular)": the notebook tabs and „FINANCIAR".
       await type.selectOption({ label: "Contract de Vânzare (are formular)" });
-      // #37.54: the CVC's tabs renamed — „Preț și taxe", „Cadastru și CF", „Formalități".
-      for (const tab of ["Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"]) {
+      // #38.33: the CVC's five tabs; the first page's first panel is „Preț".
+      for (const tab of ["Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"]) {
         await expect(page.getByRole("tab", { name: tab, exact: true })).toBeVisible();
       }
-      await expect(page.getByText("FINANCIAR").first()).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Preț", exact: true }).first()).toBeVisible();
 
       // Step 4 — „Etichetă scurtă" is the title; there is no „Titlu" field.
       await page.getByLabel(/^Etichetă scurtă/).fill(TITLE);
@@ -236,9 +236,9 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // (document-detail-tiles.tsx), so its text is „Stare procesare: Neprocesat"
       // and an exact match on „Neprocesat" alone finds nothing (first run).
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
-      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(9, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"
-      for (const tile of ["Identificarea actului", "Pagini", "Preț și taxe"]) await expect(tileBox(page, tile)).toBeChecked();
-      for (const tile of ["Cadastru și CF", "Stare juridică", "Formalități", "Legături", "Clasificare", "Etichete și grupuri"]) {
+      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(11, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"; #38.33: five type tiles and „Părți"
+      for (const tile of ["Identificarea actului", "Pagini", "Preț și plată", "Părți"]) await expect(tileBox(page, tile)).toBeChecked();
+      for (const tile of ["Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli", "Legături", "Clasificare", "Etichete și grupuri"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
       await expect(page.getByRole("tab")).toHaveCount(0);
@@ -281,11 +281,11 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       const pagesBox = await pages.boundingBox();
       expect(Math.round(pagesBox?.width ?? 0)).toBe(PAGES_PANEL_REM * 16);
       // Slice #37.20 — the page image and all four notebook tiles on one screen.
-      for (const tile of ["Cadastru și CF", "Stare juridică", "Formalități"]) await showTile(page, tile);
+      for (const tile of ["Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"]) await showTile(page, tile);
       // 1440 px high: the four notebook tiles run to a second and third row.
       await photograph(page, "document-cvc-notebook-tiles", [1920, 2560], 1440);
       await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
-      await expect(tileBox(page, "Cadastru și CF")).not.toBeChecked();
+      await expect(tileBox(page, "Carte funciară")).not.toBeChecked();
 
       // Step 10 — „Pagini extinse": the full-window view headed „Pagini".
       // (That the page is readable is the hand run's to judge — see the header.)

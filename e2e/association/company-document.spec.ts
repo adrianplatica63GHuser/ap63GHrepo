@@ -1,6 +1,6 @@
 /**
  * Case:   TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei
- * Source: docs/testing/cases/TC-ASSOC-10.md, „Last green" 2026-09-26
+ * Source: docs/testing/cases/TC-ASSOC-10.md, „Last green" 2026-10-07
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -24,6 +24,8 @@
  *   - Slice #37.67: so are the company's „Persoane corelate", „Proprietăți" and „Acte": its
  *     „Corelate" has the contract on one line — „Etichetă scurtă (Tip)" — and the company's role
  *     behind „Relația".
+ *   - Slice #38.33: the contract's buyer is on its „Părți", not on „Legături"
+ *     (the case's step 7 as corrected on 2026-10-07).
  */
 
 import { test, expect } from "@playwright/test";
@@ -102,7 +104,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
 
       // Step 7 — its „Persoane": one row — the company, „Cumpărător", the two empty fields
       // reading „fără cotă" and „fără suprafață", „Mod de deținere" „nespecificat".
-      const personsTile = await showTile(page, "Legături");
+      const personsTile = await showTile(page, "Părți"); // #38.33: a CVC's buyer is on „Părți"
       const back = lineRow(personsTile, COMPANY);
       await expect(back).toHaveCount(1, { timeout: 15_000 });
       await expect(back.locator("[data-row-content]")).toHaveText(`${COMPANY} (Cumpărător)`);

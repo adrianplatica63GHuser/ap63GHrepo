@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -37,7 +37,7 @@ role a notary writes for the buyer on a Contract de Vânzare.
 | 6 | Chooses „Cumpărător" in „Rol" | The role is selected |
 | 7 | Presses „Asociază selecția" | Back on the person, on its „Legături" (`?tab=document`): one line, no column headings — `TC-DOC-01 Contract de test (Contract de Vânzare)` — „Relația", „Vizualizare"; „Relația" says `Rol în act: „Cumpărător”` |
 | 8 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
-| 9 | Ticks the tile „Legături" on the document | One row, on one line: `Ion TC-PERS-01 (Cumpărător)`, with an orange „Cotă" |
+| 9 | Looks at the tile „Părți" on the document | One row, on one line: `Ion TC-PERS-01 (Cumpărător)`, with an orange „Cotă" |
 
 Step 9 is the other end of the link, and is the reason this case is not just step 7.
 
@@ -54,6 +54,9 @@ asks for no confirmation). „Nimic corelat încă." follows. The person and the
 for the cases that follow.
 
 ## Notes from the runs
+
+**2026-10-07 — Slice #38.33.** A Contract de Vânzare's sellers and buyers are on „Părți", so step 9
+reads the buyer there.
 
 **2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
 result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.

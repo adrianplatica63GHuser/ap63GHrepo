@@ -70,8 +70,8 @@ async function boxesPerRow(page: Page, name: string): Promise<number[]> {
 }
 
 async function stepFive(page: Page): Promise<void> {
-  expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([3, 3, 3, 3, 2]);
-  expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 3, 3, 2]);
+  expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
+  expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
 }
 
 async function photograph(page: Page, lang: "ro" | "en"): Promise<void> {
@@ -79,7 +79,7 @@ async function photograph(page: Page, lang: "ro" | "en"): Promise<void> {
     await page.setViewportSize({ width, height: 1080 });
     await page.waitForTimeout(300);
     await stepFive(page); // the rows do not depend on the window
-    await page.getByRole("heading", { name: "Stare juridică", exact: true }).first().scrollIntoViewIfNeeded();
+    await page.getByRole("heading", { name: "Declarații și garanții", exact: true }).first().scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${SHOTS}/cvc-tiles-${lang}-${width}.png`, fullPage: true, mask: [recent(page)] });
   }
   await page.setViewportSize({ width: 1366, height: 900 });

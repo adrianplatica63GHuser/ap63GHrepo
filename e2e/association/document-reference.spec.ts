@@ -166,8 +166,8 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
 
       // ── At the end — radio, „Dezasociază"; then the certificate „Șterge" / „Da" ─
       await page.getByRole("radio", { name: CERTIFICATE }).check();
-      await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
+      await related.getByRole("button", { name: "Dezasociază", exact: true }).click(); // #38.33: „Părți" has its own
+      await expect(related.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
       await page.goto(`/documents/${certificateId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       // `.last()`: the form's „Șterge" is at the bottom; „Pagini" rows carry their own, and since

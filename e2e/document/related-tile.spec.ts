@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-10 — „Corelate" pe un act: persoanele fizice, juridice, proprietățile și actele într-o singură fișă, un singur „Dezasociază"
- * Source: docs/testing/cases/TC-DOC-10.md, „Last green" 2026-10-03
+ * Source: docs/testing/cases/TC-DOC-10.md, „Last green" 2026-10-07
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -12,6 +12,9 @@
  *     where the case uses `?tab=related`.
  *   - Slice #37.65's pictures, not steps of the case: „Corelate" with a row
  *     selected, at 1366 and 1920 px, into `playwright-report/related-tile/`.
+ *   - Slice #38.33: a CVC's sellers and buyers are on „Părți", so the person
+ *     is the CVC's „Notar" and the company its „Reprezentant legal / Mandatar",
+ *     two roles that hold no share (the case's steps as corrected on 2026-10-07).
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -34,7 +37,7 @@ const CVC = `${MARK} CVC`;
 const PAD = `${MARK} PAD`;
 const SHOTS = "playwright-report/related-tile";
 
-type Pair = { personRoleId: string; personRoleName: string; documentTypeName: string };
+type Pair = { personRoleId: string; personRoleName: string; documentTypeName: string; holdsShare: boolean };
 
 async function post(page: Page, url: string, data: unknown): Promise<void> {
   const res = await page.request.post(url, { data });
@@ -58,9 +61,10 @@ test.describe("TC-DOC-10 — „Corelate” pe un act", () => {
     await page.setViewportSize({ width: 1366, height: 900 });
 
     const pairs = ((await (await page.request.get("/api/admin/doc-type-person-roles")).json()) as { items: Pair[] }).items;
-    const seller = pairs.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Vânzător");
-    const buyer = pairs.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Cumpărător");
-    expect(seller && buyer, "Contract de Vânzare offers „Vânzător\" and „Cumpărător\"").toBeTruthy();
+    const seller = pairs.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Notar");
+    const buyer = pairs.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Reprezentant legal / Mandatar");
+    expect(seller && buyer, "Contract de Vânzare offers „Notar\" and „Reprezentant legal / Mandatar\"").toBeTruthy();
+    expect(seller?.holdsShare || buyer?.holdsShare, "neither holds a share, so both stay on „Legături\" (#38.33)").toBe(false);
     const roles = ((await (await page.request.get("/api/admin/document-document-roles")).json()) as { items: { id: string; name: string }[] }).items;
     const titluAnterior = roles.find((r) => r.name === "Titlu anterior al");
 
@@ -82,8 +86,8 @@ test.describe("TC-DOC-10 — „Corelate” pe un act", () => {
       const groups = tile.locator("[data-related-group]");
       await expect(groups).toHaveCount(4, { timeout: 30_000 });
       const expected = [
-        ["natural", `${PERSON} (Vânzător)`, /lucide-user\b/],
-        ["judicial", `${COMPANY} (Cumpărător)`, /lucide-building-?2/],
+        ["natural", `${PERSON} (Notar)`, /lucide-user\b/],
+        ["judicial", `${COMPANY} (Reprezentant legal / Mandatar)`, /lucide-building-?2/],
         ["property", PROPERTY, /lucide-map\b/],
         ["document", `${PAD} (Plan de Amplasament și Delimitare)`, /lucide-file-text/],
       ] as const;
@@ -105,7 +109,7 @@ test.describe("TC-DOC-10 — „Corelate” pe un act", () => {
 
       // Step 2 — the property's radio, then the company's: only the company's.
       await tile.getByRole("radio", { name: PROPERTY }).check();
-      await tile.getByRole("radio", { name: `${COMPANY} — Cumpărător` }).check();
+      await tile.getByRole("radio", { name: `${COMPANY} — Reprezentant legal / Mandatar` }).check();
       await expect(tile.getByRole("radio", { name: PROPERTY })).not.toBeChecked();
       await expect(tile.locator('input[type="radio"]:checked')).toHaveCount(1);
       for (const name of names.slice(0, 3)) await expect(tile.getByRole("button", { name, exact: true })).toBeDisabled();

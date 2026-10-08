@@ -37,10 +37,10 @@ is saved.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-06 CVC` in Romanian and presses „Toate" | 36 dropdowns of the type's own fields, each reading „fără valoare" in italics, with no „—" around it (a real choice may carry one: „1 — Cadastru vechi, CF nedefinitivă") |
-| 2 | Opens the list of „Circuit civil" („Declarații și garanții") | „fără valoare" first, in italics; „Afirmat", „Nu e menționat", „Excepție" in the regular font |
+| 2 | Opens the list of „Circuit civil" („Declarațiile vânzătorului") | „fără valoare" first, in italics; „Afirmat", „Nu e menționat", „Excepție" in the regular font |
 | 3 | Chooses „Afirmat" | The box reads „Afirmat", regular; the list still has „fără valoare" in italics and the others regular |
 | 4 | Chooses „fără valoare" again | The box reads „fără valoare" in italics |
-| 5 | Looks at „Declarații și garanții" and „Declarații și obligații legale" | Boxes per row 3, 3, 3, 3, 2 and 2, 3, 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
+| 5 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 3, 3, 3, 3 and 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
 | 6 | Switches the interface to English and presses „All" | Each dropdown reads „no value" in italics; the two panels' boxes per row as in step 5 |
 
 ## At the end — leaving things as they were found

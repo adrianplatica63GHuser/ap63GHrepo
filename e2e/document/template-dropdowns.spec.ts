@@ -80,16 +80,16 @@ async function stepsTwoAndThree(page: Page): Promise<void> {
   // Step 2 — every one, its widest choice selected, shows it whole.
   for (const { name, value } of await widestChoices(page)) await page.locator(`select[name="${name}"]`).selectOption(value);
   expect(await clipped(page)).toEqual([]);
-  // Step 3 — since #37.55, three to a row: 14 as 3,3,3,3,2; 10 as 2,3,3,2.
-  expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([3, 3, 3, 3, 2]);
-  expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 3, 3, 2]);
+  // Step 3 — since #37.55, three to a row; since #38.33 the 12 statements as 3,3,3,3 and the 5 statutory declarations as 3,2.
+  expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
+  expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
 }
 
 async function photograph(page: Page): Promise<void> {
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 1080 });
     await page.waitForTimeout(300);
-    await page.getByRole("region", { name: "Preț și taxe", exact: true }).scrollIntoViewIfNeeded();
+    await page.getByRole("region", { name: "Preț și plată", exact: true }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${SHOTS}/cvc-tiles-${width}.png`, fullPage: true, mask: [recent(page)] });
   }
 }
@@ -113,8 +113,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       // Step 4 — 1920 × 1080: the same.
       await page.setViewportSize({ width: 1920, height: 1080 });
       expect(await clipped(page)).toEqual([]);
-      expect(await boxesPerRow(page, "Declarații și garanții")).toEqual([3, 3, 3, 3, 2]);
-      expect(await boxesPerRow(page, "Declarații și obligații legale")).toEqual([2, 3, 3, 2]);
+      expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
+      expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
 
       await photograph(page);
     } finally {

@@ -78,7 +78,7 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       await expect(pages).toBeVisible({ timeout: 30_000 });
       await expect.poll(() => colour(pages), { timeout: 20_000 }).toBe(PINNED);
       expect(await colour(page.locator('[data-panel="general"]'))).toBe(CARD);
-      expect(await colour(page.getByRole("region", { name: "Preț și taxe", exact: true }))).toBe(CARD);
+      expect(await colour(page.getByRole("region", { name: "Preț și plată", exact: true }))).toBe(CARD);
     } finally {
       await removeRecord(page.request, "document", docId);
       await removeRecord(page.request, "property", propId);

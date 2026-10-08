@@ -45,7 +45,7 @@ Nothing.
 | 1 | Opens „TC-TILES-18 Teren", presses „Toate" | Four strips, left to right: [Date cadastrale, Adresă] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Hartă, Puncte de contur, Street View] purple. Each tile in its group's colour |
 | 2 | Opens „TC-TILES-18 Ion", presses „Toate" | Four strips: [Identitate, Carte de identitate, Contact, Adrese] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Interacțiuni] purple. Each tile in its group's colour |
 | 3 | Opens „TC-TILES-18 SRL", presses „Toate" | Four strips: [Identitate, Persoane de contact, Adrese] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Interacțiuni] purple. Each tile in its group's colour |
-| 4 | Opens „TC-TILES-18 Act", presses „Toate" | Four strips: [Date generale, Preț și taxe, Cadastru și CF, Stare juridică, Formalități] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Pagini] purple. Each tile in its group's colour |
+| 4 | Opens „TC-TILES-18 Act", presses „Toate" | Four strips: [Date generale, Preț și plată, Obiectul vânzării, Carte funciară, Declarații și garanții, Taxe și cheltuieli, Părți] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Pagini] purple. Each tile in its group's colour |
 | 5 | Steps 1–4 at 1920 px | The same |
 | 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is green |
 | 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Etichete și grupuri" by its empty space to under „Legături" | It stands there, still yellow |

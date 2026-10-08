@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-07 — Cota-parte doar pentru rolurile care dețin o cotă: un PAD cu un Proiectant, un CVC cu un Vânzător
- * Source: docs/testing/cases/TC-DOC-07.md, „Last green" 2026-10-02
+ * Source: docs/testing/cases/TC-DOC-07.md, „Last green" 2026-10-07
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -22,6 +22,8 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #38.33: a CVC's „Vânzător" is on its „Părți", not on „Legături" (the
+ *     case's step 2 as corrected on 2026-10-07); the PAD has no „Părți".
  */
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
@@ -56,10 +58,10 @@ async function link(page: Page, documentId: string, personId: string, personRole
   expect(res.ok(), `POST persons failed (${res.status()})`).toBeTruthy();
 }
 
-/** The person's row on „Persoane": how many share boxes it draws, and whether they are editable. */
-async function personsRow(page: Page, documentId: string): Promise<Locator> {
+/** The person's row on „Legături" (a CVC: „Părți", #38.33): how many share boxes it draws, and whether they are editable. */
+async function personsRow(page: Page, documentId: string, tileName = "Legături"): Promise<Locator> {
   await page.goto(`/documents/${documentId}`);
-  const tile = await showTile(page, "Legături");
+  const tile = await showTile(page, tileName);
   const row = lineRow(tile, PERSON);
   await expect(row).toHaveCount(1, { timeout: 30_000 });
   return row;
@@ -122,13 +124,17 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await photograph(page, "pad-persons-unticked", page.getByRole("region", { name: "Legături", exact: true }));
 
       // Step 2 — the CVC: „Vânzător", the three boxes, empty.
-      row = await personsRow(page, cvcId);
+      row = await personsRow(page, cvcId, "Părți");
       await expect(row).toContainText("Vânzător");
+      const parties = page.getByRole("region", { name: "Părți", exact: true });
+      await expect(parties.locator("[data-party-group-heading]")).toHaveText(["Vânzător"]);
+      const others = await showTile(page, "Legături");
+      await expect(others.locator("[data-row-content]").filter({ hasText: PERSON })).toHaveCount(0);
       await openShare(row);
       await expect(boxes(row)).toHaveCount(3);
       for (const b of await boxes(row).all()) await expect(b).toBeEnabled();
       await expect(boxes(row).first()).toHaveValue("");
-      await photograph(page, "cvc-persons", page.getByRole("region", { name: "Legături", exact: true }));
+      await photograph(page, "cvc-persons", page.getByRole("region", { name: "Părți", exact: true }));
 
       // Step 3 — „Roluri pe Document": Tip document · Rol persoană · Deține cotă.
       let dialog = await openRolesScreen(page);

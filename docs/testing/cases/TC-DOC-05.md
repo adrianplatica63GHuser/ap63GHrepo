@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-05 |
+| **Last green** | 2026-10-07 |
 
 ## What this proves
 
@@ -41,9 +41,9 @@ The window is 1366 × 900. „One line" is the label 20 px high (its line height
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-05 CVC` | In „Părți afișate": „Identificarea actului", „Pagini", „Cadastru și CF" and „Formalități" ticked; „Preț și taxe" and „Stare juridică" not |
-| 2 | Presses „Toate" | The tiles „Preț și taxe" (panels „[Financiar]", „[Taxe și onorarii]"), „Cadastru și CF" („[Dosar și exemplar]", „[Excepție cadastru]", „[Obiect declarat]"), „Stare juridică" („[Declarații și garanții]"), „Formalități" („[Declarații și obligații legale]"). None of „Instrument", „Antet instrument", „Stare juridică afirmată", „Conformitate", „Conformitate și formalități", „Cadastru și carte funciară", nor any panel heading without its brackets |
-| 3 | Looks at „Taxe și onorarii" | After Notariat, Nr. act autentic and Data autentificării: „Timbru judiciar", „Onorariu notarial", „Impozit transfer" on one row, then „Taxă timbru și publicitate" alone on the next, its label on one line |
+| 1 | Opens `TC-DOC-05 CVC` | In „Părți afișate": „Identificarea actului", „Pagini", „Obiectul vânzării", „Carte funciară", „Declarații și garanții" and „Taxe și cheltuieli" ticked — the old choice read as today's tiles (#38.33); „Preț și plată" and „Părți" not |
+| 2 | Presses „Toate" | The tiles „Preț și plată" („[Preț]", „[Plată]"), „Obiectul vânzării" („[Scop și predare]", „[Obiect declarat]"), „Carte funciară" („[Dosar cadastral]", „[Situația în cartea funciară]", „[Excepția de la cadastru]"), „Declarații și garanții" („[Declarațiile vânzătorului]", „[Garanții]", „[Declarații legale]") and „Taxe și cheltuieli" („[Taxe și onorarii]", „[Cheltuieli]"); none of the old names anywhere |
+| 3 | Looks at „Taxe și onorarii" | „Timbru judiciar", „Onorariu notarial", „Impozit transfer" on one row, then „Taxă timbru și publicitate" alone on the next, its label on one line |
 
 ## At the end — leaving things as they were found
 
@@ -99,3 +99,8 @@ the file changed, so the case is confirmed, and `e2e/document/cvc-tile-names.spe
 **2026-10-05 — `automated` again.** `e2e/document/cvc-tile-names.spec.ts` follows the rewritten steps (the
 old name's tick, the bracketed headings, „Cadastru și carte funciară" among the old names). Green on the
 runner, `20261005T052540Z-18394` on `d2752d7` with the slice's tree.
+
+**2026-10-07 — Slice #38.33, steps 1–2 rewritten.** The CVC's four type tiles became five (Preț și
+plată, Obiectul vânzării, Carte funciară, Declarații și garanții, Taxe și cheltuieli) and a stored old
+tile now stands for one or more new ones; „Părți" is new. Step 3's fees are as before, without the
+issuer, number and date (on „Identificarea actului" since #38.32). The spec changed with it.
