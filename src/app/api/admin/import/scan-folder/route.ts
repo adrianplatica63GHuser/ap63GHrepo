@@ -37,7 +37,8 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const CLASSIFY_MODEL = "claude-haiku-4-5-20251001";
+// Slice #38.40: from @/lib/ai/models, which „Setări → AI" reads.
+import { CLASSIFY_MODEL } from "@/lib/ai/models";
 
 type ClassifyResult = {
   classifiedLabel: string;

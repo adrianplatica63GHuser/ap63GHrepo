@@ -6,12 +6,16 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
-import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
+import { parseTimeFrameDraft } from "@/lib/time-frames/config";
+import { TIME_FRAME_GROUPS, exampleValue } from "@/lib/time-frames/groups";
+import type { SystemStatus } from "@/lib/settings/system-status";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
-/** Slice #37.35: Setări's three tiles, 3 units each — fixed, not tickable (Ask first). */
+/** Slice #37.35: Setări's tiles, 3 units each — fixed, not tickable (Ask first). */
 const SETTINGS_TILE_UNITS = 3;
+/** Slice #38.40: „Praguri de timp" is four groups with an example under each threshold — one unit wider. */
+const TIME_FRAMES_UNITS = 4;
 
 // ---------------------------------------------------------------------------
 // Locale helper — read the current cookie locale so we can pick _en vs _ro
@@ -70,11 +74,13 @@ function TimeFramesPanel() {
   const isDirty = Object.keys(drafts).length > 0;
 
   // Build ordered rows from the server response, preserving canonical key order.
-  const ordered: TimeFrameRow[] = rows
-    ? (TIME_FRAME_KEYS
-        .map((k) => rows.find((r) => r.key === k))
-        .filter((r): r is TimeFrameRow => r !== undefined))
-    : [];
+  // Slice #38.40: grouped by where each threshold acts (`TIME_FRAME_GROUPS`).
+  const grouped = TIME_FRAME_GROUPS.map((g) => ({
+    id: g.id,
+    rows: g.keys
+      .map((k) => rows?.find((r) => r.key === k))
+      .filter((r): r is TimeFrameRow => r !== undefined),
+  })).filter((g) => g.rows.length > 0);
 
   async function handleSave() {
     const settings: { key: string; value: number }[] = [];
@@ -137,7 +143,7 @@ function TimeFramesPanel() {
   }
 
   return (
-    <section {...screenPanel("time-frames", SETTINGS_TILE_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("time-frames", TIME_FRAMES_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionTimeFrames")}</h2>
 
       {isLoading && (
@@ -149,8 +155,12 @@ function TimeFramesPanel() {
 
       {!isLoading && !isError && (
         <>
-          <div className="flex flex-col gap-3">
-            {ordered.map((row) => {
+          {grouped.map((group) => (
+          <div key={group.id} className="flex flex-col gap-3" data-time-frame-group={group.id}>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
+              {t(`timeFrames.groups.${group.id}`)}
+            </h3>
+            {group.rows.map((row) => {
               const label = isRo ? row.labelRo : row.labelEn;
               const desc  = isRo ? row.descriptionRo : row.descriptionEn;
               const val   = draftValue(row.key, row.value);
@@ -184,10 +194,20 @@ function TimeFramesPanel() {
                       {t(`timeFrames.unit.${row.unit}` as Parameters<typeof t>[0])}
                     </span>
                   </div>
+                  {/* Slice #38.40: what the value does, with the value being edited. */}
+                  <p className="text-xs text-ink dark:text-zinc-300" data-time-frame-example={row.key}>
+                    <span className="text-fade">{t("timeFrames.example")}</span>{" "}
+                    {t(`timeFrames.examples.${row.key}` as Parameters<typeof t>[0], {
+                      duration: t(`timeFrames.duration.${row.unit}` as Parameters<typeof t>[0], {
+                        count: exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseTimeFrameDraft),
+                      }),
+                    })}
+                  </p>
                 </div>
               );
             })}
           </div>
+          ))}
 
           {saveError && (
             <p className="text-sm text-red-500">{saveError}</p>
@@ -228,16 +248,148 @@ function TimeFramesPanel() {
 // Root component
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Copii de siguranță, AI, Despre                                (Slice #38.40)
+// ---------------------------------------------------------------------------
+
+async function fetchSystem(): Promise<SystemStatus> {
+  const res = await fetch("/api/settings/system");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as SystemStatus;
+}
+
+/** A date and time the way the rest of the archive writes one: local, day first. */
+function when(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("ro-RO", { dateStyle: "short", timeStyle: "short" });
+}
+
+function megabytes(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toLocaleString("ro-RO", { maximumFractionDigits: 1 })} MB`;
+}
+
+function Tile({ name, title, children }: { name: string; title: string; children: React.ReactNode }) {
+  return (
+    <section {...screenPanel(name, SETTINGS_TILE_UNITS)} aria-label={title} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-3">
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function SystemTiles() {
+  const t = useTranslations("settings");
+  const { data, isLoading, isError } = useQuery({ queryKey: ["settings-system"], queryFn: fetchSystem });
+  const status = isLoading ? (
+    <p className="text-sm text-fade">{t("system.loading")}</p>
+  ) : isError || !data ? (
+    <p role="alert" className="text-sm text-red-500">{t("system.loadError")}</p>
+  ) : null;
+
+  const backups = data?.backups;
+  return (
+    <>
+      <Tile name="settings-backups" title={t("sections.backups")}>
+        {status ?? (backups && (
+          <div className="flex flex-col gap-3 text-sm">
+            <p className="text-xs text-fade">{t("backups.intro")}</p>
+            {!backups.reachable ? (
+              <div className="flex flex-col gap-1" data-backups="unreachable">
+                <p className="text-ink">{t("backups.unreachable")}</p>
+                <p className="font-mono text-xs text-fade break-words">{backups.why}</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-0.5" data-backups="last">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("backups.lastBackup")}</h3>
+                  {backups.lastBackup ? (
+                    <>
+                      <p className="text-ink">{when(backups.lastBackup.at)}</p>
+                      <p className="text-xs text-fade">{t("backups.kept", { count: backups.count })}</p>
+                      {backups.lastBackup.latestMigration && (
+                        <p className="text-xs text-fade">{t("backups.schema", { migration: backups.lastBackup.latestMigration })}</p>
+                      )}
+                      {backups.lastBackup.dumpBytes !== null && (
+                        <p className="text-xs text-fade">{t("backups.size", { size: megabytes(backups.lastBackup.dumpBytes) })}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-fade">{t("backups.noBackup")}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-0.5" data-backups="drill">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("backups.lastDrill")}</h3>
+                  {backups.lastDrill ? (
+                    <>
+                      <p className="text-ink">
+                        <span
+                          data-drill-verdict={backups.lastDrill.verdict}
+                          className={backups.lastDrill.verdict === "passed" ? "font-medium text-emerald-700 dark:text-emerald-400" : "font-medium text-red-600 dark:text-red-400"}
+                        >
+                          {t(`backups.verdict.${backups.lastDrill.verdict}`)}
+                        </span>
+                        {" — "}{when(backups.lastDrill.at)}
+                      </p>
+                      <p className="text-xs text-fade">{t("backups.drillOf", { backup: backups.lastDrill.backup })}</p>
+                      <p className="font-mono text-xs text-fade break-words">{backups.lastDrill.line}</p>
+                    </>
+                  ) : (
+                    <p className="text-fade">{t("backups.noDrill")}</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </Tile>
+
+      <Tile name="settings-ai" title={t("sections.ai")}>
+        {status ?? (data && (
+          <div className="flex flex-col gap-2 text-sm">
+            <p className="text-xs text-fade">{t("ai.intro")}</p>
+            <dl className="flex flex-col gap-1.5">
+              {data.ai.models.map((m) => (
+                <div key={m.use} className="flex flex-col" data-ai-use={m.use}>
+                  <dt className="text-xs text-fade">{t(`ai.uses.${m.use}`)}</dt>
+                  <dd className="font-mono text-xs text-ink">{m.model}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </Tile>
+
+      <Tile name="settings-about" title={t("sections.about")}>
+        {status ?? (data && (
+          <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-sm" data-about="">
+            <dt className="text-fade">{t("about.version")}</dt>
+            <dd className="text-ink">{data.about.version}</dd>
+            <dt className="text-fade">{t("about.commit")}</dt>
+            <dd className="font-mono text-ink">{data.about.commit ?? "—"}</dd>
+            <dt className="text-fade">{t("about.environment")}</dt>
+            <dd className="text-ink">{t(`about.environments.${data.about.environment}`)}</dd>
+            <dt className="text-fade">{t("about.database")}</dt>
+            <dd className="font-mono text-ink break-words">
+              {data.about.database ? `${data.about.database.name} @ ${data.about.database.host}` : "—"}
+            </dd>
+          </dl>
+        ))}
+      </Tile>
+    </>
+  );
+}
+
 export function SettingsView() {
   return (
-    // Slice #37.22: three panels in a row that wraps — the window decides how
-    // many sit side by side, never how wide one is. Slice #37.35: three tiles of
-    // whole units on the screen's unit row.
-    <UnitRow units={[SETTINGS_TILE_UNITS]}>
+    // Slice #37.22: panels in a row that wraps — the window decides how many sit
+    // side by side, never how wide one is. Slice #38.40: four sections —
+    // „Praguri de timp" (four units, its four groups), then „Copii de siguranță",
+    // „AI" and „Despre" (three each).
+    <UnitRow units={[TIME_FRAMES_UNITS, SETTINGS_TILE_UNITS]}>
       {/* Slice #38.20: no „Altele" — Grupuri, Ștampile and Etichete are in the sidebar's
           „Administrare", which is where a screen is found. */}
-      {/* ── Time Frames ── */}
       <TimeFramesPanel />
+      <SystemTiles />
 
       {/* Slice #38.22: the developer-notes panel is gone from every build; its note is in
           docs/claude/DEVELOPER-NOTES.md. */}

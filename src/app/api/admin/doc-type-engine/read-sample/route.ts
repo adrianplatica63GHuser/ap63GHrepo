@@ -86,7 +86,8 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
  * will do afterwards. A different model here would distil a form against
  * evidence the extraction never sees.
  */
-const EXTRACT_MODEL = "claude-sonnet-4-6";
+// Slice #38.40: the extraction's own constant now, not a second spelling of it.
+import { EXTRACT_MODEL } from "@/lib/ai/models";
 const DISCOVER_MAX_TOKENS = 16384;
 
 /**

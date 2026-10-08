@@ -88,7 +88,8 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+// Slice #38.40: the default and the ANTHROPIC_VISION_MODEL override, from @/lib/ai/models.
+import { idCardModel } from "@/lib/ai/models";
 
 type ExtractionField =
   | "lastName"
@@ -326,7 +327,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const buffer = Buffer.from(await imageField.arrayBuffer());
   const base64 = buffer.toString("base64");
 
-  const model = process.env.ANTHROPIC_VISION_MODEL || DEFAULT_MODEL;
+  const model = idCardModel();
 
   let anthropicRes: globalThis.Response;
   try {

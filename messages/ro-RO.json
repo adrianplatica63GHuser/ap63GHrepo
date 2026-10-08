@@ -3699,7 +3699,7 @@
   },
   "settings": {
     "pageTitle": "Setări",
-    "sectionTimeFrames": "Intervale de timp",
+    "sectionTimeFrames": "Praguri de timp",
     "timeFrames": {
       "loading": "Se încarcă…",
       "loadError": "Eroare la încărcarea setărilor",
@@ -3714,6 +3714,78 @@
         "hours": "ore",
         "minutes": "minute",
         "months": "luni"
+      },
+      "groups": {
+        "dashboard": "Tablou de bord",
+        "documents": "Acte",
+        "persons": "Persoane",
+        "recency": "Insigna „Nou!”"
+      },
+      "duration": {
+        "days": "{count, plural, one {o zi} few {# zile} other {# de zile}}",
+        "hours": "{count, plural, one {o oră} few {# ore} other {# de ore}}",
+        "minutes": "{count, plural, one {un minut} few {# minute} other {# de minute}}",
+        "months": "{count, plural, one {o lună} few {# luni} other {# de luni}}"
+      },
+      "examples": {
+        "dashboard_recent_days": "Pe Tablou de bord, «Recente» numără ce s-a adăugat sau schimbat în ultimele {duration}.",
+        "dashboard_expiring_docs": "Tabloul de bord arată actele care expiră în următoarele {duration}.",
+        "dashboard_expiring_amber": "Un act care expiră în cel mult {duration} apare cu chihlimbar pe Tablou de bord.",
+        "dashboard_stale_metadata": "Metadatele neactualizate de {duration} sunt numărate pe Tablou de bord ca învechite.",
+        "documents_expiring_soon": "Un act apare «expiră curând» cu {duration} înainte.",
+        "metadata_review_warning": "Un câmp din «Meta info» neverificat de {duration} arată un avertisment.",
+        "id_card_expiring_soon": "O carte de identitate e semnalată «expiră curând» cu {duration} înainte de data expirării.",
+        "recency_badge_red": "O înregistrare schimbată acum cel mult {duration} poartă insigna «Nou!» roșie.",
+        "recency_badge_amber": "O înregistrare schimbată acum cel mult {duration} poartă insigna «Nou!» chihlimbar.",
+        "recency_badge_window": "La {duration} după ultima schimbare, insigna «Nou!» dispare."
+      },
+      "example": "Exemplu:"
+    },
+    "sections": {
+      "timeFrames": "Praguri de timp",
+      "backups": "Copii de siguranță",
+      "ai": "AI",
+      "about": "Despre"
+    },
+    "system": {
+      "loading": "Se încarcă…",
+      "loadError": "Informațiile nu s-au putut încărca."
+    },
+    "backups": {
+      "intro": "Copiile le face runner-ul de teste, zilnic, iar proba de restaurare lunar. Aici doar se citesc.",
+      "unreachable": "Copiile de siguranță nu pot fi citite de aici: sunt pe laptopul pe care rulează runner-ul.",
+      "lastBackup": "Ultima copie",
+      "noBackup": "Nicio copie încă.",
+      "kept": "{count, plural, one {o copie păstrată} few {# copii păstrate} other {# de copii păstrate}} (14 zile)",
+      "schema": "Schema: {migration}",
+      "size": "Mărime: {size}",
+      "lastDrill": "Ultima probă de restaurare",
+      "noDrill": "Nicio probă încă.",
+      "drillOf": "pe copia din {backup}",
+      "verdict": {
+        "passed": "Reușită",
+        "failed": "Eșuată",
+        "error": "Întreruptă"
+      }
+    },
+    "ai": {
+      "intro": "Modelele cu care aplicația face citirile plătite.",
+      "uses": {
+        "extract": "Extragerea datelor din acte",
+        "idCard": "Citirea cărților de identitate",
+        "classify": "Clasificarea fișierelor la import",
+        "cluster": "Gruparea mostrelor (Funcții)"
+      }
+    },
+    "about": {
+      "version": "Versiune",
+      "commit": "Commit",
+      "environment": "Mediu",
+      "database": "Bază de date",
+      "environments": {
+        "DEV": "Dezvoltare (laptopul lui Adrian)",
+        "UAT": "UAT (fără autentificare)",
+        "VERCEL": "Vercel"
       }
     }
   },

@@ -53,7 +53,9 @@ import type { DocumentTemplateField } from "@/lib/documents/template-fields";
 import { unmappedLabel } from "@/lib/documents/unmapped-labels";
 
 export const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-export const EXTRACT_MODEL = "claude-sonnet-4-6";
+// Slice #38.40: the model lives with every other paid model, so „Setări → AI" reads the same name.
+export { EXTRACT_MODEL } from "@/lib/ai/models";
+import { EXTRACT_MODEL } from "@/lib/ai/models";
 export const ANTHROPIC_VERSION = "2023-06-01";
 export const PDF_BETA_HEADER = "pdfs-2024-09-25";
 

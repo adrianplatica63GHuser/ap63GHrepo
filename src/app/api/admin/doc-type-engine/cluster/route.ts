@@ -59,7 +59,8 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const CLUSTER_MODEL = "claude-sonnet-4-6";
+// Slice #38.40: from @/lib/ai/models, which „Setări → AI" reads.
+import { CLUSTER_MODEL } from "@/lib/ai/models";
 
 /**
  * ⚠️ **THE SAME BUDGET AS A READ, BECAUSE THE SAME SIXTY-SECOND CEILING APPLIES

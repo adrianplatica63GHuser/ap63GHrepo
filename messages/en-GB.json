@@ -3699,7 +3699,7 @@
   },
   "settings": {
     "pageTitle": "Settings",
-    "sectionTimeFrames": "Time frames",
+    "sectionTimeFrames": "Time thresholds",
     "timeFrames": {
       "loading": "Loading…",
       "loadError": "Failed to load settings",
@@ -3714,6 +3714,78 @@
         "hours": "hours",
         "minutes": "minutes",
         "months": "months"
+      },
+      "groups": {
+        "dashboard": "Dashboard",
+        "documents": "Documents",
+        "persons": "Persons",
+        "recency": "The „New!” badge"
+      },
+      "duration": {
+        "days": "{count, plural, one {one day} other {# days}}",
+        "hours": "{count, plural, one {one hour} other {# hours}}",
+        "minutes": "{count, plural, one {one minute} other {# minutes}}",
+        "months": "{count, plural, one {one month} other {# months}}"
+      },
+      "examples": {
+        "dashboard_recent_days": "On the Dashboard, «Recent» counts what was added or changed in the last {duration}.",
+        "dashboard_expiring_docs": "The Dashboard shows the documents that expire in the next {duration}.",
+        "dashboard_expiring_amber": "A document that expires within {duration} shows amber on the Dashboard.",
+        "dashboard_stale_metadata": "Metadata not updated for {duration} is counted as stale on the Dashboard.",
+        "documents_expiring_soon": "A document shows «expiring soon» {duration} ahead.",
+        "metadata_review_warning": "A «Meta info» field not reviewed for {duration} shows a warning.",
+        "id_card_expiring_soon": "An identity card is flagged «expiring soon» {duration} before it expires.",
+        "recency_badge_red": "A record changed at most {duration} ago carries the red «New!» badge.",
+        "recency_badge_amber": "A record changed at most {duration} ago carries the amber «New!» badge.",
+        "recency_badge_window": "{duration} after the last change, the «New!» badge goes."
+      },
+      "example": "Example:"
+    },
+    "sections": {
+      "timeFrames": "Time thresholds",
+      "backups": "Backups",
+      "ai": "AI",
+      "about": "About"
+    },
+    "system": {
+      "loading": "Loading…",
+      "loadError": "The information could not be loaded."
+    },
+    "backups": {
+      "intro": "The test runner makes the backups daily and the restore drill monthly. They are only read here.",
+      "unreachable": "The backups cannot be read from here: they are on the laptop the runner runs on.",
+      "lastBackup": "Last backup",
+      "noBackup": "No backup yet.",
+      "kept": "{count, plural, one {one backup kept} other {# backups kept}} (14 days)",
+      "schema": "Schema: {migration}",
+      "size": "Size: {size}",
+      "lastDrill": "Last restore drill",
+      "noDrill": "No drill yet.",
+      "drillOf": "on the backup of {backup}",
+      "verdict": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "error": "Interrupted"
+      }
+    },
+    "ai": {
+      "intro": "The models the application makes its paid reads with.",
+      "uses": {
+        "extract": "Extracting a document's data",
+        "idCard": "Reading identity cards",
+        "classify": "Classifying files at import",
+        "cluster": "Grouping samples (Functions)"
+      }
+    },
+    "about": {
+      "version": "Version",
+      "commit": "Commit",
+      "environment": "Environment",
+      "database": "Database",
+      "environments": {
+        "DEV": "Development (Adrian's laptop)",
+        "UAT": "UAT (no sign-in)",
+        "VERCEL": "Vercel"
       }
     }
   },
