@@ -20,7 +20,7 @@ order the links were made is the defect this case exists to catch.
 ## Before you start
 
 - TC-AUTH-01 is green.
-- On „Roluri pe Document", Contract de Vânzare's „Vânzător" and „Cumpărător" have „Deține cotă"
+- In the role panels (Date de referință → Roluri), Contract de Vânzare's „Vânzător" and „Cumpărător" have „Deține cotă"
   ticked and its „Notar" does not.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: the persons
   „Ion TC-DOC-19" and „Maria TC-DOC-19", the company „TC-DOC-19 Firmă SRL" and a Contract de Vânzare

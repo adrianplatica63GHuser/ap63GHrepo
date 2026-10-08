@@ -40,7 +40,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat / Mandant)` with the building, `TC-PERS-05 Teren (Proprietar / Titular de drept real)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
-| 2 | Presses „Relația" on `TC-PERS-05 CVC` | A bubble: `Rol în act: „Vânzător”` |
+| 2 | Presses „Relația" on `TC-PERS-05 CVC` | A bubble: `Rol: „Vânzător”` |
 | 3 | Clicks the tile's title, outside the bubble | It goes |
 | 4 | Selects Maria's radio | Only hers is selected; the three „Asociază …" are not offered |
 | 5 | Presses „Dezasociază" | Maria's row goes, and with it its group; the company, the property and the contract stay |
@@ -48,7 +48,7 @@ Nothing.
 | 7 | Presses „Asociază proprietate", then „Anulează" | „Asociere proprietate"; back with „Legături" on screen |
 | 8 | Presses „Asociază act", then „Anulează" | „Asociere act"; back with „Legături" on screen |
 | 9 | Opens `TC-PERS-05 Firmă SRL`, tile „Legături" | Two rows, one line each: `Ion TC-PERS-05 (Reprezentant legal / Mandatar)` with the person icon, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and „Relația" |
-| 10 | Presses „Relația" on the contract, then Esc | `Rol în act: „Cumpărător”`; Esc hides it |
+| 10 | Presses „Relația" on the contract, then Esc | `Rol: „Cumpărător”`; Esc hides it |
 | 11 | Selects the contract's radio, presses „Dezasociază" | The contract's row and group go; Ion stays |
 | 12 | Presses each „Asociază …", then „Anulează" | The same three screens; back on the company with „Legături" on screen each time |
 
@@ -67,13 +67,13 @@ written from it.
   the last three, one heading (the tile's); the icons `lucide-user`, `lucide-building2`,
   `lucide-map`, `lucide-file-text`; every row 34 px; the share slot empty on every row, the relation
   slot filled only on the contract's.
-- Steps 2–3: `Rol în act: „Vânzător”`; a press on the tile's title hid it.
+- Steps 2–3: `Rol: „Vânzător”`; a press on the tile's title hid it.
 - Steps 4–5: one radio checked, Maria's, the three „Asociază …" disabled; after „Dezasociază" the
   groups judicial · property · document. „Dezasociază" was found again after the selection: the
   button is a new element once enabled (FU-291).
 - Steps 6–8: `/associate-person` → `?tab=related`, `/associate-property` → `?tab=properties`,
   `/associate-document` → `?tab=document`, „Corelate" on screen each time.
-- Steps 9–12: on the company, natural · document; `Rol în act: „Cumpărător”`, gone on Esc; after
+- Steps 9–12: on the company, natural · document; `Rol: „Cumpărător”`, gone on Esc; after
   „Dezasociază" only Ion; the three screens and back as on Ion.
 - The five records deleted (`DELETE` 204 on each), Căutare globală for `TC-PERS-05` empty.
 

@@ -39,8 +39,8 @@ Both are deleted at the end.
 |---|---|---|
 | 1 | Creates the company and the person above | Each on its list, badged „Nou!", with no system ID |
 | 2 | Opens the company and ticks the tile **„Legături"** („Persoane corelate" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
-| 3 | Presses „Asociază persoană" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Tip relație"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
-| 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `Ion TC-ASSOC-11`, „Fizică" — and chooses „Tip relație" **„Reprezentant legal / Mandatar"** | The hint goes away |
+| 3 | Presses „Asociază persoană" | „Asociere persoană corelată" at `/judicial-persons/[id]/associate-person`, the company's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with a tick box on each row, and the hint „Selectați cel puțin o persoană". **„Rol"** offering „Reprezentant legal / Mandatar", and beside it „Rolul pe care persoana bifată îl are față de TC-ASSOC-11 Firmă de test SRL." |
+| 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `Ion TC-ASSOC-11`, „Fizică" — and chooses „Rol" **„Reprezentant legal / Mandatar"** | The hint goes away |
 | 5 | Presses „Asociază selecția" | Back on the company's „Legături" (`?tab=related`): one line, no column headings — `Ion TC-ASSOC-11 (`**`Reprezentant legal / Mandatar`**`)` — and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The person, read-only (`/natural-persons/[id]?readonly=true`) |
 | 7 | Ticks the person's tile **„Legături"** („Persoane" before #37.67) | One line: `TC-ASSOC-11 Firmă de test SRL (`**`Reprezentat / Mandant`**`)`, „Vizualizare" |

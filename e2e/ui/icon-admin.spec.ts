@@ -182,10 +182,10 @@ test.describe("TC-ICON-05 — redenumită, fuzionată, ștampilată, cu pictogra
       // Pictures (#37.46), not steps: „Tipuri de Document"'s modal, „Calcul", „Distilare Tipizate".
       await page.goto("/admin/value-lists");
       await page.getByRole("button", { name: "Tipuri de Document", exact: true }).click();
-      const roles = page.getByRole("button", { name: "Roluri pe Document", exact: true });
-      await expect(roles).toBeVisible({ timeout: 30_000 });
-      expect(await iconOf(roles)).toBe("lucide-users");
-      expect(await iconOf(page.getByRole("button", { name: /^Formular \(\d+\)$/ }).first())).toBe("lucide-clipboard-list");
+      // Slice #38.36: „Roluri pe Document" is gone from this toolbar — a role's types are in its own panel.
+      const form = page.getByRole("button", { name: /^Formular \(\d+\)$/ }).first();
+      await expect(form).toBeVisible({ timeout: 30_000 });
+      expect(await iconOf(form)).toBe("lucide-clipboard-list");
       await photograph(page, "value-list-modal", () => moveAway(page));
 
       await page.goto("/admin/calculation");

@@ -64,8 +64,8 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();
-      // „Tip relație" offers the representative, and says whose role it is (#37.28).
-      const roleSelect = page.getByLabel("Tip relație", { exact: true });
+      // „Rol" offers the representative, and says whose role it is (#37.28).
+      const roleSelect = page.getByLabel("Rol", { exact: true });
       await expect(roleSelect).toBeVisible();
       await expect(roleSelect.locator("option", { hasText: "Reprezentant legal / Mandatar" })).toHaveCount(1);
       await expect(page.getByText(`Rolul pe care persoana bifată îl are față de ${COMPANY}.`)).toBeVisible();

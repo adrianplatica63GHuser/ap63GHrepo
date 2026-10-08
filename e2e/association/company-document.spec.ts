@@ -94,7 +94,7 @@ test.describe("TC-ASSOC-10 — Firmă asociată unui act, din ecranul firmei", (
       await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
       await expectOneLine(linked);
       await linked.getByRole("button", { name: "Relația", exact: true }).click();
-      await expect(page.getByRole("status").filter({ hasText: "Rol în act" })).toHaveText("Rol în act: „Cumpărător”");
+      await expect(page.getByRole("status").filter({ hasText: "Rol: „" })).toHaveText("Rol: „Cumpărător”");
       await page.keyboard.press("Escape");
 
       // Step 6 — „Vizualizare": the document, read-only.

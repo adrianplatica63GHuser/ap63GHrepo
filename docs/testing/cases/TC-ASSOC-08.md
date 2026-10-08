@@ -42,7 +42,7 @@ Two properties, typed by hand, „Poreclă" only: **`TC-ASSOC-08 Teren întreg`*
 |---|---|---|
 | 1 | Creates both properties: „Proprietăți" → „Adaugă proprietate" → „Introducere manuală", types the „Poreclă", „Salvează" | Two rows badged „Nou!" |
 | 2 | Opens `TC-ASSOC-08 Parcelă inclusă`, tile **„Legături"** („Proprietăți corelate" before #37.66, „Asocieri" before #37.30) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
-| 3 | Presses „Asociază proprietate" | „Asociere proprietate corelată" at `/properties/[id]/associate-reference`, the property's name under it, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every other property, and a select „Tip relație": „— fără relație —", „Adiacent", „Inclus în", „Contiguu", „Subdiviziune a", „Suprapus cu", „Acces prin", „Alipit de" |
+| 3 | Presses „Asociază proprietate" | „Asociere proprietate corelată" at `/properties/[id]/associate-reference`, the property's name under it, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every other property, and a select „Tip legătură": „— fără relație —", „Adiacent", „Inclus în", „Contiguu", „Subdiviziune a", „Suprapus cu", „Acces prin", „Alipit de" |
 | 4 | Types `TC-ASSOC-08` into „Căutare", ticks `TC-ASSOC-08 Teren întreg`, chooses **„Inclus în"** | Both selected |
 | 5 | Presses „Asociază selecția" | Back on the part's „Legături" (`?tab=related`): one line, `TC-ASSOC-08 Teren întreg`, „Relația", „Vizualizare"; „Relația" shows **„această proprietate „Inclus în” TC-ASSOC-08 Teren întreg"** (the whole's name), and Esc hides it |
 | 6 | Opens `TC-ASSOC-08 Teren întreg`, tile „Legături", and presses the row's „Relația" | One row, `TC-ASSOC-08 Parcelă inclusă`; „Relația" shows **„TC-ASSOC-08 Parcelă inclusă „Inclus în” această proprietate"** (the part's name), and a click outside hides it — the whole is the one that includes it |
@@ -71,7 +71,7 @@ Steps 2–6 were then driven on the screens for each part.
 - **Run 2:** whole `PROP02921`; parts `PROP02922` (before) and `PROP02923` (after). The same
   sentences, with those codes.
 - Steps 2–4 held as written: „Nicio proprietate corelată"; „Asociere proprietate corelată" with
-  „Căutare", Cod · Denumire and the eight options of „Tip relație" in the order the case gives.
+  „Căutare", Cod · Denumire and the eight options of „Tip legătură" in the order the case gives.
   The „Asocieri" table's columns are Denumire · Tip relație.
 - Both runs' records were removed: „Dezasociază" on the whole's „Asocieri" (the tab then read
   „Nicio proprietate corelată"), then every property through `DELETE /api/properties/[id]` (204).

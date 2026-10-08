@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-07 — Cota-parte doar pentru rolurile care dețin o cotă: un PAD cu un Proiectant, un CVC cu un Vânzător
- * Source: docs/testing/cases/TC-DOC-07.md, „Last green" 2026-10-07
+ * Source: docs/testing/cases/TC-DOC-07.md, „Last green" 2026-10-08
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -22,6 +22,9 @@
  *   - Slice #37.65: a Document's „Persoane", „Proprietăți" and „Acte corelate"
  *     are one tile, „Corelate", with „Asociază persoană", „Asociază
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
+ *   - Slice #38.36: „Roluri pe Document" is gone; „Deține cotă" is ticked in the
+ *     role's own panel, Date de referință → „Roluri" → „Editează" (the case's
+ *     steps 3, 4 and 7 as corrected on 2026-10-08).
  *   - Slice #38.33: a CVC's „Vânzător" is on its „Părți", not on „Legături" (the
  *     case's step 2 as corrected on 2026-10-07); the PAD has no „Părți".
  */
@@ -71,14 +74,16 @@ async function personsRow(page: Page, documentId: string, tileName = "Legături"
 const boxes = (row: Locator) => row.locator("[data-share-panel]").locator('input[type="text"], select');
 const shareButton = (row: Locator) => row.getByRole("button", { name: "Cotă", exact: true });
 
-async function openRolesScreen(page: Page): Promise<Locator> {
-  await page.goto("/admin/value-lists");
-  await page.getByRole("button", { name: "Tipuri de Document", exact: true }).click();
-  await page.getByRole("button", { name: "Roluri pe Document", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Roluri pe Document" });
-  await expect(dialog).toBeVisible({ timeout: 30_000 });
-  await expect(dialog.locator("tbody tr").first()).toBeVisible({ timeout: 30_000 });
-  return dialog;
+/** Slice #38.36: Date de referință → „Roluri", the role's „Editează": its one panel, its document types under „Act". */
+async function openRolePanel(page: Page, role: string): Promise<Locator> {
+  await page.goto("/admin/value-lists?list=person-roles");
+  const list = page.getByRole("region", { name: "Roluri", exact: true });
+  // The name is the row's first cell, exactly — „Vânzător" is also Cumpărător's converse, in another cell.
+  const row = list.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^${role.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}$`) }) });
+  await row.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
+  const panel = list.locator("[data-role-scope]");
+  await expect(panel.locator("[data-role-doc-types]")).toBeVisible({ timeout: 30_000 });
+  return panel;
 }
 
 const tick = (dialog: Locator, pair: Pair) =>
@@ -136,18 +141,20 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await expect(boxes(row).first()).toHaveValue("");
       await photograph(page, "cvc-persons", page.getByRole("region", { name: "Părți", exact: true }));
 
-      // Step 3 — „Roluri pe Document": Tip document · Rol persoană · Deține cotă.
-      let dialog = await openRolesScreen(page);
-      await expect(dialog.getByRole("columnheader", { name: "Deține cotă" })).toBeVisible();
-      await expect(tick(dialog, P)).not.toBeChecked();
+      // Step 3 — the role's panel (#38.36): „Act" pressed, the PAD's „Deține cotă" unticked;
+      // Vânzător's panel, the CVC's ticked.
+      let dialog = await openRolePanel(page, V.personRoleName);
+      await expect(dialog.getByRole("button", { name: "Act", exact: true })).toHaveAttribute("aria-pressed", "true");
       await expect(tick(dialog, V)).toBeChecked();
-      await photograph(page, "roles-on-document", dialog);
+      dialog = await openRolePanel(page, P.personRoleName);
+      await expect(tick(dialog, P)).not.toBeChecked();
+      await photograph(page, "role-panel", dialog);
 
-      // Step 4 — tick it; it stays after the screen is opened again.
+      // Step 4 — tick it; it stays after the panel is opened again.
       await tick(dialog, P).check();
       await expect(tick(dialog, P)).toBeChecked();
       await expect.poll(async () => (await pairs(page)).find((p) => p.id === P.id)?.holdsShare, { timeout: 15_000 }).toBe(true);
-      dialog = await openRolesScreen(page);
+      dialog = await openRolePanel(page, P.personRoleName);
       await expect(tick(dialog, P)).toBeChecked();
 
       // Step 5 — the PAD: the three boxes, empty.
@@ -163,7 +170,7 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await expect(parte).toHaveValue("50", { timeout: 15_000 });
 
       // Step 7 — untick; the boxes stay, read-only, `50` kept, the hint under them.
-      dialog = await openRolesScreen(page);
+      dialog = await openRolePanel(page, P.personRoleName);
       await tick(dialog, P).uncheck();
       await expect(tick(dialog, P)).not.toBeChecked();
       await expect.poll(async () => (await pairs(page)).find((p) => p.id === P.id)?.holdsShare, { timeout: 15_000 }).toBe(false);

@@ -69,7 +69,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
-  // Step 3 — „Asociere proprietate corelată": „Căutare", Denumire, „Tip relație" (#37.57: no „Cod").
+  // Step 3 — „Asociere proprietate corelată": „Căutare", Denumire, „Tip legătură" (#37.57: no „Cod").
   await page.getByRole("button", { name: "Asociază proprietate", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/properties/${part.id}/associate-reference$`), { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Asociere proprietate corelată" })).toBeVisible({ timeout: 30_000 });
@@ -80,7 +80,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   }
   // The select renders only once GET /api/admin/property-property-roles has
   // answered, and on a cold server that route compiles on this first request.
-  const relation = page.getByRole("combobox", { name: "Tip relație", exact: true });
+  const relation = page.getByRole("combobox", { name: "Tip legătură", exact: true });
   await expect(relation.locator("option")).toHaveText(ROLES, { timeout: 30_000 });
 
   // Step 4 — the whole's one row, ticked; „Inclus în".
@@ -122,7 +122,7 @@ test.describe("TC-ASSOC-08 — Proprietate inclusă în alta, citită din ambele
     // more than test.slow()'s tripled default.
     test.setTimeout(300_000);
     await removeLeftovers(page.request, MARK);
-    // Ask for the roles once before any screen does. „Tip relație" renders only
+    // Ask for the roles once before any screen does. „Tip legătură" renders only
     // after GET /api/admin/property-property-roles answers, and on a cold server
     // that route compiles on its first request — in a full run (20260927T113050Z-1886)
     // the compile outlasted the screen's wait. A request waits it out; the

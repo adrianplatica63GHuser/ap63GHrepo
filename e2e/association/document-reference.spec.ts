@@ -115,7 +115,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await cited.click();
       await expect(page.getByText("Înscrisuri citate în acest document")).toHaveCount(0);
 
-      // Step 4 — „Asociază": „Asociază Document", „Căutare", Cod · Tip · Titlu, „Tip relație".
+      // Step 4 — „Asociază": „Asociază Document", „Căutare", Cod · Tip · Titlu, „Tip legătură".
       await page.getByRole("button", { name: "Asociază act", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/documents/${certificateId}/associate-reference$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociază Document" })).toBeVisible({ timeout: 30_000 });
@@ -124,7 +124,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       for (const col of ["Tip", "Titlu"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
-      const relation = page.getByRole("combobox", { name: "Tip relație", exact: true });
+      const relation = page.getByRole("combobox", { name: "Tip legătură", exact: true });
       await expect(relation.locator("option")).toHaveText(ROLES);
 
       // Step 5 — the contract's one row, ticked; „Titlu anterior al".

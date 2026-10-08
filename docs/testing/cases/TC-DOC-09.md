@@ -26,7 +26,7 @@ panel closes is the defect this case exists to catch.
   „Ion TC-DOC-09", a PAD (Plan de amplasament și delimitare) „TC-DOC-09 PAD" and a Contract de
   Vânzare „TC-DOC-09 CVC"; the person associated to the PAD as „Proiectant / Consultant" and to the
   CVC as „Vânzător"; the PAD associated to the CVC as „Titlu anterior al" (posted from the PAD).
-- In „Roluri pe Document", PAD — „Proiectant / Consultant" has „Deține cotă" NOT ticked, Contract
+- In the role panels (Date de referință → Roluri), PAD — „Proiectant / Consultant" has „Deține cotă" NOT ticked, Contract
   de Vânzare — „Vânzător" has it ticked (migration_091).
 - Each screen is opened with `?tab=…`, which shows the tile for the visit without changing which
   tiles you keep ticked.

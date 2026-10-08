@@ -114,7 +114,7 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(linked.locator("[data-row-content]")).toHaveText(`${DOC_TITLE} (Contract de Vânzare)`);
       await expectOneLine(linked);
       await linked.getByRole("button", { name: "Relația", exact: true }).click();
-      await expect(page.getByRole("status").filter({ hasText: "Rol în act" })).toHaveText("Rol în act: „Cumpărător”");
+      await expect(page.getByRole("status").filter({ hasText: "Rol: „" })).toHaveText("Rol: „Cumpărător”");
       await page.keyboard.press("Escape");
 
       // Step 8 — „Vizualizare": the document, READ-ONLY.

@@ -19,7 +19,7 @@ TC-ASSOC-08 of property↔property ones.
 **How this family encodes direction (Slice #37.28).** `person_person` stores the pair in uuid
 order, an optional role from `lookup_person_role`, and since migration_088 `role_reads_a_to_b`,
 saying which of the two holds the role. On „Asociere persoană corelată" the role is the **ticked**
-person's, towards the person whose screen it is — the sentence under „Tip relație" says so. The
+person's, towards the person whose screen it is — the sentence under „Rol" says so. The
 other end shows the role's converse, stored on the role itself (Date de referință → Roluri
 Persoană → „Rol invers", „— bărbat", „— femeie"): the converse of „Părinte" is „Fiu" for a man,
 „Fiică" for a woman, and „Copil" when the gender is not set. Before #37.28 both ends showed the
@@ -45,8 +45,8 @@ Two natural persons, typed by hand, no CNP: „Nume" **`TC-ASSOC-09`**, „Prenu
 |---|---|---|
 | 1 | Creates both people: „Persoane Fizice" → „Adaugă persoană", types „Nume", „Prenume", chooses „Gen", „Salvează" | Two rows badged „Nou!", with no system ID |
 | 2 | Opens `Ana TC-ASSOC-09`, tile **„Legături"** („Persoane" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
-| 3 | Presses „Asociază persoană" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Tip relație"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
-| 4 | Ticks `Mihai TC-ASSOC-09`, chooses „Tip relație" **„Părinte"** | The hint goes away |
+| 3 | Presses „Asociază persoană" | „Asociere persoană corelată" at `/natural-persons/[id]/associate-person`, the person's name under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip listing every other person, the hint „Selectați cel puțin o persoană", **„Rol"** offering Soț, Soție, Părinte, Fiu, Fiică, Frate, Soră, and beside it „Rolul pe care persoana bifată îl are față de Ana TC-ASSOC-09." |
+| 4 | Ticks `Mihai TC-ASSOC-09`, chooses „Rol" **„Părinte"** | The hint goes away |
 | 5 | Presses „Asociază selecția" | Back on Ana's „Legături" (`?tab=related`): one line, no column headings — `Mihai TC-ASSOC-09 (`**`Părinte`**`)`, „Vizualizare" |
 | 6 | Opens `Mihai TC-ASSOC-09`, tile „Legături" | One line — `Ana TC-ASSOC-09 (`**`Fiică`**`)` (not „Părinte") |
 
@@ -68,13 +68,13 @@ result `20260925T205914Z-28808` on `7195b77` (23 tests); the spec is named in th
 
 **2026-09-25, second run (Slice #36.19) — `confirmed`: the file held line for line.**
 `PPERS01981` (Ana) and `PPERS01982` (Mihai), both typed in; Ana's „Asociere persoană corelată"
-showed Mihai alone, no „Tip relație", the hint gone on the tick; each end read the other with
+showed Mihai alone, no „Rol", the hint gone on the tick; each end read the other with
 „—". Removed with the radio and „Dezasociază" from Mihai's end, then „Șterge" and „Da" on
 each. Only this section was written.
 
 **2026-09-25 — driven for the first time, green (Slice #36.19).** `PPERS01979` (Ana) linked to
 `PPERS01980` (Mihai) from Ana's screen; each read the other with „—". Written from the code and
-corrected by the run in one place: the „Tip relație" select is not disabled or empty, it is
+corrected by the run in one place: the „Rol" select is not disabled or empty, it is
 **absent** — `associate-person-view.tsx` renders it only when there is a role to offer, and
 says nothing when there is none (FU-221). Removed with the radio and „Dezasociază", then both
 people through `DELETE /api/people/[id]`, the route „Șterge" → „Da" calls.

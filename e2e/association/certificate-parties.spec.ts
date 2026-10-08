@@ -153,7 +153,7 @@ test.describe("TC-ASSOC-12 — Defunctul și moștenitorul adăugați ca părți
         await expect(r).toHaveCount(1, { timeout: 15_000 });
         await expect(r.locator("[data-row-content]")).toHaveText(`${CERTIFICATE} (Certificat de Moștenitor)`);
         await r.getByRole("button", { name: "Relația", exact: true }).click();
-        await expect(page.getByRole("status").filter({ hasText: "Rol în act" })).toHaveText(`Rol în act: „${quality}”`); // FU-224
+        await expect(page.getByRole("status").filter({ hasText: "Rol: „" })).toHaveText(`Rol: „${quality}”`); // FU-224
         await page.keyboard.press("Escape");
       }
 

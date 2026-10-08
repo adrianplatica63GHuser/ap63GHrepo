@@ -6,13 +6,13 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-07 |
+| **Last green** | 2026-10-08 |
 
 ## What this proves
 
 On a Document's „Persoane", the three share values — „Cotă-parte", „Suprafață echivalentă (mp)" and
 „Mod de deținere" — appear only for a role that holds a share in the property on that document's
-type, and the tick that decides it („Deține cotă", in „Roluri pe Document") brings them back when
+type, and the tick that decides it („Deține cotă", in the role's panel under „Date de referință → Roluri") brings them back when
 it is set. Boxes on a Proiectant, or none on a Vânzător, is the defect this case exists to catch.
 
 ## Before you start
@@ -22,7 +22,7 @@ it is set. Boxes on a Proiectant, or none on a Vânzător, is the defect this ca
   „Ion TC-DOC-07", a PAD (Plan de amplasament și delimitare) „TC-DOC-07 PAD" and a Contract de
   Vânzare „TC-DOC-07 CVC"; the person associated to the PAD as „Proiectant / Consultant" and to the
   CVC as „Vânzător".
-- In „Roluri pe Document", the pair PAD — „Proiectant / Consultant" exists with „Deține cotă" NOT
+- In „Proiectant / Consultant"'s panel (Date de referință → Roluri), the PAD is listed with „Deține cotă" NOT
   ticked, and Contract de Vânzare — „Vânzător" with it ticked (migration_091).
 
 ## What Adrian is asked for
@@ -35,11 +35,11 @@ Nothing.
 |---|---|---|
 | 1 | Opens `TC-DOC-07 PAD`, tile „Legături" | One row, `Ion TC-DOC-07 (Proiectant / Consultant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
 | 2 | Opens `TC-DOC-07 CVC`, tile „Părți", and presses the row's „Cotă" | Under the heading „Vânzător", one row, `Ion TC-DOC-07 (Vânzător)` — and none on „Legături"; behind „Cotă" the three boxes, empty |
-| 3 | Opens „Date de referință" → „Tipuri de Document" → „Roluri pe Document" | A table Tip document · Rol persoană · Deține cotă; the PAD's „Proiectant / Consultant" unticked, Contract de Vânzare's „Vânzător" ticked |
-| 4 | Ticks „Deține cotă" on the PAD's „Proiectant / Consultant" | The tick stays after the screen is opened again |
+| 3 | Opens „Date de referință” → „Roluri”, „Editează” on „Vânzător”; then on „Proiectant / Consultant” | Vânzător's panel: „Act” pressed, „Contract de Vânzare” with „Deține cotă” ticked. Proiectant's panel: „Plan de Amplasament și Delimitare” with „Deține cotă” unticked |
+| 4 | Ticks „Deține cotă” on „Plan de Amplasament și Delimitare” in Proiectant's panel | The tick stays after the panel is opened again |
 | 5 | Opens `TC-DOC-07 PAD`, tile „Legături", and presses the row's „Cotă" | The row now has „Cotă", and behind it the three boxes, empty |
 | 6 | Types `50` into „Cotă-parte" and presses Enter | The value stays: `50` |
-| 7 | Unticks „Deține cotă" on the PAD's „Proiectant / Consultant" again, and opens `TC-DOC-07 PAD`, tile „Legături", „Cotă" | The three boxes are still there, greyed and not editable, `50` in „Cotă-parte", and under them „Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit." — nothing stored is hidden |
+| 7 | Unticks „Deține cotă" on „Plan de Amplasament și Delimitare" in Proiectant's panel again, and opens `TC-DOC-07 PAD`, tile „Legături", „Cotă" | The three boxes are still there, greyed and not editable, `50` in „Cotă-parte", and under them „Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit." — nothing stored is hidden |
 
 ## At the end — leaving things as they were found
 
@@ -48,6 +48,9 @@ three records (`DELETE` on their routes); their links go with them. Căutare glo
 finds nothing.
 
 ## Notes from the runs
+
+**2026-10-08 — Slice #38.36.** „Roluri pe Document” is gone; „Deține cotă” is ticked in the role's own
+panel (Date de referință → „Roluri” → „Editează”, under „Act”). Steps 3, 4 and 7 follow.
 
 **2026-10-07 — Slice #38.33.** A CVC's sellers and buyers are on „Părți", so step 2 reads the
 seller there. The PAD has no „Părți"; steps 1, 5 and 7 are unchanged.

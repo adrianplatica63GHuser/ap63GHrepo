@@ -37,7 +37,7 @@ The window is 1366 × 900.
 | 1 | Opens `TC-DOC-20 Act`, with „Actul modificat", „Ce modifică" and „Părți" ticked | „Identificarea actului" holds „Notariat", „Nr. act autentic", „Data autentificării", „Calitate exemplar", „Exemplare emise" and „Onorariu notarial". „Actul modificat" offers „Leagă actul modificat", then „Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:" and the four fields, „Nr. act părinte" first. „Ce modifică" holds „Motiv completare", „Efect urmărit", „Preț neschimbat" and the clauses, „Liber de sarcini" among them |
 | 2 | Types `TC-1` into „Nr. act părinte"; „Salvează" | „v 1" |
 | 3 | Presses „Leagă actul modificat", types `TC-DOC-20` into „Caută actul modificat", presses „Leagă" on `TC-DOC-20 CVC` | The two contracts are listed. The tile then shows `TC-DOC-20 CVC`, „Contract de Vânzare" and „Deschide"; the line and the four fields are gone |
-| 4 | On „Legături", „Asociază act": ticks `TC-DOC-20 Alt CVC`, picks „Act adițional la" in „Tip relație", presses „Asociază selecția"; then „Anulează" | „Acest act adițional modifică deja „TC-DOC-20 CVC”. Dezlegați-l întâi." — nothing is linked; back on the act |
+| 4 | On „Legături", „Asociază act": ticks `TC-DOC-20 Alt CVC`, picks „Act adițional la" in „Tip legătură", presses „Asociază selecția"; then „Anulează" | „Acest act adițional modifică deja „TC-DOC-20 CVC”. Dezlegați-l întâi." — nothing is linked; back on the act |
 | 5 | Presses „Dezleagă" on „Actul modificat" | „Leagă actul modificat" again, and the four fields, `TC-1` still in „Nr. act părinte" |
 
 ## At the end — leaving things as they were found

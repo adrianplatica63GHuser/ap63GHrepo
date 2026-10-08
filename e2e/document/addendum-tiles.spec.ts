@@ -93,7 +93,7 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(page.getByRole("heading", { name: "Asociază Document" })).toBeVisible({ timeout: 30_000 });
       await page.getByPlaceholder("Cod sau titlu…", { exact: true }).fill(OTHER);
       await page.getByRole("checkbox", { name: OTHER }).check({ timeout: 15_000 });
-      await page.getByRole("combobox", { name: "Tip relație", exact: true }).selectOption({ label: "Act adițional la" });
+      await page.getByRole("combobox", { name: "Tip legătură", exact: true }).selectOption({ label: "Act adițional la" });
       await page.getByRole("button", { name: "Asociază selecția" }).click();
       await expect(page.getByText(`Acest act adițional modifică deja „${CVC}”. Dezlegați-l întâi.`)).toBeVisible({ timeout: 15_000 });
       await page.getByRole("button", { name: "Anulează", exact: true }).click();

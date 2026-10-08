@@ -54,7 +54,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       await expect(related.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
 
       // Step 3 — „Asociere persoană corelată": „Nume", „Cod", Cod · Nume · Tip, the hint,
-      // „Tip relație" with the family roles and the sentence saying whose role it is.
+      // „Rol" with the family roles and the sentence saying whose role it is.
       await related.getByRole("button", { name: "Asociază persoană", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${anaId}/associate-person$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Asociere persoană corelată" })).toBeVisible({ timeout: 30_000 });
@@ -66,7 +66,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
       await expect(page.getByText("Selectați cel puțin o persoană")).toBeVisible();
-      const roleSelect = page.getByLabel("Tip relație", { exact: true });
+      const roleSelect = page.getByLabel("Rol", { exact: true });
       await expect(roleSelect).toBeVisible();
       for (const role of ["Soț", "Soție", "Părinte", "Fiu", "Fiică", "Frate", "Soră"]) {
         await expect(roleSelect.locator("option", { hasText: new RegExp(`^${role}$`) })).toHaveCount(1);

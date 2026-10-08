@@ -130,8 +130,8 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
       await expect(contract).not.toContainText("Vânzător");
       await expect(tile.getByRole("button", { name: "Relația", exact: true })).toHaveCount(1);
       await contract.getByRole("button", { name: "Relația", exact: true }).click();
-      const bubble = page.getByRole("status").filter({ hasText: "Rol în act" });
-      await expect(bubble).toHaveText("Rol în act: „Vânzător”");
+      const bubble = page.getByRole("status").filter({ hasText: "Rol: „" });
+      await expect(bubble).toHaveText("Rol: „Vânzător”");
       await photograph(page, "natural-person-related", tile);
       await tile.getByRole("heading", { name: "Legături" }).click();
       await expect(bubble).toHaveCount(0);
@@ -159,7 +159,7 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
 
       // Step 10 — „Relația" on the contract, then Esc.
       await onCompany.locator('[data-related-group="document"]').getByRole("button", { name: "Relația", exact: true }).click();
-      await expect(bubble).toHaveText("Rol în act: „Cumpărător”");
+      await expect(bubble).toHaveText("Rol: „Cumpărător”");
       await photograph(page, "judicial-person-related", onCompany);
       await page.keyboard.press("Escape");
       await expect(bubble).toHaveCount(0);
