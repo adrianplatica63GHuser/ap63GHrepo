@@ -10,7 +10,7 @@
 
 ## What this proves
 
-Since Slice #38.40, „Setări” has four sections.
+Since Slice #38.40, „Setări” has four sections, and since #38.41 a fifth, first: **„Contul meu”** — the password and the language.
 - **„Praguri de timp”**: the ten thresholds in four groups (Tablou de bord, Acte, Persoane, Insigna
   „Nou!”), each with a worked example that follows the value being typed.
 - **„Copii de siguranță”**: read-only, the last backup and the last restore drill with its result,
@@ -38,12 +38,13 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Setări” | Four sections: „Praguri de timp”, „Copii de siguranță”, „AI”, „Despre” |
+| 1 | Opens „Setări” | Five sections: „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „AI”, „Despre” |
 | 2 | Reads „Praguri de timp” | Four groups: „Tablou de bord”, „Acte”, „Persoane”, „Insigna „Nou!”” |
 | 3 | Reads „Fereastră filtru expiră curând” | Its value, and „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.” for the value 30 |
 | 4 | Types `45` (nothing saved), then „Anulează” | The example reads „… cu 45 de zile înainte.” at once; after „Anulează” the value and the example are back |
 | 5 | Reads „Copii de siguranță” | „Ultima copie” and „Ultima probă de restaurare”, with the result — or „Copiile de siguranță nu pot fi citite de aici…” on an installation without them; no button |
 | 6 | Reads „AI” and „Despre” | Four uses, each with a `claude-…` model; „Versiune”, „Commit”, „Mediu”, „Bază de date” (a host and a name) |
+| 7 | Reads „Contul meu” and the sidebar's footer | „Parola nouă” and „Confirmă parola”; „Limba” with „Română” chosen and „English”; the footer holds „Ieșire” alone |
 
 ## At the end — leaving things as they were found
 

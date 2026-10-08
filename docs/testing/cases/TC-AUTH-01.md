@@ -115,7 +115,7 @@ the 36.06 handover.
 
 1. **„Autentificat ca <name>" is at the TOP of the sidebar**, directly above the
    „Nume, cod…" quick-search box — not in the footer, as this file first said. The
-   footer holds „Schimbă parola" and „Ieșire".
+   footer holds „Schimbă parola" and „Ieșire" (since #38.41, „Ieșire" alone — the password is in „Setări → Contul meu").
 2. **The sidebar has more in it than the case listed**: „Admin-Operațiuni" and
    „Admin-Configurare" below the five entity sections, and a „RECENTE" list of
    recently-opened documents below those. Step 7 now says so.

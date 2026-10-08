@@ -42,7 +42,7 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
     // Step 1 — four sections.
     await page.goto("/admin/settings");
     const main = page.locator("main");
-    for (const title of ["Praguri de timp", "Copii de siguranță", "AI", "Despre"]) {
+    for (const title of ["Contul meu", "Praguri de timp", "Copii de siguranță", "AI", "Despre"]) {
       await expect(main.getByRole("heading", { name: title, exact: true, level: 2 })).toBeVisible({ timeout: 30_000 });
     }
 
@@ -88,6 +88,15 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
       await expect(about.getByText(label, { exact: true })).toBeVisible();
     }
     await expect(about).not.toContainText("password");
+
+    // Step 7 (#38.41) — „Contul meu": the password's two fields and the language; the
+    // sidebar's footer keeps „Ieșire" alone.
+    const account = main.getByRole("region", { name: "Contul meu", exact: true });
+    await expect(account.getByLabel("Parola nouă", { exact: false })).toBeVisible();
+    await expect(account.getByRole("radio", { name: "Română", exact: true })).toBeChecked();
+    await expect(account.getByRole("radio", { name: "English", exact: true })).not.toBeChecked();
+    await expect(page.locator("aside").getByRole("link", { name: "Schimbă parola" })).toHaveCount(0);
+    await expect(page.locator("aside").getByRole("button", { name: "Ieșire", exact: true })).toBeVisible();
     await photograph(page, "settings");
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Case:   TC-LAYOUT-04 — „Recente": o singură bară, pliată, deasupra „Schimbă parola" / „Ieșire"
+ * Case:   TC-LAYOUT-04 — „Recente": o singură bară, pliată, deasupra „Ieșire"
  * Source: docs/testing/cases/TC-LAYOUT-04.md, „Last green" 2026-10-07
  *
  * A translation of the case file, step for step (Slice #38.28). Every Romanian
@@ -9,8 +9,9 @@
  *   - The two records are this spec's own, created through the POST route the
  *     „Adaugă" form calls and removed in `finally`, both marked
  *     TC-E2E-LAYOUT-04.
- *   - The footer's height is measured (the bounding box of „Schimbă parola")
- *     where the hand run looked.
+ *   - The footer's height is measured (the bounding box of „Ieșire" — „Schimbă
+ *     parola" until Slice #38.41 moved it to „Setări → Contul meu") where the
+ *     hand run looked.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -22,7 +23,7 @@ const TWO = `${MARK} Proprietate doi`;
 
 const aside = (page: Page) => page.locator("aside");
 const bar = (page: Page) => aside(page).getByRole("button", { name: "Recente", exact: true });
-const footerTop = async (page: Page) => (await aside(page).getByRole("link", { name: "Schimbă parola" }).or(aside(page).getByRole("button", { name: "Schimbă parola" })).first().boundingBox())!.y;
+const footerTop = async (page: Page) => (await aside(page).getByRole("button", { name: "Ieșire", exact: true }).boundingBox())!.y;
 /** Removes the browser's list of visits, so the two this spec makes are the ones it reads. */
 const forgetVisits = (page: Page) => page.evaluate(() => localStorage.removeItem("ga40_recently_viewed"));
 

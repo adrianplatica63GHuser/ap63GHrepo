@@ -41,7 +41,7 @@ parola” and set the one in `.env`.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Signs in as `test-user` (Adrian types the password) | The dashboard; „Autentificat ca test-user” |
-| 2 | Presses „Schimbă parola” in the sidebar | The heading „Schimbă parola”, „Introdu o parolă nouă pentru contul tău.”, „Parola nouă” with „Minimum 8 caractere.”, „Confirmă parola”, „Schimbă parola” and „Anulează”; the tab reads „Schimbă parola — GA40”, the breadcrumb „Acasă › Schimbă parola” |
+| 2 | Opens „Setări” → „Contul meu” (#38.41; „Schimbă parola” in the sidebar's footer before) — or `/account/change-password`, which stays | The heading „Schimbă parola”, „Introdu o parolă nouă pentru contul tău.”, „Parola nouă” with „Minimum 8 caractere.”, „Confirmă parola”, „Schimbă parola” and „Anulează”; the tab reads „Schimbă parola — GA40”, the breadcrumb „Acasă › Schimbă parola” |
 | 3 | Adrian types a new password in both fields; Claude presses „Schimbă parola” | „Parola a fost schimbată!”, then the dashboard |
 | 4 | „Ieșire”, then signs in with the new password (Adrian types it) | The dashboard |
 | 5 | „Schimbă parola” again; Adrian types the `.env` password in both fields; „Schimbă parola” | „Parola a fost schimbată!” |
@@ -105,3 +105,5 @@ password is neither. The app has no way back in — no „forgot password" link 
 
 (Before that: none — `draft`: it needs Adrian at the desk to type passwords, and `test-user` to sign in from
 `.env` first; see TC-AUTH-02.)
+
+**2026-10-08 — Slice #38.41 (step 2 rewritten).** The password moved from the sidebar's footer to „Setări → Contul meu”, where the same form saves and stays on the page; `/account/change-password` still works.

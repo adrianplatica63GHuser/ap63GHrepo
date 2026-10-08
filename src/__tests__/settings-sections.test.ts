@@ -190,6 +190,6 @@ describe("the sections' sentences", () => {
   });
   it("are the four section titles", () => {
     expect(ro.sectionTimeFrames).toBe("Praguri de timp");
-    expect(ro.sections).toEqual({ timeFrames: "Praguri de timp", backups: "Copii de siguranță", ai: "AI", about: "Despre" });
+    expect(ro.sections).toEqual({ account: "Contul meu", timeFrames: "Praguri de timp", backups: "Copii de siguranță", ai: "AI", about: "Despre" });
   });
 });
