@@ -82,9 +82,15 @@ test.describe("TC-VL-04 — un tip de act pe pagina lui", () => {
       await page.getByRole("button", { name: "Adaugă rolul", exact: true }).click();
       const tick = page.getByRole("checkbox", { name: `Deține cotă — ${TYPE} — ${ROLE}`, exact: true });
       await expect(tick).not.toBeChecked({ timeout: 15_000 });
+      // The tick shows at once (optimistically), so the reload waits for the PATCH itself —
+      // a `networkidle` wait resolves at once on a page that has long been idle, and the
+      // first runner run (20261008T083305Z-28735) reloaded with the PATCH still in flight.
+      const saved = page.waitForResponse(
+        (r) => r.url().includes("/api/admin/doc-type-person-roles/") && r.request().method() === "PATCH",
+      );
       await tick.check();
+      expect((await saved).ok()).toBeTruthy();
       await expect(tick).toBeChecked();
-      await page.waitForLoadState("networkidle").catch(() => {});
       await page.reload();
       await expect(page.getByRole("checkbox", { name: `Deține cotă — ${TYPE} — ${ROLE}`, exact: true })).toBeChecked({ timeout: 30_000 });
       await photograph(page, "roles");
