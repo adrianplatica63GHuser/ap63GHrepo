@@ -28,7 +28,8 @@ const FORMS = JSON.parse(read("src", "db", "document-type-forms.json")) as { for
 
 describe("the identification group", () => {
   it("is the fourth special group, named as the tile, in both languages", () => {
-    expect(TEMPLATE_FIELD_GROUPS.map((g) => g.id)).toEqual(["financial", "fees", "certificates", "identification"]);
+    // #38.34 added a fifth after it, „Actul modificat" (addendum-tiles.test.tsx).
+    expect(TEMPLATE_FIELD_GROUPS.map((g) => g.id).slice(0, 4)).toEqual(["financial", "fees", "certificates", "identification"]);
     expect(isIdentificationGroup("Identificarea actului")).toBe(true);
     expect(isIdentificationGroup("Document identification")).toBe(true);
     expect(templateFieldGroupOf("Identificarea actului ")).toBeNull();

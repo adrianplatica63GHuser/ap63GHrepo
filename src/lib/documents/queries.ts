@@ -966,6 +966,7 @@ import {
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { foldLookupName } from "@/lib/import/lookup-name-match";
 import {
+  PURPOSE_ROLE_NAME,
   manualLinkDirection,
   parseReferencedInstruments,
   roleReadsFromDocument,
@@ -973,12 +974,15 @@ import {
   type ReferencedInstrument,
 } from "./referenced-instruments";
 import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
+import type { ParentLinkConflict } from "./parent-deed";
 
 export type DocumentSearchItem = {
   id:             string;
   code:           string;
   documentTypeId: string;
   typeName:       string | null;
+  /** Slice #38.34: the type's stable key, so „Leagă actul modificat" can list contracts first. */
+  typeKey:        string | null;
   title:          string | null;
 };
 
@@ -1004,6 +1008,7 @@ export async function searchDocumentAll(opts: {
       code:           document.code,
       documentTypeId: document.documentTypeId,
       typeName:       lookupDocumentType.name,
+      typeKey:        lookupDocumentType.key,
       title:          document.title,
     })
     .from(document)
@@ -1508,6 +1513,9 @@ export type DocumentRefItem = {
   documentTypeId:       string;
   typeName:             string | null;
   title:                string | null;
+  /** Slice #38.34: the linked act's number and date, for an act adițional's „Actul modificat". */
+  nrDocument:           string | null;
+  dateDocument:         string | null;
   associatedAt:         Date;
   relationshipRoleId:   string | null;
   relationshipRoleName: string | null;
@@ -1543,6 +1551,8 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
       documentTypeId:       document.documentTypeId,
       typeName:             lookupDocumentType.name,
       title:                document.title,
+      nrDocument:           document.nrDocument,
+      dateDocument:         document.dateDocument,
     })
     .from(documentDocument)
     .innerJoin(
@@ -1568,6 +1578,8 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
       documentTypeId:       r.documentTypeId,
       typeName:             r.typeName,
       title:                r.title,
+      nrDocument:           r.nrDocument ?? null,
+      dateDocument:         r.dateDocument ?? null,
       associatedAt:         r.associatedAt,
       relationshipRoleId:   r.relationshipRoleId ?? null,
       relationshipRoleName: r.relationshipRoleName ?? null,
@@ -1882,6 +1894,36 @@ export async function listInstrumentCandidateDocuments(
  * is null is exactly the „Consolidat cu"-shaped silence this slice exists to
  * stop producing.
  */
+/**
+ * Why a link „Act adițional la" may not be made, or `null` when it may.
+ *                                                  (Slice #38.34, Ask first 3)
+ *
+ * An act adițional amends ONE deed. A link under that role that reads FROM the
+ * document — „this act is an addendum to X" — is refused when the document
+ * already has one to another deed, and when several deeds are ticked at once,
+ * so the archive never holds two parents for one addendum. Any other role, and
+ * the same link read the other way (a deed with several addenda), passes.
+ *
+ * `targetIds` are the documents the caller is about to link; a stub not yet
+ * created counts as „another deed" (pass any id that is not an existing one).
+ * The sentence is `parentConflictBody` (`@/lib/documents/parent-deed`).
+ */
+export async function parentLinkConflict(
+  documentId: string,
+  targetIds: readonly string[],
+  relationshipRoleId: string | null,
+): Promise<ParentLinkConflict | null> {
+  if (relationshipRoleId === null) return null;
+  const parentRoleId = await findDocumentDocumentRoleByName(PURPOSE_ROLE_NAME.PARENT);
+  if (parentRoleId === null || parentRoleId !== relationshipRoleId) return null;
+  const targets = [...new Set(targetIds.filter((t) => t !== documentId))];
+  if (targets.length > 1) return { reason: "several" };
+  const existing = (await listDocumentReferences(documentId)).find(
+    (r) => r.relationshipRoleId === parentRoleId && r.roleReadsFromViewed && !targets.includes(r.id),
+  );
+  return existing ? { reason: "taken", existing: { id: existing.id, code: existing.code, title: existing.title } } : null;
+}
+
 export async function findDocumentDocumentRoleByName(name: string): Promise<string | null> {
   const wanted = foldLookupName(name);
   if (wanted === "") return null;

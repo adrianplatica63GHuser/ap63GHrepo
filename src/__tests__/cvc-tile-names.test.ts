@@ -132,7 +132,7 @@ describe("a remembered tile choice survives the rename (#37.54, #38.33)", () => 
       metadata: ["classification", "connections"], // #37.63
       persons: "related", properties: "related", associations: "related", // #37.65: „Corelate"
     });
-    expect(Object.keys(RENAMED_TABS)).toHaveLength(8);
+    expect(Object.keys(RENAMED_TABS)).toHaveLength(10); // #38.34: and the act adițional's two
   });
 
   it("reads a browser that showed „Preț și taxe” as showing „Preț și plată” and „Taxe și cheltuieli”, in registry order", () => {

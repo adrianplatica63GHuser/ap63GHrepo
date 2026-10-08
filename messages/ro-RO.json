@@ -1927,7 +1927,9 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin un document",
-      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din „Legături” dacă doriți alt tip de relație."
+      "alreadyAssociated": "Documentele selectate sunt deja asociate: {documents}. Nu s-a schimbat nimic. Dezasociați-le din „Legături” dacă doriți alt tip de relație.",
+      "parentTaken": "Acest act adițional modifică deja „{document}”. Dezlegați-l întâi.",
+      "parentSeveral": "Un act adițional modifică un singur act — bifați unul."
     },
     "pages": {
       "sectionTitle": "Pagini",
@@ -2031,6 +2033,25 @@
     },
     "parties": {
       "empty": "Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor."
+    },
+    "amended": {
+      "link": "Leagă actul modificat",
+      "linkThis": "Leagă „{document}”",
+      "searchLabel": "Caută actul modificat",
+      "searchPlaceholder": "Etichetă sau număr…",
+      "results": "Acte găsite",
+      "searching": "Se caută…",
+      "noResults": "Niciun act găsit.",
+      "open": "Deschide",
+      "unlink": "Dezleagă",
+      "number": "nr. {nr}",
+      "date": "din {date}",
+      "saveFirst": "Salvați actul ca să-l legați de actul pe care îl modifică.",
+      "notInArchive": "Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:",
+      "taken": "Acest act adițional modifică deja „{document}”. Dezlegați-l întâi.",
+      "several": "Un act adițional modifică un singur act — alegeți unul.",
+      "noRole": "Relația „Act adițional la” lipsește din Date de referință.",
+      "error": "Legătura nu s-a putut salva. Încercați din nou."
     }
   },
   "valueList": {

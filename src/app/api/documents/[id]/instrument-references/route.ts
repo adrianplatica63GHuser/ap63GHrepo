@@ -64,8 +64,10 @@ import {
   getDocumentById,
   getReferencedInstruments,
   listInstrumentCandidateDocuments,
+  parentLinkConflict,
   saveReferencedInstruments,
 } from "@/lib/documents/queries";
+import { parentConflictBody } from "@/lib/documents/parent-deed";
 
 export const runtime = "nodejs";
 
@@ -258,6 +260,13 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
         { error: `Relationship role not found: ${roleName}`, code: "role_missing", roleName },
         { status: 422 },
       );
+    }
+
+    // Slice #38.34 (Ask first 3): an act adițional amends one deed. Checked
+    // before a stub is created, so a refusal leaves nothing behind.
+    if (body.action === "stub" || body.action === "link") {
+      const conflict = await parentLinkConflict(id, [body.action === "link" ? body.documentId : "a-stub-not-yet-made"], roleId);
+      if (conflict) return Response.json(parentConflictBody(conflict), { status: 409 });
     }
 
     const email = await getCurrentUserEmail();

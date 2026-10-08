@@ -48,6 +48,7 @@ import {
   isFeesGroup,
   isFinancialGroup,
   isIdentificationGroup,
+  isAmendedDeedGroup,
 } from "@/lib/documents/template-groups";
 import {
   feesPairStaysTogether,
@@ -66,6 +67,7 @@ import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { NewPagesPanel } from "./new-pages-panel";
 import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
+import { AmendedDeedLink, useParentDeed } from "./amended-deed-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -943,8 +945,12 @@ export function DocumentForm({
   // Slice #38.32: a type's own fields that say which act this is, drawn in
   // „Identificarea actului" on every page and tile, never as a panel of their own.
   const identificationGroup = customFieldGroups.find((g) => isIdentificationGroup(g.label));
+  // Slice #38.34: an act adițional's fallback for the deed it amends — drawn
+  // under that deed's link („Actul modificat"), and only while there is none.
+  const amendedGroup = customFieldGroups.find((g) => isAmendedDeedGroup(g.label));
+  const parentDeed = useParentDeed(amendedGroup ? documentId : undefined);
   const otherGroups = customFieldGroups.filter(
-    (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup && g !== identificationGroup,
+    (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup && g !== identificationGroup && g !== amendedGroup,
   );
 
   // ── The notebook ─────────────────────────────────── (Slice #36.01) ──
@@ -1428,6 +1434,22 @@ export function DocumentForm({
         );
       })()}
 
+      {/* ── Slice #38.34: „Actul modificat" — the link to the deed an act
+          adițional amends, and under it the deed's four free-text fields while
+          there is no link. Hidden, never unmounted, so linking clears nothing. */}
+      {amendedGroup && tabIndexOfPanel(amendedGroup.fields, tabs) === tab && (() => {
+        const packed = packCustomFields(amendedGroup.fields);
+        const linked = !!parentDeed;
+        return (
+          <Section panel="amended" units={Math.max(packed.units, AMENDED_DEED_UNITS)}>
+            <AmendedDeedLink documentId={documentId} readOnly={effectiveMode === "view"} />
+            <div hidden={linked} className={linked ? "hidden" : "flex flex-col gap-2"} data-amended-fallback="">
+              {packed.nodes}
+            </div>
+          </Section>
+        );
+      })()}
+
       {/* ── Any other template groups — one fixed panel each (Slice #37.15:
           the fields flow two to a row where their widths fit, one where they
           do not, instead of a 2-column grid). ───────────────────────────── */}
@@ -1900,6 +1922,9 @@ export function DocumentForm({
  * frame — no border, its units' inner width, `data-section` rather than
  * `data-panel` — so the frame is the tile and the tile is whole units.
  */
+/** Slice #38.34: „Actul modificat" is at least three units wide — room for the deed's search. */
+const AMENDED_DEED_UNITS = 3;
+
 function Section({
   title,
   subtitle,

@@ -20,8 +20,12 @@
  * PURE — no React, no DB.
  */
 
-/** The document types whose saved records show „Părți" (38.34 adds the act adițional). */
-export const PARTIES_TILE_TYPES: readonly string[] = ["CONTRACT_VANZARE"];
+/**
+ * The document types whose saved records show „Părți": the contract de vânzare
+ * (#38.33) and the act adițional that amends one (#38.34), whose sellers and
+ * buyers are the same people with the same shares.
+ */
+export const PARTIES_TILE_TYPES: readonly string[] = ["CONTRACT_VANZARE", "ACT_ADITIONAL"];
 
 export function hasPartiesTile(typeKey: string | null | undefined): boolean {
   return !!typeKey && PARTIES_TILE_TYPES.includes(typeKey);

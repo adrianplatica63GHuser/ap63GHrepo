@@ -1927,7 +1927,9 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one document",
-      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from “Links” if you want a different relationship."
+      "alreadyAssociated": "The selected documents are already associated: {documents}. Nothing changed. Dissociate them from “Links” if you want a different relationship.",
+      "parentTaken": "This addendum already amends “{document}”. Unlink it first.",
+      "parentSeveral": "An addendum amends one deed — tick one."
     },
     "pages": {
       "sectionTitle": "Pages",
@@ -2031,6 +2033,25 @@
     },
     "parties": {
       "empty": "No party linked yet. Link the sellers and the buyers with their role and share."
+    },
+    "amended": {
+      "link": "Link the amended deed",
+      "linkThis": "Link “{document}”",
+      "searchLabel": "Search for the amended deed",
+      "searchPlaceholder": "Short label or number…",
+      "results": "Deeds found",
+      "searching": "Searching…",
+      "noResults": "No deed found.",
+      "open": "Open",
+      "unlink": "Unlink",
+      "number": "no. {nr}",
+      "date": "of {date}",
+      "saveFirst": "Save the act to link it to the deed it amends.",
+      "notInArchive": "The amended deed is not in the archive — its details, as the addendum gives them:",
+      "taken": "This addendum already amends “{document}”. Unlink it first.",
+      "several": "An addendum amends one deed — choose one.",
+      "noRole": "The “Act adițional la” relation is missing from Reference data.",
+      "error": "The link could not be saved. Try again."
     }
   },
   "valueList": {

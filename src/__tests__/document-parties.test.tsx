@@ -67,9 +67,10 @@ describe("who is a party", () => {
     expect(isPartyLink({ holdsShare: true })).toBe(true);
     expect(isPartyLink({ holdsShare: false })).toBe(false);
   });
-  it("only a contract de vânzare shows „Părți” (the act adițional joins it in #38.34)", () => {
-    expect(PARTIES_TILE_TYPES).toEqual(["CONTRACT_VANZARE"]);
+  it("a contract de vânzare and an act adițional show „Părți”, and nothing else does", () => {
+    expect(PARTIES_TILE_TYPES).toEqual(["CONTRACT_VANZARE", "ACT_ADITIONAL"]); // #38.34: the act adițional too
     expect(hasPartiesTile("CONTRACT_VANZARE")).toBe(true);
+    expect(hasPartiesTile("ACT_ADITIONAL")).toBe(true);
     expect(hasPartiesTile("CERTIFICAT_MOSTENITOR")).toBe(false);
     expect(hasPartiesTile(null)).toBe(false);
   });

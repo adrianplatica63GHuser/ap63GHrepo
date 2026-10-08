@@ -32,7 +32,7 @@
  * a client-side admin dialog alike.
  */
 
-export type TemplateFieldGroupId = "financial" | "fees" | "certificates" | "identification";
+export type TemplateFieldGroupId = "financial" | "fees" | "certificates" | "identification" | "amendedDeed";
 
 export type TemplateFieldGroup = {
   id: TemplateFieldGroupId;
@@ -43,7 +43,7 @@ export type TemplateFieldGroup = {
 };
 
 /**
- * The four (three until #38.32), in the order the editor offers them — which is also the order they
+ * The five (three until #38.32, four until #38.34), in the order the editor offers them — which is also the order they
  * appear down the document form (Financiar and Taxe și onorarii share a row,
  * Certificate și referințe sits below).
  *
@@ -65,6 +65,12 @@ export const TEMPLATE_FIELD_GROUPS: readonly TemplateFieldGroup[] = [
   // type has, on whatever notebook tab the field names. The group's Romanian
   // name is that tile's title, so the two read as one place.
   { id: "identification", ro: "Identificarea actului", en: "Document identification" },
+  // Slice #38.34: on an act adițional, what the text says of the deed it amends
+  // — number, date, notary, type. Drawn under that deed's link („Act adițional
+  // la"), and only while there is none: a deed in the archive is read from its
+  // own record, these four are the fallback for one that is not. Its tab is
+  // named the same, so the tile and the group read as one place.
+  { id: "amendedDeed", ro: "Actul modificat", en: "Amended deed" },
 ] as const;
 
 /** Look one up by id. Returns undefined for an id that is not one of the three. */
@@ -109,4 +115,9 @@ export function isCertificatesGroup(label: string): boolean {
 /** `Identificarea actului` / `Document identification` — drawn in the document's first tile (#38.32). */
 export function isIdentificationGroup(label: string): boolean {
   return templateFieldGroupOf(label) === "identification";
+}
+
+/** `Actul modificat` / `Amended deed` — the fallback under an act adițional's link to its deed (#38.34). */
+export function isAmendedDeedGroup(label: string): boolean {
+  return templateFieldGroupOf(label) === "amendedDeed";
 }

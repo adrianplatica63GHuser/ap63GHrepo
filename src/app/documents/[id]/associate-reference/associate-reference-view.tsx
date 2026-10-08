@@ -6,6 +6,7 @@ import { Link as LinkIcon, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { PARENT_SEVERAL_CODE, PARENT_TAKEN_CODE } from "@/lib/documents/parent-deed";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
@@ -105,6 +106,18 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        // Slice #38.34 (Ask first 3): an act adițional amends one deed; the
+        // route names the one it already has, and this says so in words.
+        if (body?.code === PARENT_TAKEN_CODE) {
+          setSubmitError(t("parentTaken", { document: nameOr(body.existing?.title ?? null, "document") }));
+          setSubmitting(false);
+          return;
+        }
+        if (body?.code === PARENT_SEVERAL_CODE) {
+          setSubmitError(t("parentSeveral"));
+          setSubmitting(false);
+          return;
+        }
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
       /*

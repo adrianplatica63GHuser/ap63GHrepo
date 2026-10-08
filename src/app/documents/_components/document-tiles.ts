@@ -98,6 +98,9 @@ export const RENAMED_TABS: Readonly<Record<string, string | readonly string[]>> 
   "Stare juridică": "Declarații și garanții",
   Conformitate: ["Declarații și garanții", "Taxe și cheltuieli"],
   Formalități: ["Declarații și garanții", "Taxe și cheltuieli"],
+  // Slice #38.34: the act adițional's two tabs became „Actul modificat" and „Ce modifică".
+  "Act adițional": ["Actul modificat", "Ce modifică"],
+  "Clauze adăugate": "Ce modifică",
 };
 
 /** The tile keys an old tab's tile stands for, among the tabs the type has — none, one or several. */

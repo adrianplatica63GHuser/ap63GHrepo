@@ -4,7 +4,8 @@
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
-import { listDocumentReferences, associateDocumentToDocument } from "@/lib/documents/queries";
+import { listDocumentReferences, associateDocumentToDocument, parentLinkConflict } from "@/lib/documents/queries";
+import { parentConflictBody } from "@/lib/documents/parent-deed";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
+    // Slice #38.34 (Ask first 3): an act adițional amends one deed — a second
+    // „Act adițional la" from it is refused, naming the one it already has.
+    const conflict = await parentLinkConflict(id, parsed.data.documentIds, parsed.data.relationshipRoleId ?? null);
+    if (conflict) return Response.json(parentConflictBody(conflict), { status: 409 });
     const result = await associateDocumentToDocument(
       id,
       parsed.data.documentIds,
