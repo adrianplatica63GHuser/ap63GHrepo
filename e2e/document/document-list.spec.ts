@@ -142,10 +142,18 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       // A tick reloads the address; the list is opened again whenever it is not showing.
+      // A toggle that is checked to have held: in full 20261008T112106Z-3600 step 9's untick of
+      // „Contract de Vânzare" was lost and both types stayed ticked. So the click is repeated
+      // until the box reads the opposite of what it read before.
       const tick = async (name: string) => {
         const box = main.getByRole("checkbox", { name, exact: true });
         if (!(await box.isVisible())) await typeFilter.click();
-        await box.click();
+        const want = !(await box.isChecked());
+        await expect(async () => {
+          if (!(await box.isVisible())) await typeFilter.click();
+          if ((await box.isChecked()) !== want) await box.click();
+          await expect(box).toBeChecked({ checked: want, timeout: 2_000 });
+        }).toPass({ timeout: 30_000 });
       };
       await tick("Toate tipurile");
       await tick("Contract de Vânzare");
