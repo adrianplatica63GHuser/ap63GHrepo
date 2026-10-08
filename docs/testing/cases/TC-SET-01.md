@@ -40,7 +40,7 @@ If `90` ever stops being the stored value, this file is updated first.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Setări” in the left sidebar | „Setări” — no „Altele” any more (#38.20: Grupuri, Ștampile and Etichete are in „Administrare”), „Intervale de timp” with ten settings, each a label, a sentence and a number with its unit, and „Salvează” |
+| 1 | Opens „Setări” in the left sidebar | „Setări” — no „Altele” any more (#38.20: Grupuri, Ștampile and Etichete are in „Administrare”), „Praguri de timp” (#38.40; „Intervale de timp” before) with ten settings in four groups, each a label, a sentence, a number with its unit and an example, and „Salvează” |
 | 2 | Reads „Prag CI expiră curând” | `90` zile — the value above |
 | 3 | Types `91` — „Anulează” appears beside „Salvează” — and presses „Salvează” | „Salvat cu succes.” |
 | 4 | Reloads the page | `91` |

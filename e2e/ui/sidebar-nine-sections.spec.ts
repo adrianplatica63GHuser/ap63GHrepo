@@ -206,7 +206,8 @@ test.describe("TC-NAV-01 — the sidebar in nine sections", () => {
     // Step 6 — „Setări": no „Altele".
     await nav.getByRole("link", { name: "Setări", exact: true }).click();
     await expect(await title(page)).toHaveText("Setări");
-    await expect(page.locator("main").getByText("Intervale de timp", { exact: true })).toBeVisible();
+    // Slice #38.40: „Intervale de timp" became „Praguri de timp", the first of four sections.
+    await expect(page.locator("main").getByText("Praguri de timp", { exact: true }).first()).toBeVisible();
     await expect(page.locator("main").getByText("Altele", { exact: true })).toHaveCount(0);
     await expect(page.locator("main a")).toHaveCount(0);
     await expect(crumbTrail(page)).toHaveText(["Acasă", "Setări"]);
