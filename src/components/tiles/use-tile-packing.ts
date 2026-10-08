@@ -48,9 +48,22 @@
  * another record leaves holes where a tile above is unticked, shorter or
  * empty; `placeWithStored` closes them (`riseIntoGaps`), at every fresh layout
  * — so also on a height change in the two seconds after one, still „when the
- * screen opens", and never after (#38.16's Ask first 3). A drop rises at once:
- * the outline shows where the tile is released, it then slides up from there,
- * and what is stored is what the user then sees (#38.16's Ask first 2).
+ * screen opens", and never after (#38.16's Ask first 3). Since #38.45 it closes
+ * only what a tile above gave up: the space the user left above a tile is
+ * stored with its place and kept.
+ *
+ * A DROP NO LONGER RISES; A DOUBLE-CLICK DOES (Slice #38.45). This said „A drop
+ * rises at once: the outline shows where the tile is released, it then slides
+ * up from there, and what is stored is what the user then sees (#38.16's Ask
+ * first 2)." Reversed at Adrian's request: a tile moved away to make room left
+ * a hole that the tile under it filled at once. Now a released tile stays
+ * where the outline showed it, and nothing else moves. A double-click on a
+ * tile's unused space — the surface a drag starts from (`isDragSurface`), so
+ * never a field, a button, a link or a list row, where a double-click already
+ * means something — rises that one tile, in its own columns, to right under
+ * the lowest tile above it, or to the top under the banners (`riseOne`); never
+ * sideways, and nothing else moves. It is stored like a drop. No keyboard path:
+ * dragging has none either (#38.45's Ask first 2).
  *
  * UNDER THE RIGHT COLUMN (Slice #37.79). `rightRef` names the right column
  * (#37.56's `TileAreas`). While it stands beside the left area its tiles are
@@ -82,8 +95,9 @@ import {
   parseStoredPlaces,
   placeWithStored,
   placesToStore,
-  riseIntoGaps,
+  riseOne,
   snapPlace,
+  storedPlaceOf,
   tilePositionsKey,
   type StoredPlace,
   type StoredPlaces,
@@ -469,6 +483,19 @@ export function useTilePacking(
     const boxAt = (target: EventTarget | null): FoundBox | undefined =>
       target instanceof Node ? boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target)) : undefined;
 
+    // Box `id` now stands where the user put it: store the arrangement — a preview's place for this visit only.
+    const store = (id: string) => {
+      const { gap } = metrics();
+      if (isStorable(id)) {
+        stored = placesToStore(placed, stored, fallback, id, lead, gap);
+        fallback = fallback.filter((f) => f !== id);
+        writePlaces(key, stored);
+        return;
+      }
+      const at = placed.find((p) => p.id === id);
+      if (at) visit = { ...visit, [id]: storedPlaceOf(placed, at, gap, lead) };
+    };
+
     const follow = () => {
       if (!drag?.active) return;
       const { unit, gap } = metrics();
@@ -539,16 +566,9 @@ export function useTilePacking(
       styles.set(d.box.el, "cursor", "");
       if (keep && d.place && d.free) {
         const { gap } = metrics();
-        // #38.16: the dropped tile, and the tiles under where it was, rise at once.
-        placed = riseIntoGaps(dropAt(placed, d.box.id, d.place, gap), gap, lead, new Set(boxes.filter((b) => b.full).map((b) => b.id)));
-        const at = placed.find((p) => p.id === d.box.id);
-        if (isStorable(d.box.id)) {
-          stored = placesToStore(placed, stored, fallback, d.box.id, lead);
-          fallback = fallback.filter((id) => id !== d.box.id);
-          writePlaces(key, stored);
-        } else {
-          visit = { ...visit, [d.box.id]: at ? { col: at.col, top: at.top } : d.place };
-        }
+        // #38.45: the dropped tile stands where it was released; nothing rises — the space it left stays empty.
+        placed = dropAt(placed, d.box.id, d.place, gap);
+        store(d.box.id);
       }
       // Dropped: where it now stands. Refused or Esc: back where it was.
       apply();
@@ -608,9 +628,23 @@ export function useTilePacking(
       if (!drag && hovered) styles.set(hovered, "cursor", "");
       hovered = null;
     };
+    // #38.45: a double-click on a tile's unused space rises that one tile; nothing else moves.
+    const onDouble = (e: MouseEvent) => {
+      if (drag?.active || e.button !== 0) return;
+      const box = boxAt(e.target);
+      if (!box || !isDragSurface(e.target, e.clientX, e.clientY, box.el)) return;
+      // A double-click selects the word nearest the pointer; on empty space there is nothing to select.
+      window.getSelection()?.removeAllRanges();
+      const next = riseOne(placed, box.id, metrics().gap, lead);
+      if (!next) return;
+      placed = next;
+      store(box.id);
+      apply();
+    };
     container.addEventListener("pointerdown", onPress);
     container.addEventListener("pointermove", onHover);
     container.addEventListener("pointerleave", onLeave);
+    container.addEventListener("dblclick", onDouble);
 
     // „Implicit" forgot the arrangement: lay the row out afresh even if no tile came or went.
     const onReset = (e: Event) => {
@@ -635,6 +669,7 @@ export function useTilePacking(
       container.removeEventListener("pointerdown", onPress);
       container.removeEventListener("pointermove", onHover);
       container.removeEventListener("pointerleave", onLeave);
+      container.removeEventListener("dblclick", onDouble);
       window.removeEventListener(TILE_POSITIONS_RESET, onReset);
       document.removeEventListener("visibilitychange", shown);
     };

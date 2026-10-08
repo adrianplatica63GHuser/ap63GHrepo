@@ -45,17 +45,28 @@
  * and its stored places then leave holes — a tile the user put under two
  * tiles kept its top when one of those two was gone. So once the stored
  * places and the fallbacks are placed, `riseIntoGaps` moves every tile up, in
- * its own columns, to right under the tile above it (PANEL_GAP below it) or to
- * the top of the row, under the banners (`lead`) — the place #37.75's flow
- * gives a freshly opened screen. Top to bottom, so each column keeps its
- * order; never sideways, never lower. Every gap closes, not only large ones
- * (#38.16's Ask first 1). Fixed boxes, banners and the action bar never rise;
+ * its own columns, toward the tile above it (PANEL_GAP below it) or the top of
+ * the row, under the banners (`lead`) — the place #37.75's flow gives a
+ * freshly opened screen. Top to bottom, so each column keeps its order; never
+ * sideways, never lower. Fixed boxes, banners and the action bar never rise;
  * the action bar is then placed under everything. With nothing stored
  * `placeWithStored` is `packTiles` and nothing rises: the flow already stands
  * each tile right under the one above it. The STORED places are not rewritten
- * by a layout — the rise is what this visit shows; a drop stores the places
- * as they stand after it, the dropped tile risen too (#38.16's Ask first 2),
- * so the next visit shows what the user saw on letting go.
+ * by a layout — the rise is what this visit shows.
+ *
+ * A GAP LEFT ON PURPOSE IS KEPT (Slice #38.45). #38.16 said „Every gap closes,
+ * not only large ones (#38.16's Ask first 1)", and „a drop stores the places
+ * as they stand after it, the dropped tile risen too (#38.16's Ask first 2)".
+ * Both are reversed: Adrian rearranges by moving a tile away to make room, and
+ * the room closed under him at once. Now a drop moves only the dropped tile
+ * (`dropAt`), and what is stored with each place is the empty space the user
+ * left above it (`StoredPlace.space`: its top minus `ceilingOf` — right under
+ * the lowest tile above it in its columns). A layout rises a tile only by what
+ * a tile above it gave up since then — unticked, shorter or empty — so the gap
+ * the user left stays at its stored size (#38.45's Ask first 1). An entry
+ * stored before #38.45 has no `space` and closes every gap, as it did. A
+ * DOUBLE-CLICK on a tile's unused space rises that one tile, alone, to its
+ * ceiling (`riseOne`); nothing else moves, and it is stored like a drop.
  *
  * PURE — no DOM, no React; `tile-positions.test.ts` covers it.
  */
@@ -65,6 +76,12 @@ import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, topUnder, type Pac
 export interface StoredPlace {
   col: number;
   top: number;
+  /**
+   * The empty space left above it on purpose, in px past PANEL_GAP: its top
+   * minus `ceilingOf` when it was stored (#38.45). Absent, none — every entry
+   * stored before #38.45 — and the layout closes the gap above it.
+   */
+  space?: number;
 }
 
 export type StoredPlaces = Readonly<Record<string, StoredPlace>>;
@@ -74,6 +91,13 @@ export const ROW_STEP = 8;
 
 /** The largest top a stored place may have, in px: past it the entry is out of range. */
 export const MAX_TOP = 100_000;
+
+/**
+ * PANEL_GAP in px at the browser's default 16-px rem (`PANEL_GAP_REM` = 1):
+ * what `placesToStore` measures the stored space with when it is not told.
+ * The hook always tells it the gap it measured.
+ */
+export const DEFAULT_GAP_PX = 16;
 
 /** Where a screen's arrangement is kept: beside `tileStorageKey(entity)`. */
 export function tilePositionsKey(entity: string): string {
@@ -108,6 +132,9 @@ export function parseStoredPlaces(raw: string | null | undefined): Record<string
     if (!Number.isInteger(col) || (col as number) < 0 || (col as number) > 64) continue;
     if (typeof top !== "number" || !Number.isFinite(top) || top < 0 || top > MAX_TOP) continue;
     out[id] = { col: col as number, top: Math.round(top) };
+    // #38.45: a corrupt space is no space — the place itself still holds.
+    const { space } = v as { space?: unknown };
+    if (typeof space === "number" && Number.isFinite(space) && space >= 1 && space <= MAX_TOP) out[id].space = Math.round(space);
   }
   return out;
 }
@@ -143,23 +170,54 @@ function withRowEnds(placed: Placed[], gap: number): Placed[] {
 }
 
 /**
- * Every box that is not fixed, not a banner (`still`) and not a row end
- * risen, top to bottom (then left to right), to the highest place in its own
- * columns: right under the lowest box already settled there, PANEL_GAP below
- * it, or the top of the row under the banners (`lead`). Never lower than it
- * stood, never sideways; the row ends then go under everything. (#38.16)
+ * The highest box `me` may stand in its own columns (#38.45): right under the
+ * lowest box above it there, PANEL_GAP below it, or the top of the row under
+ * the banners (`lead`). Only what stands above it counts: a fixed tile lower
+ * in its columns is not a ceiling, and a row end is never one.
  */
-export function riseIntoGaps(placed: readonly Placed[], gap: number, lead = 0, still: ReadonlySet<string> = new Set()): Placed[] {
+export function ceilingOf(placed: readonly Placed[], me: Placed, gap: number, lead = 0): number {
+  const above = placed.filter((p) => p.id !== me.id && !p.rowEnd && p.top < me.top);
+  return Math.max(lead, topUnder(above, me.col, me.units, gap));
+}
+
+/**
+ * Every box that is not fixed, not a banner (`still`) and not a row end
+ * risen, top to bottom (then left to right), toward the highest place in its
+ * own columns (`ceilingOf` the boxes already settled), and stopped `space`
+ * px short of it — the gap the user left above it (#38.45; none, it closes).
+ * Never lower than it stood, never sideways; the row ends then go under
+ * everything. (#38.16)
+ */
+export function riseIntoGaps(
+  placed: readonly Placed[],
+  gap: number,
+  lead = 0,
+  still: ReadonlySet<string> = new Set(),
+  space: Readonly<Record<string, number>> = {},
+): Placed[] {
   const out = placed.map((p) => ({ ...p }));
   const moves = (p: Placed): boolean => !p.fixed && !p.rowEnd && !still.has(p.id);
   const settled = out.filter((p) => !p.rowEnd && !moves(p));
   for (const me of out.filter(moves).sort((a, b) => a.top - b.top || a.col - b.col)) {
-    // Only what stands above it counts: a fixed tile lower in its columns is not a ceiling.
-    const above = settled.filter((p) => p.top < me.top);
-    me.top = Math.min(me.top, Math.max(lead, topUnder(above, me.col, me.units, gap)));
+    me.top = Math.min(me.top, ceilingOf(settled, me, gap, lead) + (space[me.id] ?? 0));
     settled.push(me);
   }
   return withRowEnds(out, gap);
+}
+
+/**
+ * A DOUBLE-CLICK's rise (#38.45): box `id` alone, in its own columns, up to
+ * its ceiling — right under the lowest box above it (PANEL_GAP below), or
+ * `lead`. Never sideways; nothing else moves but the row ends, which go under
+ * everything. `null` when it cannot rise: already there, fixed, a row end, or
+ * not placed.
+ */
+export function riseOne(placed: readonly Placed[], id: string, gap: number, lead = 0): Placed[] | null {
+  const me = placed.find((p) => p.id === id);
+  if (!me || me.fixed || me.rowEnd) return null;
+  const top = ceilingOf(placed, me, gap, lead);
+  if (top >= me.top - 0.5) return null;
+  return dropAt(placed, id, { col: me.col, top }, gap);
 }
 
 /** The first top at or below `from` where a box of `units` × `height` at `col` is free. */
@@ -248,7 +306,9 @@ export function placeWithStored(
     next = col + units >= fcols ? 0 : col + units;
   }
   // #38.16: then every tile rises into the empty space above it; the banners stay where they stand.
-  const out = riseIntoGaps([...placed, ...flow], gap, lead, new Set(boxes.filter((b) => b.full).map((b) => b.id)));
+  // #38.45: a stored tile only by what the tiles above it gave up — the space the user left above it stays.
+  const space = Object.fromEntries(usable.filter((b) => !fallback.has(b.id)).map((b) => [b.id, stored[b.id].space ?? 0]));
+  const out = riseIntoGaps([...placed, ...flow], gap, lead, new Set(boxes.filter((b) => b.full).map((b) => b.id)), space);
   // Back in the boxes' order, so the DOM's order and the placed order agree.
   const order = new Map(boxes.map((b, i) => [b.id, i]));
   out.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
@@ -261,17 +321,35 @@ export function placeWithStored(
 }
 
 /**
- * What a drop writes: every storable box's place as it now stands, counted
- * from under the banners (`lead`), but an entry this visit could not use is
- * kept as it was (`fallback`), and an entry for a tile not on screen
- * (unticked) is kept too.
+ * Box `p`'s place as it now stands, counted from under the banners (`lead`),
+ * with the empty space above it (#38.45) when there is any.
  */
-export function placesToStore(placed: readonly Placed[], previous: StoredPlaces, fallback: readonly string[], dropped: string, lead = 0): Record<string, StoredPlace> {
+export function storedPlaceOf(placed: readonly Placed[], p: Placed, gap: number, lead = 0): StoredPlace {
+  const place: StoredPlace = { col: p.col, top: Math.max(0, Math.round(p.top - lead)) };
+  const space = Math.round(p.top - ceilingOf(placed, p, gap, lead));
+  if (space >= 1) place.space = space;
+  return place;
+}
+
+/**
+ * What a drop — or a double-click's rise — writes: every storable box's place
+ * as it now stands (`storedPlaceOf`), but an entry this visit could not use is kept
+ * as it was (`fallback`), and an entry for a tile not on screen (unticked) is
+ * kept too.
+ */
+export function placesToStore(
+  placed: readonly Placed[],
+  previous: StoredPlaces,
+  fallback: readonly string[],
+  dropped: string,
+  lead = 0,
+  gap = DEFAULT_GAP_PX,
+): Record<string, StoredPlace> {
   const out: Record<string, StoredPlace> = { ...previous };
   for (const p of placed) {
     if (p.rowEnd || p.fixed || !isStorable(p.id)) continue;
     if (fallback.includes(p.id) && p.id !== dropped) continue;
-    out[p.id] = { col: p.col, top: Math.max(0, Math.round(p.top - lead)) };
+    out[p.id] = storedPlaceOf(placed, p, gap, lead);
   }
   return out;
 }
