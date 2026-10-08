@@ -1537,6 +1537,8 @@
     "allTypes": "All types",
     "typesShown": "{count, plural, one {# type shown} other {# types shown}}",
     "noTypes": "No type",
+    "typeSearchPlaceholder": "Search the types…",
+    "typeSearchEmpty": "No type matches.",
     "noTypeSelected": "Please select at least one document type",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",

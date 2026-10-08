@@ -89,3 +89,35 @@ export function customFieldState(
   if (customFieldOptionsOf(types, [one.id]).length === 0) return off("noClosedList", name, 1);
   return { enabled: true, reason: null, typeName: name, count: 1 };
 }
+
+/**
+ * THE SEARCH BOX IN THE DROPDOWN (Slice #38.48). Adrian: „It is difficult to
+ * pick because there are so many and I need to do a lot of scrolling". A box
+ * under „Toate tipurile", above the divider: typing narrows the checklist to
+ * the types whose name CONTAINS what was typed, ignoring case and diacritics —
+ * „mostenitor" finds „Certificat de moștenitor".
+ *
+ * The fold is `normaliseDocumentTypeName`'s NFD-and-strip-the-marks, so both
+ * spellings of „ș"/„ț" (comma-below and cedilla) fold to „s"/„t" — never a
+ * `\b` regex, which is ASCII-only — but it keeps the spaces (runs of them
+ * collapsed), so „de vanzare" matches „Contract de vânzare" and not
+ * „Contractdevânzare". An empty or blank search matches every type.
+ *
+ * Searching only hides rows: what is ticked is never changed by it (#38.48's
+ * Ask first 1).
+ */
+export function foldForSearch(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** The types whose name contains `query`, folded; all of them for a blank query. In their own order. */
+export function typesMatching<T extends { name: string }>(types: readonly T[], query: string): T[] {
+  const q = foldForSearch(query);
+  if (!q) return [...types];
+  return types.filter((ty) => foldForSearch(ty.name).includes(q));
+}

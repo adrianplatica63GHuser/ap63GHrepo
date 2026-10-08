@@ -15,7 +15,7 @@ import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/comp
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
-import { customFieldFilter, customFieldState, typeFilterTrigger } from "@/lib/documents/type-filter";
+import { customFieldFilter, customFieldState, typeFilterTrigger, typesMatching } from "@/lib/documents/type-filter";
 import { CustomFieldSign } from "@/components/documents/custom-field-sign";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -125,6 +125,8 @@ function DocumentTypeFilterDropdown({
   allTypesLabel,
   noTypesLabel,
   typesShownLabel,
+  searchPlaceholder,
+  searchEmptyLabel,
 }: {
   types: DocumentTypeOption[];
   initialDocumentTypeIds?: string[];
@@ -134,10 +136,25 @@ function DocumentTypeFilterDropdown({
   noTypesLabel: string;
   /** Slice #38.07: „{count} tipuri afișate". */
   typesShownLabel: (count: number) => string;
+  /** Slice #38.48: the search box's placeholder and name, „Caută un tip…". */
+  searchPlaceholder: string;
+  /** Slice #38.48: „Niciun tip nu se potrivește." */
+  searchEmptyLabel: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Slice #38.48: the search box — focused when the dropdown opens, emptied when it closes.
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (open) searchRef.current?.focus();
+  }, [open]);
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+  const shownTypes = typesMatching(types, query);
 
   const allTypeIds = types.map((ty) => ty.id);
   const checkedIds = new Set(
@@ -158,6 +175,7 @@ function DocumentTypeFilterDropdown({
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setQuery("");
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -183,7 +201,7 @@ function DocumentTypeFilterDropdown({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? close() : setOpen(true))}
         aria-haspopup="listbox"
         aria-expanded={open}
         className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
@@ -207,7 +225,9 @@ function DocumentTypeFilterDropdown({
 
       {open && (
         <div className="absolute z-20 mt-1 w-64 max-h-80 overflow-y-auto rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-          <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium border-b border-crease cursor-pointer hover:bg-cta-pale dark:border-zinc-800 dark:hover:bg-zinc-800/50">
+          {/* The two top rows stay in view while the checklist scrolls under them. */}
+          <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
+          <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50">
             <input
               ref={selectAllRef}
               type="checkbox"
@@ -217,7 +237,32 @@ function DocumentTypeFilterDropdown({
             />
             {allTypesLabel}
           </label>
-          {types.map((ty) => (
+          {/* Slice #38.48: under „Toate tipurile", above the divider (this row's border-b). Searching
+              only hides rows; „Toate tipurile" still ticks and unticks the whole list. Esc closes. */}
+          <div className="border-b border-crease px-3 pb-2 dark:border-zinc-800">
+            <input
+              ref={searchRef}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") close();
+              }}
+              placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
+              autoComplete="off"
+              data-type-search=""
+              className="w-full rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink placeholder:text-fade focus:outline-none focus:ring-2 focus:ring-cta dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+          </div>
+          {/* Only once there are types to search: while they load, the list is simply empty. */}
+          {types.length > 0 && shownTypes.length === 0 && (
+            <p className="px-3 py-2 text-sm italic text-fade" data-type-search-empty="">
+              {searchEmptyLabel}
+            </p>
+          )}
+          {shownTypes.map((ty) => (
             <label
               key={ty.id}
               className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50"
@@ -767,6 +812,8 @@ export function DocumentListView({
           allTypesLabel={t("allTypes")}
           noTypesLabel={t("noTypes")}
           typesShownLabel={(count) => t("typesShown", { count })}
+          searchPlaceholder={t("typeSearchPlaceholder")}
+          searchEmptyLabel={t("typeSearchEmpty")}
         />
         {typeOptions.length > 0 && (
         <>

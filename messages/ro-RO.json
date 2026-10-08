@@ -1537,6 +1537,8 @@
     "allTypes": "Toate tipurile",
     "typesShown": "{count, plural, one {# tip afișat} few {# tipuri afișate} other {# de tipuri afișate}}",
     "noTypes": "Niciun tip",
+    "typeSearchPlaceholder": "Caută un tip…",
+    "typeSearchEmpty": "Niciun tip nu se potrivește.",
     "noTypeSelected": "Selectați cel puțin un tip de document",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",
