@@ -567,11 +567,13 @@ export function SidebarNav() {
         // #37.42 (A004): „Ieșire" is LogOut; its word is the name and the tooltip.
         // Slice #38.41 (Ask first 1): „Schimbă parola" moved to „Setări → Contul meu";
         // „Ieșire" stays alone and the strip keeps its height (the same padding,
-        // the same button size).
+        // the same button size). Expanded, it stands at the strip's RIGHT end: at the
+        // left it sat under Next's dev indicator (bottom-left, development only), which
+        // took its clicks — full 20261008T103908Z-9761, TC-AUTH-01's sign-out.
         <div
           className={[
             "border-t border-wire shrink-0 px-2 py-2 flex gap-1",
-            isCollapsed ? "flex-col items-center" : "items-center px-3",
+            isCollapsed ? "flex-col items-center" : "items-center justify-end px-3",
           ].join(" ")}
         >
           <IconButton
