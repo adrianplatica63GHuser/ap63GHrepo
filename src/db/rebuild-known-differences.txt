@@ -160,9 +160,9 @@ FK CONSTRAINT public.property_property property_property_a_fk :: absent from ful
 FK CONSTRAINT public.property_property property_property_b_fk :: absent from full-schema
 FK CONSTRAINT public.property_property property_property_property_id_a_fkey :: absent from migrations
 FK CONSTRAINT public.property_property property_property_property_id_b_fkey :: absent from migrations
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Coproprietar / Co-moștenitor | true]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Coproprietar | true]
 REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Moștenitor | true]
-REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Notar public | false]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Notar | false]
 REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Reprezentant legal / Mandatar | false]
 REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Solicitant | false]
 REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Succesor universal | true]
@@ -208,13 +208,13 @@ REFDATA lookup_document_type :: - [Hotărâre Judecătorească | 16 | HOTARARE_J
 REFDATA lookup_document_type :: - [NECLASIFICAT | 18 | UNCLASSIFIED | <null> | MANUAL | NECLASIFICAT]
 REFDATA lookup_document_type :: - [Testament | 1019 | TESTAMENT | <null> | MANUAL | Testament]
 REFDATA lookup_document_type :: - [Titlu de Proprietate | 17 | TITLU_PROPRIETATE | <null> | MANUAL | TP]
-REFDATA lookup_person_role :: + [Coproprietari / Coindivizari | (părți care partajează) | 11 | true | false | <null> | <null> | <null> | <null>]
+REFDATA lookup_person_role :: + [Coproprietar | (proprietar în indiviziune, alături de alții: comoștenitorii dintr-un certificat, coindivizarii dintr-un partaj) | 9 | true | true | Coproprietar | <null> | <null> | <null>]
 REFDATA lookup_person_role :: + [Cumpărător | (Dobânditor) | 14 | true | false | <null> | <null> | <null> | <null>]
-REFDATA lookup_person_role :: + [Proprietar / Titular de drept real | (principalul interesat) | 37 | true | false | <null> | <null> | <null> | <null>]
+REFDATA lookup_person_role :: + [Proprietar | (deținătorul dreptului de proprietate: titularul imobilului, al dreptului real sau al drepturilor înscrise în cartea funciară) | 33 | true | false | <null> | <null> | <null> | <null>]
 REFDATA lookup_person_role :: + [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | true | false | <null> | <null> | <null> | <null>]
-REFDATA lookup_person_role :: - [Coproprietari / Coindivizari | (părți care partajează) | 11 | false | false | <null> | <null> | <null> | <null>]
+REFDATA lookup_person_role :: - [Coproprietar | (proprietar în indiviziune, alături de alții: comoștenitorii dintr-un certificat, coindivizarii dintr-un partaj) | 9 | false | true | Coproprietar | <null> | <null> | <null>]
 REFDATA lookup_person_role :: - [Cumpărător | (Dobânditor) | 14 | false | false | <null> | <null> | <null> | <null>]
-REFDATA lookup_person_role :: - [Proprietar / Titular de drept real | (principalul interesat) | 37 | false | false | <null> | <null> | <null> | <null>]
+REFDATA lookup_person_role :: - [Proprietar | (deținătorul dreptului de proprietate: titularul imobilului, al dreptului real sau al drepturilor înscrise în cartea funciară) | 33 | false | false | <null> | <null> | <null> | <null>]
 REFDATA lookup_person_role :: - [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | false | false | <null> | <null> | <null> | <null>]
 TABLE public.document :: + principal_object_id uuid NOT NULL,
 TABLE public.document :: - principal_object_id uuid NOT NULL,
