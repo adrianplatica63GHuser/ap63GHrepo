@@ -13,7 +13,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { act, createEvent, fireEvent, render, screen } from "@testing-library/react";
 
-import { customFieldFilter, customFieldState, typeFilterTrigger } from "@/lib/documents/type-filter";
+import { customFieldFilter, customFieldState, foldForSearch, typeFilterTrigger, typesMatching } from "@/lib/documents/type-filter";
 import { CustomFieldSign } from "@/components/documents/custom-field-sign";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 
@@ -195,5 +195,65 @@ describe("the sign between „Tip document:” and „Câmp specific:” (#38.18
     expect(box).toMatch(/: "inline-flex cursor-not-allowed items-center gap-1\.5 rounded-md border border-dashed border-wire bg-cta-pale/);
     expect(box).toContain('customField.enabled ? "text-fade" : "italic text-fade dark:text-zinc-500"');
     expect(VIEW).toMatch(/disabled=\{!customField\.enabled\}[\s\S]{0,200}disabled:cursor-not-allowed disabled:italic disabled:text-fade/);
+  });
+});
+
+/** Slice #38.48 — a search box in the dropdown, under „Toate tipurile", above the divider. */
+describe("„Tip document” — the search box (#38.48)", () => {
+  const TYPES_RO = [
+    { id: "1", name: "Certificat de moștenitor" },
+    { id: "2", name: "Contract de vânzare" },
+    { id: "3", name: "Autorizație de construire" },
+    { id: "4", name: "Hotărâre judecătorească" },
+    { id: "5", name: "Certificat de urbanism" },
+  ];
+  const names = (q: string) => typesMatching(TYPES_RO, q).map((t) => t.name);
+
+  it("folds case and diacritics: „ș”/„s”, „ț”/„t”, „ă”/„a”, „â”/„a”, „î”/„i”, either spelling of „ș” and „ț”", () => {
+    expect(foldForSearch("Moștenitor")).toBe("mostenitor");
+    expect(foldForSearch("AUTORIZAȚIE")).toBe("autorizatie");
+    expect(foldForSearch("Hotărâre judecătorească")).toBe("hotarare judecatoreasca");
+    expect(foldForSearch("Înscris")).toBe("inscris");
+    // The cedilla forms older keyboards and OCR write: U+015F, U+0163.
+    expect(foldForSearch("moştenitor autorizaţie")).toBe("mostenitor autorizatie");
+    expect(foldForSearch("  de   vânzare ")).toBe("de vanzare");
+  });
+
+  it("narrows to the names that contain what was typed, in their own order", () => {
+    expect(names("mostenitor")).toEqual(["Certificat de moștenitor"]);
+    expect(names("CERTIFICAT")).toEqual(["Certificat de moștenitor", "Certificat de urbanism"]);
+    expect(names("hotarare")).toEqual(["Hotărâre judecătorească"]);
+    expect(names("de vanzare")).toEqual(["Contract de vânzare"]);
+    expect(names("devanzare")).toEqual([]); // the spaces count
+    expect(names("zzz")).toEqual([]);
+  });
+
+  it("a blank search shows every type", () => {
+    expect(names("")).toEqual(TYPES_RO.map((t) => t.name));
+    expect(names("   ")).toEqual(TYPES_RO.map((t) => t.name));
+  });
+
+  it("the words, in both languages", () => {
+    expect(ro.document.typeSearchPlaceholder).toBe("Caută un tip…");
+    expect(ro.document.typeSearchEmpty).toBe("Niciun tip nu se potrivește.");
+    expect(en.document.typeSearchPlaceholder).toBe("Search the types…");
+    expect(en.document.typeSearchEmpty).toBe("No type matches.");
+  });
+
+  it("the screen: the box under „Toate tipurile”, above the divider; focused on opening, emptied on closing; the rows it hides never untick", () => {
+    const dropdown = VIEW.slice(VIEW.indexOf("function DocumentTypeFilterDropdown"), VIEW.indexOf("// Types"));
+    expect(dropdown.indexOf("{allTypesLabel}\n")).toBeLessThan(dropdown.indexOf("data-type-search"));
+    expect(dropdown).toMatch(/<div className="border-b border-crease[^"]*">\s*<input\s+ref=\{searchRef\}/);
+    expect(dropdown).toContain("if (open) searchRef.current?.focus();");
+    expect(dropdown).toMatch(/const close = \(\) => \{\s*setOpen\(false\);\s*setQuery\(""\);\s*\};/);
+    expect(dropdown).not.toMatch(/setOpen\(false\)(?!;\s*setQuery)/);
+    expect(dropdown).toContain("const shownTypes = typesMatching(types, query);");
+    expect(dropdown).toContain("{shownTypes.map((ty) => (");
+    // „Toate tipurile" and each row act on the whole list, never on what the search shows.
+    expect(dropdown).toContain("const next = allChecked ? new Set<string>() : new Set(allTypeIds);");
+    expect(dropdown).toMatch(/data-type-search-empty=""[\s\S]*?\{searchEmptyLabel\}/);
+    // Not while the types load: an empty list then is not „nothing matches".
+    expect(dropdown).toContain("{types.length > 0 && shownTypes.length === 0 && (");
+    expect(dropdown).toContain('className="px-3 py-2 text-sm italic text-fade"');
   });
 });
