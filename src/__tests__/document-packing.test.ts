@@ -156,8 +156,8 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
   ] },
   { label: "Identificarea actului", units: 3, rows: [
     ["calitateExemplar", "exemplareEmise"],
-    ["temeiAutentificare"],
-    ["dataContinut"],
+    // „Data conținutului" is a date since #38.32 (migration_097): a fixed box beside the text.
+    ["temeiAutentificare", "dataContinut"],
   ] },
   { label: "Excepție cadastru", units: 3, rows: [
     ["temeiExceptieCadastru"],
