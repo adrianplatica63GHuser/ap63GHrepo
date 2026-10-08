@@ -15,6 +15,7 @@ import { SUPPORTED_LOCALES, setLocaleCookie } from "@/lib/i18n/locale";
 import { ChangePasswordForm } from "@/app/account/change-password/change-password-form";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
+import { MyTileDefaults } from "./my-tile-defaults";
 
 /** Slice #37.35: Setări's tiles, 3 units each — fixed, not tickable (Ask first). */
 const SETTINGS_TILE_UNITS = 3;
@@ -440,6 +441,7 @@ function AccountTile({ uat }: { uat: boolean }) {
         )}
       </div>
       <LanguageChoice />
+      <MyTileDefaults />
     </Tile>
   );
 }

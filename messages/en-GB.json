@@ -3801,6 +3801,26 @@
       "languages": {
         "en-GB": "English",
         "ro-RO": "Română"
+      },
+      "tileDefaults": {
+        "title": "My defaults",
+        "intro": "The parts “Default” shows on a record's screen, for each kind of record. The ticks set on a screen stay the browser's; “Default” returns to what you save here.",
+        "loading": "Loading…",
+        "loadError": "Your defaults could not be read.",
+        "kinds": {
+          "natural-person": "Natural person",
+          "judicial-person": "Judicial person",
+          "property": "Property",
+          "document": "Document"
+        },
+        "own": "mine",
+        "save": "Save",
+        "reset": "Back to default",
+        "atLeastOne": "At least one part stays ticked.",
+        "saved": "Saved.",
+        "cleared": "Back to default.",
+        "error": "Could not save.",
+        "saving": "Saving…"
       }
     }
   },

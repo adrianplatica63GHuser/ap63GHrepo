@@ -30,6 +30,8 @@ import {
   toggleTile,
   type TileRegistry,
 } from "@/lib/ui/tiles";
+import { effectiveDefaults, kindOfEntity } from "@/lib/ui/tile-defaults";
+import { useSavedTileDefaults } from "./saved-tile-defaults";
 
 function write(key: string, value: string[] | null): void {
   try {
@@ -61,6 +63,14 @@ export function useTileChoice<K extends string>(
   disabled: readonly K[] = NONE,
 ): TileChoice<K> {
   const storageKey = tileStorageKey(reg.entity);
+  // Slice #38.41: the user's own set for this kind of record, when „Contul meu" saved one —
+  // what shows with nothing stored in this browser, and what „Implicit" returns to.
+  const saved = useSavedTileDefaults();
+  const kind = kindOfEntity(reg.entity);
+  const defaults = useMemo(
+    () => effectiveDefaults(reg, kind && saved ? saved[kind] : undefined),
+    [reg, kind, saved],
+  );
   const [stored, setStored] = useState<K[]>(() => [...reg.defaults]);
   const [visit, setVisit] = useState<K[]>(() => [...initialVisit]);
 
@@ -72,10 +82,10 @@ export function useTileChoice<K extends string>(
       } catch {
         raw = null;
       }
-      setStored(parseStoredTiles(raw, reg));
+      setStored(parseStoredTiles(raw, { ...reg, defaults }));
     }, 0);
     return () => clearTimeout(id);
-  }, [storageKey, reg]);
+  }, [storageKey, reg, defaults]);
 
   const shown = useMemo(() => shownTiles(stored, visit, reg.all), [stored, visit, reg.all]);
 
@@ -99,11 +109,11 @@ export function useTileChoice<K extends string>(
 
   const reset = useCallback(() => {
     if (disabled.length === 0) {
-      setStored([...reg.defaults]);
+      setStored([...defaults]);
       write(storageKey, null);
     } else {
       // #38.04: the enabled tiles back to the defaults, the disabled ones as stored.
-      const next = reg.all.filter((k) => (disabled.includes(k) ? stored.includes(k) : reg.defaults.includes(k)));
+      const next = reg.all.filter((k) => (disabled.includes(k) ? stored.includes(k) : defaults.includes(k)));
       setStored(next);
       write(storageKey, next);
     }
@@ -111,7 +121,7 @@ export function useTileChoice<K extends string>(
     // Slice #37.76 (its Ask first): „Implicit" returns the screen to how it first was — #37.75's places.
     write(tilePositionsKey(reg.entity), null);
     window.dispatchEvent(new CustomEvent(TILE_POSITIONS_RESET, { detail: reg.entity }));
-  }, [reg.all, reg.defaults, reg.entity, storageKey, disabled, stored]);
+  }, [reg.all, reg.entity, defaults, storageKey, disabled, stored]);
 
   const reveal = useCallback((key: K) => {
     setVisit((v) => (v.includes(key) ? v : [...v, key]));

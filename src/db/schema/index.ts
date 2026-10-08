@@ -10,6 +10,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   smallint,
   text,
   timestamp,
@@ -2138,4 +2139,22 @@ export const aiPaidRead = pgTable(
     at:      timestamp("at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("ai_paid_read_at_idx").on(t.at)],
+);
+
+// ── user_tile_default (Slice #38.41, migration_101) ────────────────────────────
+// Each user's own default tiles per kind of record — what „Implicit" returns
+// to. Read through the registry's `renamed` map and filtered
+// (src/lib/ui/tile-defaults.ts); the registry's `defaults` are the fallback.
+export const userTileDefault = pgTable(
+  "user_tile_default",
+  {
+    userId:    text("user_id").notNull(),
+    kind:      text("kind").notNull(),
+    tiles:     jsonb("tiles").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.kind] }),
+    check("user_tile_default_kind_check", sql`${t.kind} IN ('natural-person', 'judicial-person', 'property', 'document')`),
+  ],
 );

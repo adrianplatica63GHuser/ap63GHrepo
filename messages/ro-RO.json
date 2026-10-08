@@ -3801,6 +3801,26 @@
       "languages": {
         "en-GB": "English",
         "ro-RO": "Română"
+      },
+      "tileDefaults": {
+        "title": "Implicitele mele",
+        "intro": "Părțile pe care „Implicit” le arată pe ecranul unei înregistrări, pentru fiecare fel de înregistrare. Bifele puse pe un ecran rămân ale browserului; „Implicit” revine la ce salvați aici.",
+        "loading": "Se încarcă…",
+        "loadError": "Implicitele nu au putut fi citite.",
+        "kinds": {
+          "natural-person": "Persoană fizică",
+          "judicial-person": "Persoană juridică",
+          "property": "Proprietate",
+          "document": "Act"
+        },
+        "own": "ale mele",
+        "save": "Salvează",
+        "reset": "Revino la implicit",
+        "atLeastOne": "Cel puțin o parte rămâne bifată.",
+        "saved": "Salvat.",
+        "cleared": "Revenit la implicit.",
+        "error": "Nu s-a putut salva.",
+        "saving": "Se salvează…"
       }
     }
   },
