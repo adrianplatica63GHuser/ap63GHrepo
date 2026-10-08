@@ -36,8 +36,13 @@ import {
 
 export type NavItem = {
   key: string;
-  href?: string;  // undefined = coming soon (rendered disabled, „În curând" as its tooltip)
+  // Undefined = not built yet. Since Slice #38.42 such an item draws NOTHING
+  // (`drawnSections`, sidebar-helpers.ts); giving it an href brings it back.
+  href?: string;
   icon: LucideIcon;
+  // Slice #38.42: a screen that exists but is a „work in progress" page — drawn
+  // nothing, like an item with no href, until the flag goes. Its URL still opens.
+  wip?: true;
   // Slice #32.19 removed the `devOnly` field that used to sit here. Adrian
   // asked for the developer-only screen items to be revealed, so Help
   // information and Settings are ordinary entries now and nothing in this
@@ -55,7 +60,18 @@ export type NavSection = {
 };
 
 /**
- * THE LEFT NAVIGATION IN NINE SECTIONS.                          (Slice #38.20)
+ * THE LEFT NAVIGATION IN NINE SECTIONS — SIX OF THEM DRAWN.     (Slice #38.20, #38.42)
+ *
+ * Slice #38.42: what is not built is not drawn. An item with no `href`, or one
+ * marked `wip`, draws nothing, and a section left with nothing to draw draws
+ * nothing either (`drawnSections`, sidebar-helpers.ts) — so „Rapoarte",
+ * „Studiu" and „Ajutor" are gone from the sidebar, and „Verificare corelări",
+ * „Arbori de moștenire", „Dosare diverse" and „Fișier individual" from their
+ * sections. The entries stay here: an href brings one back. „Date de
+ * referință" moved from Domeniu to Administrare (it is configuration, not
+ * records), and „Funcții" is called „Instrumente" (the key is unchanged).
+ *
+ * What #38.20 wrote, still true of the config:
  *
  * Top to bottom: Tablou de bord, Domeniu, Funcții, Import, Rapoarte,
  * Administrare, Setări, Studiu, Ajutor. Every screen that exists is reachable
@@ -92,7 +108,6 @@ export const NAV_SECTIONS: NavSection[] = [
       // (/properties/map) opens from the list, and this item is active there.
       { key: "propertyList", href: "/properties", icon: Map },
       { key: "document", href: "/documents", icon: FileText },
-      { key: "referenceData", href: "/admin/value-lists", icon: BookOpen },
     ],
   },
   {
@@ -123,12 +138,15 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     key: "reports",
     icon: BarChart3,
-    items: [{ key: "reportsInProgress", href: "/reports", icon: Construction }],
+    // Slice #38.42 (Ask first 1): its one item is a placeholder page, so it is hidden too.
+    items: [{ key: "reportsInProgress", href: "/reports", icon: Construction, wip: true }],
   },
   {
     key: "administration",
     icon: ShieldCheck,
     items: [
+      // Slice #38.42: „Date de referință" moved here from Domeniu — configuration, not records.
+      { key: "referenceData", href: "/admin/value-lists", icon: BookOpen },
       { key: "users", href: "/admin/users", icon: UserCog },
       { key: "groups", href: "/admin/groups", icon: Users },
       { key: "stamps", href: "/admin/stamps", icon: Stamp },

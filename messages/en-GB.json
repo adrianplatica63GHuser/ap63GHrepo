@@ -322,7 +322,7 @@
       "empty": "—"
     },
     "address": {
-      "streetLine": "Street Address",
+      "streetLine": "Street, No., Floor, Apt",
       "postalCode": "Postal Code",
       "locality": "Locality",
       "county": "County / Sector",
@@ -922,7 +922,7 @@
         "remove": "Remove link",
         "codePlaceholder": "Entity code",
         "notePlaceholder": "Why this link matters (optional)",
-        "codeHint": "Use the entity's system code — PERS, PROP, or DOC followed by the number.",
+        "codeHint": "Type the other record's code: PPERS (natural person), JPERS (judicial person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
         "empty": "No cross-references added yet",
         "referencedBy": "referenced by",
         "typePerson": "Person",
@@ -1103,7 +1103,7 @@
       "personalEmail2": "Personal Email 2",
       "workEmail": "Work Email",
       "citizenship": "Citizenship",
-      "physicalPersonTypeId": "Professional Type",
+      "physicalPersonTypeId": "Professional type",
       "placeOfBirth": "Place of Birth",
       "idIssuingAuthority": "ID Issuer",
       "age": "Age",
@@ -1249,7 +1249,7 @@
       "labelName": "Name",
       "namePlaceholder": "search by name",
       "labelCode": "Code",
-      "codePlaceholder": "PERS…",
+      "codePlaceholder": "PPERS…",
       "colName": "Name",
       "loading": "Loading…",
       "error": "Failed to load",
@@ -1314,7 +1314,7 @@
     "sections": {
       "dashboard": "Dashboard",
       "domain": "Domain",
-      "functions": "Functions",
+      "functions": "Tools",
       "importSection": "Import",
       "reports": "Reports",
       "administration": "Administration",
@@ -3775,7 +3775,7 @@
         "extract": "Extracting a document's data",
         "idCard": "Reading identity cards",
         "classify": "Classifying files at import",
-        "cluster": "Grouping samples (Functions)"
+        "cluster": "Grouping samples (Tools)"
       }
     },
     "about": {
@@ -3808,7 +3808,7 @@
       "documents": "Documents",
       "sections": {
         "domain": "Domain",
-        "functions": "Functions",
+        "functions": "Tools",
         "importSection": "Import",
         "administration": "Administration"
       },

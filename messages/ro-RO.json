@@ -322,7 +322,7 @@
       "empty": "—"
     },
     "address": {
-      "streetLine": "Stradă, Nr., Ap",
+      "streetLine": "Stradă, Nr., etaj, ap",
       "postalCode": "Cod poștal",
       "locality": "Oraș / Localitate",
       "county": "Județ / Sector",
@@ -922,7 +922,7 @@
         "remove": "Elimină trimiterea",
         "codePlaceholder": "Codul entității",
         "notePlaceholder": "De ce contează această legătură (opțional)",
-        "codeHint": "Folosiți codul de sistem al entității — PERS, PROP sau DOC urmat de număr.",
+        "codeHint": "Scrieți codul celeilalte înregistrări: PPERS (persoană fizică), JPERS (persoană juridică), PROP (proprietate) sau DOC (act), urmat de număr — ex. PPERS00001.",
         "empty": "Nicio trimitere adăugată încă",
         "referencedBy": "referit de",
         "typePerson": "Persoană",
@@ -1103,7 +1103,7 @@
       "personalEmail2": "Email Personal 2",
       "workEmail": "Email serviciu",
       "citizenship": "Cetățenie",
-      "physicalPersonTypeId": "Tip Profesional",
+      "physicalPersonTypeId": "Tip profesional",
       "placeOfBirth": "Locul nașterii",
       "idIssuingAuthority": "Emisă de",
       "age": "Vârstă",
@@ -1249,7 +1249,7 @@
       "labelName": "Nume",
       "namePlaceholder": "caută după nume",
       "labelCode": "Cod",
-      "codePlaceholder": "PERS…",
+      "codePlaceholder": "PPERS…",
       "colName": "Nume",
       "loading": "Se încarcă…",
       "error": "Eroare la încărcare",
@@ -1314,7 +1314,7 @@
     "sections": {
       "dashboard": "Tablou de bord",
       "domain": "Domeniu",
-      "functions": "Funcții",
+      "functions": "Instrumente",
       "importSection": "Import",
       "reports": "Rapoarte",
       "administration": "Administrare",
@@ -3775,7 +3775,7 @@
         "extract": "Extragerea datelor din acte",
         "idCard": "Citirea cărților de identitate",
         "classify": "Clasificarea fișierelor la import",
-        "cluster": "Gruparea mostrelor (Funcții)"
+        "cluster": "Gruparea mostrelor (Instrumente)"
       }
     },
     "about": {
@@ -3808,7 +3808,7 @@
       "documents": "Acte",
       "sections": {
         "domain": "Domeniu",
-        "functions": "Funcții",
+        "functions": "Instrumente",
         "importSection": "Import",
         "administration": "Administrare"
       },

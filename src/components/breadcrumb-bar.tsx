@@ -76,8 +76,8 @@ interface Segment {
 /**
  * The sidebar section that holds the screen `/admin/<part>` (Slice #38.20) — its key, or null for a
  * screen that is a section by itself („Setări") or in none. The crumb that was „Admin", named after
- * the two „Admin-…" sections that no longer exist, now names this one: „Domeniu" for „Date de
- * referință", „Funcții" for „Căutare globală", „Administrare" for „Etichete".
+ * the two „Admin-…" sections that no longer exist, now names this one: „Instrumente" for „Căutare
+ * globală", „Administrare" for „Etichete" and, since #38.42, for „Date de referință".
  */
 export function sectionOfAdminScreen(part: string | undefined): string | null {
   if (!part) return null;

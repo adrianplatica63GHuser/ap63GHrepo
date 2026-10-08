@@ -1,7 +1,7 @@
 // Pure route-matching helpers — no external dependencies so they are
 // trivially unit-testable without mocking lucide-react or next-intl.
 
-type NavItemMin = { key: string; href?: string };
+type NavItemMin = { key: string; href?: string; wip?: true };
 type NavSectionMin = { key: string; items: NavItemMin[]; href?: string };
 
 /**
@@ -70,15 +70,35 @@ export function isFlatSectionActive(section: NavSectionMin, pathname: string): b
 export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"];
 
 /**
+ * What the sidebar draws at all (Slice #38.42): an item with an `href` and no
+ * `wip` mark; a section with such an item, or a flat section with its own
+ * `href`. Nothing else — a placeholder costs attention every day, so it waits
+ * in nav-config.ts, undrawn, until its screen exists.
+ */
+export function drawnSections<S extends NavSectionMin>(sections: readonly S[]): S[] {
+  const out: S[] = [];
+  for (const s of sections) {
+    if (s.items.length === 0) {
+      if (s.href) out.push(s);
+      continue;
+    }
+    const items = s.items.filter((i) => i.href !== undefined && !i.wip);
+    if (items.length > 0) out.push({ ...s, items });
+  }
+  return out;
+}
+
+/**
  * The sections an account sees: with full access (#38.21: every account with an
  * app_users row) all of them; otherwise only the hrefs in `USER_HREFS` — a flat
  * section whose href is listed, the listed items of the others, and no section
  * left empty.
  */
 export function sectionsFor<S extends NavSectionMin>(sections: readonly S[], fullAccess: boolean): S[] {
-  if (fullAccess) return [...sections];
+  const drawn = drawnSections(sections);
+  if (fullAccess) return drawn;
   const out: S[] = [];
-  for (const s of sections) {
+  for (const s of drawn) {
     if (s.items.length === 0) {
       if (s.href && USER_HREFS.includes(s.href)) out.push(s);
       continue;
