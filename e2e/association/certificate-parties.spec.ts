@@ -131,7 +131,9 @@ test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca păr
       const roleSelect = page.getByRole("combobox", { name: "Rol", exact: true });
       await expect(roleSelect).toBeVisible({ timeout: 30_000 });
       for (const offered of ["Defunct", "Moștenitor"]) {
-        await expect(roleSelect.locator("option", { hasText: offered })).toHaveCount(1);
+        // Exact: `hasText` is a case-insensitive substring, and „Coproprietar / Co-moștenitor"
+        // is on the certificate too (full-db 20261008T121259Z-10666).
+        await expect(roleSelect.locator("option", { hasText: new RegExp(`^${offered}$`) })).toHaveCount(1);
       }
       // The two quality buttons are gone.
       await expect(page.getByRole("button", { name: "Defunct", exact: true })).toHaveCount(0);
