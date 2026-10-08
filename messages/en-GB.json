@@ -2055,6 +2055,14 @@
       "several": "An addendum amends one deed — choose one.",
       "noRole": "The “Act adițional la” relation is missing from Reference data.",
       "error": "The link could not be saved. Try again."
+    },
+    "idCardPeople": {
+      "action": "Create people from the ID card",
+      "loading": "Preparing the card…",
+      "noPage": "The document has no page to read.",
+      "error": "The card could not be read. Try again.",
+      "holderCreated": "The holder was created and linked to the document.",
+      "holderLinked": "The holder already existed and was linked to the document."
     }
   },
   "valueList": {
@@ -4092,6 +4100,7 @@
       "createInsteadOfMatch": "No, this is someone else",
       "skip": "Skip"
     },
-    "ok": "OK"
+    "ok": "OK",
+    "foldHintCardNone": "The card does not print the parents' first names, or the read did not find them. You can type them here: each ticked parent is created or linked after the holder, as „Tată” or „Mamă”."
   }
 }

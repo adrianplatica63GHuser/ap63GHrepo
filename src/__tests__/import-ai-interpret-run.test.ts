@@ -756,7 +756,7 @@ const pageGroup = (names: string[]): FSEntry =>
   }) as unknown as FSEntry;
 
 describe("shouldInterpretEntry", () => {
-  const NOT_A_CARD = { isIdCard: false, canCreatePerson: false };
+  const NOT_A_CARD = { isIdCard: false };
 
   it("reads anything with a page a model can see", () => {
     expect(shouldInterpretEntry(file("act.pdf"), NOT_A_CARD)).toBe(true);
@@ -774,31 +774,16 @@ describe("shouldInterpretEntry", () => {
     expect(shouldInterpretEntry(pageGroup(["1.txt", "2.jpg"]), NOT_A_CARD)).toBe(true);
   });
 
-  it("⚠️ skips an identity card ONLY where the person action can act on it", () => {
+  // Slice #38.44 inverted this test in place. It read: „⚠️ skips an identity card
+  // ONLY where the person action can act on it" — a card under `common` or
+  // `floating` was read here, because the person action was not offered there.
+  // Since #38.44 it is offered on every card (Ask first 3), so every recognised
+  // card is skipped here, and the screen's upper bound has nothing to guess
+  // (the old „over-counts rather than under-counts" test went with the term).
+  it("skips every identity card the scan recognises, property or none (#38.44)", () => {
     const card = file("CI Popescu.jpg");
-    // #23.08: "Creează persoană" extracts strictly more from a card, so a
-    // second generic call is worse than nothing.
-    expect(shouldInterpretEntry(card, { isIdCard: true, canCreatePerson: true })).toBe(false);
-    // …but since #26.07 that action is not offered on a card under `common` or
-    // `floating`, which is exactly where an owner's card belongs. Skipping here
-    // too would leave the file imported and never read by anything.
-    expect(shouldInterpretEntry(card, { isIdCard: true, canCreatePerson: false })).toBe(true);
-  });
-
-  it("⚠️ over-counts rather than under-counts on the axis the screen cannot know", () => {
-    // The Import screen passes the scan's real `isIdCard` and guesses
-    // `canCreatePerson: false`, because the property step has not run. The
-    // guess must be the one that returns true more often — over-stating a spend
-    // is safe, under-stating it surprises somebody with a bill.
-    //
-    // ⚠️ The axis matters: an earlier version of this test varied `isIdCard`
-    // instead, which short-circuits the whole rule, so it passed against an
-    // implementation that ignored `canCreatePerson` altogether — the bug the
-    // predicate's own doc calls out as real rather than a simplification.
-    const card = file("CI Popescu.jpg");
-    const guessed = shouldInterpretEntry(card, { isIdCard: true, canCreatePerson: false });
-    const truth = shouldInterpretEntry(card, { isIdCard: true, canCreatePerson: true });
-    expect({ guessed, truth }).toEqual({ guessed: true, truth: false });
+    expect(shouldInterpretEntry(card, { isIdCard: true })).toBe(false);
+    expect(shouldInterpretEntry(card, NOT_A_CARD)).toBe(true);
   });
 });
 

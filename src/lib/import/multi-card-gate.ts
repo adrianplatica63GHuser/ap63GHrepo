@@ -67,10 +67,12 @@
  * paragraph said "three places, each seeing a different amount", a fifth
  * adversarial round replaced it with "the AI read is never called for an
  * identity card", and a SIXTH showed that is not true either.**
- * `interpretSkipReason` answers `"id-card"` only for a card that can produce a
- * person — `scan.isIdCard && scan.canCreatePerson` — and `canCreatePerson` is
- * false for a card under `common` or `floating`, which `ai-interpret-run.ts`
- * records. So:
+ * Until Slice #38.44, `interpretSkipReason` answered `"id-card"` only for a card
+ * that could produce a person — `scan.isIdCard && scan.canCreatePerson` — and
+ * `canCreatePerson` was false for a card under `common` or `floating`. Since
+ * #38.44 every recognised card goes to the identity-card step, so the second
+ * bullet below now holds only for documents this gate did NOT type as a card.
+ * As it was:
  *
  *  - a card with a sole Property is skipped by the AI read and backed up by the
  *    IDENTITY-CARD STEP, which is the only refusal standing between a scan and

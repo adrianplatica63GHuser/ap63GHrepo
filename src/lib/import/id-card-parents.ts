@@ -107,6 +107,18 @@ export function blankDrafts(holderLastName: string): ParentDraft[] {
 }
 
 /**
+ * The parents „Creează persoană din CI" offers.               (Slice #38.44)
+ *
+ * Both, always (Ask first 2): one the card names, ticked and filled; one it
+ * does not — a card that prints no parents, or a read that missed them — as
+ * „Adaugă nou" offers it, unticked and empty, to type.
+ */
+export function offeredDrafts(parents: CardParents, holderLastName: string): ParentDraft[] {
+  const read = draftsFromCard(parents, holderLastName);
+  return blankDrafts(holderLastName).map((blank) => read.find((d) => d.kind === blank.kind) ?? blank);
+}
+
+/**
  * The holder's surname changed in the form: every parent whose surname is
  * still the ASSUMED one follows it; one the user typed or confirmed stays.
  */

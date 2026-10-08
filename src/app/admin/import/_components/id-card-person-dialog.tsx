@@ -95,10 +95,11 @@ import {
 } from "@/components/persons/person-resolution-dialog";
 import { ActivityCue } from "@/components/activity-cue";
 import { ParentsFold } from "@/components/persons/parents-fold";
+import { holderRoleIdFor } from "@/lib/import/id-card-holder-role";
 import { ParentsResolution } from "@/components/persons/parents-resolution";
 import {
   cardParentsFrom,
-  draftsFromCard,
+  offeredDrafts,
   followHolderSurname,
   incompleteParents,
   parentsToCreate,
@@ -407,8 +408,12 @@ type Props = {
   file: File;
   /** Row label, used as the summary heading before a name is read. */
   entryLabel: string;
-  /** The run's Property, resolved in Slice #23.00.Import. */
-  propertyId: string;
+  /**
+   * The run's Property, resolved in Slice #23.00.Import — or null (Slice
+   * #38.44) for a card in no property's folder, or opened from the card's own
+   * screen: the holder is then linked to the Document only.
+   */
+  propertyId: string | null;
   /** The Document the import already created for this same image. */
   documentId: string;
   /**
@@ -632,6 +637,8 @@ export function IdCardPersonDialog({
    * edits it: `followHolderSurname` at render, never an effect.
    */
   const [parentDrafts, setParentDrafts] = useState<ParentDraft[]>([]);
+  /** Slice #38.44 — did the read find either parent? Only the fold's sentence follows it. */
+  const [cardNamesParents, setCardNamesParents] = useState(true);
   /** The holder is done; the ticked parents are being resolved before `onDone`. */
   const [parentsStage, setParentsStage] = useState<
     { personId: string; created: boolean; doc: { written: number; failed: boolean } } | null
@@ -734,7 +741,11 @@ export function IdCardPersonDialog({
         setCitizenshipRaw(fields.citizenshipRaw ?? "");
         setLowConfidence(new Set(data.lowConfidenceFields ?? []));
         setUnmappedRaw(data.unmappedRaw ?? {});
-        setParentDrafts(draftsFromCard(cardParentsFrom(data.parents), fields.lastName ?? ""));
+        // Slice #38.44 (Ask first 2): both rows, always — one the card does not
+        // name is offered empty, to type.
+        const cardParents = cardParentsFrom(data.parents);
+        setCardNamesParents(cardParents.father !== null || cardParents.mother !== null);
+        setParentDrafts(offeredDrafts(cardParents, fields.lastName ?? ""));
         setPhase("resolving");
 
         const resolveRes = await fetch("/api/admin/import/resolve-natural-person", {
@@ -844,20 +855,29 @@ export function IdCardPersonDialog({
   // attached to the right property, which is the association this import run
   // exists to produce; the reverse ordering would leave an ID card linked to a
   // person who belongs to no property.
+  //
+  // Slice #38.44: with no property, the Document alone. And on the Document the
+  // holder is „Titular act de identitate" (`id-card-holder-role.ts`), the role
+  // the general reader gave a card's holder — so a card reads the same whichever
+  // path it took. A type that does not offer that role gets the link without
+  // one, as before; a failed read of the roles is the same answer.
   const linkPerson = useCallback(
     async (personId: string) => {
-      const propRes = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/persons`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personIds: [personId], personRoleId: null }),
-      });
-      if (propRes.redirected) throw new Error(t("sessionExpired"));
-      if (!propRes.ok) throw new Error(`HTTP ${propRes.status}`);
+      if (propertyId !== null) {
+        const propRes = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/persons`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ personIds: [personId], personRoleId: null }),
+        });
+        if (propRes.redirected) throw new Error(t("sessionExpired"));
+        if (!propRes.ok) throw new Error(`HTTP ${propRes.status}`);
+      }
 
+      const holderRoleId = await holderRoleIdFor(documentId);
       const docRes = await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personIds: [personId], personRoleId: null }),
+        body: JSON.stringify({ personIds: [personId], personRoleId: holderRoleId }),
       });
       if (docRes.redirected) throw new Error(t("sessionExpired"));
       if (!docRes.ok) throw new Error(`HTTP ${docRes.status}`);
@@ -1773,7 +1793,7 @@ export function IdCardPersonDialog({
       <ParentsFold
         drafts={shownParents}
         onChange={setParentDrafts}
-        hint={tParents("foldHintCard")}
+        hint={tParents(cardNamesParents ? "foldHintCard" : "foldHintCardNone")}
         disabled={busy}
       />
 

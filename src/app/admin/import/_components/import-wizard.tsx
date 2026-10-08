@@ -2709,32 +2709,23 @@ export function ImportWizard() {
   /**
    * How many documents the import run may read with the model.   (Slice #26.09)
    *
-   * ⚠️ **An UPPER BOUND, and the panel words it as one.** The loop skips an
-   * identity card whose person action can act on it, and whether it can depends
-   * on which property the entry belongs to — an answer `PropertyStepDialog`
-   * produces two screens after this number is shown. Over-stating the spend is
-   * the safe direction; under-stating it is the one that surprises somebody.
+   * ⚠️ **An UPPER BOUND, and the panel words it as one.** Until #38.44 the
+   * loop skipped only a card whose person action could act on it, which
+   * depended on a property `PropertyStepDialog` decides two screens later, so
+   * this guessed in the safe direction. Over-stating the spend is the safe
+   * direction; under-stating it is the one that surprises somebody.
    *
    * `shouldInterpretEntry` is the loop's own predicate, called rather than
    * restated — a number on a screen and the loop it describes must be one
    * expression.
    *
-   * ⚠️ **Only ONE of its two arguments is guessed, and it is guessed in the
-   * safe direction.** `isIdCard` is a fact about the scan and is passed
-   * honestly; `canCreatePerson` depends on which property the entry lands in,
-   * which `PropertyStepDialog` decides two screens later, so it is answered
-   * `false` — the answer that makes the predicate return true more often. An
-   * earlier draft passed `isIdCard: false` as well, which short-circuited the
-   * whole rule and quietly reduced this to "has a readable page"; the same
-   * number, arrived at by asserting something untrue.
+   * Since Slice #38.44 nothing is guessed: a recognised card is never read
+   * here, whatever property it lands in, so the scan's `isIdCard` decides alone.
    */
   const interpretUpperBound = useMemo(
     () =>
       entriesToImport.filter((entry) =>
-        shouldInterpretEntry(entry, {
-          isIdCard: isIdCardEntry(scanResults.get(entry.path)),
-          canCreatePerson: false,
-        }),
+        shouldInterpretEntry(entry, { isIdCard: isIdCardEntry(scanResults.get(entry.path)) }),
       ).length,
     [entriesToImport, scanResults],
   );

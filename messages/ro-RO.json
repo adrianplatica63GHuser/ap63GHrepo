@@ -2055,6 +2055,14 @@
       "several": "Un act adițional modifică un singur act — alegeți unul.",
       "noRole": "Relația „Act adițional la” lipsește din Date de referință.",
       "error": "Legătura nu s-a putut salva. Încercați din nou."
+    },
+    "idCardPeople": {
+      "action": "Creează persoane din CI",
+      "loading": "Se pregătește cartea…",
+      "noPage": "Actul nu are nicio pagină de citit.",
+      "error": "Cartea nu a putut fi citită. Încercați din nou.",
+      "holderCreated": "Titularul a fost creat și legat de act.",
+      "holderLinked": "Titularul există deja și a fost legat de act."
     }
   },
   "valueList": {
@@ -4092,6 +4100,7 @@
       "createInsteadOfMatch": "Nu, este altcineva",
       "skip": "Omite"
     },
-    "ok": "Am înțeles"
+    "ok": "Am înțeles",
+    "foldHintCardNone": "Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit. Le puteți scrie aici: fiecare părinte bifat este creat sau legat după titular, ca „Tată” sau „Mamă”."
   }
 }

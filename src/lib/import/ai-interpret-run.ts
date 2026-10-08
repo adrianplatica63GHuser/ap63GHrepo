@@ -287,15 +287,16 @@ export type AiInterpretRunResult =
  * from the type's `template_fields` — and CARTE_IDENTITATE has none, so it asks
  * for four generic fields and returns strictly less for a second billed call.
  *
- * ⚠️ `canCreatePerson` is what makes that true, and dropping it is a real bug
- * rather than a simplification: since #26.07 the person action is NOT offered
- * on a card under `common` or `floating`, which is exactly where an owner's
- * carte de identitate belongs — so suppressing this one as well would leave the
- * file imported and never read by anything.
+ * Slice #38.44 (Ask first 3): EVERY card the scan recognises. Until then a
+ * `canCreatePerson` term kept a card under `common` or `floating` here, because
+ * the person action was not offered there and skipping it would have left the
+ * file read by nothing. Since #38.44 the person action is offered on every card,
+ * property or none, so the term had nothing left to decide and went. A card the
+ * scan MISSES is still read here, as before.
  */
 export function shouldInterpretEntry(
   entry: FSEntry,
-  scan: { isIdCard: boolean; canCreatePerson: boolean },
+  scan: { isIdCard: boolean },
 ): boolean {
   return interpretSkipReason(entry, scan) === null;
 }
@@ -326,10 +327,11 @@ export function shouldInterpretEntry(
  */
 export function interpretSkipReason(
   entry: FSEntry,
-  scan: { isIdCard: boolean; canCreatePerson: boolean },
+  scan: { isIdCard: boolean },
 ): "no-page" | "id-card" | null {
   if (!hasReadablePage(entry)) return "no-page";
-  if (scan.isIdCard && scan.canCreatePerson) return "id-card";
+  // Slice #38.44: every recognised card, property or none — see shouldInterpretEntry.
+  if (scan.isIdCard) return "id-card";
   return null;
 }
 

@@ -521,7 +521,9 @@ describe("the model-readable set is narrower than the image kind, and says so", 
       "lib/import/preflight.ts",
       "lib/import/folder-utils.ts",
       "app/admin/import/_components/import-wizard.tsx",
-      "app/admin/import/_components/bulk-import-dialog.tsx",
+      // Slice #38.44: the card's image check moved out of bulk-import-dialog.tsx,
+      // with the PDF rasteriser, so a card's own screen asks it too.
+      "app/admin/import/_components/id-card-image.ts",
     ]) {
       const code = codeOf(rel);
       expect(code).toContain("isModelReadable");

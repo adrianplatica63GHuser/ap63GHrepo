@@ -606,9 +606,12 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
    * EVERY page, which is the difference that matters: a two-card sheet on page
    * four of a group is invisible to the gate and visible here.
    *
-   * ⚠️ **AND IT DOES NOT RUN FOR AN IDENTITY CARD THAT CAN PRODUCE A PERSON.**
-   * `interpretSkipReason` answers `"id-card"` for `scan.isIdCard &&
-   * scan.canCreatePerson`, deliberately, because the identity-card step
+   * ⚠️ **AND IT DOES NOT RUN FOR A RECOGNISED IDENTITY CARD.** Since Slice
+   * #38.44 `interpretSkipReason` answers `"id-card"` for every `scan.isIdCard`,
+   * property or none (Ask first 3), so what follows about `common` and
+   * `floating` is history: such a card now goes to the identity-card step too,
+   * and this call reads only cards the scan missed. Until then it answered for
+   * `scan.isIdCard && scan.canCreatePerson`, deliberately, because the identity-card step
    * extracts strictly more from one of those. It is the SECOND term that a
    * reader trips on: a card under `common` or `floating` has no sole Property,
    * so it is not skipped and this call does read it. So the two backstops
