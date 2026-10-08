@@ -1,6 +1,6 @@
 /**
  * Case:   TC-TILES-14 — Fișele care nu se mută sunt mov deschis: harta, colțurile, Street View, paginile
- * Source: docs/testing/cases/TC-TILES-14.md, „Last green" 2026-10-04
+ * Source: docs/testing/cases/TC-TILES-14.md, „Last green" 2026-10-08
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -29,11 +29,17 @@ const RELATED = "rgb(221, 240, 225) / rgb(175, 213, 183)"; // #38.15: one step s
 const colour = (l: Locator) =>
   l.evaluate((e) => `${getComputedStyle(e).backgroundColor} / ${getComputedStyle(e).borderTopColor}`);
 
+/**
+ * The column under the left tiles. It read the right area's top against the left area's bottom; since
+ * #38.46 a wrapped column's tiles are boxes of the row, under the left tiles and above the action bar,
+ * so it reads every column tile's top against the lowest left tile.
+ */
 const columnUnderLeft = (page: Page) =>
   page.evaluate(() => {
-    const l = document.querySelector('[data-tile-area="left"]')!.getBoundingClientRect();
-    const r = document.querySelector('[data-tile-area="right"]')!.getBoundingClientRect();
-    return r.top >= l.bottom - 1;
+    const lowest = Math.max(...[...document.querySelectorAll<HTMLElement>('[data-tile-area="left"] [data-packed-col]')]
+      .filter((e) => !e.classList.contains("order-last")).map((e) => e.getBoundingClientRect().bottom));
+    const tiles = [...document.querySelectorAll<HTMLElement>('[data-tile-area="right"] [data-tile-slot] > *')].filter((t) => !t.hidden && t.getClientRects().length > 0);
+    return tiles.length > 0 && tiles.every((t) => t.getBoundingClientRect().top >= lowest - 1);
   });
 
 test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () => {

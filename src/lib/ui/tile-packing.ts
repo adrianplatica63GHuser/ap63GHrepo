@@ -51,8 +51,8 @@
  * A WRAPPED COLUMN (Slice #38.46). When the left area's widest tile and the
  * column no longer fit side by side (`fitsBeside`), the column's tiles are no
  * longer fixed: they are boxes of the row marked `under` — the first starts a
- * line of its own, and each stands right under the lowest box above it in its
- * columns — so they come under the left tiles, and the action bar under them.
+ * line of its own, and each stands under every left tile, as the whole column
+ * stood under the whole left area before — and the action bar under them.
  * The space under them is then free for a dragged tile like any other.
  *
  * POSITIONS ARE DATA: a column in units and a place down the screen in px.
@@ -77,8 +77,8 @@ export interface PackBox {
   fixed?: { col: number; top: number };
   /**
    * Slice #38.46: a right-column tile while the column is wrapped: the first
-   * starts a new line, and each stands under every box placed before it in
-   * its columns (stored ones included).
+   * starts a new line, and each stands under every tile that is not one of
+   * them — as the whole column stood under the whole left area before.
    */
   under?: boolean;
 }
@@ -148,15 +148,15 @@ export function packTiles(boxes: readonly PackBox[], columns: number, gap: numbe
   const placed: Placed[] = fixedBoxes(boxes);
   const ends: PackBox[] = [];
   let next = 0; // the first free column of the current line
-  let under = false; // #38.46: the wrapped column's line has started
+  let floor = -1; // #38.46: under every tile, once the wrapped column's line has started
   for (const box of boxes) {
     if (box.fixed) continue;
     if (box.rowEnd) {
       ends.push(box);
       continue;
     }
-    if (box.under && !under) {
-      under = true;
+    if (box.under && floor < 0) {
+      floor = endsTop(placed, gap);
       next = 0;
     }
     const units = box.full ? cols : Math.max(1, Math.min(Math.round(box.units), cols));
@@ -168,7 +168,8 @@ export function packTiles(boxes: readonly PackBox[], columns: number, gap: numbe
     }
     if (next > 0 && next + units > cols) next = 0;
     const col = next;
-    placed.push({ id: box.id, col, units, top: topUnder(placed, col, units, gap), height: box.height });
+    const top = topUnder(placed, col, units, gap);
+    placed.push({ id: box.id, col, units, top: box.under ? Math.max(top, floor) : top, height: box.height });
     next = col + units >= cols ? 0 : col + units;
   }
   let top = endsTop(placed, gap);

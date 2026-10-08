@@ -301,15 +301,15 @@ export function placeWithStored(
   const flow: Placed[] = [];
   const ends: PackBox[] = [];
   let next = 0;
-  let under = false; // #38.46: the wrapped column's line has started
+  let floor = -1; // #38.46: under every tile, once the wrapped column's line has started
   for (const box of boxes) {
     if (placed.some((p) => p.id === box.id)) continue;
     if (box.rowEnd) {
       ends.push(box);
       continue;
     }
-    if (box.under && !under) {
-      under = true;
+    if (box.under && floor < 0) {
+      floor = endsTop([...placed, ...flow].filter((p) => !boxes.find((b) => b.id === p.id)?.under), gap);
       next = 0;
     }
     const units = box.full ? fcols : Math.max(1, Math.min(Math.round(box.units), fcols));
@@ -322,15 +322,16 @@ export function placeWithStored(
     }
     if (next > 0 && next + units > fcols) next = 0;
     const col = next;
-    // A wrapped column tile goes under every box above it in its columns, a stored one too (#38.46).
-    const top = firstFree(all, col, units, box.height, topUnder(box.under ? all : flow, col, units, gap), gap);
+    // A wrapped column tile goes under every tile, a stored one too (#38.46).
+    const top = firstFree(all, col, units, box.height, box.under ? Math.max(floor, topUnder(all, col, units, gap)) : topUnder(flow, col, units, gap), gap);
     flow.push({ id: box.id, col, units, top, height: box.height });
     next = col + units >= fcols ? 0 : col + units;
   }
   // #38.16: then every tile rises into the empty space above it; the banners stay where they stand.
   // #38.45: a stored tile only by what the tiles above it gave up — the space the user left above it stays.
   const space = Object.fromEntries(usable.filter((b) => !fallback.has(b.id)).map((b) => [b.id, stored[b.id].space ?? 0]));
-  const out = riseIntoGaps([...placed, ...flow], gap, lead, new Set(boxes.filter((b) => b.full).map((b) => b.id)), space);
+  // The wrapped column's tiles do not rise either: they stand under every tile (#38.46).
+  const out = riseIntoGaps([...placed, ...flow], gap, lead, new Set(boxes.filter((b) => b.full || b.under).map((b) => b.id)), space);
   // Back in the boxes' order, so the DOM's order and the placed order agree.
   const order = new Map(boxes.map((b, i) => [b.id, i]));
   out.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));

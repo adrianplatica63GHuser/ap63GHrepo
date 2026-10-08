@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-07 — „Interacțiuni”, o fișă fixă la dreapta pe persoane; prima fișă a persoanei juridice se numește „Identitate”
- * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-05 (step 2 follows Slice #38.06)
+ * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-08 (step 2 follows Slice #38.06, step 4 #38.46)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -93,12 +93,16 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await tileBox(page, "Interacțiuni").click();
       await expect(tile).toBeVisible();
 
-      // Step 4 — 1366: under the left area, still „Pagini"'s size, purple.
+      // Step 4 — 1366: under the left tiles, the action bar under it (#38.46 — it read „under the left area", which
+      // was the column wrapped as a line of its own, outside the packing), still „Pagini"'s size, purple.
       await page.setViewportSize({ width: 1366, height: 1080 });
       await expect.poll(async () => {
-        const [l, t] = [await size(page.locator('[data-tile-area="left"]')), await size(tile)];
-        return t.y >= l.y + l.h;
-      }, { timeout: 15_000 }).toBe(true);
+        const t = await size(tile);
+        const bottoms = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('[data-tile-area="left"] [data-packed-col]')]
+          .filter((e) => !e.classList.contains("order-last")).map((e) => e.getBoundingClientRect().bottom));
+        const bar = await size(page.locator("[data-tile-row] [data-packed-col].order-last"));
+        return { underTiles: t.y >= Math.max(...bottoms), barUnder: bar.y >= t.y + t.h };
+      }, { timeout: 15_000 }).toEqual({ underTiles: true, barUnder: true });
       const at1366 = await size(tile);
       expect(at1366.w).toBe(640);
       expect(Math.abs(at1366.h - pages1920.h)).toBeLessThanOrEqual(4);

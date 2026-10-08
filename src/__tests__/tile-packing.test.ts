@@ -255,8 +255,8 @@ describe("the right column wrapped (#38.46)", () => {
     const at = (id: string) => placed.find((p) => p.id === id)!;
     // „m" would have fitted beside „b" on the first line; it starts a new one, under „a".
     expect(at("m")).toMatchObject({ col: 0, top: 316 });
-    // The next wrapped tile flows beside it, under „b" in its columns.
-    expect(at("c")).toMatchObject({ col: 3, top: 116 });
+    // The next wrapped tile flows beside it — under every left tile too, not only „b" above it.
+    expect(at("c")).toMatchObject({ col: 3, top: 316 });
     expect(at("bar").top).toBe(316 + 378 + 16);
   });
 });

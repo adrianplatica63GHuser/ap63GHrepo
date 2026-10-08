@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-04 |
+| **Last green** | 2026-10-08 |
 
 ## What this proves
 
@@ -37,7 +37,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificare" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Identificare cadastrală" and „Adresă": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`; „Clasificare" the yellow group's (#37.88): fill `rgb(248, 243, 229)`, rim `rgb(221, 211, 174)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
-| 2 | Ticks „Legături" and narrows the window to 1366 px | The column stands under the left area; „Hartă", „Puncte de contur" and „Street View" are still `rgb(246, 240, 254)`, „Legături" the green group's (#37.88; #38.15's stronger green), `rgb(221, 240, 225)` |
+| 2 | Ticks „Legături" and narrows the window to 1366 px | The column's tiles stand under the left tiles (above the action bar); „Hartă", „Puncte de contur" and „Street View" are still `rgb(246, 240, 254)`, „Legături" the green group's (#37.88; #38.15's stronger green), `rgb(221, 240, 225)` |
 | 3 | Widens the window to 1920 px and opens „TC-TILES-14 Act" | „Pagini": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Identificarea actului" and „Preț și plată": `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)` |
 
 ## At the end — leaving things as they were found
@@ -77,3 +77,5 @@ green too).
 yellow and „Corelate" (step 2) light green, at the card's lightness. Steps 1 and 2 and the spec
 changed together; the purple column, the map's frame and the corner table are as they were.
 TC-TILES-18 holds the four groups.
+
+**2026-10-08 — Slice #38.46.** Step 2 read „The column stands under the left area". Since #38.46 a wrapped column's tiles are boxes of the row, under the left tiles and above the action bar; the right area itself is out of the flow. Rewritten in place, and the spec's `columnUnderLeft` reads the tiles, not the area.
