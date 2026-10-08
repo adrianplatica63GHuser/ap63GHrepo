@@ -68,9 +68,10 @@ export const TEMPLATE_FIELD_GROUPS: readonly TemplateFieldGroup[] = [
   // Slice #38.34: on an act adițional, what the text says of the deed it amends
   // — number, date, notary, type. Drawn under that deed's link („Act adițional
   // la"), and only while there is none: a deed in the archive is read from its
-  // own record, these four are the fallback for one that is not. Its tab is
-  // named the same, so the tile and the group read as one place.
-  { id: "amendedDeed", ro: "Actul modificat", en: "Amended deed" },
+  // own record, these four are the fallback for one that is not. They sit on
+  // the tab „Actul modificat"; the group says which part of it they are (and a
+  // group name is written down only here, so it is not the tab's name).
+  { id: "amendedDeed", ro: "Actul modificat în afara arhivei", en: "Amended deed outside the archive" },
 ] as const;
 
 /** Look one up by id. Returns undefined for an id that is not one of the three. */
@@ -117,7 +118,7 @@ export function isIdentificationGroup(label: string): boolean {
   return templateFieldGroupOf(label) === "identification";
 }
 
-/** `Actul modificat` / `Amended deed` — the fallback under an act adițional's link to its deed (#38.34). */
+/** `Actul modificat în afara arhivei` — the fallback under an act adițional's link to its deed (#38.34). */
 export function isAmendedDeedGroup(label: string): boolean {
   return templateFieldGroupOf(label) === "amendedDeed";
 }

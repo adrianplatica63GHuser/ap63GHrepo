@@ -20,7 +20,7 @@ import {
   parentConflictBody,
   parentDeedOf,
 } from "@/lib/documents/parent-deed";
-import { TEMPLATE_FIELD_GROUPS, isAmendedDeedGroup, templateFieldGroupOf } from "@/lib/documents/template-groups";
+import { TEMPLATE_FIELD_GROUPS, isAmendedDeedGroup, templateFieldGroupById, templateFieldGroupOf } from "@/lib/documents/template-groups";
 import { templateTabsOf } from "@/lib/documents/template-tabs";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 
@@ -38,6 +38,8 @@ jest.mock("next/link", () => ({
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 type Field = { key: string; tabRo: string | null; groupRo: string | null; groupEn: string | null; order: number };
 const ACT = (JSON.parse(read("src", "db", "document-type-forms.json")) as { forms: Record<string, Field[]> }).forms.ACT_ADITIONAL;
+/** The group's name, read from the module — a second copy of it is what template-groups-single-source forbids. */
+const AMENDED = templateFieldGroupById("amendedDeed")?.ro ?? "";
 const keysOf = (group: string) => ACT.filter((f) => f.groupRo === group).map((f) => f.key);
 
 describe("the act adițional's 20 fields, each placed once", () => {
@@ -47,8 +49,8 @@ describe("the act adițional's 20 fields, each placed once", () => {
   });
 
   it("„Actul modificat”: the deed's four free-text fields, on their own tab", () => {
-    expect(keysOf("Actul modificat")).toEqual(["actParinteNumar", "actParinteData", "actParinteNotariat", "actParinteTip"]);
-    expect(ACT.filter((f) => f.groupRo === "Actul modificat").every((f) => f.tabRo === "Actul modificat" && f.groupEn === "Amended deed")).toBe(true);
+    expect(keysOf(AMENDED)).toEqual(["actParinteNumar", "actParinteData", "actParinteNotariat", "actParinteTip"]);
+    expect(ACT.filter((f) => f.groupRo === AMENDED).every((f) => f.tabRo === "Actul modificat" && isAmendedDeedGroup(f.groupEn ?? ""))).toBe(true);
   });
 
   it("„Ce modifică”: the reason, the basis, the effect, „Preț neschimbat” and the nine clauses", () => {
@@ -61,17 +63,17 @@ describe("the act adițional's 20 fields, each placed once", () => {
     expect(ACT).toHaveLength(20);
     expect(new Set(ACT.map((f) => f.key)).size).toBe(20);
     expect(ACT.map((f) => f.order)).toEqual(ACT.map((_, i) => i));
-    expect(ACT.filter((f) => !["Identificarea actului", "Actul modificat", "Motiv și efect", "Clauze completate"].includes(f.groupRo ?? ""))).toEqual([]);
+    expect(ACT.filter((f) => !["Identificarea actului", AMENDED, "Motiv și efect", "Clauze completate"].includes(f.groupRo ?? ""))).toEqual([]);
     expect(templateTabsOf(parseTemplateFields(ACT))).toEqual(["Actul modificat", "Ce modifică"]);
   });
 });
 
 describe("the template group „Actul modificat”", () => {
-  it("is the fifth special group, named as its tab, in both languages", () => {
+  it("is the fifth special group, in both languages — and not the tab's name, which says only where it is", () => {
     expect(TEMPLATE_FIELD_GROUPS.map((g) => g.id)).toEqual(["financial", "fees", "certificates", "identification", "amendedDeed"]);
-    expect(isAmendedDeedGroup("Actul modificat")).toBe(true);
-    expect(isAmendedDeedGroup("Amended deed")).toBe(true);
-    expect(templateFieldGroupOf("Actul  modificat")).toBeNull();
+    expect(isAmendedDeedGroup(AMENDED)).toBe(true);
+    expect(isAmendedDeedGroup(templateFieldGroupById("amendedDeed")?.en ?? "")).toBe(true);
+    expect(templateFieldGroupOf("Actul modificat")).toBeNull();
   });
 
   it("is drawn by the form under the link, hidden — never unmounted — while a link stands", () => {
@@ -141,7 +143,7 @@ describe("the deed it amends", () => {
     ]) {
       const src = read(...route);
       expect(src).toContain("parentLinkConflict(");
-      expect(src.indexOf("parentLinkConflict(")).toBeLessThan(src.indexOf("associateDocumentToDocument(id"));
+      expect(src.indexOf("parentLinkConflict(")).toBeLessThan(src.indexOf("associateDocumentToDocument("));
     }
   });
 });
