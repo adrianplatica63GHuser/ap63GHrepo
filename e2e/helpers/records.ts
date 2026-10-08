@@ -198,7 +198,14 @@ export async function createDocumentOfType(
  * may already have removed it, and this is the net under that.
  */
 export async function removeRecord(request: APIRequestContext, kind: RecordKind, id: string): Promise<void> {
-  const res = await request.delete(`${ROUTE[kind]}/${encodeURIComponent(id)}`);
+  // A connection reset by the dev server is tried once more — measured: TC-DOC-20's cleanup
+  // DELETE died with `read ECONNRESET` in full 20261008T204526Z-8554 and passed alone at once.
+  // The DELETE is idempotent (a 404 is success), so a second try cannot remove twice.
+  const del = () => request.delete(`${ROUTE[kind]}/${encodeURIComponent(id)}`);
+  const res = await del().catch((err: unknown) => {
+    if (err instanceof Error && /ECONNRESET|socket hang up/.test(err.message)) return del();
+    throw err;
+  });
   expect(
     res.ok() || res.status() === 404,
     `DELETE ${ROUTE[kind]}/${id} failed (${res.status()}) — the record is still in the database; ` +
