@@ -244,8 +244,9 @@ describe("the free space under the right column (#37.79)", () => {
     expect(placeOf(placed, "connections")).toMatchObject({ col: 0, top: 465 });
     expect(placeOf(placed, `${FIXED_PREFIX}map`)).toMatchObject({ col: 7, top: 0, fixed: true });
     expect(placeOf(placed, `${FIXED_PREFIX}corners`)).toMatchObject({ col: 7, top: 394, fixed: true });
-    // The action bar under every tile that is not fixed, the left area's width.
-    expect(placeOf(placed, "actions")).toMatchObject({ col: 0, units: 7, top: 465 + 363 + GAP });
+    // #37.79 had „The action bar under every tile that is not fixed, the left area's width" (units 7). Inverted by
+    // #38.47: under every tile, the fixed ones too, across the whole row — here „Conexiuni" is still the lowest.
+    expect(placeOf(placed, "actions")).toMatchObject({ col: 0, units: 10, top: 465 + 363 + GAP });
     expect(placeWithStored(PROPERTY, {}, 10, GAP, 7).placed).toEqual(placed);
   });
 
@@ -391,15 +392,17 @@ describe("every tile rises into the empty space above it (#38.16)", () => {
     expect(placeOf(risen, "connections")).toMatchObject({ col: 7, top: 394 + 341 + GAP });
     expect(placeOf(risen, `${FIXED_PREFIX}map`)).toMatchObject({ col: 7, top: 0 });
     expect(placeOf(risen, `${FIXED_PREFIX}corners`)).toMatchObject({ col: 7, top: 394 });
-    expect(placeOf(risen, "actions").top).toBe(Math.max(...risen.filter((p) => !p.rowEnd && !p.fixed).map((p) => p.top + p.height)) + GAP);
+    // #38.47: under every box, the fixed ones too (it read `!p.rowEnd && !p.fixed`).
+    expect(placeOf(risen, "actions").top).toBe(Math.max(...risen.filter((p) => !p.rowEnd).map((p) => p.top + p.height)) + GAP);
     // A tile above the column's lowest tile, in its columns, rises past nothing below it.
     const high: Placed[] = [
       { id: `${FIXED_PREFIX}low`, col: 7, units: 3, top: 600, height: 100, fixed: true },
       { id: "t", col: 7, units: 3, top: 200, height: 100 },
     ];
     expect(placeOf(riseIntoGaps(high, GAP), "t").top).toBe(0);
-    // A row end handed in is never taken for a tile.
-    expect(placeOf(riseIntoGaps([...high, { id: "bar", col: 0, units: 7, top: 5, height: 63, rowEnd: true }], GAP), "bar").top).toBe(100 + GAP);
+    // A row end handed in is never taken for a tile. It expected `100 + GAP` — under „t" only, beside the fixed
+    // tile; #38.47 puts the bar under every box, the fixed one too: 600 + 100 + GAP.
+    expect(placeOf(riseIntoGaps([...high, { id: "bar", col: 0, units: 7, top: 5, height: 63, rowEnd: true }], GAP), "bar").top).toBe(600 + 100 + GAP);
   });
 
   it("the stored value is left untouched: a layout only reads it, and only a drop writes", () => {

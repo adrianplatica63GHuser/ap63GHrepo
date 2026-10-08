@@ -178,6 +178,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-20](cases/TC-TILES-20.md) | O fișă trasă sub două fișe urcă sub cea rămasă când una dintre ele nu e afișată | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/tiles-rise.spec.ts` |
 | [TC-TILES-21](cases/TC-TILES-21.md) | Un dublu-clic pe o fișă o urcă sub fișa de deasupra; o fișă trasă lasă locul gol | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/tiles-double-click.spec.ts` |
 | [TC-TILES-22](cases/TC-TILES-22.md) | O fișă trasă sub „Interacțiuni” rămâne acolo, și după reîncărcare, pe ambele fișe de persoană | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/tiles-under-interactions.spec.ts` |
+| [TC-TILES-23](cases/TC-TILES-23.md) | Bara de butoane e ultimul lucru de pe ecran, la orice lățime, pe persoană, act și proprietate | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/action-bar-lowest.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-05 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |

@@ -260,3 +260,38 @@ describe("the right column wrapped (#38.46)", () => {
     expect(at("bar").top).toBe(316 + 378 + 16);
   });
 });
+
+/** Slice #38.47 — the action bar is the lowest thing on the screen, beside or wrapped. */
+describe("the action bar under every box, wrapped or not (#38.47)", () => {
+  const bottomOf = (p: Placed) => p.top + p.height;
+  const LEFT: PackBox[] = [
+    { id: "cadastral", units: 3, height: 449 },
+    { id: "address", units: 3, height: 391 },
+    { id: "bar", units: 1, height: 63, rowEnd: true },
+  ];
+
+  it("beside: a right column taller than the left tiles — the map, corners and Street View — has the bar under it, across the whole row", () => {
+    const boxes: PackBox[] = [
+      { id: "fixed:map", units: 3, height: 378, fixed: { col: 7, top: 0 } },
+      { id: "fixed:corners", units: 3, height: 341, fixed: { col: 7, top: 394 } },
+      { id: "fixed:streetView", units: 3, height: 378, fixed: { col: 7, top: 751 } },
+      ...LEFT,
+    ];
+    const placed = packTiles(boxes, 10, 16, 7);
+    const bar = placed.find((p) => p.rowEnd)!;
+    expect(bar).toMatchObject({ col: 0, units: 10, top: 751 + 378 + 16 });
+    for (const p of placed.filter((x) => !x.rowEnd)) expect(bar.top).toBeGreaterThanOrEqual(bottomOf(p) + 16);
+  });
+
+  it("beside: left tiles taller than the column — the bar under them, as before", () => {
+    const placed = packTiles([{ id: "fixed:pages", units: 4, height: 436, fixed: { col: 6, top: 0 } }, { id: "general", units: 6, height: 900 }, LEFT[2]], 10, 16, 6);
+    expect(placed.find((p) => p.rowEnd)!.top).toBe(900 + 16);
+  });
+
+  it("wrapped: the column's tiles under the left tiles, the bar under them", () => {
+    const placed = packTiles([...LEFT.slice(0, 2), { id: "wrapped:map", units: 3, height: 378, under: true }, { id: "wrapped:corners", units: 3, height: 341, under: true }, LEFT[2]], 6, 16);
+    const bar = placed.find((p) => p.rowEnd)!;
+    for (const p of placed.filter((x) => !x.rowEnd)) expect(bar.top).toBeGreaterThanOrEqual(bottomOf(p) + 16);
+    expect(bar.units).toBe(6);
+  });
+});
