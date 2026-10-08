@@ -224,7 +224,8 @@ const NO_FOLDS_OPEN: ReadonlySet<string> = Object.freeze(new Set<string>());
 const REFERENCE_DATA_HREF = "/admin/value-lists";
 const DOC_TYPE_ENGINE_HREF = "/admin/doc-type-engine";
 /** Reference Data opened on the document-type list, where its Form editor is. (#37.85) */
-const FORM_EDITOR_HREF = `${REFERENCE_DATA_HREF}?list=document-types`;
+// Slice #38.51: it opens with „Fără formular" ticked — the types this screen sends the user to give a form.
+const FORM_EDITOR_HREF = `${REFERENCE_DATA_HREF}?list=document-types&form=without`;
 
 export function ImportTypesBlockedStage({
   folderName,

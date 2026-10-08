@@ -57,9 +57,12 @@ export function ValueListHub({
    */
   initialList,
   initialAddName,
+  initialFormFilter,
 }: {
   initialList?: string;
   initialAddName?: string;
+  /** Slice #38.51: `?form=`, for the list the visit arrived on, once — as `initialAddName`. */
+  initialFormFilter?: string;
 } = {}) {
   const t = useTranslations("valueList");
   const router = useRouter();
@@ -154,6 +157,7 @@ export function ValueListHub({
               key={selected}
               listKey={selected}
               initialAddName={selected === arrival && !addNameUsed ? initialAddName : undefined}
+              initialFormFilter={selected === arrival && !addNameUsed ? initialFormFilter : undefined}
             />
           </>
         )}

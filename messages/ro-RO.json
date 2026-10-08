@@ -2125,7 +2125,8 @@
     "toolbar": {
       "add": "Adaugă",
       "count": "{count, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
-      "onlyWithoutForm": "Doar cele care așteaptă un formular",
+      "withForm": "Cu formular",
+      "withoutForm": "Fără formular",
       "countFiltered": "{count} din {total, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
       "onlyAwaitingReview": "Doar cele care așteaptă verificare"
     },
@@ -2677,8 +2678,8 @@
         },
         "typeNote": {
           "typesGainedForm": "{count, plural, one {Un tip de document a primit un formular în acest import: {names}.} few {# tipuri de documente au primit câte un formular în acest import: {names}.} other {# de tipuri de documente au primit câte un formular în acest import: {names}.}}",
-          "typesStillWithoutForm": "{count, plural, one {A rămas fără formular: {names}. Îl găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.} few {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.} other {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.}}",
-          "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.",
+          "typesStillWithoutForm": "{count, plural, one {A rămas fără formular: {names}. Îl găsiți în Date de referință → Tipuri de Document, bifând „Fără formular”.} few {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Fără formular”.} other {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Fără formular”.}}",
+          "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Fără formular”.",
           "typesCreatedEmpty": "{count, plural, one {Un tip de document a fost creat în acest import și niciun document din acest import nu a rămas pe el: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} few {# tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} other {# de tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.}}"
         },
         "aiMultiIdentity": "Documentul conține actele de identitate ale mai multor persoane. Citirea AI a fost refuzată, ca să nu ajungă datele a două persoane în aceeași fișă. Pentru acest rând nu se oferă „Reîncearcă”: răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanarea și importați-o din nou."

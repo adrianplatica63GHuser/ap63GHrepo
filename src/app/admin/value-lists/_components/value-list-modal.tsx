@@ -41,6 +41,8 @@ import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-edit
 import { usedFirst } from "@/lib/admin/value-lists/categories";
 import { RoleScope } from "./role-scope";
 import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page";
+import { formFilterFrom, formFilterKeeps, formFilterNarrows, type FormFilter } from "@/lib/admin/value-lists/form-filter";
+import { documentTypeHasForm } from "@/lib/documents/status";
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
@@ -697,6 +699,7 @@ function EditForm({
 export function ValueListModal({
   listKey,
   initialAddName,
+  initialFormFilter,
   onClose,
 }: {
   listKey: ListKey;
@@ -721,6 +724,12 @@ export function ValueListModal({
    * body, so it is not written at all rather than written somewhere plausible.
    */
   initialAddName?: string;
+  /**
+   * Slice #38.51: `?form=with` / `?form=without` — open the document types with „Cu formular" or
+   * „Fără formular" ticked (the import's stop screen sends the user here to give a type its form).
+   * Initial, like `initialAddName`: the checkboxes own the state from then on.
+   */
+  initialFormFilter?: string;
   /** Slice #38.35: what Escape does once the add/edit form is closed — nothing, on the page. */
   onClose?: () => void;
 }) {
@@ -979,6 +988,14 @@ export function ValueListModal({
   // administrator open Document Types next week, see nine rows where the list
   // holds dozens, and have no way to know why.
   const [onlyAwaiting, setOnlyAwaiting] = useState(false);
+  // Slice #38.51: on the document types, two checkboxes in place of „Doar cele care așteaptă un
+  // formular" — „Cu formular" and „Fără formular" (`form-filter.ts`). The same lens on one visit.
+  const [formFilter, setFormFilter] = useState<FormFilter>(() => formFilterFrom(listKey === "document-types" ? initialFormFilter : null));
+  // Is a filter that keeps only the rows still to be worked through ticked? The tarla's and the
+  // institutions' „Doar cele care așteaptă verificare"; on the document types, „Fără formular" alone.
+  const awaitingOn = listKey === "document-types" ? formFilter.withoutForm && !formFilter.withForm : onlyAwaiting;
+  // Is the list narrowed at all — the rows the user works on are then kept until the next visit.
+  const filterOn = listKey === "document-types" ? formFilterNarrows(formFilter) : onlyAwaiting;
   /**
    * Types whose form editor has been opened during this visit.
    *
@@ -1147,7 +1164,7 @@ export function ValueListModal({
    * different things and only the plumbing is shared.
    */
   const review: {
-    labelKey: "onlyWithoutForm" | "onlyAwaitingReview";
+    labelKey: "withoutForm" | "onlyAwaitingReview";
     doneKey: "allHaveForm" | "allReviewed";
     statusPrefix: "documentTypeStatus" | "lookupOriginStatus";
     awaits: (row: Row) => boolean;
@@ -1175,7 +1192,7 @@ export function ValueListModal({
   } | null =
     listKey === "document-types"
       ? {
-          labelKey: "onlyWithoutForm",
+          labelKey: "withoutForm",
           doneKey: "allHaveForm",
           statusPrefix: "documentTypeStatus",
           awaits: (row) => awaitsFormRow(row),
@@ -1222,8 +1239,15 @@ export function ValueListModal({
   // its own — and #34.02 made that strictly worse than it was, because `review`
   // now admits three lists where `isDocumentTypes` admitted one. Deleting it as
   // dead code is the edit that makes the bug reachable.
-  const filteredRows =
-    onlyAwaiting && review
+  //
+  // Slice #38.51: on the document types the lens is „Cu formular" / „Fără formular" — every type
+  // whose form is (or is not) empty, the catch-all and the identity card included (Ask first 1);
+  // both or neither, the whole list. The retained rows (`touchedTypeIds`) keep their guarantee.
+  const filteredRows = isDocumentTypes
+    ? formFilterNarrows(formFilter)
+      ? query.data?.filter((row) => formFilterKeeps(formFilter, documentTypeHasForm(row.templateFields)) || touchedTypeIds.has(row.id))
+      : query.data
+    : onlyAwaiting && review
       ? query.data?.filter((row) => review.awaits(row) || touchedTypeIds.has(row.id))
       : query.data;
   // Slice #38.35 (Ask first 2): the values nothing uses last, greyed.
@@ -1245,7 +1269,7 @@ export function ValueListModal({
    */
   const offerReview =
     review !== null &&
-    (review.alwaysOffered || onlyAwaiting || (query.data?.some(review.awaits) ?? false));
+    (review.alwaysOffered || filterOn || (query.data?.some(review.awaits) ?? false));
   /**
    * Is there any of the backlog left?                            (Slice #27.07)
    *
@@ -1258,7 +1282,7 @@ export function ValueListModal({
    * this whole slice is working towards would have been unreachable.
    */
   const backlogEmpty =
-    onlyAwaiting &&
+    awaitingOn &&
     review !== null &&
     query.data !== undefined &&
     query.data.length > 0 &&
@@ -1355,7 +1379,23 @@ export function ValueListModal({
                   standing tells the administrator how many rows the list
                   really holds above the nine shown; one that rewrites the total
                   loses the one number that says how much of the list this is. */}
-              {review && offerReview && (
+              {/* Slice #38.51: two independent checkboxes on the document types — not a radio. */}
+              {isDocumentTypes && (
+                <div className="flex items-center gap-3" data-form-filter="">
+                  {(["withForm", "withoutForm"] as const).map((k) => (
+                    <label key={k} className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={formFilter[k]}
+                        onChange={(e) => setFormFilter((f) => ({ ...f, [k]: e.target.checked }))}
+                        className="h-4 w-4 rounded border-wire accent-cta"
+                      />
+                      <span className="font-medium">{t(`toolbar.${k}`)}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {!isDocumentTypes && review && offerReview && (
                 <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">
                   <input
                     type="checkbox"
@@ -1403,7 +1443,7 @@ export function ValueListModal({
                 the table's own empty row carries the same sentence, in the
                 place a reader is already looking. Drawing both would print it
                 twice, six pixels apart. */}
-            {onlyAwaiting && review && (
+            {awaitingOn && review && (
               <p
                 role="status"
                 className="mb-3 text-xs font-medium text-emerald-700 dark:text-emerald-400"
@@ -1661,7 +1701,7 @@ export function ValueListModal({
                                 // a second derivation. Retention exists to stop
                                 // a row vanishing out of the FILTERED list;
                                 // with the filter off there is nothing to keep.
-                                if (onlyAwaiting) {
+                                if (filterOn) {
                                   setTouchedTypeIds((prev) =>
                                     prev.has(row.id)
                                       ? prev

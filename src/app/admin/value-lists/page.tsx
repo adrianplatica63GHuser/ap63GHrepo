@@ -14,10 +14,10 @@ import { ValueListHub } from "./_components/value-list-hub";
 export default async function ValueListsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ list?: string; add?: string }>;
+  searchParams: Promise<{ list?: string; add?: string; form?: string }>;
 }) {
   const t = await getTranslations("valueList");
-  const { list, add } = await searchParams;
+  const { list, add, form } = await searchParams;
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -28,7 +28,7 @@ export default async function ValueListsPage({
           </h1>
         </header>
 
-        <ValueListHub initialList={list} initialAddName={add} />
+        <ValueListHub initialList={list} initialAddName={add} initialFormFilter={form} />
       </main>
     </div>
   );
