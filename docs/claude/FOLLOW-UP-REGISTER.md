@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-08, FU-319 filed — 319 entries. Rows are status, columns are impact.
+As of 2026-10-08, FU-320 filed — 320 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 74 | 67 | 16 | 175 |
+| open | 19 | 74 | 67 | 16 | 176 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 30 | 3 | 126 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 59 | 137 | 102 | 21 | 319 |
+| **total** | 60 | 137 | 102 | 21 | 320 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -403,3 +403,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-317 | 2026-10-08 #38.33 20261008T033937Z-15705 | defect | Documents | On a document opened a moment earlier, a click on the form's „Șterge" can open no dialog: TC-ASSOC-07 pressed it 0.4 s after the heading appeared, nothing opened, and the re-run was green. A click before the page has hydrated is lost without a sign, so a quick user presses again or thinks the button is broken. | e2e/association/document-reference.spec.ts (now settles and presses again); the form's „Șterge" in src/app/documents/_components/document-form.tsx | user | S | open | Reproduce on a cold `next dev` with a throttled CPU; if the click is lost, render the button disabled until hydrated (or until the record is loaded), so the press is refused visibly rather than dropped. | 2026-10-08 |
 | FU-318 | 2026-10-08 #38.34 Handover.38.34.md | data risk | Reference data | The act adițional's „Roluri pe Document" pairs (Arendaș, Arendator, Cumpărător, Notar public, Promitent cumpărător, Promitent vânzător, Reprezentant legal, Vânzător) exist only in the databases where an administrator ticked them: `sync-reference-data.sql` seeds no pair for „Act Adițional", so a project rebuilt from it offers the act adițional no role at all, and migration_098's „Deține cotă" tick has nothing to land on there. | src/db/sync-reference-data.sql (the pairs list ends with „Titlu de Proprietate"; no „Act Adițional" rows) | data | S | open | Add the act adițional's pairs to the seed with the names they carry today, and „Deține cotă" for Vânzător and Cumpărător in the same rule as the file's UPDATE — after the role clean-up (#38.37), so the names seeded are the surviving ones. | 2026-10-08 |
 | FU-319 | 2026-10-08 #38.49 Handover.38.49.md | recommendation | Documents | „Descrierea obiectului" (#38.49) is filled when a contract is opened with the field empty, but not as a change, so it is stored — and found by the list's search — only once someone saves that contract; the contracts nobody reopens keep it empty. | src/components/documents/sale-object-recompose.tsx (the `auto` fill), src/lib/documents/sale-object-queries.ts | user | S | open | A one-time script under scripts/ with a dry run: for every CONTRACT_VANZARE whose `descriereObiect` is blank, `composeSaleObjectFor` and store it — after migration_102 is confirmed; Adrian's call, since it writes a version on every contract. | 2026-10-08 |
+| FU-320 | 2026-10-08 #38.52 Handover.38.52.md | recommendation | Reference data | Two document types still read „Creat la import" after #38.52, because each is used by one document and #38.52 deletes only unused ones: „Publicație de Vânzare Imobiliară" [PUBLICATIE_DE_VANZARE_IMOBILIARA] and „Tabel/Listă proprietari - Ilfov, Clinceni" [TABEL_LISTA_PROPRIETARI_ILFOV_CLINCENI]. `origin` is write-once, so only a merge clears the word. | lookup_document_type (ga40db), „Unește" (#38.35) | data | S | open | Adrian rules on each: „Unește" the first into „Comunicare Oficială" and the second into „NECLASIFICAT" (Claude's suggestion), or create a hand-made type to merge into; then `npm run doctypes:prune-import` lists nothing held. | 2026-10-08 |
