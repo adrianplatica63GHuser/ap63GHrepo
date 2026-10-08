@@ -2057,11 +2057,6 @@
   "valueList": {
     "pageTitle": "Reference Data",
     "sections": {
-      "property": "Property",
-      "person": "Person",
-      "document": "Document",
-      "roles": "Roles",
-      "rolesObject": "Object-to-object",
       "rolesObjectNote": "There is no “Document → Property” list: the relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed."
     },
     "lists": {
@@ -2100,9 +2095,6 @@
     "lookupOriginStatus": {
       "manual": "Added by hand",
       "imported": "Created by an import"
-    },
-    "modal": {
-      "close": "Close"
     },
     "form": {
       "addTitle": "Add new entry",
@@ -2275,6 +2267,32 @@
       "colHoldsShare": "Holds a share",
       "holdsShareLabel": "Holds a share — {docType} — {role}",
       "holdsShareError": "“Holds a share” could not be saved. Try again."
+    },
+    "categories": {
+      "property": "Properties",
+      "person": "People",
+      "document": "Documents",
+      "roles": "Roles",
+      "links": "Links between objects",
+      "other": "Other"
+    },
+    "page": {
+      "nav": "Reference lists",
+      "choose": "Choose a list on the left."
+    },
+    "usage": {
+      "column": "Used by",
+      "usedBy": "{count, plural, one {used by # record} other {used by # records}}",
+      "unused": "unused"
+    },
+    "merge": {
+      "button": "Merge",
+      "title": "Merge “{name}” into another value",
+      "keep": "Value to keep",
+      "willMove": "{count, plural, one {One record moves to the value kept:} other {# records move to the value kept:}}",
+      "nothingMoves": "Nothing uses this value: after the merge it is gone and the value kept stays.",
+      "confirm": "Merge",
+      "merging": "Merging…"
     }
   },
   "adminTags": {

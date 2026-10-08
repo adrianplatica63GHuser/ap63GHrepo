@@ -742,13 +742,17 @@ describe("the carried-roles read", () => {
 describe("the value-list hub", () => {
   const hub = read("app", "admin", "value-lists", "_components", "value-list-hub.tsx");
 
-  it("gives the object-to-object lists their own section", () => {
-    expect(hub).toContain('<Section label={t("sections.rolesObject")} note={t("sections.rolesObjectNote")}>');
-    // …and no longer as a divider inside „Roluri".
-    expect(hub).not.toContain('<SubLabel label={t("sections.rolesObject")} />');
-    // The two lists themselves still open the generic modal (#29.13).
-    expect(hub).toContain('open("property-property-roles")');
-    expect(hub).toContain('open("document-document-roles")');
+  // Slice #38.35: the hub is one page — categories on the left, the list on the right. The
+  // object-to-object lists are their own category, „Legături între obiecte", and the sentence
+  // is printed above whichever of the two is open.
+  it("gives the object-to-object lists their own category", () => {
+    const cats = read("lib", "admin", "value-lists", "categories.ts");
+    expect(cats).toContain('{ id: "links", lists: ["property-property-roles", "document-document-roles"] }');
+    expect(cats).toContain('{ id: "roles", lists: ["person-roles"] }');
+    expect(hub).toContain('categoryOfList(selected) === "links"');
+    expect(hub).toContain('{t("sections.rolesObjectNote")}');
+    // …and both open the one generic list (#29.13), now as the page's panel.
+    expect(hub).toContain("<ValueListModal");
   });
 
   it("has deleted the button whose modal said there was nothing behind it", () => {

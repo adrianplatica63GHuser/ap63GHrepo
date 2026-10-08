@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ClipboardList, FolderInput, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
+import { ClipboardList, FolderInput, Merge, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
@@ -39,6 +39,7 @@ import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { DocumentPersonsModal } from "./document-persons-modal";
+import { usedFirst } from "@/lib/admin/value-lists/categories";
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
@@ -91,6 +92,8 @@ function listColumns(listKey: ListKey): ColumnName[] {
   return [
     ...listCells(listKey).map(cellColumn),
     ...(REVIEWED_LISTS.has(listKey) ? (["valueStatus"] as const) : []),
+    // Slice #38.35: „folosit de N" on every row.
+    "valueUsage",
     "rowActions",
   ];
 }
@@ -132,6 +135,13 @@ async function fetchRows(listKey: ListKey): Promise<Row[]> {
   // because React Query rejects `undefined` data with an error of its own, which
   // is the right outcome reached by accident. Now it is reached on purpose.
   return (data.items ?? []) as Row[];
+}
+
+/** Slice #38.35: „folosit de N" for every row of the list, 0 for a value nothing uses. */
+async function fetchUsage(listKey: ListKey): Promise<Record<string, number>> {
+  const res = await fetch(`/api/admin/value-lists/${listKey}/usage`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return ((await res.json()) as { usage: Record<string, number> }).usage;
 }
 
 async function saveRow(
@@ -344,6 +354,9 @@ function invalidateListCaches(
   listKey: ListKey,
 ): void {
   qc.invalidateQueries({ queryKey: ["value-list", listKey] });
+  // Slice #38.35: „folosit de N" — its own key, so nothing that prefix-reads
+  // `["value-list", …]` as rows can ever be handed a map of counts.
+  qc.invalidateQueries({ queryKey: ["value-list-usage", listKey] });
   if (listKey === "document-types") {
     qc.invalidateQueries({ queryKey: ["document-types"] });
     // …and the panel that prints the type's name beside a role's:
@@ -679,7 +692,8 @@ export function ValueListModal({
    * body, so it is not written at all rather than written somewhere plausible.
    */
   initialAddName?: string;
-  onClose: () => void;
+  /** Slice #38.35: what Escape does once the add/edit form is closed — nothing, on the page. */
+  onClose?: () => void;
 }) {
   const t = useTranslations("valueList");
   /**
@@ -773,6 +787,14 @@ export function ValueListModal({
     queryKey: ["value-list", listKey],
     queryFn: () => fetchRows(listKey),
   });
+  // Slice #38.35: „folosit de N" for every row, one request for the list.
+  const usage = useQuery<Record<string, number>>({
+    queryKey: ["value-list-usage", listKey],
+    queryFn: () => fetchUsage(listKey),
+  });
+  // Slice #38.35: „Unește" opens the delete conversation as a merge — the same
+  // dialog, the same reassign route, the value kept chosen first.
+  const [dialogMode, setDialogMode] = useState<"delete" | "merge">("delete");
 
   // Slice #27.03: the row whose form editor is open. Read out of the live query
   // rather than captured into state at click time, so a refetch that lands
@@ -899,7 +921,7 @@ export function ValueListModal({
         // list would otherwise swallow one keypress with nothing on screen.
         if (confirmDeleteRow) return;
         if (form) { setForm(null); return; }
-        onClose();
+        onClose?.();
       }
     }
     document.addEventListener("keydown", onKey);
@@ -1225,7 +1247,7 @@ export function ValueListModal({
         }
       : null;
   // One extra column for the status, plus the always-present actions column.
-  const emptyStateColSpan = cells.length + (review ? 2 : 1);
+  const emptyStateColSpan = cells.length + (review ? 3 : 2); // #38.35: + „Folosit de"
   // ⚠️ **`onlyAwaiting && review`, in that order and both terms — and the
   // second term is belt-and-braces TODAY, which a review round established and
   // #27.07's own comment did not.** That comment said the state "outlives a
@@ -1241,10 +1263,12 @@ export function ValueListModal({
   // its own — and #34.02 made that strictly worse than it was, because `review`
   // now admits three lists where `isDocumentTypes` admitted one. Deleting it as
   // dead code is the edit that makes the bug reachable.
-  const visibleRows =
+  const filteredRows =
     onlyAwaiting && review
       ? query.data?.filter((row) => review.awaits(row) || touchedTypeIds.has(row.id))
       : query.data;
+  // Slice #38.35 (Ask first 2): the values nothing uses last, greyed.
+  const visibleRows = filteredRows && usedFirst(filteredRows, usage.data);
   /**
    * Should the checkbox be on screen at all?                     (Slice #34.02)
    *
@@ -1283,14 +1307,10 @@ export function ValueListModal({
 
   return (
     <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
-
-      {/* Panel */}
+      {/* Panel — Slice #38.35: the list is a panel of the „Date de referință"
+          page, beside its categories, no longer a dialog over a page of
+          buttons: no overlay, no close button, and Escape closes only the
+          add/edit form. */}
       {/* Slice #27.03: `inert` while the form editor is on top. Its Tab trap
           already keeps the keyboard out of here; this keeps a screen reader's
           virtual cursor out too. Nested `aria-modal` is undefined behaviour —
@@ -1300,8 +1320,7 @@ export function ValueListModal({
       <div
         ref={listPanelRef}
         tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
+        role="region"
         aria-labelledby={listTitleId}
         // Slice #29.05: the delete dialog counts here too, and an adversarial
         // round showed what it costs when it does not. Its backdrop hides the
@@ -1312,7 +1331,7 @@ export function ValueListModal({
         // confirmation — the exact stack `document-type-form-editor.tsx`
         // documents as unreachable by Escape.)
         inert={!!formEditorRow || !!confirmDeleteRow || showDocPersons}
-        className="fixed inset-x-4 top-[10%] z-50 mx-auto rounded-xl border border-card-rim bg-card shadow-2xl focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+        className="rounded-xl border border-card-rim bg-card shadow-sm focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
         style={dialogCardStyle(VALUE_LIST_CARD_UNITS)}
       >
         {/* Header */}
@@ -1323,18 +1342,11 @@ export function ValueListModal({
           >
             {t(`lists.${meta.titleKey}`)}
           </h2>
-          <IconButton
-            icon={X}
-            label={t("modal.close")}
-            variant="bare"
-            size="md"
-            onClick={onClose}
-          />
         </div>
 
         {/* Body */}
-        <div className="flex max-h-[70vh] flex-col overflow-hidden">
-          <div className="overflow-y-auto p-5">
+        <div className="flex flex-col">
+          <div className="p-5">
             {/* Add/Edit form */}
             {form && (
               <EditForm
@@ -1487,6 +1499,7 @@ export function ValueListModal({
                     {review && (
                       <th className="px-4 py-2" {...columnHead("valueStatus")}>{t("fields.status")}</th>
                     )}
+                    <th className="px-4 py-2" {...columnHead("valueUsage")}>{t("usage.column")}</th>
                     <th className="px-4 py-2" {...columnHead("rowActions")} />
                   </tr>
                 </thead>
@@ -1543,7 +1556,8 @@ export function ValueListModal({
                   {visibleRows?.map((row) => (
                     <tr
                       key={row.id}
-                      className="hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+                      data-unused={usage.data?.[row.id] === 0 ? "" : undefined}
+                      className={`hover:bg-cta-pale dark:hover:bg-zinc-800/50${usage.data?.[row.id] === 0 ? " opacity-60" : ""}`}
                     >
                       {cells.map((cell) => (
                         <td
@@ -1588,6 +1602,13 @@ export function ValueListModal({
                           )}
                         </td>
                       )}
+                      <td className="px-4 py-2 text-xs text-fade dark:text-zinc-400" data-usage={usage.data?.[row.id] ?? ""}>
+                        {usage.data === undefined
+                          ? "…"
+                          : (usage.data[row.id] ?? 0) === 0
+                            ? t("usage.unused")
+                            : t("usage.usedBy", { count: usage.data[row.id] })}
+                      </td>
                       <td className="px-4 py-2">
                         {/* Slice #37.37: the buttons wrap inside the fixed actions column. */}
                         <div className="flex flex-wrap gap-2">
@@ -1695,6 +1716,20 @@ export function ValueListModal({
                               disabled={!!form}
                             />
                           )}
+                          {/* Slice #38.35: „Unește" — the move-and-delete, made visible. */}
+                          <IconButton
+                            icon={Merge}
+                            label={t("merge.button")}
+                            showLabel
+                            variant="secondary"
+                            size="xs"
+                            disabled={(query.data?.length ?? 0) < 2}
+                            onClick={(e) => {
+                              deleteOpenerRef.current = e.currentTarget;
+                              setDialogMode("merge");
+                              setConfirmDeleteId(row.id);
+                            }}
+                          />
                           <IconButton
                             icon={Trash2}
                             label={t("table.delete")}
@@ -1702,6 +1737,7 @@ export function ValueListModal({
                             size="xs"
                             onClick={(e) => {
                               deleteOpenerRef.current = e.currentTarget;
+                              setDialogMode("delete");
                               setConfirmDeleteId(row.id);
                             }}
                           />
@@ -1747,7 +1783,8 @@ export function ValueListModal({
           count rather than from the previous row's answer. */}
       {confirmDeleteRow && (
         <DeleteDialog
-          key={confirmDeleteRow.id}
+          key={`${dialogMode}:${confirmDeleteRow.id}`}
+          mode={dialogMode}
           listKey={listKey}
           row={confirmDeleteRow}
           rows={query.data ?? []}
@@ -1800,6 +1837,7 @@ export function ValueListModal({
  * mutation's `onError`.
  */
 function DeleteDialog({
+  mode = "delete",
   listKey,
   row,
   rows,
@@ -1807,6 +1845,13 @@ function DeleteDialog({
   onClose,
   onDeleted,
 }: {
+  /**
+   * Slice #38.35: „merge" is „Unește" — the value kept is chosen first, the
+   * dependents are moved onto it (the reassign route, unchanged) and this
+   * value is deleted, in one confirmation. „delete" is the conversation it
+   * always was. No new merge logic: the two calls this dialog already made.
+   */
+  mode?: "delete" | "merge";
   listKey: ListKey;
   row: Row;
   /** Every row of this list — the candidates to move onto are these minus `row`. */
@@ -1930,11 +1975,39 @@ function DeleteDialog({
     },
   });
 
+  // Slice #38.35 — „Unește": move what depends on this value onto the one kept,
+  // then delete this one. Both are the calls this dialog already makes.
+  const mergeMutation = useMutation({
+    mutationFn: async () => {
+      if ((dependents.data?.total ?? 0) > 0) {
+        const res = await reassignRows(listKey, row.id, targetId);
+        setMovedTotal(res.total);
+        setGranted(res.granted ?? []);
+        setWarnings(res.warnings ?? []);
+      }
+      await removeRow(listKey, row.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      onDeleted();
+    },
+    onError: (err: Error) => {
+      qc.invalidateQueries();
+      dependents.refetch();
+      setFailure(
+        err instanceof RequestFailedError
+          ? { code: err.code, detail: err.detail, collisions: err.collisions }
+          : { code: "generic" },
+      );
+    },
+  });
+  const merging = mode === "merge";
+
   const report  = dependents.data;
   const blocked = report !== undefined && report.total > 0;
   const free    = report !== undefined && report.total === 0;
   const targets = rows.filter((r) => r.id !== row.id);
-  const busy    = reassignMutation.isPending || deleteMutation.isPending;
+  const busy    = reassignMutation.isPending || deleteMutation.isPending || mergeMutation.isPending;
   // The recount after a move is in flight: the report on screen is the OLD one,
   // so the Move button would still be enabled and would move nothing — and its
   // "nothing was moved" answer would overwrite the message saying five things
@@ -1997,7 +2070,9 @@ function DeleteDialog({
           id={titleId}
           className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100"
         >
-          {t("confirm.title", { name: String(row[labelField] ?? "") })}
+          {merging
+            ? t("merge.title", { name: String(row[labelField] ?? "") })
+            : t("confirm.title", { name: String(row[labelField] ?? "") })}
         </h3>
 
         {/* The answer arrives after the dialog does, and a screen-reader user
@@ -2019,7 +2094,7 @@ function DeleteDialog({
           {blocked && report && (
             <>
               <p className="mb-2 text-sm text-ink dark:text-zinc-300">
-                {t("confirm.inUse", { count: report.total })}
+                {merging ? t("merge.willMove", { count: report.total }) : t("confirm.inUse", { count: report.total })}
               </p>
               <ul className="mb-3 list-disc pl-5 text-sm text-ink dark:text-zinc-300">
                 {report.dependents.map((d) => (
@@ -2036,7 +2111,7 @@ function DeleteDialog({
 
           {free && (
             <p className="mb-3 text-sm text-ink dark:text-zinc-300">
-              {t("confirm.deleteBody")}
+              {merging ? t("merge.nothingMoves") : t("confirm.deleteBody")}
             </p>
           )}
 
@@ -2051,7 +2126,7 @@ function DeleteDialog({
           ))}
         </div>
 
-        {blocked && (
+        {(blocked || (merging && report !== undefined)) && (
           <div className="mb-3">
             {targets.length === 0 ? (
               <p className="text-sm text-ink dark:text-zinc-300">
@@ -2061,7 +2136,7 @@ function DeleteDialog({
               <>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-ink dark:text-zinc-400">
-                  {t("confirm.moveTo")}
+                  {merging ? t("merge.keep") : t("confirm.moveTo")}
                 </span>
                 <select
                   value={targetId}
@@ -2256,7 +2331,19 @@ function DeleteDialog({
         )}
 
         <div className="flex justify-end gap-2">
-          {blocked && targets.length > 0 && (
+          {merging && targets.length > 0 && (
+            <IconButton
+              icon={Merge}
+              label={mergeMutation.isPending ? t("merge.merging") : t("merge.confirm")}
+              busy={mergeMutation.isPending}
+              showLabel
+              variant="primary"
+              size="sm"
+              onClick={() => mergeMutation.mutate()}
+              disabled={busy || settling || targetId === "" || report === undefined}
+            />
+          )}
+          {!merging && blocked && targets.length > 0 && (
             // #37.46 (A078): FolderInput + „Mută"; working, „Se mută…" with
             // the spinner in the icon's place.
             <IconButton
@@ -2270,7 +2357,7 @@ function DeleteDialog({
               disabled={busy || settling || targetId === ""}
             />
           )}
-          {free && (
+          {!merging && free && (
             <button
               onClick={() => deleteMutation.mutate()}
               disabled={busy || settling}

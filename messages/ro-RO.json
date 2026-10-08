@@ -2057,11 +2057,6 @@
   "valueList": {
     "pageTitle": "Date de referință",
     "sections": {
-      "property": "Proprietate",
-      "person": "Persoană",
-      "document": "Document",
-      "roles": "Roluri",
-      "rolesObject": "Relație între obiecte",
       "rolesObjectNote": "Nu există o listă „Document → Proprietate”: relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație."
     },
     "lists": {
@@ -2100,9 +2095,6 @@
     "lookupOriginStatus": {
       "manual": "Adăugat manual",
       "imported": "Creat la import"
-    },
-    "modal": {
-      "close": "Închide"
     },
     "form": {
       "addTitle": "Adaugă înregistrare nouă",
@@ -2275,6 +2267,32 @@
       "colHoldsShare": "Deține cotă",
       "holdsShareLabel": "Deține cotă — {docType} — {role}",
       "holdsShareError": "Bifa „Deține cotă\" nu s-a putut salva. Încercați din nou."
+    },
+    "categories": {
+      "property": "Proprietăți",
+      "person": "Persoane",
+      "document": "Acte",
+      "roles": "Roluri",
+      "links": "Legături între obiecte",
+      "other": "Altele"
+    },
+    "page": {
+      "nav": "Liste de referință",
+      "choose": "Alegeți o listă din stânga."
+    },
+    "usage": {
+      "column": "Folosit de",
+      "usedBy": "{count, plural, one {folosit de # înregistrare} few {folosit de # înregistrări} other {folosit de # de înregistrări}}",
+      "unused": "nefolosit"
+    },
+    "merge": {
+      "button": "Unește",
+      "title": "Unește „{name}” cu altă valoare",
+      "keep": "Valoarea păstrată",
+      "willMove": "{count, plural, one {O înregistrare se mută pe valoarea păstrată:} few {# înregistrări se mută pe valoarea păstrată:} other {# de înregistrări se mută pe valoarea păstrată:}}",
+      "nothingMoves": "Nimic nu folosește această valoare: după unire ea dispare, valoarea păstrată rămâne.",
+      "confirm": "Unește",
+      "merging": "Se unește…"
     }
   },
   "adminTags": {

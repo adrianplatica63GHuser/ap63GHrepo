@@ -798,10 +798,11 @@ describe("the relationship-role lists", () => {
     }
   });
 
-  it("open the generic modal from the hub, and their own modals are gone", () => {
-    const hub = read("app", "admin", "value-lists", "_components", "value-list-hub.tsx");
-    expect(hub).toContain('open("property-property-roles")');
-    expect(hub).toContain('open("document-document-roles")');
+  it("open the generic list from the page, and their own modals are gone", () => {
+    // Slice #38.35: from the category „Legături între obiecte", into the page's one panel.
+    const cats = read("lib", "admin", "value-lists", "categories.ts");
+    expect(cats).toContain('"property-property-roles", "document-document-roles"');
+    expect(read("app", "admin", "value-lists", "_components", "value-list-hub.tsx")).toContain("<ValueListModal");
     for (const f of ["property-property-modal.tsx", "document-document-modal.tsx"]) {
       expect([f, fs.existsSync(path.join(SRC, "app", "admin", "value-lists", "_components", f))])
         .toEqual([f, false]);

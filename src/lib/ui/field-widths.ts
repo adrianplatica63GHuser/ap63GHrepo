@@ -1236,6 +1236,7 @@ export const COLUMN = {
   valueFlag: { content: "S", kind: "fixed" }, //            a checkbox field, „✓" or „–" — S for its header, „PROPRIETATE"
   valueDescription: { content: "XL", kind: "wraps" }, //    a list's description, which wraps downward
   valueStatus: { content: "L", kind: "wraps" }, //          „Fără formular" / „De revizuit" — the review lists' status
+  valueUsage: { content: "L", kind: "fixed" }, //           „folosit de 12 înregistrări" / „nefolosit" — Slice #38.35
   // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
   feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
   feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward

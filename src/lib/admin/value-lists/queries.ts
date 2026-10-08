@@ -1340,6 +1340,35 @@ async function buildReport(
 }
 
 /**
+ * „Folosit de N" for every row of a list at once.               (Slice #38.35)
+ *
+ * The same refs `countDependents` counts one row at a time — the objects that
+ * depend on a value, never its own configuration (a whitelist tick goes with
+ * the row and is not a use of it) — counted for the whole list in one grouped
+ * query per ref, so the cost follows the number of refs (one to three per
+ * list), not the number of rows. Every row of the list is in the answer, a
+ * value nothing uses with 0: the panel greys it („nefolosit") and sorts it last.
+ */
+export async function countUsage(list: ListKey): Promise<Record<string, number>> {
+  const def = LIST_DEPENDENCIES[list];
+  const ids = await db.select({ id: def.idColumn }).from(def.table);
+  const usage: Record<string, number> = Object.fromEntries(ids.map((r) => [String(r.id), 0]));
+  for (const ref of def.refs) {
+    if (ref.configuration) continue;
+    const rows = await db
+      .select({ value: ref.column, n: count() })
+      .from(ref.table)
+      .where(sql`${ref.column} IS NOT NULL`)
+      .groupBy(ref.column);
+    for (const r of rows) {
+      const key = String(r.value);
+      if (key in usage) usage[key] += Number(r.n);
+    }
+  }
+  return usage;
+}
+
+/**
  * What depends on one lookup row, live. `null` when the row does not exist.
  */
 export async function countDependents(

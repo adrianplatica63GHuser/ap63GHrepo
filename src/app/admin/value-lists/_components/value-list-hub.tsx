@@ -1,113 +1,52 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * „Date de referință" — one page: the categories on the left, the chosen list
+ * on the right.                                                (Slice #38.35)
+ *
+ * Until #38.35 this was a page of blue buttons, each opening its list as a
+ * modal. Now every list is reached from one category (`listsByCategory`,
+ * `@/lib/admin/value-lists/categories` — a list in none lands under „Altele"),
+ * and the list opens beside them, as a panel: no overlay, no close button. The
+ * dialogs that sit ON a list — a delete or „Unește", the Form editor,
+ * „Roluri pe Document" — stay dialogs; 38.36 and 38.39 give the last two pages
+ * of their own.
+ *
+ * THE URL CARRIES THE LIST (Ask first 1): `/admin/value-lists?list=<key>`, so a
+ * list can be linked to and the browser's Back goes to the previous one. A
+ * press pushes the URL; the server page reads it and hands it here, so the
+ * panel shown is always the one the address names.
+ *
+ * KEYBOARD: the lists are buttons in one column — Tab reaches them, ↑ / ↓ move
+ * between them, Home / End go to the first and the last.
+ */
+
+import { useRef, useState, type KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
-import { ValueListModal } from "./value-list-modal";
+import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
+import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
+import { ValueListModal, VALUE_LIST_CARD_UNITS } from "./value-list-modal";
 import { screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
-/** Slice #37.35: a section is 6 units (#37.22's two panels, 65rem, on the unit); its buttons wrap inside it. */
-const SECTION_UNITS = 6;
-
-// ── Section wrapper ───────────────────────────────────────────────────────────
-
-function Section({
-  label,
-  note,
-  children,
-}: {
-  label: string;
-  /**
-   * A sentence printed under the heading, before the buttons.
-   *
-   * Slice #34.05: the one caller is „Relație între obiecte", and the sentence
-   * is the entire former content of `DocToPropertyModal` — a modal behind a
-   * blue button that said only that there is nothing behind it. Printed here it
-   * answers the question before it is asked instead of after.
-   */
-  note?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    // Slice #37.22: a section is two panels wide; its buttons wrap inside it. #37.35: 6 units.
-    <div {...screenPanel(`value-lists-${label}`, SECTION_UNITS)} className="rounded-lg border border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="border-b border-card-rim px-4 py-2 dark:border-zinc-800">
-        <span className="text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
-          {label}
-        </span>
-      </div>
-      {note && (
-        <p className="border-b border-card-rim px-4 py-3 text-sm leading-relaxed text-fade dark:border-zinc-800 dark:text-zinc-400">
-          {note}
-        </p>
-      )}
-      <div className="flex flex-wrap gap-3 p-4">{children}</div>
-    </div>
-  );
-}
-
-// ── Sub-row divider label ─────────────────────────────────────────────────────
-//
-// ⚠️ **GONE WITH ITS LAST CALLER, Slice #34.10.** `SubLabel` existed to head
-// one sub-row of the „Roluri" section — „Persoană implicată" — under which
-// three buttons once sat. #34.04 folded two of them into checkboxes on the
-// „Roluri Persoană" row and #34.10 moved the third onto the document-type
-// screen, so the divider was heading a sub-row with nothing in it. Left behind,
-// it would be an unused component in a file a lint run reads, and the next
-// person to want a sub-row would find a helper whose one former caller says
-// nothing about how it was meant to be used.
-
-// ── List button ───────────────────────────────────────────────────────────────
-
-function ListBtn({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
-    >
-      {label}
-    </button>
-  );
-}
-
-// ── Hub ───────────────────────────────────────────────────────────────────────
+/** The categories' column: three units. */
+const NAV_UNITS = 3;
 
 export function ValueListHub({
   /**
-   * A list to open on arrival, and a name to start adding — Slice #34.10.
+   * The list the address names — `?list=` — and a name to start adding (`?add=`,
+   * Slice #34.10: the import's stop screen carries the name of a type the run
+   * would have created).
    *
    * ⚠️ **VALIDATED HERE with `isValidListKey`, and not trusted from the URL.**
-   * `ListKey` is a union and `?list=` is a string anybody can type; casting it
-   * would put an unknown key into `LIST_META[listKey]` inside the modal, where
-   * `meta.fields` is read without a guard — a blank screen from a typo. An
-   * unrecognised value opens the hub exactly as a visit with no parameter does,
-   * which is the right failure for a deep link.
+   * `?list=` is a string anybody can type, and `in` on a plain object would let
+   * `constructor` or `__proto__` through (found by an adversarial round on
+   * #34.10). An unrecognised value shows the page with no list open, which is
+   * the right failure for a deep link.
    *
-   * ⚠️ **`isValidListKey`, NOT `initialList in LIST_META` — and the first draft
-   * of this slice wrote the second.** `in` walks the prototype chain of a plain
-   * object literal, so `?list=constructor`, `toString`, `valueOf`, `__proto__`,
-   * `hasOwnProperty`, `isPrototypeOf`, `propertyIsEnumerable` and
-   * `toLocaleString` — eight strings, verified — all passed the guard.
-   * `LIST_META["constructor"]` is then `Object`, `meta.fields` is `undefined`,
-   * and the modal throws on `displayFields.length` before it paints: exactly
-   * the blank screen the paragraph above claims to prevent, delivered by the
-   * check meant to prevent it. Found by an adversarial round.
-   *
-   * `isValidListKey` was already exported from `config.ts` and already used by
-   * four API routes; it tests membership of `VALID_LIST_KEYS`, so it reaches no
-   * prototype and there is one definition of what a list key is.
-   *
-   * ⚠️ **`initialAddName` is passed on and NOT validated**, deliberately: it is
-   * a type name a person is about to create, and the only thing that may refuse
-   * one is the create door itself. Trimming or rejecting it here would be a
-   * second opinion about names, one screen away from the one that decides.
+   * ⚠️ **`initialAddName` goes to the list the visit ARRIVED on, once.** Moving
+   * to another list, or back, opens it without the name: the URL has had its say.
    */
   initialList,
   initialAddName,
@@ -116,137 +55,98 @@ export function ValueListHub({
   initialAddName?: string;
 } = {}) {
   const t = useTranslations("valueList");
+  const router = useRouter();
+  const navRef = useRef<HTMLElement>(null);
 
-  /**
-   * ⚠️ **LATCHED IN STATE, not recomputed from the prop on every render.**
-   * `openOnArrival` gates `initialAddName` below, and computed fresh it stayed
-   * true for the whole visit: a user who arrived with `?add=Foo`, closed the
-   * modal and reopened the SAME list from the hub got the add form seeded with
-   * "Foo" all over again — which the `initialAddName` prop's own comment says
-   * cannot happen. `useState`'s initialiser runs once, so "on arrival" means
-   * what it says. Found by an adversarial round.
-   *
-   * ⚠️ **The residual, stated rather than left to be rediscovered: this latch
-   * is STALE under a soft navigation between two `?list=` URLs on this route**
-   * — `openOnArrival` would hold list A while `initialAddName` became B's,
-   * which is the same cross-list leak arrived at from the other side. Not
-   * reachable in this build: every in-app link into this route either carries
-   * no params (`preflight-checklist.tsx`) or opens in a new tab
-   * (`import-types-blocked-stage.tsx`, and since Slice #34.16
-   * `components/forms/no-roles-for-type-note.tsx`, which carries `?list=` from
-   * three association screens), so every arrival is a fresh mount. **This
-   * enumeration is the whole of the argument, so a link added to this route
-   * that is not in it makes the paragraph false rather than merely incomplete**
-   * — #34.16 added the third and an adversarial round is what noticed the list
-   * had not grown with it. The day one of those becomes a same-tab `<Link>`,
-   * both halves have to be latched together — or read from `useSearchParams` rather than from a prop.
-   */
-  const [openOnArrival] = useState<ListKey | null>(() =>
-    initialList !== undefined && isValidListKey(initialList) ? initialList : null,
-  );
-  /** Consumed once: the second visit to the same list is an ordinary one. */
+  const selected: ListKey | null =
+    initialList !== undefined && isValidListKey(initialList) ? initialList : null;
+  const [arrival] = useState<ListKey | null>(selected);
   const [addNameUsed, setAddNameUsed] = useState(false);
 
-  const [openList, setOpenList] = useState<ListKey | null>(openOnArrival);
-
-  function open(key: ListKey) { setOpenList(key); }
-  function close() {
-    setOpenList(null);
-    // Slice #34.10 — the URL has had its say. See `openOnArrival`.
+  function open(key: ListKey) {
+    if (key === selected) return;
     setAddNameUsed(true);
+    router.push(`/admin/value-lists?list=${key}`, { scroll: false });
+  }
+
+  function onNavKey(e: KeyboardEvent<HTMLElement>) {
+    const buttons = Array.from(navRef.current?.querySelectorAll<HTMLButtonElement>("button[data-list-key]") ?? []);
+    const at = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    const next =
+      e.key === "ArrowDown" ? Math.min(at + 1, buttons.length - 1)
+      : e.key === "ArrowUp" ? Math.max(at - 1, 0)
+      : e.key === "Home" ? 0
+      : e.key === "End" ? buttons.length - 1
+      : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    buttons[next].focus();
   }
 
   return (
-    <>
-      <UnitRow units={[SECTION_UNITS]}>
-        {/* ── Proprietate ── */}
-        <Section label={t("sections.property")}>
-          <ListBtn label={t("lists.propertyTypes")}  onClick={() => open("property-types")} />
-          <ListBtn label={t("lists.tarla")}           onClick={() => open("tarla")} />
-          <ListBtn label={t("lists.useCategories")}   onClick={() => open("use-categories")} />
-        </Section>
+    <UnitRow units={[NAV_UNITS, VALUE_LIST_CARD_UNITS]}>
+      <nav
+        ref={navRef}
+        aria-label={t("page.nav")}
+        onKeyDown={onNavKey}
+        {...screenPanel("value-lists-nav", NAV_UNITS)}
+        className="flex flex-col gap-4 rounded-lg border border-card-rim bg-card p-3 dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        {listsByCategory().map((category) => (
+          <div key={category.id} className="flex flex-col gap-1" data-category={category.id}>
+            <h2 className="px-2 text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
+              {t(`categories.${category.id}`)}
+            </h2>
+            <ul className="flex flex-col">
+              {category.lists.map((key) => {
+                const label = t(`lists.${LIST_META[key].titleKey}`);
+                const current = key === selected;
+                return (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      data-list-key={key}
+                      aria-current={current ? "page" : undefined}
+                      onClick={() => open(key)}
+                      className={[
+                        "w-fit rounded-md px-2 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+                        current
+                          ? "bg-cta font-medium text-white"
+                          : "text-ink hover:bg-cta-pale dark:text-zinc-200 dark:hover:bg-zinc-800",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
 
-        {/* ── Persoană ── */}
-        <Section label={t("sections.person")}>
-          <ListBtn label={t("lists.personTypes")}         onClick={() => open("person-types")} />
-          <ListBtn label={t("lists.judicialPersonTypes")} onClick={() => open("judicial-person-types")} />
-          <ListBtn label={t("lists.citizenships")}        onClick={() => open("citizenships")} />
-        </Section>
-
-        {/* ── Document ── */}
-        <Section label={t("sections.document")}>
-          <ListBtn label={t("lists.documentTypes")} onClick={() => open("document-types")} />
-          <ListBtn label={t("lists.institutions")}  onClick={() => open("institutions")} />
-        </Section>
-
-        {/* ── Roluri ──
-
-            Slice #34.04: „Persoană → Proprietate" and „Persoană → Persoană"
-            are gone from here, and their words are two CHECKBOXES on the
-            „Roluri Persoană" row below. Each opened a modal over a table
-            holding one bit per role — a UNIQUE NOT NULL foreign key back to
-            the master list and nothing else — so one question about one role
-            cost three windows, and the empty-by-default state of
-            „Persoană → Persoană" was invisible until you opened it.
-            migration_079 made both a boolean column.
-
-            ⚠️ **Slice #34.10 took the third, „Persoană → Document", to the
-            document-type screen — and it did NOT become a checkbox, because it
-            cannot.** `lookup_doc_type_person_role` is unique over the PAIR
-            (document_type_id, person_role_id) — „Vânzător" is a valid party on
-            a sale contract and not on a cadastral plan — so it is a grid, and a
-            bit cannot hold it. What was wrong with it here was not its shape
-            but its address: „who may appear on this kind of document?" belongs
-            beside „what fields does this kind of document have?", which is the
-            Form editor, two screens away from this one. It now opens from the
-            „Tipuri de document" list's own toolbar, under its real name
-            „Roluri pe Document" — which is also the name two sentences in
-            `value-list-modal.tsx` already used to send people to it.
-
-            So this section is one button again, and it is the master list. */}
-        <Section label={t("sections.roles")}>
-          <ListBtn label={t("lists.personRoles")} onClick={() => open("person-roles")} />
-        </Section>
-
-        {/* ── Relație între obiecte ──
-
-            Slice #34.05: A SECTION, NOT A SUB-ROW OF „Roluri", AND THE WORD
-            „rol" IS THE REASON. „Adiacent" and „Înlocuiește" are relationship
-            types between two objects of the SAME kind; they are not roles a
-            person plays, which is what „rol" means everywhere else in this
-            system. They sat under „Roluri" because a sub-row was added to an
-            existing section rather than a section beside it.
-
-            The third button that stood here — „Document → Proprietate" —
-            opened `DocToPropertyModal`, whose entire content was three strings
-            saying there is nothing to configure. The button and the modal are
-            gone and the sentence is the section's `note`: `sections
-            .rolesObjectNote`, which IS the modal's former `body`, re-homed
-            rather than orphaned.
-
-            Slice #29.13 is why the two survivors take `open(...)`: they are
-            ordinary value lists on the generic modal, with the refusal, the
-            live count and the offer to move the associations. */}
-        <Section label={t("sections.rolesObject")} note={t("sections.rolesObjectNote")}>
-          <ListBtn label={t("lists.propertyToProperty")} onClick={() => open("property-property-roles")} />
-          <ListBtn label={t("lists.documentToDocument")} onClick={() => open("document-document-roles")} />
-        </Section>
-
-      </UnitRow>
-
-      {openList && (
-        <ValueListModal
-          listKey={openList}
-          // ⚠️ **Only on the list the URL asked for.** The state persists after
-          // the first close, so without this term a user who arrived with
-          // `?add=` and then opened a DIFFERENT list would get its add form
-          // opened with a document type's name in it.
-          initialAddName={
-            openList === openOnArrival && !addNameUsed ? initialAddName : undefined
-          }
-          onClose={close}
-        />
-      )}
-    </>
+      <div {...screenPanel("value-list", VALUE_LIST_CARD_UNITS)} className="flex flex-col gap-3">
+        {selected === null ? (
+          <p className="rounded-lg border border-dashed border-card-rim px-4 py-6 text-sm text-fade dark:border-zinc-800 dark:text-zinc-400">
+            {t("page.choose")}
+          </p>
+        ) : (
+          <>
+            {/* Slice #34.05's sentence, under the category it answers for. */}
+            {categoryOfList(selected) === "links" && (
+              <p className="text-sm leading-relaxed text-fade dark:text-zinc-400">{t("sections.rolesObjectNote")}</p>
+            )}
+            {/* Keyed on the list: each list starts from its own state — a filter
+                ticked on one never filters the next (#27.07). */}
+            <ValueListModal
+              key={selected}
+              listKey={selected}
+              initialAddName={selected === arrival && !addNameUsed ? initialAddName : undefined}
+            />
+          </>
+        )}
+      </div>
+    </UnitRow>
   );
 }
