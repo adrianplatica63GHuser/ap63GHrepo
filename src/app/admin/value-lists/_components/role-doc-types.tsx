@@ -42,9 +42,9 @@ import {
 
 type LookupItem = { id: string; name: string };
 /** A value-list row AS THE API SENDS IT — the cache keeps it whole. */
-type ValueListRow = LookupItem & Record<string, unknown>;
+export type ValueListRow = LookupItem & Record<string, unknown>;
 
-async function fetchValueListRows(list: string): Promise<ValueListRow[]> {
+export async function fetchValueListRows(list: string): Promise<ValueListRow[]> {
   const res = await fetch(`/api/admin/value-lists/${list}`);
   // A redirect is an expired session answering with the login page: an error,
   // never a successful empty list (#34.04, on the grid this replaces).
@@ -53,7 +53,7 @@ async function fetchValueListRows(list: string): Promise<ValueListRow[]> {
   return (data.items ?? []) as ValueListRow[];
 }
 
-const toLookupItems = (rows: ValueListRow[]): LookupItem[] => rows.map((r) => ({ id: r.id, name: r.name }));
+export const toLookupItems = (rows: ValueListRow[]): LookupItem[] => rows.map((r) => ({ id: r.id, name: r.name }));
 
 export function usePairsOfRole(roleId: string | null): { pairs: DocTypePersonRolePair[]; loading: boolean } {
   // The literal key, as every consumer of a bare key spells it (value-list-dependents reads it here).

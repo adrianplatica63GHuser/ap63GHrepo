@@ -2115,6 +2115,7 @@
       "error": "Eroare la încărcare",
       "empty": "Nu există înregistrări",
       "edit": "Editează",
+      "open": "Deschide",
       "delete": "Șterge",
       "editForm": "Formular ({count})",
       "allHaveForm": "Niciun tip de document nu mai așteaptă un formular.",
@@ -2294,6 +2295,47 @@
       "actOff": "Rolul nu va mai fi oferit pe: {types}. Legăturile care îl folosesc deja rămân.",
       "actOffConfirm": "Scoate toate tipurile",
       "saveFirst": "Salvați rolul ca să-i alegeți tipurile de act."
+    },
+    "typePage": {
+      "back": "← Tipuri de Document",
+      "loading": "Se încarcă…",
+      "loadError": "Tipurile de document nu s-au putut încărca.",
+      "notFound": "Nu există niciun tip de document cu codul „{code}”.",
+      "tabsLabel": "Tipul de document",
+      "tabs": {
+        "general": "General",
+        "form": "Formular",
+        "roles": "Roluri"
+      },
+      "general": {
+        "name": "Denumire",
+        "shortName": "Denumire scurtă",
+        "code": "Cod",
+        "codeNote": "Codul nu se schimbă: formularele exportate, cererea către AI și testele îl folosesc.",
+        "status": "Stare",
+        "save": "Salvează",
+        "saving": "Se salvează…",
+        "saved": "Salvat."
+      },
+      "form": {
+        "none": "Acest tip nu are încă formular.",
+        "edit": "{count, plural, =0 {Creează formularul} other {Editează formularul (#)}}"
+      },
+      "roles": {
+        "title": "Rolurile tipului „{type}”",
+        "intro": "Rolurile pe care le poate avea o persoană într-un act de acest tip. Bifa „Deține cotă” aduce cota-parte pe legătură.",
+        "loadError": "Rolurile nu s-au putut încărca.",
+        "none": "Acest tip nu oferă încă niciun rol. Adăugați unul mai jos.",
+        "remove": "Scoate „{role}”",
+        "removeTitle": "Scoateți „{role}”?",
+        "removeWithLinks": "{count, plural, one {O legătură folosește rolul „{role}” pe acest tip de act.} few {# legături folosesc rolul „{role}” pe acest tip de act.} other {# de legături folosesc rolul „{role}” pe acest tip de act.}} Legăturile rămân așa cum sunt, dar rolul nu va mai putea fi ales.",
+        "removeNoLinks": "Nicio legătură nu folosește rolul „{role}” pe acest tip de act. Rolul nu va mai fi oferit.",
+        "removeConfirm": "Scoate rolul",
+        "addLabel": "Adaugă un rol",
+        "selectRole": "Alegeți rolul…",
+        "rolesError": "Rolurile nu s-au putut încărca",
+        "add": "Adaugă rolul"
+      }
     }
   },
   "adminTags": {

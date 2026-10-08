@@ -2115,6 +2115,7 @@
       "error": "Failed to load",
       "empty": "No entries yet",
       "edit": "Edit",
+      "open": "Open",
       "delete": "Delete",
       "editForm": "Form ({count})",
       "allHaveForm": "No document type is waiting for a form.",
@@ -2294,6 +2295,47 @@
       "actOff": "The role will no longer be offered on: {types}. Links that already use it stay.",
       "actOffConfirm": "Remove every type",
       "saveFirst": "Save the role to choose its document types."
+    },
+    "typePage": {
+      "back": "← Document Types",
+      "loading": "Loading…",
+      "loadError": "The document types could not be loaded.",
+      "notFound": "There is no document type with the code „{code}”.",
+      "tabsLabel": "Document type",
+      "tabs": {
+        "general": "General",
+        "form": "Form",
+        "roles": "Roles"
+      },
+      "general": {
+        "name": "Name",
+        "shortName": "Short name",
+        "code": "Code",
+        "codeNote": "The code does not change: exported forms, the AI request and the tests use it.",
+        "status": "Status",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Saved."
+      },
+      "form": {
+        "none": "This type has no form yet.",
+        "edit": "{count, plural, =0 {Create the form} other {Edit the form (#)}}"
+      },
+      "roles": {
+        "title": "Roles of the type „{type}”",
+        "intro": "The roles a person may hold on a document of this type. „Holds a share” brings the share onto the link.",
+        "loadError": "The roles could not be loaded.",
+        "none": "This type offers no role yet. Add one below.",
+        "remove": "Remove „{role}”",
+        "removeTitle": "Remove „{role}”?",
+        "removeWithLinks": "{count, plural, one {One link uses the role „{role}” on this document type.} other {# links use the role „{role}” on this document type.}} The links stay as they are, but the role can no longer be chosen.",
+        "removeNoLinks": "No link uses the role „{role}” on this document type. The role will no longer be offered.",
+        "removeConfirm": "Remove the role",
+        "addLabel": "Add a role",
+        "selectRole": "Choose a role…",
+        "rolesError": "The roles could not be loaded",
+        "add": "Add the role"
+      }
     }
   },
   "adminTags": {

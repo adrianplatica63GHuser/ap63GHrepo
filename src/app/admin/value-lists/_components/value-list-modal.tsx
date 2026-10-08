@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ClipboardList, FolderInput, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { ClipboardList, FolderInput, FolderOpen, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
@@ -40,6 +40,7 @@ import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { usedFirst } from "@/lib/admin/value-lists/categories";
 import { RoleScope } from "./role-scope";
+import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page";
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
@@ -144,7 +145,7 @@ async function fetchUsage(listKey: ListKey): Promise<Record<string, number>> {
   return ((await res.json()) as { usage: Record<string, number> }).usage;
 }
 
-async function saveRow(
+export async function saveRow(
   listKey: ListKey,
   id: string | null,
   body: Record<string, unknown>,
@@ -349,7 +350,7 @@ async function reassignRows(
  * table in the same edit as the branch; the test reads the table, so an
  * unlisted branch fails it too.
  */
-function invalidateListCaches(
+export function invalidateListCaches(
   qc: ReturnType<typeof useQueryClient>,
   listKey: ListKey,
 ): void {
@@ -1526,14 +1527,28 @@ export function ValueListModal({
                       <td className="px-4 py-2">
                         {/* Slice #37.37: the buttons wrap inside the fixed actions column. */}
                         <div className="flex flex-wrap gap-2">
-                          <IconButton
-                            icon={Pencil}
-                            label={t("table.edit")}
-                            variant="secondary"
-                            size="xs"
-                            onClick={() => startEdit(row)}
-                            disabled={!!form}
-                          />
+                          {/* Slice #38.39: a document type is edited on its own page —
+                              General, Formular, Roluri — so its row opens that page
+                              instead of the inline form. Adding one still uses it. */}
+                          {isDocumentTypes ? (
+                            <IconButton
+                              icon={FolderOpen}
+                              label={t("table.open")}
+                              showLabel
+                              variant="secondary"
+                              size="xs"
+                              href={documentTypePageHref(String(row.key ?? ""))}
+                            />
+                          ) : (
+                            <IconButton
+                              icon={Pencil}
+                              label={t("table.edit")}
+                              variant="secondary"
+                              size="xs"
+                              onClick={() => startEdit(row)}
+                              disabled={!!form}
+                            />
+                          )}
                           {/* Slice #27.03: the type's custom form. Document
                               types only — no other list has one. The count is
                               on the button rather than in a column of its own
