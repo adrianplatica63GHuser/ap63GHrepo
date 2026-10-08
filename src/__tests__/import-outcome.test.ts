@@ -82,7 +82,6 @@ function row(patch: Partial<OutcomeRow> = {}): OutcomeRow {
     cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
-    canLinkPerson: true,
     ...patch,
   };
 }
@@ -257,16 +256,13 @@ describe("idCardNote", () => {
     });
   });
 
-  it("says why a card in a shared folder produced no person", () => {
-    // Not a failure: the person flow writes to ONE Property, a `common` card
-    // concerns several and a `floating` one none. Since #26.09 such a card is
-    // read by the model instead, so the row already carries a field count —
-    // what was missing was any sentence saying why the person half did not
-    // happen.
-    expect(idCardNote(card({ canLinkPerson: false }))).toEqual({
-      id: "personNoProperty",
-      values: {},
-    });
+  // Slice #38.44 inverted this test in place. It read: „says why a card in a
+  // shared folder produced no person" — the row's own flag then gave
+  // `personNoProperty`. Since #38.44 such a card goes through the person flow
+  // like any other, so it takes the ordinary sentences, and the flag is gone.
+  it("gives a card in a shared folder the same sentences as any other (#38.44)", () => {
+    expect(idCardNote(card())).toEqual({ id: "personPending", values: {} });
+    expect(idCardNote(card({ personId: "p1", personCreated: true }))).toEqual({ id: "personCreated", values: {} });
   });
 
   it("⚠️ keeps a card whose READ failed apart from one whose image would not open", () => {
@@ -480,7 +476,6 @@ describe("what the row says about the document TYPE's form", () => {
     cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
-    canLinkPerson: false,
     ...over,
   });
 
@@ -517,7 +512,7 @@ describe("what the row says about the document TYPE's form", () => {
 
   it("is drawn last, after everything about the document itself", () => {
     const notes = outcomeNotes(
-      row({ isIdCard: true, canLinkPerson: true, personId: "p1", typeFormMissing: true }),
+      row({ isIdCard: true, personId: "p1", typeFormMissing: true }),
     );
     expect(notes.map((n) => n.id)).toEqual(["personConfirmed", "typeFormPending"]);
   });
@@ -565,7 +560,6 @@ describe("what the row says about being read again", () => {
     cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
-    canLinkPerson: false,
     ...over,
   });
 
@@ -889,9 +883,10 @@ describe("summariseImportRun", () => {
       [
         srow({ isIdCard: true, idCardQueued: true }),
         srow({ isIdCard: true, idCardQueued: true, personDeclined: true }),
-        // Never queued: no single Property to link to, an image that could not
-        // be prepared, no page at all. None of them is waiting for an answer.
-        srow({ isIdCard: true, canLinkPerson: false }),
+        // Never queued: a row the run had not reached (#38.44 queues every card),
+        // an image that could not be prepared, no page at all. None of them is
+        // waiting for an answer.
+        srow({ isIdCard: true }),
         srow({ isIdCard: true, personFileUnreadable: true }),
         srow({ isIdCard: true, readSkipped: "no-page" }),
       ],
@@ -1946,7 +1941,7 @@ describe("a refused re-read (Slice #32.08)", () => {
 
 describe("a refused identity card (Slice #32.08)", () => {
   const card = (over: Partial<OutcomeRow> = {}): OutcomeRow =>
-    row({ isIdCard: true, canLinkPerson: true, ...over });
+    row({ isIdCard: true, ...over });
 
   it("⚠️ says split, never 'try again with the Confirm the people button'", () => {
     expect(idCardNote(card({ personCardRefused: true }))).toEqual({

@@ -95,7 +95,6 @@ const row = (over: Partial<SummaryRow> = {}): SummaryRow => ({
   cornerPropertyName: null,
   cornerCount: 0,
   isIdCard: false,
-  canLinkPerson: false,
   aiProcessed: true,
   documentTypeId: "type-arenda",
   documentTypeName: "Contract de arendă",

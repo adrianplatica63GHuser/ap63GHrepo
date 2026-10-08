@@ -4823,7 +4823,6 @@ export function BulkImportDialog({
         cornerPropertyName: cornerProperty === undefined ? null : (cornerProperty.nickname ?? tUnnamed("property")),
         cornerCount: cornerProperty?.cornerCount ?? 0,
         isIdCard: isIdCardEntry(scanResults.get(r.entry.path)),
-        canLinkPerson: soleProperty(r.entry.path) !== null,
         personId: r.personId,
         personCreated: r.personCreated,
         personDeclined: r.personDeclined,
@@ -5891,7 +5890,6 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   personConfirmed: "text-emerald-600 dark:text-emerald-400",
   personPending: "text-sky-700 dark:text-sky-400",
   personDeclined: "text-amber-700 dark:text-amber-400",
-  personNoProperty: "text-sky-700 dark:text-sky-400",
   personUnreadable: "text-amber-700 dark:text-amber-400",
   personStepUnfinished: "text-amber-700 dark:text-amber-400",
   // Slice #32.08 — amber, like `personStepUnfinished` above it and unlike the

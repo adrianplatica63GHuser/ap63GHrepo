@@ -2648,7 +2648,6 @@
           "personConfirmed": "the person on the identity card was already in the system and was linked",
           "personPending": "the identity card is waiting to be confirmed",
           "personDeclined": "no person was created from this identity card",
-          "personNoProperty": "an identity card in a folder that belongs to no property in particular — it cannot be linked to a single property, so it was read as a document",
           "personUnreadable": "the identity card image could not be prepared, so no person was created",
           "readSkippedIdCard": "the general AI read was skipped, because this is an identity card",
           "readSkippedNoPage": "it has no page the AI can read",

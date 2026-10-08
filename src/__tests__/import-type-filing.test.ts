@@ -36,7 +36,6 @@ function row(patch: Partial<OutcomeRow> = {}): OutcomeRow {
     cornerPropertyName: null,
     cornerCount: 0,
     isIdCard: false,
-    canLinkPerson: true,
     ...patch,
   };
 }

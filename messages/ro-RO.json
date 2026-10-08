@@ -2648,7 +2648,6 @@
           "personConfirmed": "persoana din cartea de identitate exista deja și a fost legată",
           "personPending": "cartea de identitate așteaptă să fie confirmată",
           "personDeclined": "nicio persoană nu a fost creată din această carte de identitate",
-          "personNoProperty": "carte de identitate dintr-un folder care nu ține de o proprietate anume — nu poate fi legată de o singură proprietate, așa că a fost citită ca document",
           "personUnreadable": "imaginea cărții de identitate nu a putut fi pregătită, așa că nu s-a creat nicio persoană",
           "readSkippedIdCard": "nu a fost citit cu citirea generală AI, pentru că este o carte de identitate",
           "readSkippedNoPage": "nu are nicio pagină pe care AI să o poată citi",

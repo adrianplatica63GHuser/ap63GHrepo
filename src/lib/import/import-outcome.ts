@@ -107,7 +107,6 @@ export const OUTCOME_NOTE_IDS = [
   "personConfirmed",
   "personPending",
   "personDeclined",
-  "personNoProperty",
   "personUnreadable",
   "personStepUnfinished",
   // Slice #32.08 — the card step was REFUSED, not failed: the image holds more
@@ -182,12 +181,6 @@ export type OutcomeRow = {
   cornerCount: number;
   /** The scan says this is an identity card. */
   isIdCard: boolean;
-  /**
-   * Is there exactly ONE Property a person read off this card could be linked
-   * to? False for a card under `common` (several) or `floating` (none) — see
-   * `soleProperty` in the dialog.
-   */
-  canLinkPerson: boolean;
   /** Set once a Person was confirmed or created from this card. */
   personId?: string;
   /** …and whether that person was NEW. `IdCardPersonOutcome.created`. */
@@ -493,13 +486,9 @@ export function coordinateNote(row: OutcomeRow): OutcomeNote | null {
  *   - the person already existed and was confirmed, so nothing was created
  *   - the card is queued and nobody has been asked yet
  *   - the question was put and closed without an answer
- *   - the card belongs to no single Property, so there is nothing to link to
  *
- * ⚠️ **The last is not a failure and must not read as one.** An owner's carte
- * de identitate under `common` concerns every property in the run; the person
- * flow writes to ONE, so it is not offered — and since #26.09 such a card is
- * read by the model instead, so the row already carries a field count. What was
- * missing was any sentence saying why the person half did not happen.
+ * Until #38.44 a sixth said the card belonged to no single Property, so there
+ * was nothing to link to. Since then every card goes through the person flow.
  */
 export function idCardNote(row: OutcomeRow): OutcomeNote | null {
   if (!row.isIdCard) return null;
@@ -510,7 +499,9 @@ export function idCardNote(row: OutcomeRow): OutcomeNote | null {
   // carve-out re-imports identity cards deliberately — but a note that depends
   // on another stage's exception is one this module should not be relying on.)
   if (row.preexisting !== undefined) return null;
-  if (!row.canLinkPerson) return { id: "personNoProperty", values: {} };
+  // Slice #38.44: no `personNoProperty` any more. A card under `common` or
+  // `floating` goes through „Creează persoană din CI" like any other (its holder
+  // linked to the Document only), so it takes the same five sentences below.
   if (row.personFileUnreadable === true && row.personId === undefined) {
     return { id: "personUnreadable", values: {} };
   }

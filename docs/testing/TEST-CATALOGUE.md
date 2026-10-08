@@ -126,7 +126,7 @@ fixed fixture where the existing one will do.
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-IMP-04](cases/TC-IMP-04.md) | Folderele speciale „comune” și „flotante” | import | happy | `11.mixed.tc.marker` | `driven` | 2026-09-25 | — |
-| [TC-IMP-05](cases/TC-IMP-05.md) | Importul unei cărți de identitate cu părinții: titularul, apoi tatăl și mama | import | happy | `12.tc.id.card.parents` | `draft` | — | — |
+| [TC-IMP-05](cases/TC-IMP-05.md) | Importul unei cărți de identitate cu părinții: titularul, apoi tatăl și mama | import | happy | `12.tc.id.card.parents` | `driven` | 2026-10-08 | — |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-10-02 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
@@ -188,12 +188,12 @@ fixed fixture where the existing one will do.
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
 | [TC-NAV-01](cases/TC-NAV-01.md) | Bara laterală arată doar ce există: șase secțiuni, fiecare legătură își deschide ecranul, niciun „În curând" | nav | happy | — | `automated` | 2026-10-06 | `e2e/ui/sidebar-sections.spec.ts` |
 
-**One hundred and one are `automated`, seventeen are `driven`, and two are `draft`** — as of 2026-10-08 (Slices
+**One hundred and four are `automated`, seventeen are `driven`, and one is `draft`** — as of 2026-10-08 (Slices
 #37.38, #37.40, #37.42–#37.47, #37.49–#37.85, #37.88, #37.89, #37.91–#37.95, #38.03–#38.05, #38.07, #38.10–#38.14, #38.16, #38.17 #38.19, #38.20, #38.28, #38.29, #38.31, #38.32, #38.33, #38.34, #38.35, #38.36, #38.39 and #38.40, which added TC-MAP-01, TC-FOLD-01, TC-ICON-01–07, TC-PERS-03–04, TC-DOC-02–07, TC-TILES-07, TC-SYSID-01, TC-ASSOC-13, TC-DOC-07, TC-PERS-04, TC-PROP-06, TC-DOC-08, TC-TILES-08, TC-DOC-09, TC-DOC-10, TC-PROP-07, TC-PERS-05, TC-TILES-09, TC-TILES-10, TC-TILES-11, TC-PERS-06, TC-DOC-11, TC-TILES-12, TC-TILES-13, TC-PROP-08, TC-TILES-14, TC-TILES-15, TC-DOC-12, TC-TILES-16, TC-TILES-17, TC-LAYOUT-02, TC-DOC-13, TC-TILES-18, TC-PERS-07, TC-PROP-09, TC-PROP-10, TC-DOC-14, TC-LAYOUT-03, TC-DOC-15, TC-PROP-11, TC-PROP-12, TC-TILES-19, TC-DOC-16, TC-GRP-02, TC-GRP-03, TC-GRP-04, TC-STAMP-02, TC-TAG-02, TC-TILES-20, TC-TAG-03, TC-NAV-01, TC-DOC-17, TC-LAYOUT-04, TC-PERS-08, TC-PERS-09, TC-DOC-18, TC-DOC-19, TC-DOC-20, TC-VL-02, TC-VL-03, TC-VL-04 and TC-SET-02 and took each to `automated` the same day). Nothing is `confirmed`. What stays below `automated` is the import and AI cases, the first
-runs of #37.04, #37.08 and #37.10, TC-CALC-01, TC-AUTH-02 and TC-IMP-05 (#38.29: it needs an invented card that prints the parents, and a paid read), and the reason for
+runs of #37.04, #37.08 and #37.10, TC-AUTH-02 (TC-CALC-01 went to `automated` in #38.43, and TC-IMP-05 to `driven` in #38.44 on a drawn card), and the reason for
 each is written here, not implied:
 
-- **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-AI-01** —
+- **`driven`, waiting on an import spec: TC-IMP-01, TC-IMP-02, TC-IMP-03, TC-IMP-04, TC-IMP-05, TC-AI-01** —
   „What a Playwright spec for an import case would need", below.
 - **`driven`, first run: TC-PROP-05**, the first `negative` case (Slice #37.04), and
   **TC-USERS-01, TC-SET-01, TC-VL-01** (Slice #37.08) — a second run unchanged confirms each, and
