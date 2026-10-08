@@ -107,8 +107,8 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
 
       // ── At the end — on the document's „Proprietăți": radio, „Dezasociază" ─
       await page.getByRole("radio", { name: PROPERTY }).check();
-      await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
-      await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
+      await props.getByRole("button", { name: "Dezasociază", exact: true }).click(); // #38.33: „Părți" has its own
+      await expect(props.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "property", propertyId);

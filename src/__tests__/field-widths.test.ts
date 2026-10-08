@@ -652,7 +652,9 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
     }
     // #37.65: one tile for the three lists, named by its tile.
-    expect(page).toContain("<DocumentRelatedTile documentId={documentId} label={labels.related} />");
+    expect(page).toContain("<DocumentRelatedTile documentId={documentId} label={labels.related}");
+    // #38.33: a CVC's „Părți" is a list tile the size of „Legături".
+    expect(page).toMatch(/<ListTile tile="parties"[^>]*units=\{LIST_UNITS\.document\.related\}/);
     expect(page).not.toMatch(/compactCellRem/);
     expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_UNIT_STYLE\.document\.succession\}/);
   });

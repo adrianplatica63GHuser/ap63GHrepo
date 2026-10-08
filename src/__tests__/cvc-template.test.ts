@@ -192,7 +192,11 @@ describe("Contract de Vânzare, specifically", () => {
     expect(tabs.length).toBeLessThanOrEqual(5);
   });
 
-  it("spells „Taxe și onorarii” and „Financiar” exactly, so they inherit the paired layout", () => {
+  // Slice #38.33 inverted this test in place. It read: „spells „Taxe și onorarii” and „Financiar”
+  // exactly, so they inherit the paired layout", and asserted a „Financiar" group. The price is now
+  // „Preț" on „Preț și plată" and the fees „Taxe și onorarii" on „Taxe și cheltuieli" — two tabs,
+  // so there is no pair to inherit, and a „Financiar" group would pull the price back beside the fees.
+  it("spells „Taxe și onorarii” exactly, and has no „Financiar” to pair it with (#38.33)", () => {
     // ⚠️ The one silent failure mode in `template-groups.ts`: a name one
     // diacritic off saves cleanly, renders cleanly, and quietly costs the type
     // the half-width pairing. Asserted through the matchers the FORM uses, not
@@ -200,7 +204,7 @@ describe("Contract de Vânzare, specifically", () => {
     // #27.03 moved them into that module to prevent.
     const panels = new Set(cvc.map((f) => f.groupRo ?? ""));
     expect([...panels].some((p) => isFeesGroup(p))).toBe(true);
-    expect([...panels].some((p) => isFinancialGroup(p))).toBe(true);
+    expect([...panels].some((p) => isFinancialGroup(p))).toBe(false);
   });
 
   it("records the flavour as a field, not as five document types", () => {
