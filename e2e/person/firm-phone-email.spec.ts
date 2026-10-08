@@ -32,8 +32,12 @@ test.describe("TC-PERS-09 — O firmă cu telefonul și e-mailul ei, păstrate d
       await expect(page.getByRole("heading", { name: NAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
       const tile = await showTile(page, "Reprezentanți și contact");
-      const phone: Locator = tile.getByLabel("Telefon firmă", { exact: true });
-      const email: Locator = tile.getByLabel("E-mail firmă", { exact: true });
+      // By the box, not the label: an error inside the <label> joins the box's
+      // accessible name („E-mail firmă Adresa de e-mail nu pare…").
+      await expect(tile.getByText("Telefon firmă", { exact: true })).toBeVisible();
+      await expect(tile.getByText("E-mail firmă", { exact: true })).toBeVisible();
+      const phone: Locator = tile.locator('[data-width-field="phone"]');
+      const email: Locator = tile.locator('[data-width-field="email"]');
       await expect(phone).toHaveValue("");
       await expect(email).toHaveValue("");
       const [pBox, cBox] = [await phone.boundingBox(), await tile.getByText("Persoană de contact 1").first().boundingBox()];
@@ -55,22 +59,22 @@ test.describe("TC-PERS-09 — O firmă cu telefonul și e-mailul ei, păstrate d
       // Step 4 — after a reload, both are there.
       await page.reload();
       const after = await showTile(page, "Reprezentanți și contact");
-      await expect(after.getByLabel("Telefon firmă", { exact: true })).toHaveValue(PHONE, { timeout: 30_000 });
-      await expect(after.getByLabel("E-mail firmă", { exact: true })).toHaveValue(EMAIL);
+      await expect(after.locator('[data-width-field="phone"]')).toHaveValue(PHONE, { timeout: 30_000 });
+      await expect(after.locator('[data-width-field="email"]')).toHaveValue(EMAIL);
 
       // Step 5 — „Versiunea anterioară": „v 0", both empty.
       await page.getByRole("button", { name: "Versiunea anterioară", exact: true })
         .or(page.getByRole("button", { name: /^\d+ versiuni$/ })).first().click();
       await expect(page.getByText("v 0", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-      await expect(after.getByLabel("Telefon firmă", { exact: true })).toHaveValue("");
-      await expect(after.getByLabel("E-mail firmă", { exact: true })).toHaveValue("");
+      await expect(after.locator('[data-width-field="phone"]')).toHaveValue("");
+      await expect(after.locator('[data-width-field="email"]')).toHaveValue("");
 
       // Step 6 — „Versiunea următoare": „v 1", both filled and framed in green.
       await page.getByRole("button", { name: "Versiunea următoare" }).click();
       await expect(page.getByText("v 1", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-      await expect(after.getByLabel("Telefon firmă", { exact: true })).toHaveValue(PHONE);
-      await expect(after.getByLabel("Telefon firmă", { exact: true })).toHaveClass(GREEN);
-      await expect(after.getByLabel("E-mail firmă", { exact: true })).toHaveClass(GREEN);
+      await expect(after.locator('[data-width-field="phone"]')).toHaveValue(PHONE);
+      await expect(after.locator('[data-width-field="phone"]')).toHaveClass(GREEN);
+      await expect(after.locator('[data-width-field="email"]')).toHaveClass(GREEN);
     } finally {
       await removeRecord(page.request, "company", id);
     }

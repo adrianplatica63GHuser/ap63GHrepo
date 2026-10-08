@@ -335,7 +335,7 @@ describe("every frame a form renders is a frame the diff computes", () => {
       "src/app/judicial-persons/_components/judicial-person-form.tsx",
       "displayHighlights\\?\\.fields\\.([A-Za-z0-9_]+)",
       [...JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS, "notes"],
-      9,
+      11, // #38.31: + phone, email
     ],
   ];
 
