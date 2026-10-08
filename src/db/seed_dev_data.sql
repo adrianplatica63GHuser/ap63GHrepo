@@ -1213,7 +1213,7 @@ FROM (VALUES
   ('PROP00010','PPERS00018','Proprietar'),
   ('PROP00011','PPERS00027','Proprietar'),
   ('PROP00012','PPERS00021','Proprietar'),
-  ('PROP00013','PPERS00001','Proprietar / Titular'),
+  ('PROP00013','PPERS00001','Proprietar'),
   ('PROP00014','PPERS00010','Proprietar'),
   ('PROP00015','PPERS00014','Proprietar'),
   ('PROP00016','PPERS00022','Proprietar'),
@@ -1259,14 +1259,14 @@ SELECT gen_random_uuid(), p.id, d.id, v.quality,
   now()
 FROM (VALUES
   -- Titluri proprietate
-  ('PPERS00001','DOC00001',NULL,'Titular / Proprietar'),
-  ('PPERS00002','DOC00002',NULL,'Titular / Proprietar'),
-  ('PPERS00005','DOC00003',NULL,'Titular / Proprietar'),
-  ('PPERS00021','DOC00004',NULL,'Titular / Proprietar'),
-  ('PPERS00027','DOC00005',NULL,'Titular / Proprietar'),
-  ('PPERS00013','DOC00006',NULL,'Titular / Proprietar'),
-  ('PPERS00010','DOC00007',NULL,'Titular / Proprietar'),
-  ('PPERS00030','DOC00008',NULL,'Titular / Proprietar'),
+  ('PPERS00001','DOC00001',NULL,'Proprietar'),
+  ('PPERS00002','DOC00002',NULL,'Proprietar'),
+  ('PPERS00005','DOC00003',NULL,'Proprietar'),
+  ('PPERS00021','DOC00004',NULL,'Proprietar'),
+  ('PPERS00027','DOC00005',NULL,'Proprietar'),
+  ('PPERS00013','DOC00006',NULL,'Proprietar'),
+  ('PPERS00010','DOC00007',NULL,'Proprietar'),
+  ('PPERS00030','DOC00008',NULL,'Proprietar'),
   -- Contracte vânzare
   ('PPERS00030','DOC00009',NULL,'Vânzător'),
   ('PPERS00019','DOC00009',NULL,'Cumpărător'),
@@ -1285,17 +1285,17 @@ FROM (VALUES
   ('PPERS00015','DOC00015','MOSTENITOR','Moștenitor'),
   ('PPERS00027','DOC00015','DEFUNCT','Titular al succesiunii / Defunct'),
   -- Extras CF
-  ('PPERS00001','DOC00016',NULL,'Solicitant / Beneficiar'),
-  ('PPERS00021','DOC00017',NULL,'Solicitant / Beneficiar'),
+  ('PPERS00001','DOC00016',NULL,'Solicitant'),
+  ('PPERS00021','DOC00017',NULL,'Solicitant'),
   -- Acte cadastru
   ('PPERS00023','DOC00019',NULL,'Topograf / Expert cadastral'),
-  ('PPERS00001','DOC00019',NULL,'Solicitant / Beneficiar'),
+  ('PPERS00001','DOC00019',NULL,'Solicitant'),
   ('PPERS00023','DOC00020',NULL,'Topograf / Expert cadastral'),
-  ('PPERS00021','DOC00020',NULL,'Solicitant / Beneficiar'),
+  ('PPERS00021','DOC00020',NULL,'Solicitant'),
   -- CU și autorizații
-  ('PPERS00024','DOC00021',NULL,'Solicitant / Beneficiar'),
-  ('PPERS00008','DOC00022',NULL,'Beneficiar / Solicitant'),
-  ('PPERS00008','DOC00023',NULL,'Beneficiar / Solicitant'),
+  ('PPERS00024','DOC00021',NULL,'Solicitant'),
+  ('PPERS00008','DOC00022',NULL,'Solicitant'),
+  ('PPERS00008','DOC00023',NULL,'Solicitant'),
   ('PPERS00025','DOC00023',NULL,'Constructor / Antreprenor'),
   -- Contracte arendă
   ('PPERS00021','DOC00027',NULL,'Arendator'),
@@ -1313,8 +1313,8 @@ FROM (VALUES
   ('PPERS00004','DOC00036',NULL,'Proprietar'),
   ('PPERS00020','DOC00036',NULL,'Moștenitor'),
   -- Partaj
-  ('PPERS00011','DOC00037',NULL,'Coproprietari / Coindivizari'),
-  ('PPERS00012','DOC00037',NULL,'Coproprietari / Coindivizari'),
+  ('PPERS00011','DOC00037',NULL,'Coproprietar'),
+  ('PPERS00012','DOC00037',NULL,'Coproprietar'),
   -- Testament
   ('PPERS00027','DOC00050',NULL,'Proprietar'),
   ('PPERS00001','DOC00069',NULL,'Proprietar')
@@ -1455,8 +1455,8 @@ SELECT gen_random_uuid(),
   now()
 FROM (VALUES
   ('PPERS00011','PPERS00012','Coproprietar'),
-  ('PPERS00004','PPERS00005','Coproprietar / Co-moștenitor'),
-  ('PPERS00002','PPERS00020','Moștenitor / Succesor'),
+  ('PPERS00004','PPERS00005','Coproprietar'),
+  ('PPERS00002','PPERS00020','Moștenitor'),
   ('PPERS00001','PPERS00007','Reprezentant legal'),
   ('PPERS00013','PPERS00004','Moștenitor'),
   ('PPERS00027','PPERS00015','Coproprietar')
