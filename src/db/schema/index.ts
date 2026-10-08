@@ -259,6 +259,12 @@ export const judicialPerson = pgTable(
     // Trade Register number — "Nr. ORC" (e.g. "J22/123/2020").
     tradeRegisterNumber: text("trade_register_number"),
 
+    // Slice #38.31 (migration_096): the firm's own phone and e-mail, shown on
+    // „Reprezentanți și contact". Free text; the e-mail's shape is checked by
+    // the form and the API, not by the database.
+    phone: text("phone"),
+    email: text("email"),
+
     // Contact persons — FK references to natural_person rows.
     // Nullable; ON DELETE SET NULL so removing the linked person just clears
     // the reference without touching this judicial_person row.
