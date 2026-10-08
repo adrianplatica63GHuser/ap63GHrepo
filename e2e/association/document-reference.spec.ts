@@ -172,8 +172,17 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       // `.last()`: the form's „Șterge" is at the bottom; „Pagini" rows carry their own, and since
       // #37.56 stand in the right-hand column, after the form in the page: the left area's last one.
-      await page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last().click();
-      await page.getByRole("dialog", { name: "Ștergeți actul?" }).getByRole("button", { name: "Da", exact: true }).click();
+      // #38.33: in full-db 20261008T033937Z-15705 a click 0.4 s after the heading opened no dialog, and the
+      // test waited out its 90 s on „Da" (green on the re-run). Settle the page, and press again if it
+      // still did not open.
+      await page.waitForLoadState("networkidle").catch(() => {});
+      const remove = page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last();
+      const confirm = page.getByRole("dialog", { name: "Ștergeți actul?" });
+      await expect(async () => {
+        if (!(await confirm.isVisible())) await remove.click();
+        await expect(confirm).toBeVisible({ timeout: 3_000 });
+      }).toPass({ timeout: 30_000 });
+      await confirm.getByRole("button", { name: "Da", exact: true }).click();
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
     } finally {
       if (certificateId) await removeRecord(page.request, "document", certificateId);
