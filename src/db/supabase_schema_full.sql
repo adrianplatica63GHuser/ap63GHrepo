@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-07 22:11
+-- Generated : 2026-10-08 08:09
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -207,6 +207,19 @@ CREATE TABLE public.address (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: ai_paid_read; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_paid_read (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    route text NOT NULL,
+    model text NOT NULL,
+    success boolean NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -851,14 +864,12 @@ CREATE TABLE public.person_document (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     person_id uuid NOT NULL,
     document_id uuid NOT NULL,
-    quality text,
     person_role_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     cota_parte numeric(7,4),
     cota_suprafata_mp numeric(12,2),
     cota_mod text,
-    CONSTRAINT person_document_cota_mod_check CHECK (((cota_mod IS NULL) OR (cota_mod = ANY (ARRAY['NUME_PROPRIU'::text, 'DEVALMASIE'::text, 'INDIVIZIUNE'::text, 'PRIN_MANDATAR'::text])))),
-    CONSTRAINT person_document_quality_check CHECK (((quality IS NULL) OR (quality = ANY (ARRAY['DEFUNCT'::text, 'MOSTENITOR'::text]))))
+    CONSTRAINT person_document_cota_mod_check CHECK (((cota_mod IS NULL) OR (cota_mod = ANY (ARRAY['NUME_PROPRIU'::text, 'DEVALMASIE'::text, 'INDIVIZIUNE'::text, 'PRIN_MANDATAR'::text]))))
 );
 
 
@@ -1174,11 +1185,32 @@ CREATE TABLE public.user_requests (
 
 
 --
+-- Name: user_tile_default; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_tile_default (
+    user_id text NOT NULL,
+    kind text NOT NULL,
+    tiles jsonb NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_tile_default_kind_check CHECK ((kind = ANY (ARRAY['natural-person'::text, 'judicial-person'::text, 'property'::text, 'document'::text])))
+);
+
+
+--
 -- Name: address address_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.address
     ADD CONSTRAINT address_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ai_paid_read ai_paid_read_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_paid_read
+    ADD CONSTRAINT ai_paid_read_pkey PRIMARY KEY (id);
 
 
 --
@@ -1750,10 +1782,25 @@ ALTER TABLE ONLY public.user_requests
 
 
 --
+-- Name: user_tile_default user_tile_default_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_tile_default
+    ADD CONSTRAINT user_tile_default_pkey PRIMARY KEY (user_id, kind);
+
+
+--
 -- Name: address_person_kind_unique; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX address_person_kind_unique ON public.address USING btree (person_id, kind);
+
+
+--
+-- Name: ai_paid_read_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_paid_read_at_idx ON public.ai_paid_read USING btree (at);
 
 
 --
