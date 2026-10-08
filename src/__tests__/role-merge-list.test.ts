@@ -92,6 +92,12 @@ describe("the committed list", () => {
     const seeder = read("scripts/seed-dev-data/seed.ts");
     expect(foldedNames(parseRoleMergeList(committed())).filter((n) => seeder.includes(`"${n}"`))).toEqual([]);
   });
+
+  /** The SQL dev seed resolves them by name too: a folded name leaves its link with no role. */
+  it("seed_dev_data.sql names no folded role either", () => {
+    const sql = read("src/db/seed_dev_data.sql");
+    expect(foldedNames(parseRoleMergeList(committed())).filter((n) => sql.includes(`'${n.replace(/'/g, "''")}'`))).toEqual([]);
+  });
 });
 
 describe("a list that cannot run is named, not half-run", () => {
