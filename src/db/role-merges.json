@@ -1,0 +1,91 @@
+{
+  "$comment": [
+    "Slice #38.37: the person-role clean-up. Each merge folds roles into a survivor: their links move to it, their document-type pairs join it, their rows are deleted.",
+    "Drafted by Claude as Role.Merge.List.docx (C:\\dev.docs\\01.Slice.Inputs\\Slices.38.30-38.44\\38.37.Role.Cleanup). Adrian and Ciprian strike out what is wrong; the session that finds Role.Merge.List.marked.docx drops the struck merges and folds here, sets approved and approvedBy, and re-runs the dry run.",
+    "src/db/sync-reference-data.sql seeds the list AFTER these merges, and verify-rebuild proves it: it applies this file to the database built from the migrations and requires the same role names as the one built from the seed.",
+    "npm run roles:merge is the dry run; npm run roles:merge:apply refuses while approved is false."
+  ],
+  "version": 1,
+  "approved": false,
+  "approvedBy": null,
+  "merges": [
+    {
+      "survivor": "Proprietar",
+      "description": "(deținătorul dreptului de proprietate: titularul imobilului, al dreptului real sau al drepturilor înscrise în cartea funciară)",
+      "fold": [
+        "Proprietar / Titular",
+        "Proprietar / Titular al imobilului",
+        "Proprietar / Titular de drept real",
+        "Proprietar / Titular de drepturi înscrise",
+        "Proprietar / Coproprietar",
+        "Titular / Proprietar",
+        "Titular al imobilului"
+      ]
+    },
+    {
+      "survivor": "Coproprietar",
+      "description": "(proprietar în indiviziune, alături de alții: comoștenitorii dintr-un certificat, coindivizarii dintr-un partaj)",
+      "fold": [
+        "Coproprietar / Co-moștenitor",
+        "Coproprietari / Coindivizari"
+      ]
+    },
+    {
+      "survivor": "Moștenitor",
+      "description": "(cel care dobândește prin moștenire, inclusiv succesorul care continuă o procedură)",
+      "fold": [
+        "Moștenitori",
+        "Moștenitor / succesor",
+        "Moștenitor / Succesor"
+      ]
+    },
+    {
+      "survivor": "Notar",
+      "description": "(notarul public care autentifică actul sau emite certificatul)",
+      "fold": [
+        "Notar public",
+        "Martor / Notar"
+      ]
+    },
+    {
+      "survivor": "Reprezentant legal",
+      "description": "(al părților)",
+      "fold": [
+        "Reprezentant legal (al părților)"
+      ]
+    },
+    {
+      "survivor": "Proiectant",
+      "description": "(cel care elaborează documentația: proiectant, arhitect, consultant, urbanist)",
+      "fold": [
+        "Proiectant / Arhitect",
+        "Proiectant / Consultant",
+        "Urbanist / Proiectant"
+      ]
+    },
+    {
+      "survivor": "Solicitant",
+      "description": "(cel care cere eliberarea actului sau comandă lucrarea: beneficiarul, titularul drepturilor sau al rolului fiscal)",
+      "fold": [
+        "Solicitant / Beneficiar",
+        "Beneficiar / Solicitant",
+        "Solicitant / Titular de drepturi",
+        "Solicitant / Titular de rol fiscal"
+      ]
+    },
+    {
+      "survivor": "Creditor",
+      "description": "(cel căruia i se datorează: inițiatorul executării, creditorul ipotecar)",
+      "fold": [
+        "Creditor / Ipotecar"
+      ]
+    },
+    {
+      "survivor": "Debitor",
+      "description": "(cel care datorează: debitorul executat, plătitorul de impozite)",
+      "fold": [
+        "Debitor / Plătitor de impozite"
+      ]
+    }
+  ]
+}

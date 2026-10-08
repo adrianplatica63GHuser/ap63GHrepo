@@ -859,7 +859,10 @@ describe("moving person-role associations", () => {
     // for reading page file paths before deleting a document.
     const body = functionBody(
       read("lib", "admin", "value-lists", "queries.ts"),
-      "reassignDependents",
+      // The body lives in `reassignDependentsIn` since Slice #38.37, so the role
+      // clean-up can run it on its own transaction; `reassignDependents` is
+      // the wrapper that resolves the actor and opens one.
+      "reassignDependentsIn",
     );
     const grantAt = body.indexOf("grantWhitelists(tx");
     const moveAt  = body.indexOf("moveRef(tx");

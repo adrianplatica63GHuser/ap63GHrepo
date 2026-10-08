@@ -543,8 +543,14 @@ describe("the move records itself", () => {
     // disagreeing with its own rows, and a crash between the two loses it
     // outright. `recordMoveHistory` takes `tx` — the same one `moveRef` was
     // handed — and that is the whole guarantee.
-    const body = functionBody(moverSource(), "reassignDependents");
-    expect(body).toContain("db.transaction");
+    //
+    // Since Slice #38.37 the body is `reassignDependentsIn`, run on a
+    // transaction its caller opened, so the guarantee is now two halves: the
+    // wrapper hands its OWN `tx` to the body, and the body writes with it.
+    const wrapper = functionBody(moverSource(), "reassignDependents");
+    expect(wrapper).toMatch(/db\.transaction\(\(tx\) => reassignDependentsIn\(tx,/);
+    const body = functionBody(moverSource(), "reassignDependentsIn");
+    expect(body).not.toContain("db.transaction");
     expect(body).toContain("recordMoveHistory(tx");
   });
 
@@ -552,7 +558,7 @@ describe("the move records itself", () => {
     // The mirror image of #29.13's grant, which has to run BEFORE. The
     // snapshot is built from the row as it stands; built before the UPDATE it
     // would faithfully record the state the move was undoing.
-    const body = functionBody(moverSource(), "reassignDependents");
+    const body = functionBody(moverSource(), "reassignDependentsIn");
     const moveAt = body.indexOf("moveRef(tx");
     const histAt = body.indexOf("recordMoveHistory(tx");
     expect(moveAt).toBeGreaterThan(-1);
@@ -576,7 +582,7 @@ describe("the move records itself", () => {
   });
 
   it("passes the acting user to the history writer, and keeps the count", () => {
-    const body = functionBody(moverSource(), "reassignDependents");
+    const body = functionBody(moverSource(), "reassignDependentsIn");
     expect(body).toMatch(
       /versions \+= await recordMoveHistory\(tx,\s*ref,\s*rewritten\.ids,\s*updatedBy\)/,
     );

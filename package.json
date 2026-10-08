@@ -22,6 +22,8 @@
     "storage:migrate-bucket": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/storage-migrate-bucket.ts",
     "properties:mark-bow-ties": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/mark-bow-tie-properties.ts",
     "properties:mark-bow-ties:apply": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/mark-bow-tie-properties.ts --apply",
+    "roles:merge": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/merge-person-roles.ts",
+    "roles:merge:apply": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/merge-person-roles.ts --apply",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "postinstall": "node scripts/copy-pdfjs-worker.mjs"

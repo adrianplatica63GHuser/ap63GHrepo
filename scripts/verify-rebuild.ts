@@ -107,6 +107,7 @@
 
 import { spawnSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 import {
@@ -249,7 +250,9 @@ const DB_MIGRATIONS = "ga40_rebuild_migrations";
 const DB_FULL = "ga40_rebuild_full";
 const DB_REPAIR = "ga40_rebuild_repair";
 const DB_PRE070 = "ga40_rebuild_pre070";
-const SCRATCH = [DB_MIGRATIONS, DB_FULL, DB_REPAIR, DB_PRE070];
+/** A copy of the migrations database, with links in it, for the role clean-up's test (#38.37). */
+const DB_ROLES = "ga40_rebuild_roles";
+const SCRATCH = [DB_MIGRATIONS, DB_FULL, DB_REPAIR, DB_PRE070, DB_ROLES];
 
 /** Only these are ever dropped, and only if this run created them. */
 const created = new Set<string>();
@@ -805,10 +808,13 @@ function renderBaseline(lines: string[]): string {
       "#        `+` for the full-schema value and a `-` for the migrations value.",
       "#        Four REFDATA lines became eight; nothing was gained or lost.",
       "#        STILL OPEN, for its original reason: `sync-reference-data.sql` ticks",
-      "#        Coproprietari / Coindivizari, Cumpărător, Proprietar / Titular de",
-      "#        drept real and Titular de drept by name, and no migration ticks",
-      "#        anything. The other 52 roles agree (false on both sides) and do not",
-      "#        appear.",
+      "#        Coproprietar, Cumpărător, Proprietar and Titular de drept by name,",
+      "#        and no migration ticks anything. (Until Slice #38.37 the first and",
+      "#        third were Coproprietari / Coindivizari and Proprietar / Titular de",
+      "#        drept real; the clean-up folded them, and verify-rebuild applies the",
+      "#        same merges to the migrations side before comparing, so the tick",
+      "#        lands on the survivor on both.) The other roles agree (false on",
+      "#        both sides) and do not appear.",
       "#        The two `lookup_property_person_role` CONSTRAINT lines that used to",
       "#        sit in category 1 above ARE closed, and permanently: they were a",
       "#        `drizzle-kit push` artefact on a table that no longer exists.",
@@ -1078,6 +1084,11 @@ function main(): void {
   } else {
     ok("applied cleanly");
     loadDocumentTypeForms();
+    // BEFORE the rows are compared: the database built from the migrations
+    // still holds the roles the clean-up folds, and the seed no longer does.
+    // A migrated database reaches the clean list by running the merges, so the
+    // comparison below is between the two clean lists, which is the claim.
+    verifyRoleMerges();
     const lookupTables = rows(
       DB_FULL,
       "SELECT table_name FROM information_schema.tables WHERE table_schema='public' " +
@@ -1382,6 +1393,214 @@ function main(): void {
   }
 
   finish();
+}
+
+/**
+ * The role clean-up, run on two throwaway databases.               (Slice #38.37)
+ *
+ * src/db/role-merges.json folds near-duplicate person roles into survivors, and
+ * scripts/merge-person-roles.ts runs it. This proves three things, by running
+ * that script — not a copy of it — exactly as Adrian will:
+ *
+ *   1. On a copy of the migrations database with links in it (invented TC-
+ *      persons and one document): the dry run writes nothing; the apply moves
+ *      every link to its survivor and loses none; and a merge whose move would
+ *      duplicate a link — one person holding both „Creditor" and
+ *      „Creditor / Ipotecar" on one document — is REPORTED as a collision and
+ *      writes nothing, while every other merge goes through.
+ *   2. On the migrations database itself: every merge applies, none collides.
+ *   3. Afterwards it holds the SAME role names as the database built from
+ *      sync-reference-data.sql — which is what "a rebuilt database gets the
+ *      same clean list" means, checked rather than claimed.
+ *
+ * The list is the committed draft with `approved` forced on, in a temporary
+ * file: a throwaway database is the one place a draft may be applied, and the
+ * script refuses an unapproved list on `--apply` everywhere else.
+ */
+function verifyRoleMerges(): void {
+  step("The role clean-up (src/db/role-merges.json) on a rebuilt database");
+
+  const listPath = path.join(REPO, "src/db/role-merges.json");
+  let list: { merges: Array<{ survivor: string; fold: string[] }> } & Record<string, unknown>;
+  try {
+    list = JSON.parse(fs.readFileSync(listPath, "utf-8"));
+  } catch (e) {
+    bad(`src/db/role-merges.json does not parse: ${(e as Error).message}`);
+    return;
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ga40-role-merges-"));
+  const approvedList = path.join(tmp, "role-merges.approved.json");
+  fs.writeFileSync(
+    approvedList,
+    JSON.stringify({ ...list, approved: true, approvedBy: "verify-rebuild (a throwaway database)" }),
+  );
+  const folded = list.merges.flatMap((m) => m.fold);
+  const survivorOf = new Map(list.merges.flatMap((m) => m.fold.map((f) => [f, m.survivor] as const)));
+
+  /** The script, against one throwaway database. Returns its exit code and its outcomes. */
+  const merge = (db: string, apply: boolean): { status: number; outcomes: Array<Record<string, unknown>>; out: string } => {
+    const jsonOut = path.join(tmp, `${db}-${apply ? "apply" : "dry"}.json`);
+    const env = childEnv();
+    // The published port on loopback, in --container mode too: the script is a
+    // Node process on THIS machine, not a psql inside the container.
+    env.DATABASE_URL = `postgres://${encodeURIComponent(USER)}:${encodeURIComponent(PASSWORD)}@${HOST}:${PORT}/${db}`;
+    // Not production: src/db/index.ts would ask a loopback server for TLS.
+    Reflect.deleteProperty(env, "NODE_ENV");
+    const r = spawnSync(
+      process.execPath,
+      [
+        path.join(REPO, "node_modules/tsx/dist/cli.mjs"),
+        path.join(REPO, "scripts/merge-person-roles.ts"),
+        ...(apply ? ["--apply"] : []),
+        "--list", approvedList,
+        "--json", jsonOut,
+      ],
+      { cwd: REPO, env, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 },
+    );
+    const out = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
+    const outcomes = fs.existsSync(jsonOut) ? JSON.parse(fs.readFileSync(jsonOut, "utf-8")) : [];
+    return { status: r.status ?? -1, outcomes, out };
+  };
+  const roleNames = (db: string) => rows(db, "SELECT name FROM lookup_person_role ORDER BY name");
+  const linkRoles = (db: string) =>
+    rows(
+      db,
+      "SELECT 'pd ' || pd.person_id || ' ' || pd.document_id || ' ' || coalesce(r.name, '(none)') " +
+        "FROM person_document pd LEFT JOIN lookup_person_role r ON r.id = pd.person_role_id " +
+        "UNION ALL SELECT 'pp ' || pp.person_id_a || ' ' || pp.person_id_b || ' ' || coalesce(r.name, '(none)') " +
+        "FROM person_person pp LEFT JOIN lookup_person_role r ON r.id = pp.relationship_role_id ORDER BY 1",
+    );
+
+  try {
+    // ── 1. A copy with links in it ──────────────────────────────────────────
+    dropDb(DB_ROLES);
+    psql("postgres", ["-c", `CREATE DATABASE ${DB_ROLES} TEMPLATE ${DB_MIGRATIONS}`]);
+    created.add(DB_ROLES);
+
+    // Invented records only. P1 < P2 by uuid, as person_person_order requires.
+    const P1 = "00000000-0000-4000-8000-000000003701";
+    const P2 = "00000000-0000-4000-8000-000000003702";
+    const D1 = "00000000-0000-4000-8000-000000003703";
+    const role = (n: string) => `(SELECT id FROM lookup_person_role WHERE name = '${n.replace(/'/g, "''")}')`;
+    const fixture: Array<[string, string, string]> = [
+      // [person, role, why]
+      [P1, "Notar public", "moves to Notar"],
+      [P2, "Proiectant / Consultant", "moves to Proiectant"],
+      [P1, "Creditor", "the survivor's own link"],
+      [P1, "Creditor / Ipotecar", "collides with the line above"],
+    ];
+    const present = new Set(roleNames(DB_ROLES));
+    const missing = [...new Set([...fixture.map((f) => f[1]), "Reprezentant legal (al părților)"])].filter(
+      (n) => !present.has(n),
+    );
+    if (missing.length > 0) {
+      bad(`the migrations database has no role named ${missing.map((n) => `„${n}"`).join(", ")} - the test cannot be built`);
+      return;
+    }
+    applyText(
+      DB_ROLES,
+      [
+        "INSERT INTO principal_object (id, code, object_type) VALUES",
+        `  ('${P1}', 'TC-ROLE-P1', 'PERSON'), ('${P2}', 'TC-ROLE-P2', 'PERSON'), ('${D1}', 'TC-ROLE-D1', 'DOCUMENT');`,
+        "INSERT INTO person (id, principal_object_id, code, type, display_name) VALUES",
+        `  ('${P1}', '${P1}', 'TC-ROLE-P1', 'NATURAL', 'TC Rol Unu'), ('${P2}', '${P2}', 'TC-ROLE-P2', 'NATURAL', 'TC Rol Doi');`,
+        "INSERT INTO document (id, principal_object_id, code, document_type_id) VALUES",
+        `  ('${D1}', '${D1}', 'TC-ROLE-D1', (SELECT id FROM lookup_document_type ORDER BY name LIMIT 1));`,
+        ...fixture.map(
+          ([p, n]) => `INSERT INTO person_document (person_id, document_id, person_role_id) VALUES ('${p}', '${D1}', ${role(n)});`,
+        ),
+        `INSERT INTO person_person (person_id_a, person_id_b, relationship_role_id) VALUES ('${P1}', '${P2}', ${role("Reprezentant legal (al părților)")});`,
+      ].join("\n"),
+    );
+    const rolesBefore = roleNames(DB_ROLES);
+    const linksBefore = linkRoles(DB_ROLES);
+
+    const dry = merge(DB_ROLES, false);
+    if (dry.outcomes.length !== list.merges.length) {
+      bad(`the dry run reported ${dry.outcomes.length} of ${list.merges.length} merge(s) (exit ${dry.status}):\n${indent(dry.out)}`);
+      return;
+    }
+    if (roleNames(DB_ROLES).join("\n") === rolesBefore.join("\n") && linkRoles(DB_ROLES).join("\n") === linksBefore.join("\n")) {
+      ok("the dry run reports every merge and writes nothing");
+    } else {
+      bad("the dry run changed the database - it must roll every merge back");
+    }
+
+    const applied = merge(DB_ROLES, true);
+    const byStatus = (o: Record<string, unknown>) => `${String(o.survivor)}: ${String(o.status)}`;
+    const collided = applied.outcomes.filter((o) => o.status === "collides");
+    const other = applied.outcomes.filter((o) => !["merged", "nothing-to-do", "collides"].includes(String(o.status)));
+    if (
+      collided.length === 1 &&
+      collided[0].survivor === "Creditor" &&
+      collided[0].role === "Creditor / Ipotecar" &&
+      collided[0].collisions === 1 &&
+      applied.status === 1
+    ) {
+      ok("the colliding merge is reported - „Creditor\", 1 link that would be duplicated - and exits 1");
+    } else {
+      bad(`expected exactly one collision, on „Creditor", and exit 1; got exit ${applied.status}: ${applied.outcomes.map(byStatus).join("; ")}`);
+    }
+    if (other.length > 0) bad(`merges neither merged nor refused by collision: ${other.map(byStatus).join("; ")}`);
+
+    const after = new Set(roleNames(DB_ROLES));
+    const stillThere = folded.filter((n) => after.has(n) && n !== "Creditor / Ipotecar");
+    if (stillThere.length === 0 && after.has("Creditor / Ipotecar")) {
+      ok("every folded role is gone, except the one whose merge collided - that merge wrote nothing");
+    } else {
+      bad(`folded roles still present: ${stillThere.join(", ") || "(none)"}; „Creditor / Ipotecar" present: ${after.has("Creditor / Ipotecar")}`);
+    }
+
+    // No link lost: the same links, each on its survivor — or, for the merge
+    // that collided, on the role it had.
+    const expected = linksBefore
+      .map((l) => {
+        const [kind, a, b, ...rest] = l.split(" ");
+        const name = rest.join(" ");
+        const to = name === "Creditor / Ipotecar" ? name : (survivorOf.get(name) ?? name);
+        return `${kind} ${a} ${b} ${to}`;
+      })
+      .sort();
+    const actual = linkRoles(DB_ROLES);
+    if (actual.join("\n") === expected.join("\n")) {
+      ok(`no link lost: ${actual.length} link(s) before and after, each on its survivor`);
+    } else {
+      bad(`the links after the merge are not the links before, re-pointed:\n${indent(multisetDiff(expected, actual).join("\n"))}`);
+    }
+
+    // ── 2 and 3. The migrations database, then against the seed ─────────────
+    const chain = merge(DB_MIGRATIONS, true);
+    const refused = chain.outcomes.filter((o) => !["merged", "nothing-to-do"].includes(String(o.status)));
+    if (chain.status === 0 && refused.length === 0 && chain.outcomes.length === list.merges.length) {
+      ok(`all ${list.merges.length} merge(s) apply to the database built from the migrations`);
+    } else {
+      bad(`the merges did not all apply to the migrations database (exit ${chain.status}):\n${indent(chain.out)}`);
+    }
+    const migrated = roleNames(DB_MIGRATIONS);
+    const seeded = roleNames(DB_FULL);
+    const diff = multisetDiff(migrated, seeded);
+    if (diff.length === 0) {
+      ok(`after the merges, the migrations database holds the seed's ${seeded.length} role name(s) exactly`);
+    } else {
+      bad(
+        "after the merges, the role names differ from sync-reference-data.sql's " +
+          "(`-` only after the merges, `+` only in the seed). The seed and src/db/role-merges.json " +
+          `must describe the same clean list:\n${indent(diff.join("\n"))}`,
+      );
+    }
+  } catch (e) {
+    bad(`the role clean-up test could not run:\n${indent((e as Error).message)}`);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+    if (!KEEP && created.has(DB_ROLES)) {
+      try {
+        dropDb(DB_ROLES);
+        created.delete(DB_ROLES);
+      } catch {
+        /* finish() drops it */
+      }
+    }
+  }
 }
 
 /**

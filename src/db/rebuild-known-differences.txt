@@ -94,10 +94,13 @@
 #        `+` for the full-schema value and a `-` for the migrations value.
 #        Four REFDATA lines became eight; nothing was gained or lost.
 #        STILL OPEN, for its original reason: `sync-reference-data.sql` ticks
-#        Coproprietari / Coindivizari, Cumpărător, Proprietar / Titular de
-#        drept real and Titular de drept by name, and no migration ticks
-#        anything. The other 52 roles agree (false on both sides) and do not
-#        appear. Slice #37.28 (migration_088) added three converse columns to
+#        Coproprietar, Cumpărător, Proprietar and Titular de drept by name,
+#        and no migration ticks anything. (Until Slice #38.37 the first and
+#        third were Coproprietari / Coindivizari and Proprietar / Titular de
+#        drept real; the clean-up folded them, and verify-rebuild applies the
+#        same merges to the migrations side before comparing, so the tick
+#        lands on the survivor on both.) The other roles agree (false on
+#        both sides) and do not appear. Slice #37.28 (migration_088) added three converse columns to
 #        the role row, so each of these eight lines ends with three `<null>`
 #        now - the same four facts, nothing gained or lost. The ten roles
 #        migration_088 ticks for people, and their converses, are written by

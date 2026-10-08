@@ -1605,7 +1605,6 @@ export async function reassignDependents(
   actor?: string | null,
 ): Promise<ReassignOutcome> {
   if (fromId === toId) return { ok: false, reason: "same-value" };
-  const def = LIST_DEPENDENCIES[list];
 
   // Resolved BEFORE the transaction opens. `getCurrentUser()` reads the
   // request's cookies and, outside UAT mode, asks Supabase — network work that
@@ -1628,95 +1627,117 @@ export async function reassignDependents(
     updatedBy = actor;
   }
 
-  return db.transaction(async (tx) => {
-    // Both rows locked, in id order. The order is what keeps two
-    // administrators moving values at each other from deadlocking; the lock
-    // itself is what stops a new dependent arriving between the move and the
-    // delete that follows it (see `lookupRowId`).
-    const [firstId, secondId] = fromId < toId ? [fromId, toId] : [toId, fromId];
-    await lookupRowId(tx, def, firstId, true);
-    await lookupRowId(tx, def, secondId, true);
+  return db.transaction((tx) => reassignDependentsIn(tx, list, fromId, toId, updatedBy));
+}
 
-    const from = await lookupRowId(tx, def, fromId);
-    const to   = await lookupRowId(tx, def, toId);
-    if (from === undefined || to === undefined) {
-      return { ok: false, reason: "not-found" } as const;
+/**
+ * The body of `reassignDependents`, on a transaction the CALLER opened.
+ *                                                              (Slice #38.37)
+ *
+ * Split out so the role clean-up (src/lib/admin/person-roles/role-merge.ts)
+ * can fold several roles into one survivor, union their document-type pairs and
+ * delete the folded rows in ONE transaction per merge — through this logic
+ * rather than a copy of it, so the collision check, the whitelist grant and the
+ * move history are the same ones the „Unește" button runs. `updatedBy` is
+ * already resolved: the caller decides who is acting (the route resolves the
+ * session; the script names itself).
+ */
+export async function reassignDependentsIn(
+  tx: DbTransaction,
+  list: ListKey,
+  fromId: string,
+  toId: string,
+  updatedBy: string | null,
+): Promise<ReassignOutcome> {
+  if (fromId === toId) return { ok: false, reason: "same-value" };
+  const def = LIST_DEPENDENCIES[list];
+  // Both rows locked, in id order. The order is what keeps two
+  // administrators moving values at each other from deadlocking; the lock
+  // itself is what stops a new dependent arriving between the move and the
+  // delete that follows it (see `lookupRowId`).
+  const [firstId, secondId] = fromId < toId ? [fromId, toId] : [toId, fromId];
+  await lookupRowId(tx, def, firstId, true);
+  await lookupRowId(tx, def, secondId, true);
+
+  const from = await lookupRowId(tx, def, fromId);
+  const to   = await lookupRowId(tx, def, toId);
+  if (from === undefined || to === undefined) {
+    return { ok: false, reason: "not-found" } as const;
+  }
+  // Both ids exist and are different rows. Since Slice #34.03 this can only
+  // fire when `fromId === toId`, because the values compared ARE the ids; on
+  // a value-matched list it used to catch two `tarla` rows carrying the same
+  // indicativ, where moving one onto the other rewrote nothing while
+  // reporting a move.
+  if (from === to) return { ok: false, reason: "same-value" } as const;
+
+  // Slice #34.03: the `ambiguous-value` refusal stood here. A row whose twin
+  // carried the same text could not be moved at all — the properties
+  // carrying "T1" belonged to BOTH rows equally, nothing in the data said
+  // which, and rewriting them would silently take the twin's properties too.
+  // A property points at a ROW now, so "which of the two does this belong
+  // to" has an answer and the refusal has nothing to refuse.
+
+  // ⚠️ **BEFORE the move, and that is not an implementation detail.**
+  // `grantWhitelists` decides what to grant by asking whether any rows still
+  // carry the SOURCE value; after the UPDATE they carry the target's, mixed
+  // in with rows that were already there, and the question stops being
+  // answerable. It runs on this transaction, so a move that rolls back takes
+  // its grants with it.                                       (Slice #29.13)
+  //
+  // The `typeof` guard is what keeps this honest on a value-matched list: on
+  // `tarla` the values are text, not ids, and no whitelist exists — the
+  // clause below is simply not entered, because `tarla` declares no
+  // `grantWhitelists`. It is written as a narrowing rather than a cast so a
+  // future value-matched list that DOES declare one cannot silently pass a
+  // non-uuid into an insert.
+  const whitelists =
+    def.grantWhitelists && typeof from === "string" && typeof to === "string"
+      ? await def.grantWhitelists(tx, from, to)
+      : { granted: [], warnings: [] };
+
+  /*
+   * ⚠️ **ASK BEFORE MOVING ANYTHING, AND ASK FOR EVERY REF FIRST.**
+   *                                                          (Slice #36.02)
+   *
+   * A per-ref check inside the loop below would refuse only after the refs
+   * ahead of it had already been rewritten — and while the transaction would
+   * roll those back, `grantWhitelists` has already run by this point too, so
+   * the tidy thing is to have written nothing at all before deciding. It is
+   * one `count(*)` per ref that declares a `uniqueWith`, which today is one
+   * ref on one list.
+   */
+  for (const ref of def.refs) {
+    if (ref.configuration) continue;
+    const collisions = await collisionsForRef(tx, ref, from, to);
+    if (collisions > 0) {
+      return { ok: false, reason: "would-collide", labelKey: ref.labelKey, collisions } as const;
     }
-    // Both ids exist and are different rows. Since Slice #34.03 this can only
-    // fire when `fromId === toId`, because the values compared ARE the ids; on
-    // a value-matched list it used to catch two `tarla` rows carrying the same
-    // indicativ, where moving one onto the other rewrote nothing while
-    // reporting a move.
-    if (from === to) return { ok: false, reason: "same-value" } as const;
+  }
 
-    // Slice #34.03: the `ambiguous-value` refusal stood here. A row whose twin
-    // carried the same text could not be moved at all — the properties
-    // carrying "T1" belonged to BOTH rows equally, nothing in the data said
-    // which, and rewriting them would silently take the twin's properties too.
-    // A property points at a ROW now, so "which of the two does this belong
-    // to" has an answer and the refusal has nothing to refuse.
-
-    // ⚠️ **BEFORE the move, and that is not an implementation detail.**
-    // `grantWhitelists` decides what to grant by asking whether any rows still
-    // carry the SOURCE value; after the UPDATE they carry the target's, mixed
-    // in with rows that were already there, and the question stops being
-    // answerable. It runs on this transaction, so a move that rolls back takes
-    // its grants with it.                                       (Slice #29.13)
-    //
-    // The `typeof` guard is what keeps this honest on a value-matched list: on
-    // `tarla` the values are text, not ids, and no whitelist exists — the
-    // clause below is simply not entered, because `tarla` declares no
-    // `grantWhitelists`. It is written as a narrowing rather than a cast so a
-    // future value-matched list that DOES declare one cannot silently pass a
-    // non-uuid into an insert.
-    const whitelists =
-      def.grantWhitelists && typeof from === "string" && typeof to === "string"
-        ? await def.grantWhitelists(tx, from, to)
-        : { granted: [], warnings: [] };
-
-    /*
-     * ⚠️ **ASK BEFORE MOVING ANYTHING, AND ASK FOR EVERY REF FIRST.**
-     *                                                          (Slice #36.02)
-     *
-     * A per-ref check inside the loop below would refuse only after the refs
-     * ahead of it had already been rewritten — and while the transaction would
-     * roll those back, `grantWhitelists` has already run by this point too, so
-     * the tidy thing is to have written nothing at all before deciding. It is
-     * one `count(*)` per ref that declares a `uniqueWith`, which today is one
-     * ref on one list.
-     */
-    for (const ref of def.refs) {
-      if (ref.configuration) continue;
-      const collisions = await collisionsForRef(tx, ref, from, to);
-      if (collisions > 0) {
-        return { ok: false, reason: "would-collide", labelKey: ref.labelKey, collisions } as const;
-      }
-    }
-
-    const moved: DependentCount[] = [];
-    let versions = 0;
-    for (const ref of def.refs) {
-      // Configuration goes with the row when it is deleted; it is not moved —
-      // so it never reaches `recordMoveHistory` either, which is correct: a
-      // version of a whitelist tick would record something that never
-      // happened.
-      if (ref.configuration) continue;
-      const rewritten = await moveRef(tx, ref, from, to);
-      addCount(moved, ref.labelKey, rewritten.count);
-      // Slice #29.14: the same transaction, deliberately. `rewritten.ids` is
-      // empty for the five unversioned association tables, and this is a no-op
-      // for them.
-      versions += await recordMoveHistory(tx, ref, rewritten.ids, updatedBy);
-    }
-    return {
-      ok: true,
-      moved,
-      total: moved.reduce((sum, d) => sum + d.count, 0),
-      granted:  whitelists.granted,
-      warnings: whitelists.warnings,
-      versions,
-    } as const;
-  });
+  const moved: DependentCount[] = [];
+  let versions = 0;
+  for (const ref of def.refs) {
+    // Configuration goes with the row when it is deleted; it is not moved —
+    // so it never reaches `recordMoveHistory` either, which is correct: a
+    // version of a whitelist tick would record something that never
+    // happened.
+    if (ref.configuration) continue;
+    const rewritten = await moveRef(tx, ref, from, to);
+    addCount(moved, ref.labelKey, rewritten.count);
+    // Slice #29.14: the same transaction, deliberately. `rewritten.ids` is
+    // empty for the five unversioned association tables, and this is a no-op
+    // for them.
+    versions += await recordMoveHistory(tx, ref, rewritten.ids, updatedBy);
+  }
+  return {
+    ok: true,
+    moved,
+    total: moved.reduce((sum, d) => sum + d.count, 0),
+    granted:  whitelists.granted,
+    warnings: whitelists.warnings,
+    versions,
+  } as const;
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
