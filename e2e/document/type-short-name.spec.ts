@@ -46,7 +46,8 @@ async function tipOf(page: Page, title: string): Promise<[string, string | null]
 async function editType(page: Page): Promise<{ dialog: Locator; field: Locator; row: Locator }> {
   await page.goto("/admin/value-lists");
   await page.getByRole("button", { name: "Tipuri de Document", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Tipuri de Document" });
+  // Slice #38.35: the list is the page's panel beside its category, not a dialog.
+  const dialog = page.getByRole("region", { name: "Tipuri de Document" });
   const row = dialog.locator("tbody tr").filter({ hasText: TYPE });
   await expect(row).toHaveCount(1, { timeout: 30_000 });
   await row.getByRole("button", { name: "Editează", exact: true }).click();

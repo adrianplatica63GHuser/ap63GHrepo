@@ -38,8 +38,8 @@ starts with `TC-VL-01`.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Domeniu” → „Date de referință” | Sections PROPRIETATE, PERSOANĂ, DOCUMENT, ROLURI, RELAȚIE ÎNTRE OBIECTE, each with its lists |
-| 2 | Presses „Cetățenie” | A panel „Cetățenie” with „✕”, „+ Adaugă”, „8 înregistrări” and a DENUMIRE column: Română, Moldoveană, Americană, Germană, Franceză, Italiană, Spaniolă, Engleză, each with „Editează” and „Șterge” |
+| 1 | Opens „Domeniu” → „Date de referință” | On the left the categories „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”, each with its lists; on the right „Alegeți o listă din stânga.” |
+| 2 | Presses „Cetățenie” | The list „Cetățenie” opens on the right (the address reads `?list=citizenships`), with „+ Adaugă”, „8 înregistrări” and a DENUMIRE column: Română, Moldoveană, Americană, Germană, Franceză, Italiană, Spaniolă, Engleză, each with „folosit de …”, „Editează”, „Unește” and „Șterge” |
 | 3 | „+ Adaugă” — „Adaugă înregistrare nouă”, „Denumire*”, „Salvează”, „Anulează” — types `TC-VL-01 Cetățenie de test`, „Salvează” | „9 înregistrări”; the new value is the **last** row, after Engleză |
 | 4 | „Editează” on it — „Editează înregistrarea”, the name in „Denumire*” — changes it to `TC-VL-01 Cetățenie redenumită`, „Salvează” | The row reads the new name, still last |
 | 5 | „Șterge” on it | „Ștergeți „TC-VL-01 Cetățenie redenumită”?”, first „Se verifică ce depinde de această înregistrare…”, then „Nimic nu depinde de această înregistrare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.” and a note on version history; „Șterge” and „Anulează” |
@@ -50,6 +50,10 @@ starts with `TC-VL-01`.
 Steps 5–6 are the cleanup.
 
 ## Notes from the runs
+
+**2026-10-08 — Slice #38.35.** „Date de referință” is one page: the categories on the left, the list
+on the right, no dialog and no „✕”. Steps 1–2 read the page as it is now; the steps on the list are
+unchanged. Not re-run; the case stays `driven`.
 
 **2026-09-27 — driven for the first time, green (Slice #37.08).** Added last (its stored position
 was 18: the list's largest, 8, plus 10 — FU-056), renamed in place, deleted after the dependency

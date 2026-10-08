@@ -88,7 +88,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/admin/users":                          ["TC-USERS-01", "TC-LAYOUT-01", "TC-AUTH-02"],
   "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01", "TC-NAV-01"],
   "/reports":                              ["TC-NAV-01"],
-  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07", "TC-DOC-15", "TC-AUTH-02"],
+  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07", "TC-DOC-15", "TC-AUTH-02", "TC-VL-02"],
   "/account/change-password":              ["TC-ACCT-01", "TC-LAYOUT-01"],
 };
 
