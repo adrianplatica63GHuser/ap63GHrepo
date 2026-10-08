@@ -84,7 +84,7 @@ test.describe("TC-VL-03 — un rol într-un singur panou", () => {
       panel = await openRole(page);
       await expect(panel.getByRole("button", { name: "Act", exact: true })).toHaveAttribute("aria-pressed", "true");
       await expect(panel.getByRole("checkbox", { name: `Deține cotă — ${TYPE} — ${ROLE}`, exact: true })).toBeChecked({ timeout: 15_000 });
-      await photograph(page, "role-panel", panel);
+      await photograph(page, "role-panel", panel.locator("xpath=..")); // the form: the fields, then the chips and the types
 
       // Step 4 — the PAD: „Asociază persoană", the role in „Rol", the person; the row has „Cotă".
       personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
