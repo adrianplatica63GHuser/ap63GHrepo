@@ -22,7 +22,7 @@ company, not a natural person.
 ## What Adrian is asked for
 
 **Nothing — the role was a choice, recorded so it can be overturned in one line.** The role is
-**„Proprietar / Titular de drept real"**, for the reason TC-ASSOC-04 gives: a company that owns
+**„Proprietar"**, for the reason TC-ASSOC-04 gives: a company that owns
 land is written in the land book as the holder of the right of ownership, whatever kind of
 person it is. The list the company is offered is the same four roles a natural person is.
 
@@ -32,11 +32,11 @@ person it is. The list the company is offered is the same four roles a natural p
 |---|---|---|
 | 1 | Opens `TC-PERS-02 Firmă de test SRL` from „Persoane Juridice" | The company's screen |
 | 2 | Ticks the tile **„Legături"** („Proprietăți" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
-| 3 | Presses „Asociază proprietate" | „Asociere proprietate" at `/judicial-persons/[id]/associate-property`, the company's name under it, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every property, and „Rol" offering „Coproprietari / Coindivizari", „Cumpărător", „Proprietar / Titular de drept real", „Titular de drept" |
+| 3 | Presses „Asociază proprietate" | „Asociere proprietate" at `/judicial-persons/[id]/associate-property`, the company's name under it, one filter „Căutare" („Cod sau denumire…"), a table Denumire listing every property, and „Rol" offering „Coproprietari / Coindivizari", „Cumpărător", „Proprietar", „Titular de drept" |
 | 4 | Types `TC-PROP-01` into „Căutare" and ticks the one row | The row is selected |
-| 5 | Chooses „Proprietar / Titular de drept real" in „Rol" | The role is selected |
-| 6 | Presses „Asociază selecția" | Back on the company's „Legături" (`?tab=properties`): one line, no column headings — `TC-PROP-01 Teren de test (Proprietar / Titular de drept real)` — and „Vizualizare" |
-| 7 | Opens `TC-PROP-01 Teren de test` and ticks its tile „Legături" | One line: `TC-PERS-02 Firmă de test SRL (Proprietar / Titular de drept real)` |
+| 5 | Chooses „Proprietar" in „Rol" | The role is selected |
+| 6 | Presses „Asociază selecția" | Back on the company's „Legături" (`?tab=properties`): one line, no column headings — `TC-PROP-01 Teren de test (Proprietar)` — and „Vizualizare" |
+| 7 | Opens `TC-PROP-01 Teren de test` and ticks its tile „Legături" | One line: `TC-PERS-02 Firmă de test SRL (Proprietar)` |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen at `/judicial-persons/[id]?readonly=true`, with „Înapoi la listă" and „Modifică" at the bottom |
 
 Step 7 is the other end; step 8 checks that the property knows what kind of person it holds.

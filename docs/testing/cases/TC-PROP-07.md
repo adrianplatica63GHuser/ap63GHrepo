@@ -23,7 +23,7 @@ leaving it returns to „Corelate".
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a property
   „TC-PROP-07 Teren", a second property „TC-PROP-07 Teren întreg", a natural person
   „Ion TC-PROP-07", a company „TC-PROP-07 Firmă SRL" and a Contract de Vânzare „TC-PROP-07 CVC"; on
-  the first property the person and the company as „Proprietar / Titular de drept real", the
+  the first property the person and the company as „Proprietar", the
   second property as „Inclus în" (posted from the first), and the contract.
 - The property is opened with `?tab=related`, which shows „Corelate" for the visit without
   changing which tiles you keep ticked.
@@ -36,7 +36,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-PROP-07 Teren`, tile „Legături" | On the left, beside the map column: four rows, each on one line, in this order, no headings, a thin line between two kinds — `Ion TC-PROP-07 (Proprietar / Titular de drept real)` with the person icon, `TC-PROP-07 Firmă SRL (Proprietar / Titular de drept real)` with the building, `TC-PROP-07 Teren întreg` with the map and a „Relația" button, `TC-PROP-07 CVC (Contract de Vânzare)` with the document. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `TC-PROP-07 Teren`, tile „Legături" | On the left, beside the map column: four rows, each on one line, in this order, no headings, a thin line between two kinds — `Ion TC-PROP-07 (Proprietar)` with the person icon, `TC-PROP-07 Firmă SRL (Proprietar)` with the building, `TC-PROP-07 Teren întreg` with the map and a „Relația" button, `TC-PROP-07 CVC (Contract de Vânzare)` with the document. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PROP-07 Teren întreg` | A bubble: `această proprietate „Inclus în” TC-PROP-07 Teren întreg` |
 | 3 | Clicks outside the bubble | It goes |
 | 4 | Selects the company's radio, presses „Dezasociază" | The company's row goes, and with it its group; the person, the other property and the contract stay |

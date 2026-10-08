@@ -99,7 +99,7 @@ test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-part
       // Step 5 — „Cumpărător", out of the five a Contract de Vânzare offers.
       for (const offered of [
         "Cumpărător",
-        "Moștenitor / Succesor",
+        "Moștenitor", // „Moștenitor / Succesor" until #38.37's clean-up is applied; hasText matches both
         "Notar",
         "Reprezentant legal / Mandatar",
         "Vânzător",

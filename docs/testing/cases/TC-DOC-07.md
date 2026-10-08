@@ -20,9 +20,9 @@ it is set. Boxes on a Proiectant, or none on a Vânzător, is the defect this ca
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a natural person
   „Ion TC-DOC-07", a PAD (Plan de amplasament și delimitare) „TC-DOC-07 PAD" and a Contract de
-  Vânzare „TC-DOC-07 CVC"; the person associated to the PAD as „Proiectant / Consultant" and to the
+  Vânzare „TC-DOC-07 CVC"; the person associated to the PAD as „Proiectant" and to the
   CVC as „Vânzător".
-- In „Proiectant / Consultant"'s panel (Date de referință → Roluri), the PAD is listed with „Deține cotă" NOT
+- In „Proiectant"'s panel (Date de referință → Roluri), the PAD is listed with „Deține cotă" NOT
   ticked, and Contract de Vânzare — „Vânzător" with it ticked (migration_091).
 
 ## What Adrian is asked for
@@ -33,9 +33,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-07 PAD`, tile „Legături" | One row, `Ion TC-DOC-07 (Proiectant / Consultant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
+| 1 | Opens `TC-DOC-07 PAD`, tile „Legături" | One row, `Ion TC-DOC-07 (Proiectant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
 | 2 | Opens `TC-DOC-07 CVC`, tile „Părți", and presses the row's „Cotă" | Under the heading „Vânzător", one row, `Ion TC-DOC-07 (Vânzător)` — and none on „Legături"; behind „Cotă" the three boxes, empty |
-| 3 | Opens „Date de referință” → „Roluri”, „Editează” on „Vânzător”; then on „Proiectant / Consultant” | Vânzător's panel: „Act” pressed, „Contract de Vânzare” with „Deține cotă” ticked. Proiectant's panel: „Plan de Amplasament și Delimitare” with „Deține cotă” unticked |
+| 3 | Opens „Date de referință” → „Roluri”, „Editează” on „Vânzător”; then on „Proiectant” | Vânzător's panel: „Act” pressed, „Contract de Vânzare” with „Deține cotă” ticked. Proiectant's panel: „Plan de Amplasament și Delimitare” with „Deține cotă” unticked |
 | 4 | Ticks „Deține cotă” on „Plan de Amplasament și Delimitare” in Proiectant's panel | The tick stays after the panel is opened again |
 | 5 | Opens `TC-DOC-07 PAD`, tile „Legături", and presses the row's „Cotă" | The row now has „Cotă", and behind it the three boxes, empty |
 | 6 | Types `50` into „Cotă-parte" and presses Enter | The value stays: `50` |
@@ -43,7 +43,7 @@ Nothing.
 
 ## At the end — leaving things as they were found
 
-„Deține cotă" on the PAD's „Proiectant / Consultant" is unticked again by step 7. Delete the
+„Deține cotă" on the PAD's „Proiectant" is unticked again by step 7. Delete the
 three records (`DELETE` on their routes); their links go with them. Căutare globală for `TC-DOC-07`
 finds nothing.
 
@@ -60,10 +60,10 @@ the interface in English) against `npm run dev` on 3000, after migration_091 rea
 database; the records created through the API, read with a script. This file was written from it.
 - Before: a POST of the PAD's link with `cotaParte: 50` answered 400 `SHARE_NOT_HELD` with the
   Romanian sentence, and wrote nothing.
-- Step 1: one row, „Ion TC-DOC-07 — Proiectant / Consultant", `data-share="none"`, no box, 72 px tall.
+- Step 1: one row, „Ion TC-DOC-07 — Proiectant", `data-share="none"`, no box, 72 px tall.
 - Step 2: one row, „Vânzător", three boxes, empty and editable, 110 px tall.
 - Step 3: „Document Persons": Document Type · Person Role · Holds a share; the PAD's „Proiectant /
-  Consultant" unticked; Contract de Vânzare's Cumpărător, Moștenitor / Succesor and Vânzător
+  Consultant" unticked; Contract de Vânzare's Cumpărător, Moștenitor and Vânzător
   ticked, Notar and Reprezentant legal / Mandatar not.
 - Step 4: the first tick, a script's click fired straight after the screen opened, did not stay
   (unticked when the screen was opened again; no error shown). Ticked again it stayed, and three
@@ -76,7 +76,7 @@ database; the records created through the API, read with a script. This file was
 **2026-10-02 — run 2, `confirmed` (Slice #37.59).** Same Chrome, three new records, against the
 file above unchanged.
 - Steps 1–2: the PAD's row `none`, no box; the CVC's „Vânzător" row three empty, editable boxes.
-- Steps 3–4: the three columns; the PAD's „Proiectant / Consultant" unticked, „Vânzător" ticked;
+- Steps 3–4: the three columns; the PAD's „Proiectant" unticked, „Vânzător" ticked;
   the tick, clicked once, was on the screen and in the database, and still on when the screen was
   opened again.
 - Steps 5–7: three empty, editable boxes; `50` saved; unticked on the screen (the database

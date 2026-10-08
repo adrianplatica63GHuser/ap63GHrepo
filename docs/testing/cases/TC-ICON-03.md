@@ -35,8 +35,8 @@ tooltip is the element with role `tooltip`.
 |---|---|---|
 | 1 | Opens the property and ticks „Legături" in „Părți afișate" | „Nimic corelat încă."; „Asociază persoană" — a link icon and the words — and „Dezasociază" — a broken link and the word, inactive |
 | 2 | Presses „Asociază persoană" | „Asociere persoană" (`/properties/<id>/associate-person`), its „Anulează" an X |
-| 3 | Types `TC-ICON-03` in „Nume…", ticks `Ion TC-ICON-03`, picks „Rol": „Proprietar / Titular de drept real" | „Asociază selecția" — a link icon and the words — active |
-| 4 | Presses „Asociază selecția" | Back on the property (`?tab=persons`): one row, `Ion TC-ICON-03`, „Proprietar / Titular de drept real" |
+| 3 | Types `TC-ICON-03` in „Nume…", ticks `Ion TC-ICON-03`, picks „Rol": „Proprietar" | „Asociază selecția" — a link icon and the words — active |
+| 4 | Presses „Asociază selecția" | Back on the property (`?tab=persons`): one row, `Ion TC-ICON-03`, „Proprietar" |
 | 5 | Picks the row's radio, presses „Dezasociază" | „Nimic corelat încă." — no question asked |
 | 6 | Changes „Poreclă" to `TC-ICON-03 Teren v1`, presses the floppy disk („Salvează") | It stays; the strip shows a chip „2 versiuni" with the step-back icon before the words |
 | 7 | Moves the mouse over the chip | A tooltip of two lines: `2 versiuni` and `Versiunea anterioară` |

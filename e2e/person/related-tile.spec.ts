@@ -33,7 +33,7 @@ const MARIA = `Maria ${MARK}`;
 const COMPANY = `${MARK} Firmă SRL`;
 const PROPERTY = `${MARK} Teren`;
 const CVC = `${MARK} CVC`;
-const OWNER = "Proprietar / Titular de drept real";
+const OWNER = "Proprietar"; // „Proprietar / Titular de drept real" until #38.37 folded it; both are offered for a property until the clean-up is applied
 const SHOTS = "playwright-report/person-related-tile";
 
 type Pair = { personRoleId: string; personRoleName: string; documentTypeName: string };

@@ -27,7 +27,7 @@ import { showTile } from "../helpers/tiles";
 const MARK = `${E2E_MARKER}ICON-03`;
 const PROPERTY = `${MARK} Teren`;
 const PERSON = `Ion ${MARK}`;
-const ROLE = "Proprietar / Titular de drept real";
+const ROLE = "Proprietar"; // „Proprietar / Titular de drept real" until #38.37 folded it; both are offered for a property until the clean-up is applied
 const SHOTS = "playwright-report/icon-associations";
 
 const recent = (page: Page) =>

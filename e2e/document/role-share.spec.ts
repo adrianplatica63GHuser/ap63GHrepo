@@ -42,6 +42,10 @@ import { lineRow, openShare, showTile } from "../helpers/tiles";
 const MARK = `${E2E_MARKER}DOC-07`;
 const PERSON = `Ion ${MARK}`;
 const SHOTS = "playwright-report/role-share";
+// „Proiectant / Consultant" until #38.37's role clean-up is applied, „Proiectant"
+// after it: the spec takes whichever the PAD offers, so it is green on both
+// sides of `npm run roles:merge:apply`.
+const PROIECTANT_NAMES = ["Proiectant", "Proiectant / Consultant"];
 
 type Pair = { id: string; documentTypeId: string; personRoleId: string; personRoleName: string; documentTypeName: string; holdsShare: boolean };
 
@@ -105,9 +109,9 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
     await page.setViewportSize({ width: 1366, height: 900 });
 
     const all = await pairs(page);
-    const proiectant = all.find((p) => p.documentTypeName === "Plan de Amplasament și Delimitare" && p.personRoleName === "Proiectant / Consultant");
+    const proiectant = all.find((p) => p.documentTypeName === "Plan de Amplasament și Delimitare" && PROIECTANT_NAMES.includes(p.personRoleName));
     const vanzator = all.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Vânzător");
-    expect(proiectant, "the PAD offers „Proiectant / Consultant\" (Before you start)").toBeTruthy();
+    expect(proiectant, "the PAD offers „Proiectant\" (Before you start)").toBeTruthy();
     expect(vanzator, "Contract de Vânzare offers „Vânzător\" (Before you start)").toBeTruthy();
     const P = proiectant as Pair;
     const V = vanzator as Pair;
@@ -121,9 +125,9 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await link(page, padId, personId, P.personRoleId);
       await link(page, cvcId, personId, V.personRoleId);
 
-      // Step 1 — the PAD: „Proiectant / Consultant", no share boxes.
+      // Step 1 — the PAD: „Proiectant", no share boxes.
       let row = await personsRow(page, padId);
-      await expect(row).toContainText("Proiectant / Consultant");
+      await expect(row).toContainText(P.personRoleName);
       await expect(shareButton(row)).toHaveCount(0);
       await expect(boxes(row)).toHaveCount(0);
       await photograph(page, "pad-persons-unticked", page.getByRole("region", { name: "Legături", exact: true }));

@@ -33,7 +33,7 @@ role a notary writes for the buyer on a Contract de Vânzare.
 | 2 | Ticks the tile **„Legături"** („Acte" before #37.67) | „Nimic corelat încă.", with „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" |
 | 3 | Presses „Asociază act" | „Asociere act" at `/natural-persons/[id]/associate-document`, the person's name under it, one filter „Căutare" (placeholder „Cod sau titlu…"), a table Tip · Titlu listing **every** document, and below it a select „Rol" with „— fără rol —" |
 | 4 | Types `TC-DOC-01` into „Căutare" | One row: „Contract de Vânzare", `TC-DOC-01 Contract de test` |
-| 5 | **Ticks the row first** | The row is selected, the hint „Selectați cel puțin un act" goes away, and **„Rol" narrows to the roles of that document's type**: „— fără rol —", „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
+| 5 | **Ticks the row first** | The row is selected, the hint „Selectați cel puțin un act" goes away, and **„Rol" narrows to the roles of that document's type**: „— fără rol —", „Cumpărător", „Moștenitor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 6 | Chooses „Cumpărător" in „Rol" | The role is selected |
 | 7 | Presses „Asociază selecția" | Back on the person, on its „Legături" (`?tab=document`): one line, no column headings — `TC-DOC-01 Contract de test (Contract de Vânzare)` — „Relația", „Vizualizare"; „Relația" says `Rol: „Cumpărător”` |
 | 8 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
@@ -77,7 +77,7 @@ Corrections to what was written from the code before the run:
    deliberate (a role must be one the ticked type offers), so the case ticks first. That
    link was dissociated and made again in the right order.
 2. **Before a document is ticked, „Rol" lists every curated role** — including near-twins such
-   as „Moștenitor / succesor" and „Moștenitor / Succesor", and „Coproprietar" beside
+   as „Moștenitor / succesor" and „Moștenitor", and „Coproprietar" beside
    „Coproprietari / Coindivizari". Reference data, not this screen; in the handover.
 3. The breadcrumb reads „Adaugă document" while the heading reads „Asociere act". Noted only.
 

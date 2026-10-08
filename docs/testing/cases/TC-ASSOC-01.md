@@ -57,7 +57,7 @@ Two consequences for the steps:
 | 2 | Looks at the tile **„Părți"** | „Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.", with „Asociază persoană" and „Dezasociază" |
 | 3 | Presses „Părți"'s „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
 | 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
-| 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor / Succesor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
+| 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
 | 6 | Ticks the row for `Ion TC-PERS-01` | The row is selected |
 | 7 | Presses „Asociază selecția" | The screen returns to the document |
 | 8 | Looks at „Părți" | No column headings and no „Cod": under the heading „Cumpărător", one row, on one line, `Ion TC-PERS-01 (Cumpărător)`, then an orange „Cotă", „Vizualizare" and „Previzualizare" |

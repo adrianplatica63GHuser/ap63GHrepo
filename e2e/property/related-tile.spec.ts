@@ -33,7 +33,7 @@ const COMPANY = `${MARK} Firmă SRL`;
 const PROPERTY = `${MARK} Teren`;
 const WHOLE = `${MARK} Teren întreg`;
 const CVC = `${MARK} CVC`;
-const ROLE = "Proprietar / Titular de drept real";
+const ROLE = "Proprietar"; // „Proprietar / Titular de drept real" until #38.37 folded it; both are offered for a property until the clean-up is applied
 const RELATION = "Inclus în";
 const SHOTS = "playwright-report/property-related-tile";
 

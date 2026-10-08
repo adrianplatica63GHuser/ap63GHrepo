@@ -38,7 +38,7 @@ import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 const MARK = `${E2E_MARKER}ASSOC-06`;
 const COMPANY = `${MARK} Firmă de test SRL`;
 const PROPERTY = `${MARK} Teren de test`;
-const ROLE = "Proprietar / Titular de drept real";
+const ROLE = "Proprietar"; // „Proprietar / Titular de drept real" until #38.37 folded it; both are offered for a property until the clean-up is applied
 
 test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
   test("firma devine proprietar din ecranul ei; proprietatea o deschide ca firmă", async ({ page }) => {

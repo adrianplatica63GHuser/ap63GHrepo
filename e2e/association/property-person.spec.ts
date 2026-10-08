@@ -54,7 +54,7 @@ import { TILE_GROUP, expectOneLine, hideTile, lineRow, showTile, tileBox } from 
 const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
 const PERSON = `Ion ${MARK}`;
-const ROLE = "Proprietar / Titular de drept real";
+const ROLE = "Proprietar"; // „Proprietar / Titular de drept real" until #38.37 folded it; both are offered for a property until the clean-up is applied
 
 test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzută din ambele capete", () => {
   test("legătura persoană–proprietate făcută din fiecare capăt, citită din celălalt", async ({ page }) => {

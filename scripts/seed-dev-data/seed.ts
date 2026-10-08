@@ -244,7 +244,7 @@ const NEW_OR_FLAGGED_ROLES: RoleSpec[] = [
   { name: "Chiriaș / Locatar", forProperty: true },
   { name: "Locator", forProperty: true },
   { name: "Moștenitor", forProperty: true },
-  { name: "Creditor / Ipotecar", forProperty: true },
+  { name: "Creditor", forProperty: true },
   { name: "Vânzător", forProperty: true },
 ];
 
@@ -252,14 +252,14 @@ const NEW_OR_FLAGGED_ROLES: RoleSpec[] = [
 const DOC_TYPE_ROLES: Record<string, [string, boolean][]> = {
   CARTE_IDENTITATE: [["Titular act de identitate", false]],
   TITLU_PROPRIETATE: [["Autoritate locală", false]],
-  ACT_DEZMEMBRARE: [["Proprietar / Coproprietar", true], ["Notar public", false], ["Topograf / Expert cadastral", false]],
-  ACT_ALIPIRE: [["Proprietar / Coproprietar", true], ["Notar public", false], ["Topograf / Expert cadastral", false]],
+  ACT_DEZMEMBRARE: [["Proprietar", true], ["Notar", false], ["Topograf / Expert cadastral", false]],
+  ACT_ALIPIRE: [["Proprietar", true], ["Notar", false], ["Topograf / Expert cadastral", false]],
   PLAN_AMPLASAMENT_DELIMITARE: [
     ["Topograf / Expert cadastral", false],
-    ["Proprietar / Titular de drept real", true],
+    ["Proprietar", true],
     ["Autoritate locală", false],
   ],
-  ANTECONTRACT: [["Promitent vânzător", true], ["Promitent cumpărător", true], ["Notar public", false]],
+  ANTECONTRACT: [["Promitent vânzător", true], ["Promitent cumpărător", true], ["Notar", false]],
   ACT_ADITIONAL: [
     ["Promitent vânzător", false],
     ["Promitent cumpărător", false],
@@ -268,27 +268,27 @@ const DOC_TYPE_ROLES: Record<string, [string, boolean][]> = {
     ["Arendator", false],
     ["Arendaș", false],
     ["Reprezentant legal", false],
-    ["Notar public", false],
+    ["Notar", false],
   ],
-  CONTRACT_VANZARE: [["Creditor / Ipotecar", false]],
-  PROCURA: [["Mandant", false], ["Reprezentant legal / Mandatar", false], ["Notar public", false]],
+  CONTRACT_VANZARE: [["Creditor", false]],
+  PROCURA: [["Mandant", false], ["Reprezentant legal / Mandatar", false], ["Notar", false]],
   CERTIFICAT_URBANISM: [["Autoritate locală", false]],
   AUTORIZATIE_CONSTRUIRE: [
-    ["Solicitant / Beneficiar", false],
-    ["Proprietar / Titular al imobilului", true],
+    ["Solicitant", false],
+    ["Proprietar", true],
     ["Proiectant", false],
     ["Autoritate locală", false],
     ["Constructor / Antreprenor", false],
   ],
-  ACT_DONATIE: [["Donator", true], ["Donatar", true], ["Notar public", false]],
-  TESTAMENT: [["Testator", false], ["Legatar", true], ["Notar public", false]],
-  CERTIFICAT_SARCINI: [["Proprietar", true], ["Creditor / Ipotecar", false], ["Solicitant / Beneficiar", false]],
+  ACT_DONATIE: [["Donator", true], ["Donatar", true], ["Notar", false]],
+  TESTAMENT: [["Testator", false], ["Legatar", true], ["Notar", false]],
+  CERTIFICAT_SARCINI: [["Proprietar", true], ["Creditor", false], ["Solicitant", false]],
   INCHEIERE_INTABULARE: [
-    ["Proprietar / Titular de drepturi înscrise", true],
-    ["Creditor / Ipotecar", false],
-    ["Solicitant / Beneficiar", false],
+    ["Proprietar", true],
+    ["Creditor", false],
+    ["Solicitant", false],
   ],
-  ACT_PARTAJ: [["Coproprietari / Coindivizari", true], ["Notar public", false]],
+  ACT_PARTAJ: [["Coproprietar", true], ["Notar", false]],
 };
 
 const refIds = {
@@ -987,7 +987,7 @@ async function createRelations(): Promise<void> {
   await pp("P3", "N6", "Coproprietar");
   await pp("P4", "N2", "Coproprietar");
   await pp("P4", "N4", "Coproprietar");
-  await pp("P4", "J4", "Creditor / Ipotecar");
+  await pp("P4", "J4", "Creditor");
   await pp("P4", "N10", "Vânzător");
   await pp("P5", "N9", "Proprietar");
   await pp("P5", "@PPERS07056", "Uzufructuar");
@@ -1005,49 +1005,49 @@ async function createRelations(): Promise<void> {
   await pd("D2", "N3", "Titular act de identitate");
   await pd("D3", "N5", "Titular act de identitate");
   await pd("D4", "N9", "Titular act de identitate");
-  await pd("D5", "N1", "Titular / Proprietar", { pct: 100, mp: 13500, mod: "NUME_PROPRIU" });
+  await pd("D5", "N1", "Proprietar", { pct: 100, mp: 13500, mod: "NUME_PROPRIU" });
   await pd("D5", "J5", "Autoritate locală");
   await pd("D6", "N1", null, undefined, "DEFUNCT");
   await pd("D6", "N2", null, { pct: 50, mp: 6750, mod: "INDIVIZIUNE" }, "MOSTENITOR");
   await pd("D6", "N3", null, { pct: 50, mp: 6750, mod: "INDIVIZIUNE" }, "MOSTENITOR");
-  await pd("D6", "N7", "Notar public");
-  await pd("D7", "N2", "Proprietar / Coproprietar", { pct: 50, mod: "INDIVIZIUNE" });
-  await pd("D7", "N3", "Proprietar / Coproprietar", { pct: 50, mod: "INDIVIZIUNE" });
-  await pd("D7", "N7", "Notar public");
-  await pd("D7", "J2", "Notar public");
+  await pd("D6", "N7", "Notar");
+  await pd("D7", "N2", "Proprietar", { pct: 50, mod: "INDIVIZIUNE" });
+  await pd("D7", "N3", "Proprietar", { pct: 50, mod: "INDIVIZIUNE" });
+  await pd("D7", "N7", "Notar");
+  await pd("D7", "J2", "Notar");
   await pd("D7", "N8", "Topograf / Expert cadastral");
   await pd("D7", "J3", "Topograf / Expert cadastral");
   await pd("D8", "N8", "Topograf / Expert cadastral");
-  await pd("D8", "J3", "Proiectant / Consultant");
+  await pd("D8", "J3", "Proiectant");
   await pd("D8", "J5", "Autoritate locală");
   await pd("D9", "N3", "Promitent vânzător", { pct: 100, mod: "NUME_PROPRIU" });
   await pd("D9", "N5", "Promitent cumpărător", { pct: 60, mp: 3486, mod: "INDIVIZIUNE" });
   await pd("D9", "N6", "Promitent cumpărător", { pct: 40, mp: 2324, mod: "INDIVIZIUNE" });
-  await pd("D9", "N7", "Notar public");
+  await pd("D9", "N7", "Notar");
   await pd("D10", "N3", "Promitent vânzător");
   await pd("D10", "N5", "Promitent cumpărător");
   await pd("D10", "N6", "Promitent cumpărător");
-  await pd("D10", "N7", "Notar public");
+  await pd("D10", "N7", "Notar");
   await pd("D11", "N3", "Vânzător", { pct: 100, mp: 5810, mod: "NUME_PROPRIU" });
   await pd("D11", "N5", "Cumpărător", { pct: 60, mp: 3486, mod: "INDIVIZIUNE" });
   await pd("D11", "N6", "Cumpărător", { pct: 40, mp: 2324, mod: "INDIVIZIUNE" });
   await pd("D11", "N7", "Notar");
   await pd("D11", "J2", "Notar");
-  await pd("D11", "J4", "Creditor / Ipotecar");
+  await pd("D11", "J4", "Creditor");
   await pd("D12", "N10", "Vânzător", { pct: 100, mod: "PRIN_MANDATAR" });
   await pd("D12", "N9", "Reprezentant legal / Mandatar");
   await pd("D12", "N2", "Cumpărător", { pct: 100, mp: 650, mod: "DEVALMASIE" });
   await pd("D12", "N4", "Cumpărător", { pct: 100, mp: 650, mod: "DEVALMASIE" });
   await pd("D12", "N7", "Notar");
   await pd("D12", "J2", "Notar");
-  await pd("D12", "J4", "Creditor / Ipotecar");
+  await pd("D12", "J4", "Creditor");
   await pd("D13", "N10", "Mandant");
   await pd("D13", "N9", "Reprezentant legal / Mandatar");
-  await pd("D13", "N7", "Notar public");
-  await pd("D13", "J2", "Notar public");
-  await pd("D14", "N2", "Proprietar / Titular de drepturi înscrise", { pct: 100, mod: "DEVALMASIE" });
-  await pd("D14", "N4", "Proprietar / Titular de drepturi înscrise", { pct: 100, mod: "DEVALMASIE" });
-  await pd("D14", "J4", "Creditor / Ipotecar");
+  await pd("D13", "N7", "Notar");
+  await pd("D13", "J2", "Notar");
+  await pd("D14", "N2", "Proprietar", { pct: 100, mod: "DEVALMASIE" });
+  await pd("D14", "N4", "Proprietar", { pct: 100, mod: "DEVALMASIE" });
+  await pd("D14", "J4", "Creditor");
   await pd("D15", "N10", "Arendator");
   await pd("D15", "N2", "Arendator");
   await pd("D15", "N3", "Arendator");
@@ -1057,12 +1057,12 @@ async function createRelations(): Promise<void> {
   await pd("D16", "J1", "Arendaș");
   await pd("D16", "N6", "Reprezentant legal");
   // one person, two roles on one document
-  await pd("D17", "N9", "Solicitant / Beneficiar");
-  await pd("D17", "N9", "Proprietar / Titular al imobilului", { pct: 100, mp: 1200, mod: "NUME_PROPRIU" });
+  await pd("D17", "N9", "Solicitant");
+  await pd("D17", "N9", "Proprietar", { pct: 100, mp: 1200, mod: "NUME_PROPRIU" });
   await pd("D17", "N8", "Proiectant");
   await pd("D17", "J3", "Proiectant");
   await pd("D17", "J5", "Autoritate locală");
-  await pd("D18", "N9", "Solicitant / Beneficiar");
+  await pd("D18", "N9", "Solicitant");
   await pd("D18", "J3", "Proiectant");
   await pd("D18", "N8", "Proiectant");
   await pd("D18", "J5", "Autoritate locală");

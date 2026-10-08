@@ -26,7 +26,7 @@ its screen and leaving it returns to „Corelate".
   „TC-PERS-05 Firmă SRL", a property „TC-PERS-05 Teren" and a Contract de Vânzare „TC-PERS-05 CVC";
   Maria related to Ion as „Soț" (posted from Ion), Ion related to the company as
   „Reprezentant legal / Mandatar" (posted from the company), the property on Ion as
-  „Proprietar / Titular de drept real", and on the contract Ion as „Vânzător" and the company as
+  „Proprietar", and on the contract Ion as „Vânzător" and the company as
   „Cumpărător".
 - Each screen is opened with `?tab=related`, which shows „Corelate" for the visit without changing
   which tiles you keep ticked.
@@ -39,7 +39,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat / Mandant)` with the building, `TC-PERS-05 Teren (Proprietar / Titular de drept real)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat / Mandant)` with the building, `TC-PERS-05 Teren (Proprietar)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PERS-05 CVC` | A bubble: `Rol: „Vânzător”` |
 | 3 | Clicks the tile's title, outside the bubble | It goes |
 | 4 | Selects Maria's radio | Only hers is selected; the three „Asociază …" are not offered |

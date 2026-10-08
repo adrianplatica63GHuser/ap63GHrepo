@@ -38,6 +38,10 @@ const PERSON = `Ion ${MARK}`;
 const PAD = `${MARK} PAD`;
 const CVC = `${MARK} CVC`;
 const SHOTS = "playwright-report/one-line-rows";
+// „Proiectant / Consultant" until #38.37's role clean-up is applied, „Proiectant"
+// after it: the spec takes whichever the PAD offers, so it is green on both
+// sides of `npm run roles:merge:apply`.
+const PROIECTANT_NAMES = ["Proiectant", "Proiectant / Consultant"];
 
 type Pair = { personRoleId: string; personRoleName: string; documentTypeName: string; holdsShare: boolean };
 
@@ -70,9 +74,9 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
 
     const pairsRes = await page.request.get("/api/admin/doc-type-person-roles");
     const pairs = ((await pairsRes.json()) as { items: Pair[] }).items;
-    const proiectant = pairs.find((p) => p.documentTypeName === "Plan de Amplasament și Delimitare" && p.personRoleName === "Proiectant / Consultant");
+    const proiectant = pairs.find((p) => p.documentTypeName === "Plan de Amplasament și Delimitare" && PROIECTANT_NAMES.includes(p.personRoleName));
     const vanzator = pairs.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Vânzător");
-    expect(proiectant?.holdsShare, "PAD — „Proiectant / Consultant\" holds no share (Before you start)").toBe(false);
+    expect(proiectant?.holdsShare, "PAD — „Proiectant\" holds no share (Before you start)").toBe(false);
     expect(vanzator?.holdsShare, "Contract de Vânzare — „Vânzător\" holds a share (Before you start)").toBe(true);
     const roles = ((await (await page.request.get("/api/admin/document-document-roles")).json()) as { items: { id: string; name: string }[] }).items;
     const titluAnterior = roles.find((r) => r.name === "Titlu anterior al");
@@ -91,7 +95,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       let persons = await showTile(page, "Legături");
       let row = lineRow(persons, PERSON);
       await expect(row).toHaveCount(1, { timeout: 30_000 });
-      await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (Proiectant / Consultant)`);
+      await expect(row.locator("[data-row-content]")).toHaveText(`${PERSON} (${proiectant?.personRoleName})`);
       await expectOneLine(row);
       await expect(persons.getByRole("columnheader")).toHaveCount(0);
       await expect(row.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);

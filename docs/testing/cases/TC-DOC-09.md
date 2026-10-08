@@ -24,9 +24,9 @@ panel closes is the defect this case exists to catch.
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a natural person
   „Ion TC-DOC-09", a PAD (Plan de amplasament și delimitare) „TC-DOC-09 PAD" and a Contract de
-  Vânzare „TC-DOC-09 CVC"; the person associated to the PAD as „Proiectant / Consultant" and to the
+  Vânzare „TC-DOC-09 CVC"; the person associated to the PAD as „Proiectant" and to the
   CVC as „Vânzător"; the PAD associated to the CVC as „Titlu anterior al" (posted from the PAD).
-- In the role panels (Date de referință → Roluri), PAD — „Proiectant / Consultant" has „Deține cotă" NOT ticked, Contract
+- In the role panels (Date de referință → Roluri), PAD — „Proiectant" has „Deține cotă" NOT ticked, Contract
   de Vânzare — „Vânzător" has it ticked (migration_091).
 - Each screen is opened with `?tab=…`, which shows the tile for the visit without changing which
   tiles you keep ticked.
@@ -39,7 +39,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-09 PAD`, tile „Legături" | No column headings. The person's row, on one line: `Ion TC-DOC-09 (Proiectant / Consultant)`, then „Vizualizare" and „Previzualizare" — no „Cotă" button and no share box |
+| 1 | Opens `TC-DOC-09 PAD`, tile „Legături" | No column headings. The person's row, on one line: `Ion TC-DOC-09 (Proiectant)`, then „Vizualizare" and „Previzualizare" — no „Cotă" button and no share box |
 | 2 | Opens `TC-DOC-09 CVC`, tile „Părți" | The person's row, on one line: `Ion TC-DOC-09 (Vânzător)`, then a solid orange „Cotă", „Vizualizare", „Previzualizare" |
 | 3 | Rests the mouse on „Cotă" | A bubble: „Cotă-parte: fără cotă · Suprafață echivalentă (mp): fără suprafață · Mod de deținere: nespecificat" |
 | 4 | Presses „Cotă" | A small panel beside the row with „Cotă-parte", „Suprafață echivalentă (mp)" and „Mod de deținere", empty; the cursor in „Cotă-parte" |
@@ -64,7 +64,7 @@ there; step 7 reads the CVC's documents on „Legături" as before.
 **2026-10-03 — run 1, `driven` (Slice #37.64).** Driven in the Claude desktop app's browser pane on
 Windows against `npm run dev` on 3000, the records created through the API from the page, read with
 a script. This file was written from it.
-- Step 1: `data-share="none"`, the content „Ion TC-DOC-09 (Proiectant / Consultant)" whole in its
+- Step 1: `data-share="none"`, the content „Ion TC-DOC-09 (Proiectant)" whole in its
   title, the row 34 px tall, no heading; the tile 476 px (3 units).
 - Step 2: the row 34 px, „Cotă" `bg-orange-700`.
 - Step 3: the pane's hover does not raise a pointer event the page hears — no tooltip opened on any
@@ -86,7 +86,7 @@ a script. This file was written from it.
 
 **2026-10-03 — run 2, `confirmed` (Slice #37.64).** Same pane and width, three new records, against
 the file above unchanged.
-- Steps 1–2: the PAD's row „Ion TC-DOC-09 (Proiectant / Consultant)", 34 px, no heading, no box,
+- Steps 1–2: the PAD's row „Ion TC-DOC-09 (Proiectant)", 34 px, no heading, no box,
   only „Vizualizare" and „Previzualizare"; the CVC's „Ion TC-DOC-09 (Vânzător)", 34 px, „Cotă"
   solid orange, then „Vizualizare" and „Previzualizare".
 - Step 3: read as the button's description, as in run 1 (the pane cannot hover).
