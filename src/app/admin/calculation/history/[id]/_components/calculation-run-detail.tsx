@@ -11,6 +11,7 @@ import { ownerColor } from "@/lib/calculation/owner-colors";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
+import { DeleteRunButton } from "@/app/admin/calculation/history/_components/delete-run";
 
 /** The run's two tables, at #37.16's column widths (Slice #37.22). */
 const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
@@ -226,10 +227,10 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
             {t("detail.group")}: <span className="font-mono">{run.resultGroupCode}</span>
           </span>
         )}
-        {isSideRoad && (
-          <div className="ml-auto flex gap-2">
-            {/* #37.46 (A088): RotateCw + „Re-rulează cu acești parametri", on
-                buttonClass's primary rather than a hand-written cta class. */}
+        <div className="ml-auto flex items-center gap-2">
+          {isSideRoad && (
+            // #37.46 (A088): RotateCw + „Re-rulează cu acești parametri", on
+            // buttonClass's primary rather than a hand-written cta class.
             <IconButton
               icon={RotateCw}
               label={t("detail.rerun")}
@@ -238,8 +239,14 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
               size="sm"
               onClick={handleRerun}
             />
-          </div>
-        )}
+          )}
+          {/* Slice #38.43: deleted, the page goes back to the history it belongs to. */}
+          <DeleteRunButton
+            run={{ id: run.id, code: run.code, outputCount: run.outputs.filter((o) => o.propertyId !== null).length, resultGroupCode: run.resultGroupCode }}
+            size="sm"
+            onDeleted={() => router.push("/admin/calculation/history")}
+          />
+        </div>
       </div>
       {!isSideRoad && (
         <p data-old-run="" className="text-xs text-fade dark:text-zinc-400">{t("detail.oldRunNoRerun")}</p>

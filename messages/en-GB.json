@@ -176,6 +176,16 @@
       "group": "Group",
       "rerun": "Re-run with these parameters",
       "oldRunNoRerun": "Made with the old five-section file, which „Calcul drum lateral” no longer reads: it can be read, not re-run."
+    },
+    "delete": {
+      "action": "Delete calculation",
+      "title": "Delete the calculation?",
+      "bodyWithGroup": "Calculation {code} is deleted; {count, plural, =0 {the properties it created were already deleted, and the group it created stays} one {the property and the group it created stay} other {the # properties and the group it created stay}}.",
+      "bodyNoGroup": "Calculation {code} is deleted; {count, plural, =0 {the properties it created were already deleted} one {the property it created stays} other {the # properties it created stay}}.",
+      "confirm": "Delete",
+      "deleting": "Deleting…",
+      "cancel": "Cancel",
+      "error": "The calculation could not be deleted."
     }
   },
   "home": {

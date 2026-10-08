@@ -8,9 +8,11 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
+import { DeleteRunButton } from "./delete-run";
 
 /** The runs, at #37.16's column widths (Slice #37.22). */
-const COLUMNS: readonly ColumnName[] = ["code", "algorithm", "count", "groupCode", "runStatus", "updatedBy", "date", "open"];
+// Slice #38.43: „rowActions" — „Detalii" and „Șterge calculul" — where „open" held „Detalii" alone.
+const COLUMNS: readonly ColumnName[] = ["code", "algorithm", "count", "groupCode", "runStatus", "updatedBy", "date", "rowActions"];
 
 /** Slice #37.35: one tile, the fewest units that hold the runs' columns; „De către" takes the rest. */
 const LIST_UNITS = tableUnits(COLUMNS);
@@ -111,7 +113,7 @@ export function CalculationHistoryList() {
             <th className="px-3 py-2" {...columnHead("runStatus")}>{t("col.status")}</th>
             <th className="px-3 py-2" {...columnHead("updatedBy")}>{t("col.createdBy")}</th>
             <th className="px-3 py-2" {...columnHead("date")}>{t("col.date")}</th>
-            <th className="px-3 py-2" {...columnHead("open")} />
+            <th className="px-3 py-2" {...columnHead("rowActions")} />
           </tr>
         </thead>
         <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -152,14 +154,18 @@ export function CalculationHistoryList() {
                 })}
               </td>
               <td className="px-3 py-2 text-right">
-                {/* #37.42 (A016): ArrowRight; „Detalii" its name and tooltip. */}
-                <IconButton
-                  href={`/admin/calculation/history/${run.id}`}
-                  icon={ArrowRight}
-                  label={t("viewDetail")}
-                  variant="secondary"
-                  size="xs"
-                />
+                <div className="flex justify-end gap-1">
+                  {/* #37.42 (A016): ArrowRight; „Detalii" its name and tooltip. */}
+                  <IconButton
+                    href={`/admin/calculation/history/${run.id}`}
+                    icon={ArrowRight}
+                    label={t("viewDetail")}
+                    variant="secondary"
+                    size="xs"
+                  />
+                  {/* Slice #38.43: the run goes; what it created stays, and the confirmation says so. */}
+                  <DeleteRunButton run={run} />
+                </div>
               </td>
             </tr>
           ))}

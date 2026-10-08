@@ -176,6 +176,16 @@
       "group": "Grup",
       "rerun": "Re-rulează cu acești parametri",
       "oldRunNoRerun": "Calcul făcut cu fișierul vechi, în cinci secțiuni, pe care „Calcul drum lateral” nu îl mai citește: se poate consulta, dar nu se poate re-rula."
+    },
+    "delete": {
+      "action": "Șterge calculul",
+      "title": "Ștergeți calculul?",
+      "bodyWithGroup": "Calculul {code} se șterge; {count, plural, =0 {proprietățile pe care le crease au fost deja șterse, iar grupul creat rămâne} one {proprietatea și grupul create rămân} few {cele # proprietăți și grupul create rămân} other {cele # de proprietăți și grupul create rămân}}.",
+      "bodyNoGroup": "Calculul {code} se șterge; {count, plural, =0 {proprietățile pe care le crease au fost deja șterse} one {proprietatea creată rămâne} few {cele # proprietăți create rămân} other {cele # de proprietăți create rămân}}.",
+      "confirm": "Șterge",
+      "deleting": "Se șterge…",
+      "cancel": "Anulează",
+      "error": "Calculul nu a putut fi șters."
     }
   },
   "home": {
