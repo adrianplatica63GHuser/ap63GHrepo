@@ -805,6 +805,7 @@ describe("§6 every confirm.errors reader passes an ICU values object", () => {
   const READER_FILES = [
     "src/app/admin/value-lists/_components/value-list-modal.tsx",
     "src/app/admin/value-lists/_components/role-doc-types.tsx", // #38.36: the grid's rows, in a role's panel
+    "src/app/admin/value-lists/_components/role-scope.tsx", // #38.36: the role's chips, turning „Act" off
   ] as const;
   const READERS = READER_FILES.map(
     (f) => [f.split("/").pop() as string, readRoot(...f.split("/"))] as const,
