@@ -1241,7 +1241,7 @@ export const COLUMN = {
   valueName: { content: "XL", kind: "fixed" }, //           a list's „Denumire" — „Contract de Vânzare-Cumpărare" (252 px)
   valueNameShort: { content: "M", kind: "fixed" }, //       the same, on a list of short names — property types (125 px), citizenships
   valueText: { content: 10, kind: "fixed" }, //             any other text field — an indicativ, a short name, a type of institution (150 px)
-  valueKey: { content: "L", kind: "fixed" }, //             a document type's key, „CONTRACT_VANZARE", in mono — cut, whole on hover
+  valueConverse: { content: "XL", kind: "fixed" }, //       a role's converse names on one line, „Vânzător, Vânzător, Vânzătoare" — Slice #38.55
   valueFlag: { content: 5.5, kind: "fixed" }, //            a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px)
   valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
   valueStatus: { content: 6.75, kind: "fixed" }, //         „Fără formular" / „De revizuit" — the review lists' status (102 px)

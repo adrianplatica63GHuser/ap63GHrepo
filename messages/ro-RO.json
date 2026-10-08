@@ -2103,6 +2103,8 @@
       "converseName": "Rol invers",
       "converseNameMale": "Rol invers — bărbat",
       "converseNameFemale": "Rol invers — femeie",
+      "converseJoined": "Rol invers",
+      "converseJoinedSub": "(bărbat, femeie)",
       "status": "Stare",
       "shortName": "Denumire scurtă"
     },

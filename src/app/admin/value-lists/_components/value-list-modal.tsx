@@ -43,6 +43,7 @@ import { RoleScope } from "./role-scope";
 import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page";
 import { formFilterFrom, formFilterKeeps, formFilterNarrows, type FormFilter } from "@/lib/admin/value-lists/form-filter";
 import { documentTypeHasForm } from "@/lib/documents/status";
+import { joinedCellText } from "@/lib/admin/value-lists/joined-cell";
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
@@ -58,7 +59,7 @@ const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["property-types", "use-c
 /** A field's column: its width from `COLUMN`, by what the field holds. */
 function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
   if (f.type === "checkbox") return "valueFlag";
-  if (f.key === "key") return "valueKey";
+  // Slice #38.53 took the document type's key out of the table (`nameTip`), and #38.55 its `valueKey` with it.
   if (f.multiline) return "valueDescription";
   if (f.key !== "name") return "valueText";
   return SHORT_NAME_LISTS.has(listKey) ? "valueNameShort" : "valueName";
@@ -71,13 +72,22 @@ function formBox(f: FieldMeta): "valueName" | "valueText" | "valueDescription" {
 }
 
 /**
- * Fields shown one under another in ONE column: a role's three converse names
- * (#37.28), which are read together — „Fiu / Fiică / Copil" — and side by side
- * would make „Roluri Persoană" the widest table by three columns, and with it
- * every list's card.
+ * Fields read together in ONE column: a role's three converse names (#37.28),
+ * which are read together — „Fiu / Fiică / Copil" — and side by side would make
+ * „Roluri Persoană" the widest table by three columns, and with it every list's
+ * card.
+ *
+ * Slice #37.28 showed them „one under another"; Slice #38.55, Adrian: „I do not
+ * want three values stacked on top of each other" — they share one line, the
+ * blanks skipped, joined with „, " (`joinedCellText`), under a two-line header.
  */
 const STACKED_FIELDS: Partial<Record<ListKey, readonly string[]>> = {
   "person-roles": ["converseName", "converseNameMale", "converseNameFemale"],
+};
+
+/** Slice #38.55: a joined cell's header — two lines, Adrian's words: „Rol invers" over „(bărbat, femeie)". */
+const JOINED_HEADS: Partial<Record<ListKey, { title: string; sub: string }>> = {
+  "person-roles": { title: "converseJoined", sub: "converseJoinedSub" },
 };
 
 /** A list's table cells: each field its own, the stacked ones together, in the fields' order. */
@@ -96,6 +106,8 @@ function listCells(listKey: ListKey): FieldMeta[][] {
 
 /** Slice #38.50: a cell's whole text, for its tooltip — what it shows, stacked values joined. */
 function cellText(cell: FieldMeta[], row: Readonly<Record<string, unknown>>): string {
+  // Slice #38.55: a joined cell skips its blanks — „Copil, Fiică", never „Copil, –, Fiică".
+  if (cell.length > 1) return joinedCellText(cell.map((f) => row[f.key]));
   return cell
     .map((f) => (f.type === "checkbox" ? (row[f.key] ? "✓" : "–") : String(row[f.key] ?? "").trim() || "–"))
     .join(", ");
@@ -106,9 +118,9 @@ function nameTipField(listKey: ListKey): FieldMeta | undefined {
   return LIST_META[listKey].fields.find((f) => f.nameTip);
 }
 
-/** A cell's column: a stacked one is a text column; any other, its field's. */
+/** A cell's column: a joined one is as wide as a name (#38.55: three names on one line); any other, its field's. */
 function cellColumn(cell: FieldMeta[], listKey: ListKey): ColumnName {
-  return cell.length > 1 ? "valueText" : fieldColumn(cell[0], listKey);
+  return cell.length > 1 ? "valueConverse" : fieldColumn(cell[0], listKey);
 }
 
 /** A list's table: a column per cell, the status where the list has one, then the actions. */
@@ -1476,9 +1488,18 @@ export function ValueListModal({
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (
                       <th key={cell[0].key} className="px-4 py-2 align-bottom" {...columnHead(cellColumn(cell, listKey))}>
-                        {cell.map((f) => (
-                          <span key={f.key} className="block">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
-                        ))}
+                        {/* Slice #38.55: a joined cell's header is two lines, „Rol invers" over „(bărbat, femeie)" —
+                            #37.28 stacked the three fields' own labels. */}
+                        {cell.length > 1 && JOINED_HEADS[listKey] ? (
+                          <>
+                            <span className="block">{t(`fields.${JOINED_HEADS[listKey].title}` as Parameters<typeof t>[0])}</span>
+                            <span className="block">{t(`fields.${JOINED_HEADS[listKey].sub}` as Parameters<typeof t>[0])}</span>
+                          </>
+                        ) : (
+                          cell.map((f) => (
+                            <span key={f.key} className="block">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
+                          ))
+                        )}
                       </th>
                     ))}
                     {/* The status column (#26.12), at `COLUMN.valueStatus` since
@@ -1581,9 +1602,12 @@ export function ValueListModal({
                             <IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono className="max-w-full">
                               <span className={`min-w-0 ${ONE_LINE}`} data-name-tip="">{cellText(cell, row)}</span>
                             </IconTooltip>
+                          ) : cell.length > 1 ? (
+                            // Slice #38.55: one line, „Vânzător, Vânzător, Vânzătoare" — #37.28 stacked them.
+                            cellText(cell, row)
                           ) : (
                             cell.map((f) => (
-                              <span key={f.key} className={cell.length > 1 ? "block" : undefined}>
+                              <span key={f.key}>
                                 {f.type === "checkbox"
                                   ? (row[f.key] ? "✓" : "–")
                                   : (String(row[f.key] ?? "").trim() || "–")}

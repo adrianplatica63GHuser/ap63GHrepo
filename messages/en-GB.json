@@ -2103,6 +2103,8 @@
       "converseName": "Converse role",
       "converseNameMale": "Converse role — man",
       "converseNameFemale": "Converse role — woman",
+      "converseJoined": "Converse role",
+      "converseJoinedSub": "(man, woman)",
       "status": "Status",
       "shortName": "Short name"
     },
