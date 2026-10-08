@@ -182,7 +182,9 @@ describe("the modal is on the tied side of it", () => {
     const to = flat.indexOf(':listKey==="tarla"', from);
     expect([from > -1, to > from]).toEqual([true, true]);
     const branch = flat.slice(from, to);
-    expect(branch).toContain('labelKey:"onlyWithoutForm"');
+    // #38.51: the document types' label is „Fără formular" (`withoutForm`), beside „Cu formular";
+    // it read `labelKey:"onlyWithoutForm"` — „Doar cele care așteaptă un formular".
+    expect(branch).toContain('labelKey:"withoutForm"');
     expect(branch).toContain('doneKey:"allHaveForm"');
     expect(branch).toContain('colouredField:"name"');
     expect(branch).toContain("alwaysOffered:true");

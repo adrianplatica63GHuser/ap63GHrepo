@@ -1633,7 +1633,8 @@ describe("the result screen's copy", () => {
    */
   it.each(LOCALES)("%s quotes the Reference Data checkbox by its real label", (locale) => {
     const messages = loadMessages(locale);
-    const label = at(messages, "valueList.toolbar.onlyWithoutForm") as string;
+    // #38.51: the checkbox is „Fără formular" (`withoutForm`); it was `onlyWithoutForm`.
+    const label = at(messages, "valueList.toolbar.withoutForm") as string;
     expect(typeof label).toBe("string");
     // ⚠️ **Quoted, not merely contained, and an adversarial round is why.** A
     // bare `toContain` is satisfied by any label that happens to occur in the
@@ -1688,7 +1689,7 @@ describe("the result screen's copy", () => {
     expect(scanIcu(filtered).plurals.map((p) => p.arg)).toEqual(["total"]);
     for (const form of plural) expect(filtered).toContain(`${form} {`);
 
-    for (const key of ["valueList.toolbar.onlyWithoutForm", "valueList.table.allHaveForm"]) {
+    for (const key of ["valueList.toolbar.withoutForm", "valueList.toolbar.withForm", "valueList.table.allHaveForm"]) { // #38.51: was onlyWithoutForm
       const value = at(messages, key) as string;
       expect(typeof value).toBe("string");
       expect(value.trim()).not.toBe("");

@@ -569,7 +569,8 @@ describe("the stop screen's copy", () => {
     const formEditor = code.indexOf("goToFormEditor");
     expect(formEditor).toBeGreaterThan(engine);
     expect(formEditor).toBeLessThan(refData);
-    expect(source).toContain("const FORM_EDITOR_HREF = `${REFERENCE_DATA_HREF}?list=document-types`");
+    // #38.51: the link opens the list with „Fără formular" ticked (it read `?list=document-types`).
+    expect(source).toContain("const FORM_EDITOR_HREF = `${REFERENCE_DATA_HREF}?list=document-types&form=without`");
     expect(source).toContain("href={FORM_EDITOR_HREF}");
 
     // …and each carries the type it is talking about. A link that lands on the
