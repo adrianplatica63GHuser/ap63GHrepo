@@ -20,7 +20,9 @@ async function photograph(page: Page, name: string): Promise<void> {
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
-    await page.locator("main").screenshot({ path: `${SHOTS}/${name}-${width}.png` });
+    // The whole page, not `main`: an element taller than the window photographs with
+    // its upper part blank (the first run's 1920 picture, 20261008T093730Z-1005).
+    await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 1366, height: 900 });
 }
