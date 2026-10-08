@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-07 16:53
+-- Generated : 2026-10-07 20:44
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -536,7 +536,9 @@ CREATE TABLE public.judicial_person (
     contact_person_1_id uuid,
     contact_person_2_id uuid,
     correspondence_same_as_hq boolean DEFAULT false NOT NULL,
-    judicial_person_type_id uuid
+    judicial_person_type_id uuid,
+    phone text,
+    email text
 );
 
 
