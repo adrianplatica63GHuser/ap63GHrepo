@@ -1539,6 +1539,12 @@
     "noTypes": "Niciun tip",
     "typeSearchPlaceholder": "Caută un tip…",
     "typeSearchEmpty": "Niciun tip nu se potrivește.",
+    "saleObject": {
+      "recompose": "Recompune",
+      "recomposing": "Se recompune…",
+      "nothing": "Nu există încă date din care să se compună descrierea: legați proprietățile și părțile.",
+      "failed": "Descrierea nu a putut fi compusă. Încercați din nou."
+    },
     "noTypeSelected": "Selectați cel puțin un tip de document",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",

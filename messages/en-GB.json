@@ -1539,6 +1539,12 @@
     "noTypes": "No type",
     "typeSearchPlaceholder": "Search the types…",
     "typeSearchEmpty": "No type matches.",
+    "saleObject": {
+      "recompose": "Recompose",
+      "recomposing": "Recomposing…",
+      "nothing": "There is nothing yet to compose the description from: link the properties and the parties.",
+      "failed": "The description could not be composed. Try again."
+    },
     "noTypeSelected": "Please select at least one document type",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",

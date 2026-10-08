@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { RightColumn } from "@/components/tiles/tile-areas";
 import { tileSurface } from "@/lib/ui/tile-surface";
@@ -64,6 +64,8 @@ import {
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { IdCardPeopleAction } from "./id-card-people-action";
+import { SaleObjectRecompose } from "@/components/documents/sale-object-recompose";
+import { SALE_OBJECT_FIELD_KEY } from "@/lib/documents/sale-object-description";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { NewPagesPanel } from "./new-pages-panel";
 import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
@@ -898,6 +900,14 @@ export function DocumentForm({
   };
 
   const { register, formState } = form;
+
+  // Slice #38.49: „Descrierea obiectului" — „Recompune" writes it as a change; the empty field
+  // filled on opening is not one (`SaleObjectRecompose`).
+  const onSaleObjectText = useCallback(
+    (text: string, how: "recompose" | "auto") =>
+      form.setValue(`customFields.${SALE_OBJECT_FIELD_KEY}` as unknown as FieldPath<FormValues>, text as never, { shouldDirty: how === "recompose" }),
+    [form],
+  );
   const errors = formState.errors;
 
   // Slice #21.06.misc: the Pages panel moves into a right-hand column next
@@ -1184,7 +1194,7 @@ export function DocumentForm({
     // the step the field's own `width` names. A `select` with no options is a
     // text box here, so it is sized as one.
     const width = customFieldWidth(f, forceFullWidthTextarea);
-    return (
+    const field = (
       <Field
         key={f.key}
         label={fieldLabel}
@@ -1195,6 +1205,26 @@ export function DocumentForm({
         fillRem={fillRem}
       />
     );
+    // Slice #38.49: the contract de vânzare's description of what it sells, with „Recompune" under it.
+    // Inert on a form without the field — migration_102 adds it.
+    if (f.key === SALE_OBJECT_FIELD_KEY && documentId) {
+      const fields = watchedValues.customFields as Record<string, unknown> | undefined;
+      const scop = fields?.scopVanzare;
+      const value = fields?.[SALE_OBJECT_FIELD_KEY];
+      return (
+        <div key={f.key} className="flex flex-col gap-1">
+          {field}
+          <SaleObjectRecompose
+            documentId={documentId}
+            scop={typeof scop === "string" ? scop : null}
+            value={typeof value === "string" ? value : null}
+            editable={effectiveMode === "edit"}
+            onText={onSaleObjectText}
+          />
+        </div>
+      );
+    }
+    return field;
   };
 
   // ── Taxe și onorarii — the fees group's own fields, packed (rule 18).
