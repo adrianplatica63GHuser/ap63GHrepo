@@ -102,6 +102,8 @@ type IconTooltipProps = {
   label: string;
   /** A second, smaller line under the label: why the control is as it is (#37.43). */
   note?: string;
+  /** The note in a monospace face: a code under its name — a document type's key (#38.53). */
+  noteMono?: boolean;
   /** The control. Its own name must already be `label`. */
   children: ReactNode;
   /** Layout extras for the wrapper (`ml-auto`, `shrink-0`). */
@@ -127,7 +129,7 @@ type IconTooltipProps = {
  * the press just opened („Ajutor") would cover it. (HintBubble does not do this — its ⓘ's click is
  * what toggles its bubble.)
  */
-export function IconTooltip({ label, note, children, className, fill = false }: IconTooltipProps) {
+export function IconTooltip({ label, note, noteMono = false, children, className, fill = false }: IconTooltipProps) {
   const { isOpen, setOpen, wrapRef, handlers } = useTooltipTriggers<HTMLSpanElement>();
   const tipRef = useRef<HTMLSpanElement | null>(null);
 
@@ -167,7 +169,9 @@ export function IconTooltip({ label, note, children, className, fill = false }: 
             className="pointer-events-none fixed z-[70] max-w-[20rem] rounded-md border border-card-rim bg-white px-2 py-1 text-xs leading-snug font-medium text-ink shadow-lg dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
           >
             {label}
-            {note && <span className="mt-0.5 block font-normal text-fade dark:text-zinc-400">{note}</span>}
+            {note && (
+              <span className={`mt-0.5 block font-normal text-fade dark:text-zinc-400${noteMono ? " font-mono" : ""}`}>{note}</span>
+            )}
           </span>,
           document.body,
         )}

@@ -107,6 +107,19 @@ export type FieldMeta = {
    * tests say they do.
    */
   createOnly?: boolean;
+  /**
+   * Not a column in the list: the value is read in the NAME's tooltip, under
+   * the full name, in a monospace face.                            (Slice #38.53)
+   *
+   * Adrian: „remove the key column from the same table (document types) and
+   * only display the key (as a tip) if the user hovers over the name column".
+   * `createOnly`'s note above („a createOnly field is still a column in the
+   * list — an immutable value you … can never see again is a value you cannot
+   * verify") still holds in substance: the key is verified by hovering the
+   * name, and on the type's own page („General", #38.39). The add form still
+   * asks for it.
+   */
+  nameTip?: boolean;
 };
 
 export type ListMeta = {
@@ -236,7 +249,8 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     titleKey: "documentTypes",
     fields: [
       { key: "name", labelKey: "name", required: true },
-      { key: "key",  labelKey: "key",  required: false, createOnly: true },
+      // Slice #38.53: not a column — read in the name's tooltip, under the name.
+      { key: "key",  labelKey: "key",  required: false, createOnly: true, nameTip: true },
       // Slice #37.95: the short name the Documents list shows; blank = the rule's.
       { key: "shortName", labelKey: "shortName", required: false },
     ],

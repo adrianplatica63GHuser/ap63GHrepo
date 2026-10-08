@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ClipboardList, FolderInput, FolderOpen, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
   useQuery,
@@ -85,6 +85,8 @@ function listCells(listKey: ListKey): FieldMeta[][] {
   const stacked = new Set(STACKED_FIELDS[listKey] ?? []);
   const cells: FieldMeta[][] = [];
   for (const f of LIST_META[listKey].fields) {
+    // Slice #38.53: a `nameTip` field is not a column — it is read in the name's tooltip.
+    if (f.nameTip) continue;
     const last = cells[cells.length - 1];
     if (stacked.has(f.key) && last && stacked.has(last[0].key)) last.push(f);
     else cells.push([f]);
@@ -97,6 +99,11 @@ function cellText(cell: FieldMeta[], row: Readonly<Record<string, unknown>>): st
   return cell
     .map((f) => (f.type === "checkbox" ? (row[f.key] ? "✓" : "–") : String(row[f.key] ?? "").trim() || "–"))
     .join(", ");
+}
+
+/** Slice #38.53: the field read under the name in the name's tooltip (a document type's key), if any. */
+function nameTipField(listKey: ListKey): FieldMeta | undefined {
+  return LIST_META[listKey].fields.find((f) => f.nameTip);
 }
 
 /** A cell's column: a stacked one is a text column; any other, its field's. */
@@ -929,6 +936,11 @@ export function ValueListModal({
   // the row. (This said "text fields only" from #19.02 until Slice #34.04,
   // which doubled the number of lists it misdescribed.)
   //
+  // Slice #38.53, at Adrian's request: the document type's key is no longer a
+  // column. It is read under the full name in the name's tooltip (`nameTip`),
+  // and on the type's own page; the paragraph below is kept for the reason the
+  // key must stay SEEABLE, which the tooltip now serves. It read:
+  //
   // ⚠️ **`createOnly` fields ARE columns, and that asymmetry is deliberate.**
   // (Slice #34.09.) `createOnly` governs the FORM: a document type's `key` is
   // set once and can never be edited, so offering an input for it on a rename
@@ -943,6 +955,7 @@ export function ValueListModal({
   // units, the same for every list — `VALUE_LIST_CARD_UNITS`.)
   const columns = listColumns(listKey);
   const cells = listCells(listKey);
+  const nameTip = nameTipField(listKey);
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
   //
@@ -1537,8 +1550,9 @@ export function ValueListModal({
                       {cells.map((cell) => (
                         <td
                           key={cell[0].key}
-                          // Slice #38.50: one line; the whole text on hover.
-                          title={cellText(cell, row)}
+                          // Slice #38.50: one line; the whole text on hover. Slice #38.53: the name of a list with
+                          // a `nameTip` field says it in its own tooltip, the field under it — one tooltip, not two.
+                          title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}
                           className={[
                             "px-4 py-2",
                             // Slice #26.12: the type's name carries the colour
@@ -1562,13 +1576,20 @@ export function ValueListModal({
                               a dash and were right to. It is the EN dash the
                               checkbox column beside it already prints, so one
                               table does not carry two different ones. */}
-                          {cell.map((f) => (
-                            <span key={f.key} className={cell.length > 1 ? "block" : undefined}>
-                              {f.type === "checkbox"
-                                ? (row[f.key] ? "✓" : "–")
-                                : (String(row[f.key] ?? "").trim() || "–")}
-                            </span>
-                          ))}
+                          {nameTip && cell[0].key === "name" ? (
+                            // Slice #38.53, Ask first 1: one tooltip — the full name, and the key under it in mono.
+                            <IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono className="max-w-full">
+                              <span className={`min-w-0 ${ONE_LINE}`} data-name-tip="">{cellText(cell, row)}</span>
+                            </IconTooltip>
+                          ) : (
+                            cell.map((f) => (
+                              <span key={f.key} className={cell.length > 1 ? "block" : undefined}>
+                                {f.type === "checkbox"
+                                  ? (row[f.key] ? "✓" : "–")
+                                  : (String(row[f.key] ?? "").trim() || "–")}
+                              </span>
+                            ))
+                          )}
                         </td>
                       ))}
                       {review && (
