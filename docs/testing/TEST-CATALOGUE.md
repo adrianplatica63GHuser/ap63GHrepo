@@ -151,6 +151,7 @@ fixed fixture where the existing one will do.
 | [TC-VL-02](cases/TC-VL-02.md) | „Date de referință” pe o pagină: „folosit de N” pe fiecare rând, valorile nefolosite la urmă, două valori unite | reference-data | happy | — | `automated` | 2026-10-08 | `e2e/admin/value-list-merge.spec.ts` |
 | [TC-VL-03](cases/TC-VL-03.md) | Un rol într-un singur panou: un tip de act cu „Deține cotă”, apoi rolul ales pe acel tip, cu cotă | reference-data | happy | — | `automated` | 2026-10-08 | `e2e/admin/role-panel.spec.ts` |
 | [TC-VL-04](cases/TC-VL-04.md) | Un tip de act pe pagina lui: General, Formular, Roluri; un rol bifat aici apare în panoul rolului | reference-data | happy | — | `automated` | 2026-10-08 | `e2e/admin/document-type-page.spec.ts` |
+| [TC-VL-05](cases/TC-VL-05.md) | „Date de referință”: tabele înguste, câte un rând pe linie, butoanele unul lângă altul | value lists | happy | — | `automated` | 2026-10-08 | `e2e/admin/reference-tables-one-line.spec.ts` |
 | [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
