@@ -26,12 +26,19 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
 import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
-import { ValueListModal, VALUE_LIST_CARD_UNITS } from "./value-list-modal";
-import { screenPanel } from "@/lib/ui/field-widths";
+import { ValueListModal } from "./value-list-modal";
+import { rem, screenPanel, unitsRem } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
-/** The categories' column: three units. */
-const NAV_UNITS = 3;
+/** The categories' column: two units — the longest list name, „Tipuri de Persoană Juridică", fits. */
+const NAV_UNITS = 2;
+
+/**
+ * The list's side takes the rest of the row, and never less than this: below
+ * it (a 1366 px window, six units) the list goes under the categories rather
+ * than beside them in a sliver. A list wider than its side scrolls inside it.
+ */
+const LIST_MIN_UNITS = 6;
 
 export function ValueListHub({
   /**
@@ -85,7 +92,7 @@ export function ValueListHub({
   }
 
   return (
-    <UnitRow units={[NAV_UNITS, VALUE_LIST_CARD_UNITS]}>
+    <UnitRow units={[NAV_UNITS, LIST_MIN_UNITS]}>
       <nav
         ref={navRef}
         aria-label={t("page.nav")}
@@ -126,7 +133,11 @@ export function ValueListHub({
         ))}
       </nav>
 
-      <div {...screenPanel("value-list", VALUE_LIST_CARD_UNITS)} className="flex flex-col gap-3">
+      <div
+        data-value-list-side=""
+        className="flex flex-1 flex-col gap-3 overflow-x-auto"
+        style={{ flexBasis: 0, minWidth: rem(unitsRem(LIST_MIN_UNITS)) }}
+      >
         {selected === null ? (
           <p className="rounded-lg border border-dashed border-card-rim px-4 py-6 text-sm text-fade dark:border-zinc-800 dark:text-zinc-400">
             {t("page.choose")}
