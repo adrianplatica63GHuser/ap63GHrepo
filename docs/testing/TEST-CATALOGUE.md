@@ -144,6 +144,7 @@ fixed fixture where the existing one will do.
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-02](cases/TC-SET-02.md) | „Setări” în patru secțiuni; exemplul unui prag se schimbă odată cu valoarea | settings | happy | — | `automated` | 2026-10-08 | `e2e/settings/settings-sections.spec.ts` |
+| [TC-SET-03](cases/TC-SET-03.md) | „Implicitele mele”: setul salvat e ce arată „Implicit”, și după o reîncărcare | settings | happy | TC-E2E-TILEDEF | `automated` | 2026-10-08 | `e2e/settings/my-tile-defaults.spec.ts` |
 | [TC-VL-01](cases/TC-VL-01.md) | O valoare adăugată în „Date de referință”, redenumită și ștearsă | reference-data | happy | — | `driven` | 2026-09-27 | — |
 | [TC-VL-02](cases/TC-VL-02.md) | „Date de referință” pe o pagină: „folosit de N” pe fiecare rând, valorile nefolosite la urmă, două valori unite | reference-data | happy | — | `automated` | 2026-10-08 | `e2e/admin/value-list-merge.spec.ts` |
 | [TC-VL-03](cases/TC-VL-03.md) | Un rol într-un singur panou: un tip de act cu „Deține cotă”, apoi rolul ales pe acel tip, cu cotă | reference-data | happy | — | `automated` | 2026-10-08 | `e2e/admin/role-panel.spec.ts` |
