@@ -6,18 +6,23 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-06 |
+| **Last green** | 2026-10-08 |
 
 ## What this proves
 
-Since Slice #38.16 a stored tile arrangement (#37.76) leaves no empty space above a tile: once the
-stored places are laid out, every tile rises, in its own columns, to right under the tile above it.
-So a tile the user put under two side-by-side tiles stands right under the one that is left on a
-record where the other is not shown. The arrangement itself is not rewritten: shown again, the
-other tile has its place back and the tile stands under it as the user made it. A drop rises at
-once, so what the user sees on letting go is what the next visit shows. A tile left with a hole
-above it, a tile that moves sideways, or an arrangement rewritten by a visit is the defect this case
-exists to catch.
+Since Slice #38.16 a stored tile arrangement (#37.76) leaves no hole where a tile above is not
+shown: once the stored places are laid out, every tile rises, in its own columns, by what the tiles
+above it gave up. So a tile the user put under two side-by-side tiles stands under the one that is
+left on a record where the other is not shown. The arrangement itself is not rewritten: shown again,
+the other tile has its place back and the tile stands under it as the user made it.
+
+**Since Slice #38.45 the space the user left is kept.** This case said „A drop rises at once, so what
+the user sees on letting go is what the next visit shows", and that the tile rose to „right under the
+tile above it". Both are reversed: a released tile stays where the outline showed it, and the empty
+space between it and the tile above is stored with its place, so on another record it rises by what
+the missing tile held and keeps that space. (A double-click is what rises a tile now — TC-TILES-21.)
+A tile left with a hole where a tile above is missing, a deliberate space closed by a visit, a tile
+that moves sideways, or an arrangement rewritten by a visit is the defect this case exists to catch.
 
 ## Before you start
 
@@ -40,9 +45,9 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „TC-TILES-20 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" | Every tile but „Interacțiuni", each where #37.75 places it; „Clasificare" at the left edge, under „Adresă domiciliu" |
-| 2 | Presses on „Etichete și grupuri"'s left padding and drags until its top-left corner is one unit right of „Clasificare"'s left edge and 60 px under the lowest other tile in the columns it will span; releases | While dragging the outline is marked free. Released, „Etichete și grupuri" rises: its left edge one unit right of „Clasificare"'s, its top right under „Clasificare" — under two tiles, „Clasificare" and „Adresă corespondență", the lower one. Every other box where it was in step 1 |
-| 3 | Opens „TC-TILES-20 Doi"; unticks „Clasificare" | „Etichete și grupuri" keeps its left edge, and stands right under the tiles left in its columns („Adresă domiciliu" and „Adresă corespondență") — no empty space above it |
-| 4 | Ticks „Clasificare" again | „Clasificare" where step 1 had it, and „Etichete și grupuri" right under it again, its left edge unchanged |
+| 2 | Presses on „Etichete și grupuri"'s left padding and drags until its top-left corner is one unit right of „Clasificare"'s left edge and 60 px under the lowest other tile in the columns it will span; releases | While dragging the outline is marked free. Released, „Etichete și grupuri" stays where the outline was: its left edge one unit right of „Clasificare"'s, its top about 60 px under „Clasificare" — under two tiles, „Clasificare" and „Adresă corespondență", the lower one — with that empty space above it. Every other box where it was in step 1 |
+| 3 | Opens „TC-TILES-20 Doi"; unticks „Clasificare" | „Etichete și grupuri" keeps its left edge, and stands under the tiles left in its columns („Adresă domiciliu" and „Adresă corespondență") with the same empty space above it as in step 2 — it rose by what „Clasificare" held |
+| 4 | Ticks „Clasificare" again | „Clasificare" where step 1 had it, and „Etichete și grupuri" where step 2 left it, its left edge unchanged |
 | 5 | Reloads the page | „Etichete și grupuri" where step 4 had it |
 
 ## At the end — leaving things as they were found
@@ -79,3 +84,9 @@ Deleted (204). Nothing in the file changed, so the case is confirmed, and
 **2026-10-06 — `automated` (Slice #38.16).** The test runner's full run 20261006T154851Z-356 on
 c8c9259 ran `e2e/tiles/tiles-rise.spec.ts` green with the other 97 specs (lint, tsc and forms-drift
 green; jest's one red was this case's missing route in `catalogue-map.ts`, added in the next commit).
+
+**2026-10-08 — Slice #38.45.** A drop no longer rises, and a gap the user leaves is kept: steps 2–4
+rewritten in place (above). Step 2's tile stays where the outline showed it; step 3's rises only by
+what „Clasificare" held, keeping its space; step 4's is back where step 2 left it. The spec follows,
+and reads the outline's place before the release, so an edge scroll that lands it lower than 60 px
+does not matter.

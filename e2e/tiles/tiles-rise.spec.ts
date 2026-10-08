@@ -1,6 +1,6 @@
 /**
  * Case:   TC-TILES-20 — O fișă trasă sub două fișe urcă sub cea rămasă când una dintre ele nu e afișată
- * Source: docs/testing/cases/TC-TILES-20.md, „Last green" 2026-10-06
+ * Source: docs/testing/cases/TC-TILES-20.md, „Last green" 2026-10-08
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -61,15 +61,18 @@ async function setTile(page: Page, name: string, on: boolean): Promise<void> {
   }).toPass({ timeout: 30_000 });
 }
 
-/** Presses at (`x`, `y`), moves in steps to (`tx`, `ty`), and returns the outline's verdict before releasing. */
-async function drag(page: Page, x: number, y: number, tx: number, ty: number): Promise<string | null> {
+/** Presses at (`x`, `y`), moves in steps to (`tx`, `ty`), and returns the outline's verdict and place in the row before releasing. */
+async function drag(page: Page, x: number, y: number, tx: number, ty: number): Promise<{ free: string | null; x: number; y: number }> {
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x + 10, y + 10, { steps: 3 });
   await page.mouse.move(tx, ty, { steps: 12 });
-  const free = await page.evaluate(() => document.querySelector<HTMLElement>("[data-tile-outline]")?.dataset.free ?? null);
+  const out = await page.evaluate(() => {
+    const o = document.querySelector<HTMLElement>("[data-tile-outline]");
+    return { free: o?.dataset.free ?? null, x: Math.round(parseFloat(o?.style.left ?? "NaN")), y: Math.round(parseFloat(o?.style.top ?? "NaN")) };
+  });
   await page.mouse.up();
-  return free;
+  return out;
 }
 
 /** A point in a tile's left padding, half way down its visible part. */
@@ -105,7 +108,8 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       expect(rule.classification.x).toBe(0);
       expect(rule.classification.y).toBe(rightUnder(rule, "classification"));
 
-      // Step 2 — one unit right of „Clasificări", 60 px under the lowest other tile in those columns: free; it rises right under „Clasificări".
+      // Step 2 — one unit right of „Clasificări", 60 px under the lowest other tile in those columns: free; released, it stays
+      // where the outline showed it (#38.45 — it no longer „rises right under „Clasificări"", as #38.16 had it).
       const unit = (rule.identity.w + GAP) / 3;
       const x0 = rule.classification.x + unit;
       const x1 = x0 + rule.connections.w;
@@ -117,33 +121,42 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       const [r0, row] = await Promise.all([conn.boundingBox(), page.locator("[data-tile-row]").boundingBox()]);
       const tx = (row?.x ?? 0) + x0 + (p.x - (r0?.x ?? 0));
       const ty = (row?.y ?? 0) + y0 + (p.y - (r0?.y ?? 0));
-      expect(await drag(page, p.x, p.y, tx, ty)).toBe("true");
+      const outline = await drag(page, p.x, p.y, tx, ty);
+      expect(outline.free).toBe("true");
+      expect(outline.x).toBe(Math.round(x0));
       const underClassification = rule.classification.y + rule.classification.h + GAP;
+      // Where it lands: the pointer near the window's bottom scrolls the page until the release, so it may land lower
+      // than the outline read above — but never risen: a rise would put it exactly PANEL_GAP under „Clasificări".
       await expect.poll(async () => {
         const now = await boxes(page);
-        return { x: now.connections.x, y: now.connections.y };
-      }).toEqual({ x: Math.round(x0), y: underClassification });
+        return { x: now.connections.x, below: now.connections.y >= Math.min(outline.y, underClassification + 40) };
+      }).toEqual({ x: Math.round(x0), below: true });
+      await page.waitForTimeout(500);
       const dropped = await boxes(page);
       for (const id of Object.keys(rule).filter((k) => k !== "connections")) expect({ id, box: dropped[id] }).toEqual({ id, box: rule[id] });
+      // The space the user left between „Clasificări" and „Conexiuni".
+      const space = dropped.connections.y - underClassification;
+      expect(space).toBeGreaterThan(GAP);
 
-      // Step 3 — the second record, „Clasificări" unticked: „Conexiuni" keeps its left edge, right under the tiles left in its columns.
+      // Step 3 — the second record, „Clasificări" unticked: „Conexiuni" keeps its left edge, and rises only by what
+      // „Clasificări" gave up — the same space above it, under the tiles left in its columns (#38.45; #38.16 closed it).
       await page.goto(`/natural-persons/${second}`);
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(1500);
       await setTile(page, "Clasificare", false);
       await expect.poll(async () => {
         const now = await boxes(page);
-        return { x: now.connections.x, gap: now.connections.y - rightUnder(now, "connections"), classification: "classification" in now };
-      }, { timeout: 20_000 }).toEqual({ x: dropped.connections.x, gap: 0, classification: false });
+        return { x: now.connections.x, space: Math.abs(now.connections.y - rightUnder(now, "connections") - space) <= 1, classification: "classification" in now };
+      }, { timeout: 20_000 }).toEqual({ x: dropped.connections.x, space: true, classification: false });
       const left = await boxes(page);
-      expect(left.connections.y).toBeLessThan(dropped.connections.y); // it rose: no empty space above it
+      expect(left.connections.y).toBeLessThan(dropped.connections.y); // it rose by what „Clasificări" gave up
 
-      // Step 4 — „Clasificări" ticked again: where step 1 had it, and „Conexiuni" right under it again.
+      // Step 4 — „Clasificări" ticked again: where step 1 had it, and „Conexiuni" where step 2 left it.
       await setTile(page, "Clasificare", true);
       await expect.poll(async () => {
         const now = await boxes(page);
-        return { cx: now.classification?.x, cy: now.classification?.y, x: now.connections.x, under: now.classification ? now.connections.y - (now.classification.y + now.classification.h + GAP) : null };
-      }, { timeout: 20_000 }).toEqual({ cx: rule.classification.x, cy: rule.classification.y, x: dropped.connections.x, under: 0 });
+        return { cx: now.classification?.x, cy: now.classification?.y, x: now.connections.x, y: Math.abs(now.connections.y - dropped.connections.y) <= 1 };
+      }, { timeout: 20_000 }).toEqual({ cx: rule.classification.x, cy: rule.classification.y, x: dropped.connections.x, y: true });
       const back = await boxes(page);
 
       // Step 5 — after a reload, where step 4 had it.

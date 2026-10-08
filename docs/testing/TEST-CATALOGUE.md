@@ -175,7 +175,8 @@ fixed fixture where the existing one will do.
 | [TC-TILES-17](cases/TC-TILES-17.md) | „Conexiuni": o linie între fiecare două grupuri, ca în „Clasificări" | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/connections-dividers.spec.ts` |
 | [TC-TILES-18](cases/TC-TILES-18.md) | Bifele fișelor în patru grupuri colorate, fiecare fișă în culoarea grupului ei | tiles | happy | — | `automated` | 2026-10-05 | `e2e/tiles/tile-groups.spec.ts` |
 | [TC-TILES-19](cases/TC-TILES-19.md) | Lângă o listă, a doua previzualizare se deschide sub prima, nu sub listă | tiles | happy | — | `automated` | 2026-10-05 | `e2e/tiles/list-second-preview.spec.ts` |
-| [TC-TILES-20](cases/TC-TILES-20.md) | O fișă trasă sub două fișe urcă sub cea rămasă când una dintre ele nu e afișată | tiles | happy | — | `automated` | 2026-10-06 | `e2e/tiles/tiles-rise.spec.ts` |
+| [TC-TILES-20](cases/TC-TILES-20.md) | O fișă trasă sub două fișe urcă sub cea rămasă când una dintre ele nu e afișată | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/tiles-rise.spec.ts` |
+| [TC-TILES-21](cases/TC-TILES-21.md) | Un dublu-clic pe o fișă o urcă sub fișa de deasupra; o fișă trasă lasă locul gol | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/tiles-double-click.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-05 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |

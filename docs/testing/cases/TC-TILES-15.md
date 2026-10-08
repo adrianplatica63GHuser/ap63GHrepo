@@ -80,3 +80,5 @@ cbafeb3 ran `e2e/tiles/tiles-under-column.spec.ts` green with the other 75 (lint
 forms-drift green too).
 
 **2026-10-06 — Slice #38.16.** A drop now rises at once: „Conexiuni" released 60 px under „Puncte de contur" slides up to 16 px under it, which step 2's „at least 16 px" allows; step 4's „Street View", opening exactly there, pushes it under itself (a column tile is never „taken" ground — `placeWithStored`). The spec reads „Street View"'s own `section`: once Google draws the panorama its scene is a second region named „Street View", a strict-mode violation the runner met in 20261006T153636Z-12188. Nothing in the steps changes; green in 20261006T154250Z-10015.
+
+**2026-10-08 — Slice #38.45.** A drop no longer rises: the released tile stays where the outline showed it (60 px under, give or take the snap), and nothing else moves. The steps' „at least 16 px under" still holds, so nothing in this file or its spec changed. A double-click is what rises a tile now (TC-TILES-21).

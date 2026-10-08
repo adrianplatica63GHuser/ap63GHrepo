@@ -78,3 +78,5 @@ forms-drift green too).
 **2026-10-05 — Slice #37.89.** A person has a right-hand column now, „Interacțiuni", ticked by default and by „Toate"; at 1920 px it narrows the row this case measures. Right after „Toate" the case unticks „Interacțiuni" (TC-PERS-07 holds the column), so every number above stands. The spec follows.
 
 **2026-10-06 — Slice #38.16.** A drop now rises at once: released 60 px under „Corelate", „Conexiuni" slides up to 16 px under it (every tile rises into the empty space above it, #38.16). Step 2's „at least 16 px under" holds — it is exactly 16 — and every other box stays where step 1 had it, since nothing stood under „Conexiuni"'s old place. Nothing in the steps changes; the spec ran green on it (runner 20261006T153636Z-12188).
+
+**2026-10-08 — Slice #38.45.** A drop no longer rises: the released tile stays where the outline showed it (60 px under, give or take the snap), and nothing else moves. The steps' „at least 16 px under" still holds, so nothing in this file or its spec changed. A double-click is what rises a tile now (TC-TILES-21).
