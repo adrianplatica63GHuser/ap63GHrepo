@@ -161,11 +161,16 @@ describe.each([
     }
   });
 
+  // #38.32: every field but the identification group's, which is drawn in „Identificarea actului"
+  // on whatever page is open and so names no tab.
   it("puts every field on a tab, and gives the type a notebook", () => {
     const tabs = templateTabsOf(fields);
     expect(tabs.length).toBeGreaterThanOrEqual(2);
     expect(tabs.length).toBeLessThanOrEqual(5);
-    for (const f of fields) expect(f.tabRo).toBeTruthy();
+    for (const f of fields) {
+      if (f.groupRo === "Identificarea actului") expect([f.key, f.tabRo ?? null]).toEqual([f.key, null]);
+      else expect([f.key, !!f.tabRo]).toEqual([f.key, true]);
+    }
   });
 
   it("is accepted by the door the form editor writes through", () => {

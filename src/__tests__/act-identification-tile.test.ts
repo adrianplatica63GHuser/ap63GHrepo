@@ -73,7 +73,8 @@ describe("a type with no fields of its own", () => {
     expect(cm.defaults).toEqual(["general", "pages", "succession"]);
     const pad = documentTileRegistry({ typeKey: "PLAN_AMPLASAMENT_DELIMITARE", tabs: [], succession: false, pages: true, ownFields: true });
     expect(pad.defaults).toEqual(["general", "pages", FIELDS_TILE]);
-    expect(FORM).toContain("ownFields: templateFields.length > 0");
+    expect(FORM).toContain("ownFields: typeHasForm");
+    expect(FORM).toContain("const typeHasForm = documentTypeHasForm(selectedType?.templateFields);");
   });
 });
 

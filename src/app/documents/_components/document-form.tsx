@@ -56,6 +56,7 @@ import {
   templateTabsOf,
 } from "@/lib/documents/template-tabs";
 import {
+  documentTypeHasForm,
   documentTypeNeedsFormHint,
   documentTypeOptionLabel,
 } from "@/lib/documents/status";
@@ -433,6 +434,8 @@ export function DocumentForm({
     () => parseTemplateFields(selectedType?.templateFields),
     [selectedType],
   );
+  // Slice #38.32: whether „Detalii act" has anything to hold — the one has-a-form rule (`status.ts`).
+  const typeHasForm = documentTypeHasForm(selectedType?.templateFields);
 
   // --- Version history (Slice #18.06) ------------------------------------
   const versionsQuery = useQuery({
@@ -1002,7 +1005,7 @@ export function DocumentForm({
   // nothing.
   const onTileLayout = tiles?.onLayout;
   const tileLayoutSig = JSON.stringify({
-    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched, ownFields: templateFields.length > 0 },
+    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm },
     highlighted: Object.entries(displayHighlights ?? {})
       .filter(([, colour]) => !!colour)
       .map(([field]) => tileOfPath(field)),
@@ -1474,7 +1477,7 @@ export function DocumentForm({
                   {frameBlock(tileOfTabIndex(tabs, i), label, panelsOf(i))}
                 </div>
               ))
-            : templateFields.length > 0 && frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0), t("tileSubtitles.fields"))}
+            : typeHasForm && frameBlock(tileOfTabIndex(tabs, 0), tiles?.labels[tileOfTabIndex(tabs, 0)] ?? t("tiles.fields"), panelsOf(0), t("tileSubtitles.fields"))}
         </>
       ) : notebook ? (
         <>

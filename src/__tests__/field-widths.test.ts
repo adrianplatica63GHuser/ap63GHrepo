@@ -222,7 +222,8 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
   });
 
   it("every field on the Document names its width, a type's own fields take the rule's, the page image is a fixed panel, and no page caps it", () => {
-    const general = region(DOC_FORM, "const feesSection = (", "const formElement = (");
+    // #38.32: `const feesSection = ` no longer opens with a parenthesis — it is null without a fees group.
+    const general = region(DOC_FORM, "const feesSection = ", "const formElement = (");
     const uses = general.match(/<(Field|SelectField)\b/g) ?? [];
     expect(uses.length).toBe(7);
     expect(general.match(/width=\{DOC\.[A-Za-z]+\}/g) ?? []).toHaveLength(uses.length);
@@ -232,7 +233,7 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Slice #37.31: a panel is whole units (as tiles it also takes its tile's `order`).
     expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/style=\{order === undefined \? unitStyle\(units\) : \{ \.\.\.unitStyle\(units\), order \}\}[\s\S]*data-panel=\{panel\}/);
     // A type's own fields: the rule, never a width of their own in the form.
-    const custom = region(DOC_FORM, "const customFieldWidth = (", "const feesSection = (");
+    const custom = region(DOC_FORM, "const customFieldWidth = (", "const feesSection = ");
     expect(custom.match(/templateFieldWidth\(/g) ?? []).toHaveLength(2);
     expect(custom).not.toMatch(/width=\{(DOC|SCALE)\./);
     // Slice #37.31: the unit row, with or without the page image.
