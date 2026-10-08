@@ -10,7 +10,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LIST_META, VALID_LIST_KEYS, type FieldMeta, type ListKey } from "@/lib/admin/value-lists/config";
-import { FixedColumns, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { columnsRem, dialogCardStyle, dialogUnits, screenBox, type ColumnName } from "@/lib/ui/field-widths";
 import {
   isInUseBody,
@@ -47,12 +47,19 @@ import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page
 /** The lists whose table carries a status column (`review`, below). */
 const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla", "institutions"]);
 
+/**
+ * Slice #38.50: the lists whose names are short — „Teren Arabil", „Română" — take a narrower name
+ * column, so their table is as wide as its content needs (measured at 1920 px: 125 px the longest).
+ */
+const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["property-types", "use-categories", "person-types", "citizenships"]);
+
 /** A field's column: its width from `COLUMN`, by what the field holds. */
-function fieldColumn(f: FieldMeta): ColumnName {
+function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
   if (f.type === "checkbox") return "valueFlag";
   if (f.key === "key") return "valueKey";
   if (f.multiline) return "valueDescription";
-  return f.key === "name" ? "valueName" : "valueText";
+  if (f.key !== "name") return "valueText";
+  return SHORT_NAME_LISTS.has(listKey) ? "valueNameShort" : "valueName";
 }
 
 /** A field's box in the add/edit form, at its step (`SCREEN`). */
@@ -83,19 +90,27 @@ function listCells(listKey: ListKey): FieldMeta[][] {
   return cells;
 }
 
+/** Slice #38.50: a cell's whole text, for its tooltip — what it shows, stacked values joined. */
+function cellText(cell: FieldMeta[], row: Readonly<Record<string, unknown>>): string {
+  return cell
+    .map((f) => (f.type === "checkbox" ? (row[f.key] ? "✓" : "–") : String(row[f.key] ?? "").trim() || "–"))
+    .join(", ");
+}
+
 /** A cell's column: a stacked one is a text column; any other, its field's. */
-function cellColumn(cell: FieldMeta[]): ColumnName {
-  return cell.length > 1 ? "valueText" : fieldColumn(cell[0]);
+function cellColumn(cell: FieldMeta[], listKey: ListKey): ColumnName {
+  return cell.length > 1 ? "valueText" : fieldColumn(cell[0], listKey);
 }
 
 /** A list's table: a column per cell, the status where the list has one, then the actions. */
 function listColumns(listKey: ListKey): ColumnName[] {
   return [
-    ...listCells(listKey).map(cellColumn),
+    ...listCells(listKey).map((cell) => cellColumn(cell, listKey)),
     ...(REVIEWED_LISTS.has(listKey) ? (["valueStatus"] as const) : []),
     // Slice #38.35: „folosit de N" on every row.
     "valueUsage",
-    "rowActions",
+    // Slice #38.50: the buttons on one line — a document type has two more.
+    listKey === "document-types" ? "valueActionsDocTypes" : "valueActions",
   ];
 }
 
@@ -1301,6 +1316,10 @@ export function ValueListModal({
               />
             )}
 
+            {/* Slice #38.50: the toolbar and the table in one column as wide as the wider of the two, so
+                the table is never narrower than its toolbar — its controls never meet — and the toolbar's
+                right-hand side stands at the table's right edge. */}
+            <div className="w-fit max-w-full" data-value-list-frame="">
             {/* Toolbar */}
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               {/* ⚠️ **The two buttons are wrapped, Slice #34.10, so that
@@ -1395,14 +1414,15 @@ export function ValueListModal({
               </p>
             )}
 
-            {/* Table */}
-            <div className="w-fit max-w-full overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
-              <table {...fixedTable(columns)}>
+            {/* Table — Slice #38.50: as wide as the column above, at least its toolbar's width. */}
+            <div className="max-w-full overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
+              <table {...fixedTable(columns, "text-sm min-w-full")}>
                 <FixedColumns columns={columns} />
                 <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
+                    {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (
-                      <th key={cell[0].key} className="px-4 py-2" {...columnHead(cellColumn(cell))}>
+                      <th key={cell[0].key} className="px-4 py-2 align-bottom" {...columnHead(cellColumn(cell, listKey))}>
                         {cell.map((f) => (
                           <span key={f.key} className="block">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
                         ))}
@@ -1415,7 +1435,7 @@ export function ValueListModal({
                       <th className="px-4 py-2" {...columnHead("valueStatus")}>{t("fields.status")}</th>
                     )}
                     <th className="px-4 py-2" {...columnHead("valueUsage")}>{t("usage.column")}</th>
-                    <th className="px-4 py-2" {...columnHead("rowActions")} />
+                    <th className="px-4 py-2" {...columnHead(isDocumentTypes ? "valueActionsDocTypes" : "valueActions")} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease bg-white dark:divide-zinc-800 dark:bg-zinc-900">
@@ -1477,6 +1497,8 @@ export function ValueListModal({
                       {cells.map((cell) => (
                         <td
                           key={cell[0].key}
+                          // Slice #38.50: one line; the whole text on hover.
+                          title={cellText(cell, row)}
                           className={[
                             "px-4 py-2",
                             // Slice #26.12: the type's name carries the colour
@@ -1487,8 +1509,9 @@ export function ValueListModal({
                             review && cell[0].key === review.colouredField
                               ? review.nameClass(row)
                               : "text-ink dark:text-zinc-300",
-                            // Slice #37.37: a long value wraps downward in its column, never truncated.
-                            wrapsIf(cellColumn(cell)),
+                            // Slice #37.37 had „a long value wraps downward in its column, never truncated".
+                            // Slice #38.50, at Adrian's request: one line per row, cut with „…", whole on hover.
+                            ONE_LINE,
                           ].filter(Boolean).join(" ")}
                         >
                           {/* Slice #19.02: render checkboxes as ✓ / – symbols.
@@ -1509,7 +1532,10 @@ export function ValueListModal({
                         </td>
                       ))}
                       {review && (
-                        <td className={`px-4 py-2 text-ink dark:text-zinc-300 ${wrapsIf("valueStatus")}`}>
+                        <td
+                          className={`px-4 py-2 text-ink dark:text-zinc-300 ${ONE_LINE}`}
+                          title={t(`${review.statusPrefix}.${review.statusOf(row)}` as Parameters<typeof t>[0])}
+                        >
                           {t(
                             `${review.statusPrefix}.${review.statusOf(row)}` as Parameters<
                               typeof t
@@ -1517,7 +1543,7 @@ export function ValueListModal({
                           )}
                         </td>
                       )}
-                      <td className="px-4 py-2 text-xs text-fade dark:text-zinc-400" data-usage={usage.data?.[row.id] ?? ""}>
+                      <td className={`px-4 py-2 text-xs text-fade dark:text-zinc-400 ${ONE_LINE}`} data-usage={usage.data?.[row.id] ?? ""}>
                         {usage.data === undefined
                           ? "…"
                           : (usage.data[row.id] ?? 0) === 0
@@ -1525,8 +1551,9 @@ export function ValueListModal({
                             : t("usage.usedBy", { count: usage.data[row.id] })}
                       </td>
                       <td className="px-4 py-2">
-                        {/* Slice #37.37: the buttons wrap inside the fixed actions column. */}
-                        <div className="flex flex-wrap gap-2">
+                        {/* Slice #37.37 had „the buttons wrap inside the fixed actions column" — stacked, a row two
+                            lines tall. Slice #38.50: side by side, always (`valueActions`, measured). */}
+                        <div className="flex flex-nowrap gap-2" data-row-actions="">
                           {/* Slice #38.39: a document type is edited on its own page —
                               General, Formular, Roluri — so its row opens that page
                               instead of the inline form. Adding one still uses it. */}
@@ -1676,6 +1703,7 @@ export function ValueListModal({
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           </div>
         </div>

@@ -1215,6 +1215,11 @@ export const COLUMN = {
   dateTime: { content: "L", kind: "fixed" }, //             „28.09.2026, 14:05" — when an access request came, and was answered
   count: { content: "S", kind: "fixed" }, //                a group's or stamp's members, a tag's uses, a run's parcels
   rowActions: { content: "M", kind: "fixed" }, //           „Editează" and „Șterge" — two xs buttons, which wrap rather than overflow
+  // Slice #38.50: a reference list's buttons, side by side on one line, never stacked —
+  // measured at 1920 px: pencil, „Unește", bin = 146 px; on a document type „Deschide",
+  // „Formular (n)", „Unește", bin = 331 px.
+  valueActions: { content: 9.25, kind: "fixed" },
+  valueActionsDocTypes: { content: 21, kind: "fixed" },
   groupCode: { content: "M", kind: "fixed" }, //            „AA 01 (12)", and the group's target under it
   description: { content: "XXL", kind: "wraps" }, //        a group's description; a stamp's code, short description and notes
   tag: { content: "L", kind: "wraps" }, //                  a tag, in mono
@@ -1230,13 +1235,17 @@ export const COLUMN = {
   percent: { content: "S", kind: "fixed" }, //              „33.333%"
   area: { content: "M", kind: "fixed" }, //                 „1234567.89", as surfaceAreaMp
   // Slice #37.37 — the value-list editor's table, a column per field of the list
-  valueName: { content: "XL", kind: "wraps" }, //           a list's „Denumire" — „Contract de Vânzare-Cumpărare"
-  valueText: { content: "L", kind: "wraps" }, //            any other text field — an indicativ, a converse name, a type of institution
-  valueKey: { content: "L", kind: "wraps" }, //             a document type's key, „CONTRACT_VANZARE", in mono — the longest (22 characters, 356 px) wraps
-  valueFlag: { content: "S", kind: "fixed" }, //            a checkbox field, „✓" or „–" — S for its header, „PROPRIETATE"
-  valueDescription: { content: "XL", kind: "wraps" }, //    a list's description, which wraps downward
-  valueStatus: { content: "L", kind: "wraps" }, //          „Fără formular" / „De revizuit" — the review lists' status
-  valueUsage: { content: "L", kind: "fixed" }, //           „folosit de 12 înregistrări" / „nefolosit" — Slice #38.35
+  // Slice #38.50: every reference list as wide as its content needs, one line per row — a value that
+  // does not fit is cut with „…" and shown whole on hover (`ONE_LINE` and `title`). So none of these
+  // wraps any more. Widths measured at 1920 px on the local archive (Adrian's request: „much more narrow").
+  valueName: { content: "XL", kind: "fixed" }, //           a list's „Denumire" — „Contract de Vânzare-Cumpărare" (252 px)
+  valueNameShort: { content: "M", kind: "fixed" }, //       the same, on a list of short names — property types (125 px), citizenships
+  valueText: { content: 10, kind: "fixed" }, //             any other text field — an indicativ, a short name, a type of institution (150 px)
+  valueKey: { content: "L", kind: "fixed" }, //             a document type's key, „CONTRACT_VANZARE", in mono — cut, whole on hover
+  valueFlag: { content: 5.5, kind: "fixed" }, //            a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px)
+  valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
+  valueStatus: { content: 6.75, kind: "fixed" }, //         „Fără formular" / „De revizuit" — the review lists' status (102 px)
+  valueUsage: { content: 9, kind: "fixed" }, //             „folosit de 12 înregistrări" / „nefolosit" — Slice #38.35 (141 px)
   // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
   feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
   feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward
