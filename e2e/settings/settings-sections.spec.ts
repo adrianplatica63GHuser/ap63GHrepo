@@ -79,7 +79,7 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
 
     // Step 6 — „AI": the four uses and a model each; „Despre": version, commit, environment, database.
     const ai = main.getByRole("region", { name: "AI", exact: true });
-    for (const use of ["Extragerea datelor din acte", "Citirea cărților de identitate", "Clasificarea fișierelor la import", "Gruparea mostrelor (Funcții)"]) {
+    for (const use of ["Extragerea datelor din acte", "Citirea cărților de identitate", "Clasificarea fișierelor la import", "Gruparea mostrelor (Instrumente)"]) {
       await expect(ai.getByText(use, { exact: true })).toBeVisible();
     }
     await expect(ai.locator("dd").first()).toHaveText(/^claude-/);

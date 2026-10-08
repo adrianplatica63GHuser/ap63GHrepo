@@ -1,4 +1,4 @@
-# TC-NAV-01 — Bara laterală în nouă secțiuni: fiecare legătură își deschide ecranul, fiecare „În curând" e inactiv, „Rapoarte" → „În lucru" arată textul
+# TC-NAV-01 — Bara laterală arată doar ce există: șase secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
 
 | | |
 |---|---|
@@ -10,13 +10,21 @@
 
 ## What this proves
 
-Since Slice #38.20 the left sidebar reads, top to bottom, nine sections: „Tablou de bord", „Domeniu",
-„Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu", „Ajutor". Every screen that exists
-is reachable from it, and opening it lights up its item. An item whose screen does not exist yet is
-drawn disabled, „În curând" as its tooltip, and pressing it goes nowhere. „Rapoarte" → „În lucru" opens
-a page that says, in a business user's words, what reports will offer. „Setări" no longer has
-„Altele". A breadcrumb names the section that holds the screen, where it said „Admin". Collapsed, the sidebar shows one icon per section. A screen that cannot be reached, a
-placeholder that navigates, or a section missing or out of order is the defect.
+Since Slice #38.42 the left sidebar draws only what exists. Top to bottom it reads six sections:
+„Tablou de bord", „Domeniu", „Instrumente" (called „Funcții" until #38.42), „Import", „Administrare"
+and „Setări".
+- **Placeholders are not drawn.** An item whose screen is not built draws nothing, and neither does a
+  section left empty by that. So „Rapoarte", „Studiu" and „Ajutor" are gone, and so are the four
+  placeholders inside „Instrumente" and „Import". (#38.20 had drawn them disabled, with „În curând" as
+  the tooltip.)
+- **„Date de referință" is under „Administrare".**
+- **Every screen that exists is still reachable from the sidebar,** and opening it lights up its item.
+- **The Reports page still opens from its address.**
+- **A breadcrumb names the section that holds the screen.**
+- **Collapsed, the sidebar shows one icon per section.**
+
+The defect is any of these: a screen that cannot be reached; a placeholder drawn; a section that is
+missing, empty or out of order.
 
 ## Before you start
 
@@ -32,20 +40,23 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Funcții", „Import", „Rapoarte", „Administrare", „Setări", „Studiu", „Ajutor" |
-| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte, Date de referință. „Funcții": Căutare globală, Distilare Tipizate, Verificare corelări, Calcul drum lateral, Arbori de moștenire. „Import": Dosare de proprietăți, Dosare diverse, Fișier individual. „Rapoarte": În lucru. „Administrare": Utilizatori & Acces, Grupuri, Ștampile, Etichete, Informații de ajutor. „Studiu": Cursuri, Chestionare, Punctaj. „Ajutor": Manual de utilizare, Întreabă AI |
-| 3 | Presses each link in turn: „Tablou de bord", the five of „Domeniu", „Căutare globală", „Distilare Tipizate", „Calcul drum lateral", „Dosare de proprietăți", „În lucru", the five of „Administrare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Date de referință", „Căutare globală", „Distilare Tipizate", „Calcul", „Import", „Rapoarte — în lucru", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Setări" — and the item pressed is the sidebar's active one |
-| 4 | Points at each of the nine placeholders (Verificare corelări, Arbori de moștenire, Dosare diverse, Fișier individual, Cursuri, Chestionare, Punctaj, Manual de utilizare, Întreabă AI), then presses it | Each drawn faded, the cursor „not allowed"; the tooltip „În curând"; pressing it leaves the page where it was |
-| 5 | „Rapoarte" → „În lucru" | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte" |
-| 6 | „Setări" | „Setări" with „Praguri de timp" first (#38.40: then „Copii de siguranță", „AI", „Despre"; #38.22 removed „Opțiuni pentru dezvoltator"); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
-| 7 | „Restrânge bara laterală" | Nine icons, one per section, each named by its section; then „Extinde bara laterală" |
-| 8 | „Administrare" → „Etichete"; „Funcții" → „Căutare globală"; „Domeniu" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section, not „Admin": „Acasă › Administrare › Etichete", „Acasă › Funcții › Căutare globală", „Acasă › Domeniu › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
+| 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Administrare", „Setări" — no „Funcții", „Rapoarte", „Studiu" or „Ajutor" |
+| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte. „Instrumente": Căutare globală, Distilare Tipizate, Calcul drum lateral. „Import": Dosare de proprietăți. „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete, Informații de ajutor. No item is drawn faded, and nothing says „În curând" |
+| 3 | Presses each link in turn: „Tablou de bord", the four of „Domeniu", the three of „Instrumente", „Dosare de proprietăți", the six of „Administrare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Căutare globală", „Distilare Tipizate", „Calcul", „Import", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Setări" — and the item pressed is the sidebar's active one |
+| 4 | Types `/reports` into the address bar | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte" |
+| 5 | „Setări" | „Setări" with „Praguri de timp" (#38.40; #38.41 put „Contul meu" first); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
+| 6 | „Restrânge bara laterală" | Six icons, one per section, each named by its section; then „Extinde bara laterală" |
+| 7 | „Administrare" → „Etichete"; „Instrumente" → „Căutare globală"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Instrumente › Căutare globală", „Acasă › Administrare › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
 
 ## At the end — leaving things as they were found
 
 Nothing was created. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-08 — Slice #38.42, rewritten.** The case was „nine sections, every placeholder disabled";
+the sidebar now draws only what exists, so steps 1–4 and 7–8 changed and the old steps 4–5 became
+step 4 (the Reports page by its address). The runs below are of the nine-section case.
 
 **2026-10-06 — run 1, `driven` (Slice #38.20).** Driven in the desktop app's browser pane, its viewport
 emulated at 1920 × 1080, against `npm run dev` on 3000, by script (FU-290: `click()` on the section

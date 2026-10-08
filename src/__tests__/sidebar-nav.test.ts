@@ -128,9 +128,12 @@ describe("isFlatSectionActive", () => {
   });
 });
 
-describe("sectionsFor — full access sees every section; an account without a row, the four lists", () => {
-  it("full access sees every section", () => {
-    expect(sectionsFor(MOCK_SECTIONS, true).map((s) => s.key)).toEqual(MOCK_SECTIONS.map((s) => s.key));
+describe("sectionsFor — full access sees every drawn section; an account without a row, the four lists", () => {
+  it("full access sees every section that has something to draw — not one of placeholders only (#38.42)", () => {
+    expect(sectionsFor(MOCK_SECTIONS, true).map((s) => s.key)).toEqual(
+      MOCK_SECTIONS.filter((s) => s.href || s.items.some((i) => i.href)).map((s) => s.key),
+    );
+    expect(sectionsFor(MOCK_SECTIONS, true).map((s) => s.key)).not.toContain("study");
   });
 
   it("anyone else: the dashboard and the four lists — no administration screen, no reports page, no placeholder", () => {

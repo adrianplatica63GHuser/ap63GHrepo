@@ -116,7 +116,7 @@ docker exec ga40prj-postgres psql -U postgres ga40db -c "DELETE FROM calculation
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Funcții" → „Calcul drum lateral" | „Calcul", the history icon, the text „Alegeți fișierul de date al parcelei. Are trei secțiuni, fiecare deschisă de un rând care începe cu „Secțiunea de”:" with the three sections and their rules, and „Alegeți fișierul de date…" |
+| 1 | Opens „Instrumente" → „Calcul drum lateral" | „Calcul", the history icon, the text „Alegeți fișierul de date al parcelei. Are trei secțiuni, fiecare deschisă de un rând care începe cu „Secțiunea de”:" with the three sections and their rules, and „Alegeți fișierul de date…" |
 | 2 | Chooses `TC-CALC-01 Respins 5 colturi.txt`, then `… Respins 98 la suta.txt`, then `… Respins drum 15 m.txt` | Each time „Fișierul nu poate fi folosit:" and one reason: „Fișierul are 5 colțuri; trebuie să aibă exact 4." · „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%." · „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m." — and no map |
 | 3 | Chooses `TC-CALC-01 Impartire cu drum.txt` | „Pasul 3 — drumul" with „Faceți clic pe colțul din care pornește drumul …"; the map with the parcel, its corners numbered 16–19, three slices named `TC-CALC-01 A`, `B`, `C` in a random order; „Suprafața parcelei" **611,87 m²**, „Lățime drum" 3,0 m, „Latura 16–17" 29,8 m, „17–18" 20,5 m, „18–19" 29,8 m, „19–16" 20,5 m; the table, and under it „Cotele însumează 99,99%: ultima felie din ordine (…) preia diferența de 0,01% …" |
 | 4 | Puts the owners in the order A, B, C — by dragging one slice onto another, or with ↑ ↓ in the table | The table reads A, B, C from „Nr." 1 to 3; every slice keeps its area |

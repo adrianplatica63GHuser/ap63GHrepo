@@ -23,23 +23,23 @@ import { test, expect } from "@playwright/test";
 import { USER_STATE } from "../helpers/auth-state";
 import { openFromSidebar, sidebar } from "../helpers/sidebar";
 
-const NINE = ["Tablou de bord", "Domeniu", "Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"];
+const SIX = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Administrare", "Setări"]; // #38.42: the six drawn
 
 test.use({ storageState: fs.existsSync(USER_STATE) ? USER_STATE : undefined });
 
 test.describe("TC-AUTH-02 — Contul care era „user\" are toată aplicația, ca administratorul", () => {
   test.skip(!fs.existsSync(USER_STATE), "No `user` account: E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env.");
 
-  test("nouă secțiuni, Utilizatori & Acces, Date de referință, Etichete", async ({ page }) => {
+  test("șase secțiuni, Utilizatori & Acces, Date de referință, Etichete", async ({ page }) => {
     // Step 1 — the dashboard, signed in as the account that was a `user`.
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
 
-    // Step 2 — all nine sections.
+    // Step 2 — all six sections drawn (#38.42).
     const rows = sidebar(page).locator(":scope > *");
-    await expect(rows).toHaveCount(9);
-    expect((await rows.allInnerTexts()).map((t) => t.trim().split("\n")[0])).toEqual(NINE);
+    await expect(rows).toHaveCount(SIX.length);
+    expect((await rows.allInnerTexts()).map((t) => t.trim().split("\n")[0])).toEqual(SIX);
 
     // Step 3 — „Administrare" → „Utilizatori & Acces", no role on the screen.
     await openFromSidebar(page, "Utilizatori & Acces", "Administrare");

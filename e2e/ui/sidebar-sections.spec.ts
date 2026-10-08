@@ -1,62 +1,55 @@
 /**
- * Case:   TC-NAV-01 — Bara laterală în nouă secțiuni: fiecare legătură își deschide ecranul, fiecare „În curând" e inactiv, „Rapoarte" → „În lucru" arată textul
+ * Case:   TC-NAV-01 — Bara laterală arată doar ce există: șase secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
  * Source: docs/testing/cases/TC-NAV-01.md, „Last green" 2026-10-06
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim; an icon is read as the case reads it, the Lucide
- * class on the <svg>.
+ * class on the <svg>. Slice #38.42 rewrote the case — the sidebar draws only
+ * what exists — and renamed this file from `sidebar-nine-sections.spec.ts`.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
- *   - The hand run pressed by script and dispatched `pointerover` for the
- *     tooltips (FU-290); here it is Playwright's mouse.
- *   - Slice #38.20's pictures, not steps of the case: the sidebar expanded with
- *     each section open, and collapsed, over the Reports page (static text, no
- *     records); the Reports page; Settings — at 1366 and 1920 px, into
- *     `playwright-report/sidebar-nine-sections/`. The sidebar's „Recente" list
- *     is painted over.
+ *   - Slice #38.42's pictures, not steps of the case: the sidebar expanded with
+ *     each section open, and collapsed — at 1366 and 1920 px, into
+ *     `playwright-report/sidebar-sections/`. The sidebar's „Recente" list is
+ *     painted over.
  */
 
 import fs from "node:fs";
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { openSection, sidebar } from "../helpers/sidebar";
 
-const SHOTS = "playwright-report/sidebar-nine-sections";
+const SHOTS = "playwright-report/sidebar-sections";
 
-const SECTIONS = [
-  "Tablou de bord", "Domeniu", "Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor",
+const SECTIONS = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Administrare", "Setări"] as const;
+
+/** What #38.42 stopped drawing: four sections' worth of placeholders and a placeholder page. */
+const GONE = [
+  "Funcții", "Rapoarte", "Studiu", "Ajutor", "În lucru", "Verificare corelări", "Arbori de moștenire",
+  "Dosare diverse", "Fișier individual", "Cursuri", "Chestionare", "Punctaj", "Manual de utilizare", "Întreabă AI",
 ] as const;
 
-/** Each section's items, in order; `null` marks a placeholder. */
-const ITEMS: Record<string, [string, string | null][]> = {
+/** Each section's items, in order, with their addresses. */
+const ITEMS: Record<string, [string, string][]> = {
   Domeniu: [
     ["Persoane Fizice", "/natural-persons"],
     ["Persoane Juridice", "/judicial-persons"],
     ["Proprietăți", "/properties"],
     ["Acte", "/documents"],
-    ["Date de referință", "/admin/value-lists"],
   ],
-  Funcții: [
+  Instrumente: [
     ["Căutare globală", "/admin/global-search"],
     ["Distilare Tipizate", "/admin/doc-type-engine"],
-    ["Verificare corelări", null],
     ["Calcul drum lateral", "/admin/calculation"],
-    ["Arbori de moștenire", null],
   ],
-  Import: [
-    ["Dosare de proprietăți", "/admin/import"],
-    ["Dosare diverse", null],
-    ["Fișier individual", null],
-  ],
-  Rapoarte: [["În lucru", "/reports"]],
+  Import: [["Dosare de proprietăți", "/admin/import"]],
   Administrare: [
+    ["Date de referință", "/admin/value-lists"],
     ["Utilizatori & Acces", "/admin/users"],
     ["Grupuri", "/admin/groups"],
     ["Ștampile", "/admin/stamps"],
     ["Etichete", "/admin/tags"],
     ["Informații de ajutor", "/admin/help-content"],
   ],
-  Studiu: [["Cursuri", null], ["Chestionare", null], ["Punctaj", null]],
-  Ajutor: [["Manual de utilizare", null], ["Întreabă AI", null]],
 };
 
 /** Step 3: the link's label, its section (none for a flat one), the title its screen shows. */
@@ -66,12 +59,11 @@ const LINKS: [string, string | null, string][] = [
   ["Persoane Juridice", "Domeniu", "Persoană juridică"],
   ["Proprietăți", "Domeniu", "Proprietăți"],
   ["Acte", "Domeniu", "Acte"],
-  ["Date de referință", "Domeniu", "Date de referință"],
-  ["Căutare globală", "Funcții", "Căutare globală"],
-  ["Distilare Tipizate", "Funcții", "Distilare Tipizate"],
-  ["Calcul drum lateral", "Funcții", "Calcul"],
+  ["Căutare globală", "Instrumente", "Căutare globală"],
+  ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],
+  ["Calcul drum lateral", "Instrumente", "Calcul"],
   ["Dosare de proprietăți", "Import", "Import"],
-  ["În lucru", "Rapoarte", "Rapoarte — în lucru"],
+  ["Date de referință", "Administrare", "Date de referință"],
   ["Utilizatori & Acces", "Administrare", "Utilizatori & Acces"],
   ["Grupuri", "Administrare", "Grupuri"],
   ["Ștampile", "Administrare", "Ștampile"],
@@ -80,10 +72,7 @@ const LINKS: [string, string | null, string][] = [
   ["Setări", null, "Setări"],
 ];
 
-const ICONS = [
-  "lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-chart-column",
-  "lucide-shield-check", "lucide-settings", "lucide-graduation-cap", "lucide-life-buoy",
-];
+const ICONS = ["lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-shield-check", "lucide-settings"];
 
 const recent = (page: Page) =>
   page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) });
@@ -92,7 +81,7 @@ async function photograph(page: Page, name: string, before?: () => Promise<void>
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: width === 1366 ? 768 : 1080 });
     if (before) await before();
-    // Off every row: a pointer left on a placeholder would photograph its „În curând".
+    // Off every row: a pointer left on one would photograph its hover.
     await page.mouse.move(width - 10, (width === 1366 ? 768 : 1080) - 10);
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, mask: [recent(page)] });
@@ -126,34 +115,33 @@ async function title(page: Page): Promise<Locator> {
   return h1;
 }
 
-test.describe("TC-NAV-01 — the sidebar in nine sections", () => {
+test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
   test.beforeAll(() => {
     fs.mkdirSync(SHOTS, { recursive: true });
   });
 
-  test("every link opens its screen, every placeholder is disabled, „În lucru” shows the text", async ({ page }) => {
+  test("six sections, every link opens its screen, no placeholder is drawn", async ({ page }) => {
     test.setTimeout(240_000);
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto("/reports");
+    await page.goto("/admin/settings");
     const nav = sidebar(page);
     await expect(nav).toBeVisible({ timeout: 30_000 });
 
-    // Step 1 — the nine sections, top to bottom.
-    await expect(sectionRows(page)).toHaveCount(9);
+    // Step 1 — the six sections, top to bottom; nothing #38.42 stopped drawing.
+    await expect(sectionRows(page)).toHaveCount(SECTIONS.length);
     expect((await sectionRows(page).allInnerTexts()).map((t) => t.trim().split("\n")[0])).toEqual([...SECTIONS]);
 
-    // Step 2 — each section's items; a placeholder is drawn disabled.
+    // Step 2 — each section's items, exactly; no placeholder, no „În curând".
     for (const [section, items] of Object.entries(ITEMS)) {
       await openSection(page, section);
+      const rows = nav.getByRole("link").filter({ visible: true });
       for (const [label, href] of items) {
-        if (href) {
-          await expect(nav.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", href);
-        } else {
-          const ph = nav.locator("[data-nav-placeholder]").filter({ hasText: label });
-          await expect(ph).toHaveAttribute("aria-disabled", "true");
-          await expect(ph).toHaveAttribute("tabindex", "0");
-        }
+        await expect(nav.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", href);
       }
+      await expect(nav.locator("[data-nav-placeholder]")).toHaveCount(0);
+      for (const gone of GONE) await expect(nav.getByText(gone, { exact: true })).toHaveCount(0);
+      // The open section's links, and the two flat ones („Tablou de bord", „Setări"): nothing else.
+      await expect(rows).toHaveCount(items.length + 2);
       await photograph(page, `section-${section.normalize("NFD").replace(/[^A-Za-z]/g, "").toLowerCase()}`);
     }
 
@@ -168,29 +156,8 @@ test.describe("TC-NAV-01 — the sidebar in nine sections", () => {
       if (section) await expect(link).toHaveAttribute("aria-current", "page");
     }
 
-    // Step 4 — each placeholder: faded, „not allowed", „În curând", and pressing it goes nowhere.
-    for (const [section, items] of Object.entries(ITEMS)) {
-      const placeholders = items.filter(([, href]) => href === null);
-      if (placeholders.length === 0) continue;
-      await openSection(page, section);
-      for (const [label] of placeholders) {
-        const ph = nav.locator("[data-nav-placeholder]").filter({ hasText: label });
-        const before = page.url();
-        await ph.hover();
-        await expect(page.locator("[role=tooltip][data-icon-tooltip]")).toHaveText("În curând");
-        expect(await ph.evaluate((el) => getComputedStyle(el).cursor)).toBe("not-allowed");
-        expect(Number(await ph.evaluate((el) => getComputedStyle(el).opacity))).toBeLessThan(1);
-        await ph.click({ force: true });
-        await page.waitForTimeout(300);
-        expect(page.url()).toBe(before);
-        await page.mouse.move(1900, 1060);
-      }
-    }
-
-    // Step 5 — „Rapoarte" → „În lucru".
-    await openSection(page, "Rapoarte");
-    await nav.getByRole("link", { name: "În lucru", exact: true }).click();
-    await expect(page).toHaveURL(/\/reports$/);
+    // Step 4 — /reports by its address: the page is there, the sidebar does not offer it.
+    await page.goto("/reports");
     await expect(await title(page)).toHaveText("Rapoarte — în lucru");
     const paras = page.locator("main p");
     await expect(paras).toHaveCount(5);
@@ -201,26 +168,22 @@ test.describe("TC-NAV-01 — the sidebar in nine sections", () => {
       "Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza.",
     );
     await expect(crumbTrail(page)).toHaveText(["Acasă", "Rapoarte"]);
-    await photograph(page, "reports");
+    await expect(nav.getByText("Rapoarte", { exact: true })).toHaveCount(0);
 
-    // Step 6 — „Setări": no „Altele".
+    // Step 5 — „Setări": no „Altele".
     await nav.getByRole("link", { name: "Setări", exact: true }).click();
     await expect(await title(page)).toHaveText("Setări");
-    // Slice #38.40: „Intervale de timp" became „Praguri de timp", the first of four sections.
     await expect(page.locator("main").getByText("Praguri de timp", { exact: true }).first()).toBeVisible();
     await expect(page.locator("main").getByText("Altele", { exact: true })).toHaveCount(0);
     await expect(page.locator("main a")).toHaveCount(0);
     await expect(crumbTrail(page)).toHaveText(["Acasă", "Setări"]);
-    await photograph(page, "settings");
 
-    // Step 7 — collapsed: nine icons, one per section, each named by its section.
-    await page.goto("/reports");
-    await expect(nav).toBeVisible({ timeout: 30_000 });
+    // Step 6 — collapsed: six icons, one per section, each named by its section.
     await page.getByRole("button", { name: "Restrânge bara laterală", exact: true }).click();
     await expect(page.getByRole("button", { name: "Extinde bara laterală", exact: true })).toBeVisible();
     const rows = sectionRows(page);
-    await expect(rows).toHaveCount(9);
-    for (let i = 0; i < 9; i++) {
+    await expect(rows).toHaveCount(SECTIONS.length);
+    for (let i = 0; i < SECTIONS.length; i++) {
       const row = rows.nth(i);
       expect(await iconOf(row)).toBe(ICONS[i]);
       await expect(row.locator("[aria-label]").first()).toHaveAttribute("aria-label", SECTIONS[i]);
@@ -229,11 +192,11 @@ test.describe("TC-NAV-01 — the sidebar in nine sections", () => {
     await page.getByRole("button", { name: "Extinde bara laterală", exact: true }).click();
     await expect(page.getByRole("button", { name: "Restrânge bara laterală", exact: true })).toBeVisible();
 
-    // Step 8 — the breadcrumb names the section, as text; „Import" is not said twice.
+    // Step 7 — the breadcrumb names the section, as text; „Import" is not said twice.
     for (const [section, label, trail] of [
       ["Administrare", "Etichete", ["Acasă", "Administrare", "Etichete"]],
-      ["Funcții", "Căutare globală", ["Acasă", "Funcții", "Căutare globală"]],
-      ["Domeniu", "Date de referință", ["Acasă", "Domeniu", "Date de referință"]],
+      ["Instrumente", "Căutare globală", ["Acasă", "Instrumente", "Căutare globală"]],
+      ["Administrare", "Date de referință", ["Acasă", "Administrare", "Date de referință"]],
       ["Import", "Dosare de proprietăți", ["Acasă", "Import"]],
     ] as const) {
       await openSection(page, section);

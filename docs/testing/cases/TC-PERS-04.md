@@ -37,7 +37,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Persoane Fizice" | A search box („caută după cod, nume, email sau telefon"), no „Importanță" or „Relevanță" filter, and „Câmpuri afișate 0/4" |
-| 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Locul nașterii, Tip Profesional — in that order |
+| 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Locul nașterii, Tip profesional — in that order |
 | 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
 | 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
 | 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/4`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact |

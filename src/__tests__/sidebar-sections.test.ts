@@ -2,6 +2,12 @@
  * Slice #38.20 — the left navigation in nine sections: Tablou de bord,
  * Domeniu, Funcții, Import, Rapoarte, Administrare, Setări, Studiu, Ajutor.
  *
+ * Slice #38.42 — six of them drawn: what is not built is not drawn
+ * (`drawnSections`). „Rapoarte", „Studiu" and „Ajutor" hold nothing built, so
+ * they draw nothing; „Date de referință" moved to Administrare; „Funcții" is
+ * called „Instrumente". The config keeps every entry. (This file was
+ * `sidebar-nine-sections.test.ts`.)
+ *
  * Every screen that exists is reachable from it; an item whose screen does not
  * exist yet is a disabled „În curând" placeholder; „Rapoarte" → „În lucru"
  * opens /reports; Settings has no „Altele"; since #38.21 every account with an
@@ -10,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
-import { getActiveHref, getActiveSectionKey, sectionsFor } from "@/components/sidebar/sidebar-helpers";
+import { drawnSections, getActiveHref, getActiveSectionKey, sectionsFor } from "@/components/sidebar/sidebar-helpers";
 
 // breadcrumb-bar.tsx is a client component; only its pure `buildSegments` is under test below, so
 // what it imports for rendering is stood in for (breadcrumb-copy.test.ts does the same).
@@ -27,26 +33,30 @@ const RO = JSON.parse(read("messages", "ro-RO.json")) as Msgs;
 const EN = JSON.parse(read("messages", "en-GB.json")) as Msgs;
 const nav = (m: Msgs) => m.nav as { sections: Record<string, string>; items: Record<string, string>; comingSoon: string };
 
-describe("the nine sections, in order, each with its items", () => {
+describe("the nine sections in the config, in order, each with its items", () => {
   it("top to bottom", () => {
     expect(NAV_SECTIONS.map((s) => nav(RO).sections[s.key])).toEqual([
-      "Tablou de bord", "Domeniu", "Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor",
+      "Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor",
     ]);
   });
 
-  it("each section's items, by their Romanian names; a placeholder has no address", () => {
+  it("each section's items, by their Romanian names; a placeholder has no address, a placeholder page is `wip`", () => {
     const tree = NAV_SECTIONS.map((s) => [nav(RO).sections[s.key], s.href ?? null, s.items.map((i) => [nav(RO).items[i.key], i.href ?? null])]);
     expect(tree).toEqual([
       ["Tablou de bord", "/", []],
-      ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"], ["Date de referință", "/admin/value-lists"]]],
-      ["Funcții", null, [["Căutare globală", "/admin/global-search"], ["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Arbori de moștenire", null]]],
+      ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"]]],
+      ["Instrumente", null, [["Căutare globală", "/admin/global-search"], ["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Arbori de moștenire", null]]],
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
       ["Rapoarte", null, [["În lucru", "/reports"]]],
-      ["Administrare", null, [["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Informații de ajutor", "/admin/help-content"]]],
+      ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Informații de ajutor", "/admin/help-content"]]],
       ["Setări", "/admin/settings", []],
       ["Studiu", null, [["Cursuri", null], ["Chestionare", null], ["Punctaj", null]]],
       ["Ajutor", null, [["Manual de utilizare", null], ["Întreabă AI", null]]],
     ]);
+  });
+
+  it("only „În lucru” is marked `wip`", () => {
+    expect(NAV_SECTIONS.flatMap((s) => s.items).filter((i) => i.wip).map((i) => i.key)).toEqual(["reportsInProgress"]);
   });
 
   it("every section has an icon of its own — a collapsed sidebar shows section icons only", () => {
@@ -78,13 +88,51 @@ describe("the nine sections, in order, each with its items", () => {
   });
 });
 
+describe("what is drawn (#38.42)", () => {
+  const drawn = drawnSections(NAV_SECTIONS);
+  const ro = (s: { key: string; items: { key: string }[] }) => [nav(RO).sections[s.key], s.items.map((i) => nav(RO).items[i.key])];
+
+  it("six sections, each with only built screens", () => {
+    expect(drawn.map(ro)).toEqual([
+      ["Tablou de bord", []],
+      ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
+      ["Instrumente", ["Căutare globală", "Distilare Tipizate", "Calcul drum lateral"]],
+      ["Import", ["Dosare de proprietăți"]],
+      ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Informații de ajutor"]],
+      ["Setări", []],
+    ]);
+  });
+
+  it("no item without an href, no `wip` item, and no section left empty", () => {
+    for (const s of drawn) {
+      expect([s.key, s.items.length > 0 || !!s.href]).toEqual([s.key, true]);
+      for (const i of s.items) expect([i.key, !!i.href, !!i.wip]).toEqual([i.key, true, false]);
+    }
+  });
+
+  it("an href brings a placeholder back; `wip` going brings a page back", () => {
+    const withHref = NAV_SECTIONS.map((s) =>
+      s.key === "study" ? { ...s, items: s.items.map((i) => (i.key === "courses" ? { ...i, href: "/courses" } : i)) } : s,
+    );
+    expect(drawnSections(withHref).find((s) => s.key === "study")?.items.map((i) => i.key)).toEqual(["courses"]);
+    const notWip = NAV_SECTIONS.map((s) => (s.key === "reports" ? { ...s, items: s.items.map(({ wip: _wip, ...i }) => i) } : s));
+    expect(drawnSections(notWip).some((s) => s.key === "reports")).toBe(true);
+  });
+
+  it("the sidebar draws through it, for every account", () => {
+    expect(sectionsFor(NAV_SECTIONS, true)).toEqual(drawn);
+    const user = sectionsFor(NAV_SECTIONS, false).flatMap((s) => s.items);
+    expect(user.every((i) => !!i.href && !i.wip)).toBe(true);
+  });
+});
+
 describe("the active section and item for every route", () => {
   it.each([
     ["/natural-persons/abc", "domain", "/natural-persons"],
     ["/judicial-persons", "domain", "/judicial-persons"],
     ["/properties/map", "domain", "/properties"],
     ["/documents/new", "domain", "/documents"],
-    ["/admin/value-lists", "domain", "/admin/value-lists"],
+    ["/admin/value-lists", "administration", "/admin/value-lists"],
     ["/admin/global-search", "functions", "/admin/global-search"],
     ["/admin/doc-type-engine", "functions", "/admin/doc-type-engine"],
     ["/admin/calculation/history", "functions", "/admin/calculation"],
@@ -123,7 +171,7 @@ describe("an account without an app_users row sees what a `user` saw before #38.
 });
 
 describe("placeholders, the reports page, Settings", () => {
-  it("a placeholder is drawn disabled, „În curând” as its tooltip", () => {
+  it("the disabled drawing is kept for an item handed over without an href — unreached since #38.42 (`drawnSections`)", () => {
     const src = code(read("src", "components", "sidebar", "sidebar-nav.tsx"));
     expect(src).toMatch(/if \(!item\.href\) \{[\s\S]*?<IconTooltip label=\{comingSoon\}[\s\S]*?aria-disabled="true"/);
     expect(src).toContain('comingSoon={t("comingSoon")}');
@@ -163,10 +211,10 @@ describe("breadcrumbs name the section, not „Admin”", () => {
     buildSegments(path, crumb, {}, from?.[0], from?.[1]).map((s) => `${s.label}${s.href === null ? " (text)" : ""}`);
 
   it("each /admin/ screen under the section that holds it in the sidebar", () => {
-    expect(trail("/admin/value-lists")).toEqual(["Acasă", "Domeniu (text)", "Date de referință"]);
-    expect(trail("/admin/global-search")).toEqual(["Acasă", "Funcții (text)", "Căutare globală"]);
-    expect(trail("/admin/doc-type-engine")).toEqual(["Acasă", "Funcții (text)", "Distilare Tipizate"]);
-    expect(trail("/admin/calculation")).toEqual(["Acasă", "Funcții (text)", "Calcul"]);
+    expect(trail("/admin/value-lists")).toEqual(["Acasă", "Administrare (text)", "Date de referință"]);
+    expect(trail("/admin/global-search")).toEqual(["Acasă", "Instrumente (text)", "Căutare globală"]);
+    expect(trail("/admin/doc-type-engine")).toEqual(["Acasă", "Instrumente (text)", "Distilare Tipizate"]);
+    expect(trail("/admin/calculation")).toEqual(["Acasă", "Instrumente (text)", "Calcul"]);
     expect(trail("/admin/users")).toEqual(["Acasă", "Administrare (text)", "Utilizatori & Acces"]);
     expect(trail("/admin/groups")).toEqual(["Acasă", "Administrare (text)", "Grupuri"]);
     expect(trail("/admin/stamps")).toEqual(["Acasă", "Administrare (text)", "Ștampile"]);

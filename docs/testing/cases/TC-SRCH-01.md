@@ -27,7 +27,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Funcții" → „Căutare globală" in the left sidebar | The heading „Căutare globală" and, under it, „Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. …" |
+| 1 | Presses „Instrumente" → „Căutare globală" in the left sidebar | The heading „Căutare globală" and, under it, „Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. …" |
 | 2 | Types `TC-` into „Căutare nume / cod" (placeholder „ex. Popescu sau PPERS00012") | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „3 rezultate", and the address bar carries `?search=TC-` |

@@ -73,12 +73,15 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 
     // Step 7 — the sidebar's sections, scoped to the sidebar (helpers/sidebar.ts).
     const nav = sidebar(page);
-    // #38.20: the nine sections, in order.
-    const NINE = ["Tablou de bord", "Domeniu", "Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"];
-    for (const section of NINE) {
+    // #38.20: the sections, in order; #38.42: the six that hold a built screen.
+    const SIX = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Administrare", "Setări"];
+    for (const section of SIX) {
       await expect(nav.getByText(section, { exact: true })).toBeVisible();
     }
-    const tops = await Promise.all(NINE.map(async (s) => (await nav.getByText(s, { exact: true }).boundingBox())!.y));
+    for (const hidden of ["Funcții", "Rapoarte", "Studiu", "Ajutor"]) {
+      await expect(nav.getByText(hidden, { exact: true })).toHaveCount(0);
+    }
+    const tops = await Promise.all(SIX.map(async (s) => (await nav.getByText(s, { exact: true }).boundingBox())!.y));
     expect(tops).toEqual([...tops].sort((a, b) => a - b));
     // Step 7's „Recente": one folded bar, there even when nothing has been
     // opened (#38.28). What it unfolds is TC-LAYOUT-04's.
@@ -94,7 +97,8 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 // ── Step 9 ───────────────────────────────────────────────────────────────────
 
 // #38.20: the sections that were a superuser's until #38.21 — every account's since.
-const ADMIN_SECTIONS = ["Funcții", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor"] as const;
+// #38.42: those still drawn („Rapoarte", „Studiu" and „Ajutor" hold no built screen).
+const ADMIN_SECTIONS = ["Instrumente", "Import", "Administrare", "Setări"] as const;
 
 /** The sidebar's own <nav> — present for every role (#38.20: `data-sidebar-nav`). */
 function mainNav(page: Page) {
@@ -171,7 +175,7 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
     await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
   });
 
-  test("după administrator, contul care era „user” vede toate cele nouă secțiuni și Utilizatori & Acces", async ({ page }) => {
+  test("după administrator, contul care era „user” vede toate cele șase secțiuni și Utilizatori & Acces", async ({ page }) => {
     test.skip(
       !fs.existsSync(USER_STATE),
       "No `user` account signs in: E2E_USER_EMAIL / E2E_USER_PASSWORD are not in .env, or auth.setup.ts skipped them.",
