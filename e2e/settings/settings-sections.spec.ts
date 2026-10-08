@@ -18,11 +18,12 @@ const SHOTS = "playwright-report/settings-sections";
 
 async function photograph(page: Page, name: string): Promise<void> {
   for (const width of [1366, 1920]) {
-    await page.setViewportSize({ width, height: 900 });
+    // A window tall enough for the whole of „Setări”: `main` scrolls inside the page, so a
+    // shorter one photographed its upper part blank (20261008T093730Z-1005) and a full-page
+    // shot only the window's worth (20261008T095645Z-17464).
+    await page.setViewportSize({ width, height: 2400 });
     await page.waitForTimeout(300);
-    // The whole page, not `main`: an element taller than the window photographs with
-    // its upper part blank (the first run's 1920 picture, 20261008T093730Z-1005).
-    await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, fullPage: true });
+    await page.locator("main").screenshot({ path: `${SHOTS}/${name}-${width}.png` });
   }
   await page.setViewportSize({ width: 1366, height: 900 });
 }
