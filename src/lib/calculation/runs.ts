@@ -6,6 +6,7 @@
  *   listCalculationRuns        — all runs, newest first (for the history list)
  *   getCalculationRun          — full detail for one run (for the history detail page)
  *   getPropertyCalculationSource — find the run that created a given property (if any)
+ *   deleteCalculationRun       — remove one run (Slice #38.43)
  */
 
 import { desc, eq, sql } from "drizzle-orm";
@@ -253,4 +254,24 @@ export async function getPropertyPrincipalObjectId(
     .where(eq(property.id, propertyId))
     .limit(1);
   return row?.principalObjectId ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// deleteCalculationRun                                          (Slice #38.43)
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes one run — the row only. Its `calculation_run_output` rows go with it
+ * (ON DELETE CASCADE, migration_062); the properties and the group it created
+ * stay, because nothing references them from the run's side (Ask first 1). The
+ * code is never handed out again: `calculation_run_code_seq` only moves
+ * forward (Ask first 2). Returns the deleted run's code, or null when no run
+ * has that id.
+ */
+export async function deleteCalculationRun(id: string): Promise<{ code: string } | null> {
+  const [row] = await db
+    .delete(calculationRun)
+    .where(eq(calculationRun.id, id))
+    .returning({ code: calculationRun.code });
+  return row ?? null;
 }
