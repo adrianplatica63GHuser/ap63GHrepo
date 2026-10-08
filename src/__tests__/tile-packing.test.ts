@@ -13,7 +13,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { columnsIn, freeUnder, grow, overlaps, packTiles, packedHeight, topUnder, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
+import { columnsIn, fitsBeside, freeUnder, grow, overlaps, packTiles, packedHeight, topUnder, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 
 const GAP = 16;
 const UNIT = 148; // 9.25rem
@@ -229,5 +229,34 @@ describe("the screens", () => {
     expect(tiles).toContain('closest<HTMLElement>("[data-tile]")');
     expect(tiles).toContain("anchor={target.anchor}");
     expect(code(read("src", "components", "tiles", "preview-tile-body.tsx"))).toContain("data-preview-anchor={anchor}");
+  });
+});
+
+/** Slice #38.46 — the right column beside the left area, or wrapped under it as boxes of the row. */
+describe("the right column wrapped (#38.46)", () => {
+  it("fits beside when the widest left tile and the widest column tile fit in the row's units", () => {
+    expect(fitsBeside([3, 3, 2, 4], [4], 10)).toBe(true); // a person at 1920
+    expect(fitsBeside([3, 3, 2, 4], [4], 8)).toBe(true); // at 1600: 4 + 4
+    expect(fitsBeside([3, 3, 2, 4], [4], 7)).toBe(false); // at 1536
+    expect(fitsBeside([3, 3, 2, 4], [4], 6)).toBe(false); // at 1366
+    expect(fitsBeside([3, 3, 2], [3, 4, 3], 7)).toBe(true); // a property: the widest column tile counts
+    expect(fitsBeside([3], [], 1)).toBe(true); // no column, nothing to wrap
+  });
+
+  it("the wrapped tiles start a line of their own under the left tiles, in their order; the bar goes under them", () => {
+    const boxes: PackBox[] = [
+      { id: "a", units: 3, height: 300 },
+      { id: "b", units: 2, height: 100 },
+      { id: "m", units: 3, height: 378, under: true },
+      { id: "c", units: 3, height: 341, under: true },
+      { id: "bar", units: 1, height: 63, rowEnd: true },
+    ];
+    const placed = packTiles(boxes, 6, 16);
+    const at = (id: string) => placed.find((p) => p.id === id)!;
+    // „m" would have fitted beside „b" on the first line; it starts a new one, under „a".
+    expect(at("m")).toMatchObject({ col: 0, top: 316 });
+    // The next wrapped tile flows beside it, under „b" in its columns.
+    expect(at("c")).toMatchObject({ col: 3, top: 116 });
+    expect(at("bar").top).toBe(316 + 378 + 16);
   });
 });

@@ -12,6 +12,7 @@ import { grow, packTiles, settle, type PackBox, type Placed } from "@/lib/ui/til
 import {
   FIXED_PREFIX,
   ROW_STEP,
+  WRAPPED_PREFIX,
   canDrop,
   ceilingOf,
   dropAt,
@@ -544,5 +545,98 @@ describe("a drop leaves its space; a double-click rises one tile; a gap left on 
     expect(src).toContain('container.addEventListener("dblclick", onDouble)');
     expect(src).toMatch(/const onDouble = [\s\S]*?isDragSurface\(e\.target, e\.clientX, e\.clientY, box\.el\)[\s\S]*?riseOne\(placed, box\.id, metrics\(\)\.gap, lead\)[\s\S]*?store\(box\.id\)/);
     expect(src).toContain('container.removeEventListener("dblclick", onDouble)');
+  });
+});
+
+/**
+ * Slice #38.46 — a tile can be dropped under „Interacțiuni", beside the left
+ * area or wrapped under it. The persons' boxes as measured by the browser on a
+ * blank Natural Person and Judicial Person (units; heights in px): at 1920 px
+ * the row is 10 units, the left area 6, „Interacțiuni" fixed at col 6; at
+ * 1366 px the row is 6 units, and the column — 4 units beside a left area
+ * whose widest tile is 4 — no longer fits, so it wraps.
+ */
+describe("a tile dropped under „Interacțiuni”, beside or wrapped (#38.46)", () => {
+  const NP_LEFT: PackBox[] = [
+    { id: "identity", units: 3, height: 370 },
+    { id: "idCard", units: 3, height: 398 },
+    { id: "contact", units: 2, height: 364 },
+    { id: "addresses#0", units: 3, height: 342 },
+    { id: "addresses#1", units: 3, height: 294 },
+    { id: "related", units: 4, height: 184 },
+    { id: "classification", units: 3, height: 313 },
+    { id: "connections", units: 3, height: 383 },
+  ];
+  const JP_LEFT: PackBox[] = [
+    { id: "identity", units: 3, height: 306 },
+    { id: "contactPersons", units: 2, height: 360 },
+    { id: "addresses#0", units: 3, height: 366 },
+    { id: "addresses#1", units: 3, height: 294 },
+    { id: "related", units: 4, height: 184 },
+    { id: "classification", units: 3, height: 313 },
+    { id: "connections", units: 3, height: 383 },
+  ];
+  const BAR: PackBox = { id: "actions", units: 1, height: 63, rowEnd: true };
+  const INTER = 436;
+  const beside = (left: PackBox[]): PackBox[] => [{ id: `${FIXED_PREFIX}interactions`, units: 4, height: INTER, fixed: { col: 6, top: 0 } }, ...left, BAR];
+  const wrapped = (left: PackBox[]): PackBox[] => [...left, { id: `${WRAPPED_PREFIX}interactions`, units: 4, height: INTER, under: true }, BAR];
+
+  it.each([
+    ["Persoană fizică", NP_LEFT],
+    ["Persoană juridică", JP_LEFT],
+  ] as const)("%s at 1920: canDrop accepts a place under „Interacțiuni”, and the place holds after a reload", (_name, left) => {
+    const placed = placeWithStored(beside([...left]), {}, 10, GAP, 6).placed;
+    const tile = left[1].id;
+    const place = { col: 6, top: INTER + GAP + 40 };
+    expect(canDrop(placed, tile, place, 10, GAP)).toBe(true);
+    const stored = placesToStore(dropAt(placed, tile, place, GAP), {}, [], tile, 0, GAP);
+    const back = placeWithStored(beside([...left]), parseStoredPlaces(JSON.stringify(stored)), 10, GAP, 6);
+    expect(back.fallback).toEqual([]);
+    expect(at(back.placed, tile)).toMatchObject({ col: 6, top: INTER + GAP + 40 });
+  });
+
+  it.each([
+    ["Persoană fizică", NP_LEFT],
+    ["Persoană juridică", JP_LEFT],
+  ] as const)("%s at 1366, the column wrapped: „Interacțiuni” stands under the left tiles, the bar under it, and a tile dropped under it stays there", (_name, left) => {
+    const placed = placeWithStored(wrapped([...left]), {}, 6, GAP).placed;
+    const inter = at(placed, `${WRAPPED_PREFIX}interactions`);
+    // Its own line, from the left edge, under every left tile in its columns.
+    expect(inter.col).toBe(0);
+    for (const p of placed.filter((x) => !x.rowEnd && x.id !== inter.id && x.col < inter.col + inter.units)) expect(p.top + p.height + GAP).toBeLessThanOrEqual(inter.top);
+    expect(at(placed, "actions").top).toBeGreaterThanOrEqual(inter.top + INTER + GAP);
+    // Dropped under it, at the left edge.
+    const tile = left[1].id;
+    const place = { col: 0, top: inter.top + INTER + GAP + 40 };
+    expect(canDrop(placed, tile, place, 6, GAP)).toBe(true);
+    const dropped = dropAt(placed, tile, place, GAP);
+    expect(at(dropped, "actions").top).toBe(place.top + at(dropped, tile).height + GAP);
+    // The wrapped tile's place is stored with the rest, so after a reload the dropped tile is still under it.
+    const stored = placesToStore(dropped, {}, [], tile, 0, GAP);
+    expect(stored[`${WRAPPED_PREFIX}interactions`]).toMatchObject({ col: 0, top: inter.top });
+    const back = placeWithStored(wrapped([...left]), parseStoredPlaces(JSON.stringify(stored)), 6, GAP).placed;
+    expect(at(back, `${WRAPPED_PREFIX}interactions`).top).toBe(inter.top);
+    expect(at(back, tile)).toMatchObject({ col: 0, top: place.top });
+  });
+
+  it("a wrapped column's tile is storable, a fixed one is not; an arrangement stored beside is not rewritten when it wraps", () => {
+    expect(isStorable(`${WRAPPED_PREFIX}interactions`)).toBe(true);
+    expect(isStorable(`${FIXED_PREFIX}interactions`)).toBe(false);
+    const stored = placesToStore(placeWithStored(beside([...NP_LEFT]), {}, 10, GAP, 6).placed, {}, [], "identity", 0, GAP);
+    const r = placeWithStored(wrapped([...NP_LEFT]), stored, 6, GAP);
+    // Read only: the wrapped tile is placed by the rule, under everything in its columns.
+    expect(JSON.stringify(stored)).not.toContain(WRAPPED_PREFIX);
+    const inter = at(r.placed, `${WRAPPED_PREFIX}interactions`);
+    for (const p of r.placed.filter((x) => !x.rowEnd && x.id !== inter.id && x.col < inter.col + inter.units)) expect(p.top + p.height + GAP).toBeLessThanOrEqual(inter.top);
+  });
+
+  it("the hook decides beside or wrapped itself, takes the wrapped column out of the flow, and watches the row's width", () => {
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src).toContain("let wrap = els.length > 0 && !fitsBeside(left, column, rowUnits);");
+    expect(src).toContain('styles.set(right, "position", "absolute");');
+    expect(src).toContain("width.observe(container.parentElement)");
+    expect(src).toContain("under: true");
+    // Never dragged: the drag looks only among the left area's boxes.
+    expect(src).toContain("boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target))");
   });
 });
