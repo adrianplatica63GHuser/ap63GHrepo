@@ -337,7 +337,7 @@ export function placeWithStored(
   out.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
   let top = endsTop(out, gap);
   for (const box of ends) {
-    out.push({ id: box.id, col: 0, units: fcols, top, height: box.height, rowEnd: true });
+    out.push({ id: box.id, col: 0, units: cols, top, height: box.height, rowEnd: true }); // #38.47: the whole row
     top += box.height + gap;
   }
   return { placed: out, fallback: [...fallback], lead };

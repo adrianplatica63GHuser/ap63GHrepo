@@ -409,7 +409,9 @@ export function useTilePacking(
         styles.set(box.el, "left", `${p.col * (unit + gap)}px`);
         styles.set(box.el, "top", `${p.top}px`);
         styles.set(box.el, "margin", "0");
-        if (p.rowEnd || box.full) styles.set(box.el, "width", "100%");
+        // #38.47: the action bar spans the row's units, under the right column too; a banner the left area.
+        if (p.rowEnd) styles.set(box.el, "width", `${p.units * (unit + gap) - gap}px`);
+        else if (box.full) styles.set(box.el, "width", "100%");
         // A wrapped column tile does not hold the left area open: it is not in it.
         else if (!rightBoxes.includes(box)) widest = Math.max(widest, ownWidth(box.el));
         box.el.dataset.packedCol = String(p.col);

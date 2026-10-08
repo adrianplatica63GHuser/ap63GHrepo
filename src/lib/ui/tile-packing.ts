@@ -45,8 +45,16 @@
  * left area's columns (`flowColumns`), so a screen opens as before, the column
  * alone on the right; the space under the lowest fixed box is free for a
  * DRAGGED tile (`canDrop` sees the row's whole width). A fixed box that grows
- * pushes the boxes under it down, as any box does. The action bar stands under
- * every box that is not fixed: the column beside it is not in its way.
+ * pushes the boxes under it down, as any box does.
+ *
+ * THE ACTION BAR IS THE LOWEST THING ON THE SCREEN (Slice #38.47). This said
+ * „The action bar stands under every box that is not fixed: the column beside
+ * it is not in its way." It was in its way: a column taller than the left
+ * tiles — a Property's map, corners and Street View, a long „Pagini" — reached
+ * below the buttons. Now the bar stands under every box, the fixed ones too
+ * (`endsTop`), and spans the row's whole width, under both areas; with the
+ * column wrapped (#38.46) its tiles are boxes of the row and the bar is under
+ * them as well.
  *
  * A WRAPPED COLUMN (Slice #38.46). When the left area's widest tile and the
  * column no longer fit side by side (`fitsBeside`), the column's tiles are no
@@ -173,8 +181,10 @@ export function packTiles(boxes: readonly PackBox[], columns: number, gap: numbe
     next = col + units >= cols ? 0 : col + units;
   }
   let top = endsTop(placed, gap);
+  // #38.47: across the whole row, under both areas.
+  const across = Math.max(1, Math.floor(columns));
   for (const box of ends) {
-    placed.push({ id: box.id, col: 0, units: cols, top, height: box.height, rowEnd: true });
+    placed.push({ id: box.id, col: 0, units: across, top, height: box.height, rowEnd: true });
     top += box.height + gap;
   }
   return placed;
@@ -187,9 +197,9 @@ export function fixedBoxes(boxes: readonly PackBox[]): Placed[] {
     .map((b) => ({ id: b.id, col: b.fixed!.col, units: Math.max(1, Math.round(b.units)), top: b.fixed!.top, height: b.height, fixed: true }));
 }
 
-/** Where the row-end boxes start: under every box but the fixed ones and the row ends. */
+/** Where the row-end boxes start: under every box, the fixed ones too (#38.47), but the row ends. */
 export function endsTop(placed: readonly Placed[], gap: number): number {
-  const body = placed.filter((p) => !p.rowEnd && !p.fixed);
+  const body = placed.filter((p) => !p.rowEnd);
   return body.length ? Math.max(...body.map(bottom)) + gap : 0;
 }
 
