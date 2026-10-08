@@ -29,7 +29,9 @@ describe("one line per row (#38.50)", () => {
 
   it("every row cell is one line, cut with „…”, its whole text in a tooltip; the old wrapping is gone", () => {
     expect(MODAL).not.toContain("wrapsIf(");
-    expect(MODAL).toContain("title={cellText(cell, row)}");
+    // Slice #38.50 had `title={cellText(cell, row)}` on every cell. Slice #38.53: a document type's name says
+    // itself in its own tooltip, the key under it (document-type-key-tip.test.tsx) — every other cell as before.
+    expect(MODAL).toContain('title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}');
     expect((MODAL.match(/\bONE_LINE\b/g) ?? []).length).toBeGreaterThanOrEqual(4); // import, cells, status, usage
   });
 

@@ -26,8 +26,10 @@ async function reading(page: Page, skip: string[]) {
         }
         if (skipCols.includes(heads[i].innerText.split("\n")[0])) return;
         const cs = getComputedStyle(td);
-        const cut = td.scrollWidth > td.clientWidth + 1;
-        if (cs.whiteSpace !== "nowrap" || cs.textOverflow !== "ellipsis" || (cut && !(td.title || "").trim())) cellsOk.push(`${heads[i].innerText}: ${td.innerText}`);
+        // #38.53: a document type's name is cut inside its tooltip's span, and that tooltip (not `title`) says it whole.
+        const tip = td.querySelector<HTMLElement>("[data-name-tip]");
+        const cut = (tip ?? td).scrollWidth > (tip ?? td).clientWidth + 1;
+        if (cs.whiteSpace !== "nowrap" || cs.textOverflow !== "ellipsis" || (cut && !tip && !(td.title || "").trim())) cellsOk.push(`${heads[i].innerText}: ${td.innerText}`);
       });
     }
     const heights = rows.map((r) => Math.round(r.getBoundingClientRect().height));

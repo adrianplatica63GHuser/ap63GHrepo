@@ -153,6 +153,7 @@ fixed fixture where the existing one will do.
 | [TC-VL-04](cases/TC-VL-04.md) | Un tip de act pe pagina lui: General, Formular, Roluri; un rol bifat aici apare în panoul rolului | reference-data | happy | — | `automated` | 2026-10-08 | `e2e/admin/document-type-page.spec.ts` |
 | [TC-VL-05](cases/TC-VL-05.md) | „Date de referință”: tabele înguste, câte un rând pe linie, butoanele unul lângă altul | value lists | happy | — | `automated` | 2026-10-08 | `e2e/admin/reference-tables-one-line.spec.ts` |
 | [TC-VL-06](cases/TC-VL-06.md) | Tipuri de document: „Cu formular” și „Fără formular”, fiecare singur și amândouă | value lists | happy | — | `automated` | 2026-10-08 | `e2e/admin/document-type-form-filter.spec.ts` |
+| [TC-VL-07](cases/TC-VL-07.md) | Tipuri de document: fără coloana „Cheie”; cheia în bula denumirii | value lists | happy | — | `automated` | 2026-10-08 | `e2e/admin/document-type-key-tip.spec.ts` |
 | [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
