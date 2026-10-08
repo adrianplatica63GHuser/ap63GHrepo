@@ -1098,8 +1098,10 @@ describe("the sibling panels say their failures in Romanian", () => {
   // than merged because the tables behind them are two booleans now.
   // „Persoană → Document" keeps its panel: `lookup_doc_type_person_role` is
   // unique over the PAIR and does not collapse.
+  // Slice #38.36: the grid is gone; its rows live in a role's panel, `role-doc-types.tsx`,
+  // whose writes report through one `failed` handler (`setError(tErr(`).
   const PANELS = [
-    "document-persons-modal.tsx",
+    "role-doc-types.tsx",
   ] as const;
 
   it.each(PANELS)("%s — has an onError on its delete, and never renders err.message", (file) => {
@@ -1112,7 +1114,7 @@ describe("the sibling panels say their failures in Romanian", () => {
     // adversarial round deleted the whole `onError` and watched a
     // `/setDeleteError\(/` guard stay green on the three CLEARING calls that
     // remain (open, cancel, success). Only the failure handler translates.
-    expect([file, /setDeleteError\(tErr\(/.test(body)]).toEqual([file, true]);
+    expect([file, /setError\(tErr\(/.test(body) && /onError: failed/.test(body)]).toEqual([file, true]);
     // ⚠️ **`err.message` is the SERVER'S ENGLISH** — "Delete failed (404)",
     // "Invalid input", "This role is already in the list" — on a screen
     // CLAUDE.md's first rule says must never show any.
@@ -1184,7 +1186,7 @@ describe("the sibling panels say their failures in Romanian", () => {
         "doc-distinct-roles"],
       [["app", "judicial-persons", "[id]", "associate-document", "associate-document-view.tsx"],
         "doc-distinct-roles"],
-      [["app", "admin", "value-lists", "_components", "document-persons-modal.tsx"],
+      [["app", "admin", "value-lists", "_components", "role-doc-types.tsx"],
         "doc-type-person-roles"],
     ];
 

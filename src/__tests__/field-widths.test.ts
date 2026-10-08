@@ -1246,7 +1246,7 @@ describe("the value-list editors and the Form editor on the unit (Slice #37.37)"
   const DIR = ["src", "app", "admin", "value-lists", "_components"];
   const FILES: [string, string][] = [
     ["the value-list editor", code(read(...DIR, "value-list-modal.tsx"))],
-    ["„Roluri pe Document”", code(read(...DIR, "document-persons-modal.tsx"))],
+    // Slice #38.36: „Roluri pe Document" is gone; a role's document types are a list inside the role's form.
     ["the Form editor", code(read(...DIR, "document-type-form-editor.tsx"))],
   ];
 

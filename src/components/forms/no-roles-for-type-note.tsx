@@ -76,17 +76,12 @@ import { useTranslations } from "next-intl";
  * keeps the half-made association on screen, which is the argument
  * `import-types-blocked-stage.tsx` makes for the second one.
  *
- * ⚠️ **IT CANNOT CARRY THE ROW, AND THAT IS A LIMIT RATHER THAN AN OVERSIGHT.**
- * `import-types-blocked-stage.tsx` puts `?type=<id>` in its link because the
- * screen it opens takes one. This route takes `?list=` and `?add=<name>` only —
- * `add` seeds a NEW type's name, which is the wrong verb here — and the roles
- * grid is a toolbar button over the list rather than a deep link. So this lands
- * on the document-types list and the sentence beside it names the button. A
- * `?docPersons=` parameter would remove that last step; it is in the handover
- * rather than in this slice, because it reaches `page.tsx`, `ValueListHub` and
- * `ValueListModal` and re-opens the latch paragraph above.
+ * Slice #38.36: it lands on „Roluri", where a role's own panel holds its
+ * document types (the „Roluri pe Document" grid behind the document types'
+ * toolbar is gone). It cannot open the right role — the link does not know which
+ * one the user meant — so the sentence beside it says where to go from there.
  */
-const DOCUMENT_TYPES_HREF = "/admin/value-lists?list=document-types";
+const ROLES_HREF = "/admin/value-lists?list=person-roles";
 
 export function NoRolesForTypeNote({
   show,
@@ -147,7 +142,7 @@ export function NoRolesForTypeNote({
           {canConfigureRoles && (
             <p className="mt-1.5">
               <Link
-                href={DOCUMENT_TYPES_HREF}
+                href={ROLES_HREF}
                 target="_blank"
                 rel="noreferrer"
                 className="font-medium text-cta underline underline-offset-2 dark:text-amber-200"

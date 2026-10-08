@@ -508,10 +508,12 @@ describe("a document type with no person roles configured", () => {
    * is gated on `canConfigureRoles`; the reader who does not get it is the one
    * who most needs to be told where to send an administrator.
    */
-  it("says it in Romanian, names the grid, and says the association can still be made", () => {
+  // Slice #38.36: the grid is gone — a role's document types are in the role's own panel, and
+  // the sentence names that path („Date de referință → Roluri → rolul → „Act”").
+  it("says it in Romanian, names the role's panel, and says the association can still be made", () => {
     const note = at(messages("ro-RO"), "shared.noRolesForType") as string;
-    expect(note).toContain("Roluri pe Document");
-    expect(note).toContain("Tipuri de Document");
+    expect(note).toContain("Date de referință → Roluri → rolul → „Act”");
+    expect(note).not.toContain("Roluri pe Document");
     expect(note).toContain("fără rol");
   });
 
@@ -522,9 +524,9 @@ describe("a document type with no person roles configured", () => {
    * longer exists — and this slice corrected the last two sentences that still
    * said it, in the AI party linker.
    */
-  it.each(["ro-RO", "en-GB"] as const)("%s points at the grid where #34.10 put it, in a new tab", (locale) => {
+  it.each(["ro-RO", "en-GB"] as const)("%s points at „Roluri”, where #38.36 put a role's types, in a new tab", (locale) => {
     const note = read("components", "forms", "no-roles-for-type-note.tsx");
-    expect(note).toContain('"/admin/value-lists?list=document-types"');
+    expect(note).toContain('"/admin/value-lists?list=person-roles"');
     expect(note).toContain('target="_blank"');
     // ⚠️ **A link that opens a new tab has to SAY so, and the label is where
     // it says it.** `import-types-blocked-stage.tsx` makes the same promise in
@@ -537,7 +539,9 @@ describe("a document type with no person roles configured", () => {
   it.each(["ro-RO", "en-GB"] as const)("%s sends the AI party linker to the same place", (locale) => {
     for (const key of ["roleMissingBody", "roleMissingAfterCreate"]) {
       const s = at(messages(locale), `document.aiPartyLinker.${key}`) as string;
-      expect([locale, key, /Document Persons|Roluri pe Document/.test(s)]).toEqual([locale, key, true]);
+      // Slice #38.36: the role's panel, no longer the grid.
+      expect([locale, key, /Roluri → rolul → „Act”|Roles → the role → “Document”/.test(s)]).toEqual([locale, key, true]);
+      expect([locale, key, /Document Persons|Roluri pe Document/.test(s)]).toEqual([locale, key, false]);
       // The route #34.10 deleted. `valueList.lists.personToDocument` is gone
       // from both files and the hub has no such button.
       expect([locale, key, /Persoane document/.test(s)]).toEqual([locale, key, false]);

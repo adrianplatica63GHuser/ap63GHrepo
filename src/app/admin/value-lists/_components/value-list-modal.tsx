@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ClipboardList, FolderInput, Merge, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
+import { ClipboardList, FolderInput, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import {
@@ -38,8 +38,8 @@ import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
-import { DocumentPersonsModal } from "./document-persons-modal";
 import { usedFirst } from "@/lib/admin/value-lists/categories";
+import { RoleScope } from "./role-doc-types";
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
@@ -302,8 +302,8 @@ async function reassignRows(
  *   property-property-roles          properties/[id]/associate-reference/associate-reference-view.tsx
  *   document-document-roles          documents/[id]/associate-reference/associate-reference-view.tsx
  *   doc-distinct-roles               the two associate-document views
- *   doc-type-person-roles            _components/document-persons-modal.tsx  (opened from
- *                                    THIS modal's toolbar since Slice #34.10)
+ *   doc-type-person-roles            _components/role-doc-types.tsx  (a role's panel,
+ *                                    since Slice #38.36; the grid is gone)
  *
  * ⚠️ **THIS TABLE LOST FIVE ROWS IN SLICE #34.04, AND THE LESSON IS WHY A
  * BRANCH EXISTS AT ALL.** `property-person-roles-whitelist`,
@@ -485,6 +485,7 @@ function EditForm({
   const fields = meta.fields.filter(
     (f) => state.id === null || f.createOnly !== true,
   );
+  const isRole = listKey === "person-roles";
   const [values, setValues] = useState<Record<string, unknown>>(state.values);
   // A CODE, not the server's message: those are English ("Validation failed",
   // "Internal server error") and this form is on a Romanian-only screen. Fixed
@@ -541,6 +542,8 @@ function EditForm({
 
       <div className="flex flex-wrap gap-3">
         {fields.map((f, i) => {
+          // Slice #38.36: a role's two flags are chips, with „Act", under the fields (`RoleScope`).
+          if (isRole && (f.key === "validForProperty" || f.key === "validForPerson")) return null;
           // Slice #19.02: checkbox field
           if (f.type === "checkbox") {
             return (
@@ -603,6 +606,16 @@ function EditForm({
             </div>
           );
         })}
+        {/* Slice #38.36: the role's one panel — where it applies, and for Act its document types. */}
+        {isRole && (
+          <RoleScope
+            roleId={state.id}
+            roleName={String(values.name ?? "")}
+            validForProperty={Boolean(values.validForProperty)}
+            validForPerson={Boolean(values.validForPerson)}
+            onToggle={(key, on) => setValues((prev) => ({ ...prev, [key]: on }))}
+          />
+        )}
       </div>
 
       {/* ⚠️ **`role="alert"`, and Slice #32.07 is what made its absence
@@ -696,21 +709,6 @@ export function ValueListModal({
   onClose?: () => void;
 }) {
   const t = useTranslations("valueList");
-  /**
-   * The moved panel's OWN namespace, read here for its title alone.
-   *                                                              (Slice #34.10)
-   *
-   * ⚠️ **The button is labelled from `documentPersons.title`, not from a key of
-   * this screen's own** — that is what "re-homed rather than orphaned" means
-   * here. The hub's `lists.personToDocument` („Persoană → Document") is gone
-   * with the button it named, and this button carries the panel's real name,
-   * „Roluri pe Document". Two consequences that are the point rather than side
-   * effects: the button and the dialog heading it opens now say the same words,
-   * and `confirm.roleWhitelistPending` and `dependents.docTypePersonRoleWhitelist`
-   * — two sentences elsewhere in this file that already told the user to go to
-   * „Roluri pe Document" by name — now name something the user can see.
-   */
-  const tDocPersons = useTranslations("valueList.documentPersons");
   const meta = LIST_META[listKey];
   // Names the panel for assistive technology — and it has to, now that focus
   // can LAND here (after a delete, when the button that opened the dialog has
@@ -737,35 +735,9 @@ export function ValueListModal({
   // ancestor — so by effect time `document.activeElement` is already `body`.
   // (The lesson is written up in `cancel-import-dialog.tsx`.)
   const formEditorOpenerRef = useRef<HTMLElement | null>(null);
-  /**
-   * „Roluri pe Document" — the document-type ↔ person-role grid.
-   *                                                              (Slice #34.10)
-   *
-   * ⚠️ **IT MOVED HERE FROM THE HUB, AND WHY IT COULD NOT BECOME A CHECKBOX IS
-   * THE REASON IT IS STILL A SEPARATE PANEL.** #34.04 folded
-   * „Persoană → Proprietate" and „Persoană → Persoană" into two boolean columns
-   * on the „Roluri Persoană" row, and its comment on the hub says in as many
-   * words why this one could not follow: `lookup_doc_type_person_role` is
-   * unique over the PAIR `(document_type_id, person_role_id)` — „Vânzător" is a
-   * valid party on a sale contract and not on a cadastral plan — so it is a
-   * grid, and a bit cannot hold it. The grid stays a grid.
-   *
-   * ⚠️ **What the move buys is adjacency, not a smaller table.** „Who may
-   * appear on this kind of document?" and „what fields does this kind of
-   * document have?" are the same question asked twice, and they configure the
-   * same row. Sat under „Roluri" on the hub, the first was two screens away
-   * from the second and in front of somebody thinking about ROLES; here it is
-   * one button from the Form editor and in front of somebody already thinking
-   * about TYPES — which is also where the unconfigured types are listed.
-   *
-   * ⚠️ **The cache needed nothing.** The grid already reads
-   * `["value-list", "document-types"]` and `["value-list", "person-roles"]` —
-   * the same entries this modal fetches and invalidates — so opening it from
-   * here sees this list's own writes, and a type added in the row below is in
-   * its dropdown without a refetch anyone had to write.
-   */
-  const [showDocPersons, setShowDocPersons] = useState(false);
-  const docPersonsOpenerRef = useRef<HTMLButtonElement | null>(null);
+  // Slice #38.36: „Roluri pe Document" — the grid that sat behind this list's
+  // toolbar — is gone. A role's document types are set in the role's own panel
+  // (`role-doc-types.tsx`), and #38.39 shows them from the type's side.
   // Same trick for the delete confirmation (Slice #29.05): captured in the
   // click handler, because the same commit marks this panel `inert` and the
   // HTML focus-fixup rule has already blurred the button by effect time.
@@ -858,24 +830,6 @@ export function ValueListModal({
   }, [formEditorRow]);
 
   /**
-   * …and the same restore for „Roluri pe Document".            (Slice #34.10)
-   *
-   * ⚠️ **Its own effect rather than a term added to the one above**, because
-   * the two dialogs open and close independently and a shared effect would
-   * restore focus to the wrong opener whenever both had been used. The
-   * `isConnected` test is the same one and matters for the same reason — except
-   * that here it can only fail if the whole list is re-rendered underneath,
-   * since this button, unlike the Form button, is not inside a row the grid's
-   * own writes can remove.
-   */
-  useEffect(() => {
-    if (showDocPersons) return;
-    const opener = docPersonsOpenerRef.current;
-    docPersonsOpenerRef.current = null;
-    if (opener?.isConnected) opener.focus();
-  }, [showDocPersons]);
-
-  /**
    * The same restore for the delete confirmation — with one difference.
    *
    * After a DELETE the opener is gone (see `onDeleted` below, which clears the
@@ -903,17 +857,6 @@ export function ValueListModal({
         // list modal underneath closes too, so Escape out of the editor lands
         // the administrator back on Reference Data instead of on the list.
         if (formEditorRow) return;
-        // ⚠️ **AND THE SAME FOR „Roluri pe Document" — Slice #34.10, and this
-        // omission was a REGRESSION THE MOVE CREATED.** That grid used to be
-        // rendered by `value-list-hub.tsx`, a plain page with no `keydown`
-        // listener at all, so nothing competed with its own Escape handler.
-        // Mounted here instead, it sits under this one: both listeners are on
-        // `document`, `document-persons-modal.tsx` calls no `stopPropagation`,
-        // so one keypress closed the grid AND unmounted this list — landing the
-        // administrator on the Reference Data hub having lost the Document
-        // Types list. Verbatim the failure the paragraph above records #27.03
-        // fixing for the form editor. Found by an adversarial round.
-        if (showDocPersons) return;
         // The delete dialog handles its own Escape — it has to, because it
         // must ignore the key while a move is in flight, and this handler
         // cannot see that. Guarded on what is RENDERED (`confirmDeleteRow`),
@@ -926,7 +869,7 @@ export function ValueListModal({
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [confirmDeleteRow, form, formEditorRow, showDocPersons, onClose]);
+  }, [confirmDeleteRow, form, formEditorRow, onClose]);
 
   function startAdd() {
     setForm({ id: null, values: blankFormValues(meta) });
@@ -1330,7 +1273,7 @@ export function ValueListModal({
         // path reached "Formular", which mounts the z-70 editor over the z-60
         // confirmation — the exact stack `document-type-form-editor.tsx`
         // documents as unreachable by Escape.)
-        inert={!!formEditorRow || !!confirmDeleteRow || showDocPersons}
+        inert={!!formEditorRow || !!confirmDeleteRow}
         className="rounded-xl border border-card-rim bg-card shadow-sm focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
         style={dialogCardStyle(VALUE_LIST_CARD_UNITS)}
       >
@@ -1377,35 +1320,6 @@ export function ValueListModal({
                 onClick={startAdd}
                 disabled={!!form}
               />
-              {/* Slice #34.10 — „Roluri pe Document", moved off the hub.
-                  See `showDocPersons` above for why it is a grid and why it
-                  belongs beside the Form button rather than under „Roluri".
-
-                  ⚠️ **`secondary`, not `primary`.** „+ Adaugă" is what this
-                  screen is for; this opens a different table over the top of
-                  it. Two primaries side by side would make them read as a
-                  choice between equals.
-
-                  ⚠️ **Not disabled by `form`, unlike every other control in
-                  this toolbar.** Those all write to THIS list, so an open
-                  add/edit form is an unsaved edit they would clobber. This one
-                  writes to a junction table and touches no row here — and a
-                  half-typed new type is exactly when somebody wants to check
-                  which roles it will accept. */}
-              {isDocumentTypes && (
-                // #37.46 (A086): Users + „Roluri pe Document".
-                <IconButton
-                  icon={Users}
-                  label={tDocPersons("title")}
-                  showLabel
-                  variant="secondary"
-                  size="sm"
-                  onClick={(e) => {
-                    docPersonsOpenerRef.current = e.currentTarget;
-                    setShowDocPersons(true);
-                  }}
-                />
-              )}
               </div>
               {/* Slice #27.07: the onboarding backlog, in one click.
 
@@ -1755,14 +1669,6 @@ export function ValueListModal({
       {/* Slice #27.03: the template-fields editor for one document type.
           Keyed on the row so reopening a different type remounts it with that
           type's fields rather than keeping the first one's local edits. */}
-      {/* Slice #34.10 — „Roluri pe Document", over this list rather than over
-          the hub. It renders the whole cross-product grid and takes no row
-          context, exactly as it did before the move: it configures document
-          types as a class, which is why it sits in this list's toolbar and not
-          on a row's action cell beside "Formular". */}
-      {showDocPersons && (
-        <DocumentPersonsModal onClose={() => setShowDocPersons(false)} />
-      )}
 
       {formEditorRow && (
         <DocumentTypeFormEditor

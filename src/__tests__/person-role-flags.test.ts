@@ -340,16 +340,18 @@ describe("the two endpoints, their keys and their panels are gone", () => {
    * `updateValue` full-replaces, so a rename in that state unticks both flags
    * and blanks the description. `select` is what keeps one key one shape.
    */
+  // Slice #38.36: the grid is gone; the role panel's document types read the same key, the same way.
   it("and the panel that shares those keys projects in a select, not the queryFn", () => {
-    const panel = code(read("app", "admin", "value-lists", "_components", "document-persons-modal.tsx"));
+    const panel = code(read("app", "admin", "value-lists", "_components", "role-doc-types.tsx"));
     expect(panel).toMatch(/select:\s*toLookupItems/);
     // The fetcher hands back what the API sent. A `.map(` inside it is the
     // defect returning.
     const fetcher = /async function fetchValueListRows[\s\S]*?\n\}/.exec(panel)?.[0] ?? "";
     expect(fetcher).toContain("data.items");
     expect(fetcher).not.toContain(".map(");
-    // …and both shared keys go through it.
-    for (const list of ["person-roles", "document-types"]) {
+    // …and the shared key it reads goes through it (the role is the panel's own, so
+    // „person-roles" is no longer read here).
+    for (const list of ["document-types"]) {
       expect([list, panel.includes(`fetchValueListRows("${list}")`)]).toEqual([list, true]);
     }
   });
@@ -510,8 +512,12 @@ describe("the two labels are the panel names, in one place", () => {
     for (const ns of ["propertyPersons", "personPersonRoles"]) {
       expect([locale, ns, at(m, `valueList.${ns}`)]).toEqual([locale, ns, undefined]);
     }
-    // …and the panel that survives keeps its own.
-    expect([locale, typeof at(m, "valueList.documentPersons.title")]).toEqual([locale, "string"]);
+    // Slice #38.36 inverted this in place. It read „…and the panel that survives keeps its own"
+    // and asserted `valueList.documentPersons.title` a string. That grid is gone too — a role's
+    // document types are in the role's own panel — so its namespace went with it, and the
+    // role panel's is the one that must exist.
+    expect([locale, at(m, "valueList.documentPersons")]).toEqual([locale, undefined]);
+    expect([locale, typeof at(m, "valueList.roleEditor.holdsShareLabel")]).toEqual([locale, "string"]);
   });
 
   /**

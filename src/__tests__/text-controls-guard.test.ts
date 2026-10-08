@@ -110,10 +110,6 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/admin/users/users-access-client.tsx": [
     ["A075", "{tabKey === \"pending\" ? t(\"tabs.pending\") : t(\"tabs.hist"],
   ],
-  "src/app/admin/value-lists/_components/document-persons-modal.tsx": [
-    ["A110", "{deleteMutation.isPending ? t(\"deleting\") : t(\"delete\")}"],
-    ["A110", "{t(\"cancel\")}"],
-  ],
   "src/app/admin/value-lists/_components/document-type-form-editor.tsx": [
     ["A110", "{pending.kind === \"discard\" ? t(\"confirmDiscard\") : t(\"c"],
     ["A110", "{t(\"cancel\")}"],

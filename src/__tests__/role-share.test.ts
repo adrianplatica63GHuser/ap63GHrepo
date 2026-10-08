@@ -199,11 +199,12 @@ describe("every path that writes or offers a share reads the tick", () => {
     expect(route).toMatch(/holdsShare:\s+personRoleId !== null && holdsShareById\.get\(personRoleId\) === true,/);
   });
 
-  it("the tick is set on „Persoană → Document”, beside the role it qualifies", () => {
-    const modal = read("src", "app", "admin", "value-lists", "_components", "document-persons-modal.tsx");
-    expect(modal).toMatch(/\["documentType", "valueName", "valueFlag", "rowActions"\]/);
-    expect(modal).toMatch(/checked=\{pendingShare\[row\.id\] \?\? row\.holdsShare\}/);
-    expect(modal).toMatch(/method: "PATCH"/);
+  // Slice #38.36: in the role's own panel, one row per document type — the grid is gone.
+  it("the tick is set in the role's panel, beside the document type it qualifies", () => {
+    const panel = read("src", "app", "admin", "value-lists", "_components", "role-doc-types.tsx");
+    expect(panel).toMatch(/checked=\{pendingShare\[p\.id\] \?\? p\.holdsShare\}/);
+    expect(panel).toContain("setPairHoldsShare(id, holdsShare)");
+    expect(read("src", "lib", "admin", "doc-type-person-roles", "client.ts")).toMatch(/method: "PATCH"/);
   });
 
   it("migration_091 adds the column NOT NULL DEFAULT false and ticks only the ownership roles", () => {

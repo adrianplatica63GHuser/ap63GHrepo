@@ -5,7 +5,7 @@
  * List queries join both sides so the caller receives display names directly.
  */
 
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   lookupDocTypePersonRole,
@@ -23,7 +23,21 @@ export type DocTypePersonRoleRow = {
   personRoleName: string;
   /** Slice #37.59: this role, on this type, holds a share in the property. */
   holdsShare: boolean;
+  /**
+   * Slice #38.36: how many person ↔ document links use this role on documents
+   * of this type — what a role's panel says before the type is taken off it.
+   * Present on the list; a freshly created pair has none.
+   */
+  linkCount?: number;
 };
+
+/** Links using the pair: person_document rows with this role, on documents of this type. */
+const linkCountOfPair = sql<number>`(
+  SELECT count(*)::int FROM person_document pd
+    JOIN document d ON d.id = pd.document_id
+   WHERE d.document_type_id = ${lookupDocTypePersonRole.documentTypeId}
+     AND pd.person_role_id = ${lookupDocTypePersonRole.personRoleId}
+)`;
 
 // ── List ──────────────────────────────────────────────────────────────────────
 
@@ -36,6 +50,7 @@ export async function listDocTypePersonRoles(): Promise<DocTypePersonRoleRow[]> 
       documentTypeName: lookupDocumentType.name,
       personRoleName:   lookupPersonRole.name,
       holdsShare:       lookupDocTypePersonRole.holdsShare,
+      linkCount:        linkCountOfPair,
     })
     .from(lookupDocTypePersonRole)
     .innerJoin(

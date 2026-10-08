@@ -39,7 +39,6 @@ const FILES = [
   "src/app/admin/stamps/_components/stamp-applicator.tsx",
   "src/app/admin/stamps/_components/stamps-list-view.tsx",
   "src/app/admin/tags/_components/tag-manager.tsx",
-  "src/app/admin/value-lists/_components/document-persons-modal.tsx",
   "src/app/admin/value-lists/_components/document-type-form-editor.tsx",
   "src/app/admin/value-lists/_components/value-list-modal.tsx",
   "src/app/documents/[id]/associate-party/associate-party-view.tsx",
@@ -77,7 +76,6 @@ const WORDS = new Set(["Salvează", "Anulează", "Renunță", "Închide", "Șter
 const A110: Record<string, Record<string, number>> = {
   "src/app/admin/groups/_components/groups-list-view.tsx": { "group.confirm.delete": 1, "group.confirm.cancel": 1 },
   "src/app/admin/stamps/_components/stamps-list-view.tsx": { "stamp.confirm.delete": 1, "stamp.confirm.cancel": 1 },
-  "src/app/admin/value-lists/_components/document-persons-modal.tsx": { "valueList.documentPersons.delete": 1, "valueList.documentPersons.cancel": 1 },
   "src/app/admin/value-lists/_components/document-type-form-editor.tsx": { "valueList.templateFields.confirmDiscard": 1, "valueList.templateFields.cancel": 1 },
   "src/app/admin/value-lists/_components/value-list-modal.tsx": { "valueList.confirm.delete": 1, "valueList.confirm.cancel": 1 },
   "src/app/documents/_components/pages-panel.tsx": { "document.pages.deleteConfirm.yes": 1, "document.pages.deleteConfirm.no": 1 },
