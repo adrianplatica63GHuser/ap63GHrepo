@@ -40,6 +40,14 @@
  * so there is no space beside it, or fewer units) falls back, not written
  * over; one a grown fixed tile now reaches into is pushed down.
  *
+ * THE COLUMN WRAPPED (Slice #38.46). #37.79 read „While the column is wrapped
+ * under the left area there are no fixed boxes" and left it at that: the
+ * column then stood outside the packing, under the left area, so a tile
+ * dropped „under" it landed in the left area and pushed it down again. Now its
+ * tiles are boxes of the row (`WRAPPED_PREFIX`, `PackBox.under`), placed
+ * under the left tiles and stored like tiles, so a tile dropped under one
+ * stays there after a reload.
+ *
  * RISEN INTO THE GAPS (Slice #38.16). A stored arrangement is laid out on
  * records it was not made on: a tile above may be unticked, shorter or empty,
  * and its stored places then leave holes — a tile the user put under two
@@ -114,6 +122,14 @@ export function isStorable(id: string): boolean {
 
 /** A right-column tile's box id (Slice #37.79): `fixed:<tile>`. */
 export const FIXED_PREFIX = "fixed:";
+
+/**
+ * A right-column tile's box id while the column is wrapped under the left
+ * area (Slice #38.46): `wrapped:<tile>`. Placed and stored like a tile, so a
+ * tile dropped under it stays there after a reload; never dragged. Beside, the
+ * same tile is `fixed:<tile>`, and its wrapped entry is kept for next time.
+ */
+export const WRAPPED_PREFIX = "wrapped:";
 
 /** The stored places, each checked; anything corrupt or out of range is left out. */
 export function parseStoredPlaces(raw: string | null | undefined): Record<string, StoredPlace> {
@@ -285,11 +301,16 @@ export function placeWithStored(
   const flow: Placed[] = [];
   const ends: PackBox[] = [];
   let next = 0;
+  let under = false; // #38.46: the wrapped column's line has started
   for (const box of boxes) {
     if (placed.some((p) => p.id === box.id)) continue;
     if (box.rowEnd) {
       ends.push(box);
       continue;
+    }
+    if (box.under && !under) {
+      under = true;
+      next = 0;
     }
     const units = box.full ? fcols : Math.max(1, Math.min(Math.round(box.units), fcols));
     const all = [...placed, ...flow];
@@ -301,7 +322,8 @@ export function placeWithStored(
     }
     if (next > 0 && next + units > fcols) next = 0;
     const col = next;
-    const top = firstFree(all, col, units, box.height, topUnder(flow, col, units, gap), gap);
+    // A wrapped column tile goes under every box above it in its columns, a stored one too (#38.46).
+    const top = firstFree(all, col, units, box.height, topUnder(box.under ? all : flow, col, units, gap), gap);
     flow.push({ id: box.id, col, units, top, height: box.height });
     next = col + units >= fcols ? 0 : col + units;
   }

@@ -27,7 +27,11 @@
  * (`min-width: min-content`), so when that tile and the column no longer fit
  * side by side the column wraps under the left area — the form first (#37.56's
  * Ask first). The row is still `unitRowStyle`'s whole units, and so, since the
- * column is whole units, is the left area.
+ * column is whole units, is the left area. Since #38.46 the packing hook makes
+ * that call itself (`fitsBeside`) and, wrapped, takes the column out of the
+ * flow and places its tiles as boxes of the row, under the left tiles: a
+ * column wrapped as a flex line of its own was outside the packing, so nothing
+ * could be dropped under it.
  */
 import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useTilePacking } from "./use-tile-packing";

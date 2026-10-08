@@ -48,6 +48,13 @@
  * pushes the boxes under it down, as any box does. The action bar stands under
  * every box that is not fixed: the column beside it is not in its way.
  *
+ * A WRAPPED COLUMN (Slice #38.46). When the left area's widest tile and the
+ * column no longer fit side by side (`fitsBeside`), the column's tiles are no
+ * longer fixed: they are boxes of the row marked `under` — the first starts a
+ * line of its own, and each stands right under the lowest box above it in its
+ * columns — so they come under the left tiles, and the action bar under them.
+ * The space under them is then free for a dragged tile like any other.
+ *
  * POSITIONS ARE DATA: a column in units and a place down the screen in px.
  * The screens measure and draw (`use-tile-packing.ts`); #37.76 stores
  * positions in place of what this computes, and falls back to it.
@@ -68,6 +75,23 @@ export interface PackBox {
   rowEnd?: boolean;
   /** Slice #37.79: a right-column tile, at this place and never moved. */
   fixed?: { col: number; top: number };
+  /**
+   * Slice #38.46: a right-column tile while the column is wrapped: the first
+   * starts a new line, and each stands under every box placed before it in
+   * its columns (stored ones included).
+   */
+  under?: boolean;
+}
+
+/**
+ * Do the left area and the right column stand side by side (#38.46)? The
+ * left area is never narrower than its widest tile, the column is as wide as
+ * its widest; both in whole units, as the row is — the same sum the row's
+ * flex-wrap makes. With no column, there is nothing to wrap.
+ */
+export function fitsBeside(leftUnits: readonly number[], columnUnits: readonly number[], rowUnits: number): boolean {
+  if (columnUnits.length === 0) return true;
+  return Math.max(1, ...leftUnits) + Math.max(...columnUnits) <= rowUnits;
 }
 
 /** A placed box: its first column (0-based), its units, its top and height in px. */
@@ -124,11 +148,16 @@ export function packTiles(boxes: readonly PackBox[], columns: number, gap: numbe
   const placed: Placed[] = fixedBoxes(boxes);
   const ends: PackBox[] = [];
   let next = 0; // the first free column of the current line
+  let under = false; // #38.46: the wrapped column's line has started
   for (const box of boxes) {
     if (box.fixed) continue;
     if (box.rowEnd) {
       ends.push(box);
       continue;
+    }
+    if (box.under && !under) {
+      under = true;
+      next = 0;
     }
     const units = box.full ? cols : Math.max(1, Math.min(Math.round(box.units), cols));
     const anchor = box.anchor ? placed.find((p) => p.id === box.anchor) : undefined;
