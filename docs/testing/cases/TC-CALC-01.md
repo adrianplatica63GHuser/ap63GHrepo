@@ -5,7 +5,7 @@
 | **Area** | calculation |
 | **Kind** | happy |
 | **Data** | `09.tc.calc.file` |
-| **State** | `driven` |
+| **State** | `automated` |
 | **Last green** | 2026-10-07 |
 
 ## What this proves
@@ -17,7 +17,8 @@ with a side road:
 - two clicks place the road;
 - the figures add up, and are the ones **a person computes by hand**;
 - the properties are created with the parcel's corner numbers;
-- the run is found in „Istoricul calculelor" and re-runs.
+- the run is found in „Istoricul calculelor", re-runs, and can be deleted there (#38.43) — its
+  properties and its group staying.
 
 A calculation case is worth only as much as the figure it is checked against, so the figure is a
 person's, not the application's.
@@ -105,12 +106,9 @@ The run creates **four properties and a group**:
 - the road, `TC-CALC-01 Drum comun`;
 - and **a run** in „Istoricul calculelor".
 
-The properties and the group are deleted at the end. **The run cannot be**: no screen or route
-deletes one. It stays, listing its parcels as „(ștearsă)". To remove it by hand, with its code
-from step 9:
-```powershell
-docker exec ga40prj-postgres psql -U postgres ga40db -c "DELETE FROM calculation_run WHERE code = 'CALC…';"
-```
+Step 14 deletes the run (Slice #38.43): the confirmation says the four properties and the group stay,
+and they do. The properties and the group are deleted at the end. A deleted run's code is never given
+again: the next run after `CALC00008` is `CALC00009` even if `CALC00008` was deleted.
 
 ## Steps
 
@@ -129,6 +127,7 @@ docker exec ga40prj-postgres psql -U postgres ga40db -c "DELETE FROM calculation
 | 11 | Presses „Vezi proprietatea" on `TC-CALC-01 A` | The property, „Suprafață calculată (m²)" **183.12** (the property screen's own format); of its corners, the one at 17 carries „Nr. orig." **17**, the others none. (The road carries 18; C carries 16 and 19.) |
 | 12 | Opens „Istoricul calculelor" | The run's row: `CALC…`, „Drum lateral", 4, `GRP-…`, „Activ" |
 | 13 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul" opens on the same file, the owners in the order A, B, C and the road already from 18 along 18–19, with step 8's figures |
+| 14 | On „Istoricul calculelor", presses „Șterge calculul" on the run's row, then „Șterge" | „Ștergeți calculul?" and „Calculul CALC… se șterge; cele 4 proprietăți și grupul create rămân."; after „Șterge" the row is gone, the run's page no longer exists, and `TC-CALC-01 A` still opens |
 
 Step 8 is the assertion — Adrian's independently checked figure (2026-10-07) — and step 11 checks the corner
 numbers. Step 5 is the colours (#38.27). Steps 10, 12 and 13 are the history.
@@ -136,9 +135,13 @@ numbers. Step 5 is the colours (#38.27). Steps 10, 12 and 13 are the history.
 ## At the end — leaving things as they were found
 
 On „Grupuri", „Șterge" on `TC-CALC-01 Grup de test` and **„Șterge"**; then „Șterge" and **„Da"**
-on each of the four properties. The run stays (above).
+on each of the four properties. The run went at step 14.
 
 ## Notes from the runs
+
+**2026-10-08 — Slice #38.43, `automated`.** Runs can be deleted now, so the spec is committed:
+`e2e/calculation/side-road.spec.ts`, translated from this file, with step 14 added. It deletes the run
+from its row and removes the rest in `afterAll`.
 
 **2026-09-25 — Slice #36.21, on the five-section file** (run `CALC00001`). That file and that screen
 are gone (#38.23–#38.25). The run's notes are in #36.21's handover and in git history.

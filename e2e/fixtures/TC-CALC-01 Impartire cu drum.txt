@@ -1,0 +1,13 @@
+Sectiunea de Colturi (numai 4 colturi, nu 3, nu 5)
+16	318693.706	573578.558
+17	318675.770	573554.698
+18	318659.521	573567.196
+19	318677.456	573591.056
+
+Sectiunea de Proprietari (total cote-parti 99,99%)
+TC-CALC-01 A	33,33%
+TC-CALC-01 B	33,33%
+TC-CALC-01 C	33,33%
+
+Sectiunea de Latime Drum (in metri)
+3

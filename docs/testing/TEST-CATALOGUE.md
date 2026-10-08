@@ -140,7 +140,7 @@ fixed fixture where the existing one will do.
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
 | [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
-| [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `driven` | 2026-10-07 | — |
+| [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `automated` | 2026-10-07 | `e2e/calculation/side-road.spec.ts` |
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-02](cases/TC-SET-02.md) | „Setări” în patru secțiuni; exemplul unui prag se schimbă odată cu valoarea | settings | happy | — | `automated` | 2026-10-08 | `e2e/settings/settings-sections.spec.ts` |

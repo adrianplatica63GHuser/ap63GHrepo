@@ -61,6 +61,11 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/admin/calculation/_components/calculation-view.tsx": [
     ["A113", "{nameOr(p.nickname, \"property\")}"], // #37.57: no system ID; back with #38.25's commit
   ],
+  // Slice #38.43: „Ștergeți calculul?" — „Șterge" / „Anulează".
+  "src/app/admin/calculation/history/_components/delete-run.tsx": [
+    ["A110", "{busy ? t(\"deleting\") : t(\"confirm\")}"],
+    ["A110", "{t(\"cancel\")}"],
+  ],
   "src/app/admin/groups/_components/groups-list-view.tsx": [
     ["A110", "{deleteMutation.isPending ? t(\"confirm.deleting\") : t(\"c"],
     ["A110", "{t(\"confirm.cancel\")}"],
