@@ -1030,7 +1030,8 @@
       "associateProperty": "Associate property",
       "associateDocument": "Associate document",
       "dissociate": "Dissociate",
-      "dissociating": "Removing…"
+      "dissociating": "Removing…",
+      "noRole": "No role"
     }
   },
   "naturalPerson": {
@@ -1685,7 +1686,8 @@
       "associations": "Related documents",
       "related": "Links",
       "classification": "Classification",
-      "connections": "Tags and groups"
+      "connections": "Tags and groups",
+      "parties": "Parties"
     },
     "tileSubtitles": {
       "general": "Type, issuer, number, date",
@@ -1694,7 +1696,8 @@
       "pages": "Scans of the document's pages",
       "related": "People, properties and documents linked to this record",
       "classification": "Importance, relevance, provenance",
-      "connections": "Tags, groups, stamps, see also"
+      "connections": "Tags, groups, stamps, see also",
+      "parties": "The sellers and the buyers, with their shares"
     },
     "tabs": {
       "details": "Details",
@@ -2025,6 +2028,9 @@
     },
     "notebook": {
       "tablistLabel": "Form sections"
+    },
+    "parties": {
+      "empty": "No party linked yet. Link the sellers and the buyers with their role and share."
     }
   },
   "valueList": {

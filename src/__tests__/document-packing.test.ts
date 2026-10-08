@@ -137,52 +137,61 @@ describe("a CVC's panels, written out", () => {
  * internă" has a 37-character option (18rem).
  */
 const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
-  { label: "Financiar", units: 3, rows: [
-    ["pretTotal", "monedaPret"],
-    ["starePlata", "modalitatePlata"],
-    ["dataPlatii", "temeiPret"],
-    ["alocarePret", "scopVanzare"],
-    ["predareStapanire"],
-  ] },
-  { label: "Taxe și onorarii", units: 3, rows: [
-    ["timbruJudiciar", "onorariuNotarial", "impozitTransfer"],
-    ["taxaTimbruPublicitate"],
-  ] },
-  // #38.32: Calitate exemplar, Exemplare emise, Temei autentificare and Data conținutului
-  // left for „Identificarea actului" (drawn inside that tile, packed to its 3 units).
-  { label: "Dosar și exemplar", units: 3, rows: [
-    ["categorieInterna"],
-    ["documentatieFinalizata"],
-  ] },
+  // #38.33: the CVC's groups after its six tiles (Adrian.Request.txt), in form order.
   { label: "Identificarea actului", units: 3, rows: [
     ["calitateExemplar", "exemplareEmise"],
-    // „Data conținutului" is a date since #38.32 (migration_097): a fixed box beside the text.
     ["temeiAutentificare", "dataContinut"],
   ] },
-  { label: "Excepție cadastru", units: 3, rows: [
-    ["temeiExceptieCadastru"],
-    ["marcajCarteFunciara", "poateFiIntabulat"],
-    ["renuntareCercetareOcpi", "obligatieNrCadastral"],
-    ["termenFormalitati"],
-    ["completareUlterioara", "consimtamantRadiere"],
+  { label: "Preț", units: 3, rows: [
+    ["pretTotal", "monedaPret"],
+    ["temeiPret"],
+    ["alocarePret", "pretRealDeclarat"],
+  ] },
+  { label: "Plată", units: 3, rows: [
+    ["starePlata", "modalitatePlata"],
+    ["dataPlatii"],
+  ] },
+  { label: "Scop și predare", units: 3, rows: [
+    ["scopVanzare", "predareStapanire"],
   ] },
   { label: "Obiect declarat", units: 2, rows: [
     ["vecinatati"],
     ["origineLot"],
   ] },
-  { label: "Declarații și garanții", units: 3, rows: [
+  { label: "Dosar cadastral", units: 3, rows: [
+    ["categorieInterna"],
+    ["documentatieFinalizata"],
+  ] },
+  { label: "Situația în cartea funciară", units: 3, rows: [
+    ["marcajCarteFunciara", "poateFiIntabulat"],
+    ["consimtamantRadiere"],
+  ] },
+  { label: "Excepția de la cadastru", units: 3, rows: [
+    ["temeiExceptieCadastru", "renuntareCercetareOcpi"],
+    ["obligatieNrCadastral", "termenFormalitati"],
+    ["completareUlterioara"],
+  ] },
+  { label: "Declarațiile vânzătorului", units: 3, rows: [
     ["inCircuitCivil", "liberDeSarcini", "faraServituti"],
     ["neipotecat", "nepromisAltcuiva", "nearendat"],
     ["neaportatSocietate", "faraLitigii", "faraExpropriere"],
-    ["faraMonumentIstoric", "nedezmembratContrar", "garantieEvictiune"],
-    ["garantieVicii", "cumparatorCunoasteSituatia"],
+    ["faraMonumentIstoric", "nedezmembratContrar", "cumparatorCunoasteSituatia"],
   ] },
-  { label: "Declarații și obligații legale", units: 3, rows: [
-    // „Temei legal evicțiune" is a text box (XL, 17rem): one dropdown beside it.
-    ["temeiLegalEvictiune", "declaratieArt292"],
-    ["pretRealDeclarat", "notificareAml", "consimtamantDatePersonale"],
-    ["preemptiuneTerenAgricol", "preemptiunePadure", "taxeLocaleLaZi"],
-    ["taxeLocalePlatiteDe", "cheltuieliPerfectare"],
+  { label: "Garanții", units: 3, rows: [
+    // „Temei legal evicțiune" is a text box (XL, 17rem): beside „Garanție evicțiune", as the request asks.
+    ["garantieEvictiune", "temeiLegalEvictiune"],
+    ["garantieVicii"],
+  ] },
+  { label: "Declarații legale", units: 3, rows: [
+    ["declaratieArt292", "notificareAml", "consimtamantDatePersonale"],
+    ["preemptiuneTerenAgricol", "preemptiunePadure"],
+  ] },
+  { label: "Taxe și onorarii", units: 3, rows: [
+    ["timbruJudiciar", "onorariuNotarial", "impozitTransfer"],
+    ["taxaTimbruPublicitate"],
+  ] },
+  { label: "Cheltuieli", units: 3, rows: [
+    ["cheltuieliPerfectare", "taxeLocalePlatiteDe", "taxeLocaleLaZi"],
   ] },
 ];
 
@@ -210,10 +219,12 @@ describe("dropdowns three to a row (#37.53, #37.55)", () => {
         }
       }
     }
+    // #38.33: the CVC's three are „Declarațiile vânzătorului", „Declarații legale" and „Cheltuieli".
     expect(threes.sort()).toEqual([
       "ACT_ADITIONAL · Clauze completate",
-      "CONTRACT_VANZARE · Declarații și garanții",
-      "CONTRACT_VANZARE · Declarații și obligații legale",
+      "CONTRACT_VANZARE · Cheltuieli",
+      "CONTRACT_VANZARE · Declarații legale",
+      "CONTRACT_VANZARE · Declarațiile vânzătorului",
     ]);
   });
 

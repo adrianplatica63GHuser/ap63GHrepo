@@ -41,8 +41,8 @@ describe("the identification group", () => {
     expect(cvc.every((f) => f.tabRo === null && f.groupEn === "Document identification")).toBe(true);
     // Ask first 2: „Data conținutului" is a real date field, its stored text converted by migration_097.
     expect(cvc.find((f) => f.key === "dataContinut")?.type).toBe("date");
-    // „Dosar și exemplar" keeps the two that describe the cadastral file.
-    expect(FORMS.forms.CONTRACT_VANZARE.filter((f) => f.groupRo === "Dosar și exemplar").map((f) => f.key)).toEqual(["categorieInterna", "documentatieFinalizata"]);
+    // „Dosar și exemplar" kept the two that describe the cadastral file — „Dosar cadastral" since #38.33.
+    expect(FORMS.forms.CONTRACT_VANZARE.filter((f) => f.groupRo === "Dosar cadastral").map((f) => f.key)).toEqual(["categorieInterna", "documentatieFinalizata"]);
   });
 });
 

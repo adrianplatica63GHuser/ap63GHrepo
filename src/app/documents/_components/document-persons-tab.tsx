@@ -26,6 +26,15 @@ import { openThroughGuard, personPath } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
+import { isPartyLink } from "@/lib/documents/sale-parties";
+
+/**
+ * Which of a document's person links a list draws.             (Slice #38.33)
+ * `all` — every link (the default, as before); `parties` — the links whose role
+ * holds a share, for a contract de vânzare's „Părți"; `notParties` — the rest,
+ * for that contract's „Legături", so each link has one home.
+ */
+export type PersonLinkScope = "all" | "parties" | "notParties";
 
 /**
  * A Document's persons, as „Corelate"'s rows (Slice #37.65; one line a row
@@ -117,7 +126,7 @@ function cotaErrorLabel(t: (key: string) => string, error: CotaParseError): stri
   }
 }
 
-export function useDocumentPersonRows(documentId: string): DocumentPersonRows {
+export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope = "all"): DocumentPersonRows {
   const t           = useTranslations("document.persons");
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
@@ -159,10 +168,15 @@ export function useDocumentPersonRows(documentId: string): DocumentPersonRows {
       ?.focus();
   }, [shareOpenId]);
 
-  const { data: items, isLoading, isError } = useQuery({
+  const { data: allItems, isLoading, isError } = useQuery({
     queryKey: ["document-persons", documentId],
     queryFn:  () => fetchDocumentPersons(documentId),
   });
+  // Slice #38.33: one query, filtered here — „Părți" and „Legături" read the same rows.
+  const items = useMemo(
+    () => (allItems ?? []).filter((i) => scope === "all" || (scope === "parties") === isPartyLink(i)),
+    [allItems, scope],
+  );
 
   /**
    * The per-role totals, recomputed from whatever is currently SAVED — not from
@@ -470,6 +484,8 @@ export function useDocumentPersonRows(documentId: string): DocumentPersonRows {
       // ⚠️ The LINK, never the person: one person may hold two roles here (#36.02).
       key: `person:${item.linkId}`,
       kind: item.type === "JUDICIAL" ? "judicial" : "natural",
+      // Slice #38.33: „Părți" groups its rows by role.
+      group: item.roleName,
       data: { "data-share": cells },
       radioLabel: `${item.displayName} — ${roleLabel}`,
       title: text,

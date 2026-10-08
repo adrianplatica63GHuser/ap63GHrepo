@@ -31,7 +31,7 @@ const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
 const UNTITLED: Readonly<Record<string, readonly string[]>> = { property: ["map", "streetView"] };
 
 /** A document with every tile a no-notebook type can have: the fields tile, „Părți", „Pagini". */
-const DOC_ALL = documentTileRegistry({ typeKey: "X", tabs: [], succession: true, pages: true }).all;
+const DOC_ALL = documentTileRegistry({ typeKey: "X", tabs: [], succession: true, pages: true, parties: true }).all;
 
 const SCREENS = [
   ["property", PROP_TILE_REGISTRY.all, "src/app/properties/_components"],

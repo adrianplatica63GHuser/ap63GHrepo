@@ -50,6 +50,12 @@ export interface DocumentLayout {
   /** A saved document: the page image is offered as a tile. */
   pages: boolean;
   /**
+   * Slice #38.33: a saved contract de vânzare — „Părți", its sellers and buyers
+   * with their shares (`@/lib/documents/sale-parties`), is offered as a tile.
+   * Absent means false.
+   */
+  parties?: boolean;
+  /**
    * The types have loaded, so `typeKey` is the type's and not a placeholder.
    *
    * ⚠️ **NO TICK BEFORE THIS.** Measured in full 20260929T004229Z-10537
@@ -78,15 +84,34 @@ export function tabTileKey(label: string): string {
  * step, not a chain — so #37.90's „Cadastru și CF" is the target of both
  * „Cadastru" and „Cadastru și carte funciară".
  */
-export const RENAMED_TABS: Readonly<Record<string, string>> = {
-  Instrument: "Preț și taxe",
-  Cadastru: "Cadastru și CF",
-  "Cadastru și carte funciară": "Cadastru și CF",
-  Conformitate: "Formalități",
+// Slice #38.33: the CVC's four tiles became five type tiles, so an old tile now
+// stands for ONE OR MORE new ones — a browser that showed „Preț și taxe" shows
+// „Preț și plată" and „Taxe și cheltuieli". Every old name maps straight to
+// today's tiles (no chain through #37.54's names), because a stored choice is
+// read once, through this map alone.
+export const RENAMED_TABS: Readonly<Record<string, string | readonly string[]>> = {
+  Instrument: ["Preț și plată", "Taxe și cheltuieli"],
+  "Preț și taxe": ["Preț și plată", "Taxe și cheltuieli"],
+  Cadastru: ["Carte funciară", "Obiectul vânzării"],
+  "Cadastru și carte funciară": ["Carte funciară", "Obiectul vânzării"],
+  "Cadastru și CF": ["Carte funciară", "Obiectul vânzării"],
+  "Stare juridică": "Declarații și garanții",
+  Conformitate: ["Declarații și garanții", "Taxe și cheltuieli"],
+  Formalități: ["Declarații și garanții", "Taxe și cheltuieli"],
 };
+
+/** The tile keys an old tab's tile stands for, among the tabs the type has — none, one or several. */
+export function renamedTabTiles(was: string, tabs: readonly string[]): string[] {
+  const now = RENAMED_TABS[was];
+  if (now === undefined) return [];
+  return (typeof now === "string" ? [now] : [...now]).filter((t) => tabs.includes(t)).map(tabTileKey);
+}
 
 /** The single tile of a type with no notebook tabs. */
 export const FIELDS_TILE = "fields";
+
+/** Slice #38.33: a contract de vânzare's sellers and buyers (`layout.parties`). */
+export const PARTIES_TILE = "parties";
 
 /** The tile of notebook page `index` — or the fields tile when there is no notebook. */
 export function tileOfTabIndex(tabs: readonly string[], index: number): string {
@@ -113,7 +138,9 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
   const typeTiles = layout.tabs.length > 0 ? layout.tabs.map(tabTileKey) : layout.ownFields === false ? [] : [FIELDS_TILE];
   // Slice #37.88: in the groups' order — the record's own data (with „Părți"),
   // „Corelate", „Clasificări" and „Conexiuni", then „Pagini" at the right.
-  const record = ["general", ...typeTiles, ...(layout.succession ? ["succession"] : [])];
+  // Slice #38.33: a contract de vânzare's „Părți" stands after its type tiles, as a certificate's does.
+  const parties = layout.parties ? [PARTIES_TILE] : [];
+  const record = ["general", ...typeTiles, ...parties, ...(layout.succession ? ["succession"] : [])];
   const fixed = layout.pages ? ["pages"] : [];
   const all = [...record, ...DOCUMENT_LIST_TILES, ...fixed];
   return {
@@ -123,6 +150,7 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       "general",
       ...(layout.pages ? ["pages"] : []),
       ...typeTiles.slice(0, 1),
+      ...parties,
       ...(layout.succession ? ["succession"] : []),
     ],
     // Hidden, never unmounted: the form's panels, and the page image and the
@@ -138,9 +166,10 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
     groups: { record, related: ["related"], meta: ["classification", "connections"], fixed },
     renamed: {
       ...Object.fromEntries(
-        Object.entries(RENAMED_TABS)
-          .filter(([, now]) => layout.tabs.includes(now))
-          .map(([was, now]) => [tabTileKey(was), tabTileKey(now)]),
+        Object.keys(RENAMED_TABS)
+          .map((was) => [was, renamedTabTiles(was, layout.tabs)] as const)
+          .filter(([, now]) => now.length > 0)
+          .map(([was, now]) => [tabTileKey(was), now.length === 1 ? now[0] : now]),
       ),
       // A browser that stored META INFO opens with both of its halves (#37.63).
       metadata: ["classification", "connections"],

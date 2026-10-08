@@ -1030,7 +1030,8 @@
       "associateProperty": "Asociază proprietate",
       "associateDocument": "Asociază act",
       "dissociate": "Dezasociază",
-      "dissociating": "Se elimină…"
+      "dissociating": "Se elimină…",
+      "noRole": "Fără rol"
     }
   },
   "naturalPerson": {
@@ -1685,7 +1686,8 @@
       "associations": "Acte corelate",
       "related": "Legături",
       "classification": "Clasificare",
-      "connections": "Etichete și grupuri"
+      "connections": "Etichete și grupuri",
+      "parties": "Părți"
     },
     "tileSubtitles": {
       "general": "Tip, emitent, număr, dată",
@@ -1694,7 +1696,8 @@
       "pages": "Imaginile paginilor actului",
       "related": "Persoane, proprietăți și acte legate de această înregistrare",
       "classification": "Importanță, relevanță, proveniență",
-      "connections": "Etichete, grupuri, ștampile, vezi și"
+      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "parties": "Vânzătorii și cumpărătorii, cu cotele lor"
     },
     "tabs": {
       "details": "Detalii",
@@ -2025,6 +2028,9 @@
     },
     "notebook": {
       "tablistLabel": "Secțiunile formularului"
+    },
+    "parties": {
+      "empty": "Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor."
     }
   },
   "valueList": {

@@ -64,6 +64,7 @@ import {
   type DocumentLayout,
 } from "./document-tiles";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
+import { DocumentPartiesTile } from "./document-parties-tile";
 
 type Props = {
   documentId:        string;
@@ -142,6 +143,7 @@ export function DocumentDetailTiles({
       pages:        t("tiles.pages"),
       [FIELDS_TILE]: t("tiles.fields"),
       succession:   t("tiles.succession"),
+      parties:      t("tiles.parties"),
       related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
@@ -214,11 +216,20 @@ export function DocumentDetailTiles({
               right: column,
             }}
           />
+          {/* Slice #38.33: a contract de vânzare's sellers and buyers, with their shares. */}
+          {layout.parties && choice.isShown("parties") && (
+            <div className="max-w-full" style={{ order: order("parties") }}>
+              <ListTile tile="parties" title={labels.parties} subtitle={t("tileSubtitles.parties")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "parties"))}>
+                <DocumentPartiesTile documentId={documentId} label={labels.parties} />
+              </ListTile>
+            </div>
+          )}
           {/* Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate". */}
           {choice.isShown("related") && (
             <div className="max-w-full" style={{ order: order("related") }}>
               <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "related"))}>
-                <DocumentRelatedTile documentId={documentId} label={labels.related} />
+                {/* Slice #38.33: with „Părți" on screen, the parties are there and not here; with it unticked, here. */}
+                <DocumentRelatedTile documentId={documentId} label={labels.related} personScope={layout.parties && choice.isShown("parties") ? "notParties" : "all"} />
               </ListTile>
             </div>
           )}

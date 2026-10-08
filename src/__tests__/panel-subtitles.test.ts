@@ -34,29 +34,35 @@ describe("a panel's subtitle inside a tile (#37.90)", () => {
     const groups = Object.values(FORMS).flat().map((f) => f.groupRo ?? "");
     expect(groups.filter((g) => g.startsWith("[") || g.endsWith("]"))).toEqual([]);
     const cvcGroups = new Set(FORMS.CONTRACT_VANZARE.map((f) => f.groupRo));
-    for (const g of ["Financiar", "Taxe și onorarii"]) expect([g, cvcGroups.has(g)]).toEqual([g, true]);
+    // #38.33: the CVC has no „Financiar" any more (its fields are „Preț" and „Plată"); the fees group keeps its name.
+    for (const g of ["Taxe și onorarii"]) expect([g, cvcGroups.has(g)]).toEqual([g, true]);
   });
 });
 
-describe('„Cadastru și CF" (#37.90)', () => {
-  it("is the CVC's tab in the forms file, its English name unchanged", () => {
-    const tabs = FORMS.CONTRACT_VANZARE.filter((f) => f.tabRo === "Cadastru și CF");
-    expect(tabs.length).toBeGreaterThan(0);
-    expect([...new Set(tabs.map((f) => f.tabEn))]).toEqual(["Cadastre and land book"]);
+// #38.33: „Cadastru și CF" (#37.90) became „Carte funciară" and „Obiectul vânzării"; this block
+// used to assert it was the CVC's tab, „Cadastre and land book" in English.
+describe('„Cadastru și CF" (#37.90, split by #38.33)', () => {
+  it("is no longer a tab; „Carte funciară” is, „Land book” in English", () => {
+    expect(FORMS.CONTRACT_VANZARE.filter((f) => f.tabRo === "Cadastru și CF")).toEqual([]);
+    const cf = FORMS.CONTRACT_VANZARE.filter((f) => f.tabRo === "Carte funciară");
+    expect(cf.length).toBeGreaterThan(0);
+    expect([...new Set(cf.map((f) => f.tabEn))]).toEqual(["Land book"]);
   });
 
   it('leaves no „Cadastru și carte funciară" anywhere in the forms file', () => {
     expect(FORMS_TEXT).not.toContain("Cadastru și carte funciară");
   });
 
-  it("reads a tick stored under the old name as the new tile", () => {
+  it("reads a tick stored under the old names as the new tiles", () => {
     const reg = documentTileRegistry({
       typeKey: "CONTRACT_VANZARE",
-      tabs: ["Preț și taxe", "Cadastru și CF", "Stare juridică", "Formalități"],
+      tabs: ["Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"],
       succession: false,
       pages: true,
     });
     const stored = JSON.stringify([tabTileKey("Cadastru și carte funciară"), tabTileKey("Formalități")]);
-    expect(parseStoredTiles(stored, reg)).toEqual([tabTileKey("Cadastru și CF"), tabTileKey("Formalități")]);
+    expect(parseStoredTiles(stored, reg)).toEqual([
+      tabTileKey("Obiectul vânzării"), tabTileKey("Carte funciară"), tabTileKey("Declarații și garanții"), tabTileKey("Taxe și cheltuieli"),
+    ]);
   });
 });

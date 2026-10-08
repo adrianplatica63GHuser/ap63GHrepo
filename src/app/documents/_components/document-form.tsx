@@ -90,6 +90,7 @@ import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/l
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { panelSubtitle } from "@/lib/ui/panel-subtitle";
+import { hasPartiesTile } from "@/lib/documents/sale-parties";
 import { TILE_TITLE_CLASS, TileSubtitle, TileTitle } from "@/components/tiles/tile-title";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
@@ -1005,7 +1006,7 @@ export function DocumentForm({
   // nothing.
   const onTileLayout = tiles?.onLayout;
   const tileLayoutSig = JSON.stringify({
-    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm },
+    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm, parties: mode !== "create" && !!documentId && hasPartiesTile(selectedTypeKey) },
     highlighted: Object.entries(displayHighlights ?? {})
       .filter(([, colour]) => !!colour)
       .map(([field]) => tileOfPath(field)),

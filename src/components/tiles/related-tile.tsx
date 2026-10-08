@@ -44,6 +44,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { RELATED_SLOTS, type RowSlot } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { RELATED_ROWS_SURFACE } from "@/lib/ui/tile-surface";
+import { partyGroupOrder } from "@/lib/documents/sale-parties";
 
 export type RelatedKind = "natural" | "judicial" | "property" | "document";
 
@@ -69,6 +70,8 @@ export interface RelatedRow {
   buttons: Partial<Record<RowSlot, ReactNode>>;
   /** The record, read-only: a double-click opens it, a Ctrl/⌘+click or a middle-click in a new tab. */
   href: string;
+  /** Slice #38.33: the row's group when the tile groups by role („Părți") — the role's name, or none. */
+  group?: string | null;
   /** `data-*` marks for the specs (`data-share`). */
   data?: { [k: `data-${string}`]: string | undefined };
   /** Remove this row's link, through the route its kind uses; throws with the reason. */
@@ -107,6 +110,8 @@ export function RelatedTile({
   belowRows,
   extraButtons,
   underButtons,
+  groupByRole,
+  emptyLabel,
 }: {
   /** The tile's title — the rows' accessible name. */
   label: string;
@@ -122,6 +127,14 @@ export function RelatedTile({
   extraButtons?: ReactNode;
   /** Under the buttons (the panel „Înscrisuri citate" unfolds). */
   underButtons?: ReactNode;
+  /**
+   * Slice #38.33: group the rows by role, each group headed by its role's name,
+   * in `partyGroupOrder` — „Părți" lists Vânzător, then Cumpărător. Absent, the
+   * rows group by kind as they always have.
+   */
+  groupByRole?: boolean;
+  /** What an empty tile says, in place of „Nimic corelat încă.". */
+  emptyLabel?: string;
 }) {
   const t = useTranslations("shared.related");
   const { guardedNavigate } = useUnsavedChanges();
@@ -131,9 +144,15 @@ export function RelatedTile({
 
   // A row that has gone (removed here, or on another screen) is no longer selected.
   const selected = rows.find((r) => r.key === selectedKey) ?? null;
-  const groups = RELATED_KINDS
-    .map((kind) => ({ kind, rows: rows.filter((r) => r.kind === kind) }))
-    .filter((g) => g.rows.length > 0);
+  const groups: { kind: string; heading: string | null; rows: RelatedRow[] }[] = groupByRole
+    ? partyGroupOrder(rows.map((r) => r.group ?? null)).map((role) => ({
+        kind: `role:${role ?? ""}`,
+        heading: role ?? t("noRole"),
+        rows: rows.filter((r) => (r.group ?? null) === role),
+      }))
+    : RELATED_KINDS
+        .map((kind) => ({ kind: kind as string, heading: null, rows: rows.filter((r) => r.kind === kind) }))
+        .filter((g) => g.rows.length > 0);
 
   const handleDissociate = async () => {
     if (!selected) return;
@@ -154,7 +173,7 @@ export function RelatedTile({
       {loading ? (
         <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
       ) : groups.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("empty")}</p>
+        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{emptyLabel ?? t("empty")}</p>
       ) : (
         <div
           role="group"
@@ -170,7 +189,13 @@ export function RelatedTile({
               // The thin line between two groups — no heading: the icon tells the kind.
               className={i > 0 ? "border-t border-wire dark:border-zinc-600" : undefined}
             >
-              <OneLineRows slots={RELATED_SLOTS} label={groupLabel(t, g.kind)} bare>
+              {/* Slice #38.33: a role group is headed by its role; a kind group by nothing — the icon tells it. */}
+              {g.heading !== null && (
+                <p className="px-3 pt-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400" data-party-group-heading="">
+                  {g.heading}
+                </p>
+              )}
+              <OneLineRows slots={RELATED_SLOTS} label={g.heading ?? groupLabel(t, g.kind as RelatedKind)} bare>
                 {g.rows.map((row) => {
                   const isSelected = row.key === selected?.key;
                   return (

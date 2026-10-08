@@ -17,13 +17,25 @@
 
 import { useTranslations } from "next-intl";
 import { RelatedTile } from "@/components/tiles/related-tile";
-import { useDocumentPersonRows } from "./document-persons-tab";
+import { useDocumentPersonRows, type PersonLinkScope } from "./document-persons-tab";
 import { useDocumentPropertyRows } from "./document-properties-tab";
 import { useDocumentReferenceRows } from "./document-references-tab";
 
-export function DocumentRelatedTile({ documentId, label }: { documentId: string; label: string }) {
+export function DocumentRelatedTile({
+  documentId,
+  label,
+  personScope = "all",
+}: {
+  documentId: string;
+  label: string;
+  /**
+   * Slice #38.33: on a contract de vânzare the parties are on „Părți", so
+   * „Legături" draws the other person links only (`notParties`).
+   */
+  personScope?: PersonLinkScope;
+}) {
   const t = useTranslations("shared.related");
-  const persons = useDocumentPersonRows(documentId);
+  const persons = useDocumentPersonRows(documentId, personScope);
   const properties = useDocumentPropertyRows(documentId);
   const references = useDocumentReferenceRows(documentId);
 
