@@ -237,7 +237,8 @@ function DocumentTypeFilterDropdown({
             />
             {allTypesLabel}
           </label>
-          {/* Slice #38.48: under „Toate tipurile", above the divider (this row's border-b). Searching
+          {/* Slice #38.48: under „Toate tipurile", above the divider (this row's border-b), as wide as the
+              dropdown's w-64 less its px-3 — a fixed width, never w-full (layout-guard). Searching
               only hides rows; „Toate tipurile" still ticks and unticks the whole list. Esc closes. */}
           <div className="border-b border-crease px-3 pb-2 dark:border-zinc-800">
             <input
@@ -252,7 +253,7 @@ function DocumentTypeFilterDropdown({
               aria-label={searchPlaceholder}
               autoComplete="off"
               data-type-search=""
-              className="w-full rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink placeholder:text-fade focus:outline-none focus:ring-2 focus:ring-cta dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="w-[13.5rem] rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink placeholder:text-fade focus:outline-none focus:ring-2 focus:ring-cta dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             />
           </div>
           </div>
