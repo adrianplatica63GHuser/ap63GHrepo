@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-07, FU-315 filed — 315 entries. Rows are status, columns are impact.
+As of 2026-10-07, FU-316 filed — 316 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 17 | 71 | 67 | 16 | 171 |
+| open | 17 | 72 | 67 | 16 | 172 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 30 | 3 | 126 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 58 | 134 | 102 | 21 | 315 |
+| **total** | 58 | 135 | 102 | 21 | 316 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -399,3 +399,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-313 | 2026-10-06 #38.20 Handover.38.20.md | recommendation | Accessibility | Since #38.20 the sidebar has a section „Ajutor", and every screen's „?" button is also named „Ajutor": a screen reader lists two „Ajutor" buttons with different jobs, and a locator by name finds the sidebar's first (TC-HELP-01 now excludes the sidebar). | src/components/help/screen-help-button.tsx (its label); messages ro-RO nav.sections.helpSection | user | XS | open | Name the „?" for what it opens — e.g. „Ajutor pentru acest ecran" — in both languages; TC-HELP-01's locator can then go back to a plain name. | 2026-10-06 |
 | FU-314 | 2026-10-06 #38.21 20261006T201421Z-9456 | tooling | Tests & e2e | The second e2e account, `test-user` (E2E_USER_EMAIL), signs in but no `app_users` row carries its Supabase id: `/api/auth/me` answers `fullAccess: false`. Until #38.21 that was invisible — an account without a row was a `user` by default, which is what auth.setup.ts checked — so TC-AUTH-01's reverse run and TC-AUTH-02's parked spec ran as a no-row account. Since #38.21 it is refused like any account without a row and the `user` specs skip. | e2e/auth.setup.ts (the `fullAccess !== true` skip); request approved 2026-09-26 19:13 on „Utilizatori & Acces" → „Istoric" | dev | XS | open | Adrian: put the account's Supabase Auth id into its app_users row (or approve a fresh request for it); then TC-AUTH-01's reverse run checks the nine sections as that account and takes #38.21's pictures of its sidebar. | 2026-10-06 |
 | FU-315 | 2026-10-07 #38.31 Handover.38.31.md | defect | People | A natural person's three e-mail fields take any text: neither the form nor the API checks their shape, so a phone number or a name without „@" is saved as an e-mail. A firm's e-mail has been checked since #38.31. | src/app/natural-persons/_components/form-schema.ts:66-68 (`z.string()`), src/lib/persons/validation.ts (no e-mail rule) | user | XS | open | Refine the three with `isEmailShape` (src/lib/persons/email-shape.ts) in the form schema and the API schema, with the firm's message key. | 2026-10-07 |
+| FU-316 | 2026-10-07 #38.32 Handover.38.32.md | recommendation | AI | „Data conținutului" is a date field since #38.32, so the extraction prompt asks for an ISO date there, but the field's own aiHint still says „anul sau data care se citește din corpul actului": a contract that gives only a year can now only be answered with an invented day or nothing. | src/db/document-type-forms.json (CONTRACT_VANZARE · dataContinut · aiHint); src/lib/documents/template-fields.ts:212 | user | XS | open | Reword the hint to ask for the full date when one is printed and to leave the field empty otherwise (the year then goes to „Note"); it is part of the CVC form, so ai-score before and after. | 2026-10-07 |
