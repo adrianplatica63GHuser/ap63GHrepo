@@ -9,6 +9,10 @@ import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { parseTimeFrameDraft } from "@/lib/time-frames/config";
 import { TIME_FRAME_GROUPS, exampleValue } from "@/lib/time-frames/groups";
 import type { SystemStatus } from "@/lib/settings/system-status";
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { SUPPORTED_LOCALES, setLocaleCookie } from "@/lib/i18n/locale";
+import { ChangePasswordForm } from "@/app/account/change-password/change-password-form";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -379,15 +383,66 @@ function SystemTiles() {
   );
 }
 
-export function SettingsView() {
+// ---------------------------------------------------------------------------
+// Contul meu                                                    (Slice #38.41)
+// ---------------------------------------------------------------------------
+
+/** The interface language, as two choices: the same cookie the flags in the sidebar's header write. */
+function LanguageChoice() {
+  const t = useTranslations("settings.account");
+  const locale = useLocale();
+  const router = useRouter();
+  return (
+    <fieldset className="flex flex-col gap-1.5" data-account-language="">
+      <legend className="mb-1 text-xs font-semibold uppercase tracking-widest text-ink">{t("language")}</legend>
+      {SUPPORTED_LOCALES.map((l) => (
+        <label key={l} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+          <input
+            type="radio"
+            name="account-language"
+            value={l}
+            checked={locale === l}
+            onChange={() => {
+              setLocaleCookie(l);
+              router.refresh();
+            }}
+            className="h-4 w-4 accent-cta"
+          />
+          {t(`languages.${l}`)}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+function AccountTile({ uat }: { uat: boolean }) {
+  const t = useTranslations("settings");
+  const tPwd = useTranslations("auth.changePassword");
+  return (
+    <Tile name="settings-account" title={t("sections.account")}>
+      <div className="flex flex-col gap-2" data-account-password="">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("account.password")}</h3>
+        {uat ? (
+          <p className="text-sm text-fade" role="note" data-uat-no-accounts="password">{tPwd("uatNoAccounts")}</p>
+        ) : (
+          <ChangePasswordForm inSettings />
+        )}
+      </div>
+      <LanguageChoice />
+    </Tile>
+  );
+}
+
+export function SettingsView({ uat = false }: { uat?: boolean } = {}) {
   return (
     // Slice #37.22: panels in a row that wraps — the window decides how many sit
     // side by side, never how wide one is. Slice #38.40: four sections —
     // „Praguri de timp" (four units, its four groups), then „Copii de siguranță",
-    // „AI" and „Despre" (three each).
-    <UnitRow units={[TIME_FRAMES_UNITS, SETTINGS_TILE_UNITS]}>
+    // „AI" and „Despre" (three each). Slice #38.41: „Contul meu" first.
+    <UnitRow units={[SETTINGS_TILE_UNITS, TIME_FRAMES_UNITS]}>
       {/* Slice #38.20: no „Altele" — Grupuri, Ștampile and Etichete are in the sidebar's
           „Administrare", which is where a screen is found. */}
+      <AccountTile uat={uat} />
       <TimeFramesPanel />
       <SystemTiles />
 

@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { SettingsView } from "./_components/settings-view";
+import { isUatNoAuth } from "@/lib/auth/current-user";
 
 export default async function SettingsPage() {
   // ⚠️ **Slice #32.19 removed the `if (!isDevToolsEnabled()) redirect("/")`
@@ -22,7 +23,8 @@ export default async function SettingsPage() {
           </h1>
         </header>
 
-        <SettingsView />
+        {/* Slice #38.41: UAT has no accounts, so „Contul meu" says so instead of a password form. */}
+        <SettingsView uat={isUatNoAuth()} />
       </main>
     </div>
   );

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, LogOut, KeyRound, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
 import { LocaleToggle } from "@/components/locale-toggle";
@@ -562,29 +562,18 @@ export function SidebarNav() {
         </p>
       )}
 
-      {/* ── Bottom strip — change password + logout ── */}
+      {/* ── Bottom strip — logout ── */}
       {!isUatMode && (
-        // #37.42 (A003, A004): „Schimbă parola" and „Ieșire" are KeyRound and
-        // LogOut, side by side when the sidebar is open and one above the other
-        // on the collapsed rail; their words are the names and the tooltips.
+        // #37.42 (A004): „Ieșire" is LogOut; its word is the name and the tooltip.
+        // Slice #38.41 (Ask first 1): „Schimbă parola" moved to „Setări → Contul meu";
+        // „Ieșire" stays alone and the strip keeps its height (the same padding,
+        // the same button size).
         <div
           className={[
             "border-t border-wire shrink-0 px-2 py-2 flex gap-1",
             isCollapsed ? "flex-col items-center" : "items-center px-3",
           ].join(" ")}
         >
-          <IconButton
-            href="/account/change-password"
-            icon={KeyRound}
-            label={t("changePassword")}
-            variant="bare"
-            size="sm"
-            onClick={(e) => {
-              if (!isPlainLeftClick(e)) return;
-              e.preventDefault();
-              guardedNavigate("/account/change-password");
-            }}
-          />
           <IconButton
             icon={LogOut}
             label={t("signOut")}

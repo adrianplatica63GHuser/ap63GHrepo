@@ -3742,6 +3742,7 @@
       "example": "Exemplu:"
     },
     "sections": {
+      "account": "Contul meu",
       "timeFrames": "Praguri de timp",
       "backups": "Copii de siguranță",
       "ai": "AI",
@@ -3786,6 +3787,14 @@
         "DEV": "Dezvoltare (laptopul lui Adrian)",
         "UAT": "UAT (fără autentificare)",
         "VERCEL": "Vercel"
+      }
+    },
+    "account": {
+      "password": "Parola",
+      "language": "Limba",
+      "languages": {
+        "en-GB": "English",
+        "ro-RO": "Română"
       }
     }
   },

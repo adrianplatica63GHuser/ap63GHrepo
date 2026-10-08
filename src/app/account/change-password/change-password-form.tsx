@@ -11,7 +11,12 @@ import { buttonClass } from "@/lib/ui/button-styles";
 
 type State = "idle" | "saving" | "success" | "error";
 
-export function ChangePasswordForm() {
+/**
+ * `inSettings` (Slice #38.41): the form inside „Setări → Contul meu". There is
+ * nowhere to go back to and nothing to leave, so it has no „Anulează" and a
+ * success stays on the page — the fields empty again — instead of going home.
+ */
+export function ChangePasswordForm({ inSettings = false }: { inSettings?: boolean } = {}) {
   const router         = useRouter();
   // FU-246 (Slice #37.07): every string from auth.changePassword.
   const t              = useTranslations("auth.changePassword");
@@ -46,7 +51,13 @@ export function ChangePasswordForm() {
         return;
       }
       setState("success");
-      setTimeout(() => router.push("/"), 2000);
+      if (inSettings) {
+        setNewPwd("");
+        setConfirmPwd("");
+        setTimeout(() => setState("idle"), 4000);
+      } else {
+        setTimeout(() => router.push("/"), 2000);
+      }
     } catch {
       setErrorMsg(t("errorGeneric"));
       setState("error");
@@ -58,7 +69,7 @@ export function ChangePasswordForm() {
       <div className="text-center py-4">
         <div className="text-3xl mb-2">✓</div>
         <p className="font-semibold text-ink">{t("successTitle")}</p>
-        <p className="text-sm text-fade mt-1">{t("successRedirect")}</p>
+        {!inSettings && <p className="text-sm text-fade mt-1">{t("successRedirect")}</p>}
       </div>
     );
   }
@@ -115,13 +126,15 @@ export function ChangePasswordForm() {
         >
           {state === "saving" ? t("buttonSaving") : t("buttonSave")}
         </button>
-        <IconButton
-          icon={X}
-          label={t("buttonCancel")}
-          variant="secondary"
-          size="lg"
-          onClick={() => router.back()}
-        />
+        {!inSettings && (
+          <IconButton
+            icon={X}
+            label={t("buttonCancel")}
+            variant="secondary"
+            size="lg"
+            onClick={() => router.back()}
+          />
+        )}
       </div>
     </form>
   );

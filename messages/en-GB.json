@@ -3742,6 +3742,7 @@
       "example": "Example:"
     },
     "sections": {
+      "account": "My account",
       "timeFrames": "Time thresholds",
       "backups": "Backups",
       "ai": "AI",
@@ -3786,6 +3787,14 @@
         "DEV": "Development (Adrian's laptop)",
         "UAT": "UAT (no sign-in)",
         "VERCEL": "Vercel"
+      }
+    },
+    "account": {
+      "password": "Password",
+      "language": "Language",
+      "languages": {
+        "en-GB": "English",
+        "ro-RO": "Română"
       }
     }
   },
