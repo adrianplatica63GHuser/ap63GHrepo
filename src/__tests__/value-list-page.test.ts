@@ -60,7 +60,8 @@ describe("„folosit de N”", () => {
     expect(usedFirst(rows, { a: 0 }).map((r) => r.id)).toEqual(["b", "c", "d", "a"]);
   });
 
-  it("reads „nefolosit” greyed, „folosit de N” otherwise", () => {
+  // #38.59: the row now reads „N obiecte” (was „folosit de N înregistrări”) — used-by-objects.test.ts pins the words.
+  it("reads „nefolosit” greyed, the count otherwise", () => {
     const modal = read("src", "app", "admin", "value-lists", "_components", "value-list-modal.tsx");
     expect(modal).toContain('t("usage.unused")');
     expect(modal).toContain('t("usage.usedBy", { count: usage.data[row.id] })');

@@ -1567,7 +1567,12 @@ export function ValueListModal({
                     {review && (
                       <th className="px-4 py-2" {...columnHead("valueStatus")}>{t("fields.status")}</th>
                     )}
-                    <th className="px-4 py-2" {...columnHead("valueUsage")}>{t("usage.column")}</th>
+                    {/* Slice #38.59: two lines, Adrian's words — „Folosit de" over „(n obiecte)"; each row reads
+                        „3 obiecte", where #38.35 read „folosit de 3 înregistrări". */}
+                    <th className="px-4 py-2 align-bottom" {...columnHead("valueUsage")}>
+                      <span className="block">{t("usage.column")}</span>
+                      <span className="block">{t("usage.columnSub")}</span>
+                    </th>
                     <th className="px-4 py-2" {...columnHead(isDocumentTypes ? "valueActionsDocTypes" : "valueActions")} />
                   </tr>
                 </thead>

@@ -1245,7 +1245,7 @@ export const COLUMN = {
   valueFlag: { content: 5.5, kind: "fixed" }, //            a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px)
   valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
   valueStatus: { content: 6.75, kind: "fixed" }, //         „Fără formular" / „De revizuit" — the review lists' status (102 px)
-  valueUsage: { content: 9, kind: "fixed" }, //             „folosit de 12 înregistrări" / „nefolosit" — Slice #38.35 (141 px)
+  valueUsage: { content: 5.25, kind: "fixed" }, //          „999 de obiecte" (79 px) under „FOLOSIT DE" over „(N OBIECTE)" (77) — Slice #38.59; was 9 for „folosit de 12 înregistrări" (141)
   // Slice #38.57 — the four main lists (Proprietăți, Persoane fizice, Persoane juridice, Acte) on #38.50's rule: one line
   // per row, a long cell cut with „…" and whole on hover, the row's buttons side by side. Each column as wide as its
   // content, measured at 1920 px on the archive (the slice's probe): a short value its longest, a free text — a name, a

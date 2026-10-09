@@ -2278,7 +2278,8 @@
     },
     "usage": {
       "column": "Folosit de",
-      "usedBy": "{count, plural, one {folosit de # înregistrare} few {folosit de # înregistrări} other {folosit de # de înregistrări}}",
+      "columnSub": "(n obiecte)",
+      "usedBy": "{count, plural, one {# obiect} few {# obiecte} other {# de obiecte}}",
       "unused": "nefolosit"
     },
     "merge": {

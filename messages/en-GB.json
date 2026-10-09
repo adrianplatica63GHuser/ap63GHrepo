@@ -2278,7 +2278,8 @@
     },
     "usage": {
       "column": "Used by",
-      "usedBy": "{count, plural, one {used by # record} other {used by # records}}",
+      "columnSub": "(n objects)",
+      "usedBy": "{count, plural, one {# object} other {# objects}}",
       "unused": "unused"
     },
     "merge": {

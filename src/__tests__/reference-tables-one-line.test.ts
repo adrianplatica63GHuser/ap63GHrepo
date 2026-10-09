@@ -48,7 +48,10 @@ describe("one line per row (#38.50)", () => {
     const content = (n: keyof typeof COLUMN) => (columnRem(n) - 2) * REM;
     expect(content("valueFlag")).toBeGreaterThanOrEqual(86); // „PROPRIETATE"
     expect(content("valueFlag")).toBeLessThan(112); // narrower than S's old 7 rem column
-    expect(content("valueUsage")).toBeGreaterThanOrEqual(141);
+    // #38.50 measured „folosit de 12 înregistrări" at 141 px. #38.59: the row reads „N obiecte", measured on every list at
+    // 1920 px — „999 de obiecte" 79 px, the header's „(N OBIECTE)" 77 — so the column is narrower than it was.
+    expect(content("valueUsage")).toBeGreaterThanOrEqual(79);
+    expect(content("valueUsage")).toBeLessThan(141);
     expect(content("valueStatus")).toBeGreaterThanOrEqual(102);
     expect(content("valueNameShort")).toBeGreaterThanOrEqual(125); // the longest property type
     expect(columnRem("valueUsage")).toBeLessThan(15); // L's old width
