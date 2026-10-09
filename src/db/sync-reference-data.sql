@@ -286,9 +286,9 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('ACT_DEZLIPIRE',                 'Act de Dezlipire',                  42),
   ('ACT_DEZMEMBRARE',               'Act de Dezmembrare',                43);
 
--- SHORT NAMES (Slice #37.95). This VALUES list is written twice, here and in
--- src/db/sync-reference-data.sql, and src/__tests__/document-type-short-name.test.ts
--- holds the two byte-equal.
+-- SHORT NAMES (Slice #37.95). This VALUES list is migration_092's, with the six
+-- short names migration_103 sets (Slice #38.54) written in their places;
+-- src/__tests__/document-type-short-name.test.ts holds the two equal.
 UPDATE lookup_document_type AS t
    SET short_name = s.short_name
   FROM (VALUES
@@ -300,7 +300,7 @@ UPDATE lookup_document_type AS t
     ('CERTIFICAT_FISCAL',            'Cert. fiscal'),
     ('CERTIFICAT_MOSTENITOR',        'Moștenitor'),
     ('CERTIFICAT_BUNURI',            'Bunuri'),
-    ('CERTIFICAT_URBANISM',          'CU'),
+    ('CERTIFICAT_URBANISM',          'Urbanism'),
     ('CONTRACT_ARENDA',              'Arendă'),
     ('CONTRACT_INCHIRIERE',          'Închiriere'),
     ('CONTRACT_PARTAJ',              'Contract partaj'),
@@ -308,15 +308,15 @@ UPDATE lookup_document_type AS t
     ('CONTRACT_VANZARE',             'CVC'),
     ('EXTRAS_CARTE_FUNCIARA',        'Extras CF'),
     ('EXTRAS_PUG',                   'Extras PUG'),
-    ('HOTARARE_JUDECATOREASCA',      'Hot. judecătorească'),
+    ('HOTARARE_JUDECATOREASCA',      'Hot. judec.'),
     ('TESTAMENT',                    'Testament'),
     ('TITLU_PROPRIETATE',            'TP'),
-    ('UNCLASSIFIED',                 'NECLASIFICAT'),
-    ('AUTORIZATIE',                  'Autorizație'),
+    ('UNCLASSIFIED',                 'NECLASIF.'),
+    ('AUTORIZATIE',                  'Aut.'),
     ('CERTIFICAT_SARCINI',           'Sarcini'),
-    ('HOTARARE_ADMINISTRATIVA',      'Hot. administrativă'),
+    ('HOTARARE_ADMINISTRATIVA',      'Hot. admin.'),
     ('DOCUMENTATIE_CADASTRALA',      'Doc. cadastrală'),
-    ('AUTORIZATIE_CONSTRUIRE',       'AC'),
+    ('AUTORIZATIE_CONSTRUIRE',       'Aut. Constr.'),
     ('ACT_LOTIZARE',                 'Lotizare'),
     ('ACT_PARTAJ',                   'Act partaj'),
     ('ADEVERINTA',                   'Adeverință'),
