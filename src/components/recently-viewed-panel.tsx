@@ -1,16 +1,22 @@
 "use client";
 
 // ---------------------------------------------------------------------------
-// RecentlyViewedPanel  (Slice #20.17; one folded bar since #38.28)
+// RecentlyViewedPanel  (Slice #20.17; one folded bar since #38.28; the bar on top since #38.63)
 // ---------------------------------------------------------------------------
 //
 // „Recente" at the bottom of the sidebar nav, directly above the
 // change-password / logout strip, takes the space of ONE bar: the history
 // icon, the word „Recente" and a chevron. It is FOLDED by default (#38.28 —
 // Adrian: „by default it should not be expanded … it should be one bar").
-// A click unfolds the recently viewed records above the bar, like an
-// accordion — the list grows upwards and the footer does not move — and a
-// second click folds it back.
+// A click unfolds the recently viewed records UNDER the bar, like an
+// accordion, and a second click folds it back. #38.28 drew the list above the
+// bar, so that it „grows upwards and the footer does not move"; Slice #38.63,
+// Adrian: „I would like this bar to be at the top of this list so it looks
+// like it opens the accordion under the bar". The bar is the panel's top line
+// now, the list (max-h-64, which scrolls) under it — and the footer still does
+// not move: the panel sits at the bottom of the sidebar and grows upwards as a
+// whole, bar and list together. The chevron behaves like a sidebar section's:
+// down while folded, up while unfolded.
 //
 // The panel lives in the layout, so it stays as the user left it while moving
 // between screens; a reload or a new sign-in folds it again (no storage).
@@ -132,10 +138,31 @@ export function RecentlyViewedPanel({
 
   return (
     <div className="border-t border-wire shrink-0 px-2 py-1 flex flex-col gap-0.5" data-recent-panel>
-      {/* Unfolded, the records sit ABOVE the bar: the list grows upwards and
-          the footer under the bar does not move. */}
+      {/* The bar: one row, the height of a section row (#38.28) — and, since
+          #38.63, the panel's top line, the list opening under it. */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={listId}
+        data-recent-bar
+        className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-crease transition-colors"
+      >
+        <History size={18} className="shrink-0" aria-hidden="true" />
+        <span className="flex-1 text-left ml-2.5">{t("title")}</span>
+        {/* #38.28 pointed it up while folded (the list opened above); #38.63: a sidebar section's chevron. */}
+        <ChevronDown
+          size={14}
+          className={`shrink-0 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {/* #38.28 had „Unfolded, the records sit ABOVE the bar: the list grows upwards and the footer
+          under the bar does not move." #38.63: they sit UNDER it, like an accordion; the panel as a
+          whole grows upwards, so the footer still does not move. */}
       {open && (
-        <div id={listId} className="flex flex-col gap-0.5 max-h-64 overflow-y-auto pt-1">
+        <div id={listId} className="flex flex-col gap-0.5 max-h-64 overflow-y-auto pb-1">
           {recentlyViewed.length === 0 ? (
             <p className="px-3 py-1.5 text-xs text-fade">{t("empty")}</p>
           ) : (
@@ -149,24 +176,6 @@ export function RecentlyViewedPanel({
           )}
         </div>
       )}
-
-      {/* The bar: one row, the height of a section row (#38.28). */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls={listId}
-        data-recent-bar
-        className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-crease transition-colors"
-      >
-        <History size={18} className="shrink-0" aria-hidden="true" />
-        <span className="flex-1 text-left ml-2.5">{t("title")}</span>
-        <ChevronDown
-          size={14}
-          className={`shrink-0 transition-transform duration-150 ${open ? "" : "rotate-180"}`}
-          aria-hidden="true"
-        />
-      </button>
     </div>
   );
 }
