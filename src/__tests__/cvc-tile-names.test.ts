@@ -45,7 +45,8 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
   it("are named as the request names them, in Romanian and English", () => {
     expect(layout(CVC)).toEqual([
       { tab: "Preț și plată", tabEn: "Price and payment", panels: [["Preț", "Price"], ["Plată", "Payment"]] },
-      { tab: "Obiectul vânzării", tabEn: "What is sold", panels: [["Scop și predare", "Purpose and possession"], ["Obiect declarat", "Declared object"]] },
+      // Slice #38.49 (migration_102): „Descriere" first — #38.33 had „Scop și predare" and „Obiect declarat" alone.
+      { tab: "Obiectul vânzării", tabEn: "What is sold", panels: [["Descriere", "Description"], ["Scop și predare", "Purpose and possession"], ["Obiect declarat", "Declared object"]] },
       {
         tab: "Carte funciară",
         tabEn: "Land book",
@@ -60,14 +61,15 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
     ]);
   });
 
-  it("places every one of the 53 fields exactly once, each where the request puts it", () => {
+  // Slice #38.49 (migration_102): 54 fields — #38.33 had „places every one of the 53 fields".
+  it("places every one of the 54 fields exactly once, each where the request puts it", () => {
     const where = new Map(CVC.map((f) => [f.key, f.tabRo ?? IDENTIFICATION]));
-    expect(CVC).toHaveLength(53);
-    expect(new Set(CVC.map((f) => f.key)).size).toBe(53);
+    expect(CVC).toHaveLength(54);
+    expect(new Set(CVC.map((f) => f.key)).size).toBe(54);
     const PLACE: Record<string, string[]> = {
       [IDENTIFICATION]: ["calitateExemplar", "exemplareEmise", "temeiAutentificare", "dataContinut"],
       "Preț și plată": ["pretTotal", "monedaPret", "starePlata", "modalitatePlata", "dataPlatii", "temeiPret", "alocarePret", "pretRealDeclarat"],
-      "Obiectul vânzării": ["scopVanzare", "predareStapanire", "vecinatati", "origineLot"],
+      "Obiectul vânzării": ["descriereObiect", "scopVanzare", "predareStapanire", "vecinatati", "origineLot"],
       "Carte funciară": [
         "temeiExceptieCadastru", "marcajCarteFunciara", "poateFiIntabulat", "renuntareCercetareOcpi", "obligatieNrCadastral",
         "termenFormalitati", "completareUlterioara", "consimtamantRadiere", "categorieInterna", "documentatieFinalizata",
@@ -83,8 +85,8 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
       ],
     };
     const placed = Object.values(PLACE).flat();
-    expect(placed).toHaveLength(53);
-    expect(new Set(placed).size).toBe(53);
+    expect(placed).toHaveLength(54);
+    expect(new Set(placed).size).toBe(54);
     for (const [tile, keys] of Object.entries(PLACE)) for (const k of keys) expect([k, where.get(k)]).toEqual([k, tile]);
   });
 

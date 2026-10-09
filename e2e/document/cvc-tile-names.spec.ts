@@ -25,7 +25,8 @@ const STORE = "ga40-tiles-document-CONTRACT_VANZARE-v1";
 // Slice #38.33: five type tiles and their panels.
 const TILES: [string, string[]][] = [
   ["Preț și plată", ["Preț", "Plată"]],
-  ["Obiectul vânzării", ["Scop și predare", "Obiect declarat"]],
+  // Slice #38.49 (migration_102): „Descriere" first.
+  ["Obiectul vânzării", ["Descriere", "Scop și predare", "Obiect declarat"]],
   ["Carte funciară", ["Dosar cadastral", "Situația în cartea funciară", "Excepția de la cadastru"]],
   ["Declarații și garanții", ["Declarațiile vânzătorului", "Garanții", "Declarații legale"]],
   ["Taxe și cheltuieli", ["Taxe și onorarii", "Cheltuieli"]],

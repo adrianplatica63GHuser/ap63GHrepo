@@ -151,6 +151,10 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["starePlata", "modalitatePlata"],
     ["dataPlatii"],
   ] },
+  // Slice #38.49 (migration_102): „Descrierea obiectului" first in „Obiectul vânzării", a panel of its own.
+  { label: "Descriere", units: 2, rows: [
+    ["descriereObiect"],
+  ] },
   { label: "Scop și predare", units: 3, rows: [
     ["scopVanzare", "predareStapanire"],
   ] },

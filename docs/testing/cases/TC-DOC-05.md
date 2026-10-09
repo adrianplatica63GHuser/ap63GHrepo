@@ -42,7 +42,7 @@ The window is 1366 × 900. „One line" is the label 20 px high (its line height
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-05 CVC` | In „Părți afișate": „Identificarea actului", „Pagini", „Obiectul vânzării", „Carte funciară", „Declarații și garanții" and „Taxe și cheltuieli" ticked — the old choice read as today's tiles (#38.33); „Preț și plată" and „Părți" not |
-| 2 | Presses „Toate" | The tiles „Preț și plată" („[Preț]", „[Plată]"), „Obiectul vânzării" („[Scop și predare]", „[Obiect declarat]"), „Carte funciară" („[Dosar cadastral]", „[Situația în cartea funciară]", „[Excepția de la cadastru]"), „Declarații și garanții" („[Declarațiile vânzătorului]", „[Garanții]", „[Declarații legale]") and „Taxe și cheltuieli" („[Taxe și onorarii]", „[Cheltuieli]"); none of the old names anywhere |
+| 2 | Presses „Toate" | The tiles „Preț și plată" („[Preț]", „[Plată]"), „Obiectul vânzării" („[Descriere]", „[Scop și predare]", „[Obiect declarat]" — „[Descriere]" since #38.49), „Carte funciară" („[Dosar cadastral]", „[Situația în cartea funciară]", „[Excepția de la cadastru]"), „Declarații și garanții" („[Declarațiile vânzătorului]", „[Garanții]", „[Declarații legale]") and „Taxe și cheltuieli" („[Taxe și onorarii]", „[Cheltuieli]"); none of the old names anywhere |
 | 3 | Looks at „Taxe și onorarii" | „Timbru judiciar", „Onorariu notarial", „Impozit transfer" on one row, then „Taxă timbru și publicitate" alone on the next, its label on one line |
 
 ## At the end — leaving things as they were found
