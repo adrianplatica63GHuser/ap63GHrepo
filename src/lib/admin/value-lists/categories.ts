@@ -10,17 +10,27 @@
  */
 import { VALID_LIST_KEYS, type ListKey } from "./config";
 
-export type ValueListCategoryId = "property" | "person" | "document" | "roles" | "links" | "other";
+export type ValueListCategoryId = "objectTypes" | "rolesLinks" | "valueLists" | "other";
 
-/** The categories, top to bottom, and their lists, in the order the hub showed them. */
+/**
+ * The categories, top to bottom, and their lists — Slice #38.61, Adrian's three groups, in his order:
+ * the kinds of object, then how objects are tied to each other, then the plain lists of values.
+ * #38.35 had five („Proprietăți", „Persoane", „Acte", „Roluri", „Legături între obiecte"), grouped by
+ * the object a list belonged to. The list keys — and so every `?list=` link — do not change.
+ */
 export const VALUE_LIST_CATEGORIES: readonly { id: Exclude<ValueListCategoryId, "other">; lists: readonly ListKey[] }[] = [
-  { id: "property", lists: ["property-types", "tarla", "use-categories"] },
-  { id: "person", lists: ["person-types", "judicial-person-types", "citizenships"] },
-  { id: "document", lists: ["document-types", "institutions"] },
-  { id: "roles", lists: ["person-roles"] },
-  // „Tip legătură": a link between two objects of the same kind, not a role a person plays.
-  { id: "links", lists: ["property-property-roles", "document-document-roles"] },
+  { id: "objectTypes", lists: ["person-types", "judicial-person-types", "property-types", "document-types"] },
+  // A role a person plays, and „Tip legătură": a link between two objects of the same kind.
+  { id: "rolesLinks", lists: ["person-roles", "property-property-roles", "document-document-roles"] },
+  { id: "valueLists", lists: ["tarla", "use-categories", "citizenships", "institutions"] },
 ];
+
+/**
+ * The two lists of links between objects of the same kind. #34.05's note — there is no „Document → Proprietate"
+ * list — is printed above them; #38.35 found them by their category, „Legături între obiecte", which #38.61 merged
+ * into „Roluri și legături" beside the roles, so they are named here instead.
+ */
+export const LINK_LISTS: ReadonlySet<ListKey> = new Set(["property-property-roles", "document-document-roles"]);
 
 /** The categories with their lists, „Altele" last and only when some list is in no category. */
 export function listsByCategory(): { id: ValueListCategoryId; lists: ListKey[] }[] {

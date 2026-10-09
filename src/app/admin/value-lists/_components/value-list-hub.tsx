@@ -25,12 +25,15 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
-import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
+import { LINK_LISTS, listsByCategory } from "@/lib/admin/value-lists/categories";
 import { ValueListModal } from "./value-list-modal";
 import { rem, screenPanel, unitsRem } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
-/** The categories' column: two units — the longest list name, „Tipuri de Persoană Juridică", fits. */
+/**
+ * The categories' column: two units. #38.35 sized it for „Tipuri de Persoană Juridică"; #38.61's longest name,
+ * „Legături Proprietate → Proprietate", was measured to fit it too (TC-VL-02 step 1 checks that no name wraps).
+ */
 const NAV_UNITS = 2;
 
 /**
@@ -148,7 +151,7 @@ export function ValueListHub({
         ) : (
           <>
             {/* Slice #34.05's sentence, under the category it answers for. */}
-            {categoryOfList(selected) === "links" && (
+            {LINK_LISTS.has(selected) && (
               <p className="text-sm leading-relaxed text-fade dark:text-zinc-400">{t("sections.rolesObjectNote")}</p>
             )}
             {/* Keyed on the list: each list starts from its own state — a filter

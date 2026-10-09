@@ -515,10 +515,11 @@ describe("a document type with no person roles configured", () => {
    * who most needs to be told where to send an administrator.
    */
   // Slice #38.36: the grid is gone — a role's document types are in the role's own panel, and
-  // the sentence names that path („Date de referință → Roluri → rolul → „Act”").
+  // the sentence names that path („Date de referință → Roluri → rolul → „Act”"; #38.61 renamed the list
+  // „Roluri Persoane", so the path follows it).
   it("says it in Romanian, names the role's panel, and says the association can still be made", () => {
     const note = at(messages("ro-RO"), "shared.noRolesForType") as string;
-    expect(note).toContain("Date de referință → Roluri → rolul → „Act”");
+    expect(note).toContain("Date de referință → Roluri Persoane → rolul → „Act”");
     expect(note).not.toContain("Roluri pe Document");
     expect(note).toContain("fără rol");
   });
@@ -545,8 +546,9 @@ describe("a document type with no person roles configured", () => {
   it.each(["ro-RO", "en-GB"] as const)("%s sends the AI party linker to the same place", (locale) => {
     for (const key of ["roleMissingBody", "roleMissingAfterCreate"]) {
       const s = at(messages(locale), `document.aiPartyLinker.${key}`) as string;
-      // Slice #38.36: the role's panel, no longer the grid.
-      expect([locale, key, /Roluri → rolul → „Act”|Roles → the role → “Document”/.test(s)]).toEqual([locale, key, true]);
+      // Slice #38.36: the role's panel, no longer the grid. #38.61: the list is „Roluri Persoane" / „Person Roles"
+      // (was „Roluri" / „Roles").
+      expect([locale, key, /Roluri Persoane → rolul → „Act”|Person Roles → the role → “Document”/.test(s)]).toEqual([locale, key, true]);
       expect([locale, key, /Document Persons|Roluri pe Document/.test(s)]).toEqual([locale, key, false]);
       // The route #34.10 deleted. `valueList.lists.personToDocument` is gone
       // from both files and the hub has no such button.
@@ -753,13 +755,15 @@ describe("the value-list hub", () => {
   const hub = read("app", "admin", "value-lists", "_components", "value-list-hub.tsx");
 
   // Slice #38.35: the hub is one page — categories on the left, the list on the right. The
-  // object-to-object lists are their own category, „Legături între obiecte", and the sentence
-  // is printed above whichever of the two is open.
-  it("gives the object-to-object lists their own category", () => {
+  // object-to-object lists were their own category, „Legături între obiecte", and the sentence
+  // is printed above whichever of the two is open. Slice #38.61 put them in „Roluri și legături",
+  // after the roles (was: `{ id: "links", … }` and `{ id: "roles", lists: ["person-roles"] }`), so the
+  // hub names the two lists (`LINK_LISTS`) rather than their category.
+  it("gives the object-to-object lists their place beside the roles, and the sentence above them", () => {
     const cats = read("lib", "admin", "value-lists", "categories.ts");
-    expect(cats).toContain('{ id: "links", lists: ["property-property-roles", "document-document-roles"] }');
-    expect(cats).toContain('{ id: "roles", lists: ["person-roles"] }');
-    expect(hub).toContain('categoryOfList(selected) === "links"');
+    expect(cats).toContain('{ id: "rolesLinks", lists: ["person-roles", "property-property-roles", "document-document-roles"] }');
+    expect(cats).toContain('LINK_LISTS: ReadonlySet<ListKey> = new Set(["property-property-roles", "document-document-roles"])');
+    expect(hub).toContain("LINK_LISTS.has(selected) && (");
     expect(hub).toContain('{t("sections.rolesObjectNote")}');
     // …and both open the one generic list (#29.13), now as the page's panel.
     expect(hub).toContain("<ValueListModal");

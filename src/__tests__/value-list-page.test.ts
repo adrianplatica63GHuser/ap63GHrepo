@@ -1,22 +1,47 @@
 /**
  * Slice #38.35 — „Date de referință" as one page: every list under one
- * category, „folosit de N" on every row, the unused last, and „Unește".
+ * category, „folosit de N" on every row, the unused last, and „Unește". #38.61: three groups, Adrian's.
  */
 import fs from "fs";
 import path from "path";
 
-import { VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
-import { VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, usedFirst } from "@/lib/admin/value-lists/categories";
+import { LIST_META, VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
+import { LINK_LISTS, VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, usedFirst } from "@/lib/admin/value-lists/categories";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const ro = JSON.parse(read("messages", "ro-RO.json")) as { valueList: Record<string, Record<string, string>> };
 
+const en = JSON.parse(read("messages", "en-GB.json")) as { valueList: Record<string, Record<string, string>> };
+
 describe("the categories (nothing disappears)", () => {
-  it("are the five the page names, in order", () => {
-    expect(VALUE_LIST_CATEGORIES.map((c) => c.id)).toEqual(["property", "person", "document", "roles", "links"]);
+  // #38.35 had five, „Proprietăți", „Persoane", „Acte", „Roluri", „Legături între obiecte". #38.61: Adrian's three,
+  // in his order, each with its lists in his order.
+  it("are Adrian's three, in his order (#38.61)", () => {
+    expect(VALUE_LIST_CATEGORIES.map((c) => c.id)).toEqual(["objectTypes", "rolesLinks", "valueLists"]);
     expect(VALUE_LIST_CATEGORIES.map((c) => ro.valueList.categories[c.id])).toEqual([
-      "Proprietăți", "Persoane", "Acte", "Roluri", "Legături între obiecte",
+      "Tipuri de obiecte", "Roluri și legături", "Liste de valori",
     ]);
+    expect(VALUE_LIST_CATEGORIES.map((c) => en.valueList.categories[c.id])).toEqual([
+      "Object types", "Roles and links", "Value lists",
+    ]);
+  });
+
+  it("hold their lists in Adrian's order, by their titles (#38.61)", () => {
+    const titles = (m: typeof ro) => VALUE_LIST_CATEGORIES.map((c) => c.lists.map((k) => m.valueList.lists[LIST_META[k].titleKey]));
+    expect(titles(ro)).toEqual([
+      ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de Proprietate", "Tipuri de Document"],
+      ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
+      ["Indicative Tarla", "Categorii Folosință", "Cetățenie", "Instituții"],
+    ]);
+    expect(titles(en)).toEqual([
+      ["Physical Person Types", "Judicial Person Types", "Property Types", "Document Types"],
+      ["Person Roles", "Property → Property Links", "Document → Document Links"],
+      ["Tarla Codes", "Use Categories", "Citizenship", "Institutions"],
+    ]);
+  });
+
+  it("keep no category key that names a group the page no longer has", () => {
+    for (const m of [ro, en]) expect(Object.keys(m.valueList.categories).sort()).toEqual(["objectTypes", "other", "rolesLinks", "valueLists"]);
   });
 
   it("hold every list the hub opened, each exactly once — so „Altele” is empty today", () => {
@@ -27,12 +52,16 @@ describe("the categories (nothing disappears)", () => {
     expect(ro.valueList.categories.other).toBe("Altele");
   });
 
-  it("put each list where the hub's sections had it", () => {
-    expect(categoryOfList("tarla")).toBe("property");
-    expect(categoryOfList("citizenships")).toBe("person");
-    expect(categoryOfList("institutions")).toBe("document");
-    expect(categoryOfList("person-roles")).toBe("roles");
-    expect(categoryOfList("document-document-roles")).toBe("links");
+  // #38.35 kept each list where the old hub's sections had it („tarla" under „property", …); #38.61 regrouped them.
+  it("put each list in Adrian's group, and name the two link lists for #34.05's note", () => {
+    expect(categoryOfList("person-types")).toBe("objectTypes");
+    expect(categoryOfList("document-types")).toBe("objectTypes");
+    expect(categoryOfList("tarla")).toBe("valueLists");
+    expect(categoryOfList("citizenships")).toBe("valueLists");
+    expect(categoryOfList("institutions")).toBe("valueLists");
+    expect(categoryOfList("person-roles")).toBe("rolesLinks");
+    expect(categoryOfList("document-document-roles")).toBe("rolesLinks");
+    expect([...LINK_LISTS].sort()).toEqual(["document-document-roles", "property-property-roles"]);
   });
 });
 

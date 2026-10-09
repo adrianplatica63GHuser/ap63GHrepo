@@ -671,10 +671,10 @@
     "roleListUnavailable": "Lista de roluri nu a putut fi citită, așa că nu se poate alege un rol acum. Rolul este oricum opțional.",
     "roleNotOffered": "Rolul ales nu mai este valid pentru această asociere — probabil a fost dezactivat între timp în Date de referință. Reîncărcați pagina și alegeți din nou; rolul este oricum opțional.",
     "roleNoLongerOffered": "{role} (nu mai este disponibil)",
-    "noRolesForType": "Acest tip de document nu are niciun rol configurat, așa că nu se poate alege un rol aici. Rolurile se configurează în Date de referință → Roluri → rolul → „Act”. Asocierea se poate face și fără rol.",
-    "noRolesForPerson": "Niciun rol nu este bifat „Persoană”, așa că nu se poate alege un rol aici. Rolurile se bifează în Date de referință → Roluri. Asocierea se poate face și fără rol.",
+    "noRolesForType": "Acest tip de document nu are niciun rol configurat, așa că nu se poate alege un rol aici. Rolurile se configurează în Date de referință → Roluri Persoane → rolul → „Act”. Asocierea se poate face și fără rol.",
+    "noRolesForPerson": "Niciun rol nu este bifat „Persoană”, așa că nu se poate alege un rol aici. Rolurile se bifează în Date de referință → Roluri Persoane. Asocierea se poate face și fără rol.",
     "noRolesForTypeLink": "Deschide Roluri (se deschide într-o filă nouă)",
-    "roleStranded": "{count, plural, one {Rolul ales nu este configurat pe tipul actului {documents}. Asocierea se va face oricum, dar rolul nu va mai putea fi ales din nou pentru el.} other {Rolul ales nu este configurat pe tipul acestor acte: {documents}. Asocierea se va face oricum, dar rolul nu va mai putea fi ales din nou pentru ele.}} Rolurile se configurează în Date de referință → Roluri → rolul → „Act”.",
+    "roleStranded": "{count, plural, one {Rolul ales nu este configurat pe tipul actului {documents}. Asocierea se va face oricum, dar rolul nu va mai putea fi ales din nou pentru el.} other {Rolul ales nu este configurat pe tipul acestor acte: {documents}. Asocierea se va face oricum, dar rolul nu va mai putea fi ales din nou pentru ele.}} Rolurile se configurează în Date de referință → Roluri Persoane → rolul → „Act”.",
     "roleStrandedUnknown": "{count, plural, one {Nu se poate spune dacă rolul ales va mai fi disponibil pentru actul {documents}, pentru că lista lui de roluri nu a putut fi citită.} other {Nu se poate spune dacă rolul ales va mai fi disponibil pentru aceste acte, pentru că listele lor de roluri nu au putut fi citite: {documents}.}} Asocierea se va face cu rolul ales.",
     "documentNotFound": "Actul selectat nu mai există — probabil a fost șters între timp. Reîncărcați pagina și încercați din nou.",
     "properties": {
@@ -1807,8 +1807,8 @@
       "linkThis": "Asociază aceasta",
       "noneOfThese": "Niciuna dintre acestea — creează nouă",
       "roleMissingTitle": "Rol neconfigurat",
-      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Roluri → rolul → „Act”, apoi adăugați persoana din „Legături” pe document.",
-      "roleMissingAfterCreate": "Persoana a fost creată, dar nu a putut fi legată de document: rolul „{roleName}” nu mai este configurat pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Roluri → rolul → „Act”, apoi apăsați din nou — persoana nu va fi creată a doua oară. Dacă omiteți această parte, persoana rămâne în arhivă nelegată de document.",
+      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Roluri Persoane → rolul → „Act”, apoi adăugați persoana din „Legături” pe document.",
+      "roleMissingAfterCreate": "Persoana a fost creată, dar nu a putut fi legată de document: rolul „{roleName}” nu mai este configurat pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Roluri Persoane → rolul → „Act”, apoi apăsați din nou — persoana nu va fi creată a doua oară. Dacă omiteți această parte, persoana rămâne în arhivă nelegată de document.",
       "noMatchTitle": "Nicio potrivire găsită",
       "noMatchBody": "Se va crea o persoană nouă cu detaliile extrase.",
       "createAndLink": "Creează și asociază",
@@ -2083,13 +2083,13 @@
       "tarla": "Indicative Tarla",
       "useCategories": "Categorii Folosință",
       "personTypes": "Tipuri de Persoană Fizică",
-      "personRoles": "Roluri",
+      "personRoles": "Roluri Persoane",
       "citizenships": "Cetățenie",
       "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
-      "propertyToProperty": "Proprietate → Proprietate",
-      "documentToDocument": "Document → Document"
+      "propertyToProperty": "Legături Proprietate → Proprietate",
+      "documentToDocument": "Legături Document → Document"
     },
     "fields": {
       "name": "Denumire",
@@ -2239,7 +2239,7 @@
         "documentTypeShortNameTaken": "Alt tip de document se citește deja cu această denumire scurtă în lista actelor. Alegeți alta — sau lăsați câmpul gol, iar lista va scurta singură denumirea."
       },
       "roleWhitelistGranted": "Rolul ales a fost bifat automat acolo unde asocierile mutate aveau nevoie:",
-      "roleWhitelistPending": "Rolul ales nu a putut fi oferit automat pe toate tipurile de document ale asocierilor mutate: tipurile fără o listă de roluri configurată sunt lăsate neatinse. Adăugați tipurile potrivite în Date de referință → Roluri → rolul → „Act”, altfel asocierile Persoană–Document mutate vor arăta un rol care nu mai poate fi ales din listă pe acele tipuri.",
+      "roleWhitelistPending": "Rolul ales nu a putut fi oferit automat pe toate tipurile de document ale asocierilor mutate: tipurile fără o listă de roluri configurată sunt lăsate neatinse. Adăugați tipurile potrivite în Date de referință → Roluri Persoane → rolul → „Act”, altfel asocierile Persoană–Document mutate vor arăta un rol care nu mai poate fi ales din listă pe acele tipuri.",
       "noTarget": "Nu există altă valoare în această listă pe care să le mutați. Adăugați una întâi, apoi reveniți aici.",
       "delete": "Șterge",
       "deleting": "Se șterge…",
@@ -2265,11 +2265,9 @@
       }
     },
     "categories": {
-      "property": "Proprietăți",
-      "person": "Persoane",
-      "document": "Acte",
-      "roles": "Roluri",
-      "links": "Legături între obiecte",
+      "objectTypes": "Tipuri de obiecte",
+      "rolesLinks": "Roluri și legături",
+      "valueLists": "Liste de valori",
       "other": "Altele"
     },
     "page": {

@@ -671,10 +671,10 @@
     "roleListUnavailable": "The role list could not be read, so no role can be chosen right now. The role is optional in any case.",
     "roleNotOffered": "The selected role is no longer valid for this association — it has probably been switched off in Reference Data in the meantime. Reload the page and choose again; the role is optional in any case.",
     "roleNoLongerOffered": "{role} (no longer available)",
-    "noRolesForType": "This document type has no roles configured, so no role can be chosen here. Roles are configured in Reference Data → Roles → the role → “Document”. The association can still be made without a role.",
-    "noRolesForPerson": "No role is ticked “Person”, so no role can be chosen here. Roles are ticked in Reference Data → Roles. The association can still be made without one.",
+    "noRolesForType": "This document type has no roles configured, so no role can be chosen here. Roles are configured in Reference Data → Person Roles → the role → “Document”. The association can still be made without a role.",
+    "noRolesForPerson": "No role is ticked “Person”, so no role can be chosen here. Roles are ticked in Reference Data → Person Roles. The association can still be made without one.",
     "noRolesForTypeLink": "Open Roles (opens in a new tab)",
-    "roleStranded": "{count, plural, one {The chosen role is not configured for the type of document {documents}. The association will still be made, but the role will not be offered for it again.} other {The chosen role is not configured for the type of these documents: {documents}. The association will still be made, but the role will not be offered for them again.}} Roles are configured in Reference Data → Roles → the role → “Document”.",
+    "roleStranded": "{count, plural, one {The chosen role is not configured for the type of document {documents}. The association will still be made, but the role will not be offered for it again.} other {The chosen role is not configured for the type of these documents: {documents}. The association will still be made, but the role will not be offered for them again.}} Roles are configured in Reference Data → Person Roles → the role → “Document”.",
     "roleStrandedUnknown": "{count, plural, one {It cannot be said whether the chosen role will still be offered for document {documents}, because its role list could not be read.} other {It cannot be said whether the chosen role will still be offered for these documents, because their role lists could not be read: {documents}.}} The association will still be made with the chosen role.",
     "documentNotFound": "The selected document no longer exists — it has probably been deleted in the meantime. Reload the page and try again.",
     "properties": {
@@ -1807,8 +1807,8 @@
       "linkThis": "Link this one",
       "noneOfThese": "None of these — create new",
       "roleMissingTitle": "Role not configured",
-      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Roles → the role → “Document”, then add the person from the document’s “Links”.",
-      "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Roles → the role → “Document”, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
+      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Person Roles → the role → “Document”, then add the person from the document’s “Links”.",
+      "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Person Roles → the role → “Document”, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
       "noMatchTitle": "No existing match found",
       "noMatchBody": "A new person will be created with the extracted details.",
       "createAndLink": "Create & link",
@@ -2083,13 +2083,13 @@
       "tarla": "Tarla Codes",
       "useCategories": "Use Categories",
       "personTypes": "Physical Person Types",
-      "personRoles": "Roles",
+      "personRoles": "Person Roles",
       "citizenships": "Citizenship",
       "judicialPersonTypes": "Judicial Person Types",
       "documentTypes": "Document Types",
       "institutions": "Institutions",
-      "propertyToProperty": "Property → Property",
-      "documentToDocument": "Document → Document"
+      "propertyToProperty": "Property → Property Links",
+      "documentToDocument": "Document → Document Links"
     },
     "fields": {
       "name": "Name",
@@ -2239,7 +2239,7 @@
         "documentTypeShortNameTaken": "Another document type already reads as this short name on the Documents list. Choose another — or leave the field blank and the list shortens the name itself."
       },
       "roleWhitelistGranted": "The role you picked was ticked automatically where the moved associations needed it:",
-      "roleWhitelistPending": "The role you picked could not be offered automatically on every document type the moved associations belong to: types with no role list configured are left untouched. Add those types in Reference Data → Roles → the role → “Document”, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list on them.",
+      "roleWhitelistPending": "The role you picked could not be offered automatically on every document type the moved associations belong to: types with no role list configured are left untouched. Add those types in Reference Data → Person Roles → the role → “Document”, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list on them.",
       "noTarget": "There is no other value in this list to move them to. Add one first, then come back here.",
       "delete": "Delete",
       "deleting": "Deleting…",
@@ -2265,11 +2265,9 @@
       }
     },
     "categories": {
-      "property": "Properties",
-      "person": "People",
-      "document": "Documents",
-      "roles": "Roles",
-      "links": "Links between objects",
+      "objectTypes": "Object types",
+      "rolesLinks": "Roles and links",
+      "valueLists": "Value lists",
       "other": "Other"
     },
     "page": {

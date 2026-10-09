@@ -152,9 +152,10 @@ describe("one vocabulary", () => {
     expect(get("shared.document.roleInDocument")).toBe("Rol: „{role}”");
   });
 
+  // #38.61 renamed the list „Roluri Persoane" (was „Roluri"), so the path follows it.
   it("the sentences that sent the user to the grid send them to the role's panel", () => {
     for (const p of ["shared.noRolesForType", "shared.roleStranded", "document.aiPartyLinker.roleMissingBody", "document.aiPartyLinker.roleMissingAfterCreate", "valueList.confirm.roleWhitelistPending"]) {
-      expect([p, get(p)?.includes("Date de referință → Roluri → rolul → „Act”")]).toEqual([p, true]);
+      expect([p, get(p)?.includes("Date de referință → Roluri Persoane → rolul → „Act”")]).toEqual([p, true]);
     }
   });
 });
