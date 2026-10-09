@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { ClipboardList, FolderInput, FolderOpen, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
@@ -44,6 +44,55 @@ import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page
 import { formFilterFrom, formFilterKeeps, formFilterNarrows, type FormFilter } from "@/lib/admin/value-lists/form-filter";
 import { documentTypeHasForm } from "@/lib/documents/status";
 import { joinedCellText } from "@/lib/admin/value-lists/joined-cell";
+import { frameMaxHeight } from "@/lib/ui/frame-height";
+
+/**
+ * Slice #38.56: the frame's height — the window's remaining height, or a screen of its own where the list
+ * stands under the categories (`frameMaxHeight`). Measured in the page's scroll container, re-measured when
+ * the window, the page or the list's column changes size.
+ */
+function useFrameHeight(frameRef: RefObject<HTMLDivElement | null>): number | null {
+  const [height, setHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    // The app shell's scroll area, by name (app-shell.tsx) — the list's column is `overflow-x-auto`, which
+    // computes `overflow-y: auto` too, so the nearest "scrolling" ancestor is that column, not the page.
+    const scroller = frame.closest<HTMLElement>("[data-page-scroll]");
+    const column = frame.closest<HTMLElement>("[data-value-list-side]") ?? frame;
+    // What is under the frame is measured to the page's own bottom (its `main`, padding included), not to
+    // the scroll container's, which a short page stretches to the window and would read as space taken.
+    const page = frame.closest<HTMLElement>("main") ?? scroller ?? document.body;
+    const measure = () => {
+      const viewport = scroller ? scroller.clientHeight : window.innerHeight;
+      const base = scroller ? scroller.getBoundingClientRect().top - scroller.scrollTop : -window.scrollY;
+      const f = frame.getBoundingClientRect();
+      const next = frameMaxHeight({
+        viewport,
+        frameTop: f.top - base,
+        columnTop: column.getBoundingClientRect().top - base,
+        below: Math.max(0, page.getBoundingClientRect().bottom - f.bottom),
+      });
+      setHeight((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(page);
+    observer.observe(column);
+    // The scroll area's own children too: the breadcrumb bar above the page settles after the first measure,
+    // which moves the frame down without resizing the page, the column or the scroll area (measured: 9 px).
+    if (scroller) {
+      observer.observe(scroller);
+      for (const child of Array.from(scroller.children)) observer.observe(child);
+    }
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [frameRef]);
+  return height;
+}
 
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
@@ -968,6 +1017,9 @@ export function ValueListModal({
   const columns = listColumns(listKey);
   const cells = listCells(listKey);
   const nameTip = nameTipField(listKey);
+  // Slice #38.56: the list's frame scrolls — in both directions — and its header row stays at its top.
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const frameHeight = useFrameHeight(frameRef);
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
   //
@@ -1480,10 +1532,17 @@ export function ValueListModal({
             )}
 
             {/* Table — Slice #38.50: as wide as the column above, at least its toolbar's width. */}
-            <div className="max-w-full overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
+            {/* Slice #38.56: was `overflow-x-auto` only, which does not scroll vertically — so a sticky header had
+                nothing to stick to and left with the page's scroll. Now the frame scrolls both ways, at the
+                measured height, and the header row sticks to its top. */}
+            <div
+              ref={frameRef}
+              className="max-w-full overflow-auto rounded-md border border-card-rim dark:border-zinc-800"
+              style={frameHeight === null ? undefined : { maxHeight: frameHeight }}
+            >
               <table {...fixedTable(columns, "text-sm min-w-full")}>
                 <FixedColumns columns={columns} />
-                <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+                <thead className="sticky top-0 z-10 bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (

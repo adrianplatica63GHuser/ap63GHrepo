@@ -13,8 +13,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-1 min-h-0">
       <SidebarNav />
-      {/* min-h-0 prevents flex children from overflowing on short viewports */}
-      <div className="flex flex-1 flex-col overflow-auto min-h-0">
+      {/* min-h-0 prevents flex children from overflowing on short viewports.
+          Slice #38.56: `data-page-scroll` names THE page's scroll area, for a screen that sizes a frame to what
+          is left of the window — an ancestor with only `overflow-x-auto` computes `overflow-y: auto` too, so
+          looking for the nearest scrolling ancestor finds the wrong one. */}
+      <div className="flex flex-1 flex-col overflow-auto min-h-0" data-page-scroll="">
         <BreadcrumbBar />
         {children}
       </div>
