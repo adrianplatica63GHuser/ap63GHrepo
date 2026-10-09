@@ -1,6 +1,6 @@
 /**
  * Case:   TC-VL-08 — Roluri: numele inverse ale unui rol pe o singură linie, despărțite prin virgulă
- * Source: docs/testing/cases/TC-VL-08.md, „Last green" 2026-10-08
+ * Source: docs/testing/cases/TC-VL-08.md, „Last green" 2026-10-09
  *
  * A translation of the case file, step for step. The roles carry `TC-E2E-VL-08` (records.ts).
  */
@@ -12,6 +12,9 @@ const MARK = `${E2E_MARKER}VL-08`;
 const ROLES = "/api/admin/value-lists/person-roles";
 const SELLER = `${MARK} Vânzător`;
 const SELLER_F = `${MARK} Vânzătoare`;
+// Slice #38.58: „<male> / <female>" beside the two reads only the two.
+const BROTHER = `${MARK} Frate`;
+const SISTER = `${MARK} Soră`;
 
 async function removeRoles(request: APIRequestContext): Promise<void> {
   const res = await request.get(ROLES);
@@ -39,14 +42,17 @@ async function converseOf(page: Page, name: string) {
 }
 
 test.describe("TC-VL-08 — numele inverse pe o singură linie", () => {
-  test("trei nume, două nume, antetul pe două rânduri", async ({ page }) => {
+  test("trei nume, două nume, perechea fără numele neutru, antetul pe două rânduri", async ({ page }) => {
     test.slow();
     await page.setViewportSize({ width: 1366, height: 1000 });
     await removeRoles(page.request);
     try {
       for (const data of [
-        { name: `${MARK} Trei`, converseName: SELLER, converseNameMale: SELLER, converseNameFemale: SELLER_F },
+        // #38.55 used „Vânzător, Vânzător, Vânzătoare" here; #38.58 leaves out a neutral name that repeats
+        // one of the pair, so three DIFFERENT names now prove the three-name line.
+        { name: `${MARK} Trei`, converseName: `${MARK} Copil`, converseNameMale: `${MARK} Fiu`, converseNameFemale: `${MARK} Fiică` },
         { name: `${MARK} Două`, converseName: SELLER, converseNameMale: "", converseNameFemale: SELLER_F },
+        { name: `${MARK} Pereche`, converseName: `${BROTHER} / ${SISTER}`, converseNameMale: BROTHER, converseNameFemale: SISTER },
       ]) {
         const created = await page.request.post(ROLES, { data });
         expect(created.ok(), `POST ${ROLES} failed (${created.status()})`).toBeTruthy();
@@ -60,7 +66,7 @@ test.describe("TC-VL-08 — numele inverse pe o singură linie", () => {
       expect(three.head.map((s) => s.toLowerCase())).toEqual(["rol invers", "(bărbat, femeie)"]);
 
       // Step 2 — three names, one line, the whole text on hover; the row one line tall.
-      const whole = `${SELLER}, ${SELLER}, ${SELLER_F}`;
+      const whole = `${MARK} Copil, ${MARK} Fiu, ${MARK} Fiică`;
       expect(three.title).toBe(whole);
       expect(whole.startsWith(three.text.replace(/…$/, ""))).toBe(true);
       expect(three.oneLine).toBe(true);
@@ -70,6 +76,12 @@ test.describe("TC-VL-08 — numele inverse pe o singură linie", () => {
       const two = await converseOf(page, `${MARK} Două`);
       expect(two.title).toBe(`${SELLER}, ${SELLER_F}`);
       expect(two.oneLine).toBe(true);
+
+      // Step 4 — #38.58: „Frate / Soră, Frate, Soră" reads „Frate, Soră"; the hover text follows.
+      const pair = await converseOf(page, `${MARK} Pereche`);
+      expect(pair.title).toBe(`${BROTHER}, ${SISTER}`);
+      expect(pair.text.replace(/…$/, "")).not.toContain("/");
+      expect(pair.oneLine).toBe(true);
     } finally {
       await removeRoles(page.request);
     }
