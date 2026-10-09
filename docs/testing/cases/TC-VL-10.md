@@ -37,7 +37,8 @@ At 1366 × 1000 px, then at 1920 × 1000.
 | 2 | Reads the tile's list | Six entries, numbered as in the drawing: Persoană → Persoană, Proprietate → Proprietate, Document → Document, Persoană – Proprietate, Persoană – Document — each „configurat în aplicație" — and Document – Proprietate, „neconfigurat, intenționat", with the sentence „Nu există o listă „Document → Proprietate”…"; Persoană – Document says it has no column in „Roluri Persoane". The Document – Proprietate side is dotted and opens nothing |
 | 3 | Presses the number on the Proprietate corner | „Legături Proprietate → Proprietate" opens (`?list=property-property-roles`), the tile still above it |
 | 4 | Presses the number on the Persoană – Proprietate side | „Roluri Persoane" opens (`?list=person-roles`) |
-| 5 | Opens „Cetățenie" | No tile above it |
+| 5 | Still on „Roluri Persoane", scrolls the page to the list, then the list to its last row | The list's frame takes most of the screen; its column titles stay at its top while the rows move (#38.56's frame, measured from the list's own card since the tile stands above it) |
+| 6 | Opens „Cetățenie" | No tile above it |
 
 ## At the end — leaving things as they were found
 

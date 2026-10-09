@@ -62,7 +62,21 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       await expect(page).toHaveURL(/\?list=person-roles$/, { timeout: 15_000 });
       await expect(page.getByRole("region", { name: "Roluri Persoane", exact: true })).toBeVisible({ timeout: 15_000 });
 
-      // Step 5 — a list outside „Roluri și legături" has no tile.
+      // Step 5 — the list under the tile keeps #38.56's frame: scrolled to the list, it takes most of a screen, and
+      // scrolled to its last row its header row stays at the frame's top.
+      const table = page.locator("table[data-width-table]");
+      await table.evaluate((t) => t.closest("[data-value-list-card]")!.scrollIntoView({ block: "start" }));
+      const frameOf = () => table.evaluate((t) => {
+        const f = t.parentElement!;
+        return { height: f.getBoundingClientRect().height, top: f.getBoundingClientRect().top, head: t.querySelector("thead")!.getBoundingClientRect().top, scrollTop: f.scrollTop };
+      });
+      expect((await frameOf()).height).toBeGreaterThan(500);
+      await table.evaluate((t) => { t.parentElement!.scrollTop = t.parentElement!.scrollHeight; });
+      await expect.poll(async () => (await frameOf()).scrollTop).toBeGreaterThan(0);
+      const after = await frameOf();
+      expect(Math.abs(after.head - after.top)).toBeLessThanOrEqual(2);
+
+      // Step 6 — a list outside „Roluri și legături" has no tile.
       await page.goto("/admin/value-lists?list=citizenships");
       await expect(page.getByRole("region", { name: "Cetățenie", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator("[data-relationship-triangle]")).toHaveCount(0);

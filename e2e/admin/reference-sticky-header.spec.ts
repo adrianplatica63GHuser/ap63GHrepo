@@ -1,6 +1,6 @@
 /**
  * Case:   TC-VL-09 — „Date de referință”: titlurile coloanelor rămân în vedere cât lista derulează
- * Source: docs/testing/cases/TC-VL-09.md, „Last green" 2026-10-08
+ * Source: docs/testing/cases/TC-VL-09.md, „Last green" 2026-10-09
  *
  * A translation of the case file, step for step. Nothing is created: the lists are read as they are, and
  * the longest one is chosen by asking each list's route how many rows it has.
@@ -8,9 +8,12 @@
 
 import { test, expect, type Page } from "@playwright/test";
 
+// Slice #38.62: the lists of „Roluri și legături" — „person-roles", „property-property-roles",
+// „document-document-roles", which this list held — have the relationship triangle above them, so on a wide
+// screen the page scrolls to them by design; TC-VL-10 step 5 holds their header row. The longest of the rest is read here.
 const LISTS = [
   "property-types", "tarla", "use-categories", "person-types", "judicial-person-types", "citizenships",
-  "document-types", "institutions", "person-roles", "property-property-roles", "document-document-roles",
+  "document-types", "institutions",
 ];
 
 /** The frame, its header row and the page's scroll area, measured. */
