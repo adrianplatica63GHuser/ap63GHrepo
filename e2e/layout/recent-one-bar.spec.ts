@@ -1,6 +1,6 @@
 /**
  * Case:   TC-LAYOUT-04 — „Recente": o singură bară, pliată, deasupra „Ieșire"
- * Source: docs/testing/cases/TC-LAYOUT-04.md, „Last green" 2026-10-07
+ * Source: docs/testing/cases/TC-LAYOUT-04.md, „Last green" 2026-10-09
  *
  * A translation of the case file, step for step (Slice #38.28). Every Romanian
  * string below is quoted from it verbatim.
@@ -28,7 +28,7 @@ const footerTop = async (page: Page) => (await aside(page).getByRole("button", {
 const forgetVisits = (page: Page) => page.evaluate(() => localStorage.removeItem("ga40_recently_viewed"));
 
 test.describe("TC-LAYOUT-04 — „Recente” într-o singură bară", () => {
-  test("pliată la o încărcare nouă; un clic arată cele două înregistrări deasupra, al doilea le ascunde; subsolul nu se mișcă", async ({ page, request }) => {
+  test("pliată la o încărcare nouă; un clic arată cele două înregistrări sub bară, al doilea le ascunde; subsolul nu se mișcă", async ({ page, request }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page.goto("/");
     await forgetVisits(page);
@@ -57,14 +57,18 @@ test.describe("TC-LAYOUT-04 — „Recente” într-o singură bară", () => {
       const folded = await footerTop(page);
       const barTop = (await bar(page).boundingBox())!.y;
 
-      // Step 3 — a click: both names above the bar; the footer has not moved.
+      // Step 3 — a click: both names UNDER the bar, like an accordion (#38.63; #38.28 had them above it, the
+      // bar where it was). The footer has not moved: the panel grows upwards as a whole, so the bar rises.
       await bar(page).click();
       await expect(bar(page)).toHaveAttribute("aria-expanded", "true");
       await expect(aside(page).getByRole("link", { name: ONE })).toBeVisible();
       await expect(aside(page).getByRole("link", { name: TWO })).toBeVisible();
-      expect((await aside(page).getByRole("link", { name: TWO }).boundingBox())!.y).toBeLessThan((await bar(page).boundingBox())!.y);
+      const barBox = (await bar(page).boundingBox())!;
+      const firstEntry = (await page.locator("aside [data-recent-panel] a").first().boundingBox())!;
+      expect(firstEntry.y).toBeGreaterThanOrEqual(barBox.y + barBox.height - 1);
+      expect((await aside(page).getByRole("link", { name: TWO }).boundingBox())!.y).toBeGreaterThan(barBox.y);
       expect(await footerTop(page)).toBe(folded);
-      expect((await bar(page).boundingBox())!.y).toBe(barTop);
+      expect(barBox.y).toBeLessThan(barTop);
 
       // Step 4 — a second click folds it again.
       await bar(page).click();
