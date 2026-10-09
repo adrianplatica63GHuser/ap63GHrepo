@@ -11,7 +11,7 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, ChevronLeft, ChevronRight, Map as MapIcon, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, TABLE_FRAME, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
@@ -250,16 +250,16 @@ export function PropertyListView() {
     // persisted per user in localStorage (`LIST_COLUMN_CHOICE.property`), so renaming one
     // silently drops that column from the saved choices of anyone who had it
     // on. The key is a UI identifier; the field is the data.  (Slice #34.03)
-    { key: "tarlaSola",        label: t("table.tarlaSola"),        column: "tarlaSola" },
-    { key: "parcela",          label: t("table.parcela"),          column: "parcela" },
-    { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp"),    column: "surfaceAreaMp" },
-    { key: "calculatedAreaMp", label: t("table.calculatedAreaMp"), column: "calculatedAreaMp" },
-    { key: "carteFunciara",    label: t("table.carteFunciara"),    column: "carteFunciara" },
-    { key: "cadastralNumber",  label: t("table.cadastralNumber"),  column: "cadastralNumber" },
+    { key: "tarlaSola",        label: t("table.tarlaSola"),        column: "listTarla" },
+    { key: "parcela",          label: t("table.parcela"),          column: "listParcela" },
+    { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp"),    column: "listArea" },
+    { key: "calculatedAreaMp", label: t("table.calculatedAreaMp"), column: "listArea" },
+    { key: "carteFunciara",    label: t("table.carteFunciara"),    column: "listCarteFunciara" },
+    { key: "cadastralNumber",  label: t("table.cadastralNumber"),  column: "listCadastral" },
     // Slice #37.72: the two the chooser lacked, labelled as on the form.
-    { key: "useCategory",      label: t("fields.useCategory"),     column: "useCategory" },
-    { key: "propertyType",     label: t("fields.propertyType"),    column: "propertyType" },
-    { key: "locality",         label: t("table.locality"),         column: "locality" },
+    { key: "useCategory",      label: t("fields.useCategory"),     column: "listUseCategory" },
+    { key: "propertyType",     label: t("fields.propertyType"),    column: "listPropertyType" },
+    { key: "locality",         label: t("table.locality"),         column: "listLocality" },
     // Slice #37.61: importance, relevance and provenance are no longer offered; a
     // browser that remembers one simply loses it (`field-chooser.tsx`).
   ];
@@ -284,8 +284,8 @@ export function PropertyListView() {
   // stored key this build has no column for stays in storage and is not drawn.
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.property.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.property.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  // Slice #37.72: Poreclă always, the first after the checkbox.
-  const columns: ColumnName[] = ["selectBadges", "propertyNickname", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #37.72: Poreclă always, the first after the checkbox. Slice #38.57: the list's own columns, one line each.
+  const columns: ColumnName[] = ["listBadges", "listPropertyNickname", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
   const colCount = columns.length;
@@ -372,11 +372,12 @@ export function PropertyListView() {
       {/* Table */}
       <ListPreviews>
         <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
-          <table {...fixedTable(columns)}>
+          {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
+          <table {...fixedTable(columns, "text-sm min-w-full")}>
             <FixedColumns columns={columns} />
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
               <tr>
-                <th className="px-4 py-2" {...columnHead("selectBadges")}>
+                <th className="px-4 py-2" {...columnHead("listBadges")}>
                   <input
                     ref={headerCheckboxRef}
                     type="checkbox"
@@ -387,7 +388,7 @@ export function PropertyListView() {
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
                 </th>
-                <th className="px-4 py-2" {...columnHead("propertyNickname")}>
+                <th className="px-4 py-2" {...columnHead("listPropertyNickname")}>
                   {t("table.nickname")}
                 </th>
                 {shownCols.map((col) => (
@@ -395,7 +396,7 @@ export function PropertyListView() {
                     {col.label}
                   </th>
                 ))}
-                <th className="px-4 py-2" {...columnHead("openPreview")} />
+                <th className="px-4 py-2" {...columnHead("listRowActions")} />
               </tr>
             </thead>
             <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -432,9 +433,9 @@ export function PropertyListView() {
                   className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                    {/* Slice #37.16: the badges wrap — „Încrucișat" takes a line
-                        of its own rather than widening the column. */}
-                    <span className="inline-flex flex-wrap items-center">
+                    {/* Slice #37.16 had „the badges wrap — „Încrucișat" takes a line of its own rather than widening
+                        the column". Slice #38.57: one line per row — the column holds all three (`listBadges`). */}
+                    <span className="inline-flex flex-nowrap items-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(item.id)}
@@ -446,19 +447,21 @@ export function PropertyListView() {
                       <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
                     </span>
                   </td>
-                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf("propertyNickname")}`} data-col="nickname">
+                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
                     {item.nickname ?? <span className="text-fade italic">—</span>}
                   </td>
                   {shownCols.map((col) => (
                     <td
                       key={col.key}
-                      className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf(col.column)}`}
+                      className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`}
+                      title={cellTitle(cellValue(item, col.key))}
                     >
                       {cellValue(item, col.key)}
                     </td>
                   ))}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                    <span className="flex gap-2">
+                    {/* Slice #38.57: side by side, always. */}
+                    <span className="flex flex-nowrap gap-2" data-row-actions="">
                       <IconButton
                         href={`/properties/${item.id}`}
                         icon={ArrowRight}

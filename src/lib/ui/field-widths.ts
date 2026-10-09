@@ -1246,6 +1246,42 @@ export const COLUMN = {
   valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
   valueStatus: { content: 6.75, kind: "fixed" }, //         „Fără formular" / „De revizuit" — the review lists' status (102 px)
   valueUsage: { content: 9, kind: "fixed" }, //             „folosit de 12 înregistrări" / „nefolosit" — Slice #38.35 (141 px)
+  // Slice #38.57 — the four main lists (Proprietăți, Persoane fizice, Persoane juridice, Acte) on #38.50's rule: one line
+  // per row, a long cell cut with „…" and whole on hover, the row's buttons side by side. Each column as wide as its
+  // content, measured at 1920 px on the archive (the slice's probe): a short value its longest, a free text — a name, a
+  // nickname, a title, a subject — its 90th percentile, the rest cut; and never narrower than its header's longest word
+  // (a header may take two lines; a word cannot). Columns of their own, so the screens that share the older names —
+  // the association views, the dashboard, the calculation screens — keep theirs.
+  listBadges: { content: 8, kind: "fixed" }, //             the property list's checkbox, „Nou!" and „Încrucișat" side by side (127 px)
+  listRowActions: { content: 4, kind: "fixed" }, //         a row's two xs buttons, „Deschide" and „Previzualizare", side by side (60 px)
+  listPropertyNickname: { content: 14, kind: "fixed" }, //  PROP.nickname — 90th percentile 213 px, longest 278
+  listTarla: { content: 5, kind: "fixed" }, //              Tarla/Solă — the header's word, „TARLA/SOLĂ" (80 px); values 28
+  listParcela: { content: 4, kind: "fixed" }, //            Parcelă — „PARCELĂ" (60 px); values 47
+  listArea: { content: 5, kind: "fixed" }, //               the two areas, „1234567.89" — „CALCULATĂ" (76 px); values 55
+  listCarteFunciara: { content: 3, kind: "fixed" }, //      Nr. CF — values 47 px
+  listCadastral: { content: 6.5, kind: "fixed" }, //        Nr. cadastru — values 104 px
+  listUseCategory: { content: 5, kind: "fixed" }, //        Categorie de folosință — „FOLOSINȚĂ" (74 px); values 48
+  listPropertyType: { content: 6.75, kind: "fixed" }, //    Tip proprietate — values 107 px
+  listLocality: { content: 6, kind: "fixed" }, //           Localitate, „Clinceni, Ilfov" — values 95 px
+  listPersonName: { content: 8, kind: "fixed" }, //         a natural person's name — 90th percentile 116 px, longest 123
+  listCompanyName: { content: 16.25, kind: "fixed" }, //    a judicial person's name — longest 259 px
+  listPersonNickname: { content: 6, kind: "fixed" }, //     Poreclă on the two persons' lists — values up to 92 px
+  listCnp: { content: 6.5, kind: "fixed" }, //              13 digits (102 px)
+  listDate: { content: 4.5, kind: "fixed" }, //             dd.mm.yyyy (71 px) — a birth date, a document's date, „Adăugat la"
+  listAge: { content: 3.25, kind: "fixed" }, //             „VÂRSTĂ" (52 px); values 16
+  listGender: { content: 3.5, kind: "fixed" }, //           „Masculin" (56 px)
+  listBirthPlace: { content: 7.75, kind: "fixed" }, //      Locul nașterii — values 121 px
+  listProfessionalType: { content: 5.75, kind: "fixed" }, // Tip profesional — „PROFESIONAL" (90 px); values 41
+  listCompanyType: { content: 5.5, kind: "fixed" }, //      a judicial person's „Tip" — values 88 px
+  listCui: { content: 6, kind: "fixed" }, //                „ÎNREGISTRARE" (95 px); values 92
+  listTradeRegister: { content: 6, kind: "fixed" }, //      „J40/12345/2020" (93 px)
+  listContactPerson: { content: 6.5, kind: "fixed" }, //    Persoană de contact — values 104 px
+  listDocumentType: { content: 6.5, kind: "fixed" }, //     „Tip", the short name — 90th percentile 100 px; the full name on hover
+  listDocumentTitle: { content: "XXL", kind: "fixed" }, //  Titlu — 90th percentile 437 px, longest 969: capped at the scale's widest step (384 px)
+  listNrDocument: { content: 5.75, kind: "fixed" }, //      Nr. document — values 90 px
+  listInstitution: { content: 11, kind: "fixed" }, //       Instituție / Notariat — longest 173 px
+  listSubject: { content: "XXL", kind: "fixed" }, //        Subiect, a sentence — 384 px, the rest on hover
+  listCount: { content: 5.25, kind: "fixed" }, //           Nr. pagini / Persoane / Proprietăți — „PROPRIETĂȚI" (84 px); values 8
   // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
   feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
   feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward

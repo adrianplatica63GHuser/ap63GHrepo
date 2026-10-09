@@ -59,6 +59,16 @@ export const TABLE_FRAME = "w-fit max-w-full overflow-x-auto";
  */
 export const ONE_LINE = "truncate";
 
+/**
+ * Slice #38.57: a one-line cell's tooltip — its whole text, when the cell holds plain text or a number; nothing for
+ * an empty cell or one that draws something else.
+ */
+export function cellTitle(value: unknown): string | undefined {
+  if (typeof value === "string") return value.trim() || undefined;
+  if (typeof value === "number") return String(value);
+  return undefined;
+}
+
 /** A cell in a `wraps` column: a long word breaks inside the column. */
 export const WRAPS = "break-words";
 

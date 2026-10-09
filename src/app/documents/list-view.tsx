@@ -11,7 +11,7 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, TABLE_FRAME, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
@@ -695,14 +695,14 @@ export function DocumentListView({
   // ⚠️ The keys are persisted per browser (`LIST_COLUMN_CHOICE.document`); renaming one silently
   // drops it from every stored choice.
   const optionalCols: ChooserField[] = [
-    { key: "nrDocument",    label: t("table.nrDocument"),    column: "nrDocument" },
-    { key: "dateDocument",  label: t("table.dateDocument"),  column: "dateDocument" },
-    { key: "institution",   label: t("table.institution"),   column: "institution" },
-    { key: "subject",       label: t("table.subject"),       column: "documentSubject" },
-    { key: "pageCount",     label: t("table.pageCount"),     column: "count" },
-    { key: "personCount",   label: t("table.personCount"),   column: "count" },
-    { key: "propertyCount", label: t("table.propertyCount"), column: "count" },
-    { key: "createdAt",     label: t("table.createdAt"),     column: "date" },
+    { key: "nrDocument",    label: t("table.nrDocument"),    column: "listNrDocument" },
+    { key: "dateDocument",  label: t("table.dateDocument"),  column: "listDate" },
+    { key: "institution",   label: t("table.institution"),   column: "listInstitution" },
+    { key: "subject",       label: t("table.subject"),       column: "listSubject" },
+    { key: "pageCount",     label: t("table.pageCount"),     column: "listCount" },
+    { key: "personCount",   label: t("table.personCount"),   column: "listCount" },
+    { key: "propertyCount", label: t("table.propertyCount"), column: "listCount" },
+    { key: "createdAt",     label: t("table.createdAt"),     column: "listDate" },
   ];
 
   function cellValue(item: DocumentListItem, key: string): React.ReactNode {
@@ -726,7 +726,8 @@ export function DocumentListView({
   // build has no column for is dropped on read (`useFieldChooser`).
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.document.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.document.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const columns: ColumnName[] = ["selectNew", "documentType", "documentTitle", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #38.57: the list's own columns, one line each.
+  const columns: ColumnName[] = ["selectNew", "listDocumentType", "listDocumentTitle", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
   const colCount = columns.length;
@@ -958,7 +959,8 @@ export function DocumentListView({
         <>
           <ListPreviews>
             <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
-              <table {...fixedTable(columns)}>
+              {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
+              <table {...fixedTable(columns, "text-sm min-w-full")}>
                 <FixedColumns columns={columns} />
                 <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
@@ -973,14 +975,14 @@ export function DocumentListView({
                         className="h-4 w-4 rounded border-wire accent-cta"
                       />
                     </th>
-                    <th className="px-4 py-2" {...columnHead("documentType")}>{t("table.type")}</th>
-                    <th className="px-4 py-2" {...columnHead("documentTitle")}>{t("table.title")}</th>
+                    <th className="px-4 py-2" {...columnHead("listDocumentType")}>{t("table.type")}</th>
+                    <th className="px-4 py-2" {...columnHead("listDocumentTitle")}>{t("table.title")}</th>
                     {shownCols.map((col) => (
                       <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
                         {col.label}
                       </th>
                     ))}
-                    <th className="px-4 py-2" {...columnHead("openPreview")} />
+                    <th className="px-4 py-2" {...columnHead("listRowActions")} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -1031,25 +1033,26 @@ export function DocumentListView({
                       {/* Slice #37.95: the type by its short name (CVC, PAD…, or the rule's),
                           the full name in its tooltip. */}
                       <td
-                        className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}
+                        className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`}
                         title={item.documentTypeName ?? undefined}
                       >
                         {item.documentTypeName
                           ? documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })
                           : "—"}
                       </td>
-                      <td className={`px-4 py-2 font-medium ${WRAPS}`}>
+                      <td className={`px-4 py-2 font-medium ${ONE_LINE}`} title={cellTitle(item.title)}>
                         {item.title ?? (
                           <span className="text-fade italic">—</span>
                         )}
                       </td>
                       {shownCols.map((col) => (
-                        <td key={col.key} className="px-4 py-2 text-fade dark:text-zinc-400">
+                        <td key={col.key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, col.key))}>
                           {cellValue(item, col.key)}
                         </td>
                       ))}
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="flex gap-2">
+                        {/* Slice #38.57: side by side, always. */}
+                        <span className="flex flex-nowrap gap-2" data-row-actions="">
                           <IconButton
                             href={`/documents/${item.id}`}
                             icon={ArrowRight}

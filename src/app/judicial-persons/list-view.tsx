@@ -10,7 +10,7 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, TABLE_FRAME, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -205,15 +205,16 @@ export function JudicialPersonListView() {
 
   // Slice #37.60 — „Câmpuri afișate", the same chooser the Natural Persons list draws.
   const optionalCols: ChooserField[] = [
-    { key: "judicialPersonType",  label: t("fields.judicialType"),        column: "companyType" },
-    { key: "cuiNumber",           label: t("fields.cuiNumber"),           column: "cui" },
-    { key: "tradeRegisterNumber", label: t("fields.tradeRegisterNumber"), column: "tradeRegister" },
+    { key: "judicialPersonType",  label: t("fields.judicialType"),        column: "listCompanyType" },
+    { key: "cuiNumber",           label: t("fields.cuiNumber"),           column: "listCui" },
+    { key: "tradeRegisterNumber", label: t("fields.tradeRegisterNumber"), column: "listTradeRegister" },
     // Slice #37.71: the company's contact person — the first, when it has two.
-    { key: "contactPerson",       label: t("fields.contactPerson"),       column: "contactPerson" },
+    { key: "contactPerson",       label: t("fields.contactPerson"),       column: "listContactPerson" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.company.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.company.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
-  const COLUMNS: ColumnName[] = ["selectNew", "personName", "personNickname", ...shownCols.map((c) => c.column), "openPreview"];
+  // Slice #38.57: the list's own columns, one line each — a company's name is longer than a person's.
+  const COLUMNS: ColumnName[] = ["selectNew", "listCompanyName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(COLUMNS);
   const colCount = COLUMNS.length;
@@ -278,7 +279,8 @@ export function JudicialPersonListView() {
           as wide as they are. */}
       <ListPreviews>
         <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
-          <table {...fixedTable(COLUMNS)}>
+          {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
+          <table {...fixedTable(COLUMNS, "text-sm min-w-full")}>
             <FixedColumns columns={COLUMNS} />
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
               <tr>
@@ -293,12 +295,12 @@ export function JudicialPersonListView() {
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
                 </th>
-                <th className="px-4 py-2" {...columnHead("personName")}>{t("table.name")}</th>
-                <th className="px-4 py-2" {...columnHead("personNickname")}>{t("table.nickname")}</th>
+                <th className="px-4 py-2" {...columnHead("listCompanyName")}>{t("table.name")}</th>
+                <th className="px-4 py-2" {...columnHead("listPersonNickname")}>{t("table.nickname")}</th>
                 {shownCols.map((col) => (
                   <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>{col.label}</th>
                 ))}
-                <th className="px-4 py-2" {...columnHead("openPreview")} />
+                <th className="px-4 py-2" {...columnHead("listRowActions")} />
               </tr>
             </thead>
             <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -346,21 +348,22 @@ export function JudicialPersonListView() {
                       <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                     </span>
                   </td>
-                  <td className={`px-4 py-2 font-medium ${WRAPS}`}>
+                  <td className={`px-4 py-2 font-medium ${ONE_LINE}`} title={cellTitle(item.displayName)}>
                     {item.displayName || (
                       <span className="text-fade italic">—</span>
                     )}
                   </td>
-                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${WRAPS}`}>
+                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(item.nickname)}>
                     {item.nickname || <span className="italic">—</span>}
                   </td>
                   {shownCols.map((col) => (
-                    <td key={col.key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${wrapsIf(col.column)}`}>
+                    <td key={col.key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, col.key))}>
                       {cellValue(item, col.key) ?? <span className="italic">—</span>}
                     </td>
                   ))}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                    <span className="flex gap-2">
+                    {/* Slice #38.57: side by side, always. */}
+                    <span className="flex flex-nowrap gap-2" data-row-actions="">
                       <IconButton
                         href={`/judicial-persons/${item.id}`}
                         icon={ArrowRight}
