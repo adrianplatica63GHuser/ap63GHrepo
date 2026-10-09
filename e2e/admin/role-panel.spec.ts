@@ -33,7 +33,7 @@ async function removeRoles(request: APIRequestContext): Promise<void> {
 
 async function openRole(page: Page): Promise<Locator> {
   await page.goto("/admin/value-lists?list=person-roles");
-  const list = page.getByRole("region", { name: "Roluri", exact: true });
+  const list = page.getByRole("region", { name: "Roluri Persoane", exact: true }) /* #38.61: was „Roluri" */;
   const row = list.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: ROLE }) });
   await row.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
   const panel = list.locator("[data-role-scope]");

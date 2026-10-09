@@ -38,7 +38,7 @@ starts with `TC-VL-01`.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Domeniu” → „Date de referință” | On the left the categories „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”, each with its lists; on the right „Alegeți o listă din stânga.” |
+| 1 | Opens „Domeniu” → „Date de referință” | On the left the categories „Tipuri de obiecte”, „Roluri și legături”, „Liste de valori”, each with its lists (#38.61; was „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”); on the right „Alegeți o listă din stânga.” |
 | 2 | Presses „Cetățenie” | The list „Cetățenie” opens on the right (the address reads `?list=citizenships`), with „+ Adaugă”, „8 înregistrări” and a DENUMIRE column: Română, Moldoveană, Americană, Germană, Franceză, Italiană, Spaniolă, Engleză, each with „N obiecte” (#38.59; was „folosit de …”), „Editează”, „Unește” and „Șterge” |
 | 3 | „+ Adaugă” — „Adaugă înregistrare nouă”, „Denumire*”, „Salvează”, „Anulează” — types `TC-VL-01 Cetățenie de test`, „Salvează” | „9 înregistrări”; the new value is the **last** row, after Engleză |
 | 4 | „Editează” on it — „Editează înregistrarea”, the name in „Denumire*” — changes it to `TC-VL-01 Cetățenie redenumită`, „Salvează” | The row reads the new name, still last |

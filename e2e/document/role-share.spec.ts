@@ -81,7 +81,7 @@ const shareButton = (row: Locator) => row.getByRole("button", { name: "Cotă", e
 /** Slice #38.36: Date de referință → „Roluri", the role's „Editează": its one panel, its document types under „Act". */
 async function openRolePanel(page: Page, role: string): Promise<Locator> {
   await page.goto("/admin/value-lists?list=person-roles");
-  const list = page.getByRole("region", { name: "Roluri", exact: true });
+  const list = page.getByRole("region", { name: "Roluri Persoane", exact: true }) /* #38.61: was „Roluri" */;
   // The name is the row's first cell, exactly — „Vânzător" is also Cumpărător's converse, in another cell.
   const row = list.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^${role.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}$`) }) });
   await row.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });

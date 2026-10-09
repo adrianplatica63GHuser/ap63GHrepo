@@ -33,7 +33,7 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Date de referință” → „Roluri”, „Editează” on `TC-VL-03 Rol` | The role's panel: the fields, then „Se aplică la” with „Act”, „Proprietate”, „Persoană”, none pressed |
+| 1 | Opens „Date de referință” → „Roluri Persoane”, „Editează” on `TC-VL-03 Rol` | The role's panel: the fields, then „Se aplică la” with „Act”, „Proprietate”, „Persoană”, none pressed |
 | 2 | Presses „Act”; picks „Plan de Amplasament și Delimitare” in „Adaugă un tip de act”, „Adaugă tipul” | „Rolul nu este oferit încă pe niciun tip de act. Adăugați unul mai jos.”, then the type listed, „Deține cotă” unticked, „nicio legătură” |
 | 3 | Ticks „Deține cotă”; opens the role again | The tick stays; „Act” is pressed |
 | 4 | Opens `TC-VL-03 PAD`, „Legături” → „Asociază persoană”; types `TC-VL-03`, picks `TC-VL-03 Rol` in „Rol”, ticks Ion, „Asociază selecția” | The row `Ion TC-VL-03 (TC-VL-03 Rol)` with an orange „Cotă” |

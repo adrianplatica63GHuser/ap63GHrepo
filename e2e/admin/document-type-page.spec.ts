@@ -97,7 +97,7 @@ test.describe("TC-VL-04 — un tip de act pe pagina lui", () => {
 
       // Step 5 — the role's panel: the type under „Tipuri de act", „Deține cotă" ticked.
       await page.goto("/admin/value-lists?list=person-roles");
-      const roles = page.getByRole("region", { name: "Roluri", exact: true });
+      const roles = page.getByRole("region", { name: "Roluri Persoane", exact: true }) /* #38.61: was „Roluri" */;
       const roleRow = roles.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: ROLE }) });
       await roleRow.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
       const panel = roles.locator("[data-role-scope]");

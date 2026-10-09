@@ -35,7 +35,7 @@ Nothing.
 |---|---|---|
 | 1 | Opens `TC-DOC-07 PAD`, tile „Legături" | One row, `Ion TC-DOC-07 (Proiectant)`, with no „Cotă" button — so no „Cotă-parte", „Suprafață echivalentă (mp)" or „Mod de deținere" box |
 | 2 | Opens `TC-DOC-07 CVC`, tile „Părți", and presses the row's „Cotă" | Under the heading „Vânzător", one row, `Ion TC-DOC-07 (Vânzător)` — and none on „Legături"; behind „Cotă" the three boxes, empty |
-| 3 | Opens „Date de referință” → „Roluri”, „Editează” on „Vânzător”; then on „Proiectant” | Vânzător's panel: „Act” pressed, „Contract de Vânzare” with „Deține cotă” ticked. Proiectant's panel: „Plan de Amplasament și Delimitare” with „Deține cotă” unticked |
+| 3 | Opens „Date de referință” → „Roluri Persoane”, „Editează” on „Vânzător”; then on „Proiectant” | Vânzător's panel: „Act” pressed, „Contract de Vânzare” with „Deține cotă” ticked. Proiectant's panel: „Plan de Amplasament și Delimitare” with „Deține cotă” unticked |
 | 4 | Ticks „Deține cotă” on „Plan de Amplasament și Delimitare” in Proiectant's panel | The tick stays after the panel is opened again |
 | 5 | Opens `TC-DOC-07 PAD`, tile „Legături", and presses the row's „Cotă" | The row now has „Cotă", and behind it the three boxes, empty |
 | 6 | Types `50` into „Cotă-parte" and presses Enter | The value stays: `50` |
@@ -50,7 +50,7 @@ finds nothing.
 ## Notes from the runs
 
 **2026-10-08 — Slice #38.36.** „Roluri pe Document” is gone; „Deține cotă” is ticked in the role's own
-panel (Date de referință → „Roluri” → „Editează”, under „Act”). Steps 3, 4 and 7 follow.
+panel (Date de referință → „Roluri Persoane” → „Editează”, under „Act”). Steps 3, 4 and 7 follow.
 
 **2026-10-07 — Slice #38.33.** A CVC's sellers and buyers are on „Părți", so step 2 reads the
 seller there. The PAD has no „Părți"; steps 1, 5 and 7 are unchanged.

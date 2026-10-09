@@ -43,7 +43,7 @@ The window is 1366 × 900.
 | 2 | Looks at the tabs | „General”, „Formular”, „Roluri”; „General” open: „Denumire” `TC-VL-04 Tip`, „Denumire scurtă”, „Cod” read-only with „Codul nu se schimbă…” under it, „Stare” |
 | 3 | Opens „Formular” | „Acest tip nu are încă formular.” and „Creează formularul” |
 | 4 | Opens „Roluri”; picks `TC-VL-04 Rol` in „Adaugă un rol”, „Adaugă rolul”; ticks „Deține cotă”; reloads | „Acest tip nu oferă încă niciun rol. Adăugați unul mai jos.”, then the role listed, unticked; after the tick and the reload it is still ticked |
-| 5 | Opens „Roluri” in „Date de referință”, „Editează” on `TC-VL-04 Rol` | Under „Tipuri de act”, `TC-VL-04 Tip` with „Deține cotă” ticked |
+| 5 | Opens „Roluri Persoane” in „Date de referință”, „Editează” on `TC-VL-04 Rol` | Under „Tipuri de act”, `TC-VL-04 Tip` with „Deține cotă” ticked |
 
 ## At the end — leaving things as they were found
 

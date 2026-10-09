@@ -69,10 +69,25 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       properties.push(await createProperty(page.request, { nickname: `${MARK} P2`, useCategoryId: kept }));
       properties.push(await createProperty(page.request, { nickname: `${MARK} P3`, useCategoryId: merged }));
 
-      // Step 1 — the page: the five categories; „Categorii Folosință" open, marked in the column.
+      // Step 1 — the page: Adrian's three groups, each with its lists in his order (#38.61 — #38.35 had five,
+      // „Proprietăți", „Persoane", „Acte", „Roluri", „Legături între obiecte"); no list name wraps; „Categorii
+      // Folosință" open, marked in the column.
       await page.goto("/admin/value-lists?list=use-categories");
       const nav = page.getByRole("navigation", { name: "Liste de referință" });
-      await expect(nav.locator("h2")).toHaveText(["Proprietăți", "Persoane", "Acte", "Roluri", "Legături între obiecte"], { timeout: 30_000 });
+      await expect(nav.locator("h2")).toHaveText(["Tipuri de obiecte", "Roluri și legături", "Liste de valori"], { timeout: 30_000 });
+      const groups = await nav.locator("[data-category]").evaluateAll((els) =>
+        els.map((el) => [...el.querySelectorAll<HTMLButtonElement>("button[data-list-key]")].map((b) => ({
+          name: b.innerText.trim(),
+          oneLine: b.getBoundingClientRect().height < parseFloat(getComputedStyle(b).lineHeight) * 1.5 + 8,
+          whole: b.scrollWidth <= b.clientWidth + 1,
+        }))),
+      );
+      expect(groups.map((g) => g.map((b) => b.name))).toEqual([
+        ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de Proprietate", "Tipuri de Document"],
+        ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
+        ["Indicative Tarla", "Categorii Folosință", "Cetățenie", "Instituții"],
+      ]);
+      expect(groups.flat().filter((b) => !b.oneLine || !b.whole).map((b) => b.name)).toEqual([]);
       await expect(nav.getByRole("button", { name: "Categorii Folosință", exact: true })).toHaveAttribute("aria-current", "page");
       const panel = page.getByRole("region", { name: "Categorii Folosință", exact: true });
       // Slice #38.59: the header is two lines, „Folosit de" over „(n obiecte)".
@@ -112,6 +127,11 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       await page.goBack();
       await expect(page).toHaveURL(/\?list=use-categories$/, { timeout: 15_000 });
       await expect(panel).toBeVisible({ timeout: 15_000 });
+
+      // Step 6 — (#38.61) the list keys did not change: `?list=person-roles` still opens the roles, under their new title.
+      await page.goto("/admin/value-lists?list=person-roles");
+      await expect(page.getByRole("region", { name: "Roluri Persoane", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(nav.getByRole("button", { name: "Roluri Persoane", exact: true })).toHaveAttribute("aria-current", "page");
     } finally {
       await page.waitForLoadState("networkidle").catch(() => {});
       for (const id of properties) await removeRecord(page.request, "property", id);

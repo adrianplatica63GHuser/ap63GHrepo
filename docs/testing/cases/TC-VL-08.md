@@ -38,7 +38,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Date de referință", „Roluri" | The column headed „Rol invers", and under it „(bărbat, femeie)" |
+| 1 | Opens „Date de referință", „Roluri Persoane" | The column headed „Rol invers", and under it „(bărbat, femeie)" |
 | 2 | Reads „TC-E2E-VL-08 Trei"'s converse cell | „TC-E2E-VL-08 Copil, TC-E2E-VL-08 Fiu, TC-E2E-VL-08 Fiică" on one line (cut with „…" where it does not fit, whole on hover); the row as tall as its neighbours |
 | 3 | Reads „TC-E2E-VL-08 Două"'s | „TC-E2E-VL-08 Vânzător, TC-E2E-VL-08 Vânzătoare" — no empty place between commas |
 | 4 | Reads „TC-E2E-VL-08 Pereche"'s (#38.58) | „TC-E2E-VL-08 Frate, TC-E2E-VL-08 Soră" — no „/", the neutral name left out; the same on hover |
