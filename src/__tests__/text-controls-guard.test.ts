@@ -122,6 +122,10 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/admin/value-lists/_components/value-list-hub.tsx": [
     ["A085", "{label}"],
   ],
+  "src/app/admin/value-lists/_components/relationship-triangle.tsx": [
+    ["A085", "<title>{openLabel(r)}</title> {mark}"], // #38.62: a corner's or side's number opens its list
+    ["A085", "{name(r)}"], // #38.62: the relationship's name opens its list — the name is the place
+  ],
   "src/app/admin/value-lists/_components/document-type-page.tsx": [
     ["A111", "{t(`tabs.${key}`)}"], // #38.39: General / Formular / Roluri
   ],

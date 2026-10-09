@@ -2075,8 +2075,52 @@
   },
   "valueList": {
     "pageTitle": "Date de referință",
-    "sections": {
-      "rolesObjectNote": "Nu există o listă „Document → Proprietate”: relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație."
+    "triangle": {
+      "title": "Cum se leagă obiectele între ele",
+      "intro": "Fiecare colț al triunghiului este un tip de obiect. Un colț leagă două obiecte de același tip, o latură leagă două tipuri diferite. Apăsați un număr sau un nume pentru a deschide lista în care se configurează legătura.",
+      "drawing": "Triunghiul legăturilor: Persoană sus, Proprietate jos în stânga, Document jos în dreapta. Colțurile 1–3 leagă obiecte de același tip, laturile 4–6 două tipuri diferite; latura Document – Proprietate este punctată, fiind neconfigurată.",
+      "objects": {
+        "person": "Persoană",
+        "property": "Proprietate",
+        "document": "Document"
+      },
+      "status": {
+        "configured": "configurat în aplicație",
+        "notConfigured": "neconfigurat, intenționat"
+      },
+      "open": "{name} — deschide lista „{list}”",
+      "relations": {
+        "personPerson": {
+          "name": "Persoană → Persoană",
+          "text": "O persoană legată de altă persoană: frate, soț, părinte, asociat. Rolul se alege din „Roluri Persoane”, dintre rolurile bifate „Persoană → Persoană”; persoana de la celălalt capăt vede rolul invers, după genul ei.",
+          "where": "Coloana „Persoană → Persoană” și coloana „Rol invers” din lista „Roluri Persoane”."
+        },
+        "propertyProperty": {
+          "name": "Proprietate → Proprietate",
+          "text": "O proprietate legată de altă proprietate: adiacentă, inclusă în alta, subdiviziune a alteia. Tipul legăturii se alege din „Legături Proprietate → Proprietate” și se citește într-un singur sens, de la prima proprietate la a doua.",
+          "where": "Lista „Legături Proprietate → Proprietate”."
+        },
+        "documentDocument": {
+          "name": "Document → Document",
+          "text": "Un document legat de alt document: îl modifică, îl înlocuiește, este anexă la el. Tipul legăturii se alege din „Legături Document → Document”.",
+          "where": "Lista „Legături Document → Document”."
+        },
+        "personProperty": {
+          "name": "Persoană – Proprietate",
+          "text": "O persoană legată de o proprietate: coproprietar, arendaș, chiriaș. Rolul se alege din „Roluri Persoane”, dintre rolurile bifate „Persoană → Proprietate”.",
+          "where": "Coloana „Persoană → Proprietate” din lista „Roluri Persoane”."
+        },
+        "personDocument": {
+          "name": "Persoană – Document",
+          "text": "O persoană într-un document: vânzător, cumpărător, mandatar. Rolul se alege din „Roluri Persoane”, dar este oferit doar pe tipurile de document alese pentru el — în panoul rolului, la „Act”, sau pe pagina tipului de document, fila „Roluri”.",
+          "where": "Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document."
+        },
+        "documentProperty": {
+          "name": "Document – Proprietate",
+          "text": "Nu există o listă „Document → Proprietate”: relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație.",
+          "where": "Nicio listă: tipul documentului spune ce înseamnă legătura."
+        }
+      }
     },
     "lists": {
       "propertyTypes": "Tipuri de Proprietate",

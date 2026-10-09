@@ -757,14 +757,14 @@ describe("the value-list hub", () => {
   // Slice #38.35: the hub is one page — categories on the left, the list on the right. The
   // object-to-object lists were their own category, „Legături între obiecte", and the sentence
   // is printed above whichever of the two is open. Slice #38.61 put them in „Roluri și legături",
-  // after the roles (was: `{ id: "links", … }` and `{ id: "roles", lists: ["person-roles"] }`), so the
-  // hub names the two lists (`LINK_LISTS`) rather than their category.
-  it("gives the object-to-object lists their place beside the roles, and the sentence above them", () => {
+  // after the roles (was: `{ id: "links", … }` and `{ id: "roles", lists: ["person-roles"] }`). Slice #38.62
+  // moved the sentence into the relationship triangle, as its Document – Proprietate entry, above every list
+  // of the group (was: `{t("sections.rolesObjectNote")}` above the two link lists) — relationship-triangle.test.ts.
+  it("gives the object-to-object lists their place beside the roles, and the triangle above them", () => {
     const cats = read("lib", "admin", "value-lists", "categories.ts");
     expect(cats).toContain('{ id: "rolesLinks", lists: ["person-roles", "property-property-roles", "document-document-roles"] }');
-    expect(cats).toContain('LINK_LISTS: ReadonlySet<ListKey> = new Set(["property-property-roles", "document-document-roles"])');
-    expect(hub).toContain("LINK_LISTS.has(selected) && (");
-    expect(hub).toContain('{t("sections.rolesObjectNote")}');
+    expect(hub).toContain('categoryOfList(selected) === "rolesLinks" && (');
+    expect(hub).toContain("<RelationshipTriangle");
     // …and both open the one generic list (#29.13), now as the page's panel.
     expect(hub).toContain("<ValueListModal");
   });
@@ -781,8 +781,10 @@ describe("the value-list hub", () => {
     // screen nobody can open is the same class of lie #33.05 deleted seven of.
     expect([locale, at(m, "valueList.docToPropertyInfo")]).toEqual([locale, undefined]);
     expect([locale, at(m, "valueList.lists.documentToProperty")]).toEqual([locale, undefined]);
-    // …and the words survive, under the heading that now answers the question.
-    expect([locale, typeof at(m, "valueList.sections.rolesObjectNote")]).toEqual([locale, "string"]);
+    // …and the words survive, under the heading that now answers the question — since #38.62 the triangle's
+    // Document – Proprietate entry (was `valueList.sections.rolesObjectNote`, now gone).
+    expect([locale, typeof at(m, "valueList.triangle.relations.documentProperty.text")]).toEqual([locale, "string"]);
+    expect([locale, at(m, "valueList.sections")]).toEqual([locale, undefined]);
   });
 
   /**
@@ -795,12 +797,12 @@ describe("the value-list hub", () => {
     ["ro-RO", "Document → Proprietate"],
     ["en-GB", "Document → Property"],
   ] as const)("%s names the list that does not exist", (locale, pair) => {
-    const note = at(messages(locale), "valueList.sections.rolesObjectNote") as string;
+    const note = at(messages(locale), "valueList.triangle.relations.documentProperty.text") as string;
     expect([locale, note.includes(pair)]).toEqual([locale, true]);
   });
 
   it("and keeps the modal's own words for the rest of it", () => {
-    const note = at(messages("ro-RO"), "valueList.sections.rolesObjectNote") as string;
+    const note = at(messages("ro-RO"), "valueList.triangle.relations.documentProperty.text") as string;
     expect(note).toContain("definită de tipul documentului");
     expect(note).toContain("Nu este necesară configurarea separată a unui tip de relație.");
   });

@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 
 import { LIST_META, VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
-import { LINK_LISTS, VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, usedFirst } from "@/lib/admin/value-lists/categories";
+import { VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, usedFirst } from "@/lib/admin/value-lists/categories";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const ro = JSON.parse(read("messages", "ro-RO.json")) as { valueList: Record<string, Record<string, string>> };
@@ -53,7 +53,7 @@ describe("the categories (nothing disappears)", () => {
   });
 
   // #38.35 kept each list where the old hub's sections had it („tarla" under „property", …); #38.61 regrouped them.
-  it("put each list in Adrian's group, and name the two link lists for #34.05's note", () => {
+  it("put each list in Adrian's group", () => {
     expect(categoryOfList("person-types")).toBe("objectTypes");
     expect(categoryOfList("document-types")).toBe("objectTypes");
     expect(categoryOfList("tarla")).toBe("valueLists");
@@ -61,7 +61,6 @@ describe("the categories (nothing disappears)", () => {
     expect(categoryOfList("institutions")).toBe("valueLists");
     expect(categoryOfList("person-roles")).toBe("rolesLinks");
     expect(categoryOfList("document-document-roles")).toBe("rolesLinks");
-    expect([...LINK_LISTS].sort()).toEqual(["document-document-roles", "property-property-roles"]);
   });
 });
 

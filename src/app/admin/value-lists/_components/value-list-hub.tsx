@@ -25,8 +25,9 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
-import { LINK_LISTS, listsByCategory } from "@/lib/admin/value-lists/categories";
-import { ValueListModal } from "./value-list-modal";
+import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
+import { VALUE_LIST_CARD_UNITS, ValueListModal } from "./value-list-modal";
+import { RelationshipTriangle } from "./relationship-triangle";
 import { rem, screenPanel, unitsRem } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -150,9 +151,11 @@ export function ValueListHub({
           </p>
         ) : (
           <>
-            {/* Slice #34.05's sentence, under the category it answers for. */}
-            {LINK_LISTS.has(selected) && (
-              <p className="text-sm leading-relaxed text-fade dark:text-zinc-400">{t("sections.rolesObjectNote")}</p>
+            {/* Slice #38.62: the relationship triangle above every list of „Roluri și legături" (Ask first #1) —
+                #34.05's sentence, printed here above the two link lists until now, is its Document – Proprietate
+                entry. A corner or side with a list opens it through `open`, as the column on the left does. */}
+            {categoryOfList(selected) === "rolesLinks" && (
+              <RelationshipTriangle current={selected} onOpen={open} cardUnits={VALUE_LIST_CARD_UNITS} />
             )}
             {/* Keyed on the list: each list starts from its own state — a filter
                 ticked on one never filters the next (#27.07). */}

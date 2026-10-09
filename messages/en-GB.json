@@ -2075,8 +2075,52 @@
   },
   "valueList": {
     "pageTitle": "Reference Data",
-    "sections": {
-      "rolesObjectNote": "There is no “Document → Property” list: the relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed."
+    "triangle": {
+      "title": "How objects are linked to each other",
+      "intro": "Each corner of the triangle is a kind of object. A corner links two objects of the same kind; a side links two different kinds. Press a number or a name to open the list where the link is configured.",
+      "drawing": "The relationship triangle: Person at the top, Property bottom left, Document bottom right. Corners 1–3 link objects of the same kind, sides 4–6 two different kinds; the Document – Property side is dotted, as it is not configured.",
+      "objects": {
+        "person": "Person",
+        "property": "Property",
+        "document": "Document"
+      },
+      "status": {
+        "configured": "configured in the application",
+        "notConfigured": "not configured, by design"
+      },
+      "open": "{name} — open the list “{list}”",
+      "relations": {
+        "personPerson": {
+          "name": "Person → Person",
+          "text": "A person linked to another person: brother, spouse, parent, partner. The role is chosen from “Person Roles”, among the roles ticked “Person → Person”; the person at the other end sees the converse role, by their gender.",
+          "where": "The “Person → Person” column and the “Converse role” column of the “Person Roles” list."
+        },
+        "propertyProperty": {
+          "name": "Property → Property",
+          "text": "A property linked to another property: adjacent, included in another, a subdivision of another. The type of link is chosen from “Property → Property Links” and reads one way, from the first property to the second.",
+          "where": "The “Property → Property Links” list."
+        },
+        "documentDocument": {
+          "name": "Document → Document",
+          "text": "A document linked to another document: it amends it, replaces it, is an annex to it. The type of link is chosen from “Document → Document Links”.",
+          "where": "The “Document → Document Links” list."
+        },
+        "personProperty": {
+          "name": "Person – Property",
+          "text": "A person linked to a property: co-owner, tenant farmer, tenant. The role is chosen from “Person Roles”, among the roles ticked “Person → Property”.",
+          "where": "The “Person → Property” column of the “Person Roles” list."
+        },
+        "personDocument": {
+          "name": "Person – Document",
+          "text": "A person in a document: seller, buyer, attorney. The role is chosen from “Person Roles”, but is offered only on the document types chosen for it — in the role's panel, under “Document”, or on the document type's own page, “Roles” tab.",
+          "where": "No column in the “Person Roles” list: it is configured on each role, under “Document”, or on the document type's page."
+        },
+        "documentProperty": {
+          "name": "Document – Property",
+          "text": "There is no “Document → Property” list: the relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed.",
+          "where": "No list: the document's type says what the link means."
+        }
+      }
     },
     "lists": {
       "propertyTypes": "Property Types",

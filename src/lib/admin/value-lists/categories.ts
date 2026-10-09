@@ -25,13 +25,6 @@ export const VALUE_LIST_CATEGORIES: readonly { id: Exclude<ValueListCategoryId, 
   { id: "valueLists", lists: ["tarla", "use-categories", "citizenships", "institutions"] },
 ];
 
-/**
- * The two lists of links between objects of the same kind. #34.05's note — there is no „Document → Proprietate"
- * list — is printed above them; #38.35 found them by their category, „Legături între obiecte", which #38.61 merged
- * into „Roluri și legături" beside the roles, so they are named here instead.
- */
-export const LINK_LISTS: ReadonlySet<ListKey> = new Set(["property-property-roles", "document-document-roles"]);
-
 /** The categories with their lists, „Altele" last and only when some list is in no category. */
 export function listsByCategory(): { id: ValueListCategoryId; lists: ListKey[] }[] {
   const named = new Set<ListKey>(VALUE_LIST_CATEGORIES.flatMap((c) => c.lists));
