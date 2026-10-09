@@ -58,7 +58,9 @@ describe("one line per row (#38.50)", () => {
   });
 
   it("a header may take two lines; the table is never narrower than its toolbar", () => {
-    expect(MODAL).toContain('className="px-4 py-2 align-bottom"');
+    // #38.50 pinned the literal `className="px-4 py-2 align-bottom"`; #38.60 centres some headers, so the class is
+    // built — still `px-4 py-2 align-bottom`, plus `text-center` where the column is centred (column-centring.test.ts).
+    expect(MODAL).toContain("px-4 py-2 align-bottom");
     expect(MODAL).toContain('<div className="w-fit max-w-full" data-value-list-frame="">');
     expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full")');
   });

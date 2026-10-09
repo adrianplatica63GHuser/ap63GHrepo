@@ -111,8 +111,20 @@ function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
   // Slice #38.53 took the document type's key out of the table (`nameTip`), and #38.55 its `valueKey` with it.
   if (f.multiline) return "valueDescription";
   if (f.key !== "name") return "valueText";
+  // Slice #38.60: a role's name has its own width, its longest (215 px) — not a document type's (252).
+  if (listKey === "person-roles") return "valueRoleName";
   return SHORT_NAME_LISTS.has(listKey) ? "valueNameShort" : "valueName";
 }
+
+/**
+ * Slice #38.60: the columns read centred, header and cells together — a checkmark („✓" / „–", every list:
+ * Ask first #1, a ✓ at the left edge reads as if it belonged to the column before it), the converse names, and
+ * „Folosit de" (below, its own `<th>`/`<td>`). „Denumire" and „Descriere" stay left-aligned.
+ */
+function centredCell(cell: FieldMeta[]): boolean {
+  return cell.length > 1 || cell[0].type === "checkbox";
+}
+const CENTRED = "text-center";
 
 /** A field's box in the add/edit form, at its step (`SCREEN`). */
 function formBox(f: FieldMeta): "valueName" | "valueText" | "valueDescription" {
@@ -1546,7 +1558,7 @@ export function ValueListModal({
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (
-                      <th key={cell[0].key} className="px-4 py-2 align-bottom" {...columnHead(cellColumn(cell, listKey))}>
+                      <th key={cell[0].key} className={`px-4 py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}>
                         {/* Slice #38.55: a joined cell's header is two lines, „Rol invers" over „(bărbat, femeie)" —
                             #37.28 stacked the three fields' own labels. */}
                         {cell.length > 1 && JOINED_HEADS[listKey] ? (
@@ -1569,7 +1581,7 @@ export function ValueListModal({
                     )}
                     {/* Slice #38.59: two lines, Adrian's words — „Folosit de" over „(n obiecte)"; each row reads
                         „3 obiecte", where #38.35 read „folosit de 3 înregistrări". */}
-                    <th className="px-4 py-2 align-bottom" {...columnHead("valueUsage")}>
+                    <th className={`px-4 py-2 align-bottom ${CENTRED}`} {...columnHead("valueUsage")}>
                       <span className="block">{t("usage.column")}</span>
                       <span className="block">{t("usage.columnSub")}</span>
                     </th>
@@ -1651,6 +1663,7 @@ export function ValueListModal({
                             // Slice #37.37 had „a long value wraps downward in its column, never truncated".
                             // Slice #38.50, at Adrian's request: one line per row, cut with „…", whole on hover.
                             ONE_LINE,
+                            centredCell(cell) && CENTRED,
                           ].filter(Boolean).join(" ")}
                         >
                           {/* Slice #19.02: render checkboxes as ✓ / – symbols.
@@ -1692,7 +1705,7 @@ export function ValueListModal({
                           )}
                         </td>
                       )}
-                      <td className={`px-4 py-2 text-xs text-fade dark:text-zinc-400 ${ONE_LINE}`} data-usage={usage.data?.[row.id] ?? ""}>
+                      <td className={`px-4 py-2 text-xs text-fade dark:text-zinc-400 ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
                         {usage.data === undefined
                           ? "…"
                           : (usage.data[row.id] ?? 0) === 0
