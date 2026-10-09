@@ -7,6 +7,14 @@ import path from "path";
 
 import { LIST_META, VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
 import { VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, usedFirst } from "@/lib/admin/value-lists/categories";
+import {
+  PANEL_BORDER_REM,
+  PANEL_PADDING_REM,
+  REFERENCE_NAV_BUTTON_PAD_REM,
+  REFERENCE_NAV_NAME_PX,
+  REFERENCE_NAV_REM,
+  unitsRem,
+} from "@/lib/ui/field-widths";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const ro = JSON.parse(read("messages", "ro-RO.json")) as { valueList: Record<string, Record<string, string>> };
@@ -134,5 +142,56 @@ describe("the page", () => {
 
   it("moves between the lists with ↑ ↓ Home End", () => {
     for (const key of ['"ArrowDown"', '"ArrowUp"', '"Home"', '"End"']) expect(hub).toContain(`e.key === ${key}`);
+  });
+});
+
+describe("the column, as wide as its longest name (Slice #38.65)", () => {
+  const hub = read("src", "app", "admin", "value-lists", "_components", "value-list-hub.tsx");
+  const page = read("src", "app", "admin", "value-lists", "page.tsx");
+  const px = (r: number) => r * 16;
+
+  it("is 16rem: the measured name, the padding and the border a side, up to the next quarter rem", () => {
+    expect(REFERENCE_NAV_NAME_PX).toBe(213.2);
+    const parts = REFERENCE_NAV_NAME_PX / 16 + 2 * (PANEL_PADDING_REM + REFERENCE_NAV_BUTTON_PAD_REM + PANEL_BORDER_REM);
+    expect(parts).toBeCloseTo(15.95, 5);
+    expect(REFERENCE_NAV_REM).toBe(16);
+    expect(REFERENCE_NAV_REM).toBeGreaterThanOrEqual(parts);
+  });
+
+  it("leaves the gap after that name equal to the gap before it, within the 4 px TC-VL-02 step 7 allows", () => {
+    const before = px(PANEL_BORDER_REM + PANEL_PADDING_REM + REFERENCE_NAV_BUTTON_PAD_REM);
+    const after = px(REFERENCE_NAV_REM) - before - REFERENCE_NAV_NAME_PX;
+    expect(before).toBe(21);
+    expect(Math.abs(after - before)).toBeLessThanOrEqual(4);
+  });
+
+  it("is about 20 % narrower than the two units it was (#38.35)", () => {
+    const saved = 1 - REFERENCE_NAV_REM / unitsRem(2);
+    expect(unitsRem(2)).toBe(19.5);
+    expect(saved).toBeGreaterThan(0.15);
+    expect(saved).toBeLessThan(0.25);
+  });
+
+  it("is the measured name: the longest list title in either language, by characters too", () => {
+    const longest = (m: typeof ro) => VALID_LIST_KEYS.map((k) => m.valueList.lists[LIST_META[k].titleKey]).sort((a, b) => b.length - a.length)[0];
+    // A rename that makes another title the longest is the moment to re-measure (field-widths.ts says how).
+    expect(longest(ro)).toBe("Legături Proprietate → Proprietate");
+    expect(longest(en).length).toBeLessThan(longest(ro).length);
+  });
+
+  it("is drawn at that width, off the unit grid by name, never narrower than its names", () => {
+    expect(hub).toContain('style={{ width: rem(REFERENCE_NAV_REM), minWidth: "max-content" }}');
+    expect(hub).toContain('data-panel="value-lists-nav"');
+    expect(hub).toContain('data-measured-width=""');
+    expect(hub).not.toMatch(/NAV_UNITS|screenPanel\(/);
+  });
+
+  it("has the title above it, so the list's side starts beside the title, just under the breadcrumbs bar", () => {
+    const column = hub.slice(hub.indexOf('data-value-list-column=""'), hub.indexOf("data-value-list-side"));
+    expect(column.indexOf('{t("pageTitle")}')).toBeGreaterThan(-1);
+    expect(column.indexOf('{t("pageTitle")}')).toBeLessThan(column.indexOf("<nav"));
+    expect(page).not.toContain("pageTitle");
+    // 8 px under the bar, where every other page starts 32 px under it (`py-8`).
+    expect(page).toContain('className="w-full px-6 pt-2 pb-8 flex flex-col gap-6"');
   });
 });

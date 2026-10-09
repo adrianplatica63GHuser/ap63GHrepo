@@ -10,7 +10,8 @@
  *     created through the routes the screens call, with `TC-E2E-VL-02` names,
  *     and removed in `finally` (a value by DELETE, after its properties).
  *   - Slice #38.35's pictures, not steps of the case: the page and the merge
- *     dialog, at 1366 and 1920 px, into `playwright-report/value-list-page/`.
+ *     dialog, at 1366 and 1920 px, into `playwright-report/value-list-page/`;
+ *     Slice #38.65's, „Roluri Persoane" under the narrower column, beside them.
  */
 
 import { test, expect, type APIRequestContext, type Locator, type Page } from "@playwright/test";
@@ -132,6 +133,35 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       await page.goto("/admin/value-lists?list=person-roles");
       await expect(page.getByRole("region", { name: "Roluri Persoane", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(nav.getByRole("button", { name: "Roluri Persoane", exact: true })).toHaveAttribute("aria-current", "page");
+
+      // Step 7 — (#38.65) the column is as wide as its longest name: the gap after „Legături Proprietate →
+      // Proprietate" within 4 px of the gap before it. At 1920 px the list's side starts just under the breadcrumbs
+      // bar, level with the page title; at 1366 px it is still under the column (Ask first #2).
+      const gaps = (await nav.getByRole("button", { name: "Legături Proprietate → Proprietate", exact: true }).evaluate((b) => {
+        const navBox = b.closest("nav")!.getBoundingClientRect();
+        const text = (el: Element) => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect(); };
+        const widest = Math.max(...[...b.closest("nav")!.querySelectorAll("button[data-list-key]")].map((x) => text(x).width));
+        const own = text(b);
+        return { before: own.left - navBox.left, after: navBox.right - own.right, widest: own.width >= widest - 0.5 };
+      }));
+      expect(gaps.widest, "„Legături Proprietate → Proprietate” is the longest name").toBe(true);
+      expect(Math.abs(gaps.after - gaps.before), `gap before ${gaps.before} px, after ${gaps.after} px`).toBeLessThanOrEqual(4);
+      const bar = page.getByRole("navigation", { name: "Fir de navigare" });
+      const title = page.getByRole("heading", { level: 1, name: "Date de referință" });
+      const side = page.locator("[data-value-list-side]");
+      await page.setViewportSize({ width: 1920, height: 900 });
+      await page.waitForTimeout(300);
+      const [barBox, titleBox, sideBox] = [await bar.boundingBox(), await title.boundingBox(), await side.boundingBox()];
+      expect(barBox && titleBox && sideBox, "the bar, the title and the list's side are drawn").toBeTruthy();
+      const under = sideBox!.y - (barBox!.y + barBox!.height);
+      expect(under, `the list's side starts ${under} px under the breadcrumbs bar`).toBeGreaterThanOrEqual(0);
+      expect(under).toBeLessThanOrEqual(8);
+      expect(Math.abs(sideBox!.y - titleBox!.y), "the list's side is level with the title").toBeLessThanOrEqual(2);
+      await page.setViewportSize({ width: 1366, height: 900 });
+      await page.waitForTimeout(300);
+      const navBox = await nav.boundingBox();
+      expect((await side.boundingBox())!.y, "at 1366 px the list stays under the column").toBeGreaterThan(navBox!.y + navBox!.height);
+      await photograph(page, "narrow-column", null);
     } finally {
       await page.waitForLoadState("networkidle").catch(() => {});
       for (const id of properties) await removeRecord(page.request, "property", id);

@@ -55,7 +55,7 @@ editor, and saves nothing.
 | 3 | Looks at the table columns marked fixed (codes, dates, counts, buttons) | No cell's value is wider than its column. Names, titles and descriptions wrap onto a second line instead |
 | 4 | Looks at a long sentence on a screen (the calculation's introduction, a note under a box) | It wraps inside the screen's column. It does not stretch the column to the window |
 | 5 | On each „Asociază …" screen, at 1366, 1920 and 2560 px (Slice #37.34) | Three tiles in reading order — „Căutare", „Rezultate", „Asociere" — side by side when the window holds them and wrapping when it does not. Every tile, and the row they sit in, is a whole number of width units (6 at 1366, 10 at 1920, 14 at 2560). The breadcrumb reads „Acasă › <the list> › <the record> › <this screen's title>" |
-| 6 | On each administration screen and Schimbă parola, at 1366, 1920 and 2560 px (Slice #37.35) | Its sections are tiles side by side where the window holds them, each a whole number of width units, and the row they sit in is whole units — 6, 10 and 14 at the three widths, or as wide as its widest tile where one is wider (the history of access requests, 9) |
+| 6 | On each administration screen and Schimbă parola, at 1366, 1920 and 2560 px (Slice #37.35) | Its sections are tiles side by side where the window holds them, each a whole number of width units, and the row they sit in is whole units — 6, 10 and 14 at the three widths, or as wide as its widest tile where one is wider (the history of access requests, 9). Not „Date de referință” since #38.65: its column is as wide as its longest name, off the unit by design |
 
 ## Notes from the runs
 
@@ -82,3 +82,7 @@ first run with the step was green (e2e 20261001T030112Z-23451).
 
 **2026-10-01 — step 6 added (Slice #37.35).** The administration screens became rows of unit
 tiles; the spec checks each with `unitGrid` (e2e 20261001T033557Z-3201, green on its first run).
+
+**2026-10-09 — step 6 narrowed (Slice #38.65).** „Date de referință”'s column is sized by its longest name, not
+by the unit, and marked `data-measured-width`; the spec checks that screen's widths at 1400 and 2400 px but no longer
+its unit grid, where nothing else on the page is a tile.

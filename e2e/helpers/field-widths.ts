@@ -387,7 +387,8 @@ export async function expectUnitGrid(
         // n units are n·u + (n−1)·g, so (w + g) / (u + g) is a whole number.
         const units = (px: number) => (px / rem + g) / (u + g);
         const row = document.querySelector<HTMLElement>("[data-tile-row]")?.parentElement;
-        const boxes = [...document.querySelectorAll<HTMLElement>("[data-tile], [data-panel]")]
+        // Slice #38.65: a panel sized by its own text (`data-measured-width`, „Date de referință"'s column) is off the grid by design.
+        const boxes = [...document.querySelectorAll<HTMLElement>("[data-tile], [data-panel]:not([data-measured-width])")]
           .map((el) => ({ name: el.dataset.tile ?? el.dataset.panel ?? "?", w: el.getBoundingClientRect().width }))
           .filter((b) => b.w > 0);
         return {

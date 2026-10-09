@@ -38,6 +38,7 @@ The window is 1366 × 900.
 | 4 | Presses „Unește” | The dialog closes; „Unită” is gone; „Păstrată” — „3 obiecte” |
 | 5 | Presses „Cetățenie” on the left, then the browser's Back | The address reads `?list=citizenships` and „Cetățenie” opens; after Back, `?list=use-categories` and „Categorii Folosință” again |
 | 6 | Opens `/admin/value-lists?list=person-roles` (#38.61) | The list „Roluri Persoane” opens, marked on the left — the address an old bookmark carries still works |
+| 7 | Looks at the column, then widens the window to 1920 px, then narrows it back to 1366 (#38.65) | The column is as wide as „Legături Proprietate → Proprietate” needs: the gap after it is the gap before it, within 4 px. At 1920 px the list's side starts just under the breadcrumbs bar (within 8 px), level with the title „Date de referință”, which sits above the column; at 1366 px the list is under the column |
 
 ## At the end — leaving things as they were found
 
@@ -54,3 +55,6 @@ handover.
 
 **2026-10-09 — `automated` (Slice #38.61).** Step 1 reads the three groups; step 6 added; the test runner ran it
 green.
+
+**2026-10-09 — `automated` (Slice #38.65).** Step 7 added: the column 16rem, as wide as its longest name; the list's
+side beside the title from just under the breadcrumbs bar. The test runner ran it green.

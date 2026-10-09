@@ -82,7 +82,8 @@ async function screen(
 async function expectScreenUnitGrid(page: Page): Promise<void> {
   const widest = await page.evaluate(([u, g]) => {
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const units = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-tile], [data-tile-row] [data-panel]")]
+    // Slice #38.65: „Date de referință"'s column is sized by its text (`data-measured-width`), not by the unit.
+    const units = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-tile], [data-tile-row] [data-panel]:not([data-measured-width])")]
       .map((el) => Math.round((el.getBoundingClientRect().width / rem + g) / (u + g)));
     return Math.max(0, ...units);
   }, [UNIT_REM, UNIT_GAP_REM] as const);
@@ -193,7 +194,9 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
 
       // Administration.
       await screen(page, "settings", "/admin/settings", (p) => p.locator('[data-width-field="timeFrameDays"]').first(), { unitGrid: true, alsoAt: [1366, 2560] });
-      await screen(page, "value-lists", "/admin/value-lists", (p) => p.locator("[data-panel]").first(), { unitGrid: true });
+      // Slice #38.65: no unit grid here any more — the page's one panel is its column, sized by its longest name
+      // (`data-measured-width`), and a list opens beside it as a card, not a tile. Its widths are still held at 1400 / 2400.
+      await screen(page, "value-lists", "/admin/value-lists", (p) => p.locator("[data-panel]").first());
       // „Istoric", whose table is there whenever anyone has ever asked for access;
       // with no request at all the screen has nothing fixed to measure but the
       // page itself, which must still not be pushed sideways.
