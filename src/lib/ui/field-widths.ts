@@ -1482,6 +1482,37 @@ export function screenRowStyle(widestUnits: number): CSSProperties {
 /** A tile is never narrower than this: two units hold a role, two buttons and a sentence. */
 export const MIN_TILE_UNITS = 2;
 
+// ---- „Date de referință"'s column: as wide as its longest name (#38.65) -----------------
+
+/**
+ * THE ONE COLUMN SIZED BY ITS TEXT, NOT BY THE UNIT.                 (Slice #38.65)
+ *
+ * Adrian: the column of „Date de referință" is as wide as its longest name needs,
+ * the gap after that name equal to the gap before it — 12 px of panel padding
+ * (`p-3`) plus 8 px inside the button (`px-2`), a side. Two units (19.5rem,
+ * #38.35) left 63 px after it.
+ *
+ * MEASURED, not estimated — in the runner's Chromium on Windows, 2026-10-09: the
+ * page renders in the body's `Arial, Helvetica, sans-serif` at 14 px, and
+ * „Legături Proprietate → Proprietate" is 213.2 px. The longest en-GB name,
+ * „Document → Document Links", is 186.0 px; the widest heading, „ROLURI ȘI
+ * LEGĂTURI", 162.9 px with its padding; the page title, which now sits above the
+ * column at its width, 179.2 px. The open list's `font-medium` is no wider:
+ * Arial has no 500. Re-measure when a list is renamed or added — TC-VL-02 step 1
+ * reads the two gaps and fails first, and the nav's `min-width: max-content`
+ * widens it rather than wrap a name meanwhile.
+ *
+ * The parts: 13.325rem of text, 2 × (0.75 + 0.5)rem of padding, 2 px of border —
+ * 15.95rem, rounded up to the next quarter: **16rem, 82 % of two units** (Adrian
+ * asked for „about 20 %" less). It is the one panel off the unit grid, and says
+ * so (`data-measured-width`, which `expectUnitGrid` leaves out).
+ */
+export const REFERENCE_NAV_NAME_PX = 213.2;
+/** Inside each of the column's buttons, a side: Tailwind `px-2`. */
+export const REFERENCE_NAV_BUTTON_PAD_REM = 0.5;
+export const REFERENCE_NAV_REM =
+  Math.ceil((REFERENCE_NAV_NAME_PX / 16 + 2 * (PANEL_PADDING_REM + REFERENCE_NAV_BUTTON_PAD_REM + PANEL_BORDER_REM)) * 4) / 4;
+
 /** The fewest units whose tile holds these `SCREEN` boxes side by side (labels above). */
 export function boxesUnits(names: readonly ScreenField[]): number {
   return Math.max(MIN_TILE_UNITS, unitsFor(panelRem(rowRem(names.map((n) => SCREEN[n])))));

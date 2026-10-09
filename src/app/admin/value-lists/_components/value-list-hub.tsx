@@ -28,14 +28,15 @@ import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists
 import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
 import { VALUE_LIST_CARD_UNITS, ValueListModal } from "./value-list-modal";
 import { RelationshipTriangle } from "./relationship-triangle";
-import { rem, screenPanel, unitsRem } from "@/lib/ui/field-widths";
+import { REFERENCE_NAV_REM, rem, unitsRem } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /**
- * The categories' column: two units. #38.35 sized it for „Tipuri de Persoană Juridică"; #38.61's longest name,
- * „Legături Proprietate → Proprietate", was measured to fit it too (TC-VL-02 step 1 checks that no name wraps).
+ * The categories' column: as wide as its longest name, the gap after it equal to the gap before it — 16rem
+ * (`REFERENCE_NAV_REM`, measured in field-widths.ts; Slice #38.65). It was two units (19.5rem) from #38.35 to
+ * #38.64. The page title sits above it, at its width, so the list's side can start level with the title, just
+ * under the breadcrumbs bar (Ask first #1): the title used to be page.tsx's, above the whole row.
  */
-const NAV_UNITS = 2;
 
 /**
  * The list's side takes the rest of the row, and never less than this: below
@@ -99,46 +100,54 @@ export function ValueListHub({
   }
 
   return (
-    <UnitRow units={[NAV_UNITS, LIST_MIN_UNITS]}>
-      <nav
-        ref={navRef}
-        aria-label={t("page.nav")}
-        onKeyDown={onNavKey}
-        {...screenPanel("value-lists-nav", NAV_UNITS)}
-        className="flex flex-col gap-4 rounded-lg border border-card-rim bg-card p-3 dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        {listsByCategory().map((category) => (
-          <div key={category.id} className="flex flex-col gap-1" data-category={category.id}>
-            <h2 className="px-2 text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
-              {t(`categories.${category.id}`)}
-            </h2>
-            <ul className="flex flex-col">
-              {category.lists.map((key) => {
-                const label = t(`lists.${LIST_META[key].titleKey}`);
-                const current = key === selected;
-                return (
-                  <li key={key}>
-                    <button
-                      type="button"
-                      data-list-key={key}
-                      aria-current={current ? "page" : undefined}
-                      onClick={() => open(key)}
-                      className={[
-                        "w-fit rounded-md px-2 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
-                        current
-                          ? "bg-cta font-medium text-white"
-                          : "text-ink hover:bg-cta-pale dark:text-zinc-200 dark:hover:bg-zinc-800",
-                      ].join(" ")}
-                    >
-                      {label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </nav>
+    <UnitRow units={[LIST_MIN_UNITS]}>
+      {/* Slice #38.65: the title and the column, one above the other; the list's side beside both, from the top. */}
+      <div className="flex flex-col gap-6" data-value-list-column="">
+        <header>
+          <h1 className="whitespace-nowrap text-2xl font-semibold tracking-tight">{t("pageTitle")}</h1>
+        </header>
+        <nav
+          ref={navRef}
+          aria-label={t("page.nav")}
+          onKeyDown={onNavKey}
+          style={{ width: rem(REFERENCE_NAV_REM), minWidth: "max-content" }}
+          data-panel="value-lists-nav"
+          data-measured-width=""
+          className="flex flex-col gap-4 rounded-lg border border-card-rim bg-card p-3 dark:border-zinc-800 dark:bg-zinc-900"
+        >
+          {listsByCategory().map((category) => (
+            <div key={category.id} className="flex flex-col gap-1" data-category={category.id}>
+              <h2 className="px-2 text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
+                {t(`categories.${category.id}`)}
+              </h2>
+              <ul className="flex flex-col">
+                {category.lists.map((key) => {
+                  const label = t(`lists.${LIST_META[key].titleKey}`);
+                  const current = key === selected;
+                  return (
+                    <li key={key}>
+                      <button
+                        type="button"
+                        data-list-key={key}
+                        aria-current={current ? "page" : undefined}
+                        onClick={() => open(key)}
+                        className={[
+                          "w-fit rounded-md px-2 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+                          current
+                            ? "bg-cta font-medium text-white"
+                            : "text-ink hover:bg-cta-pale dark:text-zinc-200 dark:hover:bg-zinc-800",
+                        ].join(" ")}
+                      >
+                        {label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </div>
 
       <div
         data-value-list-side=""
