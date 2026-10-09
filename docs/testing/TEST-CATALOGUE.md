@@ -158,6 +158,7 @@ fixed fixture where the existing one will do.
 | [TC-VL-07](cases/TC-VL-07.md) | Tipuri de document: fără coloana „Cheie”; cheia în bula denumirii | value lists | happy | — | `automated` | 2026-10-08 | `e2e/admin/document-type-key-tip.spec.ts` |
 | [TC-VL-08](cases/TC-VL-08.md) | Roluri: numele inverse ale unui rol pe o singură linie, despărțite prin virgulă | value lists | happy | — | `automated` | 2026-10-09 | `e2e/admin/converse-one-line.spec.ts` |
 | [TC-VL-09](cases/TC-VL-09.md) | „Date de referință”: titlurile coloanelor rămân în vedere cât lista derulează | value lists | happy | — | `automated` | 2026-10-08 | `e2e/admin/reference-sticky-header.spec.ts` |
+| [TC-VL-10](cases/TC-VL-10.md) | „Roluri și legături”: triunghiul legăturilor deasupra listelor | value lists | happy | — | `automated` | 2026-10-09 | `e2e/admin/relationship-triangle.spec.ts` |
 | [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
