@@ -1,4 +1,4 @@
-# TC-VL-02 — „Date de referință” pe o pagină: „folosit de N” pe fiecare rând, valorile nefolosite la urmă, două valori unite
+# TC-VL-02 — „Date de referință” pe o pagină: „N obiecte” pe fiecare rând, valorile nefolosite la urmă, două valori unite
 
 | | |
 |---|---|
@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-08 |
+| **Last green** | 2026-10-09 |
 
 ## What this proves
 
@@ -33,9 +33,9 @@ The window is 1366 × 900.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `/admin/value-lists?list=use-categories` | On the left „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”, each with its lists, „Categorii Folosință” marked; on the right the list „Categorii Folosință”, with a column „Folosit de” |
-| 2 | Reads the three `TC-VL-02` rows | „Păstrată” — „folosit de 2 înregistrări”; „Unită” — „folosit de 1 înregistrare”; „Nefolosită” — „nefolosit”, greyed, after the other two |
+| 2 | Reads the three `TC-VL-02` rows | „Păstrată” — „2 obiecte”; „Unită” — „1 obiect”; „Nefolosită” — „nefolosit”, greyed, after the other two. The column is headed „Folosit de” over „(n obiecte)” (#38.59; #38.35 read „folosit de 2 înregistrări”) |
 | 3 | Presses „Unește” on „Unită” | „Unește „TC-VL-02 Unită” cu altă valoare”, „O înregistrare se mută pe valoarea păstrată:”; picks „TC-VL-02 Păstrată” in „Valoarea păstrată” |
-| 4 | Presses „Unește” | The dialog closes; „Unită” is gone; „Păstrată” — „folosit de 3 înregistrări” |
+| 4 | Presses „Unește” | The dialog closes; „Unită” is gone; „Păstrată” — „3 obiecte” |
 | 5 | Presses „Cetățenie” on the left, then the browser's Back | The address reads `?list=citizenships` and „Cetățenie” opens; after Back, `?list=use-categories` and „Categorii Folosință” again |
 
 ## At the end — leaving things as they were found
@@ -47,3 +47,6 @@ Delete the three properties, then the values that start with `TC-VL-02` (`DELETE
 **2026-10-08 — Slice #38.35, `automated` the same day.** Written with the change and translated into
 `e2e/admin/value-list-merge.spec.ts`, with `TC-E2E-VL-02` names. The runner's run is in #38.35's
 handover.
+
+**2026-10-09 — `automated` (Slice #38.59).** The rows read „N obiecte” and the header „Folosit de” over
+„(n obiecte)”; the spec's locators changed in the same commit, and the test runner ran it green.

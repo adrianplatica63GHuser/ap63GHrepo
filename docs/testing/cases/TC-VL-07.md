@@ -29,7 +29,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Date de referință", „Tipuri de Document" | The columns „Denumire", „Denumire scurtă", „Stare", „folosit de"; no „Cheie" |
+| 1 | Opens „Date de referință", „Tipuri de Document" | The columns „Denumire", „Denumire scurtă", „Stare", „Folosit de (n obiecte)"; no „Cheie" |
 | 2 | Hovers „Contract de Vânzare" | One tooltip: „Contract de Vânzare", and under it „CONTRACT_VANZARE" in a monospace face; the cell has no browser tooltip of its own |
 | 3 | Moves the mouse away | The tooltip closes |
 

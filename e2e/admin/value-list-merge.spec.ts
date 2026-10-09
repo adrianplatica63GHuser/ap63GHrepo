@@ -1,5 +1,5 @@
 /**
- * Case:   TC-VL-02 — „Date de referință” pe o pagină: „folosit de N” pe fiecare rând, valorile nefolosite la urmă, două valori unite
+ * Case:   TC-VL-02 — „Date de referință” pe o pagină: „N obiecte” pe fiecare rând, valorile nefolosite la urmă, două valori unite
  * Source: docs/testing/cases/TC-VL-02.md, „Last green" 2026-10-08
  *
  * A translation of the case file, step for step (Slice #38.35). Every Romanian
@@ -55,7 +55,7 @@ async function photograph(page: Page, name: string, target: Locator | null): Pro
 }
 
 test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori unite", () => {
-  test("„folosit de” pe ambele valori, nefolosita la urmă, „Unește” mută și șterge", async ({ page }) => {
+  test("„N obiecte” pe ambele valori, nefolosita la urmă, „Unește” mută și șterge", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await removeValues(page.request);
@@ -75,12 +75,14 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       await expect(nav.locator("h2")).toHaveText(["Proprietăți", "Persoane", "Acte", "Roluri", "Legături între obiecte"], { timeout: 30_000 });
       await expect(nav.getByRole("button", { name: "Categorii Folosință", exact: true })).toHaveAttribute("aria-current", "page");
       const panel = page.getByRole("region", { name: "Categorii Folosință", exact: true });
-      await expect(panel.getByRole("columnheader", { name: "Folosit de" })).toBeVisible({ timeout: 30_000 });
+      // Slice #38.59: the header is two lines, „Folosit de" over „(n obiecte)".
+      await expect(panel.getByRole("columnheader", { name: /^folosit de\s*\(n obiecte\)$/i })).toBeVisible({ timeout: 30_000 });
 
-      // Step 2 — „folosit de" on each; the unused value greyed, after the two in use.
+      // Step 2 — the count on each, „N obiecte" (#38.59; #38.35 read „folosit de N înregistrări"); the unused value
+      // greyed, after the two in use.
       const row = (name: string) => panel.locator("tbody tr").filter({ hasText: name });
-      await expect(row(KEPT)).toContainText("folosit de 2 înregistrări", { timeout: 30_000 });
-      await expect(row(MERGED)).toContainText("folosit de 1 înregistrare");
+      await expect(row(KEPT).locator("[data-usage]")).toHaveText("2 obiecte", { timeout: 30_000 });
+      await expect(row(MERGED).locator("[data-usage]")).toHaveText("1 obiect");
       await expect(row(UNUSED)).toContainText("nefolosit");
       await expect(row(UNUSED)).toHaveAttribute("data-unused", "");
       const names = await panel.locator("tbody tr").allTextContents();
@@ -101,7 +103,7 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       await dialog.getByRole("button", { name: "Unește", exact: true }).click();
       await expect(dialog).toHaveCount(0, { timeout: 15_000 });
       await expect(row(MERGED)).toHaveCount(0, { timeout: 15_000 });
-      await expect(row(KEPT)).toContainText("folosit de 3 înregistrări", { timeout: 15_000 });
+      await expect(row(KEPT).locator("[data-usage]")).toHaveText("3 obiecte", { timeout: 15_000 });
 
       // Step 5 — another list, then the browser's Back: „Categorii Folosință" again.
       await nav.getByRole("button", { name: "Cetățenie", exact: true }).click();
