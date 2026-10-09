@@ -903,9 +903,18 @@ export function DocumentForm({
 
   // Slice #38.49: „Descrierea obiectului" — „Recompune" writes it as a change; the empty field
   // filled on opening is not one (`SaleObjectRecompose`).
+  //
+  // ⚠️ **„Not a change" means the BASELINE takes it too.** This screen's „Modificări nesalvate", its Save button and
+  // its version lock read `editDirty` — the form against `baseline` — not React Hook Form's dirty flag, so a value
+  // written with `shouldDirty: false` alone still showed „Modificări nesalvate" on opening (measured on the runner,
+  // TC-DOC-22). The auto-filled text goes into the baseline as well, and is stored with the next „Salvează" (FU-319).
   const onSaleObjectText = useCallback(
-    (text: string, how: "recompose" | "auto") =>
-      form.setValue(`customFields.${SALE_OBJECT_FIELD_KEY}` as unknown as FieldPath<FormValues>, text as never, { shouldDirty: how === "recompose" }),
+    (text: string, how: "recompose" | "auto") => {
+      form.setValue(`customFields.${SALE_OBJECT_FIELD_KEY}` as unknown as FieldPath<FormValues>, text as never, { shouldDirty: how === "recompose" });
+      if (how === "auto") {
+        setBaseline((b) => ({ values: { ...b.values, customFields: { ...(b.values.customFields ?? {}), [SALE_OBJECT_FIELD_KEY]: text } } }));
+      }
+    },
     [form],
   );
   const errors = formState.errors;

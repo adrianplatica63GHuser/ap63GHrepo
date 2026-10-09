@@ -66,19 +66,25 @@ export function SaleObjectRecompose({
   }, [documentId, scop, onText]);
 
   // An empty field is filled once, when the contract is opened for editing.
+  //
+  // ⚠️ **The request is never cancelled by a later render** — the screen's first renders change `editable` as the
+  // versions load, and #38.49's first version dropped the answer on that cleanup, then never asked again (measured
+  // on the runner: one call, the text returned, the field left empty). The answer is applied when it arrives, if the
+  // field is still editable and still empty THEN — read from `latest`, not from the render that asked.
   const filled = useRef(false);
+  const latest = useRef({ editable, value });
+  useEffect(() => {
+    latest.current = { editable, value };
+  });
   useEffect(() => {
     if (!editable || filled.current || (value ?? "").trim() !== "") return;
     filled.current = true;
-    let live = true;
     fetchSaleObjectText(documentId, scop)
       .then((text) => {
-        if (live && text) onText(text, "auto");
+        const now = latest.current;
+        if (text && now.editable && (now.value ?? "").trim() === "") onText(text, "auto");
       })
       .catch(() => undefined);
-    return () => {
-      live = false;
-    };
   }, [editable, value, documentId, scop, onText]);
 
   if (!editable) return null;
