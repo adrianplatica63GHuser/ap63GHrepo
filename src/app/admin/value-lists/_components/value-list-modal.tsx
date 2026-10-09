@@ -59,7 +59,11 @@ function useFrameHeight(frameRef: RefObject<HTMLDivElement | null>): number | nu
     // The app shell's scroll area, by name (app-shell.tsx) — the list's column is `overflow-x-auto`, which
     // computes `overflow-y: auto` too, so the nearest "scrolling" ancestor is that column, not the page.
     const scroller = frame.closest<HTMLElement>("[data-page-scroll]");
-    const column = frame.closest<HTMLElement>("[data-value-list-side]") ?? frame;
+    // Slice #38.62: the list's OWN card, not its column. #38.56 measured from the column's top, which was the
+    // card's; since the relationship triangle stands above the lists of „Roluri și legături", the column starts
+    // a tile higher, and a frame measured from there was left the minimum — the header row then scrolled away
+    // with the page. From the card's top, the page scrolls to the list and the frame takes the screen from there.
+    const column = frame.closest<HTMLElement>("[data-value-list-card]") ?? frame.closest<HTMLElement>("[data-value-list-side]") ?? frame;
     // What is under the frame is measured to the page's own bottom (its `main`, padding included), not to
     // the scroll container's, which a short page stretches to the window and would read as space taken.
     const page = frame.closest<HTMLElement>("main") ?? scroller ?? document.body;
@@ -1405,6 +1409,7 @@ export function ValueListModal({
         inert={!!formEditorRow || !!confirmDeleteRow}
         className="rounded-xl border border-card-rim bg-card shadow-sm focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
         style={dialogCardStyle(VALUE_LIST_CARD_UNITS)}
+        data-value-list-card=""
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-800">
