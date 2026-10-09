@@ -133,7 +133,9 @@ describe('a list row\'s „Previzualizare" (#37.25)', () => {
     const src = read("src", "app", ...(f as string[]));
     const kind = KIND[(f as string[])[0]];
     expect(src).toMatch(new RegExp(`<PreviewButton target=\\{\\{ kind: "${kind}", id: item\\.id \\}\\} />`));
-    expect(src).toMatch(/\bcolumnHead\("openPreview"\)/);
+    // Slice #37.25 had `columnHead("openPreview")` (13 rem, a tile's two labelled buttons). Slice #38.57: the four
+    // lists' own `listRowActions`, as wide as their two xs buttons side by side.
+    expect(src).toMatch(/\bcolumnHead\("listRowActions"\)/);
     expect(src).not.toMatch(/\bcolumnHead\("open"\)/);
     // The table and the previews share one wrapping row, inside the opener.
     expect(src).toMatch(/<ListPreviews>\s*<div className=\{`\$\{TABLE_FRAME\}/);

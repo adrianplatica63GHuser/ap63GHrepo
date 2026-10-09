@@ -25,10 +25,12 @@ describe("the Properties list (Slice #37.61)", () => {
   });
 
   it("the two new fields: labelled as on the form, their own columns, the API's names (#37.72)", () => {
-    expect(VIEW).toMatch(/\{ key: "useCategory",\s+label: t\("fields\.useCategory"\),\s+column: "useCategory" \}/);
-    expect(VIEW).toMatch(/\{ key: "propertyType",\s+label: t\("fields\.propertyType"\),\s+column: "propertyType" \}/);
-    expect(COLUMN.useCategory.kind).toBe("wraps");
-    expect(COLUMN.propertyType.kind).toBe("wraps");
+    // Slice #37.72 had `column: "useCategory"` / `column: "propertyType"`, both `wraps`. Slice #38.57: the list's own
+    // columns, one line each, cut with „…" and whole on hover.
+    expect(VIEW).toMatch(/\{ key: "useCategory",\s+label: t\("fields\.useCategory"\),\s+column: "listUseCategory" \}/);
+    expect(VIEW).toMatch(/\{ key: "propertyType",\s+label: t\("fields\.propertyType"\),\s+column: "listPropertyType" \}/);
+    expect(COLUMN.listUseCategory.kind).toBe("fixed");
+    expect(COLUMN.listPropertyType.kind).toBe("fixed");
     const q = QUERIES.slice(QUERIES.indexOf("export async function listProperties"));
     expect(q).toMatch(/useCategory:\s+lookupUseCategory\.name/);
     expect(q).toMatch(/propertyType:\s+lookupPropertyType\.name/);
@@ -49,8 +51,9 @@ describe("the Properties list (Slice #37.61)", () => {
   });
 
   it("has no „Cod” column; Poreclă is always the first after the checkbox (#37.72)", () => {
-    expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["selectBadges", "propertyNickname", \.\.\.shownCols\.map\(\(c\) => c\.column\), "openPreview"\];/);
-    expect(VIEW).toMatch(/\{\.\.\.columnHead\("propertyNickname"\)\}>\s*\{t\("table\.nickname"\)\}/);
+    // Slice #37.72 had ["selectBadges", "propertyNickname", …, "openPreview"]; Slice #38.57: the list's own columns.
+    expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["listBadges", "listPropertyNickname", \.\.\.shownCols\.map\(\(c\) => c\.column\), "listRowActions"\];/);
+    expect(VIEW).toMatch(/\{\.\.\.columnHead\("listPropertyNickname"\)\}>\s*\{t\("table\.nickname"\)\}/);
     expect(VIEW).not.toMatch(/columnHead\("code"\)/);
   });
 });

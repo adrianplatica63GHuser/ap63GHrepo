@@ -197,7 +197,10 @@ export async function expectStableColumns(page: Page, widths: readonly number[] 
         [...tr.cells].forEach((td, i) => {
           const th = heads[i];
           if (th?.dataset.widthKind !== "fixed") return;
-          if (td.scrollWidth > td.clientWidth + 1) out.push(`${th.dataset.widthColumn}: „${td.textContent?.trim()}" needs ${td.scrollWidth} px in ${td.clientWidth}`);
+          if (td.scrollWidth <= td.clientWidth + 1) return;
+          // Slice #38.50/#38.57: a one-line cell cut with „…" that shows its whole text on hover holds its value.
+          if (getComputedStyle(td).textOverflow === "ellipsis" && (td.title || "").trim()) return;
+          out.push(`${th.dataset.widthColumn}: „${td.textContent?.trim()}" needs ${td.scrollWidth} px in ${td.clientWidth}`);
         });
       });
     });

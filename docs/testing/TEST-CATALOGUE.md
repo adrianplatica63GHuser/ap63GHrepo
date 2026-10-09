@@ -166,6 +166,7 @@ fixed fixture where the existing one will do.
 | [TC-LAYOUT-02](cases/TC-LAYOUT-02.md) | Listele: „Adaugă …" se termină la marginea tabelului, nu a ferestrei | layout | happy | — | `automated` | 2026-10-04 | `e2e/layout/list-edge.spec.ts` |
 | [TC-LAYOUT-03](cases/TC-LAYOUT-03.md) | „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe | layout | happy | — | `automated` | 2026-10-05 | `e2e/layout/list-default-fields.spec.ts` |
 | [TC-LAYOUT-04](cases/TC-LAYOUT-04.md) | „Recente": o singură bară, pliată, deasupra „Schimbă parola" / „Ieșire" | layout | happy | — | `automated` | 2026-10-07 | `e2e/layout/recent-one-bar.spec.ts` |
+| [TC-LAYOUT-05](cases/TC-LAYOUT-05.md) | Cele patru liste: înguste, câte un rând pe linie, butoanele unul lângă altul | layout | happy | — | `automated` | 2026-10-08 | `e2e/layout/domain-lists-one-line.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 | [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tile-placement.spec.ts` |

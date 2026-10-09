@@ -53,12 +53,14 @@ describe("„Persoană de contact” (Slice #37.71)", () => {
     expect(body).not.toMatch(/for \(const|await db[\s\S]*\.map\(async/);
   });
 
-  it("is offered fourth, with room for all four, labelled in both languages, in a column that wraps like a name", () => {
-    expect(VIEW).toMatch(/\{ key: "contactPerson",\s+label: t\("fields\.contactPerson"\),\s+column: "contactPerson" \}/);
+  // Slice #37.71 had „… in a column that wraps like a name" (`COLUMN.contactPerson`, L, wraps). Slice #38.57: the list's
+  // own column, one line, cut with „…" and whole on hover.
+  it("is offered fourth, with room for all four, labelled in both languages, in a one-line column of the list's own", () => {
+    expect(VIEW).toMatch(/\{ key: "contactPerson",\s+label: t\("fields\.contactPerson"\),\s+column: "listContactPerson" \}/);
     expect(VIEW).toMatch(/const MAX_OPT = 4;/);
     expect(VIEW).toMatch(/key === "contactPerson" \? item\.contactPerson/);
     expect(ro.judicialPerson.fields.contactPerson).toBe("Persoană de contact");
     expect(en.judicialPerson.fields.contactPerson).toBe("Contact person");
-    expect(COLUMN.contactPerson).toEqual({ content: "L", kind: "wraps" });
+    expect(COLUMN.listContactPerson).toEqual({ content: 6.5, kind: "fixed" });
   });
 });
