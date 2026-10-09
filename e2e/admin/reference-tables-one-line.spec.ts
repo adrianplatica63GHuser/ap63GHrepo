@@ -1,6 +1,6 @@
 /**
  * Case:   TC-VL-05 — „Date de referință”: tabele înguste, câte un rând pe linie, butoanele unul lângă altul
- * Source: docs/testing/cases/TC-VL-05.md, „Last green" 2026-10-08
+ * Source: docs/testing/cases/TC-VL-05.md, „Last green" 2026-10-09
  *
  * A translation of the case file, step for step. Nothing is created: the lists are read as they are.
  */
@@ -74,6 +74,63 @@ test.describe("TC-VL-05 — tabele înguste, câte un rând pe linie", () => {
         });
         if (list.sameHeight) expect({ list: list.name, sameHeight: r.sameHeight, oneLine: r.tallest < 56 }).toEqual({ list: list.name, sameHeight: true, oneLine: true });
       }
+    });
+  }
+});
+
+/** Slice #38.60: where each column's text sits against its column — the ✓ in a checkmark column, and the alignment. */
+async function centring(page: Page) {
+  return page.evaluate(() => {
+    const table = document.querySelector<HTMLElement>("table[data-width-table]")!;
+    const heads = [...table.querySelectorAll<HTMLElement>("thead th")];
+    const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr")].filter((r) => r.cells.length === heads.length);
+    const first = (re: RegExp) => heads.findIndex((th) => re.test(th.innerText.replace(/\s+/g, " ").trim()));
+    const cols = {
+      flagProperty: first(/^persoană → proprietate$/i),
+      flagPerson: first(/^persoană → persoană$/i),
+      converse: first(/^rol invers/i),
+      usage: first(/^folosit de/i),
+      name: first(/^denumire$/i),
+      description: first(/^descriere$/i),
+    };
+    let worstTick = 0;
+    let ticks = 0;
+    for (const i of [cols.flagProperty, cols.flagPerson]) {
+      for (const r of rows) {
+        const td = r.cells[i];
+        const span = td.querySelector("span");
+        if (!span || span.textContent !== "✓") continue;
+        const a = span.getBoundingClientRect();
+        const b = td.getBoundingClientRect();
+        worstTick = Math.max(worstTick, Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2));
+        ticks++;
+      }
+    }
+    const align = (i: number) => ({ head: getComputedStyle(heads[i]).textAlign, cell: getComputedStyle(rows[0].cells[i]).textAlign });
+    return {
+      ticks,
+      worstTick: Math.round(worstTick * 10) / 10,
+      centred: [cols.flagProperty, cols.flagPerson, cols.converse, cols.usage].map(align),
+      left: [cols.name, cols.description].map(align),
+      tallest: Math.max(...rows.map((r) => Math.round(r.getBoundingClientRect().height))),
+    };
+  });
+}
+
+test.describe("TC-VL-05 pasul 4 — Roluri: valorile centrate (#38.60)", () => {
+  for (const width of [1366, 1920]) {
+    test(`la ${width} px: ✓ în mijlocul coloanei, antetele centrate deasupra, rândul pe o linie`, async ({ page }) => {
+      test.slow();
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto("/admin/value-lists?list=person-roles");
+      await expect(page.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
+      const c = await centring(page);
+      expect(c.ticks).toBeGreaterThan(0);
+      expect(c.worstTick).toBeLessThanOrEqual(2);
+      const centre = { head: "center", cell: "center" };
+      expect(c.centred).toEqual([centre, centre, centre, centre]);
+      for (const l of c.left) expect([l.head, l.cell].every((a) => a === "left" || a === "start")).toBe(true);
+      expect(c.tallest).toBeLessThan(56);
     });
   }
 });
