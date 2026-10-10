@@ -262,12 +262,13 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(dialog.getByText(`✓ ${FIXTURE_NAME}`)).toBeVisible();
 
       // Step 9 — „Salvează": the page is in „Pagini" under its file name, with
-      // „Vizualizare", „Tipărire", „Șterge" — and no „1 / 1" for a single page.
+      // „Notițe pagină" (#38.80: the pen, where „Vizualizare" stood), „Tipărire", „Șterge" — and no „1 / 1" for a
+      // single page.
       await dialogSave.click();
       await expect(dialog).toHaveCount(0);
       await expect(pages.getByRole("img", { name: FIXTURE_NAME })).toBeVisible({ timeout: 15_000 });
       await expect(pages.getByText(FIXTURE_NAME, { exact: true }).first()).toBeVisible();
-      for (const action of ["Vizualizare", "Tipărire", "Șterge"]) {
+      for (const action of ["Notițe pagină", "Tipărire", "Șterge"]) {
         await expect(pages.getByRole("button", { name: action, exact: true })).toBeVisible();
       }
       await expect(pages.getByText("1 / 1")).toHaveCount(0);

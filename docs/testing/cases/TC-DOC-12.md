@@ -49,7 +49,7 @@ viewport emulated at 1920 × 1080, against `npm run dev` on 3000; a script read 
 its buttons (FU-290). „TC-DOC-12 Act"'s page uploaded as `tc-doc-12-pagina.png`, its file then
 removed from `uploads\document-pages\<document>\`; „TC-DOC-12 Notă"'s page `tc-doc-12-nota.docx`.
 - Step 1: the viewer holds a `role="img"` named and titled „Fișierul paginii nu este disponibil",
-  its icon in `rgb(89, 95, 106)` (text-fade); neither sentence; page 1's row with „Vizualizare",
+  its icon in `rgb(89, 95, 106)` (text-fade); neither sentence; page 1's row with „Notițe pagină" (#38.80; „Vizualizare" before),
   „Tipărire", „Șterge".
 - Step 2: „Pagini extinse" opens the large viewer (the dialog „Pagini"): the same picture, neither
   sentence; „Restrânge" closes it.

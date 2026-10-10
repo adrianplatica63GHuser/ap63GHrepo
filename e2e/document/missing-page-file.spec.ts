@@ -53,7 +53,8 @@ test.describe("TC-DOC-12 — fișierul unei pagini lipsește", () => {
       await expect(pagini.getByRole("img", { name: MISSING, exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(pagini.getByText(ERROR)).toHaveCount(0);
       await expect(pagini.getByText(FAILED)).toHaveCount(0);
-      for (const b of ["Vizualizare", "Tipărire", "Șterge"]) await expect(pagini.locator("tbody tr").getByRole("button", { name: b, exact: true })).toBeVisible();
+      // #38.80: the pen, „Notițe pagină", where #37.42's „Vizualizare" stood.
+      for (const b of ["Notițe pagină", "Tipărire", "Șterge"]) await expect(pagini.locator("tbody tr").getByRole("button", { name: b, exact: true })).toBeVisible();
 
       // Step 2 — „Pagini extinse": the same picture; „Restrânge".
       await pagini.getByRole("button", { name: "Pagini extinse", exact: true }).click();
