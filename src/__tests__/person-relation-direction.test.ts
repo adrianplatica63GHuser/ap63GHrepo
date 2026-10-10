@@ -55,10 +55,11 @@ import {
 const LOW  = "11111111-1111-4111-8111-111111111111";
 const HIGH = "99999999-9999-4999-8999-999999999999";
 
-/** The ten roles as migration_088 fills them in. */
+/** The ten roles as migration_088 fills them in — with migration_104's „Reprezentant legal / Mandatar" (#38.70). */
 const ROLES: Record<string, PersonRoleWords> = {
   Coproprietar:                    { name: "Coproprietar", converseName: "Coproprietar", converseNameMale: null, converseNameFemale: null },
-  "Reprezentant legal / Mandatar": { name: "Reprezentant legal / Mandatar", converseName: "Reprezentat / Mandant", converseNameMale: null, converseNameFemale: "Reprezentată / Mandantă" },
+  // #38.70 (migration_104): was („Reprezentat / Mandant", null, „Reprezentată / Mandantă").
+  "Reprezentant legal / Mandatar": { name: "Reprezentant legal / Mandatar", converseName: "Reprezentat(ă) / Mandant(ă)", converseNameMale: null, converseNameFemale: null },
   "Moștenitor":                    { name: "Moștenitor", converseName: "Autorul moștenirii", converseNameMale: null, converseNameFemale: null },
   "Soț":                           { name: "Soț", converseName: "Soț / Soție", converseNameMale: "Soț", converseNameFemale: "Soție" },
   "Soție":                         { name: "Soție", converseName: "Soț / Soție", converseNameMale: "Soț", converseNameFemale: "Soție" },
@@ -131,7 +132,7 @@ describe.each([
       .toEqual({ kind: "role", name: "Reprezentant legal / Mandatar" });
     // The person's tile lists the company — no gender — which is represented.
     expect(personRoleShown(role, roleHeldBy(company, row.personIdA, row.roleReadsAToB), null))
-      .toEqual({ kind: "role", name: "Reprezentat / Mandant" });
+      .toEqual({ kind: "role", name: "Reprezentat(ă) / Mandant(ă)" });
   });
 });
 
@@ -149,8 +150,9 @@ describe("the converse follows the gender of the person shown", () => {
     ["Soră", "MALE", "Frate"],
     ["Frate", null, "Frate / Soră"],
     ["Moștenitor", "MALE", "Autorul moștenirii"],
-    ["Reprezentant legal / Mandatar", "FEMALE", "Reprezentată / Mandantă"],
-    ["Reprezentant legal / Mandatar", "MALE", "Reprezentat / Mandant"],
+    // #38.70: one name for both, the „(ă)" carrying the woman — was „Reprezentată / Mandantă" and „Reprezentat / Mandant".
+    ["Reprezentant legal / Mandatar", "FEMALE", "Reprezentat(ă) / Mandant(ă)"],
+    ["Reprezentant legal / Mandatar", "MALE", "Reprezentat(ă) / Mandant(ă)"],
     ["Coproprietar", "FEMALE", "Coproprietar"],
   ];
   it.each(cases)("the converse of %s for %s is %s", (role, gender, expected) => {
@@ -188,7 +190,7 @@ describe("a role with no converse is not guessed at", () => {
   });
 });
 
-describe("migration_088 and sync-reference-data.sql carry the same roles", () => {
+describe("migration_088 and sync-reference-data.sql carry the same roles — migration_104 applied to the seed (#38.70)", () => {
   const read = (rel: string) =>
     fs.readFileSync(path.join(process.cwd(), rel), "utf8")
       .split("\n").filter((l) => !/^\s*--/.test(l)).join("\n");
@@ -204,9 +206,17 @@ describe("migration_088 and sync-reference-data.sql carry the same roles", () =>
       .map((m) => m.slice(1).join(" | ")).sort();
   }
 
-  it("names the same converse for every role, row for row", () => {
+  /** migration_104's one row on the seed's side (Slice #38.70); „Nepot" is in no file, only in Adrian's archive. */
+  const AFTER_104 = (row: string) =>
+    row === "'Reprezentant legal / Mandatar' | 'Reprezentat / Mandant' | NULL | 'Reprezentată / Mandantă'"
+      ? "'Reprezentant legal / Mandatar' | 'Reprezentat(ă) / Mandant(ă)' | NULL | NULL"
+      : row;
+
+  // #38.62 and before: `expect(converseRows(seed)).toEqual(converseRows(migration))` — the seed was 088's table unchanged.
+  it("names the same converse for every role, row for row — 088's, with 104's change", () => {
     expect(converseRows(migration)).toHaveLength(10);
-    expect(converseRows(seed)).toEqual(converseRows(migration));
+    expect(converseRows(seed)).toEqual(converseRows(migration).map(AFTER_104).sort());
+    expect(read("src/db/migration_104_role_converse_short_names.sql")).toContain("SET converse_name = 'Reprezentat(ă) / Mandant(ă)', converse_name_male = NULL, converse_name_female = NULL");
   });
 
   it("matches this suite's own table, so the tests above test the shipped words", () => {
@@ -214,7 +224,7 @@ describe("migration_088 and sync-reference-data.sql carry the same roles", () =>
     const mine = Object.values(ROLES)
       .map((r) => [q(r.name), q(r.converseName), q(r.converseNameMale), q(r.converseNameFemale)].join(" | "))
       .sort();
-    expect(converseRows(migration)).toEqual(mine);
+    expect(converseRows(seed)).toEqual(mine); // #38.70: the seed, which carries 104's change; was `converseRows(migration)`
   });
 
   it("adds the seven kinship roles with the same description and sort_order on both", () => {

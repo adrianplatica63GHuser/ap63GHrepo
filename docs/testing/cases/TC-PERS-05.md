@@ -39,7 +39,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat / Mandant)` with the building, `TC-PERS-05 Teren (Proprietar)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat(ă) / Mandant(ă))` with the building, `TC-PERS-05 Teren (Proprietar)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PERS-05 CVC` | A bubble: `Rol: „Vânzător”` |
 | 3 | Clicks the tile's title, outside the bubble | It goes |
 | 4 | Selects Maria's radio | Only hers is selected; the three „Asociază …" are not offered |
@@ -89,3 +89,6 @@ records deleted (`DELETE` 204 on each), Căutare globală for `TC-PERS-05` empty
 **2026-10-03 — `automated` (Slice #37.67).** `e2e/person/related-tile.spec.ts`, green first time in the
 runner's e2e run of the slice's specs `20261003T191258Z-18437` and in its whole `full` run
 `20261003T191537Z-11484` on `d7aafae` (66 passed).
+
+**2026-10-10 — wording (Slice #38.70, migration_104).** The company reads „Reprezentat(ă) / Mandant(ă)” where it read
+„Reprezentat / Mandant”; the spec changed in the same commit.

@@ -609,14 +609,15 @@ UPDATE lookup_person_role
                 'Soț', 'Soție', 'Părinte', 'Fiu', 'Fiică', 'Frate', 'Soră');
 
 -- What the other end of each is called (lookup_person_role.converse_name*):
--- neutral, for a man, for a woman. Identical to migration_088's table.
+-- neutral, for a man, for a woman. migration_088's table, with migration_104's change to
+-- „Reprezentant legal / Mandatar" (Slice #38.70: Adrian's „Reprezentat(ă) / Mandant(ă)", neutral alone).
 UPDATE lookup_person_role r
    SET converse_name        = c.neutral,
        converse_name_male   = c.male,
        converse_name_female = c.female
   FROM (VALUES
     ('Coproprietar',                  'Coproprietar',          NULL,    NULL),
-    ('Reprezentant legal / Mandatar', 'Reprezentat / Mandant', NULL,    'Reprezentată / Mandantă'),
+    ('Reprezentant legal / Mandatar', 'Reprezentat(ă) / Mandant(ă)', NULL, NULL),
     ('Moștenitor',                    'Autorul moștenirii',    NULL,    NULL),
     ('Soț',                           'Soț / Soție',           'Soț',   'Soție'),
     ('Soție',                         'Soț / Soție',           'Soț',   'Soție'),

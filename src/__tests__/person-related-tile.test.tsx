@@ -32,7 +32,7 @@ jest.mock("@/components/providers/unsaved-changes-provider", () => ({
 jest.mock("@/components/tiles/preview-tiles", () => ({ PreviewButton: () => null }));
 
 const REFERENCES = [
-  { id: "c1", code: "JPERS1", type: "JUDICIAL", displayName: "Firma SRL", associatedAt: "", relationshipRoleId: "x", relationshipRoleName: "Reprezentant legal", roleShown: { kind: "role", name: "Reprezentat / Mandant" } },
+  { id: "c1", code: "JPERS1", type: "JUDICIAL", displayName: "Firma SRL", associatedAt: "", relationshipRoleId: "x", relationshipRoleName: "Reprezentant legal", roleShown: { kind: "role", name: "Reprezentat(ă) / Mandant(ă)" } }, // #38.70
   { id: "p1", code: "PPERS1", type: "NATURAL", displayName: "Maria", associatedAt: "", relationshipRoleId: "y", relationshipRoleName: "Soț", roleShown: { kind: "role", name: "Soț" } },
   { id: "p2", code: "PPERS2", type: "NATURAL", displayName: "Vasile", associatedAt: "", relationshipRoleId: "z", relationshipRoleName: "Moștenitor", roleShown: { kind: "held-by-viewed", name: "Moștenitor" } },
   { id: "p3", code: "PPERS3", type: "NATURAL", displayName: "Ana", associatedAt: "", relationshipRoleId: null, relationshipRoleName: null, roleShown: { kind: "none" } },
@@ -81,7 +81,7 @@ describe("a person's „Corelate”", () => {
     expect(groups.map((g) => g.dataset.relatedGroup)).toEqual(["natural", "judicial", "property", "document"]);
     expect(groups.map((g) => [...g.querySelectorAll("[data-row-content]")].map((c) => c.textContent))).toEqual([
       ["Maria (Soț)", "Vasile", "Ana"], // a role held by the viewed person is behind „Relația"; none, the name alone
-      ["Firma SRL (Reprezentat / Mandant)"],
+      ["Firma SRL (Reprezentat(ă) / Mandant(ă))"],
       ["Teren (Proprietar)", "Vecina"],
       ["CVC 1 (Contract de Vânzare)", "CVC 1 (Contract de Vânzare)", "CM 1 (Certificat de moștenitor)", "Plan"],
     ]);

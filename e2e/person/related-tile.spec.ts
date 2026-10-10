@@ -115,7 +115,7 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
       const tile = await showTile(page, "Legături");
       await expectRows(tile, [
         ["natural", `${MARIA} (Soț)`, /lucide-user\b/],
-        ["judicial", `${COMPANY} (Reprezentat / Mandant)`, /lucide-building-?2/],
+        ["judicial", `${COMPANY} (Reprezentat(ă) / Mandant(ă))`, /lucide-building-?2/], // #38.70: migration_104
         ["property", `${PROPERTY} (${OWNER})`, /lucide-map\b/],
         ["document", `${CVC} (Contract de Vânzare)`, /lucide-file-text/],
       ]);

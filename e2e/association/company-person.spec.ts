@@ -8,7 +8,7 @@
  * Slice #37.28 (FU-221 closed): the case chooses the representative it was
  * written for. From the company's screen Ion is ticked as „Reprezentant legal /
  * Mandatar": the company's „Persoane corelate" (#37.29, „Asocieri" before) reads „Ion — Reprezentant legal /
- * Mandatar", and Ion's „Persoane" reads the company as „Reprezentat / Mandant"
+ * Mandatar", and Ion's „Persoane" reads the company as „Reprezentat(ă) / Mandant(ă)" (migration_104, #38.70)
  * — the role's converse, neutral because a company has no gender.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
@@ -95,10 +95,11 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
 
-      // Step 7 — the person's „Corelate": the company, „Reprezentat / Mandant" (the converse), „Vizualizare".
+      // Step 7 — the person's „Corelate": the company, „Reprezentat(ă) / Mandant(ă)" (the converse; „Reprezentat / Mandant"
+      // until migration_104, #38.70), „Vizualizare".
       const onPerson = lineRow(await showTile(page, "Legături"), COMPANY);
       await expect(onPerson).toHaveCount(1, { timeout: 30_000 });
-      await expect(onPerson.locator("[data-row-content]")).toHaveText(`${COMPANY} (Reprezentat / Mandant)`);
+      await expect(onPerson.locator("[data-row-content]")).toHaveText(`${COMPANY} (Reprezentat(ă) / Mandant(ă))`);
       await expect(onPerson).not.toContainText("Reprezentant legal / Mandatar");
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.

@@ -12,7 +12,7 @@
 
 A natural person can be linked to a company **from the company's screen** as its representative,
 and the link reads correctly from both ends — the company lists the person as „Reprezentant legal /
-Mandatar", the person lists the company as „Reprezentat / Mandant" (the role's converse, neutral
+Mandatar", the person lists the company as „Reprezentat(ă) / Mandant(ă)" (the role's converse, neutral
 because a company has no gender), and each „Vizualizare" opens the other record of the right kind.
 
 ## Before you start
@@ -43,7 +43,7 @@ Both are deleted at the end.
 | 4 | Types `TC-ASSOC-11` into „Nume" and ticks the one row — `Ion TC-ASSOC-11`, „Fizică" — and chooses „Rol" **„Reprezentant legal / Mandatar"** | The hint goes away |
 | 5 | Presses „Asociază selecția" | Back on the company's „Legături" (`?tab=related`): one line, no column headings — `Ion TC-ASSOC-11 (`**`Reprezentant legal / Mandatar`**`)` — and „Vizualizare" |
 | 6 | Presses „Vizualizare" | The person, read-only (`/natural-persons/[id]?readonly=true`) |
-| 7 | Ticks the person's tile **„Legături"** („Persoane" before #37.67) | One line: `TC-ASSOC-11 Firmă de test SRL (`**`Reprezentat / Mandant`**`)`, „Vizualizare" |
+| 7 | Ticks the person's tile **„Legături"** („Persoane" before #37.67) | One line: `TC-ASSOC-11 Firmă de test SRL (`**`Reprezentat(ă) / Mandant(ă)`**`)`, „Vizualizare" |
 | 8 | Presses „Vizualizare" on that row | **The company's** screen, `/judicial-persons/[id]?readonly=true` |
 
 Step 7 is the other end of the link: the person represents the company, so the company is the one represented.
@@ -73,3 +73,6 @@ screen is titled „Asociere persoană corelată", and there is no role to choos
 not a new finding; this case is added to its evidence.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-10 — wording (Slice #38.70, migration_104).** The company reads „Reprezentat(ă) / Mandant(ă)” where it read
+„Reprezentat / Mandant”; the spec changed in the same commit.
