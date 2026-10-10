@@ -14,10 +14,18 @@
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import {
-  E2E_MARKER, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord,
+  E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord,
+  type RecordKind,
 } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-11`;
+/**
+ * Slice #38.75: step 9's own records — a full page of them on each list. Its own marker, which neither holds
+ * `MARK` nor is held by it, so steps 1–8's searches and leftovers never meet these.
+ */
+const TALL = `${E2E_MARKER}INCURSION-H`;
+/** A list's page (`PAGE_SIZE` in each list-view). */
+const PAGE = 15;
 
 /** Searches the list for the case's marker and opens the preview of the row holding `name`. */
 async function preview(page: Page, list: string, name: string): Promise<Locator> {
@@ -211,6 +219,125 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       for (const [k, id] of [["document", doc], ["property", property], ["company", company], ["person", person], ["person", c1], ["person", c2]] as const) {
         await removeRecord(page.request, k, id);
       }
+    }
+  });
+});
+
+// ── Step 9 (Slice #38.75): the Incursiune as tall as the list, in its own purple ─────────────────────────────
+
+type Box = { top: number; bottom: number; height: number };
+type Measure = { list: Box; tile: Box; wrapped: boolean; surface: string; pinned: string; card: string };
+
+/** The list's body (toolbar to pagination) and the Incursiune beside it; the reused tile's fill and the two fills it may wear. */
+async function measure(page: Page): Promise<Measure> {
+  return page.evaluate(() => {
+    const box = (el: Element): Box => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, height: r.height };
+    };
+    const list = box(document.querySelector("[data-list-body]")!);
+    const tile = box(document.querySelector("[data-incursion]")!);
+    const fill = (cls: string) => {
+      const probe = document.createElement("div");
+      probe.className = cls;
+      document.body.append(probe);
+      const c = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return c;
+    };
+    return {
+      list,
+      tile,
+      wrapped: tile.top >= list.bottom - 1,
+      surface: getComputedStyle(document.querySelector("[data-incursion] > section")!).backgroundColor,
+      pinned: fill("bg-card-pinned"),
+      card: fill("bg-card"),
+    };
+  });
+}
+
+/**
+ * The list's own rows — inside its frame. Not `main tbody tr`: the Incursiune beside it holds tables of its own
+ * (Google Maps' hidden keyboard-shortcuts table under „Hartă", measured: 25 rows for 15; the pages under „Pagini").
+ */
+const listRows = (page: Page) => page.locator("main [data-list-body] [data-list-edge] tbody tr");
+
+/** Searches the list and waits for `rows` rows. */
+async function searchFor(page: Page, text: string, rows: number): Promise<void> {
+  const main = page.locator("main");
+  await main.locator('input[placeholder^="caută"]').first().fill(text);
+  await expect(listRows(page)).toHaveCount(rows, { timeout: 30_000 });
+  await page.waitForTimeout(400); // the tile's own read (the map's corners, the pages) settles
+}
+
+/**
+ * On one list: one row (shorter than the tile) and a full page (taller), at 1920 and 1366 px. Beside the list,
+ * the tile's top is the list's; with one row it keeps its own height and the list is not stretched; with a page
+ * its bottom is the list's (±2 px). Under the list (a window too narrow for both) it keeps its own height.
+ */
+async function asTall(page: Page, list: string, kind: string, shot: string): Promise<void> {
+  await page.setViewportSize({ width: 1920, height: 1000 });
+  await page.goto(list);
+  await expect(page.locator("main").locator('input[placeholder^="caută"]').first()).toBeVisible({ timeout: 30_000 });
+  const one = `${TALL} Rând 01`;
+  await searchFor(page, one, 1);
+  const before = await page.locator("[data-list-body]").evaluate((el) => el.getBoundingClientRect().height);
+  await listRows(page).first().getByRole("button", { name: "Incursiune", exact: true }).click();
+  await expect(page.locator(`[data-incursion="${kind}"] > section`)).toBeVisible({ timeout: 30_000 });
+  for (const width of [1920, 1366]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await searchFor(page, one, 1);
+    const short = await measure(page);
+    const at = `${list} at ${width}`;
+    expect(short.surface, `${at}: the tile's fill is the pinned purple`).toBe(short.pinned);
+    expect(short.surface, `${at}: not the card's grey-blue`).not.toBe(short.card);
+    if (width === 1920) {
+      expect(short.wrapped, `${at}: the tile stands beside the list`).toBe(false);
+      expect(Math.abs(short.list.height - before), `${at}: the one-row list was stretched`).toBeLessThanOrEqual(1);
+    }
+    if (!short.wrapped) {
+      expect(Math.abs(short.tile.top - short.list.top), `${at}, one row: tops`).toBeLessThanOrEqual(2);
+      expect(short.tile.bottom, `${at}, one row: the tile keeps its own height`).toBeGreaterThan(short.list.bottom + 2);
+    }
+    await searchFor(page, TALL, PAGE);
+    const tall = await measure(page);
+    if (tall.wrapped) {
+      // Under the list: its own height, whatever the list's.
+      expect(Math.abs(tall.tile.height - short.tile.height), `${at}, under the list: its own height`).toBeLessThanOrEqual(2);
+    } else {
+      expect(tall.list.height, `${at}: a page of rows is taller than the tile's own height`).toBeGreaterThan(short.tile.height);
+      expect(Math.abs(tall.tile.top - tall.list.top), `${at}: tops ${tall.tile.top} / ${tall.list.top}`).toBeLessThanOrEqual(2);
+      expect(Math.abs(tall.tile.bottom - tall.list.bottom), `${at}: bottoms ${tall.tile.bottom} / ${tall.list.bottom}`).toBeLessThanOrEqual(2);
+    }
+    expect(tall.surface, `${at}: the tile's fill is the pinned purple`).toBe(tall.pinned);
+    // The spec's own records only: nothing in the picture identifies anyone. A tile under the list is scrolled
+    // into the picture (the page scrolls inside the layout, so `fullPage` stops at the window); the pointer off the
+    // rows, so the eye's tooltip does not cover the list.
+    if (tall.wrapped) await page.locator("[data-incursion]").evaluate((el) => el.scrollIntoView({ block: "end" }));
+    await page.mouse.move(1, 1);
+    await page.screenshot({ path: `playwright-report/incursion-height/${shot}-${width}.png` });
+  }
+}
+
+test.describe("TC-TILES-11 — the Incursiune as tall as the list (#38.75)", () => {
+  test("step 9: on the four lists, level with the list's top and bottom, in the pinned purple", async ({ page }) => {
+    test.slow();
+    for (let i = 0; i < 4; i++) await removeLeftovers(page.request, TALL); // the search answers a page at a time
+    const made: [RecordKind, string][] = [];
+    try {
+      for (let n = 1; n <= PAGE; n++) {
+        const name = `${TALL} Rând ${String(n).padStart(2, "0")}`;
+        made.push(["person", await createNaturalPerson(page.request, { lastName: name, firstName: "Test" })]);
+        made.push(["company", await createCompany(page.request, { name })]);
+        made.push(["property", await createProperty(page.request, { nickname: name })]);
+        made.push(["document", await createDocumentOfType(page.request, "ADEVERINTA", name)]);
+      }
+      await asTall(page, "/natural-persons", "person", "natural-persons");
+      await asTall(page, "/judicial-persons", "company", "judicial-persons");
+      await asTall(page, "/properties", "property", "properties");
+      await asTall(page, "/documents", "document", "documents");
+    } finally {
+      for (const [kind, id] of made) await removeRecord(page.request, kind, id);
     }
   });
 });

@@ -28,6 +28,9 @@ document's preview is the defect this case exists to catch.
   - a property „TC-TILES-11 Teren", Nr. parcelă `77/1`, the archive's first tarla, 1234 mp;
   - an „Adeverință" „TC-TILES-11 Act", Subiect „Adeverință de rol fiscal", Nr. document `123/2020`,
     Data 04.05.2020.
+- **For step 9 (#38.75), also through the API:** a full page — 15 — of each kind, named
+  `TC-E2E-INCURSION-H Rând 01` … `Rând 15`: natural persons (first name „Test"), companies, properties
+  (nickname only) and „Adeverință" documents. Their own marker, so steps 1–8 never see them.
 
 ## What Adrian is asked for
 
@@ -45,10 +48,11 @@ Nothing.
 | 6 | On each of the four lists: a row's magnifier, then its eye (#38.72) | The row reads „Previzualizare", „Incursiune", „Deschide". The eye shows, beside the list, the object's tile — „Interacțiuni" for a person and for the company, „Hartă" for the property, „Pagini" for the document — filling the row to the content area's right edge (±8 px) at 1366 and 1920 px; the eye reads pressed, the preview has closed and every magnifier is disabled. The eye again closes it and frees them |
 | 7 | „Persoane Fizice": Ioana's eye, then „Contact Unu"'s (#38.72) | One Incursiune, moved to „Contact Unu"; Ioana's eye reads not pressed |
 | 8 | „Acte": the document's eye (#38.72) | „Pagini" with no „+ Adaugă pagină" and no turn or „Salvează" — a look, not an edit |
+| 9 | On each of the four lists, at 1920 and then 1366 px: searches `TC-E2E-INCURSION-H Rând 01` and presses the row's eye; then searches `TC-E2E-INCURSION-H` (15 rows) (#38.75) | With one row: the Incursiune's top is level with the list's top (the toolbar's), the tile keeps its own height, and the list is not stretched. With 15 rows: its top level with the list's top and its bottom with the list's bottom — the pagination's — within 2 px; the map or the page viewer grows into it. Where the window is too narrow for both, it stands under the list at its own height. Its tile is the light purple it wears on the object's own screen (`bg-card-pinned`), not the card's grey-blue |
 
 ## At the end — leaving things as they were found
 
-Delete the six records (`DELETE` on each route); previews store nothing.
+Delete the six records (`DELETE` on each route), and step 9's sixty; previews store nothing.
 
 ## Notes from the runs
 
@@ -81,3 +85,8 @@ test runner ran it green.
 
 **2026-10-10 — `automated` (Slice #38.72).** Steps 6–8 added: the Incursiune on the four lists; the test runner ran them
 green.
+
+**2026-10-10 — `automated` (Slice #38.75).** Step 9 added: the Incursiune level with the list's top (the toolbar's) and bottom
+(the pagination's) within 2 px on a full page of 15, at its own height with one row and under the list, in
+`bg-card-pinned`. At 1366 px all four lists put it under the list (38.72's minimum widths); at 1920 beside it. The test
+runner ran it green.
