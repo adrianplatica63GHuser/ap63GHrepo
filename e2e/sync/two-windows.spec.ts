@@ -60,7 +60,7 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
       // Step 6 — the second window is NOT reloaded under the user's hands: it says so.
       const saved = second.locator('[data-record-sync="saved"]');
       await expect(saved).toBeVisible({ timeout: 30_000 });
-      await expect(saved).toContainText("Această înregistrare a fost salvată în altă fereastră.");
+      await expect(saved).toContainText("Acest obiect a fost salvat în altă fereastră."); // #38.73: was „Această înregistrare a fost salvată …"
       await expect(saved.getByRole("button", { name: "Reîncarcă" })).toBeVisible();
       await expect(subjectB).toHaveValue("TC-B");
       // Slice #37.23 — the User Guide's picture of this notice, from the heading down: typing
@@ -88,7 +88,7 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
 
       // Step 9 — „Reîncarcă" in the second window: asked first (something is unsaved), then the current version.
       await stale.getByRole("button", { name: "Reîncarcă" }).click();
-      const confirm = second.getByRole("dialog", { name: "Reîncărcați înregistrarea?" });
+      const confirm = second.getByRole("dialog", { name: "Reîncărcați obiectul?" }); // #38.73: was „Reîncărcați înregistrarea?"
       await expect(confirm).toBeVisible();
       await confirm.getByRole("button", { name: "Reîncarcă" }).click();
       await expect(subjectB).toHaveValue("TC-A2", { timeout: 30_000 });

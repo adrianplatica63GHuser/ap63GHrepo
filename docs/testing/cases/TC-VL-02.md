@@ -34,7 +34,7 @@ The window is 1366 × 900.
 |---|---|---|
 | 1 | Opens `/admin/value-lists?list=use-categories` | On the left three groups, in this order, each with its lists in this order, no list name on two lines (#38.61; #38.35 had „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”): „Tipuri de obiecte” — Tipuri de Persoană Fizică, Tipuri de Persoană Juridică, Tipuri de Proprietate, Tipuri de Document; „Roluri și legături” — Roluri Persoane, Legături Proprietate → Proprietate, Legături Document → Document; „Liste de valori” — Indicative Tarla, Categorii Folosință, Cetățenie, Instituții. „Categorii Folosință” marked; on the right the list „Categorii Folosință”, with a column „Folosit de” |
 | 2 | Reads the three `TC-VL-02` rows | „Păstrată” — „2 obiecte”; „Unită” — „1 obiect”; „Nefolosită” — „nefolosit”, greyed, after the other two. The column is headed „Folosit de” over „(n obiecte)” (#38.59; #38.35 read „folosit de 2 înregistrări”) |
-| 3 | Presses „Unește” on „Unită” | „Unește „TC-VL-02 Unită” cu altă valoare”, „O înregistrare se mută pe valoarea păstrată:”; picks „TC-VL-02 Păstrată” in „Valoarea păstrată” |
+| 3 | Presses „Unește” on „Unită” | „Unește „TC-VL-02 Unită” cu altă valoare”, „Un obiect se mută pe valoarea păstrată:”; picks „TC-VL-02 Păstrată” in „Valoarea păstrată” |
 | 4 | Presses „Unește” | The dialog closes; „Unită” is gone; „Păstrată” — „3 obiecte” |
 | 5 | Presses „Cetățenie” on the left, then the browser's Back | The address reads `?list=citizenships` and „Cetățenie” opens; after Back, `?list=use-categories` and „Categorii Folosință” again |
 | 6 | Opens `/admin/value-lists?list=person-roles` (#38.61) | The list „Roluri Persoane” opens, marked on the left — the address an old bookmark carries still works |
@@ -58,3 +58,5 @@ green.
 
 **2026-10-09 — `automated` (Slice #38.65).** Step 7 added: the column 16rem, as wide as its longest name; the list's
 side beside the title from just under the breadcrumbs bar. The test runner ran it green.
+
+**2026-10-10 — wording (Slice #38.73).** Step 3 reads „Un obiect se mută pe valoarea păstrată:”; the spec's locators changed in the same commit.

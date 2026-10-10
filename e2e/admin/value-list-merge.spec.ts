@@ -111,7 +111,7 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       await row(MERGED).getByRole("button", { name: "Unește", exact: true }).click();
       const dialog = page.getByRole("alertdialog", { name: `Unește „${MERGED}” cu altă valoare` });
       await expect(dialog).toBeVisible();
-      await expect(dialog).toContainText("O înregistrare se mută pe valoarea păstrată:", { timeout: 15_000 });
+      await expect(dialog).toContainText("Un obiect se mută pe valoarea păstrată:", { timeout: 15_000 }); // #38.73: was „O înregistrare se mută …"
       await dialog.locator("select").selectOption({ label: KEPT });
       await photograph(page, "merge-dialog", dialog);
 

@@ -29,7 +29,7 @@ as written, with no correction:
 - step 3's reload came by itself;
 - steps 6 and 7 showed the sentences quoted below, word for word;
 - step 8's history read v 0 (no subject), v 1 `TC-A1`, v 2 `TC-A2`;
-- after „Șterge" in A, B said „Această înregistrare a fost ștearsă în altă fereastră." with a link
+- after „Șterge" in A, B said „Acest obiect a fost șters în altă fereastră." with a link
   to `/documents`.
 
 ## The second run, 2026-09-28 (Slice #37.21) — confirmed
@@ -65,8 +65,10 @@ The contract and its two extra versions, all removed with „Șterge" → „Da"
 | 3 | Looks at B, touching nothing | B has reloaded itself: „Subiect" reads `TC-A1` |
 | 4 | In B: „Modifică", „Subiect" `TC-B`, not saved | „Modificări nesalvate" in B |
 | 5 | In A: „Subiect" `TC-A2`, „Salvează" | A: „v 2", „3 versiuni" |
-| 6 | Looks at B | B was not reloaded; `TC-B` is still in „Subiect". Under the banner, in red: „Această înregistrare a fost salvată în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată." and „Reîncarcă" |
-| 7 | In B: „Salvează" | „Nu s-a salvat nimic: înregistrarea a fost salvată între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran." `TC-B` is still there |
+| 6 | Looks at B | B was not reloaded; `TC-B` is still in „Subiect". Under the banner, in red: „Acest obiect a fost salvat în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată." and „Reîncarcă" |
+| 7 | In B: „Salvează" | „Nu s-a salvat nimic: obiectul a fost salvat între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran." `TC-B` is still there |
 | 8 | Opens the version history (◀ in A, or `GET /api/documents/<id>/versions`) | Exactly v 0, v 1, v 2, and v 2 reads `TC-A2`. B's `TC-B` is in none of them |
-| 9 | In B: „Reîncarcă" | „Reîncărcați înregistrarea?", with „Valorile introduse și nesalvate se pierd; se încarcă versiunea curentă." Then „Reîncarcă": B shows `TC-A2` |
-| — | At the end: „Șterge" → „Da" in A | B, if left open, says „Această înregistrare a fost ștearsă în altă fereastră." with „Înapoi la listă" |
+| 9 | In B: „Reîncarcă" | „Reîncărcați obiectul?", with „Valorile introduse și nesalvate se pierd; se încarcă versiunea curentă." Then „Reîncarcă": B shows `TC-A2` |
+| — | At the end: „Șterge" → „Da" in A | B, if left open, says „Acest obiect a fost șters în altă fereastră." with „Înapoi la listă" |
+
+**2026-10-10 — wording (Slice #38.73).** The banners and the reload dialog say „obiect” where they said „înregistrare”; the spec's locators changed in the same commit.

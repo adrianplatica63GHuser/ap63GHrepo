@@ -108,8 +108,9 @@ describe("„Grupuri” at the limit (#38.10)", () => {
     expect(src).toMatch(/const groupCap = apiPath\.startsWith\("\/api\/properties\/"\) \? MAX_GROUPS_PER_PROPERTY : MAX_GROUPS_PER_ITEM;/);
     const ro = JSON.parse(readFileSync(join(process.cwd(), "messages", "ro-RO.json"), "utf8")).shared.entityMetadata.groups;
     const en = JSON.parse(readFileSync(join(process.cwd(), "messages", "en-GB.json"), "utf8")).shared.entityMetadata.groups;
-    expect(ro.limit).toBe("Un element poate face parte din cel mult {max} grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.");
-    expect(en.limit).toBe("A record can belong to at most {max} groups. Remove it from one to add it to another.");
+    // #38.73: „Un obiect" / „An object" — was „Un element" / „A record".
+    expect(ro.limit).toBe("Un obiect poate face parte din cel mult {max} grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.");
+    expect(en.limit).toBe("An object can belong to at most {max} groups. Remove it from one to add it to another.");
     expect(ro.noneAvailable).toBe("niciun grup disponibil");
     for (const m of [ro, en]) expect(m.limit).not.toMatch(/\b3\b/);
   });

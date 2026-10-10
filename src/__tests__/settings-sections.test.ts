@@ -72,9 +72,10 @@ describe("the worked example", () => {
   });
 
   it.each([
-    [1, "O înregistrare schimbată acum cel mult un minut poartă insigna «Nou!» roșie."],
-    [5, "O înregistrare schimbată acum cel mult 5 minute poartă insigna «Nou!» roșie."],
-    [45, "O înregistrare schimbată acum cel mult 45 de minute poartă insigna «Nou!» roșie."],
+    // #38.73: „obiect", neuter — was „O înregistrare schimbată …" (#38.64's report, 1a).
+    [1, "Un obiect schimbat acum cel mult un minut poartă insigna «Nou!» roșie."],
+    [5, "Un obiect schimbat acum cel mult 5 minute poartă insigna «Nou!» roșie."],
+    [45, "Un obiect schimbat acum cel mult 45 de minute poartă insigna «Nou!» roșie."],
   ])("the red badge at %i minute(s)", (count, sentence) => {
     expect(exampleRo("recency_badge_red", "minutes", count)).toBe(sentence);
   });

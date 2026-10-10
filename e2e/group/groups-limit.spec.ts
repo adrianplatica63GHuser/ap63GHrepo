@@ -20,7 +20,8 @@ import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}GRP-02`;
 const SHOTS = "playwright-report/groups-limit";
-const LINE = "Un element poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.";
+// #38.73: „Un obiect" — was „Un element".
+const LINE = "Un obiect poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.";
 
 async function createGroup(request: APIRequestContext, description: string): Promise<string> {
   const res = await request.post("/api/groups", { data: { targetType: "PROPERTY", description } });

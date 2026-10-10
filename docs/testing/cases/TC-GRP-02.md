@@ -34,7 +34,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-GRP-02 Teren" | „Grupuri" lists the three groups. Its „+" is inactive, named „Cel mult 3 grupuri"; under the list, in italics: „Un element poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul." No picker |
+| 1 | Opens „TC-GRP-02 Teren" | „Grupuri" lists the three groups. Its „+" is inactive, named „Cel mult 3 grupuri"; under the list, in italics: „Un obiect poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul." No picker |
 | 2 | Removes „Grup A" (its „×", „Elimină din grup …") | Two groups; „+" active, named „+ Adaugă în grup"; the line is gone |
 | 3 | Presses „+" | The picker opens; „Grup A" is among the groups it offers |
 | 4 | Chooses „Grup A" | Three groups again; „+" inactive, named „Cel mult 3 grupuri"; the line is back; the picker closed |
@@ -64,3 +64,5 @@ confirmed, and `e2e/group/groups-limit.spec.ts` translates it.
 **2026-10-05 — `automated` (Slice #38.10).** The test runner's full run 20261005T235518Z-11121 on
 75e8a88 ran `e2e/group/groups-limit.spec.ts` green with the other 92 (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-10 — wording (Slice #38.73).** Step 1 reads „Un obiect poate face parte …”; the spec's locators changed in the same commit.

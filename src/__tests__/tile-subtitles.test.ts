@@ -69,10 +69,11 @@ describe("every registered tile on the four screens has a subtitle, in both lang
 describe("the renames and subtitles are the request's table (Adrian.Request.txt)", () => {
   const ro = msg("ro-RO.json");
   it.each([
-    ["property", "related", "Legături", "Persoane, proprietăți și acte legate de această înregistrare"],
-    ["naturalPerson", "related", "Legături", "Persoane, proprietăți și acte legate de această înregistrare"],
-    ["judicialPerson", "related", "Legături", "Persoane, proprietăți și acte legate de această înregistrare"],
-    ["document", "related", "Legături", "Persoane, proprietăți și acte legate de această înregistrare"],
+    // #38.73: each screen's own noun — all four read „… legate de această înregistrare" until then.
+    ["property", "related", "Legături", "Persoane, proprietăți și acte legate de această proprietate"],
+    ["naturalPerson", "related", "Legături", "Persoane, proprietăți și acte legate de această persoană"],
+    ["judicialPerson", "related", "Legături", "Persoane, proprietăți și acte legate de această persoană juridică"],
+    ["document", "related", "Legături", "Persoane, proprietăți și acte legate de acest act"],
     ["property", "classification", "Clasificare", "Importanță, relevanță, proveniență"],
     ["naturalPerson", "classification", "Clasificare", "Importanță, relevanță, proveniență"],
     ["judicialPerson", "classification", "Clasificare", "Importanță, relevanță, proveniență"],
