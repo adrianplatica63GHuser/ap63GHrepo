@@ -12,6 +12,8 @@
  *     reads; the spec compares the preview with its indicativ.
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import {
   E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord,
@@ -217,6 +219,48 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       await expect(pagesTile.locator('section[aria-label="Pagini"]')).toBeVisible({ timeout: 30_000 });
       await expect(pagesTile.getByRole("button", { name: "+ Adaugă pagină" })).toHaveCount(0);
       await expect(pagesTile.locator("[data-page-turn]")).toHaveCount(0);
+      // Slice #38.82 — the scan three quarters of the panel's width, the list a quarter (of the two, side by side):
+      // the list at most 26 %, the viewer at least 74 %, at 1366 and 1920 px. A page with a 32-character name is shown
+      // cut at 20 and „…", whole in its tooltip; no Notes column, no arrow, no pen.
+      const up = await page.request.post(`/api/documents/${doc}/pages`, {
+        multipart: {
+          file: { name: "tc-e2e-pagina.png", mimeType: "image/png", buffer: fs.readFileSync(path.join(process.cwd(), "e2e", "fixtures", "tc-e2e-pagina.png")) },
+          pageNumber: "1",
+          pageName: "Plan de amplasament, scara 1:500",
+        },
+      });
+      expect(up.ok(), await up.text()).toBeTruthy();
+      await page.reload();
+      const reopened = page.locator("main [data-list-edge] tbody tr").filter({ hasText: `${MARK} Act` });
+      await expect(page.locator("main").locator('input[placeholder^="caută"]').first()).toBeVisible({ timeout: 30_000 });
+      await page.locator("main").locator('input[placeholder^="caută"]').first().fill(MARK);
+      await expect(reopened).toHaveCount(1, { timeout: 30_000 });
+      await reopened.getByRole("button", { name: "Incursiune", exact: true }).click();
+      const peekPages = page.locator('[data-incursion="document"] section[aria-label="Pagini"]');
+      const nameCell = peekPages.locator("[data-page-name]").first();
+      await expect(nameCell).toHaveText("Plan de amplasament,…", { timeout: 30_000 });
+      await expect(nameCell).toHaveAttribute("title", "Plan de amplasament, scara 1:500");
+      await expect(peekPages.locator("thead th")).toHaveText(["Nr.", "Denumire pagină", "Acțiuni"]);
+      await expect(peekPages.getByRole("button", { name: "Vizualizare", exact: true })).toHaveCount(0);
+      await expect(peekPages.getByRole("button", { name: "Notițe pagină", exact: true })).toHaveCount(0);
+      await expect(peekPages.getByRole("button", { name: "Tipărire", exact: true })).toHaveCount(1);
+      for (const width of [1366, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.waitForTimeout(400);
+        const split = await peekPages.evaluate((sec) => {
+          const viewer = sec.querySelector<HTMLElement>(".min-h-\\[320px\\]")!.parentElement!.getBoundingClientRect().width;
+          const list = sec.querySelector<HTMLElement>("table")!.closest<HTMLElement>("div.order-1")!.getBoundingClientRect().width;
+          return { viewer: viewer / (viewer + list), list: list / (viewer + list) };
+        });
+        expect(split.list, `the list's share at ${width}`).toBeLessThanOrEqual(0.26);
+        expect(split.viewer, `the viewer's share at ${width}`).toBeGreaterThanOrEqual(0.74);
+        if (width === 1366) {
+          await page.locator('[data-incursion="document"]').evaluate((el) => el.scrollIntoView({ block: "nearest" }));
+          await page.mouse.move(1, 1);
+          await page.screenshot({ path: "playwright-report/incursion/documents-pages-1366.png" });
+        }
+      }
+      await page.setViewportSize({ width: 1366, height: 900 });
     } finally {
       for (const [k, id] of [["document", doc], ["property", property], ["company", company], ["person", person], ["person", c1], ["person", c2]] as const) {
         await removeRecord(page.request, k, id);
