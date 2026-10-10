@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-10, FU-323 filed — 323 entries. Rows are status, columns are impact.
+As of 2026-10-10, FU-324 filed — 324 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 75 | 69 | 16 | 179 |
+| open | 19 | 75 | 70 | 16 | 180 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 30 | 3 | 126 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 138 | 104 | 21 | 323 |
+| **total** | 60 | 138 | 105 | 21 | 324 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -406,4 +406,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-320 | 2026-10-08 #38.52 Handover.38.52.md | recommendation | Reference data | Two document types still read „Creat la import" after #38.52, because each is used by one document and #38.52 deletes only unused ones: „Publicație de Vânzare Imobiliară" [PUBLICATIE_DE_VANZARE_IMOBILIARA] and „Tabel/Listă proprietari - Ilfov, Clinceni" [TABEL_LISTA_PROPRIETARI_ILFOV_CLINCENI]. `origin` is write-once, so only a merge clears the word. | lookup_document_type (ga40db), „Unește" (#38.35) | data | S | open | Adrian rules on each: „Unește" the first into „Comunicare Oficială" and the second into „NECLASIFICAT" (Claude's suggestion), or create a hand-made type to merge into; then `npm run doctypes:prune-import` lists nothing held. | 2026-10-08 |
 | FU-321 | 2026-10-10 #38.69 20261010T015322Z-7829 | test gap | Tests & e2e | TC-TILES-20 (`tiles-rise.spec.ts`) step 5 failed once in a `full`: after the reload „Conexiuni" stood at y 1073 instead of step 4's 1216, and the 20 s poll ran out — the same commit passed on the next request (20261010T021743Z-17862). | e2e/tiles/tiles-rise.spec.ts:163-168 (the reload and its poll); .test-runner/logs/20261010T015322Z-7829/e2e.log | dev | XS | open | Unverified: likely the hydration race FU-310 describes (a tile's choice undone after the reload) — read the run's trace before changing the spec; FU-310's second look in the helpers may cover it. | 2026-10-10 |
 | FU-322 | 2026-10-10 #38.69 20261010T015322Z-7829 | test gap | Tests & e2e | TC-LAYOUT-02 (`list-edge.spec.ts`) failed once in a `full` on /properties at 1920 px: its own row, `TC-E2E-LAYOUT-02`, did not appear in 30 s — the same commit passed on the next request (20261010T021743Z-17862). | e2e/layout/list-edge.spec.ts:121 (the row's locator); .test-runner/logs/20261010T015322Z-7829/e2e.log | dev | XS | open | Unverified: a cold compile or a slow search on the runner's server (FU-216's shape) — read the run's trace and dev-server log before widening the wait. | 2026-10-10 |
-| FU-323 | 2026-10-10 #38.70 Handover.38.70.md | recommendation | Reference data | migration_104 — „Nepot" and „Reprezentant legal / Mandatar" take Adrian's short converse names („Bunic(ă), Unchi, Mătușă", „Reprezentat(ă) / Mandant(ă)") as their neutral name, the gendered two emptied — is written and waits for his confirmation, outside the repository. | C:\dev.docs\01.Slice.Inputs\Slices.38.65-38.74\38.70.Roles.Short.Converse.No.Scroll\proposed\ (the migration and a README of the steps after it) | user | XS | open | On „yes": the steps in that README — commit with `Schema-Confirmed:`, sync-reference-data.sql and four specs/tests with it, `migrate-local`, then `npm run supabase:migrate` and the push are Adrian's. | 2026-10-10 |
+| FU-323 | 2026-10-10 #38.70 Handover.38.70.md; 2026-10-10 #38.70 9a600245, 1a04ef38 | recommendation | Reference data | migration_104 — „Nepot" and „Reprezentant legal / Mandatar" take Adrian's short converse names („Bunic(ă), Unchi, Mătușă", „Reprezentat(ă) / Mandant(ă)") as their neutral name, the gendered two emptied — confirmed („yes, as written"), committed and applied to the local database; Supabase does not have it yet. | src/db/migration_104_role_converse_short_names.sql (9a600245); src/db/sync-reference-data.sql, tests, specs, TC-ASSOC-11, TC-PERS-05 (1a04ef38); migrate-local 20261010T112554Z-26629 | user | XS | open | Adrian's: `npm run supabase:migrate` (applies migration_104 to Supabase), then the push — the runner holds it (`migration-in-range`). Resolved when Supabase has it. | 2026-10-10 |
+| FU-324 | 2026-10-10 #38.70 20261010T112743Z-24298 | test gap | Tests & e2e | TC-VL-08 (`converse-one-line.spec.ts`) failed once in a `full-db`, third test of the run: the cleanup's GET /api/admin/value-lists/person-roles in `finally` ended in `read ECONNRESET` — the dev server logged no such request — which hides whatever the body did; the same commit passed on the next request (20261010T115148Z-24371). | e2e/admin/converse-one-line.spec.ts:20 (removeRoles) and :86 (the `finally`); .test-runner/logs/20261010T112743Z-24298/e2e.log, dev-server.log | dev | XS | open | Catch in the `finally` (or retry its GET once) so a reset there neither fails the spec nor masks the body's own error; if it recurs, look for the dev server dropping connections while the usage route compiles. | 2026-10-10 |
