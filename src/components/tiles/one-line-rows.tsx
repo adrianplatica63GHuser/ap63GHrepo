@@ -86,7 +86,11 @@ export function OneLineRow({
   ...data
 }: {
   selected: boolean;
-  onSelect: () => void;
+  /**
+   * Selects the row. Slice #38.76: absent, the row is a look, not a choice — no radio is drawn (the read-only
+   * „Legături" beside a list, where a selection would lead to nothing but „Dezasociază").
+   */
+  onSelect?: () => void;
   /** The radio's accessible name — what the row is, for a screen reader. */
   radioLabel: string;
   /** The icon of the row's kind, after the radio (#37.65). Decoration: the kind is `kindLabel`. */
@@ -118,16 +122,18 @@ export function OneLineRow({
         selected ? "bg-cta-pale dark:bg-cta/10" : "hover:bg-canvas dark:hover:bg-zinc-800/50",
       ].join(" ")}
     >
-      <span className="inline-flex shrink-0 justify-center" style={{ width: rem(ROW_SELECT_REM) }}>
-        <input
-          type="radio"
-          checked={selected}
-          onChange={onSelect}
-          onClick={keep}
-          className="accent-cta"
-          aria-label={radioLabel}
-        />
-      </span>
+      {onSelect && (
+        <span className="inline-flex shrink-0 justify-center" style={{ width: rem(ROW_SELECT_REM) }}>
+          <input
+            type="radio"
+            checked={selected}
+            onChange={onSelect}
+            onClick={keep}
+            className="accent-cta"
+            aria-label={radioLabel}
+          />
+        </span>
+      )}
       {Icon && <Icon size={16} aria-hidden="true" className="shrink-0 text-fade dark:text-zinc-400" />}
       {kindLabel && <span className="sr-only">{kindLabel}: </span>}
       <span data-row-content="" className="min-w-0 flex-1 truncate" title={title}>

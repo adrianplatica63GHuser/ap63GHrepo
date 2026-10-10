@@ -17,7 +17,7 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
-import { IncursionButton } from "@/components/tiles/incursion-button";
+import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
 import { IncursionTile } from "@/app/_components/incursion-tile";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
@@ -465,9 +465,10 @@ export function PropertyListView() {
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
                     <span className="flex flex-nowrap gap-2" data-row-actions="">
-                      {/* Slice #38.71/#38.72: the magnifier („Previzualizare"), the eye („Incursiune"), the arrow („Deschide"). */}
+                      {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"), the arrow („Deschide"). */}
                       <PreviewButton target={{ kind: "property", id: item.id }} />
                       <IncursionButton target={{ kind: "property", id: item.id }} />
+                      <LinksButton target={{ kind: "property", id: item.id }} />
                       <IconButton
                         href={`/properties/${item.id}`}
                         icon={ArrowRight}

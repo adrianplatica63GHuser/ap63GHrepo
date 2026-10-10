@@ -1294,7 +1294,8 @@ export const COLUMN = {
   listBadges: { content: 8, kind: "fixed" }, //             the property list's checkbox, „Nou!" and „Încrucișat" side by side (127 px)
   // Slice #38.72: three xs buttons side by side — the magnifier, the eye („Incursiune") and the arrow — 3 × 26 + 2 × 8 =
   // 94 px; it was 4 for two (60 px), and the third button was cut at the table's edge.
-  listRowActions: { content: 6, kind: "fixed" },
+  // Slice #38.76: four — the chain link („Legături") after the eye — 4 × 26 + 3 × 8 = 128 px, 8 rem; it was 6 for three.
+  listRowActions: { content: 8, kind: "fixed" },
   listPropertyNickname: { content: 14, kind: "fixed" }, //  PROP.nickname — 90th percentile 213 px, longest 278
   listTarla: { content: 5, kind: "fixed" }, //              Tarla/Solă — the header's word, „TARLA/SOLĂ" (80 px); values 28
   listParcela: { content: 4, kind: "fixed" }, //            Parcelă — „PARCELĂ" (60 px); values 47

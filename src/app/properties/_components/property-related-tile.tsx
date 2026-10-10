@@ -18,7 +18,8 @@ import { usePropertyPersonRows } from "./property-persons-tab";
 import { usePropertyReferenceRows } from "./property-references-tab";
 import { usePropertyDocumentRows } from "./property-document-tab";
 
-export function PropertyRelatedTile({ propertyId, label }: { propertyId: string; label: string }) {
+/** Slice #38.76: `readOnly` — beside a list, the chain link's look: no associate, dissociate or share control. */
+export function PropertyRelatedTile({ propertyId, label, readOnly = false }: { propertyId: string; label: string; readOnly?: boolean }) {
   const t = useTranslations("shared.related");
   const persons = usePropertyPersonRows(propertyId);
   const properties = usePropertyReferenceRows(propertyId);
@@ -26,6 +27,7 @@ export function PropertyRelatedTile({ propertyId, label }: { propertyId: string;
 
   return (
     <RelatedTile
+      readOnly={readOnly}
       label={label}
       rows={[...persons.rows, ...properties.rows, ...documents.rows]}
       loading={persons.isLoading || properties.isLoading || documents.isLoading}

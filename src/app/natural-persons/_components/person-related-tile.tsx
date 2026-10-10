@@ -23,9 +23,11 @@ type Props = {
   /** "/natural-persons" or "/judicial-persons" — where the three „Asociază …" go. */
   backBase: string;
   label: string;
+  /** Slice #38.76: beside a list, the chain link's look — no associate, dissociate or share control. */
+  readOnly?: boolean;
 };
 
-export function PersonRelatedTile({ personId, backBase, label }: Props) {
+export function PersonRelatedTile({ personId, backBase, label, readOnly = false }: Props) {
   const t = useTranslations("shared.related");
   const persons = usePersonReferenceRows(personId, backBase);
   const properties = usePersonPropertyRows(personId, backBase);
@@ -33,6 +35,7 @@ export function PersonRelatedTile({ personId, backBase, label }: Props) {
 
   return (
     <RelatedTile
+      readOnly={readOnly}
       label={label}
       rows={[...persons.rows, ...properties.rows, ...documents.rows]}
       loading={persons.isLoading || properties.isLoading || documents.isLoading}

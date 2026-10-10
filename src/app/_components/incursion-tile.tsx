@@ -27,6 +27,14 @@
  * today — so a list shorter than that leaves the tile at it, and the list is not stretched. The tile wears the
  * surface its own screen gives it: the registry's group for that tile (`INCURSION_SURFACE`), the right column's
  * purple (#37.78) for all three — never the card's grey-blue.
+ *
+ * Slice #38.76 — „LEGĂTURI", the chain link's tile (`view` "links"): the object's „Legături", in the green its
+ * own screen gives it (`LINKS_SURFACE`, the registry's `related` group — RELATED_TILE_SURFACE, its rows
+ * RELATED_ROWS_SURFACE), drawn by that screen's own tile and hooks in their `readOnly` form (`related-tile.tsx`):
+ * no radio, no „Asociază …", no „Dezasociază", no share control. As tall as the list like the eye's tile, its rows
+ * scrolling inside it when there are more than the list's height holds; never below „Interacțiuni"'s height.
+ * The head line is the eye's (Ask first #2). A document's „Legături" lists every person link — the parties too:
+ * the Incursiune has no „Părți" beside it, as a contract de vânzare's screen has.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -37,7 +45,8 @@ import { InteractionsTile } from "@/components/tiles/interactions-tile";
 import { loadPreview } from "@/components/tiles/preview-data";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { IconButton } from "@/lib/ui/icon-button";
-import { MAP_BOX_HEIGHT_REM, PAGES_PANEL_REM, rem, unitsRem } from "@/lib/ui/field-widths";
+import { INTERACTIONS_TILE_STYLE, MAP_BOX_HEIGHT_REM, PAGES_PANEL_REM, rem, unitsRem } from "@/lib/ui/field-widths";
+import type { IncursionView } from "@/components/tiles/incursion-context";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { tileGroupOf } from "@/lib/ui/tiles";
 import { previewHref, type PreviewKind, type PreviewTarget } from "@/lib/ui/previews";
@@ -49,6 +58,9 @@ import { documentTileRegistry, type DocumentLayout } from "@/app/documents/_comp
 import { NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles";
 import { JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
 import { PROP_TILE_REGISTRY } from "@/app/properties/_components/property-tiles";
+import { PersonRelatedTile } from "@/app/natural-persons/_components/person-related-tile";
+import { PropertyRelatedTile } from "@/app/properties/_components/property-related-tile";
+import { DocumentRelatedTile } from "@/app/documents/_components/document-related-tile";
 
 /** Never narrower than the tile on its detail screen: „Interacțiuni" and „Pagini" 4 units, „Hartă" 3. */
 export const INCURSION_MIN_REM: Readonly<Record<PreviewKind, number>> = {
@@ -72,9 +84,17 @@ export const INCURSION_SURFACE: Readonly<Record<PreviewKind, string>> = {
   document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "pages")),
 };
 
+/** Slice #38.76: „Legături"'s surface on each kind's own screen — the registry's group for `related`. */
+export const LINKS_SURFACE: Readonly<Record<PreviewKind, string>> = {
+  person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related")),
+  company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "related")),
+  property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "related")),
+  document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "related")),
+};
+
 const UNNAMED_KIND: Record<PreviewKind, UnnamedKind> = { person: "person", company: "person", property: "property", document: "document" };
 
-export function IncursionTile({ target, onClose }: { target: PreviewTarget; onClose: () => void }) {
+export function IncursionTile({ target, view, onClose }: { target: PreviewTarget; view: IncursionView; onClose: () => void }) {
   const t = useTranslations("shared.incursion");
   const tPreview = useTranslations("shared.preview");
   const nameOr = useNameOr();
@@ -86,6 +106,7 @@ export function IncursionTile({ target, onClose }: { target: PreviewTarget; onCl
   return (
     <section
       data-incursion={target.kind}
+      data-incursion-view={view}
       aria-label={`${t("title")}: ${name}`}
       className="flex min-w-0 flex-1 flex-col gap-2 self-stretch"
       style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}
@@ -111,7 +132,9 @@ export function IncursionTile({ target, onClose }: { target: PreviewTarget; onCl
           <IconButton icon={X} label={tPreview("close")} variant="secondary" size="xs" onClick={onClose} />
         </div>
       </div>
-      {target.kind === "property" ? (
+      {view === "links" ? (
+        <IncursionLinks target={target} label={t("links")} />
+      ) : target.kind === "property" ? (
         <IncursionMap propertyId={target.id} title={t("map")} surface={INCURSION_SURFACE.property} />
       ) : target.kind === "document" ? (
         <IncursionPages documentId={target.id} surface={INCURSION_SURFACE.document} />
@@ -149,6 +172,39 @@ function IncursionMap({ propertyId, title, surface }: { propertyId: string; titl
         ) : (
           <p className="p-3 text-sm text-fade dark:text-zinc-400">{q.isError ? tPreview("error") : tPreview("loading")}</p>
         )}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Slice #38.76: „Legături" — the object's related rows, read-only, through its own screen's tile and hooks; the
+ * rows scroll inside the tile, so the tile is the list's height and not the rows'.
+ */
+function IncursionLinks({ target, label }: { target: PreviewTarget; label: string }) {
+  return (
+    <section
+      data-tile="incursion-links"
+      aria-label={label}
+      className={`${LINKS_SURFACE[target.kind]} flex flex-1 flex-col`}
+      style={{ minHeight: INTERACTIONS_TILE_STYLE.minHeight }}
+    >
+      <TileTitle title={label} />
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 overflow-y-auto" data-incursion-links="">
+          {target.kind === "property" ? (
+            <PropertyRelatedTile propertyId={target.id} label={label} readOnly />
+          ) : target.kind === "document" ? (
+            <DocumentRelatedTile documentId={target.id} label={label} readOnly />
+          ) : (
+            <PersonRelatedTile
+              personId={target.id}
+              backBase={target.kind === "company" ? "/judicial-persons" : "/natural-persons"}
+              label={label}
+              readOnly
+            />
+          )}
+        </div>
       </div>
     </section>
   );

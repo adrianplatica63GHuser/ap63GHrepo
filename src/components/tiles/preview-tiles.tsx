@@ -41,7 +41,7 @@ import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { loadPreview } from "./preview-data";
 import { PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
-import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
+import { IncursionContext, type Incursion, type IncursionOpen, type IncursionTileComponent, type IncursionView } from "./incursion-context";
 
 // ── Which previews are open ───────────────────────────────────────────────────
 
@@ -150,11 +150,12 @@ export function ListPreviews({ children, incursion: IncursionTile }: { children:
   const previews = usePreviews();
   // Slice #38.72: the row whose „Incursiune" is open — one at a time (Ask first #1). A list without an
   // Incursiune tile offers none, and its magnifiers are never locked.
-  const [open, setOpen] = useState<PreviewTarget | null>(null);
+  // Slice #38.76: and which tile — the eye's or the chain link's; one choice for both (Ask first: none — the header's).
+  const [open, setOpen] = useState<IncursionOpen | null>(null);
   const toggle = useCallback(
-    (target: PreviewTarget) => {
-      const opening = open === null || previewKey(open) !== previewKey(target);
-      setOpen(opening ? { kind: target.kind, id: target.id } : null);
+    (target: PreviewTarget, view: IncursionView) => {
+      const opening = open === null || previewKey(open) !== previewKey(target) || open.view !== view;
+      setOpen(opening ? { kind: target.kind, id: target.id, view } : null);
       // While it is open no preview is: every magnifier is released, its preview closed.
       if (opening) for (const p of previews.open) previews.close(previewKey(p));
     },
@@ -170,7 +171,14 @@ export function ListPreviews({ children, incursion: IncursionTile }: { children:
           <div data-list-body className={peeking ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
             {children}
           </div>
-          {IncursionTile && open && <IncursionTile key={previewKey(open)} target={open} onClose={() => setOpen(null)} />}
+          {IncursionTile && open && (
+            <IncursionTile
+              key={`${open.view}:${previewKey(open)}`}
+              target={{ kind: open.kind, id: open.id }}
+              view={open.view}
+              onClose={() => setOpen(null)}
+            />
+          )}
         </div>
       </IncursionContext.Provider>
     </PreviewOpenerProvider>

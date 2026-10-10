@@ -25,6 +25,7 @@ export function DocumentRelatedTile({
   documentId,
   label,
   personScope = "all",
+  readOnly = false,
 }: {
   documentId: string;
   label: string;
@@ -33,6 +34,8 @@ export function DocumentRelatedTile({
    * „Legături" draws the other person links only (`notParties`).
    */
   personScope?: PersonLinkScope;
+  /** Slice #38.76: beside a list, the chain link's look — no associate, dissociate or share control. */
+  readOnly?: boolean;
 }) {
   const t = useTranslations("shared.related");
   const persons = useDocumentPersonRows(documentId, personScope);
@@ -41,6 +44,7 @@ export function DocumentRelatedTile({
 
   return (
     <RelatedTile
+      readOnly={readOnly}
       label={label}
       rows={[...persons.rows, ...properties.rows, ...references.rows]}
       loading={persons.isLoading || properties.isLoading || references.isLoading}

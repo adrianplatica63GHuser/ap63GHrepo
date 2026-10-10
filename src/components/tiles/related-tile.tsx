@@ -32,6 +32,14 @@
  * What stays under the rows (the share totals, each list's errors) and what
  * stands after the buttons („Înscrisuri citate") are the screen's, passed in.
  * #37.66 (the Property) and #37.67 (the two persons) use this same tile.
+ *
+ * Slice #38.76 — `readOnly`: the chain link on a list row shows this tile beside the list, A LOOK, NOT AN EDIT
+ * (as an Incursiune, #38.72). The same rows, the same groups and icons, the same green — and none of what writes:
+ * no radio and so no selection, no „Asociază …", no „Dezasociază", no share control (the `share` slot, whose
+ * „Cotă" opens its values to edit), nothing under the rows or after the buttons (the totals, the lists' errors,
+ * „Înscrisuri citate"). „Relația" stays: it is a bubble that shows a sentence and writes nothing. „Vizualizare"
+ * and a double-click (Ask first #3) open the record read-only through the guard; „Previzualizare" is locked by
+ * the open Incursiune (#38.72). The screen's own hooks still build the rows: no fork.
  */
 
 import { Building2, FileText, Link as LinkIcon, Map as MapIcon, Unlink, User, type LucideProps } from "lucide-react";
@@ -112,6 +120,7 @@ export function RelatedTile({
   underButtons,
   groupByRole,
   emptyLabel,
+  readOnly = false,
 }: {
   /** The tile's title — the rows' accessible name. */
   label: string;
@@ -135,6 +144,8 @@ export function RelatedTile({
   groupByRole?: boolean;
   /** What an empty tile says, in place of „Nimic corelat încă.". */
   emptyLabel?: string;
+  /** Slice #38.76: a look, not an edit — see above. */
+  readOnly?: boolean;
 }) {
   const t = useTranslations("shared.related");
   const { guardedNavigate } = useUnsavedChanges();
@@ -204,16 +215,17 @@ export function RelatedTile({
                       {...row.data}
                       data-kind={row.kind}
                       selected={isSelected}
-                      onSelect={() => setSelectedKey(row.key)}
+                      onSelect={readOnly ? undefined : () => setSelectedKey(row.key)}
                       radioLabel={row.radioLabel}
                       icon={RELATED_ICON[row.kind]}
                       kindLabel={kindLabel(t, row.kind)}
                       content={row.content}
                       title={row.title}
-                      buttons={row.buttons}
+                      buttons={readOnly ? withoutShare(row.buttons) : row.buttons}
                       // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
                       onClick={(e) => {
                         if (newTabIfAsked(e, row.href)) return;
+                        if (readOnly) return;
                         setSelectedKey(isSelected ? null : row.key);
                       }}
                       onAuxClick={(e) => newTabIfAsked(e, row.href)}
@@ -227,43 +239,54 @@ export function RelatedTile({
         </div>
       )}
 
-      {belowRows}
+      {readOnly ? null : (
+        <>
+          {belowRows}
 
-      <div className="flex flex-col gap-2">
-        {/* At `sm`: the three „Asociază …" and „Dezasociază" stand in one row in the
-            tile's 4 units (563 px of the 610 inside, measured); at `lg` they took two rows. */}
-        <div className="flex flex-wrap gap-2">
-          {associate.map((a) => (
-            <IconButton
-              key={a.label}
-              icon={LinkIcon}
-              label={a.label}
-              showLabel
-              variant="primary"
-              size="sm"
-              onClick={a.onClick}
-              disabled={selected !== null}
-            />
-          ))}
-          <IconButton
-            icon={Unlink}
-            label={t("dissociate")}
-            busy={dissociating}
-            busyLabel={t("dissociating")}
-            showLabel
-            variant="secondary"
-            size="sm"
-            onClick={handleDissociate}
-            disabled={selected === null || dissociating}
-          />
-          {extraButtons}
-        </div>
-        {dissociateErr && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">{dissociateErr}</p>
-        )}
-      </div>
+          <div className="flex flex-col gap-2">
+            {/* At `sm`: the three „Asociază …" and „Dezasociază" stand in one row in the
+                tile's 4 units (563 px of the 610 inside, measured); at `lg` they took two rows. */}
+            <div className="flex flex-wrap gap-2">
+              {associate.map((a) => (
+                <IconButton
+                  key={a.label}
+                  icon={LinkIcon}
+                  label={a.label}
+                  showLabel
+                  variant="primary"
+                  size="sm"
+                  onClick={a.onClick}
+                  disabled={selected !== null}
+                />
+              ))}
+              <IconButton
+                icon={Unlink}
+                label={t("dissociate")}
+                busy={dissociating}
+                busyLabel={t("dissociating")}
+                showLabel
+                variant="secondary"
+                size="sm"
+                onClick={handleDissociate}
+                disabled={selected === null || dissociating}
+              />
+              {extraButtons}
+            </div>
+            {dissociateErr && (
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert">{dissociateErr}</p>
+            )}
+          </div>
 
-      {underButtons}
+          {underButtons}
+        </>
+      )}
     </div>
   );
+}
+
+/** Slice #38.76: a read-only row's buttons — every slot but `share`, whose „Cotă" opens its values to edit. */
+export function withoutShare(buttons: RelatedRow["buttons"]): RelatedRow["buttons"] {
+  const { share: _share, ...rest } = buttons;
+  void _share;
+  return rest;
 }

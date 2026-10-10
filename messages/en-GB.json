@@ -622,6 +622,7 @@
     },
     "incursion": {
       "button": "Peek inside",
+      "links": "Links",
       "title": "Peek inside",
       "interactions": "Interactions",
       "map": "Map",

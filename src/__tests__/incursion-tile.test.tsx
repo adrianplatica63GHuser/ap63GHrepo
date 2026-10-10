@@ -11,7 +11,9 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
-import { IncursionButton } from "@/components/tiles/incursion-button";
+import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
+import { RelatedTile, type RelatedRow } from "@/components/tiles/related-tile";
+import { RELATED_TILE_SURFACE } from "@/lib/ui/tile-surface";
 import type { PreviewTarget } from "@/lib/ui/previews";
 import { groupSurface, PINNED_TILE_SURFACE } from "@/lib/ui/tile-surface";
 import { tileGroupOf } from "@/lib/ui/tiles";
@@ -32,10 +34,10 @@ jest.mock("@/components/tiles/preview-data", () => ({
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 
-/** The list's tile, stubbed: which row it is for. */
-function Stub({ target, onClose }: { target: PreviewTarget; onClose: () => void }) {
+/** The list's tile, stubbed: which row it is for, and (#38.76) which tile. */
+function Stub({ target, view, onClose }: { target: PreviewTarget; view: string; onClose: () => void }) {
   return (
-    <section data-incursion={target.kind} data-for={target.id}>
+    <section data-incursion={target.kind} data-for={target.id} data-incursion-view={view}>
       <button type="button" onClick={onClose} aria-label="close-stub" />
     </section>
   );
@@ -55,6 +57,7 @@ function renderList() {
                   <td data-row={id}>
                     <PreviewButton target={{ kind: "property", id }} />
                     <IncursionButton target={{ kind: "property", id }} />
+                    <LinksButton target={{ kind: "property", id }} />
                   </td>
                 </tr>
               ))}
@@ -68,6 +71,7 @@ function renderList() {
 const magnifier = (id: string) => document.querySelector<HTMLButtonElement>(`[data-row="${id}"] [data-preview-toggle]`)!;
 const eye = (id: string) => document.querySelector<HTMLButtonElement>(`[data-row="${id}"] [data-incursion-toggle]`)!;
 const tile = () => document.querySelector<HTMLElement>("[data-incursion]");
+const link = (id: string) => document.querySelector<HTMLButtonElement>(`[data-row="${id}"] [data-links-toggle]`)!;
 
 describe("the eye opens one Incursiune, and the magnifiers yield to it (#38.72)", () => {
   it("pressed, it shows its row's tile beside the list, closes the open preview and disables every magnifier", async () => {
@@ -152,12 +156,14 @@ describe("a look, not an edit (#38.72)", () => {
     expect(TILE).toContain("style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}");
   });
 
-  it("the four lists draw magnifier, eye, arrow, and offer the tile", () => {
+  it("the four lists draw magnifier, eye, chain link, arrow, and offer the tile", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = read("src", "app", dir, "list-view.tsx");
       const actions = view.slice(view.indexOf('data-row-actions=""'), view.indexOf("</span>", view.indexOf('data-row-actions=""')));
       const at = (s: string) => actions.indexOf(s);
-      expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("icon={ArrowRight}")]).toEqual([dir, true]);
+      // #38.72 held magnifier, eye, arrow (`at("<IncursionButton") < at("icon={ArrowRight}")`); #38.76 puts the
+      // chain link between the eye and the arrow.
+      expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("<LinksButton") && at("<LinksButton") < at("icon={ArrowRight}")]).toEqual([dir, true]);
       expect([dir, view.includes("<ListPreviews incursion={IncursionTile}>")]).toEqual([dir, true]);
       // Slice #38.75: around the whole list, its first child the toolbar; the table frame in `ListPreviewRow`.
       expect([dir, /<ListPreviews incursion=\{IncursionTile\}>\s*\{\/\* Toolbar/.test(view)]).toEqual([dir, true]);
@@ -166,9 +172,10 @@ describe("a look, not an edit (#38.72)", () => {
     }
   });
 
-  it("the four lists' button column holds the three buttons side by side (94 px)", () => {
+  it("the four lists' button column holds the four buttons side by side (128 px, #38.76)", () => {
     const widths = read("src", "lib", "ui", "field-widths.ts");
-    expect(widths).toContain('listRowActions: { content: 6, kind: "fixed" },');
+    // #38.72: „three buttons side by side (94 px)", `content: 6`. #38.76 adds the chain link: 4 × 26 + 3 × 8 = 128 px.
+    expect(widths).toContain('listRowActions: { content: 8, kind: "fixed" },');
   });
 
   it("is named „Incursiune” in Romanian and „Peek inside” in English (Ask first #3)", () => {
@@ -241,5 +248,128 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     expect(TILE).not.toContain("PINNED_TILE_SURFACE");
     expect(TILE).toContain('surface={INCURSION_SURFACE.property}');
     expect(TILE).toContain('surface={INCURSION_SURFACE.document}');
+  });
+});
+
+describe("the chain link shows „Legături” beside the list, read-only, in green (#38.76)", () => {
+  const TILE = read("src", "app", "_components", "incursion-tile.tsx");
+  const RELATED = read("src", "components", "tiles", "related-tile.tsx");
+  const BUTTON = read("src", "components", "tiles", "incursion-button.tsx");
+
+  it("pressed, it shows its row's „Legături”, reads pressed, closes the open preview and locks every magnifier", async () => {
+    renderList();
+    await act(async () => fireEvent.click(magnifier("A")));
+    await waitFor(() => expect(document.querySelectorAll("[data-preview]")).toHaveLength(1));
+    await act(async () => fireEvent.click(link("A")));
+    expect(tile()).toHaveAttribute("data-for", "A");
+    expect(tile()).toHaveAttribute("data-incursion-view", "links");
+    expect(link("A")).toHaveAttribute("aria-pressed", "true");
+    expect(eye("A")).toHaveAttribute("aria-pressed", "false");
+    expect(document.querySelectorAll("[data-preview]")).toHaveLength(0);
+    for (const id of ["A", "B"]) expect(magnifier(id)).toBeDisabled();
+  });
+
+  it("one choice with the eye: an eye after it closes it and the reverse; another row's chain link moves it; pressed again it closes", async () => {
+    renderList();
+    await act(async () => fireEvent.click(link("A")));
+    await act(async () => fireEvent.click(eye("A")));
+    expect(document.querySelectorAll("[data-incursion]")).toHaveLength(1);
+    expect(tile()).toHaveAttribute("data-incursion-view", "peek");
+    expect([eye("A").getAttribute("aria-pressed"), link("A").getAttribute("aria-pressed")]).toEqual(["true", "false"]);
+    await act(async () => fireEvent.click(link("B")));
+    expect(tile()).toHaveAttribute("data-for", "B");
+    expect(tile()).toHaveAttribute("data-incursion-view", "links");
+    expect([eye("A"), link("A"), eye("B"), link("B")].map((b) => b.getAttribute("aria-pressed"))).toEqual(["false", "false", "false", "true"]);
+    await act(async () => fireEvent.click(link("B")));
+    expect(tile()).toBeNull();
+    for (const id of ["A", "B"]) expect(magnifier(id)).toBeEnabled();
+  });
+
+  it("its icon is the very one „Asociază …” wears inside „Legături” — lucide's Link — and its name „Legături” / „Links”", () => {
+    expect(RELATED).toContain('Link as LinkIcon, ');
+    expect(BUTTON).toContain('import { Eye, Link as LinkIcon } from "lucide-react";');
+    expect(BUTTON).toContain('icon={LinkIcon} label={t("links")}');
+    expect(JSON.parse(read("messages", "ro-RO.json")).shared.incursion.links).toBe("Legături");
+    expect(JSON.parse(read("messages", "en-GB.json")).shared.incursion.links).toBe("Links");
+  });
+
+  it("the tile is each screen's own „Legături”, read-only, through its own hooks — no fork", () => {
+    expect(TILE).toContain('<PropertyRelatedTile propertyId={target.id} label={label} readOnly />');
+    expect(TILE).toContain('<DocumentRelatedTile documentId={target.id} label={label} readOnly />');
+    expect(TILE).toMatch(/<PersonRelatedTile\s+personId=\{target\.id\}\s+backBase=\{target\.kind === "company" \? "\/judicial-persons" : "\/natural-persons"\}\s+label=\{label\}\s+readOnly\s+\/>/);
+    for (const f of [
+      ["src", "app", "natural-persons", "_components", "person-related-tile.tsx"],
+      ["src", "app", "properties", "_components", "property-related-tile.tsx"],
+      ["src", "app", "documents", "_components", "document-related-tile.tsx"],
+    ]) {
+      expect([f.at(-1), read(...f).includes("readOnly={readOnly}")]).toEqual([f.at(-1), true]);
+    }
+  });
+
+  it("wears its screen's green: the registry's `related` group, RELATED_TILE_SURFACE, on all four", () => {
+    const saved = documentTileRegistry({ typeKey: null, tabs: [], succession: false, pages: true });
+    for (const group of [
+      tileGroupOf(NP_TILE_REGISTRY, "related"),
+      tileGroupOf(JP_TILE_REGISTRY, "related"),
+      tileGroupOf(PROP_TILE_REGISTRY, "related"),
+      tileGroupOf(saved, "related"),
+    ]) {
+      expect(group).toBe("related");
+      expect(groupSurface(group)).toBe(RELATED_TILE_SURFACE);
+    }
+    expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related")),');
+    expect(TILE).toContain("className={`${LINKS_SURFACE[target.kind]} flex flex-1 flex-col`}");
+    // The rows keep their own, calmer green (#38.15): RelatedTile draws them, whatever `readOnly` is.
+    expect(RELATED).toMatch(/data-related-rows=""\s*\/\/[^\n]*\n\s*className=\{RELATED_ROWS_SURFACE\}/);
+  });
+});
+
+describe("„Legături” read-only draws no association control (#38.76)", () => {
+  const rows: RelatedRow[] = [
+    {
+      key: "natural:1", kind: "natural", radioLabel: "Ion", content: "Ion", title: "Ion", href: "/natural-persons/1?readonly=true",
+      buttons: { share: <button type="button" data-share-button="">Cotă</button>, view: <span data-view="">Vizualizare</span> },
+      dissociate: jest.fn(async () => {}),
+    },
+    {
+      key: "property:2", kind: "property", radioLabel: "Teren", content: "Teren", title: "Teren", href: "/properties/2?readonly=true",
+      buttons: { relation: <span data-relation-bubble="">Vecin</span> },
+      dissociate: jest.fn(async () => {}),
+    },
+  ];
+  const draw = (readOnly: boolean) =>
+    render(
+      <RelatedTile
+        readOnly={readOnly}
+        label="Legături"
+        rows={rows}
+        loading={false}
+        associate={[{ label: "associatePerson", onClick: jest.fn() }]}
+        belowRows={<p data-below="">Total</p>}
+        extraButtons={<button type="button" data-extra="">Înscrisuri citate</button>}
+        underButtons={<div data-under="" />}
+      />,
+    );
+
+  it("on its screen: radios, „Asociază …”, „Dezasociază”, the share button and what the screen passes", () => {
+    const { container } = draw(false);
+    expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(2);
+    expect(container.textContent).toContain("associatePerson");
+    expect(container.textContent).toContain("dissociate");
+    for (const sel of ["[data-share-button]", "[data-below]", "[data-extra]", "[data-under]"]) expect(container.querySelector(sel)).not.toBeNull();
+  });
+
+  it("read-only: the rows, their kinds' icons, „Vizualizare” and „Relația” — and no radio, no associate, no dissociate, no share, nothing below", () => {
+    const { container } = draw(true);
+    expect(container.querySelectorAll("[data-one-line-row]")).toHaveLength(2);
+    expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(0);
+    expect(container.textContent).not.toContain("associatePerson");
+    expect(container.textContent).not.toContain("dissociate");
+    for (const sel of ["[data-share-button]", "[data-below]", "[data-extra]", "[data-under]"]) expect(container.querySelector(sel)).toBeNull();
+    expect(container.textContent).toContain("Vizualizare");
+    expect(container.querySelector("[data-relation-bubble]")).not.toBeNull();
+    // A click selects nothing: no row is marked chosen.
+    fireEvent.click(container.querySelector("[data-one-line-row]")!);
+    expect(container.querySelector(".bg-cta-pale")).toBeNull();
   });
 });
