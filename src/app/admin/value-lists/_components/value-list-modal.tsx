@@ -10,6 +10,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LIST_META, VALID_LIST_KEYS, type FieldMeta, type ListKey } from "@/lib/admin/value-lists/config";
+import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
 import { FixedColumns, ONE_LINE, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { columnsRem, dialogCardStyle, dialogUnits, screenBox, type ColumnName } from "@/lib/ui/field-widths";
 import {
@@ -804,8 +805,11 @@ export function ValueListModal({
   initialAddName,
   initialFormFilter,
   onClose,
+  titleMarked = false,
 }: {
   listKey: ListKey;
+  /** Slice #38.68: the title in the heavy yellow — the chosen link's list, on „Roluri și legături". */
+  titleMarked?: boolean;
   /**
    * Open with the add form already up, and this name typed in — Slice #34.10.
    *
@@ -1436,7 +1440,14 @@ export function ValueListModal({
             id={listTitleId}
             className="text-base font-semibold text-ink dark:text-zinc-100"
           >
-            {t(`lists.${meta.titleKey}`)}
+            {/* Slice #38.68: marked, the title looks like the marked name in the column — a filled rounded box. */}
+            <span
+              className={titleMarked ? `${LINK_MARK_BOX} px-2 py-1` : undefined}
+              aria-current={titleMarked ? "true" : undefined}
+              data-marked={titleMarked ? "" : undefined}
+            >
+              {t(`lists.${meta.titleKey}`)}
+            </span>
           </h2>
         </div>
 

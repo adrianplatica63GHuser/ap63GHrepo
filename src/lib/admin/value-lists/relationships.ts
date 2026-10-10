@@ -62,3 +62,44 @@ export const RELATIONSHIPS: readonly Relationship[] = [
 export function isCorner(r: Relationship): boolean {
   return r.ends[0] === r.ends[1];
 }
+
+// ---- Slice #38.68: one choice, marked in four places ---------------------------------------------
+
+/** The links a list configures — „Roluri Persoane": 1, 4 and 5; a list outside „Roluri și legături": none. */
+export function linksOfList(key: ListKey | null): RelationshipId[] {
+  return key === null ? [] : RELATIONSHIPS.filter((r) => r.list === key).map((r) => r.id);
+}
+
+/** The list a link is configured in — Document – Proprietate (6) has none. */
+export function listOfLink(id: RelationshipId): ListKey | null {
+  return RELATIONSHIPS.find((r) => r.id === id)?.list ?? null;
+}
+
+/** A link pressed on the triangle or among the six, and the list open when the press took effect. */
+export interface PressedLink {
+  id: RelationshipId;
+  on: ListKey | null;
+}
+
+/**
+ * What carries the yellow (Slice #38.68): the links — their numbers, sides and loops on the triangle and
+ * their numbers among the six — and the list whose name in the column and whose card title are marked.
+ *
+ *   - a list chosen in the column, or arrived at by `?list=`: every link it configures, and the list
+ *     (Ask first #1 — „Roluri Persoane" marks 1, 4 and 5);
+ *   - a link pressed: that link only, and its list, which opens as it did (#2);
+ *   - 6, which has no list: 6 alone — the list that was open stays open, unmarked (#3);
+ *   - the address remembers no link (#4): a press counts only while the list it was made on is still
+ *     the open one, so Back, a reload or the column fall back to the list's whole set.
+ */
+export function markedLinks(
+  selected: ListKey | null,
+  pressed: PressedLink | null,
+): { links: RelationshipId[]; list: ListKey | null } {
+  if (pressed !== null && pressed.on === selected) {
+    const list = listOfLink(pressed.id);
+    return { links: [pressed.id], list: list !== null && list === selected ? list : null };
+  }
+  const links = linksOfList(selected);
+  return { links, list: links.length > 0 ? selected : null };
+}

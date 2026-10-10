@@ -11,11 +11,12 @@
  * Proprietate has none and opens nothing. The data is `RELATIONSHIPS` (`@/lib/admin/value-lists/relationships`).
  */
 
-import { useId, type MouseEvent } from "react";
+import { useId, type KeyboardEvent, type MouseEvent } from "react";
 import { useTranslations } from "next-intl";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
-import { RELATIONSHIPS, type ObjectKind, type Relationship } from "@/lib/admin/value-lists/relationships";
+import { RELATIONSHIPS, type ObjectKind, type Relationship, type RelationshipId } from "@/lib/admin/value-lists/relationships";
 import { dialogCardStyle, rem } from "@/lib/ui/field-widths";
+import { LINK_MARK_BOX, LINK_MARK_FILL, LINK_MARK_INK } from "@/lib/ui/link-mark";
 
 /**
  * THE DRAWING'S GEOMETRY.                                                     (Slices #38.62, #38.67)
@@ -78,13 +79,18 @@ function numberAt(r: Relationship): { x: number; y: number } {
 }
 
 export function RelationshipTriangle({
-  current,
-  onOpen,
+  marked,
+  onPress,
   cardUnits,
 }: {
-  /** The list open beside the categories — its relationships are drawn heavier. */
-  current: ListKey;
-  onOpen: (key: ListKey) => void;
+  /**
+   * Slice #38.68: the links marked in the heavy yellow — every link of the open list, or the one pressed
+   * (`markedLinks`). Until #38.68 the open list's lines were drawn heavier (`current`); now the marked ones are,
+   * on a yellow band.
+   */
+  marked: readonly RelationshipId[];
+  /** A number on the drawing, or a name among the six, pressed: the hub marks that link and opens its list. */
+  onPress: (id: RelationshipId) => void;
   /** The list card's width, so the tile above it lines up with it. */
   cardUnits: number;
 }) {
@@ -95,9 +101,18 @@ export function RelationshipTriangle({
   const name = (r: Relationship) => t(`triangle.relations.${r.id}.name`);
   const openLabel = (r: Relationship) => (r.list ? t("triangle.open", { name: name(r), list: listName(r.list) }) : name(r));
 
-  function press(e: MouseEvent, key: ListKey) {
+  const isMarked = (r: Relationship) => marked.includes(r.id);
+
+  function press(e: MouseEvent, id: RelationshipId) {
     e.preventDefault();
-    onOpen(key);
+    onPress(id);
+  }
+
+  /** 6 has no list, so no link: a button on the drawing, pressed with Enter or Space as well. */
+  function pressKey(e: KeyboardEvent, id: RelationshipId) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onPress(id);
   }
 
   return (
@@ -135,30 +150,34 @@ export function RelationshipTriangle({
             {RELATIONSHIPS.filter((r) => r.ends[0] !== r.ends[1]).map((r) => {
               const [a, b] = r.ends;
               return (
-                <line
-                  key={r.id}
-                  x1={AT[a].x}
-                  y1={AT[a].y}
-                  x2={AT[b].x}
-                  y2={AT[b].y}
-                  stroke="currentColor"
-                  strokeWidth={r.list === current ? 3 : 1.5}
-                  strokeDasharray={r.configured ? undefined : "6 5"}
-                  data-side={r.id}
-                />
+                <g key={r.id}>
+                  {/* Slice #38.68: a marked side is a yellow band behind its line — a yellow line alone reads poorly on white —
+                      and the line on it is the dark ink in both themes, as a marked number's digit is. */}
+                  {isMarked(r) && (
+                    <line x1={AT[a].x} y1={AT[a].y} x2={AT[b].x} y2={AT[b].y} stroke={LINK_MARK_FILL} strokeWidth={9} strokeLinecap="round" data-band={r.id} />
+                  )}
+                  <line
+                    x1={AT[a].x}
+                    y1={AT[a].y}
+                    x2={AT[b].x}
+                    y2={AT[b].y}
+                    stroke={isMarked(r) ? LINK_MARK_INK : "currentColor"}
+                    strokeWidth={isMarked(r) ? 3 : 1.5}
+                    strokeDasharray={r.configured ? undefined : "6 5"}
+                    data-side={r.id}
+                  />
+                </g>
               );
             })}
 
             {/* The three corners' loops — a link between two objects of the same kind. */}
             {RELATIONSHIPS.filter((r) => r.ends[0] === r.ends[1]).map((r) => (
-              <path
-                key={r.id}
-                d={LOOP[r.ends[0]].d}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={r.list === current ? 3 : 1.5}
-                data-corner={r.id}
-              />
+              <g key={r.id}>
+                {isMarked(r) && (
+                  <path d={LOOP[r.ends[0]].d} fill="none" stroke={LINK_MARK_FILL} strokeWidth={9} strokeLinecap="round" data-band={r.id} />
+                )}
+                <path d={LOOP[r.ends[0]].d} fill="none" stroke={isMarked(r) ? LINK_MARK_INK : "currentColor"} strokeWidth={isMarked(r) ? 3 : 1.5} data-corner={r.id} />
+              </g>
             ))}
 
             {/* The three objects, over the lines. */}
@@ -183,10 +202,21 @@ export function RelationshipTriangle({
             {/* The six numbers — a link where the relationship has a list (Ask first #2). */}
             {RELATIONSHIPS.map((r, i) => {
               const at = numberAt(r);
+              const on = isMarked(r);
+              // Slice #38.68: a marked number is the heavy yellow, its digit and rim dark — in both themes.
               const mark = (
                 <>
-                  <circle cx={at.x} cy={at.y} r={BUBBLE} className="fill-white dark:fill-zinc-900" stroke="currentColor" strokeWidth={1.5} />
-                  <text x={at.x} y={at.y} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize={12} fontWeight={600}>
+                  <circle
+                    cx={at.x}
+                    cy={at.y}
+                    r={BUBBLE}
+                    className={on ? undefined : "fill-white dark:fill-zinc-900"}
+                    fill={on ? LINK_MARK_FILL : undefined}
+                    stroke={on ? LINK_MARK_INK : "currentColor"}
+                    strokeWidth={1.5}
+                    data-bubble={r.id}
+                  />
+                  <text x={at.x} y={at.y} textAnchor="middle" dominantBaseline="central" fill={on ? LINK_MARK_INK : "currentColor"} fontSize={12} fontWeight={600}>
                     {i + 1}
                   </text>
                 </>
@@ -195,8 +225,9 @@ export function RelationshipTriangle({
                 <a
                   key={r.id}
                   href={`/admin/value-lists?list=${r.list}`}
-                  onClick={(e) => press(e, r.list as ListKey)}
+                  onClick={(e) => press(e, r.id)}
                   aria-label={openLabel(r)}
+                  aria-current={on ? "true" : undefined}
                   data-relationship={r.id}
                   className="cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
                 >
@@ -204,7 +235,18 @@ export function RelationshipTriangle({
                   {mark}
                 </a>
               ) : (
-                <g key={r.id} data-relationship={r.id} aria-label={name(r)}>
+                // Slice #38.68 (Ask first #3): 6 is pressed too — it marks 6 alone and opens nothing.
+                <g
+                  key={r.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => press(e, r.id)}
+                  onKeyDown={(e) => pressKey(e, r.id)}
+                  aria-label={name(r)}
+                  aria-pressed={on}
+                  data-relationship={r.id}
+                  className="cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
+                >
                   <title>{name(r)}</title>
                   {mark}
                 </g>
@@ -218,10 +260,21 @@ export function RelationshipTriangle({
           data-triangle-list=""
         >
           {RELATIONSHIPS.map((r, i) => (
-            <li key={r.id} className="flex gap-3" data-relationship-entry={r.id} data-configured={r.configured ? "yes" : "no"}>
+            <li
+              key={r.id}
+              className="flex gap-3"
+              data-relationship-entry={r.id}
+              data-configured={r.configured ? "yes" : "no"}
+              aria-current={isMarked(r) ? "true" : undefined}
+            >
+              {/* Slice #38.68: marked, the number is the column's marked look — a filled rounded box. */}
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink text-xs font-semibold text-ink dark:border-zinc-300 dark:text-zinc-300"
+                data-entry-number={r.id}
+                className={[
+                  "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-xs font-semibold",
+                  isMarked(r) ? LINK_MARK_BOX : "rounded-full border border-ink text-ink dark:border-zinc-300 dark:text-zinc-300",
+                ].join(" ")}
               >
                 {i + 1}
               </span>
@@ -231,7 +284,7 @@ export function RelationshipTriangle({
                   {r.list ? (
                     <a
                       href={`/admin/value-lists?list=${r.list}`}
-                      onClick={(e) => press(e, r.list as ListKey)}
+                      onClick={(e) => press(e, r.id)}
                       title={openLabel(r)}
                       className="font-semibold text-cta underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:outline-2 focus-visible:outline-focus dark:text-sky-300"
                     >

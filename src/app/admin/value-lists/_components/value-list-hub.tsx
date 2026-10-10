@@ -26,6 +26,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
 import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
+import { listOfLink, markedLinks, type PressedLink, type RelationshipId } from "@/lib/admin/value-lists/relationships";
+import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
 import { VALUE_LIST_CARD_UNITS, ValueListModal } from "./value-list-modal";
 import { RelationshipTriangle } from "./relationship-triangle";
 import { REFERENCE_NAV_REM, rem, unitsRem } from "@/lib/ui/field-widths";
@@ -77,6 +79,16 @@ export function ValueListHub({
     initialList !== undefined && isValidListKey(initialList) ? initialList : null;
   const [arrival] = useState<ListKey | null>(selected);
   const [addNameUsed, setAddNameUsed] = useState(false);
+  // Slice #38.68: a link pressed on the triangle or among the six — one choice, marked in four places
+  // (`markedLinks`): the list's name here, the triangle, the six and the list card's title.
+  const [pressed, setPressed] = useState<PressedLink | null>(null);
+  const marking = markedLinks(selected, pressed);
+
+  function pressLink(id: RelationshipId) {
+    const list = listOfLink(id);
+    setPressed({ id, on: list ?? selected });
+    if (list !== null) open(list);
+  }
 
   function open(key: ListKey) {
     if (key === selected) return;
@@ -124,18 +136,27 @@ export function ValueListHub({
                 {category.lists.map((key) => {
                   const label = t(`lists.${LIST_META[key].titleKey}`);
                   const current = key === selected;
+                  // Slice #38.68: in „Roluri și legături" the chosen link's list is the heavy yellow, not the navy.
+                  const linkGroup = category.id === "rolesLinks";
+                  const marked = linkGroup && key === marking.list;
                   return (
                     <li key={key}>
                       <button
                         type="button"
                         data-list-key={key}
                         aria-current={current ? "page" : undefined}
-                        onClick={() => open(key)}
+                        data-marked={marked ? "" : undefined}
+                        onClick={() => {
+                          setPressed(null);
+                          open(key);
+                        }}
                         className={[
                           "w-fit rounded-md px-2 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
-                          current
-                            ? "bg-cta font-medium text-white"
-                            : "text-ink hover:bg-cta-pale dark:text-zinc-200 dark:hover:bg-zinc-800",
+                          marked
+                            ? LINK_MARK_BOX
+                            : current && !linkGroup
+                              ? "bg-cta font-medium text-white"
+                              : "text-ink hover:bg-cta-pale dark:text-zinc-200 dark:hover:bg-zinc-800",
                         ].join(" ")}
                       >
                         {label}
@@ -162,9 +183,10 @@ export function ValueListHub({
           <>
             {/* Slice #38.62: the relationship triangle above every list of „Roluri și legături" (Ask first #1) —
                 #34.05's sentence, printed here above the two link lists until now, is its Document – Proprietate
-                entry. A corner or side with a list opens it through `open`, as the column on the left does. */}
+                entry. #38.68: a number on it, or a name among the six, presses that link (`pressLink`) — marked in
+                yellow in all four places, its list opened as the column on the left opens it. */}
             {categoryOfList(selected) === "rolesLinks" && (
-              <RelationshipTriangle current={selected} onOpen={open} cardUnits={VALUE_LIST_CARD_UNITS} />
+              <RelationshipTriangle marked={marking.links} onPress={pressLink} cardUnits={VALUE_LIST_CARD_UNITS} />
             )}
             {/* Keyed on the list: each list starts from its own state — a filter
                 ticked on one never filters the next (#27.07). */}
@@ -173,6 +195,7 @@ export function ValueListHub({
               listKey={selected}
               initialAddName={selected === arrival && !addNameUsed ? initialAddName : undefined}
               initialFormFilter={selected === arrival && !addNameUsed ? initialFormFilter : undefined}
+              titleMarked={marking.list === selected}
             />
           </>
         )}
