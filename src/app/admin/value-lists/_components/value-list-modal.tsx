@@ -107,10 +107,29 @@ const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla",
  * Slice #38.50: the lists whose names are short — „Teren Arabil", „Română" — take a narrower name
  * column, so their table is as wide as its content needs (measured at 1920 px: 125 px the longest).
  */
-const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["property-types", "use-categories", "person-types", "citizenships"]);
+const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "person-types", "citizenships"]);
+
+/**
+ * Slice #38.66: the lists of „Tipuri de obiecte" whose shared columns were too wide — each of these fields has a
+ * column of its own, as wide as its longest value or its header's longest word (measured, field-widths.ts). The
+ * property types left `SHORT_NAME_LISTS` for theirs. „Contract de Vânzare-Cumpărare" no longer sets the width of a
+ * company type.
+ */
+const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>> = {
+  "judicial-person-types": { name: "valueJudicialTypeName" },
+  "property-types": {
+    name: "valuePropertyTypeName",
+    showTarlaParcela: "valueFlagTarlaParcela",
+    showAddress: "valueFlagAddress",
+    showStreetView: "valueFlagStreetView",
+  },
+  "document-types": { name: "valueDocTypeName", shortName: "valueDocTypeShortName" },
+};
 
 /** A field's column: its width from `COLUMN`, by what the field holds. */
 function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
+  const own = OWN_COLUMNS[listKey]?.[f.key];
+  if (own) return own;
   if (f.type === "checkbox") return "valueFlag";
   // Slice #38.53 took the document type's key out of the table (`nameTip`), and #38.55 its `valueKey` with it.
   if (f.multiline) return "valueDescription";

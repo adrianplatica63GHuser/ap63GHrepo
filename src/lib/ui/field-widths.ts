@@ -1239,7 +1239,7 @@ export const COLUMN = {
   // does not fit is cut with „…" and shown whole on hover (`ONE_LINE` and `title`). So none of these
   // wraps any more. Widths measured at 1920 px on the local archive (Adrian's request: „much more narrow").
   valueName: { content: "XL", kind: "fixed" }, //           a list's „Denumire" — „Contract de Vânzare-Cumpărare" (252 px)
-  valueNameShort: { content: "M", kind: "fixed" }, //       the same, on a list of short names — property types (125 px), citizenships
+  valueNameShort: { content: "M", kind: "fixed" }, //       the same, on a list of short names — citizenships, use categories (the property types' 125 px until #38.66)
   valueText: { content: 10, kind: "fixed" }, //             any other text field — an indicativ, a short name, a type of institution (150 px)
   // Slice #38.60 — the roles' own two: #38.50 gave „Roluri" the name column sized for the longest DOCUMENT type (XL, 252 px)
   // and #38.55 the converse names an XL too; both held much shorter text, which left the gaps Adrian saw. Each is now as
@@ -1248,8 +1248,22 @@ export const COLUMN = {
   valueConverse: { content: 19.5, kind: "fixed" }, //       a role's converse names on one line — „Reprezentat / Mandant, Reprezentată / Mandantă" (309 px); XL before
   valueFlag: { content: 5.5, kind: "fixed" }, //            a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px)
   valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
-  valueStatus: { content: 6.75, kind: "fixed" }, //         „Fără formular" / „De revizuit" — the review lists' status (102 px)
+  // Slice #38.66: the review lists' status — the longest word any of the three can show is „Adăugat manual" (102 px, the
+  // document types' „new" and the tarla's and institutions' „manual"); was 6.75 for „Fără formular" / „De revizuit".
+  valueStatus: { content: 6.5, kind: "fixed" },
   valueUsage: { content: 5.25, kind: "fixed" }, //          „999 de obiecte" (79 px) under „FOLOSIT DE" over „(N OBIECTE)" (77) — Slice #38.59; was 9 for „folosit de 12 înregistrări" (141)
+  // Slice #38.66 — „Tipuri de obiecte": three lists with columns of their own where the shared one was too wide (Adrian:
+  // „too much wasted space"). Each as wide as its longest value or its header's longest word, whichever is wider —
+  // measured in the runner's Chromium at 1366 px on the archive, 2026-10-10 (Arial: 14 px cells, 12 px uppercase
+  // headers), and rounded up to the next quarter rem with at least 1 px to spare. A longer value added later is cut
+  // with „…" and whole on hover, as every reference cell is (#38.50). The seed's values are all shorter.
+  valueJudicialTypeName: { content: 5.75, kind: "fixed" }, // „Consiliu Local" (87.2 px); was valueName's XL (272)
+  valuePropertyTypeName: { content: 8, kind: "fixed" }, //   „Vegetație Forestieră" (125.3 px); was valueNameShort's M (136)
+  valueFlagTarlaParcela: { content: 4, kind: "fixed" }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88)
+  valueFlagAddress: { content: 3.5, kind: "fixed" }, //      ✓ / – under „ADRESĂ" (52.5 px)
+  valueFlagStreetView: { content: 3.25, kind: "fixed" }, //  ✓ / – under „STREET" over „VIEW" (49.1 px): the header takes two lines
+  valueDocTypeName: { content: 14.75, kind: "fixed" }, //    „Plan de Amplasament și Delimitare" in bold — a type with a form (232.6 px); was XL (272)
+  valueDocTypeShortName: { content: 6.25, kind: "fixed" }, // „Doc. cadastrală" (97.3 px); was valueText's 10 rem (160)
   // Slice #38.57 — the four main lists (Proprietăți, Persoane fizice, Persoane juridice, Acte) on #38.50's rule: one line
   // per row, a long cell cut with „…" and whole on hover, the row's buttons side by side. Each column as wide as its
   // content, measured at 1920 px on the archive (the slice's probe): a short value its longest, a free text — a name, a
