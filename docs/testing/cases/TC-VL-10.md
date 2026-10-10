@@ -39,6 +39,7 @@ At 1366 × 1000 px, then at 1920 × 1000.
 | 4 | Presses the number on the Persoană – Proprietate side | „Roluri Persoane" opens (`?list=person-roles`) |
 | 5 | Still on „Roluri Persoane", scrolls the page to the list, then the list to its last row | The list's frame takes most of the screen; its column titles stay at its top while the rows move (#38.56's frame, measured from the list's own card since the tile stands above it) |
 | 6 | Opens „Cetățenie" | No tile above it |
+| 7 | Back on „Roluri Persoane", looks at the tile (#38.67; the spec reads it after step 2) | The title and its sentence over the drawing, in a column no wider than the drawing (±8 px); the drawing about 20 % smaller than before (between 75 and 85 % of 416 px), its words not under 12 px; the six beside the column, the first within 8 px of the tile's top; a vertical divider between them that runs the tile's full height; no divider across the tile under the title |
 
 ## At the end — leaving things as they were found
 
@@ -49,3 +50,6 @@ Nothing to undo.
 **2026-10-09 — `automated` (Slice #38.62).** Written with the change, and translated at once into
 `e2e/admin/relationship-triangle.spec.ts`, which the test runner ran green (the slice's handover names the
 run).
+
+**2026-10-10 — `automated` (Slice #38.67).** Step 7 added: the title over a smaller drawing, the six beside them
+from the top behind a full-height divider. The test runner ran it green.

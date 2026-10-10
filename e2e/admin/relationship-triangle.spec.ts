@@ -51,6 +51,50 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       // #34.05's note is not printed above the list any more: it is entry 6.
       await expect(page.getByText("Nu există o listă „Document → Proprietate”")).toHaveCount(1);
 
+      // Step 7 (#38.67, read here, before step 3 moves away) — the title over the drawing, no wider than it; the drawing
+      // about 20 % smaller than #38.62's 416 px, its words not under 12 px; the six from the tile's top edge, beside the
+      // column, a divider between them that runs the tile's full height; no divider across the tile under the title.
+      const layout = await tile.evaluate((t) => {
+        const box = (sel: string) => t.querySelector<HTMLElement | SVGElement>(sel)!.getBoundingClientRect();
+        const tileBox = t.getBoundingClientRect();
+        const heading = box("[data-triangle-heading]");
+        const svg = t.querySelector<SVGSVGElement>("[data-triangle-drawing]")!;
+        const drawing = svg.getBoundingClientRect();
+        const scale = drawing.width / svg.viewBox.baseVal.width;
+        const fonts = [...svg.querySelectorAll("text")].map((x) => Number(x.getAttribute("font-size")) * scale);
+        const ol = t.querySelector<HTMLElement>("[data-triangle-list]")!;
+        const olBox = ol.getBoundingClientRect();
+        const first = box("[data-relationship-entry]");
+        const cs = getComputedStyle(ol);
+        return {
+          headingOver: heading.width - drawing.width,
+          drawingW: drawing.width,
+          smallestFont: Math.min(...fonts),
+          firstFromTop: first.top - tileBox.top,
+          beside: olBox.left >= drawing.right,
+          divider: cs.borderLeftWidth,
+          dividerTop: cs.borderTopWidth,
+          dividerHeight: olBox.height - (tileBox.height - 2),
+          ruledUnderTitle: [...t.querySelectorAll<HTMLElement>("div")].some((d) => getComputedStyle(d).borderBottomWidth !== "0px" && d.getBoundingClientRect().width > tileBox.width - 4),
+        };
+      });
+      expect(layout.headingOver, "the title's box against the drawing's width").toBeLessThanOrEqual(8);
+      expect(layout.drawingW).toBeGreaterThan(416 * 0.75);
+      expect(layout.drawingW).toBeLessThan(416 * 0.85);
+      expect(layout.smallestFont, "the smallest word in the drawing, px").toBeGreaterThanOrEqual(12);
+      expect(layout.firstFromTop, "the first of the six against the tile's top").toBeLessThanOrEqual(8);
+      expect(layout.beside).toBe(true);
+      expect([layout.divider, layout.dividerTop]).toEqual(["1px", "0px"]);
+      expect(Math.abs(layout.dividerHeight), "the divider runs the tile's full height").toBeLessThanOrEqual(2);
+      expect(layout.ruledUnderTitle).toBe(false);
+      // The slice's pictures, light and dark — not a step of the case.
+      for (const scheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.waitForTimeout(300);
+        await tile.screenshot({ path: `playwright-report/value-list-page/triangle-${width}-${scheme}.png` });
+      }
+      await page.emulateMedia({ colorScheme: "light" });
+
       // Step 3 — the Proprietate → Proprietate corner opens its list; the tile stays above it.
       await tile.locator('a[data-relationship="propertyProperty"]').click();
       await expect(page).toHaveURL(/\?list=property-property-roles$/, { timeout: 15_000 });

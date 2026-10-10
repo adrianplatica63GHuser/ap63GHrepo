@@ -107,3 +107,35 @@ describe("the tile on the page (#38.62)", () => {
     expect(TILE).toContain("href={`/admin/value-lists?list=${r.list}`}");
   });
 });
+
+describe("the tile's layout (Slice #38.67)", () => {
+  it("draws one unit to one pixel, about 20 % smaller than #38.62's 416 px, the words not under 12 px", () => {
+    expect(TILE).toContain("viewBox={`0 0 ${DRAWING.w} ${DRAWING.h}`}");
+    expect(TILE).toContain("style={{ width: rem(DRAWING.w / 16) }}");
+    expect(TILE).not.toContain("w-[26rem]");
+    // 94 + 146 + 94: Proprietate's centre, the side, Document's margin — every coordinate comes from the constants.
+    expect(TILE).toMatch(/const SIDE = 146;/);
+    expect(TILE).toMatch(/const BOX = \{ w: 96, h: 32 \};/);
+    const w = 2 * (1 + 11 + 34 + 96 / 2) + 146;
+    expect(w).toBe(334);
+    expect(1 - w / 416).toBeGreaterThan(0.17);
+    expect(1 - w / 416).toBeLessThan(0.23);
+    expect(TILE).toContain("fontSize={13} fontWeight={600}");
+    expect(TILE).toContain("fontSize={12} fontWeight={600}");
+    expect(TILE).not.toMatch(/fontSize=\{(?:[0-9]|1[01])\}/);
+  });
+
+  it("puts the title over the drawing, in a column as wide as it, and no full-width divider under the title", () => {
+    const column = TILE.slice(TILE.indexOf('data-triangle-column=""'), TILE.indexOf("</svg>"));
+    expect(column).toContain('<div style={{ width: rem(DRAWING.w / 16) }} data-triangle-heading="">');
+    expect(column.indexOf('t("triangle.title")')).toBeLessThan(column.indexOf("<svg"));
+    expect(TILE).not.toContain('className="border-b border-card-rim px-5 py-4');
+  });
+
+  it("puts the six beside the column from the top, a full-height divider between — and under it, a horizontal one, when they wrap", () => {
+    expect(TILE).toContain('className="@container rounded-xl');
+    expect(TILE).toContain('<div className="flex flex-col @min-[42rem]:flex-row">');
+    const ol = TILE.slice(TILE.indexOf("<ol"), TILE.indexOf('data-triangle-list=""'));
+    for (const c of ["border-t", "@min-[42rem]:border-t-0", "@min-[42rem]:border-l", "@min-[42rem]:pt-1.5", "min-w-[18rem]", "flex-1"]) expect(ol).toContain(c);
+  });
+});
