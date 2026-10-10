@@ -65,8 +65,40 @@ describe("one line per row (#38.50)", () => {
     // #38.70: built from `pad` — `px-4`, or `px-2` on a compact list (the roles).
     expect(MODAL).toContain("${pad} py-2 align-bottom");
     expect(MODAL).toContain('const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";');
-    expect(MODAL).toContain('<div className="w-fit max-w-full" data-value-list-frame="">');
+    // #38.50: `<div className="w-fit max-w-full" data-value-list-frame="">`; #38.78 measures it (`columnRef`).
+    expect(MODAL).toContain('<div ref={columnRef} className="w-fit max-w-full" data-value-list-frame="">');
     expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full")');
+  });
+});
+
+describe("„+ Adaugă” and the count on the title's line (Slice #38.78)", () => {
+  const head = MODAL.slice(MODAL.indexOf('data-value-list-head=""'), MODAL.indexOf("{/* Body */}"));
+  const frame = MODAL.slice(MODAL.indexOf('data-value-list-frame=""'), MODAL.indexOf("{/* Slice #27.07: the backlog is empty."));
+
+  it("the title's line holds the title, then the count, then „+ Adaugă” — every list in the card (Ask first #1)", () => {
+    const at = (x: string) => head.indexOf(x);
+    expect(at("{t(`lists.${meta.titleKey}`)}")).toBeGreaterThan(-1);
+    expect(at('data-value-list-count=""')).toBeGreaterThan(at("{t(`lists.${meta.titleKey}`)}"));
+    expect(at("label={`+ ${t(\"toolbar.add\")}`}")).toBeGreaterThan(at('data-value-list-count=""'));
+    // The count keeps its wording rule: what is shown, and of how many when filtered (#27.07).
+    expect(head).toContain('t("toolbar.countFiltered", {');
+    expect(head).toContain('t("toolbar.count", { count: query.data.length })');
+    // Its right edge is the table's: the line is never narrower than the frame, measured.
+    expect(head).toContain("style={columnWidth === null ? undefined : { minWidth: columnWidth, width: \"fit-content\" }}");
+    expect(MODAL).toContain("const columnWidth = useWidthOf(columnRef);");
+  });
+
+  it("neither is in the frame any more; the checkboxes have a line of their own, only on the lists that have them (Ask first #2)", () => {
+    expect(frame).not.toContain("toolbar.add");
+    expect(frame).not.toContain("toolbar.count");
+    expect(frame).toContain('{(isDocumentTypes || (review && offerReview)) && (');
+    expect(frame).toContain('data-value-list-filters=""');
+    expect(frame).toContain('data-form-filter=""');
+  });
+
+  it("the table starts right under the divider: the body's top is 6 px, not 20", () => {
+    expect(MODAL).toContain('<div className="px-5 pb-5 pt-1.5">');
+    expect(MODAL).not.toContain('<div className="p-5">\n            {/* Add/Edit form');
   });
 });
 

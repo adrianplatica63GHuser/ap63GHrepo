@@ -52,6 +52,29 @@ import { frameMaxHeight } from "@/lib/ui/frame-height";
  * stands under the categories (`frameMaxHeight`). Measured in the page's scroll container, re-measured when
  * the window, the page or the list's column changes size.
  */
+/**
+ * Slice #38.78: an element's width as drawn, kept up to date — the title line's „+ Adaugă" stands at the TABLE's right
+ * edge (the frame is as wide as the table), not the card's, which may be wider. Null before the first layout (and in
+ * jsdom, which has none): the title line then spans the card.
+ */
+function useWidthOf(ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () => {
+      const next = el.getBoundingClientRect().width;
+      setWidth((prev) => (prev === next ? prev : next));
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(read);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
+}
+
 function useFrameHeight(frameRef: RefObject<HTMLDivElement | null>): number | null {
   const [height, setHeight] = useState<number | null>(null);
   useLayoutEffect(() => {
@@ -1078,6 +1101,9 @@ export function ValueListModal({
   const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";
   // Slice #38.56: the list's frame scrolls — in both directions — and its header row stays at its top.
   const frameRef = useRef<HTMLDivElement | null>(null);
+  // Slice #38.78: the frame's width, so the title line's right-hand group ends where the table does.
+  const columnRef = useRef<HTMLDivElement | null>(null);
+  const columnWidth = useWidthOf(columnRef);
   const frameHeight = useFrameHeight(frameRef);
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
@@ -1455,49 +1481,42 @@ export function ValueListModal({
         data-value-list-card=""
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-800">
-          <h2
-            id={listTitleId}
-            className="text-base font-semibold text-ink dark:text-zinc-100"
+        {/* Slice #38.78: the title's line carries „+ Adaugă" at the right — its right edge the table's (the line is
+            never narrower than the frame under it) — and the count a little to its left. The table starts right
+            under the divider. */}
+        <div className="border-b border-card-rim px-5 py-3 dark:border-zinc-800" data-value-list-head="">
+          <div
+            className="flex max-w-full flex-wrap items-center justify-between gap-3"
+            style={columnWidth === null ? undefined : { minWidth: columnWidth, width: "fit-content" }}
           >
-            {/* Slice #38.68: marked, the title looks like the marked name in the column — a filled rounded box. */}
-            <span
-              className={titleMarked ? `${LINK_MARK_BOX} px-2 py-1` : undefined}
-              aria-current={titleMarked ? "true" : undefined}
-              data-marked={titleMarked ? "" : undefined}
+            <h2
+              id={listTitleId}
+              className="text-base font-semibold text-ink dark:text-zinc-100"
             >
-              {t(`lists.${meta.titleKey}`)}
-            </span>
-          </h2>
-        </div>
-
-        {/* Body */}
-        <div className="flex flex-col">
-          <div className="p-5">
-            {/* Add/Edit form */}
-            {form && (
-              <EditForm
-                listKey={listKey}
-                state={form}
-                onClose={() => setForm(null)}
-                onSaved={() => setForm(null)}
-              />
-            )}
-
-            {/* Slice #38.50: the toolbar and the table in one column as wide as the wider of the two, so
-                the table is never narrower than its toolbar — its controls never meet — and the toolbar's
-                right-hand side stands at the table's right edge. */}
-            <div className="w-fit max-w-full" data-value-list-frame="">
-            {/* Toolbar */}
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              {/* ⚠️ **The two buttons are wrapped, Slice #34.10, so that
-                  "beside" is what the CSS does.** The toolbar is
-                  `justify-between`, so adding a fourth child distributed it
-                  into the middle of the row rather than putting it next to the
-                  primary — and the comment under it argues about two buttons
-                  sitting side by side. An adversarial round pointed out that
-                  the premise was no longer true of the layout. */}
-              <div className="flex flex-wrap items-center gap-3">
+              {/* Slice #38.68: marked, the title looks like the marked name in the column — a filled rounded box. */}
+              <span
+                className={titleMarked ? `${LINK_MARK_BOX} px-2 py-1` : undefined}
+                aria-current={titleMarked ? "true" : undefined}
+                data-marked={titleMarked ? "" : undefined}
+              >
+                {t(`lists.${meta.titleKey}`)}
+              </span>
+            </h2>
+            <div className="ml-auto flex items-center gap-3" data-value-list-add="">
+              {/* ⚠️ **The count counts what is SHOWN, and says so when that is not everything** (#27.07). A filter
+                  that leaves the total standing tells the administrator how many rows the list really holds above
+                  the nine shown; one that rewrites the total loses the one number that says how much of the list
+                  this is. */}
+              {query.data && (
+                <span className="text-xs text-fade dark:text-zinc-400" data-value-list-count="">
+                  {visibleRows !== undefined && visibleRows.length !== query.data.length
+                    ? t("toolbar.countFiltered", {
+                        count: visibleRows.length,
+                        total: query.data.length,
+                      })
+                    : t("toolbar.count", { count: query.data.length })}
+                </span>
+              )}
               {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
                   stays the one every locator knows. */}
               <IconButton
@@ -1508,7 +1527,36 @@ export function ValueListModal({
                 onClick={startAdd}
                 disabled={!!form}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col">
+          {/* Slice #38.78: 6 px under the divider, not 20 — the table starts right under it. */}
+          <div className="px-5 pb-5 pt-1.5">
+            {/* Add/Edit form — Slice #38.78: its own space under the divider, the body's top being tight now. */}
+            {form && (
+              <div className="pt-2">
+              <EditForm
+                listKey={listKey}
+                state={form}
+                onClose={() => setForm(null)}
+                onSaved={() => setForm(null)}
+              />
               </div>
+            )}
+
+            {/* Slice #38.50: the toolbar and the table in one column as wide as the wider of the two, so
+                the table is never narrower than its toolbar — its controls never meet — and the toolbar's
+                right-hand side stands at the table's right edge. */}
+            <div ref={columnRef} className="w-fit max-w-full" data-value-list-frame="">
+            {/* Slice #38.78: „+ Adaugă" and the count moved to the title's line (Ask first #1: every list in this card).
+                What stayed is the filters — Tipuri de Document's two checkboxes, the review checkbox — on a line of
+                their own above the table, only on the lists that have them (Ask first #2); a list without them has
+                its table right under the divider. */}
+            {(isDocumentTypes || (review && offerReview)) && (
+            <div className="mb-3 mt-2 flex flex-wrap items-center gap-3" data-value-list-filters="">
               {/* Slice #27.07: the onboarding backlog, in one click.
 
                   ⚠️ **A checkbox rather than a third status column or a sort.**
@@ -1516,13 +1564,7 @@ export function ValueListModal({
                   already SAYS which it is — in a word and in a colour — so a
                   control that reorders or re-labels would be a third way of
                   stating the same fact. This one only chooses how many rows are
-                  on screen.
-
-                  ⚠️ **The count beside it counts what is SHOWN, and says so
-                  when that is not everything.** A filter that leaves the total
-                  standing tells the administrator how many rows the list
-                  really holds above the nine shown; one that rewrites the total
-                  loses the one number that says how much of the list this is. */}
+                  on screen. */}
               {/* Slice #38.51: two independent checkboxes on the document types — not a radio. */}
               {isDocumentTypes && (
                 <div className="flex items-center gap-3" data-form-filter="">
@@ -1552,17 +1594,8 @@ export function ValueListModal({
                   </span>
                 </label>
               )}
-              {query.data && (
-                <span className="text-xs text-fade dark:text-zinc-400">
-                  {visibleRows !== undefined && visibleRows.length !== query.data.length
-                    ? t("toolbar.countFiltered", {
-                        count: visibleRows.length,
-                        total: query.data.length,
-                      })
-                    : t("toolbar.count", { count: query.data.length })}
-                </span>
-              )}
             </div>
+            )}
 
             {/* Slice #27.07: the backlog is empty.
 
