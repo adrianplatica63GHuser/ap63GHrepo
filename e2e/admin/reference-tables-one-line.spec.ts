@@ -34,7 +34,9 @@ async function reading(page: Page, skip: string[]) {
     }
     const heights = rows.map((r) => Math.round(r.getBoundingClientRect().height));
     const frame = document.querySelector<HTMLElement>("[data-value-list-frame]")!;
-    const toolbar = frame.firstElementChild as HTMLElement;
+    // Slice #38.78: „+ Adaugă" and the count left the frame for the title's line; what stays above the table is the
+    // filters' line, on the lists that have one (#38.50 read the frame's first child, the toolbar).
+    const toolbar = frame.querySelector<HTMLElement>("[data-value-list-filters]");
     return {
       rows: rows.length,
       notOneLine: cellsOk.slice(0, 5),
@@ -43,6 +45,7 @@ async function reading(page: Page, skip: string[]) {
       tallest: Math.max(...heights),
       // The toolbar's own width — its controls side by side, with their gaps — against the table's frame.
       tableAtLeastToolbar: (() => {
+        if (!toolbar) return true;
         const kids = [...toolbar.children].map((c) => c.getBoundingClientRect().width);
         const natural = kids.reduce((a, b) => a + b, 0) + Math.max(0, kids.length - 1) * parseFloat(getComputedStyle(toolbar).columnGap || "0");
         return table.parentElement!.getBoundingClientRect().width + 1 >= natural;
@@ -73,6 +76,41 @@ test.describe("TC-VL-05 — tabele înguste, câte un rând pe linie", () => {
           list: list.name, rows: true, notOneLine: [], actionsOneLine: true, toolbar: true,
         });
         if (list.sameHeight) expect({ list: list.name, sameHeight: r.sameHeight, oneLine: r.tallest < 56 }).toEqual({ list: list.name, sameHeight: true, oneLine: true });
+
+        // Slice #38.78 — „+ Adaugă" on the title's line, its right edge the table's (±2 px), the count to its left; on
+        // a list with no checkboxes the table's top within 8 px of the divider under the title.
+        const head = await page.evaluate(() => {
+          const card = document.querySelector<HTMLElement>("[data-value-list-card]")!;
+          const add = card.querySelector<HTMLElement>("[data-value-list-head] [data-value-list-add] button")!.getBoundingClientRect();
+          const title = card.querySelector<HTMLElement>("[data-value-list-head] h2")!.getBoundingClientRect();
+          const count = card.querySelector<HTMLElement>("[data-value-list-head] [data-value-list-count]")!.getBoundingClientRect();
+          const table = card.querySelector<HTMLElement>("table[data-width-table]")!.parentElement!.getBoundingClientRect();
+          const divider = card.querySelector<HTMLElement>("[data-value-list-head]")!.getBoundingClientRect().bottom;
+          return {
+            sameLine: Math.abs((add.top + add.bottom) / 2 - (title.top + title.bottom) / 2),
+            rightEdges: add.right - table.right,
+            countLeft: count.right <= add.left,
+            countSameLine: Math.abs((count.top + count.bottom) / 2 - (add.top + add.bottom) / 2),
+            tableUnderDivider: table.top - divider,
+            filters: card.querySelector("[data-value-list-filters]") !== null,
+          };
+        });
+        const at = `${list.name} at ${width}`;
+        await expect(page.locator("[data-value-list-head]").getByRole("button", { name: "+ Adaugă", exact: true })).toBeVisible();
+        expect(head.sameLine, `${at}: „+ Adaugă" on the title's line`).toBeLessThanOrEqual(4);
+        expect(Math.abs(head.rightEdges), `${at}: „+ Adaugă"'s right edge against the table's`).toBeLessThanOrEqual(2);
+        expect([head.countLeft, head.countSameLine <= 4], `${at}: the count to its left, on its line`).toEqual([true, true]);
+        expect(head.filters, `${at}: a line of checkboxes`).toBe(list.key === "document-types");
+        if (!head.filters) {
+          expect(head.tableUnderDivider, `${at}: the table's top under the divider`).toBeGreaterThanOrEqual(0);
+          expect(head.tableUnderDivider, `${at}: the table's top under the divider`).toBeLessThanOrEqual(8);
+        }
+        if (width === 1366 && (list.key === "person-roles" || list.key === "document-types")) {
+          // The slice's pictures: reference data, no person in them.
+          await page.locator("[data-value-list-card]").evaluate((el) => el.scrollIntoView({ block: "start" }));
+          await page.mouse.move(1, 1);
+          await page.screenshot({ path: `playwright-report/value-list-head/${list.key}-1366.png` });
+        }
       }
     });
   }

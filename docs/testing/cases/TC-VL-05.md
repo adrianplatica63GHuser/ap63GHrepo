@@ -46,6 +46,7 @@ At 1366 and at 1920 px.
 | 4 | „Roluri Persoană" again (#38.60) | Each ✓ centred in its column (its centre within 2 px of the column's); the headers of „Persoană → Proprietate", „Persoană → Persoană", „Rol invers" and „Folosit de" centred over them, and those cells' text centred; „Denumire" left-aligned (since #38.70 „Descriere" is in the name's tooltip); the row still one line |
 | 5 | At 1366 px, „Tipuri de Persoană Juridică", „Tipuri de Proprietate" and „Tipuri de Document" (#38.66) | On each, the longest name ends less than 24 px before the next column starts, and no name is cut; on „Tipuri de Proprietate" the header „Street View" is on two lines |
 | 6 | At 1366 px, „Roluri Persoane" (#38.70) | The whole table shows, no horizontal scroll bar; every row's last button inside the card; no „Descriere" column — a role's description is read in its name's tooltip, under the name |
+| 7 | On „Tipuri Proprietate", „Roluri Persoană" and „Tipuri Document", at 1366 and 1920 px (#38.78; the spec reads it with steps 1–3) | „+ Adaugă" on the title's line, at the right, its right edge within 2 px of the table's; the count of values a little to its left, on that line; on Tipuri Document the two checkboxes on a line of their own above the table; on the other two the table's top within 8 px of the divider under the title |
 
 ## At the end — leaving things as they were found
 
@@ -65,3 +66,6 @@ handover names the run).
 
 **2026-10-10 — `automated` (Slice #38.70).** Step 6 added; step 4 reads „Denumire" alone left-aligned. The test runner ran
 it green.
+
+**2026-10-10 — `automated` (Slice #38.78).** Step 7 added: „+ Adaugă" and the count on the title's line, the
+checkboxes on their own line, the table under the divider. The test runner ran it green.
