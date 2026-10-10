@@ -31,6 +31,10 @@ document's preview is the defect this case exists to catch.
 - **For step 9 (#38.75), also through the API:** a full page — 15 — of each kind, named
   `TC-E2E-INCURSION-H Rând 01` … `Rând 15`: natural persons (first name „Test"), companies, properties
   (nickname only) and „Adeverință" documents. Their own marker, so steps 1–8 never see them.
+- **For step 10 (#38.76), also through the API:** a natural person „Ana `TC-E2E-LEGATURI-10`", a company
+  „`TC-E2E-LEGATURI-10` Firmă", a property „`TC-E2E-LEGATURI-10` Teren" and an „Adeverință"
+  „`TC-E2E-LEGATURI-10` Act", the document linked to the three (`POST /api/documents/<id>/persons` and
+  `/properties`).
 
 ## What Adrian is asked for
 
@@ -45,14 +49,16 @@ Nothing.
 | 3 | „Proprietăți": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Teren`; under it, labels above values, three rows: „Nr. parcelă" `77/1`, „Tarla/Solă" (the tarla's indicativ), „Suprafață (mp)" 1234.00 on the first; „Poreclă" on the second; „Carte funciară" and „Nr. cadastral" („—") on the third |
 | 4 | „Acte": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Act`; no „Tip document" and no „Etichetă scurtă" in it; one row „Subiect", „Nr. document", „Data" with „Adeverință de rol fiscal", `123/2020`, `04.05.2020`; then „Prima pagină" |
 | 5 | On each of the four lists, before and after each step's preview (#38.71) | The row's first button is the magnifier, „Previzualizare", and its last „Deschide"; the magnifier reads not pressed, then pressed while its preview is open; pressed again, it closes the preview and reads not pressed |
-| 6 | On each of the four lists: a row's magnifier, then its eye (#38.72) | The row reads „Previzualizare", „Incursiune", „Deschide". The eye shows, beside the list, the object's tile — „Interacțiuni" for a person and for the company, „Hartă" for the property, „Pagini" for the document — filling the row to the content area's right edge (±8 px) at 1366 and 1920 px; the eye reads pressed, the preview has closed and every magnifier is disabled. The eye again closes it and frees them |
+| 6 | On each of the four lists: a row's magnifier, then its eye (#38.72) | The row reads „Previzualizare", „Incursiune", „Legături" (#38.76), „Deschide". The eye shows, beside the list, the object's tile — „Interacțiuni" for a person and for the company, „Hartă" for the property, „Pagini" for the document — filling the row to the content area's right edge (±8 px) at 1366 and 1920 px; the eye reads pressed, the preview has closed and every magnifier is disabled. The eye again closes it and frees them |
 | 7 | „Persoane Fizice": Ioana's eye, then „Contact Unu"'s (#38.72) | One Incursiune, moved to „Contact Unu"; Ioana's eye reads not pressed |
 | 8 | „Acte": the document's eye (#38.72) | „Pagini" with no „+ Adaugă pagină" and no turn or „Salvează" — a look, not an edit |
 | 9 | On each of the four lists, at 1920 and then 1366 px: searches `TC-E2E-INCURSION-H Rând 01` and presses the row's eye; then searches `TC-E2E-INCURSION-H` (15 rows) (#38.75) | With one row: the Incursiune's top is level with the list's top (the toolbar's), the tile keeps its own height, and the list is not stretched. With 15 rows: its top level with the list's top and its bottom with the list's bottom — the pagination's — within 2 px; the map or the page viewer grows into it. Where the window is too narrow for both, it stands under the list at its own height. Its tile is the light purple it wears on the object's own screen (`bg-card-pinned`), not the card's grey-blue |
+| 10 | On each of the four lists: searches `TC-E2E-LEGATURI-10`, presses the row's magnifier, then its chain link; then its eye; then the chain link; then the chain link again (#38.76) | The row reads „Previzualizare", „Incursiune", „Legături", „Deschide", all inside the table's frame. The chain link, pressed, shows beside the list the object's „Legături" — the document's three rows, the others' one — in the related green, its rows in the rows' calmer green; no radio, no „Asociază …", no „Dezasociază", no „Cotă"; the chain link reads pressed, the preview has closed and every magnifier is disabled. The eye after it shows its own tile in its place, the chain link released; the chain link after the eye shows „Legături" again, the eye released; pressed again it closes and frees the magnifiers |
 
 ## At the end — leaving things as they were found
 
-Delete the six records (`DELETE` on each route), and step 9's sixty; previews store nothing.
+Delete the six records (`DELETE` on each route), step 9's sixty and step 10's four (the document first, with
+its links); previews store nothing.
 
 ## Notes from the runs
 
@@ -90,3 +96,6 @@ green.
 (the pagination's) within 2 px on a full page of 15, at its own height with one row and under the list, in
 `bg-card-pinned`. At 1366 px all four lists put it under the list (38.72's minimum widths); at 1920 beside it. The test
 runner ran it green.
+
+**2026-10-10 — `automated` (Slice #38.76).** Step 10 added, and step 6's row reads four buttons: the chain link,
+„Legături", read-only beside the list in the related green, one choice with the eye. The test runner ran it green.

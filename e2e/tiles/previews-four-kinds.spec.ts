@@ -74,7 +74,9 @@ async function peek(page: Page, list: string, name: string, kind: string, inner:
   const actions = row.locator("[data-row-actions]").locator("a, button");
   await expect(actions.nth(0)).toHaveAccessibleName("Previzualizare");
   await expect(actions.nth(1)).toHaveAccessibleName("Incursiune");
-  await expect(actions.nth(2)).toHaveAccessibleName("Deschide");
+  // Slice #38.76: the chain link between the eye and the arrow (#38.72 read „Deschide" third).
+  await expect(actions.nth(2)).toHaveAccessibleName("Legături");
+  await expect(actions.nth(3)).toHaveAccessibleName("Deschide");
   // …and all three inside the table's frame, none cut at its edge.
   const cut = await row.evaluate((r) => {
     const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
@@ -336,6 +338,127 @@ test.describe("TC-TILES-11 — the Incursiune as tall as the list (#38.75)", () 
       await asTall(page, "/judicial-persons", "company", "judicial-persons");
       await asTall(page, "/properties", "property", "properties");
       await asTall(page, "/documents", "document", "documents");
+    } finally {
+      for (const [kind, id] of made) await removeRecord(page.request, kind, id);
+    }
+  });
+});
+
+// ── Step 10 (Slice #38.76): the chain link shows „Legături” beside the list, read-only, in green ─────────────
+
+/** Step 10's own records and links. Its own marker: neither holds `MARK` or `TALL`, nor is held by them. */
+const LINKS = `${E2E_MARKER}LEGATURI-10`;
+
+/** The fill of an element and of a probe wearing `cls`. */
+async function fills(page: Page, selector: string, cls: string): Promise<[string, string]> {
+  return page.evaluate(([sel, c]) => {
+    const probe = document.createElement("div");
+    probe.className = c;
+    document.body.append(probe);
+    const want = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return [getComputedStyle(document.querySelector(sel)!).backgroundColor, want];
+  }, [selector, cls] as const);
+}
+
+/**
+ * On one list: the row reads magnifier, eye, chain link, arrow, inside its frame; the chain link shows the object's
+ * „Legături” — `rows` related rows, no radio, no „Asociază”, no „Dezasociază”, no share — in the related green,
+ * pressed; an eye after it closes it, and the chain link after the eye; pressed again it closes.
+ */
+async function links(page: Page, list: string, name: string, kind: string, rows: number, shot: string): Promise<void> {
+  await page.setViewportSize({ width: 1366, height: 1000 });
+  await page.goto(list);
+  const main = page.locator("main");
+  const search = main.locator('input[placeholder^="caută"]').first();
+  await expect(search).toBeVisible({ timeout: 30_000 });
+  await search.fill(LINKS);
+  const row = main.locator("[data-list-edge] tbody tr").filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
+  const actions = row.locator("[data-row-actions]").locator("a, button");
+  await expect(actions).toHaveCount(4);
+  for (const [i, n] of ["Previzualizare", "Incursiune", "Legături", "Deschide"].entries()) await expect(actions.nth(i)).toHaveAccessibleName(n);
+  const cut = await row.evaluate((r) => {
+    const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
+    return [...r.querySelectorAll<HTMLElement>("[data-row-actions] a, [data-row-actions] button")].filter((b) => b.getBoundingClientRect().right > frame.right + 0.5).length;
+  });
+  expect(cut, `${list}: buttons cut at the table's edge`).toBe(0);
+
+  const magnifier = row.getByRole("button", { name: "Previzualizare", exact: true });
+  const eye = row.getByRole("button", { name: "Incursiune", exact: true });
+  const chain = row.getByRole("button", { name: "Legături", exact: true });
+  await magnifier.click();
+  await expect(page.locator("[data-preview]")).toHaveCount(1, { timeout: 30_000 });
+  await chain.click();
+  const tile = page.locator(`[data-incursion="${kind}"][data-incursion-view="links"]`);
+  const inner = tile.locator('[data-tile="incursion-links"]');
+  await expect(inner.locator("[data-one-line-row]")).toHaveCount(rows, { timeout: 30_000 });
+  await expect(chain).toHaveAttribute("aria-pressed", "true");
+  await expect(eye).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("[data-preview]")).toHaveCount(0);
+  await expect(magnifier).toBeDisabled();
+  // A look, not an edit.
+  await expect(inner.locator('input[type="radio"]')).toHaveCount(0);
+  await expect(inner.getByRole("button", { name: /^Asociază/ })).toHaveCount(0);
+  await expect(inner.getByRole("button", { name: "Dezasociază" })).toHaveCount(0);
+  await expect(inner.locator("[data-share-button]")).toHaveCount(0);
+  // The green its screen gives it — the tile and, calmer, its rows.
+  const [tileFill, related] = await fills(page, `[data-incursion-view="links"] [data-tile="incursion-links"]`, "bg-card-related");
+  expect(tileFill, `${list}: „Legături” in the related green`).toBe(related);
+  const [rowsFill, relatedRow] = await fills(page, `[data-incursion-view="links"] [data-related-rows]`, "bg-card-related-row");
+  expect(rowsFill, `${list}: its rows in the rows' green`).toBe(relatedRow);
+  for (const width of [1366, 1920]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.waitForTimeout(400);
+    // The spec's own records only: nothing in the picture identifies anyone.
+    await page.locator("[data-incursion]").evaluate((el) => el.scrollIntoView({ block: "nearest" }));
+    await page.mouse.move(1, 1);
+    await page.screenshot({ path: `playwright-report/legaturi/${shot}-${width}.png` });
+  }
+  await page.setViewportSize({ width: 1366, height: 1000 });
+
+  // One choice with the eye: the eye after it closes it; the chain link after the eye closes that.
+  await eye.click();
+  await expect(page.locator("[data-incursion]")).toHaveCount(1);
+  await expect(page.locator(`[data-incursion="${kind}"]`)).toHaveAttribute("data-incursion-view", "peek");
+  await expect(eye).toHaveAttribute("aria-pressed", "true");
+  await expect(chain).toHaveAttribute("aria-pressed", "false");
+  await chain.click();
+  await expect(tile).toBeVisible();
+  await expect(eye).toHaveAttribute("aria-pressed", "false");
+  await expect(chain).toHaveAttribute("aria-pressed", "true");
+  // Pressed again, it closes, and the magnifiers come back.
+  await chain.click();
+  await expect(page.locator("[data-incursion]")).toHaveCount(0);
+  await expect(chain).toHaveAttribute("aria-pressed", "false");
+  await expect(magnifier).toBeEnabled();
+}
+
+test.describe("TC-TILES-11 — the chain link shows „Legături” (#38.76)", () => {
+  test("step 10: on the four lists, the object's „Legături” beside the list, read-only, in green, one choice with the eye", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, LINKS);
+    const made: [RecordKind, string][] = [];
+    try {
+      const person = await createNaturalPerson(page.request, { lastName: LINKS, firstName: "Ana" });
+      made.push(["person", person]);
+      const company = await createCompany(page.request, { name: `${LINKS} Firmă` });
+      made.push(["company", company]);
+      const property = await createProperty(page.request, { nickname: `${LINKS} Teren` });
+      made.push(["property", property]);
+      const doc = await createDocumentOfType(page.request, "ADEVERINTA", `${LINKS} Act`);
+      made.unshift(["document", doc]); // removed first, with its links
+      for (const [url, data] of [
+        [`/api/documents/${doc}/persons`, { personIds: [person, company] }],
+        [`/api/documents/${doc}/properties`, { propertyIds: [property] }],
+      ] as const) {
+        const res = await page.request.post(url, { data });
+        expect(res.ok(), `POST ${url}: ${res.status()} ${await res.text()}`).toBeTruthy();
+      }
+      await links(page, "/natural-persons", "Ana", "person", 1, "natural-persons");
+      await links(page, "/judicial-persons", "Firmă", "company", 1, "judicial-persons");
+      await links(page, "/properties", "Teren", "property", 1, "properties");
+      await links(page, "/documents", "Act", "document", 3, "documents");
     } finally {
       for (const [kind, id] of made) await removeRecord(page.request, kind, id);
     }
