@@ -203,7 +203,8 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     titleKey: "personRoles",
     fields: [
       { key: "name",        labelKey: "name",        required: true  },
-      { key: "description", labelKey: "description", required: false, multiline: true },
+      // Slice #38.70: not a column — read in the name's tooltip, under the name, so the table fits 1366 px.
+      { key: "description", labelKey: "description", required: false, multiline: true, nameTip: true },
       { key: "validForProperty", labelKey: "validForProperty", required: false, type: "checkbox" },
       { key: "validForPerson",   labelKey: "validForPerson",   required: false, type: "checkbox" },
       // Slice #37.28 (migration_088): what the other end of a person-to-person

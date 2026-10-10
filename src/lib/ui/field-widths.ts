@@ -1146,10 +1146,20 @@ export interface ColumnWidth {
   /** The content's width, a step of the scale — or, for the two tiny controls, rem. */
   content: Step | number;
   kind: "fixed" | "wraps";
+  /**
+   * Slice #38.70: the cells' side padding, both sides together, in rem — `CELL_PADDING_REM` (`px-4`) unless the
+   * table draws this column's cells tighter: „Roluri Persoane"'s are `px-2`, 1.
+   */
+  pad?: number;
 }
 
 const colRem = (c: ColumnWidth): number =>
-  (typeof c.content === "number" ? c.content : SCALE[c.content]) + CELL_PADDING_REM;
+  (typeof c.content === "number" ? c.content : SCALE[c.content]) + (c.pad ?? CELL_PADDING_REM);
+
+/** Slice #38.70: a column's cell padding, both sides together, in rem. */
+export function columnPadRem(name: ColumnName): number {
+  return (COLUMN[name] as ColumnWidth).pad ?? CELL_PADDING_REM;
+}
 
 export const COLUMN = {
   // Controls
@@ -1244,8 +1254,19 @@ export const COLUMN = {
   // Slice #38.60 — the roles' own two: #38.50 gave „Roluri" the name column sized for the longest DOCUMENT type (XL, 252 px)
   // and #38.55 the converse names an XL too; both held much shorter text, which left the gaps Adrian saw. Each is now as
   // wide as its own longest value, measured at 1920 px on the archive after #38.58 shortened the converse cell.
-  valueRoleName: { content: 13.75, kind: "fixed" }, //      a role's „Denumire" — „Reprezentant al instituției emitente" (215 px)
-  valueConverse: { content: 19.5, kind: "fixed" }, //       a role's converse names on one line — „Reprezentat / Mandant, Reprezentată / Mandantă" (309 px); XL before
+  //
+  // Slice #38.70 — Adrian: „it's a bit unexpected that we need a horizontal scroll bar for such a small table in order
+  // to be able to see the buttons at the end of the rows". At 1366 px the list's frame is 924 px; the roles' table was
+  // 1436. Every column below is as wide as what it holds, measured at 1366 px on the archive (2026-10-10), with HALF
+  // the usual cell padding (`pad: 1` — the roles' cells are `px-2`), and the description is read in the name's tooltip
+  // (`nameTip`, as #38.53 reads a document type's key): 14.75 + 2 × 6.5 + 12.25 + 6.25 + 10.25 = 56.5rem, 904 px.
+  valueRoleName: { content: 13.75, kind: "fixed", pad: 1 }, // a role's „Denumire" — „Reprezentant al instituției emitente" (214.8 px)
+  // „Reprezentat(ă) / Mandant(ă)" (176.6 px) once migration_104 lands; until then „Reprezentat / Mandant, Reprezentată /
+  // Mandantă" (308 px) and „Bunic / Unchi, Bunică / Mătușă" (191) are cut with „…" and whole on hover. Was 19.5 (#38.60).
+  valueConverse: { content: 11.25, kind: "fixed", pad: 1 },
+  valueRoleFlag: { content: 5.5, kind: "fixed", pad: 1 }, //  ✓ / – under „PERSOANĂ →" over „PROPRIETATE" (86.9 px); was valueFlag at full padding
+  valueUsageRoles: { content: 5.25, kind: "fixed", pad: 1 }, // valueUsage's „999 de obiecte" (79 px), at the roles' padding
+  valueActionsRoles: { content: 9.25, kind: "fixed", pad: 1 }, // valueActions' three buttons (146 px), at the roles' padding
   valueFlag: { content: 5.5, kind: "fixed" }, //            a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px)
   valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
   // Slice #38.66: the review lists' status — the longest word any of the three can show is „Adăugat manual" (102 px, the
@@ -1581,5 +1602,5 @@ export function columnsRem(names: readonly ColumnName[]): number {
 
 /** A box inside a fixed column: the column's content width, without the cell's padding. */
 export function columnBoxStyle(name: ColumnName): CSSProperties {
-  return { width: rem(columnRem(name) - CELL_PADDING_REM) };
+  return { width: rem(columnRem(name) - columnPadRem(name)) };
 }

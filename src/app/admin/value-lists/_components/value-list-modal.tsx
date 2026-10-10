@@ -125,7 +125,15 @@ const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>
     showStreetView: "valueFlagStreetView",
   },
   "document-types": { name: "valueDocTypeName", shortName: "valueDocTypeShortName" },
+  // Slice #38.70: the roles' two checkmarks at the roles' tighter padding.
+  "person-roles": { validForProperty: "valueRoleFlag", validForPerson: "valueRoleFlag" },
 };
+
+/**
+ * Slice #38.70: the lists whose cells are drawn with half the side padding (`px-2`) — „Roluri Persoane", so its table
+ * fits the 924 px its frame has at 1366 px. Every column it draws carries the same `pad` (field-widths.ts).
+ */
+const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles"]);
 
 /** A field's column: its width from `COLUMN`, by what the field holds. */
 function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
@@ -213,11 +221,21 @@ function listColumns(listKey: ListKey): ColumnName[] {
   return [
     ...listCells(listKey).map((cell) => cellColumn(cell, listKey)),
     ...(REVIEWED_LISTS.has(listKey) ? (["valueStatus"] as const) : []),
-    // Slice #38.35: „folosit de N" on every row.
-    "valueUsage",
+    // Slice #38.35: „folosit de N" on every row. #38.70: the roles' at their tighter padding.
+    usageColumn(listKey),
     // Slice #38.50: the buttons on one line — a document type has two more.
-    listKey === "document-types" ? "valueActionsDocTypes" : "valueActions",
+    actionsColumn(listKey),
   ];
+}
+
+/** „Folosit de"'s column — the roles' own since #38.70, for their padding. */
+function usageColumn(listKey: ListKey): ColumnName {
+  return COMPACT_LISTS.has(listKey) ? "valueUsageRoles" : "valueUsage";
+}
+
+/** The buttons' column: a document type has two more (#38.50); the roles' at their padding (#38.70). */
+function actionsColumn(listKey: ListKey): ColumnName {
+  return listKey === "document-types" ? "valueActionsDocTypes" : COMPACT_LISTS.has(listKey) ? "valueActionsRoles" : "valueActions";
 }
 
 /** The card's padding (`p-5`). */
@@ -1056,6 +1074,8 @@ export function ValueListModal({
   const columns = listColumns(listKey);
   const cells = listCells(listKey);
   const nameTip = nameTipField(listKey);
+  // Slice #38.70: the cells' side padding — `px-2` on a compact list, `px-4` elsewhere.
+  const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";
   // Slice #38.56: the list's frame scrolls — in both directions — and its header row stays at its top.
   const frameRef = useRef<HTMLDivElement | null>(null);
   const frameHeight = useFrameHeight(frameRef);
@@ -1593,7 +1613,7 @@ export function ValueListModal({
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (
-                      <th key={cell[0].key} className={`px-4 py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}>
+                      <th key={cell[0].key} className={`${pad} py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}>
                         {/* Slice #38.55: a joined cell's header is two lines, „Rol invers" over „(bărbat, femeie)" —
                             #37.28 stacked the three fields' own labels. */}
                         {cell.length > 1 && JOINED_HEADS[listKey] ? (
@@ -1612,15 +1632,15 @@ export function ValueListModal({
                         Slice #37.37 — it was a w-32 beside a w-28 actions column
                         in a max-w-2xl panel. */}
                     {review && (
-                      <th className="px-4 py-2" {...columnHead("valueStatus")}>{t("fields.status")}</th>
+                      <th className={`${pad} py-2`} {...columnHead("valueStatus")}>{t("fields.status")}</th>
                     )}
                     {/* Slice #38.59: two lines, Adrian's words — „Folosit de" over „(n obiecte)"; each row reads
                         „3 obiecte", where #38.35 read „folosit de 3 înregistrări". */}
-                    <th className={`px-4 py-2 align-bottom ${CENTRED}`} {...columnHead("valueUsage")}>
+                    <th className={`${pad} py-2 align-bottom ${CENTRED}`} {...columnHead(usageColumn(listKey))}>
                       <span className="block">{t("usage.column")}</span>
                       <span className="block">{t("usage.columnSub")}</span>
                     </th>
-                    <th className="px-4 py-2" {...columnHead(isDocumentTypes ? "valueActionsDocTypes" : "valueActions")} />
+                    <th className={`${pad} py-2`} {...columnHead(actionsColumn(listKey))} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease bg-white dark:divide-zinc-800 dark:bg-zinc-900">
@@ -1686,7 +1706,7 @@ export function ValueListModal({
                           // a `nameTip` field says it in its own tooltip, the field under it — one tooltip, not two.
                           title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}
                           className={[
-                            "px-4 py-2",
+                            `${pad} py-2`,
                             // Slice #26.12: the type's name carries the colour
                             // coding; every other cell keeps the table's body
                             // colour. `documentTypeNameClass` returns exactly
@@ -1711,7 +1731,7 @@ export function ValueListModal({
                               table does not carry two different ones. */}
                           {nameTip && cell[0].key === "name" ? (
                             // Slice #38.53, Ask first 1: one tooltip — the full name, and the key under it in mono.
-                            <IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono className="max-w-full">
+                            <IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono={nameTip.key === "key"} className="max-w-full">
                               <span className={`min-w-0 ${ONE_LINE}`} data-name-tip="">{cellText(cell, row)}</span>
                             </IconTooltip>
                           ) : cell.length > 1 ? (
@@ -1730,7 +1750,7 @@ export function ValueListModal({
                       ))}
                       {review && (
                         <td
-                          className={`px-4 py-2 text-ink dark:text-zinc-300 ${ONE_LINE}`}
+                          className={`${pad} py-2 text-ink dark:text-zinc-300 ${ONE_LINE}`}
                           title={t(`${review.statusPrefix}.${review.statusOf(row)}` as Parameters<typeof t>[0])}
                         >
                           {t(
@@ -1740,14 +1760,14 @@ export function ValueListModal({
                           )}
                         </td>
                       )}
-                      <td className={`px-4 py-2 text-xs text-fade dark:text-zinc-400 ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
+                      <td className={`${pad} py-2 text-xs text-fade dark:text-zinc-400 ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
                         {usage.data === undefined
                           ? "…"
                           : (usage.data[row.id] ?? 0) === 0
                             ? t("usage.unused")
                             : t("usage.usedBy", { count: usage.data[row.id] })}
                       </td>
-                      <td className="px-4 py-2">
+                      <td className={`${pad} py-2`}>
                         {/* Slice #37.37 had „the buttons wrap inside the fixed actions column" — stacked, a row two
                             lines tall. Slice #38.50: side by side, always (`valueActions`, measured). */}
                         <div className="flex flex-nowrap gap-2" data-row-actions="">
