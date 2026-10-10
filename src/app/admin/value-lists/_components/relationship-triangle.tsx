@@ -11,12 +11,22 @@
  * Proprietate has none and opens nothing. The data is `RELATIONSHIPS` (`@/lib/admin/value-lists/relationships`).
  */
 
-import { useId, type KeyboardEvent, type MouseEvent } from "react";
+import { useId, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, type ObjectKind, type Relationship, type RelationshipId } from "@/lib/admin/value-lists/relationships";
 import { dialogCardStyle, rem } from "@/lib/ui/field-widths";
 import { LINK_MARK_BOX, LINK_MARK_FILL, LINK_MARK_INK } from "@/lib/ui/link-mark";
+import { InfoPress } from "@/lib/ui/info-press";
+
+/**
+ * Slice #38.69: the two notes that are „more tricky and complex" (Adrian) — 5's and 6's — are italic magenta, each
+ * with an ⓘ that shows, in three steps, where that link is configured. The magenta is a fuchsia: #a21caf on the card
+ * (#EEF4FA) is 5.7 : 1, and in dark mode the lighter #f0abfc on zinc-900 is 10 : 1 — both over 4.5 : 1.
+ */
+export const NOTE_MAGENTA = { light: "#a21caf", dark: "#f0abfc" } as const;
+const NOTE_MAGENTA_CLASS = "text-[#a21caf] dark:text-[#f0abfc]";
+const INFO_NOTES: readonly RelationshipId[] = ["personDocument", "documentProperty"];
 
 /**
  * THE DRAWING'S GEOMETRY.                                                     (Slices #38.62, #38.67)
@@ -81,6 +91,7 @@ function numberAt(r: Relationship): { x: number; y: number } {
 export function RelationshipTriangle({
   marked,
   onPress,
+  onOpenList,
   cardUnits,
 }: {
   /**
@@ -91,6 +102,8 @@ export function RelationshipTriangle({
   marked: readonly RelationshipId[];
   /** A number on the drawing, or a name among the six, pressed: the hub marks that link and opens its list. */
   onPress: (id: RelationshipId) => void;
+  /** Slice #38.69: a list named in an ⓘ's steps, opened as the column on the left opens it. */
+  onOpenList: (key: ListKey) => void;
   /** The list card's width, so the tile above it lines up with it. */
   cardUnits: number;
 }) {
@@ -102,6 +115,23 @@ export function RelationshipTriangle({
   const openLabel = (r: Relationship) => (r.list ? t("triangle.open", { name: name(r), list: listName(r.list) }) : name(r));
 
   const isMarked = (r: Relationship) => marked.includes(r.id);
+
+  /** A list named inside an ⓘ's steps: a link, as the triangle's names are (Ask first #2). */
+  const listLink = (key: ListKey) =>
+    function ListLink(chunks: ReactNode) {
+      return (
+        <a
+          href={`/admin/value-lists?list=${key}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onOpenList(key);
+          }}
+          className="font-semibold text-cta underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:outline-2 focus-visible:outline-focus dark:text-sky-300"
+        >
+          {chunks}
+        </a>
+      );
+    };
 
   function press(e: MouseEvent, id: RelationshipId) {
     e.preventDefault();
@@ -298,7 +328,26 @@ export function RelationshipTriangle({
                   </span>
                 </div>
                 <p className="leading-relaxed text-ink dark:text-zinc-300">{t(`triangle.relations.${r.id}.text`)}</p>
-                <p className="text-xs leading-relaxed text-fade dark:text-zinc-400">{t(`triangle.relations.${r.id}.where`)}</p>
+                {INFO_NOTES.includes(r.id) ? (
+                  <div className={`text-xs italic leading-relaxed ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>
+                    {t(`triangle.relations.${r.id}.where`)}{" "}
+                    <InfoPress label={t(`triangle.info.${r.id}.label`)}>
+                      <span className="mb-1 block font-semibold">{t(`triangle.info.${r.id}.label`)}</span>
+                      <span className="flex flex-col gap-1">
+                        {(["s1", "s2", "s3"] as const).map((k, n) => (
+                          <span key={k} className="flex gap-1.5">
+                            <span aria-hidden="true">{n + 1}.</span>
+                            <span>
+                              {t.rich(`triangle.info.${r.id}.${k}`, { roles: listLink("person-roles"), types: listLink("document-types") })}
+                            </span>
+                          </span>
+                        ))}
+                      </span>
+                    </InfoPress>
+                  </div>
+                ) : (
+                  <p className="text-xs leading-relaxed text-fade dark:text-zinc-400" data-note={r.id}>{t(`triangle.relations.${r.id}.where`)}</p>
+                )}
               </div>
             </li>
           ))}

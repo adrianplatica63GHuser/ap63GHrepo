@@ -84,6 +84,12 @@ export function ValueListHub({
   const [pressed, setPressed] = useState<PressedLink | null>(null);
   const marking = markedLinks(selected, pressed);
 
+  /** A list chosen — in the column, or from a step of the triangle's ⓘ (#38.69): its whole set is marked. */
+  function chooseList(key: ListKey) {
+    setPressed(null);
+    open(key);
+  }
+
   function pressLink(id: RelationshipId) {
     const list = listOfLink(id);
     setPressed({ id, on: list ?? selected });
@@ -146,10 +152,7 @@ export function ValueListHub({
                         data-list-key={key}
                         aria-current={current ? "page" : undefined}
                         data-marked={marked ? "" : undefined}
-                        onClick={() => {
-                          setPressed(null);
-                          open(key);
-                        }}
+                        onClick={() => chooseList(key)}
                         className={[
                           "w-fit rounded-md px-2 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
                           marked
@@ -186,7 +189,7 @@ export function ValueListHub({
                 entry. #38.68: a number on it, or a name among the six, presses that link (`pressLink`) — marked in
                 yellow in all four places, its list opened as the column on the left opens it. */}
             {categoryOfList(selected) === "rolesLinks" && (
-              <RelationshipTriangle marked={marking.links} onPress={pressLink} cardUnits={VALUE_LIST_CARD_UNITS} />
+              <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} />
             )}
             {/* Keyed on the list: each list starts from its own state — a filter
                 ticked on one never filters the next (#27.07). */}

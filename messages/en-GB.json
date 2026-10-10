@@ -2089,6 +2089,20 @@
         "notConfigured": "not configured, by design"
       },
       "open": "{name} — open the list “{list}”",
+      "info": {
+        "personDocument": {
+          "label": "How the Person – Document link is configured",
+          "s1": "In <roles>Person Roles</roles>, open the role and, under “Document”, add the document types it is offered on.",
+          "s2": "Or from the type's side: in <types>Document Types</types>, open the type, the “Roles” tab, and add the role.",
+          "s3": "On a document of one of those types, the role can then be chosen for an associated person."
+        },
+        "documentProperty": {
+          "label": "How the Document – Property link is made",
+          "s1": "The link has no role: what it means comes from the document's type, in <types>Document Types</types>.",
+          "s2": "It is made from the document's screen, with “Associate property”, or from the property's, with “Associate document”.",
+          "s3": "There is nothing to configure for it in Reference Data."
+        }
+      },
       "relations": {
         "personPerson": {
           "name": "Person → Person",

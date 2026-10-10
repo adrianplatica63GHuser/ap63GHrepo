@@ -2089,6 +2089,20 @@
         "notConfigured": "neconfigurat, intenționat"
       },
       "open": "{name} — deschide lista „{list}”",
+      "info": {
+        "personDocument": {
+          "label": "Cum se configurează legătura Persoană – Document",
+          "s1": "În <roles>Roluri Persoane</roles>, deschideți rolul și adăugați, la „Act”, tipurile de document pe care este oferit.",
+          "s2": "Sau din partea tipului: în <types>Tipuri de Document</types>, deschideți tipul, fila „Roluri”, și adăugați rolul.",
+          "s3": "Pe un act de unul dintre acele tipuri, rolul poate fi apoi ales pentru o persoană asociată."
+        },
+        "documentProperty": {
+          "label": "Cum se face legătura Document – Proprietate",
+          "s1": "Legătura nu are un rol: ce înseamnă o spune tipul actului, din <types>Tipuri de Document</types>.",
+          "s2": "Se face din ecranul actului, cu „Asociere proprietate”, sau din ecranul proprietății, cu „Asociere act”.",
+          "s3": "În „Date de referință” nu este nimic de configurat pentru ea."
+        }
+      },
       "relations": {
         "personPerson": {
           "name": "Persoană → Persoană",
