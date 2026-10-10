@@ -138,8 +138,9 @@ describe('a list row\'s „Previzualizare" (#37.25)', () => {
     expect(src).toMatch(/\bcolumnHead\("listRowActions"\)/);
     expect(src).not.toMatch(/\bcolumnHead\("open"\)/);
     // The table and the previews share one wrapping row, inside the opener.
-    // #37.25 pinned a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile.
-    expect(src).toMatch(/<ListPreviews incursion=\{IncursionTile\}>\s*<div className=\{`\$\{TABLE_FRAME\}/);
+    // #37.25 pinned a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; #38.75 moves that round the
+    // whole list and gives the table and its previews `ListPreviewRow`.
+    expect(src).toMatch(/<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/);
   });
 });
 

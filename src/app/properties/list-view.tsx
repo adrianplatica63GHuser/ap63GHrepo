@@ -16,7 +16,7 @@ import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
-import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton } from "@/components/tiles/incursion-button";
 import { IncursionTile } from "@/app/_components/incursion-tile";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
@@ -293,7 +293,8 @@ export function PropertyListView() {
   const colCount = columns.length;
 
   return (
-    <div className="flex flex-col gap-4">
+    // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
+    <ListPreviews incursion={IncursionTile}>
       {/* Toolbar */}
       <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         <input
@@ -372,7 +373,7 @@ export function PropertyListView() {
       )}
 
       {/* Table */}
-      <ListPreviews incursion={IncursionTile}>
+      <ListPreviewRow>
         <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
           {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
           <table {...fixedTable(columns, "text-sm min-w-full")}>
@@ -481,7 +482,7 @@ export function PropertyListView() {
             </tbody>
           </table>
         </div>
-      </ListPreviews>
+      </ListPreviewRow>
 
       {/* Pagination */}
       <div className="flex w-fit max-w-full items-center justify-between gap-4" {...edge.frame}>
@@ -526,6 +527,6 @@ export function PropertyListView() {
       )}
 
       {addOpen && <AddPropertyDialog onClose={() => setAddOpen(false)} />}
-    </div>
+    </ListPreviews>
   );
 }

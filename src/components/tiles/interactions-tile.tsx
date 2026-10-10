@@ -16,6 +16,8 @@ import { TileTitle } from "./tile-title";
 /**
  * Slice #38.72: `fill` — beside a list, in an „Incursiune", the tile takes the width it is given rather than its
  * fixed 40rem; its height stays the one it has on a person's screen.
+ * Slice #38.75: …as its MINIMUM — it grows (`flex-1`) to the height the Incursiune is given, the list's; the
+ * sentence stays at its top.
  */
 export function InteractionsTile({ title, subtitle, surface, fill = false }: { title: string; subtitle?: string; surface: string; fill?: boolean }) {
   const t = useTranslations("shared.tiles");
@@ -24,7 +26,7 @@ export function InteractionsTile({ title, subtitle, surface, fill = false }: { t
       data-tile="interactions"
       data-panel="interactions"
       aria-label={title}
-      className={surface}
+      className={fill ? `${surface} flex-1` : surface}
       style={fill ? { minHeight: INTERACTIONS_TILE_STYLE.minHeight } : INTERACTIONS_TILE_STYLE}
     >
       <TileTitle title={title} subtitle={subtitle} />

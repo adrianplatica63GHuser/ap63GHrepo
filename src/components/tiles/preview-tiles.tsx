@@ -132,11 +132,19 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
  * table's right, x 1162, the second at x 248 under the table).
  * Slice #38.72: and the row's „Incursiune" (the eye, `IncursionButton`) — one tile from inside the object,
  * `IncursionTile` from `src/app/_components/`, passed in so this module reaches nothing under `src/app/` —
- * stands beside the table in the previews' place, filling what the row leaves.
+ * stands beside the list in the previews' place, filling what the row leaves.
  * „Previzualizare" on a row opens one there. The same body, the same
  * two-at-most rule and the same read-only guarantee as on a detail screen; a
  * list has no „Părți afișate", so „Închide" is how one is closed. Changing the
  * page, the search or the filter leaves them open.
+ *
+ * Slice #38.75: TWO PIECES, so the Incursiune can be as tall as the WHOLE list. `ListPreviews` wraps the list
+ * from its toolbar to its pagination (`data-list-body`) and draws the Incursiune beside that, `self-stretch`ed to
+ * the row — so its top is the toolbar's top and its bottom the pagination's bottom (Ask first #2), however many
+ * rows the page shows (Ask first #1). The list is `items-start`: a list shorter than the tile's own minimum is
+ * not stretched, and a tile wrapped under the list (a narrow window) stretches only to itself. `ListPreviewRow`
+ * wraps the table frame alone and draws the previews' column beside it, exactly where #38.05 put it — the
+ * previews are not this slice's. Both read one state, held here.
  */
 export function ListPreviews({ children, incursion: IncursionTile }: { children: ReactNode; incursion?: IncursionTileComponent }) {
   const previews = usePreviews();
@@ -153,23 +161,39 @@ export function ListPreviews({ children, incursion: IncursionTile }: { children:
     [open, previews],
   );
   const incursion = useMemo<Incursion | null>(() => (IncursionTile ? { open, toggle } : null), [IncursionTile, open, toggle]);
+  const peeking = IncursionTile !== undefined && open !== null;
   return (
     <PreviewOpenerProvider previews={previews}>
       <IncursionContext.Provider value={incursion}>
-        <div data-list-previews className="flex flex-wrap items-start gap-4">
-          {children}
-          {IncursionTile && open ? (
-            <IncursionTile key={previewKey(open)} target={open} onClose={() => setOpen(null)} />
-          ) : (
-            previews.open.length > 0 && (
-              <div data-list-preview-column className="flex flex-col items-start gap-4">
-                <PreviewTiles previews={previews} />
-              </div>
-            )
-          )}
+        <div data-list-incursion-row className="flex flex-wrap items-start gap-4">
+          {/* The whole page's width while nothing stands beside it, as the list's own column always was. */}
+          <div data-list-body className={peeking ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
+            {children}
+          </div>
+          {IncursionTile && open && <IncursionTile key={previewKey(open)} target={open} onClose={() => setOpen(null)} />}
         </div>
       </IncursionContext.Provider>
     </PreviewOpenerProvider>
+  );
+}
+
+/**
+ * The table frame and, beside it, the open previews' column (Slice #38.05) — inside `ListPreviews` (#38.75).
+ * While an Incursiune is open no preview is (#38.72), so the column is never drawn beside it.
+ */
+export function ListPreviewRow({ children }: { children: ReactNode }) {
+  const previews = useContext(OpenerContext);
+  const incursion = useContext(IncursionContext);
+  const peeking = incursion !== null && incursion.open !== null;
+  return (
+    <div data-list-previews className="flex flex-wrap items-start gap-4">
+      {children}
+      {previews !== null && previews.open.length > 0 && !peeking && (
+        <div data-list-preview-column className="flex flex-col items-start gap-4">
+          <PreviewTiles previews={previews} />
+        </div>
+      )}
+    </div>
   );
 }
 

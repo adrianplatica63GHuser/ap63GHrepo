@@ -11,7 +11,7 @@ import { join } from "path";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -28,20 +28,23 @@ function renderList() {
   return render(
     <QueryClientProvider client={client}>
       <ListPreviews>
-        <div data-list-edge="">
-          <table>
-            <tbody>
-              {["A", "B", "C"].map((id) => (
-                <tr key={id}>
-                  <td>{id}</td>
-                  <td data-row={id}>
-                    <PreviewButton target={{ kind: "property", id }} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Slice #38.75: `ListPreviews` holds the whole list; the table and its previews are `ListPreviewRow`. */}
+        <ListPreviewRow>
+          <div data-list-edge="">
+            <table>
+              <tbody>
+                {["A", "B", "C"].map((id) => (
+                  <tr key={id}>
+                    <td>{id}</td>
+                    <td data-row={id}>
+                      <PreviewButton target={{ kind: "property", id }} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ListPreviewRow>
       </ListPreviews>
     </QueryClientProvider>,
   );
@@ -85,8 +88,10 @@ describe("a list's previews stand in one column beside the table (#38.05)", () =
   it("the four lists draw their table through it", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
-      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile.
+      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; since #38.75 the table and
+      // its previews' column are `ListPreviewRow`, inside it.
       expect([dir, /<ListPreviews( incursion=\{IncursionTile\})?>/.test(view)]).toEqual([dir, true]);
+      expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);
     }
   });
 });

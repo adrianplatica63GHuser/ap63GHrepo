@@ -636,6 +636,8 @@ type Props = {
   /**
    * Slice #38.72: `"peek"` — an „Incursiune" beside a list: a look, not an edit. As `"view"`, and without the
    * turn and its „Salvează" (#38.17), the one write a `"view"` panel still offers.
+   * Slice #38.75: and it FILLS the height it is given (the list's, beside it): the panel grows (`flex-1`), its
+   * body with it, and the viewer box — `PagesViewerBox`, never below its 320 px — takes what the table leaves.
    */
   mode:             "edit" | "view" | "peek";
   state:            PagesPanelState;
@@ -711,6 +713,7 @@ export function PagesPanel({
       className={[
         surface,
         sidebar ? "flex h-full flex-col" : "",
+        mode === "peek" ? "flex flex-1 flex-col" : "",
       ].join(" ")}
       aria-label={t("sectionTitle")}
     >
@@ -827,7 +830,9 @@ export function PagesPanel({
           className={[
             bigPage || sidebar
               ? "flex flex-col gap-3"
-              : "flex flex-col gap-3 lg:flex-row lg:items-start",
+              : mode === "peek"
+                ? "flex flex-1 flex-col gap-3 lg:flex-row lg:items-stretch"
+                : "flex flex-col gap-3 lg:flex-row lg:items-start",
             // Slice #21.06.misc: in the sidebar slot, let the body grow to
             // fill (and scroll within) the height the outer grid stretched
             // this panel to, instead of staying its own shorter natural size.
@@ -836,7 +841,7 @@ export function PagesPanel({
         >
           {/* ── Viewer (left on lg, below on sm) — only when not big-page ── */}
           {!bigPage && (
-            <div className={sidebar ? "w-full" : "order-2 lg:order-1 lg:flex-1"}>
+            <div className={sidebar ? "w-full" : mode === "peek" ? "order-2 flex flex-1 flex-col lg:order-1" : "order-2 lg:order-1 lg:flex-1"}>
               <PagesViewerBox state={state} />
             </div>
           )}

@@ -18,7 +18,7 @@ import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
 import { customFieldFilter, customFieldState, typeFilterTrigger, typesMatching } from "@/lib/documents/type-filter";
 import { CustomFieldSign } from "@/components/documents/custom-field-sign";
 import { newTabIfAsked } from "@/lib/ui/row-link";
-import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton } from "@/components/tiles/incursion-button";
 import { IncursionTile } from "@/app/_components/incursion-tile";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
@@ -735,7 +735,8 @@ export function DocumentListView({
   const colCount = columns.length;
 
   return (
-    <div className="flex flex-col gap-4">
+    // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
+    <ListPreviews incursion={IncursionTile}>
       {/* Toolbar — Slice #37.83: two rows. The first: the search, „Tip document",
           „Expiră curând", „Câmpuri afișate" and, at its end, „Adaugă act"'s group;
           choosing a field in „Câmp specific" no longer moves any of them. The
@@ -959,7 +960,7 @@ export function DocumentListView({
         </div>
       ) : (
         <>
-          <ListPreviews incursion={IncursionTile}>
+          <ListPreviewRow>
             <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
               {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
               <table {...fixedTable(columns, "text-sm min-w-full")}>
@@ -1072,7 +1073,7 @@ export function DocumentListView({
                 </tbody>
               </table>
             </div>
-          </ListPreviews>
+          </ListPreviewRow>
 
           {/* Pagination */}
           <div className="flex w-fit max-w-full items-center justify-between gap-4" {...edge.frame}>
@@ -1117,6 +1118,6 @@ export function DocumentListView({
           onNo={() => setConfirmOpen(false)}
         />
       )}
-    </div>
+    </ListPreviews>
   );
 }
