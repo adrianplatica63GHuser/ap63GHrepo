@@ -52,7 +52,8 @@ describe("the header (#38.59)", () => {
   });
   it("draws the two keys as two lines of the one header cell, on every list", () => {
     expect(MODAL).toMatch(
-      /columnHead\("valueUsage"\)\}>\s*<span className="block">\{t\("usage\.column"\)\}<\/span>\s*<span className="block">\{t\("usage\.columnSub"\)\}<\/span>/,
+    // #38.59 pinned `columnHead("valueUsage")`; #38.70 gives the roles their own usage column (`usageColumn`).
+      /columnHead\(usageColumn\(listKey\)\)\}>\s*<span className="block">\{t\("usage\.column"\)\}<\/span>\s*<span className="block">\{t\("usage\.columnSub"\)\}<\/span>/,
     );
   });
 });

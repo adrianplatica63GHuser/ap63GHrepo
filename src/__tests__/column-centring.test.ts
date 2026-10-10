@@ -8,12 +8,13 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { COLUMN, columnRem } from "@/lib/ui/field-widths";
+import { COLUMN, columnPadRem, columnRem } from "@/lib/ui/field-widths";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 const MODAL = read("src/app/admin/value-lists/_components/value-list-modal.tsx");
 const REM = 16;
-const content = (n: keyof typeof COLUMN) => (columnRem(n) - 2) * REM;
+// #38.70: less the column's own padding — the roles' columns are `px-2` (1 rem), every other `px-4` (2).
+const content = (n: keyof typeof COLUMN) => (columnRem(n) - columnPadRem(n)) * REM;
 
 describe("the roles list's own widths (#38.60)", () => {
   it("„Denumire” is as wide as the longest role name (215 px), narrower than a document type's (252)", () => {
@@ -21,9 +22,12 @@ describe("the roles list's own widths (#38.60)", () => {
     expect(content("valueRoleName")).toBeLessThan(content("valueName"));
     expect(MODAL).toContain('if (listKey === "person-roles") return "valueRoleName";');
   });
-  it("„Rol invers” is as wide as its longest value after #38.58 (309 px)", () => {
-    expect(content("valueConverse")).toBeGreaterThanOrEqual(309);
-    expect(content("valueConverse")).toBeLessThan(330);
+  // #38.60 held „Rol invers" at its longest after #38.58, „Reprezentat / Mandant, Reprezentată / Mandantă" (309 px:
+  // `>= 309`, `< 330`). #38.70 shortens that name to „Reprezentat(ă) / Mandant(ă)" (176.6 px, migration_104) and the
+  // column with it.
+  it("„Rol invers” is as wide as its longest value after #38.70 („Reprezentat(ă) / Mandant(ă)”, 176.6 px)", () => {
+    expect(content("valueConverse")).toBeGreaterThanOrEqual(177.6);
+    expect(content("valueConverse")).toBeLessThan(185);
   });
   it("the other lists keep #38.50's name columns", () => {
     expect(MODAL).toContain('return SHORT_NAME_LISTS.has(listKey) ? "valueNameShort" : "valueName";');
@@ -36,11 +40,12 @@ describe("the centred columns (#38.60)", () => {
     expect(MODAL).toContain('const CENTRED = "text-center";');
   });
   it("centre the header and the cells together", () => {
-    expect(MODAL).toContain('className={`px-4 py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}');
+    // #38.60 pinned `px-4`; #38.70 draws a compact list's cells `px-2` (`pad`).
+    expect(MODAL).toContain('className={`${pad} py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}');
     expect(MODAL).toContain("centredCell(cell) && CENTRED,");
   });
   it("centre „Folosit de”, header and cells, on every list", () => {
-    expect(MODAL).toContain('<th className={`px-4 py-2 align-bottom ${CENTRED}`} {...columnHead("valueUsage")}>');
-    expect(MODAL).toMatch(/<td className=\{`px-4 py-2 text-xs text-fade dark:text-zinc-400 \$\{ONE_LINE\} \$\{CENTRED\}`\} data-usage=/);
+    expect(MODAL).toContain('<th className={`${pad} py-2 align-bottom ${CENTRED}`} {...columnHead(usageColumn(listKey))}>');
+    expect(MODAL).toMatch(/<td className=\{`\$\{pad\} py-2 text-xs text-fade dark:text-zinc-400 \$\{ONE_LINE\} \$\{CENTRED\}`\} data-usage=/);
   });
 });

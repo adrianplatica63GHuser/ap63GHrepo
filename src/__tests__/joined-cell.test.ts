@@ -27,6 +27,13 @@ describe("joinedCellText (#38.55)", () => {
     expect(joinedCellText(["Părinte", null, undefined])).toBe("Părinte");
     expect(joinedCellText(["  Părinte  ", "   ", ""])).toBe("Părinte");
   });
+  // Slice #38.70 (migration_104): Adrian's two short names, each the role's neutral name alone — a man and a woman are
+  // both shown it, the „(ă)" carrying both.
+  it("shows Adrian's two names whole, as written, each alone in its role", () => {
+    expect(joinedCellText(["Bunic(ă), Unchi, Mătușă", null, null])).toBe("Bunic(ă), Unchi, Mătușă");
+    expect(joinedCellText(["Reprezentat(ă) / Mandant(ă)", null, null])).toBe("Reprezentat(ă) / Mandant(ă)");
+    expect(neutralRepeatsPair("Reprezentat(ă) / Mandant(ă)", null, null)).toBe(false);
+  });
   it("shows „–” when every one is blank", () => {
     expect(joinedCellText([null, "", "  "])).toBe("–");
     expect(joinedCellText([])).toBe("–");

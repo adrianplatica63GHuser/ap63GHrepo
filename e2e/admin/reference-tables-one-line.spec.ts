@@ -111,7 +111,8 @@ async function centring(page: Page) {
       ticks,
       worstTick: Math.round(worstTick * 10) / 10,
       centred: [cols.flagProperty, cols.flagPerson, cols.converse, cols.usage].map(align),
-      left: [cols.name, cols.description].map(align),
+      // #38.70: „Descriere" is read in the name's tooltip, not a column — #38.60 read it left-aligned here too.
+      left: [cols.name].map(align),
       tallest: Math.max(...rows.map((r) => Math.round(r.getBoundingClientRect().height))),
     };
   });
@@ -182,5 +183,42 @@ test.describe("TC-VL-05 pasul 5 — „Tipuri de obiecte” fără spațiu irosi
       // The slice's pictures, not a step of the case.
       await page.getByRole("region", { name: list.name, exact: true }).screenshot({ path: `playwright-report/value-list-page/types-${list.key}-1366.png` });
     }
+  });
+});
+
+test.describe("TC-VL-05 pasul 6 — „Roluri Persoane” fără bară de derulare orizontală (#38.70)", () => {
+  test("la 1366 px: tot tabelul, butoanele fiecărui rând în chenar; descrierea în bula denumirii", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1366, height: 1000 });
+    await page.goto("/admin/value-lists?list=person-roles");
+    await expect(page.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
+    const fit = await page.evaluate(() => {
+      const table = document.querySelector<HTMLElement>("table[data-width-table]")!;
+      const frame = table.parentElement!;
+      const card = table.closest<HTMLElement>("[data-value-list-card]")!.getBoundingClientRect();
+      const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr")];
+      const outside = rows.filter((r) => {
+        const buttons = [...r.querySelectorAll<HTMLElement>("[data-row-actions] button, [data-row-actions] a")];
+        const last = buttons[buttons.length - 1];
+        return last ? last.getBoundingClientRect().right > card.right : false;
+      }).length;
+      const heads = [...table.querySelectorAll<HTMLElement>("thead th")].map((th) => th.innerText.replace(/\s+/g, " ").trim().toLowerCase());
+      return { scroll: frame.scrollWidth, client: frame.clientWidth, rows: rows.length, outside, heads };
+    });
+    expect(fit.rows).toBeGreaterThan(0);
+    expect(fit.scroll, `the frame scrolls ${fit.scroll - fit.client} px`).toBeLessThanOrEqual(fit.client);
+    expect(fit.outside, "rows whose last button is outside the card").toBe(0);
+    expect(fit.heads).not.toContain("descriere");
+    // The description, in the name's tooltip under the name — in the body's face, not mono.
+    const named = page.locator("tbody tr").filter({ hasText: /^Coproprietar/ }).locator("[data-name-tip]").first();
+    await named.hover();
+    const tip = page.getByRole("tooltip");
+    await expect(tip).toHaveCount(1);
+    await expect(tip).toContainText("Coproprietar");
+    await page.screenshot({ path: "playwright-report/value-list-page/roles-no-scroll-1366.png" });
+    await page.mouse.move(5, 5);
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: "playwright-report/value-list-page/roles-no-scroll-1920.png" });
   });
 });

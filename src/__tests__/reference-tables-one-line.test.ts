@@ -8,7 +8,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { COLUMN, columnRem } from "@/lib/ui/field-widths";
+import { COLUMN, columnPadRem, columnRem } from "@/lib/ui/field-widths";
+import { LIST_META } from "@/lib/admin/value-lists/config";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const code = (src: string): string => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
@@ -40,7 +41,7 @@ describe("one line per row (#38.50)", () => {
     expect(MODAL).not.toMatch(/flex flex-wrap gap-2">\s*\{isDocumentTypes/);
     expect(columnRem("valueActions") * REM - 32).toBeGreaterThanOrEqual(146);
     expect(columnRem("valueActionsDocTypes") * REM - 32).toBeGreaterThanOrEqual(331);
-    expect(MODAL).toContain('listKey === "document-types" ? "valueActionsDocTypes" : "valueActions"');
+    expect(MODAL).toContain('listKey === "document-types" ? "valueActionsDocTypes" : COMPACT_LISTS.has(listKey) ? "valueActionsRoles" : "valueActions"');
   });
 
   it("each column as wide as what it holds, measured: a checkmark as its header's longest word, „folosit de N” and the status their longest", () => {
@@ -61,7 +62,9 @@ describe("one line per row (#38.50)", () => {
   it("a header may take two lines; the table is never narrower than its toolbar", () => {
     // #38.50 pinned the literal `className="px-4 py-2 align-bottom"`; #38.60 centres some headers, so the class is
     // built — still `px-4 py-2 align-bottom`, plus `text-center` where the column is centred (column-centring.test.ts).
-    expect(MODAL).toContain("px-4 py-2 align-bottom");
+    // #38.70: built from `pad` — `px-4`, or `px-2` on a compact list (the roles).
+    expect(MODAL).toContain("${pad} py-2 align-bottom");
+    expect(MODAL).toContain('const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";');
     expect(MODAL).toContain('<div className="w-fit max-w-full" data-value-list-frame="">');
     expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full")');
   });
@@ -107,5 +110,35 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
     const content = (columnRem("valueStatus") - 2) * REM;
     expect(content).toBeGreaterThanOrEqual(103);
     expect(content).toBeLessThanOrEqual(106);
+  });
+});
+
+describe("„Roluri Persoane” without a horizontal scroll bar at 1366 px (#38.70)", () => {
+  // The roles' table, column by column, as value-list-modal.tsx draws it.
+  const ROLES = ["valueRoleName", "valueRoleFlag", "valueRoleFlag", "valueConverse", "valueUsageRoles", "valueActionsRoles"] as const;
+  /** The list's frame at 1366 px: the 968-px card less its 20-px padding and its border, measured. */
+  const FRAME_1366 = 924;
+
+  it("fits the frame: 904 px", () => {
+    const px = ROLES.reduce((sum, n) => sum + columnRem(n), 0) * REM;
+    expect(px).toBe(904);
+    expect(px).toBeLessThanOrEqual(FRAME_1366);
+  });
+
+  it("every one of its columns is drawn at half the padding, and holds its widest", () => {
+    for (const n of ROLES) expect([n, columnPadRem(n)]).toEqual([n, 1]);
+    const content = (n: keyof typeof COLUMN) => (columnRem(n) - columnPadRem(n)) * REM;
+    expect(content("valueRoleName")).toBeGreaterThanOrEqual(214.8); // „Reprezentant al instituției emitente"
+    expect(content("valueRoleFlag")).toBeGreaterThanOrEqual(86.9); // „PROPRIETATE"
+    expect(content("valueConverse")).toBeGreaterThanOrEqual(176.6); // „Reprezentat(ă) / Mandant(ă)"
+    expect(content("valueUsageRoles")).toBe(content("valueUsage"));
+    expect(content("valueActionsRoles")).toBe(content("valueActions"));
+  });
+
+  it("reads the description in the name's tooltip, in the body's face, not in a column", () => {
+    const description = LIST_META["person-roles"].fields.find((f) => f.key === "description");
+    expect(description).toMatchObject({ nameTip: true, multiline: true });
+    expect(MODAL).toContain('const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles"]);');
+    expect(MODAL).toContain('"person-roles": { validForProperty: "valueRoleFlag", validForPerson: "valueRoleFlag" },');
   });
 });

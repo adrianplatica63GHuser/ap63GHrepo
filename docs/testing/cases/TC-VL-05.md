@@ -43,8 +43,9 @@ At 1366 and at 1920 px.
 | 1 | Opens „Date de referință", „Tipuri Proprietate" | Every row one line high, all rows the same height; each row's buttons on one line; every value on one line, a cut one with its whole text as a tooltip; the table at least as wide as the toolbar above it |
 | 2 | „Roluri Persoană" | The same as step 1 (#38.50 had „but for the converse names' cell"; one line since #38.55) |
 | 3 | „Tipuri Document" | The same as step 1, with four buttons on a row |
-| 4 | „Roluri Persoană" again (#38.60) | Each ✓ centred in its column (its centre within 2 px of the column's); the headers of „Persoană → Proprietate", „Persoană → Persoană", „Rol invers" and „Folosit de" centred over them, and those cells' text centred; „Denumire" and „Descriere" left-aligned; the row still one line |
+| 4 | „Roluri Persoană" again (#38.60) | Each ✓ centred in its column (its centre within 2 px of the column's); the headers of „Persoană → Proprietate", „Persoană → Persoană", „Rol invers" and „Folosit de" centred over them, and those cells' text centred; „Denumire" left-aligned (since #38.70 „Descriere" is in the name's tooltip); the row still one line |
 | 5 | At 1366 px, „Tipuri de Persoană Juridică", „Tipuri de Proprietate" and „Tipuri de Document" (#38.66) | On each, the longest name ends less than 24 px before the next column starts, and no name is cut; on „Tipuri de Proprietate" the header „Street View" is on two lines |
+| 6 | At 1366 px, „Roluri Persoane" (#38.70) | The whole table shows, no horizontal scroll bar; every row's last button inside the card; no „Descriere" column — a role's description is read in its name's tooltip, under the name |
 
 ## At the end — leaving things as they were found
 
@@ -61,3 +62,6 @@ handover names the run).
 
 **2026-10-10 — `automated` (Slice #38.66).** Step 5 added; the test runner ran it green (the slice's
 handover names the run).
+
+**2026-10-10 — `automated` (Slice #38.70).** Step 6 added; step 4 reads „Denumire" alone left-aligned. The test runner ran
+it green.

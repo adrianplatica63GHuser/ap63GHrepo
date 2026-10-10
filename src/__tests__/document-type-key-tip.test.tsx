@@ -19,9 +19,11 @@ const MODAL = fs.readFileSync(
 );
 
 describe("the key is not a column (#38.53)", () => {
-  it("is the one `nameTip` field on any list: the document type's key, still create-only", () => {
+  // #38.53: „the one `nameTip` field on any list" — `toEqual(["document-types.key"])`. #38.70 reads the roles'
+  // description in their name's tooltip too, so the roles' table fits 1366 px; the key is still create-only.
+  it("is one of two `nameTip` fields: the document type's key, still create-only, and the roles' description", () => {
     const tips = VALID_LIST_KEYS.flatMap((list) => LIST_META[list].fields.filter((f) => f.nameTip).map((f) => `${list}.${f.key}`));
-    expect(tips).toEqual(["document-types.key"]);
+    expect(tips).toEqual(["person-roles.description", "document-types.key"]);
     expect(LIST_META["document-types"].fields.find((f) => f.key === "key")).toMatchObject({ createOnly: true, nameTip: true });
   });
 
@@ -31,7 +33,9 @@ describe("the key is not a column (#38.53)", () => {
   });
 
   it("is read in the name's ONE tooltip — the name, the key under it in mono — and the name cell has no `title` of its own", () => {
-    expect(MODAL).toContain('<IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono className="max-w-full">');
+    // #38.53 pinned `noteMono` bare: the key was the only `nameTip`. #38.70 reads the roles' description there too, in
+    // the body's face — mono is for a key.
+    expect(MODAL).toContain('<IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono={nameTip.key === "key"} className="max-w-full">');
     expect(MODAL).toContain('title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}');
   });
 });
