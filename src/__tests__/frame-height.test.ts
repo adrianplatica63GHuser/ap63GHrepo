@@ -24,7 +24,13 @@ describe("frameMaxHeight (#38.56)", () => {
     expect(frameMaxHeight({ viewport: 300, frameTop: 200, columnTop: 100, below: 56 })).toBe(FRAME_MIN_PX);
   });
 
-  it("takes the remaining height while it is at least the minimum", () => {
+  it("takes a screen of its own where the remaining height is the minimum but not half its own screen (#38.78)", () => {
+    // Measured on „Roluri Persoane" at 1920 px after #38.77/#38.78: the frame's top at 663 of a 1000 px window, the
+    // card's at 602 — 283 px left, its own screen 885. #38.56's rule gave it the 283.
+    expect(frameMaxHeight({ viewport: 1000, frameTop: 663, columnTop: 602, below: 54 })).toBe(885);
+  });
+
+  it("takes the remaining height while it is at least the minimum (and half its own screen, #38.78)", () => {
     expect(frameMaxHeight({ viewport: 700, frameTop: 360, columnTop: 100, below: 60 })).toBe(280);
     expect(frameMaxHeight({ viewport: 701, frameTop: 360, columnTop: 100, below: 60 })).toBe(281);
   });

@@ -25,6 +25,16 @@
  * the page scrolls that far and no further, and from there only the rows move.
  * Never under `min`, so a short window still shows a handful of rows.
  *
+ * ⚠️ **"FITS" MEANS A FAIR SHARE, NOT THE MINIMUM** (Slice #38.78). The rule
+ * took the remaining height whenever it was at least `min`, so a frame that
+ * started just high enough fitted in a six-row strip rather than a screen of its
+ * own — a cliff at 280 px. #38.77 shortened the triangle above „Roluri
+ * Persoane" and #38.78 the card's head, which moved the frame up at 1920 px to
+ * exactly that edge (measured: top 663, 283 px left of a 1000 px window, where
+ * its own screen gives 885), and TC-VL-10's frame of "most of a screen" became
+ * 283 px. The remaining height is taken only while it is at least half of what
+ * the frame's own screen would give it.
+ *
  * PURE — `frame-height.test.ts` covers it; value-list-modal.tsx measures.
  */
 
@@ -40,7 +50,7 @@ export const FRAME_MIN_PX = 280;
 
 export function frameMaxHeight(s: FrameSpace, min = FRAME_MIN_PX): number {
   const fits = s.viewport - s.frameTop - s.below;
-  if (fits >= min) return Math.floor(fits);
   const ownScreen = s.viewport - (s.frameTop - s.columnTop) - s.below;
+  if (fits >= min && fits >= ownScreen / 2) return Math.floor(fits);
   return Math.floor(Math.max(ownScreen, min));
 }
