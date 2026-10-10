@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-10, FU-324 filed — 324 entries. Rows are status, columns are impact.
+As of 2026-10-10, FU-325 filed — 325 entries. Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 75 | 70 | 16 | 180 |
+| open | 19 | 75 | 71 | 16 | 181 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 56 | 30 | 3 | 126 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 138 | 105 | 21 | 324 |
+| **total** | 60 | 138 | 106 | 21 | 325 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -408,3 +408,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-322 | 2026-10-10 #38.69 20261010T015322Z-7829 | test gap | Tests & e2e | TC-LAYOUT-02 (`list-edge.spec.ts`) failed once in a `full` on /properties at 1920 px: its own row, `TC-E2E-LAYOUT-02`, did not appear in 30 s — the same commit passed on the next request (20261010T021743Z-17862). | e2e/layout/list-edge.spec.ts:121 (the row's locator); .test-runner/logs/20261010T015322Z-7829/e2e.log | dev | XS | open | Unverified: a cold compile or a slow search on the runner's server (FU-216's shape) — read the run's trace and dev-server log before widening the wait. | 2026-10-10 |
 | FU-323 | 2026-10-10 #38.70 Handover.38.70.md; 2026-10-10 #38.70 9a600245, 1a04ef38 | recommendation | Reference data | migration_104 — „Nepot" and „Reprezentant legal / Mandatar" take Adrian's short converse names („Bunic(ă), Unchi, Mătușă", „Reprezentat(ă) / Mandant(ă)") as their neutral name, the gendered two emptied — confirmed („yes, as written"), committed and applied to the local database; Supabase does not have it yet. | src/db/migration_104_role_converse_short_names.sql (9a600245); src/db/sync-reference-data.sql, tests, specs, TC-ASSOC-11, TC-PERS-05 (1a04ef38); migrate-local 20261010T112554Z-26629 | user | XS | open | Adrian's: `npm run supabase:migrate` (applies migration_104 to Supabase), then the push — the runner holds it (`migration-in-range`). Resolved when Supabase has it. | 2026-10-10 |
 | FU-324 | 2026-10-10 #38.70 20261010T112743Z-24298 | test gap | Tests & e2e | TC-VL-08 (`converse-one-line.spec.ts`) failed once in a `full-db`, third test of the run: the cleanup's GET /api/admin/value-lists/person-roles in `finally` ended in `read ECONNRESET` — the dev server logged no such request — which hides whatever the body did; the same commit passed on the next request (20261010T115148Z-24371). | e2e/admin/converse-one-line.spec.ts:20 (removeRoles) and :86 (the `finally`); .test-runner/logs/20261010T112743Z-24298/e2e.log, dev-server.log | dev | XS | open | Catch in the `finally` (or retry its GET once) so a reset there neither fails the spec nor masks the body's own error; if it recurs, look for the dev server dropping connections while the usage route compiles. | 2026-10-10 |
+| FU-325 | 2026-10-10 #38.70 20261010T115344Z-29906 | test gap | Tests & e2e | TC-TILES-15 (`tiles-under-column.spec.ts`) step 6 failed once in a `full`: after „Clasificări" was dragged under „Pagini", „Pagini" ended at bottom 784 instead of the 480 read 1.5 s after it showed — the tile grew while its content arrived, so the „Pagini stays where it was" check read a later height; the same commit passed on the next request (20261010T121542Z-18827). | e2e/tiles/tiles-under-column.spec.ts:104-112 (the fixed 1.5 s wait before p1); .test-runner/logs/20261010T115344Z-29906/e2e.log | dev | XS | open | Read p1 only once „Pagini"'s height has stopped changing (poll two equal reads), or compare x/y only — the step is about position, not height. | 2026-10-10 |
