@@ -5,7 +5,7 @@
  * A translation of the case file, step for step. Nothing is created: the tile describes the code.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 
 const SIX = [
   ["personPerson", "Persoană → Persoană", "configurat în aplicație"],
@@ -119,6 +119,59 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       await expect.poll(async () => (await frameOf()).scrollTop).toBeGreaterThan(0);
       const after = await frameOf();
       expect(Math.abs(after.head - after.top)).toBeLessThanOrEqual(2);
+
+      // Step 8 — (#38.68) one link, the heavy yellow in four places. Pressing 4 marks 4 on the drawing and among the six,
+      // „Roluri Persoane" in the column and the card's title, and leaves 1 and 5 unmarked. Colour read with getComputedStyle.
+      const YELLOW = "rgb(250, 204, 21)";
+      const nav = page.getByRole("navigation", { name: "Liste de referință" });
+      const bg = (l: Locator) => l.evaluate((el) => getComputedStyle(el).backgroundColor);
+      const fill = (id: string) => page.locator(`[data-relationship-triangle] [data-bubble="${id}"]`).evaluate((el) => getComputedStyle(el).fill);
+      const entryNo = (id: string) => bg(page.locator(`[data-relationship-triangle] [data-entry-number="${id}"]`));
+      const cardTitle = page.locator("[data-value-list-card] h2 span");
+      const ALL = SIX.map(([id]) => id);
+      const unmarkedBut = async (id: string) => {
+        for (const other of ALL.filter((x) => x !== id)) {
+          expect([other, await fill(other)]).not.toEqual([other, YELLOW]);
+          expect([other, await entryNo(other)]).not.toEqual([other, YELLOW]);
+        }
+      };
+      await page.locator('[data-relationship-triangle] a[data-relationship="personProperty"]').click();
+      await expect.poll(() => fill("personProperty")).toBe(YELLOW);
+      expect(await entryNo("personProperty")).toBe(YELLOW);
+      await unmarkedBut("personProperty");
+      expect(await bg(nav.getByRole("button", { name: "Roluri Persoane", exact: true }))).toBe(YELLOW);
+      expect(await bg(cardTitle)).toBe(YELLOW);
+      await expect(page.locator('[data-relationship-triangle] a[data-relationship="personProperty"]')).toHaveAttribute("aria-current", "true");
+      await expect(page.locator('[data-relationship-entry="personProperty"]')).toHaveAttribute("aria-current", "true");
+      await expect(page.locator('[data-relationship-triangle] a[data-relationship="personPerson"]')).not.toHaveAttribute("aria-current", "true");
+      if (width === 1366) {
+        // The page scrolls in its own area (`data-page-scroll`), not the window: to its top, so the column shows.
+        await page.evaluate(() => document.querySelector("[data-page-scroll]")?.scrollTo(0, 0));
+        for (const scheme of ["light", "dark"] as const) {
+          await page.emulateMedia({ colorScheme: scheme });
+          await page.waitForTimeout(300);
+          await page.screenshot({ path: `playwright-report/value-list-page/yellow-4-1366-${scheme}.png` });
+        }
+        await page.emulateMedia({ colorScheme: "light" });
+      }
+
+      // The column: „Legături Document → Document" marks 3, and itself.
+      await nav.getByRole("button", { name: "Legături Document → Document", exact: true }).click();
+      await expect(page).toHaveURL(/\?list=document-document-roles$/, { timeout: 15_000 });
+      await expect.poll(() => fill("documentDocument")).toBe(YELLOW);
+      expect(await entryNo("documentDocument")).toBe(YELLOW);
+      await unmarkedBut("documentDocument");
+      expect(await bg(nav.getByRole("button", { name: "Legături Document → Document", exact: true }))).toBe(YELLOW);
+      await expect.poll(() => bg(cardTitle)).toBe(YELLOW);
+
+      // 6: marks only 6 — the list stays open, its name and its title unmarked.
+      await page.locator('[data-relationship-triangle] [data-relationship="documentProperty"]').click();
+      await expect.poll(() => fill("documentProperty")).toBe(YELLOW);
+      await expect(page).toHaveURL(/\?list=document-document-roles$/);
+      await unmarkedBut("documentProperty");
+      expect(await bg(nav.getByRole("button", { name: "Legături Document → Document", exact: true }))).not.toBe(YELLOW);
+      expect(await bg(cardTitle)).not.toBe(YELLOW);
+      await expect(page.locator('[data-relationship-triangle] [data-relationship="documentProperty"]')).toHaveAttribute("aria-pressed", "true");
 
       // Step 6 — a list outside „Roluri și legături" has no tile.
       await page.goto("/admin/value-lists?list=citizenships");

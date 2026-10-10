@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
-import { RELATIONSHIPS, isCorner } from "@/lib/admin/value-lists/relationships";
+import { RELATIONSHIPS, isCorner, linksOfList, listOfLink, markedLinks } from "@/lib/admin/value-lists/relationships";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 const SCHEMA = read("src/db/supabase_schema_full.sql");
@@ -101,9 +101,12 @@ describe("the tile on the page (#38.62)", () => {
     for (const m of [MSG.ro, MSG.en]) expect(m.valueList.sections).toBeUndefined();
   });
 
+  // #38.62 pinned `onOpen={open}` and `press(e, r.list as ListKey)`: a press opened the list and nothing else.
+  // #38.68: a press is a link (`pressLink`) — marked in yellow in four places — and still opens its list through `open`.
   it("opens a list from a corner or side through the page's own `open` (Ask first #2)", () => {
-    expect(HUB).toContain("onOpen={open}");
-    expect(TILE).toContain("onClick={(e) => press(e, r.list as ListKey)}");
+    expect(HUB).toContain("onPress={pressLink}");
+    expect(HUB).toMatch(/function pressLink\(id: RelationshipId\) \{\s*const list = listOfLink\(id\);\s*setPressed\(\{ id, on: list \?\? selected \}\);\s*if \(list !== null\) open\(list\);\s*\}/);
+    expect(TILE).toContain("onClick={(e) => press(e, r.id)}");
     expect(TILE).toContain("href={`/admin/value-lists?list=${r.list}`}");
   });
 });
@@ -137,5 +140,60 @@ describe("the tile's layout (Slice #38.67)", () => {
     expect(TILE).toContain('<div className="flex flex-col @min-[42rem]:flex-row">');
     const ol = TILE.slice(TILE.indexOf("<ol"), TILE.indexOf('data-triangle-list=""'));
     for (const c of ["border-t", "@min-[42rem]:border-t-0", "@min-[42rem]:border-l", "@min-[42rem]:pt-1.5", "min-w-[18rem]", "flex-1"]) expect(ol).toContain(c);
+  });
+});
+
+describe("one link, marked in four places (Slice #38.68)", () => {
+  it("maps each list to its links and each link to its list — all six; 6 to none", () => {
+    expect(linksOfList("person-roles")).toEqual(["personPerson", "personProperty", "personDocument"]);
+    expect(linksOfList("property-property-roles")).toEqual(["propertyProperty"]);
+    expect(linksOfList("document-document-roles")).toEqual(["documentDocument"]);
+    expect(linksOfList("citizenships")).toEqual([]);
+    expect(linksOfList(null)).toEqual([]);
+    expect(RELATIONSHIPS.map((r) => [r.id, listOfLink(r.id)])).toEqual([
+      ["personPerson", "person-roles"],
+      ["propertyProperty", "property-property-roles"],
+      ["documentDocument", "document-document-roles"],
+      ["personProperty", "person-roles"],
+      ["personDocument", "person-roles"],
+      ["documentProperty", null],
+    ]);
+  });
+
+  it("a list chosen marks every link it configures, and itself (Ask first #1)", () => {
+    expect(markedLinks("person-roles", null)).toEqual({ links: ["personPerson", "personProperty", "personDocument"], list: "person-roles" });
+    expect(markedLinks("document-document-roles", null)).toEqual({ links: ["documentDocument"], list: "document-document-roles" });
+    // A list outside the group marks nothing.
+    expect(markedLinks("citizenships", null)).toEqual({ links: [], list: null });
+  });
+
+  it("a link pressed marks that link only, and its list (Ask first #2)", () => {
+    expect(markedLinks("person-roles", { id: "personProperty", on: "person-roles" })).toEqual({ links: ["personProperty"], list: "person-roles" });
+  });
+
+  it("6 marks alone, the open list unmarked (Ask first #3)", () => {
+    expect(markedLinks("person-roles", { id: "documentProperty", on: "person-roles" })).toEqual({ links: ["documentProperty"], list: null });
+  });
+
+  it("a press counts only while its list is open — Back or the column fall back to the list's set (Ask first #4)", () => {
+    expect(markedLinks("property-property-roles", { id: "personProperty", on: "person-roles" })).toEqual({ links: ["propertyProperty"], list: "property-property-roles" });
+  });
+
+  it("the column's chosen list in „Roluri și legături” is the yellow, the other groups keep the navy", () => {
+    expect(HUB).toContain('const linkGroup = category.id === "rolesLinks";');
+    expect(HUB).toContain("const marked = linkGroup && key === marking.list;");
+    expect(HUB).toMatch(/marked\s*\? LINK_MARK_BOX\s*: current && !linkGroup\s*\? "bg-cta font-medium text-white"/);
+    expect(HUB).toContain("titleMarked={marking.list === selected}");
+  });
+
+  it("is #facc15 with #111827 text and rim — the side-road calculation's yellow — and says itself without colour too", () => {
+    const mark = read("src/lib/ui/link-mark.ts");
+    expect(mark).toContain('export const LINK_MARK_FILL = "#facc15";');
+    expect(mark).toContain('export const LINK_MARK_INK = "#111827";');
+    expect(read("src/app/admin/calculation/_components/preview-map.tsx")).toContain('"#facc15"');
+    expect(TILE).toContain('aria-current={on ? "true" : undefined}');
+    expect(TILE).toContain("aria-pressed={on}");
+    expect(TILE).toContain('aria-current={isMarked(r) ? "true" : undefined}');
+    expect(read("src/app/admin/value-lists/_components/value-list-modal.tsx")).toContain('aria-current={titleMarked ? "true" : undefined}');
   });
 });

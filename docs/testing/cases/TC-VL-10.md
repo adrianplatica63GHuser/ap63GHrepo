@@ -40,6 +40,7 @@ At 1366 × 1000 px, then at 1920 × 1000.
 | 5 | Still on „Roluri Persoane", scrolls the page to the list, then the list to its last row | The list's frame takes most of the screen; its column titles stay at its top while the rows move (#38.56's frame, measured from the list's own card since the tile stands above it) |
 | 6 | Opens „Cetățenie" | No tile above it |
 | 7 | Back on „Roluri Persoane", looks at the tile (#38.67; the spec reads it after step 2) | The title and its sentence over the drawing, in a column no wider than the drawing (±8 px); the drawing about 20 % smaller than before (between 75 and 85 % of 416 px), its words not under 12 px; the six beside the column, the first within 8 px of the tile's top; a vertical divider between them that runs the tile's full height; no divider across the tile under the title |
+| 8 | Still on „Roluri Persoane" (#38.68; the spec runs it before step 6): presses 4 on the drawing; then „Legături Document → Document" in the column; then 6 | After 4: 4 is the heavy yellow on the drawing and among the six, and so are „Roluri Persoane" in the column and the list's title; 1 and 5 are not. After the column: 3 is yellow, and the list's name and title. After 6: only 6 is yellow; „Legături Document → Document" stays open, its name and title not yellow. A marked number or entry also says so to a screen reader (aria-current, aria-pressed on 6) |
 
 ## At the end — leaving things as they were found
 
@@ -53,3 +54,6 @@ run).
 
 **2026-10-10 — `automated` (Slice #38.67).** Step 7 added: the title over a smaller drawing, the six beside them
 from the top behind a full-height divider. The test runner ran it green.
+
+**2026-10-10 — `automated` (Slice #38.68).** Step 8 added: one link, the heavy yellow in four places; the test runner
+ran it green.
