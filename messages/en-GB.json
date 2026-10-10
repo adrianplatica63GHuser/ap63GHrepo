@@ -418,7 +418,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",
-      "body": "This property can't be deleted from this screen. You must first disassociate it from the record you opened it from, then open it from the left navigation panel and delete it there.",
+      "body": "This property can't be deleted from this screen. You must first disassociate it from the object you opened it from, then open it from the left navigation panel and delete it there.",
       "ok": "OK"
     },
     "table": {
@@ -450,7 +450,7 @@
     "tileSubtitles": {
       "cadastral": "Tarla, parcel, land book, cadastral no., areas",
       "address": "The property's postal address",
-      "related": "People, properties and documents linked to this record",
+      "related": "People, properties and documents linked to this property",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
       "corners": "The parcel's corners (Stereo 70), in order"
@@ -634,7 +634,7 @@
       "close": "Close",
       "readonly": "Read-only",
       "loading": "Loading…",
-      "error": "The record could not be read.",
+      "error": "The object could not be read.",
       "firstPage": "First page",
       "noPage": "No page attached",
       "bornMale": "born:",
@@ -665,12 +665,12 @@
       }
     },
     "recordSync": {
-      "stale": "Nothing was saved: this record was saved in another window or by another user since you opened it. What you typed is still on screen.",
-      "saved": "This record was saved in another window. Your changes here are not saved, and saving them will be refused.",
-      "deleted": "This record was deleted in another window.",
+      "stale": "Nothing was saved: this object was saved in another window or by another user since you opened it. What you typed is still on screen.",
+      "saved": "This object was saved in another window. Your changes here are not saved, and saving them will be refused.",
+      "deleted": "This object was deleted in another window.",
       "reload": "Reload",
       "backToList": "Back to list",
-      "confirmTitle": "Reload the record?",
+      "confirmTitle": "Reload the object?",
       "confirmBody": "The values you typed and did not save are lost; the current version is loaded.",
       "confirmYes": "Reload",
       "confirmNo": "Cancel"
@@ -916,7 +916,7 @@
         "add": "+ Add to group",
         "addPlaceholder": "select a group",
         "remove": "Remove from group",
-        "limit": "A record can belong to at most {max} groups. Remove it from one to add it to another.",
+        "limit": "An object can belong to at most {max} groups. Remove it from one to add it to another.",
         "limitReached": "At most {max} groups",
         "noneAvailable": "no group available",
         "members": "{count, plural, one {# member} other {# members}}"
@@ -937,7 +937,7 @@
         "remove": "Remove link",
         "codePlaceholder": "Entity code",
         "notePlaceholder": "Why this link matters (optional)",
-        "codeHint": "Type the other record's code: PPERS (natural person), JPERS (judicial person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
+        "codeHint": "Type the other object's code: PPERS (natural person), JPERS (judicial person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
         "empty": "No cross-references added yet",
         "referencedBy": "referenced by",
         "typePerson": "Person",
@@ -1154,7 +1154,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",
-      "body": "This person can't be deleted from this screen. You must first disassociate them from the record you opened them from, then open them from the left navigation panel and delete them there.",
+      "body": "This person can't be deleted from this screen. You must first disassociate them from the object you opened them from, then open them from the left navigation panel and delete them there.",
       "ok": "OK"
     },
     "hints": {
@@ -1190,7 +1190,7 @@
       "idCard": "Identity card or passport",
       "contact": "Phone numbers and e-mail addresses",
       "addresses": "Home and correspondence",
-      "related": "People, properties and documents linked to this record",
+      "related": "People, properties and documents linked to this person",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
       "interactions": "History of interactions with this person"
@@ -1287,7 +1287,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",
-      "body": "This judicial person can't be deleted from this screen. You must first disassociate it from the record you opened it from, then open it from the left navigation panel and delete it there.",
+      "body": "This judicial person can't be deleted from this screen. You must first disassociate it from the object you opened it from, then open it from the left navigation panel and delete it there.",
       "ok": "OK"
     },
     "hints": {
@@ -1309,7 +1309,7 @@
       "identity": "Name, tax ID (CUI), Trade Register",
       "contactPersons": "The firm's representatives and contact persons",
       "addresses": "Registered office and correspondence",
-      "related": "People, properties and documents linked to this record",
+      "related": "People, properties and documents linked to this judicial person",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
       "interactions": "History of interactions with this firm"
@@ -1696,7 +1696,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",
-      "body": "This document can't be deleted from this screen. You must first disassociate it from the record you opened it from, then open it from the left navigation panel and delete it there.",
+      "body": "This document can't be deleted from this screen. You must first disassociate it from the object you opened it from, then open it from the left navigation panel and delete it there.",
       "ok": "OK"
     },
     "tiles": {
@@ -1717,7 +1717,7 @@
       "fields": "The fields specific to this document type",
       "succession": "The deceased and the heirs",
       "pages": "Scans of the document's pages",
-      "related": "People, properties and documents linked to this record",
+      "related": "People, properties and documents linked to this document",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
       "parties": "The sellers and the buyers, with their shares"
@@ -2282,7 +2282,7 @@
       "selectTarget": "Choose a value…",
       "move": "Move",
       "moving": "Moving…",
-      "moved": "{count, plural, =0 {Nothing was moved.} one {# record was moved.} other {# records were moved.}}",
+      "moved": "{count, plural, =0 {Nothing was moved.} one {# object was moved.} other {# objects were moved.}}",
       "removedWithRow": "Deleting it also removes:",
       "errors": {
         "sameValue": "The value you picked is the one you are deleting. Choose another.",
@@ -2349,7 +2349,7 @@
       "button": "Merge",
       "title": "Merge “{name}” into another value",
       "keep": "Value to keep",
-      "willMove": "{count, plural, one {One record moves to the value kept:} other {# records move to the value kept:}}",
+      "willMove": "{count, plural, one {One object moves to the value kept:} other {# objects move to the value kept:}}",
       "nothingMoves": "Nothing uses this value: after the merge it is gone and the value kept stays.",
       "confirm": "Merge",
       "merging": "Merging…"
@@ -3740,7 +3740,7 @@
     "loadError": "Failed to load dashboard",
     "recentCounts": {
       "title": "Added in the last {days, plural, one {day} other {# days}}",
-      "subtitle": "Newly added records",
+      "subtitle": "Newly added objects",
       "persons": "Persons",
       "properties": "Properties",
       "documents": "Documents"
@@ -3760,7 +3760,7 @@
     "staleMetadata": {
       "title": "Metadata needing attention",
       "allGood": "All metadata is up to date",
-      "description": "{total, plural, one {# record} other {# records}} with metadata not updated in over {days, plural, one {a day} other {# days}}",
+      "description": "{total, plural, one {# object} other {# objects}} with metadata not updated in over {days, plural, one {a day} other {# days}}",
       "persons": "persons",
       "properties": "properties",
       "documents": "documents",
@@ -3820,8 +3820,8 @@
         "documents_expiring_soon": "A document shows «expiring soon» {duration} ahead.",
         "metadata_review_warning": "A «Meta info» field not reviewed for {duration} shows a warning.",
         "id_card_expiring_soon": "An identity card is flagged «expiring soon» {duration} before it expires.",
-        "recency_badge_red": "A record changed at most {duration} ago carries the red «New!» badge.",
-        "recency_badge_amber": "A record changed at most {duration} ago carries the amber «New!» badge.",
+        "recency_badge_red": "An object changed at most {duration} ago carries the red «New!» badge.",
+        "recency_badge_amber": "An object changed at most {duration} ago carries the amber «New!» badge.",
         "recency_badge_window": "{duration} after the last change, the «New!» badge goes."
       },
       "example": "Example:"
@@ -3886,7 +3886,7 @@
       },
       "tileDefaults": {
         "title": "My defaults",
-        "intro": "The parts “Default” shows on a record's screen, for each kind of record. The ticks set on a screen stay the browser's; “Default” returns to what you save here.",
+        "intro": "The parts “Default” shows on an object's screen, for each kind of object. The ticks set on a screen stay the browser's; “Default” returns to what you save here.",
         "loading": "Loading…",
         "loadError": "Your defaults could not be read.",
         "kinds": {
@@ -4109,7 +4109,7 @@
     "title": "Reports — in progress",
     "intro": "Here you will be able to ask the archive business questions and get the answers as tables and charts.",
     "questions": "Reports will look at people, companies, properties and documents together, and at the links between them — for example: which properties changed owner most often, which documents expire soon and whose they are, how the properties divide by area, type and size, which people are linked by inheritances or shared contracts.",
-    "analysis": "You will be able to filter and group by period, place, type or person, compare one period with another, follow how a figure changes over time to see the trends, and find the exceptions — the records that do not fit the usual pattern. Starting from a total, you will be able to drill down to the records behind it.",
+    "analysis": "You will be able to filter and group by period, place, type or person, compare one period with another, follow how a figure changes over time to see the trends, and find the exceptions — the cases that do not fit the usual pattern. Starting from a total, you will be able to drill down to the cases behind it.",
     "results": "The results will come as tables you can sort and export, and as a wide range of charts: bars, lines, pie charts, maps, timelines and link diagrams.",
     "noSkills": "No technical knowledge is needed: choose what you want to find out, and the system does the analysis."
   },

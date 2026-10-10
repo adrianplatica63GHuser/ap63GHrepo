@@ -418,7 +418,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Nu se poate șterge de aici",
-      "body": "Această proprietate nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de înregistrarea din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
+      "body": "Această proprietate nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de obiectul din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
       "ok": "OK"
     },
     "table": {
@@ -450,7 +450,7 @@
     "tileSubtitles": {
       "cadastral": "Tarla, parcelă, CF, nr. cadastral, suprafețe",
       "address": "Adresa poștală a proprietății",
-      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "related": "Persoane, proprietăți și acte legate de această proprietate",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
       "corners": "Colțurile parcelei (Stereo 70), în ordine"
@@ -634,7 +634,7 @@
       "close": "Închide",
       "readonly": "Numai citire",
       "loading": "Se încarcă…",
-      "error": "Înregistrarea nu a putut fi citită.",
+      "error": "Obiectul nu a putut fi citit.",
       "firstPage": "Prima pagină",
       "noPage": "Nicio pagină atașată",
       "bornMale": "născut:",
@@ -665,12 +665,12 @@
       }
     },
     "recordSync": {
-      "stale": "Nu s-a salvat nimic: înregistrarea a fost salvată între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.",
-      "saved": "Această înregistrare a fost salvată în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.",
-      "deleted": "Această înregistrare a fost ștearsă în altă fereastră.",
+      "stale": "Nu s-a salvat nimic: obiectul a fost salvat între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.",
+      "saved": "Acest obiect a fost salvat în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.",
+      "deleted": "Acest obiect a fost șters în altă fereastră.",
       "reload": "Reîncarcă",
       "backToList": "Înapoi la listă",
-      "confirmTitle": "Reîncărcați înregistrarea?",
+      "confirmTitle": "Reîncărcați obiectul?",
       "confirmBody": "Valorile introduse și nesalvate se pierd; se încarcă versiunea curentă.",
       "confirmYes": "Reîncarcă",
       "confirmNo": "Anulează"
@@ -916,7 +916,7 @@
         "add": "+ Adaugă în grup",
         "addPlaceholder": "selectează un grup",
         "remove": "Elimină din grup",
-        "limit": "Un element poate face parte din cel mult {max} grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.",
+        "limit": "Un obiect poate face parte din cel mult {max} grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.",
         "limitReached": "Cel mult {max} grupuri",
         "noneAvailable": "niciun grup disponibil",
         "members": "{count, plural, one {# membru} few {# membri} other {# de membri}}"
@@ -937,7 +937,7 @@
         "remove": "Elimină trimiterea",
         "codePlaceholder": "Codul entității",
         "notePlaceholder": "De ce contează această legătură (opțional)",
-        "codeHint": "Scrieți codul celeilalte înregistrări: PPERS (persoană fizică), JPERS (persoană juridică), PROP (proprietate) sau DOC (act), urmat de număr — ex. PPERS00001.",
+        "codeHint": "Scrieți codul celuilalt obiect: PPERS (persoană fizică), JPERS (persoană juridică), PROP (proprietate) sau DOC (act), urmat de număr — ex. PPERS00001.",
         "empty": "Nicio trimitere adăugată încă",
         "referencedBy": "referit de",
         "typePerson": "Persoană",
@@ -1154,7 +1154,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Nu se poate șterge de aici",
-      "body": "Această persoană nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de înregistrarea din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
+      "body": "Această persoană nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de obiectul din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
       "ok": "OK"
     },
     "hints": {
@@ -1190,7 +1190,7 @@
       "idCard": "Carte de identitate sau pașaport",
       "contact": "Telefoane și adrese de e-mail",
       "addresses": "Domiciliu și corespondență",
-      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "related": "Persoane, proprietăți și acte legate de această persoană",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
       "interactions": "Istoricul interacțiunilor cu această persoană"
@@ -1287,7 +1287,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Nu se poate șterge de aici",
-      "body": "Această persoană juridică nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de înregistrarea din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
+      "body": "Această persoană juridică nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de obiectul din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
       "ok": "OK"
     },
     "hints": {
@@ -1309,7 +1309,7 @@
       "identity": "Denumire, CUI, Registrul Comerțului",
       "contactPersons": "Reprezentanții firmei și persoanele de contact",
       "addresses": "Sediu social și corespondență",
-      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "related": "Persoane, proprietăți și acte legate de această persoană juridică",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
       "interactions": "Istoricul interacțiunilor cu această firmă"
@@ -1696,7 +1696,7 @@
     },
     "cannotDeleteAssociated": {
       "title": "Nu se poate șterge de aici",
-      "body": "Acest act nu poate fi șters din acest ecran. Trebuie mai întâi să îl disociați de înregistrarea din care a fost deschis, apoi să îl deschideți din panoul de navigare din stânga și să îl ștergeți de acolo.",
+      "body": "Acest act nu poate fi șters din acest ecran. Trebuie mai întâi să îl disociați de obiectul din care a fost deschis, apoi să îl deschideți din panoul de navigare din stânga și să îl ștergeți de acolo.",
       "ok": "OK"
     },
     "tiles": {
@@ -1717,7 +1717,7 @@
       "fields": "Câmpurile proprii tipului de act",
       "succession": "Defunctul și moștenitorii",
       "pages": "Imaginile paginilor actului",
-      "related": "Persoane, proprietăți și acte legate de această înregistrare",
+      "related": "Persoane, proprietăți și acte legate de acest act",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
       "parties": "Vânzătorii și cumpărătorii, cu cotele lor"
@@ -2282,7 +2282,7 @@
       "selectTarget": "Alegeți o valoare…",
       "move": "Mută",
       "moving": "Se mută…",
-      "moved": "{count, plural, =0 {Nu s-a mutat nicio înregistrare.} one {# înregistrare a fost mutată.} few {# înregistrări au fost mutate.} other {# de înregistrări au fost mutate.}}",
+      "moved": "{count, plural, =0 {Nu s-a mutat niciun obiect.} one {Un obiect a fost mutat.} few {# obiecte au fost mutate.} other {# de obiecte au fost mutate.}}",
       "removedWithRow": "La ștergere se elimină și:",
       "errors": {
         "sameValue": "Valoarea aleasă este aceeași cu cea pe care o ștergeți. Alegeți alta.",
@@ -2349,7 +2349,7 @@
       "button": "Unește",
       "title": "Unește „{name}” cu altă valoare",
       "keep": "Valoarea păstrată",
-      "willMove": "{count, plural, one {O înregistrare se mută pe valoarea păstrată:} few {# înregistrări se mută pe valoarea păstrată:} other {# de înregistrări se mută pe valoarea păstrată:}}",
+      "willMove": "{count, plural, one {Un obiect se mută pe valoarea păstrată:} few {# obiecte se mută pe valoarea păstrată:} other {# de obiecte se mută pe valoarea păstrată:}}",
       "nothingMoves": "Nimic nu folosește această valoare: după unire ea dispare, valoarea păstrată rămâne.",
       "confirm": "Unește",
       "merging": "Se unește…"
@@ -3740,7 +3740,7 @@
     "loadError": "Eroare la încărcarea tabloului de bord",
     "recentCounts": {
       "title": "{days, plural, one {Adăugate în ultima zi} few {Adăugate în ultimele # zile} other {Adăugate în ultimele # de zile}}",
-      "subtitle": "Înregistrări nou adăugate",
+      "subtitle": "Obiecte nou adăugate",
       "persons": "Persoane",
       "properties": "Proprietăți",
       "documents": "Acte"
@@ -3760,7 +3760,7 @@
     "staleMetadata": {
       "title": "Metadate care necesită atenție",
       "allGood": "Toate metadatele sunt actualizate",
-      "description": "{total, plural, one {O înregistrare} few {# înregistrări} other {# de înregistrări}} cu metadate neactualizate de peste {days, plural, one {o zi} few {# zile} other {# de zile}}",
+      "description": "{total, plural, one {Un obiect} few {# obiecte} other {# de obiecte}} cu metadate neactualizate de peste {days, plural, one {o zi} few {# zile} other {# de zile}}",
       "persons": "persoane",
       "properties": "proprietăți",
       "documents": "acte",
@@ -3820,8 +3820,8 @@
         "documents_expiring_soon": "Un act apare «expiră curând» cu {duration} înainte.",
         "metadata_review_warning": "Un câmp din «Meta info» neverificat de {duration} arată un avertisment.",
         "id_card_expiring_soon": "O carte de identitate e semnalată «expiră curând» cu {duration} înainte de data expirării.",
-        "recency_badge_red": "O înregistrare schimbată acum cel mult {duration} poartă insigna «Nou!» roșie.",
-        "recency_badge_amber": "O înregistrare schimbată acum cel mult {duration} poartă insigna «Nou!» chihlimbar.",
+        "recency_badge_red": "Un obiect schimbat acum cel mult {duration} poartă insigna «Nou!» roșie.",
+        "recency_badge_amber": "Un obiect schimbat acum cel mult {duration} poartă insigna «Nou!» chihlimbar.",
         "recency_badge_window": "La {duration} după ultima schimbare, insigna «Nou!» dispare."
       },
       "example": "Exemplu:"
@@ -3886,7 +3886,7 @@
       },
       "tileDefaults": {
         "title": "Implicitele mele",
-        "intro": "Părțile pe care „Implicit” le arată pe ecranul unei înregistrări, pentru fiecare fel de înregistrare. Bifele puse pe un ecran rămân ale browserului; „Implicit” revine la ce salvați aici.",
+        "intro": "Părțile pe care „Implicit” le arată pe ecranul unui obiect, pentru fiecare fel de obiect. Bifele puse pe un ecran rămân ale browserului; „Implicit” revine la ce salvați aici.",
         "loading": "Se încarcă…",
         "loadError": "Implicitele nu au putut fi citite.",
         "kinds": {
@@ -4109,7 +4109,7 @@
     "title": "Rapoarte — în lucru",
     "intro": "Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice.",
     "questions": "Rapoartele vor privi împreună persoanele, firmele, proprietățile și actele și legăturile dintre ele — de exemplu: ce proprietăți și-au schimbat proprietarul cel mai des, ce acte expiră în perioada următoare și ale cui sunt, cum se împart proprietățile pe zone, tipuri și suprafețe, ce persoane sunt legate prin moșteniri sau contracte comune.",
-    "analysis": "Veți putea filtra și grupa după perioadă, loc, tip sau persoană, compara o perioadă cu alta, urmări cum evoluează o cifră în timp pentru a vedea tendințele, și găsi excepțiile — înregistrările care nu se potrivesc tiparului obișnuit. Pornind de la un total, veți putea coborî până la înregistrările din spatele lui.",
+    "analysis": "Veți putea filtra și grupa după perioadă, loc, tip sau persoană, compara o perioadă cu alta, urmări cum evoluează o cifră în timp pentru a vedea tendințele, și găsi excepțiile — cazurile care nu se potrivesc tiparului obișnuit. Pornind de la un total, veți putea coborî până la cazurile din spatele lui.",
     "results": "Rezultatele vor veni ca tabele pe care le puteți sorta și exporta și ca o varietate largă de grafice: bare, linii, diagrame circulare, hărți, axe de timp și diagrame de legături.",
     "noSkills": "Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza."
   },
