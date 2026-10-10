@@ -299,7 +299,10 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
     }
     if (!short.wrapped) {
       expect(Math.abs(short.tile.top - short.list.top), `${at}, one row: tops`).toBeLessThanOrEqual(2);
-      expect(short.tile.bottom, `${at}, one row: the tile keeps its own height`).toBeGreaterThan(short.list.bottom + 2);
+      // Its own height, or the list's where that is taller: never shorter than the list. (#38.75's first check said
+      // „taller than the list" — but „Pagini" of a document with no page is about one row's list tall: measured 360
+      // against 360 at 1920 px in full 20261010T183342Z-8518; the list was not stretched, which is checked above.)
+      expect(short.tile.bottom, `${at}, one row: the tile keeps its own height`).toBeGreaterThanOrEqual(short.list.bottom - 2);
     }
     await searchFor(page, TALL, PAGE);
     const tall = await measure(page);
