@@ -173,6 +173,49 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       expect(await bg(cardTitle)).not.toBe(YELLOW);
       await expect(page.locator('[data-relationship-triangle] [data-relationship="documentProperty"]')).toHaveAttribute("aria-pressed", "true");
 
+      // Step 9 — (#38.69) notes 5 and 6 italic and magenta, 1–4 not; each ⓘ opens its steps, Esc or a press outside closes
+      // them, and a list a step names opens.
+      const MAGENTA = "rgb(162, 28, 175)";
+      const note = (id: string) => page.locator(`[data-relationship-triangle] [data-note="${id}"]`);
+      const look = (id: string) => note(id).evaluate((el) => ({ italic: getComputedStyle(el).fontStyle, color: getComputedStyle(el).color }));
+      for (const id of ["personDocument", "documentProperty"]) expect([id, await look(id)]).toEqual([id, { italic: "italic", color: MAGENTA }]);
+      for (const id of ["personPerson", "propertyProperty", "documentDocument", "personProperty"]) {
+        const l = await look(id);
+        expect([id, l.italic === "italic" || l.color === MAGENTA]).toEqual([id, false]);
+      }
+      const info5 = note("personDocument").getByRole("button", { name: "Cum se configurează legătura Persoană – Document", exact: true });
+      await info5.click();
+      const panel5 = page.getByRole("dialog", { name: "Cum se configurează legătura Persoană – Document", exact: true });
+      await expect(panel5).toBeVisible();
+      await expect(panel5).toContainText("fila „Roluri”");
+      await expect(info5).toHaveAttribute("aria-expanded", "true");
+      if (width === 1366) {
+        await panel5.scrollIntoViewIfNeeded();
+        for (const scheme of ["light", "dark"] as const) {
+          await page.emulateMedia({ colorScheme: scheme });
+          await page.waitForTimeout(300);
+          // The window, not the tile: the explanation hangs over the tile's bottom edge.
+          await page.screenshot({ path: `playwright-report/value-list-page/magenta-info-1366-${scheme}.png` });
+        }
+        await page.emulateMedia({ colorScheme: "light" });
+      }
+      await page.keyboard.press("Escape");
+      await expect(panel5).toHaveCount(0);
+      await expect(info5).toBeFocused();
+      const info6 = note("documentProperty").getByRole("button", { name: "Cum se face legătura Document – Proprietate", exact: true });
+      await info6.click();
+      const panel6 = page.getByRole("dialog", { name: "Cum se face legătura Document – Proprietate", exact: true });
+      await expect(panel6).toBeVisible();
+      await page.locator("[data-relationship-triangle] h2").click();
+      await expect(panel6).toHaveCount(0);
+      await info6.click();
+      await page.keyboard.press("Escape");
+      await expect(panel6).toHaveCount(0);
+      // A list a step names opens, as the triangle's names do (Ask first #2).
+      await info5.click();
+      await panel5.getByRole("link", { name: "Roluri Persoane", exact: true }).click();
+      await expect(page).toHaveURL(/\?list=person-roles$/, { timeout: 15_000 });
+
       // Step 6 — a list outside „Roluri și legături" has no tile.
       await page.goto("/admin/value-lists?list=citizenships");
       await expect(page.getByRole("region", { name: "Cetățenie", exact: true })).toBeVisible({ timeout: 30_000 });

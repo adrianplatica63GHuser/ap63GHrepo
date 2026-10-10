@@ -197,3 +197,52 @@ describe("one link, marked in four places (Slice #38.68)", () => {
     expect(read("src/app/admin/value-lists/_components/value-list-modal.tsx")).toContain('aria-current={titleMarked ? "true" : undefined}');
   });
 });
+
+
+describe("notes 5 and 6 in magenta, each with an ⓘ (Slice #38.69)", () => {
+  const lum = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a: string, b: string) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+
+  it("reads at 4.5 : 1 or more on the card, light and dark", () => {
+    expect(TILE).toContain('export const NOTE_MAGENTA = { light: "#a21caf", dark: "#f0abfc" } as const;');
+    expect(TILE).toContain('const NOTE_MAGENTA_CLASS = "text-[#a21caf] dark:text-[#f0abfc]";');
+    expect(read("src/app/globals.css")).toContain("--color-card:      #EEF4FA;");
+    expect(contrast("#a21caf", "#EEF4FA")).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#f0abfc", "#18181b")).toBeGreaterThanOrEqual(4.5); // zinc-900, the card in dark mode
+  });
+
+  it("only 5's and 6's notes are magenta and italic; their words did not change", () => {
+    expect(TILE).toContain('const INFO_NOTES: readonly RelationshipId[] = ["personDocument", "documentProperty"];');
+    expect(TILE).toContain("<div className={`text-xs italic leading-relaxed ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>");
+    expect(tri("ro").relations.personDocument.where).toBe("Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document.");
+    expect(tri("ro").relations.documentProperty.where).toBe("Nicio listă: tipul documentului spune ce înseamnă legătura.");
+  });
+
+  it("every ⓘ has its label and three steps in both languages, and the lists they name are links", () => {
+    for (const l of ["ro", "en"] as const) {
+      const info = (MSG[l].valueList.triangle as unknown as { info: Record<string, Record<string, string>> }).info;
+      expect(Object.keys(info)).toEqual(["personDocument", "documentProperty"]);
+      for (const id of Object.keys(info)) expect(Object.keys(info[id])).toEqual(["label", "s1", "s2", "s3"]);
+      expect(info.personDocument.s1).toMatch(/<roles>[^<]+<\/roles>/);
+      expect(info.personDocument.s2).toMatch(/<types>[^<]+<\/types>/);
+      expect(info.documentProperty.s1).toMatch(/<types>[^<]+<\/types>/);
+    }
+    expect(TILE).toContain('{ roles: listLink("person-roles"), types: listLink("document-types") }');
+    expect(HUB).toContain("onOpenList={chooseList}");
+  });
+
+  it("the ⓘ is a real button: named, a press outside or Esc closes it (`usePressAway`)", () => {
+    const info = read("src/lib/ui/info-press.tsx");
+    expect(info).toContain("aria-label={label}");
+    expect(info).toContain("aria-expanded={open}");
+    expect(info).toContain("usePressAway<HTMLSpanElement>(open, (how) => {");
+    expect(info).toContain('if (how === "escape") button.current?.focus();');
+    expect(info).toContain('className={buttonClass({ variant: "ghost", size: "xs", pill: true');
+  });
+});

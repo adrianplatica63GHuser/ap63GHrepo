@@ -126,6 +126,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A085", "<title>{openLabel(r)}</title> {mark}"], // #38.62: a corner's or side's number opens its list
     ["A085", "{name(r)}"], // #38.62: the relationship's name opens its list — the name is the place
     ["A085", "<title>{name(r)}</title> {mark}"], // #38.68: 6's number is pressed too — it marks 6 alone, opens nothing
+    ["A096", "{chunks}"], // #38.69: a list named in a step of the ⓘ — a link in a sentence, the same tab
   ],
   "src/app/admin/value-lists/_components/document-type-page.tsx": [
     ["A111", "{t(`tabs.${key}`)}"], // #38.39: General / Formular / Roluri
@@ -267,6 +268,9 @@ const ALLOW: Record<string, Allowed[]> = {
   ],
   "src/lib/ui/hint-bubble.tsx": [
     ["INFO", "<span aria-hidden=\"true\" data-info-glyph=\"\" className={INFO_GLYPH} style={INFO_G"], // #38.08
+  ],
+  "src/lib/ui/info-press.tsx": [
+    ["INFO", "<span aria-hidden=\"true\" data-info-glyph=\"\" className={INFO_GLYPH} style={INFO_G"], // #38.69: the same ⓘ, opened by a press
   ],
   "src/lib/ui/icon-button.tsx": [
     ["ICONBUTTON", "{inner}"],
