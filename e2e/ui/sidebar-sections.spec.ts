@@ -35,6 +35,7 @@ const ITEMS: Record<string, [string, string][]> = {
     ["Persoane Juridice", "/judicial-persons"],
     ["Proprietăți", "/properties"],
     ["Acte", "/documents"],
+    ["Interacțiuni", "/interactions"], // Slice #38.84
   ],
   Instrumente: [
     ["Căutare globală", "/admin/global-search"],
@@ -59,6 +60,7 @@ const LINKS: [string, string | null, string][] = [
   ["Persoane Juridice", "Domeniu", "Persoană juridică"],
   ["Proprietăți", "Domeniu", "Proprietăți"],
   ["Acte", "Domeniu", "Acte"],
+  ["Interacțiuni", "Domeniu", "Interacțiuni"], // Slice #38.84
   ["Căutare globală", "Instrumente", "Căutare globală"],
   ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],
   ["Calcul drum lateral", "Instrumente", "Calcul"],
