@@ -42,6 +42,9 @@ Nothing.
 | 3 | „Proprietăți": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Teren`; under it, labels above values, three rows: „Nr. parcelă" `77/1`, „Tarla/Solă" (the tarla's indicativ), „Suprafață (mp)" 1234.00 on the first; „Poreclă" on the second; „Carte funciară" and „Nr. cadastral" („—") on the third |
 | 4 | „Acte": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Act`; no „Tip document" and no „Etichetă scurtă" in it; one row „Subiect", „Nr. document", „Data" with „Adeverință de rol fiscal", `123/2020`, `04.05.2020`; then „Prima pagină" |
 | 5 | On each of the four lists, before and after each step's preview (#38.71) | The row's first button is the magnifier, „Previzualizare", and its last „Deschide"; the magnifier reads not pressed, then pressed while its preview is open; pressed again, it closes the preview and reads not pressed |
+| 6 | On each of the four lists: a row's magnifier, then its eye (#38.72) | The row reads „Previzualizare", „Incursiune", „Deschide". The eye shows, beside the list, the object's tile — „Interacțiuni" for a person and for the company, „Hartă" for the property, „Pagini" for the document — filling the row to the content area's right edge (±8 px) at 1366 and 1920 px; the eye reads pressed, the preview has closed and every magnifier is disabled. The eye again closes it and frees them |
+| 7 | „Persoane Fizice": Ioana's eye, then „Contact Unu"'s (#38.72) | One Incursiune, moved to „Contact Unu"; Ioana's eye reads not pressed |
+| 8 | „Acte": the document's eye (#38.72) | „Pagini" with no „+ Adaugă pagină" and no turn or „Salvează" — a look, not an edit |
 
 ## At the end — leaving things as they were found
 
@@ -75,3 +78,6 @@ the sidebar item by its new name; nothing else in them changed.
 
 **2026-10-10 — `automated` (Slice #38.71).** Step 5 added: the magnifier first and a toggle on each of the four lists; the
 test runner ran it green.
+
+**2026-10-10 — `automated` (Slice #38.72).** Steps 6–8 added: the Incursiune on the four lists; the test runner ran them
+green.

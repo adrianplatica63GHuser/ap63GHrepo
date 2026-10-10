@@ -47,9 +47,10 @@ describe("the four lists, one line per row (#38.57)", () => {
     expect((VIEW[l].match(/\bONE_LINE\b/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 
-  it.each(LISTS)("%s: the row's buttons on one line, in a column as wide as they measured (60 px)", (l) => {
+  it.each(LISTS)("%s: the row's buttons on one line, in a column as wide as they measured (94 px, three since #38.72)", (l) => {
     expect(VIEW[l]).toContain('<span className="flex flex-nowrap gap-2" data-row-actions="">');
-    expect(content("listRowActions")).toBeGreaterThanOrEqual(60);
+    // #38.57 held two xs buttons (60 px); #38.72 adds the eye between them — three side by side, 94 px.
+    expect(content("listRowActions")).toBeGreaterThanOrEqual(94);
   });
 
   it("the property list's badges side by side — „Încrucișat” no longer on a line of its own", () => {

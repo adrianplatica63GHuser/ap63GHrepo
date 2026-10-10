@@ -49,6 +49,59 @@ async function closeByMagnifier(page: Page, name: string): Promise<void> {
   await expect(row.getByRole("button", { name: "Previzualizare", exact: true })).toHaveAttribute("aria-pressed", "false");
 }
 
+/**
+ * Slice #38.72: the eye, „Incursiune", on one list. The row reads magnifier, eye, arrow; with a preview open,
+ * the eye shows the object's tile beside the list — `inner` finds the reused tile in it — filling the row to the
+ * content area's right edge (±8 px) at 1366 and 1920 px, the preview closed and every magnifier disabled; the
+ * eye again closes it and frees them. A picture at each width (the spec's own records only).
+ */
+async function peek(page: Page, list: string, name: string, kind: string, inner: (tile: Locator) => Locator, shot: string): Promise<void> {
+  await page.goto(list);
+  const main = page.locator("main");
+  const search = main.locator('input[placeholder^="caută"]').first();
+  await expect(search).toBeVisible({ timeout: 30_000 });
+  await search.fill(MARK);
+  const row = main.locator("tbody tr").filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
+  const actions = row.locator("[data-row-actions]").locator("a, button");
+  await expect(actions.nth(0)).toHaveAccessibleName("Previzualizare");
+  await expect(actions.nth(1)).toHaveAccessibleName("Incursiune");
+  await expect(actions.nth(2)).toHaveAccessibleName("Deschide");
+  // …and all three inside the table's frame, none cut at its edge.
+  const cut = await row.evaluate((r) => {
+    const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
+    return [...r.querySelectorAll<HTMLElement>("[data-row-actions] a, [data-row-actions] button")].filter((b) => b.getBoundingClientRect().right > frame.right + 0.5).length;
+  });
+  expect(cut, `${list}: buttons cut at the table's edge`).toBe(0);
+  const magnifier = row.getByRole("button", { name: "Previzualizare", exact: true });
+  const eye = row.getByRole("button", { name: "Incursiune", exact: true });
+  await magnifier.click();
+  await expect(page.locator("[data-preview]")).toHaveCount(1, { timeout: 30_000 });
+  await eye.click();
+  const tile = page.locator(`[data-incursion="${kind}"]`);
+  await expect(tile).toBeVisible({ timeout: 30_000 });
+  await expect(inner(tile)).toBeVisible({ timeout: 30_000 });
+  await expect(eye).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("[data-preview]")).toHaveCount(0);
+  await expect(magnifier).toBeDisabled();
+  for (const width of [1366, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForTimeout(400);
+    const gap = await page.evaluate((k) => {
+      const m = document.querySelector("main")!;
+      const content = m.getBoundingClientRect().right - parseFloat(getComputedStyle(m).paddingRight);
+      return content - document.querySelector(`[data-incursion="${k}"]`)!.getBoundingClientRect().right;
+    }, kind);
+    expect(Math.abs(gap), `${list} at ${width}: the tile ends ${gap} px before the content area's right edge`).toBeLessThanOrEqual(8);
+    await page.screenshot({ path: `playwright-report/incursion/${shot}-${width}.png` });
+  }
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await eye.click();
+  await expect(tile).toHaveCount(0);
+  await expect(eye).toHaveAttribute("aria-pressed", "false");
+  await expect(magnifier).toBeEnabled();
+}
+
 /** A compact line's values, as read: the values' own text, not their read-aloud labels. */
 async function linesOf(tile: Locator): Promise<string[]> {
   return tile.evaluate((el) => [...el.querySelectorAll("[data-preview-line]")].map((l) =>
@@ -117,6 +170,43 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       await expect(d.getByText("Prima pagină", { exact: true })).toBeVisible();
       await page.screenshot({ path: "playwright-report/magnifier/documents-pressed-1366.png" });
       await closeByMagnifier(page, "Act");
+
+      // Step 6 — (#38.72) „Incursiune" on each of the four lists: its tile beside the list, filling the row.
+      await peek(page, "/natural-persons", "Ioana", "person", (t) => t.locator('[data-tile="interactions"]'), "natural-persons");
+      await peek(page, "/judicial-persons", "Firmă", "company", (t) => t.locator('[data-tile="interactions"]'), "judicial-persons");
+      await peek(page, "/properties", "Teren", "property", (t) => t.locator("[data-incursion-map]"), "properties");
+      await peek(page, "/documents", "Act", "document", (t) => t.locator('section[aria-label="Pagini"]'), "documents");
+      // In peek mode „Pagini" offers no write: no „+ Adaugă pagină", no turn, no „Salvează".
+      // (Read on the open tile, below, where the documents' Incursiune is opened again.)
+
+      // Step 7 — one at a time: on Persoane Fizice, another row's eye moves it there.
+      await page.goto("/natural-persons");
+      const search = page.locator("main").locator('input[placeholder^="caută"]').first();
+      await expect(search).toBeVisible({ timeout: 30_000 });
+      await search.fill(MARK);
+      const rows = page.locator("main tbody tr");
+      await expect(rows).toHaveCount(3, { timeout: 30_000 });
+      const eyeOf = (name: string) => rows.filter({ hasText: name }).getByRole("button", { name: "Incursiune", exact: true });
+      await eyeOf("Ioana").click();
+      await expect(page.locator("[data-incursion]")).toHaveCount(1, { timeout: 30_000 });
+      await eyeOf("Unu").click();
+      await expect(page.locator("[data-incursion]")).toHaveCount(1);
+      await expect(page.locator("[data-incursion] h2").first()).toContainText("Unu"); // its own head; the reused tile has an h2 too
+      await expect(eyeOf("Ioana")).toHaveAttribute("aria-pressed", "false");
+      await expect(eyeOf("Unu")).toHaveAttribute("aria-pressed", "true");
+
+      // Step 8 — the documents' Incursiune draws no write.
+      await page.goto("/documents");
+      const dsearch = page.locator("main").locator('input[placeholder^="caută"]').first();
+      await expect(dsearch).toBeVisible({ timeout: 30_000 });
+      await dsearch.fill(MARK);
+      const docRow = page.locator("main tbody tr").filter({ hasText: `${MARK} Act` });
+      await expect(docRow).toHaveCount(1, { timeout: 30_000 });
+      await docRow.getByRole("button", { name: "Incursiune", exact: true }).click();
+      const pagesTile = page.locator('[data-incursion="document"]');
+      await expect(pagesTile.locator('section[aria-label="Pagini"]')).toBeVisible({ timeout: 30_000 });
+      await expect(pagesTile.getByRole("button", { name: "+ Adaugă pagină" })).toHaveCount(0);
+      await expect(pagesTile.locator("[data-page-turn]")).toHaveCount(0);
     } finally {
       for (const [k, id] of [["document", doc], ["property", property], ["company", company], ["person", person], ["person", c1], ["person", c2]] as const) {
         await removeRecord(page.request, k, id);

@@ -85,7 +85,8 @@ describe("a list's previews stand in one column beside the table (#38.05)", () =
   it("the four lists draw their table through it", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
-      expect([dir, /<ListPreviews>/.test(view)]).toEqual([dir, true]);
+      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile.
+      expect([dir, /<ListPreviews( incursion=\{IncursionTile\})?>/.test(view)]).toEqual([dir, true]);
     }
   });
 });
