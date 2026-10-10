@@ -35,7 +35,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type CSSProp
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
-import { Eye } from "lucide-react";
+import { Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { loadPreview } from "./preview-data";
@@ -58,34 +58,50 @@ export function usePreviews(): Previews {
   return useMemo(() => ({ open, show, close }), [open, show, close]);
 }
 
-const OpenerContext = createContext<((target: PreviewTarget) => void) | null>(null);
+/** Slice #38.71: the whole set, not only `show` — a magnifier is pressed while its preview is open, and closes it. */
+const OpenerContext = createContext<Previews | null>(null);
 
 /** Lets the association tiles inside a detail screen open previews on it. */
 export function PreviewOpenerProvider({ previews, children }: { previews: Previews; children: ReactNode }) {
-  return <OpenerContext.Provider value={previews.show}>{children}</OpenerContext.Provider>;
+  return <OpenerContext.Provider value={previews}>{children}</OpenerContext.Provider>;
 }
 
 /**
  * „Previzualizare" on an association row or a list row. Drawn only inside a
  * detail screen or a list that shows previews (`ListPreviews`, #37.25);
  * anywhere else it is absent.
+ *
+ * Slice #38.71: a MAGNIFIER, and a TOGGLE. It was the eye (#37.42, A017); Adrian gave the eye a new job on the
+ * lists, „Incursiune" (#38.72), so the preview takes the magnifier — everywhere it is drawn, the association tiles
+ * included (Ask first #1), so the eye never means „Previzualizare". Pressed, it opens its row's preview and is
+ * drawn pressed — the navy fill with a white icon, the app's look for a chosen item (Ask first #2) — and says so in
+ * words too (`aria-pressed`; its name stays „Previzualizare"). Pressed again, it closes that preview. It is
+ * pressed exactly while its preview is open, so when a third preview replaces the oldest, the oldest row's
+ * magnifier is released with it (Ask first #3), and „Închide" on the tile releases it as well.
  */
 export function PreviewButton({ target }: { target: PreviewTarget }) {
-  const open = useContext(OpenerContext);
+  const previews = useContext(OpenerContext);
   const t = useTranslations("shared.preview");
-  if (!open) return null;
+  if (!previews) return null;
+  const key = previewKey(target);
+  const pressed = previews.open.some((p) => previewKey(p) === key);
   return (
-    // #37.42 (A017): Eye, its words the name and the tooltip.
     <IconButton
-      icon={Eye}
+      icon={Search}
       label={t("openPreview")}
-      variant="secondary"
+      variant={pressed ? "primary" : "secondary"}
       size="xs"
+      aria-pressed={pressed}
+      data-preview-toggle=""
       onClick={(e) => {
         e.stopPropagation();
+        if (pressed) {
+          previews.close(key);
+          return;
+        }
         // Slice #37.75: the tile it was pressed in — the preview opens right under it.
         const anchor = (e.currentTarget as HTMLElement).closest<HTMLElement>("[data-tile]")?.dataset.tile;
-        open(anchor ? { ...target, anchor } : target);
+        previews.show(anchor ? { ...target, anchor } : target);
       }}
       onDoubleClick={(e) => e.stopPropagation()}
     />

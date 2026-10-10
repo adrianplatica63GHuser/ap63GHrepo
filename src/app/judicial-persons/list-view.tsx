@@ -364,6 +364,8 @@ export function JudicialPersonListView() {
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
                     <span className="flex flex-nowrap gap-2" data-row-actions="">
+                      {/* Slice #38.71: the magnifier first, „Deschide" last (#38.72 puts the eye between them). */}
+                      <PreviewButton target={{ kind: "company", id: item.id }} />
                       <IconButton
                         href={`/judicial-persons/${item.id}`}
                         icon={ArrowRight}
@@ -371,7 +373,6 @@ export function JudicialPersonListView() {
                         variant="secondary"
                         size="xs"
                       />
-                      <PreviewButton target={{ kind: "company", id: item.id }} />
                     </span>
                   </td>
                 </tr>
