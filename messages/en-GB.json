@@ -1375,6 +1375,7 @@
       "judicialPeople": "Judicial Persons",
       "propertyList": "Properties",
       "document": "Documents",
+      "interactions": "Interactions",
       "checkCorrelations": "Correlation check",
       "inheritanceTrees": "Inheritance trees",
       "miscFolders": "Miscellaneous folders",
@@ -1435,6 +1436,7 @@
         "properties-map": "Properties — Map",
         "documents-list": "Documents — List",
         "document-detail": "Documents — Detail / New",
+        "interactions": "Interactions — History",
         "natural-persons-list": "Persons — Natural Person List",
         "natural-person-detail": "Persons — Natural Person Detail / New",
         "judicial-persons-list": "Persons — Judicial Person List",
@@ -3914,6 +3916,7 @@
       "properties": "Properties",
       "propertiesMap": "Full map",
       "documents": "Documents",
+      "interactions": "Interactions",
       "sections": {
         "domain": "Domain",
         "functions": "Tools",
@@ -4198,6 +4201,75 @@
       "SENT": "Sent",
       "COMPLETED": "Completed",
       "SCHEDULED": "Scheduled"
-    }
+    },
+    "screen": {
+      "scopeAll": "All clients",
+      "scopeClear": "Show all clients",
+      "searchLabel": "Search the history",
+      "search": "Search person or subject…",
+      "count": "{count, plural, one {# interaction} other {# interactions}}",
+      "needsReply": "Needs reply: {count}",
+      "historyTitle": "Interaction history",
+      "logTitle": "Log interaction",
+      "logPlaceholder": "A new interaction will be logged here, and the one chosen in the history changed.",
+      "error": "The history could not be loaded. The filters are as they were.",
+      "retry": "Retry",
+      "emptyFiltered": "No interactions in this view.",
+      "emptyLog": "Nothing logged yet.",
+      "logFirst": "Log the first interaction",
+      "noDescription": "No description",
+      "selectHint": "Select to edit",
+      "docsCount": "{count, plural, one {# linked document} other {# linked documents}}",
+      "docsLoading": "Loading the documents…"
+    },
+    "toolbar": {
+      "range": "Period",
+      "rangeHint": "Showing interactions in this range",
+      "preset": {
+        "today": "Today",
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "last90": "Last 90 days",
+        "thisYear": "This year",
+        "custom": "Custom"
+      },
+      "from": "From",
+      "to": "To",
+      "between": "{from} – {to}",
+      "since": "since {from}",
+      "always": "any time",
+      "channels": "Channels",
+      "direction": "Direction",
+      "directionAll": "All",
+      "directionIn": "In",
+      "directionOut": "Out",
+      "person": "Person",
+      "personSearch": "Search person…",
+      "personSearching": "Searching…",
+      "personNone": "No person found",
+      "personClear": "All people",
+      "newest": "Newest first",
+      "oldest": "Oldest first",
+      "sortedBy": "Sorted by {column}",
+      "clear": "Clear filters"
+    },
+    "column": {
+      "occurredAt": "Date",
+      "channel": "Channel",
+      "direction": "Direction",
+      "person": "Person",
+      "subject": "Subject",
+      "documents": "Docs",
+      "status": "Status"
+    },
+    "documents": {
+      "all": "All",
+      "with": "With linked documents",
+      "without": "Without linked documents"
+    },
+    "sortBy": "Sort by {column}",
+    "columnFilter": "Filter by {column}",
+    "resize": "Width of the {column} column",
+    "subjectContains": "Subject contains"
   }
 }

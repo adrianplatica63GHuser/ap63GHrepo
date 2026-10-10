@@ -29,6 +29,7 @@ describe("resolveHelpScreenKey", () => {
     it.each([
       ["/properties", "properties-list"],
       ["/documents", "documents-list"],
+      ["/interactions", "interactions"],
       ["/natural-persons", "natural-persons-list"],
       ["/judicial-persons", "judicial-persons-list"],
     ])("%s -> %s", (path, expected) => {

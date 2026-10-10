@@ -9,7 +9,7 @@
  */
 import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { interaction, interactionDocument, interactionTag, person } from "@/db/schema";
+import { document, interaction, interactionDocument, interactionTag, person } from "@/db/schema";
 import type { InteractionInput, InteractionListQuery, InteractionUpdate } from "./validation";
 import type { InteractionListItem, InteractionRecord } from "./model";
 
@@ -76,7 +76,9 @@ function toListItem(r: ListRow): InteractionListItem {
   };
 }
 
-export async function listInteractions(f: InteractionListQuery): Promise<{ items: InteractionListItem[]; total: number; needsReply: number }> {
+export async function listInteractions(
+  f: InteractionListQuery,
+): Promise<{ items: InteractionListItem[]; total: number; needsReply: number; anyLogged: boolean }> {
   const where = listWhere(f);
   const column = SORT_COLUMN[f.sort];
   const order = f.order === "asc" ? asc(column) : desc(column);
@@ -100,7 +102,15 @@ export async function listInteractions(f: InteractionListQuery): Promise<{ items
     .from(interaction)
     .innerJoin(person, eq(person.id, interaction.personId))
     .where(and(where, eq(interaction.status, "NEEDS_REPLY"), eq(interaction.direction, "INBOUND")));
-  return { items: rows.map(toListItem), total: Number(total), needsReply: Number(needsReply) };
+  // §3's two empty states: filters matching nothing, or a log truly empty — for the scope shown (#38.84).
+  const anyLogged =
+    Number(total) > 0 ||
+    (await db
+      .select({ id: interaction.id })
+      .from(interaction)
+      .where(f.personId ? eq(interaction.personId, f.personId) : undefined)
+      .limit(1)).length > 0;
+  return { items: rows.map(toListItem), total: Number(total), needsReply: Number(needsReply), anyLogged };
 }
 
 export async function getInteraction(id: string): Promise<InteractionRecord | null> {
@@ -118,7 +128,12 @@ export async function getInteraction(id: string): Promise<InteractionRecord | nu
     .innerJoin(person, eq(person.id, interaction.personId))
     .where(eq(interaction.id, id));
   if (!row) return null;
-  const docs = await db.select({ id: interactionDocument.documentId }).from(interactionDocument).where(eq(interactionDocument.interactionId, id));
+  const docs = await db
+    .select({ id: interactionDocument.documentId, title: document.title })
+    .from(interactionDocument)
+    .innerJoin(document, eq(document.id, interactionDocument.documentId))
+    .where(eq(interactionDocument.interactionId, id))
+    .orderBy(asc(interactionDocument.createdAt));
   const tags = await db.select({ tag: interactionTag.tag }).from(interactionTag).where(eq(interactionTag.interactionId, id)).orderBy(asc(interactionTag.tag));
   return {
     ...toListItem(row),
@@ -126,6 +141,7 @@ export async function getInteraction(id: string): Promise<InteractionRecord | nu
     internalNote: row.internalNote,
     relatedPropertyId: row.relatedPropertyId,
     documentIds: docs.map((d) => d.id),
+    documents: docs.map((d) => ({ id: d.id, title: d.title })),
     tags: tags.map((t) => t.tag),
     createdAt: row.createdAt.toISOString(),
     createdBy: row.createdBy,

@@ -50,6 +50,9 @@ export const HELP_SCREENS = [
   { key: "documents-list" },
   { key: "document-detail" },
 
+  // ── Interacțiuni (Slice #38.84) ─────────────────────────────────────────
+  { key: "interactions" },
+
   // ── Persons ─────────────────────────────────────────────────────────────
   { key: "natural-persons-list" },
   { key: "natural-person-detail" },

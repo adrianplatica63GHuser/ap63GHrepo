@@ -62,12 +62,15 @@ export function isFlatSectionActive(section: NavSectionMin, pathname: string): b
  * What an account WITHOUT FULL ACCESS may open from the sidebar — since #38.21
  * only an account with no app_users row (every other account has the whole
  * application, `hasFullAccess` in src/lib/auth/current-role.ts). It is the reach
- * a `user` had before #38.20 (the four lists) plus the dashboard at `/`.
+ * a `user` had before #38.20 (the four lists) plus the dashboard at `/` — and,
+ * since #38.84, „Interacțiuni", the domain's log of contacts, which no layout
+ * guards (`sidebar-nav-items.test.ts`: every address outside this list is an
+ * /admin/ screen or the static reports page).
  * Everything else — the administration screens, which src/app/admin/layout.tsx
  * refuses such an account server-side, „Rapoarte" and every placeholder —
  * stays out of its sidebar. An explicit list rather than a key prefix.
  */
-export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"];
+export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions"];
 
 /**
  * What the sidebar draws at all (Slice #38.42): an item with an `href` and no

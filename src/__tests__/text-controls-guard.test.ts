@@ -157,6 +157,15 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/documents/_components/succession-parties-panel.tsx": [
     ["A113", "{item.displayName}"],
   ],
+  // Slice #38.84 — „Interacțiuni": the period's trigger names its range; a person, a document and a count are data.
+  "src/app/interactions/_components/filter-controls.tsx": [
+    ["A113", "<span className=\"min-w-0 flex-1 truncate text-left\">{p.displayName"], // a person found, by name
+  ],
+  "src/app/interactions/_components/history-tile.tsx": [
+    ["A015", "<CalendarDays aria-hidden=\"true\" size={16} /> {t(`toolbar.preset."], // the period: its preset and its days
+    ["A113", "<Paperclip aria-hidden=\"true\" size={14} /> {count}"], // how many documents, opening them
+    ["A113", "<FileText aria-hidden=\"true\" size={16} /> {nameOr(d.title"], // a linked document, by its name
+  ],
   "src/app/documents/list-view.tsx": [
     ["A015", "<span className=\"text-fade\">{label}</span> {trigger.kind"], // #38.07: the trigger names one type, or says how many
     ["A110", "{noLabel}"],

@@ -44,7 +44,7 @@ describe("the nine sections in the config, in order, each with its items", () =>
     const tree = NAV_SECTIONS.map((s) => [nav(RO).sections[s.key], s.href ?? null, s.items.map((i) => [nav(RO).items[i.key], i.href ?? null])]);
     expect(tree).toEqual([
       ["Tablou de bord", "/", []],
-      ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"]]],
+      ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"], ["Interacțiuni", "/interactions"]]],
       ["Instrumente", null, [["Căutare globală", "/admin/global-search"], ["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Arbori de moștenire", null]]],
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
       ["Rapoarte", null, [["În lucru", "/reports"]]],
@@ -95,7 +95,7 @@ describe("what is drawn (#38.42)", () => {
   it("six sections, each with only built screens", () => {
     expect(drawn.map(ro)).toEqual([
       ["Tablou de bord", []],
-      ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
+      ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte", "Interacțiuni"]],
       ["Instrumente", ["Căutare globală", "Distilare Tipizate", "Calcul drum lateral"]],
       ["Import", ["Dosare de proprietăți"]],
       ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Informații de ajutor"]],
@@ -150,10 +150,10 @@ describe("the active section and item for every route", () => {
 });
 
 describe("an account without an app_users row sees what a `user` saw before #38.21", () => {
-  it("the dashboard and the four lists, nothing else", () => {
+  it("the dashboard, the four lists and „Interacțiuni” (#38.84), nothing else", () => {
     const seen = sectionsFor(NAV_SECTIONS, false);
     const hrefs = seen.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter(Boolean);
-    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"]);
+    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions"]);
   });
 
   it("the sidebar renders `sectionsFor(NAV_SECTIONS, fullAccess)`", () => {

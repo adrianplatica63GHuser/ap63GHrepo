@@ -17,8 +17,8 @@ export async function GET(request: NextRequest): Promise<Response> {
   const parsed = interactionListQuerySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    const { items, total, needsReply } = await listInteractions(parsed.data);
-    return Response.json({ items, total, needsReply, limit: parsed.data.limit, offset: parsed.data.offset });
+    const { items, total, needsReply, anyLogged } = await listInteractions(parsed.data);
+    return Response.json({ items, total, needsReply, anyLogged, limit: parsed.data.limit, offset: parsed.data.offset });
   } catch (err) {
     return unexpectedError(err, "GET /api/interactions");
   }

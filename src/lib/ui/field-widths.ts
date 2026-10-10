@@ -1363,6 +1363,25 @@ export function columnRem(name: ColumnName): number {
  * content is not a table of fixed columns (META INFO). An association list's
  * tile is as wide as its table, which #37.16 fixed.
  */
+/**
+ * „Interacțiuni"'s history grid (Slice #38.84): each column's starting width, in rem — the spec's grid (§3) lets the
+ * user drag a header's edge, and what they drag to is kept for the browser session. The subject takes what the
+ * others leave and is never narrower than its own; the rest hold their longest value at 14 px with 1rem of padding:
+ * a date over its time, the „Întâlnire" pill with its icon, the arrow and „Trimisă", the paperclip and a count, the
+ * „Așteaptă răspuns" pill — and each header its name, its sort and its funnel.
+ */
+export const INTERACTION_COLUMN_REM = {
+  occurredAt: 7,
+  channel: 7.5,
+  direction: 6.5,
+  person: 10,
+  subject: 10,
+  documents: 6.5,
+  status: 9,
+} as const;
+/** The narrowest a dragged column gets. */
+export const INTERACTION_COLUMN_MIN_REM = 4;
+
 export const TILE_REM = { small: PANEL_REM, wide: 2 * PANEL_REM + PANEL_GAP_REM } as const;
 export const WIDE_TILE_STYLE: CSSProperties = { width: rem(TILE_REM.wide) };
 
@@ -1477,6 +1496,11 @@ export const SCREEN = {
   valueDescription: { step: "XXL", kind: "lines", rows: 3 }, // a description, which grows downward
   docPersonsType: { step: "XL", kind: "select" }, //   Tip Document; a longer name shows on hover
   docPersonsRole: { step: "XL", kind: "select" }, //   Rol Persoană
+  // „Interacțiuni" (Slice #38.84)
+  interactionSearch: { step: "XL", kind: "fixed" }, // the module bar's search, on a person's name and the subject
+  interactionPerson: { step: "XL", kind: "fixed" }, // the person typeahead, as `searchText`
+  interactionSubject: { step: "L", kind: "fixed" }, // „Subiectul conține", a few words of a 120-character subject
+  interactionDay: { step: "M", kind: "fixed", sample: "00.00.0000" }, // „Personalizat"'s two days
 } as const satisfies Record<string, FieldWidth>;
 export type ScreenField = keyof typeof SCREEN;
 

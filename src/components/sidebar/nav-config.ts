@@ -20,6 +20,7 @@ import {
   LifeBuoy,
   Lightbulb,
   Map,
+  MessagesSquare,
   Network,
   Search,
   Settings,
@@ -108,6 +109,8 @@ export const NAV_SECTIONS: NavSection[] = [
       // (/properties/map) opens from the list, and this item is active there.
       { key: "propertyList", href: "/properties", icon: Map },
       { key: "document", href: "/documents", icon: FileText },
+      // Slice #38.84: the log of contacts with clients, after the four lists.
+      { key: "interactions", href: "/interactions", icon: MessagesSquare },
     ],
   },
   {

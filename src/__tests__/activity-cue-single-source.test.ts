@@ -41,6 +41,10 @@ const ALLOWLIST: Record<string, string> = {
   // load. No text, no live region, nothing to notice: a shimmer, not a cue.
   "app/_components/dashboard-client.tsx": "skeleton placeholder blocks",
 
+  // Slice #38.84: „Interacțiuni"'s history draws skeleton rows while it loads (the spec's §3: „skeleton rows,
+  // not a spinner over the whole tile") — grey bars standing in for cells, nothing to read or announce.
+  "app/interactions/_components/history-tile.tsx": "skeleton rows while the history loads",
+
   // This file names the pattern it retired.
   "__tests__/activity-cue-single-source.test.ts": "this file",
 };

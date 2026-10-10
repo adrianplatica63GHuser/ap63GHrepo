@@ -72,6 +72,8 @@ export interface InteractionRecord extends InteractionListItem {
   internalNote: string | null;
   relatedPropertyId: string | null;
   documentIds: string[];
+  /** The same documents with the name the archive gives each — the grid's paperclip popover (#38.84). */
+  documents: { id: string; title: string | null }[];
   tags: string[];
   createdAt: string;
   createdBy: string | null;

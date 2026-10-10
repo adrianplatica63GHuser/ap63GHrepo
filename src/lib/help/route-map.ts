@@ -132,6 +132,9 @@ export function resolveHelpScreenKey(pathname: string): HelpScreenKey | null {
     }
   }
 
+  // ── Interacțiuni (Slice #38.84) — one screen ────────────────────────────
+  if (head === "interactions") return second ? null : "interactions";
+
   // ── Entity sections ─────────────────────────────────────────────────────
   // "new" and "[id]" share the detail key: /properties/new and
   // /properties/[id] render the same form component, so a hint inside it

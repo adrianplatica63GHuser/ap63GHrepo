@@ -401,6 +401,7 @@ export function SidebarNav() {
     judicialPeople:            t("items.judicialPeople"),
     propertyList:              t("items.propertyList"),
     document:                  t("items.document"),
+    interactions:              t("items.interactions"), // Slice #38.84
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),

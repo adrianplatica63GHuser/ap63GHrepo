@@ -140,7 +140,7 @@ describe("sectionsFor — full access sees every drawn section; an account witho
     const seen = sectionsFor(MOCK_SECTIONS, false);
     expect(seen.map((s) => s.key)).toEqual(["dashboard", "domain"]);
     expect(seen[1].items.map((i) => i.href)).toEqual(["/natural-persons", "/judicial-persons", "/properties", "/documents"]);
-    expect(USER_HREFS).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents"]);
+    expect(USER_HREFS).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions"]);
   });
 
   it("does not change the sections it was given", () => {

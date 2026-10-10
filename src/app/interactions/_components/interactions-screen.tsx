@@ -1,0 +1,188 @@
+"use client";
+
+import { useDeferredValue, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Reply, Search, SquarePen, X } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
+import { screenBox } from "@/lib/ui/field-widths";
+import { useSessionValue } from "@/lib/ui/use-session-value";
+import { useNameOr } from "@/components/record/use-name-or";
+import {
+  DEFAULT_FILTERS,
+  DEFAULT_ORDER_STATE,
+  listQuery,
+  needsReplyFilters,
+  readOrder,
+  type InteractionFilters,
+  type InteractionOrder,
+} from "@/lib/interactions/filters";
+import { PAGE_DEFAULT } from "@/lib/interactions/model";
+import { MODULE_CARD } from "@/lib/interactions/palette";
+import { HistoryTile, type HistoryPage } from "./history-tile";
+
+/** The order chosen, kept for the browser session (§8.3). */
+const ORDER_KEY = "ga.interactions.order";
+
+/**
+ * „Interacțiuni" — the module's working surface (§2).   (Slice #38.84)
+ *
+ * A thin module bar (not a third tile) answers „whose history am I looking at?": the title, the scope („Toți
+ * clienții" or one person), a search on person and subject, how many interactions the view holds and the
+ * „Așteaptă răspuns" counter. Under it two cards: the history, about 62 % of the width, and the log tile — side by
+ * side once the module has 1100 px, stacked under that, history first.
+ *
+ * THE SCOPE IS THE ADDRESS (`?person=<id>`), so the person's tile (38.89) can open the screen scoped; the toolbar's
+ * person search and the „Persoană" column filter change it. Everything else is the one filter state
+ * (`src/lib/interactions/filters.ts`), and the order is kept for the session.
+ */
+export function InteractionsScreen() {
+  const t = useTranslations("interactions");
+  const nameOr = useNameOr();
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const scope = params.get("person");
+
+  const [filters, setFiltersState] = useState<InteractionFilters>(DEFAULT_FILTERS);
+  const [orderRaw, setOrderRaw] = useSessionValue(ORDER_KEY);
+  const order = useMemo(() => readOrder(orderRaw), [orderRaw]);
+  const [page, setPage] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const logRef = useRef<HTMLElement>(null);
+
+  // A filter changed: back to the first page. (Plain functions: the React Compiler memoizes them.)
+  const setFilters = (next: InteractionFilters) => {
+    setFiltersState(next);
+    setPage(0);
+  };
+  const setOrder = (next: InteractionOrder) => {
+    setOrderRaw(JSON.stringify(next));
+    setPage(0);
+  };
+  const reset = () => {
+    setFiltersState(DEFAULT_FILTERS);
+    setOrderRaw(JSON.stringify(DEFAULT_ORDER_STATE));
+    setPage(0);
+  };
+  const setScope = (personId: string | null) => {
+    const next = new URLSearchParams(params.toString());
+    if (personId) next.set("person", personId);
+    else next.delete("person");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    setPage(0);
+  };
+
+  // The search waits for the typing to settle before it asks.
+  const deferred = useDeferredValue(filters);
+  const query = listQuery(deferred, order, scope, page, PAGE_DEFAULT, new Date()).toString();
+  const history = useQuery<HistoryPage>({
+    queryKey: ["interactions", query],
+    queryFn: async () => {
+      const res = await fetch(`/api/interactions?${query}`);
+      if (!res.ok || res.redirected) throw new Error(`interactions ${res.status}`);
+      return (await res.json()) as HistoryPage;
+    },
+  });
+
+  const person = useQuery<{ person: { displayName: string | null } }>({
+    queryKey: ["person", scope],
+    enabled: scope !== null,
+    queryFn: async () => {
+      const res = await fetch(`/api/people/${encodeURIComponent(scope as string)}`);
+      if (!res.ok || res.redirected) throw new Error(`person ${res.status}`);
+      return (await res.json()) as { person: { displayName: string | null } };
+    },
+  });
+  const scopeName = scope ? (person.data ? nameOr(person.data.person.displayName, "person") : "…") : null;
+  const needsReply = history.data?.needsReply ?? 0;
+
+  const logFirst = () => {
+    logRef.current?.scrollIntoView({ block: "nearest" });
+    logRef.current?.focus();
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* The module bar (§2). */}
+      <header data-interactions-bar="" className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink dark:text-zinc-100">{t("title")}</h1>
+          <p className="flex items-center gap-1 text-sm text-fade dark:text-zinc-400" data-interactions-scope={scope ?? ""}>
+            {scopeName ?? t("screen.scopeAll")}
+            {scope && <IconButton icon={X} label={t("screen.scopeClear")} variant="bare" size="xs" onClick={() => setScope(null)} />}
+          </p>
+        </div>
+        <label className="relative flex items-center">
+          <span className="sr-only">{t("screen.searchLabel")}</span>
+          <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-2.5 text-fade dark:text-zinc-400" />
+          <input
+            type="search"
+            value={filters.q}
+            placeholder={t("screen.search")}
+            onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+            data-interactions-search=""
+            className="rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-sm text-ink placeholder:text-fade dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            {...screenBox("interactionSearch")}
+          />
+        </label>
+        <span className="text-sm text-ink dark:text-zinc-200" data-interactions-count={history.data?.total ?? ""} aria-live="polite">
+          {history.data ? t("screen.count", { count: history.data.total }) : ""}
+        </span>
+        <IconButton
+          icon={Reply}
+          label={t("screen.needsReply", { count: needsReply })}
+          showLabel
+          variant="attention-outline"
+          size="md"
+          disabled={needsReply === 0}
+          data-needs-reply={needsReply}
+          onClick={() => setFilters(needsReplyFilters(filters))}
+        />
+      </header>
+
+      {/* The two tiles (§2): side by side from 1100 px of module, stacked under it, history first. */}
+      <div className="@container">
+        <div className="flex flex-col gap-4 @min-[1100px]:flex-row @min-[1100px]:items-start">
+          <div className="min-w-0 @min-[1100px]:w-[62%] @min-[1100px]:shrink-0">
+            <HistoryTile
+              filters={filters}
+              onFilters={setFilters}
+              order={order}
+              onOrder={setOrder}
+              onReset={reset}
+              scope={scope}
+              scopeName={scopeName}
+              onScope={setScope}
+              data={history.data}
+              isPending={history.isPending}
+              isError={history.isError}
+              onRetry={() => void history.refetch()}
+              page={page}
+              pageSize={PAGE_DEFAULT}
+              onPage={setPage}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onLogFirst={logFirst}
+            />
+          </div>
+          <section
+            ref={logRef}
+            tabIndex={-1}
+            aria-labelledby="interactions-log-title"
+            data-interactions-log=""
+            className={`${MODULE_CARD} flex min-w-0 flex-1 flex-col gap-3 p-4 focus-visible:outline-2 focus-visible:outline-focus`}
+          >
+            <h2 id="interactions-log-title" className="flex items-center gap-2 text-lg font-semibold text-ink dark:text-zinc-100">
+              <SquarePen aria-hidden="true" size={20} className="text-[#3b5bdb] dark:text-[#768ce6]" />
+              {t("screen.logTitle")}
+            </h2>
+            <p className="text-sm text-fade dark:text-zinc-400">{t("screen.logPlaceholder")}</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

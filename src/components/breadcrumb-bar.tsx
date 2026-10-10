@@ -135,6 +135,8 @@ export function buildSegments(
       segments.push({ label: t("documents"), href: accumulated });
       continue;
     }
+    // Slice #38.84: „Interacțiuni".
+    if (part === "interactions") { segments.push({ label: t("interactions"), href: accumulated }); continue; }
     // Slice #38.20: the reports page.
     if (part === "reports") { segments.push({ label: t("reports"), href: accumulated }); continue; }
     if (part === "admin") {

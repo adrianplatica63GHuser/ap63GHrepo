@@ -1375,6 +1375,7 @@
       "judicialPeople": "Persoane Juridice",
       "propertyList": "Proprietăți",
       "document": "Acte",
+      "interactions": "Interacțiuni",
       "checkCorrelations": "Verificare corelări",
       "inheritanceTrees": "Arbori de moștenire",
       "miscFolders": "Dosare diverse",
@@ -1435,6 +1436,7 @@
         "properties-map": "Proprietăți — Hartă",
         "documents-list": "Acte — Listă",
         "document-detail": "Acte — Detaliu / Nou",
+        "interactions": "Interacțiuni — Istoric",
         "natural-persons-list": "Persoane fizice — Listă",
         "natural-person-detail": "Persoane fizice — Detaliu / Nou",
         "judicial-persons-list": "Persoane juridice — Listă",
@@ -3914,6 +3916,7 @@
       "properties": "Proprietăți",
       "propertiesMap": "Hartă completă",
       "documents": "Acte",
+      "interactions": "Interacțiuni",
       "sections": {
         "domain": "Domeniu",
         "functions": "Instrumente",
@@ -4198,6 +4201,75 @@
       "SENT": "Trimisă",
       "COMPLETED": "Încheiată",
       "SCHEDULED": "Programată"
-    }
+    },
+    "screen": {
+      "scopeAll": "Toți clienții",
+      "scopeClear": "Arată toți clienții",
+      "searchLabel": "Caută în istoric",
+      "search": "Caută persoană sau subiect…",
+      "count": "{count, plural, one {o interacțiune} few {# interacțiuni} other {# de interacțiuni}}",
+      "needsReply": "Așteaptă răspuns: {count}",
+      "historyTitle": "Istoricul interacțiunilor",
+      "logTitle": "Înregistrează o interacțiune",
+      "logPlaceholder": "Aici se va înregistra o interacțiune nouă și se va modifica cea aleasă în istoric.",
+      "error": "Istoricul nu s-a putut încărca. Filtrele au rămas cum erau.",
+      "retry": "Reîncearcă",
+      "emptyFiltered": "Nicio interacțiune în această vizualizare.",
+      "emptyLog": "Nimic înregistrat încă.",
+      "logFirst": "Înregistrează prima interacțiune",
+      "noDescription": "Fără descriere",
+      "selectHint": "Selectează pentru editare",
+      "docsCount": "{count, plural, one {un act legat} few {# acte legate} other {# de acte legate}}",
+      "docsLoading": "Se încarcă actele…"
+    },
+    "toolbar": {
+      "range": "Perioada",
+      "rangeHint": "Se afișează interacțiunile din acest interval",
+      "preset": {
+        "today": "Azi",
+        "last7": "Ultimele 7 zile",
+        "last30": "Ultimele 30 de zile",
+        "last90": "Ultimele 90 de zile",
+        "thisYear": "Anul acesta",
+        "custom": "Personalizat"
+      },
+      "from": "De la",
+      "to": "Până la",
+      "between": "{from} – {to}",
+      "since": "din {from}",
+      "always": "oricând",
+      "channels": "Canale",
+      "direction": "Sens",
+      "directionAll": "Toate",
+      "directionIn": "Primite",
+      "directionOut": "Trimise",
+      "person": "Persoană",
+      "personSearch": "Caută persoană…",
+      "personSearching": "Se caută…",
+      "personNone": "Nicio persoană găsită",
+      "personClear": "Toate persoanele",
+      "newest": "Cele mai noi întâi",
+      "oldest": "Cele mai vechi întâi",
+      "sortedBy": "Ordonat după „{column}”",
+      "clear": "Șterge filtrele"
+    },
+    "column": {
+      "occurredAt": "Data",
+      "channel": "Canal",
+      "direction": "Sens",
+      "person": "Persoană",
+      "subject": "Subiect",
+      "documents": "Acte",
+      "status": "Stare"
+    },
+    "documents": {
+      "all": "Toate",
+      "with": "Cu acte legate",
+      "without": "Fără acte legate"
+    },
+    "sortBy": "Ordonează după „{column}”",
+    "columnFilter": "Filtrează după „{column}”",
+    "resize": "Lățimea coloanei „{column}”",
+    "subjectContains": "Subiectul conține"
   }
 }
