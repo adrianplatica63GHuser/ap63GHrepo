@@ -39,11 +39,11 @@ starts with `TC-VL-01`.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Domeniu” → „Date de referință” | On the left the categories „Tipuri de obiecte”, „Roluri și legături”, „Liste de valori”, each with its lists (#38.61; was „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”); on the right „Alegeți o listă din stânga.” |
-| 2 | Presses „Cetățenie” | The list „Cetățenie” opens on the right (the address reads `?list=citizenships`), with „+ Adaugă”, „8 înregistrări” and a DENUMIRE column: Română, Moldoveană, Americană, Germană, Franceză, Italiană, Spaniolă, Engleză, each with „N obiecte” (#38.59; was „folosit de …”), „Editează”, „Unește” and „Șterge” |
-| 3 | „+ Adaugă” — „Adaugă înregistrare nouă”, „Denumire*”, „Salvează”, „Anulează” — types `TC-VL-01 Cetățenie de test`, „Salvează” | „9 înregistrări”; the new value is the **last** row, after Engleză |
-| 4 | „Editează” on it — „Editează înregistrarea”, the name in „Denumire*” — changes it to `TC-VL-01 Cetățenie redenumită`, „Salvează” | The row reads the new name, still last |
-| 5 | „Șterge” on it | „Ștergeți „TC-VL-01 Cetățenie redenumită”?”, first „Se verifică ce depinde de această înregistrare…”, then „Nimic nu depinde de această înregistrare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.” and a note on version history; „Șterge” and „Anulează” |
-| 6 | Presses „Șterge” | „8 înregistrări”; the value is gone |
+| 2 | Presses „Cetățenie” | The list „Cetățenie” opens on the right (the address reads `?list=citizenships`), with „+ Adaugă”, „8 valori” and a DENUMIRE column: Română, Moldoveană, Americană, Germană, Franceză, Italiană, Spaniolă, Engleză, each with „N obiecte” (#38.59; was „folosit de …”), „Editează”, „Unește” and „Șterge” |
+| 3 | „+ Adaugă” — „Adaugă o valoare nouă”, „Denumire*”, „Salvează”, „Anulează” — types `TC-VL-01 Cetățenie de test`, „Salvează” | „9 valori”; the new value is the **last** row, after Engleză |
+| 4 | „Editează” on it — „Editează valoarea”, the name in „Denumire*” — changes it to `TC-VL-01 Cetățenie redenumită`, „Salvează” | The row reads the new name, still last |
+| 5 | „Șterge” on it | „Ștergeți „TC-VL-01 Cetățenie redenumită”?”, first „Se verifică ce depinde de această valoare…”, then „Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.” and a note on version history; „Șterge” and „Anulează” |
+| 6 | Presses „Șterge” | „8 valori”; the value is gone |
 
 ## At the end — leaving things as they were found
 
@@ -77,3 +77,6 @@ and the window's width at 1366, where its table scrolls with the dialog. No fixe
 was wider than its column. The steps above were not re-run; the case stays `driven`.
 
 **2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Domeniu" → „Date de referință". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).
+
+**2026-10-10 — wording (Slice #38.74).** A list's entries are „valori”: „8 valori”, „Adaugă o valoare nouă”, „Editează
+valoarea”, „… de această valoare”. No spec reads these lines.
