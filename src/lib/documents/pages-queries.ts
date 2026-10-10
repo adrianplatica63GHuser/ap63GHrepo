@@ -105,6 +105,22 @@ export async function updateDocumentPageRotation(
   return row;
 }
 
+/**
+ * Slice #38.80: a page's notes, written about the page — not read from it — so,
+ * as a turn (#38.17), not a new version of the document. `null` clears them.
+ */
+export async function updateDocumentPageNotes(
+  pageId: string,
+  pageNotes: string | null,
+): Promise<DocumentPageRow | undefined> {
+  const [row] = await db
+    .update(documentPage)
+    .set({ pageNotes, updatedAt: new Date() })
+    .where(eq(documentPage.id, pageId))
+    .returning();
+  return row;
+}
+
 export async function deleteDocumentPage(pageId: string): Promise<void> {
   await db.delete(documentPage).where(eq(documentPage.id, pageId));
 }

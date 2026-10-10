@@ -1972,6 +1972,8 @@
       "colActions": "Acțiuni",
       "view": "Vizualizare",
       "print": "Tipărire",
+      "notes": "Notițe pagină",
+      "notesError": "Notițele nu s-au salvat. Încercați din nou.",
       "delete": "Șterge",
       "loadError": "Eroare la încărcarea paginilor",
       "deleteError": "Pagina nu a putut fi ștearsă",

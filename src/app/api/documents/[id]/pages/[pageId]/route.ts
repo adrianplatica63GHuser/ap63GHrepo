@@ -5,6 +5,9 @@
  * PATCH  — store the page's turn, `{ rotation: 0 | 90 | 180 | 270 }` (Slice #38.17):
  *          how far to the right the viewer draws it. The file is never touched,
  *          and a turn is not a new version of the document.
+ *          Or (Slice #38.80) its notes, `{ pageNotes: string }` — trimmed, an
+ *          empty string clears them; not a new version either. One or the
+ *          other per request: the pen and the turn are two buttons.
  */
 
 import type { NextRequest } from "next/server";
@@ -13,16 +16,23 @@ import { unexpectedError } from "@/lib/api/errors";
 import {
   deleteDocumentPage,
   getDocumentPage,
+  updateDocumentPageNotes,
   updateDocumentPageRotation,
 } from "@/lib/documents/pages-queries";
 import { deleteFile } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ id: string; pageId: string }> };
 
-/** The one field a page's update takes. Anything else, or another number, is refused. */
-const PageUpdate = z
+/** A page's turn: the one field, one of four numbers. Anything else is refused. */
+const RotationUpdate = z
   .object({ rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]) })
   .strict();
+
+/** The longest a page's notes may be — a paragraph or a few, never a file. */
+export const PAGE_NOTES_MAX = 4000;
+
+/** Slice #38.80: a page's notes, the one field; "" (after trimming) clears them. */
+const NotesUpdate = z.object({ pageNotes: z.string().max(PAGE_NOTES_MAX) }).strict();
 
 export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id: documentId, pageId } = await ctx.params;
@@ -33,8 +43,17 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   } catch {
     return Response.json({ error: "Expected a JSON body" }, { status: 400 });
   }
-  const parsed = PageUpdate.safeParse(body);
-  if (!parsed.success) {
+  // Slice #38.80: a body naming the notes is read as notes, and refused as notes.
+  const isNotes = typeof body === "object" && body !== null && !Array.isArray(body) && "pageNotes" in body;
+  const notes = isNotes ? NotesUpdate.safeParse(body) : null;
+  const turn = isNotes ? null : RotationUpdate.safeParse(body);
+  if (notes && !notes.success) {
+    return Response.json(
+      { error: `pageNotes must be text of at most ${PAGE_NOTES_MAX} characters, and alone`, code: "invalid_notes" },
+      { status: 400 },
+    );
+  }
+  if (turn && !turn.success) {
     return Response.json(
       { error: "rotation must be 0, 90, 180 or 270", code: "invalid_rotation" },
       { status: 400 },
@@ -43,11 +62,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
 
   try {
     const page = await getDocumentPage(pageId);
-    // A page of another document is not this document's page to turn.
+    // A page of another document is not this document's page to turn — or to write about.
     if (!page || page.documentId !== documentId) {
       return Response.json({ error: "Page not found" }, { status: 404 });
     }
-    const row = await updateDocumentPageRotation(pageId, parsed.data.rotation);
+    const row = notes?.success
+      ? await updateDocumentPageNotes(pageId, notes.data.pageNotes.trim() || null)
+      : await updateDocumentPageRotation(pageId, turn!.success ? turn!.data.rotation : 0);
     if (!row) return Response.json({ error: "Page not found" }, { status: 404 });
     return Response.json(row);
   } catch (err) {

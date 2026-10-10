@@ -42,8 +42,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useId } from "react";
+import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Pencil, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
@@ -694,6 +694,9 @@ export function PagesPanel({
     saveTurnFailed,
   } = state;
 
+  // Slice #38.80: the page whose notes the pen has open, or none.
+  const [notesTarget, setNotesTarget] = useState<Page | null>(null);
+
   // Slice #37.93: the pages a new document's first Save could not upload,
   // named here once (the save kept them in session storage). Read after the
   // first render — the server has no session storage — as use-tile-choice.ts does.
@@ -920,15 +923,30 @@ export function PagesPanel({
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >
-                            {/* #37.42 (A016): ArrowRight, „Vizualizare" its name and
-                                tooltip. „Tipărire" and „Șterge" beside it are #37.45's. */}
-                            <IconButton
-                              icon={ArrowRight}
-                              label={t("view")}
-                              variant="secondary"
-                              size="xs"
-                              onClick={() => loadView(page)}
-                            />
+                            {/* Slice #38.80: the pen, „Notițe pagină" — the page's notes, written and
+                                saved in a small dialog, in view and in edit mode alike (Ask first #1): a
+                                note is how the page is read. It took the place of #37.42's ArrowRight
+                                („Vizualizare"), which did nothing the row's own click does not. An
+                                Incursiune's „Pagini" is a look, not an edit: no pen there (#38.72) — its
+                                arrow stays until #38.82 takes the row's buttons out. */}
+                            {mode === "peek" ? (
+                              <IconButton
+                                icon={ArrowRight}
+                                label={t("view")}
+                                variant="secondary"
+                                size="xs"
+                                onClick={() => loadView(page)}
+                              />
+                            ) : (
+                              <IconButton
+                                icon={Pencil}
+                                label={t("notes")}
+                                variant="secondary"
+                                size="xs"
+                                data-page-notes-pen=""
+                                onClick={() => setNotesTarget(page)}
+                              />
+                            )}
 
                             {/* #37.44 (A034): Printer; „Tipărire" its name and tooltip. */}
                             <IconButton
@@ -971,6 +989,18 @@ export function PagesPanel({
           onClose={() => setDialogOpen(false)}
           onSuccess={() => {
             setDialogOpen(false);
+            queryClient.invalidateQueries({ queryKey: pagesQueryKey });
+          }}
+        />
+      )}
+
+      {notesTarget && (
+        <PageNotesDialog
+          documentId={documentId}
+          page={notesTarget}
+          onClose={() => setNotesTarget(null)}
+          onSaved={() => {
+            setNotesTarget(null);
             queryClient.invalidateQueries({ queryKey: pagesQueryKey });
           }}
         />
@@ -1443,6 +1473,113 @@ function AddPageDialog({
             size="lg"
             onClick={handleSave}
             disabled={saving || !stagedFile}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PageNotesDialog — Slice #38.80: one page's notes, written, changed or cleared
+// ---------------------------------------------------------------------------
+
+/**
+ * The pen's dialog. The add dialog's notes field and look (`GrowingText`, folding at
+ * `NOTE_FOLD_LINES`); saved at once through the page's PATCH, and the pages refetched.
+ * Clearing the box and saving clears the notes (the Notes column then reads „—").
+ */
+function PageNotesDialog({
+  documentId,
+  page,
+  onClose,
+  onSaved,
+}: {
+  documentId: string;
+  page: Page;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const t = useTranslations("document.pages");
+  const titleId = useId();
+  const [notes, setNotes] = useState(page.pageNotes ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/documents/${encodeURIComponent(documentId)}/pages/${encodeURIComponent(page.id)}`,
+        { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pageNotes: notes }) },
+      );
+      if (!res.ok) throw new Error(t("notesError"));
+      onSaved();
+    } catch {
+      setError(t("notesError"));
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      data-page-notes-dialog=""
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !saving) onClose();
+      }}
+    >
+      <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
+        <h3 id={titleId} className="text-base font-semibold text-ink dark:text-zinc-100">
+          {t("notes")}
+        </h3>
+        <p className="mt-1 truncate text-xs text-fade dark:text-zinc-400" title={page.pageName ?? page.fileName}>
+          {page.pageNumber}. {page.pageName ?? page.fileName}
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <DialogRow label={t("dialog.pageNotes")} alignTop>
+            <GrowingText
+              value={notes}
+              onValueChange={setNotes}
+              width="100%"
+              lines
+              minRows={3}
+              fold={NOTE_FOLD_LINES}
+              wrapClassName="flex-1"
+              aria-label={t("dialog.pageNotes")}
+              className="rounded-md border border-wire bg-white px-2 py-1 shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+            />
+          </DialogRow>
+          {error && (
+            <p className="ml-32 text-xs text-red-600 dark:text-red-400" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <IconButton
+            icon={X}
+            label={t("dialog.cancel")}
+            variant="secondary"
+            size="lg"
+            onClick={onClose}
+            disabled={saving}
+          />
+          <IconButton
+            icon={Save}
+            label={t("dialog.save")}
+            busy={saving}
+            busyLabel={t("dialog.saving")}
+            variant="primary"
+            size="lg"
+            onClick={handleSave}
+            disabled={saving}
           />
         </div>
       </div>

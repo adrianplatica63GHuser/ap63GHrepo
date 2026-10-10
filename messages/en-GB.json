@@ -1972,6 +1972,8 @@
       "colActions": "Actions",
       "view": "View",
       "print": "Print",
+      "notes": "Page notes",
+      "notesError": "The notes were not saved. Try again.",
       "delete": "Delete",
       "loadError": "Failed to load pages",
       "deleteError": "Could not delete page",

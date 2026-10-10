@@ -11,13 +11,14 @@ jest.mock("@/lib/documents/pages-queries", () => ({
   __esModule: true,
   getDocumentPage: jest.fn(),
   updateDocumentPageRotation: jest.fn(),
+  updateDocumentPageNotes: jest.fn(),
   deleteDocumentPage: jest.fn(),
 }));
 
 import { PATCH } from "@/app/api/documents/[id]/pages/[pageId]/route";
 import * as pagesQueries from "@/lib/documents/pages-queries";
 
-const q = pagesQueries as unknown as { getDocumentPage: jest.Mock; updateDocumentPageRotation: jest.Mock };
+const q = pagesQueries as unknown as { getDocumentPage: jest.Mock; updateDocumentPageRotation: jest.Mock; updateDocumentPageNotes: jest.Mock };
 const DOC = "33333333-3333-4333-8333-333333333333";
 const OTHER = "55555555-5555-4555-8555-555555555555";
 const PAGE = { id: "44444444-4444-4444-8444-444444444444", documentId: DOC, pageNumber: 1, fileName: "p.png", mimeType: "image/png", rotation: 0 };
@@ -30,6 +31,7 @@ const call = (body: unknown, raw = false) =>
 beforeEach(() => {
   q.getDocumentPage.mockReset();
   q.updateDocumentPageRotation.mockReset();
+  q.updateDocumentPageNotes.mockReset();
 });
 
 describe("PATCH /api/documents/[id]/pages/[pageId]", () => {
@@ -64,5 +66,47 @@ describe("PATCH /api/documents/[id]/pages/[pageId]", () => {
     q.getDocumentPage.mockResolvedValueOnce({ ...PAGE, documentId: OTHER });
     expect((await call({ rotation: 90 })).status).toBe(404);
     expect(q.updateDocumentPageRotation).not.toHaveBeenCalled();
+  });
+});
+
+describe("PATCH … { pageNotes } — a page's notes (Slice #38.80)", () => {
+  it("stores the notes, trimmed", async () => {
+    q.getDocumentPage.mockResolvedValueOnce(PAGE);
+    q.updateDocumentPageNotes.mockResolvedValueOnce({ ...PAGE, pageNotes: "Verso semnat." });
+    const res = await call({ pageNotes: "  Verso semnat.  " });
+    expect(res.status).toBe(200);
+    expect(q.updateDocumentPageNotes).toHaveBeenCalledWith(PAGE.id, "Verso semnat.");
+    expect(q.updateDocumentPageRotation).not.toHaveBeenCalled();
+  });
+
+  it.each([[""], ["   "]])("clears them with %j — stored as null", async (pageNotes) => {
+    q.getDocumentPage.mockResolvedValueOnce(PAGE);
+    q.updateDocumentPageNotes.mockResolvedValueOnce({ ...PAGE, pageNotes: null });
+    expect((await call({ pageNotes })).status).toBe(200);
+    expect(q.updateDocumentPageNotes).toHaveBeenCalledWith(PAGE.id, null);
+  });
+
+  it.each([[{ pageNotes: 5 }], [{ pageNotes: null }], [{ pageNotes: "x", rotation: 90 }], [{ pageNotes: "x", pageName: "y" }], [{ pageNotes: "x".repeat(4001) }]])(
+    "refuses %j — 400 invalid_notes, nothing stored",
+    async (body) => {
+      const res = await call(body);
+      expect(res.status).toBe(400);
+      expect((await res.json()).code).toBe("invalid_notes");
+      expect(q.updateDocumentPageNotes).not.toHaveBeenCalled();
+      expect(q.updateDocumentPageRotation).not.toHaveBeenCalled();
+    },
+  );
+
+  it("a turn alone is still valid, and still stores only the turn", async () => {
+    q.getDocumentPage.mockResolvedValueOnce(PAGE);
+    q.updateDocumentPageRotation.mockResolvedValueOnce({ ...PAGE, rotation: 90 });
+    expect((await call({ rotation: 90 })).status).toBe(200);
+    expect(q.updateDocumentPageNotes).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 for another document's page", async () => {
+    q.getDocumentPage.mockResolvedValueOnce({ ...PAGE, documentId: OTHER });
+    expect((await call({ pageNotes: "x" })).status).toBe(404);
+    expect(q.updateDocumentPageNotes).not.toHaveBeenCalled();
   });
 });
