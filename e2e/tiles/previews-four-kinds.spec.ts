@@ -28,10 +28,25 @@ async function preview(page: Page, list: string, name: string): Promise<Locator>
   await search.fill(MARK);
   const row = main.locator("tbody tr").filter({ hasText: name });
   await expect(row).toHaveCount(1, { timeout: 30_000 });
-  await row.getByRole("button", { name: "Previzualizare", exact: true }).click();
+  // Slice #38.71: the row's first button is the magnifier, „Previzualizare"; its last, „Deschide"; not pressed yet.
+  const actions = row.locator("[data-row-actions]").locator("a, button");
+  await expect(actions.first()).toHaveAccessibleName("Previzualizare");
+  await expect(actions.last()).toHaveAccessibleName("Deschide");
+  const magnifier = row.getByRole("button", { name: "Previzualizare", exact: true });
+  await expect(magnifier).toHaveAttribute("aria-pressed", "false");
+  await magnifier.click();
   const tile = page.locator("[data-preview]");
   await expect(tile.getByRole("link", { name: "Deschide", exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(magnifier).toHaveAttribute("aria-pressed", "true");
   return tile;
+}
+
+/** Slice #38.71: the magnifier pressed again closes its preview and is released. */
+async function closeByMagnifier(page: Page, name: string): Promise<void> {
+  const row = page.locator("main tbody tr").filter({ hasText: name });
+  await row.getByRole("button", { name: "Previzualizare", exact: true }).click();
+  await expect(page.locator("[data-preview]")).toHaveCount(0, { timeout: 15_000 });
+  await expect(row.getByRole("button", { name: "Previzualizare", exact: true })).toHaveAttribute("aria-pressed", "false");
 }
 
 /** A compact line's values, as read: the values' own text, not their read-aloud labels. */
@@ -74,12 +89,14 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       const p = await preview(page, "/natural-persons", "Ioana");
       await expect(p.locator("h2")).toHaveText(`${MARK} Ioana`);
       await expect.poll(() => linesOf(p)).toEqual(["Ioni", "născută: 12.03.1960, Bragadiru"]);
+      await closeByMagnifier(page, "Ioana");
 
       // Step 2 — the company: „(2 contacte)" after its name, then „Firma".
       const c = await preview(page, "/judicial-persons", "Firmă");
       await expect(c.locator("h2")).toHaveText(`${MARK} Firmă SRL`);
       await expect(c.locator("[data-preview-title-note]")).toHaveText("(2 contacte)");
       await expect.poll(() => linesOf(c)).toEqual(["Firma"]);
+      await closeByMagnifier(page, "Firmă");
 
       // Step 3 — the property's three rows.
       const r = await preview(page, "/properties", "Teren");
@@ -89,6 +106,7 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
         [`Poreclă=${MARK} Teren`],
         ["Carte funciară=—", "Nr. cadastral=—"],
       ]);
+      await closeByMagnifier(page, "Teren");
 
       // Step 4 — the document: no „Tip document", no „Etichetă scurtă"; one row; „Prima pagină".
       const d = await preview(page, "/documents", "Act");
@@ -97,6 +115,8 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       await expect(d).not.toContainText("Tip document");
       await expect(d).not.toContainText("Etichetă scurtă");
       await expect(d.getByText("Prima pagină", { exact: true })).toBeVisible();
+      await page.screenshot({ path: "playwright-report/magnifier/documents-pressed-1366.png" });
+      await closeByMagnifier(page, "Act");
     } finally {
       for (const [k, id] of [["document", doc], ["property", property], ["company", company], ["person", person], ["person", c1], ["person", c2]] as const) {
         await removeRecord(page.request, k, id);

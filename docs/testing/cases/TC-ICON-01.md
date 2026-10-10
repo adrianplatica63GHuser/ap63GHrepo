@@ -43,7 +43,7 @@ can clip it) and exists only while it is shown.
 | 2 | Moves the mouse over the columns icon, then away | A tooltip `Câmpuri afișate 0/4` under it, centred on it; it goes when the mouse leaves |
 | 3 | Moves the mouse over „Adaugă persoană" | No tooltip — the words are on the button |
 | 4 | Moves the mouse over „Anterior", which is inactive | A tooltip `Anterior` |
-| 5 | Brings the keyboard focus to „Următor" (Tab from the last row's „Previzualizare") | A tooltip `Următor`; Escape closes it |
+| 5 | Brings the keyboard focus to „Următor" (Tab from the last row's last button — „Deschide" since #38.71, which put the magnifier, „Previzualizare", first) | A tooltip `Următor`; Escape closes it |
 | 6 | Presses „Următor" | „Pagina 2 din 2", one row, `Persoana 01 TC-ICON-01`, „Se afișează 16 din 16"; no tooltip is left on the screen |
 
 ## At the end — leaving things as they were found
@@ -55,3 +55,5 @@ Delete the sixteen persons (on each, „Șterge" and „Da", or `DELETE /api/peo
 **2026-10-01 — `automated`.** `e2e/ui/icon-button.spec.ts` translates the case with Playwright's
 real mouse and keyboard, and takes #37.42's pictures. Green on its first runner run,
 `20261001T165018Z-30877`.
+
+**2026-10-10 — `automated` (Slice #38.71).** Step 5 tabs from the last row's „Deschide": the magnifier now comes first.

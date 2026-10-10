@@ -20,6 +20,7 @@ import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../he
 const MARK = `${E2E_MARKER}TILES-19`;
 const A = `${MARK} Teren A`;
 const B = `${MARK} Teren B`;
+const C = `${MARK} Teren C`;
 const SHOTS = "playwright-report/list-second-preview";
 
 type Box = { left: number; top: number; right: number; bottom: number };
@@ -38,7 +39,11 @@ test.describe("TC-TILES-19 — a doua previzualizare sub prima", () => {
   test("la 1920 sub prima, lângă tabel; la 1366 amândouă sub tabel, una sub alta", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
-    const ids = [await createProperty(page.request, { nickname: A }), await createProperty(page.request, { nickname: B })];
+    const ids = [
+      await createProperty(page.request, { nickname: A }),
+      await createProperty(page.request, { nickname: B }),
+      await createProperty(page.request, { nickname: C }),
+    ];
     try {
       // Step 1 — 1920 × 1080; „Proprietăți", the search: the two rows.
       await page.setViewportSize({ width: 1920, height: 1080 });
@@ -48,7 +53,7 @@ test.describe("TC-TILES-19 — a doua previzualizare sub prima", () => {
       await expect(search).toBeVisible({ timeout: 30_000 });
       await search.fill(MARK);
       const rows = main.locator("tbody tr");
-      await expect(rows).toHaveCount(2, { timeout: 30_000 });
+      await expect(rows).toHaveCount(3, { timeout: 30_000 });
       const table = main.locator("[data-list-previews] table").first();
 
       // Step 2 — A's preview at the table's right, level with its top.
@@ -80,6 +85,15 @@ test.describe("TC-TILES-19 — a doua previzualizare sub prima", () => {
       expect(near(b4.top, a4.bottom + 16)).toBe(true);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
       await page.screenshot({ path: `${SHOTS}/properties-two-previews-1366.png`, fullPage: true });
+
+      // Step 5 — (#38.71) C's magnifier: a third preview replaces the oldest, A's, and A's magnifier is released.
+      const magnifier = (name: string) => rows.filter({ hasText: name }).getByRole("button", { name: "Previzualizare", exact: true });
+      await magnifier(C).click();
+      await expect(previewOf(page, C)).toBeVisible({ timeout: 30_000 });
+      await expect(previewOf(page, A)).toHaveCount(0);
+      await expect(magnifier(A)).toHaveAttribute("aria-pressed", "false");
+      await expect(magnifier(B)).toHaveAttribute("aria-pressed", "true");
+      await expect(magnifier(C)).toHaveAttribute("aria-pressed", "true");
     } finally {
       for (const id of ids) await removeRecord(page.request, "property", id);
     }

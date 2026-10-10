@@ -41,6 +41,7 @@ Nothing.
 | 2 | „Persoane Juridice": searches `TC-TILES-11`, presses „Previzualizare" on its row | A tile headed `TC-TILES-11 Firmă SRL` followed by „(2 contacte)", then „Firma" |
 | 3 | „Proprietăți": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Teren`; under it, labels above values, three rows: „Nr. parcelă" `77/1`, „Tarla/Solă" (the tarla's indicativ), „Suprafață (mp)" 1234.00 on the first; „Poreclă" on the second; „Carte funciară" and „Nr. cadastral" („—") on the third |
 | 4 | „Acte": searches `TC-TILES-11`, presses „Previzualizare" | A tile headed `TC-TILES-11 Act`; no „Tip document" and no „Etichetă scurtă" in it; one row „Subiect", „Nr. document", „Data" with „Adeverință de rol fiscal", `123/2020`, `04.05.2020`; then „Prima pagină" |
+| 5 | On each of the four lists, before and after each step's preview (#38.71) | The row's first button is the magnifier, „Previzualizare", and its last „Deschide"; the magnifier reads not pressed, then pressed while its preview is open; pressed again, it closes the preview and reads not pressed |
 
 ## At the end — leaving things as they were found
 
@@ -71,3 +72,6 @@ and forms-drift green too); `e2e/person/person-lists.spec.ts` (TC-PERS-04) green
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-10 — `automated` (Slice #38.71).** Step 5 added: the magnifier first and a toggle on each of the four lists; the
+test runner ran it green.

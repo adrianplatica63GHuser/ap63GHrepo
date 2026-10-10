@@ -36,10 +36,11 @@ gap, within 2 px.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | The window 1920 × 1080; „Proprietăți", searches `TC-TILES-19` | The two properties' rows |
+| 1 | The window 1920 × 1080; „Proprietăți", searches `TC-TILES-19` | The three properties' rows |
 | 2 | „Previzualizare" on „TC-TILES-19 Teren A" | Its preview at the table's right, its top level with the table's top |
 | 3 | „Previzualizare" on „TC-TILES-19 Teren B" | Its preview under A's: the same left edge, its top just under A's bottom; both right of the table. Nothing under the table |
 | 4 | The window 1366 × 900 | The table and a preview do not fit side by side, so both previews stand below the table, B under A with the same left edge; the page does not scroll sideways |
+| 5 | „Previzualizare" on „TC-TILES-19 Teren C" (#38.71) | C's preview opens and A's closes — at most two; A's magnifier reads not pressed, B's and C's pressed |
 
 ## At the end — leaving things as they were found
 
@@ -68,3 +69,6 @@ translates it.
 **2026-10-05 — `automated` (Slice #38.05).** The test runner's full run 20261005T213827Z-4294 on
 3b80dd0 ran `e2e/tiles/list-second-preview.spec.ts` green with the other 90 (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-10 — `automated` (Slice #38.71).** A third property and step 5: the third preview releases the first row's
+magnifier; the test runner ran it green.

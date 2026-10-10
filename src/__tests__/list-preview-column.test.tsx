@@ -89,3 +89,43 @@ describe("a list's previews stand in one column beside the table (#38.05)", () =
     }
   });
 });
+
+describe("„Previzualizare” is a magnifier, a toggle (Slice #38.71)", () => {
+  const button = (id: string) => document.querySelector<HTMLButtonElement>(`[data-row="${id}"] button`)!;
+
+  it("pressed, it opens its row's preview and reads pressed; pressed again, it closes it", async () => {
+    renderList();
+    expect(button("A")).toHaveAttribute("aria-pressed", "false");
+    expect(button("A").querySelector("svg.lucide-search")).not.toBeNull();
+    expect(button("A").querySelector("svg.lucide-eye")).toBeNull();
+    await act(async () => press("A"));
+    await waitFor(() => expect(column()?.querySelectorAll("[data-preview]")).toHaveLength(1));
+    expect(button("A")).toHaveAttribute("aria-pressed", "true");
+    await act(async () => press("A"));
+    await waitFor(() => expect(column()).toBeNull());
+    expect(button("A")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("a third preview replaces the oldest, and the oldest row's magnifier is released with it (Ask first #3)", async () => {
+    renderList();
+    for (const id of ["A", "B", "C"]) await act(async () => press(id));
+    await waitFor(() => expect(button("C")).toHaveAttribute("aria-pressed", "true"));
+    expect(["A", "B", "C"].map((id) => button(id).getAttribute("aria-pressed"))).toEqual(["false", "true", "true"]);
+  });
+
+  it("on the four lists the magnifier is the row's first button and „Deschide” its last", () => {
+    for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
+      const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
+      const actions = view.slice(view.indexOf('data-row-actions=""'), view.indexOf("</span>", view.indexOf('data-row-actions=""')));
+      expect([dir, actions.indexOf("<PreviewButton") > -1 && actions.indexOf("<PreviewButton") < actions.indexOf("icon={ArrowRight}")]).toEqual([dir, true]);
+    }
+  });
+
+  it("its pressed look is the navy fill (primary), its name stays „Previzualizare”", () => {
+    const tiles = readFileSync(join(process.cwd(), "src", "components", "tiles", "preview-tiles.tsx"), "utf8");
+    expect(tiles).toContain('variant={pressed ? "primary" : "secondary"}');
+    expect(tiles).toContain("aria-pressed={pressed}");
+    expect(tiles).toContain('label={t("openPreview")}');
+    expect(tiles).toContain("icon={Search}");
+  });
+});

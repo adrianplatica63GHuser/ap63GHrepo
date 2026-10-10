@@ -102,8 +102,9 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await expect(tooltip(page)).toHaveText("Anterior");
       await moveAway(page);
 
-      // Step 5 — Tab from the last row's „Previzualizare" to „Următor": its tooltip; Escape closes it.
-      await main.getByRole("button", { name: "Previzualizare", exact: true }).last().focus();
+      // Step 5 — Tab from the last row's last button to „Următor": its tooltip; Escape closes it. Since #38.71 that button
+      // is „Deschide" — the magnifier („Previzualizare") comes first.
+      await main.locator("tbody tr").last().locator("[data-row-actions]").locator("a, button").last().focus();
       await page.keyboard.press("Tab");
       await expect(next).toBeFocused();
       await expect(tooltip(page)).toHaveText("Următor");
