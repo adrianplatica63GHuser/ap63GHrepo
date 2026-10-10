@@ -50,7 +50,7 @@ text above ever stops being the stored one, the case file is updated first.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Administrare" → „Informații de ajutor" | The heading „Informații de ajutor", two tabs „Ecrane" and „Sfaturi rapide", and the list of screens, each with „Complet" |
+| 1 | Opens „Administrare" → „Informații de ajutor" | The heading „Informații de ajutor", two tabs „Ecrane" and „Sfaturi rapide", and the list of screens, each with „Complet" — except a screen whose help Adrian has still to write, which may read „Lipsă": today „Interacțiuni — Istoric" (#38.84) |
 | 2 | Presses „Administrare — Etichete" | Four fields — „Context (Engleză)", „Context (Română)", „Cum se folosește (Engleză)", „Cum se folosește (Română)" — „Salvează", and „Previzualizare", which shows each field under its own heading |
 | 3 | Notes the text in „Cum se folosește (Română)" and checks it is the text above | It is |
 | 4 | Replaces it with `TC-HELP-01 — text de ajutor scris de cazul de test.` | „Previzualizare" follows as it is typed |

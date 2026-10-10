@@ -33,6 +33,12 @@ const ORIGINAL_HOW_TO_RO =
   "Etichetele se adaugă din fila META INFO a unei înregistrări, una câte una.\n\n" +
   "Descriere completă: Manualul utilizatorului, capitolul 6.4.";
 const TC_TEXT = "TC-E2E-HELP-01 — text de ajutor scris de cazul de test.";
+/**
+ * Screens registered before their help is written — Adrian writes it, on this very screen (#37.23's rule: the text
+ * is his, the handover proposes it). Each may read „Lipsă"; every other screen must read „Complet". The list may
+ * outlive the gap: once the text is written the screen reads „Complet" and still passes. (Slice #38.84)
+ */
+const HELP_TO_WRITE = ["Interacțiuni — Istoric"] as const;
 
 test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în spatele „?”", () => {
   test("textul scris pe „Informații de ajutor” e cel din „?”; apoi pus înapoi identic", async ({ page }) => {
@@ -57,7 +63,8 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
       await expect(page.getByText("Sfaturi rapide", { exact: true })).toBeVisible();
       const screenButton = page.getByRole("button", { name: /^Administrare — Etichete/ });
       await expect(screenButton).toContainText("Complet", { timeout: 30_000 });
-      await expect(page.getByText("Lipsă", { exact: true })).toHaveCount(0);
+      const missing = await page.getByRole("button").filter({ has: page.getByText("Lipsă", { exact: true }) }).allInnerTexts();
+      expect(missing.filter((name) => !HELP_TO_WRITE.some((s) => name.trim().startsWith(s)))).toEqual([]);
 
       // Step 2 — the four fields, „Salvează", „Previzualizare".
       await screenButton.click();
