@@ -112,6 +112,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-21](cases/TC-DOC-21.md) | Căutare în „Tip document”: se tastează o parte din nume, fără diacritice, și rămân doar tipurile potrivite | document | happy | — | `automated` | 2026-10-08 | `e2e/document/document-type-search.spec.ts` |
 | [TC-DOC-22](cases/TC-DOC-22.md) | „Obiectul vânzării” spune ce se vinde: descrierea compusă din proprietăți, „Recompune” după o schimbare | document | happy | — | `automated` | 2026-10-08 | `e2e/document/sale-object-description.spec.ts` |
 | [TC-DOC-23](cases/TC-DOC-23.md) | Lista actelor arată noile denumiri scurte: „Urbanism”, „Aut. Constr.” | document | happy | — | `automated` | 2026-10-08 | `e2e/document/type-short-name-38-54.spec.ts` |
+| [TC-DOC-24](cases/TC-DOC-24.md) | „Pagini”: creionul „Notițe pagină” scrie, schimbă și șterge notițele unei pagini | document | happy | — | `automated` | 2026-10-10 | `e2e/document/page-notes.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/person-document.spec.ts` |
