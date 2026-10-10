@@ -656,6 +656,21 @@ type Props = {
   subtitle?:        string;
 };
 
+/**
+ * Slice #38.81 — a PDF page alone, without the browser's column of page thumbnails.
+ *
+ * The frame is the browser's own PDF viewer; Chrome and Edge open its thumbnail sidebar when the frame is wide
+ * enough. The PDF open parameter `navpanes=0`, on the URL's fragment, closes it. MEASURED on 2026-10-10 with a
+ * three-page PDF framed 900 px wide: Adrian's Chrome drew the sidebar without it and none with it, keeping its
+ * toolbar — zoom, page count, search, print; the desktop app's built-in pane the same. So the fragment, not
+ * pdf.js (Ask first #1): one attribute, and the viewer keeps its zoom on „Pagini extinse". One helper, so the
+ * document's screen, „Pagini extinse" and an Incursiune — all three draw through `PageViewer` — get it alike.
+ */
+export const PDF_VIEW_PARAMS = "navpanes=0";
+export function pdfFrameSrc(url: string): string {
+  return `${url}${url.includes("#") ? "&" : "#"}${PDF_VIEW_PARAMS}`;
+}
+
 export function PagesPanel({
   documentId,
   mode,
@@ -1158,7 +1173,8 @@ function PageViewer({
   if (isPdf(mimeType)) {
     return (
       <iframe
-        src={viewData.url}
+        src={pdfFrameSrc(viewData.url)}
+        data-pdf-frame=""
         title={viewData.fileName}
         className={fill ? "h-full w-full" : "h-[600px] w-full"}
         style={{ border: "none" }}
