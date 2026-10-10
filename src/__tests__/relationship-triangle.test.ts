@@ -10,7 +10,7 @@ import path from "node:path";
 
 import { VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, isCorner, linksOfList, listOfLink, markedLinks } from "@/lib/admin/value-lists/relationships";
-import { DRAWING, SIX_WIDER, triangleCardStyle } from "@/app/admin/value-lists/_components/relationship-triangle";
+import { DRAWING, NOTE_PULSE_MS, SIX_WIDER, triangleCardStyle } from "@/app/admin/value-lists/_components/relationship-triangle";
 
 // Slice #38.77 reads the tile's width rule from the component itself; it needs no translations to do that.
 jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
@@ -231,7 +231,9 @@ describe("notes 5 and 6 in magenta, each with an ⓘ (Slice #38.69)", () => {
     expect(TILE).toContain('const INFO_NOTES: readonly RelationshipId[] = ["personDocument", "documentProperty"];');
     // #38.69: `<div className={`text-xs italic leading-relaxed ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>` under the
     // text; #38.77 moves it onto the name line, after „Vezi:", italic magenta still.
-    expect(TILE).toContain("<span className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>");
+    // #38.77: `<span className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>`; #38.79 adds the pulse
+    // to the same class list while the note draws the eye.
+    expect(TILE).toContain('className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}${pulsing(r.id) ? " ga-note-pulse" : ""}`}');
     expect(tri("ro").relations.personDocument.where).toBe("Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document.");
     expect(tri("ro").relations.documentProperty.where).toBe("Nicio listă: tipul documentului spune ce înseamnă legătura.");
   });
@@ -256,6 +258,46 @@ describe("notes 5 and 6 in magenta, each with an ⓘ (Slice #38.69)", () => {
     expect(info).toContain("usePressAway<HTMLSpanElement>(open, (how) => {");
     expect(info).toContain('if (how === "escape") button.current?.focus();');
     expect(info).toContain('className={buttonClass({ variant: "ghost", size: "xs", pill: true');
+  });
+});
+
+describe("pressing 5 or 6 draws the eye to its magenta note (Slice #38.79)", () => {
+  const CSS = read("src/app/globals.css");
+  const lum = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a: string, b: string) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+
+  it("a press on the drawing or a name marks 5's or 6's note for three seconds, after what the press already does", () => {
+    expect(NOTE_PULSE_MS).toBe(3000);
+    expect(TILE).toMatch(/function press\(e: MouseEvent, id: RelationshipId\) \{\s*e\.preventDefault\(\);\s*onPress\(id\);\s*drawEye\(id\);\s*\}/);
+    expect(TILE).toMatch(/e\.preventDefault\(\);\s*onPress\(id\);\s*drawEye\(id\);\s*\}\s*\n\s*return \(/);
+    expect(TILE).toContain("if (INFO_NOTES.includes(id)) setAttention((prev) => ({ id, n: (prev?.n ?? 0) + 1 }));");
+    expect(TILE).toContain("const timer = setTimeout(() => setAttention(null), NOTE_PULSE_MS);");
+    expect(TILE).toContain('data-attention={pulsing(r.id) ? "" : undefined}');
+    // A press during the pulse restarts it: a new key, a new animation.
+    expect(TILE).toContain('key={pulsing(r.id) ? `pulse-${attention?.n}` : "still"}');
+  });
+
+  it("pulses a band behind the text — the background alone, so nothing widens or re-wraps — and holds it steady under reduced motion", () => {
+    const keyframes = CSS.slice(CSS.indexOf("@keyframes ga-note-pulse"), CSS.indexOf(".ga-note-pulse {"));
+    expect(keyframes).toContain("background-color");
+    expect(keyframes).not.toMatch(/font|opacity|padding|width|transform/);
+    expect(CSS).toContain("animation: ga-note-pulse 1s ease-in-out 3;");
+    expect(CSS).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.ga-note-pulse \{ animation: none; background-color: var\(--ga-note-band\); \}/);
+  });
+
+  it("keeps the note at 4.5 : 1 on the band, light and dark", () => {
+    expect(CSS).toContain("--ga-note-band: #f5d0fe;");
+    // Only vertical padding: horizontal padding on an inline box would widen the line.
+    expect(CSS).toContain("  padding: 2px 0;");
+    expect(CSS).toContain(".ga-note-pulse { --ga-note-band: #4a044e; }");
+    expect(contrast("#a21caf", "#f5d0fe")).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#f0abfc", "#4a044e")).toBeGreaterThanOrEqual(4.5);
   });
 });
 

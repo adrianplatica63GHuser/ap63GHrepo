@@ -175,6 +175,40 @@ body {
    `ga-version-pulse-*` fallback above.
    ─────────────────────────────────────────────────────────────────────────── */
 
+/* ── The triangle's magenta note draws the eye  (Slice #38.79) ──────────────
+   Pressing 5 or 6 on the relationship triangle (its number, or 5's name among
+   the six) makes that entry's magenta note pulse for three seconds: a pale
+   magenta band BEHIND the text fades in and out three times. Only the
+   background changes — the text never fades, nothing widens, nothing moves —
+   so the line never re-wraps (Ask first #1). The note keeps 4.5 : 1 at every
+   moment: #a21caf on #f5d0fe is 4.96 : 1, #f0abfc on #4a044e 9.7 : 1. The band
+   reaches 2 px above and below the text (vertical padding on an inline box
+   paints without moving a line).
+   Reduced motion: the band held steady for the same three seconds.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes ga-note-pulse {
+  0%, 100% { background-color: transparent; }
+  50%      { background-color: var(--ga-note-band); }
+}
+
+.ga-note-pulse {
+  --ga-note-band: #f5d0fe; /* fuchsia-200 */
+  padding: 2px 0;
+  border-radius: 0.25rem;
+  /* Not `box-decoration-break: clone`: it repeats the note's `ml-4` on every line it wraps onto, and the
+     wrapped note re-flowed by 16 px (measured, TC-VL-10 step 11). The band paints across the lines as they are. */
+  animation: ga-note-pulse 1s ease-in-out 3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ga-note-pulse { --ga-note-band: #4a044e; } /* fuchsia-950 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ga-note-pulse { animation: none; background-color: var(--ga-note-band); }
+}
+
 @keyframes ga-cue-blink {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.2; }

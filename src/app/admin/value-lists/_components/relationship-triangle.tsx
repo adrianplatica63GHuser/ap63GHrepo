@@ -11,7 +11,7 @@
  * Proprietate has none and opens nothing. The data is `RELATIONSHIPS` (`@/lib/admin/value-lists/relationships`).
  */
 
-import { useId, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useId, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, type ObjectKind, type Relationship, type RelationshipId } from "@/lib/admin/value-lists/relationships";
@@ -60,6 +60,9 @@ export const DRAWING = { w: LEFT * 2 + SIDE, h: BASE + BOX.h / 2 + MARGIN }; // 
  * Measured before, at 1920 px: the tile 1132 px, the six 756.4; after, 1283.6 and 908.6 (×1.20).
  */
 export const SIX_WIDER = 1.2;
+
+/** Slice #38.79: how long a pressed 5's or 6's magenta note draws the eye. */
+export const NOTE_PULSE_MS = 3000;
 /** The drawing's column: the drawing and its `px-5` either side. */
 const DRAWING_COLUMN_REM = DRAWING.w / 16 + 2 * 1.25;
 
@@ -134,6 +137,20 @@ export function RelationshipTriangle({
 
   const isMarked = (r: Relationship) => marked.includes(r.id);
 
+  // Slice #38.79: 5 or 6 pressed — from the drawing or from 5's name — and its magenta note pulses for three seconds,
+  // then settles exactly as it was. `n` counts the presses: a press during the pulse restarts it (a new key, a new
+  // animation). Added to what a press does (#38.68: the yellow and the list), never in its place.
+  const [attention, setAttention] = useState<{ id: RelationshipId; n: number } | null>(null);
+  useEffect(() => {
+    if (attention === null) return;
+    const timer = setTimeout(() => setAttention(null), NOTE_PULSE_MS);
+    return () => clearTimeout(timer);
+  }, [attention]);
+  const drawEye = (id: RelationshipId) => {
+    if (INFO_NOTES.includes(id)) setAttention((prev) => ({ id, n: (prev?.n ?? 0) + 1 }));
+  };
+  const pulsing = (id: RelationshipId) => attention !== null && attention.id === id;
+
   /** A list named inside an ⓘ's steps: a link, as the triangle's names are (Ask first #2). */
   const listLink = (key: ListKey) =>
     function ListLink(chunks: ReactNode) {
@@ -154,6 +171,7 @@ export function RelationshipTriangle({
   function press(e: MouseEvent, id: RelationshipId) {
     e.preventDefault();
     onPress(id);
+    drawEye(id);
   }
 
   /** 6 has no list, so no link: a button on the drawing, pressed with Enter or Space as well. */
@@ -161,6 +179,7 @@ export function RelationshipTriangle({
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
     onPress(id);
+    drawEye(id);
   }
 
   return (
@@ -346,7 +365,12 @@ export function RelationshipTriangle({
                     <span className="whitespace-nowrap font-semibold text-ink dark:text-zinc-100">{name(r)}</span>
                   )}
                   {INFO_NOTES.includes(r.id) ? (
-                    <span className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>
+                    <span
+                      key={pulsing(r.id) ? `pulse-${attention?.n}` : "still"}
+                      className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}${pulsing(r.id) ? " ga-note-pulse" : ""}`}
+                      data-note={r.id}
+                      data-attention={pulsing(r.id) ? "" : undefined}
+                    >
                       <span data-see="">{t("triangle.see")}</span> {t(`triangle.relations.${r.id}.where`)}{" "}
                       <InfoPress label={t(`triangle.info.${r.id}.label`)}>
                         <span className="mb-1 block font-semibold">{t(`triangle.info.${r.id}.label`)}</span>
