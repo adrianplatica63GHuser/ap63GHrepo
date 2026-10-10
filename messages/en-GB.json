@@ -4176,5 +4176,28 @@
     },
     "ok": "OK",
     "foldHintCardNone": "The card does not print the parents' first names, or the read did not find them. You can type them here: each ticked parent is created or linked after the holder, as „Tată” or „Mamă”."
+  },
+  "interactions": {
+    "title": "Interactions",
+    "subtitle": "The log of contacts with clients",
+    "channel": {
+      "EMAIL": "Email",
+      "WHATSAPP": "WhatsApp",
+      "SMS": "SMS",
+      "PHONE": "Phone",
+      "MEETING": "Meeting",
+      "PAPER_MAIL": "Paper mail"
+    },
+    "direction": {
+      "INBOUND": "Inbound",
+      "OUTBOUND": "Outbound"
+    },
+    "status": {
+      "LOGGED": "Logged",
+      "NEEDS_REPLY": "Needs reply",
+      "SENT": "Sent",
+      "COMPLETED": "Completed",
+      "SCHEDULED": "Scheduled"
+    }
   }
 }

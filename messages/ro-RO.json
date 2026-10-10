@@ -4176,5 +4176,28 @@
     },
     "ok": "Am înțeles",
     "foldHintCardNone": "Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit. Le puteți scrie aici: fiecare părinte bifat este creat sau legat după titular, ca „Tată” sau „Mamă”."
+  },
+  "interactions": {
+    "title": "Interacțiuni",
+    "subtitle": "Jurnalul contactelor cu clienții",
+    "channel": {
+      "EMAIL": "E-mail",
+      "WHATSAPP": "WhatsApp",
+      "SMS": "SMS",
+      "PHONE": "Telefon",
+      "MEETING": "Întâlnire",
+      "PAPER_MAIL": "Poștă"
+    },
+    "direction": {
+      "INBOUND": "Primită",
+      "OUTBOUND": "Trimisă"
+    },
+    "status": {
+      "LOGGED": "Înregistrată",
+      "NEEDS_REPLY": "Așteaptă răspuns",
+      "SENT": "Trimisă",
+      "COMPLETED": "Încheiată",
+      "SCHEDULED": "Programată"
+    }
   }
 }
