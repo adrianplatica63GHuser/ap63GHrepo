@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-10 07:26
+-- Generated : 2026-10-10 18:30
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -533,6 +533,58 @@ CREATE TABLE public.help_hint (
     text_ro text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: interaction; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.interaction (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    channel text NOT NULL,
+    direction text DEFAULT 'OUTBOUND'::text NOT NULL,
+    occurred_at timestamp with time zone NOT NULL,
+    person_id uuid NOT NULL,
+    subject text NOT NULL,
+    description text,
+    internal_note text,
+    status text DEFAULT 'LOGGED'::text NOT NULL,
+    follow_up_on date,
+    related_property_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text,
+    CONSTRAINT interaction_channel_check CHECK ((channel = ANY (ARRAY['EMAIL'::text, 'WHATSAPP'::text, 'SMS'::text, 'PHONE'::text, 'MEETING'::text, 'PAPER_MAIL'::text]))),
+    CONSTRAINT interaction_direction_check CHECK ((direction = ANY (ARRAY['INBOUND'::text, 'OUTBOUND'::text]))),
+    CONSTRAINT interaction_status_check CHECK ((status = ANY (ARRAY['LOGGED'::text, 'NEEDS_REPLY'::text, 'SENT'::text, 'COMPLETED'::text, 'SCHEDULED'::text]))),
+    CONSTRAINT interaction_subject_check CHECK (((char_length(btrim(subject)) >= 1) AND (char_length(btrim(subject)) <= 120)))
+);
+
+
+--
+-- Name: interaction_document; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.interaction_document (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    interaction_id uuid NOT NULL,
+    document_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: interaction_tag; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.interaction_tag (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    interaction_id uuid NOT NULL,
+    tag text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT interaction_tag_tag_check CHECK (((char_length(btrim(tag)) >= 1) AND (char_length(btrim(tag)) <= 60)))
 );
 
 
@@ -1414,6 +1466,46 @@ ALTER TABLE ONLY public.help_hint
 
 
 --
+-- Name: interaction_document interaction_document_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_document
+    ADD CONSTRAINT interaction_document_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: interaction_document interaction_document_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_document
+    ADD CONSTRAINT interaction_document_unique UNIQUE (interaction_id, document_id);
+
+
+--
+-- Name: interaction interaction_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction
+    ADD CONSTRAINT interaction_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: interaction_tag interaction_tag_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_tag
+    ADD CONSTRAINT interaction_tag_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: interaction_tag interaction_tag_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_tag
+    ADD CONSTRAINT interaction_tag_unique UNIQUE (interaction_id, tag);
+
+
+--
 -- Name: judicial_person judicial_person_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1965,6 +2057,41 @@ CREATE INDEX idx_property_nickname_trgm ON public.property USING gin (nickname p
 
 
 --
+-- Name: interaction_document_document_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX interaction_document_document_idx ON public.interaction_document USING btree (document_id);
+
+
+--
+-- Name: interaction_occurred_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX interaction_occurred_at_idx ON public.interaction USING btree (occurred_at DESC);
+
+
+--
+-- Name: interaction_person_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX interaction_person_idx ON public.interaction USING btree (person_id);
+
+
+--
+-- Name: interaction_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX interaction_status_idx ON public.interaction USING btree (status);
+
+
+--
+-- Name: interaction_tag_tag_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX interaction_tag_tag_idx ON public.interaction_tag USING btree (tag);
+
+
+--
 -- Name: judicial_person_cui_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2441,6 +2568,46 @@ ALTER TABLE ONLY public.group_member
 
 ALTER TABLE ONLY public.group_member
     ADD CONSTRAINT group_member_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: interaction_document interaction_document_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_document
+    ADD CONSTRAINT interaction_document_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: interaction_document interaction_document_interaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_document
+    ADD CONSTRAINT interaction_document_interaction_id_fkey FOREIGN KEY (interaction_id) REFERENCES public.interaction(id) ON DELETE CASCADE;
+
+
+--
+-- Name: interaction interaction_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction
+    ADD CONSTRAINT interaction_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: interaction interaction_related_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction
+    ADD CONSTRAINT interaction_related_property_id_fkey FOREIGN KEY (related_property_id) REFERENCES public.property(id) ON DELETE SET NULL;
+
+
+--
+-- Name: interaction_tag interaction_tag_interaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.interaction_tag
+    ADD CONSTRAINT interaction_tag_interaction_id_fkey FOREIGN KEY (interaction_id) REFERENCES public.interaction(id) ON DELETE CASCADE;
 
 
 --
