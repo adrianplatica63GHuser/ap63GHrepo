@@ -7,14 +7,24 @@
 
 import { test, expect, type Locator } from "@playwright/test";
 
+// Slice #38.77: the third cell was the status in words („configurat în aplicație" / „neconfigurat, intenționat");
+// it is the where-sentence now, which stands after „Vezi:" on the name line.
 const SIX = [
-  ["personPerson", "Persoană → Persoană", "configurat în aplicație"],
-  ["propertyProperty", "Proprietate → Proprietate", "configurat în aplicație"],
-  ["documentDocument", "Document → Document", "configurat în aplicație"],
-  ["personProperty", "Persoană – Proprietate", "configurat în aplicație"],
-  ["personDocument", "Persoană – Document", "configurat în aplicație"],
-  ["documentProperty", "Document – Proprietate", "neconfigurat, intenționat"],
+  ["personPerson", "Persoană → Persoană", "Coloana „Persoană → Persoană” și coloana „Rol invers” din lista „Roluri Persoane”."],
+  ["propertyProperty", "Proprietate → Proprietate", "Lista „Legături Proprietate → Proprietate”."],
+  ["documentDocument", "Document → Document", "Lista „Legături Document → Document”."],
+  ["personProperty", "Persoană – Proprietate", "Coloana „Persoană → Proprietate” din lista „Roluri Persoane”."],
+  ["personDocument", "Persoană – Document", "Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document."],
+  ["documentProperty", "Document – Proprietate", "Nicio listă: tipul documentului spune ce înseamnă legătura."],
 ] as const;
+
+/**
+ * Slice #38.77 — measured on 2026-10-10 before the slice, Roluri Persoane: at 1920 px the tile 1132 × 698.6 px and the
+ * six's column 756.4 px wide; at 1366 px the tile 968 × 741 px (the side's six units, the unit grid giving it no
+ * more) and the column 592.4. After: 1920 — the tile 1283.6 × 535.5, the column 908 (×1.20); 1366 — 968 × 694.7,
+ * the column unchanged (the cap, Ask first #1).
+ */
+const BEFORE = { 1366: { tileH: 741, column: 592.4 }, 1920: { tileH: 698.6, column: 756.4 } } as const;
 
 test.describe("TC-VL-10 — triunghiul legăturilor", () => {
   for (const width of [1366, 1920]) {
@@ -34,14 +44,28 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       await expect(tile.getByRole("img")).toBeVisible();
       for (const k of ["Persoană", "Proprietate", "Document"]) await expect(tile.locator("svg text", { hasText: new RegExp(`^${k}$`) })).toHaveCount(1);
 
-      // Step 2 — the six, in order, each with its status in words.
+      // Step 2 — the six, in order. #38.77: no status words; on each name line, a few spaces after the name,
+      // „Vezi:" and the sentence that stood in small type at the bottom (#38.62–#38.76: `[data-status]`).
       const entries = tile.locator("[data-relationship-entry]");
       await expect(entries).toHaveCount(6);
-      for (const [i, [id, name, status]] of SIX.entries()) {
+      await expect(tile.locator("[data-status]")).toHaveCount(0);
+      await expect(tile).not.toContainText("configurat în aplicație");
+      await expect(tile).not.toContainText("neconfigurat, intenționat");
+      for (const [i, [id, name, where]] of SIX.entries()) {
         const e = entries.nth(i);
         await expect(e).toHaveAttribute("data-relationship-entry", id);
         await expect(e).toContainText(name);
-        await expect(e.locator("[data-status]")).toHaveText(status);
+        // Word for word after „Vezi:" (5 and 6 also hold their ⓘ, so not `toHaveText` on the whole).
+        await expect(e.locator(`[data-note="${id}"]`)).toHaveText(/^Vezi: /);
+        await expect(e.locator(`[data-note="${id}"]`)).toContainText(`Vezi: ${where}`);
+        const line = await e.evaluate((el, nid) => {
+          const nameEl = el.querySelector<HTMLElement>("p > a, p > span.whitespace-nowrap")!.getBoundingClientRect(); // the name, not the number
+          const first = el.querySelector<HTMLElement>(`[data-note="${nid}"]`)!.getClientRects()[0];
+          return { sameLine: Math.abs(first.top - nameEl.top) <= 6, gap: first.left - nameEl.right };
+        }, id);
+        expect([id, line.sameLine], `${id}: „Vezi:" on the name's line`).toEqual([id, true]);
+        expect(line.gap, `${id}: the gap after the name, px`).toBeGreaterThanOrEqual(10);
+        expect(line.gap, `${id}: the gap after the name, px`).toBeLessThanOrEqual(24);
       }
       await expect(entries.nth(5)).toContainText("Nu există o listă „Document → Proprietate”");
       await expect(entries.nth(4)).toContainText("Nu are o coloană în lista „Roluri Persoane”");
@@ -87,6 +111,25 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       expect([layout.divider, layout.dividerTop]).toEqual(["1px", "0px"]);
       expect(Math.abs(layout.dividerHeight), "the divider runs the tile's full height").toBeLessThanOrEqual(2);
       expect(layout.ruledUnderTitle).toBe(false);
+
+      // Step 10 (#38.77) — the six's column 20 % wider where the tile is held by its own width, the drawing kept; where
+      // the side already holds it (1366 px), as wide as the side; and the tile less tall than before, at both.
+      const wide = await tile.evaluate((t) => ({
+        tileW: t.getBoundingClientRect().width,
+        tileH: t.getBoundingClientRect().height,
+        column: t.querySelector<HTMLElement>("[data-triangle-list]")!.getBoundingClientRect().width,
+        side: t.closest<HTMLElement>("[data-value-list-side]")!.getBoundingClientRect().width,
+        sideScrolls: t.closest<HTMLElement>("[data-value-list-side]")!.scrollWidth > t.closest<HTMLElement>("[data-value-list-side]")!.clientWidth + 1,
+      }));
+      const before = BEFORE[width as 1366 | 1920];
+      expect(wide.tileH, `the tile's height against ${before.tileH} px before`).toBeLessThan(before.tileH - 20);
+      expect(wide.sideScrolls, "the side scrolls sideways").toBe(false);
+      if (width === 1920) {
+        expect(wide.column / before.column, "the six's column against its width before").toBeGreaterThanOrEqual(1.2 - 0.005);
+      } else {
+        expect(Math.abs(wide.tileW - wide.side), "the tile as wide as the side holding it").toBeLessThanOrEqual(1);
+        expect(wide.column, "the six's column no narrower than before").toBeGreaterThanOrEqual(before.column - 1);
+      }
       // The slice's pictures, light and dark — not a step of the case.
       for (const scheme of ["light", "dark"] as const) {
         await page.emulateMedia({ colorScheme: scheme });
