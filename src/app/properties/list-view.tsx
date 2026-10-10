@@ -17,6 +17,8 @@ import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { IncursionButton } from "@/components/tiles/incursion-button";
+import { IncursionTile } from "@/app/_components/incursion-tile";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 
@@ -370,7 +372,7 @@ export function PropertyListView() {
       )}
 
       {/* Table */}
-      <ListPreviews>
+      <ListPreviews incursion={IncursionTile}>
         <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
           {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
           <table {...fixedTable(columns, "text-sm min-w-full")}>
@@ -462,8 +464,9 @@ export function PropertyListView() {
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
                     <span className="flex flex-nowrap gap-2" data-row-actions="">
-                      {/* Slice #38.71: the magnifier first, „Deschide" last (#38.72 puts the eye between them). */}
+                      {/* Slice #38.71/#38.72: the magnifier („Previzualizare"), the eye („Incursiune"), the arrow („Deschide"). */}
                       <PreviewButton target={{ kind: "property", id: item.id }} />
+                      <IncursionButton target={{ kind: "property", id: item.id }} />
                       <IconButton
                         href={`/properties/${item.id}`}
                         icon={ArrowRight}

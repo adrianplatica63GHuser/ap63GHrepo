@@ -41,6 +41,7 @@ import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { loadPreview } from "./preview-data";
 import { PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
+import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
 
 // ── Which previews are open ───────────────────────────────────────────────────
 
@@ -81,10 +82,14 @@ export function PreviewOpenerProvider({ previews, children }: { previews: Previe
  */
 export function PreviewButton({ target }: { target: PreviewTarget }) {
   const previews = useContext(OpenerContext);
+  // Slice #38.72: while the list's Incursiune is open, every magnifier is released and disabled.
+  const incursion = useContext(IncursionContext);
   const t = useTranslations("shared.preview");
+  const tIncursion = useTranslations("shared.incursion");
   if (!previews) return null;
   const key = previewKey(target);
-  const pressed = previews.open.some((p) => previewKey(p) === key);
+  const locked = incursion !== null && incursion.open !== null;
+  const pressed = !locked && previews.open.some((p) => previewKey(p) === key);
   return (
     <IconButton
       icon={Search}
@@ -92,6 +97,8 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
       variant={pressed ? "primary" : "secondary"}
       size="xs"
       aria-pressed={pressed}
+      disabled={locked}
+      note={locked ? tIncursion("lockedNote") : undefined}
       data-preview-toggle=""
       onClick={(e) => {
         e.stopPropagation();
@@ -123,23 +130,45 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
  * line and the second wrapped onto the next — under the table, not under the
  * first (Adrian's bug, on Proprietăți at 1920 px: measured, the first at the
  * table's right, x 1162, the second at x 248 under the table).
+ * Slice #38.72: and the row's „Incursiune" (the eye, `IncursionButton`) — one tile from inside the object,
+ * `IncursionTile` from `src/app/_components/`, passed in so this module reaches nothing under `src/app/` —
+ * stands beside the table in the previews' place, filling what the row leaves.
  * „Previzualizare" on a row opens one there. The same body, the same
  * two-at-most rule and the same read-only guarantee as on a detail screen; a
  * list has no „Părți afișate", so „Închide" is how one is closed. Changing the
  * page, the search or the filter leaves them open.
  */
-export function ListPreviews({ children }: { children: ReactNode }) {
+export function ListPreviews({ children, incursion: IncursionTile }: { children: ReactNode; incursion?: IncursionTileComponent }) {
   const previews = usePreviews();
+  // Slice #38.72: the row whose „Incursiune" is open — one at a time (Ask first #1). A list without an
+  // Incursiune tile offers none, and its magnifiers are never locked.
+  const [open, setOpen] = useState<PreviewTarget | null>(null);
+  const toggle = useCallback(
+    (target: PreviewTarget) => {
+      const opening = open === null || previewKey(open) !== previewKey(target);
+      setOpen(opening ? { kind: target.kind, id: target.id } : null);
+      // While it is open no preview is: every magnifier is released, its preview closed.
+      if (opening) for (const p of previews.open) previews.close(previewKey(p));
+    },
+    [open, previews],
+  );
+  const incursion = useMemo<Incursion | null>(() => (IncursionTile ? { open, toggle } : null), [IncursionTile, open, toggle]);
   return (
     <PreviewOpenerProvider previews={previews}>
-      <div data-list-previews className="flex flex-wrap items-start gap-4">
-        {children}
-        {previews.open.length > 0 && (
-          <div data-list-preview-column className="flex flex-col items-start gap-4">
-            <PreviewTiles previews={previews} />
-          </div>
-        )}
-      </div>
+      <IncursionContext.Provider value={incursion}>
+        <div data-list-previews className="flex flex-wrap items-start gap-4">
+          {children}
+          {IncursionTile && open ? (
+            <IncursionTile key={previewKey(open)} target={open} onClose={() => setOpen(null)} />
+          ) : (
+            previews.open.length > 0 && (
+              <div data-list-preview-column className="flex flex-col items-start gap-4">
+                <PreviewTiles previews={previews} />
+              </div>
+            )
+          )}
+        </div>
+      </IncursionContext.Provider>
     </PreviewOpenerProvider>
   );
 }

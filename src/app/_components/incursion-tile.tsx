@@ -1,0 +1,135 @@
+"use client";
+
+/**
+ * „Incursiune" — one tile from inside the object, beside the list.     (Slice #38.72)
+ *
+ * Adrian: on the persons' lists the eye shows the person's „Interacțiuni" tile, on Proprietăți the property's
+ * „Hartă", on Acte the document's „Pagini" — „on the right of the lists, taking up as much space as there is".
+ * So the tile stands beside the list and FILLS what the row leaves (`flex-1`), never narrower than the tile's
+ * own width on its detail screen (`INCURSION_MIN_REM`); where the window leaves less, it goes under the list
+ * and takes the row's whole width, as the previews go under it. The map and the pages grow with it.
+ *
+ * ⚠️ **A LOOK, NOT AN EDIT** — like a preview (#37.24): no add, edit, delete, upload or reorder. It REUSES the
+ * detail screens' tiles rather than drawing new ones, each in its read-only form:
+ *   - „Interacțiuni" (`InteractionsTile`, #37.89) is a placeholder that fetches and writes nothing; `fill` lets
+ *     it take the width it is given instead of its fixed 40rem;
+ *   - „Hartă" is `PropertyMiniMap` with `readOnly` and an `onChange` that does nothing, the corners read from
+ *     the property's GET route, and no „Hartă extinsă" (that opens the editor's theater);
+ *   - „Pagini" is `PagesPanel` in its `"peek"` mode, which draws neither „+ Adaugă pagină", nor a row's bin,
+ *     nor the turn and its „Salvează" (#38.17) — the one write a `"view"` panel still offers — and leaves a new
+ *     document's unsaved-pages note for its own screen.
+ * `incursion-tile.test.tsx` holds it to that. „Deschide" (Ask first #2) goes through the guarded navigation,
+ * as a preview's does; „Închide" closes it, as the eye does.
+ */
+import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { ArrowRight, X } from "lucide-react";
+import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
+import { useNameOr } from "@/components/record/use-name-or";
+import { InteractionsTile } from "@/components/tiles/interactions-tile";
+import { loadPreview } from "@/components/tiles/preview-data";
+import { TileTitle } from "@/components/tiles/tile-title";
+import { IconButton } from "@/lib/ui/icon-button";
+import { MAP_BOX_HEIGHT_REM, PAGES_PANEL_REM, rem, unitsRem } from "@/lib/ui/field-widths";
+import { TILE_SURFACE } from "@/lib/ui/tile-surface";
+import { previewHref, type PreviewKind, type PreviewTarget } from "@/lib/ui/previews";
+import type { UnnamedKind } from "@/lib/ui/unnamed";
+import { PropertyMiniMap } from "@/app/properties/_components/property-mini-map";
+import type { Corner } from "@/app/properties/_components/form-schema";
+import { PagesPanel, usePagesPanelState } from "@/app/documents/_components/pages-panel";
+
+/** Never narrower than the tile on its detail screen: „Interacțiuni" and „Pagini" 4 units, „Hartă" 3. */
+export const INCURSION_MIN_REM: Readonly<Record<PreviewKind, number>> = {
+  person: PAGES_PANEL_REM,
+  company: PAGES_PANEL_REM,
+  property: unitsRem(3),
+  document: PAGES_PANEL_REM,
+};
+
+const UNNAMED_KIND: Record<PreviewKind, UnnamedKind> = { person: "person", company: "person", property: "property", document: "document" };
+
+export function IncursionTile({ target, onClose }: { target: PreviewTarget; onClose: () => void }) {
+  const t = useTranslations("shared.incursion");
+  const tPreview = useTranslations("shared.preview");
+  const nameOr = useNameOr();
+  const { guardedNavigate } = useUnsavedChanges();
+  // The preview's own read and key: the record's name, refetched when another window saves it (#37.21).
+  const q = useQuery({ queryKey: ["preview", target.kind, target.id], queryFn: () => loadPreview(target) });
+  const name = q.data ? nameOr(q.data.title, UNNAMED_KIND[target.kind]) : q.isError ? tPreview("error") : tPreview("loading");
+  const href = previewHref(target);
+  return (
+    <section
+      data-incursion={target.kind}
+      aria-label={`${t("title")}: ${name}`}
+      className="flex min-w-0 flex-1 flex-col gap-2"
+      style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="min-w-0 truncate text-sm font-semibold text-ink dark:text-zinc-100" title={name}>
+          {t("title")}: {name}
+        </h2>
+        <div className="flex shrink-0 items-center gap-2">
+          <IconButton
+            href={href}
+            icon={ArrowRight}
+            label={tPreview("open")}
+            variant="secondary"
+            size="xs"
+            onClick={(e) => {
+              // A plain click asks about unsaved work first; Ctrl+click is the browser's (#37.24).
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              guardedNavigate(href);
+            }}
+          />
+          <IconButton icon={X} label={tPreview("close")} variant="secondary" size="xs" onClick={onClose} />
+        </div>
+      </div>
+      {target.kind === "property" ? (
+        <IncursionMap propertyId={target.id} title={t("map")} />
+      ) : target.kind === "document" ? (
+        <IncursionPages documentId={target.id} />
+      ) : (
+        <InteractionsTile title={t("interactions")} surface={TILE_SURFACE} fill />
+      )}
+    </section>
+  );
+}
+
+/** „Hartă": the property's corners, read-only, the map as wide as the tile. */
+function IncursionMap({ propertyId, title }: { propertyId: string; title: string }) {
+  const tPreview = useTranslations("shared.preview");
+  const q = useQuery({
+    queryKey: ["incursion", "property", propertyId],
+    queryFn: async (): Promise<Corner[]> => {
+      const res = await fetch(`/api/properties/${encodeURIComponent(propertyId)}`);
+      if (!res.ok) throw new Error(`GET /api/properties/${propertyId} ${res.status}`);
+      const body = (await res.json()) as { corners?: { lat: number; lon: number; originalIndex?: number | null }[] };
+      return (body.corners ?? []).map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex }));
+    },
+  });
+  return (
+    <section data-tile="incursion-map" aria-label={title} className={TILE_SURFACE}>
+      <TileTitle title={title} />
+      <div
+        className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
+        style={{ height: rem(MAP_BOX_HEIGHT_REM) }}
+        data-incursion-map=""
+      >
+        {q.data ? (
+          <div className="absolute inset-0">
+            <PropertyMiniMap corners={q.data} onChange={() => {}} readOnly />
+          </div>
+        ) : (
+          <p className="p-3 text-sm text-fade dark:text-zinc-400">{q.isError ? tPreview("error") : tPreview("loading")}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** „Pagini": the document's pages, in the panel's read-only `"peek"` mode. */
+function IncursionPages({ documentId }: { documentId: string }) {
+  const state = usePagesPanelState(documentId);
+  return <PagesPanel documentId={documentId} mode="peek" state={state} />;
+}

@@ -13,7 +13,11 @@ import { useTranslations } from "next-intl";
 import { INTERACTIONS_TILE_STYLE } from "@/lib/ui/field-widths";
 import { TileTitle } from "./tile-title";
 
-export function InteractionsTile({ title, subtitle, surface }: { title: string; subtitle?: string; surface: string }) {
+/**
+ * Slice #38.72: `fill` — beside a list, in an „Incursiune", the tile takes the width it is given rather than its
+ * fixed 40rem; its height stays the one it has on a person's screen.
+ */
+export function InteractionsTile({ title, subtitle, surface, fill = false }: { title: string; subtitle?: string; surface: string; fill?: boolean }) {
   const t = useTranslations("shared.tiles");
   return (
     <section
@@ -21,7 +25,7 @@ export function InteractionsTile({ title, subtitle, surface }: { title: string; 
       data-panel="interactions"
       aria-label={title}
       className={surface}
-      style={INTERACTIONS_TILE_STYLE}
+      style={fill ? { minHeight: INTERACTIONS_TILE_STYLE.minHeight } : INTERACTIONS_TILE_STYLE}
     >
       <TileTitle title={title} subtitle={subtitle} />
       {/* Slice #38.06: in italics and in parentheses. The parentheses are drawn

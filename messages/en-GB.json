@@ -620,6 +620,13 @@
       "showMore": "Show more…",
       "showLess": "Show less…"
     },
+    "incursion": {
+      "button": "Peek inside",
+      "title": "Peek inside",
+      "interactions": "Interactions",
+      "map": "Map",
+      "lockedNote": "Preview comes back when the peek closes."
+    },
     "preview": {
       "title": "Preview",
       "openPreview": "Preview",

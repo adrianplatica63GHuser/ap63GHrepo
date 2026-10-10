@@ -633,7 +633,11 @@ export function PagesViewerBox({
 
 type Props = {
   documentId:       string;
-  mode:             "edit" | "view";
+  /**
+   * Slice #38.72: `"peek"` — an „Incursiune" beside a list: a look, not an edit. As `"view"`, and without the
+   * turn and its „Salvează" (#38.17), the one write a `"view"` panel still offers.
+   */
+  mode:             "edit" | "view" | "peek";
   state:            PagesPanelState;
   bigPage?:         boolean;
   onToggleBigPage?: () => void;
@@ -693,12 +697,14 @@ export function PagesPanel({
   // first render — the server has no session storage — as use-tile-choice.ts does.
   const [unsaved, setUnsaved] = useState<string[]>([]);
   useEffect(() => {
+    // Slice #38.72: a peek leaves that note for the document's own screen — reading it here would take it.
+    if (mode === "peek") return;
     const id = setTimeout(() => {
       const names = takeUnsavedPages(documentId);
       if (names.length > 0) setUnsaved(names);
     }, 0);
     return () => clearTimeout(id);
-  }, [documentId]);
+  }, [documentId, mode]);
 
   return (
     <section
@@ -744,7 +750,7 @@ export function PagesPanel({
             </div>
           )}
           {/* Slice #38.17: turn the image page shown, and store the turn. RotateCw / Save, by #37.41–#37.49's icon rules. */}
-          {pages.length > 0 && (
+          {pages.length > 0 && mode !== "peek" && (
             <div className="flex items-center gap-1.5" data-page-turn>
               <IconButton
                 icon={RotateCw}

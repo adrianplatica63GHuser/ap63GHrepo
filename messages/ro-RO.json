@@ -620,6 +620,13 @@
       "showMore": "Arată mai mult…",
       "showLess": "Arată mai puțin…"
     },
+    "incursion": {
+      "button": "Incursiune",
+      "title": "Incursiune",
+      "interactions": "Interacțiuni",
+      "map": "Hartă",
+      "lockedNote": "Previzualizarea revine când se închide incursiunea."
+    },
     "preview": {
       "title": "Previzualizare",
       "openPreview": "Previzualizare",

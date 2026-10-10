@@ -1292,7 +1292,9 @@ export const COLUMN = {
   // (a header may take two lines; a word cannot). Columns of their own, so the screens that share the older names —
   // the association views, the dashboard, the calculation screens — keep theirs.
   listBadges: { content: 8, kind: "fixed" }, //             the property list's checkbox, „Nou!" and „Încrucișat" side by side (127 px)
-  listRowActions: { content: 4, kind: "fixed" }, //         a row's two xs buttons, „Deschide" and „Previzualizare", side by side (60 px)
+  // Slice #38.72: three xs buttons side by side — the magnifier, the eye („Incursiune") and the arrow — 3 × 26 + 2 × 8 =
+  // 94 px; it was 4 for two (60 px), and the third button was cut at the table's edge.
+  listRowActions: { content: 6, kind: "fixed" },
   listPropertyNickname: { content: 14, kind: "fixed" }, //  PROP.nickname — 90th percentile 213 px, longest 278
   listTarla: { content: 5, kind: "fixed" }, //              Tarla/Solă — the header's word, „TARLA/SOLĂ" (80 px); values 28
   listParcela: { content: 4, kind: "fixed" }, //            Parcelă — „PARCELĂ" (60 px); values 47
