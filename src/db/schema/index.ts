@@ -2158,3 +2158,82 @@ export const userTileDefault = pgTable(
     check("user_tile_default_kind_check", sql`${t.kind} IN ('natural-person', 'judicial-person', 'property', 'document')`),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// interaction — the log of interactions with clients  (Slice #38.83, migration_105)
+// ---------------------------------------------------------------------------
+//
+// One row per contact with a client — email, WhatsApp, SMS, phone, meeting or
+// paper mail — logged by hand (no Gmail, no WhatsApp: Adrian, 2026-10-10). Not a
+// principal object: no code, no versions. ASCII keys; the words are in messages
+// (`interactions.*`). `description` is client-facing, `internal_note` team-only:
+// neither is ever a filter, a sort or a search (§8.2, `src/lib/interactions/`).
+// `updated_at` is also what two people editing one row compare: a save that read
+// an older one answers 409 (§7). migration_105 is the truth for the CHECKs.
+
+export const INTERACTION_CHANNELS = ["EMAIL", "WHATSAPP", "SMS", "PHONE", "MEETING", "PAPER_MAIL"] as const;
+export const INTERACTION_DIRECTIONS = ["INBOUND", "OUTBOUND"] as const;
+export const INTERACTION_STATUSES = ["LOGGED", "NEEDS_REPLY", "SENT", "COMPLETED", "SCHEDULED"] as const;
+
+export const interaction = pgTable(
+  "interaction",
+  {
+    id:                uuid("id").primaryKey().defaultRandom(),
+    channel:           text("channel").notNull(),
+    direction:         text("direction").notNull().default("OUTBOUND"),
+    occurredAt:        timestamp("occurred_at", { withTimezone: true }).notNull(),
+    // A person's interactions go with the person (Ask first #1).
+    personId:          uuid("person_id").notNull().references(() => person.id, { onDelete: "cascade" }),
+    subject:           text("subject").notNull(),
+    description:       text("description"),
+    internalNote:      text("internal_note"),
+    status:            text("status").notNull().default("LOGGED"),
+    followUpOn:        date("follow_up_on"),
+    // A property only (Ask first #4); the interaction outlives it.
+    relatedPropertyId: uuid("related_property_id").references(() => property.id, { onDelete: "set null" }),
+    createdAt:         timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdBy:         text("created_by"),
+    updatedAt:         timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedBy:         text("updated_by"),
+  },
+  (t) => [
+    check("interaction_channel_check", sql`${t.channel} IN ('EMAIL', 'WHATSAPP', 'SMS', 'PHONE', 'MEETING', 'PAPER_MAIL')`),
+    check("interaction_direction_check", sql`${t.direction} IN ('INBOUND', 'OUTBOUND')`),
+    check("interaction_subject_check", sql`char_length(btrim(${t.subject})) BETWEEN 1 AND 120`),
+    check("interaction_status_check", sql`${t.status} IN ('LOGGED', 'NEEDS_REPLY', 'SENT', 'COMPLETED', 'SCHEDULED')`),
+    index("interaction_occurred_at_idx").on(t.occurredAt.desc()),
+    index("interaction_person_idx").on(t.personId),
+    index("interaction_status_idx").on(t.status),
+  ],
+);
+
+/** An interaction's documents — a link, never a copy of the file (§6). */
+export const interactionDocument = pgTable(
+  "interaction_document",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    interactionId: uuid("interaction_id").notNull().references(() => interaction.id, { onDelete: "cascade" }),
+    documentId:    uuid("document_id").notNull().references(() => document.id, { onDelete: "cascade" }),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("interaction_document_unique").on(t.interactionId, t.documentId),
+    index("interaction_document_document_idx").on(t.documentId),
+  ],
+);
+
+/** An interaction's tags — its own table, not the archive's `entity_tag` (Ask first #3). */
+export const interactionTag = pgTable(
+  "interaction_tag",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    interactionId: uuid("interaction_id").notNull().references(() => interaction.id, { onDelete: "cascade" }),
+    tag:           text("tag").notNull(),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("interaction_tag_tag_check", sql`char_length(btrim(${t.tag})) BETWEEN 1 AND 60`),
+    uniqueIndex("interaction_tag_unique").on(t.interactionId, t.tag),
+    index("interaction_tag_tag_idx").on(t.tag),
+  ],
+);
