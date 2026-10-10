@@ -7,15 +7,15 @@
  * link between two objects of the same kind; a side, a link between two kinds. Each of the six carries
  * a number, explained in the list beside the drawing: what the link is, where it is configured, and
  * whether it is configured at all — in words, never by colour alone (a link that is not configured is
- * also drawn dashed). A corner or side that has a list opens it (`?list=`, Ask first #2); Document –
+ * also drawn dashed). Since #38.77 the words are its „Vezi:" sentence (6's: „Nicio listă: …"), not a status label. A corner or side that has a list opens it (`?list=`, Ask first #2); Document –
  * Proprietate has none and opens nothing. The data is `RELATIONSHIPS` (`@/lib/admin/value-lists/relationships`).
  */
 
-import { useId, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { useId, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, type ObjectKind, type Relationship, type RelationshipId } from "@/lib/admin/value-lists/relationships";
-import { dialogCardStyle, rem } from "@/lib/ui/field-widths";
+import { rem, unitsRem } from "@/lib/ui/field-widths";
 import { LINK_MARK_BOX, LINK_MARK_FILL, LINK_MARK_INK } from "@/lib/ui/link-mark";
 import { InfoPress } from "@/lib/ui/info-press";
 
@@ -50,6 +50,24 @@ const LEFT = MARGIN + BUBBLE + LOOP_REACH + BOX.w / 2; //   Proprietate's centre
 const TOP = MARGIN + BUBBLE + 36 + BOX.h / 2; //             Persoană's centre: 64 — its number 36 above its box
 const BASE = Math.round(TOP + (SIDE * Math.sqrt(3)) / 2); // Proprietate's and Document's: 190
 export const DRAWING = { w: LEFT * 2 + SIDE, h: BASE + BOX.h / 2 + MARGIN }; // 334 × 207
+
+/**
+ * Slice #38.77 — the six's column 20 % wider, the drawing kept (#38.67's size). The tile was the list card's width
+ * (`dialogCardStyle(cardUnits)`), the six taking what the drawing's column leaves; it grows by a fifth of that, its
+ * left edge still the card's, so it stands wider than the card under it (Ask first #1). Capped, as before, by the
+ * side it stands in: where that already holds it narrower than the card's units (a 1366 px window: the side is its
+ * six units, 968 px, and the unit grid gives it no more), the column cannot grow and keeps what the side leaves.
+ * Measured before, at 1920 px: the tile 1132 px, the six 756.4; after, 1283.6 and 908.6 (×1.20).
+ */
+export const SIX_WIDER = 1.2;
+/** The drawing's column: the drawing and its `px-5` either side. */
+const DRAWING_COLUMN_REM = DRAWING.w / 16 + 2 * 1.25;
+
+/** The tile's width: the card's, plus a fifth of what the six had in it. */
+export function triangleCardStyle(cardUnits: number): CSSProperties {
+  const card = unitsRem(cardUnits);
+  return { maxWidth: rem(card + (SIX_WIDER - 1) * (card - DRAWING_COLUMN_REM)) };
+}
 
 /** Where each object sits — the triangle's corners. */
 const AT: Record<ObjectKind, { x: number; y: number }> = {
@@ -151,7 +169,7 @@ export function RelationshipTriangle({
       aria-labelledby={titleId}
       data-relationship-triangle=""
       className="@container rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      style={dialogCardStyle(cardUnits)}
+      style={triangleCardStyle(cardUnits)}
     >
       {/* Slice #38.67: the title and its sentence over the drawing, in a column as wide as the drawing; the six beside
           them from the tile's top edge, a divider between that runs the tile's full height. #38.62's full-width
@@ -294,7 +312,6 @@ export function RelationshipTriangle({
               key={r.id}
               className="flex gap-3"
               data-relationship-entry={r.id}
-              data-configured={r.configured ? "yes" : "no"}
               aria-current={isMarked(r) ? "true" : undefined}
             >
               {/* Slice #38.68: marked, the number is the column's marked look — a filled rounded box. */}
@@ -309,45 +326,49 @@ export function RelationshipTriangle({
                 {i + 1}
               </span>
               <div className="flex min-w-0 flex-col gap-0.5 text-sm">
-                <div className="flex flex-wrap items-baseline gap-x-2">
+                {/* Slice #38.77: the name line — the name, then, a few spaces after it (`ml-4`), „Vezi:" and the
+                    sentence that stood in small type at the bottom until now, word for word (5 and 6 in their
+                    italic magenta with their ⓘ, #38.69). The status words („configurat în aplicație" /
+                    „neconfigurat, intenționat") are gone. Inline, so a long sentence wraps under the name line
+                    and the name itself never breaks. */}
+                <p className="leading-relaxed">
                   <span className="sr-only">{i + 1}.</span>
                   {r.list ? (
                     <a
                       href={`/admin/value-lists?list=${r.list}`}
                       onClick={(e) => press(e, r.id)}
                       title={openLabel(r)}
-                      className="font-semibold text-cta underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:outline-2 focus-visible:outline-focus dark:text-sky-300"
+                      className="whitespace-nowrap font-semibold text-cta underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:outline-2 focus-visible:outline-focus dark:text-sky-300"
                     >
                       {name(r)}
                     </a>
                   ) : (
-                    <span className="font-semibold text-ink dark:text-zinc-100">{name(r)}</span>
+                    <span className="whitespace-nowrap font-semibold text-ink dark:text-zinc-100">{name(r)}</span>
                   )}
-                  <span className="text-xs font-medium text-fade dark:text-zinc-400" data-status="">
-                    {t(r.configured ? "triangle.status.configured" : "triangle.status.notConfigured")}
-                  </span>
-                </div>
-                <p className="leading-relaxed text-ink dark:text-zinc-300">{t(`triangle.relations.${r.id}.text`)}</p>
-                {INFO_NOTES.includes(r.id) ? (
-                  <div className={`text-xs italic leading-relaxed ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>
-                    {t(`triangle.relations.${r.id}.where`)}{" "}
-                    <InfoPress label={t(`triangle.info.${r.id}.label`)}>
-                      <span className="mb-1 block font-semibold">{t(`triangle.info.${r.id}.label`)}</span>
-                      <span className="flex flex-col gap-1">
-                        {(["s1", "s2", "s3"] as const).map((k, n) => (
-                          <span key={k} className="flex gap-1.5">
-                            <span aria-hidden="true">{n + 1}.</span>
-                            <span>
-                              {t.rich(`triangle.info.${r.id}.${k}`, { roles: listLink("person-roles"), types: listLink("document-types") })}
+                  {INFO_NOTES.includes(r.id) ? (
+                    <span className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>
+                      <span data-see="">{t("triangle.see")}</span> {t(`triangle.relations.${r.id}.where`)}{" "}
+                      <InfoPress label={t(`triangle.info.${r.id}.label`)}>
+                        <span className="mb-1 block font-semibold">{t(`triangle.info.${r.id}.label`)}</span>
+                        <span className="flex flex-col gap-1">
+                          {(["s1", "s2", "s3"] as const).map((k, n) => (
+                            <span key={k} className="flex gap-1.5">
+                              <span aria-hidden="true">{n + 1}.</span>
+                              <span>
+                                {t.rich(`triangle.info.${r.id}.${k}`, { roles: listLink("person-roles"), types: listLink("document-types") })}
+                              </span>
                             </span>
-                          </span>
-                        ))}
-                      </span>
-                    </InfoPress>
-                  </div>
-                ) : (
-                  <p className="text-xs leading-relaxed text-fade dark:text-zinc-400" data-note={r.id}>{t(`triangle.relations.${r.id}.where`)}</p>
-                )}
+                          ))}
+                        </span>
+                      </InfoPress>
+                    </span>
+                  ) : (
+                    <span className="ml-4 text-xs text-fade dark:text-zinc-400" data-note={r.id}>
+                      <span data-see="">{t("triangle.see")}</span> {t(`triangle.relations.${r.id}.where`)}
+                    </span>
+                  )}
+                </p>
+                <p className="leading-relaxed text-ink dark:text-zinc-300">{t(`triangle.relations.${r.id}.text`)}</p>
               </div>
             </li>
           ))}

@@ -10,6 +10,11 @@ import path from "node:path";
 
 import { VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, isCorner, linksOfList, listOfLink, markedLinks } from "@/lib/admin/value-lists/relationships";
+import { DRAWING, SIX_WIDER, triangleCardStyle } from "@/app/admin/value-lists/_components/relationship-triangle";
+
+// Slice #38.77 reads the tile's width rule from the component itself; it needs no translations to do that.
+jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
+import { unitsRem } from "@/lib/ui/field-widths";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 const SCHEMA = read("src/db/supabase_schema_full.sql");
@@ -19,7 +24,8 @@ type Msg = { valueList: Record<string, unknown> & { triangle: Record<string, unk
 const MSG = { ro: JSON.parse(read("messages/ro-RO.json")) as Msg, en: JSON.parse(read("messages/en-GB.json")) as Msg };
 const tri = (l: "ro" | "en") => MSG[l].valueList.triangle as {
   relations: Record<string, { name: string; text: string; where: string }>;
-  status: { configured: string; notConfigured: string };
+  status?: { configured: string; notConfigured: string };
+  see: string;
   objects: Record<string, string>;
 };
 
@@ -63,7 +69,7 @@ describe("the six relationships (#38.62)", () => {
 });
 
 describe("the six texts (#38.62)", () => {
-  it.each(["ro", "en"] as const)("%s: a name, a text and a where for each, and both statuses", (l) => {
+  it.each(["ro", "en"] as const)("%s: a name, a text and a where for each (#38.77: no status any more)", (l) => {
     for (const r of RELATIONSHIPS) {
       const e = tri(l).relations[r.id];
       expect([l, r.id, typeof e?.name, typeof e?.text, typeof e?.where]).toEqual([l, r.id, "string", "string", "string"]);
@@ -72,11 +78,15 @@ describe("the six texts (#38.62)", () => {
     expect(Object.keys(tri(l).objects).sort()).toEqual(["document", "person", "property"]);
   });
 
-  it("say the status in words", () => {
-    expect(tri("ro").status).toEqual({ configured: "configurat în aplicație", notConfigured: "neconfigurat, intenționat" });
-    expect(tri("en").status).toEqual({ configured: "configured in the application", notConfigured: "not configured, by design" });
-    expect(TILE).toContain('t(r.configured ? "triangle.status.configured" : "triangle.status.notConfigured")');
-    // …and the drawing does not rely on colour either: the side that is not configured is dashed.
+  // #38.62 held „say the status in words": `status` was { configured: "configurat în aplicație", notConfigured:
+  // "neconfigurat, intenționat" } and the tile drew `t(r.configured ? "triangle.status.configured" : …)`.
+  // Slice #38.77 removes the words, in Adrian's request; „Vezi:" and the where-sentence stand there instead.
+  it("say no status in words any more (#38.77) — and the drawing still does not rely on colour", () => {
+    for (const l of ["ro", "en"] as const) expect([l, tri(l).status]).toEqual([l, undefined]);
+    expect(TILE).not.toContain("triangle.status");
+    expect(TILE).not.toContain("data-status");
+    expect(TILE).not.toContain("data-configured");
+    // …the drawing does not rely on colour either: the side that is not configured is dashed.
     expect(TILE).toContain('strokeDasharray={r.configured ? undefined : "6 5"}');
   });
 
@@ -219,7 +229,9 @@ describe("notes 5 and 6 in magenta, each with an ⓘ (Slice #38.69)", () => {
 
   it("only 5's and 6's notes are magenta and italic; their words did not change", () => {
     expect(TILE).toContain('const INFO_NOTES: readonly RelationshipId[] = ["personDocument", "documentProperty"];');
-    expect(TILE).toContain("<div className={`text-xs italic leading-relaxed ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>");
+    // #38.69: `<div className={`text-xs italic leading-relaxed ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>` under the
+    // text; #38.77 moves it onto the name line, after „Vezi:", italic magenta still.
+    expect(TILE).toContain("<span className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>");
     expect(tri("ro").relations.personDocument.where).toBe("Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document.");
     expect(tri("ro").relations.documentProperty.where).toBe("Nicio listă: tipul documentului spune ce înseamnă legătura.");
   });
@@ -244,5 +256,39 @@ describe("notes 5 and 6 in magenta, each with an ⓘ (Slice #38.69)", () => {
     expect(info).toContain("usePressAway<HTMLSpanElement>(open, (how) => {");
     expect(info).toContain('if (how === "escape") button.current?.focus();');
     expect(info).toContain('className={buttonClass({ variant: "ghost", size: "xs", pill: true');
+  });
+});
+
+describe("„Vezi: …” on the name line, the six's column 20 % wider (Slice #38.77)", () => {
+  it("„Vezi:” / „See:” is a key of its own", () => {
+    expect(tri("ro").see).toBe("Vezi:");
+    expect(tri("en").see).toBe("See:");
+  });
+
+  it("the name line holds the name, then — a few spaces after it — „Vezi:” and the where-sentence, word for word", () => {
+    const line = TILE.slice(TILE.indexOf('<p className="leading-relaxed">'), TILE.indexOf("triangle.relations.${r.id}.text"));
+    const name = line.indexOf("{name(r)}");
+    const see = line.indexOf('<span data-see="">{t("triangle.see")}</span> {t(`triangle.relations.${r.id}.where`)}');
+    expect(name).toBeGreaterThan(-1);
+    expect(see).toBeGreaterThan(name);
+    // The gap is a margin, not spaces; the name never breaks; both branches (5 and 6 magenta with their ⓘ, the rest fade).
+    expect((line.match(/className="whitespace-nowrap font-semibold/g) ?? []).length).toBe(2);
+    expect(line).toContain('<span className="ml-4 text-xs text-fade dark:text-zinc-400" data-note={r.id}>');
+    expect(line).toContain("<InfoPress label={t(`triangle.info.${r.id}.label`)}>");
+    // Nothing under the text any more: the where-sentence is printed once per branch, both on the name line.
+    expect((TILE.match(/triangle\.relations\.\$\{r\.id\}\.where/g) ?? []).length).toBe(2);
+  });
+
+  it("the tile grows by a fifth of the six's column, the drawing kept", () => {
+    expect(SIX_WIDER).toBe(1.2);
+    const units = 7;
+    const card = unitsRem(units);
+    const drawingColumn = DRAWING.w / 16 + 2.5; // the drawing and its px-5 either side
+    const tile = parseFloat(String(triangleCardStyle(units).maxWidth));
+    expect(tile - drawingColumn).toBeCloseTo(1.2 * (card - drawingColumn), 6);
+    expect(TILE).toContain("style={triangleCardStyle(cardUnits)}");
+    expect(TILE).not.toContain("style={dialogCardStyle(");
+    // The drawing keeps #38.67's size.
+    expect(TILE).toContain("style={{ width: rem(DRAWING.w / 16) }}");
   });
 });

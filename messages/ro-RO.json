@@ -2092,10 +2092,7 @@
         "property": "Proprietate",
         "document": "Document"
       },
-      "status": {
-        "configured": "configurat în aplicație",
-        "notConfigured": "neconfigurat, intenționat"
-      },
+      "see": "Vezi:",
       "open": "{name} — deschide lista „{list}”",
       "info": {
         "personDocument": {

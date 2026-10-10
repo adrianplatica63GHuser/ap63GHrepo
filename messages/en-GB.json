@@ -2092,10 +2092,7 @@
         "property": "Property",
         "document": "Document"
       },
-      "status": {
-        "configured": "configured in the application",
-        "notConfigured": "not configured, by design"
-      },
+      "see": "See:",
       "open": "{name} — open the list “{list}”",
       "info": {
         "personDocument": {
