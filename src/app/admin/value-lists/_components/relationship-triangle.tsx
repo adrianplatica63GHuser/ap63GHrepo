@@ -15,26 +15,60 @@ import { useId, type MouseEvent } from "react";
 import { useTranslations } from "next-intl";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, type ObjectKind, type Relationship } from "@/lib/admin/value-lists/relationships";
-import { dialogCardStyle } from "@/lib/ui/field-widths";
+import { dialogCardStyle, rem } from "@/lib/ui/field-widths";
 
-/** Where each object sits — the triangle's corners, its sides 240 units long. */
+/**
+ * THE DRAWING'S GEOMETRY.                                                     (Slices #38.62, #38.67)
+ *
+ * #38.67: about 20 % smaller — 334 px wide where #38.62's was 416 (a 440-unit viewBox drawn at 26rem).
+ * Scaling that viewBox down would have taken the words under 12 px (the numbers were already 11.3), so the
+ * drawing is now one unit to one pixel and the GEOMETRY shrinks instead: the sides are 146 long (were 240),
+ * the boxes 96 × 32 (were 104 × 34), and the text keeps its size — the objects' names 13 px (13.2 before),
+ * the numbers 12 px. „Proprietate", the longest name, is 68.6 px at 13 px bold, so a box keeps 13 px a side.
+ * Every coordinate below comes from these few numbers; the 1-unit margin keeps the outer numbers' rims
+ * inside the viewBox.
+ */
+const SIDE = 146;
+const BOX = { w: 96, h: 32 };
+/** A number's bubble. */
+const BUBBLE = 11;
+/** How far a corner's number sits from its box — on the loop, outward from the triangle. */
+const LOOP_REACH = 34;
+const MARGIN = 1;
+const LEFT = MARGIN + BUBBLE + LOOP_REACH + BOX.w / 2; //   Proprietate's centre: 94
+const TOP = MARGIN + BUBBLE + 36 + BOX.h / 2; //             Persoană's centre: 64 — its number 36 above its box
+const BASE = Math.round(TOP + (SIDE * Math.sqrt(3)) / 2); // Proprietate's and Document's: 190
+export const DRAWING = { w: LEFT * 2 + SIDE, h: BASE + BOX.h / 2 + MARGIN }; // 334 × 207
+
+/** Where each object sits — the triangle's corners. */
 const AT: Record<ObjectKind, { x: number; y: number }> = {
-  person: { x: 220, y: 70 },
-  property: { x: 100, y: 278 },
-  document: { x: 340, y: 278 },
+  person: { x: LEFT + SIDE / 2, y: TOP },
+  property: { x: LEFT, y: BASE },
+  document: { x: LEFT + SIDE, y: BASE },
 };
-
-const BOX = { w: 104, h: 34 };
 
 /**
  * A corner's loop: a curve that leaves the object's box and comes back to it, outward from the
  * triangle — above Persoană, left of Proprietate, right of Document — and where its number sits.
  */
-const LOOP: Record<ObjectKind, { d: string; nx: number; ny: number }> = {
-  person: { d: "M 206 53 C 186 4, 254 4, 234 53", nx: 220, ny: 17 },
-  property: { d: "M 48 266 C 0 244, 0 312, 48 290", nx: 14, ny: 278 },
-  document: { d: "M 392 266 C 440 244, 440 312, 392 290", nx: 426, ny: 278 },
-};
+const LOOP: Record<ObjectKind, { d: string; nx: number; ny: number }> = (() => {
+  const p = AT.person;
+  const top = p.y - BOX.h / 2;
+  const side = (k: "property" | "document", dir: -1 | 1) => {
+    const c = AT[k];
+    const edge = c.x + (dir * BOX.w) / 2;
+    return {
+      d: `M ${edge} ${c.y - 12} C ${edge + dir * 48} ${c.y - 34}, ${edge + dir * 48} ${c.y + 34}, ${edge} ${c.y + 12}`,
+      nx: edge + dir * LOOP_REACH,
+      ny: c.y,
+    };
+  };
+  return {
+    person: { d: `M ${p.x - 14} ${top} C ${p.x - 34} ${top - 49}, ${p.x + 34} ${top - 49}, ${p.x + 14} ${top}`, nx: p.x, ny: top - 36 },
+    property: side("property", -1),
+    document: side("document", 1),
+  };
+})();
 
 /** Where a relationship's number sits: on its corner's loop, or halfway along its side. */
 function numberAt(r: Relationship): { x: number; y: number } {
@@ -71,108 +105,118 @@ export function RelationshipTriangle({
       role="region"
       aria-labelledby={titleId}
       data-relationship-triangle=""
-      className="rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="@container rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       style={dialogCardStyle(cardUnits)}
     >
-      <div className="border-b border-card-rim px-5 py-4 dark:border-zinc-800">
-        <h2 id={titleId} className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("triangle.title")}
-        </h2>
-        <p className="mt-1 text-sm leading-relaxed text-fade dark:text-zinc-400">{t("triangle.intro")}</p>
-      </div>
+      {/* Slice #38.67: the title and its sentence over the drawing, in a column as wide as the drawing; the six beside
+          them from the tile's top edge, a divider between that runs the tile's full height. #38.62's full-width
+          divider under the title is gone. Where the tile cannot hold both side by side (under 42rem: the column's
+          23.4rem and the six's 18rem), the six go under the column and the divider turns horizontal. */}
+      <div className="flex flex-col @min-[42rem]:flex-row">
+        <div className="flex shrink-0 flex-col gap-4 px-5 py-4" data-triangle-column="">
+          <div style={{ width: rem(DRAWING.w / 16) }} data-triangle-heading="">
+            <h2 id={titleId} className="text-base font-semibold text-ink dark:text-zinc-100">
+              {t("triangle.title")}
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-fade dark:text-zinc-400">{t("triangle.intro")}</p>
+          </div>
 
-      <div className="flex flex-wrap items-start gap-6 p-5">
-        <svg
-          viewBox="0 0 440 310"
-          role="img"
-          aria-labelledby={svgTitleId}
-          className="w-[26rem] max-w-full shrink-0 text-ink dark:text-zinc-300"
-          data-triangle-drawing=""
-        >
-          <title id={svgTitleId}>{t("triangle.drawing")}</title>
+          <svg
+            viewBox={`0 0 ${DRAWING.w} ${DRAWING.h}`}
+            role="img"
+            aria-labelledby={svgTitleId}
+            className="max-w-full shrink-0 text-ink dark:text-zinc-300"
+            style={{ width: rem(DRAWING.w / 16) }}
+            data-triangle-drawing=""
+          >
+            <title id={svgTitleId}>{t("triangle.drawing")}</title>
 
-          {/* The three sides — a side that is not configured is dashed, so the drawing says it without colour. */}
-          {RELATIONSHIPS.filter((r) => r.ends[0] !== r.ends[1]).map((r) => {
-            const [a, b] = r.ends;
-            return (
-              <line
+            {/* The three sides — a side that is not configured is dashed, so the drawing says it without colour. */}
+            {RELATIONSHIPS.filter((r) => r.ends[0] !== r.ends[1]).map((r) => {
+              const [a, b] = r.ends;
+              return (
+                <line
+                  key={r.id}
+                  x1={AT[a].x}
+                  y1={AT[a].y}
+                  x2={AT[b].x}
+                  y2={AT[b].y}
+                  stroke="currentColor"
+                  strokeWidth={r.list === current ? 3 : 1.5}
+                  strokeDasharray={r.configured ? undefined : "6 5"}
+                  data-side={r.id}
+                />
+              );
+            })}
+
+            {/* The three corners' loops — a link between two objects of the same kind. */}
+            {RELATIONSHIPS.filter((r) => r.ends[0] === r.ends[1]).map((r) => (
+              <path
                 key={r.id}
-                x1={AT[a].x}
-                y1={AT[a].y}
-                x2={AT[b].x}
-                y2={AT[b].y}
+                d={LOOP[r.ends[0]].d}
+                fill="none"
                 stroke="currentColor"
                 strokeWidth={r.list === current ? 3 : 1.5}
-                strokeDasharray={r.configured ? undefined : "6 5"}
-                data-side={r.id}
+                data-corner={r.id}
               />
-            );
-          })}
+            ))}
 
-          {/* The three corners' loops — a link between two objects of the same kind. */}
-          {RELATIONSHIPS.filter((r) => r.ends[0] === r.ends[1]).map((r) => (
-            <path
-              key={r.id}
-              d={LOOP[r.ends[0]].d}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={r.list === current ? 3 : 1.5}
-              data-corner={r.id}
-            />
-          ))}
-
-          {/* The three objects, over the lines. */}
-          {(Object.keys(AT) as ObjectKind[]).map((k) => (
-            <g key={k} data-object={k}>
-              <rect
-                x={AT[k].x - BOX.w / 2}
-                y={AT[k].y - BOX.h / 2}
-                width={BOX.w}
-                height={BOX.h}
-                rx={8}
-                className="fill-white dark:fill-zinc-900"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              />
-              <text x={AT[k].x} y={AT[k].y} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize={14} fontWeight={600}>
-                {t(`triangle.objects.${k}`)}
-              </text>
-            </g>
-          ))}
-
-          {/* The six numbers — a link where the relationship has a list (Ask first #2). */}
-          {RELATIONSHIPS.map((r, i) => {
-            const at = numberAt(r);
-            const mark = (
-              <>
-                <circle cx={at.x} cy={at.y} r={11} className="fill-white dark:fill-zinc-900" stroke="currentColor" strokeWidth={1.5} />
-                <text x={at.x} y={at.y} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize={12} fontWeight={600}>
-                  {i + 1}
+            {/* The three objects, over the lines. */}
+            {(Object.keys(AT) as ObjectKind[]).map((k) => (
+              <g key={k} data-object={k}>
+                <rect
+                  x={AT[k].x - BOX.w / 2}
+                  y={AT[k].y - BOX.h / 2}
+                  width={BOX.w}
+                  height={BOX.h}
+                  rx={8}
+                  className="fill-white dark:fill-zinc-900"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                />
+                <text x={AT[k].x} y={AT[k].y} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize={13} fontWeight={600}>
+                  {t(`triangle.objects.${k}`)}
                 </text>
-              </>
-            );
-            return r.list ? (
-              <a
-                key={r.id}
-                href={`/admin/value-lists?list=${r.list}`}
-                onClick={(e) => press(e, r.list as ListKey)}
-                aria-label={openLabel(r)}
-                data-relationship={r.id}
-                className="cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
-              >
-                <title>{openLabel(r)}</title>
-                {mark}
-              </a>
-            ) : (
-              <g key={r.id} data-relationship={r.id} aria-label={name(r)}>
-                <title>{name(r)}</title>
-                {mark}
               </g>
-            );
-          })}
-        </svg>
+            ))}
 
-        <ol className="flex min-w-[18rem] flex-1 flex-col gap-3" data-triangle-list="">
+            {/* The six numbers — a link where the relationship has a list (Ask first #2). */}
+            {RELATIONSHIPS.map((r, i) => {
+              const at = numberAt(r);
+              const mark = (
+                <>
+                  <circle cx={at.x} cy={at.y} r={BUBBLE} className="fill-white dark:fill-zinc-900" stroke="currentColor" strokeWidth={1.5} />
+                  <text x={at.x} y={at.y} textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize={12} fontWeight={600}>
+                    {i + 1}
+                  </text>
+                </>
+              );
+              return r.list ? (
+                <a
+                  key={r.id}
+                  href={`/admin/value-lists?list=${r.list}`}
+                  onClick={(e) => press(e, r.list as ListKey)}
+                  aria-label={openLabel(r)}
+                  data-relationship={r.id}
+                  className="cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
+                >
+                  <title>{openLabel(r)}</title>
+                  {mark}
+                </a>
+              ) : (
+                <g key={r.id} data-relationship={r.id} aria-label={name(r)}>
+                  <title>{name(r)}</title>
+                  {mark}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        <ol
+          className="flex min-w-[18rem] flex-1 flex-col gap-3 border-t border-card-rim px-5 pt-4 pb-5 dark:border-zinc-800 @min-[42rem]:border-t-0 @min-[42rem]:border-l @min-[42rem]:pt-1.5"
+          data-triangle-list=""
+        >
           {RELATIONSHIPS.map((r, i) => (
             <li key={r.id} className="flex gap-3" data-relationship-entry={r.id} data-configured={r.configured ? "yes" : "no"}>
               <span
