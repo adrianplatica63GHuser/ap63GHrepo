@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
 import { RelatedTile, type RelatedRow } from "@/components/tiles/related-tile";
+import { PagesPanel, PEEK_NAME_CHARS, peekName, usePagesPanelState } from "@/app/documents/_components/pages-panel";
 import { RELATED_TILE_SURFACE } from "@/lib/ui/tile-surface";
 import type { PreviewTarget } from "@/lib/ui/previews";
 import { groupSurface, PINNED_TILE_SURFACE } from "@/lib/ui/tile-surface";
@@ -221,7 +222,8 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     const pages = read("src", "app", "documents", "_components", "pages-panel.tsx");
     expect(pages).toContain('mode === "peek" ? "flex flex-1 flex-col" : "",');
     expect(pages).toContain('"flex flex-1 flex-col gap-3 lg:flex-row lg:items-stretch"');
-    expect(pages).toContain('mode === "peek" ? "order-2 flex flex-1 flex-col lg:order-1"');
+    // #38.75: `mode === "peek" ? "order-2 flex flex-1 flex-col lg:order-1"`; #38.82 gives the scan three parts of four.
+    expect(pages).toContain('mode === "peek" ? "order-2 flex min-w-0 flex-1 flex-col lg:order-1 lg:flex-[3_1_0%]"');
     // The viewer's own floor stays: it grows from 320 px, never below.
     expect(pages).toContain('"relative min-h-[320px] flex-1 overflow-hidden');
   });
@@ -371,5 +373,67 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
     // A click selects nothing: no row is marked chosen.
     fireEvent.click(container.querySelector("[data-one-line-row]")!);
     expect(container.querySelector(".bg-cta-pale")).toBeNull();
+  });
+});
+
+describe("„Pagini” in an Incursiune: three quarters for the scan, names cut at 20 characters (#38.82)", () => {
+  const DOC = "33333333-3333-4333-8333-333333333333";
+  const NAME = "Plan de amplasament, scara 1:500"; // 32 characters
+  const PAGE = { id: "44444444-4444-4444-8444-444444444444", documentId: DOC, pageNumber: 1, pageName: NAME, pageNotes: "o notă", fileName: "plan.png", fileSize: 10, mimeType: "image/png", rotation: 0, createdAt: "", updatedAt: "" };
+  const UNNAMED = { ...PAGE, id: "55555555-5555-4555-8555-555555555555", pageNumber: 2, pageName: null, fileName: "scanare-extras-carte-funciara-2019.png" };
+  const answer = (body: unknown) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) } as Response);
+
+  function Panel({ mode }: { mode: "peek" | "view" }) {
+    const state = usePagesPanelState(DOC);
+    return <PagesPanel documentId={DOC} mode={mode} state={state} />;
+  }
+  const draw = (mode: "peek" | "view") => {
+    global.fetch = jest.fn((url: string) =>
+      url.endsWith("/view") ? answer({ url: "/api/files/plan.png", mimeType: "image/png", fileName: "plan.png" }) : answer([PAGE, UNNAMED]),
+    ) as unknown as typeof fetch;
+    return render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <Panel mode={mode} />
+      </QueryClientProvider>,
+    );
+  };
+  afterEach(() => {
+    (global as { fetch?: unknown }).fetch = undefined;
+  });
+
+  it("cuts a name at 20 characters by count, then „…”; a shorter one is left whole", () => {
+    expect(PEEK_NAME_CHARS).toBe(20);
+    expect(peekName(NAME)).toBe("Plan de amplasament,…");
+    expect(Array.from(peekName(NAME))).toHaveLength(21);
+    expect(peekName("Pagina 1")).toBe("Pagina 1");
+    expect(peekName("ăîâșțăîâșțăîâșțăîâșț")).toBe("ăîâșțăîâșțăîâșțăîâșț"); // 20 with diacritics: whole
+  });
+
+  it("in peek: no Notes column, neither arrow nor pen on a row, „Tipărire” kept; the name cut, its title whole — the file name too", async () => {
+    const { container } = draw("peek");
+    await waitFor(() => expect(container.querySelectorAll("tbody tr")).toHaveLength(2));
+    expect([...container.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual(["colNum", "colName", "colActions"]);
+    expect(container.querySelector('[aria-label="notes"]')).toBeNull();
+    expect(container.querySelector('[aria-label="view"]')).toBeNull();
+    expect(container.querySelectorAll('[aria-label="print"]')).toHaveLength(2);
+    const names = [...container.querySelectorAll<HTMLElement>("[data-page-name]")];
+    expect(names.map((n) => n.textContent)).toEqual(["Plan de amplasament,…", "scanare-extras-carte…"]);
+    expect(names.map((n) => n.title)).toEqual([NAME, UNNAMED.fileName]);
+  });
+
+  it("on the document's own screen, nothing of that changes: the Notes column, the pen, the names whole", async () => {
+    const { container } = draw("view");
+    await waitFor(() => expect(container.querySelectorAll("tbody tr")).toHaveLength(2));
+    expect([...container.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual(["colNum", "colName", "colNotes", "colActions"]);
+    expect(container.querySelectorAll('[aria-label="notes"]')).toHaveLength(2);
+    expect(container.querySelector("[data-page-name]")!.textContent).toBe(NAME);
+  });
+
+  it("gives the scan three parts of the width and the list one, in an Incursiune only", () => {
+    const pages = read("src", "app", "documents", "_components", "pages-panel.tsx");
+    expect(pages).toContain('"order-2 flex min-w-0 flex-1 flex-col lg:order-1 lg:flex-[3_1_0%]"');
+    expect(pages).toContain('"order-1 w-full min-w-0 lg:order-2 lg:w-auto lg:flex-[1_1_0%]"');
+    // The document's own screen keeps its 380 px list.
+    expect(pages).toContain('"order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0"');
   });
 });

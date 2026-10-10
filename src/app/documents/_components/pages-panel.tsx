@@ -43,7 +43,7 @@ import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState, useId } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Pencil, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Pencil, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
 import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
@@ -671,6 +671,16 @@ export function pdfFrameSrc(url: string): string {
   return `${url}${url.includes("#") ? "&" : "#"}${PDF_VIEW_PARAMS}`;
 }
 
+/**
+ * Slice #38.82: an Incursiune's page name — its first `PEEK_NAME_CHARS` characters, by count (not by pixels), then
+ * „…"; the whole name stays in the cell's tooltip.
+ */
+export const PEEK_NAME_CHARS = 20;
+export function peekName(name: string): string {
+  const chars = Array.from(name);
+  return chars.length > PEEK_NAME_CHARS ? `${chars.slice(0, PEEK_NAME_CHARS).join("")}…` : name;
+}
+
 export function PagesPanel({
   documentId,
   mode,
@@ -859,7 +869,9 @@ export function PagesPanel({
         >
           {/* ── Viewer (left on lg, below on sm) — only when not big-page ── */}
           {!bigPage && (
-            <div className={sidebar ? "w-full" : mode === "peek" ? "order-2 flex flex-1 flex-col lg:order-1" : "order-2 lg:order-1 lg:flex-1"}>
+            /* Slice #38.82: in an Incursiune the scan takes about three quarters of the width, the list a quarter
+               (`flex` 3 : 1 — half the list's 380 px of the document's own screen, where it is a fixed column). */
+            <div className={sidebar ? "w-full" : mode === "peek" ? "order-2 flex min-w-0 flex-1 flex-col lg:order-1 lg:flex-[3_1_0%]" : "order-2 lg:order-1 lg:flex-1"}>
               <PagesViewerBox state={state} />
             </div>
           )}
@@ -869,7 +881,9 @@ export function PagesPanel({
             className={
               bigPage || sidebar
                 ? "w-full"
-                : "order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0"
+                : mode === "peek"
+                  ? "order-1 w-full min-w-0 lg:order-2 lg:w-auto lg:flex-[1_1_0%]"
+                  : "order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0"
             }
           >
             {pages.length === 0 ? (
@@ -881,9 +895,12 @@ export function PagesPanel({
                     <tr className="border-b border-wire text-left text-xs font-medium uppercase text-fade dark:border-zinc-700">
                       <th className="pb-1.5 pr-2 font-medium">{t("colNum")}</th>
                       <th className="pb-1.5 pr-2 font-medium">{t("colName")}</th>
-                      <th className="hidden pb-1.5 pr-2 font-medium sm:table-cell">
-                        {t("colNotes")}
-                      </th>
+                      {/* Slice #38.82: an Incursiune's list has no Notes column. */}
+                      {mode !== "peek" && (
+                        <th className="hidden pb-1.5 pr-2 font-medium sm:table-cell">
+                          {t("colNotes")}
+                        </th>
+                      )}
                       <th className="pb-1.5 font-medium">{t("colActions")}</th>
                     </tr>
                   </thead>
@@ -912,24 +929,31 @@ export function PagesPanel({
                         </td>
 
                         {/* Name / filename fallback */}
+                        {/* Slice #38.82: in an Incursiune, at most 20 characters, then „…" — the whole name in the
+                            tooltip; a page with no name shows its file name the same way. */}
                         <td
-                          className="max-w-[110px] truncate py-1.5 pr-2"
+                          className={mode === "peek" ? "whitespace-nowrap py-1.5 pr-2" : "max-w-[110px] truncate py-1.5 pr-2"}
                           title={page.pageName ?? page.fileName}
+                          data-page-name=""
                         >
-                          {page.pageName ?? (
-                            <span className="text-xs text-fade italic">
-                              {page.fileName}
-                            </span>
-                          )}
+                          {page.pageName !== null
+                            ? mode === "peek" ? peekName(page.pageName) : page.pageName
+                            : (
+                              <span className="text-xs text-fade italic">
+                                {mode === "peek" ? peekName(page.fileName) : page.fileName}
+                              </span>
+                            )}
                         </td>
 
-                        {/* Notes */}
-                        <td
-                          className="hidden max-w-[110px] truncate py-1.5 pr-2 text-xs text-fade sm:table-cell"
-                          title={page.pageNotes ?? ""}
-                        >
-                          {page.pageNotes ?? "—"}
-                        </td>
+                        {/* Notes — not in an Incursiune (#38.82). */}
+                        {mode !== "peek" && (
+                          <td
+                            className="hidden max-w-[110px] truncate py-1.5 pr-2 text-xs text-fade sm:table-cell"
+                            title={page.pageNotes ?? ""}
+                          >
+                            {page.pageNotes ?? "—"}
+                          </td>
+                        )}
 
                         {/* Action buttons */}
                         <td className="py-1.5">
@@ -941,18 +965,10 @@ export function PagesPanel({
                             {/* Slice #38.80: the pen, „Notițe pagină" — the page's notes, written and
                                 saved in a small dialog, in view and in edit mode alike (Ask first #1): a
                                 note is how the page is read. It took the place of #37.42's ArrowRight
-                                („Vizualizare"), which did nothing the row's own click does not. An
-                                Incursiune's „Pagini" is a look, not an edit: no pen there (#38.72) — its
-                                arrow stays until #38.82 takes the row's buttons out. */}
-                            {mode === "peek" ? (
-                              <IconButton
-                                icon={ArrowRight}
-                                label={t("view")}
-                                variant="secondary"
-                                size="xs"
-                                onClick={() => loadView(page)}
-                              />
-                            ) : (
+                                („Vizualizare"), which did nothing the row's own click does not.
+                                Slice #38.82: an Incursiune's row has neither — it is a look, not an edit;
+                                „Tipărire" stays, the one thing the row does that the viewer does not. */}
+                            {mode !== "peek" && (
                               <IconButton
                                 icon={Pencil}
                                 label={t("notes")}
