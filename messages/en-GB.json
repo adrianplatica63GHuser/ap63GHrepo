@@ -2183,24 +2183,24 @@
       "imported": "Created by an import"
     },
     "form": {
-      "addTitle": "Add new entry",
-      "editTitle": "Edit entry",
+      "addTitle": "Add a new value",
+      "editTitle": "Edit the value",
       "save": "Save",
       "saving": "Saving…",
       "cancel": "Cancel"
     },
     "toolbar": {
       "add": "Add",
-      "count": "{count, plural, one {# entry} other {# entries}}",
+      "count": "{count, plural, one {# value} other {# values}}",
       "withForm": "With a form",
       "withoutForm": "Without a form",
-      "countFiltered": "{count} of {total, plural, one {# entry} other {# entries}}",
+      "countFiltered": "{count} of {total, plural, one {# value} other {# values}}",
       "onlyAwaitingReview": "Only those awaiting review"
     },
     "table": {
       "loading": "Loading…",
       "error": "Failed to load",
-      "empty": "No entries yet",
+      "empty": "No values yet",
       "edit": "Edit",
       "open": "Open",
       "delete": "Delete",
@@ -2274,10 +2274,10 @@
     },
     "confirm": {
       "title": "Delete “{name}”?",
-      "checking": "Checking what depends on this entry…",
-      "checkFailed": "Could not check what depends on this entry. Close the dialog and try again.",
-      "deleteBody": "Nothing depends on this entry. Deleting it removes it permanently — this cannot be undone.",
-      "inUse": "{count, plural, one {# object depends} other {# objects depend}} on this entry, so it cannot be deleted yet:",
+      "checking": "Checking what depends on this value…",
+      "checkFailed": "Could not check what depends on this value. Close the dialog and try again.",
+      "deleteBody": "Nothing depends on this value. Deleting it removes it permanently — this cannot be undone.",
+      "inUse": "{count, plural, one {# object depends} other {# objects depend}} on this value, so it cannot be deleted yet:",
       "moveTo": "Move them to:",
       "selectTarget": "Choose a value…",
       "move": "Move",
@@ -2287,13 +2287,13 @@
       "errors": {
         "sameValue": "The value you picked is the one you are deleting. Choose another.",
         "validation": "The data entered is incomplete or invalid. Check the required fields.",
-        "duplicate": "That entry is already in the list.",
-        "notFound": "The entry no longer exists — the list changed meanwhile. Close the dialog and open it again.",
+        "duplicate": "That value is already in the list.",
+        "notFound": "The value no longer exists — the list changed meanwhile. Close the dialog and open it again.",
         "roleMergeCollides": "The role cannot be moved: {collisions} association(s) would become duplicates, because the same persons already hold the target role on the same documents. Nothing was changed. Remove the duplicate associations first, then move the role again.",
-        "tarlaCodeTaken": "A tarla code that reads the same as this one already exists: “{code}”. Codes are compared without case, diacritics or extra spaces, so “t3” and “T3” are one code. Two entries for one tarla split its properties between them, so no total is correct. Change the code in the field above, or close the window — the tarla is already in the list, as “{code}”.",
+        "tarlaCodeTaken": "A tarla code that reads the same as this one already exists: “{code}”. Codes are compared without case, diacritics or extra spaces, so “t3” and “T3” are one code. Two codes for one tarla split its properties between them, so no total is correct. Change the code in the field above, or close the window — the tarla is already in the list, as “{code}”.",
         "tarlaCodeTakenRace": "A tarla code that reads the same as this one has just appeared in the list. Close the window, refresh the list and use the code that already exists.",
         "generic": "The operation failed. Close the dialog, refresh the page and try again.",
-        "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
+        "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as persons, not as values in the fields of a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
         "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
         "catchAllForm": "This is the catch-all document type, so it cannot be given a form. It holds the documents whose type could not be established — documents whose type is wrong, not documents whose type is unfinished — so a form here would be written onto the one row every unrecognised document in the archive shares. If the type already carries a form, open “Form” on its row, delete every field and save; removing fields is allowed, adding them is not.",
         "catchAllRename": "This document type already has a form, so it cannot be renamed into the catch-all: the catch-all holds the documents whose type could not be established, and a form there would be written onto the one row every unrecognised document in the archive shares. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
@@ -4052,7 +4052,7 @@
       "failed": "The form could not be saved. Try again.",
       "sessionLost": "Your session has expired, so the form was NOT saved. Sign in again in a new tab, then press “Approve the form” again — the samples that were read are not lost.",
       "typeGone": "The document type no longer exists. It was deleted elsewhere, so there is nowhere to save the form.",
-      "idCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The samples that were read are not lost, but this type cannot be given the form.",
+      "idCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as persons, not as values in the fields of a form — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The samples that were read are not lost, but this type cannot be given the form.",
       "catchAllType": "This document type is the catch-all for documents whose type could not be established, so it cannot have a form: a form here would be written onto the one row every unrecognised document in the archive shares. The samples that were read are not lost, but this type cannot be given the form."
     },
     "saved": {

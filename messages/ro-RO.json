@@ -2183,24 +2183,24 @@
       "imported": "Creat la import"
     },
     "form": {
-      "addTitle": "Adaugă înregistrare nouă",
-      "editTitle": "Editează înregistrarea",
+      "addTitle": "Adaugă o valoare nouă",
+      "editTitle": "Editează valoarea",
       "save": "Salvează",
       "saving": "Se salvează…",
       "cancel": "Anulează"
     },
     "toolbar": {
       "add": "Adaugă",
-      "count": "{count, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
+      "count": "{count, plural, one {# valoare} few {# valori} other {# de valori}}",
       "withForm": "Cu formular",
       "withoutForm": "Fără formular",
-      "countFiltered": "{count} din {total, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
+      "countFiltered": "{count} din {total, plural, one {# valoare} few {# valori} other {# de valori}}",
       "onlyAwaitingReview": "Doar cele care așteaptă verificare"
     },
     "table": {
       "loading": "Se încarcă…",
       "error": "Eroare la încărcare",
-      "empty": "Nu există înregistrări",
+      "empty": "Nu există valori",
       "edit": "Editează",
       "open": "Deschide",
       "delete": "Șterge",
@@ -2274,10 +2274,10 @@
     },
     "confirm": {
       "title": "Ștergeți „{name}”?",
-      "checking": "Se verifică ce depinde de această înregistrare…",
-      "checkFailed": "Nu s-a putut verifica ce depinde de această înregistrare. Închideți fereastra și încercați din nou.",
-      "deleteBody": "Nimic nu depinde de această înregistrare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.",
-      "inUse": "{count, plural, one {# obiect depinde} few {# obiecte depind} other {# de obiecte depind}} de această înregistrare, așa că ștergerea nu este posibilă acum:",
+      "checking": "Se verifică ce depinde de această valoare…",
+      "checkFailed": "Nu s-a putut verifica ce depinde de această valoare. Închideți fereastra și încercați din nou.",
+      "deleteBody": "Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.",
+      "inUse": "{count, plural, one {# obiect depinde} few {# obiecte depind} other {# de obiecte depind}} de această valoare, așa că ștergerea nu este posibilă acum:",
       "moveTo": "Mutați-le pe:",
       "selectTarget": "Alegeți o valoare…",
       "move": "Mută",
@@ -2287,13 +2287,13 @@
       "errors": {
         "sameValue": "Valoarea aleasă este aceeași cu cea pe care o ștergeți. Alegeți alta.",
         "validation": "Datele introduse nu sunt complete sau nu sunt valide. Verificați câmpurile obligatorii.",
-        "duplicate": "Această înregistrare există deja în listă.",
-        "notFound": "Înregistrarea nu mai există — lista s-a schimbat între timp. Închideți fereastra și deschideți-o din nou.",
+        "duplicate": "Această valoare există deja în listă.",
+        "notFound": "Valoarea nu mai există — lista s-a schimbat între timp. Închideți fereastra și deschideți-o din nou.",
         "roleMergeCollides": "Rolul nu poate fi mutat: {collisions} asociere(ri) ar deveni duplicate, pentru că aceleași persoane dețin deja rolul-țintă pe aceleași acte. Nu s-a modificat nimic. Ștergeți mai întâi asocierile duplicate, apoi reluați mutarea.",
-        "tarlaCodeTaken": "Există deja un indicativ de tarla care se citește la fel ca acesta: „{code}”. Indicativele se compară fără majuscule, fără diacritice și fără spații în plus, așa că „t3” și „T3” sunt același indicativ. Două înregistrări pentru aceeași tarla îi împart proprietățile între ele, iar totalurile nu mai sunt corecte. Schimbați indicativul din câmpul de mai sus sau închideți fereastra — tarlaua este deja în listă, sub „{code}”.",
+        "tarlaCodeTaken": "Există deja un indicativ de tarla care se citește la fel ca acesta: „{code}”. Indicativele se compară fără majuscule, fără diacritice și fără spații în plus, așa că „t3” și „T3” sunt același indicativ. Două indicative pentru aceeași tarla îi împart proprietățile între ele, iar totalurile nu mai sunt corecte. Schimbați indicativul din câmpul de mai sus sau închideți fereastra — tarlaua este deja în listă, sub „{code}”.",
         "tarlaCodeTakenRace": "Între timp a apărut în listă un indicativ de tarla care se citește la fel ca acesta. Închideți fereastra, reîmprospătați lista și folosiți indicativul care există deja.",
         "generic": "Operația nu a reușit. Închideți fereastra, reîmprospătați pagina și încercați din nou.",
-        "idCardForm": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca înregistrări într-un formular. Dacă tipul poartă deja un formular, deschideți „Formular” pe rândul lui, ștergeți toate câmpurile și salvați.",
+        "idCardForm": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca valori în câmpurile unui formular. Dacă tipul poartă deja un formular, deschideți „Formular” pe rândul lui, ștergeți toate câmpurile și salvați.",
         "idCardRename": "Acest tip de document are deja un formular, deci nu poate primi o denumire de carte de identitate: datele de pe o carte de identitate se preiau la import, ca persoane în sistem, iar un formular ar însemna încă o copie, liber modificabilă, a CNP-ului. Ștergeți întâi formularul — închideți această fereastră, apăsați „Formular” pe rândul tipului, eliminați toate câmpurile și salvați — apoi reveniți și redenumiți tipul.",
         "catchAllForm": "Acesta este tipul de rezervă pentru documentele neclasificate, deci nu poate primi un formular. El adună documentele al căror tip nu a putut fi stabilit — documente al căror tip este greșit, nu documente al căror tip este neterminat — așa că un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Dacă tipul poartă deja un formular, deschideți „Formular” pe rândul lui, ștergeți toate câmpurile și salvați; eliminarea câmpurilor este permisă, adăugarea lor nu.",
         "catchAllRename": "Acest tip de document are deja un formular, deci nu poate fi redenumit în tipul de rezervă pentru documentele neclasificate: acela adună documentele al căror tip nu a putut fi stabilit, iar un formular acolo s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Ștergeți întâi formularul — închideți această fereastră, apăsați „Formular” pe rândul tipului, eliminați toate câmpurile și salvați — apoi reveniți și redenumiți tipul.",
@@ -4052,7 +4052,7 @@
       "failed": "Formularul nu a putut fi salvat. Încercați din nou.",
       "sessionLost": "Sesiunea dumneavoastră a expirat, așa că formularul NU a fost salvat. Autentificați-vă din nou într-o filă nouă, apoi apăsați din nou „Aprobă formularul” — mostrele citite nu se pierd.",
       "typeGone": "Tipul de document nu mai există. A fost șters în altă parte, deci nu are unde să fie salvat formularul.",
-      "idCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca înregistrări într-un formular — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul.",
+      "idCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca valori în câmpurile unui formular — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul.",
       "catchAllType": "Acest tip de document este tipul de rezervă pentru documentele neclasificate, deci nu poate avea formular: el adună documentele al căror tip nu a putut fi stabilit, iar un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul."
     },
     "saved": {
