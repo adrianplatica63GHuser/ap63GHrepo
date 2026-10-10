@@ -14,7 +14,8 @@ async function rows(page: Page): Promise<{ name: string; status: string }[]> {
   return page.evaluate(() => {
     const table = document.querySelector<HTMLElement>("table[data-width-table]")!;
     const heads = [...table.querySelectorAll<HTMLElement>("thead th")].map((th) => th.dataset.widthColumn);
-    const name = heads.indexOf("valueName");
+    // Slice #38.66: the document types' name has a column of its own (was the shared "valueName").
+    const name = heads.indexOf("valueDocTypeName");
     const status = heads.indexOf("valueStatus");
     return [...table.querySelectorAll<HTMLTableRowElement>("tbody tr")]
       .filter((r) => r.cells.length === heads.length)

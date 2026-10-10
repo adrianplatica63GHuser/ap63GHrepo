@@ -53,7 +53,8 @@ describe("one line per row (#38.50)", () => {
     expect(content("valueUsage")).toBeGreaterThanOrEqual(79);
     expect(content("valueUsage")).toBeLessThan(141);
     expect(content("valueStatus")).toBeGreaterThanOrEqual(102);
-    expect(content("valueNameShort")).toBeGreaterThanOrEqual(125); // the longest property type
+    // #38.50 sized it for the longest property type (125 px); #38.66 gave the property types a column of their own.
+    expect(content("valueNameShort")).toBeGreaterThanOrEqual(125);
     expect(columnRem("valueUsage")).toBeLessThan(15); // L's old width
   });
 
@@ -63,5 +64,48 @@ describe("one line per row (#38.50)", () => {
     expect(MODAL).toContain("px-4 py-2 align-bottom");
     expect(MODAL).toContain('<div className="w-fit max-w-full" data-value-list-frame="">');
     expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full")');
+  });
+});
+
+describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
+  // Each column: [its COLUMN name, the field it is drawn for, the widest thing it holds — its longest value or its
+  // header's longest word — measured in px at 1366 on the archive (field-widths.ts says where)].
+  const OWN: [string, keyof typeof COLUMN, string, number][] = [
+    ["judicial-person-types", "valueJudicialTypeName", "name", 87.2], //   „Consiliu Local"
+    ["property-types", "valuePropertyTypeName", "name", 125.3], //          „Vegetație Forestieră"
+    ["property-types", "valueFlagTarlaParcela", "showTarlaParcela", 59.2], // „PARCELĂ"
+    ["property-types", "valueFlagAddress", "showAddress", 52.5], //         „ADRESĂ"
+    ["property-types", "valueFlagStreetView", "showStreetView", 49.1], //   „STREET"
+    ["document-types", "valueDocTypeName", "name", 232.6], //               „Plan de Amplasament și Delimitare", bold
+    ["document-types", "valueDocTypeShortName", "shortName", 97.3], //      „Doc. cadastrală"
+  ];
+
+  it.each(OWN)("%s: %s holds its widest (%s) with 1 to 8 px to spare", (_list, column, _field, widest) => {
+    const content = (columnRem(column) - 2) * REM;
+    expect(content - widest).toBeGreaterThanOrEqual(1);
+    expect(content - widest).toBeLessThan(8);
+    expect(COLUMN[column].kind).toBe("fixed");
+  });
+
+  it("each list draws its own columns, and only these lists have them", () => {
+    expect(MODAL).toContain('"judicial-person-types": { name: "valueJudicialTypeName" },');
+    expect(MODAL).toContain('"document-types": { name: "valueDocTypeName", shortName: "valueDocTypeShortName" },');
+    for (const [, column, field] of OWN.filter(([l]) => l === "property-types")) expect(MODAL).toContain(`${field}: "${column}",`);
+    expect(MODAL).toMatch(/const own = OWN_COLUMNS\[listKey\]\?\.\[f\.key\];\s*if \(own\) return own;\s*if \(f\.type === "checkbox"\) return "valueFlag";/);
+    expect(MODAL).toContain('const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "person-types", "citizenships"]);');
+  });
+
+  it("each is narrower than the shared column it replaced", () => {
+    expect(columnRem("valueJudicialTypeName")).toBeLessThan(columnRem("valueName"));
+    expect(columnRem("valuePropertyTypeName")).toBeLessThan(columnRem("valueNameShort"));
+    for (const f of ["valueFlagTarlaParcela", "valueFlagAddress", "valueFlagStreetView"] as const) expect(columnRem(f)).toBeLessThan(columnRem("valueFlag"));
+    expect(columnRem("valueDocTypeName")).toBeLessThan(columnRem("valueName"));
+    expect(columnRem("valueDocTypeShortName")).toBeLessThan(columnRem("valueText"));
+  });
+
+  it("the status column holds the longest status any review list shows, „Adăugat manual” (102 px), and no more than 4 px over", () => {
+    const content = (columnRem("valueStatus") - 2) * REM;
+    expect(content).toBeGreaterThanOrEqual(103);
+    expect(content).toBeLessThanOrEqual(106);
   });
 });

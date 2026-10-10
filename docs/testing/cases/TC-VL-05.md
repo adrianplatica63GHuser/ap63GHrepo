@@ -22,6 +22,10 @@ Slice #38.60, Adrian: the checkmark columns, „Rol invers" and „Folosit de" �
 the centre of the column", header and cells together; on every list for the checkmarks and „Folosit de".
 A ✓ at its column's left edge, or a header left-aligned over centred values, is the defect.
 
+Slice #38.66, Adrian: „too much wasted space" after the name on three lists of „Tipuri de obiecte", and
+between the property types' columns. Each of those columns is as wide as its longest value or its header's
+longest word. A name followed by an empty band, or a name cut where it fitted before, is the defect.
+
 ## Before you start
 
 - TC-AUTH-01 is green. Nothing is created.
@@ -40,6 +44,7 @@ At 1366 and at 1920 px.
 | 2 | „Roluri Persoană" | The same as step 1 (#38.50 had „but for the converse names' cell"; one line since #38.55) |
 | 3 | „Tipuri Document" | The same as step 1, with four buttons on a row |
 | 4 | „Roluri Persoană" again (#38.60) | Each ✓ centred in its column (its centre within 2 px of the column's); the headers of „Persoană → Proprietate", „Persoană → Persoană", „Rol invers" and „Folosit de" centred over them, and those cells' text centred; „Denumire" and „Descriere" left-aligned; the row still one line |
+| 5 | At 1366 px, „Tipuri de Persoană Juridică", „Tipuri de Proprietate" and „Tipuri de Document" (#38.66) | On each, the longest name ends less than 24 px before the next column starts, and no name is cut; on „Tipuri de Proprietate" the header „Street View" is on two lines |
 
 ## At the end — leaving things as they were found
 
@@ -52,4 +57,7 @@ Nothing to undo.
 the run).
 
 **2026-10-09 — `automated` (Slice #38.60).** Step 4 added; the test runner ran it green (the slice's
+handover names the run).
+
+**2026-10-10 — `automated` (Slice #38.66).** Step 5 added; the test runner ran it green (the slice's
 handover names the run).

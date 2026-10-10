@@ -134,3 +134,53 @@ test.describe("TC-VL-05 pasul 4 — Roluri: valorile centrate (#38.60)", () => {
     });
   }
 });
+
+/** Slice #38.66: on one list, how close the next column follows the longest name, and whether any name is cut. */
+async function nameGap(page: Page) {
+  return page.evaluate(() => {
+    const table = document.querySelector<HTMLElement>("table[data-width-table]")!;
+    const heads = [...table.querySelectorAll<HTMLElement>("thead th")];
+    const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr")].filter((r) => r.cells.length === heads.length);
+    let gap = Infinity;
+    const cut: string[] = [];
+    for (const r of rows) {
+      const td = r.cells[0];
+      // The text's own box: a document type's name sits in its tooltip's span (#38.53), every other in a plain span.
+      const text = td.querySelector<HTMLElement>("[data-name-tip]") ?? td.querySelector<HTMLElement>("span")!;
+      gap = Math.min(gap, td.getBoundingClientRect().right - text.getBoundingClientRect().right);
+      if (text.scrollWidth > text.clientWidth + 1 || td.scrollWidth > td.clientWidth + 1) cut.push(td.innerText);
+    }
+    const street = heads.find((th) => th.innerText.replace(/\s+/g, " ").trim().toUpperCase() === "STREET VIEW");
+    let streetLines = 0;
+    if (street) {
+      // The text's own line boxes — a range over the whole cell would add the span's box as one more.
+      const words = document.createTreeWalker(street, NodeFilter.SHOW_TEXT).nextNode()!;
+      const range = document.createRange();
+      range.selectNodeContents(words);
+      streetLines = new Set([...range.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top))).size;
+    }
+    return { rows: rows.length, gap: Math.round(gap * 10) / 10, cut, streetLines };
+  });
+}
+
+test.describe("TC-VL-05 pasul 5 — „Tipuri de obiecte” fără spațiu irosit (#38.66)", () => {
+  test("la 1366 px: coloana următoare urmează îndeaproape cea mai lungă denumire; „Street View” pe două rânduri", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1366, height: 1000 });
+    for (const list of [
+      { name: "Tipuri de Persoană Juridică", key: "judicial-person-types" },
+      { name: "Tipuri de Proprietate", key: "property-types" },
+      { name: "Tipuri de Document", key: "document-types" },
+    ]) {
+      await page.goto(`/admin/value-lists?list=${list.key}`);
+      await expect(page.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
+      const g = await nameGap(page);
+      expect({ list: list.name, rows: g.rows > 0, cut: g.cut, under24: g.gap < 24 }, `the longest name ends ${g.gap} px before the next column`).toEqual({
+        list: list.name, rows: true, cut: [], under24: true,
+      });
+      if (list.key === "property-types") expect(g.streetLines, "„Street View” on two lines").toBe(2);
+      // The slice's pictures, not a step of the case.
+      await page.getByRole("region", { name: list.name, exact: true }).screenshot({ path: `playwright-report/value-list-page/types-${list.key}-1366.png` });
+    }
+  });
+});
