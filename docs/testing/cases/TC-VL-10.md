@@ -43,6 +43,7 @@ At 1366 × 1000 px, then at 1920 × 1000.
 | 8 | Still on „Roluri Persoane" (#38.68; the spec runs it before step 6): presses 4 on the drawing; then „Legături Document → Document" in the column; then 6 | After 4: 4 is the heavy yellow on the drawing and among the six, and so are „Roluri Persoane" in the column and the list's title; 1 and 5 are not. After the column: 3 is yellow, and the list's name and title. After 6: only 6 is yellow; „Legături Document → Document" stays open, its name and title not yellow. A marked number or entry also says so to a screen reader (aria-current, aria-pressed on 6) |
 | 9 | Reads the six's small notes; presses the ⓘ after note 5, then Esc; the ⓘ after note 6, then outside it; the ⓘ after 5 again, then „Roluri Persoane” in it (#38.69; the spec runs it before step 6) | Notes 5 and 6 are italic and magenta, 1–4 are not. The ⓘ after 5 opens „Cum se configurează legătura Persoană – Document” with three steps, and Esc closes it, the focus back on the ⓘ; the ⓘ after 6 opens „Cum se face legătura Document – Proprietate”, and a press outside closes it; „Roluri Persoane” in a step opens that list |
 | 10 | On „Roluri Persoane" (#38.77; the spec reads it after step 7), at 1920 and at 1366 px | At 1920 px the six's column is at least 1.2 × its width before (756.4 px), the drawing at its size, so the tile is wider than the list card under it; at 1366 px the tile is as wide as the side that holds it (968 px, six units — no wider without overhanging the unit grid) and the column no narrower than before (592.4 px). At both, the tile is less tall than before (698.6 / 741 px) and nothing scrolls sideways |
+| 11 | On „Roluri Persoane" (#38.79; the spec reads it after step 9): presses 6 on the drawing; then 5's name among the six; then 4 | 6's magenta note pulses — a pale magenta band behind it fades in and out — no wider than before, its text italic magenta throughout, and settles after about three seconds as it was; 5's name does the same for 5's note; 4 marks no note |
 
 ## At the end — leaving things as they were found
 
@@ -66,3 +67,6 @@ runner ran it green.
 **2026-10-10 — `automated` (Slice #38.77).** Step 2 reads „Vezi:" on each name line and no status words; step 10
 added. Measured: 1920 px — the tile 1132 × 698.6 → 1283.6 × 535.5, the six's column 756.4 → 908 (×1.20); 1366 px — the
 tile 968 × 741 → 968 × 694.7, the column 592.4 unchanged. The test runner ran it green.
+
+**2026-10-10 — `automated` (Slice #38.79).** Step 11 added: pressing 5 or 6 makes its magenta note pulse for three
+seconds. The test runner ran it green.

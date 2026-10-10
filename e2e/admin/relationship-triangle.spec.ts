@@ -259,6 +259,42 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       await panel5.getByRole("link", { name: "Roluri Persoane", exact: true }).click();
       await expect(page).toHaveURL(/\?list=person-roles$/, { timeout: 15_000 });
 
+      // Step 11 — (#38.79) pressing 6 on the drawing makes 6's magenta note pulse — a band behind it, the note no wider —
+      // and it settles after about three seconds; 5's name does the same for 5; pressing 4 marks no note.
+      const attention = page.locator("[data-relationship-triangle] [data-attention]");
+      const widthOf = (id: string) => note(id).evaluate((el) => el.getBoundingClientRect().width);
+      await expect(attention).toHaveCount(0);
+      const still6 = await widthOf("documentProperty");
+      await page.locator('[data-relationship-triangle] [data-relationship="documentProperty"]').click();
+      await expect(note("documentProperty")).toHaveAttribute("data-attention", "");
+      const pressedAt = Date.now();
+      await expect(attention).toHaveCount(1);
+      // Mid-pulse: a band behind the note, the text as it was.
+      await expect.poll(() => note("documentProperty").evaluate((el) => getComputedStyle(el).backgroundColor), { timeout: 2_000 }).not.toBe("rgba(0, 0, 0, 0)");
+      expect(Math.abs((await widthOf("documentProperty")) - still6), "the note's width while it pulses").toBeLessThanOrEqual(0.5);
+      expect(await look("documentProperty")).toEqual({ italic: "italic", color: MAGENTA });
+      if (width === 1366) {
+        await note("documentProperty").scrollIntoViewIfNeeded();
+        // The picture at the band's peak — the animation held at its middle for the shot, then let go.
+        await note("documentProperty").evaluate((el) => el.getAnimations().forEach((a) => { a.pause(); a.currentTime = 500; }));
+        await page.screenshot({ path: "playwright-report/value-list-page/note-pulse-1366.png" });
+        await note("documentProperty").evaluate((el) => el.getAnimations().forEach((a) => a.play()));
+      }
+      await expect(attention).toHaveCount(0, { timeout: 5_000 });
+      const lasted = Date.now() - pressedAt;
+      expect(lasted, "the pulse's length, ms").toBeGreaterThan(2_400);
+      expect(lasted, "the pulse's length, ms").toBeLessThan(4_200);
+      expect(await note("documentProperty").evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+      // 5's name among the six.
+      await page.locator('[data-relationship-entry="personDocument"] p > a').click();
+      await expect(note("personDocument")).toHaveAttribute("data-attention", "");
+      await expect(attention).toHaveCount(1);
+      await expect(attention).toHaveCount(0, { timeout: 5_000 });
+      // 4 marks no note.
+      await page.locator('[data-relationship-triangle] a[data-relationship="personProperty"]').click();
+      await expect(page.locator('[data-relationship-triangle] [data-bubble="personProperty"]')).toHaveCSS("fill", YELLOW);
+      await expect(attention).toHaveCount(0);
+
       // Step 6 — a list outside „Roluri și legături" has no tile.
       await page.goto("/admin/value-lists?list=citizenships");
       await expect(page.getByRole("region", { name: "Cetățenie", exact: true })).toBeVisible({ timeout: 30_000 });
