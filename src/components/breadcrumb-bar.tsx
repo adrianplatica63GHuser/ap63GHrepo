@@ -163,6 +163,16 @@ export function buildSegments(
       segments.push({ label: t("interactions"), href: accumulated });
       continue;
     }
+    // Slice #39.11: „Arbori de moștenire", in „Rapoarte" as „Interacțiuni" is.
+    if (part === "inheritance-tree") {
+      const section = sectionOfScreen(accumulated);
+      if (section) {
+        sectionIdx = segments.length;
+        segments.push({ label: t(`sections.${section}`), href: null });
+      }
+      segments.push({ label: t("inheritanceTree"), href: accumulated });
+      continue;
+    }
     // Slice #38.20: the reports page.
     if (part === "reports") { segments.push({ label: t("reports"), href: accumulated }); continue; }
     if (part === "admin") {

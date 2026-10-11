@@ -54,7 +54,8 @@ describe("the nine sections in the config, in order, each with its items", () =>
       // #39.09: „Calcul suprafață" after „Calcul drum lateral".
       ["Instrumente", null, [["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Calcul suprafață", "/properties/map?area=1"]]],
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
-      ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", null], ["Căutare globală", "/admin/global-search"]]],
+      // #39.11: „Arbori de moștenire" had no href.
+      ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", "/inheritance-tree"], ["Căutare globală", "/admin/global-search"]]],
       ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Informații de ajutor", "/admin/help-content"]]],
       ["Setări", "/admin/settings", []],
       ["Studiu", null, [["Cursuri", null], ["Chestionare", null], ["Punctaj", null]]],
@@ -118,7 +119,7 @@ describe("what is drawn (#38.42)", () => {
       ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
       ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral", "Calcul suprafață"]], // #39.09: + „Calcul suprafață"
       ["Import", ["Dosare de proprietăți"]],
-      ["Rapoarte", ["Interacțiuni", "Căutare globală"]],
+      ["Rapoarte", ["Interacțiuni", "Arbori de moștenire", "Căutare globală"]], // #39.11: + „Arbori de moștenire"
       ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Informații de ajutor"]],
       ["Setări", []],
     ]);
@@ -176,7 +177,8 @@ describe("an account without an app_users row sees what a `user` saw before #38.
   it("the dashboard, the four lists and „Interacțiuni” (#38.84), nothing else", () => {
     const seen = sectionsFor(NAV_SECTIONS, false);
     const hrefs = seen.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter(Boolean);
-    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions"]);
+    // #39.11: + „Arbori de moștenire", view only, the domain's persons as „Interacțiuni" is.
+    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree"]);
   });
 
   it("the sidebar renders `sectionsFor(NAV_SECTIONS, fullAccess)`", () => {

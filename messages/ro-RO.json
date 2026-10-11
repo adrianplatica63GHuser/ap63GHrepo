@@ -3974,7 +3974,8 @@
       "associatePersonOfProperty": "Asociere persoană",
       "associateDocumentOfProperty": "Asociere act",
       "associateReferenceOfProperty": "Asociere proprietate corelată",
-      "reports": "Rapoarte"
+      "reports": "Rapoarte",
+      "inheritanceTree": "Arbori de moștenire"
     },
     "recentlyViewed": {
       "title": "Recente",
@@ -4404,5 +4405,37 @@
         "tags": "Etichete"
       }
     }
+  },
+  "inheritance": {
+    "title": "Arbori de moștenire",
+    "count": "{persons, plural, one {o persoană} few {# persoane} other {# de persoane}}, {families, plural, one {o familie} few {# familii} other {# de familii}}",
+    "searchPlaceholder": "Caută o persoană…",
+    "searchButton": "Caută",
+    "notFound": "Nicio persoană cu acest nume în arbore.",
+    "level": "Nivelul {level} din 3 — rotița mărește, tragerea mută",
+    "close": "Restrânge",
+    "loading": "Se încarcă arborele…",
+    "error": "Arborele nu s-a putut încărca.",
+    "empty": "Nicio legătură de familie încă: alegeți „Rudenie” pe rolurile din „Roluri Persoane”.",
+    "born": "n. {date}",
+    "bornYear": "n. {year}",
+    "ties": "{count, plural, one {o legătură de familie} few {# legături de familie} other {# de legături de familie}}",
+    "more": "și încă {count}",
+    "nickname": "Poreclă",
+    "gender": "Gen",
+    "birth": "Data nașterii",
+    "genders": {
+      "MALE": "bărbat",
+      "FEMALE": "femeie"
+    },
+    "kinship": {
+      "PARENT": "Părinte",
+      "CHILD": "Copil",
+      "SPOUSE": "Soț/soție",
+      "SIBLING": "Frate/soră",
+      "OTHER": "Altă rudă"
+    },
+    "closeCard": "Închide",
+    "open": "Deschide"
   }
 }

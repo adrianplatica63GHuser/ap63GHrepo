@@ -83,7 +83,8 @@ export function isFlatSectionActive(section: NavSectionMin, pathname: string): b
  * refuses such an account server-side, „Rapoarte" and every placeholder —
  * stays out of its sidebar. An explicit list rather than a key prefix.
  */
-export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions"];
+// Slice #39.11: + „Arbori de moștenire" — the domain's persons and their ties, view only, as „Interacțiuni" is theirs.
+export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree"];
 
 /**
  * What the sidebar draws at all (Slice #38.42): an item with an `href` and no

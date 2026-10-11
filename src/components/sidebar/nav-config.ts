@@ -154,7 +154,8 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: BarChart3,
     items: [
       { key: "interactions", href: "/interactions", icon: MessagesSquare },
-      { key: "inheritanceTrees", icon: Network },
+      // Slice #39.11: the whole tree (A) — every natural person with a family tie, the whole page.
+      { key: "inheritanceTrees", href: "/inheritance-tree", icon: Network },
       { key: "globalSearch", href: "/admin/global-search", icon: Search },
     ],
   },

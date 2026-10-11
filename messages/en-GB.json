@@ -3974,7 +3974,8 @@
       "associatePersonOfProperty": "Associate Person",
       "associateDocumentOfProperty": "Associate Document",
       "associateReferenceOfProperty": "Associate Related Property",
-      "reports": "Reports"
+      "reports": "Reports",
+      "inheritanceTree": "Inheritance Trees"
     },
     "recentlyViewed": {
       "title": "Recently viewed",
@@ -4404,5 +4405,37 @@
         "tags": "Tags"
       }
     }
+  },
+  "inheritance": {
+    "title": "Inheritance Trees",
+    "count": "{persons, plural, one {# person} other {# people}}, {families, plural, one {# family} other {# families}}",
+    "searchPlaceholder": "Find a person…",
+    "searchButton": "Find",
+    "notFound": "No person by that name in the tree.",
+    "level": "Level {level} of 3 — the wheel zooms, a drag pans",
+    "close": "Collapse",
+    "loading": "Loading the tree…",
+    "error": "The tree could not be loaded.",
+    "empty": "No family ties yet: choose „Kinship” on the roles in „Person Roles”.",
+    "born": "b. {date}",
+    "bornYear": "b. {year}",
+    "ties": "{count, plural, one {# family tie} other {# family ties}}",
+    "more": "and {count} more",
+    "nickname": "Nickname",
+    "gender": "Gender",
+    "birth": "Date of birth",
+    "genders": {
+      "MALE": "man",
+      "FEMALE": "woman"
+    },
+    "kinship": {
+      "PARENT": "Parent",
+      "CHILD": "Child",
+      "SPOUSE": "Spouse",
+      "SIBLING": "Sibling",
+      "OTHER": "Other relative"
+    },
+    "closeCard": "Close",
+    "open": "Open"
   }
 }
