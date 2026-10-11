@@ -196,6 +196,8 @@ describe("the „Roluri Persoană” row can set both flags", () => {
         "name", "description", "validForProperty", "validForPerson",
         // Slice #37.28 (migration_088): the converse, as three text boxes.
         "converseName", "converseNameMale", "converseNameFemale",
+        // Slice #39.10 (migration_106): the family tie, a select read in „Persoană → Persoană".
+        "kinship",
       ]);
     const byKey = Object.fromEntries(LIST_META["person-roles"].fields.map((f) => [f.key, f]));
     for (const key of ["validForProperty", "validForPerson"]) {
