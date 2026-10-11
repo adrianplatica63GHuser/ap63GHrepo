@@ -165,7 +165,11 @@ describe("Groups, Stamps and Tags are in the sidebar", () => {
     const user = new Set(sectionsFor(NAV_SECTIONS, false).flatMap((s) => [s.href, ...s.items.map((i) => i.href)]));
     const stray = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)])
       .filter((h): h is string => h !== undefined && !user.has(h))
-      .filter((h) => !h.startsWith("/admin/") && h !== "/reports");
+      .filter((h) => !h.startsWith("/admin/") && h !== "/reports")
+      // #39.09: „Calcul suprafață" (/properties/map?area=1) stays under „Instrumente", out of such an account's
+      // sidebar like the rest of the section — but its screen is the map, which that account reaches from
+      // „Proprietăți" anyway: an address under a screen it is shown is not a reach it was denied.
+      .filter((h) => ![...user].some((u) => !!u && u !== "/" && h.split("?")[0]!.startsWith(u + "/")));
     expect(stray).toEqual([]);
   });
 });

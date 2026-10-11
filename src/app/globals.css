@@ -209,6 +209,33 @@ body {
   .ga-note-pulse { animation: none; background-color: var(--ga-note-band); }
 }
 
+/* ───────────────────────────────────────────────────────────────────────────
+   Slice #39.09 — „Instrumente → Calcul suprafață" points out the map's two area
+   buttons (#39.07, #39.08): ga-note-pulse's three seconds, 1 s × 3, in the area
+   tools' violet. A ring and a pale violet band come and go; the button's size,
+   its icon and the toolbar never move. Reduced motion: both held for the same
+   three seconds (the class leaves after them, `@/lib/ui/area-pulse`).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes ga-area-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50%      { box-shadow: 0 0 0 3px var(--ga-area-ring); background-color: var(--ga-area-band); }
+}
+
+.ga-area-pulse {
+  --ga-area-ring: #8b5cf6; /* violet-500, the area polygon's stroke */
+  --ga-area-band: #ddd6fe; /* violet-200 */
+  animation: ga-area-pulse 1s ease-in-out 3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ga-area-pulse { --ga-area-band: #4c1d95; } /* violet-900 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ga-area-pulse { animation: none; box-shadow: 0 0 0 3px var(--ga-area-ring); background-color: var(--ga-area-band); }
+}
+
 @keyframes ga-cue-blink {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.2; }

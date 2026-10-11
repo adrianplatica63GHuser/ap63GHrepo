@@ -1378,6 +1378,7 @@
       "import": "Property folders",
       "docTypeEngine": "DocTypeEngine",
       "calculation": "Calculation of a Side Road",
+      "areaCalculation": "Area Calculation",
       "globalSearch": "Global Search",
       "groups": "Groups",
       "stamps": "Stamps",

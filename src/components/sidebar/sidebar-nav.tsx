@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, type MouseEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -254,6 +254,8 @@ export function SidebarNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const router   = useRouter();
+  // Slice #39.09: „Calcul suprafață" is /properties/map?area=1 — its query decides which item is active.
+  const search   = useSearchParams()?.toString() ?? "";
   const { guardedAction, guardedNavigate } = useUnsavedChanges();
 
   // ── Auth — username + role for sidebar display ────────────────────────────
@@ -344,8 +346,8 @@ export function SidebarNav() {
   // to track — getActiveSectionKey only needs to resolve sections that
   // actually have expandable items.
   const activeSectionKey = useMemo(
-    () => getActiveSectionKey(pathname, NAV_SECTIONS),
-    [pathname],
+    () => getActiveSectionKey(pathname, NAV_SECTIONS, search),
+    [pathname, search],
   );
 
   // A flat-link section highlights as active for its list page and any of
@@ -377,8 +379,8 @@ export function SidebarNav() {
   }, []);
 
   const activeHref = useMemo(
-    () => getActiveHref(pathname, NAV_SECTIONS),
-    [pathname],
+    () => getActiveHref(pathname, NAV_SECTIONS, search),
+    [pathname, search],
   );
 
   // ── i18n label maps (explicit keys — required for next-intl type safety) ──
@@ -413,6 +415,7 @@ export function SidebarNav() {
     // sentence was asking for.
     docTypeEngine:             t("items.docTypeEngine"),
     calculation:               t("items.calculation"),
+    areaCalculation:           t("items.areaCalculation"),
     // Slice #38.20 — the new items; those with no href are placeholders.
     checkCorrelations:         t("items.checkCorrelations"),
     inheritanceTrees:          t("items.inheritanceTrees"),

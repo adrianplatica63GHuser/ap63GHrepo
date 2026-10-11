@@ -5,11 +5,17 @@
  * a 24-unit box, a 2-unit round stroke in currentColor, the `lucide` class — and take Lucide's props, so IconButton
  * draws them as it draws any other icon (#39.07's Ask first 4, #39.08's Ask first 2).
  */
+import { forwardRef } from "react";
 import type { LucideProps } from "lucide-react";
 
-function Glyph({ size = 24, className, strokeWidth = 2, absoluteStrokeWidth: _abs, name, children, ...rest }: LucideProps & { name: string }) {
+// Slice #39.09: forwardRef, as Lucide's own are, so the sidebar's „Calcul suprafață" (a LucideIcon slot) can carry one.
+const Glyph = forwardRef<SVGSVGElement, LucideProps & { name: string }>(function Glyph(
+  { size = 24, className, strokeWidth = 2, absoluteStrokeWidth: _abs, name, children, ...rest },
+  ref,
+) {
   return (
     <svg
+      ref={ref}
       xmlns="http://www.w3.org/2000/svg"
       width={size}
       height={size}
@@ -25,12 +31,12 @@ function Glyph({ size = 24, className, strokeWidth = 2, absoluteStrokeWidth: _ab
       {children}
     </svg>
   );
-}
+});
 
 /** #39.07: a horizontal rectangle with heavy dots at its four corners — „Suprafața unei zone delimitate". */
-export function AreaDelimitedIcon(props: LucideProps) {
+export const AreaDelimitedIcon = forwardRef<SVGSVGElement, LucideProps>(function AreaDelimitedIcon(props, ref) {
   return (
-    <Glyph name="area-delimited" {...props}>
+    <Glyph ref={ref} name="area-delimited" {...props}>
       <rect x="3" y="6" width="18" height="12" rx="1" />
       {[
         [3, 6],
@@ -42,13 +48,13 @@ export function AreaDelimitedIcon(props: LucideProps) {
       ))}
     </Glyph>
   );
-}
+});
 
 /** #39.08: a horizontal rectangle drawn with a dotted stroke, no corner dots — „Suprafața unei zone oarecare". */
-export function AreaFreeIcon(props: LucideProps) {
+export const AreaFreeIcon = forwardRef<SVGSVGElement, LucideProps>(function AreaFreeIcon(props, ref) {
   return (
-    <Glyph name="area-free" {...props}>
+    <Glyph ref={ref} name="area-free" {...props}>
       <rect x="3" y="6" width="18" height="12" rx="1" strokeDasharray="0.5 3.5" />
     </Glyph>
   );
-}
+});

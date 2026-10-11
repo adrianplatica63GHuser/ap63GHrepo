@@ -33,6 +33,8 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
+import { AreaDelimitedIcon } from "@/components/icons/area-icons";
+import { AREA_CALCULATION_HREF } from "@/lib/ui/area-pulse";
 
 export type NavItem = {
   key: string;
@@ -125,6 +127,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "docTypeEngine", href: "/admin/doc-type-engine", icon: Lightbulb },
       { key: "checkCorrelations", icon: GitCompareArrows },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },
+      // Slice #39.09: „Calcul suprafață" — the map of all properties, its two area buttons pointed out (?area=1).
+      { key: "areaCalculation", href: AREA_CALCULATION_HREF, icon: AreaDelimitedIcon },
     ],
   },
   {

@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
   usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(), // #39.09: the sidebar reads the query (Calcul suprafață)
 }));
 jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
 jest.mock("next/link", () => ({

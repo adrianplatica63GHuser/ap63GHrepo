@@ -44,6 +44,7 @@ const mockRefresh = jest.fn();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
   usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(), // #39.09: the sidebar reads the query (Calcul suprafață)
 }));
 
 jest.mock("next-intl", () => ({

@@ -51,7 +51,8 @@ describe("the nine sections in the config, in order, each with its items", () =>
       // #39.02: was Domeniu … ["Acte", "/documents"], ["Interacțiuni", "/interactions"]]; Instrumente
       // [["Căutare globală", "/admin/global-search"], …, ["Arbori de moștenire", null]]; Rapoarte [["În lucru", "/reports"]].
       ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"]]],
-      ["Instrumente", null, [["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"]]],
+      // #39.09: „Calcul suprafață" after „Calcul drum lateral".
+      ["Instrumente", null, [["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Calcul suprafață", "/properties/map?area=1"]]],
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
       ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", null], ["Căutare globală", "/admin/global-search"]]],
       ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Informații de ajutor", "/admin/help-content"]]],

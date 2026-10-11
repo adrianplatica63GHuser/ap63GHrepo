@@ -2,7 +2,7 @@
 
 import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Check, DraftingCompass, Group, Ruler, ScanEye, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -42,6 +42,7 @@ import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths"
 import { AREA_STROKE, addCorner, nextAreaMode, removeLastCorner, type AreaMode } from "@/lib/geo/area-tool";
 import { AreaDelimitedIcon, AreaFreeIcon } from "@/components/icons/area-icons";
 import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
+import { AREA_PULSE_CLASS, readAreaPulse, useAreaPulse } from "@/lib/ui/area-pulse";
 import { AreaLayer } from "./area-layer";
 import {
   FOCUS_BLINK,
@@ -778,6 +779,9 @@ export default function PropertyMap() {
   // Tab state — showTabs becomes true when "Display all selected" is clicked
   const [showTabs,  setShowTabs]  = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>("all");
+  // Slice #39.09: the map's address, read for ?area (below, by the toolbar's pulse).
+  const searchParams = useSearchParams();
+  const [areaTabSeen, setAreaTabSeen] = useState(false);
 
   // Groups filter (Slice #18.08) — panel open state + the set of UNCHECKED
   // group codes. Tracking unchecked (rather than checked) means "all checked"
@@ -1616,6 +1620,17 @@ export default function PropertyMap() {
   // Loading / error states
   // -------------------------------------------------------------------------
 
+  // Slice #39.09 — „Instrumente → Calcul suprafață" opens this map with ?area=1: the „Toate" tab, where the toolbar
+  // is drawn, and the two area buttons pulse for three seconds (`useAreaPulse`) — counted from when the toolbar is
+  // drawn, not from the arrival, so a slow list does not eat the pulse. Nothing is pressed. The parameter stays in
+  // the address, so a reload points them out again.
+  const areaAsked = readAreaPulse(searchParams?.toString() ?? "");
+  const areaPulse = useAreaPulse(areaAsked && !isLoading);
+  if (areaAsked !== areaTabSeen) {
+    setAreaTabSeen(areaAsked);
+    if (areaAsked) setActiveTab("all");
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-zinc-950 text-zinc-400 text-sm">
@@ -2101,6 +2116,7 @@ export default function PropertyMap() {
               size="sm"
               aria-pressed={areaMode === "delimited"}
               data-area-tool="delimited"
+              className={areaPulse ? AREA_PULSE_CLASS : undefined}
               onClick={() => toggleAreaMode("delimited")}
             />
 
@@ -2114,6 +2130,7 @@ export default function PropertyMap() {
               size="sm"
               aria-pressed={areaMode === "free"}
               data-area-tool="free"
+              className={areaPulse ? AREA_PULSE_CLASS : undefined}
               onClick={() => toggleAreaMode("free")}
             />
             {areaMode === "free" && freeDraw.drawing && (

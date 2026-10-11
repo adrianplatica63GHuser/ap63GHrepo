@@ -10,7 +10,16 @@ type NavSectionMin = { key: string; items: NavItemMin[]; href?: string };
  * `/properties-extra`). `/` matches only itself — every path would otherwise
  * start with it.
  */
-export function isItemActive(href: string, pathname: string): boolean {
+export function isItemActive(href: string, pathname: string, search = ""): boolean {
+  // Slice #39.09: an address with a query („Calcul suprafață", /properties/map?area=1) is active on exactly its
+  // path, and only while the current query carries every parameter it names, with its value.
+  const q = href.indexOf("?");
+  if (q >= 0) {
+    if (pathname !== href.slice(0, q)) return false;
+    const have = new URLSearchParams(search);
+    for (const [k, v] of new URLSearchParams(href.slice(q + 1))) if (have.get(k) !== v) return false;
+    return true;
+  }
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
 }
@@ -24,13 +33,16 @@ export function isItemActive(href: string, pathname: string): boolean {
 export function getActiveHref(
   pathname: string,
   sections: NavSectionMin[],
+  search = "",
 ): string | null {
+  // #39.09: an item whose address names a query that matches is more specific than any path alone.
+  const rank = (href: string) => (href.includes("?") ? 1_000_000 : 0) + href.length;
   let best: string | null = null;
   for (const section of sections) {
     for (const item of section.items) {
       if (!item.href) continue;
-      if (isItemActive(item.href, pathname)) {
-        if (best === null || item.href.length > best.length) best = item.href;
+      if (isItemActive(item.href, pathname, search)) {
+        if (best === null || rank(item.href) > rank(best)) best = item.href;
       }
     }
   }
@@ -44,8 +56,9 @@ export function getActiveHref(
 export function getActiveSectionKey(
   pathname: string,
   sections: NavSectionMin[],
+  search = "",
 ): string | null {
-  const activeHref = getActiveHref(pathname, sections);
+  const activeHref = getActiveHref(pathname, sections, search);
   if (!activeHref) return null;
   return (
     sections.find((s) => s.items.some((i) => i.href === activeHref))?.key ??
