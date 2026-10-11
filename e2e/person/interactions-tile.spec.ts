@@ -115,8 +115,12 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       // Slice #38.30: „Date de înregistrare" (was „Identitate"), „Reprezentanți și contact"; the Judicial Person keeps „Interacțiuni" ticked.
       await expect(boxes).toHaveText(["Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni"]);
       await expect(page.locator('[data-panel="identity"] h2').first()).toContainText("Date de înregistrare");
-      const jpTile = await size(page.getByRole("region", { name: "Interacțiuni", exact: true }));
-      expect({ x: jpTile.x, y: jpTile.y, w: jpTile.w, hClose: Math.abs(jpTile.h - pages1920.h) <= 4 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, hClose: true });
+      // FU-312: read once, the tile was now and then 9 px higher than „Pagini" — measured before the company's
+      // screen had settled (green alone each time; again in full 20261010T234115Z-18004). Polled, as step 4 is.
+      await expect.poll(async () => {
+        const jpTile = await size(page.getByRole("region", { name: "Interacțiuni", exact: true }));
+        return { x: jpTile.x, y: jpTile.y, w: jpTile.w, hClose: Math.abs(jpTile.h - pages1920.h) <= 4 };
+      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, hClose: true });
     } finally {
       await clearChoices(page).catch(() => undefined);
       await removeRecord(page.request, "person", np);
