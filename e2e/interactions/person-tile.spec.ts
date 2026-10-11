@@ -1,6 +1,6 @@
 /**
  * Case:   TC-INT-06 — „Interacțiuni” pe persoană: istoricul (B) și panoul de acțiune (C) sub el; în Incursiune doar istoricul
- * Source: docs/testing/cases/TC-INT-06.md
+ * Source: docs/testing/cases/TC-INT-06.md, „Last green" 2026-10-10 (the case rewritten by Slice #39.05)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
