@@ -3,7 +3,8 @@
  * Source: docs/testing/cases/TC-MAP-04.md, „Last green" 2026-10-11
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim. The pulse
- * is read as the class `ga-area-pulse` on each button (globals.css): what the eye sees is that class's animation.
+ * is read as the class `ga-area-pulse` around each button (globals.css; IconButton puts a class on the button's
+ * tooltip wrapper): what the eye sees is that class's animation.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - „not after four seconds" is read once, 4 s after both were seen pulsing.
@@ -44,8 +45,10 @@ test.describe("TC-MAP-04 — Calcul suprafață", () => {
     const ui = page.locator("[data-map-ui]");
     const delimited = ui.getByRole("button", { name: "Suprafața unei zone delimitate", exact: true });
     const free = ui.getByRole("button", { name: "Suprafața unei zone oarecare", exact: true });
-    await expect(delimited).toHaveClass(/(^|\s)ga-area-pulse(\s|$)/, { timeout: 30_000 });
-    await expect(free).toHaveClass(/(^|\s)ga-area-pulse(\s|$)/);
+    const pulsing = ui.locator(".ga-area-pulse");
+    await expect(pulsing).toHaveCount(2, { timeout: 30_000 });
+    await expect(pulsing.filter({ has: delimited })).toHaveCount(1);
+    await expect(pulsing.filter({ has: free })).toHaveCount(1);
     await expect(delimited).toHaveAttribute("aria-pressed", "false");
     await expect(free).toHaveAttribute("aria-pressed", "false");
     await page.waitForTimeout(500);
@@ -53,14 +56,13 @@ test.describe("TC-MAP-04 — Calcul suprafață", () => {
 
     // Step 4 — four seconds later: settled, still not pressed, the address unchanged.
     await page.waitForTimeout(4_000);
-    await expect(delimited).not.toHaveClass(/(^|\s)ga-area-pulse(\s|$)/);
-    await expect(free).not.toHaveClass(/(^|\s)ga-area-pulse(\s|$)/);
+    await expect(pulsing).toHaveCount(0);
     await expect(delimited).toHaveAttribute("aria-pressed", "false");
     await expect(free).toHaveAttribute("aria-pressed", "false");
     expect(new URL(page.url()).searchParams.get("area")).toBe("1");
 
     // Step 5 — a reload points them out again.
     await page.reload();
-    await expect(ui.getByRole("button", { name: "Suprafața unei zone delimitate", exact: true })).toHaveClass(/(^|\s)ga-area-pulse(\s|$)/, { timeout: 30_000 });
+    await expect(pulsing).toHaveCount(2, { timeout: 30_000 });
   });
 });

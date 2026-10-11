@@ -219,21 +219,30 @@ body {
 
 @keyframes ga-area-pulse {
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  50%      { box-shadow: 0 0 0 3px var(--ga-area-ring); background-color: var(--ga-area-band); }
+  50%      { box-shadow: 0 0 0 3px var(--ga-area-ring); }
 }
 
+@keyframes ga-area-pulse-fill {
+  50% { background-color: var(--ga-area-band); }
+}
+
+/* IconButton puts `className` on its tooltip wrapper, so the ring is the wrapper's and the band the button's —
+   two animations started together, one beat. */
 .ga-area-pulse {
   --ga-area-ring: #8b5cf6; /* violet-500, the area polygon's stroke */
   --ga-area-band: #ddd6fe; /* violet-200 */
+  border-radius: 0.375rem;
   animation: ga-area-pulse 1s ease-in-out 3;
 }
+.ga-area-pulse > button { animation: ga-area-pulse-fill 1s ease-in-out 3; }
 
 @media (prefers-color-scheme: dark) {
   .ga-area-pulse { --ga-area-band: #4c1d95; } /* violet-900 */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ga-area-pulse { animation: none; box-shadow: 0 0 0 3px var(--ga-area-ring); background-color: var(--ga-area-band); }
+  .ga-area-pulse { animation: none; box-shadow: 0 0 0 3px var(--ga-area-ring); }
+  .ga-area-pulse > button { animation: none; background-color: var(--ga-area-band); }
 }
 
 @keyframes ga-cue-blink {

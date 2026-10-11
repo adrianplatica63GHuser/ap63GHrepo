@@ -96,6 +96,8 @@ describe("the pulse itself, in globals.css", () => {
   it("is 1 s × 3, as ga-note-pulse", () => {
     expect(CSS).toContain(`.${AREA_PULSE_CLASS} {`);
     expect(CSS).toContain("animation: ga-area-pulse 1s ease-in-out 3;");
+    // IconButton puts className on its tooltip wrapper: the ring is the wrapper's, the band its button's, one beat.
+    expect(CSS).toContain(".ga-area-pulse > button { animation: ga-area-pulse-fill 1s ease-in-out 3; }");
     expect(CSS).toContain("@keyframes ga-area-pulse");
   });
   it("only paints — a ring and the background, never a size or a position", () => {
@@ -105,7 +107,7 @@ describe("the pulse itself, in globals.css", () => {
   });
   it("reduced motion holds the highlight instead", () => {
     expect(CSS).toMatch(
-      /@media \(prefers-reduced-motion: reduce\) \{\s*\.ga-area-pulse \{ animation: none; box-shadow: 0 0 0 3px var\(--ga-area-ring\); background-color: var\(--ga-area-band\); \}/,
+      /@media \(prefers-reduced-motion: reduce\) \{\s*\.ga-area-pulse \{ animation: none; box-shadow: 0 0 0 3px var\(--ga-area-ring\); \}\s*\.ga-area-pulse > button \{ animation: none; background-color: var\(--ga-area-band\); \}/,
     );
   });
   it("both area buttons carry it on the map", () => {
