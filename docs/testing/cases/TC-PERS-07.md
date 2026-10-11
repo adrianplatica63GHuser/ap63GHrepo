@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-08 |
+| **Last green** | 2026-10-10 |
 
 ## What this proves
 
@@ -35,7 +35,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „TC-PERS-07 Act" at 1920 px | „Pagini", with no page, at the right: 640 × 436 px — 420 before #38.30's subtitle line (a few px more or less with another font's line height) |
-| 2 | Opens „TC-PERS-07 Ion" at 1920 px | The bar's last box is „Interacțiuni" — not ticked since #38.30; ticks it — alone in the purple strip (`rgb(246, 240, 254)`). At the right of the screen, top-aligned with the row, the tile „Interacțiuni": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`, 640 × 420 px — „Pagini"'s size and place — reading, in italics and in parentheses (#38.06), „(Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.)" |
+| 2 | Opens „TC-PERS-07 Ion" at 1920 px | The bar's last box is „Interacțiuni" — not ticked since #38.30; ticks it — alone in the purple strip (`rgb(246, 240, 254)`). At the right of the screen, top-aligned with the row, the tile „Interacțiuni": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`, 640 × 420 px — „Pagini"'s size and place — reading „Nicio interacțiune înregistrată cu această persoană." under its two buttons, „Deschide în „Interacțiuni”" and „Interacțiune nouă" (#38.89; it read, in italics and in parentheses since #38.06, „(Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.)") |
 | 3 | Unticks „Interacțiuni" | The tile goes, and the right-hand column with it. Ticks it again: it is back |
 | 4 | At 1366 px | The column stands under the left tiles, and the action bar under it; „Interacțiuni" still 640 × 436 px and purple, as „Pagini" is on „TC-PERS-07 Act" at 1366 |
 | 5 | Opens „TC-PERS-07 SRL" at 1920 px | The bar reads „Date de înregistrare", „Reprezentanți și contact", „Adrese", „Legături", „Clasificare", „Etichete și grupuri", „Interacțiuni"; the first panel is headed „Date de înregistrare"; „Interacțiuni" at the right, 640 × 436 px |

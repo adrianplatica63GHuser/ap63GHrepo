@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-07 — „Interacțiuni”, o fișă fixă la dreapta pe persoane; prima fișă a persoanei juridice se numește „Identitate”
- * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-08 (step 2 follows Slice #38.06, step 4 #38.46)
+ * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-10 (step 2 follows Slice #38.89, step 4 #38.46)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -18,7 +18,9 @@ import { showTile, tileBox } from "../helpers/tiles";
 const MARK = `${E2E_MARKER}PERS-07`;
 const PURPLE = "rgb(246, 240, 254)";
 const RIM = "rgb(218, 203, 238)";
-const TEXT = "Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.";
+// Slice #38.89: the placeholder sentence („Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.", in
+// italics and in parentheses since #38.06) is gone — the tile shows the person's history; this person has none.
+const EMPTY = "Nicio interacțiune înregistrată cu această persoană.";
 
 async function size(l: Locator): Promise<{ x: number; y: number; w: number; h: number }> {
   const r = await l.boundingBox();
@@ -75,11 +77,9 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(boxes.last()).toHaveText("Interacțiuni");
       await expect(page.locator('[data-tile-group="fixed"] label')).toHaveText(["Interacțiuni"]);
       expect(await page.locator('[data-tile-group="fixed"]').evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(PURPLE);
-      await expect(tile).toContainText(TEXT);
-      // Slice #38.06: the sentence in italics and in parentheses.
-      const note = tile.locator("[data-interactions-note]");
-      await expect(note).toHaveText(`(${TEXT})`);
-      await expect(note).toHaveCSS("font-style", "italic");
+      await expect(tile.locator("[data-interactions-empty]")).toHaveText(EMPTY, { timeout: 30_000 });
+      await expect(tile.getByRole("button", { name: "Deschide în „Interacțiuni”", exact: true })).toBeVisible();
+      await expect(tile.getByRole("button", { name: "Interacțiune nouă", exact: true })).toBeVisible();
       expect(await tile.evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).borderTopColor])).toEqual([PURPLE, RIM]);
       await expect.poll(async () => {
         const s = await size(tile);
