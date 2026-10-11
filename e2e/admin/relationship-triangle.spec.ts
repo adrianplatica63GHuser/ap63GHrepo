@@ -14,7 +14,8 @@ const SIX = [
   ["propertyProperty", "Proprietate → Proprietate", "Lista „Legături Proprietate → Proprietate”."],
   ["documentDocument", "Document → Document", "Lista „Legături Document → Document”."],
   ["personProperty", "Persoană – Proprietate", "Coloana „Persoană → Proprietate” din lista „Roluri Persoane”."],
-  ["personDocument", "Persoană – Document", "Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document."],
+  // #39.01, Adrian 2026-10-11: was „Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document.”
+  ["personDocument", "Persoană – Document", "Nu are coloană în lista „Roluri Persoane”: se configurează per rol, la „Act”, sau pe pagina tipului de document."],
   ["documentProperty", "Document – Proprietate", "Nicio listă: tipul documentului spune ce înseamnă legătura."],
 ] as const;
 
@@ -68,7 +69,8 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
         expect(line.gap, `${id}: the gap after the name, px`).toBeLessThanOrEqual(24);
       }
       await expect(entries.nth(5)).toContainText("Nu există o listă „Document → Proprietate”");
-      await expect(entries.nth(4)).toContainText("Nu are o coloană în lista „Roluri Persoane”");
+      // #39.01, Adrian 2026-10-11: was toContainText("Nu are o coloană în lista „Roluri Persoane”").
+      await expect(entries.nth(4)).toContainText("Nu are coloană în lista „Roluri Persoane”");
       // The side that is not configured is dashed, and opens nothing.
       await expect(tile.locator('[data-side="documentProperty"]')).toHaveAttribute("stroke-dasharray", "6 5");
       await expect(tile.locator('a[data-relationship="documentProperty"]')).toHaveCount(0);

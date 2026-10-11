@@ -2142,7 +2142,7 @@
         "personDocument": {
           "name": "Persoană – Document",
           "text": "O persoană într-un document: vânzător, cumpărător, mandatar. Rolul se alege din „Roluri Persoane”, dar este oferit doar pe tipurile de document alese pentru el — în panoul rolului, la „Act”, sau pe pagina tipului de document, fila „Roluri”.",
-          "where": "Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document."
+          "where": "Nu are coloană în lista „Roluri Persoane”: se configurează per rol, la „Act”, sau pe pagina tipului de document."
         },
         "documentProperty": {
           "name": "Document – Proprietate",

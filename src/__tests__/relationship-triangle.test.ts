@@ -98,7 +98,8 @@ describe("the six texts (#38.62)", () => {
   });
 
   it("say that Persoană – Document has no column in the roles list", () => {
-    expect(tri("ro").relations.personDocument.where).toContain("Nu are o coloană în lista „Roluri Persoane”");
+    // #39.01, Adrian 2026-10-11: was toContain("Nu are o coloană în lista „Roluri Persoane”").
+    expect(tri("ro").relations.personDocument.where).toContain("Nu are coloană în lista „Roluri Persoane”");
     expect(tri("en").relations.personDocument.where).toContain("No column in the “Person Roles” list");
   });
 });
@@ -234,7 +235,8 @@ describe("notes 5 and 6 in magenta, each with an ⓘ (Slice #38.69)", () => {
     // #38.77: `<span className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}`} data-note={r.id}>`; #38.79 adds the pulse
     // to the same class list while the note draws the eye.
     expect(TILE).toContain('className={`ml-4 text-xs italic ${NOTE_MAGENTA_CLASS}${pulsing(r.id) ? " ga-note-pulse" : ""}`}');
-    expect(tri("ro").relations.personDocument.where).toBe("Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document.");
+    // #39.01, Adrian 2026-10-11: was „Nu are o coloană în lista „Roluri Persoane”: se configurează pe fiecare rol, la „Act”, sau pe pagina tipului de document.”
+    expect(tri("ro").relations.personDocument.where).toBe("Nu are coloană în lista „Roluri Persoane”: se configurează per rol, la „Act”, sau pe pagina tipului de document.");
     expect(tri("ro").relations.documentProperty.where).toBe("Nicio listă: tipul documentului spune ce înseamnă legătura.");
   });
 
