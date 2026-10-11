@@ -108,7 +108,8 @@ test.describe("TC-INT-01 — istoricul interacțiunilor", () => {
       await expect(subjects(page)).toHaveText(newest);
 
       // Step 6 — the person „Ionescu": the address names him, the bar shows him; × shows every client again.
-      await page.getByRole("combobox", { name: "Persoană" }).fill(`${MARK} Ionescu`);
+      // The toolbar's box, by its placeholder: since 38.85 the log form has a „Persoană" box of its own.
+      await page.getByPlaceholder("Caută persoană…", { exact: true }).fill(`${MARK} Ionescu`);
       await page.getByRole("listbox").getByRole("button", { name: new RegExp(`${MARK} Ionescu`) }).click();
       await expect(page).toHaveURL(new RegExp(`person=${mihai}`));
       await expect(page.locator("[data-interactions-scope]")).toContainText(`${MARK} Ionescu`);
