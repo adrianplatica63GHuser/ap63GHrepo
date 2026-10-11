@@ -24,6 +24,8 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, createSaleContract, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 
+test.use({ realMaps: true }); // it reads the map's own toolbar once its camera has settled
+
 const MARK = `${E2E_MARKER}ICON-04`;
 const PROPERTY = `${MARK} Teren`;
 const DOCUMENT = `${MARK} Act`;

@@ -71,6 +71,21 @@ week's work, not a safety net: a green run says those twenty-six still hold, not
 
 ---
 
+## Google maps are blocked by default
+
+Every spec imports `test` from `e2e/helpers/test.ts`, not from `@playwright/test`. That fixture aborts every request
+the Google Maps JavaScript API would make, so a run creates no `google.maps.Map` and Google bills nothing. Google bills
+„Dynamic Maps" per map created with the key, US$7 per 1,000 past the free 10,000 a month. The test runner's e2e made
+86 of them per `full` run, about 1,500 a day, and the bill for October 8–10, 2026 was CA$52 (Slice #39.14). A page
+whose map cannot load still renders, and its spec still passes.
+
+**A spec whose subject is the map opts back in** with one line at its top, the reason on the same line:
+`test.use({ realMaps: true }); // what it reads inside the map`. Its maps are then counted. Every runner result says
+„Google maps loaded: N" on its e2e step, and names the specs that loaded them. `src/__tests__/e2e-google-maps.test.ts`
+fails on a spec that imports `test` from `@playwright/test`, on an opt-in without its reason, and on a block left off.
+
+---
+
 ## Running it
 
 **Two things must be true first**, or you get a confusing failure:

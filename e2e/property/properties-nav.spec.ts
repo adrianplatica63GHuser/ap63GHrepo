@@ -17,6 +17,8 @@
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { openFromSidebar, sidebar } from "../helpers/sidebar";
 
+test.use({ realMaps: true }); // it waits for the big map's camera to settle (data-map-zoom)
+
 async function iconOf(el: Locator): Promise<string> {
   const cls = (await el.locator("svg").first().getAttribute("class")) ?? "";
   return cls.split(" ").find((c) => c.startsWith("lucide-") && c !== "lucide") ?? "";

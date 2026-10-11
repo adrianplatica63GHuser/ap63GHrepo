@@ -32,6 +32,8 @@ import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 
+test.use({ realMaps: true }); // TC-MAP-01 reads the map's own camera — centre, zoom and the focus blink
+
 const MARK = `${E2E_MARKER}MAP-01`;
 const NICKNAME = `${MARK} Teren pe hartă`;
 const CORNERS = [

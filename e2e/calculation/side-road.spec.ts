@@ -25,6 +25,8 @@ import path from "node:path";
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { SUPERUSER_STATE } from "../helpers/auth-state";
 
+test.use({ realMaps: true }); // TC-CALC-01 clicks the slices' labels drawn on the preview map
+
 const FIXTURES = path.join(__dirname, "..", "fixtures");
 const file = (name: string) => path.join(FIXTURES, `TC-CALC-01 ${name}.txt`);
 const OWNERS = ["TC-CALC-01 A", "TC-CALC-01 B", "TC-CALC-01 C"] as const;

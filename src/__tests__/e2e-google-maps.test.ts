@@ -141,6 +141,10 @@ describe("the block stays in force", () => {
     expect(straight).toEqual([]);
   });
 
+  it("is on: e2e/helpers/test.ts blocks by default — false only for a measuring run, never committed so", () => {
+    expect(fs.readFileSync(path.join(E2E, "helpers", "test.ts"), "utf8")).toMatch(/^const BLOCK_BY_DEFAULT = true;$/m);
+  });
+
   it("every opt-in is `test.use({ realMaps: true });` with the reason on the same line", () => {
     const bad: string[] = [];
     for (const f of files) {

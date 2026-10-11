@@ -29,7 +29,7 @@ import { MAP_COUNTER_BINDING, MAP_COUNTER_SCRIPT, isGoogleMapsUrl, isMapsLoaderU
 export * from "@playwright/test";
 
 /** Off only to measure: with it false nothing is blocked and every map is counted. */
-const BLOCK_BY_DEFAULT = false;
+const BLOCK_BY_DEFAULT = true;
 
 type MapsOptions = {
   /** This spec's subject is the map: let Google Maps load, and count what it makes. */

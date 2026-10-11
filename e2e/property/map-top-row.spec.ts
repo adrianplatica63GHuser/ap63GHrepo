@@ -21,6 +21,8 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 
+test.use({ realMaps: true }); // TC-PROP-09 draws on the map and opens it full-screen
+
 const MARK = `${E2E_MARKER}PROP-09`;
 const PROPERTY = `${MARK} Teren`;
 const CORNERS = [

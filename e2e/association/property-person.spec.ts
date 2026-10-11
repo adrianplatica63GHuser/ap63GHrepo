@@ -51,6 +51,8 @@ import {
 import { photograph } from "../helpers/field-widths";
 import { TILE_GROUP, expectOneLine, hideTile, lineRow, showTile, tileBox } from "../helpers/tiles";
 
+test.use({ realMaps: true }); // #37.19's control counts the requests a ticked map makes
+
 const MARK = `${E2E_MARKER}ASSOC-04`;
 const PROPERTY = `${MARK} Teren de test`;
 const PERSON = `Ion ${MARK}`;
