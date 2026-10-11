@@ -2,7 +2,9 @@
  * Case:   TC-VL-05 — „Date de referință”: tabele înguste, câte un rând pe linie, butoanele unul lângă altul
  * Source: docs/testing/cases/TC-VL-05.md, „Last green" 2026-10-09
  *
- * A translation of the case file, step for step. Nothing is created: the lists are read as they are.
+ * A translation of the case file, step for step. Nothing is created: the lists are read as they are — but for
+ * step 8 (Slice #39.10), which makes one role, `TC-E2E-VL-05 Rudă`, through the route the screen calls, and removes
+ * it in `finally`.
  */
 
 import { test, expect, type Page } from "../helpers/test";
@@ -258,5 +260,69 @@ test.describe("TC-VL-05 pasul 6 — „Roluri Persoane” fără bară de derula
     await page.setViewportSize({ width: 1920, height: 1000 });
     await page.waitForTimeout(300);
     await page.screenshot({ path: "playwright-report/value-list-page/roles-no-scroll-1920.png" });
+  });
+});
+
+/** Slice #39.10 — step 8's test role, created through the route the screen calls and removed in `finally`. */
+const KIN_ROLES = "/api/admin/value-lists/person-roles";
+const KIN_ROLE = "TC-E2E-VL-05 Rudă";
+
+test.describe("TC-VL-05 pasul 8 — „Rudenie” pe „Roluri Persoane” (#39.10)", () => {
+  test("la 1366 px: aleasă în panoul rolului, citită în „Persoană → Persoană”; „Tată” rămâne „Părinte”; tabelul tot fără bară de derulare", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1366, height: 1000 });
+    const leftovers = async () => {
+      const items = ((await (await page.request.get(KIN_ROLES)).json()) as { items: { id: string; name: string }[] }).items;
+      for (const r of items) if (r.name === KIN_ROLE) await page.request.delete(`${KIN_ROLES}/${r.id}`);
+    };
+    await leftovers();
+    try {
+      const created = await page.request.post(KIN_ROLES, { data: { name: KIN_ROLE, validForPerson: true } });
+      expect(created.ok(), `POST ${KIN_ROLES} failed (${created.status()})`).toBeTruthy();
+      await page.goto("/admin/value-lists?list=person-roles");
+      await expect(page.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
+      const list = page.getByRole("region", { name: "Roluri Persoane", exact: true });
+      const rowOf = (name: string) => list.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^${name}$`) }) });
+      const personCell = async (name: string) => {
+        const heads = (await list.locator("thead th").allInnerTexts()).map((h) => h.replace(/\s+/g, " ").trim().toLowerCase());
+        return rowOf(name).locator("td").nth(heads.indexOf("persoană → persoană"));
+      };
+
+      // The seeded ties read where the ✓ was: „Tată" and „Fiu".
+      await expect(await personCell("Tată")).toHaveText("Părinte");
+      await expect(await personCell("Fiu")).toHaveText("Copil");
+      await expect(await personCell(KIN_ROLE)).toHaveText("✓");
+
+      // The test role's panel: „Rudenie" while „Persoană" is pressed, gone when it is not.
+      await rowOf(KIN_ROLE).getByRole("button", { name: "Editează", exact: true }).click();
+      const panel = list.locator("[data-role-scope]");
+      const kinship = panel.getByRole("combobox", { name: "Rudenie", exact: true });
+      await expect(kinship).toHaveValue("");
+      await panel.getByRole("button", { name: "Persoană", exact: true }).click();
+      await expect(kinship).toHaveCount(0);
+      await panel.getByRole("button", { name: "Persoană", exact: true }).click();
+      await kinship.selectOption({ label: "Altă rudă" });
+      await list.getByRole("button", { name: "Salvează", exact: true }).click();
+      await expect(await personCell(KIN_ROLE)).toHaveText("Altă rudă", { timeout: 15_000 });
+      const saved = ((await (await page.request.get(KIN_ROLES)).json()) as { items: { name: string; kinship: string | null }[] }).items.find((r) => r.name === KIN_ROLE);
+      expect(saved?.kinship).toBe("OTHER");
+
+      // „Tată": its tie is fixed — the identity-card import finds the role by it.
+      await rowOf("Tată").getByRole("button", { name: "Editează", exact: true }).click();
+      await expect(panel.getByRole("combobox", { name: "Rudenie", exact: true })).toBeDisabled();
+      await expect(panel.getByRole("combobox", { name: "Rudenie", exact: true })).toHaveValue("PARENT");
+      await list.getByRole("button", { name: "Anulează", exact: true }).click();
+
+      // Still the whole table at 1366 px — no scroll bar (#38.70).
+      const fit = await page.evaluate(() => {
+        const frame = document.querySelector<HTMLElement>("table[data-width-table]")!.parentElement!;
+        return { scroll: frame.scrollWidth, client: frame.clientWidth };
+      });
+      expect(fit.scroll, `the frame scrolls ${fit.scroll - fit.client} px`).toBeLessThanOrEqual(fit.client);
+      await page.mouse.move(5, 5);
+      await page.screenshot({ path: "playwright-report/value-list-page/roles-kinship-1366.png" });
+    } finally {
+      await leftovers();
+    }
   });
 });

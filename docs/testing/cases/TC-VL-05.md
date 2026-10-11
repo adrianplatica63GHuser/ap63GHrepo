@@ -47,10 +47,11 @@ At 1366 and at 1920 px.
 | 5 | At 1366 px, „Tipuri de Persoană Juridică", „Tipuri de Proprietate" and „Tipuri de Document" (#38.66) | On each, the longest name ends less than 24 px before the next column starts, and no name is cut; on „Tipuri de Proprietate" the header „Street View" is on two lines |
 | 6 | At 1366 px, „Roluri Persoane" (#38.70) | The whole table shows, no horizontal scroll bar; every row's last button inside the card; no „Descriere" column — a role's description is read in its name's tooltip, under the name |
 | 7 | On „Tipuri Proprietate", „Roluri Persoană" and „Tipuri Document", at 1366 and 1920 px (#38.78; the spec reads it with steps 1–3) | „+ Adaugă" on the title's line, at the right, its right edge within 2 px of the table's; the count of values a little to its left, on that line; on Tipuri Document the two checkboxes on a line of their own above the table; on the other two the table's top within 8 px of the divider under the title |
+| 8 | At 1366 px, „Roluri Persoane" (#39.10): a test role `TC-E2E-VL-05 Rudă` ticked for „Persoană"; „Editează" → „Rudenie" → „Altă rudă" → „Salvează"; then „Editează" on „Tată" | „Tată" reads „Părinte" and „Fiu" „Copil" in „Persoană → Persoană", where a ✓ was; the test role's panel shows „Rudenie" only while „Persoană" is pressed; saved, its row reads „Altă rudă"; „Tată"'s „Rudenie" is „Părinte" and cannot be changed; the table still has no horizontal scroll bar |
 
 ## At the end — leaving things as they were found
 
-Nothing to undo.
+Step 8's role is deleted (`DELETE /api/admin/value-lists/person-roles/<id>`); nothing else is changed.
 
 ## Notes from the runs
 
