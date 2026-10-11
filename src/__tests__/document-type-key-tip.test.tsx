@@ -36,7 +36,8 @@ describe("the key is not a column (#38.53)", () => {
     // #38.53 pinned `noteMono` bare: the key was the only `nameTip`. #38.70 reads the roles' description there too, in
     // the body's face — mono is for a key.
     expect(MODAL).toContain('<IconTooltip label={cellText(cell, row)} note={String(row[nameTip.key] ?? "").trim() || "–"} noteMono={nameTip.key === "key"} className="max-w-full">');
-    expect(MODAL).toContain('title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}');
+    // #39.10: was `… ? undefined : cellText(cell, row)}` — a role's „Persoană → Persoană" says its family tie whole.
+    expect(MODAL).toContain('title={nameTip && cell[0].key === "name" ? undefined : (tieIn(cell, row) ?? cellText(cell, row))}');
   });
 });
 

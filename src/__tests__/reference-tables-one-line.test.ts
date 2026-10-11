@@ -32,7 +32,8 @@ describe("one line per row (#38.50)", () => {
     expect(MODAL).not.toContain("wrapsIf(");
     // Slice #38.50 had `title={cellText(cell, row)}` on every cell. Slice #38.53: a document type's name says
     // itself in its own tooltip, the key under it (document-type-key-tip.test.tsx) — every other cell as before.
-    expect(MODAL).toContain('title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}');
+    // #39.10: was `… ? undefined : cellText(cell, row)}` — a role's „Persoană → Persoană" says its family tie whole.
+    expect(MODAL).toContain('title={nameTip && cell[0].key === "name" ? undefined : (tieIn(cell, row) ?? cellText(cell, row))}');
     expect((MODAL.match(/\bONE_LINE\b/g) ?? []).length).toBeGreaterThanOrEqual(4); // import, cells, status, usage
   });
 
