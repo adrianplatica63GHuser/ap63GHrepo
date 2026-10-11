@@ -38,7 +38,11 @@ const node = (page: Page, id: string) => page.locator(`[data-tree-node="${id}"]`
 
 test.describe("TC-INHER-01 — arborele întreg", () => {
   test("cinci persoane pe trei generații; rotița schimbă nivelul; numele deschide ecranul persoanei", async ({ page }) => {
-    test.slow();
+    // Five persons and five ties through the routes, the tree, three pictures and a person's screen: measured over
+    // 90 s on a cold runner server (20261011T233612Z-31299, twice), so the test has four minutes.
+    test.setTimeout(240_000);
+    const t0 = Date.now();
+    const lap = (step: string) => console.log(`[TC-INHER-01] ${step} at ${((Date.now() - t0) / 1000).toFixed(1)} s`);
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const ids: string[] = [];
@@ -60,6 +64,7 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       await tie(page.request, maria, mama, ana);
       await tie(page.request, mihai, sot, ana);
 
+      lap("Step 1");
       // Step 1 — „Rapoarte" → „Arbori de moștenire": the whole page, the five on three generations.
       await page.goto("/");
       const nav = page.locator("nav[data-sidebar-nav]");
@@ -77,6 +82,7 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       expect([g1 - g0, g2 - g0, g3 - g0, g4 - g0]).toEqual([1, 1, 2, 2]);
       expect(new Set(await Promise.all(ids.map(cluster))).size).toBe(1);
 
+      lap("Step 2");
       // Step 2 — „Caută o persoană…": the tree centred on Ana, near enough to read (level 3), the side card open.
       await frame.getByRole("searchbox", { name: "Caută o persoană…" }).fill(`Ana ${MARK}`);
       await frame.getByRole("button", { name: "Caută", exact: true }).click();
@@ -90,6 +96,7 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       await page.screenshot({ path: `${SHOTS}/level-3-1366.png`, mask: [page.locator(others)] });
       await card.getByRole("button", { name: "Închide", exact: true }).click();
 
+      lap("Step 3");
       // Step 3 — the wheel, away from the tree's centre: level 2, then level 1; and back.
       const box = (await canvas.boundingBox())!;
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -101,6 +108,7 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       for (let i = 0; i < 40 && (await canvas.getAttribute("data-tree-level")) !== "3"; i++) await page.mouse.wheel(0, -120);
       await expect(canvas).toHaveAttribute("data-tree-level", "3");
 
+      lap("Step 4");
       // Step 4 — hover Ion: his card, with his date of birth and his three ties.
       await frame.getByRole("searchbox", { name: "Caută o persoană…" }).fill(`Ion ${MARK}`);
       await frame.getByRole("button", { name: "Caută", exact: true }).click();
@@ -111,16 +119,19 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       await expect(hover).toContainText("10.06.1955");
       await expect(hover).toContainText("3 legături de familie");
 
+      lap("Step 5");
       // Step 5 — no CNP, no identity card, no address: the route sends none of them.
       const data = (await (await page.request.get("/api/inheritance-tree")).json()) as { persons: Record<string, unknown>[] };
       const keys = new Set(data.persons.flatMap((p) => Object.keys(p)));
       expect([...keys].sort()).toEqual(["dateOfBirth", "displayName", "firstName", "gender", "id", "lastName", "nickname"]);
 
+      lap("Step 6");
       // Step 6 — Ana's name opens her screen.
       await frame.getByRole("searchbox", { name: "Caută o persoană…" }).fill(`Ana ${MARK}`);
       await frame.getByRole("button", { name: "Caută", exact: true }).click();
       await frame.locator("[data-tree-card]").getByRole("link", { name: `Ana ${MARK}`, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${ana}$`), { timeout: 30_000 });
+      lap("done");
     } finally {
       for (const id of ids) await removeRecord(page.request, "person", id);
     }
