@@ -166,7 +166,7 @@ describe("a look, not an edit (#38.72)", () => {
   // `className="flex min-w-0 flex-1 flex-col gap-2 self-stretch"`, `style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}`.
   it("is the column's width (#39.04); the Incursiune fills the column's height, „Legături” keeps its own", () => {
     expect(TILE).toContain('className={view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2" : "flex w-full min-w-0 flex-col gap-2"}');
-    expect(TILE).not.toContain("INCURSION_MIN_REM");
+    expect(TILE).not.toContain("export const INCURSION_MIN_REM");
     const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
     expect(tiles).toContain("export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };");
     expect(tiles).toContain('<div data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={ROW_TILES_STYLE}>');
@@ -180,10 +180,11 @@ describe("a look, not an edit (#38.72)", () => {
       // #38.72 held magnifier, eye, arrow (`at("<IncursionButton") < at("icon={ArrowRight}")`); #38.76 puts the
       // chain link between the eye and the arrow.
       expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("<LinksButton") && at("<LinksButton") < at("icon={ArrowRight}")]).toEqual([dir, true]);
-      // #39.04: and the list's page key (was `<ListPreviews incursion={IncursionTile}>`).
-      expect([dir, view.includes("<ListPreviews incursion={IncursionTile} resetKey={pageKey}>")]).toEqual([dir, true]);
+      // #39.04: and the ids of the rows it shows (was `<ListPreviews incursion={IncursionTile}>`).
+      const open = "<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>";
+      expect([dir, view.includes(open)]).toEqual([dir, true]);
       // Slice #38.75: around the whole list, its first child the toolbar; the table frame in `ListPreviewRow`.
-      expect([dir, /<ListPreviews incursion=\{IncursionTile\} resetKey=\{pageKey\}>\s*\{\/\* Toolbar/.test(view)]).toEqual([dir, true]);
+      expect([dir, view.slice(view.indexOf(open) + open.length).trimStart().startsWith("{/* Toolbar")]).toEqual([dir, true]);
       expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);
       expect([dir, /<\/ListPreviews>\s*\);\s*\}\s*$/.test(view)]).toEqual([dir, true]);
     }

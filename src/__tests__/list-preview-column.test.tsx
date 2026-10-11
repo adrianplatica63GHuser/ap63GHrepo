@@ -28,11 +28,11 @@ jest.mock("@/components/tiles/preview-data", () => ({
   loadPreview: async (target: { id: string }) => ({ title: `Teren ${target.id}`, fields: {} }),
 }));
 
-function renderList(resetKey = "p0") {
+function renderList(rowIds: readonly string[] | undefined = ["A", "B", "C"]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const tree = (key: string) => (
+  const tree = (ids: readonly string[] | undefined) => (
     <QueryClientProvider client={client}>
-      <ListPreviews resetKey={key}>
+      <ListPreviews rowIds={ids}>
         {/* Slice #38.75: `ListPreviews` holds the whole list; the table is `ListPreviewRow`. */}
         <ListPreviewRow>
           <div data-list-edge="">
@@ -53,8 +53,8 @@ function renderList(resetKey = "p0") {
       </ListPreviews>
     </QueryClientProvider>
   );
-  const r = render(tree(resetKey));
-  return { ...r, rerenderWith: (key: string) => r.rerender(tree(key)) };
+  const r = render(tree(rowIds));
+  return { ...r, rerenderWith: (ids: readonly string[] | undefined) => r.rerender(tree(ids)) };
 }
 const press = (id: string) => fireEvent.click(document.querySelector(`[data-row="${id}"] button`)!);
 const row = () => document.querySelector<HTMLElement>("[data-list-incursion-row]")!;
@@ -96,20 +96,25 @@ describe("a list's preview stands in the row tiles' column, beside the whole lis
     expect([...column()!.querySelectorAll("[data-preview]")]).toHaveLength(1);
   });
 
-  it("a page change, a search or a filter (the list's `resetKey`) closes it and frees every row (Ask first 2)", async () => {
-    const { rerenderWith } = renderList("p0");
+  it("a page change, a search or a filter that takes the open row off the screen closes it and frees every row (Ask first 2)", async () => {
+    const { rerenderWith } = renderList(["A", "B", "C"]);
     await act(async () => press("A"));
     await waitFor(() => expect(column()).not.toBeNull());
-    rerenderWith("p1");
+    // A new page loading (no ids yet), then one that still holds the row: nothing closes.
+    rerenderWith(undefined);
+    rerenderWith(["A", "C"]);
+    expect(column()).not.toBeNull();
+    // A page without it: all close, every row free.
+    rerenderWith(["B", "C"]);
     await waitFor(() => expect(column()).toBeNull());
     for (const id of ["A", "B", "C"]) expect(document.querySelector(`[data-row="${id}"] button`)).toBeEnabled();
   });
 
-  it("the four lists draw their table through it, and pass their page key", () => {
+  it("the four lists draw their table through it, and pass the ids of the rows they show", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
-      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; #39.04 its page key.
-      expect([dir, /<ListPreviews incursion=\{IncursionTile\} resetKey=\{pageKey\}>/.test(view)]).toEqual([dir, true]);
+      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; #39.04 its loaded rows' ids.
+      expect([dir, view.includes("<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>")]).toEqual([dir, true]);
       expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);
     }
   });

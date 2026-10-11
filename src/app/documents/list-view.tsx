@@ -736,7 +736,7 @@ export function DocumentListView({
 
   return (
     // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
-    <ListPreviews incursion={IncursionTile} resetKey={pageKey}>
+    <ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>
       {/* Toolbar — Slice #37.83: two rows. The first: the search, „Tip document",
           „Expiră curând", „Câmpuri afișate" and, at its end, „Adaugă act"'s group;
           choosing a field in „Câmp specific" no longer moves any of them. The

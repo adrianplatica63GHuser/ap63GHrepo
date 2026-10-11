@@ -246,7 +246,7 @@ export function NaturalPersonListView() {
 
   return (
     // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
-    <ListPreviews incursion={IncursionTile} resetKey={pageKey}>
+    <ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>
       {/* Toolbar */}
       <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         <input

@@ -171,28 +171,26 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
  * magnifier, eye and chain link, the other rows' three disabled, and the open tiles in ONE column beside the whole
  * list — „Previzualizare" at the top, „Legături" in the middle, „Incursiune" at the bottom — each 40 rem wide.
  * „Previzualizare" and „Legături" keep their own heights; „Incursiune" takes what is left down to the list's
- * bottom, never below its own minimum (Ask first 1). A page change, a search or a filter closes all three
- * (`resetKey`, Ask first 2). The detail screens' previews (`usePreviews`, two at most) are untouched.
+ * bottom, never below its own minimum (Ask first 1). A page change, a search or a filter that takes the open row
+ * off the screen closes all three (`rowIds`, Ask first 2). The detail screens' previews (`usePreviews`, two at most) are untouched.
  */
 export function ListPreviews({
   children,
   incursion: IncursionTile,
-  resetKey,
+  rowIds,
 }: {
   children: ReactNode;
   incursion?: IncursionTileComponent;
   /**
-   * Slice #39.04 (Ask first 2): the list's page, search and filters in one string (its `pageKey`). When it changes
-   * — the open row may be off the screen — all three close and every row is free again.
+   * Slice #39.04 (Ask first 2): the ids of the rows the list shows, once its page has loaded (undefined while it
+   * loads). A page change, a search or a filter that takes the open row off the screen closes all three and frees
+   * every row; one that keeps the row leaves them open — the search is debounced, so a magnifier pressed just after
+   * typing must not be closed by the search it was typed for.
    */
-  resetKey?: string;
+  rowIds?: readonly string[];
 }) {
   const [tiles, setTiles] = useState<RowTiles>(NO_ROW_TILES);
-  const [prevResetKey, setPrevResetKey] = useState(resetKey);
-  if (prevResetKey !== resetKey) {
-    setPrevResetKey(resetKey);
-    setTiles(NO_ROW_TILES);
-  }
+  if (tiles.row !== null && rowIds !== undefined && !rowIds.includes(tiles.row.id)) setTiles(NO_ROW_TILES);
   const toggle = useCallback((target: PreviewTarget, tile: RowTile) => setTiles((s) => toggleRowTile(s, target, tile)), []);
   const close = useCallback((tile: RowTile) => setTiles((s) => closeRowTile(s, tile)), []);
   const offersIncursion = IncursionTile !== undefined;
