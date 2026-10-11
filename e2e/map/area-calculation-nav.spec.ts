@@ -37,7 +37,8 @@ test.describe("TC-MAP-04 — Calcul suprafață", () => {
     await expect(page).toHaveURL((u) => u.pathname === "/properties/map" && u.searchParams.get("area") === "1", { timeout: 30_000 });
     await expect(page.locator("h1").filter({ visible: true }).first()).toHaveText("Toate Proprietățile", { timeout: 30_000 });
     await expect(item).toHaveAttribute("aria-current", "page");
-    await expect(nav.getByRole("link", { name: "Proprietăți", exact: true })).not.toHaveAttribute("aria-current", "page");
+    // „Proprietăți" is not: one active item, and its section („Domeniu") closed.
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
 
     // Step 3 — both buttons pulse, at once; neither is pressed.
     const ui = page.locator("[data-map-ui]");

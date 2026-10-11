@@ -92,7 +92,9 @@ describe("the nine sections in the config, in order, each with its items", () =>
   it("every address opens a page that exists", () => {
     const hrefs = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter((h): h is string => !!h);
     const missing = hrefs.filter((h) => {
-      const dir = h === "/" ? [] : h.split("/").filter(Boolean);
+      // #39.09: „Calcul suprafață" carries a query (/properties/map?area=1) — the page is its path's.
+      const p = h.split("?")[0]!;
+      const dir = p === "/" ? [] : p.split("/").filter(Boolean);
       const candidates = [path.join(ROOT, "src", "app", ...dir, "page.tsx"), path.join(ROOT, "src", "app", "(all-roles)", ...dir, "page.tsx")];
       return !candidates.some((c) => fs.existsSync(c));
     });
@@ -114,7 +116,7 @@ describe("what is drawn (#38.42)", () => {
     expect(drawn.map(ro)).toEqual([
       ["Tablou de bord", []],
       ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
-      ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral"]],
+      ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral", "Calcul suprafață"]], // #39.09: + „Calcul suprafață"
       ["Import", ["Dosare de proprietăți"]],
       ["Rapoarte", ["Interacțiuni", "Căutare globală"]],
       ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Informații de ajutor"]],
@@ -187,7 +189,12 @@ describe("an account without an app_users row sees what a `user` saw before #38.
   it("every other address is an /admin/ screen the layout refuses to an account without a row, or the static reports page", () => {
     const user = new Set(sectionsFor(NAV_SECTIONS, false).flatMap((s) => [s.href, ...s.items.map((i) => i.href)]));
     const rest = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter((h): h is string => !!h && !user.has(h));
-    expect(rest.filter((h) => !h.startsWith("/admin/") && h !== "/reports")).toEqual([]);
+    // #39.09: „Calcul suprafață" (/properties/map?area=1) is the map, which such an account reaches from „Proprietăți".
+    expect(
+      rest
+        .filter((h) => !h.startsWith("/admin/") && h !== "/reports")
+        .filter((h) => ![...user].some((u) => !!u && u !== "/" && h.split("?")[0]!.startsWith(u + "/"))),
+    ).toEqual([]);
   });
 });
 

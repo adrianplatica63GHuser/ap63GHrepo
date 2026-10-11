@@ -8,7 +8,6 @@ import { act, renderHook } from "@testing-library/react";
 
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
 import { getActiveHref, getActiveSectionKey, isItemActive } from "@/components/sidebar/sidebar-helpers";
-import { NOTE_PULSE_MS } from "@/app/admin/value-lists/_components/relationship-triangle";
 import { AREA_CALCULATION_HREF, AREA_PULSE_CLASS, AREA_PULSE_MS, readAreaPulse, useAreaPulse } from "@/lib/ui/area-pulse";
 
 const ROOT = process.cwd();
@@ -59,7 +58,9 @@ describe("useAreaPulse — three seconds, then settled", () => {
   afterEach(() => jest.useRealTimers());
 
   it("is #38.79's three seconds", () => {
-    expect(AREA_PULSE_MS).toBe(NOTE_PULSE_MS);
+    // Read from the source: the triangle is a component, and importing it here would pull next-intl's ESM into jest.
+    const note = /export const NOTE_PULSE_MS = (\d+);/.exec(read("src/app/admin/value-lists/_components/relationship-triangle.tsx"));
+    expect(Number(note?.[1])).toBe(AREA_PULSE_MS);
     expect(AREA_PULSE_MS).toBe(3000);
   });
 
