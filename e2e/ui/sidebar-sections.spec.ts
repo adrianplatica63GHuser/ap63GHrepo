@@ -272,7 +272,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
 
       // A changed field, then „Înapoi": the unsaved-changes dialog; „Anulează" keeps the form, as it was typed.
       await openRecord();
-      const firstName = page.locator('input[name="firstName"]').filter({ visible: true });
+      const firstName = page.getByRole("textbox", { name: "Prenume", exact: true });
       await expect(firstName).toHaveValue("Înapoi", { timeout: 30_000 });
       await firstName.fill("Schimbat");
       await back.click();
