@@ -58,6 +58,12 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/account/change-password/change-password-form.tsx": [
     ["A108", "{state === \"saving\" ? t(\"buttonSaving\") : t(\"buttonSave\""],
   ],
+  // #39.11: the inheritance tree — a person's name is the link to their screen (the card's, a tie's, a node's).
+  "src/app/inheritance-tree/_components/inheritance-tree-screen.tsx": [
+    ["A113", "{byId.get(chosen)!.displayName}"],
+    ["A113", "{byId.get(other)?.displayName}"],
+    ["A113", "<text x={0} y={-h / 2 + px(17)} textAnchor=\"middle\" fontSize={px(13)} fontWeight"],
+  ],
   "src/app/admin/calculation/_components/calculation-view.tsx": [
     ["A113", "{nameOr(p.nickname, \"property\")}"], // #37.57: no system ID; back with #38.25's commit
   ],

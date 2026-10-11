@@ -67,8 +67,9 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       if ((await reports.getAttribute("aria-expanded")) !== "true") await reports.click();
       await nav.getByRole("link", { name: "Arbori de moștenire", exact: true }).click();
       await expect(page).toHaveURL(/\/inheritance-tree$/, { timeout: 30_000 });
+      // The dialog's own element has no box (its panel is fixed), so its heading is what reads visible.
       const frame = page.getByRole("dialog", { name: "Arbori de moștenire" });
-      await expect(frame).toBeVisible({ timeout: 30_000 });
+      await expect(frame.getByRole("heading", { name: "Arbori de moștenire", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(node(page, ana)).toBeAttached({ timeout: 30_000 });
       const gen = async (id: string) => Number(await node(page, id).getAttribute("data-generation"));
       const cluster = async (id: string) => node(page, id).getAttribute("data-cluster");
