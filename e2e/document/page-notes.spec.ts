@@ -94,7 +94,12 @@ test.describe("TC-DOC-24 — notițele unei pagini", () => {
       await search.fill(MARK);
       const row = page.locator("main [data-list-edge] tbody tr").filter({ hasText: `${MARK} Act` });
       await expect(row).toHaveCount(1, { timeout: 30_000 });
-      await row.getByRole("button", { name: "Incursiune", exact: true }).click();
+      // A press that lands while the searched list is drawn again only shows the tooltip (full
+      // 20261011T011204Z-4538): pressed again until the Incursiune is there.
+      await expect(async () => {
+        await row.getByRole("button", { name: "Incursiune", exact: true }).click();
+        await expect(page.locator('[data-incursion="document"]')).toBeVisible({ timeout: 5_000 });
+      }).toPass({ timeout: 30_000 });
       const peek = page.locator('[data-incursion="document"] section[aria-label="Pagini"]');
       await expect(peek.locator("tbody tr")).toHaveCount(2, { timeout: 30_000 });
       await expect(peek.getByRole("button", { name: "Notițe pagină", exact: true })).toHaveCount(0);
