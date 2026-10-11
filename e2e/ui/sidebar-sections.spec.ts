@@ -26,7 +26,8 @@ const SECTIONS = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoart
 
 /** What #38.42 stopped drawing: placeholders and a placeholder page. #39.02 brought „Rapoarte" back. */
 const GONE = [
-  "Funcții", "Studiu", "Ajutor", "În lucru", "Verificare corelări", "Arbori de moștenire",
+  // #39.11: „Arbori de moștenire" left this list — it has its screen.
+  "Funcții", "Studiu", "Ajutor", "În lucru", "Verificare corelări",
   "Dosare diverse", "Fișier individual", "Cursuri", "Chestionare", "Punctaj", "Manual de utilizare", "Întreabă AI",
 ] as const;
 
@@ -47,6 +48,7 @@ const ITEMS: Record<string, [string, string][]> = {
   // Slice #39.02: moved here from „Domeniu" and „Instrumente", their addresses unchanged.
   Rapoarte: [
     ["Interacțiuni", "/interactions"],
+    ["Arbori de moștenire", "/inheritance-tree"], // #39.11
     ["Căutare globală", "/admin/global-search"],
   ],
   Administrare: [
@@ -79,6 +81,8 @@ const LINKS: [string, string | null, string][] = [
   ["Etichete", "Administrare", "Etichete"],
   ["Informații de ajutor", "Administrare", "Informații de ajutor"],
   ["Setări", null, "Setări"],
+  // #39.11: last — its screen is the whole page, over the sidebar, and step 4 leaves it by its address.
+  ["Arbori de moștenire", "Rapoarte", "Arbori de moștenire"],
 ];
 
 const ICONS = ["lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-chart-column", "lucide-shield-check", "lucide-settings"];

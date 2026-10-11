@@ -55,6 +55,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/documents":                            ["TC-DOC-01", "TC-VER-02", "TC-TILES-06", "TC-SYSID-01", "TC-DOC-08", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-DOC-15", "TC-DOC-16", "TC-DOC-21", "TC-LAYOUT-05", "TC-DOC-23"],
   // Slice #38.84: „Interacțiuni".
   "/interactions":                         ["TC-INT-01", "TC-NAV-01", "TC-INT-02", "TC-INT-03", "TC-INT-04", "TC-INT-05", "TC-INT-06"],
+  "/inheritance-tree":                     ["TC-INHER-01", "TC-NAV-01"], // Slice #39.11
   "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-DOC-13", "TC-DOC-14"],
   "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07", "TC-TILES-08", "TC-TILES-09", "TC-DOC-09", "TC-DOC-10", "TC-DOC-11", "TC-TILES-14", "TC-TILES-15", "TC-DOC-12", "TC-TILES-16", "TC-TILES-17", "TC-DOC-13", "TC-TILES-18", "TC-DOC-17", "TC-DOC-18", "TC-DOC-19", "TC-DOC-20", "TC-PERS-10", "TC-TILES-23", "TC-DOC-22", "TC-DOC-24", "TC-DOC-25"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01", "TC-LAYOUT-01", "TC-ASSOC-13", "TC-DOC-19", "TC-VL-03"],
