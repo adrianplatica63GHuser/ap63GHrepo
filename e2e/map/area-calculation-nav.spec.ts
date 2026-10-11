@@ -52,8 +52,11 @@ test.describe("TC-MAP-04 — Calcul suprafață", () => {
     await expect(pulsing.filter({ has: page.getByRole("button", { name: "Suprafața unei zone oarecare", exact: true }) })).toHaveCount(1);
     await expect(delimited).toHaveAttribute("aria-pressed", "false");
     await expect(free).toHaveAttribute("aria-pressed", "false");
-    await page.waitForTimeout(500);
+    // The picture with reduced motion: the highlight held, as such a user sees it the whole three seconds — a
+    // picture taken mid-animation can catch the ring at its faint end (the first run's did).
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.screenshot({ path: `${SHOTS}/area-calculation-1366.png`, mask: [recent(page)] });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
 
     // Step 4 — four seconds later: settled, still not pressed, the address unchanged.
     await page.waitForTimeout(4_000);
