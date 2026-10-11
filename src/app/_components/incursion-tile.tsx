@@ -11,7 +11,7 @@
  *
  * ⚠️ **A LOOK, NOT AN EDIT** — like a preview (#37.24): no add, edit, delete, upload or reorder. It REUSES the
  * detail screens' tiles rather than drawing new ones, each in its read-only form:
- *   - „Interacțiuni" (`InteractionsTile`, #37.89) is a placeholder that fetches and writes nothing; `fill` lets
+ *   - „Interacțiuni" (`InteractionsTile`, #37.89; the person's history since #38.89, read-only) writes nothing; `fill` lets
  *     it take the width it is given instead of its fixed 40rem;
  *   - „Hartă" is `PropertyMiniMap` with `readOnly` and an `onChange` that does nothing, the corners read from
  *     the property's GET route, and no „Hartă extinsă" (that opens the editor's theater);
@@ -139,7 +139,7 @@ export function IncursionTile({ target, view, onClose }: { target: PreviewTarget
       ) : target.kind === "document" ? (
         <IncursionPages documentId={target.id} surface={INCURSION_SURFACE.document} />
       ) : (
-        <InteractionsTile title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />
+        <InteractionsTile personId={target.id} title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />
       )}
     </section>
   );

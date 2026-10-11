@@ -42,7 +42,7 @@ import {
 } from "@/lib/interactions/filters";
 import type { InteractionListItem, InteractionRecord } from "@/lib/interactions/model";
 import { HOVER_ROW, MODULE_CARD, SELECTED_BAR, SELECTED_ROW } from "@/lib/interactions/palette";
-import { ChannelPill, DirectionMark, StatusPill } from "./interaction-pills";
+import { ChannelPill, DirectionMark, StatusPill } from "@/components/interactions/interaction-pills";
 import {
   ChannelChips,
   ChannelChoices,

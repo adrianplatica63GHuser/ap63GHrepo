@@ -1,7 +1,7 @@
 /**
- * Slice #37.89 — „Interacțiuni", a placeholder tile fixed at the right of the
- * two person forms, purple, as large as a Document's „Pagini"; and the Judicial
- * Person's first tile is called „Identitate".
+ * Slice #37.89 — „Interacțiuni", a tile fixed at the right of the two person forms, purple, as large as a Document's
+ * „Pagini"; and the Judicial Person's first tile is called „Identitate".
+ * Slice #38.89 — the tile is no longer a placeholder: it reads the person's interactions and draws no form.
  */
 import fs from "fs";
 import path from "path";
@@ -9,8 +9,12 @@ import { NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles
 import { JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
 import { tileGroupOf } from "@/lib/ui/tiles";
 import { INTERACTIONS_TILE_STYLE, PAGES_PANEL_STYLE } from "@/lib/ui/field-widths";
+import { interactionsHref } from "@/lib/interactions/links";
 
 const msg = (f: string) => JSON.parse(fs.readFileSync(path.join(process.cwd(), "messages", f), "utf8"));
+const SRC = fs.readFileSync(path.join(process.cwd(), "src", "components", "tiles", "interactions-tile.tsx"), "utf8");
+/** The source without its comments: what the tile does, not what it says about itself. */
+const CODE = SRC.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
 describe("„Interacțiuni” on both person registries", () => {
   it.each([["natural person", NP_TILE_REGISTRY], ["judicial person", JP_TILE_REGISTRY]] as const)("%s: in placement.right, in the purple group", (_n, reg) => {
@@ -30,13 +34,11 @@ describe("„Interacțiuni” on both person registries", () => {
     expect(INTERACTIONS_TILE_STYLE.width).toBe(PAGES_PANEL_STYLE.width);
   });
 
-  it("names itself and says what it is, in both languages", () => {
+  it("names itself in both languages", () => {
     const ro = msg("ro-RO.json"), en = msg("en-GB.json");
     expect(ro.naturalPerson.tiles.interactions).toBe("Interacțiuni");
     expect(ro.judicialPerson.tiles.interactions).toBe("Interacțiuni");
     expect(en.naturalPerson.tiles.interactions).toBe("Interactions");
-    expect(ro.shared.tiles.interactionsPlaceholder).toBe("Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.");
-    expect(en.shared.tiles.interactionsPlaceholder).toBe("The interaction-management module will be developed in the future.");
   });
 });
 
@@ -53,14 +55,45 @@ describe("the Judicial Person's first tile is „Date de înregistrare”", () =
   });
 });
 
-describe("„Interacțiuni”'s sentence, in italics and in parentheses (#38.06)", () => {
-  const src = fs.readFileSync(path.join(process.cwd(), "src", "components", "tiles", "interactions-tile.tsx"), "utf8");
-  it("is drawn in italics, the parentheses around the message", () => {
-    expect(src).toMatch(/<p className="[^"]*\bitalic\b[^"]*" data-interactions-note="">\s*\(\{t\("interactionsPlaceholder"\)\}\)\s*<\/p>/);
+/**
+ * #38.89 changes in place what #38.06 held. It read: „„Interacțiuni”'s sentence, in italics and in parentheses —
+ * is drawn in italics, the parentheses around the message; the message itself stays a plain sentence". The sentence
+ * was `shared.tiles.interactionsPlaceholder`, „Modulul de gestionare a interacțiunilor va fi dezvoltat în viitor.";
+ * the module is built, and the sentence is gone from both files.
+ */
+describe("the person's history, read-only (#38.89)", () => {
+  it("the placeholder sentence is gone from both message files and from the tile", () => {
+    for (const f of ["ro-RO.json", "en-GB.json"]) expect(msg(f).shared.tiles.interactionsPlaceholder).toBeUndefined();
+    expect(CODE).not.toContain("interactionsPlaceholder");
   });
-  it("the message itself stays a plain sentence, with no parentheses, in both files", () => {
-    for (const f of ["ro-RO.json", "en-GB.json"]) {
-      expect(msg(f).shared.tiles.interactionsPlaceholder).not.toMatch(/[()]/);
-    }
+
+  it("reads that person's interactions from the list route, newest first", () => {
+    expect(CODE).toContain("fetch(`/api/interactions?${q.toString()}`)");
+    expect(CODE).toContain('new URLSearchParams({ personId, sort: "occurredAt", order: "desc", limit: String(PAGE_MAX) })');
+  });
+
+  it("draws no form: no box to type in, nothing sent but a read", () => {
+    expect(CODE).not.toMatch(/<(input|textarea|select|form)\b/);
+    expect(CODE).not.toMatch(/method:\s*"(POST|PUT|PATCH|DELETE)"/);
+  });
+
+  it("its columns: date and time, channel, direction, subject, status, documents — no person (Ask first #1)", () => {
+    expect(CODE).toContain("<ChannelPill channel={row.channel} />");
+    expect(CODE).toContain("<DirectionMark direction={row.direction} />");
+    expect(CODE).toContain("<StatusPill status={row.status} />");
+    expect(CODE).not.toMatch(/personName/);
+  });
+
+  it("its buttons and its rows open the module through the guarded navigation", () => {
+    expect(CODE.match(/guardedNavigate\(interactionsHref\(/g)).toHaveLength(3);
+    expect(interactionsHref("p1")).toBe("/interactions?person=p1");
+    expect(interactionsHref("p1", { new: true })).toBe("/interactions?person=p1&new=1");
+    expect(interactionsHref("p1", { select: "i9" })).toBe("/interactions?person=p1&select=i9");
+  });
+
+  it("the module opens with the row chosen, or a new record ready", () => {
+    const screen = fs.readFileSync(path.join(process.cwd(), "src", "app", "interactions", "_components", "interactions-screen.tsx"), "utf8");
+    expect(screen).toContain('useState<string | null>(() => params.get("select"))');
+    expect(screen).toContain('const wantNew = params.get("new") === "1";');
   });
 });

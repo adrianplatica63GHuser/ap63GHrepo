@@ -8,7 +8,7 @@ import { CHANNEL_PILL, DIRECTION_INK, STATUS_PILL } from "@/lib/interactions/pal
 
 /**
  * The three things a person scans the history for (§5) — channel, direction, status — each a word AND a mark, never
- * colour alone (§8.7).   (Slice #38.84)
+ * colour alone (§8.7).   (Slice #38.84; moved here from src/app/interactions/_components in #38.89, for the person's tile)
  * Icons (§5): envelope, chat bubble, a bubble with lines for SMS, phone handset, two people, post box; 14 px in a pill.
  */
 export const CHANNEL_ICON: Readonly<Record<InteractionChannel, LucideIcon>> = {

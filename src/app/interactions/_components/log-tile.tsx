@@ -27,7 +27,7 @@ import {
   type FormField,
   type LogForm,
 } from "@/lib/interactions/form";
-import { CHANNEL_ICON, DIRECTION_ICON } from "./interaction-pills";
+import { CHANNEL_ICON, DIRECTION_ICON } from "@/components/interactions/interaction-pills";
 import { PersonPicker } from "./filter-controls";
 import { RecordSearch } from "./pickers";
 import { useInteraction } from "./history-tile";

@@ -17,7 +17,7 @@ import {
 } from "@/lib/interactions/filters";
 import { INTERACTION_CHANNELS, INTERACTION_STATUSES, SUBJECT_MAX } from "@/lib/interactions/model";
 import { CHANNEL_INK, CHANNEL_PILL } from "@/lib/interactions/palette";
-import { CHANNEL_ICON, StatusPill } from "./interaction-pills";
+import { CHANNEL_ICON, StatusPill } from "@/components/interactions/interaction-pills";
 
 /**
  * The history's filter controls.   (Slice #38.84)

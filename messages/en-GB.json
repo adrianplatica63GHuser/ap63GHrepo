@@ -805,7 +805,13 @@
       "defaults": "Default",
       "lastOne": "At least one part stays shown.",
       "marked": "Has highlighted fields — tick to see them",
-      "interactionsPlaceholder": "The interaction-management module will be developed in the future."
+      "interactionsEmpty": "No interaction logged with this person.",
+      "interactionsOpen": "Open in Interactions",
+      "interactionsNew": "New interaction",
+      "interactionsLoading": "Loading the interactions…",
+      "interactionsError": "The interactions could not be loaded.",
+      "interactionsMore": "The first {count} are shown; all of them in Interactions.",
+      "interactionsDocs": "{count, plural, one {# linked document} other {# linked documents}}"
     },
     "bulkDelete": {
       "selectAll": "Select all on this page",

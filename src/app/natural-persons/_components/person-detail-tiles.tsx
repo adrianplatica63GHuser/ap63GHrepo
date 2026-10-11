@@ -169,7 +169,7 @@ export function PersonDetailTiles({
           )}
           <PreviewTiles previews={previews} />
           {choice.isShown("interactions") && interactionsSlot && createPortal(
-            <InteractionsTile title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"))} />,
+            <InteractionsTile personId={personId} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"))} />,
             interactionsSlot,
           )}
         </TileAreas>

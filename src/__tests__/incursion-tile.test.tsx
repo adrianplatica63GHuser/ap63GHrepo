@@ -136,7 +136,8 @@ describe("a look, not an edit (#38.72)", () => {
 
   it("reuses the three tiles in their read-only forms", () => {
     // Slice #38.75: in its own screen's surface, not the card's (`INCURSION_SURFACE`, below).
-    expect(TILE).toContain('<InteractionsTile title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />');
+    // #38.89: the tile now reads the person's history, so it is given the person.
+    expect(TILE).toContain('<InteractionsTile personId={target.id} title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />');
     expect(TILE).toContain("<PropertyMiniMap corners={q.data} onChange={() => {}} readOnly />");
     expect(TILE).not.toContain("onFullScreen");
     expect(TILE).toContain('<PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} />');
@@ -218,7 +219,9 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     expect(TILE).toContain("style={{ minHeight: rem(MAP_BOX_HEIGHT_REM) }}");
     expect(TILE).not.toContain("style={{ height: rem(MAP_BOX_HEIGHT_REM) }}");
     const interactions = read("src", "components", "tiles", "interactions-tile.tsx");
-    expect(interactions).toContain("className={fill ? `${surface} flex-1` : surface}");
+    // #38.89 changes this in place: it read `className={fill ? `${surface} flex-1` : surface}`. The tile is a column
+    // now — its title, then its rows scrolling in what is left — and still grows in an Incursiune.
+    expect(interactions).toContain("className={fill ? `${surface} flex flex-1 flex-col` : `${surface} flex flex-col`}");
     const pages = read("src", "app", "documents", "_components", "pages-panel.tsx");
     expect(pages).toContain('mode === "peek" ? "flex flex-1 flex-col" : "",');
     expect(pages).toContain('"flex flex-1 flex-col gap-3 lg:flex-row lg:items-stretch"');

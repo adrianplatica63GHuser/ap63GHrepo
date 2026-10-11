@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -55,7 +55,9 @@ export function InteractionsScreen() {
   const [orderRaw, setOrderRaw] = useSessionValue(ORDER_KEY);
   const order = useMemo(() => readOrder(orderRaw), [orderRaw]);
   const [page, setPage] = useState(0);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // 38.89: the person's tile opens the screen with a row chosen (?select=<id>) or a new record ready (?new=1).
+  const [selectedId, setSelectedId] = useState<string | null>(() => params.get("select"));
+  const wantNew = params.get("new") === "1";
   const [flashId, setFlashId] = useState<string | null>(null);
   const [request, setRequest] = useState<SwitchRequest | null>(null);
   const logRef = useRef<HTMLElement>(null);
@@ -109,6 +111,13 @@ export function InteractionsScreen() {
   });
   const scopeName = scope ? (person.data ? nameOr(person.data.person.displayName, "person") : "…") : null;
   const needsReply = history.data?.needsReply ?? 0;
+
+  // ?new=1 (38.89): the form, ready — scrolled to and its first choice focused. A focus, nothing written.
+  useEffect(() => {
+    if (!wantNew) return;
+    logRef.current?.scrollIntoView({ block: "start" });
+    document.getElementById("interaction-channel-first")?.focus({ preventScroll: true });
+  }, [wantNew]);
 
   // „Exportă" (38.88): the list's own query without its page, and the browser's time zone for the dates. The answer
   // is an attachment, so the browser saves it and the screen stays where it is.
