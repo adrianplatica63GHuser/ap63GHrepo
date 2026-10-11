@@ -110,7 +110,9 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await expect(page.locator("[data-preview]")).not.toContainText(/PPERS\d+/);
       await expect(page.locator("[data-preview]")).not.toContainText("Prenume");
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
-      expect(np.width).toBeLessThan((3 * 9.25 + 2) * rem);
+      // Slice #39.04: on a list the preview is the row tiles' column's width, 40 rem. It read
+      // `expect(np.width).toBeLessThan((3 * 9.25 + 2) * rem)` — three units and a little.
+      expect(Math.abs(np.width - 40 * rem)).toBeLessThanOrEqual(2);
       expect(np.height).toBeLessThan(10 * rem);
       await photograph(page, "natural-person-preview", page.locator("[data-preview]"));
 

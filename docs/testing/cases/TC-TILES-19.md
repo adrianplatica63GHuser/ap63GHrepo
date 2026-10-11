@@ -1,4 +1,4 @@
-# TC-TILES-19 — Lângă o listă, a doua previzualizare se deschide sub prima, nu sub listă
+# TC-TILES-19 — Lângă o listă, previzualizarea unui rând stă în coloana lui, de 40 rem; celelalte rânduri așteaptă
 
 | | |
 |---|---|
@@ -37,16 +37,20 @@ gap, within 2 px.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | The window 1920 × 1080; „Proprietăți", searches `TC-TILES-19` | The three properties' rows |
-| 2 | „Previzualizare" on „TC-TILES-19 Teren A" | Its preview at the table's right, its top level with the table's top |
-| 3 | „Previzualizare" on „TC-TILES-19 Teren B" | Its preview under A's: the same left edge, its top just under A's bottom; both right of the table. Nothing under the table |
-| 4 | The window 1366 × 900 | The table and a preview do not fit side by side, so both previews stand below the table, B under A with the same left edge; the page does not scroll sideways |
-| 5 | „Previzualizare" on „TC-TILES-19 Teren C" (#38.71) | C's preview opens and A's closes — at most two; A's magnifier reads not pressed, B's and C's pressed |
+| 2 | „Previzualizare" on „TC-TILES-19 Teren A" (#39.04) | Its preview in the column at the list's right, its top level with the list's top (the toolbar's), 40 rem wide; the magnifier reads pressed |
+| 3 | Looks at the other two rows (#39.04) | Their magnifiers are disabled |
+| 4 | The window 1366 × 900 | The list and the column do not fit side by side, so the preview stands under the list, still 40 rem; the page does not scroll sideways |
+| 5 | „Previzualizare" on A again, then on B | A's preview closes and every row is free; B's preview opens and A's magnifier is disabled |
 
 ## At the end — leaving things as they were found
 
 Delete both properties (`DELETE` on each). A preview only reads.
 
 ## Notes from the runs
+
+**2026-10-11 — Slice #39.04, rewritten.** It was „a doua previzualizare se deschide sub prima, nu sub listă": two
+previews from two rows, B's under A's beside the table, and (#38.71) a third replacing the oldest. A list row's
+three toggles are now one row at a time, the open tiles in one 40 rem column beside the whole list.
 
 **2026-10-05 — run 1, `driven` (Slice #38.05).** Driven in the desktop app's browser pane, its
 viewport emulated, against `npm run dev` on 3000; the search was typed through the field and the

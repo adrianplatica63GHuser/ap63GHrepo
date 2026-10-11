@@ -51,6 +51,9 @@ routes). Căutare globală for `TC-PERS-04` finds nothing.
 
 ## Notes from the runs
 
+**2026-10-11 — Slice #39.04.** On a list the preview stands in the row tiles' column and is 40 rem wide; the spec's
+width check reads that now (it read „narrower than three units and a little").
+
 **2026-10-02 — run 1, `driven` (Slice #37.60).** Driven in Chrome on Windows (Claude in Chrome, the
 interface in English) against `npm run dev` on 3000, read with a script; the stored choices
 (`ga40-col-person-v2` = `[]`, `ga40-col-company-v1` absent) set aside first. This file was written
