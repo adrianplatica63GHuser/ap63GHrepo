@@ -24,7 +24,7 @@
  *     case file's text, character for character, before anything is written.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { readHelp, writeHelp } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
 

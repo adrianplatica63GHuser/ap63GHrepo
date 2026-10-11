@@ -29,7 +29,7 @@
  *     2026-10-03).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 

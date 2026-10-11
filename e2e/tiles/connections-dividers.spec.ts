@@ -9,7 +9,7 @@
  *   - The records carry `TC-E2E-TILES-17` (records.ts).
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 

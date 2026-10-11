@@ -34,7 +34,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectFixedFieldsHold, expectStableWidths, photograph } from "../helpers/field-widths";
 import { hideTile, showTile } from "../helpers/tiles";

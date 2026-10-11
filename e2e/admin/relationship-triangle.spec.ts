@@ -5,7 +5,7 @@
  * A translation of the case file, step for step. Nothing is created: the tile describes the code.
  */
 
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect, type Locator } from "../helpers/test";
 
 // Slice #38.77: the third cell was the status in words („configurat în aplicație" / „neconfigurat, intenționat");
 // it is the where-sentence now, which stands after „Vezi:" on the name line.

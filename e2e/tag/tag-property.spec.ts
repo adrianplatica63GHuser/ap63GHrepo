@@ -22,7 +22,7 @@
  *     ticked with `showTile` (e2e/helpers/tiles.ts).
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
 import { showTile } from "../helpers/tiles";

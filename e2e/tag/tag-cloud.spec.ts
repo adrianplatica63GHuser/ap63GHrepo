@@ -14,7 +14,7 @@
  *     sidebar (TC-TAG-01 covers the sidebar's way there).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TAG-02`;

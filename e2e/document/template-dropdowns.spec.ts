@@ -21,7 +21,7 @@
  *     sit three to a row; step 3 counts the new rows. The case file says so.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-04`;

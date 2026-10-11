@@ -5,7 +5,7 @@
  * A translation of the case file, step for step. Nothing is created: the lists are read as they are.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 
 /** What the case reads off one list's table. */
 async function reading(page: Page, skip: string[]) {

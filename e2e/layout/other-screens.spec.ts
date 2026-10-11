@@ -30,7 +30,7 @@
  *     run: a calculation is not made for this (it creates properties and a
  *     group). The spec says so in its output when there is none.
  */
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import {
   E2E_MARKER,
   createCompany,

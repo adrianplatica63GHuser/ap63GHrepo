@@ -15,7 +15,7 @@
  *     second record's untick was measured undone that way (Slice #38.16).
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { tileBox } from "../helpers/tiles";
 

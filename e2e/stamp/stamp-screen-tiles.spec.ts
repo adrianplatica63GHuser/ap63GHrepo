@@ -15,7 +15,7 @@
  *     computed from the tiles' own sizes, not written down.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}STAMP-02`;

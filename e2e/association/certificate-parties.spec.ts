@@ -38,7 +38,7 @@
  *     line — „Etichetă scurtă (Tip)" — and the person's quality behind „Relația" (step 8).
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import {
   E2E_MARKER,
   createDocumentOfType,

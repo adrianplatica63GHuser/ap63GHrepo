@@ -1134,3 +1134,84 @@ export function decideMigrateLocal(o: MigrateObservation): GuardDecision<{ apply
   }
   return { ok: true, apply: pending };
 }
+
+// ---- Google maps in e2e (Slice #39.14) ------------------------------------------
+
+/**
+ * ⚠️ **EVERY e2e RESULT SAYS HOW MANY REAL GOOGLE MAPS THE RUN MADE.** Google
+ * bills „Dynamic Maps" per map created with the key; the runner's e2e once made
+ * about 1,500 a day and Adrian found out from the bill (Slice #39.14). The e2e
+ * fixture (`e2e/helpers/test.ts`) appends one JSON line per test to the file
+ * named by this variable, and the runner turns the file into a note, so a spec
+ * that starts loading maps again shows on the next run rather than on the next
+ * bill. Adrian's own `npm run e2e` sets no variable and writes nothing.
+ */
+export const MAPS_LOG_ENV = "E2E_MAPS_LOG";
+/** Beside the step's `e2e.log`, in `.test-runner/logs/<id>/`. */
+export const MAPS_LOG_FILE = "google-maps.jsonl";
+
+/** One test's line, written by the fixture at teardown. */
+export type MapsLogLine = {
+  /** The spec file, relative to `e2e/`, forward slashes. */
+  spec: string;
+  title: string;
+  /** Google Maps was let through: the spec opted in with `test.use({ realMaps: true })`, or nothing was blocked. */
+  realMaps: boolean;
+  /** `new google.maps.Map(...)` calls the page-side counter saw — what Google bills. */
+  maps: number;
+  /** Fetches of the Maps JavaScript API's own script (`/maps/api/js`) that were let through. */
+  loaders: number;
+  /** Google Maps requests the fixture aborted. */
+  blocked: number;
+};
+
+function nonNegativeInt(v: unknown): number | null {
+  return typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null;
+}
+
+/** The file's lines; a line that is not a well-formed `MapsLogLine` is skipped, never guessed at. */
+export function parseMapsLog(text: string): MapsLogLine[] {
+  const out: MapsLogLine[] = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    let v: unknown;
+    try {
+      v = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const maps = nonNegativeInt(o.maps);
+    const loaders = nonNegativeInt(o.loaders);
+    const blocked = nonNegativeInt(o.blocked);
+    if (typeof o.spec !== "string" || typeof o.title !== "string" || typeof o.realMaps !== "boolean") continue;
+    if (maps === null || loaders === null || blocked === null) continue;
+    out.push({ spec: o.spec, title: o.title, realMaps: o.realMaps, maps, loaders, blocked });
+  }
+  return out;
+}
+
+/**
+ * The note on the e2e step. `null` is "no file": the fixture never ran, or the
+ * commit predates it — said as such, never as zero.
+ */
+export function mapsNote(lines: MapsLogLine[] | null): string {
+  if (lines === null) return `Google maps loaded: not counted — no ${MAPS_LOG_FILE} (the e2e fixture wrote none)`;
+  const maps = lines.reduce((n, l) => n + l.maps, 0);
+  const loaders = lines.reduce((n, l) => n + l.loaders, 0);
+  const blocked = lines.reduce((n, l) => n + l.blocked, 0);
+  const real = lines.filter((l) => l.realMaps);
+  const specs = [...new Set(real.map((l) => l.spec))].sort();
+  const withMaps = [...new Set(lines.filter((l) => l.maps > 0).map((l) => l.spec))].sort();
+  const strays = withMaps.filter((s) => !specs.includes(s));
+  return (
+    `Google maps loaded: ${maps}` +
+    ` (Maps JavaScript API fetched ${loaders}×; ${blocked} Google Maps requests blocked;` +
+    ` ${lines.length} tests, ${real.length} with real maps in ${specs.length} specs` +
+    (specs.length && specs.length <= 12 ? `: ${specs.join(", ")}` : "") +
+    ")" +
+    (strays.length ? `; ⚠️ maps made by specs that did not opt in: ${strays.join(", ")}` : "")
+  );
+}

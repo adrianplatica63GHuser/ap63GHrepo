@@ -14,7 +14,7 @@
  *     groups and at two, at 1366 px, into `playwright-report/groups-limit/`.
  */
 
-import { test, expect, type APIRequestContext, type Locator } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Locator } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 

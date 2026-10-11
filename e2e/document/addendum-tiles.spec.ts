@@ -14,7 +14,7 @@
  *     and not, and the page, at 1366 and 1920 px, into `playwright-report/addendum-tiles/`.
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 

@@ -22,7 +22,7 @@
  */
 
 import path from "node:path";
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { SUPERUSER_STATE } from "../helpers/auth-state";
 
 const FIXTURES = path.join(__dirname, "..", "fixtures");

@@ -10,7 +10,7 @@
  *     name (e2e/helpers/records.ts), and removed in `finally`.
  */
 
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect, type Locator } from "../helpers/test";
 import { E2E_MARKER, createCompany, removeLeftovers, removeRecord } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 

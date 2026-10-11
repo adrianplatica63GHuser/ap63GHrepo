@@ -12,7 +12,7 @@
  *     tile's panel (`[data-panel="general"]`); the labels by their text.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-18`;

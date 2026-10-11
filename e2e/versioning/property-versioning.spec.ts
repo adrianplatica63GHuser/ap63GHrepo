@@ -36,7 +36,7 @@
  *   - auth.setup.ts has written e2e/.auth/e2e-ids.json
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import fs from "fs";
 import path from "path";
 import * as nav from "../helpers/version-nav";

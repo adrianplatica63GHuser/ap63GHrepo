@@ -39,7 +39,7 @@
  *     line, „Denumire (Rol)", with „Asociază proprietate" (steps 7–11 as corrected on 2026-10-03).
  */
 
-import { test, expect, type Request } from "@playwright/test";
+import { test, expect, type Request } from "../helpers/test";
 import {
   E2E_MARKER,
   createNaturalPerson,

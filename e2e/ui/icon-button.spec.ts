@@ -21,7 +21,7 @@
  *     painted over, as it may name the archive's own records.
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}ICON-01`;

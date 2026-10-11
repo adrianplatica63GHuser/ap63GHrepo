@@ -18,7 +18,7 @@
  *     `playwright-report/property-tiles-by-type/`.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { tileBox, TILE_GROUP } from "../helpers/tiles";
 

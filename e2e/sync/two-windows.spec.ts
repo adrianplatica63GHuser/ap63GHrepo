@@ -13,7 +13,7 @@
  *   - The version history is read from GET /api/documents/[id]/versions, the
  *     route the header's „◀ v n ▶" reads.
  */
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { photograph } from "../helpers/field-widths";
 

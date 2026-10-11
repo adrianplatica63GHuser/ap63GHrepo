@@ -30,7 +30,7 @@
  *     corrected on 2026-10-03).
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectOneLine, lineRow, showTile } from "../helpers/tiles";
 

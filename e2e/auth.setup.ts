@@ -25,7 +25,7 @@
  *   skip, and the superuser's specs run regardless.
  */
 
-import { test as setup, expect, type Page } from "@playwright/test";
+import { test as setup, expect, type Page } from "./helpers/test";
 import { USER_STATE } from "./helpers/auth-state";
 import { fillLoginForm } from "./helpers/login-form";
 import fs from "fs";

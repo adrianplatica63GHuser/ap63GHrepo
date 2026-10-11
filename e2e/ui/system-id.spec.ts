@@ -14,7 +14,7 @@
  *     `playwright-report/system-id/`.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import {
   E2E_MARKER,
   createCompany,

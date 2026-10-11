@@ -17,7 +17,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-17`;

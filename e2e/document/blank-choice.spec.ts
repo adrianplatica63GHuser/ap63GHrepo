@@ -20,7 +20,7 @@
  *     `playwright-report/blank-choice/`, the sidebar's „Recente" list painted over.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-06`;

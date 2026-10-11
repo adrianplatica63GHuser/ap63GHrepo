@@ -10,7 +10,7 @@
  *   - A tick reloads the address, so the dropdown is opened again whenever it is not showing.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-21`;

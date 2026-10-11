@@ -5,7 +5,7 @@
  * A translation of the case file, step for step. The roles carry `TC-E2E-VL-08` (records.ts).
  */
 
-import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
 import { E2E_MARKER } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}VL-08`;

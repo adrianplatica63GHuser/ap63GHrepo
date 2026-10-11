@@ -30,7 +30,7 @@
  *     run clicks the tile's checkbox.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import {
   E2E_MARKER,
   createNaturalPerson,

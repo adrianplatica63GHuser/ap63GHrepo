@@ -11,7 +11,7 @@
  *     run's script did, because the pane's emulated viewport drops real clicks.
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { showTile } from "../helpers/tiles";
 

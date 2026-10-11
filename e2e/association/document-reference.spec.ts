@@ -36,7 +36,7 @@
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectOneLine, lineRow, showTile } from "../helpers/tiles";

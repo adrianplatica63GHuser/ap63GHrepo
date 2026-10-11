@@ -37,7 +37,7 @@
  */
 
 import fs from "fs";
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { openSection, sidebar } from "../helpers/sidebar";
 import { USER_STATE } from "../helpers/auth-state";
 import { fillLoginForm } from "../helpers/login-form";

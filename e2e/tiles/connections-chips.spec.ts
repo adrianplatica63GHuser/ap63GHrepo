@@ -15,7 +15,7 @@
  *     how many Tab presses lead there depends on the rest of the page.
  */
 
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect, type Locator } from "../helpers/test";
 import {
   E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord,
 } from "../helpers/records";

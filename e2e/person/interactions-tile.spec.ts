@@ -11,7 +11,7 @@
  *     run, not with the case's 640 × 420 written as numbers alone; both are asserted.
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { tileBox } from "../helpers/tiles";
 

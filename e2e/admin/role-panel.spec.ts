@@ -13,7 +13,7 @@
  *     and 1920 px, into `playwright-report/role-panel/`.
  */
 
-import { test, expect, type APIRequestContext, type Locator, type Page } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { lineRow, showTile } from "../helpers/tiles";
 

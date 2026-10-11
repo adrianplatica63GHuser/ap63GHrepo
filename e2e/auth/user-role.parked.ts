@@ -19,7 +19,7 @@
  */
 
 import fs from "fs";
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { USER_STATE } from "../helpers/auth-state";
 import { openFromSidebar, sidebar } from "../helpers/sidebar";
 

@@ -13,7 +13,7 @@
  *     1366 and 1920 px, into `playwright-report/document-type-page/`.
  */
 
-import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
 import { E2E_MARKER } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}VL-04`;

@@ -13,7 +13,7 @@
  *   - Playwright's mouse; the hand run pressed by script (FU-290).
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { openFromSidebar } from "../helpers/sidebar";
 
 const KEYS = ["ga40-col-property-v4", "ga40-col-document-v3", "ga40-col-person-v3", "ga40-col-company-v2"];

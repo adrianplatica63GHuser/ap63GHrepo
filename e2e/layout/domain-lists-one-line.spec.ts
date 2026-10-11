@@ -6,7 +6,7 @@
  * searched for it, so nothing but invented records is read.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}LAYOUT-05`;

@@ -23,7 +23,7 @@
  *     over.
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 
 const FOLDER = "TC-ICON-06";
 const PROPERTY_FOLDER = "40-212per40IE99906-TC-ICON-06 Teren";

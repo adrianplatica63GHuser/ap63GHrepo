@@ -29,7 +29,7 @@
  *     case's step 2 as corrected on 2026-10-07); the PAD has no „Părți".
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import {
   E2E_MARKER,
   createDocumentOfType,

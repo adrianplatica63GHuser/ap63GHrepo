@@ -11,7 +11,7 @@
  *     and last, so a red run leaves the built-in set standing.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { TILE_GROUP, tileBox } from "../helpers/tiles";
 

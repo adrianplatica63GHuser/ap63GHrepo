@@ -14,7 +14,7 @@
  *     it first, as the case's „Before you start" asks.
  */
 
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { hideTile } from "../helpers/tiles";
 

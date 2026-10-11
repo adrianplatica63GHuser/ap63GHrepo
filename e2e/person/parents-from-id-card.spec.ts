@@ -13,7 +13,7 @@
  *   - „Corelate" is ticked with `showTile`, in this browser's own profile.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { showTile } from "../helpers/tiles";

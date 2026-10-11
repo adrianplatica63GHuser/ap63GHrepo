@@ -5,7 +5,7 @@
  * A translation of the case file, step for step. Nothing is created: the list is read as it is.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 
 test.describe("TC-VL-07 — cheia în bula denumirii", () => {
   test("fără „Cheie”; „Contract de Vânzare” și CONTRACT_VANZARE într-o singură bulă", async ({ page }) => {

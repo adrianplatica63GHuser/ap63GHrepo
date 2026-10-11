@@ -14,7 +14,7 @@
  *     „Recente" list painted over.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { tileBox } from "../helpers/tiles";
 

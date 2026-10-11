@@ -12,7 +12,7 @@
  *     start" holds by itself and step 3 needs no clean-up after it.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import {
   E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord,
 } from "../helpers/records";

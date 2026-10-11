@@ -8,7 +8,7 @@
  *   - The records carry `TC-E2E-DOC-22` (records.ts); the properties are linked through the API.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-22`;

@@ -78,6 +78,10 @@ import {
   decideMigrateLocal,
   devServerCompiled,
   e2eFailuresAreAllTimeouts,
+  MAPS_LOG_ENV,
+  MAPS_LOG_FILE,
+  mapsNote,
+  parseMapsLog,
   failedE2eSpecs,
   PLAYWRIGHT_RERUN_ARGS,
   decidePush,
@@ -435,6 +439,15 @@ type StepOutcome = Pick<StepResult, "status" | "exitCode" | "summary" | "notes">
 async function stepE2e(files: string[] | null, logFile: string): Promise<StepOutcome> {
   const notes: string[] = [];
   const devLog = logFile.replace(/e2e\.log$/, "dev-server.log");
+  // Slice #39.14: the e2e fixture appends one line per test here; the note says how many real maps the run made.
+  const mapsLog = path.join(path.dirname(logFile), MAPS_LOG_FILE);
+  const readMapsLog = (): string => {
+    try {
+      return mapsNote(parseMapsLog(fs.readFileSync(mapsLog, "utf8")));
+    } catch {
+      return mapsNote(null);
+    }
+  };
   if (await portIsOpen(RUNNER_PORT)) {
     return {
       status: "error",
@@ -479,7 +492,8 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
         return { status: "error", exitCode: null, summary: `${why} (see ${rel(devLog)})`, notes };
       }
       const mark = server.output().length;
-      const env = { ...CHILD_ENV, E2E_BASE_URL: `http://localhost:${RUNNER_PORT}` };
+      fs.rmSync(mapsLog, { force: true });
+      const env = { ...CHILD_ENV, E2E_BASE_URL: `http://localhost:${RUNNER_PORT}`, [MAPS_LOG_ENV]: mapsLog };
       const first = await runLogged(NODE, [BIN.playwright, ...playwrightArgs(files)], logFile, TIMEOUT.e2e, env);
       let r = first;
       let rerunNote = "";
@@ -509,6 +523,7 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
         continue;
       }
       if (webpack) notes.push("served with next dev --webpack");
+      notes.push(readMapsLog());
       return {
         status: r.timedOut ? "error" : r.exitCode === 0 ? "passed" : "failed",
         exitCode: r.exitCode,

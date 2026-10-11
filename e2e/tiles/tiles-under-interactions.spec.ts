@@ -10,7 +10,7 @@
  *   - Each reading is polled until it holds.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-22`;

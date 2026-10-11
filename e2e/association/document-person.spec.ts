@@ -36,7 +36,7 @@
  *     end as corrected on 2026-10-07).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import {
   E2E_MARKER,
   createNaturalPerson,

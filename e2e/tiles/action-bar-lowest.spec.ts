@@ -9,7 +9,7 @@
  *   - Each reading is polled until it holds: a width change lays the row out again.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, createSaleContract, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-23`;

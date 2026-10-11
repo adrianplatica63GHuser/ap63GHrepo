@@ -24,7 +24,7 @@
  *     no fixed column's cell wider than the column. Not a step of the case.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import {
   E2E_MARKER,
   createNaturalPerson,

@@ -24,7 +24,7 @@
  *     reader reaches them; before, neither had an accessible name.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../helpers/test";
 import {
   E2E_MARKER,
   createProperty,

@@ -12,7 +12,7 @@
  *   - Step 3 opens `/documents/new` directly, the address „Adaugă act" leads to.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, documentTypeIdFor, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-13`;

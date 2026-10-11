@@ -6,7 +6,7 @@
  * the longest one is chosen by asking each list's route how many rows it has.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 
 // Slice #38.62: the lists of „Roluri și legături" — „person-roles", „property-property-roles",
 // „document-document-roles", which this list held — have the relationship triangle above them, so on a wide

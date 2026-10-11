@@ -12,7 +12,7 @@
  *     1920 px, into `playwright-report/settings-sections/`.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 
 const SHOTS = "playwright-report/settings-sections";
 

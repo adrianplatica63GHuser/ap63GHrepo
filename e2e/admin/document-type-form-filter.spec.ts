@@ -5,7 +5,7 @@
  * A translation of the case file, step for step. Nothing is created: the list is read as it is.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 
 const HAS_FORM = "Are formular";
 

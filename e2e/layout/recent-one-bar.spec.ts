@@ -14,7 +14,7 @@
  *     hand run looked.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}LAYOUT-04`;

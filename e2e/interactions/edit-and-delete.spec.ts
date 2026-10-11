@@ -15,7 +15,7 @@
  */
 
 import fs from "node:fs";
-import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { openSection, sidebar } from "../helpers/sidebar";
 
