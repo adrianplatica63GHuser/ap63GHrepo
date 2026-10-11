@@ -53,6 +53,13 @@ export const test = base.extend<MapsOptions & { googleMaps: void }>({
       } else {
         await context.route(isGoogleMapsUrl, (route) => {
           tally.blocked++;
+          // The loader is answered with an empty script rather than aborted: an abort makes the app's map provider
+          // log „The Google Maps JavaScript API failed to load." with console.error, which next dev shows as an
+          // „Issue" badge in every picture of a page with a map. An empty script never calls back, so the API never
+          // loads, no map is made, and nothing is logged.
+          if (isMapsLoaderUrl(route.request().url())) {
+            return route.fulfill({ status: 200, contentType: "text/javascript", body: "/* e2e: Google Maps blocked (Slice #39.14) */" });
+          }
           return route.abort("blockedbyclient");
         });
       }
