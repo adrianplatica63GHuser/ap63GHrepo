@@ -166,6 +166,11 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{tl(\"discardYes\")}"],
     ["A110", "{tl(\"discardNo\")}"],
     ["A113", "{s}"], // #38.86: a tag suggested — the text is the data
+    // #38.87: „…modificată de altcineva" — „Reîncarcă" / „Suprascrie"; „Ștergi interacțiunea?" — „Anulează" / „Șterge".
+    ["A110", "{tl(\"conflictReload\")}"],
+    ["A110", "{tl(\"conflictOverwrite\")}"],
+    ["A110", "{tl(\"deleteNo\")}"],
+    ["A110", "{deleting ? tl(\"deleting\") : tl(\"deleteYes\")}"],
   ],
   // Slice #38.86: a document or a property found in the archive's own search, by its name.
   "src/app/interactions/_components/pickers.tsx": [

@@ -4341,7 +4341,27 @@
       "unlinkProperty": "Remove the property",
       "propertyHint": "Optional; not shown in the history.",
       "searching": "Searching…",
-      "noHits": "Nothing found"
+      "noHits": "Nothing found",
+      "mode": "Mode",
+      "modeNew": "New record",
+      "modeEdit": "Edit selected",
+      "loadingRecord": "Loading the record…",
+      "loadFailed": "The record could not be loaded.",
+      "discardChanges": "Discard the changes you have not saved?",
+      "conflict": "This record was updated by someone else. Reload, or overwrite?",
+      "conflictReload": "Reload",
+      "conflictOverwrite": "Overwrite",
+      "delete": "Delete record",
+      "saveChanges": "Save changes",
+      "updated": "Changes saved",
+      "deleted": "Interaction deleted",
+      "deleteTitle": "Delete the interaction?",
+      "deleteBody": "The interaction with {person} on {date} will be deleted for good.",
+      "deleteKeeps": "Linked documents stay in the archive; the person and the property do not change.",
+      "deleteNo": "Cancel",
+      "deleteYes": "Delete",
+      "deleting": "Deleting…",
+      "audit": "Created by <name>{createdBy}</name>, {createdAt} · last changed by <name>{updatedBy}</name>, {updatedAt}"
     }
   }
 }

@@ -20,9 +20,10 @@ import {
 } from "@/lib/interactions/filters";
 import { PAGE_DEFAULT } from "@/lib/interactions/model";
 import type { InteractionRecord } from "@/lib/interactions/model";
+import { switchMove } from "@/lib/interactions/form";
 import { useToast } from "@/components/toast";
 import { HistoryTile, type HistoryPage } from "./history-tile";
-import { LogTile } from "./log-tile";
+import { LogTile, type SwitchRequest } from "./log-tile";
 
 /** How long a saved row keeps its flash mark (the animation is 1.4 s). */
 const FLASH_MS = 1500;
@@ -56,7 +57,9 @@ export function InteractionsScreen() {
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [request, setRequest] = useState<SwitchRequest | null>(null);
   const logRef = useRef<HTMLElement>(null);
+  const dirtyRef = useRef(false);
   const queryClient = useQueryClient();
   const { toast, show } = useToast();
 
@@ -113,9 +116,31 @@ export function InteractionsScreen() {
     document.getElementById("interaction-channel-first")?.focus({ preventScroll: true });
   };
 
-  // A record saved (§4): the toast, the history asked again, and the new row flashing where it lands.
-  const onSaved = (record: InteractionRecord) => {
-    show(t("log.saved"));
+  // Selection is the link between the tiles (§2): a row chosen loads into the log tile — after asking, if what is
+  // there was being typed (38.87).
+  const requestSelect = (id: string) => {
+    const move = switchMove(dirtyRef.current, selectedId, id);
+    if (move === "ask") setRequest({ kind: "select", id });
+    else if (move === "switch") setSelectedId(id);
+  };
+  const requestNew = () => {
+    const move = switchMove(dirtyRef.current, selectedId, null);
+    if (move === "ask") setRequest({ kind: "new" });
+    else if (move === "switch") setSelectedId(null);
+  };
+  const answer = (yes: boolean) => {
+    if (yes && request) setSelectedId(request.kind === "select" ? request.id : null);
+    setRequest(null);
+  };
+  const onDeleted = () => {
+    show(t("log.deleted"));
+    void queryClient.invalidateQueries({ queryKey: ["interactions"] });
+    setSelectedId(null);
+  };
+
+  // A record saved (§4): the toast, the history asked again, and the row flashing where it lands.
+  const onSaved = (record: InteractionRecord, kind: "created" | "updated") => {
+    show(t(kind === "created" ? "log.saved" : "log.updated"));
     void queryClient.invalidateQueries({ queryKey: ["interactions"] });
     setFlashId(record.id);
     setTimeout(() => setFlashId((id) => (id === record.id ? null : id)), FLASH_MS);
@@ -181,7 +206,7 @@ export function InteractionsScreen() {
               pageSize={PAGE_DEFAULT}
               onPage={setPage}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={requestSelect}
               onLogFirst={logFirst}
               flashId={flashId}
             />
@@ -191,7 +216,18 @@ export function InteractionsScreen() {
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <LogTile scope={scope} scopeName={scopeName} onSaved={onSaved} tileRef={logRef} />
+            <LogTile
+              scope={scope}
+              scopeName={scopeName}
+              selectedId={selectedId}
+              request={request}
+              onRequest={answer}
+              onModeNew={requestNew}
+              onSaved={onSaved}
+              onDeleted={onDeleted}
+              dirtyRef={dirtyRef}
+              tileRef={logRef}
+            />
           </div>
         </div>
       </div>

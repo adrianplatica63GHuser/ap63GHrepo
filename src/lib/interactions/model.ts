@@ -71,6 +71,8 @@ export interface InteractionRecord extends InteractionListItem {
   description: string | null;
   internalNote: string | null;
   relatedPropertyId: string | null;
+  /** The related property's nickname, for the form (#38.87). */
+  relatedPropertyLabel: string | null;
   documentIds: string[];
   /** The same documents with the name the archive gives each — the grid's paperclip popover (#38.84). */
   documents: { id: string; title: string | null }[];
@@ -78,4 +80,7 @@ export interface InteractionRecord extends InteractionListItem {
   createdAt: string;
   createdBy: string | null;
   updatedBy: string | null;
+  /** The audit line's names (#38.87, Ask first #2): the app's username where the e-mail has one, the e-mail otherwise. */
+  createdByName: string | null;
+  updatedByName: string | null;
 }

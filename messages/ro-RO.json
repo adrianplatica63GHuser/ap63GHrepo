@@ -4341,7 +4341,27 @@
       "unlinkProperty": "Scoate proprietatea",
       "propertyHint": "Opțional; nu apare în istoric.",
       "searching": "Se caută…",
-      "noHits": "Nimic găsit"
+      "noHits": "Nimic găsit",
+      "mode": "Mod",
+      "modeNew": "Înregistrare nouă",
+      "modeEdit": "Editează selecția",
+      "loadingRecord": "Se încarcă înregistrarea…",
+      "loadFailed": "Înregistrarea nu s-a putut încărca.",
+      "discardChanges": "Renunți la modificările nesalvate?",
+      "conflict": "Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?",
+      "conflictReload": "Reîncarcă",
+      "conflictOverwrite": "Suprascrie",
+      "delete": "Șterge înregistrarea",
+      "saveChanges": "Salvează modificările",
+      "updated": "Modificări salvate",
+      "deleted": "Interacțiune ștearsă",
+      "deleteTitle": "Ștergi interacțiunea?",
+      "deleteBody": "Interacțiunea cu {person} din {date} va fi ștearsă definitiv.",
+      "deleteKeeps": "Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.",
+      "deleteNo": "Anulează",
+      "deleteYes": "Șterge",
+      "deleting": "Se șterge…",
+      "audit": "Creată de <name>{createdBy}</name>, {createdAt} · modificată ultima dată de <name>{updatedBy}</name>, {updatedAt}"
     }
   }
 }

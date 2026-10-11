@@ -120,9 +120,13 @@ export async function getInteraction(id: string): Promise<InteractionRecord | nu
       description: interaction.description,
       internalNote: interaction.internalNote,
       relatedPropertyId: interaction.relatedPropertyId,
+      relatedPropertyLabel: sql<string | null>`(SELECT p.nickname FROM property p WHERE p.id = ${interaction.relatedPropertyId})`,
       createdAt: interaction.createdAt,
       createdBy: interaction.createdBy,
       updatedBy: interaction.updatedBy,
+      // #38.87, Ask first #2: the audit line names the app's username where the e-mail has one.
+      createdByName: sql<string | null>`coalesce((SELECT u.username FROM app_users u WHERE lower(u.email) = lower(${interaction.createdBy})), ${interaction.createdBy})`,
+      updatedByName: sql<string | null>`coalesce((SELECT u.username FROM app_users u WHERE lower(u.email) = lower(${interaction.updatedBy})), ${interaction.updatedBy})`,
     })
     .from(interaction)
     .innerJoin(person, eq(person.id, interaction.personId))
@@ -140,12 +144,15 @@ export async function getInteraction(id: string): Promise<InteractionRecord | nu
     description: row.description,
     internalNote: row.internalNote,
     relatedPropertyId: row.relatedPropertyId,
+    relatedPropertyLabel: (row.relatedPropertyLabel as string | null) ?? null,
     documentIds: docs.map((d) => d.id),
     documents: docs.map((d) => ({ id: d.id, title: d.title })),
     tags: tags.map((t) => t.tag),
     createdAt: row.createdAt.toISOString(),
     createdBy: row.createdBy,
     updatedBy: row.updatedBy,
+    createdByName: (row.createdByName as string | null) ?? null,
+    updatedByName: (row.updatedByName as string | null) ?? null,
   };
 }
 

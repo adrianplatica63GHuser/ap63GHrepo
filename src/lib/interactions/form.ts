@@ -11,7 +11,7 @@
  * only the ids are sent.
  */
 import { checkWhen, interactionInputSchema, type InteractionInput } from "./validation";
-import { TAG_MAX, type InteractionChannel, type InteractionDirection, type InteractionStatus } from "./model";
+import { TAG_MAX, type InteractionChannel, type InteractionDirection, type InteractionRecord, type InteractionStatus } from "./model";
 
 export interface LogForm {
   channel: InteractionChannel;
@@ -63,6 +63,29 @@ export function emptyForm(scopePersonId: string | null): LogForm {
   };
 }
 
+/**
+ * A record as the form shows it in „Editează selecția" (38.87): its own date and time, the follow-up ticked when it
+ * has a date, the internal note's switch on when it has a note, its documents and its property with their names.
+ */
+export function fromRecord(r: InteractionRecord): LogForm {
+  return {
+    channel: r.channel,
+    direction: r.direction,
+    status: r.status,
+    when: localMinute(new Date(r.occurredAt)),
+    personId: r.personId,
+    subject: r.subject,
+    description: r.description ?? "",
+    followUp: r.followUpOn !== null,
+    followUpOn: r.followUpOn ?? "",
+    internal: r.internalNote !== null,
+    internalNote: r.internalNote ?? "",
+    documents: r.documents.map((d) => ({ id: d.id, title: d.title })),
+    tags: [...r.tags],
+    property: r.relatedPropertyId ? { id: r.relatedPropertyId, label: r.relatedPropertyLabel } : null,
+  };
+}
+
 /** A document added to the links — once: a document already linked is not linked twice (38.86). */
 export function withDocument(list: readonly LinkedDocument[], d: LinkedDocument): LinkedDocument[] {
   return list.some((x) => x.id === d.id) ? [...list] : [...list, d];
@@ -83,6 +106,16 @@ export function nextAfterSave(f: LogForm): LogForm {
 /** Whether the form holds anything the user typed or chose beyond `base` (what Cancel asks about). */
 export function isDirty(f: LogForm, base: LogForm): boolean {
   return (Object.keys(base) as (keyof LogForm)[]).some((k) => JSON.stringify(f[k]) !== JSON.stringify(base[k]));
+}
+
+/**
+ * The log tile's mode switch and the history's selection (38.87): moving from the record shown (`from`, null = a new
+ * one) to `to` happens at once on a clean form, asks first on a dirty one, and is nothing at all when it is the same.
+ * Nothing is written by a switch — only by Save.
+ */
+export function switchMove(dirty: boolean, from: string | null, to: string | null): "stay" | "switch" | "ask" {
+  if (from === to) return "stay";
+  return dirty ? "ask" : "switch";
 }
 
 /** A minute of the browser's clock as a `datetime-local` value. */

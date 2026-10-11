@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useEffectEvent, useId, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
-import { useTranslations } from "next-intl";
-import { Check, CirclePlus, FileText, Link2, Mail, Map as MapIcon, MessageCircle, Plus, SquarePen, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useLocale, useTranslations } from "next-intl";
+import { Check, CirclePlus, FileText, Link2, Mail, Map as MapIcon, MessageCircle, Plus, SquarePen, Trash2, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { useNameOr } from "@/components/record/use-name-or";
 import { IconButton } from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -15,6 +16,7 @@ import {
   checkForm,
   emptyForm,
   firstError,
+  fromRecord,
   isDirty,
   localMinute,
   nextAfterSave,
@@ -28,6 +30,7 @@ import {
 import { CHANNEL_ICON, DIRECTION_ICON } from "./interaction-pills";
 import { PersonPicker } from "./filter-controls";
 import { RecordSearch } from "./pickers";
+import { useInteraction } from "./history-tile";
 
 /** The ids the focus goes to when a field is in error (§7). */
 const FIELD_ID: Readonly<Record<FormField, string>> = {
@@ -51,28 +54,56 @@ const BOX =
 const boxBorder = (invalid: boolean) =>
   invalid ? "border-red-700 outline outline-1 outline-red-700 dark:border-red-400 dark:outline-red-400" : "border-slate-300 dark:border-zinc-600";
 
+/** What the screen asks the tile to confirm before it throws a dirty form away (38.87): another row, or a new record. */
+export type SwitchRequest = { kind: "select"; id: string } | { kind: "new" };
+
 /**
- * Tile two — „Înregistrează o interacțiune" (§4), new-record mode.   (Slice #38.85)
+ * Tile two — „Înregistrează o interacțiune" (§4).   (Slices #38.85, #38.87)
  *
  * Two jobs kept apart: the connections card on top — drawn as Figure 2 draws it and inert, because there is no Gmail
  * and no WhatsApp in this app (Adrian, 2026-10-10) — and the manual entry form under it, which needs no account at
  * all (§8.4). The form is checked with the route's own schema (`src/lib/interactions/form.ts`); Save stays disabled
  * until it passes, and Ctrl+S on a form that does not pass outlines what is missing and moves the focus there.
+ *
+ * 38.87 — TWO MODES, the spec's two-part switch: „Înregistrare nouă", and „Editează selecția" once a row of the history
+ * is chosen (the screen's `selectedId`). Edit mode loads the record, saves it with „Salvează modificările" over the
+ * `updatedAt` it read — a record someone else changed since answers 409 and the tile offers „Reîncarcă" (the default)
+ * or „Suprascrie", never silently — deletes it after a confirmation that names the person and the date, and shows
+ * the audit line. A dirty form is never thrown away without asking: here for another row or a new record
+ * (`request`), and through the app's unsaved-changes guard for leaving the screen.
  */
 export function LogTile({
   scope,
   scopeName,
+  selectedId,
+  request,
+  onRequest,
+  onModeNew,
   onSaved,
+  onDeleted,
+  dirtyRef,
   tileRef,
 }: {
   scope: string | null;
   scopeName: string | null;
-  onSaved: (record: InteractionRecord) => void;
+  selectedId: string | null;
+  request: SwitchRequest | null;
+  onRequest: (answer: boolean) => void;
+  onModeNew: () => void;
+  onSaved: (record: InteractionRecord, kind: "created" | "updated") => void;
+  onDeleted: (id: string) => void;
+  dirtyRef: RefObject<boolean>;
   tileRef: RefObject<HTMLElement | null>;
 }) {
   const t = useTranslations("interactions");
   const tl = useTranslations("interactions.log");
+  const locale = useLocale();
   const now = useNowMinute();
+  const queryClient = useQueryClient();
+  const record = useInteraction(selectedId);
+  const loaded = selectedId !== null && record.data?.id === selectedId ? record.data : null;
+  const mode: "new" | "edit" = selectedId ? "edit" : "new";
+
   const [base, setBase] = useState<LogForm>(() => emptyForm(scope));
   const [form, setForm] = useState<LogForm>(base);
   const [touched, setTouched] = useState<Partial<Record<FormField, true>>>({});
@@ -81,19 +112,46 @@ export function LogTile({
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const [personName, setPersonName] = useState<string | null>(scopeName);
+  const [conflict, setConflict] = useState<InteractionRecord | null>(null);
+  const [askDelete, setAskDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  // The version the form was filled from — what a change is saved over. Not `loaded.updatedAt`: a background read of
+  // a newer copy must never make a save land over a change nobody here has seen (§7).
+  const [readAt, setReadAt] = useState<string | null>(null);
+  const dirty = isDirty(form, base);
 
-  // A new scope, on a form nobody has touched, is the form's person (§4: pre-filled from the scope).
+  const reset = (next: LogForm, name: string | null, version: string | null = null) => {
+    setReadAt(version);
+    setBase(next);
+    setForm(next);
+    setPersonName(name);
+    setTouched({});
+    setShowAll(false);
+    setAskCancel(false);
+    setFailed(false);
+    setConflict(null);
+    setAskDelete(false);
+  };
+
+  // What the form holds follows the mode: a new record, or the record chosen — loaded, and again whenever it is
+  // read anew (after a save, a reload). A newer copy of the SAME record never replaces what is being typed: that is
+  // the 409's job, at save.
+  const formKey = loaded ? `${loaded.id}@${loaded.updatedAt}` : selectedId ? `loading:${selectedId}` : "new";
+  const [shownKey, setShownKey] = useState(formKey);
+  if (shownKey !== formKey) {
+    const sameRecord = loaded !== null && shownKey.startsWith(`${loaded.id}@`);
+    setShownKey(formKey);
+    if (loaded && (!sameRecord || !dirty)) reset(fromRecord(loaded), loaded.personName, loaded.updatedAt);
+    else if (!selectedId) reset(emptyForm(scope), scopeName);
+  }
+
+  // A new scope, on a new form nobody has touched, is the form's person (§4: pre-filled from the scope).
   const [prevScope, setPrevScope] = useState(scope);
   if (prevScope !== scope) {
     setPrevScope(scope);
-    if (!isDirty(form, base)) {
-      const fresh = emptyForm(scope);
-      setBase(fresh);
-      setForm(fresh);
-      setPersonName(scopeName);
-    }
+    if (mode === "new" && !dirty) reset(emptyForm(scope), scopeName);
   }
-  if (form.personId === scope && scopeName && personName !== scopeName) setPersonName(scopeName);
+  if (mode === "new" && form.personId === scope && scopeName && personName !== scopeName) setPersonName(scopeName);
 
   // Checked against the clock each render; `now` re-renders it every 15 s, so a time typed ahead turns valid in time.
   const check = checkForm(form, new Date());
@@ -105,56 +163,110 @@ export function LogTile({
   };
   const touch = (f: FormField) => setTouched((prev) => ({ ...prev, [f]: true }));
 
-  const save = async (andNew: boolean) => {
-    if (saving) return;
+  /** Save — a new record, or the loaded one over the `updatedAt` it was read at (or, after „Suprascrie", the newest). */
+  const save = async (andNew: boolean, over?: string): Promise<boolean> => {
+    if (saving) return false;
     const result = checkForm(form, new Date());
     if (!result.ok) {
       setShowAll(true);
       const first = firstError(result.errors);
       if (first) document.getElementById(FIELD_ID[first])?.focus();
-      return;
+      return false;
     }
+    if (mode === "edit" && (!loaded || !readAt)) return false;
     setSaving(true);
     setFailed(false);
     try {
-      const res = await fetch("/api/interactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(result.input),
-      });
-      if (res.status !== 201 || res.redirected) throw new Error(`POST /api/interactions ${res.status}`);
-      const record = (await res.json()) as InteractionRecord;
-      const next = andNew ? nextAfterSave(form) : emptyForm(scope);
-      setBase(next);
-      setForm(next);
-      if (!andNew) setPersonName(scopeName);
-      setTouched({});
-      setShowAll(false);
-      onSaved(record);
-      document.getElementById(andNew ? FIELD_ID.subject : "interaction-channel-first")?.focus();
+      const res =
+        mode === "new"
+          ? await fetch("/api/interactions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(result.input),
+            })
+          : await fetch(`/api/interactions/${encodeURIComponent((loaded as InteractionRecord).id)}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...result.input, expectedUpdatedAt: over ?? readAt }),
+            });
+      if (res.status === 409) {
+        // §7: „This record was updated by someone else. Reload, or overwrite." Overwrite is never the default.
+        const body = (await res.json()) as { current: InteractionRecord | null };
+        setConflict(body.current);
+        return false;
+      }
+      if (!res.ok || res.redirected) throw new Error(`${mode === "new" ? "POST" : "PUT"} /api/interactions ${res.status}`);
+      const saved = (await res.json()) as InteractionRecord;
+      if (mode === "new") {
+        reset(andNew ? nextAfterSave(form) : emptyForm(scope), andNew ? personName : scopeName);
+        onSaved(saved, "created");
+        document.getElementById(andNew ? FIELD_ID.subject : "interaction-channel-first")?.focus();
+      } else {
+        queryClient.setQueryData(["interaction", saved.id], saved);
+        reset(fromRecord(saved), saved.personName, saved.updatedAt);
+        setShownKey(`${saved.id}@${saved.updatedAt}`);
+        onSaved(saved, "updated");
+      }
+      return true;
     } catch {
       setFailed(true);
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
+  /** „Reîncarcă" after a 409: what is stored now, the changes typed here dropped. */
+  const reload = () => {
+    const current = conflict;
+    setConflict(null);
+    if (current) {
+      queryClient.setQueryData(["interaction", current.id], current);
+      reset(fromRecord(current), current.personName, current.updatedAt);
+      setShownKey(`${current.id}@${current.updatedAt}`);
+    }
+    void queryClient.invalidateQueries({ queryKey: ["interactions"] });
+  };
+
+  const remove = async () => {
+    if (!loaded || deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/interactions/${encodeURIComponent(loaded.id)}`, { method: "DELETE" });
+      if (!(res.status === 204 || res.status === 404) || res.redirected) throw new Error(`DELETE ${res.status}`);
+      queryClient.removeQueries({ queryKey: ["interaction", loaded.id] });
+      setAskDelete(false);
+      reset(emptyForm(scope), scopeName);
+      onDeleted(loaded.id);
+    } catch {
+      setFailed(true);
+      setAskDelete(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  /** „Renunță" (§4): clean — a new form clears, an edit stays; dirty — asks first. */
   const cancel = () => {
-    if (isDirty(form, base)) {
+    if (dirty) {
       setAskCancel(true);
       return;
     }
     clear();
   };
   const clear = () => {
-    const fresh = emptyForm(scope);
-    setBase(fresh);
-    setForm(fresh);
-    setPersonName(scopeName);
-    setTouched({});
-    setShowAll(false);
-    setAskCancel(false);
+    if (loaded) reset(fromRecord(loaded), loaded.personName, loaded.updatedAt);
+    else reset(emptyForm(scope), scopeName);
   };
+
+  // The screen asks before it switches row or mode; the app's guard asks before it leaves (38.87).
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  });
+  useUnsavedChangesGuard({ isDirty: dirty, onSave: () => save(false) });
+
+  const stamp = (iso: string) =>
+    new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
   // Ctrl+S saves (§4) — and never opens the browser's own „Save page".
   const onKey = useEffectEvent((e: KeyboardEvent) => {
@@ -192,6 +304,28 @@ export function LogTile({
         {t("screen.logTitle")}
       </h2>
 
+      {/* 38.87: the mode switch (§4, Figure 2) — „Editează selecția" once a row of the history is chosen. */}
+      <div role="radiogroup" aria-label={tl("mode")} data-log-mode={mode} className="grid grid-cols-2 overflow-hidden rounded-md border border-slate-300 text-sm dark:border-zinc-600">
+        {(["new", "edit"] as const).map((m, i) => (
+          <label
+            key={m}
+            className={`flex cursor-pointer select-none items-center justify-center px-3 py-1.5 has-[:disabled]:cursor-not-allowed has-[:disabled]:text-fade has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus ${
+              i > 0 ? "border-l border-slate-300 dark:border-zinc-600" : ""
+            } ${mode === m ? "bg-[#eef2ff] font-medium text-[#3b5bdb] dark:bg-[#202745] dark:text-[#768ce6]" : "bg-white text-slate-700 dark:bg-zinc-900 dark:text-zinc-300"}`}
+          >
+            <input
+              type="radio"
+              name="interaction-mode"
+              className="sr-only"
+              checked={mode === m}
+              disabled={m === "edit" && !selectedId}
+              onChange={() => (m === "new" ? onModeNew() : undefined)}
+            />
+            {m === "new" ? tl("modeNew") : tl("modeEdit")}
+          </label>
+        ))}
+      </div>
+
       <Connections />
 
       <form
@@ -205,6 +339,12 @@ export function LogTile({
         className="flex flex-col gap-4"
       >
         <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">{tl("manual")}</h3>
+        {mode === "edit" && !loaded && (
+          <p role="status" className="text-sm text-fade dark:text-zinc-400" data-log-loading="">
+            {record.isError ? tl("loadFailed") : tl("loadingRecord")}
+          </p>
+        )}
+        <fieldset disabled={mode === "edit" && !loaded} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
 
         <Field label={tl("channel")} labelId={ids.channel}>
           <div role="radiogroup" aria-labelledby={ids.channel} className="flex flex-wrap gap-1.5" data-log-channel="">
@@ -402,48 +542,92 @@ export function LogTile({
           )}
         </div>
 
+        </fieldset>
+
         {failed && (
           <p role="alert" className="text-sm text-red-700 dark:text-red-400">
             {tl("saveFailed")}
           </p>
         )}
 
-        {askCancel && (
-          <div role="alertdialog" aria-labelledby="interaction-discard-title" className="flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:border-amber-700 dark:bg-amber-950/40">
+        {(askCancel || request) && (
+          <div role="alertdialog" aria-labelledby="interaction-discard-title" data-log-discard="" className="flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:border-amber-700 dark:bg-amber-950/40">
             <span id="interaction-discard-title" className="text-ink dark:text-zinc-100">
-              {tl("discardQuestion")}
+              {mode === "new" && !request ? tl("discardQuestion") : tl("discardChanges")}
             </span>
-            <button type="button" onClick={clear} className={buttonClass({ variant: "danger", size: "sm" })}>
+            <button
+              type="button"
+              onClick={() => {
+                if (request) onRequest(true);
+                else clear();
+              }}
+              className={buttonClass({ variant: "danger", size: "sm" })}
+            >
               {tl("discardYes")}
             </button>
-            <button type="button" onClick={() => setAskCancel(false)} className={buttonClass({ variant: "secondary", size: "sm" })}>
+            <button
+              type="button"
+              onClick={() => {
+                if (request) onRequest(false);
+                else setAskCancel(false);
+              }}
+              className={buttonClass({ variant: "secondary", size: "sm" })}
+            >
               {tl("discardNo")}
+            </button>
+          </div>
+        )}
+
+        {/* §7: the record changed underneath — reload (the default) or overwrite, never silently. */}
+        {conflict && (
+          <div role="alertdialog" aria-labelledby="interaction-conflict-title" data-log-conflict="" className="flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:border-amber-700 dark:bg-amber-950/40">
+            <span id="interaction-conflict-title" className="text-ink dark:text-zinc-100">
+              {tl("conflict")}
+            </span>
+            <button type="button" id="interaction-conflict-reload" onClick={reload} className={buttonClass({ variant: "accent", size: "sm" })}>
+              {tl("conflictReload")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const over = conflict.updatedAt;
+                setConflict(null);
+                void save(false, over);
+              }}
+              className={buttonClass({ variant: "secondary", size: "sm" })}
+            >
+              {tl("conflictOverwrite")}
             </button>
           </div>
         )}
 
         {/* The action bar (§4). */}
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 dark:border-zinc-700" data-log-actions="">
+          {mode === "edit" && (
+            <IconButton icon={Trash2} label={tl("delete")} showLabel variant="bare-danger" size="lg" disabled={!loaded || saving} onClick={() => setAskDelete(true)} />
+          )}
           <IconButton
             type="submit"
             icon={Check}
-            label={tl("save")}
+            label={mode === "edit" ? tl("saveChanges") : tl("save")}
             showLabel
             variant="accent"
             size="lg"
             busy={saving}
             busyLabel={tl("saving")}
-            disabled={!check.ok || saving}
+            disabled={!check.ok || saving || (mode === "edit" && (!loaded || !dirty))}
           />
-          <IconButton
-            icon={CirclePlus}
-            label={tl("saveAndNew")}
-            showLabel
-            variant="secondary"
-            size="lg"
-            disabled={!check.ok || saving}
-            onClick={() => void save(true)}
-          />
+          {mode === "new" && (
+            <IconButton
+              icon={CirclePlus}
+              label={tl("saveAndNew")}
+              showLabel
+              variant="secondary"
+              size="lg"
+              disabled={!check.ok || saving}
+              onClick={() => void save(true)}
+            />
+          )}
           <IconButton icon={X} label={tl("cancel")} showLabel variant="ghost" size="lg" onClick={cancel} />
           <span className="ml-auto flex items-center gap-1 text-xs text-fade dark:text-zinc-400" data-ctrl-s="">
             {tl("ctrlS")}
@@ -452,6 +636,40 @@ export function LogTile({
           </span>
         </div>
       </form>
+
+      {/* §6: the audit line, read-only, at the bottom of edit mode. */}
+      {loaded && (
+        <p className="text-xs text-fade dark:text-zinc-400" data-audit-line="">
+          {tl.rich("audit", {
+            createdBy: loaded.createdByName ?? "—",
+            createdAt: stamp(loaded.createdAt),
+            updatedBy: loaded.updatedByName ?? "—",
+            updatedAt: stamp(loaded.updatedAt),
+            // Each name in its own span: a picture paints a real person's name over (capture-and-personal-data).
+            name: (chunks) => <span data-audit-name="">{chunks}</span>,
+          })}
+        </p>
+      )}
+
+      {askDelete && loaded && (
+        <div role="dialog" aria-modal="true" aria-labelledby="interaction-delete-title" data-log-delete="" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900" {...screenBox("interactionSubjectLine")}>
+            <h3 id="interaction-delete-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+              {tl("deleteTitle")}
+            </h3>
+            <p className="mt-2 text-sm text-ink dark:text-zinc-200">{tl("deleteBody", { person: loaded.personName, date: stamp(loaded.occurredAt) })}</p>
+            <p className="mt-1 text-sm text-fade dark:text-zinc-400">{tl("deleteKeeps")}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setAskDelete(false)} disabled={deleting} className={buttonClass({ variant: "secondary", size: "lg" })}>
+                {tl("deleteNo")}
+              </button>
+              <button type="button" onClick={() => void remove()} disabled={deleting} className={buttonClass({ variant: "danger", size: "lg" })}>
+                {deleting ? tl("deleting") : tl("deleteYes")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
