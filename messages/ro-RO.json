@@ -4251,7 +4251,8 @@
       "newest": "Cele mai noi întâi",
       "oldest": "Cele mai vechi întâi",
       "sortedBy": "Ordonat după „{column}”",
-      "clear": "Șterge filtrele"
+      "clear": "Șterge filtrele",
+      "export": "Exportă"
     },
     "column": {
       "occurredAt": "Data",
@@ -4362,6 +4363,20 @@
       "deleteYes": "Șterge",
       "deleting": "Se șterge…",
       "audit": "Creată de <name>{createdBy}</name>, {createdAt} · modificată ultima dată de <name>{updatedBy}</name>, {updatedAt}"
+    },
+    "export": {
+      "column": {
+        "occurredAt": "Data și ora",
+        "channel": "Canal",
+        "direction": "Sens",
+        "person": "Persoană",
+        "subject": "Subiect",
+        "description": "Descriere",
+        "documents": "Acte legate",
+        "status": "Stare",
+        "followUp": "Memento",
+        "tags": "Etichete"
+      }
     }
   }
 }

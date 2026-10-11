@@ -110,6 +110,16 @@ export function InteractionsScreen() {
   const scopeName = scope ? (person.data ? nameOr(person.data.person.displayName, "person") : "…") : null;
   const needsReply = history.data?.needsReply ?? 0;
 
+  // „Exportă" (38.88): the list's own query without its page, and the browser's time zone for the dates. The answer
+  // is an attachment, so the browser saves it and the screen stays where it is.
+  const exportRows = () => {
+    const p = listQuery(filters, order, scope, 0, PAGE_DEFAULT, new Date());
+    p.delete("limit");
+    p.delete("offset");
+    p.set("tz", Intl.DateTimeFormat().resolvedOptions().timeZone);
+    window.location.assign(`/api/interactions/export?${p.toString()}`);
+  };
+
   // To the form: the empty log's button and, under 1100 px, the sticky one (§2).
   const logFirst = () => {
     logRef.current?.scrollIntoView({ block: "start" });
@@ -209,6 +219,7 @@ export function InteractionsScreen() {
               onSelect={requestSelect}
               onLogFirst={logFirst}
               flashId={flashId}
+              onExport={exportRows}
             />
             {/* §2: stacked, the form is a long scroll away — this button stays at the bottom of the view. */}
             <div data-log-sticky="" className="sticky bottom-4 z-20 mt-3 flex justify-end @min-[1100px]:hidden">

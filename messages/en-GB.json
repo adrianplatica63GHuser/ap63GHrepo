@@ -4251,7 +4251,8 @@
       "newest": "Newest first",
       "oldest": "Oldest first",
       "sortedBy": "Sorted by {column}",
-      "clear": "Clear filters"
+      "clear": "Clear filters",
+      "export": "Export"
     },
     "column": {
       "occurredAt": "Date",
@@ -4362,6 +4363,20 @@
       "deleteYes": "Delete",
       "deleting": "Deleting…",
       "audit": "Created by <name>{createdBy}</name>, {createdAt} · last changed by <name>{updatedBy}</name>, {updatedAt}"
+    },
+    "export": {
+      "column": {
+        "occurredAt": "Date and time",
+        "channel": "Channel",
+        "direction": "Direction",
+        "person": "Person",
+        "subject": "Subject",
+        "description": "Description",
+        "documents": "Linked documents",
+        "status": "Status",
+        "followUp": "Follow-up",
+        "tags": "Tags"
+      }
     }
   }
 }

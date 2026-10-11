@@ -11,6 +11,7 @@ import {
   ArrowUpNarrowWide,
   CalendarClock,
   CalendarDays,
+  Download,
   ChevronDown,
   FileText,
   Funnel,
@@ -89,6 +90,8 @@ export interface HistoryTileProps {
   onLogFirst: () => void;
   /** A row just saved, flashing once where it landed (38.85). */
   flashId: string | null;
+  /** „Exportă" (38.88): the rows these filters show, in this order, as a file. */
+  onExport: () => void;
 }
 
 /** One interaction, whole — the popover's documents and the selected row's description. */
@@ -192,6 +195,18 @@ export function HistoryTile(props: HistoryTileProps) {
           {isFiltered(filters) && (
             <IconButton icon={FunnelX} label={t("toolbar.clear")} showLabel variant="ghost" size="md" data-clear-filters="" onClick={onReset} />
           )}
+          {/* §3: „Export, secondary" — at the toolbar's end. */}
+          <IconButton
+            icon={Download}
+            label={t("toolbar.export")}
+            showLabel
+            variant="secondary"
+            size="md"
+            className="ml-auto"
+            data-export=""
+            disabled={!data || data.total === 0}
+            onClick={props.onExport}
+          />
         </div>
       </div>
 

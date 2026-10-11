@@ -12,12 +12,15 @@ import { db } from "@/db";
 import { document, interaction, interactionDocument, interactionTag, person } from "@/db/schema";
 import type { InteractionInput, InteractionListQuery, InteractionUpdate } from "./validation";
 import type { InteractionListItem, InteractionRecord } from "./model";
+import { EXPORT_MAX, type ExportRow } from "./export";
 
 /** How many documents an interaction links — a subquery, so it filters and sorts as a column would. */
 const documentCount = sql<number>`(SELECT count(*)::int FROM interaction_document d WHERE d.interaction_id = ${interaction.id})`;
 
 /** The WHERE of the history: the structured fields only. Never `description`, never `internal_note` (§8.2). */
-export function listWhere(f: InteractionListQuery): SQL | undefined {
+export function listWhere(
+  f: Pick<InteractionListQuery, "from" | "to" | "channels" | "direction" | "personId" | "subject" | "hasDocuments" | "statuses" | "q">,
+): SQL | undefined {
   const pattern = f.q ? `%${f.q}%` : null;
   return and(
     f.from ? gte(interaction.occurredAt, new Date(f.from)) : undefined,
@@ -111,6 +114,41 @@ export async function listInteractions(
       .where(f.personId ? eq(interaction.personId, f.personId) : undefined)
       .limit(1)).length > 0;
   return { items: rows.map(toListItem), total: Number(total), needsReply: Number(needsReply), anyLogged };
+}
+
+/**
+ * The export (#38.88): the rows the history's filters show, in its order, without paging (at most EXPORT_MAX), with
+ * the description and the tags. Never the internal note — Ask first #2: an export is a file that leaves the app.
+ */
+export async function exportInteractions(f: Omit<InteractionListQuery, "limit" | "offset">): Promise<ExportRow[]> {
+  const column = SORT_COLUMN[f.sort];
+  const order = f.order === "asc" ? asc(column) : desc(column);
+  const rows = await db
+    .select({
+      ...listColumns,
+      description: interaction.description,
+      tags: sql<string[] | null>`(SELECT array_agg(t.tag ORDER BY t.tag) FROM interaction_tag t WHERE t.interaction_id = ${interaction.id})`,
+    })
+    .from(interaction)
+    .innerJoin(person, eq(person.id, interaction.personId))
+    .where(listWhere(f))
+    .orderBy(order, desc(interaction.occurredAt), asc(interaction.id))
+    .limit(EXPORT_MAX);
+  return rows.map((r) => {
+    const item = toListItem(r);
+    return {
+      occurredAt: item.occurredAt,
+      channel: item.channel,
+      direction: item.direction,
+      personName: item.personName,
+      subject: item.subject,
+      description: r.description,
+      documentCount: item.documentCount,
+      status: item.status,
+      followUpOn: item.followUpOn,
+      tags: r.tags ?? [],
+    };
+  });
 }
 
 export async function getInteraction(id: string): Promise<InteractionRecord | null> {
