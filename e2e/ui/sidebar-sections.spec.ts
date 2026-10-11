@@ -261,13 +261,19 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       await expect(help).toHaveCount(1);
       expect((await help.boundingBox())?.x ?? nav.x + nav.width).toBeGreaterThan(h.x);
       await page.mouse.move(1356, 758);
+      await page.waitForTimeout(400); // the button's hover colour fades (transition-colors)
       await page.screenshot({ path: `${SHOTS}/back-record-1366.png`, mask: [recent(page)] });
 
       // Pressed: back on the list.
       await back.click();
       await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
       await expect(page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon")).toBeVisible({ timeout: 30_000 });
+      // The picture shows the test person alone: the archive's other rows are real people
+      // (C:\dev\.claude\rules\capture-and-personal-data.md).
+      await page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon").fill(MARK);
+      await expect(page.locator("main tbody tr")).toHaveCount(1, { timeout: 30_000 });
       await page.mouse.move(1356, 758);
+      await page.waitForTimeout(400);
       await page.screenshot({ path: `${SHOTS}/back-list-1366.png`, mask: [recent(page)] });
 
       // A changed field, then „Înapoi": the unsaved-changes dialog; „Anulează" keeps the form, as it was typed.
