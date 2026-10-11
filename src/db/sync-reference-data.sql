@@ -640,3 +640,24 @@ UPDATE lookup_person_role r
        converse_name_female = 'Fiică'
   FROM (VALUES ('Tată', 'FATHER'), ('Mamă', 'MOTHER')) AS c(name, kind)
  WHERE r.name = c.name;
+
+-- ── lookup_person_role.kinship ───────────────────────────────────────────────
+-- Slice #39.10 (migration_106): the family tie each kinship role's holder has
+-- towards the other person, as Adrian confirmed it on 2026-10-11. The same ties
+-- as migration_106 for the names this file carries („Bunic" and „Nepot" are his
+-- own, in no file), so verify-rebuild compares equal. „Tată" and „Mamă" carry a
+-- parent_kind and are PARENT by CHECK chk_lookup_person_role_kinship_parent.
+UPDATE lookup_person_role r
+   SET kinship = c.kinship
+  FROM (VALUES
+    ('Tată',    'PARENT'),
+    ('Mamă',    'PARENT'),
+    ('Părinte', 'PARENT'),
+    ('Fiu',     'CHILD'),
+    ('Fiică',   'CHILD'),
+    ('Soț',     'SPOUSE'),
+    ('Soție',   'SPOUSE'),
+    ('Frate',   'SIBLING'),
+    ('Soră',    'SIBLING')
+  ) AS c(name, kinship)
+ WHERE r.name = c.name;

@@ -911,6 +911,13 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   // names, which are Adrian's to rename. CHECK chk_lookup_person_role_parent_kind,
   // at most one row each (uq_lookup_person_role_parent_kind).
   parentKind: text("parent_kind"),
+
+  // Slice #39.10, migration_106: the family tie the HOLDER of the role has towards the other person of a pair —
+  // PARENT, CHILD, SPOUSE, SIBLING, OTHER (a relative placed in no generation) — or NULL for none. Read the way
+  // the role is (`role_reads_a_to_b`): „A Tată B" makes A the parent of B (`tieOf`, src/lib/persons/kinship.ts).
+  // The inheritance tree reads generations from it, never from a role's name. CHECK chk_lookup_person_role_kinship
+  // holds the five; chk_lookup_person_role_kinship_parent keeps a role with a `parentKind` at PARENT.
+  kinship:    text("kinship"),
 });
 
 // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the
