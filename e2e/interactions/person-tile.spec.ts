@@ -78,7 +78,8 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       await logTile.getByRole("button", { name: "Salvează", exact: true }).click();
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune înregistrată");
       await expect(subjects).toHaveText(["Telefon de clarificare", "Ofertă de preț"], { timeout: 30_000 });
-      await tile.scrollIntoViewIfNeeded();
+      // The tile is taller than the window now: its top — B, then the start of C — is the picture.
+      await tile.evaluate((el) => el.scrollIntoView({ block: "start" }));
       await picture(page, "person-expanded-1366");
 
       // Step 3 — the new row chosen: it reads selected and loads into C; changed and saved.
