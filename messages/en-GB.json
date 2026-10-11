@@ -264,6 +264,8 @@
       "areaDelimitedHint": "Pick property corners one after another; Backspace removes the last.",
       "areaCrossing": "The sides cross — pick the corners in order.",
       "areaLocked": "Release the area button first.",
+      "areaFreeButton": "Area of any zone",
+      "areaFreeHint": "Draw the polygon as for a new property: click for each corner, click the first corner, or Done, to close it; then the corners can be dragged.",
       "anglesButton": "Angles",
       "anglesHint": "Angles — click a corner to see its interior angle(s)",
       "typeStreet": "STR",

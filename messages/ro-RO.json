@@ -264,6 +264,8 @@
       "areaDelimitedHint": "Alegeți colțuri de proprietăți, unul după altul; Backspace îl scoate pe ultimul.",
       "areaCrossing": "Laturile se încrucișează — alegeți colțurile în ordine.",
       "areaLocked": "Eliberați întâi butonul suprafeței.",
+      "areaFreeButton": "Suprafața unei zone oarecare",
+      "areaFreeHint": "Desenați poligonul ca la o proprietate nouă: clic pentru fiecare colț, clic pe primul colț sau „Gata” îl închide; apoi colțurile se pot trage.",
       "anglesButton": "Unghiuri",
       "anglesHint": "Unghiuri — apasă un colț pentru a vedea unghiul (unghiurile) sale",
       "typeStreet": "HARTĂ",

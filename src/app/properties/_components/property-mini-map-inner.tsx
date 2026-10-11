@@ -2,7 +2,7 @@
 
 import { Check, DraftingCompass, Maximize, PenTool } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
@@ -11,7 +11,6 @@ import {
   Polyline,
   useMap,
   useMapsLibrary,
-  type MapMouseEvent,
 } from "@vis.gl/react-google-maps";
 import { mapRenderingType } from "@/lib/ui/map-rendering";
 import type { Corner } from "./form-schema";
@@ -23,6 +22,7 @@ import {
 } from "@/lib/geo/angles";
 import { HelpHint } from "@/components/help/help-hint";
 import { MapCameraProbe } from "@/components/maps/map-camera-probe";
+import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -182,80 +182,14 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
   const t = useTranslations("property");
 
   const [mapType,     setMapType]     = useState<MapTypeId>("roadmap");
-  const [drawing,     setDrawing]     = useState(false);
-  const [hoverLatLng, setHoverLatLng] = useState<google.maps.LatLngLiteral | null>(null);
+  // Slice #39.08: the drawing — a click adds a corner, a line follows the cursor, the first corner or „Gata" closes,
+  // then the corners drag — is shared with the map's „Suprafața unei zone oarecare", unchanged (usePolygonDraw).
+  const draw = usePolygonDraw(corners, onChange);
+  const { drawing, exitDraw, previewPath } = draw;
 
   const positions = corners.map((c) => ({ lat: c.lat, lng: c.lon }));
   // Slice #37.38: the box the camera probe writes the centre and zoom onto.
   const boxRef = useRef<HTMLDivElement>(null);
-
-  // -------------------------------------------------------------------------
-  // Exit draw mode
-  // -------------------------------------------------------------------------
-
-  const exitDraw = useCallback(() => {
-    setDrawing(false);
-    setHoverLatLng(null);
-  }, []);
-
-  // -------------------------------------------------------------------------
-  // Drag an existing corner to a new position
-  // -------------------------------------------------------------------------
-
-  const handleDragEnd = useCallback(
-    (idx: number, e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      onChange(
-        corners.map((c, i) =>
-          i === idx
-            ? { lat: e.latLng!.lat(), lon: e.latLng!.lng() }
-            : c,
-        ),
-      );
-    },
-    [corners, onChange],
-  );
-
-  // -------------------------------------------------------------------------
-  // Map click — add a new corner when in draw mode
-  // -------------------------------------------------------------------------
-
-  const handleMapClick = useCallback(
-    (e: MapMouseEvent) => {
-      if (!drawing) return;
-      const ll = e.detail.latLng;
-      if (!ll) return;
-      onChange([...corners, { lat: ll.lat, lon: ll.lng }]);
-    },
-    [drawing, corners, onChange],
-  );
-
-  // -------------------------------------------------------------------------
-  // Mouse move — track cursor position for the draw-mode preview line
-  // -------------------------------------------------------------------------
-
-  const handleMouseMove = useCallback(
-    (e: MapMouseEvent) => {
-      if (!drawing) return;
-      setHoverLatLng(e.detail.latLng);
-    },
-    [drawing],
-  );
-
-  // -------------------------------------------------------------------------
-  // Preview polyline: last placed corner → cursor (only visible while drawing)
-  // -------------------------------------------------------------------------
-
-  const previewPath =
-    drawing && corners.length > 0 && hoverLatLng
-      ? [
-          {
-            lat: corners[corners.length - 1].lat,
-            lng: corners[corners.length - 1].lon,
-          },
-          hoverLatLng,
-        ]
-      : null;
 
   // -------------------------------------------------------------------------
   // Render
@@ -276,8 +210,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
         // crosshair cursor signals draw mode to the user
         draggableCursor={!readOnly && drawing ? "crosshair" : undefined}
         style={{ width: "100%", height: "100%" }}
-        onClick={readOnly ? undefined : handleMapClick}
-        onMousemove={readOnly ? undefined : handleMouseMove}
+        onClick={readOnly ? undefined : draw.onMapClick}
+        onMousemove={readOnly ? undefined : draw.onMouseMove}
       >
         <FitBounds corners={corners} />
         <MapCameraProbe target={boxRef} onZoom={onZoomChange} />
@@ -303,17 +237,10 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               position={{ lat: c.lat, lng: c.lon }}
               // Disable dragging in draw mode or read-only view
               draggable={!readOnly && !drawing}
-              onDragEnd={(e) => handleDragEnd(idx, e)}
-              onClick={(e) => {
-                if (!drawing) return;
-                // Clicking the first corner (≥3 corners already placed) closes and exits draw mode
-                if (idx === 0 && corners.length >= 3) {
-                  e.stop(); // prevent map onClick from also firing
-                  exitDraw();
-                } else {
-                  e.stop(); // absorb click — don't add a corner on top of an existing one
-                }
-              }}
+              onDragEnd={(e) => draw.onDragEnd(idx, e)}
+              // While drawing: the first corner (≥3 placed) closes and exits draw mode; any click is absorbed, so the
+              // map adds no corner on top of an existing one.
+              onClick={(e) => draw.onCornerClick(idx, e)}
             >
               {/* Custom dot marker: red normally, blue + ring when highlighted */}
               <div
@@ -407,7 +334,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               label={t("map.miniMap.draw")}
               variant="secondary"
               size="sm"
-              onClick={() => setDrawing(true)}
+              onClick={draw.startDraw}
             />
           ) : (
             <IconButton

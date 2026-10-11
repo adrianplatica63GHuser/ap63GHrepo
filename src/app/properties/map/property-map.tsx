@@ -1,7 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowRight, DraftingCompass, Group, Ruler, ScanEye, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
+import { ArrowRight, Check, DraftingCompass, Group, Ruler, ScanEye, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,8 +39,9 @@ import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { IconButton } from "@/lib/ui/icon-button";
 import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths";
-import { addCorner, nextAreaMode, removeLastCorner, type AreaMode } from "@/lib/geo/area-tool";
-import { AreaDelimitedIcon } from "@/components/icons/area-icons";
+import { AREA_STROKE, addCorner, nextAreaMode, removeLastCorner, type AreaMode } from "@/lib/geo/area-tool";
+import { AreaDelimitedIcon, AreaFreeIcon } from "@/components/icons/area-icons";
+import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
 import { AreaLayer } from "./area-layer";
 import {
   FOCUS_BLINK,
@@ -812,6 +813,9 @@ export default function PropertyMap() {
   const [areaCorners, setAreaCorners] = useState<readonly { lat: number; lon: number }[]>([]);
   const [areaSnap,    setAreaSnap]    = useState<LatLng | null>(null);
   const areaOn = areaMode !== null;
+  // #39.08: „… oarecare" draws exactly as a new property's polygon is drawn — the mini-map's own hook, shared.
+  const freeDraw = usePolygonDraw(areaCorners, setAreaCorners);
+  const { startDraw: startFreeDraw, exitDraw: exitFreeDraw } = freeDraw;
 
   // Refs read inside the container-level ruler listeners so their closures
   // always see the latest values without re-binding on every change.
@@ -1243,29 +1247,30 @@ export default function PropertyMap() {
 
   /** A tool's button: on → that tool, the other released and its polygon gone; pressed again → none, all gone. */
   const toggleAreaMode = useCallback((pressed: AreaMode) => {
-    setAreaMode((prev) => {
-      const next = nextAreaMode(prev, pressed);
-      if (next) {
-        // Nothing else works while it is pressed: leave every other tool, close the InfoWindow and the groups panel.
-        setSelected(null);
-        setRulerMode(false);
-        setRulerStart(null);
-        setRulerEnd(null);
-        setRulerCursor(null);
-        setRulerSnap(null);
-        setAnglesMode(false);
-        setAnglesSnap(null);
-        setAnglesDisplay(null);
-        setSelectMode(false);
-        setDragStart(null);
-        setDragCurrent(null);
-        setGroupsPanelOpen(false);
-      }
-      return next;
-    });
+    const next = nextAreaMode(areaMode, pressed);
+    setAreaMode(next);
+    if (next) {
+      // Nothing else works while it is pressed: leave every other tool, close the InfoWindow and the groups panel.
+      setSelected(null);
+      setRulerMode(false);
+      setRulerStart(null);
+      setRulerEnd(null);
+      setRulerCursor(null);
+      setRulerSnap(null);
+      setAnglesMode(false);
+      setAnglesSnap(null);
+      setAnglesDisplay(null);
+      setSelectMode(false);
+      setDragStart(null);
+      setDragCurrent(null);
+      setGroupsPanelOpen(false);
+    }
     setAreaCorners([]);
     setAreaSnap(null);
-  }, []);
+    // #39.08: „… oarecare" is drawing from the moment it is pressed, as a new property's „Desenează" is.
+    if (next === "free") startFreeDraw();
+    else exitFreeDraw();
+  }, [areaMode, startFreeDraw, exitFreeDraw]);
 
   // #39.07: a click chooses the property corner nearest it within SNAP_PX — the Ruler's snap — and a click with no
   // corner near does nothing. A drag pans. Backspace takes the last corner back (Ask first 3).
@@ -1759,6 +1764,8 @@ export default function PropertyMap() {
             ? ANGLES_CURSOR
             : rulerMode || areaMode === "delimited"
               ? RULER_CURSOR
+              : freeDraw.drawing
+                ? "crosshair"
               : (selectMode && activeTab === "all")
                 ? "crosshair"
                 : undefined,
@@ -1784,11 +1791,13 @@ export default function PropertyMap() {
           disableDefaultUI
           streetViewControl
           gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
-          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : undefined}
+          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : freeDraw.drawing ? "crosshair" : undefined}
           draggingCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : undefined}
           style={{ width: "100%", height: "100%" }}
           // Slice #39.07: and no InfoWindow while an area tool is pressed.
-          onClick={(e) => { if (!rulerMode && !anglesMode && !areaOn) handleMapClick(e.detail.latLng); }}
+          // Slice #39.08: „… oarecare" takes the map's clicks and the cursor, as the new property's mini-map does.
+          onClick={(e) => { if (areaMode === "free") freeDraw.onMapClick(e); else if (!rulerMode && !anglesMode && !areaOn) handleMapClick(e.detail.latLng); }}
+          onMousemove={areaMode === "free" ? freeDraw.onMouseMove : undefined}
           onDblclick={(e) => { if (!rulerMode && !anglesMode && !areaOn) handleMapDblClick(e.detail.latLng); }}
         >
           {/* Inner helpers that require useMap() / useMapsLibrary() */}
@@ -1835,12 +1844,15 @@ export default function PropertyMap() {
                 strokeWeight={2}
                 fillColor={fillColor}
                 fillOpacity={fillOpacity}
+                // #39.08: while an area tool is pressed a click passes through a property to the map.
+                clickable={!areaOn}
               />
             ) : (
               <Circle
                 key={prop.id}
                 center={{ lat: prop.corners[0].lat, lng: prop.corners[0].lon }}
                 radius={25}
+                clickable={!areaOn}
                 strokeColor={strokeColor}
                 strokeOpacity={1}
                 strokeWeight={2}
@@ -1876,7 +1888,41 @@ export default function PropertyMap() {
           )}
           {/* Slices #39.07/#39.08 — the area tools' polygon, its corners and its area */}
           {areaOn && (
-            <AreaLayer corners={areaCorners} affine={rulerAffine} crossingText={t("map.areaCrossing")} />
+            <AreaLayer
+              corners={areaCorners}
+              // #39.08's Ask first 1: while drawing, the cursor counts as a corner from the third on.
+              provisional={areaMode === "free" && freeDraw.hover ? { lat: freeDraw.hover.lat, lon: freeDraw.hover.lng } : null}
+              affine={rulerAffine}
+              crossingText={t("map.areaCrossing")}
+              showCorners={areaMode !== "free"}
+            />
+          )}
+          {/* Slice #39.08 — „… oarecare"'s corners: clickable while drawing (the first closes), draggable after. */}
+          {areaMode === "free" &&
+            areaCorners.map((c, idx) => (
+              <AdvancedMarker
+                key={`area-free-${idx}`}
+                position={{ lat: c.lat, lng: c.lon }}
+                draggable={!freeDraw.drawing}
+                onDragEnd={(e) => freeDraw.onDragEnd(idx, e)}
+                onClick={(e) => freeDraw.onCornerClick(idx, e)}
+              >
+                <div
+                  data-area-draw-corner={idx}
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    backgroundColor: AREA_STROKE,
+                    border: "2px solid white",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                    cursor: "pointer",
+                  }}
+                />
+              </AdvancedMarker>
+            ))}
+          {areaMode === "free" && freeDraw.previewPath && (
+            <Polyline path={freeDraw.previewPath} strokeColor={AREA_STROKE} strokeOpacity={0.6} strokeWeight={2} clickable={false} />
           )}
           {areaMode === "delimited" && areaSnap && <RulerSnapRing corner={areaSnap} />}
           {rulerHasSegment && rulerStart && rulerLiveEnd && (
@@ -2057,6 +2103,35 @@ export default function PropertyMap() {
               data-area-tool="delimited"
               onClick={() => toggleAreaMode("delimited")}
             />
+
+            {/* Slice #39.08 — „Suprafața unei zone oarecare": a polygon drawn freely, as a new property's is. Pressed, */}
+            {/* it is drawing; „Gata" (the mini-map's) or a click on the first corner closes it, then corners drag.     */}
+            <IconButton
+              icon={AreaFreeIcon}
+              label={t("map.areaFreeButton")}
+              note={t("map.areaFreeHint")}
+              variant={areaMode === "free" ? "primary" : "secondary"}
+              size="sm"
+              aria-pressed={areaMode === "free"}
+              data-area-tool="free"
+              onClick={() => toggleAreaMode("free")}
+            />
+            {areaMode === "free" && freeDraw.drawing && (
+              <IconButton
+                icon={Check}
+                label={t("map.miniMap.done")}
+                note={
+                  areaCorners.length === 0
+                    ? t("map.miniMap.hintFirst")
+                    : areaCorners.length < 3
+                      ? t("map.miniMap.hintMore")
+                      : t("map.miniMap.hintClose")
+                }
+                variant="primary"
+                size="sm"
+                onClick={freeDraw.exitDraw}
+              />
+            )}
 
             {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
             {/* Panel is anchored under the button (left-0 right-0 → exactly    */}
