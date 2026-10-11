@@ -156,6 +156,8 @@ async function mergeIn(
               converseNameFemale: role.converseNameFemale,
             }
           : {}),
+        // Slice #39.10: the survivor keeps its own family tie; it takes the folded role's only when it has none.
+        ...(current.kinship === null && role.kinship !== null ? { kinship: role.kinship } : {}),
       })
       .where(eq(lookupPersonRole.id, target.id));
 

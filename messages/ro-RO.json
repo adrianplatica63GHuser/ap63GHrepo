@@ -2179,6 +2179,7 @@
       "key": "Cheie",
       "validForProperty": "Persoană → Proprietate",
       "validForPerson": "Persoană → Persoană",
+      "kinship": "Rudenie",
       "converseName": "Rol invers",
       "converseNameMale": "Rol invers — bărbat",
       "converseNameFemale": "Rol invers — femeie",
@@ -2394,7 +2395,17 @@
       "actOffTitle": "Rolul nu se mai aplică la acte?",
       "actOff": "Rolul nu va mai fi oferit pe: {types}. Legăturile care îl folosesc deja rămân.",
       "actOffConfirm": "Scoate toate tipurile",
-      "saveFirst": "Salvați rolul ca să-i alegeți tipurile de act."
+      "saveFirst": "Salvați rolul ca să-i alegeți tipurile de act.",
+      "kinship": "Rudenie",
+      "kinshipNone": "Nicio rudenie",
+      "kinshipFixed": "Rămâne „Părinte”: importul actului de identitate găsește rolul după această rudenie."
+    },
+    "kinship": {
+      "PARENT": "Părinte",
+      "CHILD": "Copil",
+      "SPOUSE": "Soț/soție",
+      "SIBLING": "Frate/soră",
+      "OTHER": "Altă rudă"
     },
     "typePage": {
       "back": "← Tipuri de Document",

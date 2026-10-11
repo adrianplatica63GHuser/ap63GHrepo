@@ -2179,6 +2179,7 @@
       "key": "Key",
       "validForProperty": "Person → Property",
       "validForPerson": "Person → Person",
+      "kinship": "Kinship",
       "converseName": "Converse role",
       "converseNameMale": "Converse role — man",
       "converseNameFemale": "Converse role — woman",
@@ -2394,7 +2395,17 @@
       "actOffTitle": "Stop applying the role to documents?",
       "actOff": "The role will no longer be offered on: {types}. Links that already use it stay.",
       "actOffConfirm": "Remove every type",
-      "saveFirst": "Save the role to choose its document types."
+      "saveFirst": "Save the role to choose its document types.",
+      "kinship": "Kinship",
+      "kinshipNone": "No family tie",
+      "kinshipFixed": "Stays „Parent”: the identity-card import finds the role by this tie."
+    },
+    "kinship": {
+      "PARENT": "Parent",
+      "CHILD": "Child",
+      "SPOUSE": "Spouse",
+      "SIBLING": "Sibling",
+      "OTHER": "Other relative"
     },
     "typePage": {
       "back": "← Document Types",

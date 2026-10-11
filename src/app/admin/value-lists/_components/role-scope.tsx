@@ -14,6 +14,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { RequestFailedError } from "@/lib/admin/value-lists/failures";
 import { removePair } from "@/lib/admin/doc-type-person-roles/client";
 import { RoleDocTypes, usePairsOfRole } from "./role-doc-types";
+import { KINSHIPS } from "@/lib/persons/kinship";
 /**
  * „Se aplică la": the three chips of a role.                   (Slice #38.36)
  *
@@ -30,6 +31,9 @@ export function RoleScope({
   validForProperty,
   validForPerson,
   onToggle,
+  kinship = "",
+  kinshipFixed = false,
+  onKinship = () => {},
 }: {
   /** null while the role is being created: its types are chosen once it is saved. */
   roleId: string | null;
@@ -37,8 +41,14 @@ export function RoleScope({
   validForProperty: boolean;
   validForPerson: boolean;
   onToggle: (key: "validForProperty" | "validForPerson", on: boolean) => void;
+  /** Slice #39.10: the role's family tie („" for none), shown and set only while „Persoană" is pressed. */
+  kinship?: string;
+  /** A role with a parent_kind („Tată", „Mamă"): the identity-card import finds it, so its tie stays Părinte. */
+  kinshipFixed?: boolean;
+  onKinship?: (k: string) => void;
 }) {
   const t = useTranslations("valueList.roleEditor");
+  const tKin = useTranslations("valueList.kinship");
   const tErr = useTranslations("valueList.confirm.errors");
   const qc = useQueryClient();
   const { pairs } = usePairsOfRole(roleId);
@@ -87,6 +97,30 @@ export function RoleScope({
           {chip(t("chipPerson"), validForPerson, UserIcon, () => onToggle("validForPerson", !validForPerson), "person")}
         </div>
       </div>
+
+      {/* Slice #39.10 — „Rudenie": the family tie the inheritance tree reads, for a person-to-person role only.
+          Read the way the role is: „A Tată B" makes A the parent of B. */}
+      {validForPerson && (
+        <div className="flex flex-col gap-1" data-kinship="">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-ink dark:text-zinc-400">{t("kinship")}</span>
+            <select
+              value={kinship}
+              disabled={kinshipFixed}
+              onChange={(e) => onKinship(e.target.value)}
+              className="w-fit rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none disabled:bg-canvas disabled:text-fade dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              <option value="">{t("kinshipNone")}</option>
+              {KINSHIPS.map((k) => (
+                <option key={k} value={k}>
+                  {tKin(k)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {kinshipFixed && <span className="text-xs text-fade dark:text-zinc-400">{t("kinshipFixed")}</span>}
+        </div>
+      )}
 
       {confirmOff && (
         <div role="alertdialog" aria-label={t("actOffTitle")} className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950">

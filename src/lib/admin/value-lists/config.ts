@@ -35,6 +35,8 @@
  * their write routes.
  */
 
+import { KINSHIPS } from "@/lib/persons/kinship";
+
 export const VALID_LIST_KEYS = [
   "property-types",
   "tarla",
@@ -66,7 +68,15 @@ export type FieldMeta = {
   /** When true, renders a <textarea> instead of <input> in the edit form */
   multiline?: boolean;
   /** When "checkbox", renders a checkbox instead of a text input */
-  type?: "text" | "checkbox";
+  type?: "text" | "checkbox" | "select";
+  /** Slice #39.10: a `select` field's values, stored as they are; their words are `valueList.kinship.<value>`. */
+  options?: readonly string[];
+  /**
+   * Slice #39.10: not a column — read in THIS field's column instead of its ✓ (a role's „Rudenie" in
+   * „Persoană → Persoană"), so „Roluri Persoane" keeps fitting 1366 px (#38.70), and set in the role's panel
+   * (`RoleScope`) only while that field is ticked.
+   */
+  readIn?: string;
   /**
    * Optional literal label string that overrides the i18n `labelKey` lookup.
    * Used for domain-specific Romanian-only labels (e.g. panel names on the
@@ -214,6 +224,9 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "converseName",       labelKey: "converseName",       required: false },
       { key: "converseNameMale",   labelKey: "converseNameMale",   required: false },
       { key: "converseNameFemale", labelKey: "converseNameFemale", required: false },
+      // Slice #39.10 (migration_106): the family tie the inheritance tree reads — set in the role's panel when
+      // „Persoană" is ticked, read in „Persoană → Persoană" in place of its ✓. See src/lib/persons/kinship.ts.
+      { key: "kinship", labelKey: "kinship", required: false, type: "select", options: KINSHIPS, readIn: "validForPerson" },
     ],
   },
   citizenships: {

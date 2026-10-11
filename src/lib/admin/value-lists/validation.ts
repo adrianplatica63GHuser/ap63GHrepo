@@ -7,6 +7,7 @@
 
 import { storedShortName } from "@/lib/documents/type-short-name";
 import { z } from "zod/v4";
+import { KINSHIPS } from "@/lib/persons/kinship";
 import type { ListKey } from "./config";
 import {
   MAX_TEMPLATE_FIELDS,
@@ -217,6 +218,11 @@ export const personRoleSchema = z.object({
   converseName:       z.string().nullish(),
   converseNameMale:   z.string().nullish(),
   converseNameFemale: z.string().nullish(),
+  // Slice #39.10 (migration_106): the role's family tie. The panel's „Nicio rudenie" arrives as "" and is stored
+  // as NULL; absent stays absent (undefined), so a PUT that never mentioned it leaves the column alone. A role
+  // with a parent_kind is held at PARENT by the database (chk_lookup_person_role_kinship_parent), and its panel
+  // never offers another.
+  kinship: z.union([z.enum(KINSHIPS), z.literal("")]).nullish().transform((v) => (v === "" ? null : v)),
 });
 
 /**

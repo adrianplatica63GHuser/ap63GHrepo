@@ -40,6 +40,7 @@ import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { usedFirst } from "@/lib/admin/value-lists/categories";
+import { isKinship } from "@/lib/persons/kinship";
 import { RoleScope } from "./role-scope";
 import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page";
 import { formFilterFrom, formFilterKeeps, formFilterNarrows, type FormFilter } from "@/lib/admin/value-lists/form-filter";
@@ -213,6 +214,8 @@ function listCells(listKey: ListKey): FieldMeta[][] {
   for (const f of LIST_META[listKey].fields) {
     // Slice #38.53: a `nameTip` field is not a column — it is read in the name's tooltip.
     if (f.nameTip) continue;
+    // Slice #39.10: nor is a `readIn` field — it is read in its host's column (a role's „Rudenie").
+    if (f.readIn) continue;
     const last = cells[cells.length - 1];
     if (stacked.has(f.key) && last && stacked.has(last[0].key)) last.push(f);
     else cells.push([f]);
@@ -595,6 +598,8 @@ export function invalidateListCaches(
 type FormState = {
   id: string | null; // null = adding
   values: Record<string, unknown>;
+  /** Slice #39.10: a role's parent_kind — not on the form or the wire; it fixes the role's „Rudenie" at Părinte. */
+  parentKind?: string | null;
 };
 
 /**
@@ -707,6 +712,8 @@ function EditForm({
         {fields.map((f, i) => {
           // Slice #38.36: a role's two flags are chips, with „Act", under the fields (`RoleScope`).
           if (isRole && (f.key === "validForProperty" || f.key === "validForPerson")) return null;
+          // Slice #39.10: a select is set in the role's panel (`RoleScope`, „Rudenie"), beside the chip it follows.
+          if (f.type === "select") return null;
           // Slice #19.02: checkbox field
           if (f.type === "checkbox") {
             return (
@@ -776,7 +783,17 @@ function EditForm({
             roleName={String(values.name ?? "")}
             validForProperty={Boolean(values.validForProperty)}
             validForPerson={Boolean(values.validForPerson)}
-            onToggle={(key, on) => setValues((prev) => ({ ...prev, [key]: on }))}
+            // Slice #39.10: „Persoană" off takes the family tie with it — unless the role's parent_kind holds it.
+            onToggle={(key, on) =>
+              setValues((prev) => ({
+                ...prev,
+                [key]: on,
+                ...(key === "validForPerson" && !on && !state.parentKind ? { kinship: "" } : {}),
+              }))
+            }
+            kinship={String(values.kinship ?? "")}
+            kinshipFixed={Boolean(state.parentKind)}
+            onKinship={(k) => setValues((prev) => ({ ...prev, kinship: k }))}
           />
         )}
       </div>
@@ -1048,6 +1065,14 @@ export function ValueListModal({
     setForm({ id: null, values: blankFormValues(meta) });
   }
 
+  // Slice #39.10: a ticked host cell reads the field read in it — a role's „Rudenie" („Părinte") where its ✓ was.
+  const tieIn = (cell: FieldMeta[], row: Row): string | null => {
+    if (cell.length !== 1 || !row[cell[0].key]) return null;
+    const guest = meta.fields.find((g) => g.readIn === cell[0].key);
+    const v = guest ? row[guest.key] : null;
+    return isKinship(v) ? t(`kinship.${v}`) : null;
+  };
+
   function startEdit(row: Row) {
     const vals: Record<string, unknown> = {};
     for (const f of meta.fields) {
@@ -1069,7 +1094,7 @@ export function ValueListModal({
         vals[f.key] = String(row[f.key] ?? "");
       }
     }
-    setForm({ id: row.id, values: vals });
+    setForm({ id: row.id, values: vals, parentKind: typeof row.parentKind === "string" ? row.parentKind : null });
   }
 
   // Column headers — every `LIST_META` field, text and checkbox alike. Checkbox
@@ -1737,7 +1762,7 @@ export function ValueListModal({
                           key={cell[0].key}
                           // Slice #38.50: one line; the whole text on hover. Slice #38.53: the name of a list with
                           // a `nameTip` field says it in its own tooltip, the field under it — one tooltip, not two.
-                          title={nameTip && cell[0].key === "name" ? undefined : cellText(cell, row)}
+                          title={nameTip && cell[0].key === "name" ? undefined : (tieIn(cell, row) ?? cellText(cell, row))}
                           className={[
                             `${pad} py-2`,
                             // Slice #26.12: the type's name carries the colour
@@ -1774,7 +1799,7 @@ export function ValueListModal({
                             cell.map((f) => (
                               <span key={f.key}>
                                 {f.type === "checkbox"
-                                  ? (row[f.key] ? "✓" : "–")
+                                  ? (row[f.key] ? (tieIn(cell, row) ?? "✓") : "–")
                                   : (String(row[f.key] ?? "").trim() || "–")}
                               </span>
                             ))

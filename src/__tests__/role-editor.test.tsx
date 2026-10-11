@@ -91,6 +91,49 @@ describe("the chips are the existing columns", () => {
   });
 });
 
+describe("„Rudenie” — the family tie, in the role's panel (#39.10)", () => {
+  it("is offered only while „Persoană” is pressed: none, then the five", () => {
+    serve([]);
+    const { rerender } = wrap(<RoleScope roleId="r" roleName="Nepot" validForProperty={false} validForPerson={false} onToggle={jest.fn()} />);
+    expect(screen.queryByRole("combobox", { name: "kinship" })).toBeNull();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    rerender(
+      <QueryClientProvider client={client}>
+        <RoleScope roleId="r" roleName="Nepot" validForProperty={false} validForPerson onToggle={jest.fn()} kinship="" />
+      </QueryClientProvider>,
+    );
+    const select = screen.getByRole("combobox", { name: "kinship" }) as HTMLSelectElement;
+    expect([...select.options].map((o) => [o.value, o.textContent])).toEqual([
+      ["", "kinshipNone"], ["PARENT", "PARENT"], ["CHILD", "CHILD"], ["SPOUSE", "SPOUSE"], ["SIBLING", "SIBLING"], ["OTHER", "OTHER"],
+    ]);
+    expect(select.value).toBe("");
+  });
+
+  it("a choice goes to the form as the stored value", () => {
+    serve([]);
+    const onKinship = jest.fn();
+    wrap(<RoleScope roleId="r" roleName="Nepot" validForProperty={false} validForPerson onToggle={jest.fn()} kinship="" onKinship={onKinship} />);
+    fireEvent.change(screen.getByRole("combobox", { name: "kinship" }), { target: { value: "OTHER" } });
+    expect(onKinship).toHaveBeenCalledWith("OTHER");
+  });
+
+  it("„Tată” and „Mamă” (a parent_kind): Părinte, fixed, and the panel says why", () => {
+    serve([]);
+    wrap(<RoleScope roleId="r" roleName="Tată" validForProperty={false} validForPerson onToggle={jest.fn()} kinship="PARENT" kinshipFixed />);
+    const select = screen.getByRole("combobox", { name: "kinship" }) as HTMLSelectElement;
+    expect(select.value).toBe("PARENT");
+    expect(select.disabled).toBe(true);
+    expect(screen.getByText("kinshipFixed")).toBeTruthy();
+  });
+
+  it("the form passes the tie, holds it for a parent_kind, and empties it when „Persoană” goes off", () => {
+    const modal = read("src", "app", "admin", "value-lists", "_components", "value-list-modal.tsx");
+    expect(modal).toContain("kinship={String(values.kinship ?? \"\")}");
+    expect(modal).toContain("kinshipFixed={Boolean(state.parentKind)}");
+    expect(modal).toContain('...(key === "validForPerson" && !on && !state.parentKind ? { kinship: "" } : {}),');
+  });
+});
+
 describe("one module of writes for the role ↔ type rows", () => {
   it("adds, ticks and removes through the existing routes", async () => {
     const calls = serve([]);
