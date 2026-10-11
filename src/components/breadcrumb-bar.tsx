@@ -18,14 +18,24 @@
 // came from" without requiring any change to the link components.
 //
 // Hides itself when there is only one segment (home page) or on auth pages.
+//
+// Slice #39.03: „Înapoi" is the bar's first item, close to its left edge, then a
+// thin rule and a clear gap, then the crumbs exactly as before; the „?" stays at
+// the right. It goes back one step through the unsaved-changes guard, as the
+// sidebar does — or, with nothing in this tab to go back to, to the parent crumb
+// (`@/lib/ui/back-stack`).
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
+import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
+import { IconButton } from "@/lib/ui/icon-button";
+import { backTarget, currentBackStack, recordScreen } from "@/lib/ui/back-stack";
 
 // ---------------------------------------------------------------------------
 // Route segment map
@@ -231,6 +241,43 @@ export function buildSegments(
 }
 
 // ---------------------------------------------------------------------------
+// „Înapoi" (Slice #39.03)
+// ---------------------------------------------------------------------------
+
+/**
+ * The bar's first item: lucide ArrowLeft and „Înapoi", the app's secondary IconButton at xs (#39.03's Ask
+ * first 2), then a thin vertical rule. Going back leaves the screen, so it goes through the unsaved-changes
+ * guard exactly as the sidebar does — a dirty form asks before anything moves. With a screen under this one in
+ * the tab's record it is the browser's back; with none (a link opened in a new tab, a typed address, a reload)
+ * the parent crumb; disabled only where there is neither (Ask first 1).
+ */
+function BackButton({ segments, pathname }: { segments: Segment[]; pathname: string }) {
+  const t = useTranslations("navigation.breadcrumb");
+  const router = useRouter();
+  const { guardedAction, guardedNavigate } = useUnsavedChanges();
+  const goBack = () => {
+    const target = backTarget(currentBackStack(), segments, pathname);
+    if (!target) return;
+    if (target.kind === "history") guardedAction(() => router.back());
+    else guardedNavigate(target.href);
+  };
+  return (
+    <span className="mr-3 flex shrink-0 items-center gap-4" data-breadcrumb-back="">
+      <IconButton
+        icon={ArrowLeft}
+        label={t("back")}
+        variant="secondary"
+        size="xs"
+        showLabel
+        onClick={goBack}
+        disabled={backTarget(currentBackStack(), segments, pathname) === null}
+      />
+      <span aria-hidden="true" className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Inner component (needs Suspense for useSearchParams)
 // ---------------------------------------------------------------------------
 
@@ -239,6 +286,11 @@ function BreadcrumbBarInner() {
   const searchParams = useSearchParams();
   const t           = useTranslations("navigation.breadcrumb");
   const { pageLabels } = useNavigationHistory();
+
+  // Slice #39.03: every screen this tab passes through, the home page's too — before the bar hides itself.
+  useEffect(() => {
+    recordScreen(pathname);
+  }, [pathname]);
 
   // Auth pages and home: hide
   if (
@@ -291,8 +343,9 @@ function BreadcrumbBarInner() {
     */
     <nav
       aria-label={t("ariaLabel")}
-      className="flex items-center gap-1 px-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0"
+      className="flex items-center gap-1 pl-3 pr-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0"
     >
+      <BackButton segments={segments} pathname={pathname} />
       {segments.map((seg, idx) => {
         const isLast = idx === segments.length - 1;
         return (

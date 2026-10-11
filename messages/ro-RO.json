@@ -3945,6 +3945,7 @@
       "new": "Nou",
       "entity": "Entitate",
       "ariaLabel": "Fir de navigare",
+      "back": "Înapoi",
       "associatePersonOfPerson": "Asociere persoană corelată",
       "associatePropertyOfPerson": "Asociere proprietate",
       "associateDocumentOfPerson": "Asociere act",

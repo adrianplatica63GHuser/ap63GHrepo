@@ -3945,6 +3945,7 @@
       "new": "New",
       "entity": "Entity",
       "ariaLabel": "Breadcrumb",
+      "back": "Back",
       "associatePersonOfPerson": "Associate Related Person",
       "associatePropertyOfPerson": "Associate Property",
       "associateDocumentOfPerson": "Associate Document",
