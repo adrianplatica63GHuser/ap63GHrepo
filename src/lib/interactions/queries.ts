@@ -215,14 +215,15 @@ export async function deleteInteraction(id: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-/** Suggestions for a tag box (§4): the tags already used on interactions, most used first. */
+/** Suggestions for a tag box (§4: „suggested tags come from recent use"): the tags already on interactions, the most
+ * recently used first (#38.86 — it was the most used first). */
 export async function interactionTagSuggestions(prefix: string | undefined, limit = 20): Promise<string[]> {
   const rows = await db
-    .select({ tag: interactionTag.tag, n: sql<number>`count(*)::int` })
+    .select({ tag: interactionTag.tag })
     .from(interactionTag)
     .where(prefix ? ilike(interactionTag.tag, `${prefix}%`) : undefined)
     .groupBy(interactionTag.tag)
-    .orderBy(desc(sql`count(*)`), asc(interactionTag.tag))
+    .orderBy(desc(sql`max(${interactionTag.createdAt})`), asc(interactionTag.tag))
     .limit(limit);
   return rows.map((r) => r.tag);
 }

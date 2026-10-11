@@ -5,9 +5,13 @@
  * schema the route checks (`interactionInputSchema`, 38.83) and the same „future only when scheduled" rule
  * (`checkWhen`), so the form and the route cannot disagree. What is only the form's: the follow-up's box (on means
  * a date is required), the internal note's switch, and which field takes the focus first.
+ *
+ * Since 38.86 the form also holds what a record LINKS to: documents already in the archive (a link, never a copy —
+ * §6), tags, and one related property. It keeps each document's and the property's name beside its id, for drawing;
+ * only the ids are sent.
  */
 import { checkWhen, interactionInputSchema, type InteractionInput } from "./validation";
-import type { InteractionChannel, InteractionDirection, InteractionStatus } from "./model";
+import { TAG_MAX, type InteractionChannel, type InteractionDirection, type InteractionStatus } from "./model";
 
 export interface LogForm {
   channel: InteractionChannel;
@@ -23,6 +27,15 @@ export interface LogForm {
   followUpOn: string;
   internal: boolean;
   internalNote: string;
+  /** Documents already in the archive, linked (38.86). */
+  documents: LinkedDocument[];
+  tags: string[];
+  property: { id: string; label: string | null } | null;
+}
+
+export interface LinkedDocument {
+  id: string;
+  title: string | null;
 }
 
 /** The fields an error can sit on, in the order the focus looks for the first one (§7). */
@@ -44,7 +57,22 @@ export function emptyForm(scopePersonId: string | null): LogForm {
     followUpOn: "",
     internal: false,
     internalNote: "",
+    documents: [],
+    tags: [],
+    property: null,
   };
+}
+
+/** A document added to the links — once: a document already linked is not linked twice (38.86). */
+export function withDocument(list: readonly LinkedDocument[], d: LinkedDocument): LinkedDocument[] {
+  return list.some((x) => x.id === d.id) ? [...list] : [...list, d];
+}
+
+/** A tag added — trimmed, at most `TAG_MAX` characters, once, compared without regard to case. Empty adds nothing. */
+export function withTag(tags: readonly string[], raw: string): string[] {
+  const tag = raw.trim().replace(/\s+/g, " ");
+  if (tag === "" || tag.length > TAG_MAX) return [...tags];
+  return tags.some((t) => t.toLocaleLowerCase("ro") === tag.toLocaleLowerCase("ro")) ? [...tags] : [...tags, tag];
 }
 
 /** „Salvează și adaugă" (§4): a clean form that keeps channel, direction and person — logging several calls in a row. */
@@ -54,7 +82,7 @@ export function nextAfterSave(f: LogForm): LogForm {
 
 /** Whether the form holds anything the user typed or chose beyond `base` (what Cancel asks about). */
 export function isDirty(f: LogForm, base: LogForm): boolean {
-  return (Object.keys(base) as (keyof LogForm)[]).some((k) => f[k] !== base[k]);
+  return (Object.keys(base) as (keyof LogForm)[]).some((k) => JSON.stringify(f[k]) !== JSON.stringify(base[k]));
 }
 
 /** A minute of the browser's clock as a `datetime-local` value. */
@@ -98,6 +126,9 @@ export function checkForm(
     internalNote: f.internal ? f.internalNote : null,
     status: f.status,
     followUpOn: f.followUp ? f.followUpOn : null,
+    documentIds: f.documents.map((d) => d.id),
+    tags: f.tags,
+    relatedPropertyId: f.property?.id ?? null,
   });
   if (!parsed.success) {
     // The schema's own limits (a subject over 120 is stopped by the box's maxLength first).

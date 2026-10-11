@@ -4321,7 +4321,27 @@
         "whenRequired": "Alege data și ora.",
         "futureNotScheduled": "Datele viitoare sunt pentru ce e programat. Alege starea „Programată” sau o dată de azi ori din trecut.",
         "followUpRequired": "Alege data mementoului."
-      }
+      },
+      "documents": "Acte legate",
+      "documentsHint": "Legături la acte din arhivă — fișierul nu se încarcă din nou aici.",
+      "addLink": "Adaugă legătură",
+      "documentSearch": "Caută un act",
+      "documentSearchPlaceholder": "Caută după titlu sau cod…",
+      "unlinkDocument": "Scoate legătura la „{name}”",
+      "tags": "Etichete",
+      "addTag": "Adaugă etichetă",
+      "tagInput": "Etichetă nouă",
+      "tagInputPlaceholder": "Scrie și apasă Enter…",
+      "tagSuggestions": "Etichete folosite recent",
+      "removeTag": "Scoate eticheta „{tag}”",
+      "tagsHint": "Sugestiile sunt etichetele folosite recent la interacțiuni.",
+      "property": "Proprietate legată",
+      "propertySearch": "Caută o proprietate",
+      "propertySearchPlaceholder": "Caută după poreclă sau cod…",
+      "unlinkProperty": "Scoate proprietatea",
+      "propertyHint": "Opțional; nu apare în istoric.",
+      "searching": "Se caută…",
+      "noHits": "Nimic găsit"
     }
   }
 }

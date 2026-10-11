@@ -2,7 +2,9 @@
 
 import { useEffect, useEffectEvent, useId, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { useTranslations } from "next-intl";
-import { Check, CirclePlus, Link2, Mail, MessageCircle, SquarePen, X } from "lucide-react";
+import { Check, CirclePlus, FileText, Link2, Mail, Map as MapIcon, MessageCircle, Plus, SquarePen, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useNameOr } from "@/components/record/use-name-or";
 import { IconButton } from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox } from "@/lib/ui/field-widths";
@@ -16,12 +18,16 @@ import {
   isDirty,
   localMinute,
   nextAfterSave,
+  withDocument,
+  withTag,
   type FormError,
+  type LinkedDocument,
   type FormField,
   type LogForm,
 } from "@/lib/interactions/form";
 import { CHANNEL_ICON, DIRECTION_ICON } from "./interaction-pills";
 import { PersonPicker } from "./filter-controls";
+import { RecordSearch } from "./pickers";
 
 /** The ids the focus goes to when a field is in error (§7). */
 const FIELD_ID: Readonly<Record<FormField, string>> = {
@@ -335,6 +341,11 @@ export function LogTile({
           />
         </Field>
 
+        {/* 38.86: what the record links to — documents already in the archive, tags, one property. */}
+        <LinkedDocuments documents={form.documents} onChange={(documents) => set({ documents })} />
+        <TagChips tags={form.tags} onChange={(tags) => set({ tags })} />
+        <RelatedProperty property={form.property} onChange={(property) => set({ property })} />
+
         <div className="flex flex-col gap-1.5" data-log-follow-up="">
           <span className="text-sm font-medium text-ink dark:text-zinc-100">{tl("followUp")}</span>
           <div className="flex flex-wrap items-center gap-3">
@@ -524,6 +535,212 @@ function Connections() {
       <p className="flex items-center gap-1.5 border-t border-slate-200 px-3 py-2 text-xs text-fade dark:border-zinc-700 dark:text-zinc-400">
         {tl("nothingSent")}
       </p>
+    </div>
+  );
+}
+
+/** Focus a box that a press has just asked for — after React has drawn it. */
+function focusSoon(id: string) {
+  setTimeout(() => document.getElementById(id)?.focus(), 0);
+}
+
+const SECTION_LABEL = "text-sm font-medium text-ink dark:text-zinc-100";
+const HINT = "text-xs text-fade dark:text-zinc-400";
+
+/**
+ * „Acte legate" (§4, §6, Figure 2): documents already in the archive, each a row with its icon and an „×", and
+ * „Adaugă legătură" under them. A link, never a copy: nothing is uploaded here.   (Slice #38.86)
+ */
+function LinkedDocuments({ documents, onChange }: { documents: LinkedDocument[]; onChange: (next: LinkedDocument[]) => void }) {
+  const tl = useTranslations("interactions.log");
+  const nameOr = useNameOr();
+  const [adding, setAdding] = useState(false);
+  return (
+    <div className="flex flex-col gap-1.5" data-log-documents="">
+      <span className={SECTION_LABEL}>{tl("documents")}</span>
+      {documents.length > 0 && (
+        <ul className="flex flex-col gap-1" {...screenBox("interactionSubjectLine")}>
+          {documents.map((d) => {
+            const name = nameOr(d.title, "document");
+            return (
+              <li key={d.id} data-linked-document={d.id} className="flex items-center gap-2 rounded-md border border-slate-200 px-2.5 py-1 text-sm dark:border-zinc-700">
+                <FileText aria-hidden="true" size={16} className="shrink-0 text-red-700 dark:text-red-400" />
+                <span className="min-w-0 flex-1 truncate" title={name}>
+                  {name}
+                </span>
+                <IconButton icon={X} label={tl("unlinkDocument", { name })} variant="bare" size="xs" onClick={() => onChange(documents.filter((x) => x.id !== d.id))} />
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {adding ? (
+        <RecordSearch
+          endpoint="/api/documents/search"
+          inputId="interaction-document-search"
+          label={tl("documentSearch")}
+          placeholder={tl("documentSearchPlaceholder")}
+          width="interactionSubjectLine"
+          exclude={documents.map((d) => d.id)}
+          toHit={(i) => ({ id: String(i.id), name: nameOr((i.title as string | null) ?? null, "document") })}
+          onPick={(h) => {
+            onChange(withDocument(documents, { id: h.id, title: h.name }));
+            setAdding(false);
+          }}
+        />
+      ) : (
+        <div>
+          <IconButton
+            icon={Plus}
+            label={tl("addLink")}
+            showLabel
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setAdding(true);
+              focusSoon("interaction-document-search");
+            }}
+          />
+        </div>
+      )}
+      <p className={HINT}>{tl("documentsHint")}</p>
+    </div>
+  );
+}
+
+/**
+ * „Etichete" (§4, Figure 2): chips, „Adaugă etichetă" dashed; the suggestions are the tags used most recently on
+ * interactions. Every chip is the same pale indigo — a tag stores no colour (38.86, Ask first #1).
+ */
+function TagChips({ tags, onChange }: { tags: string[]; onChange: (next: string[]) => void }) {
+  const tl = useTranslations("interactions.log");
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState("");
+  const listId = useId();
+  const prefix = text.trim();
+  const suggestions = useQuery<string[]>({
+    queryKey: ["interaction-tags", prefix],
+    enabled: adding,
+    queryFn: async () => {
+      const res = await fetch(`/api/interactions/tags?${new URLSearchParams(prefix ? { prefix } : {}).toString()}`);
+      if (!res.ok || res.redirected) throw new Error(`tags ${res.status}`);
+      return ((await res.json()) as { tags: string[] }).tags;
+    },
+  });
+  const offered = (suggestions.data ?? []).filter((s) => !tags.some((x) => x.toLocaleLowerCase("ro") === s.toLocaleLowerCase("ro"))).slice(0, 8);
+  const add = (raw: string) => {
+    onChange(withTag(tags, raw));
+    setText("");
+  };
+  return (
+    <div className="flex flex-col gap-1.5" data-log-tags="">
+      <span className={SECTION_LABEL}>{tl("tags")}</span>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {tags.map((tag) => (
+          <span key={tag} data-tag-chip={tag} className="inline-flex items-center gap-0.5 rounded-full bg-[#eef2ff] py-0.5 pl-2.5 pr-1 text-sm text-[#3b5bdb] dark:bg-[#202745] dark:text-[#768ce6]">
+            {tag}
+            <IconButton icon={X} label={tl("removeTag", { tag })} variant="bare" size="xs" onClick={() => onChange(tags.filter((x) => x !== tag))} />
+          </span>
+        ))}
+        {!adding && (
+          <IconButton
+            icon={Plus}
+            label={tl("addTag")}
+            showLabel
+            variant="ghost"
+            size="sm"
+            pill
+            className="border-dashed"
+            onClick={() => {
+              setAdding(true);
+              focusSoon("interaction-tag-input");
+            }}
+          />
+        )}
+      </div>
+      {adding && (
+        <div className="relative inline-flex flex-col gap-1">
+          <input
+            id="interaction-tag-input"
+            type="text"
+            role="combobox"
+            aria-label={tl("tagInput")}
+            aria-expanded={offered.length > 0}
+            aria-controls={listId}
+            placeholder={tl("tagInputPlaceholder")}
+            value={text}
+            maxLength={60}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add(text);
+              } else if (e.key === "Escape") {
+                setAdding(false);
+                setText("");
+              }
+            }}
+            onBlur={(e) => {
+              if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node | null)) setAdding(false);
+            }}
+            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-ink placeholder:text-fade dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            {...screenBox("interactionTag")}
+          />
+          {offered.length > 0 && (
+            <ul id={listId} role="listbox" aria-label={tl("tagSuggestions")} className="flex flex-wrap gap-1.5" data-tag-suggestions="">
+              {offered.map((s) => (
+                <li key={s} role="option" aria-selected={false}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      add(s);
+                      focusSoon("interaction-tag-input");
+                    }}
+                    className={buttonClass({ variant: "ghost", size: "xs", pill: true })}
+                  >
+                    {s}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      <p className={HINT}>{tl("tagsHint")}</p>
+    </div>
+  );
+}
+
+/** „Proprietate legată" (§6): one optional property; the grid does not show it (38.86, Ask first #2). */
+function RelatedProperty({
+  property,
+  onChange,
+}: {
+  property: { id: string; label: string | null } | null;
+  onChange: (next: { id: string; label: string | null } | null) => void;
+}) {
+  const tl = useTranslations("interactions.log");
+  const nameOr = useNameOr();
+  return (
+    <div className="flex flex-col gap-1.5" data-log-property="">
+      <span className={SECTION_LABEL}>{tl("property")}</span>
+      {property ? (
+        <div className="flex items-center gap-2 rounded-md border border-slate-200 px-2.5 py-1 text-sm dark:border-zinc-700" data-related-property={property.id} {...screenBox("interactionPerson")}>
+          <MapIcon aria-hidden="true" size={16} className="shrink-0 text-slate-600 dark:text-zinc-400" />
+          <span className="min-w-0 flex-1 truncate">{nameOr(property.label, "property")}</span>
+          <IconButton icon={X} label={tl("unlinkProperty")} variant="bare" size="xs" onClick={() => onChange(null)} />
+        </div>
+      ) : (
+        <RecordSearch
+          endpoint="/api/properties/search"
+          label={tl("propertySearch")}
+          placeholder={tl("propertySearchPlaceholder")}
+          width="interactionPerson"
+          toHit={(i) => ({ id: String(i.id), name: nameOr((i.label as string | null) ?? null, "property") })}
+          onPick={(h) => onChange({ id: h.id, label: h.name })}
+        />
+      )}
+      <p className={HINT}>{tl("propertyHint")}</p>
     </div>
   );
 }

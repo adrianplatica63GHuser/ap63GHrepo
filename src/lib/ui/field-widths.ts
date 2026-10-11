@@ -1506,6 +1506,7 @@ export const SCREEN = {
   interactionStatus: { step: "L", kind: "select" }, // „Așteaptă răspuns", the longest status
   interactionSubjectLine: { step: "XXL", kind: "fixed" }, // the subject, 120 characters at most, one line
   interactionDescription: { step: "XXL", kind: "lines", rows: 3 }, // the description, and the internal note
+  interactionTag: { step: "L", kind: "fixed" }, // a tag, at most 60 characters (#38.86)
 } as const satisfies Record<string, FieldWidth>;
 export type ScreenField = keyof typeof SCREEN;
 

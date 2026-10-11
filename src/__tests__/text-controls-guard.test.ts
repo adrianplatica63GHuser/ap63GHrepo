@@ -165,6 +165,11 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/interactions/_components/log-tile.tsx": [
     ["A110", "{tl(\"discardYes\")}"],
     ["A110", "{tl(\"discardNo\")}"],
+    ["A113", "{s}"], // #38.86: a tag suggested — the text is the data
+  ],
+  // Slice #38.86: a document or a property found in the archive's own search, by its name.
+  "src/app/interactions/_components/pickers.tsx": [
+    ["A113", "<span className=\"min-w-0 flex-1 truncate text-left\">{h.name}</span>"],
   ],
   "src/app/interactions/_components/history-tile.tsx": [
     ["A015", "<CalendarDays aria-hidden=\"true\" size={16} /> {t(`toolbar.preset."], // the period: its preset and its days

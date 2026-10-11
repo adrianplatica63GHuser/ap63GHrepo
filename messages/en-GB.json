@@ -4321,7 +4321,27 @@
         "whenRequired": "Choose the date and time.",
         "futureNotScheduled": "Future dates are for scheduled items. Set status to Scheduled, or use today.",
         "followUpRequired": "Choose the reminder date."
-      }
+      },
+      "documents": "Linked documents",
+      "documentsHint": "Links to documents in the archive — the file is not uploaded again here.",
+      "addLink": "Add link",
+      "documentSearch": "Search a document",
+      "documentSearchPlaceholder": "Search by title or code…",
+      "unlinkDocument": "Remove the link to {name}",
+      "tags": "Tags",
+      "addTag": "Add tag",
+      "tagInput": "New tag",
+      "tagInputPlaceholder": "Type and press Enter…",
+      "tagSuggestions": "Recently used tags",
+      "removeTag": "Remove the tag {tag}",
+      "tagsHint": "Suggestions are the tags used recently on interactions.",
+      "property": "Related property",
+      "propertySearch": "Search a property",
+      "propertySearchPlaceholder": "Search by nickname or code…",
+      "unlinkProperty": "Remove the property",
+      "propertyHint": "Optional; not shown in the history.",
+      "searching": "Searching…",
+      "noHits": "Nothing found"
     }
   }
 }
