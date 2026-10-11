@@ -273,16 +273,29 @@ type PersonHit = { id: string; displayName: string | null; type: "NATURAL" | "JU
 
 /**
  * The person (§3): a typeahead over the client directory, matching on the name; choosing one is the scope, clearing
- * it shows every client. It never makes a person — it only finds one.
+ * it shows every client. It never makes a person — it only finds one. The log form (38.85) draws the same box with
+ * its own words, its id and its error.
  */
 export function PersonPicker({
   personId,
   personName,
   onPick,
+  inputId,
+  label,
+  placeholder,
+  clearLabel,
+  invalid = false,
+  describedBy,
 }: {
   personId: string | null;
   personName: string | null;
-  onPick: (id: string | null) => void;
+  onPick: (id: string | null, name: string | null) => void;
+  inputId?: string;
+  label?: string;
+  placeholder?: string;
+  clearLabel?: string;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   const t = useTranslations("interactions.toolbar");
   const tu = useTranslations("shared.unnamed");
@@ -305,12 +318,15 @@ export function PersonPicker({
   return (
     <div ref={ref} className="relative inline-flex items-center gap-1" data-person-picker="">
       <input
+        id={inputId}
         type="search"
         role="combobox"
         aria-expanded={editing && term.length > 0}
         aria-controls={listId}
-        aria-label={t("person")}
-        placeholder={t("personSearch")}
+        aria-label={label ?? t("person")}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
+        placeholder={placeholder ?? t("personSearch")}
         value={shown}
         onFocus={() => {
           setText("");
@@ -320,11 +336,13 @@ export function PersonPicker({
           setText(e.target.value);
           setEditing(true);
         }}
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-ink placeholder:text-fade dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+        className={`rounded-md border bg-white px-3 py-1.5 text-sm text-ink placeholder:text-fade dark:bg-zinc-900 dark:text-zinc-100 ${
+          invalid ? "border-red-700 outline outline-1 outline-red-700 dark:border-red-400 dark:outline-red-400" : "border-slate-300 dark:border-zinc-600"
+        }`}
         {...screenBox("interactionPerson")}
       />
       {personId && !editing && (
-        <IconButton icon={X} label={t("personClear")} variant="ghost" size="xs" onClick={() => onPick(null)} />
+        <IconButton icon={X} label={clearLabel ?? t("personClear")} variant="ghost" size="xs" onClick={() => onPick(null, null)} />
       )}
       {editing && term.length > 0 && (
         <ul
@@ -340,7 +358,7 @@ export function PersonPicker({
               <button
                 type="button"
                 onClick={() => {
-                  onPick(p.id);
+                  onPick(p.id, p.displayName && p.displayName.trim() ? p.displayName : tu("person"));
                   setEditing(false);
                 }}
                 className={buttonClass({ variant: "bare", size: "sm", className: "w-full hover:bg-slate-50 dark:hover:bg-zinc-800" })}

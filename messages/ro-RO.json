@@ -4211,7 +4211,6 @@
       "needsReply": "Așteaptă răspuns: {count}",
       "historyTitle": "Istoricul interacțiunilor",
       "logTitle": "Înregistrează o interacțiune",
-      "logPlaceholder": "Aici se va înregistra o interacțiune nouă și se va modifica cea aleasă în istoric.",
       "error": "Istoricul nu s-a putut încărca. Filtrele au rămas cum erau.",
       "retry": "Reîncearcă",
       "emptyFiltered": "Nicio interacțiune în această vizualizare.",
@@ -4220,7 +4219,8 @@
       "noDescription": "Fără descriere",
       "selectHint": "Selectează pentru editare",
       "docsCount": "{count, plural, one {un act legat} few {# acte legate} other {# de acte legate}}",
-      "docsLoading": "Se încarcă actele…"
+      "docsLoading": "Se încarcă actele…",
+      "followUp": "Memento: {date}"
     },
     "toolbar": {
       "range": "Perioada",
@@ -4270,6 +4270,58 @@
     "sortBy": "Ordonează după „{column}”",
     "columnFilter": "Filtrează după „{column}”",
     "resize": "Lățimea coloanei „{column}”",
-    "subjectContains": "Subiectul conține"
+    "subjectContains": "Subiectul conține",
+    "log": {
+      "manual": "Înregistrare manuală",
+      "connections": "Conturi conectate",
+      "notConnected": "Neconectat",
+      "connect": "Conectează",
+      "connectLater": "Conectarea unui cont va fi disponibilă mai târziu.",
+      "nothingSent": "Nimic nu se trimite fără confirmare.",
+      "channel": "Canal",
+      "direction": "Sens",
+      "status": "Stare",
+      "when": "Data și ora",
+      "whenHint": "Implicit: acum",
+      "person": "Persoană",
+      "personPlaceholder": "Caută în registrul de clienți…",
+      "personClear": "Golește persoana",
+      "subject": "Subiect",
+      "subjectPlaceholder": "de ex. Revenire privind contractul",
+      "subjectHint": "Se folosește la filtrare",
+      "description": "Descriere",
+      "descriptionHint": "Nu se folosește la filtrare",
+      "prompt": {
+        "written": "Ce s-a scris?",
+        "agreed": "Ce s-a convenit?",
+        "where": "Unde, și cine a participat?",
+        "posted": "Ce s-a trimis prin poștă, și numărul de urmărire, dacă există?"
+      },
+      "followUp": "Memento",
+      "followUpSet": "Setează un memento",
+      "followUpDate": "Data mementoului",
+      "followUpHint": "Data se păstrează și se vede în istoric; aplicația nu trimite notificări.",
+      "internal": "Notă internă",
+      "internalHint": "Vizibilă doar echipei",
+      "internalNote": "Notă internă",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "saveAndNew": "Salvează și adaugă",
+      "cancel": "Renunță",
+      "ctrlS": "Salvează cu",
+      "saved": "Interacțiune înregistrată",
+      "saveFailed": "Interacțiunea nu s-a putut salva. Încearcă din nou.",
+      "discardQuestion": "Renunți la interacțiunea nesalvată?",
+      "discardYes": "Renunță la ea",
+      "discardNo": "Continuă",
+      "sticky": "Înregistrează interacțiunea",
+      "error": {
+        "personRequired": "Alege o persoană din registru.",
+        "subjectRequired": "Adaugă un subiect scurt. Acesta apare în istoric.",
+        "whenRequired": "Alege data și ora.",
+        "futureNotScheduled": "Datele viitoare sunt pentru ce e programat. Alege starea „Programată” sau o dată de azi ori din trecut.",
+        "followUpRequired": "Alege data mementoului."
+      }
+    }
   }
 }

@@ -9,6 +9,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   ArrowUpNarrowWide,
+  CalendarClock,
   CalendarDays,
   ChevronDown,
   FileText,
@@ -86,6 +87,8 @@ export interface HistoryTileProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onLogFirst: () => void;
+  /** A row just saved, flashing once where it landed (38.85). */
+  flashId: string | null;
 }
 
 /** One interaction, whole — the popover's documents and the selected row's description. */
@@ -241,6 +244,8 @@ export function HistoryTile(props: HistoryTileProps) {
                     day={day.format(new Date(row.occurredAt))}
                     time={time.format(new Date(row.occurredAt))}
                     selected={row.id === props.selectedId}
+                    flash={row.id === props.flashId}
+                    followUp={row.followUpOn ? day.format(new Date(`${row.followUpOn}T12:00:00`)) : null}
                     onSelect={() => props.onSelect(row.id)}
                   />
                 ))}
@@ -389,12 +394,16 @@ function HistoryRow({
   day,
   time,
   selected,
+  flash,
+  followUp,
   onSelect,
 }: {
   row: InteractionListItem;
   day: string;
   time: string;
   selected: boolean;
+  flash: boolean;
+  followUp: string | null;
   onSelect: () => void;
 }) {
   const t = useTranslations("interactions");
@@ -407,6 +416,7 @@ function HistoryRow({
       tabIndex={0}
       aria-selected={selected}
       data-interaction-row={row.id}
+      data-flash={flash ? "" : undefined}
       onClick={onSelect}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget) return;
@@ -415,7 +425,7 @@ function HistoryRow({
           onSelect();
         }
       }}
-      className={`group cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus ${selected ? SELECTED_ROW : HOVER_ROW}`}
+      className={`group cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus ${selected ? SELECTED_ROW : HOVER_ROW}${flash ? " ga-row-flash" : ""}`}
     >
       <td className={`${cell} ${selected ? SELECTED_BAR : ""}`}>
         <div className="whitespace-nowrap">{day}</div>
@@ -445,8 +455,15 @@ function HistoryRow({
       <td className={cell}>{row.documentCount > 0 && <DocumentsCount interactionId={row.id} count={row.documentCount} />}</td>
       <td className={`${cell} relative`}>
         <StatusPill status={row.status} />
+        {/* 38.85 (Ask first #4): the follow-up's date is kept and shown here; nothing notifies. */}
+        {followUp && (
+          <span className="mt-0.5 flex items-center gap-1 whitespace-nowrap text-xs text-fade dark:text-zinc-400" data-follow-up="" title={t("screen.followUp", { date: followUp })}>
+            <CalendarClock aria-hidden="true" size={12} />
+            {followUp}
+          </span>
+        )}
         {/* Under the pill, out of the flow, so the pill stays in the row's middle like its neighbours. */}
-        {!selected && (
+        {!selected && !followUp && (
           <span className="invisible absolute bottom-0.5 left-2 whitespace-nowrap text-[11px] text-fade group-hover:visible dark:text-zinc-400" data-select-hint="">
             {t("screen.selectHint")}
           </span>

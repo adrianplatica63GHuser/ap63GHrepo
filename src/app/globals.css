@@ -380,3 +380,22 @@ select:has(option[data-blank]:checked) {
 select:has(option[data-blank]) option:not([data-blank]) {
   font-style: normal;
 }
+
+/* Slice #38.85 — „Interacțiuni": a row just saved flashes once where it landed (spec §4: „The row flashes
+   once so the user can see where it landed"). Indigo-200 fading to nothing; with reduced motion it holds
+   indigo-100 for as long as the screen keeps the mark (1.5 s), without moving. */
+@keyframes ga-row-flash {
+  from { background-color: #c7d2fe; }
+  to { background-color: transparent; }
+}
+.ga-row-flash > td { animation: ga-row-flash 1.4s ease-out 1; }
+@media (prefers-color-scheme: dark) {
+  @keyframes ga-row-flash-dark {
+    from { background-color: #3a4a8f; }
+    to { background-color: transparent; }
+  }
+  .ga-row-flash > td { animation-name: ga-row-flash-dark; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ga-row-flash > td { animation: none; background-color: #e0e7ff; }
+}

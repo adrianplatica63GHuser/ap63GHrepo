@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Reply, Search, SquarePen, X } from "lucide-react";
@@ -19,8 +19,13 @@ import {
   type InteractionOrder,
 } from "@/lib/interactions/filters";
 import { PAGE_DEFAULT } from "@/lib/interactions/model";
-import { MODULE_CARD } from "@/lib/interactions/palette";
+import type { InteractionRecord } from "@/lib/interactions/model";
+import { useToast } from "@/components/toast";
 import { HistoryTile, type HistoryPage } from "./history-tile";
+import { LogTile } from "./log-tile";
+
+/** How long a saved row keeps its flash mark (the animation is 1.4 s). */
+const FLASH_MS = 1500;
 
 /** The order chosen, kept for the browser session (§8.3). */
 const ORDER_KEY = "ga.interactions.order";
@@ -50,7 +55,10 @@ export function InteractionsScreen() {
   const order = useMemo(() => readOrder(orderRaw), [orderRaw]);
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
   const logRef = useRef<HTMLElement>(null);
+  const queryClient = useQueryClient();
+  const { toast, show } = useToast();
 
   // A filter changed: back to the first page. (Plain functions: the React Compiler memoizes them.)
   const setFilters = (next: InteractionFilters) => {
@@ -99,9 +107,18 @@ export function InteractionsScreen() {
   const scopeName = scope ? (person.data ? nameOr(person.data.person.displayName, "person") : "…") : null;
   const needsReply = history.data?.needsReply ?? 0;
 
+  // To the form: the empty log's button and, under 1100 px, the sticky one (§2).
   const logFirst = () => {
-    logRef.current?.scrollIntoView({ block: "nearest" });
-    logRef.current?.focus();
+    logRef.current?.scrollIntoView({ block: "start" });
+    document.getElementById("interaction-channel-first")?.focus({ preventScroll: true });
+  };
+
+  // A record saved (§4): the toast, the history asked again, and the new row flashing where it lands.
+  const onSaved = (record: InteractionRecord) => {
+    show(t("log.saved"));
+    void queryClient.invalidateQueries({ queryKey: ["interactions"] });
+    setFlashId(record.id);
+    setTimeout(() => setFlashId((id) => (id === record.id ? null : id)), FLASH_MS);
   };
 
   return (
@@ -166,23 +183,19 @@ export function InteractionsScreen() {
               selectedId={selectedId}
               onSelect={setSelectedId}
               onLogFirst={logFirst}
+              flashId={flashId}
             />
+            {/* §2: stacked, the form is a long scroll away — this button stays at the bottom of the view. */}
+            <div data-log-sticky="" className="sticky bottom-4 z-20 mt-3 flex justify-end @min-[1100px]:hidden">
+              <IconButton icon={SquarePen} label={t("log.sticky")} showLabel variant="accent" size="md" onClick={logFirst} />
+            </div>
           </div>
-          <section
-            ref={logRef}
-            tabIndex={-1}
-            aria-labelledby="interactions-log-title"
-            data-interactions-log=""
-            className={`${MODULE_CARD} flex min-w-0 flex-1 flex-col gap-3 p-4 focus-visible:outline-2 focus-visible:outline-focus`}
-          >
-            <h2 id="interactions-log-title" className="flex items-center gap-2 text-lg font-semibold text-ink dark:text-zinc-100">
-              <SquarePen aria-hidden="true" size={20} className="text-[#3b5bdb] dark:text-[#768ce6]" />
-              {t("screen.logTitle")}
-            </h2>
-            <p className="text-sm text-fade dark:text-zinc-400">{t("screen.logPlaceholder")}</p>
-          </section>
+          <div className="min-w-0 flex-1">
+            <LogTile scope={scope} scopeName={scopeName} onSaved={onSaved} tileRef={logRef} />
+          </div>
         </div>
       </div>
+      {toast}
     </div>
   );
 }

@@ -4211,7 +4211,6 @@
       "needsReply": "Needs reply: {count}",
       "historyTitle": "Interaction history",
       "logTitle": "Log interaction",
-      "logPlaceholder": "A new interaction will be logged here, and the one chosen in the history changed.",
       "error": "The history could not be loaded. The filters are as they were.",
       "retry": "Retry",
       "emptyFiltered": "No interactions in this view.",
@@ -4220,7 +4219,8 @@
       "noDescription": "No description",
       "selectHint": "Select to edit",
       "docsCount": "{count, plural, one {# linked document} other {# linked documents}}",
-      "docsLoading": "Loading the documents…"
+      "docsLoading": "Loading the documents…",
+      "followUp": "Follow-up: {date}"
     },
     "toolbar": {
       "range": "Period",
@@ -4270,6 +4270,58 @@
     "sortBy": "Sort by {column}",
     "columnFilter": "Filter by {column}",
     "resize": "Width of the {column} column",
-    "subjectContains": "Subject contains"
+    "subjectContains": "Subject contains",
+    "log": {
+      "manual": "Manual entry",
+      "connections": "Connected accounts",
+      "notConnected": "Not connected",
+      "connect": "Connect",
+      "connectLater": "Connecting an account will come later.",
+      "nothingSent": "Nothing is sent without confirmation.",
+      "channel": "Channel",
+      "direction": "Direction",
+      "status": "Status",
+      "when": "Date and time",
+      "whenHint": "Default: now",
+      "person": "Person",
+      "personPlaceholder": "Search the client directory…",
+      "personClear": "Clear the person",
+      "subject": "Subject",
+      "subjectPlaceholder": "e.g. Follow-up on contract review",
+      "subjectHint": "Filterable",
+      "description": "Description",
+      "descriptionHint": "Not used in filters",
+      "prompt": {
+        "written": "What was written?",
+        "agreed": "What was agreed?",
+        "where": "Where, and who attended?",
+        "posted": "What was posted, and the tracking number if any?"
+      },
+      "followUp": "Follow-up",
+      "followUpSet": "Set reminder",
+      "followUpDate": "Reminder date",
+      "followUpHint": "The date is kept and shown in the history; the app sends no notification.",
+      "internal": "Internal note",
+      "internalHint": "Visible only to your team",
+      "internalNote": "Internal note",
+      "save": "Save",
+      "saving": "Saving…",
+      "saveAndNew": "Save and new",
+      "cancel": "Cancel",
+      "ctrlS": "Save with",
+      "saved": "Interaction logged",
+      "saveFailed": "The interaction could not be saved. Try again.",
+      "discardQuestion": "Discard the interaction you have not saved?",
+      "discardYes": "Discard it",
+      "discardNo": "Keep editing",
+      "sticky": "Log interaction",
+      "error": {
+        "personRequired": "Choose a person from the directory.",
+        "subjectRequired": "Add a short subject. This is what the grid will show.",
+        "whenRequired": "Choose the date and time.",
+        "futureNotScheduled": "Future dates are for scheduled items. Set status to Scheduled, or use today.",
+        "followUpRequired": "Choose the reminder date."
+      }
+    }
   }
 }

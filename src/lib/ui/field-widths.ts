@@ -1500,7 +1500,12 @@ export const SCREEN = {
   interactionSearch: { step: "XL", kind: "fixed" }, // the module bar's search, on a person's name and the subject
   interactionPerson: { step: "XL", kind: "fixed" }, // the person typeahead, as `searchText`
   interactionSubject: { step: "L", kind: "fixed" }, // „Subiectul conține", a few words of a 120-character subject
-  interactionDay: { step: "M", kind: "fixed", sample: "00.00.0000" }, // „Personalizat"'s two days
+  interactionDay: { step: "M", kind: "fixed", sample: "00.00.0000" }, // „Personalizat"'s two days; the follow-up's date
+  // The log form (Slice #38.85)
+  interactionWhen: { step: "L", kind: "fixed", sample: "00.00.0000, 00:00" }, // date and time, with the picker's icon
+  interactionStatus: { step: "L", kind: "select" }, // „Așteaptă răspuns", the longest status
+  interactionSubjectLine: { step: "XXL", kind: "fixed" }, // the subject, 120 characters at most, one line
+  interactionDescription: { step: "XXL", kind: "lines", rows: 3 }, // the description, and the internal note
 } as const satisfies Record<string, FieldWidth>;
 export type ScreenField = keyof typeof SCREEN;
 

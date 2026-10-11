@@ -50,6 +50,7 @@ export type ButtonVariant =
   | "danger-link"
   | "attention"
   | "attention-outline"
+  | "accent"
   | "bare"
   | "bare-danger";
 
@@ -73,6 +74,9 @@ export interface ButtonClassOptions {
    *             (Slice #37.64): the Document's „Cotă" button while a person's
    *             three share values are all empty. Adrian: „a button that is
    *             very prominent (maybe using orange colour …)".
+   * accent    — „Interacțiuni"'s primary action (Slice #38.85): the spec's indigo
+   *             #3B5BDB, kept as Adrian asked; white on it reads 5.67 : 1, and in
+   *             dark mode zinc-900 on #768CE6 reads 5.6 : 1.
    * attention-outline — the same orange as an outline: „Cotă" once one of the
    *             three values is filled — still the button to look for, no
    *             longer something left to do.
@@ -310,6 +314,12 @@ const ENABLED: Record<ButtonVariant, string> = {
     "dark:border-orange-400 dark:bg-zinc-800 dark:text-orange-300 " +
     "dark:enabled:hover:bg-orange-500 dark:enabled:hover:text-zinc-950 dark:enabled:hover:**:text-zinc-950",
 
+  accent:
+    "border border-[#3b5bdb] bg-[#3b5bdb] text-white shadow-sm " +
+    "enabled:hover:border-[#3249b8] enabled:hover:bg-[#3249b8] " +
+    "dark:border-[#768ce6] dark:bg-[#768ce6] dark:text-zinc-900 " +
+    "dark:enabled:hover:border-[#93a5ec] dark:enabled:hover:bg-[#93a5ec]",
+
   bare:
     "border-0 bg-transparent shadow-none text-cta " +
     "enabled:hover:text-cta-d " +
@@ -338,6 +348,7 @@ export const SURFACED_VARIANTS: readonly ButtonVariant[] = [
   "danger-link",
   "attention",
   "attention-outline",
+  "accent",
 ] as const;
 
 /** Every variant name, for exhaustive iteration in tests. */
@@ -420,6 +431,7 @@ const LINK_HOVER: Record<ButtonVariant, string> = {
   "attention-outline":
     "hover:bg-orange-700 hover:text-white hover:**:text-white " +
     "dark:hover:bg-orange-500 dark:hover:text-zinc-950 dark:hover:**:text-zinc-950",
+  accent: "hover:border-[#3249b8] hover:bg-[#3249b8] dark:hover:border-[#93a5ec] dark:hover:bg-[#93a5ec]",
   bare: "hover:text-cta-d dark:hover:text-white",
   "bare-danger": "hover:text-danger-d dark:hover:text-red-300",
 };

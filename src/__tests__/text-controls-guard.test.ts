@@ -161,6 +161,11 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/interactions/_components/filter-controls.tsx": [
     ["A113", "<span className=\"min-w-0 flex-1 truncate text-left\">{p.displayName"], // a person found, by name
   ],
+  // Slice #38.85: „Renunți la interacțiunea nesalvată?" — „Renunță la ea" / „Continuă".
+  "src/app/interactions/_components/log-tile.tsx": [
+    ["A110", "{tl(\"discardYes\")}"],
+    ["A110", "{tl(\"discardNo\")}"],
+  ],
   "src/app/interactions/_components/history-tile.tsx": [
     ["A015", "<CalendarDays aria-hidden=\"true\" size={16} /> {t(`toolbar.preset."], // the period: its preset and its days
     ["A113", "<Paperclip aria-hidden=\"true\" size={14} /> {count}"], // how many documents, opening them
