@@ -70,11 +70,13 @@ test.describe("TC-MAP-03 — suprafața unei zone oarecare", () => {
         { x: cx + 200, y: cy + 100 },
         { x: cx - 200, y: cy + 100 },
       ];
-      for (const p of pts.slice(0, 3)) {
+      // One click at a time, each seen before the next, as a person clicks: the map binds its click handler anew
+      // after every corner (the mini-map's own behaviour), and a click inside that render lands on the old list.
+      for (const [i, p] of pts.slice(0, 3).entries()) {
         await page.mouse.move(p.x, p.y);
         await page.mouse.click(p.x, p.y);
+        await expect(page.locator("[data-area-draw-corner]")).toHaveCount(i + 1);
       }
-      await expect(page.locator("[data-area-draw-corner]")).toHaveCount(3);
       await page.mouse.move(pts[3]!.x, pts[3]!.y, { steps: 5 });
       const label = page.locator("[data-area-label]");
       await expect(label).toHaveAttribute("data-area-label", "area", { timeout: 15_000 });
