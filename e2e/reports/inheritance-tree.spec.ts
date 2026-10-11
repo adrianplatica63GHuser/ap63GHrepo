@@ -113,7 +113,8 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       await frame.getByRole("searchbox", { name: "Caută o persoană…" }).fill(`Ion ${MARK}`);
       await frame.getByRole("button", { name: "Caută", exact: true }).click();
       await frame.locator("[data-tree-card]").getByRole("button", { name: "Închide", exact: true }).click();
-      await node(page, ion).locator("rect").hover();
+      // The node, not its card's <rect>: the text lines over the rect's centre would take the pointer from it.
+      await node(page, ion).hover({ timeout: 15_000 });
       const hover = frame.locator("[data-tree-hover]");
       await expect(hover).toContainText(`Ion ${MARK}`);
       await expect(hover).toContainText("10.06.1955");
