@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useMemo, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
@@ -25,6 +27,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { useSessionValue } from "@/lib/ui/use-session-value";
 import { useNameOr } from "@/components/record/use-name-or";
+import { personBase, personLogHref } from "@/lib/interactions/links";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PaginationControls } from "@/components/pagination-controls";
 import { INTERACTION_COLUMN_MIN_REM, INTERACTION_COLUMN_REM, rem } from "@/lib/ui/field-widths";
@@ -87,7 +90,8 @@ export interface HistoryTileProps {
   onPage: (page: number) => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onLogFirst: () => void;
+  /** The empty log's „Înregistrează prima interacțiune" — drawn only where there is a form to go to (none on A, #39.06). */
+  onLogFirst?: () => void;
   /** A row just saved, flashing once where it landed (38.85). */
   flashId: string | null;
   /** „Exportă" (38.88): the rows these filters show, in this order, as a file. */
@@ -284,7 +288,9 @@ export function HistoryTile(props: HistoryTileProps) {
           ) : (
             <>
               <p>{t("screen.emptyLog")}</p>
-              <IconButton icon={SquarePen} label={t("screen.logFirst")} showLabel variant="secondary" size="md" onClick={props.onLogFirst} />
+              {props.onLogFirst && (
+                <IconButton icon={SquarePen} label={t("screen.logFirst")} showLabel variant="secondary" size="md" onClick={props.onLogFirst} />
+              )}
             </>
           )}
         </div>
@@ -423,9 +429,12 @@ function HistoryRow({
 }) {
   const t = useTranslations("interactions");
   const nameOr = useNameOr();
+  const { guardedNavigate } = useUnsavedChanges();
   const record = useInteraction(selected ? row.id : null);
   const cell = "border-b border-slate-100 px-2 py-2 align-middle dark:border-zinc-800";
   const name = nameOr(row.personName, "person");
+  // Slice #39.06: the person's screen, by the row's type, with C expanded on a new record.
+  const personHref = personLogHref(personBase(row.personType), row.personId);
   return (
     <tr
       tabIndex={0}
@@ -453,8 +462,23 @@ function HistoryRow({
         <DirectionMark direction={row.direction} />
       </td>
       <td className={cell}>
+        {/* Slice #39.06: the name is a real link — a new tab works — that does not select the row. */}
         <div className="truncate" title={name}>
-          {name}
+          <Link
+            href={personHref}
+            data-person-link={row.personId}
+            className="text-[#3b5bdb] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-focus dark:text-[#768ce6]"
+            onClick={(e) => {
+              e.stopPropagation();
+              // A plain click asks about unsaved work first, through the app's guard; Ctrl+click is the browser's.
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              guardedNavigate(personHref);
+            }}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {name}
+          </Link>
         </div>
       </td>
       <td className={cell}>

@@ -97,9 +97,15 @@ describe("the person's history, read-only (#38.89)", () => {
     expect(interactionsHref("p1", { select: "i9" })).toBe("/interactions?person=p1&select=i9");
   });
 
-  it("the module opens with the row chosen, or a new record ready", () => {
+  // #39.06 changes this in place. It read: „the module opens with the row chosen, or a new record ready" —
+  // `useState<string | null>(() => params.get("select"))` and `const wantNew = params.get("new") === "1";`. The form
+  // left the module's screen, so those two addresses are forwarded to the person's screen, C on the row or on a new
+  // record (interactions-a.test.ts).
+  it("the module's old ?select and ?new addresses are forwarded to the person's screen (#39.06)", () => {
     const screen = fs.readFileSync(path.join(process.cwd(), "src", "app", "interactions", "_components", "interactions-screen.tsx"), "utf8");
-    expect(screen).toContain('useState<string | null>(() => params.get("select"))');
-    expect(screen).toContain('const wantNew = params.get("new") === "1";');
+    expect(screen).toContain('const forwardSelect = params.get("select");');
+    expect(screen).toContain('const forwardNew = params.get("new") === "1";');
+    expect(screen).toContain("router.replace(personLogHref(personBase(forwarded.data.personType), forwarded.data.personId, forwardSelect));");
+    expect(screen).toContain("router.replace(personLogHref(personBase(scopeType), scope));");
   });
 });

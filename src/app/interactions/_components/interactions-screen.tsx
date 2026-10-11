@@ -1,10 +1,10 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Reply, Search, SquarePen, X } from "lucide-react";
+import { Reply, Search, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { screenBox } from "@/lib/ui/field-widths";
 import { useSessionValue } from "@/lib/ui/use-session-value";
@@ -19,20 +19,22 @@ import {
   type InteractionOrder,
 } from "@/lib/interactions/filters";
 import { PAGE_DEFAULT } from "@/lib/interactions/model";
-import type { InteractionRecord } from "@/lib/interactions/model";
-import { switchMove } from "@/lib/interactions/form";
-import { useToast } from "@/components/toast";
-import { HistoryTile, type HistoryPage } from "./history-tile";
-import { LogTile, type SwitchRequest } from "./log-tile";
-
-/** How long a saved row keeps its flash mark (the animation is 1.4 s). */
-const FLASH_MS = 1500;
+import { personBase, personLogHref } from "@/lib/interactions/links";
+import { HistoryTile, useInteraction, type HistoryPage } from "./history-tile";
 
 /** The order chosen, kept for the browser session (§8.3). */
 const ORDER_KEY = "ga.interactions.order";
 
 /**
  * „Interacțiuni" — the module's working surface (§2).   (Slice #38.84)
+ *
+ * Slice #39.06 — A ALONE. Opened from „Rapoarte", the screen is A, Adrian's „the log for all persons" (2026-10-11):
+ * the module bar and the history across the whole width — toolbar, column filters, „Exportă", the „Așteaptă răspuns"
+ * counter, `?person` (A filtered is B). The log tile (C) left this screen: working on interactions — new, change,
+ * delete — happens on the person's screen, and each person's name in the history is a real link there, with C
+ * expanded (`personLogHref`). A row's click still selects it and shows its description preview. An old address with
+ * `?new=1` or `?select=<id>` — the form it asked for is on the person's screen now — is sent there (Ask first 2).
+ * What is written below about the log tile, the two tiles side by side and the sticky button is #38.84–#38.89's.
  *
  * A thin module bar (not a third tile) answers „whose history am I looking at?": the title, the scope („Toți
  * clienții" or one person), a search on person and subject, how many interactions the view holds and the
@@ -55,15 +57,12 @@ export function InteractionsScreen() {
   const [orderRaw, setOrderRaw] = useSessionValue(ORDER_KEY);
   const order = useMemo(() => readOrder(orderRaw), [orderRaw]);
   const [page, setPage] = useState(0);
-  // 38.89: the person's tile opens the screen with a row chosen (?select=<id>) or a new record ready (?new=1).
-  const [selectedId, setSelectedId] = useState<string | null>(() => params.get("select"));
-  const wantNew = params.get("new") === "1";
-  const [flashId, setFlashId] = useState<string | null>(null);
-  const [request, setRequest] = useState<SwitchRequest | null>(null);
-  const logRef = useRef<HTMLElement>(null);
-  const dirtyRef = useRef(false);
-  const queryClient = useQueryClient();
-  const { toast, show } = useToast();
+  // A row chosen: selected, its description shown under its subject (§3). Nothing is loaded into a form here.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Slice #39.06 (Ask first 2): the addresses #38.89 gave the form — ?select=<id>, ?new=1 — still work: the record's
+  // person's screen, C expanded on that row or on a new record.
+  const forwardSelect = params.get("select");
+  const forwardNew = params.get("new") === "1";
 
   // A filter changed: back to the first page. (Plain functions: the React Compiler memoizes them.)
   const setFilters = (next: InteractionFilters) => {
@@ -100,7 +99,7 @@ export function InteractionsScreen() {
     },
   });
 
-  const person = useQuery<{ person: { displayName: string | null } }>({
+  const person = useQuery<{ person: { displayName: string | null; type?: "NATURAL" | "JUDICIAL" } }>({
     queryKey: ["person", scope],
     enabled: scope !== null,
     queryFn: async () => {
@@ -112,12 +111,17 @@ export function InteractionsScreen() {
   const scopeName = scope ? (person.data ? nameOr(person.data.person.displayName, "person") : "…") : null;
   const needsReply = history.data?.needsReply ?? 0;
 
-  // ?new=1 (38.89): the form, ready — scrolled to and its first choice focused. A focus, nothing written.
+  // Slice #39.06: forward an old ?select=<id> to its person's screen, C on that row; ?new=1 with a scope, C on a new
+  // record. A record that cannot be read, or ?new=1 with no person, leaves the screen as A.
+  const forwarded = useInteraction(forwardSelect);
+  const scopeType = person.data?.person.type;
   useEffect(() => {
-    if (!wantNew) return;
-    logRef.current?.scrollIntoView({ block: "start" });
-    document.getElementById("interaction-channel-first")?.focus({ preventScroll: true });
-  }, [wantNew]);
+    if (forwardSelect && forwarded.data) {
+      router.replace(personLogHref(personBase(forwarded.data.personType), forwarded.data.personId, forwardSelect));
+    } else if (!forwardSelect && forwardNew && scope && scopeType) {
+      router.replace(personLogHref(personBase(scopeType), scope));
+    }
+  }, [forwardSelect, forwarded.data, forwardNew, scope, scopeType, router]);
 
   // „Exportă" (38.88): the list's own query without its page, and the browser's time zone for the dates. The answer
   // is an attachment, so the browser saves it and the screen stays where it is.
@@ -129,41 +133,6 @@ export function InteractionsScreen() {
     window.location.assign(`/api/interactions/export?${p.toString()}`);
   };
 
-  // To the form: the empty log's button and, under 1100 px, the sticky one (§2).
-  const logFirst = () => {
-    logRef.current?.scrollIntoView({ block: "start" });
-    document.getElementById("interaction-channel-first")?.focus({ preventScroll: true });
-  };
-
-  // Selection is the link between the tiles (§2): a row chosen loads into the log tile — after asking, if what is
-  // there was being typed (38.87).
-  const requestSelect = (id: string) => {
-    const move = switchMove(dirtyRef.current, selectedId, id);
-    if (move === "ask") setRequest({ kind: "select", id });
-    else if (move === "switch") setSelectedId(id);
-  };
-  const requestNew = () => {
-    const move = switchMove(dirtyRef.current, selectedId, null);
-    if (move === "ask") setRequest({ kind: "new" });
-    else if (move === "switch") setSelectedId(null);
-  };
-  const answer = (yes: boolean) => {
-    if (yes && request) setSelectedId(request.kind === "select" ? request.id : null);
-    setRequest(null);
-  };
-  const onDeleted = () => {
-    show(t("log.deleted"));
-    void queryClient.invalidateQueries({ queryKey: ["interactions"] });
-    setSelectedId(null);
-  };
-
-  // A record saved (§4): the toast, the history asked again, and the row flashing where it lands.
-  const onSaved = (record: InteractionRecord, kind: "created" | "updated") => {
-    show(t(kind === "created" ? "log.saved" : "log.updated"));
-    void queryClient.invalidateQueries({ queryKey: ["interactions"] });
-    setFlashId(record.id);
-    setTimeout(() => setFlashId((id) => (id === record.id ? null : id)), FLASH_MS);
-  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -204,10 +173,8 @@ export function InteractionsScreen() {
         />
       </header>
 
-      {/* The two tiles (§2): side by side from 1100 px of module, stacked under it, history first. */}
-      <div className="@container">
-        <div className="flex flex-col gap-4 @min-[1100px]:flex-row @min-[1100px]:items-start">
-          <div className="min-w-0 @min-[1100px]:w-[62%] @min-[1100px]:shrink-0">
+      {/* Slice #39.06: A alone, across the whole width — the log tile is the person's screen's now. */}
+      <div className="min-w-0" data-interactions-a="">
             <HistoryTile
               filters={filters}
               onFilters={setFilters}
@@ -225,33 +192,11 @@ export function InteractionsScreen() {
               pageSize={PAGE_DEFAULT}
               onPage={setPage}
               selectedId={selectedId}
-              onSelect={requestSelect}
-              onLogFirst={logFirst}
-              flashId={flashId}
+              onSelect={setSelectedId}
+              flashId={null}
               onExport={exportRows}
             />
-            {/* §2: stacked, the form is a long scroll away — this button stays at the bottom of the view. */}
-            <div data-log-sticky="" className="sticky bottom-4 z-20 mt-3 flex justify-end @min-[1100px]:hidden">
-              <IconButton icon={SquarePen} label={t("log.sticky")} showLabel variant="accent" size="md" onClick={logFirst} />
-            </div>
-          </div>
-          <div className="min-w-0 flex-1">
-            <LogTile
-              scope={scope}
-              scopeName={scopeName}
-              selectedId={selectedId}
-              request={request}
-              onRequest={answer}
-              onModeNew={requestNew}
-              onSaved={onSaved}
-              onDeleted={onDeleted}
-              dirtyRef={dirtyRef}
-              tileRef={logRef}
-            />
-          </div>
-        </div>
       </div>
-      {toast}
     </div>
   );
 }

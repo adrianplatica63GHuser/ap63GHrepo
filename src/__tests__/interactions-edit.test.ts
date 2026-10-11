@@ -100,8 +100,10 @@ describe("the mode switch and the selection (§2)", () => {
     expect(switchMove(true, ID, ID)).toBe("stay");
   });
 
-  it("the screen asks through it, and the log tile answers in the tile", () => {
-    const screen = read("src", "app", "interactions", "_components", "interactions-screen.tsx");
+  // #39.06: it read the Rapoarte screen (`interactions-screen.tsx`); the log tile is on the person's screen now, and
+  // the person's „Interacțiuni" tile is what asks (#39.05).
+  it("the person's tile asks through it, and the log tile answers in the tile", () => {
+    const screen = read("src", "app", "_components", "person-interactions-tile.tsx");
     expect(screen.match(/switchMove\(dirtyRef\.current,/g)).toHaveLength(2);
     const tile = read("src", "app", "interactions", "_components", "log-tile.tsx");
     expect(tile).toContain("useUnsavedChangesGuard({ isDirty: dirty, onSave: () => save(false) })");

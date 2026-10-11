@@ -177,6 +177,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "<span className=\"min-w-0 flex-1 truncate text-left\">{h.name}</span>"],
   ],
   "src/app/interactions/_components/history-tile.tsx": [
+    ["A113", "{name}"], // #39.06: the person's name, a link to their screen
     ["A015", "<CalendarDays aria-hidden=\"true\" size={16} /> {t(`toolbar.preset."], // the period: its preset and its days
     ["A113", "<Paperclip aria-hidden=\"true\" size={14} /> {count}"], // how many documents, opening them
     ["A113", "<FileText aria-hidden=\"true\" size={16} /> {nameOr(d.title"], // a linked document, by its name
