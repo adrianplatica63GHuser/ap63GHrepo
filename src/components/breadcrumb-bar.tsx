@@ -81,7 +81,14 @@ interface Segment {
  */
 export function sectionOfAdminScreen(part: string | undefined): string | null {
   if (!part) return null;
-  const href = `/admin/${part}`;
+  return sectionOfScreen(`/admin/${part}`);
+}
+
+/**
+ * The sidebar section whose item opens `href` (Slice #39.02, generalised from the /admin/ case above):
+ * „Rapoarte" for /interactions since „Interacțiuni" moved there.
+ */
+export function sectionOfScreen(href: string): string | null {
   for (const s of NAV_SECTIONS) {
     if (s.items.some((i) => i.href === href || i.href?.startsWith(href + "/"))) return s.key;
   }
@@ -135,8 +142,17 @@ export function buildSegments(
       segments.push({ label: t("documents"), href: accumulated });
       continue;
     }
-    // Slice #38.84: „Interacțiuni".
-    if (part === "interactions") { segments.push({ label: t("interactions"), href: accumulated }); continue; }
+    // Slice #38.84: „Interacțiuni". Slice #39.02: it sits in „Rapoarte" now, so the crumb names that
+    // section before it, as text, the way an /admin/ screen's crumb names its own.
+    if (part === "interactions") {
+      const section = sectionOfScreen(accumulated);
+      if (section) {
+        sectionIdx = segments.length;
+        segments.push({ label: t(`sections.${section}`), href: null });
+      }
+      segments.push({ label: t("interactions"), href: accumulated });
+      continue;
+    }
     // Slice #38.20: the reports page.
     if (part === "reports") { segments.push({ label: t("reports"), href: accumulated }); continue; }
     if (part === "admin") {

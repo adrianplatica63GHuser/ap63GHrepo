@@ -418,7 +418,6 @@ export function SidebarNav() {
     inheritanceTrees:          t("items.inheritanceTrees"),
     miscFolders:               t("items.miscFolders"),
     singleFile:                t("items.singleFile"),
-    reportsInProgress:         t("items.reportsInProgress"),
     courses:                   t("items.courses"),
     quizzes:                   t("items.quizzes"),
     score:                     t("items.score"),

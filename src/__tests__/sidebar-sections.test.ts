@@ -12,6 +12,10 @@
  * exist yet is a disabled „În curând" placeholder; „Rapoarte" → „În lucru"
  * opens /reports; Settings has no „Altele"; since #38.21 every account with an
  * app_users row sees it all, one without a row the dashboard and the four lists. The browser half is TC-NAV-01.
+ *
+ * Slice #39.02 — „Rapoarte" drawn again, between „Import" and „Administrare": „Interacțiuni" (from
+ * „Domeniu"), „Arbori de moștenire" (no screen until #39.11, so undrawn) and „Căutare globală" (from
+ * „Instrumente"). Their URLs did not move. The „În lucru" item left the config; /reports still opens.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -44,10 +48,12 @@ describe("the nine sections in the config, in order, each with its items", () =>
     const tree = NAV_SECTIONS.map((s) => [nav(RO).sections[s.key], s.href ?? null, s.items.map((i) => [nav(RO).items[i.key], i.href ?? null])]);
     expect(tree).toEqual([
       ["Tablou de bord", "/", []],
-      ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"], ["Interacțiuni", "/interactions"]]],
-      ["Instrumente", null, [["Căutare globală", "/admin/global-search"], ["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Arbori de moștenire", null]]],
+      // #39.02: was Domeniu … ["Acte", "/documents"], ["Interacțiuni", "/interactions"]]; Instrumente
+      // [["Căutare globală", "/admin/global-search"], …, ["Arbori de moștenire", null]]; Rapoarte [["În lucru", "/reports"]].
+      ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"]]],
+      ["Instrumente", null, [["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"]]],
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
-      ["Rapoarte", null, [["În lucru", "/reports"]]],
+      ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", null], ["Căutare globală", "/admin/global-search"]]],
       ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Informații de ajutor", "/admin/help-content"]]],
       ["Setări", "/admin/settings", []],
       ["Studiu", null, [["Cursuri", null], ["Chestionare", null], ["Punctaj", null]]],
@@ -55,8 +61,18 @@ describe("the nine sections in the config, in order, each with its items", () =>
     ]);
   });
 
-  it("only „În lucru” is marked `wip`", () => {
-    expect(NAV_SECTIONS.flatMap((s) => s.items).filter((i) => i.wip).map((i) => i.key)).toEqual(["reportsInProgress"]);
+  // #39.02: was „only „În lucru” is marked `wip`" — toEqual(["reportsInProgress"]). The item left the config.
+  it("no item is marked `wip`, and „În lucru” is gone from the config and both languages", () => {
+    expect(NAV_SECTIONS.flatMap((s) => s.items).filter((i) => i.wip).map((i) => i.key)).toEqual([]);
+    expect(NAV_SECTIONS.flatMap((s) => s.items).map((i) => i.key)).not.toContain("reportsInProgress");
+    for (const m of [RO, EN]) expect(nav(m).items.reportsInProgress).toBeUndefined();
+  });
+
+  it("„Rapoarte” is „Reporting” in en-GB, in the sidebar and as a breadcrumb section (#39.02)", () => {
+    expect(nav(EN).sections.reports).toBe("Reporting");
+    const crumbSections = (m: Msgs) => (m.navigation as { breadcrumb: { sections: Record<string, string> } }).breadcrumb.sections;
+    expect(crumbSections(RO).reports).toBe("Rapoarte");
+    expect(crumbSections(EN).reports).toBe("Reporting");
   });
 
   it("every section has an icon of its own — a collapsed sidebar shows section icons only", () => {
@@ -92,12 +108,14 @@ describe("what is drawn (#38.42)", () => {
   const drawn = drawnSections(NAV_SECTIONS);
   const ro = (s: { key: string; items: { key: string }[] }) => [nav(RO).sections[s.key], s.items.map((i) => nav(RO).items[i.key])];
 
-  it("six sections, each with only built screens", () => {
+  // #39.02: was „six sections" — Domeniu ending „Acte", „Interacțiuni"; Instrumente opening „Căutare globală"; no Rapoarte.
+  it("seven sections, each with only built screens — „Rapoarte” between „Import” and „Administrare”", () => {
     expect(drawn.map(ro)).toEqual([
       ["Tablou de bord", []],
-      ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte", "Interacțiuni"]],
-      ["Instrumente", ["Căutare globală", "Distilare Tipizate", "Calcul drum lateral"]],
+      ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
+      ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral"]],
       ["Import", ["Dosare de proprietăți"]],
+      ["Rapoarte", ["Interacțiuni", "Căutare globală"]],
       ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Informații de ajutor"]],
       ["Setări", []],
     ]);
@@ -110,13 +128,14 @@ describe("what is drawn (#38.42)", () => {
     }
   });
 
-  it("an href brings a placeholder back; `wip` going brings a page back", () => {
+  it("an href brings a placeholder back; `wip` hides a page", () => {
     const withHref = NAV_SECTIONS.map((s) =>
       s.key === "study" ? { ...s, items: s.items.map((i) => (i.key === "courses" ? { ...i, href: "/courses" } : i)) } : s,
     );
     expect(drawnSections(withHref).find((s) => s.key === "study")?.items.map((i) => i.key)).toEqual(["courses"]);
-    const notWip = NAV_SECTIONS.map((s) => (s.key === "reports" ? { ...s, items: s.items.map(({ wip: _wip, ...i }) => i) } : s));
-    expect(drawnSections(notWip).some((s) => s.key === "reports")).toBe(true);
+    // #39.02: was „`wip` going brings a page back", over the „În lucru" item that left the config.
+    const wip = NAV_SECTIONS.map((s) => (s.key === "reports" ? { ...s, items: s.items.map((i) => ({ ...i, wip: true as const })) } : s));
+    expect(drawnSections(wip).some((s) => s.key === "reports")).toBe(false);
   });
 
   it("the sidebar draws through it, for every account", () => {
@@ -133,11 +152,12 @@ describe("the active section and item for every route", () => {
     ["/properties/map", "domain", "/properties"],
     ["/documents/new", "domain", "/documents"],
     ["/admin/value-lists", "administration", "/admin/value-lists"],
-    ["/admin/global-search", "functions", "/admin/global-search"],
+    ["/admin/global-search", "reports", "/admin/global-search"], // #39.02: was "functions"
+    ["/interactions", "reports", "/interactions"], // #39.02
     ["/admin/doc-type-engine", "functions", "/admin/doc-type-engine"],
     ["/admin/calculation/history", "functions", "/admin/calculation"],
     ["/admin/import", "importSection", "/admin/import"],
-    ["/reports", "reports", "/reports"],
+    // #39.02: was ["/reports", "reports", "/reports"] — „În lucru" left the config, so no item is active there.
     ["/admin/users", "administration", "/admin/users"],
     ["/admin/groups/x", "administration", "/admin/groups"],
     ["/admin/stamps", "administration", "/admin/stamps"],
@@ -212,7 +232,8 @@ describe("breadcrumbs name the section, not „Admin”", () => {
 
   it("each /admin/ screen under the section that holds it in the sidebar", () => {
     expect(trail("/admin/value-lists")).toEqual(["Acasă", "Administrare (text)", "Date de referință"]);
-    expect(trail("/admin/global-search")).toEqual(["Acasă", "Instrumente (text)", "Căutare globală"]);
+    // #39.02: was ["Acasă", "Instrumente (text)", "Căutare globală"].
+    expect(trail("/admin/global-search")).toEqual(["Acasă", "Rapoarte (text)", "Căutare globală"]);
     expect(trail("/admin/doc-type-engine")).toEqual(["Acasă", "Instrumente (text)", "Distilare Tipizate"]);
     expect(trail("/admin/calculation")).toEqual(["Acasă", "Instrumente (text)", "Calcul"]);
     expect(trail("/admin/users")).toEqual(["Acasă", "Administrare (text)", "Utilizatori & Acces"]);
@@ -220,6 +241,11 @@ describe("breadcrumbs name the section, not „Admin”", () => {
     expect(trail("/admin/stamps")).toEqual(["Acasă", "Administrare (text)", "Ștampile"]);
     expect(trail("/admin/tags")).toEqual(["Acasă", "Administrare (text)", "Etichete"]);
     expect(trail("/admin/help-content")).toEqual(["Acasă", "Administrare (text)", "Informații de ajutor"]);
+  });
+
+  it("„Interacțiuni” under „Rapoarte”, as text, though its address is not under /admin/ (#39.02)", () => {
+    // Was ["Acasă", "Interacțiuni"] while it sat in „Domeniu", whose four lists name no section.
+    expect(trail("/interactions")).toEqual(["Acasă", "Rapoarte (text)", "Interacțiuni"]);
   });
 
   it("a section named as its screen is not said twice; a screen that is a section has none", () => {

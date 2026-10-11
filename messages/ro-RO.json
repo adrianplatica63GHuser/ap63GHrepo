@@ -1386,7 +1386,6 @@
       "inheritanceTrees": "Arbori de moștenire",
       "miscFolders": "Dosare diverse",
       "singleFile": "Fișier individual",
-      "reportsInProgress": "În lucru",
       "courses": "Cursuri",
       "quizzes": "Chestionare",
       "score": "Punctaj",
@@ -3927,6 +3926,7 @@
         "domain": "Domeniu",
         "functions": "Instrumente",
         "importSection": "Import",
+        "reports": "Rapoarte",
         "administration": "Administrare"
       },
       "groups": "Grupuri",

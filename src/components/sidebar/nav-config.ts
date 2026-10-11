@@ -7,7 +7,6 @@ import {
   Building2,
   Calculator,
   ClipboardCheck,
-  Construction,
   Database,
   FileText,
   FileUp,
@@ -61,12 +60,16 @@ export type NavSection = {
 };
 
 /**
- * THE LEFT NAVIGATION IN NINE SECTIONS — SIX OF THEM DRAWN.     (Slice #38.20, #38.42)
+ * THE LEFT NAVIGATION IN NINE SECTIONS — SEVEN OF THEM DRAWN.  (Slice #38.20, #38.42, #39.02)
+ *
+ * Slice #39.02: „Rapoarte" is drawn again, between „Import" and „Administrare",
+ * holding „Interacțiuni" and „Căutare globală" (and, from #39.11, „Arbori de
+ * moștenire"). Their URLs did not move.
  *
  * Slice #38.42: what is not built is not drawn. An item with no `href`, or one
  * marked `wip`, draws nothing, and a section left with nothing to draw draws
- * nothing either (`drawnSections`, sidebar-helpers.ts) — so „Rapoarte",
- * „Studiu" and „Ajutor" are gone from the sidebar, and „Verificare corelări",
+ * nothing either (`drawnSections`, sidebar-helpers.ts) — so „Rapoarte" (until
+ * #39.02), „Studiu" and „Ajutor" are gone from the sidebar, and „Verificare corelări",
  * „Arbori de moștenire", „Dosare diverse" and „Fișier individual" from their
  * sections. The entries stay here: an href brings one back. „Date de
  * referință" moved from Domeniu to Administrare (it is configuration, not
@@ -109,21 +112,19 @@ export const NAV_SECTIONS: NavSection[] = [
       // (/properties/map) opens from the list, and this item is active there.
       { key: "propertyList", href: "/properties", icon: Map },
       { key: "document", href: "/documents", icon: FileText },
-      // Slice #38.84: the log of contacts with clients, after the four lists.
-      { key: "interactions", href: "/interactions", icon: MessagesSquare },
+      // Slice #39.02: „Interacțiuni" (#38.84) moved to „Rapoarte"; its URL did not.
     ],
   },
   {
-    // What the archive can work out: search, reading sample documents into a
-    // type's form (#29.09 — it imports nothing), the road calculation.
+    // What the archive can work out: reading sample documents into a type's
+    // form (#29.09 — it imports nothing), the road calculation. Slice #39.02:
+    // „Căutare globală" and „Arbori de moștenire" moved to „Rapoarte".
     key: "functions",
     icon: Workflow,
     items: [
-      { key: "globalSearch", href: "/admin/global-search", icon: Search },
       { key: "docTypeEngine", href: "/admin/doc-type-engine", icon: Lightbulb },
       { key: "checkCorrelations", icon: GitCompareArrows },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },
-      { key: "inheritanceTrees", icon: Network },
     ],
   },
   {
@@ -139,10 +140,19 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    // Slice #39.02: what the archive reports — the log of contacts (from
+    // „Domeniu"), the inheritance trees and the global search (from
+    // „Instrumente"), in that order. Each moved item kept its URL (#38.20).
+    // „Arbori de moștenire" has no screen until #39.11, so it draws nothing yet.
+    // The „În lucru" item (#38.42) left the config: /reports still opens by its
+    // address, unlinked, until a report replaces it (#39.02's Ask first 2).
     key: "reports",
     icon: BarChart3,
-    // Slice #38.42 (Ask first 1): its one item is a placeholder page, so it is hidden too.
-    items: [{ key: "reportsInProgress", href: "/reports", icon: Construction, wip: true }],
+    items: [
+      { key: "interactions", href: "/interactions", icon: MessagesSquare },
+      { key: "inheritanceTrees", icon: Network },
+      { key: "globalSearch", href: "/admin/global-search", icon: Search },
+    ],
   },
   {
     key: "administration",
