@@ -49,6 +49,7 @@ Nothing.
 | 9 | Presses the chip „Telefon", then „Șterge filtrele" | „Șterge filtrele" is gone; „Cele mai noi întâi"; „Ultimele 90 de zile"; the search empty; no chip filled; „Toate" chosen |
 | 10 | Types the marker again and presses „Așteaptă răspuns: 1" | „Confirmare vizionare" alone, „Primite" chosen |
 | 11 | Clears the filters, types the marker, clicks „Proiect de contract" | The row is selected (indigo, with a bar at its left) and „Proiectul trimis spre lectură." shows under its subject; the grid holds no box to type into |
+| 12 | (#39.06) Looks for a form on the screen, then clicks „Ana"'s name in the „Verificare titlu" row | No log form on this screen (it is A, the history alone). The name is a link: Ana's screen opens with the action panel expanded on a new record |
 | 12 | Narrows the window to 1366 px | The history tile above the log tile, the three rows as before |
 
 ## At the end — leaving things as they were found
@@ -57,6 +58,9 @@ Delete the two persons (`DELETE /api/people/<id>`); their interactions go with t
 CASCADE).
 
 ## Notes from the runs
+
+**2026-10-11 — Slice #39.06, step 12 added.** The screen opened from „Rapoarte" is A: the history alone, across the
+width; the log form is on the person's screen (#39.05), reached by the person's name.
 
 **2026-10-10 — `automated` (Slice #38.84).** `e2e/interactions/history.spec.ts`; the test runner ran it green.
 Pictures at 1366 and 1920 px in `playwright-report/interactions-history`, invented records only.

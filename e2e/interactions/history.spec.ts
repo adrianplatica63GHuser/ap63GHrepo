@@ -163,10 +163,23 @@ test.describe("TC-INT-01 — istoricul interacțiunilor", () => {
       await expect(first.locator("[data-description-preview]")).toHaveText("Proiectul trimis spre lectură.");
       await expect(rows(page).locator("input, textarea, select")).toHaveCount(0);
 
-      // The pictures at 1366: the tiles stacked under 1100 px of module, history first.
+      // The pictures at 1366 and 1920 (#39.06: A alone, across the width), the spec's invented records only.
       await page.setViewportSize({ width: 1366, height: 900 });
       await expect(subjects(page)).toHaveText(newest);
       await picture(page, "history-1366");
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await picture(page, "history-1920");
+
+      // Step 12 — (#39.06) A alone: no log tile here. A person's name is a link to their screen, C expanded on a new
+      // record; it does not select its row.
+      await expect(page.locator("[data-interactions-log]")).toHaveCount(0);
+      const second = rows(page).filter({ hasText: "Verificare titlu" });
+      const link = second.locator(`[data-person-link="${ana}"]`);
+      await expect(link).toHaveAttribute("href", `/natural-persons/${ana}?log=new`);
+      await link.click();
+      await expect(page).toHaveURL((u) => u.pathname === `/natural-persons/${ana}` && u.searchParams.get("log") === "new", { timeout: 30_000 });
+      const log = page.locator("[data-interactions-log]");
+      await expect(log.getByRole("radiogroup", { name: "Mod" }).getByRole("radio", { name: "Înregistrare nouă" })).toBeChecked({ timeout: 30_000 });
     } finally {
       await removeRecord(page.request, "person", ana);
       await removeRecord(page.request, "person", mihai);

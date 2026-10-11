@@ -45,6 +45,9 @@ Delete the person (`DELETE /api/people/<id>`); her other interaction goes with h
 
 ## Notes from the runs
 
+**2026-10-11 — Slice #39.06.** The log form is on the person's screen now (C, #39.05): the case opens Ana's screen
+(`/natural-persons/<id>?log=new`) and chooses the rows of her history there. Every step's expectation is unchanged.
+
 **2026-10-10 — `automated` (Slice #38.87).** `e2e/interactions/edit-and-delete.spec.ts`; the test runner ran it
 green. The picture of edit mode with its audit line is in `playwright-report/interactions-edit`, invented records
 only; the audit line's names (the signed-in user's) are painted over, as „Autentificat ca" is.

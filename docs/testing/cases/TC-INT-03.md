@@ -45,6 +45,10 @@ Delete the person (his interactions go with him), the two documents and the prop
 
 ## Notes from the runs
 
+**2026-10-11 — Slice #39.06.** The log form is on the person's screen now (C, #39.05): the case types on Radu's screen
+(`/natural-persons/<id>?log=new`), sees the paperclip's „2" in his history there, and opens the paperclip's list on the
+Rapoarte screen scoped to him, where the popover lives. Every step's expectation is unchanged.
+
 **2026-10-10 — `automated` (Slice #38.86).** `e2e/interactions/links-tags-property.spec.ts`; the test runner ran
 it green. The picture of the form with its documents, its tag and its property is in
 `playwright-report/interactions-links`, invented records only.

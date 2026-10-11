@@ -11,6 +11,11 @@
  *   - Dates are typed relative to the run's own clock.
  *   - The pictures for Slice #38.85's handover go to playwright-report/interactions-log, invented records only;
  *     the signed-in name and „Recente" are painted over.
+ *   - Slice #39.06: the log form left the module's screen for the person's (C, #39.05), so the spec drives it on
+ *     Irina's screen, its assertions unchanged where they still apply. The person box is gone there — the person
+ *     is the screen's — so step 3's „Alege o persoană din registru." and the focus on the person box, step 4's
+ *     search for Irina and step 7's „the person stays" have nothing left to read; the history is B, the person's
+ *     own tile, which does not flash a saved row; step 10's sticky button belonged to the module's stacked tiles.
  */
 
 import fs from "node:fs";
@@ -46,17 +51,19 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
     try {
       await page.setViewportSize({ width: 1366, height: 1000 });
       const log = page.locator("[data-interactions-log]");
-      const subjects = page.locator("[data-history-grid] tbody tr[data-interaction-row] [data-subject]");
+      // #39.06: B, Irina's history on her screen (it read the module's grid, `[data-history-grid] … [data-subject]`).
+      const subjects = page.locator('[data-tile="interactions"] [data-person-interaction] [data-subject]');
       const save = log.getByRole("button", { name: "Salvează", exact: true });
       const saveAndNew = log.getByRole("button", { name: "Salvează și adaugă", exact: true });
       const subject = log.getByLabel("Subiect", { exact: true });
       const person = log.getByRole("combobox", { name: "Persoană" });
 
-      // Step 1 — the screen scoped to Irina: the log tile, the person filled in, nothing in the grid.
-      await page.goto(`/interactions?person=${irina}`);
+      // Step 1 — Irina's screen, C expanded (#39.06: it read the module scoped to her): the log tile, no person box —
+      // the person is the screen's — and nothing in her history.
+      await page.goto(`/natural-persons/${irina}?log=new`);
       await expect(log.getByRole("heading", { name: "Înregistrează o interacțiune" })).toBeVisible({ timeout: 30_000 });
-      await expect(page.locator("[data-history-empty]")).toBeVisible({ timeout: 30_000 });
-      await expect(person).toHaveValue(new RegExp(`${MARK} Dobre`));
+      await expect(page.locator('[data-tile="interactions"] [data-interactions-empty]')).toBeVisible({ timeout: 30_000 });
+      await expect(person).toHaveCount(0);
 
       // Step 2 — „Conturi conectate": both „Neconectat", „Conectează" inert, „Nimic nu se trimite fără confirmare."
       const connections = log.locator("[data-connections]");
@@ -66,18 +73,15 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       await expect(connections).toContainText("Nimic nu se trimite fără confirmare.");
       await picture(page, "log-empty-1366");
 
-      // Step 3 — no subject: „Salvează" is inert. The person cleared and Ctrl+S: both hints, the focus on the person.
+      // Step 3 — no subject: „Salvează" is inert. Ctrl+S: the subject's hint, the focus on the subject. (#39.06: the
+      // person cleared, „Alege o persoană din registru." and the focus on the person box were read here.)
       await expect(save).toBeDisabled();
-      await log.getByRole("button", { name: "Golește persoana", exact: true }).click();
       await subject.click();
       await page.keyboard.press("Control+s");
-      await expect(log).toContainText("Alege o persoană din registru.");
       await expect(log).toContainText("Adaugă un subiect scurt. Acesta apare în istoric.");
-      await expect(person).toBeFocused();
+      await expect(subject).toBeFocused();
 
-      // Step 4 — Irina found again; „Telefon": the description asks „Ce s-a convenit?"; „Primită"; a subject.
-      await person.fill(`${MARK} Dobre`);
-      await page.getByRole("listbox").getByRole("button", { name: new RegExp(`${MARK} Dobre`) }).click();
+      // Step 4 — „Telefon": the description asks „Ce s-a convenit?"; „Primită"; a subject. (#39.06: no person to find.)
       await log.locator('[data-channel-option="PHONE"]').click();
       await expect(log.getByLabel("Descriere", { exact: true })).toHaveAttribute("placeholder", "Ce s-a convenit?");
       await log.locator("[data-log-direction]").getByText("Primită", { exact: true }).click();
@@ -94,11 +98,10 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       await expect(save).toBeEnabled();
       await picture(page, "log-filled-1366");
 
-      // Step 6 — „Salvează": the toast, the row first in the grid and flashing; the form clean again.
+      // Step 6 — „Salvează": the toast, the row first in her history; the form clean again. (#39.06: B does not flash.)
       await save.click();
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune înregistrată");
       await expect(subjects).toHaveText(["Programare vizionare"], { timeout: 30_000 });
-      await expect(page.locator("[data-interaction-row][data-flash]")).toHaveCount(1);
       await expect(subject).toHaveValue("");
 
       // Step 7 — „Salvează și adaugă": channel, direction and person stay; the subject is empty.
@@ -110,7 +113,6 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       await expect(subject).toHaveValue("");
       await expect(log.locator('[data-channel-option="PHONE"] input')).toBeChecked();
       await expect(log.locator("[data-log-direction]").getByRole("radio", { name: "Primită" })).toBeChecked();
-      await expect(person).toHaveValue(new RegExp(`${MARK} Dobre`));
 
       // Step 8 — „Renunță" on a form with something typed asks first; „Renunță la ea" clears it.
       await subject.fill("Ciornă");
@@ -126,10 +128,7 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune înregistrată");
       await expect(subjects.first()).toHaveText("Salvat cu tastatura", { timeout: 30_000 });
 
-      // Step 10 — under 1100 px of module the tiles are stacked; „Înregistrează interacțiunea" takes you to the form.
-      await page.locator("[data-history-grid]").scrollIntoViewIfNeeded();
-      await page.locator("[data-log-sticky]").getByRole("button", { name: "Înregistrează interacțiunea", exact: true }).click();
-      await expect(log.locator("#interaction-channel-first")).toBeFocused();
+      // (#39.06: step 10, the module's sticky „Înregistrează interacțiunea" under 1100 px, went with the module's form.)
     } finally {
       await removeRecord(page.request, "person", irina);
     }

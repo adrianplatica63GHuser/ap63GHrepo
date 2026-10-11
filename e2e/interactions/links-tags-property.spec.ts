@@ -11,6 +11,9 @@
  *   - Step 6 reads the saved property through GET /api/interactions/<id> — the grid does not show it (Ask first #2).
  *   - The tag is `TC-E2E-INT-03 contract`, so the suggestion it looks for is the case's own.
  *   - The picture for Slice #38.86's handover goes to playwright-report/interactions-links, invented records only.
+ *   - Slice #39.06: the log form is on the person's screen (C, #39.05), so steps 1–4 and 7 run on Radu's screen
+ *     (`?log=new`); the paperclip's popover (step 5) is the history's, A's, so it is read there, scoped to Radu.
+ *     Every assertion is unchanged.
  */
 
 import fs from "node:fs";
@@ -45,7 +48,7 @@ test.describe("TC-INT-03 — acte legate, etichete și o proprietate", () => {
     try {
       await page.setViewportSize({ width: 1920, height: 1080 });
       const log = page.locator("[data-interactions-log]");
-      await page.goto(`/interactions?person=${person}`);
+      await page.goto(`/natural-persons/${person}?log=new`); // #39.06: was `/interactions?person=${person}`
       await expect(log.getByRole("heading", { name: "Înregistrează o interacțiune" })).toBeVisible({ timeout: 30_000 });
       await log.getByLabel("Subiect", { exact: true }).fill("Vizită pe teren");
 
@@ -79,10 +82,14 @@ test.describe("TC-INT-03 — acte legate, etichete și o proprietate", () => {
       const saved = page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/api/interactions"));
       await log.getByRole("button", { name: "Salvează", exact: true }).click();
       const record = (await (await saved).json()) as { id: string; relatedPropertyId: string | null; tags: string[] };
+      // #39.06: the row of his history on his screen (it read the module's grid row).
+      await expect(page.locator(`[data-person-interaction="${record.id}"] [data-documents-count]`)).toHaveText("2", { timeout: 30_000 });
+
+      // Step 5 — the paperclip: both documents; „Contract v3" opens the archive's document. (#39.06: the popover is
+      // the history's on the Rapoarte screen, A scoped to Radu.)
+      await page.goto(`/interactions?person=${person}`);
       const row = page.locator(`[data-interaction-row="${record.id}"]`);
       await expect(row.locator("[data-documents-count]")).toHaveText("2", { timeout: 30_000 });
-
-      // Step 5 — the paperclip: both documents; „Contract v3" opens the archive's document.
       await row.locator("[data-documents-count]").click();
       const popover = page.locator("[data-documents-popover]");
       await expect(popover.getByRole("button")).toHaveText([`${MARK} Contract v3`, `${MARK} Extras CF`]);
@@ -94,7 +101,7 @@ test.describe("TC-INT-03 — acte legate, etichete și o proprietate", () => {
       expect(await back.json()).toMatchObject({ relatedPropertyId: prop, tags: [TAG], documentIds: [act1, act2] });
 
       // Step 7 — a new record: „Adaugă etichetă" suggests the tag just used.
-      await page.goto(`/interactions?person=${person}`);
+      await page.goto(`/natural-persons/${person}?log=new`); // #39.06: was `/interactions?person=${person}`
       await log.getByRole("button", { name: "Adaugă etichetă", exact: true }).click();
       await log.getByRole("combobox", { name: "Etichetă nouă" }).fill(MARK);
       await expect(log.locator("[data-tag-suggestions]").getByRole("button", { name: TAG, exact: true })).toBeVisible({ timeout: 15_000 });

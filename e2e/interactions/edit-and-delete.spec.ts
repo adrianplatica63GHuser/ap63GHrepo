@@ -10,6 +10,8 @@
  *     screen is opened scoped to her.
  *   - „Someone else" in step 5 is a PUT through the API, the route the other person's „Salvează modificările" sends.
  *   - The picture for Slice #38.87's handover goes to playwright-report/interactions-edit, invented records only.
+ *   - Slice #39.06: the log form is on the person's screen (C, #39.05), so the case runs on Ana's screen
+ *     (`?log=new`) and chooses the rows of her history there (B); every assertion is unchanged.
  */
 
 import fs from "node:fs";
@@ -74,12 +76,13 @@ test.describe("TC-INT-04 — schimbat, apărat, șters", () => {
       await page.setViewportSize({ width: 1920, height: 1080 });
       const tile = page.locator("[data-interactions-log]");
       const subject = tile.getByLabel("Subiect", { exact: true });
-      const rowOf = (id: string) => page.locator(`[data-interaction-row="${id}"]`);
+      // #39.06: the rows of Ana's history on her screen (it read the module's grid, `[data-interaction-row]`).
+      const rowOf = (id: string) => page.locator(`[data-person-interaction="${id}"]`);
       const mode = tile.getByRole("radiogroup", { name: "Mod" });
       const saveChanges = tile.getByRole("button", { name: "Salvează modificările", exact: true });
 
       // Step 1 — a row chosen: „Editează selecția", the record in the form, the audit line.
-      await page.goto(`/interactions?person=${ana}`);
+      await page.goto(`/natural-persons/${ana}?log=new`); // #39.06: was `/interactions?person=${ana}`
       await expect(rowOf(offer.id)).toBeVisible({ timeout: 30_000 });
       await expect(mode.getByRole("radio", { name: "Editează selecția" })).toBeDisabled();
       await rowOf(offer.id).click();
@@ -116,7 +119,7 @@ test.describe("TC-INT-04 — schimbat, apărat, șters", () => {
       const leave = page.getByRole("dialog").filter({ hasText: "Modificări nesalvate" });
       await expect(leave).toBeVisible();
       await leave.getByRole("button", { name: "Anulează", exact: true }).click();
-      await expect(page).toHaveURL(/\/interactions/);
+      await expect(page).toHaveURL(new RegExp(`/natural-persons/${ana}`)); // #39.06: was /\/interactions/
       await expect(subject).toHaveValue("Ciornă");
 
       // Step 5 — someone else saved first: „Reîncarcă" brings theirs; a second time, „Suprascrie" keeps ours.

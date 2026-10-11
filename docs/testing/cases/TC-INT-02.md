@@ -32,22 +32,26 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `/interactions?person=<Irina's id>` at 1366 px | „Înregistrează o interacțiune", the person box holding Irina; the history says „Nimic înregistrat încă." |
+| 1 | (#39.06) Opens Irina's screen with `?log=new` at 1366 px | „Înregistrează o interacțiune", with no person box — the person is the screen's; her history says „Nicio interacțiune înregistrată cu această persoană." (it read: `/interactions?person=<id>`, the person box holding Irina) |
 | 2 | Looks at „Conturi conectate" | Gmail and WhatsApp Business, each „Neconectat", each „Conectează" inert; „Nimic nu se trimite fără confirmare." |
-| 3 | With no subject, looks at „Salvează"; presses „Golește persoana", clicks „Subiect" and presses Ctrl+S | „Salvează" is inert; then „Alege o persoană din registru." and „Adaugă un subiect scurt. Acesta apare în istoric.", the focus in the person box |
-| 4 | Finds Irina again; chooses „Telefon" and „Primită"; types the subject „Programare vizionare" | The description's placeholder reads „Ce s-a convenit?" |
+| 3 | With no subject, looks at „Salvează"; clicks „Subiect" and presses Ctrl+S | „Salvează" is inert; then „Adaugă un subiect scurt. Acesta apare în istoric." and the focus on „Subiect" (#39.06: „Golește persoana" and „Alege o persoană din registru." have no box to read) |
+| 4 | Chooses „Telefon" and „Primită"; types the subject „Programare vizionare" | The description's placeholder reads „Ce s-a convenit?" (#39.06: no person to find again) |
 | 5 | Sets tomorrow's date; then yesterday's, and the description „S-a convenit vizionarea de joi." | „Datele viitoare sunt pentru ce e programat. …" and „Salvează" inert; then „Salvează" live |
-| 6 | Presses „Salvează" | „Interacțiune înregistrată"; „Programare vizionare" is the grid's row, flashing once; the subject box empty |
-| 7 | Chooses „Telefon" and „Primită", types „Al doilea apel", presses „Salvează și adaugă" | „Al doilea apel" above „Programare vizionare"; the form keeps „Telefon", „Primită" and Irina, the subject empty |
+| 6 | Presses „Salvează" | „Interacțiune înregistrată"; „Programare vizionare" is the row of her history; the subject box empty (#39.06: her history does not flash a row) |
+| 7 | Chooses „Telefon" and „Primită", types „Al doilea apel", presses „Salvează și adaugă" | „Al doilea apel" above „Programare vizionare"; the form keeps „Telefon" and „Primită", the subject empty (#39.06: „and Irina" — no person box) |
 | 8 | Types „Ciornă", presses „Renunță", then „Renunță la ea" | „Renunți la interacțiunea nesalvată?"; then the form clean — „E-mail", no subject |
-| 9 | Types „Salvat cu tastatura" and presses Ctrl+S | „Interacțiune înregistrată"; it is the grid's first row |
-| 10 | Scrolls to the grid and presses „Înregistrează interacțiunea" | The focus on the form's first channel |
+| 9 | Types „Salvat cu tastatura" and presses Ctrl+S | „Interacțiune înregistrată"; it is her history's first row |
+| 10 | — | (#39.06) Removed: the module's sticky „Înregistrează interacțiunea" went with the module's form |
 
 ## At the end — leaving things as they were found
 
 Delete the person (`DELETE /api/people/<id>`); her interactions go with her.
 
 ## Notes from the runs
+
+**2026-10-11 — Slice #39.06.** The log form left the module's screen (A) for the person's (C, #39.05); the case runs
+on Irina's screen. What read the person box (steps 1, 3, 4, 7), the grid's flash (6) and the sticky button (10) has
+nothing left to read there.
 
 **2026-10-10 — `automated` (Slice #38.85).** `e2e/interactions/log-by-hand.spec.ts`; the test runner ran it
 green. Pictures at 1366 px, empty and filled, in `playwright-report/interactions-log`, invented records only.
