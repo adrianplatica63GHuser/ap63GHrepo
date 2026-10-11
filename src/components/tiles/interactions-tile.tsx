@@ -13,9 +13,17 @@
  * A LOOK, NOT AN EDIT, here as in an „Incursiune": no box to type in. „Deschide în Interacțiuni" opens the module
  * scoped to the person, „Interacțiune nouă" opens it with a new record ready for them, and a row opens the module
  * with that row chosen — each through the guarded navigation, writing nothing.
+ *
+ * Slice #39.05 — B, WITH C UNDER IT. On a person's screen the tile is B and, under it, the action panel C
+ * (`src/app/_components/person-interactions-tile.tsx`, passed in as `footer`): „Interacțiune nouă" (`onNew`) expands
+ * C on a new record and a row (`onRow`) chooses itself into C, instead of opening the module; the row chosen reads
+ * selected. B keeps today's height and the tile grows by C's. „Deschide în „Interacțiuni”" still opens the module,
+ * scoped. In an Incursiune there is no C and no „Interacțiune nouă" (no `onNew`): a row opens the person's screen with
+ * C expanded on it (#39.05's Ask first 4).
  */
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
+import { type ReactNode } from "react";
 import { ArrowRight, Paperclip, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { INTERACTIONS_TILE_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX } from "@/lib/ui/field-widths";
@@ -24,6 +32,9 @@ import { ChannelPill, DirectionMark, StatusPill } from "@/components/interaction
 import { PAGE_MAX, type InteractionListItem } from "@/lib/interactions/model";
 import { interactionsHref } from "@/lib/interactions/links";
 import { TileTitle } from "./tile-title";
+
+/** Slice #39.05: B's height inside a tile that also holds C — today's tile height less the surface's p-3 and border. */
+const B_CONTENT_PX = PAGES_TILE_EMPTY_HEIGHT_PX - 26;
 
 /**
  * Slice #38.72: `fill` — beside a list, in an „Incursiune", the tile takes the width it is given rather than its
@@ -36,12 +47,24 @@ export function InteractionsTile({
   subtitle,
   surface,
   fill = false,
+  onNew,
+  onRow,
+  selectedId = null,
+  footer,
 }: {
   personId: string;
   title: string;
   subtitle?: string;
   surface: string;
   fill?: boolean;
+  /** Slice #39.05: „Interacțiune nouă" — drawn only when given (a person's screen: C expands on a new record). */
+  onNew?: () => void;
+  /** Slice #39.05: a row chosen — into C on a person's screen, the person's screen from an Incursiune. */
+  onRow?: (id: string) => void;
+  /** Slice #39.05: the row loaded into C, which reads selected. */
+  selectedId?: string | null;
+  /** Slice #39.05: C, under the history; B keeps its height and the tile grows. */
+  footer?: ReactNode;
 }) {
   const t = useTranslations("shared.tiles");
   const locale = useLocale();
@@ -59,14 +82,7 @@ export function InteractionsTile({
   const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
   const items = history.data?.items ?? [];
 
-  return (
-    <section
-      data-tile="interactions"
-      data-panel="interactions"
-      aria-label={title}
-      className={fill ? `${surface} flex flex-1 flex-col` : `${surface} flex flex-col`}
-      style={fill ? { minHeight: INTERACTIONS_TILE_STYLE.minHeight } : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }}
-    >
+  const head = (
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <TileTitle title={title} subtitle={subtitle} />
@@ -79,15 +95,19 @@ export function InteractionsTile({
           data-interactions-open=""
           onClick={() => guardedNavigate(interactionsHref(personId))}
         />
-        <IconButton
-          icon={Plus}
-          label={t("interactionsNew")}
-          variant="secondary"
-          size="xs"
-          data-interactions-new=""
-          onClick={() => guardedNavigate(interactionsHref(personId, { new: true }))}
-        />
+        {onNew && (
+          <IconButton
+            icon={Plus}
+            label={t("interactionsNew")}
+            variant="secondary"
+            size="xs"
+            data-interactions-new=""
+            onClick={onNew}
+          />
+        )}
       </div>
+  );
+  const rows = (
       <div className="relative min-h-0 flex-1">
         <div className="absolute inset-0 overflow-y-auto" data-interactions-rows="">
           {history.isPending ? (
@@ -113,20 +133,25 @@ export function InteractionsTile({
               <tbody>
                 {items.map((row) => {
                   const at = new Date(row.occurredAt);
-                  const open = () => guardedNavigate(interactionsHref(personId, { select: row.id }));
+                  const chosen = selectedId === row.id;
                   return (
                     <tr
                       key={row.id}
-                      tabIndex={0}
+                      tabIndex={onRow ? 0 : undefined}
                       data-person-interaction={row.id}
-                      onClick={open}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          open();
-                        }
-                      }}
-                      className="cursor-pointer hover:bg-white/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus dark:hover:bg-zinc-800/60"
+                      aria-selected={onRow ? chosen : undefined}
+                      onClick={onRow ? () => onRow(row.id) : undefined}
+                      onKeyDown={
+                        onRow
+                          ? (e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onRow(row.id);
+                              }
+                            }
+                          : undefined
+                      }
+                      className={`${onRow ? "cursor-pointer hover:bg-white/60 dark:hover:bg-zinc-800/60" : ""} ${chosen ? "bg-white/80 font-medium dark:bg-zinc-800" : ""} focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus`}
                     >
                       <td className="border-b border-black/5 px-1.5 py-1.5 align-middle dark:border-white/10">
                         <div className="whitespace-nowrap">{day.format(at)}</div>
@@ -165,6 +190,35 @@ export function InteractionsTile({
           )}
         </div>
       </div>
+  );
+
+  return (
+    <section
+      data-tile="interactions"
+      data-panel="interactions"
+      aria-label={title}
+      className={fill ? `${surface} flex flex-1 flex-col` : `${surface} flex flex-col`}
+      style={
+        fill
+          ? { minHeight: INTERACTIONS_TILE_STYLE.minHeight }
+          : footer
+            ? { ...INTERACTIONS_TILE_STYLE }
+            : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }
+      }
+    >
+      {footer ? (
+        // Slice #39.05: B at today's height — the section's own 436 px less its p-3 and 1 px border — and C under it.
+        <div className="flex flex-col" style={{ height: B_CONTENT_PX }} data-interactions-history="">
+          {head}
+          {rows}
+        </div>
+      ) : (
+        <>
+          {head}
+          {rows}
+        </>
+      )}
+      {footer}
     </section>
   );
 }

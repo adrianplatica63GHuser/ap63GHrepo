@@ -85,8 +85,13 @@ describe("the person's history, read-only (#38.89)", () => {
     expect(CODE).not.toMatch(/personName/);
   });
 
-  it("its buttons and its rows open the module through the guarded navigation", () => {
-    expect(CODE.match(/guardedNavigate\(interactionsHref\(/g)).toHaveLength(3);
+  // #39.05 changes this in place. It read: „its buttons and its rows open the module through the guarded navigation",
+  // with `guardedNavigate(interactionsHref(` three times — „→", „+" and a row. „+" and a row now reach C, the action
+  // panel under the history (person-interactions-tile.test.tsx), so only „→" opens the module.
+  it("„Deschide în „Interacțiuni”” opens the module through the guarded navigation; „+” and a row are the caller's (#39.05)", () => {
+    expect(CODE.match(/guardedNavigate\(interactionsHref\(/g)).toHaveLength(1);
+    expect(CODE).toContain("onClick={onNew}");
+    expect(CODE).toContain("onClick={onRow ? () => onRow(row.id) : undefined}");
     expect(interactionsHref("p1")).toBe("/interactions?person=p1");
     expect(interactionsHref("p1", { new: true })).toBe("/interactions?person=p1&new=1");
     expect(interactionsHref("p1", { select: "i9" })).toBe("/interactions?person=p1&select=i9");

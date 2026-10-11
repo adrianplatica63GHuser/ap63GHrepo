@@ -4280,6 +4280,7 @@
     "resize": "Width of the {column} column",
     "subjectContains": "Subject contains",
     "log": {
+      "collapse": "Collapse",
       "manual": "Manual entry",
       "connections": "Connected accounts",
       "notConnected": "Not connected",

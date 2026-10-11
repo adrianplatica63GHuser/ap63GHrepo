@@ -4280,6 +4280,7 @@
     "resize": "Lățimea coloanei „{column}”",
     "subjectContains": "Subiectul conține",
     "log": {
+      "collapse": "Restrânge",
       "manual": "Înregistrare manuală",
       "connections": "Conturi conectate",
       "notConnected": "Neconectat",

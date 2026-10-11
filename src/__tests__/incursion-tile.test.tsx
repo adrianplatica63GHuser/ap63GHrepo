@@ -147,7 +147,9 @@ describe("a look, not an edit (#38.72)", () => {
   it("reuses the three tiles in their read-only forms", () => {
     // Slice #38.75: in its own screen's surface, not the card's (`INCURSION_SURFACE`, below).
     // #38.89: the tile now reads the person's history, so it is given the person.
-    expect(TILE).toContain('<InteractionsTile personId={target.id} title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />');
+    // #39.05: was `<InteractionsTile personId={target.id} title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />`
+    // — the history alone still, and now a row opens the person's screen with C on it.
+    expect(TILE).toMatch(/<InteractionsTile\s+personId=\{target\.id\}\s+title=\{t\("interactions"\)\}\s+surface=\{INCURSION_SURFACE\[target\.kind\]\}\s+fill\s/);
     expect(TILE).toContain("<PropertyMiniMap corners={q.data} onChange={() => {}} readOnly />");
     expect(TILE).not.toContain("onFullScreen");
     expect(TILE).toContain('<PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} />');

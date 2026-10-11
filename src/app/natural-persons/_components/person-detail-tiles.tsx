@@ -42,7 +42,8 @@ import { NP_LIST_UNITS, npRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./person-tiles";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { InteractionsTile } from "@/components/tiles/interactions-tile";
+// Slice #39.05: the history (B) and the action panel (C) under it.
+import { PersonInteractionsTile } from "@/app/_components/person-interactions-tile";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type IdCardLink = { id: string; code: string; title: string | null } | null;
@@ -169,7 +170,7 @@ export function PersonDetailTiles({
           )}
           <PreviewTiles previews={previews} />
           {choice.isShown("interactions") && interactionsSlot && createPortal(
-            <InteractionsTile personId={personId} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"))} />,
+            <PersonInteractionsTile personId={personId} personName={personName} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"))} />,
             interactionsSlot,
           )}
         </TileAreas>

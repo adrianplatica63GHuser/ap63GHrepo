@@ -83,6 +83,7 @@ export function LogTile({
   onDeleted,
   dirtyRef,
   tileRef,
+  personFixed = false,
 }: {
   scope: string | null;
   scopeName: string | null;
@@ -94,6 +95,11 @@ export function LogTile({
   onDeleted: (id: string) => void;
   dirtyRef: RefObject<boolean>;
   tileRef: RefObject<HTMLElement | null>;
+  /**
+   * Slice #39.05: on a person's screen (C of the person's „Interacțiuni") the person is the screen's — the picker is
+   * not drawn — and Ctrl+S saves this form only while the focus is in it, so the person's own form keeps its Ctrl+S.
+   */
+  personFixed?: boolean;
 }) {
   const t = useTranslations("interactions");
   const tl = useTranslations("interactions.log");
@@ -271,6 +277,7 @@ export function LogTile({
   // Ctrl+S saves (§4) — and never opens the browser's own „Save page".
   const onKey = useEffectEvent((e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "s") {
+      if (personFixed && !tileRef.current?.contains(document.activeElement)) return;
       e.preventDefault();
       void save(false);
     }
@@ -428,6 +435,7 @@ export function LogTile({
           />
         </Field>
 
+        {!personFixed && (
         <Field label={tl("person")} htmlFor={FIELD_ID.personId} hint={shown("personId") ? tl(`error.${shown("personId")}`) : undefined} hintId={ids.hintPerson} error={!!shown("personId")}>
           <PersonPicker
             inputId={FIELD_ID.personId}
@@ -445,6 +453,7 @@ export function LogTile({
             }}
           />
         </Field>
+        )}
 
         <Field
           label={tl("subject")}

@@ -46,7 +46,8 @@ import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { InteractionsTile } from "@/components/tiles/interactions-tile";
+// Slice #39.05: the history (B) and the action panel (C) under it.
+import { PersonInteractionsTile } from "@/app/_components/person-interactions-tile";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type Props = {
@@ -166,7 +167,7 @@ export function JudicialPersonDetailTiles({
           )}
           <PreviewTiles previews={previews} />
           {choice.isShown("interactions") && interactionsSlot && createPortal(
-            <InteractionsTile personId={personId} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"))} />,
+            <PersonInteractionsTile personId={personId} personName={personName} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"))} />,
             interactionsSlot,
           )}
         </TileAreas>

@@ -56,6 +56,7 @@ import type { IncursionView } from "@/components/tiles/incursion-context";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { tileGroupOf } from "@/lib/ui/tiles";
 import { previewHref, type PreviewKind, type PreviewTarget } from "@/lib/ui/previews";
+import { personLogHref } from "@/lib/interactions/links";
 import type { UnnamedKind } from "@/lib/ui/unnamed";
 import { PropertyMiniMap } from "@/app/properties/_components/property-mini-map";
 import type { Corner } from "@/app/properties/_components/form-schema";
@@ -137,7 +138,14 @@ export function IncursionTile({ target, view, onClose }: { target: PreviewTarget
       ) : target.kind === "document" ? (
         <IncursionPages documentId={target.id} surface={INCURSION_SURFACE.document} />
       ) : (
-        <InteractionsTile personId={target.id} title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />
+        <InteractionsTile
+          personId={target.id}
+          title={t("interactions")}
+          surface={INCURSION_SURFACE[target.kind]}
+          fill
+          // Slice #39.05: B alone, no C and no „Interacțiune nouă"; a row opens the person's screen with C on it.
+          onRow={(id) => guardedNavigate(personLogHref(target.kind === "company" ? "/judicial-persons" : "/natural-persons", target.id, id))}
+        />
       )}
     </section>
   );
