@@ -47,8 +47,9 @@ test.describe("TC-MAP-04 — Calcul suprafață", () => {
     const free = ui.getByRole("button", { name: "Suprafața unei zone oarecare", exact: true });
     const pulsing = ui.locator(".ga-area-pulse");
     await expect(pulsing).toHaveCount(2, { timeout: 30_000 });
-    await expect(pulsing.filter({ has: delimited })).toHaveCount(1);
-    await expect(pulsing.filter({ has: free })).toHaveCount(1);
+    // `has` is read inside each wrapper, so the buttons are named from there, not through [data-map-ui].
+    await expect(pulsing.filter({ has: page.getByRole("button", { name: "Suprafața unei zone delimitate", exact: true }) })).toHaveCount(1);
+    await expect(pulsing.filter({ has: page.getByRole("button", { name: "Suprafața unei zone oarecare", exact: true }) })).toHaveCount(1);
     await expect(delimited).toHaveAttribute("aria-pressed", "false");
     await expect(free).toHaveAttribute("aria-pressed", "false");
     await page.waitForTimeout(500);
