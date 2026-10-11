@@ -25,11 +25,11 @@ export const NP_FORM_TILES: readonly NpTile[] = ["identity", "idCard", "contact"
 export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   entity: "natural-person",
   all: NP_TILES,
-  // Slice #38.30: „Interacțiuni" is no longer ticked by default — a placeholder
-  // until its module is built. It stays tickable, its placeholder unchanged.
-  // (#37.89 had ticked it, as „Hartă" and „Pagini" are.) The Judicial Person's
-  // registry keeps it: the request names the Natural Person only.
-  defaults: NP_FORM_TILES,
+  // Slice #38.30 took „Interacțiuni" off the defaults — a placeholder „until its
+  // module is built". #38.84–#38.89 built it, and Adrian, 2026-10-11: „„Interacțiuni”
+  // should be ticked by default on a natural person". So it is again, as on the
+  // Judicial Person and as #37.89 had it.
+  defaults: [...NP_FORM_TILES, "interactions"],
   form: NP_FORM_TILES,
   placement: { right: ["interactions"] },
   // Slice #37.88: the coloured groups; #37.89 the purple one.

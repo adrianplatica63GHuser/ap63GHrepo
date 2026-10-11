@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-07 — „Interacțiuni”, o fișă fixă la dreapta pe persoane; prima fișă a persoanei juridice se numește „Identitate”
- * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-10 (step 2 follows Slice #38.89, step 4 #38.46)
+ * Source: docs/testing/cases/TC-PERS-07.md, „Last green" 2026-10-11 (step 2 follows Slice #38.89 and the default of 2026-10-11, step 4 #38.46)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -13,7 +13,7 @@
 
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile, tileBox } from "../helpers/tiles";
+import { tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-07`;
 const PURPLE = "rgb(246, 240, 254)";
@@ -67,11 +67,10 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await page.goto(`/natural-persons/${np}`);
       await clearChoices(page);
       await page.reload();
-      // Slice #38.30: not ticked by default any more („off by default until it is built") — tick it.
+      // Ticked by default again (Adrian, 2026-10-11) — #38.30 had taken it off „until it is built"; this step read
+      // „not ticked … ticks it".
       const tile = page.getByRole("region", { name: "Interacțiuni", exact: true });
-      await expect(tileBox(page, "Interacțiuni")).not.toBeChecked({ timeout: 30_000 });
-      await expect(tile).toHaveCount(0);
-      await showTile(page, "Interacțiuni");
+      await expect(tileBox(page, "Interacțiuni")).toBeChecked({ timeout: 30_000 });
       await expect(tile).toBeVisible({ timeout: 30_000 });
       const boxes = page.locator("[data-tile-selector] label");
       await expect(boxes.last()).toHaveText("Interacțiuni");

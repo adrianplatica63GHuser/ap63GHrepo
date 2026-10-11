@@ -22,7 +22,7 @@ this case exists to catch.
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a company „TC-INT-06 Construct SRL"
   and two of its interactions — „Ofertă de preț" (e-mail, three days ago) and „Întâlnire pe șantier" (meeting,
-  yesterday). A company, because its screen shows „Interacțiuni" ticked by default.
+  yesterday). A company; since 2026-10-11 a natural person shows the tile by default too.
 
 ## What Adrian is asked for
 

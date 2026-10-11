@@ -7,7 +7,7 @@
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The company and its two interactions carry `TC-E2E-INT-06` (records.ts) and are made through the API. A
- *     company, because its screen shows „Interacțiuni" ticked by default (a natural person's does not, #38.30).
+ *     company — its screen shows „Interacțiuni" ticked by default (a natural person's too, since 2026-10-11).
  *   - The pictures for Slice #38.89's handover go to playwright-report/interactions-person, invented records only;
  *     the signed-in name and „Recente" are painted over.
  */

@@ -92,7 +92,8 @@ describe("the Natural Person's tiles", () => {
     // #37.67: „Corelate"; #37.89: „Interacțiuni", fixed at the right.
     // #38.30: „Interacțiuni" is no longer ticked by default (#37.89 had ticked it) — a placeholder until it is built.
     expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections", "interactions"]);
-    expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses"]);
+    // #38.30 took „Interacțiuni" off; it is back since the module exists (Adrian, 2026-10-11).
+    expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses", "interactions"]);
     expect(NP_TILE_REGISTRY.placement?.right).toEqual(["interactions"]);
     expect(NP_TILE_REGISTRY.form).toBe(NP_FORM_TILES);
   });

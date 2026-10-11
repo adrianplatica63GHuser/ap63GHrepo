@@ -22,10 +22,11 @@ describe("„Interacțiuni” on both person registries", () => {
     expect(tileGroupOf(reg as never, "interactions" as never)).toBe("fixed");
   });
 
-  // #38.30 inverts #37.89 for the Natural Person: „off by default until it is built". It stays
-  // tickable. The Judicial Person keeps it ticked — the request names the Natural Person only.
-  it("is not ticked by default on the Natural Person, and still is on the Judicial Person", () => {
-    expect(NP_TILE_REGISTRY.defaults).not.toContain("interactions");
+  // #38.30 took it off the Natural Person's defaults, „off by default until it is built". It is built, and
+  // Adrian, 2026-10-11: „„Interacțiuni” should be ticked by default on a natural person". It read: „is not ticked
+  // by default on the Natural Person, and still is on the Judicial Person".
+  it("is ticked by default on both persons", () => {
+    expect(NP_TILE_REGISTRY.defaults).toContain("interactions");
     expect(NP_TILE_REGISTRY.all).toContain("interactions");
     expect(JP_TILE_REGISTRY.defaults).toContain("interactions");
   });
