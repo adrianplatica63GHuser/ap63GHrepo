@@ -5,6 +5,11 @@
  * side; before, the previews were items of the list's wrapping row themselves,
  * and the second wrapped under the TABLE. One component, the four lists.
  * Measured in the browser by TC-TILES-19.
+ *
+ * Slice #39.04 changed this file in place: a list's previews are no longer „two at most, from any rows, a third
+ * replacing the oldest" in a column beside the TABLE (`data-list-preview-column`, gone). The magnifier is one of
+ * a row's three toggles (`@/lib/ui/row-tiles`): one row at a time, its preview at the top of the row tiles'
+ * column (`data-list-row-tiles`) beside the WHOLE list, 40 rem wide. Each changed assertion quotes what it read.
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -23,12 +28,12 @@ jest.mock("@/components/tiles/preview-data", () => ({
   loadPreview: async (target: { id: string }) => ({ title: `Teren ${target.id}`, fields: {} }),
 }));
 
-function renderList() {
+function renderList(resetKey = "p0") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const tree = (key: string) => (
     <QueryClientProvider client={client}>
-      <ListPreviews>
-        {/* Slice #38.75: `ListPreviews` holds the whole list; the table and its previews are `ListPreviewRow`. */}
+      <ListPreviews resetKey={key}>
+        {/* Slice #38.75: `ListPreviews` holds the whole list; the table is `ListPreviewRow`. */}
         <ListPreviewRow>
           <div data-list-edge="">
             <table>
@@ -46,51 +51,65 @@ function renderList() {
           </div>
         </ListPreviewRow>
       </ListPreviews>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const r = render(tree(resetKey));
+  return { ...r, rerenderWith: (key: string) => r.rerender(tree(key)) };
 }
 const press = (id: string) => fireEvent.click(document.querySelector(`[data-row="${id}"] button`)!);
-const row = () => document.querySelector<HTMLElement>("[data-list-previews]")!;
-const column = () => document.querySelector<HTMLElement>("[data-list-preview-column]");
+const row = () => document.querySelector<HTMLElement>("[data-list-incursion-row]")!;
+const column = () => document.querySelector<HTMLElement>("[data-list-row-tiles]");
 
-describe("a list's previews stand in one column beside the table (#38.05)", () => {
+describe("a list's preview stands in the row tiles' column, beside the whole list (#38.05, #39.04)", () => {
   it("with none open there is no column — nothing takes a gap in the row", () => {
     renderList();
     expect(column()).toBeNull();
     expect(row().children).toHaveLength(1);
+    expect(document.querySelector("[data-list-preview-column]")).toBeNull();
   });
 
-  it("the first opens in a column after the table; the second under it, in the same column", async () => {
+  it("the preview opens in a column after the list's body, 40 rem wide", async () => {
     renderList();
     await act(async () => press("A"));
     await waitFor(() => expect(column()?.querySelectorAll("[data-preview]")).toHaveLength(1));
-    await act(async () => press("B"));
-    await waitFor(() => expect(column()!.querySelectorAll("[data-preview]")).toHaveLength(2));
-    // The row holds the table's frame and the column — the previews are never items of the row itself.
+    // #38.05 read: the row (`data-list-previews`) holds the table's frame and the previews' column.
     const kids = [...row().children] as HTMLElement[];
     expect(kids).toHaveLength(2);
-    expect(kids[0]).toHaveAttribute("data-list-edge");
+    expect(kids[0]).toHaveAttribute("data-list-body");
     expect(kids[1]).toBe(column());
-    expect(kids.filter((k) => k.hasAttribute("data-preview"))).toHaveLength(0);
-    // A column: one under the other, each at its own width.
     expect(column()!.className).toMatch(/\bflex-col\b/);
-    expect(column()!.className).toMatch(/\bitems-start\b/);
+    expect(column()!.className).toMatch(/\bself-stretch\b/);
+    expect(column()!.style.width).toBe("40rem");
     expect(row().className).toMatch(/\bflex-wrap\b/);
-    await waitFor(() => expect([...column()!.querySelectorAll("[data-preview] h2")].map((h) => h.textContent)).toEqual(["Teren A", "Teren B"]));
+    await waitFor(() => expect([...column()!.querySelectorAll("[data-preview] h2")].map((h) => h.textContent)).toEqual(["Teren A"]));
+    // The preview takes the column's width, not its own detail-screen width.
+    expect(column()!.querySelector<HTMLElement>("[data-preview]")!.style.width).toBe("100%");
   });
 
-  it("still two at most: a third replaces the oldest, in the same column", async () => {
+  it("one row at a time: the other rows' magnifiers are disabled while it is open", async () => {
+    // #38.05/#38.71 read: „still two at most: a third replaces the oldest, in the same column".
     renderList();
-    for (const id of ["A", "B", "C"]) await act(async () => press(id));
-    await waitFor(() => expect([...column()!.querySelectorAll("[data-preview] h2")].map((h) => h.textContent)).toEqual(["Teren B", "Teren C"]));
+    await act(async () => press("A"));
+    await waitFor(() => expect(column()?.querySelectorAll("[data-preview]")).toHaveLength(1));
+    for (const id of ["B", "C"]) expect(document.querySelector(`[data-row="${id}"] button`)).toBeDisabled();
+    await act(async () => press("B"));
+    expect([...column()!.querySelectorAll("[data-preview]")]).toHaveLength(1);
   });
 
-  it("the four lists draw their table through it", () => {
+  it("a page change, a search or a filter (the list's `resetKey`) closes it and frees every row (Ask first 2)", async () => {
+    const { rerenderWith } = renderList("p0");
+    await act(async () => press("A"));
+    await waitFor(() => expect(column()).not.toBeNull());
+    rerenderWith("p1");
+    await waitFor(() => expect(column()).toBeNull());
+    for (const id of ["A", "B", "C"]) expect(document.querySelector(`[data-row="${id}"] button`)).toBeEnabled();
+  });
+
+  it("the four lists draw their table through it, and pass their page key", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
-      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; since #38.75 the table and
-      // its previews' column are `ListPreviewRow`, inside it.
-      expect([dir, /<ListPreviews( incursion=\{IncursionTile\})?>/.test(view)]).toEqual([dir, true]);
+      // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; #39.04 its page key.
+      expect([dir, /<ListPreviews incursion=\{IncursionTile\} resetKey=\{pageKey\}>/.test(view)]).toEqual([dir, true]);
       expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);
     }
   });
@@ -112,11 +131,15 @@ describe("„Previzualizare” is a magnifier, a toggle (Slice #38.71)", () => {
     expect(button("A")).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("a third preview replaces the oldest, and the oldest row's magnifier is released with it (Ask first #3)", async () => {
+  it("„Închide” on the preview releases its magnifier (#39.04)", async () => {
+    // #38.71 read here: „a third preview replaces the oldest, and the oldest row's magnifier is released with it".
     renderList();
-    for (const id of ["A", "B", "C"]) await act(async () => press(id));
-    await waitFor(() => expect(button("C")).toHaveAttribute("aria-pressed", "true"));
-    expect(["A", "B", "C"].map((id) => button(id).getAttribute("aria-pressed"))).toEqual(["false", "true", "true"]);
+    await act(async () => press("A"));
+    await waitFor(() => expect(column()?.querySelectorAll("[data-preview]")).toHaveLength(1));
+    const close = [...column()!.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.getAttribute("aria-label") === "close")!;
+    await act(async () => fireEvent.click(close));
+    await waitFor(() => expect(column()).toBeNull());
+    expect(button("A")).toHaveAttribute("aria-pressed", "false");
   });
 
   it("on the four lists the magnifier is the row's first button and „Deschide” its last", () => {

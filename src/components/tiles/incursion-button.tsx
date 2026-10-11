@@ -9,17 +9,19 @@
  * (`ListPreviews`); pressed again, it closes it. Drawn only on a list that offers an Incursiune.
  *
  * Slice #38.76 — „Legături", the chain link, after the eye: the row reads magnifier, eye, chain link, arrow.
- * The same toggle on the same choice (`incursion-context.ts`): pressed, it shows the object's „Legături" beside
- * the list, read-only, and closes whatever an eye or another chain link had open; it stays pressed until another
- * eye or chain link is pressed, or it is pressed again. Its icon is lucide's `Link` — the very icon the
- * „Asociază …" buttons inside „Legături" wear (`related-tile.tsx`, `LinkIcon`); its name and tooltip the tile's
- * own name, „Legături" (en-GB „Links", Ask first #1).
+ * Its icon is lucide's `Link` — the very icon the „Asociază …" buttons inside „Legături" wear
+ * (`related-tile.tsx`, `LinkIcon`); its name and tooltip the tile's own name, „Legături" (en-GB „Links").
+ *
+ * Slice #39.04 — the three are INDEPENDENT toggles on one row (`@/lib/ui/row-tiles`): the eye no longer closes the
+ * chain link's tile or the reverse, and neither closes the preview. While any of the three is open on a row, the
+ * three on every other row are drawn disabled, with a note saying why (`lockedNote`) — „Deschide" never is.
  */
 import { Eye, Link as LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconButton } from "@/lib/ui/icon-button";
 import type { PreviewTarget } from "@/lib/ui/previews";
-import { isOpenFor, useIncursion, type IncursionView } from "./incursion-context";
+import { isLocked, isRowTileOpen } from "@/lib/ui/row-tiles";
+import { useIncursion, type IncursionView } from "./incursion-context";
 
 export function IncursionButton({ target }: { target: PreviewTarget }) {
   const t = useTranslations("shared.incursion");
@@ -43,9 +45,11 @@ function ToggleButton({
   icon: typeof Eye;
   label: string;
 }) {
+  const t = useTranslations("shared.incursion");
   const incursion = useIncursion();
-  if (!incursion) return null;
-  const pressed = isOpenFor(incursion.open, target, view);
+  if (!incursion || !incursion.offersIncursion) return null;
+  const pressed = isRowTileOpen(incursion.state, target, view);
+  const locked = isLocked(incursion.state, target);
   return (
     <IconButton
       icon={icon}
@@ -53,6 +57,8 @@ function ToggleButton({
       variant={pressed ? "primary" : "secondary"}
       size="xs"
       aria-pressed={pressed}
+      disabled={locked}
+      note={locked ? t("lockedNote") : undefined}
       // The specs' marks: the eye's since #38.72, the chain link's since #38.76.
       data-incursion-toggle={view === "peek" ? "" : undefined}
       data-links-toggle={view === "links" ? "" : undefined}

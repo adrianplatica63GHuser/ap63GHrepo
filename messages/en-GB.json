@@ -626,7 +626,7 @@
       "title": "Peek inside",
       "interactions": "Interactions",
       "map": "Map",
-      "lockedNote": "Preview comes back when the peek closes."
+      "lockedNote": "Close the tiles open on another row first."
     },
     "preview": {
       "title": "Preview",

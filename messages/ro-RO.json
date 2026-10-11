@@ -626,7 +626,7 @@
       "title": "Incursiune",
       "interactions": "Interacțiuni",
       "map": "Hartă",
-      "lockedNote": "Previzualizarea revine când se închide incursiunea."
+      "lockedNote": "Închideți întâi fișele deschise pe alt rând."
     },
     "preview": {
       "title": "Previzualizare",

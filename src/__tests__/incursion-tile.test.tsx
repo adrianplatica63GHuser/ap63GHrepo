@@ -4,6 +4,11 @@
  * A LOOK, NOT AN EDIT, as a preview is (#37.24, preview-tiles.test.tsx): the tile reuses the detail screens'
  * tiles in their read-only forms and reaches no form and no write. One at a time; while it is open every
  * magnifier on the list is released and disabled. TC-TILES-11 steps 6–7 drive it in the browser.
+ *
+ * Slice #39.04 changed this file in place: the eye, the chain link and the magnifier are independent toggles on
+ * ONE row (`@/lib/ui/row-tiles`, row-tiles.test.ts) — any subset open, the other rows' three disabled, the tiles in
+ * one 40 rem column beside the list in the order Previzualizare, Legături, Incursiune. Each changed test quotes
+ * what it held before.
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -74,30 +79,35 @@ const eye = (id: string) => document.querySelector<HTMLButtonElement>(`[data-row
 const tile = () => document.querySelector<HTMLElement>("[data-incursion]");
 const link = (id: string) => document.querySelector<HTMLButtonElement>(`[data-row="${id}"] [data-links-toggle]`)!;
 
-describe("the eye opens one Incursiune, and the magnifiers yield to it (#38.72)", () => {
-  it("pressed, it shows its row's tile beside the list, closes the open preview and disables every magnifier", async () => {
+describe("the eye opens its row's Incursiune; the other rows' three wait (#38.72, #39.04)", () => {
+  // #38.72 read: „pressed, it shows its row's tile beside the list, closes the open preview and disables every magnifier".
+  it("pressed, it shows its row's tile in the column; the row's preview stays; every other row's three are disabled", async () => {
     renderList();
     await act(async () => fireEvent.click(magnifier("A")));
     await waitFor(() => expect(document.querySelectorAll("[data-preview]")).toHaveLength(1));
     await act(async () => fireEvent.click(eye("A")));
     expect(tile()).toHaveAttribute("data-for", "A");
     expect(eye("A")).toHaveAttribute("aria-pressed", "true");
-    expect(document.querySelectorAll("[data-preview]")).toHaveLength(0);
-    for (const id of ["A", "B"]) {
-      expect(magnifier(id)).toBeDisabled();
-      expect(magnifier(id)).toHaveAttribute("aria-pressed", "false");
+    expect(document.querySelectorAll("[data-preview]")).toHaveLength(1);
+    expect(magnifier("A")).toBeEnabled();
+    expect(magnifier("A")).toHaveAttribute("aria-pressed", "true");
+    for (const b of [magnifier("B"), eye("B"), link("B")]) {
+      expect(b).toBeDisabled();
+      expect(b).toHaveAttribute("aria-pressed", "false");
     }
   });
 
-  it("one at a time: another row's eye moves it there (Ask first #1); the same eye again closes it and frees the magnifiers", async () => {
+  // #38.72 read: „one at a time: another row's eye moves it there (Ask first #1); the same eye again closes it and
+  // frees the magnifiers".
+  it("another row's eye does nothing while this row has a tile; the same eye again closes it and frees every row", async () => {
     renderList();
     await act(async () => fireEvent.click(eye("A")));
     await act(async () => fireEvent.click(eye("B")));
-    expect(tile()).toHaveAttribute("data-for", "B");
-    expect([eye("A").getAttribute("aria-pressed"), eye("B").getAttribute("aria-pressed")]).toEqual(["false", "true"]);
-    await act(async () => fireEvent.click(eye("B")));
+    expect(tile()).toHaveAttribute("data-for", "A");
+    expect([eye("A").getAttribute("aria-pressed"), eye("B").getAttribute("aria-pressed")]).toEqual(["true", "false"]);
+    await act(async () => fireEvent.click(eye("A")));
     expect(tile()).toBeNull();
-    for (const id of ["A", "B"]) expect(magnifier(id)).toBeEnabled();
+    for (const id of ["A", "B"]) for (const b of [magnifier(id), eye(id), link(id)]) expect(b).toBeEnabled();
   });
 
   it("„Închide” on the tile closes it as the eye does", async () => {
@@ -152,10 +162,14 @@ describe("a look, not an edit (#38.72)", () => {
     expect((pages.match(/\{mode === "edit" && \(/g) ?? []).length).toBeGreaterThanOrEqual(2);
   });
 
-  it("fills the row beside the list, never narrower than the tile on its screen", () => {
-    // Slice #38.75: and `self-stretch`, to the list's height.
-    expect(TILE).toContain('className="flex min-w-0 flex-1 flex-col gap-2 self-stretch"');
-    expect(TILE).toContain("style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}");
+  // #38.72/#38.75 read: „fills the row beside the list, never narrower than the tile on its screen" —
+  // `className="flex min-w-0 flex-1 flex-col gap-2 self-stretch"`, `style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}`.
+  it("is the column's width (#39.04); the Incursiune fills the column's height, „Legături” keeps its own", () => {
+    expect(TILE).toContain('className={view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2" : "flex w-full min-w-0 flex-col gap-2"}');
+    expect(TILE).not.toContain("INCURSION_MIN_REM");
+    const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
+    expect(tiles).toContain("export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };");
+    expect(tiles).toContain('<div data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={ROW_TILES_STYLE}>');
   });
 
   it("the four lists draw magnifier, eye, chain link, arrow, and offer the tile", () => {
@@ -166,9 +180,10 @@ describe("a look, not an edit (#38.72)", () => {
       // #38.72 held magnifier, eye, arrow (`at("<IncursionButton") < at("icon={ArrowRight}")`); #38.76 puts the
       // chain link between the eye and the arrow.
       expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("<LinksButton") && at("<LinksButton") < at("icon={ArrowRight}")]).toEqual([dir, true]);
-      expect([dir, view.includes("<ListPreviews incursion={IncursionTile}>")]).toEqual([dir, true]);
+      // #39.04: and the list's page key (was `<ListPreviews incursion={IncursionTile}>`).
+      expect([dir, view.includes("<ListPreviews incursion={IncursionTile} resetKey={pageKey}>")]).toEqual([dir, true]);
       // Slice #38.75: around the whole list, its first child the toolbar; the table frame in `ListPreviewRow`.
-      expect([dir, /<ListPreviews incursion=\{IncursionTile\}>\s*\{\/\* Toolbar/.test(view)]).toEqual([dir, true]);
+      expect([dir, /<ListPreviews incursion=\{IncursionTile\} resetKey=\{pageKey\}>\s*\{\/\* Toolbar/.test(view)]).toEqual([dir, true]);
       expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);
       expect([dir, /<\/ListPreviews>\s*\);\s*\}\s*$/.test(view)]).toEqual([dir, true]);
     }
@@ -200,17 +215,21 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     const kids = [...row().children];
     expect(kids).toHaveLength(2);
     expect(kids[0]).toBe(body());
-    expect(kids[1]).toBe(tile());
+    // #39.04: was `expect(kids[1]).toBe(tile())` — the tile stands in the row tiles' column now.
+    expect(kids[1]).toHaveAttribute("data-list-row-tiles");
+    expect(kids[1].contains(tile())).toBe(true);
     // The toolbar and the table's row are inside the list's body, so the tile's height is all of theirs.
     expect(body().querySelector("[data-list-toolbar]")).not.toBeNull();
     expect(body().querySelector("[data-list-previews]")).not.toBeNull();
     expect(body().className).not.toMatch(/(^|\s)w-full(\s|$)/);
   });
 
-  it("the list is not stretched; the tile is (Ask first #1, #2)", () => {
+  it("the list is not stretched; the column is, and the Incursiune fills it (Ask first #1, #2; #39.04)", () => {
     const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
     expect(tiles).toContain('<div data-list-incursion-row className="flex flex-wrap items-start gap-4">');
-    expect(TILE).toContain("self-stretch");
+    // #38.75 read `expect(TILE).toContain("self-stretch")`: the tile stretched itself; now the column does.
+    expect(tiles).toMatch(/data-list-row-tiles className="[^"]*\bself-stretch\b/);
+    expect(TILE).toContain('view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2"');
   });
 
   it("the map's box and the page viewer grow into the height, never below today's; „Interacțiuni” grows, its sentence at the top", () => {
@@ -261,7 +280,8 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
   const RELATED = read("src", "components", "tiles", "related-tile.tsx");
   const BUTTON = read("src", "components", "tiles", "incursion-button.tsx");
 
-  it("pressed, it shows its row's „Legături”, reads pressed, closes the open preview and locks every magnifier", async () => {
+  // #38.76 read: „pressed, it shows its row's „Legături”, reads pressed, closes the open preview and locks every magnifier".
+  it("pressed, it shows its row's „Legături” and reads pressed; the row's preview stays; the other rows wait", async () => {
     renderList();
     await act(async () => fireEvent.click(magnifier("A")));
     await waitFor(() => expect(document.querySelectorAll("[data-preview]")).toHaveLength(1));
@@ -270,24 +290,29 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
     expect(tile()).toHaveAttribute("data-incursion-view", "links");
     expect(link("A")).toHaveAttribute("aria-pressed", "true");
     expect(eye("A")).toHaveAttribute("aria-pressed", "false");
-    expect(document.querySelectorAll("[data-preview]")).toHaveLength(0);
-    for (const id of ["A", "B"]) expect(magnifier(id)).toBeDisabled();
+    expect(document.querySelectorAll("[data-preview]")).toHaveLength(1);
+    expect(magnifier("A")).toBeEnabled();
+    for (const b of [magnifier("B"), eye("B"), link("B")]) expect(b).toBeDisabled();
   });
 
-  it("one choice with the eye: an eye after it closes it and the reverse; another row's chain link moves it; pressed again it closes", async () => {
+  // #38.76 read: „one choice with the eye: an eye after it closes it and the reverse; another row's chain link moves
+  // it; pressed again it closes".
+  it("independent of the eye (#39.04): both open together, in the column's order, whatever order pressed", async () => {
     renderList();
-    await act(async () => fireEvent.click(link("A")));
     await act(async () => fireEvent.click(eye("A")));
-    expect(document.querySelectorAll("[data-incursion]")).toHaveLength(1);
-    expect(tile()).toHaveAttribute("data-incursion-view", "peek");
-    expect([eye("A").getAttribute("aria-pressed"), link("A").getAttribute("aria-pressed")]).toEqual(["true", "false"]);
-    await act(async () => fireEvent.click(link("B")));
-    expect(tile()).toHaveAttribute("data-for", "B");
-    expect(tile()).toHaveAttribute("data-incursion-view", "links");
-    expect([eye("A"), link("A"), eye("B"), link("B")].map((b) => b.getAttribute("aria-pressed"))).toEqual(["false", "false", "false", "true"]);
-    await act(async () => fireEvent.click(link("B")));
-    expect(tile()).toBeNull();
-    for (const id of ["A", "B"]) expect(magnifier(id)).toBeEnabled();
+    await act(async () => fireEvent.click(link("A")));
+    await act(async () => fireEvent.click(magnifier("A")));
+    expect([eye("A"), link("A"), magnifier("A")].map((b) => b.getAttribute("aria-pressed"))).toEqual(["true", "true", "true"]);
+    await waitFor(() => expect(document.querySelectorAll("[data-preview]")).toHaveLength(1));
+    const column = document.querySelector<HTMLElement>("[data-list-row-tiles]")!;
+    const order = [...column.children].map((c) => (c.hasAttribute("data-preview") ? "preview" : c.getAttribute("data-incursion-view")));
+    expect(order).toEqual(["preview", "links", "peek"]);
+    await act(async () => fireEvent.click(link("A")));
+    expect([...document.querySelectorAll("[data-incursion]")].map((s) => s.getAttribute("data-incursion-view"))).toEqual(["peek"]);
+    await act(async () => fireEvent.click(eye("A")));
+    await act(async () => fireEvent.click(magnifier("A")));
+    expect(document.querySelector("[data-list-row-tiles]")).toBeNull();
+    for (const id of ["A", "B"]) for (const b of [magnifier(id), eye(id), link(id)]) expect(b).toBeEnabled();
   });
 
   it("its icon is the very one „Asociază …” wears inside „Legături” — lucide's Link — and its name „Legături” / „Links”", () => {
@@ -323,7 +348,9 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
       expect(groupSurface(group)).toBe(RELATED_TILE_SURFACE);
     }
     expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related")),');
-    expect(TILE).toContain("className={`${LINKS_SURFACE[target.kind]} flex flex-1 flex-col`}");
+    // #39.04: was `flex flex-1 flex-col` — „Legături" keeps its own height in the column now.
+    expect(TILE).toContain("className={`${LINKS_SURFACE[target.kind]} flex flex-col`}");
+    expect(TILE).toContain("style={{ height: INTERACTIONS_TILE_STYLE.minHeight }}");
     // The rows keep their own, calmer green (#38.15): RelatedTile draws them, whatever `readOnly` is.
     expect(RELATED).toMatch(/data-related-rows=""\s*\/\/[^\n]*\n\s*className=\{RELATED_ROWS_SURFACE\}/);
   });

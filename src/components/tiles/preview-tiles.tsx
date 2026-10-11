@@ -39,9 +39,10 @@ import { Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { loadPreview } from "./preview-data";
-import { PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
+import { PAGES_PANEL_REM, PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, rem, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
-import { IncursionContext, type Incursion, type IncursionOpen, type IncursionTileComponent, type IncursionView } from "./incursion-context";
+import { NO_ROW_TILES, closeRowTile, isLocked, isRowTileOpen, toggleRowTile, type RowTile, type RowTiles } from "@/lib/ui/row-tiles";
+import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
 
 // ── Which previews are open ───────────────────────────────────────────────────
 
@@ -82,14 +83,35 @@ export function PreviewOpenerProvider({ previews, children }: { previews: Previe
  */
 export function PreviewButton({ target }: { target: PreviewTarget }) {
   const previews = useContext(OpenerContext);
-  // Slice #38.72: while the list's Incursiune is open, every magnifier is released and disabled.
-  const incursion = useContext(IncursionContext);
+  // Slice #39.04: on a list the magnifier is one of the row's three toggles (`@/lib/ui/row-tiles`) — pressed it
+  // opens the row's preview at the top of the column; on another row with tiles open it is disabled.
+  const list = useContext(IncursionContext);
   const t = useTranslations("shared.preview");
   const tIncursion = useTranslations("shared.incursion");
+  if (list) {
+    const pressed = isRowTileOpen(list.state, target, "preview");
+    const locked = isLocked(list.state, target);
+    return (
+      <IconButton
+        icon={Search}
+        label={t("openPreview")}
+        variant={pressed ? "primary" : "secondary"}
+        size="xs"
+        aria-pressed={pressed}
+        disabled={locked}
+        note={locked ? tIncursion("lockedNote") : undefined}
+        data-preview-toggle=""
+        onClick={(e) => {
+          e.stopPropagation();
+          list.toggle(target, "preview");
+        }}
+        onDoubleClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
   if (!previews) return null;
   const key = previewKey(target);
-  const locked = incursion !== null && incursion.open !== null;
-  const pressed = !locked && previews.open.some((p) => previewKey(p) === key);
+  const pressed = previews.open.some((p) => previewKey(p) === key);
   return (
     <IconButton
       icon={Search}
@@ -97,8 +119,6 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
       variant={pressed ? "primary" : "secondary"}
       size="xs"
       aria-pressed={pressed}
-      disabled={locked}
-      note={locked ? tIncursion("lockedNote") : undefined}
       data-preview-toggle=""
       onClick={(e) => {
         e.stopPropagation();
@@ -145,62 +165,82 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
  * not stretched, and a tile wrapped under the list (a narrow window) stretches only to itself. `ListPreviewRow`
  * wraps the table frame alone and draws the previews' column beside it, exactly where #38.05 put it — the
  * previews are not this slice's. Both read one state, held here.
+ *
+ * Slice #39.04 — A ROW'S THREE TOGGLES, ONE COLUMN. What is above about two previews from any rows, one Incursiune,
+ * and the previews' column beside the table is replaced on the lists: one row at a time, any subset of its
+ * magnifier, eye and chain link, the other rows' three disabled, and the open tiles in ONE column beside the whole
+ * list — „Previzualizare" at the top, „Legături" in the middle, „Incursiune" at the bottom — each 40 rem wide.
+ * „Previzualizare" and „Legături" keep their own heights; „Incursiune" takes what is left down to the list's
+ * bottom, never below its own minimum (Ask first 1). A page change, a search or a filter closes all three
+ * (`resetKey`, Ask first 2). The detail screens' previews (`usePreviews`, two at most) are untouched.
  */
-export function ListPreviews({ children, incursion: IncursionTile }: { children: ReactNode; incursion?: IncursionTileComponent }) {
-  const previews = usePreviews();
-  // Slice #38.72: the row whose „Incursiune" is open — one at a time (Ask first #1). A list without an
-  // Incursiune tile offers none, and its magnifiers are never locked.
-  // Slice #38.76: and which tile — the eye's or the chain link's; one choice for both (Ask first: none — the header's).
-  const [open, setOpen] = useState<IncursionOpen | null>(null);
-  const toggle = useCallback(
-    (target: PreviewTarget, view: IncursionView) => {
-      const opening = open === null || previewKey(open) !== previewKey(target) || open.view !== view;
-      setOpen(opening ? { kind: target.kind, id: target.id, view } : null);
-      // While it is open no preview is: every magnifier is released, its preview closed.
-      if (opening) for (const p of previews.open) previews.close(previewKey(p));
-    },
-    [open, previews],
+export function ListPreviews({
+  children,
+  incursion: IncursionTile,
+  resetKey,
+}: {
+  children: ReactNode;
+  incursion?: IncursionTileComponent;
+  /**
+   * Slice #39.04 (Ask first 2): the list's page, search and filters in one string (its `pageKey`). When it changes
+   * — the open row may be off the screen — all three close and every row is free again.
+   */
+  resetKey?: string;
+}) {
+  const [tiles, setTiles] = useState<RowTiles>(NO_ROW_TILES);
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    setTiles(NO_ROW_TILES);
+  }
+  const toggle = useCallback((target: PreviewTarget, tile: RowTile) => setTiles((s) => toggleRowTile(s, target, tile)), []);
+  const close = useCallback((tile: RowTile) => setTiles((s) => closeRowTile(s, tile)), []);
+  const offersIncursion = IncursionTile !== undefined;
+  const incursion = useMemo<Incursion>(
+    () => ({ state: tiles, toggle, close, offersIncursion }),
+    [tiles, toggle, close, offersIncursion],
   );
-  const incursion = useMemo<Incursion | null>(() => (IncursionTile ? { open, toggle } : null), [IncursionTile, open, toggle]);
-  const peeking = IncursionTile !== undefined && open !== null;
+  const row = tiles.row;
   return (
-    <PreviewOpenerProvider previews={previews}>
-      <IncursionContext.Provider value={incursion}>
-        <div data-list-incursion-row className="flex flex-wrap items-start gap-4">
-          {/* The whole page's width while nothing stands beside it, as the list's own column always was. */}
-          <div data-list-body className={peeking ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
-            {children}
-          </div>
-          {IncursionTile && open && (
-            <IncursionTile
-              key={`${open.view}:${previewKey(open)}`}
-              target={{ kind: open.kind, id: open.id }}
-              view={open.view}
-              onClose={() => setOpen(null)}
-            />
-          )}
+    <IncursionContext.Provider value={incursion}>
+      <div data-list-incursion-row className="flex flex-wrap items-start gap-4">
+        {/* The whole page's width while nothing stands beside it, as the list's own column always was. */}
+        <div data-list-body className={row ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
+          {children}
         </div>
-      </IncursionContext.Provider>
-    </PreviewOpenerProvider>
+        {row && (
+          // Slice #39.04: one column, 40 rem (the person screen's „Interacțiuni" tile), as tall as the list; the
+          // tiles in the fixed order, whatever order they were pressed in. A narrow window drops it under the list,
+          // still 40 rem (Ask first 3).
+          <div data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={ROW_TILES_STYLE}>
+            {tiles.open.map((tile) =>
+              tile === "preview" ? (
+                <PreviewTile key={`preview:${previewKey(row)}`} target={row} onClose={() => close("preview")} style={FILL_COLUMN} />
+              ) : IncursionTile ? (
+                <IncursionTile key={`${tile}:${previewKey(row)}`} target={row} view={tile} onClose={() => close(tile)} />
+              ) : null,
+            )}
+          </div>
+        )}
+      </div>
+    </IncursionContext.Provider>
   );
 }
 
+/** Slice #39.04: the row tiles' column — the person screen's „Interacțiuni" width, `PAGES_PANEL_REM` (40 rem). */
+export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
+
+/** A preview in that column takes the column's width, whatever width it has on a detail screen. */
+const FILL_COLUMN: CSSProperties = { width: "100%" };
+
 /**
- * The table frame and, beside it, the open previews' column (Slice #38.05) — inside `ListPreviews` (#38.75).
- * While an Incursiune is open no preview is (#38.72), so the column is never drawn beside it.
+ * The table frame (Slice #38.05, #38.75). Since #39.04 the list's previews stand in the row tiles' column beside the
+ * whole list (`ListPreviews`), so this lays out the table alone.
  */
 export function ListPreviewRow({ children }: { children: ReactNode }) {
-  const previews = useContext(OpenerContext);
-  const incursion = useContext(IncursionContext);
-  const peeking = incursion !== null && incursion.open !== null;
   return (
     <div data-list-previews className="flex flex-wrap items-start gap-4">
       {children}
-      {previews !== null && previews.open.length > 0 && !peeking && (
-        <div data-list-preview-column className="flex flex-col items-start gap-4">
-          <PreviewTiles previews={previews} />
-        </div>
-      )}
     </div>
   );
 }

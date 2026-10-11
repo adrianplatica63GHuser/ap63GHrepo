@@ -35,6 +35,12 @@
  * scrolling inside it when there are more than the list's height holds; never below „Interacțiuni"'s height.
  * The head line is the eye's (Ask first #2). A document's „Legături" lists every person link — the parties too:
  * the Incursiune has no „Părți" beside it, as a contract de vânzare's screen has.
+ *
+ * Slice #39.04 — IN THE ROW TILES' COLUMN, 40 REM. The eye's and the chain link's tiles may now be open together, with
+ * the row's preview above them (`ListPreviews`): each is the column's width (40 rem, the person screen's
+ * „Interacțiuni"), no longer filling what the row leaves — so a property's „Hartă" grows from 3 units to 40 rem.
+ * „Legături" keeps its own height, „Interacțiuni"'s, its rows scrolling inside; the Incursiune („peek") takes what
+ * the column leaves down to the list's bottom, never below its own minimum.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -45,7 +51,7 @@ import { InteractionsTile } from "@/components/tiles/interactions-tile";
 import { loadPreview } from "@/components/tiles/preview-data";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { IconButton } from "@/lib/ui/icon-button";
-import { INTERACTIONS_TILE_STYLE, MAP_BOX_HEIGHT_REM, PAGES_PANEL_REM, rem, unitsRem } from "@/lib/ui/field-widths";
+import { INTERACTIONS_TILE_STYLE, MAP_BOX_HEIGHT_REM, rem } from "@/lib/ui/field-widths";
 import type { IncursionView } from "@/components/tiles/incursion-context";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { tileGroupOf } from "@/lib/ui/tiles";
@@ -61,14 +67,6 @@ import { PROP_TILE_REGISTRY } from "@/app/properties/_components/property-tiles"
 import { PersonRelatedTile } from "@/app/natural-persons/_components/person-related-tile";
 import { PropertyRelatedTile } from "@/app/properties/_components/property-related-tile";
 import { DocumentRelatedTile } from "@/app/documents/_components/document-related-tile";
-
-/** Never narrower than the tile on its detail screen: „Interacțiuni" and „Pagini" 4 units, „Hartă" 3. */
-export const INCURSION_MIN_REM: Readonly<Record<PreviewKind, number>> = {
-  person: PAGES_PANEL_REM,
-  company: PAGES_PANEL_REM,
-  property: unitsRem(3),
-  document: PAGES_PANEL_REM,
-};
 
 /** What an Incursiune shows of a document: a saved one, whose „Pagini" its screen offers. */
 const SAVED_DOCUMENT: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: true };
@@ -108,8 +106,8 @@ export function IncursionTile({ target, view, onClose }: { target: PreviewTarget
       data-incursion={target.kind}
       data-incursion-view={view}
       aria-label={`${t("title")}: ${name}`}
-      className="flex min-w-0 flex-1 flex-col gap-2 self-stretch"
-      style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}
+      // Slice #39.04: the column's width; the Incursiune fills the column's height, „Legături" keeps its own.
+      className={view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2" : "flex w-full min-w-0 flex-col gap-2"}
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="min-w-0 truncate text-sm font-semibold text-ink dark:text-zinc-100" title={name}>
@@ -186,8 +184,9 @@ function IncursionLinks({ target, label }: { target: PreviewTarget; label: strin
     <section
       data-tile="incursion-links"
       aria-label={label}
-      className={`${LINKS_SURFACE[target.kind]} flex flex-1 flex-col`}
-      style={{ minHeight: INTERACTIONS_TILE_STYLE.minHeight }}
+      className={`${LINKS_SURFACE[target.kind]} flex flex-col`}
+      // Slice #39.04: its own height — „Interacțiuni"'s — its rows scrolling past it; the column's rest is the Incursiune's.
+      style={{ height: INTERACTIONS_TILE_STYLE.minHeight }}
     >
       <TileTitle title={label} />
       <div className="relative min-h-0 flex-1">

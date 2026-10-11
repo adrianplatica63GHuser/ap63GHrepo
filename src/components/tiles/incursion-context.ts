@@ -1,50 +1,44 @@
 "use client";
 
 /**
- * Which row's „Incursiune" is open on a list.                        (Slice #38.72)
+ * Which row's tiles are open on a list.                                (Slice #38.72, #38.76, #39.04)
  *
- * The eye on a row of the four principal lists (`IncursionButton`) shows, beside the list, the one tile that
- * says most about that object — `ListPreviews` holds the choice and draws the tile. ONE at a time (Ask first
- * #1): pressing another row's eye moves it there. While one is open every magnifier on the list is released,
- * its preview closed, and disabled (`PreviewButton` reads this). Nothing is stored: a reload closes it.
+ * The four principal lists' rows carry three toggles — the magnifier („Previzualizare", `PreviewButton`), the eye
+ * („Incursiune", `IncursionButton`) and the chain link („Legături", `LinksButton`). `ListPreviews` holds which row
+ * and which of its tiles are open (`@/lib/ui/row-tiles`) and draws them in one column beside the list.
  *
- * Its own module, so the eye's button, the list's previews and the tile (which lives under `src/app/`, because
- * it reuses the detail screens' tiles) can all reach it without importing each other.
+ * Slice #39.04 replaced #38.72's „one eye or chain link per list, the magnifiers locked while it is open" and
+ * #38.71's „two previews from any rows": now ONE row at a time and, on that row, any subset of the three; while
+ * any is open, the three on every other row are disabled. Nothing is stored: a reload, a page change, a search or a
+ * filter closes them.
  *
- * Slice #38.76: and WHICH TILE — the eye's („peek") or the chain link's, „Legături" („links"). One choice per
- * list, shared: at most one eye or chain link is pressed on the whole list, and pressing either closes whatever
- * the other had open. One context, so #38.72's magnifier lock covers both.
+ * Its own module, so the buttons, the list's column and the tile (which lives under `src/app/`, because it reuses
+ * the detail screens' tiles) can all reach it without importing each other.
  */
 import { createContext, useContext, type ComponentType } from "react";
-import { previewKey, type PreviewTarget } from "@/lib/ui/previews";
+import type { PreviewTarget } from "@/lib/ui/previews";
+import type { RowTile, RowTiles } from "@/lib/ui/row-tiles";
 
-/** Slice #38.76: the tile an open row shows — the eye's („peek") or the chain link's „Legături" („links"). */
-export type IncursionView = "peek" | "links";
-
-/** The open row and the tile it shows. */
-export type IncursionOpen = PreviewTarget & { view: IncursionView };
+/** The two tiles from inside the object — the eye's („peek") and the chain link's „Legături" („links"). */
+export type IncursionView = Exclude<RowTile, "preview">;
 
 export interface Incursion {
-  /** The row whose Incursiune is open, and which tile, or none. */
-  open: IncursionOpen | null;
-  /**
-   * The eye or the chain link pressed: opens this row's tile, moves it here from another row or another button,
-   * or — the same row and the same button — closes it.
-   */
-  toggle: (target: PreviewTarget, view: IncursionView) => void;
-}
-
-/** Whether `open` is this row's `view` — the button that opened it reads pressed. */
-export function isOpenFor(open: IncursionOpen | null, target: PreviewTarget, view: IncursionView): boolean {
-  return open !== null && open.view === view && previewKey(open) === previewKey(target);
+  /** The open row and its open tiles. */
+  state: RowTiles;
+  /** A row's button pressed: opens or closes that tile on that row (nothing on a locked row). */
+  toggle: (target: PreviewTarget, tile: RowTile) => void;
+  /** A tile's „Închide": releases its button. */
+  close: (tile: RowTile) => void;
+  /** Whether the list draws the eye and the chain link — it passed `ListPreviews` an Incursiune tile. */
+  offersIncursion: boolean;
 }
 
 export const IncursionContext = createContext<Incursion | null>(null);
 
-/** The list's Incursiune, or null outside a list that offers one (a detail screen's association tiles). */
+/** The list's row tiles, or null outside a list (a detail screen's association tiles). */
 export function useIncursion(): Incursion | null {
   return useContext(IncursionContext);
 }
 
-/** The tile a list draws for an open Incursiune — `src/app/_components/incursion-tile.tsx`. */
+/** The tile a list draws for an open eye or chain link — `src/app/_components/incursion-tile.tsx`. */
 export type IncursionTileComponent = ComponentType<{ target: PreviewTarget; view: IncursionView; onClose: () => void }>;
