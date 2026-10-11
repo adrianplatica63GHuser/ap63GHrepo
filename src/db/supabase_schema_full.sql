@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-10 18:30
+-- Generated : 2026-10-11 18:54
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -725,6 +725,9 @@ CREATE TABLE public.lookup_person_role (
     converse_name_male text,
     converse_name_female text,
     parent_kind text,
+    kinship text,
+    CONSTRAINT chk_lookup_person_role_kinship CHECK (((kinship IS NULL) OR (kinship = ANY (ARRAY['PARENT'::text, 'CHILD'::text, 'SPOUSE'::text, 'SIBLING'::text, 'OTHER'::text])))),
+    CONSTRAINT chk_lookup_person_role_kinship_parent CHECK (((parent_kind IS NULL) OR (kinship = 'PARENT'::text))),
     CONSTRAINT chk_lookup_person_role_parent_kind CHECK (((parent_kind IS NULL) OR (parent_kind = ANY (ARRAY['FATHER'::text, 'MOTHER'::text]))))
 );
 
@@ -769,6 +772,13 @@ COMMENT ON COLUMN public.lookup_person_role.converse_name_female IS 'The convers
 --
 
 COMMENT ON COLUMN public.lookup_person_role.parent_kind IS 'FATHER or MOTHER on the one role each that a person created from an identity card''s parents is linked by (Slice #38.29, „Tată" and „Mamă"); NULL on every other role. The code finds those two roles by this column, never by their names, which are Adrian''s to rename. At most one row each (uq_lookup_person_role_parent_kind).';
+
+
+--
+-- Name: COLUMN lookup_person_role.kinship; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.kinship IS 'The family tie the holder of the role has towards the other person of a person_person pair, read the way the role is (role_reads_a_to_b): PARENT, CHILD, SPOUSE, SIBLING, OTHER (a relative placed in no generation), or NULL for no family tie (Slice #39.10). The inheritance tree reads generations from this column, never from a role''s name. A role with a parent_kind is always PARENT (chk_lookup_person_role_kinship_parent).';
 
 
 --
