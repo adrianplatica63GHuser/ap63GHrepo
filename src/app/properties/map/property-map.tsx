@@ -39,6 +39,9 @@ import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { IconButton } from "@/lib/ui/icon-button";
 import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths";
+import { addCorner, nextAreaMode, removeLastCorner, type AreaMode } from "@/lib/geo/area-tool";
+import { AreaDelimitedIcon } from "@/components/icons/area-icons";
+import { AreaLayer } from "./area-layer";
 import {
   FOCUS_BLINK,
   PROPERTY_MAP_PATH,
@@ -450,6 +453,8 @@ function CornerMarker({
   return (
     <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }}>
       <div
+        // Slice #39.07: where the corner is, for the area tool's spec (TC-MAP-02) to click it.
+        data-corner-marker={`${corner.lat},${corner.lon}`}
         style={{
           width:           10,
           height:          10,
@@ -798,6 +803,15 @@ export default function PropertyMap() {
   const [anglesMode,    setAnglesMode]    = useState(false);
   const [anglesSnap,    setAnglesSnap]    = useState<LatLng | null>(null);
   const [anglesDisplay, setAnglesDisplay] = useState<{ corner: LatLng; arcs: AngleArcInfo[] } | null>(null);
+
+  // The area tools (Slices #39.07, #39.08) — „Suprafața unei zone delimitate" and „… oarecare". While either is
+  // pressed nothing else on the map works (the other tools are disabled, a click opens no InfoWindow, the bottom
+  // bar is hidden); panning and zooming do. Nothing is written. `areaCorners` is the polygon, in order; `areaSnap`
+  // the property corner the cursor is snapping to (the Ruler's ring).
+  const [areaMode,    setAreaMode]    = useState<AreaMode | null>(null);
+  const [areaCorners, setAreaCorners] = useState<readonly { lat: number; lon: number }[]>([]);
+  const [areaSnap,    setAreaSnap]    = useState<LatLng | null>(null);
+  const areaOn = areaMode !== null;
 
   // Refs read inside the container-level ruler listeners so their closures
   // always see the latest values without re-binding on every change.
@@ -1222,6 +1236,89 @@ export default function PropertyMap() {
     setAnglesSnap(null);
     setAnglesDisplay(null);
   }, []);
+
+  // -------------------------------------------------------------------------
+  // Area tools (Slices #39.07, #39.08)
+  // -------------------------------------------------------------------------
+
+  /** A tool's button: on → that tool, the other released and its polygon gone; pressed again → none, all gone. */
+  const toggleAreaMode = useCallback((pressed: AreaMode) => {
+    setAreaMode((prev) => {
+      const next = nextAreaMode(prev, pressed);
+      if (next) {
+        // Nothing else works while it is pressed: leave every other tool, close the InfoWindow and the groups panel.
+        setSelected(null);
+        setRulerMode(false);
+        setRulerStart(null);
+        setRulerEnd(null);
+        setRulerCursor(null);
+        setRulerSnap(null);
+        setAnglesMode(false);
+        setAnglesSnap(null);
+        setAnglesDisplay(null);
+        setSelectMode(false);
+        setDragStart(null);
+        setDragCurrent(null);
+        setGroupsPanelOpen(false);
+      }
+      return next;
+    });
+    setAreaCorners([]);
+    setAreaSnap(null);
+  }, []);
+
+  // #39.07: a click chooses the property corner nearest it within SNAP_PX — the Ruler's snap — and a click with no
+  // corner near does nothing. A drag pans. Backspace takes the last corner back (Ask first 3).
+  useEffect(() => {
+    if (areaMode !== "delimited") return;
+    const container = containerRef.current;
+    if (!container) return;
+    let downPx: PixelPoint | null = null;
+    let moved = false;
+    const isUi = (e: Event) => !!(e.target as Element).closest?.("[data-map-ui],.gm-style-iw,.gmnoprint");
+    const at = (e: MouseEvent): PixelPoint => {
+      const rect = container.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (isUi(e)) return;
+      downPx = at(e);
+      moved = false;
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      const px = at(e);
+      if (downPx && Math.hypot(px.x - downPx.x, px.y - downPx.y) > 5) moved = true;
+      if (isUi(e)) return;
+      setAreaSnap(computeRulerSnap(px));
+    };
+    const onMouseUp = (e: MouseEvent) => {
+      if (!downPx) return;
+      const px = at(e);
+      const isClick = !moved && Math.hypot(px.x - downPx.x, px.y - downPx.y) <= 5;
+      downPx = null;
+      moved = false;
+      if (!isClick || isUi(e)) return;
+      const snap = computeRulerSnap(px);
+      if (snap) setAreaCorners((list) => addCorner(list, { lat: snap.lat, lon: snap.lng }));
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Backspace") return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      e.preventDefault();
+      setAreaCorners((list) => removeLastCorner(list));
+    };
+    container.addEventListener("mousedown", onMouseDown);
+    container.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      container.removeEventListener("mousedown", onMouseDown);
+      container.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [areaMode, computeRulerSnap]);
 
   // Container-level listeners for the ruler. Mirrors the drag-select effect: a
   // genuine click (no >5px movement) places/clears points; a drag pans the map
@@ -1660,7 +1757,7 @@ export default function PropertyMap() {
         style={{
           cursor: anglesMode
             ? ANGLES_CURSOR
-            : rulerMode
+            : rulerMode || areaMode === "delimited"
               ? RULER_CURSOR
               : (selectMode && activeTab === "all")
                 ? "crosshair"
@@ -1687,11 +1784,12 @@ export default function PropertyMap() {
           disableDefaultUI
           streetViewControl
           gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
-          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode ? RULER_CURSOR : undefined}
-          draggingCursor={anglesMode ? ANGLES_CURSOR : rulerMode ? RULER_CURSOR : undefined}
+          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : undefined}
+          draggingCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : undefined}
           style={{ width: "100%", height: "100%" }}
-          onClick={(e) => { if (!rulerMode && !anglesMode) handleMapClick(e.detail.latLng); }}
-          onDblclick={(e) => { if (!rulerMode && !anglesMode) handleMapDblClick(e.detail.latLng); }}
+          // Slice #39.07: and no InfoWindow while an area tool is pressed.
+          onClick={(e) => { if (!rulerMode && !anglesMode && !areaOn) handleMapClick(e.detail.latLng); }}
+          onDblclick={(e) => { if (!rulerMode && !anglesMode && !areaOn) handleMapDblClick(e.detail.latLng); }}
         >
           {/* Inner helpers that require useMap() / useMapsLibrary() */}
           <MapRefCapture mapRef={mapRef} />
@@ -1772,9 +1870,15 @@ export default function PropertyMap() {
           )}
 
           {/* Ruler tool overlays (Slice #18.14.ruler) */}
-          {rulerMode && (
-            <RulerCalibrator active={rulerMode} onCalibrate={recalibrateRuler} />
+          {(rulerMode || areaOn) && (
+            // Slice #39.07: the area tools measure through the Ruler's local Stereo 70 fit, refitted on every settle.
+            <RulerCalibrator active={rulerMode || areaOn} onCalibrate={recalibrateRuler} />
           )}
+          {/* Slices #39.07/#39.08 — the area tools' polygon, its corners and its area */}
+          {areaOn && (
+            <AreaLayer corners={areaCorners} affine={rulerAffine} crossingText={t("map.areaCrossing")} />
+          )}
+          {areaMode === "delimited" && areaSnap && <RulerSnapRing corner={areaSnap} />}
           {rulerHasSegment && rulerStart && rulerLiveEnd && (
             <RulerSegment start={rulerStart} end={rulerLiveEnd} />
           )}
@@ -1922,6 +2026,7 @@ export default function PropertyMap() {
               variant={anglesMode ? "primary" : "secondary"}
               size="sm"
               aria-pressed={anglesMode}
+              disabled={areaOn}
               onClick={toggleAnglesMode}
             />
             <HelpHint hintKey="angles-click-corner" />
@@ -1931,13 +2036,27 @@ export default function PropertyMap() {
             <IconButton
               icon={Ruler}
               label={t("map.rulerButton")}
-              note={t("map.rulerHint")}
+              note={areaOn ? t("map.areaLocked") : t("map.rulerHint")}
               variant={rulerMode ? "primary" : "secondary"}
               size="sm"
               aria-pressed={rulerMode}
+              disabled={areaOn}
               onClick={toggleRulerMode}
             />
             <HelpHint hintKey="ruler-two-clicks" />
+
+            {/* Slice #39.07 — „Suprafața unei zone delimitate": property corners, one after another, and the area of */}
+            {/* the polygon through them. After the Ruler, before „Grupuri"; a toggle, like them.                   */}
+            <IconButton
+              icon={AreaDelimitedIcon}
+              label={t("map.areaDelimitedButton")}
+              note={t("map.areaDelimitedHint")}
+              variant={areaMode === "delimited" ? "primary" : "secondary"}
+              size="sm"
+              aria-pressed={areaMode === "delimited"}
+              data-area-tool="delimited"
+              onClick={() => toggleAreaMode("delimited")}
+            />
 
             {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
             {/* Panel is anchored under the button (left-0 right-0 → exactly    */}
@@ -1951,6 +2070,7 @@ export default function PropertyMap() {
                 variant={groupsPanelOpen ? "primary" : "secondary"}
                 size="sm"
                 aria-expanded={groupsPanelOpen}
+                disabled={areaOn}
                 onClick={() => setGroupsPanelOpen((o) => !o)}
               />
 
@@ -2018,6 +2138,7 @@ export default function PropertyMap() {
               note={selectMode ? t("map.selectExitTitle") : t("map.selectEnterTitle")}
               variant={selectMode ? "danger" : "secondary"}
               size="sm"
+              disabled={areaOn}
               onClick={toggleSelectMode}
             />
             <HelpHint hintKey="drag-select" />
@@ -2046,7 +2167,7 @@ export default function PropertyMap() {
         {/* ---------------------------------------------------------------- */}
         {/* Bottom action buttons — visible when properties are selected      */}
         {/* ---------------------------------------------------------------- */}
-        {selectedIds.size > 0 && activeTab === "all" && (
+        {selectedIds.size > 0 && activeTab === "all" && !areaOn && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
             {deleteAllSelectedButton}
 
