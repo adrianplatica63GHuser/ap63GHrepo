@@ -374,7 +374,7 @@ export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
  * The Property's fields. `measure-fields` 20260928T185247Z-3109 on the local
  * archive's 8 properties: `m:` is `rows · longest · p95`.
  *
- * Nr. parcelă at M is Adrian's LATER note (01.Slice.Inputs\Slices.37.nn\
+ * Nr. parcelă at M is Adrian's LATER note (01.Slice.Inputs\Slices.01--37\Slices.37.nn\
  * Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M",
  * i.e. Field.Widths.v01), which Slice #37.30 took over v02's L; „000/00/00", the
  * longest (#37.14's measurement), holds at M. ⚠️ **Nr. tarla / sola stays at M,

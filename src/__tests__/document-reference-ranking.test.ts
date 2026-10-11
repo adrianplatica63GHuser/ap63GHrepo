@@ -12,7 +12,7 @@
  *
  * `CITATIONS` below is every instrument cited by the six deeds transcribed in
  * full in
- * `C:\dev.docs\01.Slice.Inputs\Slices.36.nn.CVC.etc\Grok.CVC-semantic-template-filled-examples-v01.docx`
+ * `C:\dev.docs\01.Slice.Inputs\Slices.01--37\Slices.36.nn.CVC.etc\Grok.CVC-semantic-template-filled-examples-v01.docx`
  * — six of the thirty-two deed folders under
  * `C:\dev\TEST.DATA\Modele.Acte\ZZZ Modele acte`, one of each of the six kinds
  * that document sets out. **45 citations, 43 distinct instruments.**

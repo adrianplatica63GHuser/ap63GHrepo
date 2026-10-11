@@ -14,7 +14,7 @@
  *
  * The reasoning, the open questions and what each path costs to bring forward
  * are in
- *   01.Slice.Inputs\Slices.32.nn.UAT\32.12\Answers.32.12.docx
+ *   01.Slice.Inputs\Slices.01--37\Slices.30.to.35\Slices.32.nn.UAT\32.12\Answers.32.12.docx
  *   section 4 — "Item 19, the Add Property dialog"
  * Cite the SECTION, never a page number: section 4 began on page 7 in the copy
  * Adrian read and moved to page 6 one revision later.
