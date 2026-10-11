@@ -10,7 +10,7 @@
 
 ## What this proves
 
-„Interacțiuni" opens from the sidebar's „Domeniu" and shows the log of contacts with clients as a read-only grid,
+„Interacțiuni" opens from the sidebar's „Rapoarte" („Domeniu" until #39.02) and shows the log of contacts with clients as a read-only grid,
 newest first, over the last 90 days (Slice #38.84). The toolbar's chips, the direction control, the person search
 and the period narrow it, and a column's own filter writes the same filter state the toolbar shows. The order chosen
 is kept through a reload; „Șterge filtrele" puts back the 90 days, every channel and direction and newest first;
@@ -38,7 +38,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Domeniu" in the sidebar and presses „Interacțiuni" | The screen „Interacțiuni", „Toți clienții" under its title; the period reads „Ultimele 90 de zile"; the sort control „Cele mai noi întâi"; no „Șterge filtrele" |
+| 1 | Opens „Rapoarte" in the sidebar and presses „Interacțiuni" | The screen „Interacțiuni", „Toți clienții" under its title; the period reads „Ultimele 90 de zile"; the sort control „Cele mai noi întâi"; no „Șterge filtrele" |
 | 2 | Types „TC-INT-01" into „Caută persoană sau subiect…" | Three rows, newest first: „Proiect de contract", „Confirmare vizionare", „Verificare titlu" — the meeting is older than 90 days; „3 interacțiuni"; „Așteaptă răspuns: 1" |
 | 3 | Presses the chip „Telefon", then presses it again | „Verificare titlu" alone, and „Șterge filtrele" shows; then the three rows again |
 | 4 | Opens „Filtrează după „Canal”" in the „Canal" header and ticks „Telefon"; closes it and presses the chip | „Verificare titlu" alone, and the chip „Telefon" is filled; then the three rows again |

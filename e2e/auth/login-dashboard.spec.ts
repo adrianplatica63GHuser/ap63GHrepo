@@ -73,15 +73,16 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 
     // Step 7 — the sidebar's sections, scoped to the sidebar (helpers/sidebar.ts).
     const nav = sidebar(page);
-    // #38.20: the sections, in order; #38.42: the six that hold a built screen.
-    const SIX = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Administrare", "Setări"];
-    for (const section of SIX) {
+    // #38.20: the sections, in order; #38.42: those that hold a built screen; #39.02: „Rapoarte" again
+    // (was six, and „Rapoarte" among the hidden).
+    const SEVEN = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări"];
+    for (const section of SEVEN) {
       await expect(nav.getByText(section, { exact: true })).toBeVisible();
     }
-    for (const hidden of ["Funcții", "Rapoarte", "Studiu", "Ajutor"]) {
+    for (const hidden of ["Funcții", "Studiu", "Ajutor"]) {
       await expect(nav.getByText(hidden, { exact: true })).toHaveCount(0);
     }
-    const tops = await Promise.all(SIX.map(async (s) => (await nav.getByText(s, { exact: true }).boundingBox())!.y));
+    const tops = await Promise.all(SEVEN.map(async (s) => (await nav.getByText(s, { exact: true }).boundingBox())!.y));
     expect(tops).toEqual([...tops].sort((a, b) => a - b));
     // Step 7's „Recente": one folded bar, there even when nothing has been
     // opened (#38.28). What it unfolds is TC-LAYOUT-04's.
@@ -97,7 +98,8 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 // ── Step 9 ───────────────────────────────────────────────────────────────────
 
 // #38.20: the sections that were a superuser's until #38.21 — every account's since.
-// #38.42: those still drawn („Rapoarte", „Studiu" and „Ajutor" hold no built screen).
+// #38.42: those still drawn („Studiu" and „Ajutor" hold no built screen; „Rapoarte" is drawn again
+// since #39.02 and is not needed here — a subset is enough).
 const ADMIN_SECTIONS = ["Instrumente", "Import", "Administrare", "Setări"] as const;
 
 /** The sidebar's own <nav> — present for every role (#38.20: `data-sidebar-nav`). */

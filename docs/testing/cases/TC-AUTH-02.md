@@ -50,7 +50,7 @@ password. Claude does every other step.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Adrian signs in as `test-user` | „Tablou de bord", and at the top of the sidebar „Autentificat ca test-user" |
-| 2 | Reads the sidebar | All six sections drawn since #38.42: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Administrare", „Setări" |
+| 2 | Reads the sidebar | All seven sections drawn since #39.02: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare", „Setări" |
 | 3 | „Administrare" → „Utilizatori & Acces" | „Utilizatori & Acces", its tabs „Cereri în așteptare" and „Istoric" — no role anywhere on the screen |
 | 4 | Types `/admin/value-lists` into the address bar | „Date de referință" — not the dashboard |
 | 5 | „Administrare" → „Etichete" | „Etichete" and its cloud |

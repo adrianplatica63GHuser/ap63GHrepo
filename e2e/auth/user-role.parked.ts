@@ -23,7 +23,8 @@ import { test, expect } from "@playwright/test";
 import { USER_STATE } from "../helpers/auth-state";
 import { openFromSidebar, sidebar } from "../helpers/sidebar";
 
-const SIX = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Administrare", "Setări"]; // #38.42: the six drawn
+// #38.42: the six drawn; #39.02: seven, with „Rapoarte".
+const SIX = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări"];
 
 test.use({ storageState: fs.existsSync(USER_STATE) ? USER_STATE : undefined });
 

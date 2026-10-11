@@ -67,7 +67,7 @@ test.describe("TC-INT-01 — istoricul interacțiunilor", () => {
       // Step 1 — the sidebar's „Interacțiuni" opens the screen: „Toți clienții", the last 90 days, newest first.
       await page.setViewportSize({ width: 1920, height: 1080 });
       await page.goto("/");
-      await openSection(page, "Domeniu");
+      await openSection(page, "Rapoarte"); // #39.02: was „Domeniu"
       await sidebar(page).getByRole("link", { name: "Interacțiuni", exact: true }).click();
       await expect(page).toHaveURL(/\/interactions$/);
       await expect(page.getByRole("heading", { level: 1, name: "Interacțiuni" })).toBeVisible({ timeout: 30_000 });

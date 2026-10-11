@@ -1,5 +1,5 @@
 /**
- * Case:   TC-NAV-01 — Bara laterală arată doar ce există: șase secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
+ * Case:   TC-NAV-01 — Bara laterală arată doar ce există: șapte secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
  * Source: docs/testing/cases/TC-NAV-01.md, „Last green" 2026-10-06
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -20,11 +20,12 @@ import { openSection, sidebar } from "../helpers/sidebar";
 
 const SHOTS = "playwright-report/sidebar-sections";
 
-const SECTIONS = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Administrare", "Setări"] as const;
+// Slice #39.02: „Rapoarte" between „Import" and „Administrare" (was six, without it).
+const SECTIONS = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări"] as const;
 
-/** What #38.42 stopped drawing: four sections' worth of placeholders and a placeholder page. */
+/** What #38.42 stopped drawing: placeholders and a placeholder page. #39.02 brought „Rapoarte" back. */
 const GONE = [
-  "Funcții", "Rapoarte", "Studiu", "Ajutor", "În lucru", "Verificare corelări", "Arbori de moștenire",
+  "Funcții", "Studiu", "Ajutor", "În lucru", "Verificare corelări", "Arbori de moștenire",
   "Dosare diverse", "Fișier individual", "Cursuri", "Chestionare", "Punctaj", "Manual de utilizare", "Întreabă AI",
 ] as const;
 
@@ -35,14 +36,17 @@ const ITEMS: Record<string, [string, string][]> = {
     ["Persoane Juridice", "/judicial-persons"],
     ["Proprietăți", "/properties"],
     ["Acte", "/documents"],
-    ["Interacțiuni", "/interactions"], // Slice #38.84
   ],
   Instrumente: [
-    ["Căutare globală", "/admin/global-search"],
     ["Distilare Tipizate", "/admin/doc-type-engine"],
     ["Calcul drum lateral", "/admin/calculation"],
   ],
   Import: [["Dosare de proprietăți", "/admin/import"]],
+  // Slice #39.02: moved here from „Domeniu" and „Instrumente", their addresses unchanged.
+  Rapoarte: [
+    ["Interacțiuni", "/interactions"],
+    ["Căutare globală", "/admin/global-search"],
+  ],
   Administrare: [
     ["Date de referință", "/admin/value-lists"],
     ["Utilizatori & Acces", "/admin/users"],
@@ -60,11 +64,11 @@ const LINKS: [string, string | null, string][] = [
   ["Persoane Juridice", "Domeniu", "Persoană juridică"],
   ["Proprietăți", "Domeniu", "Proprietăți"],
   ["Acte", "Domeniu", "Acte"],
-  ["Interacțiuni", "Domeniu", "Interacțiuni"], // Slice #38.84
-  ["Căutare globală", "Instrumente", "Căutare globală"],
   ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],
   ["Calcul drum lateral", "Instrumente", "Calcul"],
   ["Dosare de proprietăți", "Import", "Import"],
+  ["Interacțiuni", "Rapoarte", "Interacțiuni"], // #39.02: was under „Domeniu"
+  ["Căutare globală", "Rapoarte", "Căutare globală"], // #39.02: was under „Instrumente"
   ["Date de referință", "Administrare", "Date de referință"],
   ["Utilizatori & Acces", "Administrare", "Utilizatori & Acces"],
   ["Grupuri", "Administrare", "Grupuri"],
@@ -74,7 +78,7 @@ const LINKS: [string, string | null, string][] = [
   ["Setări", null, "Setări"],
 ];
 
-const ICONS = ["lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-shield-check", "lucide-settings"];
+const ICONS = ["lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-chart-column", "lucide-shield-check", "lucide-settings"];
 
 const recent = (page: Page) =>
   page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) });
@@ -122,14 +126,14 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     fs.mkdirSync(SHOTS, { recursive: true });
   });
 
-  test("six sections, every link opens its screen, no placeholder is drawn", async ({ page }) => {
+  test("seven sections, every link opens its screen, no placeholder is drawn", async ({ page }) => {
     test.setTimeout(240_000);
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto("/admin/settings");
     const nav = sidebar(page);
     await expect(nav).toBeVisible({ timeout: 30_000 });
 
-    // Step 1 — the six sections, top to bottom; nothing #38.42 stopped drawing.
+    // Step 1 — the seven sections, top to bottom; nothing #38.42 stopped drawing.
     await expect(sectionRows(page)).toHaveCount(SECTIONS.length);
     expect((await sectionRows(page).allInnerTexts()).map((t) => t.trim().split("\n")[0])).toEqual([...SECTIONS]);
 
@@ -170,7 +174,8 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       "Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza.",
     );
     await expect(crumbTrail(page)).toHaveText(["Acasă", "Rapoarte"]);
-    await expect(nav.getByText("Rapoarte", { exact: true })).toHaveCount(0);
+    // #39.02: was `nav.getByText("Rapoarte", { exact: true })` toHaveCount(0) — the section is drawn now, without „În lucru".
+    await expect(nav.locator('a[href="/reports"]')).toHaveCount(0);
 
     // Step 5 — „Setări": no „Altele".
     await nav.getByRole("link", { name: "Setări", exact: true }).click();
@@ -180,7 +185,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     await expect(page.locator("main a")).toHaveCount(0);
     await expect(crumbTrail(page)).toHaveText(["Acasă", "Setări"]);
 
-    // Step 6 — collapsed: six icons, one per section, each named by its section.
+    // Step 6 — collapsed: seven icons, one per section, each named by its section.
     await page.getByRole("button", { name: "Restrânge bara laterală", exact: true }).click();
     await expect(page.getByRole("button", { name: "Extinde bara laterală", exact: true })).toBeVisible();
     const rows = sectionRows(page);
@@ -197,7 +202,9 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     // Step 7 — the breadcrumb names the section, as text; „Import" is not said twice.
     for (const [section, label, trail] of [
       ["Administrare", "Etichete", ["Acasă", "Administrare", "Etichete"]],
-      ["Instrumente", "Căutare globală", ["Acasă", "Instrumente", "Căutare globală"]],
+      // #39.02: was ["Instrumente", "Căutare globală", ["Acasă", "Instrumente", "Căutare globală"]].
+      ["Rapoarte", "Căutare globală", ["Acasă", "Rapoarte", "Căutare globală"]],
+      ["Rapoarte", "Interacțiuni", ["Acasă", "Rapoarte", "Interacțiuni"]],
       ["Administrare", "Date de referință", ["Acasă", "Administrare", "Date de referință"]],
       ["Import", "Dosare de proprietăți", ["Acasă", "Import"]],
     ] as const) {

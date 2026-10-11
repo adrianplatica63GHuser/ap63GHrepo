@@ -1,4 +1,4 @@
-# TC-NAV-01 — Bara laterală arată doar ce există: șase secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
+# TC-NAV-01 — Bara laterală arată doar ce există: șapte secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
 
 | | |
 |---|---|
@@ -10,16 +10,18 @@
 
 ## What this proves
 
-Since Slice #38.42 the left sidebar draws only what exists. Top to bottom it reads six sections:
-„Tablou de bord", „Domeniu", „Instrumente" (called „Funcții" until #38.42), „Import", „Administrare"
-and „Setări".
+Since Slice #38.42 the left sidebar draws only what exists. Top to bottom it reads seven sections
+(six until #39.02): „Tablou de bord", „Domeniu", „Instrumente" (called „Funcții" until #38.42),
+„Import", „Rapoarte", „Administrare" and „Setări".
+- **„Rapoarte" holds „Interacțiuni" and „Căutare globală"** (Slice #39.02), moved from „Domeniu" and
+  „Instrumente" with their addresses unchanged. „Arbori de moștenire" joins them when its screen exists.
 - **Placeholders are not drawn.** An item whose screen is not built draws nothing, and neither does a
-  section left empty by that. So „Rapoarte", „Studiu" and „Ajutor" are gone, and so are the four
+  section left empty by that. So „Studiu" and „Ajutor" are gone, and so are the four
   placeholders inside „Instrumente" and „Import". (#38.20 had drawn them disabled, with „În curând" as
   the tooltip.)
 - **„Date de referință" is under „Administrare".**
 - **Every screen that exists is still reachable from the sidebar,** and opening it lights up its item.
-- **The Reports page still opens from its address.**
+- **The Reports page still opens from its address,** and the sidebar no longer links to it.
 - **A breadcrumb names the section that holds the screen.**
 - **Collapsed, the sidebar shows one icon per section.**
 
@@ -40,19 +42,23 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Administrare", „Setări" — no „Funcții", „Rapoarte", „Studiu" or „Ajutor" |
-| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte, Interacțiuni (since #38.84). „Instrumente": Căutare globală, Distilare Tipizate, Calcul drum lateral. „Import": Dosare de proprietăți. „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete, Informații de ajutor. No item is drawn faded, and nothing says „În curând" |
-| 3 | Presses each link in turn: „Tablou de bord", the five of „Domeniu", the three of „Instrumente", „Dosare de proprietăți", the six of „Administrare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Interacțiuni", „Căutare globală", „Distilare Tipizate", „Calcul", „Import", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Setări" — and the item pressed is the sidebar's active one |
-| 4 | Types `/reports` into the address bar | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte" |
+| 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare", „Setări" — no „Funcții", „Studiu" or „Ajutor" |
+| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte. „Instrumente": Distilare Tipizate, Calcul drum lateral. „Import": Dosare de proprietăți. „Rapoarte": Interacțiuni, Căutare globală (#39.02). „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete, Informații de ajutor. No item is drawn faded, and nothing says „În curând" |
+| 3 | Presses each link in turn: „Tablou de bord", the four of „Domeniu", the two of „Instrumente", „Dosare de proprietăți", the two of „Rapoarte", the six of „Administrare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Distilare Tipizate", „Calcul", „Import", „Interacțiuni", „Căutare globală", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Setări" — and the item pressed is the sidebar's active one |
+| 4 | Types `/reports` into the address bar | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte"; no link in the sidebar points at `/reports` |
 | 5 | „Setări" | „Setări" with „Praguri de timp" (#38.40; #38.41 put „Contul meu" first); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
-| 6 | „Restrânge bara laterală" | Six icons, one per section, each named by its section; then „Extinde bara laterală" |
-| 7 | „Administrare" → „Etichete"; „Instrumente" → „Căutare globală"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Instrumente › Căutare globală", „Acasă › Administrare › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
+| 6 | „Restrânge bara laterală" | Seven icons, one per section, each named by its section; then „Extinde bara laterală" |
+| 7 | „Administrare" → „Etichete"; „Rapoarte" → „Căutare globală"; „Rapoarte" → „Interacțiuni"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Rapoarte › Căutare globală", „Acasă › Rapoarte › Interacțiuni", „Acasă › Administrare › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
 
 ## At the end — leaving things as they were found
 
 Nothing was created. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-11 — Slice #39.02, rewritten.** „Rapoarte" is drawn again, between „Import" and
+„Administrare", holding „Interacțiuni" (was the last of „Domeniu") and „Căutare globală" (was the first
+of „Instrumente"); „În lucru" left the config. Steps 1–4, 6 and 7 changed; step 5 did not.
 
 **2026-10-08 — Slice #38.42, rewritten.** The case was „nine sections, every placeholder disabled";
 the sidebar now draws only what exists, so steps 1–4 and 7–8 changed and the old steps 4–5 became

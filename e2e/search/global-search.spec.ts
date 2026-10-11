@@ -17,8 +17,8 @@
  *     its „Nume" has the case's shape: `40 / TC01(TC-E2E-SRCH-01 Teren de test)`.
  *   - All three are removed in `finally`. The case writes nothing; its spec's
  *     fixtures are the spec's to remove.
- *   - Step 1 goes through the sidebar group „Instrumente" (#38.42; „Funcții" before) → „Căutare
- *     globală", as the case does, expanding the group first if it is closed.
+ *   - Step 1 goes through the sidebar group „Rapoarte" (#39.02; „Instrumente" before, „Funcții" before
+ *     #38.42) → „Căutare globală", as the case does, expanding the group first if it is closed.
  *   - Slice #37.16 checks the results' fixed column widths here: every column the
  *     same width at 1400 and 2400 px, the table no wider than its columns, and
  *     no fixed column's cell wider than the column. Not a step of the case.
@@ -55,12 +55,12 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
     const documentId = await createSaleContract(page.request, `${MARK} Contract de test`);
 
     try {
-      // Step 1 — „Instrumente" → „Căutare globală".
+      // Step 1 — „Rapoarte" → „Căutare globală" (#39.02: was „Instrumente").
       await page.goto("/");
       const nav = sidebar(page);
       const searchLink = nav.getByRole("link", { name: "Căutare globală" });
       if (!(await searchLink.isVisible())) {
-        await nav.getByRole("button", { name: "Instrumente", exact: true }).click();
+        await nav.getByRole("button", { name: "Rapoarte", exact: true }).click();
       }
       await searchLink.click();
       await expect(page).toHaveURL(/\/admin\/global-search$/, { timeout: 30_000 });
