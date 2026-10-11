@@ -70,10 +70,12 @@ test.describe("TC-MAP-03 — suprafața unei zone oarecare", () => {
         { x: cx + 200, y: cy + 100 },
         { x: cx - 200, y: cy + 100 },
       ];
-      // One click at a time, each seen before the next, as a person clicks: the map binds its click handler anew
-      // after every corner (the mini-map's own behaviour), and a click inside that render lands on the old list.
+      // One click at a time, at a person's pace: two clicks inside Google's double-click window are a double click
+      // to the map — it zooms, and the second click is no corner — however far apart they land. Measured: three
+      // quick clicks placed two corners (run 20261011T214446Z-8955), two placed one (20261011T220959Z-1629).
       for (const [i, p] of pts.slice(0, 3).entries()) {
         await page.mouse.move(p.x, p.y);
+        await page.waitForTimeout(700);
         await page.mouse.click(p.x, p.y);
         await expect(page.locator("[data-area-draw-corner]")).toHaveCount(i + 1);
       }
@@ -82,10 +84,12 @@ test.describe("TC-MAP-03 — suprafața unei zone oarecare", () => {
       await expect(label).toHaveAttribute("data-area-label", "area", { timeout: 15_000 });
 
       // Step 4 — the fourth corner, then the first again: closed, „Gata" gone, the area of the rectangle drawn.
+      await page.waitForTimeout(700);
       await page.mouse.click(pts[3]!.x, pts[3]!.y);
       await expect(page.locator("[data-area-draw-corner]")).toHaveCount(4);
       const first = page.locator('[data-area-draw-corner="0"]');
       const fb = (await first.boundingBox())!;
+      await page.waitForTimeout(700);
       await page.mouse.click(fb.x + fb.width / 2, fb.y + fb.height / 2);
       await expect(done).toHaveCount(0);
       await expect(page.locator("[data-area-draw-corner]")).toHaveCount(4);
