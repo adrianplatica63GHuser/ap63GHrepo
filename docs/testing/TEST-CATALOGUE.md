@@ -194,6 +194,7 @@ fixed fixture where the existing one will do.
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-05 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-MAP-02](cases/TC-MAP-02.md) | „Suprafața unei zone delimitate": colțurile unei proprietăți alese pe hartă, aria ei în poligon | map | happy | — | `automated` | 2026-10-11 | `e2e/map/area-tools.spec.ts` |
 | [TC-MAP-03](cases/TC-MAP-03.md) | „Suprafața unei zone oarecare": un poligon desenat liber pe hartă, aria lui în el | map | happy | — | `automated` | 2026-10-11 | `e2e/map/area-free.spec.ts` |
+| [TC-MAP-04](cases/TC-MAP-04.md) | „Instrumente → Calcul suprafață": harta tuturor proprietăților, cu cele două butoane de suprafață arătate | map | happy | — | `automated` | 2026-10-11 | `e2e/map/area-calculation-nav.spec.ts` |
 | [TC-FOLD-01](cases/TC-FOLD-01.md) | „Note” și MRZ lungi se strâng la cinci rânduri, cu „Arată mai mult…” | forms | happy | — | `automated` | 2026-10-01 | `e2e/forms/note-fold.spec.ts` |
 | [TC-ICON-01](cases/TC-ICON-01.md) | Butoanele cu pictogramă își arată numele: la mouse, la tastatură, și când sunt inactive | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-button.spec.ts` |
 | [TC-ICON-02](cases/TC-ICON-02.md) | Creionul, Salvarea și Coșul pe o proprietate: modificată, păstrată, ștearsă | ui | happy | — | `automated` | 2026-10-01 | `e2e/ui/icon-actions.spec.ts` |

@@ -41,6 +41,7 @@ const ITEMS: Record<string, [string, string][]> = {
   Instrumente: [
     ["Distilare Tipizate", "/admin/doc-type-engine"],
     ["Calcul drum lateral", "/admin/calculation"],
+    ["Calcul suprafață", "/properties/map?area=1"], // #39.09
   ],
   Import: [["Dosare de proprietăți", "/admin/import"]],
   // Slice #39.02: moved here from „Domeniu" and „Instrumente", their addresses unchanged.
@@ -67,6 +68,7 @@ const LINKS: [string, string | null, string][] = [
   ["Acte", "Domeniu", "Acte"],
   ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],
   ["Calcul drum lateral", "Instrumente", "Calcul"],
+  ["Calcul suprafață", "Instrumente", "Toate Proprietățile"], // #39.09: the map of all properties, ?area=1
   ["Dosare de proprietăți", "Import", "Import"],
   ["Interacțiuni", "Rapoarte", "Interacțiuni"], // #39.02: was under „Domeniu"
   ["Căutare globală", "Rapoarte", "Căutare globală"], // #39.02: was under „Instrumente"
@@ -157,8 +159,9 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       if (section) await openSection(page, section);
       const link = nav.getByRole("link", { name: label, exact: true });
       const href = (await link.getAttribute("href"))!;
+      // #39.09: „Calcul suprafață"'s address carries its query; every other one has none.
       await link.click();
-      await expect(page).toHaveURL((u) => u.pathname === href, { timeout: 30_000 });
+      await expect(page).toHaveURL((u) => u.pathname + u.search === href, { timeout: 30_000 });
       await expect(await title(page)).toHaveText(heading, { timeout: 30_000 });
       if (section) await expect(link).toHaveAttribute("aria-current", "page");
     }
