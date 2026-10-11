@@ -17,6 +17,7 @@
 import fs from "node:fs";
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { openSection, sidebar } from "../helpers/sidebar";
+import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
 const SHOTS = "playwright-report/sidebar-sections";
 
@@ -219,6 +220,82 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
         await expect(bar.getByRole("link", { name: section, exact: true })).toHaveCount(0);
         await expect(bar.locator("[data-crumb-section]")).toHaveText(section);
       }
+    }
+  });
+
+  // Slice #39.03 — step 8: „Înapoi", the bar's first item. A test person of its own, removed in `finally`.
+  test("„Înapoi” first on the bar: back to the list; a changed form asks first", async ({ page }) => {
+    test.setTimeout(180_000);
+    const MARK = `${E2E_MARKER}NAV-01-BACK`;
+    await removeLeftovers(page.request, MARK);
+    await page.setViewportSize({ width: 1366, height: 768 });
+    const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Înapoi" });
+    const bar = page.getByRole("navigation", { name: "Fir de navigare" }).filter({ visible: true });
+    const back = bar.getByRole("button", { name: "Înapoi", exact: true });
+    const openRecord = async () => {
+      const search = page.locator("main").getByPlaceholder("caută după cod, nume, poreclă sau ID");
+      await search.fill(MARK);
+      const row = page.locator("main tbody tr").filter({ hasText: MARK });
+      await expect(row).toHaveCount(1, { timeout: 30_000 });
+      await row.getByRole("link", { name: "Deschide", exact: true }).click();
+      await expect(page).toHaveURL((u) => u.pathname === `/natural-persons/${personId}`, { timeout: 30_000 });
+    };
+    try {
+      // The list, then a record, both reached inside the app.
+      await page.goto("/natural-persons");
+      await expect(page.locator("main").getByPlaceholder("caută după cod, nume, poreclă sau ID")).toBeVisible({ timeout: 30_000 });
+      await openRecord();
+      await expect(page.locator("h1").filter({ visible: true }).first()).toContainText(MARK, { timeout: 30_000 });
+
+      // „Înapoi" is the bar's first item, left of the first crumb, a gap and a rule between; the „?" stays right.
+      await expect(back).toBeVisible();
+      await expect(back).toBeEnabled();
+      await expect(bar.locator(":scope > *").first()).toHaveAttribute("data-breadcrumb-back", "");
+      expect(await back.locator("svg").first().getAttribute("class")).toContain("lucide-arrow-left");
+      const home = bar.getByRole("link", { name: "Acasă", exact: true });
+      const [b, h, nav] = [(await back.boundingBox())!, (await home.boundingBox())!, (await bar.boundingBox())!];
+      expect(b.x - nav.x).toBeLessThanOrEqual(16);
+      expect(h.x - (b.x + b.width)).toBeGreaterThanOrEqual(16);
+      // The „?"'s slot is still the bar's last item, pushed to the right (ml-auto).
+      const help = bar.locator(":scope > span.ml-auto");
+      await expect(help).toHaveCount(1);
+      expect((await help.boundingBox())?.x ?? nav.x + nav.width).toBeGreaterThan(h.x);
+      await page.mouse.move(1356, 758);
+      await page.screenshot({ path: `${SHOTS}/back-record-1366.png`, mask: [recent(page)] });
+
+      // Pressed: back on the list.
+      await back.click();
+      await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
+      await expect(page.locator("main").getByPlaceholder("caută după cod, nume, poreclă sau ID")).toBeVisible({ timeout: 30_000 });
+      await page.mouse.move(1356, 758);
+      await page.screenshot({ path: `${SHOTS}/back-list-1366.png`, mask: [recent(page)] });
+
+      // A changed field, then „Înapoi": the unsaved-changes dialog; „Anulează" keeps the form, as it was typed.
+      await openRecord();
+      const firstName = page.locator('input[name="firstName"]').filter({ visible: true });
+      await expect(firstName).toHaveValue("Înapoi", { timeout: 30_000 });
+      await firstName.fill("Schimbat");
+      await back.click();
+      const leave = page.getByRole("dialog").filter({ hasText: "Modificări nesalvate" });
+      await expect(leave).toBeVisible();
+      await leave.getByRole("button", { name: "Anulează", exact: true }).click();
+      await expect(leave).toHaveCount(0);
+      await expect(page).toHaveURL((u) => u.pathname === `/natural-persons/${personId}`);
+      await expect(firstName).toHaveValue("Schimbat");
+
+      // „Renunță" leaves, unsaved: back on the list.
+      await back.click();
+      await expect(leave).toBeVisible();
+      await leave.getByRole("button", { name: "Renunță", exact: true }).click();
+      await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
+
+      // Opened by its address, nothing in this tab to go back to: the parent crumb, the list.
+      await page.goto(`/natural-persons/${personId}`);
+      await expect(back).toBeEnabled({ timeout: 30_000 });
+      await back.click();
+      await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
+    } finally {
+      await removeRecord(page.request, "person", personId);
     }
   });
 });

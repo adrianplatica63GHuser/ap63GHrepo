@@ -49,12 +49,18 @@ Nothing.
 | 5 | „Setări" | „Setări" with „Praguri de timp" (#38.40; #38.41 put „Contul meu" first); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
 | 6 | „Restrânge bara laterală" | Seven icons, one per section, each named by its section; then „Extinde bara laterală" |
 | 7 | „Administrare" → „Etichete"; „Rapoarte" → „Căutare globală"; „Rapoarte" → „Interacțiuni"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Rapoarte › Căutare globală", „Acasă › Rapoarte › Interacțiuni", „Acasă › Administrare › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
+| 8 | (Slice #39.03, a test person `TC-E2E-NAV-01-BACK` „Înapoi" of its own, at 1366 × 768) From „Persoane Fizice" opens the person, then presses „Înapoi" | „Înapoi" with a left arrow is the bar's first item, at its left edge, then a rule and a gap, then „Acasă › …"; the „?" stays at the right. Pressed: back on „Persoane Fizice" |
+| 9 | Opens the person again, changes „Prenume", presses „Înapoi"; „Anulează"; „Înapoi" again, „Renunță" | „Modificări nesalvate"; „Anulează" keeps the person's screen with what was typed; „Renunță" goes back to the list, nothing saved |
+| 10 | Types the person's address into the bar, then presses „Înapoi" | Nothing in the tab to go back to: the parent crumb, „Persoane Fizice" |
 
 ## At the end — leaving things as they were found
 
-Nothing was created. The sidebar is left expanded.
+Steps 1–7 create nothing. Steps 8–10's test person is removed at the end. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-11 — Slice #39.03, steps 8–10 added.** „Înapoi" first on the breadcrumb bar, through the
+unsaved-changes guard; with nothing in the tab to go back to, the parent crumb.
 
 **2026-10-11 — Slice #39.02, rewritten.** „Rapoarte" is drawn again, between „Import" and
 „Administrare", holding „Interacțiuni" (was the last of „Domeniu") and „Căutare globală" (was the first
