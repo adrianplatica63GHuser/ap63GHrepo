@@ -10,7 +10,7 @@ paths:
 
 - **Keep `workers: 1` and `fullyParallel: false` in `playwright.config.ts`.** Every spec shares one fixed fixture row — the "E2E Proprietate Test" property, whose uuid is cached in the gitignored `e2e/.auth/e2e-ids.json`. Parallel workers would have several specs appending versions to the same property row at once. Any new spec inherits this constraint; do not opt a spec back into parallelism.
 
-- **A spec is a translation of a `confirmed` case file** (`docs/testing/cases/`), never a new test written from the screen. Its header starts `Case:` / `Source:`, its catalogue row's `Spec` column names it, and `src/__tests__/test-catalogue-coverage.test.ts` fails when either side is missing. Writing a spec does not make a row `automated` — Adrian's green `npm run e2e` does. (Slice #36.06)
+- **A spec is a translation of a `confirmed` case file** (`docs/testing/cases/`), never a new test written from the screen. Its header starts `Case:` / `Source:`, its catalogue row's `Spec` column names it, and `src/__tests__/test-catalogue-coverage.test.ts` fails when either side is missing. Writing a spec does not make a row `automated` — a green run of it does: the runner's (the slice's targeted run, or the two-weekly whole regression) or Adrian's. (Slice #36.06; targeted since #39.15, `C:\dev\CLAUDE.md` → „Tests run targeted")
 
 - **A spec that creates a record removes it in the same file**, in a `finally`, through the UI or the DELETE route the UI's „Șterge" calls — never SQL — and marks it `TC-E2E-<case>`, not `TC-`. Use `e2e/helpers/records.ts`; its `removeLeftovers` refuses any prefix that is not a `TC-E2E-` marker, because `TC-` would delete a hand run's records. Use the fixed property only where the assertion does not need a property without history. (Slice #36.06)
 
@@ -23,6 +23,8 @@ paths:
 - **Fix a broken locator at the SOURCE when the UI genuinely lost the thing being asserted.** When a compact chip replaced the full ◀ / "v N" / ▶ strip, `src/components/version-nav-controls.tsx` gained a visually-hidden (`sr-only`) "v N" span rather than the spec being loosened — no visible change, and it closed a real accessibility gap. Prefer restoring the accessible name over weakening the assertion.
 
 - **Running the suite needs local setup that CI does not have:** a running `npm run dev`, `E2E_EMAIL` and `E2E_PASSWORD` in `.env`, and a one-off `npx playwright install chromium`. Then `npm run e2e` or `npm run e2e:ui`.
+
+- **A slice runs only its own specs, not the suite.** Since Slice #39.15 the runner's `targeted` run takes the specs the slice wrote or changed and the specs of the screens it changed more than a little; the whole suite runs every two weeks on its own. The policy is `C:\dev\CLAUDE.md` → „Tests run targeted".
 
 - **The suite is deliberately NOT in CI.** CI has no Postgres, no dev server, no seeded user and no browser binaries, and `playwright.config.ts` has no `webServer` block. Do not wire it into the CI workflow as a side effect of another slice — that is its own slice.
 

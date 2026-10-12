@@ -92,6 +92,47 @@ nothing. Approved by Adrian on 2026-09-24: do not ask whether this applies.
 - **Do not re-litigate a settled decision.** Once a choice is made and stated, build on it.
   Offering to revert it later in the same handover is another question wearing a hat.
 
+### Tests run targeted; the whole regression runs every two weeks
+
+**Adrian, 2026-10-12 (#39.15), until he changes it: „cheap development first, reliability of the
+system later."** Running every e2e spec and every jest suite after every commit is what pushed Google
+Maps past its free 10,000 a month and into a surcharge (#39.14). So a slice no longer runs the whole
+regression, and Adrian accepts that something broken in between may be found late and fixed later.
+„Until further notice" has no end date: the policy changes only when Adrian changes it. Do not ask
+whether it applies, and do not run the whole suite „to be safe" — that is the cost being cut. **This
+block is the policy; every other file points here rather than repeating it.**
+
+- **What a slice runs is the runner's `targeted` sequence:** whole-tree lint and full-project `tsc`
+  (no money, no browser, no map, and a slice that does not compile is the one defect that cannot wait
+  two weeks), plus e2e and jest narrowed to **(1)** every test the slice added or changed, and
+  **(2)** the existing tests of each module the slice changed **more than a little**. A module
+  untouched, or touched only a little — a label, a message key, an import line, a one-line fix — is
+  assumed fine and its tests are not run. Claude decides „more than a little" per slice. A module's
+  tests are found the way the jest-shim staging list is (`C:\dev\.claude\rules\sandbox-and-toolchain.md`):
+  grep `src/__tests__` and `e2e/` for the module's path and its message namespace. An empty e2e list
+  is normal for a slice with no screen; `targeted` with nothing named runs lint and tsc only.
+- **The handover lists what ran and what was deliberately not run**, module by module, with the
+  reason — so a red regression two weeks later can be traced to the slice that skipped it.
+- **A header may ask for more.** A line `Regression: full` in a slice header asks for the whole
+  regression on that one slice — `full`, or `full-db` when it touches the database. Without it,
+  `targeted` is the default. A slice that touches a migration or the rebuild files also requests
+  `verify-rebuild`, which opens no browser and loads no map.
+- **The whole regression runs every two weeks, on its own.** The runner starts `full` when it is idle,
+  no backup or drill is due, the last whole `full`/`full-db` finished 14 days ago, and the working
+  tree has no tracked change — as `auto-<time>-full`. Any whole run, asked for or automatic, green or
+  red, resets the clock. `claude.sh regression` prints the last one and when the next is due.
+- **A red automatic regression is not the running slice's to fix** — the one exception to „Never
+  dismiss an error" (The working contract, below). Every handover runs `claude.sh regression`, and
+  when a whole run has finished since the last handover, lists it under **„Regression run
+  (automatic)"**: its id, its verdict, and each failed step and spec. The session carries on with its
+  own slice; Adrian decides when those failures are fixed. A failure in a test the slice itself ran
+  is the slice's, as always.
+- **CI is unchanged.** GitHub runs lint, the whole jest suite and the build on every push within its
+  free minutes, and a red CI run is still fixed in the session that pushed — it costs no money, and
+  it is how a jest suite the targeted list missed comes back the same day.
+- **A targeted run is reported as targeted**, naming the tests it ran — never as „e2e passed" or
+  „jest passed" as though the whole suite had run.
+
 ### Adversarial review rounds are SUSPENDED until 2027-01-19
 
 **Adrian, 2026-09-19, explicitly: no adversarial review rounds for four months.** Do not spawn a
@@ -138,9 +179,9 @@ shape the rule should have named instead of "every non-trivial slice".
 
 Everything else in verification is proportionate: run the whole-tree `npm run lint` and the
 full-project `tsc --noEmit` yourself — both fit inside the bridge's 180 s per-call cap
-(`C:\dev\.claude\rules\sandbox-and-toolchain.md`) — re-read your own diff, and stop. `npm run e2e`
-and `npx jest`, which the sandbox cannot run, go to **the test runner on Adrian's laptop** (Delivering
-work, below) and come back to Adrian only when it is down. Do not gold-plate: with the rounds
+(`C:\dev\.claude\rules\sandbox-and-toolchain.md`) — re-read your own diff, and stop. The targeted
+`npm run e2e` and `npx jest` („Tests run targeted", above), which the sandbox cannot run, go to **the
+test runner on Adrian's laptop** (Delivering work, below) and come back to Adrian only when it is down. Do not gold-plate: with the rounds
 suspended, the self-review of your own diff is the last word on the slice, not the first draft of one.
 
 ## The working contract
@@ -170,9 +211,10 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   not landed by the handover ends with the dependent work uncommitted, and the question at the top.
   `npm run supabase:migrate` stays Adrian's, always: the handover names it, as its own line.
 - **Slice order:** DB schema/migration → API routes → UI components → tests. A slice ends when
-  Claude has committed it, **the test runner has run the verification sequence on that commit and
-  come back green** (Delivering work, below), **the runner has pushed it and CI on it has been read
-  green** — a red CI run is fixed, committed and taken round again in the same session — and the
+  Claude has committed it, **the test runner has run the slice's `targeted` sequence on that commit
+  and come back green** („Tests run targeted", above; Delivering work, below), **the runner has
+  pushed it and CI on it has been read green** — a red CI run is fixed, committed and taken round
+  again in the same session — and the
   handover names what is left for Adrian: `npm run supabase:migrate` when there is a migration, a
   push the guard held (its reason by name), and the two blocks only when the runner was down. **`npm run lint`
   and `npx tsc --noEmit` are Claude's** — whole tree and full project, run here before the handover
@@ -181,7 +223,7 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   per-call cap killed it or the mount forced a fallback (named-file lint, narrowed tsconfig, jest
   shim, per-file parser diagnostics — `C:\dev\.claude\rules\sandbox-and-toolchain.md`), name the
   fallback, say plainly what it is not, and put that command back into Adrian's second block (or
-  let the runner's `full` run stand for it). **Never report `npm run e2e` or `npx jest` as passing
+  let the runner's `targeted` run stand for it). **Never report `npm run e2e` or `npx jest` as passing
   on anything but a runner result that says so, and never report the push or the CI run as done on
   anything but the runner's `push` and `ci` results** — the sandbox runs none of those, and a runner
   result is the runner's, never Adrian's. **Each slice leaves a clean history, and clean here means
@@ -209,7 +251,8 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   database that holds real data — a UAT box with Adrian's test records is not in scope.)
 - **Never dismiss an error** as "pre-existing", "unrelated to this slice" or "not impacting
   the current work". Every error that appears gets fixed before moving on. There is no such
-  thing as a safe-to-ignore error.
+  thing as a safe-to-ignore error. (One exception, and only one: a red **automatic** regression
+  run is listed in the handover, not fixed by the slice that meets it — „Tests run targeted", above.)
 - **Per-slice detail lives in git history, not in a CLAUDE.md.** Never append a narrative of
   what a slice did to any instruction file.
 
@@ -226,7 +269,7 @@ The old "read only these three files" restriction is withdrawn.
 
 **Verify deeply. Review rounds are suspended until 2027-01-19** — see "Speed is a requirement" above;
 until that date do not spawn a review subagent at all. The whole-tree lint and the full-project
-`tsc --noEmit` run here, green; `npm run e2e` and `npx jest` requested from the test runner, red
+`tsc --noEmit` run here, green; the targeted `npm run e2e` and `npx jest` requested from the test runner, red
 fixed and re-run in the same session, the result quoted — and re-read your own diff. **That self-review of the diff is now the whole of it:** it is not a reason to
 stop and check in, and it does not become a findings report for Adrian to read.
 
@@ -258,8 +301,8 @@ under it, is the whole list:**
 
 - Pushing — **except through the runner's `push` sequence** (Propus.3, 2026-09-24). Claude never
   runs `git push` and never pushes any other way. The runner pushes `main`, fast-forward only,
-  never forced, with Adrian's own git credentials, and only when its guard holds: a green, whole
-  `full`/`full-db` result on HEAD over a clean tree, `origin/main` an ancestor of HEAD, and no commit
+  never forced, with Adrian's own git credentials, and only when its guard holds: a green `targeted`
+  result, or a green whole `full`/`full-db`, on HEAD over a clean tree, `origin/main` an ancestor of HEAD, and no commit
   in the range touching a `src\db\migration_*.sql` — Supabase has not had it, so that push is
   Adrian's, after `npm run supabase:migrate`. Every other push, of any branch, is his.
 - **Any git command that changes the working tree, `HEAD` or a ref by something other than adding a
@@ -319,15 +362,16 @@ is a decision to state, not a permission to request.
   Approved by Adrian on 2026-09-24 (#36.13): „Claude runs the test sequence when Claude needs." A
   Scheduled Task on his laptop (`ga40prj\scripts\Install-TestRunner.ps1`) watches
   `ga40prj\.test-runner\requests\`; Claude writes a request for a sequence from a fixed list and
-  the commit it just made, the runner runs it — e2e against **its own** `next dev` on port 3100, then
+  the commit it just made — for a slice, `targeted` with the slice's test list („Tests run
+  targeted", above) — the runner runs it — e2e against **its own** `next dev` on port 3100, then
   lint, tsc and jest with that server stopped, plus `Verify-Rebuild.ps1` for `full-db` — and writes
   a result file Claude polls. **A red result is fixed and re-run in the same session**, never handed
   over. The handover quotes the final result as the runner's, with its id — never as Adrian's. How to
   request, poll and read it: `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner.
-  **The runner also pushes and reads CI** (Propus.3): after a green `full` on the commit being
+  **The runner also pushes and reads CI** (Propus.3): after a green `targeted` run on the commit being
   handed over, Claude requests `push`, then `ci`, and quotes both results. `ci` reads GitHub
   Actions with GET requests and saves each failed job's log beside the result; a red run is read,
-  fixed, committed and taken round `full` → `push` → `ci` again in the same session. A push the
+  fixed, committed and taken round `targeted` → `push` → `ci` again in the same session. A push the
   guard **held** (exit 6) is not an error: the handover names the reason and the push goes back to
   Adrian as its own line.
   **The blocks below come back only when the runner is absent or down** (`claude.sh ping` gets no
@@ -352,7 +396,10 @@ is a decision to state, not a permission to request.
   greens and a red. So it ships as two blocks, `npm run e2e` with the
   dev server up, then, with it stopped, `npx jest` — alone, because Claude has already run the
   whole-tree lint and the full-project `tsc`. Either goes back in front of it —
-  `npm run lint && npx tsc --noEmit && npx jest` — only when Claude's own run of it did not complete. **The push is
+  `npm run lint && npx tsc --noEmit && npx jest` — only when Claude's own run of it did not complete.
+  Both blocks carry the slice's targeted list, as the runner would have run it („Tests run
+  targeted", above): `npm run e2e -- <spec> ...` and `npx jest --runTestsByPath <suite> ...`, and an
+  e2e block is left out when the list names no spec. **The push is
   its own line, never chained onto that.** Chaining it would gate the push on the second block while
   `npm run e2e` — which is not in the chain — could not stop it, so a green chain would push over a
   failed e2e run.

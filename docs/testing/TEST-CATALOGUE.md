@@ -25,7 +25,7 @@ workflows, the database scripts, and what nobody tests — see
 | `draft` | Written from the code and the message file. **Never run.** Treat its steps as a hypothesis. |
 | `driven` | Claude has driven it once through the real browser and **corrected the case file against what actually happened**. Most of the value of a first run is that correction. |
 | `confirmed` | Driven a second time, unchanged, green. "Unchanged" is measured against the file as it stood when the run began: the first run after the last correction that needs none, and on which only „Notes from the runs" is written. |
-| `automated` | A Playwright spec exists under `e2e/<area>/`, **and a whole `npm run e2e` has run it green** — the test runner's (its result id recorded in the handover) or Adrian's; the date of that run is the row's „Last green". The case now runs with `npm run e2e` like everything else and costs nobody's attention again. |
+| `automated` | A Playwright spec exists under `e2e/<area>/`, **and a run of it has come back green** — the test runner's (the slice's targeted run or the two-weekly whole regression, its result id recorded in the handover) or Adrian's; the date of that run is the row's „Last green". The case now runs with `npm run e2e` like everything else and costs nobody's attention again. |
 
 **Only a `confirmed` case may be promoted**, and the spec is written **from the corrected
 case file**, never from the application — so a spec and a case file cannot come to

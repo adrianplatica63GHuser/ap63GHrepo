@@ -39,7 +39,7 @@ every slice.
 
 | Value | What Claude does |
 |---|---|
-| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → the test runner's `full` run, red fixed and re-run → the runner's `push`, then `ci`, red CI fixed and taken round again → hand over, with a push for you to run only when the guard held it (and `npm run e2e`, `npx jest` only when the runner is down). The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
+| `normal` | Plan → build → whole-tree lint and full-project `tsc` → self-review the diff → commit → the test runner's `targeted` run — the tests the slice wrote and those of the modules it changed more than a little, not the whole suite (`C:\dev\CLAUDE.md` → „Tests run targeted") — red fixed and re-run → the runner's `push`, then `ci`, red CI fixed and taken round again → hand over, with a push for you to run only when the guard held it (and `npm run e2e`, `npx jest` only when the runner is down). The default. **(The adversarial review round that used to sit between the self-review and the commit is suspended until 2027-01-19.)** |
 | `deep` | Adds parallel subagents to map the affected code before planning. Use for anything touching versioning, auth, migrations, the import wizard, or more than ~10 files. |
 | `investigate` | No code at all. Claude reads, greps, fans out, and reports findings. No diff, so no adversarial round. Use when you're not yet sure a slice is the right shape. |
 
@@ -59,7 +59,12 @@ Bug: <exactly what you saw, verbatim from the UI or the console>
 Repro: <the click path>
 Constraint: <a decision you've already made that Claude shouldn't relitigate>
 Ask first: <a question you want to rule on — Claude answers it for now, see below>
+Regression: full   ← the whole e2e and jest regression on this one slice (a big refactor, say)
 ```
+
+`Regression: full` is the only way a slice runs the whole regression. Without it the slice runs its
+targeted tests, and the whole regression runs on its own every two weeks (`C:\dev\CLAUDE.md` → „Tests run targeted",
+Slice #39.15).
 
 `Ask first:` **does not stop the session** (`C:\dev\CLAUDE.md` → „Never wait"). Claude takes the
 answer it would recommend, says so in a message that does not wait, builds, and puts that answer

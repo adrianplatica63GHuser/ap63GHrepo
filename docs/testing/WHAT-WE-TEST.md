@@ -25,8 +25,11 @@ that tests the *product*.
 ## 1. The four commands, in plain language
 
 `ga40prj/CLAUDE.md` → "Verification order" fixes the order:
-**`npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`**, every time. The
-order is not taste. `npm run e2e` needs the dev server **running**; the other three need
+**`npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`**. The
+order is not taste. **What runs is not always all of it** (Slice #39.15): a slice runs lint and
+tsc whole and only its own e2e specs and jest suites, plus those of the modules it changed more
+than a little — the runner's `targeted`. The whole regression runs every two weeks, started by the
+runner itself. Why, and what a red automatic run means: `C:\dev\CLAUDE.md` → „Tests run targeted". `npm run e2e` needs the dev server **running**; the other three need
 it **stopped**, and not merely "don't need it" — `C:\dev\CLAUDE.md` → "Delivering work"
 records that leaving `next dev` up makes `tsc` produce no output at all, because it
 reads `.next/types/**` while the dev server rewrites it underneath, and makes Jest's
@@ -328,12 +331,12 @@ Blurring these two is how a project comes to believe it is covered.
 
 | Check | Machine-enforced on every push | Depends on a person |
 |---|---|---|
-| `npm run lint` | ✅ `ci.yml` | also run by hand, in the sequence |
-| `npx jest` | ✅ `ci.yml` (as `npm test`) | also run by hand, in the sequence |
+| `npm run lint` | ✅ `ci.yml` | also run by the runner, in every targeted run |
+| `npx jest` | ✅ `ci.yml` (as `npm test`), the whole suite | the runner: the slice's suites per slice, the whole suite every two weeks |
 | `npm run build` | ✅ `ci.yml` | — |
 | Migration-chain rebuild | ✅ `db-rebuild.yml` | `Verify-Rebuild.ps1`, locally, on a migration slice |
 | `npx tsc --noEmit` | indirectly, via `npm run build` | ✅ every slice |
-| `npm run e2e` | ❌ never | ✅ every slice |
+| `npm run e2e` | ❌ never | ✅ the slice's own specs per slice; the whole suite every two weeks (#39.15) |
 | `Verify-Schema.ps1`, `Apply-Migration.ps1`, `Check-ImportHealth.ps1` | ❌ never | ✅ when the slice calls for it |
 | Everything in `docs/testing/TEST-CATALOGUE.md` at state `driven` | ❌ never | ✅ a person chooses to run it |
 | A catalogue case promoted to `automated` | ❌ never (no CI database) | ✅ but it joins `npm run e2e`, so it is one command and not a checklist |

@@ -34,7 +34,11 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
 
 ## Verification order
 
-`npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`, in that order, every time.
+`npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`, in that order — **over the
+slice's targeted list, not the whole suite** (Slice #39.15). A slice runs lint and tsc whole, and
+e2e and jest only for the tests it wrote or changed and the existing tests of the modules it changed
+more than a little; the whole regression runs every two weeks, started by the test runner itself.
+The policy, and what a red automatic run means, is `C:\dev\CLAUDE.md` → „Tests run targeted".
 
 - **None of those four touch the database delivery path, and they never did.** They cover the
   application. The files that rebuild a database from scratch — `supabase_reset.sql`,
@@ -96,8 +100,9 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   successful import, and producing three documents where one was meant. A validator that
   disagrees with the executor is worse than no validator, because it is believed.
 
-- **The test runner runs this sequence, not Adrian** (Slice Propus.2). Claude requests `full` —
-  `full-db` when the slice touches the database — through `scripts/test-runner/claude.sh`, fixes a
+- **The test runner runs this sequence, not Adrian** (Slice Propus.2). Claude requests `targeted`
+  with the slice's test list — `full`, or `full-db` when the slice touches the database, only when
+  the header says `Regression: full` (#39.15) — through `scripts/test-runner/claude.sh`, fixes a
   red result and re-runs it in the same session, and quotes the runner's result in the handover.
   The runner starts its own `next dev` on 3100 (`.next/runner`), so Adrian's server on 3000 is
   never touched. How: `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner. The
@@ -114,9 +119,9 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
 - **Document-type forms live in `src/db/document-type-forms.json`, and the runner keeps it**
   (Slice #37.05, FU-019). A form is edited on a screen, so the database is ahead of the file until
   `bash scripts/test-runner/claude.sh request forms-export` rewrites it (read-only against the local
-  database; commit the file it leaves). `full` ends with a `forms-drift` line — „in step" or the
+  database; commit the file it leaves). `full` and `targeted` end with a `forms-drift` line — „in step" or the
   type keys that moved; it never fails a run. The file is what a rebuild and Ciprian's package load,
-  so a slice that changes a form on purpose exports and commits before its `full`. A type with a
+  so a slice that changes a form on purpose exports and commits before its `targeted` run. A type with a
   form that no seed creates turns `document-type-forms-file.test.ts` red until it is named, with a
   reason, in `FORMS_OF_UNSEEDED_TYPES`.
 - **`npm run e2e` needs `npm run dev` already running in a separate terminal.** When it isn't,

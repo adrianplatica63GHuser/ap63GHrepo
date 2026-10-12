@@ -56,8 +56,10 @@ fixed property:
 | `Seteaza ca actuala — creaza versiune noua din snapshot vechi` | Restoring an old snapshot creates a NEW latest version rather than rewriting history, and the form is editable again afterwards |
 | `butonul Salveaza: dezactivat → activ → dezactivat dupa salvare` | Save tracks dirty state correctly — the bug class from Slice #18.15.bugs |
 
-A case's row reaches `automated` only after a whole run of this suite has been green —
-the test runner's, whose result id is quoted, or Adrian's — see the catalogue's states table.
+A case's row reaches `automated` only after a run of its spec has been green — the test
+runner's, whose result id is quoted, or Adrian's — see the catalogue's states table. Since Slice
+#39.15 a slice runs only its own specs and those of the screens it changed (`targeted`); the whole
+suite runs every two weeks, started by the runner itself (`C:\dev\CLAUDE.md` → „Tests run targeted").
 
 ## What is NOT covered
 

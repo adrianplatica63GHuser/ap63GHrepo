@@ -33,11 +33,14 @@ this fixed sequence. Do not ask again.
   `scripts\test-runner\protocol.ts`, pinned by `src\__tests__\test-runner-protocol.test.ts`.
 - **The request is data, never a command line:** `version`, `id`, `sequence`, `commit`, and an
   optional `only` list, and nothing else. An unknown field is refused. The sequences are a fixed
-  list: `ping` (runs nothing and proves the runner is alive), `full` (e2e, lint, tsc, jest),
+  list: `ping` (runs nothing and proves the runner is alive), `targeted` (lint and tsc whole, e2e
+  and jest only the files `only` names — **what a slice runs since #39.15**, `C:\dev\CLAUDE.md` →
+  „Tests run targeted"), `full` (e2e, lint, tsc, jest — the whole regression),
   `full-db` (the same, plus `Verify-Rebuild.ps1`, which builds a throwaway Postgres on 5433),
   `static` (lint, tsc, jest), `e2e`, `jest` and `verify-rebuild` — and since Propus.3 `push`, `ci`
   and `migrate-local` (next bullet but two). `only` narrows e2e and jest to
-  test files that exist, for re-running one red spec. The runner refuses a request when HEAD is not
+  test files that exist — on `targeted` it IS the slice's test list, and with no `only` a targeted
+  run runs no e2e spec and no jest suite at all, never all of them. The runner refuses a request when HEAD is not
   the requested commit (it tests the working tree and never checks anything out), and when another
   request is running. It deletes each request file once it has read it.
 - **Its own server.** The runner's e2e starts its own `next dev` on **port 3100**, building into
@@ -57,20 +60,22 @@ this fixed sequence. Do not ask again.
 
     ```bash
     cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh ping                 # alive? exit 0
-    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh request full         # prints the id
+    cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh request targeted e2e/a/x.spec.ts src/__tests__/y.test.ts   # prints the id
     cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh wait <id>            # timeout_ms: 180000
     ```
 
   `wait` polls the result FILE for 170 s, inside the 180 s cap, and prints the result. Exit 0 means
   passed, 1 failed, 2 error (no answer: a cache-only tsc, a server that never came up), 3 refused,
-  4 still running, 6 held. **On 4, call `wait` again** — a full run is several minutes, so it is polled
-  across calls. On a red result, read the step's `log`, fix, commit, and request again, in the same
-  session. `request full e2e/versioning/property-versioning.spec.ts` re-runs one spec while you
-  fix it. The final `full` (or `full-db`) request must be on the commit being handed over.
+  4 still running, 6 held. **On 4, call `wait` again** — a run with e2e in it is several minutes, so
+  it is polled across calls. On a red result, read the step's `log`, fix, commit, and request again,
+  in the same session. `request e2e e2e/versioning/property-versioning.spec.ts` re-runs one spec
+  while you fix it. The final `targeted` request — with the slice's whole test list — must be on the
+  commit being handed over; `full` (or `full-db`) only when the header says `Regression: full`.
+  Each targeted step's note names the files it ran; quote them.
 - **Push, CI and the local migration are runner sequences too, each behind a guard** (Propus.3;
   `decidePush`, `ciVerdict`, `decideMigrateLocal` in `protocol.ts`). A guard that says no **holds**
   the step — status `held`, exit 6, the reason as a `GuardCode` in the summary — which means „this
-  waits for Adrian", not „this is broken". After the final green `full`:
+  waits for Adrian", not „this is broken". After the final green `targeted`:
 
     ```bash
     cd "$HOME/mnt/dev/ga40prj" && bash scripts/test-runner/claude.sh request push   # then wait <id>
@@ -78,8 +83,8 @@ this fixed sequence. Do not ask again.
     ```
 
   `push` pushes `main` to origin, fast-forward only, never forced, with Adrian's own git credential,
-  when all of these hold, in this order: HEAD is `main` (`not-on-main`); a passed, unnarrowed
-  `full`/`full-db` result names HEAD (`no-green-run`) over a tree with no tracked change
+  when all of these hold, in this order: HEAD is `main` (`not-on-main`); a passed `targeted` result,
+  or a passed unnarrowed `full`/`full-db`, names HEAD (`no-green-run`) over a tree with no tracked change
   (`green-run-dirty` — an untracked file is tolerated); `git ls-remote` answers (`remote-unknown`);
   `origin/main` is an ancestor of HEAD (`not-fast-forward`); and no commit in the range adds, edits
   or renames a `src/db/migration_*.sql` (`migration-in-range` — Supabase is Adrian's, so that push
@@ -87,7 +92,7 @@ this fixed sequence. Do not ask again.
   (waiting up to 5 min for GitHub to create them and 30 min for them to finish), keeps the newest
   run per workflow, and saves each failed job's log as `.test-runner\logs\<id>\ci-<job>.log`; the
   step's notes name the job, the step it died in and the run's URL. A red CI is read there, fixed,
-  committed, and taken round `full` → `push` → `ci` again. `migrate-local` takes a `backup` first
+  committed, and taken round `targeted` → `push` → `ci` again. `migrate-local` takes a `backup` first
   (next bullet) and applies nothing when it did not pass, then runs `Apply-Migration.ps1`
   and then `Export-SupabaseSchema.ps1` against the local container, and holds while any migration
   file differs from HEAD (`migration-dirty` — the script would apply the working tree, where an
@@ -109,6 +114,13 @@ this fixed sequence. Do not ask again.
   drill monthly and after a migration — as ordinary results with `auto-` ids, so a request can
   meet `busy` for a minute. The logic is `scripts/backup/`; by hand, `scripts\Backup-Archive.ps1`
   (`-Drill`, `-Where`).
+- **The runner also runs the whole regression every two weeks, on its own** (#39.15). When idle, with
+  no backup or drill due, the last whole `full`/`full-db` 14 days old and no tracked change in the
+  tree, it starts `full` as `auto-<time>-full` — then a request can meet `busy` for half an hour; wait
+  and ask again. Every whole run it finishes is recorded in `.test-runner\regression.json`, which
+  outlives result pruning. `bash scripts/test-runner/claude.sh regression` prints the last one, when
+  the next is due, and its result; every handover runs it (`C:\dev\CLAUDE.md` → „Tests run targeted"
+  says what a red one means).
 - **The handover quotes the result as the runner's.** Give the id, the commit, and each step's
   line as `wait` printed it, and never write it up as Adrian's run — the push and the CI read
   included. His two blocks

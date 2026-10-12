@@ -32,8 +32,8 @@ that builds something adds its case"). The guard enforces this:
 `src/__tests__/test-catalogue-coverage.test.ts` walks every route under `src/app`. It fails when
 a route has no case in `CATALOGUE_ROUTE_CASES`, is not listed with a reason in
 `CATALOGUE_NOT_YET`, and is not opted out with a reason in `CATALOGUE_OPTED_OUT`
-(`src/lib/testing/catalogue-map.ts`). The failure shows in `npx jest`, in CI and in the runner's
-`full`. So the suite keeps pace with a growing system without anyone scheduling it. It cannot
+(`src/lib/testing/catalogue-map.ts`). The failure shows in CI on every push (the whole jest suite runs there) and
+in the runner's two-weekly whole regression. So the suite keeps pace with a growing system without anyone scheduling it. It cannot
 make the case itself good; that part is the slice's.
 
 ## 2. The register and the defect log reach slices only through the Monday review
