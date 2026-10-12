@@ -2244,3 +2244,31 @@ export const interactionTag = pgTable(
     index("interaction_tag_tag_idx").on(t.tag),
   ],
 );
+
+// ── cost_record (Slice #39.17, migration_107) ────────────────────────────────
+// What a provider charged for a period, in the currency it bills, with the CA$
+// rate used then. „Setări → Costuri" adds them up per month and over time.
+export const costRecord = pgTable(
+  "cost_record",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    periodStart: date("period_start", { mode: "string" }).notNull(),
+    periodEnd: date("period_end", { mode: "string" }).notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    currency: text("currency").notNull(),
+    cadRate: numeric("cad_rate", { precision: 12, scale: 6 }).notNull(),
+    source: text("source").notNull(),
+    note: text("note"),
+    enteredAt: timestamp("entered_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("cost_record_provider_check", sql`${t.provider} ~ '^[a-z][a-z-]{1,39}$'`),
+    check("cost_record_period_check", sql`${t.periodEnd} >= ${t.periodStart}`),
+    check("cost_record_amount_check", sql`${t.amount} >= 0`),
+    check("cost_record_currency_check", sql`${t.currency} ~ '^[A-Z]{3}$'`),
+    check("cost_record_rate_check", sql`${t.cadRate} > 0`),
+    check("cost_record_source_check", sql`${t.source} IN ('live', 'counted', 'entered')`),
+    index("cost_record_provider_period_idx").on(t.provider, t.periodStart),
+  ],
+);
