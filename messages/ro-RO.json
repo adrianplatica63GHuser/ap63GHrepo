@@ -3931,6 +3931,103 @@
         "error": "Nu s-a putut salva.",
         "saving": "Se salvează…"
       }
+    },
+    "costs": {
+      "tilesLabel": "Costuri",
+      "collapsed": "Luna aceasta: {soFar} · prognoză: {forecast}",
+      "aiCollapsed": "Estimat luna aceasta: {soFar} · prognoză: {forecast}",
+      "expand": "Detalii",
+      "collapse": "Restrânge",
+      "loading": "Se citesc costurile…",
+      "loadError": "Costurile nu s-au putut citi.",
+      "soFar": "Luna aceasta, până azi",
+      "today": "Azi",
+      "forecast": "Prognoză la sfârșitul lunii",
+      "conditions": "Ce se plătește",
+      "freeTier": "Gratuit",
+      "pricing": "Cum se plătește",
+      "checked": "Prețuri verificate la {date} pe",
+      "pricingLink": "pagina de prețuri a furnizorului",
+      "history": "Costul în timp",
+      "chartLabel": "Costul pe zile, de la {from} la {to}: {total} în total",
+      "noHistory": "Niciun cost înregistrat încă.",
+      "months": "Pe luni",
+      "noEntered": "Nicio sumă introdusă încă.",
+      "source": {
+        "counted": "Calculat din ce numără aplicația.",
+        "entered": "Sume introduse de tine, de pe factură sau din lista de prețuri.",
+        "known": "Din raportul Google Cloud până la 11 octombrie 2026, apoi sumele introduse de tine."
+      },
+      "notConnected": "Cifrele furnizorului nu sunt conectate. Pentru ele trebuie cheia {key} în .env — {where}.",
+      "basis": {
+        "linear": "Prognoza continuă ritmul de până azi.",
+        "perDay": "Prognoza: ce s-a facturat, plus cam 0,50 CA$ pe zi după ce s-au terminat cele 10.000 de hărți gratuite (folosirea de către oameni).",
+        "entered": "Prognoza: sumele introduse pentru luna aceasta."
+      },
+      "ai": {
+        "perRead": "O citire e socotită la {usd} US$: limita de sus, ca o citire mare (30.000 de jetoane intrate, 4.000 ieșite) la prețul lui {model}.",
+        "reads": "{count, plural, =0 {Nicio citire plătită luna aceasta} one {O citire plătită luna aceasta} few {# citiri plătite luna aceasta} other {# de citiri plătite luna aceasta}}"
+      },
+      "testing": {
+        "maps": "Hărți reale în teste luna aceasta: {maps} din plafonul de 3.000.",
+        "mapsUnknown": "Numărul hărților din teste se vede doar pe laptopul cu programul de testare."
+      },
+      "providers": {
+        "ai": {
+          "title": "AI",
+          "conditions": "Citirile actelor cu AI — extragerea datelor, cărțile de identitate, clasificarea la import, gruparea mostrelor — se plătesc către Anthropic, la fiecare citire.",
+          "freeTier": "Nu există; un cont nou primește doar un mic credit de probă.",
+          "pricing": "Pe jetoane (bucăți de text): Sonnet 4.6 costă 3 US$ pe milion de jetoane intrate și 15 US$ pe milion ieșite; Haiku 4.5, 1 US$ și 5 US$. Factura e în US$, din credit plătit dinainte."
+        },
+        "claudePlan": {
+          "title": "Abonament Claude",
+          "conditions": "Abonamentul Claude cu care se dezvoltă aplicația: o sumă fixă pe lună, oricât s-ar lucra.",
+          "freeTier": "Planul Free nu ajunge pentru dezvoltare.",
+          "pricing": "Pro: 20 US$ pe lună (17 US$ cu plata anuală). Max 5x: 100 US$ pe lună. Max 20x: 200 US$ pe lună."
+        },
+        "googleMaps": {
+          "title": "Google Maps",
+          "conditions": "Google taxează fiecare hartă afișată (o proprietate deschisă, „Hartă extinsă”, harta tuturor proprietăților), fiecare Street View deschis și fiecare „Preia din Street View”. Luna lui Google se socotește în ora Pacificului.",
+          "freeTier": "Pe lună: 10.000 de hărți, 5.000 de Street View și 10.000 de adrese căutate.",
+          "pricing": "Peste partea gratuită: hărțile 7 US$ la 1.000, Street View 14 US$ la 1.000, adresele 5 US$ la 1.000. Factura vine în CA$, pe proiectul GeoAppNT-01."
+        },
+        "supabase": {
+          "title": "Supabase",
+          "conditions": "Supabase ține, când aplicația rulează în cloud, copia bazei de date, conturile de conectare și fișierele.",
+          "freeTier": "Free: 500 MB bază de date, 1 GB fișiere, 5 GB trafic pe lună, 2 proiecte; un proiect nefolosit o săptămână e pus în pauză.",
+          "pricing": "Pro: de la 25 US$ pe lună, cu 8 GB bază de date și 100 GB fișiere incluse, apoi după utilizare."
+        },
+        "vercel": {
+          "title": "Vercel",
+          "conditions": "Vercel găzduiește aplicația pe internet. Planul Hobby e doar pentru uz personal, necomercial — aplicația unei firme are nevoie de Pro.",
+          "freeTier": "Hobby: 0 US$, 100 GB trafic și 1 milion de apeluri pe lună, fără plată peste limită.",
+          "pricing": "Pro: 20 US$ pe lună pentru fiecare dezvoltator, cu 20 US$ de utilizare incluse, apoi după utilizare."
+        },
+        "resend": {
+          "title": "Resend (e-mail)",
+          "conditions": "Resend trimite e-mailurile aplicației: aprobarea și refuzul unui cont. Încă în plan.",
+          "freeTier": "Free: 3.000 de e-mailuri pe lună, cel mult 100 pe zi.",
+          "pricing": "Pro: 20 US$ pe lună pentru 50.000 de e-mailuri, apoi 0,90 US$ la 1.000."
+        },
+        "github": {
+          "title": "GitHub",
+          "conditions": "GitHub ține codul aplicației și rulează verificările automate la fiecare trimitere a codului — cam 4 minute de fiecare dată.",
+          "freeTier": "Free: 2.000 de minute de verificări pe lună pentru un depozit privat și 500 MB spațiu.",
+          "pricing": "Peste limită: 0,006 US$ pe minut, iar spațiul 0,25 US$ pe GB pe lună."
+        },
+        "domain": {
+          "title": "Domeniu web",
+          "conditions": "Un nume de domeniu pentru aplicație (de exemplu ga40.ro). Încă în plan. Se plătește pe an.",
+          "freeTier": "Nu există.",
+          "pricing": ".ro la ROTLD: 12 EUR + TVA pe an; .com: în jur de 11 US$ pe an. O sumă anuală se împarte pe zilele anului."
+        },
+        "testing": {
+          "title": "Testare",
+          "conditions": "Testele automate deschid ecranele cum ar face un om. Plătesc doar ce cer de la alții: hărțile lui Google și citirile AI ale scorului „ai-score”. Ambele apar pe facturile Google și Anthropic, nu aici.",
+          "freeTier": "Testele își permit cel mult 3.000 de hărți reale pe lună din cele 10.000 gratuite.",
+          "pricing": "Toate testele rulează o dată la două săptămâni; o lucrare își rulează doar testele ei."
+        }
+      }
     }
   },
   "navigation": {

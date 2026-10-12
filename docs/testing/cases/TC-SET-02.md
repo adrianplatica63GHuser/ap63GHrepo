@@ -43,7 +43,7 @@ The window is 1366 × 900.
 | 3 | Reads „Fereastră filtru expiră curând” | Its value, and „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.” for the value 30 |
 | 4 | Types `45` (nothing saved), then „Anulează” | The example reads „… cu 45 de zile înainte.” at once; after „Anulează” the value and the example are back |
 | 5 | Reads „Copii de siguranță” | „Ultima copie” and „Ultima probă de restaurare”, with the result — or „Copiile de siguranță nu pot fi citite de aici…” on an installation without them; no button |
-| 6 | Reads „AI” and „Despre” | Four uses, each with a `claude-…` model; „Versiune”, „Commit”, „Mediu”, „Bază de date” (a host and a name) |
+| 6 | „Detalii” on „AI”, then reads „AI” and „Despre” | Four uses, each with a `claude-…` model; „Versiune”, „Commit”, „Mediu”, „Bază de date” (a host and a name) |
 | 7 | Reads „Contul meu” and the sidebar's footer | „Parola nouă” and „Confirmă parola”; „Limba” with „Română” chosen and „English”; the footer holds „Ieșire” alone |
 
 ## At the end — leaving things as they were found
@@ -51,6 +51,9 @@ The window is 1366 × 900.
 Nothing to put back: step 4 saves nothing.
 
 ## Notes from the runs
+
+**2026-10-12 — Slice #39.17.** „AI” is now a part of „Costuri” and opens collapsed to its estimated
+cost, so step 6 opens it with „Detalii” first (TC-SET-04 covers the rest of „Costuri”).
 
 **2026-10-08 — Slice #38.40, `automated` the same day.** Written with the change and translated into
 `e2e/settings/settings-sections.spec.ts`. The runner's run is in #38.40's handover.

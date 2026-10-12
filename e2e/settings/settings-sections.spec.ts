@@ -78,7 +78,9 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
     await expect(backups.getByRole("button")).toHaveCount(0); // read-only: nothing to start
 
     // Step 6 — „AI": the four uses and a model each; „Despre": version, commit, environment, database.
+    // Since #39.17 „AI" is a cost part that opens collapsed: „Detalii" first.
     const ai = main.getByRole("region", { name: "AI", exact: true });
+    await ai.getByRole("button", { name: "Detalii", exact: true }).click();
     for (const use of ["Extragerea datelor din acte", "Citirea cărților de identitate", "Clasificarea fișierelor la import", "Gruparea mostrelor (Instrumente)"]) {
       await expect(ai.getByText(use, { exact: true })).toBeVisible();
     }

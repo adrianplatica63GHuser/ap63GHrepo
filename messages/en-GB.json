@@ -3931,6 +3931,103 @@
         "error": "Could not save.",
         "saving": "Saving…"
       }
+    },
+    "costs": {
+      "tilesLabel": "Costs",
+      "collapsed": "This month: {soFar} · forecast: {forecast}",
+      "aiCollapsed": "Estimated this month: {soFar} · forecast: {forecast}",
+      "expand": "Details",
+      "collapse": "Collapse",
+      "loading": "Reading the costs…",
+      "loadError": "The costs could not be read.",
+      "soFar": "This month, to date",
+      "today": "Today",
+      "forecast": "Forecast for the month",
+      "conditions": "What is paid for",
+      "freeTier": "Free",
+      "pricing": "How it is priced",
+      "checked": "Prices checked on {date} on",
+      "pricingLink": "the provider's pricing page",
+      "history": "Cost over time",
+      "chartLabel": "Cost by day, {from} to {to}: {total} in all",
+      "noHistory": "No cost recorded yet.",
+      "months": "By month",
+      "noEntered": "No amount entered yet.",
+      "source": {
+        "counted": "Worked out from what the application counts.",
+        "entered": "Amounts you entered, from a bill or a price list.",
+        "known": "From the Google Cloud report up to 11 October 2026, then the amounts you enter."
+      },
+      "notConnected": "The provider's own figures are not connected. They need the key {key} in .env — {where}.",
+      "basis": {
+        "linear": "The forecast continues the pace so far.",
+        "perDay": "The forecast: what was billed, plus about CA$0.50 a day once the free 10,000 maps are used up (people using the maps).",
+        "entered": "The forecast: the amounts entered for this month."
+      },
+      "ai": {
+        "perRead": "A read is counted at US${usd}: the upper bound, a large read (30,000 tokens in, 4,000 out) at {model}'s price.",
+        "reads": "{count, plural, =0 {No paid read this month} one {One paid read this month} other {# paid reads this month}}"
+      },
+      "testing": {
+        "maps": "Real maps in the tests this month: {maps} of the 3,000 ceiling.",
+        "mapsUnknown": "The tests' map count is visible only on the laptop that runs the tests."
+      },
+      "providers": {
+        "ai": {
+          "title": "AI",
+          "conditions": "The application's AI reads of documents — extracting data, identity cards, classifying files on import, grouping samples — are paid to Anthropic, per read.",
+          "freeTier": "None; a new account gets only a small trial credit.",
+          "pricing": "By tokens (pieces of text): Sonnet 4.6 costs US$3 per million tokens in and US$15 per million out; Haiku 4.5, US$1 and US$5. Billed in US$, from prepaid credit."
+        },
+        "claudePlan": {
+          "title": "Claude subscription",
+          "conditions": "The Claude subscription the application is developed with: a fixed amount a month, however much work is done.",
+          "freeTier": "The Free plan is not enough for development.",
+          "pricing": "Pro: US$20 a month (US$17 paid yearly). Max 5x: US$100 a month. Max 20x: US$200 a month."
+        },
+        "googleMaps": {
+          "title": "Google Maps",
+          "conditions": "Google charges for each map shown (a property opened, „Hartă extinsă”, the map of all properties), each Street View opened and each „Preia din Street View”. Google's month runs on Pacific time.",
+          "freeTier": "Each month: 10,000 maps, 5,000 Street Views and 10,000 address look-ups.",
+          "pricing": "Beyond the free part: maps US$7 per 1,000, Street View US$14 per 1,000, addresses US$5 per 1,000. Billed in CA$, project GeoAppNT-01."
+        },
+        "supabase": {
+          "title": "Supabase",
+          "conditions": "When the application runs in the cloud, Supabase holds the database's copy, the sign-in accounts and the files.",
+          "freeTier": "Free: 500 MB database, 1 GB files, 5 GB traffic a month, 2 projects; a project unused for a week is paused.",
+          "pricing": "Pro: from US$25 a month, with 8 GB database and 100 GB files included, then by usage."
+        },
+        "vercel": {
+          "title": "Vercel",
+          "conditions": "Vercel hosts the application on the internet. The Hobby plan is for personal, non-commercial use only — a business's application needs Pro.",
+          "freeTier": "Hobby: US$0, 100 GB traffic and 1 million calls a month, no paying past the limit.",
+          "pricing": "Pro: US$20 a month per developer, with US$20 of usage included, then by usage."
+        },
+        "resend": {
+          "title": "Resend (e-mail)",
+          "conditions": "Resend sends the application's e-mails: an account approved or refused. Still planned.",
+          "freeTier": "Free: 3,000 e-mails a month, at most 100 a day.",
+          "pricing": "Pro: US$20 a month for 50,000 e-mails, then US$0.90 per 1,000."
+        },
+        "github": {
+          "title": "GitHub",
+          "conditions": "GitHub holds the application's code and runs the automatic checks each time code is sent — about 4 minutes each time.",
+          "freeTier": "Free: 2,000 minutes of checks a month for a private repository, and 500 MB of space.",
+          "pricing": "Beyond that: US$0.006 a minute, and space US$0.25 per GB a month."
+        },
+        "domain": {
+          "title": "Web domain",
+          "conditions": "A domain name for the application (for example ga40.ro). Still planned. Paid yearly.",
+          "freeTier": "None.",
+          "pricing": ".ro at ROTLD: EUR 12 + VAT a year; .com: about US$11 a year. A yearly amount is spread over the year's days."
+        },
+        "testing": {
+          "title": "Testing",
+          "conditions": "The automatic tests open the screens the way a person would. They pay only for what they ask of others: Google's maps and the AI reads of the „ai-score” score. Both appear on Google's and Anthropic's bills, not here.",
+          "freeTier": "The tests allow themselves at most 3,000 real maps a month of the free 10,000.",
+          "pricing": "All the tests run once every two weeks; a piece of work runs only its own tests."
+        }
+      }
     }
   },
   "navigation": {

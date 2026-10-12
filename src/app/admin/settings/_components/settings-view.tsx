@@ -16,8 +16,14 @@ import { ChangePasswordForm } from "@/app/account/change-password/change-passwor
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { MyTileDefaults } from "./my-tile-defaults";
+import { TileSelector } from "@/components/tiles/tile-selector";
+import { useTileChoice, type TileChoice } from "@/components/tiles/use-tile-choice";
+import { groupedTiles } from "@/lib/ui/tiles";
+import { COST_PROVIDERS } from "@/lib/costs/catalogue";
+import { SETTINGS_TILES, SETTINGS_TILE_REGISTRY, type SettingsTile } from "./settings-tiles";
+import { CostTile, useCosts } from "./cost-tiles";
 
-/** Slice #37.35: Setări's tiles, 3 units each — fixed, not tickable (Ask first). */
+/** Slice #37.35: Setări's tiles, 3 units each. Slice #39.17: ticked on and off like a record's (`settings-tiles.ts`). */
 const SETTINGS_TILE_UNITS = 3;
 /** Slice #38.40: „Praguri de timp" is four groups with an example under each threshold — one unit wider. */
 const TIME_FRAMES_UNITS = 4;
@@ -282,7 +288,76 @@ function Tile({ name, title, children }: { name: string; title: string; children
   );
 }
 
-function SystemTiles() {
+function useSystemStatus() {
+  const t = useTranslations("settings");
+  const { data, isLoading, isError } = useQuery({ queryKey: ["settings-system"], queryFn: fetchSystem });
+  const status = isLoading ? (
+    <p className="text-sm text-fade">{t("system.loading")}</p>
+  ) : isError || !data ? (
+    <p role="alert" className="text-sm text-red-500">{t("system.loadError")}</p>
+  ) : null;
+  return { data, status };
+}
+
+/**
+ * The AI tile's own content (Slice #38.40): this month's paid reads and the
+ * models. Since #39.17 it is the expanded part of „Costuri → AI", whose
+ * collapsed line is the reads' estimated cost.
+ */
+function AiReadsAndModels() {
+  const t = useTranslations("settings");
+  const { data, status } = useSystemStatus();
+  return (
+    <>
+      {status ?? (data && (
+          <div className="flex flex-col gap-2 text-sm">
+            {/* Slice #38.40 (migration_100): this month's paid reads, counted since the table exists. */}
+            {data.ai.paidReads === null || data.ai.paidReads === undefined ? (
+              <p className="text-xs text-fade">{t("ai.paidReadsUnavailable")}</p>
+            ) : (
+              <div className="flex flex-col" data-ai-paid-reads={data.ai.paidReads.count}>
+                <p className="text-ink">{t("ai.paidReads", { count: data.ai.paidReads.count })}</p>
+                {data.ai.paidReads.since && (
+                  <p className="text-xs text-fade">{t("ai.since", { date: when(data.ai.paidReads.since) })}</p>
+                )}
+              </div>
+            )}
+            <p className="text-xs text-fade">{t("ai.intro")}</p>
+            <dl className="flex flex-col gap-1.5">
+              {data.ai.models.map((m) => (
+                <div key={m.use} className="flex flex-col" data-ai-use={m.use}>
+                  <dt className="text-xs text-fade">{t(`ai.uses.${m.use}`)}</dt>
+                  <dd className="font-mono text-xs text-ink">{m.model}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+      ))}
+    </>
+  );
+}
+
+/** „Costuri" (Slice #39.17): one tile per provider, in the catalogue's order, each when ticked. */
+function CostTiles({ choice }: { choice: TileChoice<SettingsTile> }) {
+  const t = useTranslations("settings.costs");
+  const { data, isLoading, isError } = useCosts();
+  const status = isLoading ? (
+    <p className="text-sm text-fade">{t("loading")}</p>
+  ) : isError || !data ? (
+    <p role="alert" className="text-sm text-red-500">{t("loadError")}</p>
+  ) : null;
+  return (
+    <>
+      {COST_PROVIDERS.filter((k) => choice.isShown(k)).map((k) => (
+        <CostTile key={k} provider={k} summary={data?.providers.find((p) => p.key === k)} status={status}>
+          {k === "ai" ? <AiReadsAndModels /> : null}
+        </CostTile>
+      ))}
+    </>
+  );
+}
+
+function SystemTiles({ choice }: { choice: TileChoice<SettingsTile> }) {
   const t = useTranslations("settings");
   const { data, isLoading, isError } = useQuery({ queryKey: ["settings-system"], queryFn: fetchSystem });
   const status = isLoading ? (
@@ -294,6 +369,7 @@ function SystemTiles() {
   const backups = data?.backups;
   return (
     <>
+      {choice.isShown("backups") && (
       <Tile name="settings-backups" title={t("sections.backups")}>
         {status ?? (backups && (
           <div className="flex flex-col gap-3 text-sm">
@@ -347,34 +423,9 @@ function SystemTiles() {
           </div>
         ))}
       </Tile>
+      )}
 
-      <Tile name="settings-ai" title={t("sections.ai")}>
-        {status ?? (data && (
-          <div className="flex flex-col gap-2 text-sm">
-            {/* Slice #38.40 (migration_100): this month's paid reads, counted since the table exists. */}
-            {data.ai.paidReads === null || data.ai.paidReads === undefined ? (
-              <p className="text-xs text-fade">{t("ai.paidReadsUnavailable")}</p>
-            ) : (
-              <div className="flex flex-col" data-ai-paid-reads={data.ai.paidReads.count}>
-                <p className="text-ink">{t("ai.paidReads", { count: data.ai.paidReads.count })}</p>
-                {data.ai.paidReads.since && (
-                  <p className="text-xs text-fade">{t("ai.since", { date: when(data.ai.paidReads.since) })}</p>
-                )}
-              </div>
-            )}
-            <p className="text-xs text-fade">{t("ai.intro")}</p>
-            <dl className="flex flex-col gap-1.5">
-              {data.ai.models.map((m) => (
-                <div key={m.use} className="flex flex-col" data-ai-use={m.use}>
-                  <dt className="text-xs text-fade">{t(`ai.uses.${m.use}`)}</dt>
-                  <dd className="font-mono text-xs text-ink">{m.model}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ))}
-      </Tile>
-
+      {choice.isShown("about") && (
       <Tile name="settings-about" title={t("sections.about")}>
         {status ?? (data && (
           <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-sm" data-about="">
@@ -391,6 +442,7 @@ function SystemTiles() {
           </dl>
         ))}
       </Tile>
+      )}
     </>
   );
 }
@@ -447,20 +499,34 @@ function AccountTile({ uat }: { uat: boolean }) {
 }
 
 export function SettingsView({ uat = false }: { uat?: boolean } = {}) {
+  const t = useTranslations("settings");
+  // Slice #39.17: the tiles are ticked on and off, as on a record's screen; every one shows by default.
+  const choice = useTileChoice<SettingsTile>(SETTINGS_TILE_REGISTRY);
+  const labels = Object.fromEntries(
+    SETTINGS_TILES.map((k) => [
+      k,
+      (COST_PROVIDERS as readonly string[]).includes(k) ? t(`costs.providers.${k}.title` as Parameters<typeof t>[0]) : t(`sections.${k}` as Parameters<typeof t>[0]),
+    ]),
+  ) as Record<SettingsTile, string>;
+  // Slice #37.22: panels in a row that wraps — the window decides how many sit
+  // side by side, never how wide one is. Slice #38.40: four sections —
+  // „Praguri de timp" (four units, its four groups), then „Copii de siguranță",
+  // „AI" and „Despre" (three each). Slice #38.41: „Contul meu" first. Slice
+  // #39.17: the boxes above them, and „Costuri" after them, „AI" first among those.
   return (
-    // Slice #37.22: panels in a row that wraps — the window decides how many sit
-    // side by side, never how wide one is. Slice #38.40: four sections —
-    // „Praguri de timp" (four units, its four groups), then „Copii de siguranță",
-    // „AI" and „Despre" (three each). Slice #38.41: „Contul meu" first.
+    <div className="flex flex-col gap-4">
+    <TileSelector all={SETTINGS_TILES} groups={groupedTiles(SETTINGS_TILE_REGISTRY)} labels={labels} choice={choice} />
     <UnitRow units={[SETTINGS_TILE_UNITS, TIME_FRAMES_UNITS]}>
       {/* Slice #38.20: no „Altele" — Grupuri, Ștampile and Etichete are in the sidebar's
           „Administrare", which is where a screen is found. */}
-      <AccountTile uat={uat} />
-      <TimeFramesPanel />
-      <SystemTiles />
+      {choice.isShown("account") && <AccountTile uat={uat} />}
+      {choice.isShown("timeFrames") && <TimeFramesPanel />}
+      <SystemTiles choice={choice} />
+      <CostTiles choice={choice} />
 
       {/* Slice #38.22: the developer-notes panel is gone from every build; its note is in
           docs/claude/DEVELOPER-NOTES.md. */}
     </UnitRow>
+    </div>
   );
 }
