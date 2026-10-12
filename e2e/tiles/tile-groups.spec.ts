@@ -108,6 +108,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
       await page.reload();
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
       await hideTile(page, "Interacțiuni"); // #37.89: TC-TILES-13's layout, without the right-hand column
+      await hideTile(page, "Arbore de moștenire"); // #39.12: and without the family tile, which packs under „Legături"
       const conn = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
       const related = page.getByRole("region", { name: "Legături", exact: true });
       await expect(related).toContainText("Nimic corelat încă.", { timeout: 30_000 });

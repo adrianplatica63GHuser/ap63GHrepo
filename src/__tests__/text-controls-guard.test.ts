@@ -59,7 +59,8 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A108", "{state === \"saving\" ? t(\"buttonSaving\") : t(\"buttonSave\""],
   ],
   // #39.11: the inheritance tree — a person's name is the link to their screen (the card's, a tie's, a node's).
-  "src/app/inheritance-tree/_components/inheritance-tree-screen.tsx": [
+  // #39.12: drawn by the shared canvas now, for the whole tree and for a person's tile.
+  "src/components/inheritance/tree-canvas.tsx": [
     ["A113", "{byId.get(chosen)!.displayName}"],
     ["A113", "{byId.get(other)?.displayName}"],
     ["A113", "<text x={0} y={-h / 2 + px(17)} textAnchor=\"middle\" fontSize={px(13)} fontWeight"],

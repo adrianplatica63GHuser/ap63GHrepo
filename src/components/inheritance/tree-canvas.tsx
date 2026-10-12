@@ -55,7 +55,9 @@ export function TreeCanvas({
   linkOf = personTreeHref,
   mark = null,
   onLevel,
-  className = "",
+  // Positions the canvas: `relative` on its own, `absolute inset-0` to fill a frame. Never both — `relative` wins
+  // in the stylesheet, the box falls to 0 px high and the side card is clipped under its parent (#39.12).
+  className = "relative",
 }: {
   data: TreeData;
   layout: TreeLayout;
@@ -178,7 +180,7 @@ export function TreeCanvas({
   return (
     <div
       ref={boxRef}
-      className={`relative min-h-0 cursor-grab touch-none select-none overflow-hidden active:cursor-grabbing ${className}`}
+      className={`min-h-0 cursor-grab touch-none select-none overflow-hidden active:cursor-grabbing ${className}`}
       data-tree-level={level}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
