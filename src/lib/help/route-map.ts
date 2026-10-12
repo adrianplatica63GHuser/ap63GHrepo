@@ -41,6 +41,9 @@ export const HELP_OPTED_OUT: readonly string[] = [
   // Slice #38.20: „Rapoarte — în lucru" is itself the explanation — five paragraphs on what
   // reports will offer, and nothing to operate yet. Its help comes with the reports.
   "/reports",
+  // Slice #39.11: „Arbori de moștenire" is a full-page frame over the breadcrumb bar, where the „?" stands — a help
+  // screen registered here could never be opened. Its header says how it is used („rotița mărește, tragerea mută").
+  "/inheritance-tree",
 ];
 
 /** True when a pathname is explicitly excluded from the help system. */
