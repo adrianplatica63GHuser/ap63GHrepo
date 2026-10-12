@@ -86,6 +86,14 @@ whose map cannot load still renders, and its spec still passes.
 „Google maps loaded: N" on its e2e step, and names the specs that loaded them. `src/__tests__/e2e-google-maps.test.ts`
 fails on a spec that imports `test` from `@playwright/test`, on an opt-in without its reason, and on a block left off.
 
+**And the tests have a monthly ceiling: 3,000 real maps** (Slice #39.16), leaving 7,000 of Google's free 10,000 for the
+people using the app. The runner keeps the month's count — Google's month, on US Pacific time — in
+`.test-runner/google-maps-month.json`, and every e2e step says „Google maps this month: N of the tests' ceiling of
+3,000". Once it is reached, the runner sets `E2E_MAPS_CEILING`: no test gets real maps, and a spec that opted in is
+**skipped** with the ceiling named, not failed, until the month ends. The number is `MAPS_MONTHLY_CEILING` in
+`scripts/test-runner/protocol.ts`. October 2026 was seeded past it (the runner's records for Oct 1–11), so the map
+specs skip until November 1.
+
 ---
 
 ## Running it
