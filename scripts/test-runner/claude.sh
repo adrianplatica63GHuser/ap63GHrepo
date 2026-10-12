@@ -62,13 +62,14 @@ show() {
   ' "$1"
 }
 
+# The schedule: November 4, 2026 (Toronto midnight), then every 14 days (Adrian, 2026-10-12).
 # The newest whole regression: `.test-runner/regression.json` (the runner's record, which outlives
 # result pruning) or the newest whole full/full-db result file, whichever is later. The test mirrors
 # protocol.ts → isWholeRegression; keep the two together. (#39.15)
 regression() {
   node -e '
     const fs = require("fs"), path = require("path");
-    const ch = process.argv[1], days = 14;
+    const ch = process.argv[1], days = 14, first = "2026-11-04T05:00:00.000Z";
     const runs = [];
     try { const r = JSON.parse(fs.readFileSync(path.join(ch, "regression.json"), "utf8")); if (r.id && r.finishedAt) runs.push(r); } catch {}
     let files = [];
@@ -82,8 +83,10 @@ regression() {
     }
     runs.sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt));
     const last = runs[0];
-    if (!last) { console.log("no whole regression run on record — the runner starts one as soon as it is idle on a clean tree"); process.exit(0); }
-    const due = new Date(Date.parse(last.finishedAt) + days * 86400000);
+    // The schedule (protocol.ts → regressionDueAt): the first of first + k × 14 days after the last whole run.
+    const step = days * 86400000, f0 = Date.parse(first), t = last ? Date.parse(last.finishedAt) : NaN;
+    const due = new Date(Number.isNaN(t) || t < f0 ? f0 : f0 + (Math.floor((t - f0) / step) + 1) * step);
+    if (!last) { console.log(`no whole regression run on record — next due: ${due.toISOString()}`); process.exit(0); }
     console.log(`last whole regression: ${last.id} — ${String(last.status).toUpperCase()}, finished ${last.finishedAt}`);
     console.log(`next due: ${due.toISOString()}${due.getTime() <= Date.now() ? " (due now: the runner starts it when idle on a clean tree)" : ""}`);
     console.log(last.id);

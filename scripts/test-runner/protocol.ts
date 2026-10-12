@@ -84,7 +84,8 @@
  * no `only`, e2e and jest run NOTHING, never everything (`planSteps`). A green
  * `targeted` on HEAD licenses a push as a whole `full` does (`licensingRun`).
  * The whole regression, `full`, is started by the runner itself when it is
- * idle and the last one is 14 days old (`decideAutoRegression`), under an
+ * idle on a fixed schedule — November 4, 2026, then every 14 days
+ * (`decideAutoRegression`) — under an
  * `auto-` id, and its date survives result pruning in `regression.json`.
  *
  * Slice #37.12 added `measure-fields`: `scripts/testing/measure-field-lengths.ts`,
@@ -1058,13 +1059,17 @@ export function decidePush(o: PushObservation): GuardDecision<{ greenRun: string
  * ⚠️ **ADRIAN'S DECISION, 2026-10-12, UNTIL HE CHANGES IT: THE WHOLE REGRESSION
  * RUNS EVERY TWO WEEKS, NOT AFTER EVERY SLICE.** „Cheap development first,
  * reliability of the system later." A slice runs `targeted`; the runner starts
- * a whole `full` on its own when it is idle and the last whole run is this old.
+ * a whole `full` on its own on a FIXED schedule: November 4, 2026, then every
+ * 14 days — Adrian, 2026-10-12: „move the Oct 25 to November 4th, and every two
+ * weeks after that". A whole run asked for in between does not move the dates.
  * A red one is not fixed by whatever slice is running — the next handover lists
  * it, and Adrian decides when it is fixed (`C:\dev\CLAUDE.md` → „Tests run
  * targeted"). Change the cadence here and in that block, nowhere else.
  */
 export const REGRESSION_EVERY_DAYS = 14;
 export const REGRESSION_EVERY_MS = REGRESSION_EVERY_DAYS * 24 * 60 * 60_000;
+/** The schedule's first date: midnight of 2026-11-04 in Toronto (EST, UTC-5). Then every `REGRESSION_EVERY_DAYS`. */
+export const REGRESSION_FIRST = "2026-11-04T05:00:00.000Z";
 /** An automatic run that gave no answer (status `error`) is tried again after this long, not every ten minutes. */
 export const REGRESSION_RETRY_MS = 6 * 60 * 60_000;
 /** Under `CHANNEL_DIR`: the newest whole run, kept here because result files are pruned (60 kept). */
@@ -1111,9 +1116,18 @@ export function lastRegression(
   return all[0] ?? null;
 }
 
-/** When the next whole regression is due: 14 days after the last, or now when there has been none. */
-export function regressionDueAt(last: RegressionRecord | null, now: Date): Date {
-  return last ? new Date(Date.parse(last.finishedAt) + REGRESSION_EVERY_MS) : now;
+/**
+ * When the next whole regression is due: the first scheduled date — November 4,
+ * 2026, then every 14 days — after the last whole run finished. With no whole
+ * run on record, or the last one before the schedule began, that is November 4.
+ * So a whole run asked for in between answers the date that follows it, and
+ * never moves the dates themselves.
+ */
+export function regressionDueAt(last: RegressionRecord | null): Date {
+  const first = Date.parse(REGRESSION_FIRST);
+  const t = last ? Date.parse(last.finishedAt) : Number.NaN;
+  if (Number.isNaN(t) || t < first) return new Date(first);
+  return new Date(first + (Math.floor((t - first) / REGRESSION_EVERY_MS) + 1) * REGRESSION_EVERY_MS);
 }
 
 export interface RegressionObservation {
@@ -1131,7 +1145,8 @@ export type RegressionDecision = { start: true } | { start: false; reason: strin
  * Whether the idle runner starts the whole regression now. Checked in this
  * order, so the reason given is the one that is actually in the way:
  *
- *   1. It is due — 14 days since the last whole run, or there has been none.
+ *   1. It is due — a scheduled date (November 4, 2026, then every 14 days)
+ *      has come since the last whole run finished.
  *   2. This process has not tried within `REGRESSION_RETRY_MS` — a run that
  *      gave no answer (Docker down, a server that never came up) is retried,
  *      but not every ten minutes.
@@ -1141,7 +1156,7 @@ export type RegressionDecision = { start: true } | { start: false; reason: strin
  *      file is tolerated, as the push guard tolerates it.
  */
 export function decideAutoRegression(o: RegressionObservation): RegressionDecision {
-  const due = regressionDueAt(o.last, o.now);
+  const due = regressionDueAt(o.last);
   if (o.now.getTime() < due.getTime()) {
     return { start: false, reason: `not due until ${due.toISOString()} (last whole run ${o.last?.id ?? "none"})` };
   }

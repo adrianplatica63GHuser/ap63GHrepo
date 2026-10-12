@@ -117,10 +117,14 @@ block is the policy; every other file points here rather than repeating it.**
   regression on that one slice — `full`, or `full-db` when it touches the database. Without it,
   `targeted` is the default. A slice that touches a migration or the rebuild files also requests
   `verify-rebuild`, which opens no browser and loads no map.
-- **The whole regression runs every two weeks, on its own.** The runner starts `full` when it is idle,
-  no backup or drill is due, the last whole `full`/`full-db` finished 14 days ago, and the working
-  tree has no tracked change — as `auto-<time>-full`. Any whole run, asked for or automatic, green or
-  red, resets the clock. `claude.sh regression` prints the last one and when the next is due.
+- **The whole regression runs every two weeks, on its own, on fixed dates: November 4, 2026, then
+  every 14 days** (November 18, December 2, …) — Adrian, 2026-10-12: „move the Oct 25 to November
+  4th, and every two weeks after that". From a date's Toronto midnight the runner starts `full` once
+  it is idle, no backup or drill is due, and the working tree has no tracked change — as
+  `auto-<time>-full`. A whole run asked for in between, green or red, answers the next date only if
+  it falls on or after it; it never moves the dates. `claude.sh regression` prints the last one and
+  when the next is due. The dates are `REGRESSION_FIRST` and `REGRESSION_EVERY_DAYS` in
+  `ga40prj\scripts\test-runner\protocol.ts`.
 - **A red automatic regression is not the running slice's to fix** — the one exception to „Never
   dismiss an error" (The working contract, below). Every handover runs `claude.sh regression`, and
   when a whole run has finished since the last handover, lists it under **„Regression run

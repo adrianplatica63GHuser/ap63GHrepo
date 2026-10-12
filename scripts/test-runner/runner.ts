@@ -52,8 +52,9 @@
  * ⚠️ **AND IT RUNS THE WHOLE REGRESSION ON ITS OWN, EVERY TWO WEEKS.** (Slice
  * #39.15.) A slice is verified by `targeted` now — lint, tsc, and only the e2e
  * specs and jest suites it names. When the runner is idle, no backup or drill
- * is due, the last whole `full` is 14 days old and the working tree has no
- * tracked change, it starts `full` itself as `auto-<time>-full`
+ * is due, a scheduled date (November 4, 2026, then every 14 days) has come since
+ * the last whole `full`, and the working tree has no tracked change, it starts
+ * `full` itself as `auto-<time>-full`
  * (`protocol.ts` → `decideAutoRegression`). Every whole run it finishes, asked
  * for or not, is recorded in `.test-runner/regression.json`, because result
  * files are pruned and the clock must not be.

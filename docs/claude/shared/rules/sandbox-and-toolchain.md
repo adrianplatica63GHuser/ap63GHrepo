@@ -114,9 +114,10 @@ this fixed sequence. Do not ask again.
   drill monthly and after a migration — as ordinary results with `auto-` ids, so a request can
   meet `busy` for a minute. The logic is `scripts/backup/`; by hand, `scripts\Backup-Archive.ps1`
   (`-Drill`, `-Where`).
-- **The runner also runs the whole regression every two weeks, on its own** (#39.15). When idle, with
-  no backup or drill due, the last whole `full`/`full-db` 14 days old and no tracked change in the
-  tree, it starts `full` as `auto-<time>-full` — then a request can meet `busy` for half an hour; wait
+- **The runner also runs the whole regression every two weeks, on its own** (#39.15), on fixed dates:
+  November 4, 2026, then every 14 days (`REGRESSION_FIRST`, `REGRESSION_EVERY_DAYS`). From a date's
+  Toronto midnight, when idle, with no backup or drill due and no tracked change in the tree, it
+  starts `full` as `auto-<time>-full` — then a request can meet `busy` for half an hour; wait
   and ask again. Every whole run it finishes is recorded in `.test-runner\regression.json`, which
   outlives result pruning. `bash scripts/test-runner/claude.sh regression` prints the last one, when
   the next is due, and its result; every handover runs it (`C:\dev\CLAUDE.md` → „Tests run targeted"

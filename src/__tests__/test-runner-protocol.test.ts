@@ -37,6 +37,7 @@ import {
   PUSH_LICENSING_SEQUENCES,
   REGRESSION_EVERY_DAYS,
   REGRESSION_EVERY_MS,
+  REGRESSION_FIRST,
   REGRESSION_RETRY_MS,
   TARGETED_SEQUENCES,
   WHOLE_SEQUENCES,
@@ -613,8 +614,10 @@ describe("the push guard — every condition holds the push, by name", () => {
 });
 
 describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #39.15)", () => {
-  const NOW = new Date("2026-10-26T12:00:00.000Z");
+  // A scheduled day: November 18, 2026, the second date after November 4.
+  const NOW = new Date("2026-11-18T12:00:00.000Z");
   const DAY = 24 * 60 * 60_000;
+  const HOUR = 60 * 60_000;
   const at = (msAgo: number): string => new Date(NOW.getTime() - msAgo).toISOString();
   const run = (over: Partial<RegressionCandidate> = {}): RegressionCandidate => ({
     id: "20261012T015649Z-19192",
@@ -639,9 +642,11 @@ describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #3
     ...over,
   });
 
-  it("is every fourteen days", () => {
+  it("is every fourteen days from November 4, 2026 — Adrian: „November 4th, and every two weeks after that”", () => {
     expect(REGRESSION_EVERY_DAYS).toBe(14);
     expect(REGRESSION_EVERY_MS).toBe(14 * DAY);
+    // Midnight in Toronto, which is on EST (UTC-5) by then.
+    expect(REGRESSION_FIRST).toBe("2026-11-04T05:00:00.000Z");
   });
 
   // Rows padded to the callback's arity (sandbox-and-toolchain.md → the it.each trap).
@@ -668,9 +673,17 @@ describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #3
     expect(lastRegression([run({ sequence: "targeted", finishedAt: at(0) })], null)).toBeNull();
   });
 
-  it("is due fourteen days after the last, and at once when there has been none", () => {
-    expect(regressionDueAt({ id: "x", status: "passed", finishedAt: at(DAY) }, NOW).toISOString()).toBe(new Date(NOW.getTime() + 13 * DAY).toISOString());
-    expect(regressionDueAt(null, NOW)).toEqual(NOW);
+  const lastAt = (finishedAt: string): RegressionRecord => ({ id: "x", status: "passed", finishedAt });
+  it("is due on the schedule's first date after the last whole run — November 4 when there has been none", () => {
+    const due = (finishedAt: string | null) => regressionDueAt(finishedAt === null ? null : lastAt(finishedAt)).toISOString();
+    expect(due(null)).toBe("2026-11-04T05:00:00.000Z");
+    expect(due("2026-10-12T02:24:10.391Z")).toBe("2026-11-04T05:00:00.000Z"); // 39.13's full-db: no longer Oct 26
+    expect(due("2026-11-04T06:00:00.000Z")).toBe("2026-11-18T05:00:00.000Z");
+    expect(due("2026-11-18T05:00:00.000Z")).toBe("2026-12-02T05:00:00.000Z");
+  });
+  it("a whole run asked for in between never moves the dates", () => {
+    expect(regressionDueAt(lastAt("2026-11-01T12:00:00.000Z")).toISOString()).toBe("2026-11-04T05:00:00.000Z");
+    expect(regressionDueAt(lastAt("2026-11-10T12:00:00.000Z")).toISOString()).toBe("2026-11-18T05:00:00.000Z");
   });
 
   it("starts when due, untried and over a clean tree; an untracked file does not stop it", () => {
@@ -681,7 +694,8 @@ describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #3
   });
 
   const holds: [string, Partial<RegressionObservation>, RegExp, null][] = [
-    ["thirteen days after the last", { last: { id: "x", status: "passed", finishedAt: at(13 * DAY) } }, /^not due until 2026-10-27T12:00:00\.000Z/, null],
+    ["after this fortnight's run", { last: { id: "x", status: "passed", finishedAt: at(6 * HOUR) } }, /^not due until 2026-12-02T05:00:00\.000Z/, null],
+    ["before November 4", { now: new Date("2026-10-26T12:00:00.000Z"), last: null }, /^not due until 2026-11-04T05:00:00\.000Z/, null],
     ["tried an hour ago without an answer", { lastAttempt: new Date(NOW.getTime() - 60 * 60_000) }, /trying again after 6 h/, null],
     ["a tracked change in the tree", { dirty: [" M src/lib/a.ts", "?? x.txt"] }, /uncommitted changes \( M src\/lib\/a\.ts\)/, null],
   ];
@@ -692,13 +706,13 @@ describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #3
   });
 
   it("not due beats every other reason — the normal state is not logged as a hold", () => {
-    const d = decideAutoRegression(obs({ last: { id: "x", status: "passed", finishedAt: at(DAY) }, lastAttempt: NOW, dirty: [" M a.ts"] }));
+    const d = decideAutoRegression(obs({ last: { id: "x", status: "passed", finishedAt: at(6 * HOUR) }, lastAttempt: NOW, dirty: [" M a.ts"] }));
     expect(d.start ? "" : d.reason).toMatch(/^not due/);
   });
 
   it("claude.sh's regression command keeps protocol.ts's cadence and its idea of a whole run", () => {
     const sh = fs.readFileSync(path.join(REPO, "scripts", "test-runner", "claude.sh"), "utf8");
-    expect(sh).toContain(`days = ${REGRESSION_EVERY_DAYS}`);
+    expect(sh).toContain(`days = ${REGRESSION_EVERY_DAYS}, first = "${REGRESSION_FIRST}"`);
     expect(sh).toContain('(r.sequence === "full" || r.sequence === "full-db") && !r.only');
     expect(sh).toContain('(r.status === "passed" || r.status === "failed")');
   });
