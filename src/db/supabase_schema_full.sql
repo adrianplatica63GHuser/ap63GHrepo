@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-11 18:54
+-- Generated : 2026-10-12 13:10
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -279,6 +279,30 @@ CREATE TABLE public.calculation_run_output (
     principal_object_id uuid NOT NULL,
     output_role text DEFAULT 'OWNER_PARCEL'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: cost_record; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cost_record (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    provider text NOT NULL,
+    period_start date NOT NULL,
+    period_end date NOT NULL,
+    amount numeric(12,2) NOT NULL,
+    currency text NOT NULL,
+    cad_rate numeric(12,6) NOT NULL,
+    source text NOT NULL,
+    note text,
+    entered_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT cost_record_amount_check CHECK ((amount >= (0)::numeric)),
+    CONSTRAINT cost_record_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+    CONSTRAINT cost_record_period_check CHECK ((period_end >= period_start)),
+    CONSTRAINT cost_record_provider_check CHECK ((provider ~ '^[a-z][a-z-]{1,39}$'::text)),
+    CONSTRAINT cost_record_rate_check CHECK ((cad_rate > (0)::numeric)),
+    CONSTRAINT cost_record_source_check CHECK ((source = ANY (ARRAY['live'::text, 'counted'::text, 'entered'::text])))
 );
 
 
@@ -1340,6 +1364,14 @@ ALTER TABLE ONLY public.calculation_run
 
 
 --
+-- Name: cost_record cost_record_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cost_record
+    ADD CONSTRAINT cost_record_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: document_page document_page_document_number_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1917,6 +1949,13 @@ CREATE INDEX calculation_run_output_po_idx ON public.calculation_run_output USIN
 --
 
 CREATE INDEX calculation_run_output_run_idx ON public.calculation_run_output USING btree (calculation_run_id);
+
+
+--
+-- Name: cost_record_provider_period_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX cost_record_provider_period_idx ON public.cost_record USING btree (provider, period_start);
 
 
 --
