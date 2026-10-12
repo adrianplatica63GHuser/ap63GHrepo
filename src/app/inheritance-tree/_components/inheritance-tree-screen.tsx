@@ -12,6 +12,10 @@
  * same on arrival — the person tile's „Deschide arborele întreg" (#39.12). A name opens the person's screen with the
  * tree's action panel expanded (`personTreeHref`).
  *
+ * #39.13, time and documents: „Anul" — a slider from the earliest birth year to today — fades whoever was born after
+ * the chosen year; each person carries a badge with how many documents they are on (`TreeCanvas`); „Acte comune", OFF
+ * by default and never remembered, puts on each line how many documents the two are both on.
+ *
  * What the genealogy tools gave this screen (the handover says it at length): the descendancy chart's „generations
  * in rows, couples side by side, children under the couple" (FamilySearch, Gramps); the far view as dots with first
  * names only (MyHeritage's „family view" zoomed out); the hover card and the side card rather than a dialog
@@ -24,6 +28,7 @@ import { useTranslations } from "next-intl";
 import { Minimize, Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { layoutTree, type TreeLevel } from "@/lib/inheritance/layout";
+import { indexDocuments, yearSpan } from "@/lib/inheritance/documents";
 import { foldForSearch } from "@/lib/inheritance/search";
 import { TreeCanvas, type TreeData, type TreeFocus } from "@/components/inheritance/tree-canvas";
 
@@ -40,6 +45,11 @@ export function InheritanceTreeScreen() {
   const q = useQuery({ queryKey: ["inheritance-tree"], queryFn: fetchTree });
   const layout = useMemo(() => (q.data ? layoutTree(q.data.persons, q.data.ties) : null), [q.data]);
   const [level, setLevel] = useState<TreeLevel>(1);
+  // #39.13: the documents, the year (null is today: nobody faded) and „Acte comune" (off).
+  const docs = useMemo(() => (q.data ? indexDocuments(q.data.documents ?? [], q.data.appearances ?? []) : null), [q.data]);
+  const span = useMemo(() => (q.data ? yearSpan(q.data.persons) : null), [q.data]);
+  const [year, setYear] = useState<number | null>(null);
+  const [shared, setShared] = useState(false);
   const [search, setSearch] = useState("");
   const [notFound, setNotFound] = useState(false);
   // `?focus=<id>` (#39.12) is the first focus; a search is each one after.
@@ -100,6 +110,45 @@ export function InheritanceTreeScreen() {
               {t("notFound")}
             </span>
           )}
+          {span && (
+            <label className="flex items-center gap-2 text-xs text-ink dark:text-zinc-200" data-tree-time="">
+              <span>{t("time.label")}</span>
+              <input
+                type="range"
+                min={span.min}
+                max={span.max}
+                step={1}
+                value={year ?? span.max}
+                onChange={(e) => {
+                  const y = Number(e.target.value);
+                  setYear(y >= span.max ? null : y);
+                }}
+                aria-label={t("time.label")}
+                aria-valuetext={year === null ? t("time.today") : String(year)}
+                title={t("time.hint")}
+                className="w-40 accent-teal-700"
+              />
+              <span className="w-10 tabular-nums" data-tree-year="">
+                {year === null ? t("time.today") : year}
+              </span>
+            </label>
+          )}
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-ink dark:text-zinc-200" title={t("sharedHint")}>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-checked={shared}
+              checked={shared}
+              onChange={(e) => setShared(e.target.checked)}
+              className="peer sr-only"
+              data-tree-shared-switch=""
+            />
+            <span
+              aria-hidden="true"
+              className="relative inline-block h-5 w-9 rounded-full bg-slate-300 transition-colors peer-checked:bg-teal-700 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4 dark:bg-zinc-600 dark:peer-checked:bg-teal-500"
+            />
+            {t("shared")}
+          </label>
           <span className="ml-auto text-xs text-fade dark:text-zinc-400" data-tree-level-note="">
             {t("level", { level })}
           </span>
@@ -111,7 +160,17 @@ export function InheritanceTreeScreen() {
           {q.isError && <p role="alert" className="p-6 text-sm text-red-600">{t("error")}</p>}
           {layout && layout.nodes.length === 0 && <p className="p-6 text-sm text-fade">{t("empty")}</p>}
           {q.data && layout && layout.nodes.length > 0 && (
-            <TreeCanvas data={q.data} layout={layout} focus={focus} withCard onLevel={setLevel} className="absolute inset-0" />
+            <TreeCanvas
+              data={q.data}
+              layout={layout}
+              focus={focus}
+              withCard
+              onLevel={setLevel}
+              docs={docs}
+              year={year}
+              shared={shared}
+              className="absolute inset-0"
+            />
           )}
         </div>
       </div>

@@ -4461,6 +4461,23 @@
       "add": "Add the tie",
       "added": "The tie was added.",
       "removed": "The tie was removed."
-    }
+    },
+    "docs": {
+      "badge": "{count, plural, one {# document} other {# documents}}",
+      "count": "{count, plural, one {on # document} other {on # documents}}",
+      "shared": "{count, plural, one {# shared document} other {# shared documents}}",
+      "title": "Documents {name} is on",
+      "sharedTitle": "Shared documents: {a} and {b}",
+      "number": "no. {number}",
+      "date": "of {date}",
+      "untyped": "Untyped document"
+    },
+    "time": {
+      "label": "Year",
+      "today": "today",
+      "hint": "Whoever was born after the chosen year is faded"
+    },
+    "shared": "Shared documents",
+    "sharedHint": "On each line, how many documents the two have in common"
   }
 }

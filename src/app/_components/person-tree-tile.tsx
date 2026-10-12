@@ -11,7 +11,8 @@
  *
  * B is the whole tree's drawing (`TreeCanvas`, #39.11) over `personSubtree` — up to great-grandparents, down to
  * great-grandchildren, the siblings and every spouse — the person ringed in amber, in a square as wide as the
- * „Identitate" tile. „Deschide arborele întreg" opens A centred on the person.
+ * „Identitate" tile. „Deschide arborele întreg" opens A centred on the person. #39.13: each person's documents badge, as
+ * in A; the year slider and „Acte comune" are A's alone — the tile stays the person's family at a glance.
  *
  * C, the same A/B/C pattern as „Interacțiuni" (#39.05): collapsed to one large button; `?tree=open` expands it — a
  * name in the whole tree links there (`personTreeHref`). Expanding writes nothing. C lists the person's own family
@@ -29,6 +30,7 @@ import { useToast } from "@/components/toast";
 import { useUnsavedChanges, useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { layoutTree, type TreePerson } from "@/lib/inheritance/layout";
 import { familyRoles, personSubtree } from "@/lib/inheritance/subtree";
+import { indexDocuments } from "@/lib/inheritance/documents";
 import { TREE_PARAM, readTree, wholeTreeHref } from "@/lib/inheritance/links";
 import { roleHeldBy, personRoleShown } from "@/lib/persons/relation-roles";
 import { TreeCanvas } from "@/components/inheritance/tree-canvas";
@@ -71,6 +73,7 @@ export function PersonTreeTile({
   const q = useQuery({ queryKey: ["inheritance-tree"], queryFn: fetchTree });
   const sub = useMemo(() => (q.data ? personSubtree(personId, q.data.persons, q.data.ties) : null), [q.data, personId]);
   const layout = useMemo(() => (sub ? layoutTree(sub.persons, sub.ties) : null), [sub]);
+  const docs = useMemo(() => (q.data ? indexDocuments(q.data.documents ?? [], q.data.appearances ?? []) : null), [q.data]);
 
   return (
     <section data-tile="inheritanceTree" aria-label={title} className={`max-w-full ${surface}`} style={unitStyle(units)}>
@@ -86,7 +89,7 @@ export function PersonTreeTile({
         {q.isError && <p role="alert" className="p-3 text-xs text-red-600">{t("error")}</p>}
         {layout && layout.nodes.length === 0 && <p className="p-3 text-xs text-fade">{t("empty")}</p>}
         {sub && layout && layout.nodes.length > 0 && (
-          <TreeCanvas data={sub} layout={layout} mark={personId} linkOf={plainHref} className="absolute inset-0" />
+          <TreeCanvas data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} className="absolute inset-0" />
         )}
       </div>
       {expanded ? (

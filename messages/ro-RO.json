@@ -4461,6 +4461,23 @@
       "add": "Adaugă legătura",
       "added": "Legătura a fost adăugată.",
       "removed": "Legătura a fost scoasă."
-    }
+    },
+    "docs": {
+      "badge": "{count, plural, one {Un act} few {# acte} other {# de acte}}",
+      "count": "{count, plural, one {pe un act} few {pe # acte} other {pe # de acte}}",
+      "shared": "{count, plural, one {Un act comun} few {# acte comune} other {# de acte comune}}",
+      "title": "Actele pe care apare {name}",
+      "sharedTitle": "Acte comune: {a} și {b}",
+      "number": "nr. {number}",
+      "date": "din {date}",
+      "untyped": "Act fără tip"
+    },
+    "time": {
+      "label": "Anul",
+      "today": "azi",
+      "hint": "Cine s-a născut după anul ales apare estompat"
+    },
+    "shared": "Acte comune",
+    "sharedHint": "Pe fiecare linie, câte acte au cei doi în comun"
   }
 }
