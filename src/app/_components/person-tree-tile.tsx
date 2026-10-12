@@ -111,7 +111,8 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
     queryKey: ["value-list", "person-roles"],
     queryFn: async () => {
       const res = await fetch("/api/admin/value-lists/person-roles");
-      if (!res.ok) throw new Error(`person-roles ${res.status}`);
+      // A redirect is the sign-in page, not the list (person-role-flags.test.ts reads every caller for this).
+      if (res.redirected || !res.ok) throw new Error(`person-roles ${res.status}`);
       return ((await res.json()) as { items: Role[] }).items;
     },
   });
