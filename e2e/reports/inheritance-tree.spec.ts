@@ -131,7 +131,9 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       await frame.getByRole("searchbox", { name: "Caută o persoană…" }).fill(`Ana ${MARK}`);
       await frame.getByRole("button", { name: "Caută", exact: true }).click();
       await frame.locator("[data-tree-card]").getByRole("link", { name: `Ana ${MARK}`, exact: true }).click();
-      await expect(page).toHaveURL(new RegExp(`/natural-persons/${ana}$`), { timeout: 30_000 });
+      // #39.12: with the tree's action panel expanded there (`?tree=open`).
+      await expect(page).toHaveURL(new RegExp(`/natural-persons/${ana}\\?tree=open$`), { timeout: 30_000 });
+      await expect(page.locator('[data-tree-panel="expanded"]')).toBeVisible({ timeout: 30_000 });
       lap("done");
     } finally {
       for (const id of ids) await removeRecord(page.request, "person", id);

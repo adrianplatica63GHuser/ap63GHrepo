@@ -18,7 +18,7 @@ import { hideTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-18`;
 const KEY = "ga40-tile-positions-natural-person-v1";
-const FILL = { record: "rgb(238, 244, 250)", related: "rgb(221, 240, 225)" /* #38.15 */, meta: "rgb(248, 243, 229)", fixed: "rgb(246, 240, 254)" } as const;
+const FILL = { record: "rgb(238, 244, 250)", related: "rgb(221, 240, 225)" /* #38.15 */, meta: "rgb(248, 243, 229)", family: "rgb(223, 240, 251)" /* #39.12 */, fixed: "rgb(246, 240, 254)" } as const;
 type Group = keyof typeof FILL;
 
 /** The bar's strips, left to right: each group and the names of its boxes. */
@@ -75,6 +75,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
           ["record", ["Identitate", "Act de identitate", "Contact", "Adrese"]],
           ["related", ["Legături"]],
           ["meta", ["Clasificare", "Etichete și grupuri"]],
+          ["family", ["Arbore de moștenire"]], // #39.12
           ["fixed", ["Interacțiuni"]], // #37.89
         ]);
         await expectForm(page, `/judicial-persons/${jp}`, [
