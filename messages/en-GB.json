@@ -1196,6 +1196,7 @@
       "related": "Links",
       "classification": "Classification",
       "connections": "Tags and groups",
+      "inheritanceTree": "Inheritance tree",
       "interactions": "Interactions"
     },
     "tileSubtitles": {
@@ -1206,6 +1207,7 @@
       "related": "People, properties and documents linked to this person",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
+      "inheritanceTree": "The person's family: great-grandparents, parents, siblings, spouse, children, great-grandchildren",
       "interactions": "History of interactions with this person"
     }
   },
@@ -4436,6 +4438,29 @@
       "OTHER": "Other relative"
     },
     "closeCard": "Close",
-    "open": "Open"
+    "open": "Open",
+    "tile": {
+      "wholeTree": "Open the whole tree",
+      "loading": "Loading…",
+      "error": "Could not load or save. Try again.",
+      "empty": "No family ties yet.",
+      "open": "Add or remove a relative",
+      "collapse": "Collapse",
+      "tiesTitle": "The person's family ties",
+      "noTies": "None yet.",
+      "remove": "Remove the tie with {name}",
+      "removeConfirm": "Remove the tie with {name}?",
+      "removeYes": "Remove",
+      "removeNo": "Cancel",
+      "addTitle": "A new relative of {name}",
+      "personLabel": "Relative",
+      "searchPlaceholder": "Find a natural person…",
+      "noResults": "Nobody found.",
+      "roleLabel": "What they are to {name}",
+      "rolePick": "Choose the tie…",
+      "add": "Add the tie",
+      "added": "The tie was added.",
+      "removed": "The tie was removed."
+    }
   }
 }

@@ -53,6 +53,7 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
     record: ["cadastral", "address"],
     related: ["related"],
     meta: ["classification", "connections"],
+    family: [], // Slice #39.12: only a natural person has a family
     fixed: ["map", "corners", "streetView"],
   },
   // #37.63: META INFO is two tiles; #37.66: the three lists are „Corelate".

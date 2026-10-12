@@ -51,6 +51,7 @@ describe("the groups as the header lists them", () => {
       record: ["cadastral", "address"],
       related: ["related"],
       meta: ["classification", "connections"],
+      family: [], // #39.12: a natural person's only
       fixed: ["map", "corners", "streetView"],
     });
   });
@@ -59,6 +60,7 @@ describe("the groups as the header lists them", () => {
       record: ["general", "fields", "succession"],
       related: ["related"],
       meta: ["classification", "connections"],
+      family: [], // #39.12
       fixed: ["pages"],
     });
   });

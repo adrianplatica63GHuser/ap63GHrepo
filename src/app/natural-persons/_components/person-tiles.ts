@@ -15,6 +15,8 @@ export const NP_TILES = [
   "related",
   "classification",
   "connections",
+  // Slice #39.12: the person's „Arbore de moștenire" (B) and its action panel (C), light blue, ticked by default.
+  "inheritanceTree",
   // Slice #37.89: a placeholder, fixed at the right like „Hartă" and „Pagini".
   "interactions",
 ] as const;
@@ -29,7 +31,8 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   // module is built". #38.84–#38.89 built it, and Adrian, 2026-10-11: „„Interacțiuni”
   // should be ticked by default on a natural person". So it is again, as on the
   // Judicial Person and as #37.89 had it.
-  defaults: [...NP_FORM_TILES, "interactions"],
+  // Slice #39.12: „Arbore de moștenire" ticked by default too (Ask first 2), as Adrian asked for „Interacțiuni".
+  defaults: [...NP_FORM_TILES, "inheritanceTree", "interactions"],
   form: NP_FORM_TILES,
   placement: { right: ["interactions"] },
   // Slice #37.88: the coloured groups; #37.89 the purple one.
@@ -37,6 +40,7 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
     record: ["identity", "idCard", "contact", "addresses"],
     related: ["related"],
     meta: ["classification", "connections"],
+    family: ["inheritanceTree"],
     fixed: ["interactions"],
   },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".

@@ -91,9 +91,11 @@ describe("the Natural Person's tiles", () => {
   it("are the eight the header names, and nothing stored shows exactly the old Detalii tab", () => {
     // #37.67: „Corelate"; #37.89: „Interacțiuni", fixed at the right.
     // #38.30: „Interacțiuni" is no longer ticked by default (#37.89 had ticked it) — a placeholder until it is built.
-    expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections", "interactions"]);
+    // #39.12: + „inheritanceTree", in its own group before the right-hand column.
+    expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections", "inheritanceTree", "interactions"]);
     // #38.30 took „Interacțiuni" off; it is back since the module exists (Adrian, 2026-10-11).
-    expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses", "interactions"]);
+    // #39.12: „Arbore de moștenire" ticked by default too.
+    expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses", "inheritanceTree", "interactions"]);
     expect(NP_TILE_REGISTRY.placement?.right).toEqual(["interactions"]);
     expect(NP_TILE_REGISTRY.form).toBe(NP_FORM_TILES);
   });
@@ -150,7 +152,7 @@ describe("the Natural Person's tiles", () => {
       // Slice #37.27: „Asocieri" is „Persoane" on the Natural Person — its people, by name and relationship.
       // Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate".
       // #38.30: „Act de identitate", „Legături", „Clasificare", „Etichete și grupuri".
-      "Identitate", "Act de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni", // #37.89
+      "Identitate", "Act de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Arbore de moștenire", "Interacțiuni", // #37.89; #39.12
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");

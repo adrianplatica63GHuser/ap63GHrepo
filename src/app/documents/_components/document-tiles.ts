@@ -166,7 +166,8 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
     ],
     // Slice #37.56: the page image stands at the right of the row, top-aligned.
     placement: { right: fixed },
-    groups: { record, related: ["related"], meta: ["classification", "connections"], fixed },
+    // Slice #39.12: „family" is a natural person's only.
+    groups: { record, related: ["related"], meta: ["classification", "connections"], family: [], fixed },
     renamed: {
       ...Object.fromEntries(
         Object.keys(RENAMED_TABS)

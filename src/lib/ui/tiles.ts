@@ -28,10 +28,11 @@
  * its colour, and a tile wears its group's colour wherever it is dragged
  * (`src/lib/ui/tile-surface.ts`).
  */
-export type TileGroup = "record" | "related" | "meta" | "fixed";
+export type TileGroup = "record" | "related" | "meta" | "family" | "fixed";
 
 /** The groups' order on the bar and on the page. */
-export const TILE_GROUPS: readonly TileGroup[] = ["record", "related", "meta", "fixed"];
+// Slice #39.12: „family" — a natural person's „Arbore de moștenire", light blue — before the right-hand column.
+export const TILE_GROUPS: readonly TileGroup[] = ["record", "related", "meta", "family", "fixed"];
 
 export interface TileRegistry<K extends string> {
   /** The localStorage key's entity part: `ga40-tiles-<entity>-v1`. */

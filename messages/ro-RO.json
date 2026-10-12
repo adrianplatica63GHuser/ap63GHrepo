@@ -1196,6 +1196,7 @@
       "related": "Legături",
       "classification": "Clasificare",
       "connections": "Etichete și grupuri",
+      "inheritanceTree": "Arbore de moștenire",
       "interactions": "Interacțiuni"
     },
     "tileSubtitles": {
@@ -1206,6 +1207,7 @@
       "related": "Persoane, proprietăți și acte legate de această persoană",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
+      "inheritanceTree": "Familia persoanei: străbunici, părinți, frați, soț sau soție, copii, strănepoți",
       "interactions": "Istoricul interacțiunilor cu această persoană"
     }
   },
@@ -4436,6 +4438,29 @@
       "OTHER": "Altă rudă"
     },
     "closeCard": "Închide",
-    "open": "Deschide"
+    "open": "Deschide",
+    "tile": {
+      "wholeTree": "Deschide arborele întreg",
+      "loading": "Se încarcă…",
+      "error": "Nu s-a putut încărca sau salva. Încercați din nou.",
+      "empty": "Nicio legătură de familie încă.",
+      "open": "Adaugă sau scoate o rudă",
+      "collapse": "Restrânge",
+      "tiesTitle": "Legăturile de familie ale persoanei",
+      "noTies": "Niciuna încă.",
+      "remove": "Scoate legătura cu {name}",
+      "removeConfirm": "Scoateți legătura cu {name}?",
+      "removeYes": "Scoate",
+      "removeNo": "Anulează",
+      "addTitle": "O rudă nouă a lui {name}",
+      "personLabel": "Ruda",
+      "searchPlaceholder": "Caută o persoană fizică…",
+      "noResults": "Nicio persoană găsită.",
+      "roleLabel": "Ce este pentru {name}",
+      "rolePick": "Alegeți rudenia…",
+      "add": "Adaugă legătura",
+      "added": "Legătura a fost adăugată.",
+      "removed": "Legătura a fost scoasă."
+    }
   }
 }

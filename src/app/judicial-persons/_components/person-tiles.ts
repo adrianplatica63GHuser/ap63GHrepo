@@ -38,6 +38,7 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
     record: ["identity", "contactPersons", "addresses"],
     related: ["related"],
     meta: ["classification", "connections"],
+    family: [], // Slice #39.12: only a natural person has a family
     fixed: ["interactions"],
   },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".

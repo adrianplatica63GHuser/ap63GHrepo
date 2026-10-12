@@ -57,6 +57,14 @@ export const RELATED_ROWS_SURFACE =
 export const META_TILE_SURFACE =
   "rounded-md border border-card-meta-rim bg-card-meta p-3 shadow-sm dark:border-card-meta-rim-dark dark:bg-card-meta-dark";
 
+/**
+ * Slice #39.12: a natural person's „Arbore de moștenire" — „light blue as light as the other coloured tiles" (Adrian).
+ *   fill `--color-card-family` #DFF0FB / rim #A9CFE6 / dark #0B1B26 / dark rim #142B3B (h 235) — a clear sky blue
+ *   beside the card's grey-blue #EEF4FA, at the coloured groups' lightness.
+ */
+export const FAMILY_TILE_SURFACE =
+  "rounded-md border border-card-family-rim bg-card-family p-3 shadow-sm dark:border-card-family-rim-dark dark:bg-card-family-dark";
+
 /** The surface for a tile: pinned when it stands in the right column. */
 export function tileSurface(pinned: boolean): string {
   return pinned ? PINNED_TILE_SURFACE : TILE_SURFACE;
@@ -71,6 +79,7 @@ export function groupSurface(group: TileGroup): string {
   switch (group) {
     case "related": return RELATED_TILE_SURFACE;
     case "meta":    return META_TILE_SURFACE;
+    case "family":  return FAMILY_TILE_SURFACE;
     case "fixed":   return PINNED_TILE_SURFACE;
     default:        return TILE_SURFACE;
   }
@@ -85,6 +94,7 @@ export function groupStrip(group: TileGroup): string {
     record:  "border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900",
     related: "border-card-related-rim bg-card-related dark:border-card-related-rim-dark dark:bg-card-related-dark",
     meta:    "border-card-meta-rim bg-card-meta dark:border-card-meta-rim-dark dark:bg-card-meta-dark",
+    family:  "border-card-family-rim bg-card-family dark:border-card-family-rim-dark dark:bg-card-family-dark",
     fixed:   "border-card-pinned-rim bg-card-pinned dark:border-card-pinned-rim-dark dark:bg-card-pinned-dark",
   };
   return `flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-2.5 py-1 ${colours[group]}`;

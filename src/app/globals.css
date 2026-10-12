@@ -57,6 +57,11 @@
   --color-card-meta-rim:         #DDD3AE;  /* border-card-meta-rim           */
   --color-card-meta-dark:        #1D1808;  /* dark:bg-card-meta-dark         */
   --color-card-meta-rim-dark:    #2E270D;  /* dark:border-card-meta-rim-dark */
+  /* Slice #39.12: „Arbore de moștenire", light blue (tile-surface.ts → FAMILY_TILE_SURFACE). */
+  --color-card-family:           #DFF0FB;  /* bg-card-family                   */
+  --color-card-family-rim:       #A9CFE6;  /* border-card-family-rim           */
+  --color-card-family-dark:      #0B1B26;  /* dark:bg-card-family-dark         */
+  --color-card-family-rim-dark:  #142B3B;  /* dark:border-card-family-rim-dark */
 
   --color-cta:       #334155;   /* bg-cta / text-cta — primary buttons         */
   --color-cta-d:     #1e293b;   /* bg-cta-d  — primary button :hover           */

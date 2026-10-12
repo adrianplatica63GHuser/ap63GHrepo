@@ -44,6 +44,8 @@ import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY, type NpTile } from "./perso
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
 // Slice #39.05: the history (B) and the action panel (C) under it.
 import { PersonInteractionsTile } from "@/app/_components/person-interactions-tile";
+import { PersonTreeTile } from "@/app/_components/person-tree-tile";
+import { PANEL_UNITS } from "@/lib/ui/field-widths";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 type IdCardLink = { id: string; code: string; title: string | null } | null;
@@ -106,6 +108,7 @@ export function PersonDetailTiles({
       related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
+      inheritanceTree: t("tiles.inheritanceTree"),
       interactions:   t("tiles.interactions"),
     }),
     [t],
@@ -167,6 +170,17 @@ export function PersonDetailTiles({
                 part="connections"
               />
             </ListTile>
+          )}
+          {/* Slice #39.12: the person's tree (B) and its action panel (C) — as wide as „Identitate", the drawing square. */}
+          {choice.isShown("inheritanceTree") && (
+            <PersonTreeTile
+              personId={personId}
+              personName={personName}
+              title={labels.inheritanceTree}
+              subtitle={t("tileSubtitles.inheritanceTree")}
+              surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "inheritanceTree"))}
+              units={PANEL_UNITS.naturalPerson.identity}
+            />
           )}
           <PreviewTiles previews={previews} />
           {choice.isShown("interactions") && interactionsSlot && createPortal(
