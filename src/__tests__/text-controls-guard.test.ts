@@ -64,6 +64,10 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "{byId.get(chosen)!.displayName}"],
     ["A113", "{byId.get(other)?.displayName}"],
     ["A113", "<text x={0} y={-h / 2 + px(17)} textAnchor=\"middle\" fontSize={px(13)} fontWeight"],
+    // #39.13: a person's documents count, a pair's shared count, and a document's type in their list — the data.
+    ["A113", "<title>{t(\"docs.badge\", { count: docCount })}</title>"],
+    ["A113", "<title>{label}</title>"],
+    ["A113", "<FileText aria-hidden=\"true\" size={14} className=\"mt-0.5 shrink-0 text-teal-700\""],
   ],
   "src/app/admin/calculation/_components/calculation-view.tsx": [
     ["A113", "{nameOr(p.nickname, \"property\")}"], // #37.57: no system ID; back with #38.25's commit

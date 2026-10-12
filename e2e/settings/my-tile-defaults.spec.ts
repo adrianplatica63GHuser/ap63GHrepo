@@ -19,7 +19,13 @@ const LAST_NAME = "TC-E2E-TILEDEF";
 const ROW = "Persoană fizică";
 
 async function forgetNaturalPersonSet(page: Page): Promise<void> {
-  const r = await page.request.delete("/api/account/tile-defaults?kind=natural-person");
+  // The DELETE died with `read ECONNRESET` in full-db 20261012T012653Z-28043, the case itself green; as
+  // records.ts's removeRecord does, one more try — forgetting a set twice forgets it once.
+  const del = () => page.request.delete("/api/account/tile-defaults?kind=natural-person");
+  const r = await del().catch((err: unknown) => {
+    if (err instanceof Error && /ECONNRESET|socket hang up/.test(err.message)) return del();
+    throw err;
+  });
   expect(r.status()).toBe(204);
 }
 
