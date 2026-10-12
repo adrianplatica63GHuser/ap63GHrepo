@@ -53,7 +53,9 @@ describe("the days of a month", () => {
 
 describe("an amount for a period becomes CA$ per day", () => {
   it("a day's bill is that day, at its rate", () => {
-    expect(spreadOverDays({ periodStart: "2026-10-08", periodEnd: "2026-10-08", amount: 10, cadRate: 1.38 })).toEqual([{ day: "2026-10-08", cad: 13.8 }]);
+    const d = spreadOverDays({ periodStart: "2026-10-08", periodEnd: "2026-10-08", amount: 10, cadRate: 1.38 });
+    expect(d.map((x) => x.day)).toEqual(["2026-10-08"]);
+    expect(d[0].cad).toBeCloseTo(13.8, 10);
   });
   it("a month's plan is spread over the month's days", () => {
     const d = spreadOverDays({ periodStart: "2026-11-01", periodEnd: "2026-11-30", amount: 20, cadRate: 1.5 });
@@ -129,8 +131,8 @@ describe("the catalogue", () => {
   it("the read is priced at the model the app actually uses for extraction", () => {
     expect(read("src/lib/ai/models.ts")).toContain(`"${AI_READ_UPPER.model}"`);
   });
-  it("Google's known bill is the four days of Slice #39.16, CA$62.31 together", () => {
-    expect(GOOGLE_MAPS_KNOWN_BILL.reduce((n, d) => n + d.cad, 0)).toBeCloseTo(62.31, 6);
+  it("Google's known bill is the four days of Slice #39.16 — CA$62.30 day by day; the report's own total, rounded per line, reads 62.31", () => {
+    expect(GOOGLE_MAPS_KNOWN_BILL.reduce((n, d) => n + d.cad, 0)).toBeCloseTo(62.3, 6);
   });
   it("no key that would connect a provider is a NEXT_PUBLIC_ one — the server makes every provider call", () => {
     for (const k of COST_PROVIDERS) expect(PROVIDER_FACTS[k].liveKey?.name ?? "").not.toMatch(/^NEXT_PUBLIC_/);
@@ -160,7 +162,7 @@ describe("the summary", () => {
   });
   it("Google Maps: the known bill, plus CA$0.50 for each day left", () => {
     const g = buildCostSummary(input()).providers.find((p) => p.key === "googleMaps")!;
-    expect(g.figures).toEqual({ soFar: 62.31, today: 0, forecast: 71.81 }); // 62.31 + 19 days × 0.50
+    expect(g.figures).toEqual({ soFar: 62.3, today: 0, forecast: 71.8 }); // 62.30 + 19 days × 0.50
   });
   it("the tests' maps are this month's, and unknown away from the runner's laptop", () => {
     const testing = (i: CostInputs) => buildCostSummary(i).providers.find((p) => p.key === "testing")!.facts.testsMaps;

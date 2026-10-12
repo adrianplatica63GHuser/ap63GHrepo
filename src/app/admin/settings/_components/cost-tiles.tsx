@@ -16,8 +16,8 @@
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { IconButton, TrailingIcon } from "@/lib/ui/icon-button";
 import { screenPanel } from "@/lib/ui/field-widths";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { PROVIDER_FACTS, type CostProvider } from "@/lib/costs/catalogue";
@@ -143,8 +143,10 @@ function Details({ p }: { p: ProviderSummary }) {
         <p className="text-ink">{t(`providers.${p.key}.pricing`)}</p>
         <p className="text-xs text-fade" data-cost-checked={facts.checked}>
           {t("checked", { date: shortDay(facts.checked) })}{" "}
-          <a href={facts.pricingUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">
+          {/* A new tab carries its ExternalLink (#37.46). */}
+          <a href={facts.pricingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 underline hover:text-ink">
             {t("pricingLink")}
+            <TrailingIcon icon={ExternalLink} />
           </a>
         </p>
       </div>
