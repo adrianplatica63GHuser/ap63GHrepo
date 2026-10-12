@@ -90,7 +90,7 @@ describe("the links", () => {
   });
   it("39.11's screen links names that way", () => {
     const screen = fs.readFileSync(path.join(process.cwd(), "src/components/inheritance/tree-canvas.tsx"), "utf8");
-    expect(screen).toContain("personTreeHref(");
+    expect(screen).toMatch(/linkOf = personTreeHref\b/); // the canvas's default link, the whole tree's
   });
 });
 

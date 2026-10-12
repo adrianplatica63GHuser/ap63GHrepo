@@ -74,7 +74,9 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
 
       // Step 3 — „Ruda": Dan; „Ce este pentru …": „Frate"; „Adaugă legătura" — Dan in the tile, beside Elena.
       await panel.getByRole("searchbox", { name: "Ruda" }).fill(`Dan ${MARK}`);
-      await panel.getByRole("radio", { name: `Dan ${MARK}` }).check({ timeout: 15_000 });
+      // A pick closes the list and names the relative (`[data-tree-chosen]`), so the radio is clicked, not checked.
+      await panel.getByRole("radio", { name: `Dan ${MARK}` }).click({ timeout: 15_000 });
+      await expect(panel.locator("[data-tree-chosen]")).toHaveText(`Dan ${MARK}`);
       await panel.getByRole("combobox", { name: `Ce este pentru Elena ${MARK}` }).selectOption({ label: "Frate" });
       await panel.getByRole("button", { name: "Adaugă legătura", exact: true }).click();
       await expect(node(page, dan)).toBeAttached({ timeout: 30_000 });

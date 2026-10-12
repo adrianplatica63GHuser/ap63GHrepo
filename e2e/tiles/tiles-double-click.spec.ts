@@ -86,6 +86,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
+      await setTile(page, "Arbore de moștenire", false); // #39.12: the family tile packs under „Legături", where step 2 drops
       await page.waitForTimeout(2500); // past the first layout's settling
       const rule = await boxes(page);
       expect(rule[CORR].x).toBe(rule.idCard.x);
