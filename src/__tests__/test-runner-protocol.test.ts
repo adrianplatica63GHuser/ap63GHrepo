@@ -34,6 +34,20 @@ import {
   MAX_ONLY_ENTRIES,
   MAX_READ_CAP,
   MAX_REQUEST_BYTES,
+  PUSH_LICENSING_SEQUENCES,
+  REGRESSION_EVERY_DAYS,
+  REGRESSION_EVERY_MS,
+  REGRESSION_RETRY_MS,
+  TARGETED_SEQUENCES,
+  WHOLE_SEQUENCES,
+  decideAutoRegression,
+  isWholeRegression,
+  lastRegression,
+  regressionDueAt,
+  targetedNote,
+  type RegressionCandidate,
+  type RegressionObservation,
+  type RegressionRecord,
   RUNNER_DIST_DIR,
   RUNNER_DIST_ENV,
   RUNNER_PORT,
@@ -284,6 +298,53 @@ describe("the plan for a request", () => {
     expect(pendingSteps(plan).map((s) => s.status)).toEqual(["skipped", "pending", "pending", "pending", "pending"]);
   });
 
+  // ---- Slice #39.15: targeted --------------------------------------------------------
+
+  it("targeted is full's steps, in full's order — only what e2e and jest run differs", () => {
+    expect(SEQUENCES.targeted).toEqual(SEQUENCES.full);
+    expect(TARGETED_SEQUENCES).toEqual(["targeted"]);
+    expect(WHOLE_SEQUENCES).toEqual(["full", "full-db"]);
+  });
+
+  it("targeted with no only runs lint and tsc and NO e2e spec and NO jest suite — never the whole suite", () => {
+    // `files: null` on an unskipped step is the runner's word for „all of them",
+    // so the one thing this plan must never contain is an e2e or jest step with
+    // files null and no skip reason.
+    const plan = planSteps({ sequence: "targeted" });
+    expect(plan).toEqual([
+      { name: "e2e", files: null, skipReason: "targeted — the slice names no e2e spec, so none ran" },
+      { name: "lint", files: null, skipReason: null },
+      { name: "tsc", files: null, skipReason: null },
+      { name: "jest", files: null, skipReason: "targeted — the slice names no jest suite, so none ran" },
+      { name: "forms-drift", files: null, skipReason: null },
+    ]);
+    expect(pendingSteps(plan).map((s) => s.status)).toEqual(["skipped", "pending", "pending", "skipped", "pending"]);
+  });
+
+  it("targeted with only runs exactly the named specs and suites; an empty e2e list is allowed", () => {
+    const suite = "src/__tests__/test-runner-protocol.test.ts";
+    const spec = "e2e/auth/login-dashboard.spec.ts";
+    expect(planSteps({ sequence: "targeted", only: [spec, suite] }).filter((p) => p.files !== null)).toEqual([
+      { name: "e2e", files: [spec], skipReason: null },
+      { name: "jest", files: [suite], skipReason: null },
+    ]);
+    const jestOnly = planSteps({ sequence: "targeted", only: [suite] });
+    expect(jestOnly[0]).toEqual({ name: "e2e", files: null, skipReason: "targeted — the slice names no e2e spec, so none ran" });
+    expect(refusal(req({ sequence: "targeted", only: [suite] }))).toBe("accepted");
+    expect(refusal(req({ sequence: "targeted" }))).toBe("accepted");
+  });
+
+  it("a targeted step's note names the tests it ran; a whole run's step carries none", () => {
+    const suite = "src/__tests__/test-runner-protocol.test.ts";
+    const [e2e, , , jest] = planSteps({ sequence: "targeted", only: [suite] });
+    expect(targetedNote("targeted", jest)).toBe(`targeted — ran only the 1 suite named: ${suite}`);
+    expect(targetedNote("targeted", e2e)).toBeNull();
+    const two = { name: "e2e" as const, files: ["e2e/a.spec.ts", "e2e/b.spec.ts"], skipReason: null };
+    expect(targetedNote("targeted", two)).toBe("targeted — ran only the 2 specs named: e2e/a.spec.ts, e2e/b.spec.ts");
+    expect(targetedNote("full", planSteps({ sequence: "full" })[0])).toBeNull();
+    expect(targetedNote("full", two)).toBeNull();
+  });
+
   it("argv carries only enumerated paths, never request text", () => {
     expect(playwrightArgs(null)).toEqual(["test"]);
     expect(playwrightArgs(["e2e/auth/login-dashboard.spec.ts"])).toEqual(["test", "auth/login-dashboard.spec.ts"]);
@@ -498,6 +559,11 @@ describe("the push guard — every condition holds the push, by name", () => {
   it("full-db licenses a push as well as full", () => {
     expect(pushOutcome(pushObs({ results: [green({ sequence: "full-db" })] }))).toBe("push");
   });
+  it("a green targeted run licenses a push — narrowed by only or not (Slice #39.15)", () => {
+    expect(PUSH_LICENSING_SEQUENCES).toEqual(["full", "full-db", "targeted"]);
+    expect(pushOutcome(pushObs({ results: [green({ sequence: "targeted", only: ["src/__tests__/test-runner-protocol.test.ts"] })] }))).toBe("push");
+    expect(pushOutcome(pushObs({ results: [green({ sequence: "targeted", only: null })] }))).toBe("push");
+  });
   it("an untracked file in the green run's tree does not stop it — it is not what is pushed", () => {
     expect(pushOutcome(pushObs({ results: [green({ dirty: ["?? notes.txt"] })] }))).toBe("push");
   });
@@ -519,6 +585,10 @@ describe("the push guard — every condition holds the push, by name", () => {
     ["a green run narrowed by only", { results: [green({ only: ["e2e/auth/login-dashboard.spec.ts"] })] }, "no-green-run", null],
     ["a green static run — not the whole sequence", { results: [green({ sequence: "static" })] }, "no-green-run", null],
     ["a green e2e run alone", { results: [green({ sequence: "e2e" })] }, "no-green-run", null],
+    ["a red targeted run", { results: [green({ sequence: "targeted", status: "failed" })] }, "no-green-run", null],
+    ["a targeted run with no answer", { results: [green({ sequence: "targeted", status: "error" })] }, "no-green-run", null],
+    ["a green targeted run on another commit", { results: [green({ sequence: "targeted", commit: "f".repeat(40) })] }, "no-green-run", null],
+    ["a green targeted run over uncommitted changes", { results: [green({ sequence: "targeted", dirty: [" M src/lib/a.ts"] })] }, "green-run-dirty", null],
     ["a result that is not the runner's", { results: [green({ source: "adrian" as "runner" })] }, "no-green-run", null],
     ["a green run over uncommitted changes", { results: [green({ dirty: [" M src/lib/a.ts"] })] }, "green-run-dirty", null],
     ["ls-remote could not answer", { remoteMain: null }, "remote-unknown", null],
@@ -539,6 +609,108 @@ describe("the push guard — every condition holds the push, by name", () => {
     expect(pushOutcome(pushObs({ branch: "x", results: [], remoteMain: null }))).toBe("not-on-main");
     expect(pushOutcome(pushObs({ results: [], remoteMain: null }))).toBe("no-green-run");
     expect(pushOutcome(pushObs({ remoteIsAncestor: false, rangeChanges: ["A\tsrc/db/migration_087_x.sql"] }))).toBe("not-fast-forward");
+  });
+});
+
+describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #39.15)", () => {
+  const NOW = new Date("2026-10-26T12:00:00.000Z");
+  const DAY = 24 * 60 * 60_000;
+  const at = (msAgo: number): string => new Date(NOW.getTime() - msAgo).toISOString();
+  const run = (over: Partial<RegressionCandidate> = {}): RegressionCandidate => ({
+    id: "20261012T015649Z-19192",
+    source: "runner",
+    status: "passed",
+    sequence: "full",
+    only: null,
+    finishedAt: at(14 * DAY),
+    ...over,
+  });
+  const record = (over: Partial<RegressionRecord> = {}): RegressionRecord => ({
+    id: "auto-20261012T020000Z-full",
+    status: "failed",
+    finishedAt: at(3 * DAY),
+    ...over,
+  });
+  const obs = (over: Partial<RegressionObservation> = {}): RegressionObservation => ({
+    now: NOW,
+    last: { id: "x", status: "passed", finishedAt: at(14 * DAY) },
+    lastAttempt: null,
+    dirty: [],
+    ...over,
+  });
+
+  it("is every fourteen days", () => {
+    expect(REGRESSION_EVERY_DAYS).toBe(14);
+    expect(REGRESSION_EVERY_MS).toBe(14 * DAY);
+  });
+
+  // Rows padded to the callback's arity (sandbox-and-toolchain.md → the it.each trap).
+  const kinds: [string, Partial<RegressionCandidate>, boolean, null][] = [
+    ["a passed full", {}, true, null],
+    ["a passed full-db", { sequence: "full-db" }, true, null],
+    ["a red full — a whole run that answered still resets the clock", { status: "failed" }, true, null],
+    ["a full with no answer", { status: "error" }, false, null],
+    ["a held full", { status: "held" }, false, null],
+    ["a full narrowed by only", { only: ["e2e/auth/login-dashboard.spec.ts"] }, false, null],
+    ["a targeted run", { sequence: "targeted" }, false, null],
+    ["a static run", { sequence: "static" }, false, null],
+    ["a result that is not the runner's", { source: "adrian" as "runner" }, false, null],
+    ["a run that has not finished", { finishedAt: null }, false, null],
+  ];
+  it.each(kinds)("%s → whole regression: %s", (_label, over, whole, _pad) => {
+    expect(isWholeRegression(run(over))).toBe(whole);
+  });
+
+  it("the last one is the newest of the result files and the recorded one", () => {
+    expect(lastRegression([run()], record())).toEqual(record());
+    expect(lastRegression([run({ finishedAt: at(DAY) })], record())?.finishedAt).toBe(at(DAY));
+    expect(lastRegression([], null)).toBeNull();
+    expect(lastRegression([run({ sequence: "targeted", finishedAt: at(0) })], null)).toBeNull();
+  });
+
+  it("is due fourteen days after the last, and at once when there has been none", () => {
+    expect(regressionDueAt({ id: "x", status: "passed", finishedAt: at(DAY) }, NOW).toISOString()).toBe(new Date(NOW.getTime() + 13 * DAY).toISOString());
+    expect(regressionDueAt(null, NOW)).toEqual(NOW);
+  });
+
+  it("starts when due, untried and over a clean tree; an untracked file does not stop it", () => {
+    expect(decideAutoRegression(obs())).toEqual({ start: true });
+    expect(decideAutoRegression(obs({ last: null }))).toEqual({ start: true });
+    expect(decideAutoRegression(obs({ dirty: ["?? notes.txt"] }))).toEqual({ start: true });
+    expect(decideAutoRegression(obs({ lastAttempt: new Date(NOW.getTime() - REGRESSION_RETRY_MS) }))).toEqual({ start: true });
+  });
+
+  const holds: [string, Partial<RegressionObservation>, RegExp, null][] = [
+    ["thirteen days after the last", { last: { id: "x", status: "passed", finishedAt: at(13 * DAY) } }, /^not due until 2026-10-27T12:00:00\.000Z/, null],
+    ["tried an hour ago without an answer", { lastAttempt: new Date(NOW.getTime() - 60 * 60_000) }, /trying again after 6 h/, null],
+    ["a tracked change in the tree", { dirty: [" M src/lib/a.ts", "?? x.txt"] }, /uncommitted changes \( M src\/lib\/a\.ts\)/, null],
+  ];
+  it.each(holds)("%s → waits, and says why", (_label, over, reason, _pad) => {
+    const d = decideAutoRegression(obs(over));
+    expect(d.start).toBe(false);
+    expect(d.start ? "" : d.reason).toMatch(reason);
+  });
+
+  it("not due beats every other reason — the normal state is not logged as a hold", () => {
+    const d = decideAutoRegression(obs({ last: { id: "x", status: "passed", finishedAt: at(DAY) }, lastAttempt: NOW, dirty: [" M a.ts"] }));
+    expect(d.start ? "" : d.reason).toMatch(/^not due/);
+  });
+
+  it("claude.sh's regression command keeps protocol.ts's cadence and its idea of a whole run", () => {
+    const sh = fs.readFileSync(path.join(REPO, "scripts", "test-runner", "claude.sh"), "utf8");
+    expect(sh).toContain(`days = ${REGRESSION_EVERY_DAYS}`);
+    expect(sh).toContain('(r.sequence === "full" || r.sequence === "full-db") && !r.only');
+    expect(sh).toContain('(r.status === "passed" || r.status === "failed")');
+  });
+
+  it("the runner starts the regression as auto-<time>-full, and records every whole run it finishes", () => {
+    const code = fs
+      .readFileSync(path.join(REPO, "scripts", "test-runner", "runner.ts"), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(code).toMatch(/id: `auto-\$\{stamp\}-full`, sequence: "full"/);
+    expect(code).toMatch(/recordRegression\(result\);\s*prune\(\);/);
+    expect(code).toMatch(/if \(kind === null\) \{\s*maybeAutoRegression\(t\);/);
   });
 });
 

@@ -48,6 +48,15 @@
  * ordinary result file, id `auto-<time>-<sequence>`, so it is visible exactly
  * like a requested one. Both steps are `scripts/backup/archive.ts` with a fixed
  * argv; the live database is only read.
+ *
+ * ⚠️ **AND IT RUNS THE WHOLE REGRESSION ON ITS OWN, EVERY TWO WEEKS.** (Slice
+ * #39.15.) A slice is verified by `targeted` now — lint, tsc, and only the e2e
+ * specs and jest suites it names. When the runner is idle, no backup or drill
+ * is due, the last whole `full` is 14 days old and the working tree has no
+ * tracked change, it starts `full` itself as `auto-<time>-full`
+ * (`protocol.ts` → `decideAutoRegression`). Every whole run it finishes, asked
+ * for or not, is recorded in `.test-runner/regression.json`, because result
+ * files are pruned and the clock must not be.
  */
 
 import { spawn, spawnSync } from "child_process";
@@ -84,6 +93,12 @@ import {
   parseMapsLog,
   failedE2eSpecs,
   PLAYWRIGHT_RERUN_ARGS,
+  REGRESSION_STATE_FILE,
+  decideAutoRegression,
+  isWholeRegression,
+  lastRegression,
+  targetedNote,
+  type RegressionRecord,
   decidePush,
   firstFailedStep,
   latestRunPerWorkflow,
@@ -1193,6 +1208,8 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
     }
     const { applied, held: heldCode, ...stepFields } = out;
     Object.assign(s, stepFields, heldCode ? { held: heldCode } : {}, { finishedAt: now(), seconds: Math.round((Date.now() - t0) / 100) / 10 });
+    const ran = targetedNote(req.sequence, p); // Slice #39.15: a targeted step says which tests it ran
+    if (ran !== null) s.notes = [ran, ...s.notes];
     previous = { status: s.status, applied: applied ?? 0 };
     save();
     logLine(`run ${req.id}: ${p.name} ${s.status} — ${s.summary}`);
@@ -1201,7 +1218,34 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
   result.finishedAt = now();
   save();
   logLine(`run ${req.id}: ${result.status}`);
+  recordRegression(result);
   prune();
+}
+
+/** `.test-runner/regression.json`, or null when there is none or it cannot be read.   (Slice #39.15) */
+function readRegressionRecord(): RegressionRecord | null {
+  try {
+    const r = JSON.parse(fs.readFileSync(path.join(CH, REGRESSION_STATE_FILE), "utf8")) as Partial<RegressionRecord>;
+    return typeof r.id === "string" && (r.status === "passed" || r.status === "failed") && typeof r.finishedAt === "string"
+      ? { id: r.id, status: r.status, finishedAt: r.finishedAt }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A whole regression run, asked for or automatic, resets the two-week clock — and the record outlives `prune`. */
+function recordRegression(result: RunResult): void {
+  if (!isWholeRegression(result)) return;
+  try {
+    writeJsonAtomic(path.join(CH, REGRESSION_STATE_FILE), {
+      id: result.id,
+      status: result.status,
+      finishedAt: result.finishedAt,
+    });
+  } catch (e) {
+    logLine(`regression record: ${(e as Error).message}`);
+  }
 }
 
 /** The runner deletes its own files — the bridge could not, before delete permission existed. */
@@ -1251,7 +1295,10 @@ function maybeAutoRun(): void {
       liveLatestMigration: live,
       lastAttempt: lastAutoAttempt,
     });
-    if (kind === null) return;
+    if (kind === null) {
+      maybeAutoRegression(t);
+      return;
+    }
     const head = headCommit();
     if (!head) return;
     lastAutoAttempt[kind] = new Date(t);
@@ -1266,6 +1313,45 @@ function maybeAutoRun(): void {
       });
   } catch (e) {
     logLine(`auto: ${(e as Error).message}`);
+  }
+}
+
+// ---- the runner's own schedule: the whole regression every two weeks (Slice #39.15) ----
+
+let lastRegressionAttempt: Date | null = null;
+let lastRegressionHold = "";
+
+/**
+ * Called by `maybeAutoRun` when no backup or drill is due, so the archive's
+ * copy always goes first. Starts `full` as `auto-<time>-full` when
+ * `decideAutoRegression` says so; a hold is logged once per change of reason,
+ * not every ten minutes. Never throws.
+ */
+function maybeAutoRegression(t: number): void {
+  try {
+    const last = lastRegression(readResults(), readRegressionRecord());
+    const decision = decideAutoRegression({ now: new Date(t), last, lastAttempt: lastRegressionAttempt, dirty: dirtyPaths() });
+    if (!decision.start) {
+      // „not due" is the normal state; only a due-but-held reason is worth a line.
+      if (!decision.reason.startsWith("not due") && decision.reason !== lastRegressionHold) logLine(`auto: full — ${decision.reason}`);
+      lastRegressionHold = decision.reason;
+      return;
+    }
+    const head = headCommit();
+    if (!head) return;
+    lastRegressionAttempt = new Date(t);
+    lastRegressionHold = "";
+    const stamp = new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+    const req: RunRequest = { version: PROTOCOL_VERSION, id: `auto-${stamp}-full`, sequence: "full", commit: head };
+    logLine(`auto: the whole regression is due (last ${last ? `${last.id}, ${last.finishedAt}` : "none recorded"}); starting ${req.id}`);
+    current = req.id;
+    void runRequest(req, now())
+      .catch((e: unknown) => logLine(`run ${req.id}: runner fault ${(e as Error).message}`))
+      .finally(() => {
+        current = null;
+      });
+  } catch (e) {
+    logLine(`auto: full — ${(e as Error).message}`);
   }
 }
 

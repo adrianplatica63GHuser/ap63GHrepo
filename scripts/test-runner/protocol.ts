@@ -75,6 +75,18 @@
  * The runner also starts both on its own when idle (`scripts/backup/rules.ts`
  * → `nextAutoRun`): a backup daily, the drill monthly and after a migration.
  *
+ * Slice #39.15 added `targeted` and the two-weekly whole regression. Adrian,
+ * 2026-10-12: „cheap development first, reliability of the system later" —
+ * running every test after every commit is what pushed Google Maps past its
+ * free 10,000 a month (#39.14). So a slice is verified by `targeted`: lint and
+ * tsc whole, e2e and jest narrowed by `only` to the tests the slice wrote or
+ * changed and the existing tests of what it changed substantially — and with
+ * no `only`, e2e and jest run NOTHING, never everything (`planSteps`). A green
+ * `targeted` on HEAD licenses a push as a whole `full` does (`licensingRun`).
+ * The whole regression, `full`, is started by the runner itself when it is
+ * idle and the last one is 14 days old (`decideAutoRegression`), under an
+ * `auto-` id, and its date survives result pruning in `regression.json`.
+ *
  * Slice #37.12 added `measure-fields`: `scripts/testing/measure-field-lengths.ts`,
  * three SELECTs in a read-only session that measure how long the values behind
  * every field on the detail screens really are, and print the table
@@ -140,6 +152,8 @@ export type StepName = (typeof STEPS)[number];
 export const SEQUENCES = {
   ping: [],
   full: ["e2e", "lint", "tsc", "jest", "forms-drift"],
+  // Slice #39.15: what a slice runs. e2e and jest run ONLY what `only` names.
+  targeted: ["e2e", "lint", "tsc", "jest", "forms-drift"],
   "full-db": ["e2e", "lint", "tsc", "jest", "verify-rebuild", "forms-drift"],
   static: ["lint", "tsc", "jest"],
   e2e: ["e2e"],
@@ -464,16 +478,40 @@ export interface PlannedStep {
   skipReason: string | null;
 }
 
+/**
+ * The sequences whose e2e and jest steps run ONLY what `only` names.   (Slice #39.15)
+ *
+ * ⚠️ On every other sequence a request with no `only` means „all of them". On
+ * these it means „none of them": `files: null` is the runner's word for the
+ * whole suite, so a targeted step with nothing named must be SKIPPED, never
+ * planned with `files: null` — that would quietly be the whole regression this
+ * sequence exists to avoid.
+ */
+export const TARGETED_SEQUENCES: readonly SequenceName[] = ["targeted"];
+
 export function planSteps(request: Pick<RunRequest, "sequence" | "only">): PlannedStep[] {
   const steps = SEQUENCES[request.sequence] as readonly StepName[];
+  const targeted = TARGETED_SEQUENCES.includes(request.sequence);
   return steps.map((name) => {
-    if (!request.only || (name !== "e2e" && name !== "jest")) return { name, files: null, skipReason: null };
+    if (name !== "e2e" && name !== "jest") return { name, files: null, skipReason: null };
+    if (!request.only && !targeted) return { name, files: null, skipReason: null };
     const prefix = name === "e2e" ? "e2e/" : "src/__tests__/";
-    const files = request.only.filter((e) => e.startsWith(prefix));
-    return files.length > 0
-      ? { name, files, skipReason: null }
-      : { name, files: null, skipReason: `only names no ${name === "e2e" ? "e2e spec" : "jest suite"}` };
+    const files = (request.only ?? []).filter((e) => e.startsWith(prefix));
+    const what = name === "e2e" ? "e2e spec" : "jest suite";
+    if (files.length > 0) return { name, files, skipReason: null };
+    return { name, files: null, skipReason: targeted ? `targeted — the slice names no ${what}, so none ran` : `only names no ${what}` };
   });
+}
+
+/**
+ * The note a targeted step carries, so a result says which tests ran without
+ * anyone opening the log — or null for a step that ran its whole suite or
+ * nothing at all.   (Slice #39.15)
+ */
+export function targetedNote(sequence: SequenceName, step: PlannedStep): string | null {
+  if (!TARGETED_SEQUENCES.includes(sequence) || step.files === null) return null;
+  const what = step.name === "e2e" ? "spec" : "suite";
+  return `targeted — ran only the ${step.files.length} ${what}${step.files.length === 1 ? "" : "s"} named: ${step.files.join(", ")}`;
 }
 
 /**
@@ -875,8 +913,13 @@ export function skipReasonFor(
 /** The only branch the runner ever pushes, and the only remote. */
 export const PUSH_BRANCH = "main";
 export const PUSH_REMOTE = "origin";
-/** Sequences whose green result on HEAD licenses a push: the whole verification sequence, unnarrowed. */
-export const PUSH_LICENSING_SEQUENCES: readonly SequenceName[] = ["full", "full-db"];
+/** The whole regression: every e2e spec and every jest suite. Narrowed by `only`, it is not. */
+export const WHOLE_SEQUENCES: readonly SequenceName[] = ["full", "full-db"];
+/**
+ * Sequences whose green result on HEAD licenses a push: a whole `full`/`full-db`,
+ * unnarrowed, or — since Slice #39.15 — a `targeted` run, narrowed or not.
+ */
+export const PUSH_LICENSING_SEQUENCES: readonly SequenceName[] = [...WHOLE_SEQUENCES, ...TARGETED_SEQUENCES];
 
 /** `src/db/migration_087_x.sql` — the same shape `scripts/migration-state.ts` reads. */
 export const MIGRATION_PATH_RE = /^src\/db\/migration_\d{3}_[^/]+\.sql$/;
@@ -906,9 +949,11 @@ function trackedChanges(dirty: readonly string[]): string[] {
 }
 
 /**
- * The green run that licenses pushing HEAD: a whole `full`/`full-db` run by the
- * runner on exactly this commit, passed, and taken on a tree with no TRACKED
- * change beyond HEAD. A narrowed run (`only`) is not the verification sequence.
+ * The green run that licenses pushing HEAD: a whole `full`/`full-db` run, or a
+ * `targeted` run, by the runner on exactly this commit, passed, and taken on a
+ * tree with no TRACKED change beyond HEAD. A `full` narrowed by `only` is
+ * neither: `targeted` is the one narrowed run that says so by its name, which
+ * is what lets the result be read for what it is. (Slice #39.15)
  * An untracked file is tolerated — the runner's own channel is gitignored, but
  * Adrian's scratch files are not, and they are not what is being pushed.
  */
@@ -924,7 +969,7 @@ export function licensingRun(results: readonly GreenRunCandidate[], head: string
         r.sequence !== null &&
         PUSH_LICENSING_SEQUENCES.includes(r.sequence) &&
         r.commit === head &&
-        (r.only === null || r.only === undefined),
+        (TARGETED_SEQUENCES.includes(r.sequence) || r.only === null || r.only === undefined),
     )
     .sort((a, b) => String(b.finishedAt ?? "").localeCompare(String(a.finishedAt ?? "")));
   return {
@@ -939,7 +984,8 @@ export function licensingRun(results: readonly GreenRunCandidate[], head: string
  * credentials only when all of these hold (Slice Propus.3's header):
  *
  *   1. HEAD is `main` — never another branch, never a detached HEAD.
- *   2. A green, unnarrowed `full`/`full-db` result names HEAD, on a clean tree.
+ *   2. A green `targeted` result, or a green unnarrowed `full`/`full-db`, names
+ *      HEAD, on a clean tree. (`targeted` since Slice #39.15.)
  *   3. origin's `main` is known and is an ancestor of HEAD — a fast-forward.
  *      There is no force anywhere in the runner, and git itself would refuse a
  *      non-fast-forward, but the guard says so by name first.
@@ -965,13 +1011,13 @@ export function decidePush(o: PushObservation): GuardDecision<{ greenRun: string
       return {
         ok: false,
         code: "green-run-dirty",
-        message: `The green run ${lic.dirtyOnly.id} tested uncommitted changes beyond HEAD (${tracked.join(" · ")}), so it is not evidence about HEAD. Run full again on a clean tree.`,
+        message: `The green run ${lic.dirtyOnly.id} tested uncommitted changes beyond HEAD (${tracked.join(" · ")}), so it is not evidence about HEAD. Run targeted again on a clean tree.`,
       };
     }
     return {
       ok: false,
       code: "no-green-run",
-      message: `No passed, unnarrowed ${PUSH_LICENSING_SEQUENCES.join("/")} result by the runner names ${o.head.slice(0, 7)}. Request full first.`,
+      message: `No passed targeted run, and no passed unnarrowed ${WHOLE_SEQUENCES.join("/")} run, by the runner names ${o.head.slice(0, 7)}. Request targeted first.`,
     };
   }
   if (o.remoteMain === null) {
@@ -1004,6 +1050,109 @@ export function decidePush(o: PushObservation): GuardDecision<{ greenRun: string
     };
   }
   return { ok: true, greenRun: lic.clean.id, from: remote, to: o.head, commits: o.rangeCommits };
+}
+
+// ---- the whole regression, every two weeks (Slice #39.15) ------------------------------
+
+/**
+ * ⚠️ **ADRIAN'S DECISION, 2026-10-12, UNTIL HE CHANGES IT: THE WHOLE REGRESSION
+ * RUNS EVERY TWO WEEKS, NOT AFTER EVERY SLICE.** „Cheap development first,
+ * reliability of the system later." A slice runs `targeted`; the runner starts
+ * a whole `full` on its own when it is idle and the last whole run is this old.
+ * A red one is not fixed by whatever slice is running — the next handover lists
+ * it, and Adrian decides when it is fixed (`C:\dev\CLAUDE.md` → „Tests run
+ * targeted"). Change the cadence here and in that block, nowhere else.
+ */
+export const REGRESSION_EVERY_DAYS = 14;
+export const REGRESSION_EVERY_MS = REGRESSION_EVERY_DAYS * 24 * 60 * 60_000;
+/** An automatic run that gave no answer (status `error`) is tried again after this long, not every ten minutes. */
+export const REGRESSION_RETRY_MS = 6 * 60 * 60_000;
+/** Under `CHANNEL_DIR`: the newest whole run, kept here because result files are pruned (60 kept). */
+export const REGRESSION_STATE_FILE = "regression.json";
+
+export type RegressionCandidate = Pick<RunResult, "id" | "source" | "status" | "sequence" | "only" | "finishedAt">;
+
+/** The newest whole regression, as `regression.json` holds it. */
+export interface RegressionRecord {
+  id: string;
+  status: "passed" | "failed";
+  finishedAt: string;
+}
+
+/**
+ * Is this result a whole regression run? The runner's, `full`/`full-db`,
+ * unnarrowed, and ANSWERED — passed or failed. A run that ended `error` or
+ * `held` said nothing about the code, so it does not reset the clock; a red
+ * run did, so it does — the policy is a whole run every two weeks, not a
+ * green one.
+ */
+export function isWholeRegression(r: RegressionCandidate): boolean {
+  return (
+    r.source === "runner" &&
+    r.sequence !== null &&
+    WHOLE_SEQUENCES.includes(r.sequence) &&
+    (r.only === null || r.only === undefined) &&
+    (r.status === "passed" || r.status === "failed") &&
+    typeof r.finishedAt === "string" &&
+    !Number.isNaN(Date.parse(r.finishedAt))
+  );
+}
+
+/** The newest whole regression among the result files and the recorded one, or null when there has been none. */
+export function lastRegression(
+  results: readonly RegressionCandidate[],
+  recorded: RegressionRecord | null,
+): RegressionRecord | null {
+  const all: RegressionRecord[] = results
+    .filter(isWholeRegression)
+    .map((r) => ({ id: r.id, status: r.status as "passed" | "failed", finishedAt: r.finishedAt as string }));
+  if (recorded && !Number.isNaN(Date.parse(recorded.finishedAt))) all.push(recorded);
+  all.sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt));
+  return all[0] ?? null;
+}
+
+/** When the next whole regression is due: 14 days after the last, or now when there has been none. */
+export function regressionDueAt(last: RegressionRecord | null, now: Date): Date {
+  return last ? new Date(Date.parse(last.finishedAt) + REGRESSION_EVERY_MS) : now;
+}
+
+export interface RegressionObservation {
+  now: Date;
+  last: RegressionRecord | null;
+  /** When this runner process last started one on its own, or null. */
+  lastAttempt: Date | null;
+  /** `git status --porcelain` now. */
+  dirty: readonly string[];
+}
+
+export type RegressionDecision = { start: true } | { start: false; reason: string };
+
+/**
+ * Whether the idle runner starts the whole regression now. Checked in this
+ * order, so the reason given is the one that is actually in the way:
+ *
+ *   1. It is due — 14 days since the last whole run, or there has been none.
+ *   2. This process has not tried within `REGRESSION_RETRY_MS` — a run that
+ *      gave no answer (Docker down, a server that never came up) is retried,
+ *      but not every ten minutes.
+ *   3. The working tree has no TRACKED change beyond HEAD. A whole run over
+ *      half-written work would report a slice in progress as the regression's
+ *      failures, and the result would be evidence about neither. An untracked
+ *      file is tolerated, as the push guard tolerates it.
+ */
+export function decideAutoRegression(o: RegressionObservation): RegressionDecision {
+  const due = regressionDueAt(o.last, o.now);
+  if (o.now.getTime() < due.getTime()) {
+    return { start: false, reason: `not due until ${due.toISOString()} (last whole run ${o.last?.id ?? "none"})` };
+  }
+  if (o.lastAttempt && o.now.getTime() - o.lastAttempt.getTime() < REGRESSION_RETRY_MS) {
+    return { start: false, reason: `tried at ${o.lastAttempt.toISOString()} without an answer; trying again after ${REGRESSION_RETRY_MS / 3_600_000} h` };
+  }
+  const tracked = trackedChanges(o.dirty);
+  if (tracked.length > 0) {
+    return { start: false, reason: `due, but the working tree has uncommitted changes (${tracked.join(" · ")}); waiting for a clean tree` };
+  }
+  return { start: true };
 }
 
 // ---- ci: reading GitHub Actions, read-only -----------------------------------------

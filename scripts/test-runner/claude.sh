@@ -3,6 +3,8 @@
 # the device VM, over the bridge; the runner itself runs on Windows (runner.ts).
 #
 #   claude.sh request <sequence> [only-path ...]   write a request for HEAD; prints its id
+#   claude.sh request targeted [only-path ...]     what a slice runs (#39.15): lint + tsc whole, e2e
+#                                                  and jest ONLY the paths named — none named, none run
 #   claude.sh request reconcile <folder>           a sequence with an argument: a folder
 #                                                  NAME under C:\dev\TEST.DATA\Test.Claude\ (#36.22)
 #   claude.sh request ai-score <corpus> <readCap>  score the AI's reading of a corpus under
@@ -12,9 +14,13 @@
 #   claude.sh wait <id> [seconds]                  poll its result (default 170 s, inside the 180 s cap)
 #   claude.sh show <id>                            print a result as it stands
 #   claude.sh ping [seconds]                       request + wait for the sequence that runs nothing
+#   claude.sh regression                           the last whole regression run, when the next is
+#                                                  due, and that run's result (#39.15)
 #
-# Sequences: ping · full · full-db · static · e2e · jest · verify-rebuild
-#            push (main, fast-forward, on a green full) · ci (read Actions for HEAD)
+# Sequences: ping · targeted · full · full-db · static · e2e · jest · verify-rebuild
+#            targeted is what a slice runs; full is the whole regression — every two weeks, started
+#            by the runner itself when idle (auto-<time>-full), or when a header says „Regression: full"
+#            push (main, fast-forward, on a green targeted or full) · ci (read Actions for HEAD)
 #            migrate-local (Apply-Migration + Export-SupabaseSchema, confirmed migrations only)
 #            reconcile <folder> (what became of every file of that folder after an import; read-only)
 #            ai-score <corpus> <readCap> (paid: the app's own extraction over a labelled corpus, scored)
@@ -54,6 +60,37 @@ show() {
     out.push(`  received ${r.receivedAt}, finished ${r.finishedAt ?? "-"}, runner pid ${r.runner?.pid ?? "?"} on ${r.runner?.host ?? "?"}`);
     console.log(out.join("\n"));
   ' "$1"
+}
+
+# The newest whole regression: `.test-runner/regression.json` (the runner's record, which outlives
+# result pruning) or the newest whole full/full-db result file, whichever is later. The test mirrors
+# protocol.ts → isWholeRegression; keep the two together. (#39.15)
+regression() {
+  node -e '
+    const fs = require("fs"), path = require("path");
+    const ch = process.argv[1], days = 14;
+    const runs = [];
+    try { const r = JSON.parse(fs.readFileSync(path.join(ch, "regression.json"), "utf8")); if (r.id && r.finishedAt) runs.push(r); } catch {}
+    let files = [];
+    try { files = fs.readdirSync(path.join(ch, "results")).filter((f) => f.endsWith(".json")); } catch {}
+    for (const f of files) {
+      try {
+        const r = JSON.parse(fs.readFileSync(path.join(ch, "results", f), "utf8"));
+        if (r.source === "runner" && (r.sequence === "full" || r.sequence === "full-db") && !r.only &&
+            (r.status === "passed" || r.status === "failed") && r.finishedAt) runs.push({ id: r.id, status: r.status, finishedAt: r.finishedAt });
+      } catch {}
+    }
+    runs.sort((a, b) => Date.parse(b.finishedAt) - Date.parse(a.finishedAt));
+    const last = runs[0];
+    if (!last) { console.log("no whole regression run on record — the runner starts one as soon as it is idle on a clean tree"); process.exit(0); }
+    const due = new Date(Date.parse(last.finishedAt) + days * 86400000);
+    console.log(`last whole regression: ${last.id} — ${String(last.status).toUpperCase()}, finished ${last.finishedAt}`);
+    console.log(`next due: ${due.toISOString()}${due.getTime() <= Date.now() ? " (due now: the runner starts it when idle on a clean tree)" : ""}`);
+    console.log(last.id);
+  ' "$ch" | {
+    IFS= read -r a && echo "$a"; IFS= read -r b && echo "$b"; IFS= read -r id || exit 0
+    [ -f "$ch/results/$id.json" ] && show "$ch/results/$id.json" || echo "  (its result file has been pruned; regression.json keeps only the date and verdict)"
+  }
 }
 
 status_of() { node -e 'try{console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).status)}catch{console.log("unreadable")}' "$1"; }
@@ -107,5 +144,6 @@ case "$cmd" in
   wait)    [ $# -ge 1 ] || { echo "usage: claude.sh wait <id> [seconds]" >&2; exit 2; }; wait_for "$@" ;;
   show)    [ -f "$ch/results/${1:-}.json" ] || { echo "no result for ${1:-}" >&2; exit 5; }; show "$ch/results/$1.json" ;;
   ping)    id="$(request ping)" || exit 2; wait_for "$id" "${1:-20}" ;;
-  *)       sed -n '2,31p' "$0"; exit 2 ;;
+  regression) regression ;;
+  *)       sed -n '2,38p' "$0"; exit 2 ;;
 esac
