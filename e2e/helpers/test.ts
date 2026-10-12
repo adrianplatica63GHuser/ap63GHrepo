@@ -18,12 +18,18 @@
  * e2e step: „Google maps loaded: N". `src/__tests__/e2e-google-maps.test.ts`
  * fails when a spec imports `test` from `@playwright/test` instead of here, which
  * would quietly load maps again.
+ *
+ * ⚠️ **AND THE MONTH HAS A CEILING.** (Slice #39.16.) When the test runner has
+ * counted `MAPS_MONTHLY_CEILING` real maps this month, it sets `E2E_MAPS_CEILING`
+ * for its e2e run. Then nothing gets real maps — and a spec that opted in is
+ * SKIPPED with the ceiling named, not failed: its subject is the map, and a run
+ * with no map would only fail it for a reason that is not a defect.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { test as base } from "@playwright/test";
-import { MAPS_LOG_ENV, type MapsLogLine } from "../../scripts/test-runner/protocol";
+import { MAPS_CEILING_ENV, MAPS_LOG_ENV, type MapsLogLine } from "../../scripts/test-runner/protocol";
 import { MAP_COUNTER_BINDING, MAP_COUNTER_SCRIPT, isGoogleMapsUrl, isMapsLoaderUrl } from "./google-maps";
 
 export * from "@playwright/test";
@@ -40,8 +46,26 @@ export const test = base.extend<MapsOptions & { googleMaps: void }>({
   realMaps: [false, { option: true }],
   googleMaps: [
     async ({ context, realMaps }, use, testInfo) => {
-      const letThrough = realMaps || !BLOCK_BY_DEFAULT;
+      const ceilingReached = process.env[MAPS_CEILING_ENV];
+      const letThrough = (realMaps || !BLOCK_BY_DEFAULT) && !ceilingReached;
       const tally = { maps: 0, loaders: 0, blocked: 0 };
+      const file = process.env[MAPS_LOG_ENV];
+      const writeLine = (): void => {
+        if (!file) return;
+        const line: MapsLogLine = {
+          spec: path.relative(path.join(__dirname, ".."), testInfo.file).replace(/\\/g, "/"),
+          title: testInfo.titlePath.slice(1).join(" › "),
+          realMaps: letThrough,
+          ...tally,
+        };
+        fs.appendFileSync(file, JSON.stringify(line) + "\n");
+      };
+      if (realMaps && ceilingReached) {
+        // Slice #39.16: the month's ceiling is reached — a spec whose subject is the map is skipped, never failed.
+        writeLine();
+        testInfo.skip(true, ceilingReached);
+        return;
+      }
       if (letThrough) {
         await context.exposeBinding(MAP_COUNTER_BINDING, () => {
           tally.maps++;
@@ -64,16 +88,7 @@ export const test = base.extend<MapsOptions & { googleMaps: void }>({
         });
       }
       await use();
-      const file = process.env[MAPS_LOG_ENV];
-      if (file) {
-        const line: MapsLogLine = {
-          spec: path.relative(path.join(__dirname, ".."), testInfo.file).replace(/\\/g, "/"),
-          title: testInfo.titlePath.slice(1).join(" › "),
-          realMaps: letThrough,
-          ...tally,
-        };
-        fs.appendFileSync(file, JSON.stringify(line) + "\n");
-      }
+      writeLine();
     },
     { auto: true },
   ],

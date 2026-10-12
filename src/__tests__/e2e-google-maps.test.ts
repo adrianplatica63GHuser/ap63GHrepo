@@ -12,7 +12,22 @@ import fs from "fs";
 import path from "path";
 
 import { isGoogleMapsUrl, isMapsLoaderUrl } from "../../e2e/helpers/google-maps";
-import { mapsNote, parseMapsLog, type MapsLogLine } from "../../scripts/test-runner/protocol";
+import {
+  MAPS_CEILING_ENV,
+  MAPS_FREE_PER_MONTH,
+  MAPS_MONTHLY_CEILING,
+  addToMapsLedger,
+  mapsCeiling,
+  mapsCeilingSkipReason,
+  mapsInLog,
+  mapsMonth,
+  mapsNote,
+  mapsUsed,
+  parseMapsLedger,
+  parseMapsLog,
+  type MapsLedger,
+  type MapsLogLine,
+} from "../../scripts/test-runner/protocol";
 
 const ROOT = process.cwd();
 const E2E = path.join(ROOT, "e2e");
@@ -154,5 +169,100 @@ describe("the block stays in force", () => {
       }
     }
     expect(bad).toEqual([]);
+  });
+});
+
+// ---- Slice #39.16: the tests' monthly ceiling ------------------------------------------
+
+describe("the month's ceiling on the tests' real maps", () => {
+  const ledger = (over: Partial<MapsLedger> = {}): MapsLedger => ({ month: "2026-11", maps: 0, runs: [], ...over });
+
+  it("is 3,000 of Google's free 10,000 — 7,000 left for the people using the app", () => {
+    expect(MAPS_MONTHLY_CEILING).toBe(3_000);
+    expect(MAPS_FREE_PER_MONTH - MAPS_MONTHLY_CEILING).toBe(7_000);
+  });
+
+  it("counts the month the way Google bills it, in US Pacific time", () => {
+    // 03:30 UTC on Nov 1 is still the evening of Oct 31 in California (PDT, UTC-7).
+    expect(mapsMonth(new Date("2026-11-01T03:30:00Z"))).toBe("2026-10");
+    expect(mapsMonth(new Date("2026-11-01T08:00:00Z"))).toBe("2026-11");
+    // In winter, PST is UTC-8.
+    expect(mapsMonth(new Date("2027-01-01T07:59:00Z"))).toBe("2026-12");
+  });
+
+  it("adds a run once, and starts a new month at zero", () => {
+    const a = addToMapsLedger(null, "2026-11", "r1", 24);
+    expect(a).toEqual({ month: "2026-11", maps: 24, runs: ["r1"] });
+    expect(addToMapsLedger(a, "2026-11", "r1", 24)).toEqual(a);
+    expect(addToMapsLedger(a, "2026-11", "r2", 4)).toEqual({ month: "2026-11", maps: 28, runs: ["r1", "r2"] });
+    expect(addToMapsLedger(a, "2026-12", "r3", 2)).toEqual({ month: "2026-12", maps: 2, runs: ["r3"] });
+    expect(addToMapsLedger(a, "2026-11", "r4", -1)).toEqual(a);
+    expect(mapsUsed(a, "2026-12")).toBe(0);
+  });
+
+  it("is not reached below 3,000, and every result says how much of the month is used", () => {
+    const c = mapsCeiling(ledger({ maps: 2_999 }), "2026-11");
+    expect(c.reached).toBe(false);
+    expect(c.note).toBe(
+      "Google maps this month (2026-11): 2,999 of the tests' ceiling of 3,000 — Google's free 10,000 are shared with the people using the app",
+    );
+  });
+
+  it("is reached at 3,000 — and a ledger from last month counts as nothing", () => {
+    expect(mapsCeiling(ledger({ maps: 3_000 }), "2026-11").reached).toBe(true);
+    expect(mapsCeiling(ledger({ maps: 3_000 }), "2026-12").reached).toBe(false);
+    expect(mapsCeiling(null, "2026-11")).toMatchObject({ reached: false, used: 0 });
+  });
+
+  it("names a hand-written starting count for what it is", () => {
+    const c = mapsCeiling(
+      ledger({ month: "2026-10", maps: 14_800, seeded: { maps: 14_600, note: "October's runs before the count existed" } }),
+      "2026-10",
+    );
+    expect(c.reached).toBe(true);
+    expect(c.note).toContain("14,800 (14,600 of them estimated: October's runs before the count existed)");
+    expect(c.note).toContain("real maps are blocked for every test and the map specs are skipped");
+  });
+
+  it("the skip reason names the ceiling and where it is set", () => {
+    expect(mapsCeilingSkipReason(3_012, "2026-11")).toBe(
+      "Google maps ceiling reached: the tests made 3,012 real maps in 2026-11, and allow themselves 3,000 a month (scripts/test-runner/protocol.ts → MAPS_MONTHLY_CEILING)",
+    );
+  });
+
+  it("adds up a run's log", () => {
+    expect(mapsInLog([])).toBe(0);
+    const l = (maps: number): MapsLogLine => ({ spec: "s", title: "t", realMaps: true, maps, loaders: 0, blocked: 0 });
+    expect(mapsInLog([l(2), l(0), l(22)])).toBe(24);
+  });
+
+  it("reads a ledger back, and refuses one that is not", () => {
+    const good = { month: "2026-10", maps: 5, runs: ["a"], seeded: { maps: 3, note: "n" } };
+    expect(parseMapsLedger("﻿" + JSON.stringify(good))).toEqual(good);
+    expect(parseMapsLedger(JSON.stringify({ month: "2026-10", maps: 5, runs: ["a"] }))).toEqual({ month: "2026-10", maps: 5, runs: ["a"] });
+    expect(parseMapsLedger("{")).toBeNull();
+    expect(parseMapsLedger(JSON.stringify({ ...good, month: "Oct" }))).toBeNull();
+    expect(parseMapsLedger(JSON.stringify({ ...good, maps: -1 }))).toBeNull();
+    expect(parseMapsLedger(JSON.stringify({ ...good, runs: [1] }))).toBeNull();
+  });
+
+  it("the fixture lets no real map through once the ceiling is set, and skips — never fails — a spec that opted in", () => {
+    const code = fs
+      .readFileSync(path.join(E2E, "helpers", "test.ts"), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(code).toMatch(/const ceilingReached = process\.env\[MAPS_CEILING_ENV\];/);
+    expect(code).toMatch(/const letThrough = \(realMaps \|\| !BLOCK_BY_DEFAULT\) && !ceilingReached;/);
+    expect(code).toMatch(/if \(realMaps && ceilingReached\) \{[\s\S]*?testInfo\.skip\(true, ceilingReached\);/);
+    expect(MAPS_CEILING_ENV).toBe("E2E_MAPS_CEILING");
+  });
+
+  it("the runner decides the ceiling before the run and adds every run's maps to the month after it", () => {
+    const code = fs
+      .readFileSync(path.join(ROOT, "scripts", "test-runner", "runner.ts"), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(code).toMatch(/if \(ceiling\.reached\) env\[MAPS_CEILING_ENV\] = mapsCeilingSkipReason\(ceiling\.used, month\);/);
+    expect(code).toMatch(/notes\.push\(recordMaps\(month, runId, mapsMade\)\);/);
   });
 });

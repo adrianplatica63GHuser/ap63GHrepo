@@ -1364,3 +1364,100 @@ export function mapsNote(lines: MapsLogLine[] | null): string {
     (strays.length ? `; ⚠️ maps made by specs that did not opt in: ${strays.join(", ")}` : "")
   );
 }
+
+// ---- the tests' monthly ceiling on real Google maps (Slice #39.16) ------------------------
+
+/**
+ * ⚠️ **THE TESTS MAY MAKE AT MOST THIS MANY REAL MAPS IN A CALENDAR MONTH.**
+ * Google's first 10,000 „Dynamic Maps" a month are free and then each costs
+ * US$7 per 1,000 (#39.14). The tests and the people using the app draw on the
+ * same 10,000, so the tests keep to 3,000 and leave 7,000 for Adrian and
+ * Ciprian. Once the month's count reaches it, the runner tells the e2e fixture
+ * (`MAPS_CEILING_ENV`), which blocks real maps for EVERY test — and a spec that
+ * opted in with `realMaps: true` is SKIPPED with this ceiling named, never
+ * failed. Change the number here and nowhere else.
+ */
+export const MAPS_MONTHLY_CEILING = 3_000;
+/** Google's free „Dynamic Maps" a month, shared by the tests and the app's users. */
+export const MAPS_FREE_PER_MONTH = 10_000;
+/** Set by the runner for its e2e run when the ceiling is reached; its value is the reason the skipped specs show. */
+export const MAPS_CEILING_ENV = "E2E_MAPS_CEILING";
+/** Under `CHANNEL_DIR`: the month's running count, kept because result files are pruned. */
+export const MAPS_LEDGER_FILE = "google-maps-month.json";
+/**
+ * Google's billing day — and so its month — is US Pacific time, not Toronto's
+ * (the Cloud console reports in Pacific time). The month is counted the way
+ * Google counts it.
+ */
+export const MAPS_BILLING_TIME_ZONE = "America/Los_Angeles";
+
+export interface MapsLedger {
+  /** `YYYY-MM`, in Google's billing time zone. */
+  month: string;
+  /** Real maps the runner's tests made this month, plus any `seeded` count. */
+  maps: number;
+  /** The run ids already counted, so a run is never counted twice. */
+  runs: string[];
+  /** A starting count written by hand for a month whose early runs were never counted, and why. */
+  seeded?: { maps: number; note: string };
+}
+
+/** `YYYY-MM` of `at` in Google's billing time zone. */
+export function mapsMonth(at: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: MAPS_BILLING_TIME_ZONE, year: "numeric", month: "2-digit" }).formatToParts(at);
+  const y = parts.find((p) => p.type === "year")?.value ?? "0000";
+  const m = parts.find((p) => p.type === "month")?.value ?? "00";
+  return `${y}-${m}`;
+}
+
+/** The ledger as it stands for `month`: a ledger of an earlier month counts as nothing. */
+export function mapsUsed(ledger: MapsLedger | null, month: string): number {
+  return ledger && ledger.month === month ? ledger.maps : 0;
+}
+
+/** The ledger after one run's maps are added. Idempotent per run id; a new month starts at zero. */
+export function addToMapsLedger(ledger: MapsLedger | null, month: string, runId: string, maps: number): MapsLedger {
+  const current: MapsLedger = ledger && ledger.month === month ? ledger : { month, maps: 0, runs: [] };
+  if (current.runs.includes(runId) || !Number.isInteger(maps) || maps < 0) return current;
+  return { ...current, maps: current.maps + maps, runs: [...current.runs, runId] };
+}
+
+/** Whether this month's e2e may still make real maps, and the line every result carries about it. */
+export function mapsCeiling(ledger: MapsLedger | null, month: string): { reached: boolean; used: number; note: string } {
+  const used = mapsUsed(ledger, month);
+  const reached = used >= MAPS_MONTHLY_CEILING;
+  const fmt = (n: number): string => n.toLocaleString("en-US");
+  const seeded = ledger && ledger.month === month && ledger.seeded ? ` (${fmt(ledger.seeded.maps)} of them estimated: ${ledger.seeded.note})` : "";
+  return {
+    reached,
+    used,
+    note: reached
+      ? `Google maps this month (${month}): ${fmt(used)}${seeded} — the tests' ceiling of ${fmt(MAPS_MONTHLY_CEILING)} is reached, so real maps are blocked for every test and the map specs are skipped until the month ends`
+      : `Google maps this month (${month}): ${fmt(used)} of the tests' ceiling of ${fmt(MAPS_MONTHLY_CEILING)}${seeded} — Google's free ${fmt(MAPS_FREE_PER_MONTH)} are shared with the people using the app`,
+  };
+}
+
+/** The reason a skipped map spec shows. */
+export function mapsCeilingSkipReason(used: number, month: string): string {
+  return `Google maps ceiling reached: the tests made ${used.toLocaleString("en-US")} real maps in ${month}, and allow themselves ${MAPS_MONTHLY_CEILING.toLocaleString("en-US")} a month (scripts/test-runner/protocol.ts → MAPS_MONTHLY_CEILING)`;
+}
+
+/** The maps one run's log adds up to. */
+export function mapsInLog(lines: readonly MapsLogLine[]): number {
+  return lines.reduce((n, l) => n + l.maps, 0);
+}
+
+/** A ledger read from disk, or null when it is not one. */
+export function parseMapsLedger(text: string): MapsLedger | null {
+  try {
+    const o = JSON.parse(text.replace(/^﻿/, "")) as Partial<MapsLedger>;
+    if (typeof o.month !== "string" || !/^\d{4}-\d{2}$/.test(o.month)) return null;
+    if (typeof o.maps !== "number" || !Number.isInteger(o.maps) || o.maps < 0) return null;
+    if (!Array.isArray(o.runs) || !o.runs.every((r) => typeof r === "string")) return null;
+    const seeded =
+      o.seeded && typeof o.seeded.maps === "number" && typeof o.seeded.note === "string" ? { maps: o.seeded.maps, note: o.seeded.note } : undefined;
+    return { month: o.month, maps: o.maps, runs: o.runs, ...(seeded ? { seeded } : {}) };
+  } catch {
+    return null;
+  }
+}

@@ -89,6 +89,15 @@ import {
   e2eFailuresAreAllTimeouts,
   MAPS_LOG_ENV,
   MAPS_LOG_FILE,
+  MAPS_CEILING_ENV,
+  MAPS_LEDGER_FILE,
+  addToMapsLedger,
+  mapsCeiling,
+  mapsCeilingSkipReason,
+  mapsInLog,
+  mapsMonth,
+  parseMapsLedger,
+  type MapsLedger,
   mapsNote,
   parseMapsLog,
   failedE2eSpecs,
@@ -463,6 +472,19 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
       return mapsNote(null);
     }
   };
+  // Slice #39.16: the month's ceiling. Decided once, before the run; every map the run makes — in an attempt
+  // that is thrown away too — is added to the month's ledger afterwards, whatever the run's verdict.
+  const runId = path.basename(path.dirname(logFile));
+  const month = mapsMonth(new Date());
+  const ceiling = mapsCeiling(readMapsLedger(), month);
+  let mapsMade = 0;
+  const countMapsLog = (): void => {
+    try {
+      mapsMade += mapsInLog(parseMapsLog(fs.readFileSync(mapsLog, "utf8")));
+    } catch {
+      /* no file: nothing was made */
+    }
+  };
   if (await portIsOpen(RUNNER_PORT)) {
     return {
       status: "error",
@@ -507,8 +529,10 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
         return { status: "error", exitCode: null, summary: `${why} (see ${rel(devLog)})`, notes };
       }
       const mark = server.output().length;
+      countMapsLog(); // an attempt thrown away above still made its maps
       fs.rmSync(mapsLog, { force: true });
-      const env = { ...CHILD_ENV, E2E_BASE_URL: `http://localhost:${RUNNER_PORT}`, [MAPS_LOG_ENV]: mapsLog };
+      const env: NodeJS.ProcessEnv = { ...CHILD_ENV, E2E_BASE_URL: `http://localhost:${RUNNER_PORT}`, [MAPS_LOG_ENV]: mapsLog };
+      if (ceiling.reached) env[MAPS_CEILING_ENV] = mapsCeilingSkipReason(ceiling.used, month);
       const first = await runLogged(NODE, [BIN.playwright, ...playwrightArgs(files)], logFile, TIMEOUT.e2e, env);
       let r = first;
       let rerunNote = "";
@@ -539,6 +563,8 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
       }
       if (webpack) notes.push("served with next dev --webpack");
       notes.push(readMapsLog());
+      countMapsLog();
+      notes.push(recordMaps(month, runId, mapsMade));
       return {
         status: r.timedOut ? "error" : r.exitCode === 0 ? "passed" : "failed",
         exitCode: r.exitCode,
@@ -1246,6 +1272,26 @@ function recordRegression(result: RunResult): void {
   } catch (e) {
     logLine(`regression record: ${(e as Error).message}`);
   }
+}
+
+/** `.test-runner/google-maps-month.json`, or null when there is none or it cannot be read.   (Slice #39.16) */
+function readMapsLedger(): MapsLedger | null {
+  try {
+    return parseMapsLedger(fs.readFileSync(path.join(CH, MAPS_LEDGER_FILE), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/** Adds one run's real maps to the month's ledger and returns the note that says where the month stands. */
+function recordMaps(month: string, runId: string, maps: number): string {
+  const next = addToMapsLedger(readMapsLedger(), month, runId, maps);
+  try {
+    writeJsonAtomic(path.join(CH, MAPS_LEDGER_FILE), next);
+  } catch (e) {
+    logLine(`maps ledger: ${(e as Error).message}`);
+  }
+  return mapsCeiling(next, month).note;
 }
 
 /** The runner deletes its own files — the bridge could not, before delete permission existed. */
