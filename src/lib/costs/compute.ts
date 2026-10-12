@@ -159,3 +159,18 @@ export function chartDays(days: readonly DayCost[], today: string, maxDays = 92)
 export function formatCad(n: number): string {
   return `CA$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+/** The currencies an amount may be entered in — the ones the providers bill (migration_107 takes any three letters). */
+export const ENTERED_CURRENCIES = ["CAD", "USD", "EUR"] as const;
+export type EnteredCurrency = (typeof ENTERED_CURRENCIES)[number];
+
+/**
+ * An amount as typed: „12,50" or „12.50", never negative — or null. The rate is
+ * read the same way and must be above zero.
+ */
+export function parseTypedAmount(raw: string): number | null {
+  const s = raw.trim().replace(/\s/g, "").replace(",", ".");
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}

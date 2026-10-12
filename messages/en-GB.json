@@ -4027,6 +4027,24 @@
           "freeTier": "The tests allow themselves at most 3,000 real maps a month of the free 10,000.",
           "pricing": "All the tests run once every two weeks; a piece of work runs only its own tests."
         }
+      },
+      "entered": {
+        "heading": "Amounts entered",
+        "from": "From",
+        "to": "To",
+        "amount": "Amount",
+        "currency": "Currency",
+        "rate": "Rate in CA$",
+        "note": "Note",
+        "add": "Add an amount",
+        "saving": "Saving…",
+        "saveError": "The amount could not be saved.",
+        "invalid": "The amount and the rate are numbers, and the period ends no earlier than the day it starts.",
+        "delete": "Delete the amount",
+        "deleteError": "The amount could not be deleted.",
+        "item": "{from} – {to}: {amount} {currency}",
+        "approx": "≈ {cad}",
+        "enteredOn": "entered on {date}"
       }
     }
   },

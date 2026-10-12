@@ -1471,6 +1471,12 @@ export const SCREEN = {
   memberSearch: { step: "XXL", kind: "fixed" }, //     the search above the candidates
   // Setări
   timeFrameDays: { step: "S", kind: "fixed", sample: "0000" }, // 1–3650, with the spinner (w-20 before)
+  // Setări → Costuri: an amount entered from a bill (Slice #39.17)
+  costDate: { step: "M", kind: "fixed", sample: "00.00.0000" }, // a period's first or last day
+  costAmount: { step: "M", kind: "fixed", sample: "000000.00" }, // up to a million, two decimals
+  costCurrency: { step: "S", kind: "select" }, //      CAD, USD, EUR
+  costRate: { step: "S", kind: "fixed", sample: "0.0000" }, // CA$ per one of the currency
+  costNote: { step: "XL", kind: "fixed" }, //          at most 200 characters
   // Schimbă parola
   password: { step: "XL", kind: "fixed" },
   // Texte de ajutor

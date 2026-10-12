@@ -4027,6 +4027,24 @@
           "freeTier": "Testele își permit cel mult 3.000 de hărți reale pe lună din cele 10.000 gratuite.",
           "pricing": "Toate testele rulează o dată la două săptămâni; o lucrare își rulează doar testele ei."
         }
+      },
+      "entered": {
+        "heading": "Sume introduse",
+        "from": "De la",
+        "to": "Până la",
+        "amount": "Suma",
+        "currency": "Moneda",
+        "rate": "Curs în CA$",
+        "note": "Notă",
+        "add": "Adaugă o sumă",
+        "saving": "Se salvează…",
+        "saveError": "Suma nu s-a putut salva.",
+        "invalid": "Suma și cursul sunt numere, iar perioada se termină cel mai devreme în ziua în care începe.",
+        "delete": "Șterge suma",
+        "deleteError": "Suma nu s-a putut șterge.",
+        "item": "{from} – {to}: {amount} {currency}",
+        "approx": "≈ {cad}",
+        "enteredOn": "introdusă la {date}"
       }
     }
   },

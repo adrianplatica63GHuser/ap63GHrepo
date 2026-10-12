@@ -87,7 +87,8 @@ export function buildCostSummary(i: CostInputs): CostSummary {
     const facts: Record<string, number | string | null> = {};
     switch (key) {
       case "ai": {
-        days = sumByDay(i.aiReads.map((r) => ({ day: r.day, cad: r.reads * perReadCad })), enteredDays);
+        // An entered Anthropic bill replaces the estimate for the days it covers, as Google's known days are replaced.
+        days = sumByDay(withoutDaysCovered(i.aiReads.map((r) => ({ day: r.day, cad: r.reads * perReadCad })), entered), enteredDays);
         facts.readsThisMonth = i.aiReads.filter((r) => r.day.slice(0, 7) === i.today.slice(0, 7)).reduce((n, r) => n + r.reads, 0);
         facts.readsSince = i.aiReadsSince;
         facts.perReadUsd = aiReadUsd();

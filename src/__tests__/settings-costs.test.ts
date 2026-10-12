@@ -23,7 +23,9 @@ import {
   chartDays,
   daysBetween,
   daysInMonth,
+  ENTERED_CURRENCIES,
   formatCad,
+  parseTypedAmount,
   monthFigures,
   monthlyTotals,
   spreadOverDays,
@@ -215,5 +217,51 @@ describe("the sentences", () => {
   });
   it("the AI tile keeps its name, which TC-SET-02 reads", () => {
     expect(ro.providers.ai.title).toBe("AI");
+  });
+});
+
+// ---- the amounts Adrian enters (migration_107) ------------------------------------------
+
+
+describe("an amount entered on a tile", () => {
+  it("is typed with a comma or a dot, never negative", () => {
+    expect(parseTypedAmount("12,50")).toBe(12.5);
+    expect(parseTypedAmount(" 1 234.5 ")).toBe(1234.5);
+    expect(parseTypedAmount("-3")).toBeNull();
+    expect(parseTypedAmount("abc")).toBeNull();
+    expect(parseTypedAmount("")).toBeNull();
+  });
+  it("is in one of the currencies the providers bill", () => {
+    expect(ENTERED_CURRENCIES).toEqual(["CAD", "USD", "EUR"]);
+    for (const k of COST_PROVIDERS) expect(ENTERED_CURRENCIES).toContain(PROVIDER_FACTS[k].currency);
+  });
+  it("a plan entered for the month is the month's forecast", () => {
+    const s = buildCostSummary({
+      today: "2026-11-10",
+      aiReads: [],
+      aiReadsSince: null,
+      testsMaps: null,
+      entered: { vercel: [{ id: "x", periodStart: "2026-11-01", periodEnd: "2026-11-30", amount: 20, currency: "USD", cadRate: 1.4, note: null, enteredAt: "2026-11-01T00:00:00Z" }] },
+    });
+    expect(s.providers.find((p) => p.key === "vercel")!.figures).toEqual({ soFar: 9.33, today: 0.93, forecast: 28 });
+  });
+  it("an Anthropic bill entered for some days replaces the reads' estimate on those days", () => {
+    const s = buildCostSummary({
+      today: "2026-10-12",
+      aiReads: [{ day: "2026-10-09", reads: 100 }, { day: "2026-10-12", reads: 1 }],
+      aiReadsSince: null,
+      testsMaps: null,
+      entered: { ai: [{ id: "x", periodStart: "2026-10-09", periodEnd: "2026-10-09", amount: 2, currency: "USD", cadRate: 1.5, note: null, enteredAt: "2026-10-10T00:00:00Z" }] },
+    });
+    expect(s.providers.find((p) => p.key === "ai")!.figures.soFar).toBeCloseTo(3 + 0.15 * 1.38, 2);
+  });
+  it("the route writes only 'entered' amounts, and removes only those", () => {
+    const load = read("src/lib/costs/load.ts");
+    expect(load).toMatch(/source: "entered",/);
+    expect(load).toMatch(/\.where\(and\(eq\(costRecord\.id, id\), eq\(costRecord\.source, "entered"\)\)\)/);
+    const route = read("src/app/api/admin/costs/route.ts");
+    for (const verb of ["GET", "POST", "DELETE"]) {
+      expect(route).toMatch(new RegExp(`export async function ${verb}\\([^)]*\\): Promise<Response> \\{\\s*const denied = await requireFullAccess\\(\\);`));
+    }
   });
 });

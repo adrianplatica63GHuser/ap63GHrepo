@@ -9,9 +9,11 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { eq, min, sql } from "drizzle-orm";
+import { and, desc, eq, min, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { aiPaidRead } from "@/db/schema";
+import { aiPaidRead, costRecord } from "@/db/schema";
+import { COST_PROVIDERS, PROVIDER_ID, type CostProvider } from "./catalogue";
+import type { EnteredAmount } from "./summary";
 
 /** Successful paid reads per Toronto day, oldest first, and the first read ever — or empty on any fault. */
 export async function aiReadsByDay(): Promise<{ days: { day: string; reads: number }[]; since: string | null }> {
@@ -45,4 +47,74 @@ export function testsMapsThisMonth(root: string = process.cwd()): { month: strin
   } catch {
     return null;
   }
+}
+
+// ---- the amounts Adrian entered (migration_107) ---------------------------------------------
+
+
+const KEY_OF_ID: Readonly<Record<string, CostProvider>> = Object.fromEntries(COST_PROVIDERS.map((k) => [PROVIDER_ID[k], k]));
+
+/** Every entered amount, by tile, newest period first — or none on any fault. */
+export async function enteredAmounts(): Promise<Partial<Record<CostProvider, EnteredAmount[]>>> {
+  try {
+    const rows = await db
+      .select()
+      .from(costRecord)
+      .where(eq(costRecord.source, "entered"))
+      .orderBy(desc(costRecord.periodStart), desc(costRecord.enteredAt));
+    const out: Partial<Record<CostProvider, EnteredAmount[]>> = {};
+    for (const r of rows) {
+      const key = KEY_OF_ID[r.provider];
+      if (!key) continue;
+      (out[key] ??= []).push({
+        id: r.id,
+        periodStart: r.periodStart,
+        periodEnd: r.periodEnd,
+        amount: Number(r.amount),
+        currency: r.currency,
+        cadRate: Number(r.cadRate),
+        note: r.note,
+        enteredAt: new Date(r.enteredAt as unknown as string).toISOString(),
+      });
+    }
+    return out;
+  } catch (err) {
+    console.error("[costs] could not read the entered amounts:", err);
+    return {};
+  }
+}
+
+/** An entered amount, written. */
+export async function insertEnteredAmount(a: {
+  provider: CostProvider;
+  periodStart: string;
+  periodEnd: string;
+  amount: number;
+  currency: string;
+  cadRate: number;
+  note: string | null;
+}): Promise<string> {
+  const [row] = await db
+    .insert(costRecord)
+    .values({
+      provider: PROVIDER_ID[a.provider],
+      periodStart: a.periodStart,
+      periodEnd: a.periodEnd,
+      amount: a.amount.toFixed(2),
+      currency: a.currency,
+      cadRate: String(a.cadRate),
+      source: "entered",
+      note: a.note,
+    })
+    .returning({ id: costRecord.id });
+  return row.id;
+}
+
+/** Removes one ENTERED amount; a live or counted one is never removed from here. True when one went. */
+export async function deleteEnteredAmount(id: string): Promise<boolean> {
+  const gone = await db
+    .delete(costRecord)
+    .where(and(eq(costRecord.id, id), eq(costRecord.source, "entered")))
+    .returning({ id: costRecord.id });
+  return gone.length > 0;
 }

@@ -28,7 +28,7 @@ The defects this case exists to catch:
 ## Before you start
 
 - TC-AUTH-01 is green.
-- Nothing is created, and no setting is saved.
+- One amount is entered on „Domeniu web” and removed again (steps 7–8), marked `TC-E2E-SET-04`.
 
 ## What Adrian is asked for
 
@@ -46,10 +46,13 @@ The window is 1366 × 900.
 | 4 | „Restrânge” | One line again |
 | 5 | „Detalii” on „AI” | „Extragerea datelor din acte” and the other uses, each with a `claude-…` model; „O citire e socotită la 0.15 US$…” |
 | 6 | Unticks „Testare”, then „Implicit” | „Testare” leaves the page, then is back |
+| 7 | „Detalii” on „Domeniu web”; under „Sume introduse”: „De la” and „Până la” this month's first day, „Suma” 10, „Moneda” EUR, „Curs în CA$” 1.5, „Notă” `TC-E2E-SET-04`; „Adaugă o sumă” | The amount in the list: „… 10.00 EUR ≈ CA$15.00”, with its note; the month's figures are no longer zero |
+| 8 | „Șterge suma” on that row | The row leaves |
 
 ## At the end — leaving things as they were found
 
-„Implicit” in step 6 puts the boxes back; nothing else changes.
+„Implicit” in step 6 puts the boxes back. Step 8 removes the amount step 7 entered; an amount with the
+note `TC-E2E-SET-04` left by a broken run is removed with „Șterge suma”.
 
 ## Notes from the runs
 

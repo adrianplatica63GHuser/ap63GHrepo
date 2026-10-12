@@ -15,14 +15,14 @@
  */
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronUp, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { IconButton, TrailingIcon } from "@/lib/ui/icon-button";
-import { screenPanel } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { groupSurface } from "@/lib/ui/tile-surface";
-import { PROVIDER_FACTS, type CostProvider } from "@/lib/costs/catalogue";
-import { formatCad, type DayCost } from "@/lib/costs/compute";
-import type { CostSummary, ProviderSummary } from "@/lib/costs/summary";
+import { CAD_PER, PROVIDER_FACTS, type CostProvider } from "@/lib/costs/catalogue";
+import { ENTERED_CURRENCIES, formatCad, parseTypedAmount, type DayCost, type EnteredCurrency } from "@/lib/costs/compute";
+import type { CostSummary, EnteredAmount, ProviderSummary } from "@/lib/costs/summary";
 
 /** The cost tiles are as wide as Setări's own tiles. */
 const COST_TILE_UNITS = 3;
@@ -83,6 +83,131 @@ function Figures({ p }: { p: ProviderSummary }) {
   );
 }
 
+const INPUT = "rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink dark:bg-zinc-800";
+
+/**
+ * The amounts entered on this tile, and the form that adds one (migration_107):
+ * a bill's figure, a plan's price, a domain's year — in the currency billed,
+ * with its CA$ rate, for a period. An amount spread over a longer period is
+ * spread over its days (`spreadOverDays`).
+ */
+function EnteredAmounts({ p }: { p: ProviderSummary }) {
+  const t = useTranslations("settings.costs.entered");
+  const queryClient = useQueryClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<EnteredCurrency>(PROVIDER_FACTS[p.key].currency);
+  const [rate, setRate] = useState(String(CAD_PER[PROVIDER_FACTS[p.key].currency]));
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const id = (f: string) => `cost-${p.key}-${f}`;
+
+  async function add() {
+    const a = parseTypedAmount(amount);
+    const r = parseTypedAmount(rate);
+    if (a === null || r === null || r <= 0 || !from || !to || to < from) {
+      setError(t("invalid"));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/costs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: p.key, periodStart: from, periodEnd: to, amount: a, currency, cadRate: r, note: note.trim() || null }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setAmount("");
+      setNote("");
+      await queryClient.invalidateQueries({ queryKey: ["settings-costs"] });
+    } catch {
+      setError(t("saveError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(e: EnteredAmount) {
+    setError(null);
+    const res = await fetch(`/api/admin/costs?id=${encodeURIComponent(e.id)}`, { method: "DELETE" }).catch(() => null);
+    if (!res || !res.ok) {
+      setError(t("deleteError"));
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["settings-costs"] });
+  }
+
+  const label = "text-xs text-fade";
+  return (
+    <div className="flex flex-col gap-2" data-cost-entered="">
+      <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("heading")}</h3>
+      {p.entered.length > 0 && (
+        <ul className="flex flex-col gap-1 text-xs">
+          {p.entered.map((e) => (
+            <li key={e.id} className="flex items-start justify-between gap-2" data-cost-entered-row={e.id}>
+              <span className="flex flex-col">
+                <span className="text-ink tabular-nums">
+                  {t("item", { from: shortDay(e.periodStart), to: shortDay(e.periodEnd), amount: e.amount.toFixed(2), currency: e.currency })}
+                  {e.currency !== "CAD" && <span className="text-fade"> {t("approx", { cad: formatCad(e.amount * e.cadRate) })}</span>}
+                </span>
+                {e.note && <span className="text-fade">{e.note}</span>}
+                <span className="text-fade">{t("enteredOn", { date: shortDay(e.enteredAt.slice(0, 10)) })}</span>
+              </span>
+              <IconButton icon={Trash2} label={t("delete")} variant="secondary" size="xs" onClick={() => void remove(e)} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex flex-wrap items-end gap-2">
+        <span className="flex flex-col gap-0.5">
+          <label htmlFor={id("from")} className={label}>{t("from")}</label>
+          <input id={id("from")} type="date" {...screenBox("costDate")} value={from} onChange={(e) => setFrom(e.target.value)} className={INPUT} />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <label htmlFor={id("to")} className={label}>{t("to")}</label>
+          <input id={id("to")} type="date" {...screenBox("costDate")} value={to} onChange={(e) => setTo(e.target.value)} className={INPUT} />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <label htmlFor={id("amount")} className={label}>{t("amount")}</label>
+          <input id={id("amount")} inputMode="decimal" {...screenBox("costAmount")} value={amount} onChange={(e) => setAmount(e.target.value)} className={`${INPUT} text-right tabular-nums`} />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <label htmlFor={id("currency")} className={label}>{t("currency")}</label>
+          <select
+            id={id("currency")}
+            {...screenBox("costCurrency")}
+            value={currency}
+            onChange={(e) => {
+              const c = e.target.value as EnteredCurrency;
+              setCurrency(c);
+              setRate(String(CAD_PER[c]));
+            }}
+            className={INPUT}
+          >
+            {ENTERED_CURRENCIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <label htmlFor={id("rate")} className={label}>{t("rate")}</label>
+          <input id={id("rate")} inputMode="decimal" {...screenBox("costRate")} value={rate} onChange={(e) => setRate(e.target.value)} className={`${INPUT} text-right tabular-nums`} />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <label htmlFor={id("note")} className={label}>{t("note")}</label>
+          <input id={id("note")} maxLength={200} {...screenBox("costNote")} value={note} onChange={(e) => setNote(e.target.value)} className={INPUT} />
+        </span>
+        <IconButton icon={Plus} label={t("add")} busy={busy} busyLabel={t("saving")} variant="primary" size="md" data-cost-add="" onClick={() => void add()} disabled={busy || amount.trim() === ""} />
+      </div>
+      {error && <p role="alert" className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 function Details({ p }: { p: ProviderSummary }) {
   const t = useTranslations("settings.costs");
   const facts = PROVIDER_FACTS[p.key];
@@ -130,6 +255,7 @@ function Details({ p }: { p: ProviderSummary }) {
           <p className="text-xs text-fade" data-cost-no-entered="">{t("noEntered")}</p>
         )}
       </div>
+      {p.key !== "testing" && <EnteredAmounts p={p} />}
       <div className="flex flex-col gap-1">
         <h3 className={h3}>{t("conditions")}</h3>
         <p className="text-ink">{t(`providers.${p.key}.conditions`)}</p>
