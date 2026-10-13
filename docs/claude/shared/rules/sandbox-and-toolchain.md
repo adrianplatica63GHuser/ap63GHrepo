@@ -114,6 +114,13 @@ this fixed sequence. Do not ask again.
   drill monthly and after a migration — as ordinary results with `auto-` ids, so a request can
   meet `busy` for a minute. The logic is `scripts/backup/`; by hand, `scripts\Backup-Archive.ps1`
   (`-Drill`, `-Where`).
+- **A rehearsal on the archive runs on the laptop, never in the sandbox** (#39.21). The cloud
+  sandbox refuses to hold a copy of the backup — measured twice on 2026-10-13, as personal data and
+  as data leaving the machine — so do not stage `ga40db.dump`. `request seed-rehearsal` restores the
+  newest backup into the drill's throwaway database (5434, no volume), runs the big dev seed
+  (`scripts/seed-dev-data-big`) against it with its manifest in a scratch folder, checks that a second
+  seed is refused, runs `--remove`, and counts every table before and after. Its line says whether the
+  coverage table was met and everything came back; the log holds the table.
 - **The runner also runs the whole regression every two weeks, on its own** (#39.15), on fixed dates:
   November 4, 2026, then every 14 days (`REGRESSION_FIRST`, `REGRESSION_EVERY_DAYS`). From a date's
   Toronto midnight, when idle, with no backup or drill due and no tracked change in the tree, it
