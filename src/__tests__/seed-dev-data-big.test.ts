@@ -1,6 +1,6 @@
 /**
  * The big dev seed's pure parts — identifiers, the family generator and its rules, the persons' fields, the
- * companies, and the coverage table.                                                        (Slice #39.20)
+ * companies, the coverage table (Slice #39.20); the lots' geometry and the properties (Slice #39.21).
  *
  * The script itself (scripts/seed-dev-data-big/seed.ts) writes through the app's create functions and is
  * rehearsed against a database, not here; what it writes is decided entirely by the modules below, so these
@@ -26,7 +26,9 @@ import {
 } from "../../scripts/seed-dev-data-big/families";
 import { meaningfulWords, naturalDetails } from "../../scripts/seed-dev-data-big/persons";
 import { COMPANY_TYPES, generateCompanies, MAX_REPRESENTED } from "../../scripts/seed-dev-data-big/companies";
-import { coverageLines, formatCoverage, type JudicialRow, type NaturalRow } from "../../scripts/seed-dev-data-big/coverage";
+import { coverageLines, formatCoverage, propertyLines, type JudicialRow, type NaturalRow, type PropertyRow } from "../../scripts/seed-dev-data-big/coverage";
+import { ADRIAN_LINE, area, bearing, dist, inRange, lineCluster, lotsOnLine, overlaps, rowOfLots, sharesEdge, type Poly } from "../../scripts/seed-dev-data-big/geometry";
+import { CURTI, generateProperties, LINE_DEPTH, MAX_FAMILY_PLUS_OWNED, MAX_OWNED, MIX, PLOT_AREA, PROPERTY_TOTAL, sharesAddUp, TPC, type TypeFlags } from "../../scripts/seed-dev-data-big/properties";
 import { makeRng } from "../../scripts/seed-dev-data-big/rng";
 import { ageAt, dmy, yearOf } from "../../scripts/seed-dev-data-big/dates";
 import { KINSHIP_SEED } from "@/lib/persons/kinship";
@@ -346,5 +348,187 @@ describe("the coverage table", () => {
     expect(text).toMatch(/! 1 din \d+ cerințe NU sunt îndeplinite\./);
     const all = formatCoverage(coverageLines(input([...Array(450)].map(() => nat()), [...Array(450)].map(() => jur()))));
     expect(all).toMatch(/Toate cele \d+ cerințe sunt îndeplinite\./);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Part 2 — properties (#39.21). The geometry is proven here, by computation: no map is loaded to check it.
+// ---------------------------------------------------------------------------
+
+describe("Adrian's line and the six lots on it", () => {
+  const lots = lineCluster(LINE_DEPTH);
+
+  it("is 90.55 m long, at bearing 147.2° from point 1 to point 2", () => {
+    expect(dist(ADRIAN_LINE[0], ADRIAN_LINE[1]).toFixed(2)).toBe("90.55");
+    expect(bearing(ADRIAN_LINE[0], ADRIAN_LINE[1]).toFixed(1)).toBe("147.2");
+  });
+
+  it("six lots, each a building plot's size", () => {
+    expect(lots).toHaveLength(6);
+    for (const l of lots) {
+      expect(area(l)).toBeGreaterThanOrEqual(PLOT_AREA.min);
+      expect(area(l)).toBeLessThanOrEqual(PLOT_AREA.max);
+    }
+  });
+
+  it("their north-east edges cover the line from point 1 to point 2, every other corner south-west of it", () => {
+    const on = lotsOnLine(lots);
+    expect(on.lots).toBe(6);
+    expect(Math.abs(on.covered - on.length)).toBeLessThan(0.01);
+    expect(dist(lots[0][0], ADRIAN_LINE[0])).toBe(0);
+    expect(dist(lots[5][1], ADRIAN_LINE[1])).toBe(0);
+    // south-west of the line: the back corners' bearing from their front corner is 237.2°
+    expect(bearing(lots[2][1], lots[2][2]).toFixed(1)).toBe("237.2");
+  });
+
+  it("neighbours share their side edge exactly, and no two overlap", () => {
+    for (let i = 1; i < lots.length; i++) expect(sharesEdge(lots[i - 1], lots[i])).toBe(true);
+    for (let i = 0; i < lots.length; i++) for (let j = i + 1; j < lots.length; j++) expect(overlaps(lots[i], lots[j])).toBe(false);
+  });
+});
+
+describe("overlap", () => {
+  const sq = (n: number, e: number, s = 10): Poly => [{ n, e }, { n, e: e + s }, { n: n + s, e: e + s }, { n: n + s, e }];
+
+  it("touching along an edge or at a corner is not overlapping", () => {
+    expect(overlaps(sq(0, 0), sq(0, 10))).toBe(false);
+    expect(overlaps(sq(0, 0), sq(10, 10))).toBe(false);
+  });
+
+  it("crossing, containing and far apart", () => {
+    expect(overlaps(sq(0, 0), sq(5, 5))).toBe(true);
+    expect(overlaps(sq(0, 0, 30), sq(10, 10, 5))).toBe(true);
+    expect(overlaps(sq(10, 10, 5), sq(0, 0, 30))).toBe(true);
+    expect(overlaps(sq(0, 0), sq(100, 100))).toBe(false);
+  });
+
+  it("a row of lots shares edges and does not overlap itself", () => {
+    const row = rowOfLots({ n: 322_000, e: 580_000 }, 30, 120, [15, 20, 18], [40, 42, 39, 41]);
+    expect(sharesEdge(row[0], row[1])).toBe(true);
+    expect(sharesEdge(row[1], row[2])).toBe(true);
+    expect(overlaps(row[0], row[1])).toBe(false);
+    expect(overlaps(row[0], row[2])).toBe(false);
+  });
+});
+
+describe("the properties", () => {
+  const plan = plans.get(2026)!;
+  const details = naturalDetails(plan, makeRng(7), new Set());
+  const companies = generateCompanies(makeRng(9), plan, details, new Set());
+  // a property already in the database: a 600 × 600 m block in the middle of the range
+  const block: Poly = [{ n: 322_200, e: 579_700 }, { n: 322_200, e: 580_300 }, { n: 322_800, e: 580_300 }, { n: 322_800, e: 579_700 }];
+  const flags = new Map<string, TypeFlags>([
+    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+  ]);
+  const taken = new Set(["60000", "70000"]);
+  const props = generateProperties(makeRng(11), { plan, companies, existing: [block], takenNumbers: new Set(taken), tarlas: ["52", "61", "T3"], flags, names: new Map() });
+  const persons = new Map(plan.persons.map((p) => [p.key, p]));
+  const firms = new Map(companies.map((c) => [c.key, c]));
+  const drawn = props.filter((p) => p.corners);
+
+  it("600, in Adrian's proportions: 360 „Curți construcții”, all of them among 480 „Teren pentru Construcții”", () => {
+    expect(props).toHaveLength(PROPERTY_TOTAL);
+    expect(props.filter((p) => p.useCategory === CURTI).length).toBe(360);
+    expect(props.filter((p) => p.type === TPC).length).toBe(480);
+    expect(props.filter((p) => p.useCategory === CURTI && p.type !== TPC)).toEqual([]);
+  });
+
+  it("360 drawn and 300 with an address — an address only on a type that shows one", () => {
+    expect(drawn.length).toBe(360);
+    expect(props.filter((p) => p.address).length).toBe(300);
+    for (const p of props) if (p.address) expect([p.type, flags.get(p.type)!.address]).toEqual([p.type, true]);
+  });
+
+  it("every drawn lot inside Bragadiru, none overlapping another or the property already there", () => {
+    for (const p of drawn) expect(inRange(p.corners!)).toBe(true);
+    let n = 0;
+    for (let i = 0; i < drawn.length; i++) for (let j = i + 1; j < drawn.length; j++) if (overlaps(drawn[i].corners!, drawn[j].corners!)) n++;
+    expect(n).toBe(0);
+    expect(drawn.filter((p) => !p.cluster!.line && overlaps(p.corners!, block)).length).toBe(0);
+  });
+
+  it("clusters of two to four that touch, single lots, and one of six on the line", () => {
+    const clusters = new Map<number, typeof drawn>();
+    for (const p of drawn) clusters.set(p.cluster!.id, [...(clusters.get(p.cluster!.id) ?? []), p]);
+    const sizes = [...clusters.values()].map((c) => c.length);
+    expect(sizes.filter((n) => n === 6)).toHaveLength(1);
+    expect(sizes.every((n) => n === 6 || (n >= 1 && n <= 4))).toBe(true);
+    for (const n of [1, 2, 3, 4]) expect(sizes.filter((x) => x === n).length).toBeGreaterThanOrEqual(5);
+    for (const lots of clusters.values()) {
+      const ordered = [...lots].sort((a, b) => a.cluster!.index - b.cluster!.index);
+      for (let i = 1; i < ordered.length; i++) expect(sharesEdge(ordered[i - 1].corners!, ordered[i].corners!)).toBe(true);
+      // a cluster shares its tarla and takes consecutive parcel numbers
+      if (ordered[0].tarla) {
+        expect(new Set(ordered.map((p) => p.tarla)).size).toBe(1);
+        ordered.forEach((p, i) => expect(Number(p.parcela)).toBe(Number(ordered[0].parcela) + i));
+      }
+    }
+    const line = drawn.filter((p) => p.cluster!.line);
+    expect(lotsOnLine(line.map((p) => p.corners!)).lots).toBe(6);
+  });
+
+  it("sizes follow the SQL seed's: building plots at the small end, a drawn lot declaring what it measures", () => {
+    for (const p of props) {
+      const spec = MIX.find((m) => m.type === p.type && m.use === p.useCategory)!;
+      if (p.corners) {
+        expect(Math.abs(p.surface - area(p.corners)) / area(p.corners)).toBeLessThanOrEqual(0.03);
+        expect(area(p.corners)).toBeGreaterThanOrEqual(spec.size[0]);
+        expect(area(p.corners)).toBeLessThanOrEqual(spec.size[1]);
+      } else {
+        expect(p.surface).toBeGreaterThanOrEqual(spec.size[0]);
+        expect(p.surface).toBeLessThanOrEqual(spec.size[1]);
+      }
+    }
+  });
+
+  it("cadastral numbers unique and new; tarla and parcel only where the type shows them", () => {
+    const nums = props.map((p) => p.cadastral);
+    expect(new Set(nums).size).toBe(600);
+    for (const t of taken) expect(nums).not.toContain(t);
+    for (const p of props) expect([p.type, !!p.tarla]).toEqual([p.type, flags.get(p.type)!.tarla]);
+  });
+
+  it("every property owned: by the living, in shares that add up, by a married couple, a company — or an unsettled estate", () => {
+    const owned = new Map<string, number>();
+    for (const p of props) {
+      expect(p.owners.length).toBeGreaterThanOrEqual(1);
+      expect(sharesAddUp(p.owners)).toBe(true);
+      expect(p.acquiredOn <= TODAY).toBe(true);
+      for (const o of p.owners) {
+        owned.set(o.key, (owned.get(o.key) ?? 0) + 1);
+        const firm = firms.get(o.key);
+        if (firm) { expect(yearOf(p.acquiredOn)).toBeGreaterThanOrEqual(firm.founded); continue; }
+        const who = persons.get(o.key)!;
+        expect(ageAt(who.dob, p.acquiredOn)).toBeGreaterThanOrEqual(18);
+        if (p.ownership === "estate") expect(!!who.dod && p.acquiredOn < who.dod).toBe(true);
+        else expect(who.dod).toBeNull();
+      }
+      if (p.ownership === "devalmasie") {
+        const [a, b] = p.owners.map((o) => o.key);
+        expect(plan.unions.some((u) => u.endedBy === null && ((u.husband === a && u.wife === b) || (u.husband === b && u.wife === a)) && u.start <= p.acquiredOn)).toBe(true);
+      }
+    }
+    const shares = props.filter((p) => p.ownership === "shares").length;
+    expect(shares).toBeGreaterThanOrEqual(100);
+    for (const [k, n] of owned) if (persons.has(k)) expect(n).toBeLessThanOrEqual(MAX_OWNED);
+  });
+
+  it("family rows plus properties stay at most 11 per person, leaving room on „Legături” for documents", () => {
+    const rows = new Map<string, number>();
+    for (const t of plan.ties) for (const k of [t.holder, t.other]) rows.set(k, (rows.get(k) ?? 0) + 1);
+    for (const p of props) for (const o of p.owners) rows.set(o.key, (rows.get(o.key) ?? 0) + 1);
+    for (const [k, n] of rows) if (persons.has(k)) expect([k, n <= MAX_FAMILY_PLUS_OWNED]).toEqual([k, true]);
+  });
+
+  it("an „≈” line allows three points either way", () => {
+    const row = (useCategory: string | null): PropertyRow => ({ type: TPC, useCategory, hasAddress: false, corners: null, calculatedArea: null, surface: null, owners: 1, ownersFit: true });
+    const lineFor = (k: number) => propertyLines({
+      rows: [...Array(k)].map(() => row(CURTI)).concat([...Array(100 - k)].map(() => row(null))),
+      target: 100, tpc: TPC, curti: CURTI, overlapsNew: 0, overlapsExisting: 0, inRange: 0, touching: 0, onLine: { lots: 6, covered: 90.55, length: 90.55 },
+    }).find((l) => l.label === `„${CURTI}"`)!;
+    expect(lineFor(57).met).toBe(true);
+    expect(lineFor(63).met).toBe(true);
+    expect(lineFor(56).met).toBe(false);
   });
 });
