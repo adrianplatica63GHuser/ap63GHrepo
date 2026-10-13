@@ -322,6 +322,13 @@ const EXPECTED_WRITERS = [
   "scripts/seed-dev-data/seed.ts:document:UPDATE:1",
   "scripts/seed-dev-data/seed.ts:property:UPDATE:1",
 
+  // ── The big dev seed (scripts/seed-dev-data-big, Slices #39.20–#39.23).
+  //    Part 1 (#39.20) writes persons ONLY through createNaturalPerson,
+  //    updateNaturalPerson and createJudicialPerson, and its back-dating of a
+  //    married woman's name history touches `person_version`, `person` and
+  //    `principal_object` — none of the four tables — so it has no line here
+  //    yet. The parts that back-date properties or documents add theirs.
+
   // ── The SQL dev fixture. Slice #34.07 decided to leave it as SQL rather
   //    than rewrite it around the create functions, and its own header states
   //    every field it therefore does not write. That decision is what these

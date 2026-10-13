@@ -93,6 +93,14 @@ describe("the committed list", () => {
     expect(foldedNames(parseRoleMergeList(committed())).filter((n) => seeder.includes(`"${n}"`))).toEqual([]);
   });
 
+  /** The big dev seed (#39.20) resolves its family roles by name and creates the ones it lacks — the same risk. */
+  it("the big dev seed names no folded role either", () => {
+    const dir = "scripts/seed-dev-data-big";
+    const src = fs.readdirSync(path.join(ROOT, dir)).filter((f) => f.endsWith(".ts")).map((f) => read(`${dir}/${f}`)).join("\n");
+    expect(src.length).toBeGreaterThan(0);
+    expect(foldedNames(parseRoleMergeList(committed())).filter((n) => src.includes(`"${n}"`))).toEqual([]);
+  });
+
   /** The SQL dev seed resolves them by name too: a folded name leaves its link with no role. */
   it("seed_dev_data.sql names no folded role either", () => {
     const sql = read("src/db/seed_dev_data.sql");
