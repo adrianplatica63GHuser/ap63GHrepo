@@ -2,19 +2,23 @@
  * src/lib/costs/summary.ts                                         (Slice #39.17)
  *
  * What „Setări → Costuri" shows, built from what the server read: the paid AI
- * reads per day, the tests' Google maps this month, and the amounts Adrian
+ * reads per day, the tests' Google maps — and, since #39.19, Street View
+ * panoramas and address look-ups — this month, and the amounts Adrian
  * entered. Pure — `src/lib/costs/load.ts` does the reading.
  */
 import {
   AI_READ_UPPER,
   CAD_PER,
   COST_PROVIDERS,
+  GOOGLE_EXTRAS,
   GOOGLE_MAPS_KNOWN_BILL,
   GOOGLE_MAPS_PEOPLE_DAILY_CAD,
+  TESTS_MAPS_CEILING,
   aiReadUsd,
   type CostProvider,
 } from "./catalogue";
 import {
+  allowanceEstimate,
   cents,
   chartDays,
   monthFigures,
@@ -43,9 +47,19 @@ export interface CostInputs {
   aiReads: readonly { day: string; reads: number }[];
   /** When the application began counting them, or null. */
   aiReadsSince: string | null;
-  /** The tests' real Google maps this month (the runner's ledger), or null where it cannot be read. */
-  testsMaps: { month: string; maps: number } | null;
+  /**
+   * The tests' Google use this month — the runner's ledger — or null where it cannot be read. `streetView` and
+   * `addressLookups` are null in a ledger written before Slice #39.18 counted them: „not counted", never zero.
+   */
+  testsGoogle: TestsGoogle | null;
   entered: Readonly<Partial<Record<CostProvider, readonly EnteredAmount[]>>>;
+}
+
+export interface TestsGoogle {
+  month: string;
+  maps: number;
+  streetView: number | null;
+  addressLookups: number | null;
 }
 
 export interface ProviderSummary {
@@ -69,6 +83,9 @@ const BASIS: Readonly<Record<CostProvider, ForecastBasis>> = {
   ai: { kind: "linear" },
   claudePlan: { kind: "entered" },
   googleMaps: { kind: "perDay", cadPerDay: GOOGLE_MAPS_PEOPLE_DAILY_CAD },
+  // #39.19: what is entered from a bill, or — when more — the cost the month's estimated use comes to (below).
+  streetView: { kind: "entered" },
+  addressLookups: { kind: "entered" },
   supabase: { kind: "entered" },
   vercel: { kind: "entered" },
   resend: { kind: "entered" },
@@ -80,11 +97,17 @@ const BASIS: Readonly<Record<CostProvider, ForecastBasis>> = {
 
 export function buildCostSummary(i: CostInputs): CostSummary {
   const perReadCad = aiReadUsd() * CAD_PER.USD;
+  // The tests' counts as they stand this month: null where not counted, 0 when the ledger is last month's.
+  const thisMonth = i.today.slice(0, 7);
+  const ledger = i.testsGoogle;
+  const tests = (k: "maps" | "streetView" | "addressLookups"): number | null =>
+    ledger === null ? null : ledger[k] === null ? null : ledger.month === thisMonth ? ledger[k] : 0;
   const providers = COST_PROVIDERS.map((key): ProviderSummary => {
     const entered = [...(i.entered[key] ?? [])];
     const enteredDays = entered.flatMap(spreadOverDays);
     let days: DayCost[];
     const facts: Record<string, number | string | null> = {};
+    let floor = 0;
     switch (key) {
       case "ai": {
         // An entered Anthropic bill replaces the estimate for the days it covers, as Google's known days are replaced.
@@ -98,16 +121,51 @@ export function buildCostSummary(i: CostInputs): CostSummary {
       case "googleMaps":
         days = sumByDay(withoutDaysCovered(GOOGLE_MAPS_KNOWN_BILL, entered), enteredDays);
         break;
+      case "streetView":
+      case "addressLookups": {
+        // Nothing billed yet (#39.19): the month's use — the tests' count and people's estimate — against the free part.
+        days = enteredDays;
+        const g = GOOGLE_EXTRAS[key];
+        const e = allowanceEstimate({
+          today: i.today,
+          testsSoFar: tests(key),
+          testsCeiling: g.testsCeiling,
+          peoplePerDay: g.peoplePerDay,
+          freePerMonth: g.freePerMonth,
+          usdPer1000: g.usdPer1000,
+          cadPerUsd: CAD_PER.USD,
+        });
+        floor = e.cad;
+        Object.assign(facts, {
+          testsSoFar: e.testsSoFar,
+          testsMonth: e.tests,
+          testsCeiling: g.testsCeiling,
+          peoplePerDay: g.peoplePerDay,
+          peopleMonth: e.people,
+          monthUse: e.total,
+          free: e.free,
+          paid: e.paid,
+          estimateCad: e.cad,
+          usdPer1000: g.usdPer1000,
+        });
+        break;
+      }
       case "testing":
         days = enteredDays;
-        facts.testsMaps = i.testsMaps && i.testsMaps.month === i.today.slice(0, 7) ? i.testsMaps.maps : i.testsMaps ? 0 : null;
+        facts.testsMaps = tests("maps");
+        facts.testsStreetView = tests("streetView");
+        facts.testsAddressLookups = tests("addressLookups");
+        facts.mapsCeiling = TESTS_MAPS_CEILING;
+        facts.streetViewCeiling = GOOGLE_EXTRAS.streetView.testsCeiling;
+        facts.addressLookupsCeiling = GOOGLE_EXTRAS.addressLookups.testsCeiling;
         break;
       default:
         days = enteredDays;
     }
+    const figures = monthFigures(days, i.today, BASIS[key]);
     return {
       key,
-      figures: monthFigures(days, i.today, BASIS[key]),
+      figures: floor > figures.forecast ? { ...figures, forecast: cents(floor) } : figures,
       monthly: monthlyTotals(days),
       chart: chartDays(days, i.today),
       entered,

@@ -3956,21 +3956,37 @@
       "source": {
         "counted": "Worked out from what the application counts.",
         "entered": "Amounts you entered, from a bill or a price list.",
-        "known": "From the Google Cloud report up to 11 October 2026, then the amounts you enter."
+        "known": "From the Google Cloud report up to 11 October 2026, then the amounts you enter.",
+        "estimated": "Google has billed nothing for this yet (the report of 12 October 2026 shows only „Dynamic Maps”). A bill's amount is entered by you."
       },
       "notConnected": "The provider's own figures are not connected. They need the key {key} in .env — {where}.",
       "basis": {
         "linear": "The forecast continues the pace so far.",
         "perDay": "The forecast: what was billed, plus about CA$0.50 a day once the free 10,000 maps are used up (people using the maps).",
-        "entered": "The forecast: the amounts entered for this month."
+        "entered": "The forecast: the amounts entered for this month.",
+        "allowance": "The forecast: the amounts entered from a bill or, when more, what the month's estimated use would cost, below."
       },
       "ai": {
         "perRead": "A read is counted at US${usd}: the upper bound, a large read (30,000 tokens in, 4,000 out) at {model}'s price.",
         "reads": "{count, plural, =0 {No paid read this month} one {One paid read this month} other {# paid reads this month}}"
       },
+      "estimate": {
+        "tests": "From the tests: {soFar} to date, counted — about {month} over the whole month (their ceiling: {ceiling}).",
+        "testsUnknown": "From the tests: not counted on this computer — the forecast takes their ceiling, {ceiling}.",
+        "people": {
+          "streetView": "From people: about {perDay} a day, {month} a month — an estimate, not a count. A property's „Street View” part is off until someone ticks it.",
+          "addressLookups": "From people: about {perDay} a day, {month} a month — an estimate, not a count. A look-up happens only on a click of „Preia din Street View”."
+        },
+        "month": "The whole month: about {total} of the free {free} — nothing to pay.",
+        "monthPaid": "The whole month: about {total} of the free {free} — {paid} beyond, about {cad}."
+      },
       "testing": {
-        "maps": "Real maps in the tests this month: {maps} of the 3,000 ceiling.",
-        "mapsUnknown": "The tests' map count is visible only on the laptop that runs the tests."
+        "maps": "Real maps in the tests this month: {maps} of the {ceiling} ceiling.",
+        "mapsUnknown": "The tests' map count is visible only on the laptop that runs the tests.",
+        "streetView": "Street View panoramas in the tests this month: {count} of the {ceiling} ceiling.",
+        "addressLookups": "Address look-ups in the tests this month: {count} of the {ceiling} ceiling.",
+        "streetViewNotCounted": "Street View panoramas in the tests: not counted yet (ceiling: {ceiling}).",
+        "addressLookupsNotCounted": "Address look-ups in the tests: not counted yet (ceiling: {ceiling})."
       },
       "providers": {
         "ai": {
@@ -3990,6 +4006,18 @@
           "conditions": "Google charges for each map shown (a property opened, „Hartă extinsă”, the map of all properties), each Street View opened and each „Preia din Street View”. Google's month runs on Pacific time.",
           "freeTier": "Each month: 10,000 maps, 5,000 Street Views and 10,000 address look-ups.",
           "pricing": "Beyond the free part: maps US$7 per 1,000, Street View US$14 per 1,000, addresses US$5 per 1,000. Billed in CA$, project GeoAppNT-01."
+        },
+        "streetView": {
+          "title": "Street View",
+          "conditions": "Google charges for each Street View panorama built: a property's „Street View” part once you tick it (it is off until then), or Google's figure dragged onto a map. Checking whether there is imagery there is free. Google's month runs on Pacific time.",
+          "freeTier": "Each month: 5,000 panoramas, apart from the 10,000 maps. The tests allow themselves at most 1,500 of them.",
+          "pricing": "Beyond the free part: US$14 per 1,000 panoramas (1.4 cents each), less past 100,000. Billed in CA$, project GeoAppNT-01, on the „Dynamic Street View” line."
+        },
+        "addressLookups": {
+          "title": "Address look-ups",
+          "conditions": "Google charges for each address looked up. In the application only „Preia din Street View” looks one up, on a property's address: one click, one look-up, from the centre of its corners.",
+          "freeTier": "Each month: 10,000 look-ups, apart from the maps and Street View. The tests allow themselves at most 3,000 of them.",
+          "pricing": "Beyond the free part: US$5 per 1,000 look-ups (half a cent each), less past 100,000. Billed in CA$, project GeoAppNT-01, on the „Geocoding” line."
         },
         "supabase": {
           "title": "Supabase",
@@ -4023,8 +4051,8 @@
         },
         "testing": {
           "title": "Testing",
-          "conditions": "The automatic tests open the screens the way a person would. They pay only for what they ask of others: Google's maps and the AI reads of the „ai-score” score. Both appear on Google's and Anthropic's bills, not here.",
-          "freeTier": "The tests allow themselves at most 3,000 real maps a month of the free 10,000.",
+          "conditions": "The automatic tests open the screens the way a person would. They pay only for what they ask of others: Google's maps, Street View panoramas and address look-ups, and the AI reads of the „ai-score” score. All of it appears on Google's and Anthropic's bills, not here.",
+          "freeTier": "Each month the tests allow themselves at most 3,000 maps of the free 10,000, 1,500 Street View panoramas of 5,000 and 3,000 address look-ups of 10,000. The rest is left for people.",
           "pricing": "All the tests run once every two weeks; a piece of work runs only its own tests."
         }
       },

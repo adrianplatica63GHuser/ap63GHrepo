@@ -12,6 +12,11 @@
  *
  * The figures come from `/api/admin/costs` (`src/lib/costs/`); nothing here
  * talks to a provider, and no credential reaches the browser.
+ *
+ * Slice #39.19: „Street View" and „Adrese căutate" — Google's two other
+ * charges — have tiles of their own. Google has billed neither yet, so each
+ * shows the month's use against its free allowance: the tests' count (counted)
+ * and people's (an estimate, said as one), and what the part past it would cost.
  */
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
@@ -208,10 +213,76 @@ function EnteredAmounts({ p }: { p: ProviderSummary }) {
   );
 }
 
+/** A count the way the tiles write it: 1.500. */
+const n = (v: unknown): string => Number(v).toLocaleString("ro-RO");
+
+/**
+ * Street View's or the address look-up's month (Slice #39.19): the tests' count, people's estimate, the free part,
+ * and what lies past it. Each line says which figure is counted and which is estimated.
+ */
+function AllowanceUse({ p }: { p: ProviderSummary }) {
+  const t = useTranslations("settings.costs.estimate");
+  const f = p.facts;
+  const kind = p.key === "streetView" ? "streetView" : "addressLookups";
+  return (
+    <div className="flex flex-col gap-1 text-xs" data-cost-estimate={p.key}>
+      <p className="text-ink" data-cost-tests-so-far={f.testsSoFar ?? ""}>
+        {f.testsSoFar === null || f.testsSoFar === undefined
+          ? t("testsUnknown", { ceiling: n(f.testsCeiling) })
+          : t("tests", { soFar: n(f.testsSoFar), month: n(f.testsMonth), ceiling: n(f.testsCeiling) })}
+      </p>
+      <p className="text-ink" data-cost-people={f.peoplePerDay ?? ""}>
+        {t(`people.${kind}`, { perDay: n(f.peoplePerDay), month: n(f.peopleMonth) })}
+      </p>
+      <p className="font-medium text-ink" data-cost-month-use={f.monthUse ?? ""}>
+        {Number(f.paid) > 0
+          ? t("monthPaid", { total: n(f.monthUse), free: n(f.free), paid: n(f.paid), cad: formatCad(Number(f.estimateCad)) })
+          : t("month", { total: n(f.monthUse), free: n(f.free) })}
+      </p>
+    </div>
+  );
+}
+
+/** The „Testare" tile's counts: the tests' maps, Street View panoramas and address look-ups, each against its ceiling. */
+function TestsUse({ p }: { p: ProviderSummary }) {
+  const t = useTranslations("settings.costs.testing");
+  const f = p.facts;
+  if (f.testsMaps === null || f.testsMaps === undefined) {
+    return (
+      <p className="text-xs text-ink" data-cost-tests-maps="">
+        {t("mapsUnknown")}
+      </p>
+    );
+  }
+  const kinds = [
+    ["streetView", f.testsStreetView, f.streetViewCeiling],
+    ["addressLookups", f.testsAddressLookups, f.addressLookupsCeiling],
+  ] as const;
+  return (
+    <ul className="flex flex-col gap-0.5 text-xs text-ink" data-cost-tests="">
+      <li data-cost-tests-maps={f.testsMaps}>{t("maps", { maps: n(f.testsMaps), ceiling: n(f.mapsCeiling) })}</li>
+      {kinds.map(([kind, count, ceiling]) => (
+        <li key={kind} data-cost-tests-kind={kind} data-cost-tests-count={count ?? ""}>
+          {count === null || count === undefined
+            ? t(`${kind}NotCounted`, { ceiling: n(ceiling) })
+            : t(kind, { count: n(count), ceiling: n(ceiling) })}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Details({ p }: { p: ProviderSummary }) {
   const t = useTranslations("settings.costs");
   const facts = PROVIDER_FACTS[p.key];
-  const basis = p.key === "ai" ? "linear" : p.key === "googleMaps" ? "perDay" : "entered";
+  const basis =
+    p.key === "ai"
+      ? "linear"
+      : p.key === "googleMaps"
+        ? "perDay"
+        : p.key === "streetView" || p.key === "addressLookups"
+          ? "allowance"
+          : "entered";
   const total = p.chart.reduce((n, d) => n + d.cad, 0);
   const h3 = "text-xs font-semibold uppercase tracking-widest text-ink";
   return (
@@ -223,13 +294,8 @@ function Details({ p }: { p: ProviderSummary }) {
           {t("ai.perRead", { usd: p.facts.perReadUsd.toFixed(2), model: String(p.facts.model) })}
         </p>
       )}
-      {p.key === "testing" && (
-        <p className="text-xs text-ink" data-cost-tests-maps={p.facts.testsMaps ?? ""}>
-          {p.facts.testsMaps === null || p.facts.testsMaps === undefined
-            ? t("testing.mapsUnknown")
-            : t("testing.maps", { maps: Number(p.facts.testsMaps).toLocaleString("ro-RO") })}
-        </p>
-      )}
+      {(p.key === "streetView" || p.key === "addressLookups") && <AllowanceUse p={p} />}
+      {p.key === "testing" && <TestsUse p={p} />}
       <div className="flex flex-col gap-1">
         <h3 className={h3}>{t("history")}</h3>
         {total > 0 ? (

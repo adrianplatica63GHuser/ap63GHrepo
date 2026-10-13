@@ -3956,21 +3956,37 @@
       "source": {
         "counted": "Calculat din ce numără aplicația.",
         "entered": "Sume introduse de tine, de pe factură sau din lista de prețuri.",
-        "known": "Din raportul Google Cloud până la 11 octombrie 2026, apoi sumele introduse de tine."
+        "known": "Din raportul Google Cloud până la 11 octombrie 2026, apoi sumele introduse de tine.",
+        "estimated": "Google nu a facturat nimic încă pentru asta (raportul din 12 octombrie 2026 arată doar „Dynamic Maps”). O sumă de pe factură o introduci tu."
       },
       "notConnected": "Cifrele furnizorului nu sunt conectate. Pentru ele trebuie cheia {key} în .env — {where}.",
       "basis": {
         "linear": "Prognoza continuă ritmul de până azi.",
         "perDay": "Prognoza: ce s-a facturat, plus cam 0,50 CA$ pe zi după ce s-au terminat cele 10.000 de hărți gratuite (folosirea de către oameni).",
-        "entered": "Prognoza: sumele introduse pentru luna aceasta."
+        "entered": "Prognoza: sumele introduse pentru luna aceasta.",
+        "allowance": "Prognoza: sumele introduse de pe factură sau, dacă e mai mult, ce ar costa folosirea estimată a lunii, de mai jos."
       },
       "ai": {
         "perRead": "O citire e socotită la {usd} US$: limita de sus, ca o citire mare (30.000 de jetoane intrate, 4.000 ieșite) la prețul lui {model}.",
         "reads": "{count, plural, =0 {Nicio citire plătită luna aceasta} one {O citire plătită luna aceasta} few {# citiri plătite luna aceasta} other {# de citiri plătite luna aceasta}}"
       },
+      "estimate": {
+        "tests": "Din teste: {soFar} până azi, numărate — cam {month} în toată luna (plafonul lor: {ceiling}).",
+        "testsUnknown": "Din teste: nenumărate pe acest calculator — prognoza socotește plafonul lor, {ceiling}.",
+        "people": {
+          "streetView": "De la oameni: cam {perDay} pe zi, {month} pe lună — o estimare, nu o numărătoare. Partea „Street View” a unei proprietăți e oprită până o bifează cineva.",
+          "addressLookups": "De la oameni: cam {perDay} pe zi, {month} pe lună — o estimare, nu o numărătoare. O căutare se face doar la un clic pe „Preia din Street View”."
+        },
+        "month": "Toată luna: cam {total} din {free} gratuite — nimic de plătit.",
+        "monthPaid": "Toată luna: cam {total} din {free} gratuite — {paid} peste, cam {cad}."
+      },
       "testing": {
-        "maps": "Hărți reale în teste luna aceasta: {maps} din plafonul de 3.000.",
-        "mapsUnknown": "Numărul hărților din teste se vede doar pe laptopul cu programul de testare."
+        "maps": "Hărți reale în teste luna aceasta: {maps} din plafonul de {ceiling}.",
+        "mapsUnknown": "Numărul hărților din teste se vede doar pe laptopul cu programul de testare.",
+        "streetView": "Panorame Street View în teste luna aceasta: {count} din plafonul de {ceiling}.",
+        "addressLookups": "Adrese căutate în teste luna aceasta: {count} din plafonul de {ceiling}.",
+        "streetViewNotCounted": "Panorame Street View în teste: nenumărate încă (plafonul: {ceiling}).",
+        "addressLookupsNotCounted": "Adrese căutate în teste: nenumărate încă (plafonul: {ceiling})."
       },
       "providers": {
         "ai": {
@@ -3990,6 +4006,18 @@
           "conditions": "Google taxează fiecare hartă afișată (o proprietate deschisă, „Hartă extinsă”, harta tuturor proprietăților), fiecare Street View deschis și fiecare „Preia din Street View”. Luna lui Google se socotește în ora Pacificului.",
           "freeTier": "Pe lună: 10.000 de hărți, 5.000 de Street View și 10.000 de adrese căutate.",
           "pricing": "Peste partea gratuită: hărțile 7 US$ la 1.000, Street View 14 US$ la 1.000, adresele 5 US$ la 1.000. Factura vine în CA$, pe proiectul GeoAppNT-01."
+        },
+        "streetView": {
+          "title": "Street View",
+          "conditions": "Google taxează fiecare panoramă Street View construită: partea „Street View” a unei proprietăți, după ce o bifezi (e oprită până atunci), sau omulețul lui Google tras pe hartă. Verificarea dacă există imagini acolo e gratuită. Luna lui Google se socotește în ora Pacificului.",
+          "freeTier": "Pe lună: 5.000 de panorame, separat de cele 10.000 de hărți. Testele își permit cel mult 1.500 din ele.",
+          "pricing": "Peste partea gratuită: 14 US$ la 1.000 de panorame (1,4 cenți una), mai puțin peste 100.000. Factura vine în CA$, pe proiectul GeoAppNT-01, pe linia „Dynamic Street View”."
+        },
+        "addressLookups": {
+          "title": "Adrese căutate",
+          "conditions": "Google taxează fiecare adresă căutată. În aplicație o caută doar „Preia din Street View”, la adresa unei proprietăți: un clic, o căutare, după centrul colțurilor ei.",
+          "freeTier": "Pe lună: 10.000 de căutări, separat de hărți și de Street View. Testele își permit cel mult 3.000 din ele.",
+          "pricing": "Peste partea gratuită: 5 US$ la 1.000 de căutări (o jumătate de cent una), mai puțin peste 100.000. Factura vine în CA$, pe proiectul GeoAppNT-01, pe linia „Geocoding”."
         },
         "supabase": {
           "title": "Supabase",
@@ -4023,8 +4051,8 @@
         },
         "testing": {
           "title": "Testare",
-          "conditions": "Testele automate deschid ecranele cum ar face un om. Plătesc doar ce cer de la alții: hărțile lui Google și citirile AI ale scorului „ai-score”. Ambele apar pe facturile Google și Anthropic, nu aici.",
-          "freeTier": "Testele își permit cel mult 3.000 de hărți reale pe lună din cele 10.000 gratuite.",
+          "conditions": "Testele automate deschid ecranele cum ar face un om. Plătesc doar ce cer de la alții: hărțile lui Google, panoramele Street View și adresele căutate, și citirile AI ale scorului „ai-score”. Toate apar pe facturile Google și Anthropic, nu aici.",
+          "freeTier": "Pe lună, testele își permit cel mult 3.000 de hărți din cele 10.000 gratuite, 1.500 de panorame Street View din 5.000 și 3.000 de adrese căutate din 10.000. Restul rămâne pentru oameni.",
           "pricing": "Toate testele rulează o dată la două săptămâni; o lucrare își rulează doar testele ei."
         }
       },

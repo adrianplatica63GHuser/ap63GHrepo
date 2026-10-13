@@ -133,6 +133,57 @@ export function monthFigures(days: readonly DayCost[], today: string, basis: For
   return { soFar: cents(soFar), today: cents(todayCad), forecast: cents(Math.max(forecast, soFar)) };
 }
 
+/** A month's use of a free allowance, and what the part past it costs.   (Slice #39.19) */
+export interface AllowanceEstimate {
+  /** The tests' count this month so far, or null where it is not counted (any machine but the runner's laptop). */
+  testsSoFar: number | null;
+  /** The tests' month: their pace so far carried to the month's end, never above their ceiling — the ceiling itself when not counted. */
+  tests: number;
+  /** People's month: the daily estimate × the month's days. */
+  people: number;
+  total: number;
+  free: number;
+  /** Past the free allowance. */
+  paid: number;
+  /** What the paid part costs, CA$. */
+  cad: number;
+}
+
+/**
+ * A charge Google has not billed yet, forecast from its use: the tests' count (projected, capped at their ceiling)
+ * plus people's estimated use, set against the month's free allowance. Inside the allowance it costs nothing.
+ */
+export function allowanceEstimate(a: {
+  today: string;
+  testsSoFar: number | null;
+  testsCeiling: number;
+  peoplePerDay: number;
+  freePerMonth: number;
+  usdPer1000: number;
+  cadPerUsd: number;
+}): AllowanceEstimate {
+  const total = daysInMonth(monthOf(a.today));
+  const gone = Number(a.today.slice(8, 10));
+  let tests: number;
+  if (a.testsSoFar === null) tests = a.testsCeiling;
+  else {
+    const projected = gone > 0 ? Math.round((a.testsSoFar / gone) * total) : a.testsSoFar;
+    tests = Math.max(a.testsSoFar, Math.min(a.testsCeiling, projected));
+  }
+  const people = a.peoplePerDay * total;
+  const used = tests + people;
+  const paid = Math.max(0, used - a.freePerMonth);
+  return {
+    testsSoFar: a.testsSoFar,
+    tests,
+    people,
+    total: used,
+    free: a.freePerMonth,
+    paid,
+    cad: cents(((paid * a.usdPer1000) / 1000) * a.cadPerUsd),
+  };
+}
+
 /** Each month's total, oldest first. */
 export function monthlyTotals(days: readonly DayCost[]): { month: string; cad: number }[] {
   const m = new Map<string, number>();

@@ -18,6 +18,8 @@ export const COST_PROVIDERS = [
   "ai",
   "claudePlan",
   "googleMaps",
+  "streetView",
+  "addressLookups",
   "supabase",
   "vercel",
   "resend",
@@ -32,6 +34,8 @@ export const PROVIDER_ID: Readonly<Record<CostProvider, string>> = {
   ai: "anthropic-api",
   claudePlan: "claude-plan",
   googleMaps: "google-maps",
+  streetView: "google-street-view",
+  addressLookups: "google-geocoding",
   supabase: "supabase",
   vercel: "vercel",
   resend: "resend",
@@ -45,8 +49,10 @@ export const PROVIDER_ID: Readonly<Record<CostProvider, string>> = {
  *   counted  — worked out from the application's own count (paid AI reads).
  *   entered  — typed in by Adrian from a bill or a price list.
  *   known    — a bill's figures already read by a slice (Google, Oct 8–11), plus what Adrian enters.
+ *   estimated — nothing billed yet: the month's use is the tests' count plus an estimate of people's, set against the
+ *              free allowance; any bill line is entered by Adrian (Google's Street View and address look-ups, #39.19).
  */
-export type CostSource = "counted" | "entered" | "known";
+export type CostSource = "counted" | "entered" | "known" | "estimated";
 
 export interface ProviderFacts {
   pricingUrl: string;
@@ -63,6 +69,14 @@ export interface ProviderFacts {
 }
 
 export const PRICES_CHECKED = "2026-10-12";
+/** Street View's and the address look-up's prices, read on Google's page for Slice #39.19. */
+export const GOOGLE_EXTRAS_CHECKED = "2026-10-13";
+
+/** The Google key line the maps' tile shows — the same billing export covers all three of Google's charges. */
+const GOOGLE_BILLING_KEY = {
+  name: "GOOGLE_BILLING_EXPORT_TABLE",
+  where: "Google Cloud → Billing → Billing export → BigQuery export (the table's name), with a service account that may read it (GOOGLE_APPLICATION_CREDENTIALS)",
+};
 
 export const PROVIDER_FACTS: Readonly<Record<CostProvider, ProviderFacts>> = {
   ai: {
@@ -84,10 +98,21 @@ export const PROVIDER_FACTS: Readonly<Record<CostProvider, ProviderFacts>> = {
     checked: PRICES_CHECKED,
     currency: "CAD",
     source: "known",
-    liveKey: {
-      name: "GOOGLE_BILLING_EXPORT_TABLE",
-      where: "Google Cloud → Billing → Billing export → BigQuery export (the table's name), with a service account that may read it (GOOGLE_APPLICATION_CREDENTIALS)",
-    },
+    liveKey: GOOGLE_BILLING_KEY,
+  },
+  streetView: {
+    pricingUrl: "https://developers.google.com/maps/billing-and-pricing/pricing",
+    checked: GOOGLE_EXTRAS_CHECKED,
+    currency: "CAD",
+    source: "estimated",
+    liveKey: GOOGLE_BILLING_KEY,
+  },
+  addressLookups: {
+    pricingUrl: "https://developers.google.com/maps/billing-and-pricing/pricing",
+    checked: GOOGLE_EXTRAS_CHECKED,
+    currency: "CAD",
+    source: "estimated",
+    liveKey: GOOGLE_BILLING_KEY,
   },
   supabase: {
     pricingUrl: "https://supabase.com/pricing",
@@ -177,6 +202,32 @@ export const GOOGLE_MAPS_KNOWN_BILL: readonly { day: string; cad: number }[] = [
  * expectation is nothing.
  */
 export const GOOGLE_MAPS_PEOPLE_DAILY_CAD = 0.5;
+
+/**
+ * ⚠️ **ESTIMATES, NOT COUNTS** (Slice #39.19) — nothing in the browser counts people's Street View panoramas or
+ * address look-ups yet (FU-327). How the application uses each is what they rest on:
+ *   - Street View: the property's „Street View" tile is OFF until someone ticks it, and only then is a panorama built
+ *     — about 10 a day is generous for one person looking at a few properties.
+ *   - Address look-ups: one per click on „Preia din Street View" when filling a property's address — about 5 a day.
+ * Change a number here and nowhere else; the tile says it is an estimate.
+ */
+export const GOOGLE_STREET_VIEW_PEOPLE_PER_DAY = 10;
+export const GOOGLE_ADDRESS_LOOKUPS_PEOPLE_PER_DAY = 5;
+
+/**
+ * Google's two other charges (pricing page read 2026-10-13): each with its own free monthly allowance, apart from
+ * the maps' 10,000, and its price past it. `testsCeiling` repeats the test runner's own ceilings
+ * (`scripts/test-runner/protocol.ts` → STREET_VIEW_MONTHLY_CEILING, ADDRESS_LOOKUPS_MONTHLY_CEILING; Slice #39.18) —
+ * the screen cannot import the runner, so `settings-costs.test.ts` holds the two equal.
+ */
+export const GOOGLE_EXTRAS = {
+  streetView: { sku: "Dynamic Street View", freePerMonth: 5_000, usdPer1000: 14, testsCeiling: 1_500, peoplePerDay: GOOGLE_STREET_VIEW_PEOPLE_PER_DAY },
+  addressLookups: { sku: "Geocoding", freePerMonth: 10_000, usdPer1000: 5, testsCeiling: 3_000, peoplePerDay: GOOGLE_ADDRESS_LOOKUPS_PEOPLE_PER_DAY },
+} as const;
+export type GoogleExtra = keyof typeof GOOGLE_EXTRAS;
+
+/** The tests' monthly ceiling on real maps (`MAPS_MONTHLY_CEILING`, Slice #39.16), for the „Testare" tile. */
+export const TESTS_MAPS_CEILING = 3_000;
 
 // ---- the CA$ rates used for figures the application works out itself ----------------
 

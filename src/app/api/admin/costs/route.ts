@@ -14,7 +14,8 @@ import { z } from "zod/v4";
 import { requireFullAccess } from "@/lib/auth/current-role";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { COST_PROVIDERS } from "@/lib/costs/catalogue";
-import { aiReadsByDay, deleteEnteredAmount, enteredAmounts, insertEnteredAmount, testsMapsThisMonth } from "@/lib/costs/load";
+import { aiReadsByDay, deleteEnteredAmount, enteredAmounts, insertEnteredAmount } from "@/lib/costs/load";
+import { testsGoogleThisMonth } from "@/lib/costs/tests-ledger";
 import { buildCostSummary, torontoDay } from "@/lib/costs/summary";
 import { ENTERED_CURRENCIES } from "@/lib/costs/compute";
 
@@ -44,7 +45,7 @@ export async function GET(): Promise<Response> {
         today: torontoDay(new Date()),
         aiReads: ai.days,
         aiReadsSince: ai.since,
-        testsMaps: testsMapsThisMonth(),
+        testsGoogle: testsGoogleThisMonth(),
         entered,
       }),
     );

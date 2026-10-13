@@ -8,18 +8,25 @@
  */
 
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 import {
   AI_READ_UPPER,
   CAD_PER,
   COST_PROVIDERS,
+  GOOGLE_ADDRESS_LOOKUPS_PEOPLE_PER_DAY,
+  GOOGLE_EXTRAS,
+  GOOGLE_EXTRAS_CHECKED,
   GOOGLE_MAPS_KNOWN_BILL,
+  GOOGLE_STREET_VIEW_PEOPLE_PER_DAY,
   PROVIDER_FACTS,
   PROVIDER_ID,
+  TESTS_MAPS_CEILING,
   aiReadUsd,
 } from "@/lib/costs/catalogue";
 import {
+  allowanceEstimate,
   chartDays,
   daysBetween,
   daysInMonth,
@@ -33,6 +40,14 @@ import {
   withoutDaysCovered,
 } from "@/lib/costs/compute";
 import { buildCostSummary, torontoDay, type CostInputs } from "@/lib/costs/summary";
+import { testsGoogleThisMonth } from "@/lib/costs/tests-ledger";
+import {
+  ADDRESS_LOOKUPS_FREE_PER_MONTH,
+  ADDRESS_LOOKUPS_MONTHLY_CEILING,
+  MAPS_MONTHLY_CEILING,
+  STREET_VIEW_FREE_PER_MONTH,
+  STREET_VIEW_MONTHLY_CEILING,
+} from "../../scripts/test-runner/protocol";
 import { SETTINGS_OWN_TILES, SETTINGS_TILES, SETTINGS_TILE_REGISTRY } from "@/app/admin/settings/_components/settings-tiles";
 import { TILE_GROUPS } from "@/lib/ui/tiles";
 
@@ -117,7 +132,19 @@ describe("the graph's days", () => {
 
 describe("the catalogue", () => {
   it("names every provider the header asked for, plus the Claude plan and testing", () => {
-    expect(COST_PROVIDERS).toEqual(["ai", "claudePlan", "googleMaps", "supabase", "vercel", "resend", "github", "domain", "testing"]);
+    expect(COST_PROVIDERS).toEqual([
+      "ai",
+      "claudePlan",
+      "googleMaps",
+      "streetView",
+      "addressLookups",
+      "supabase",
+      "vercel",
+      "resend",
+      "github",
+      "domain",
+      "testing",
+    ]);
   });
   it("every provider has its pricing page, the day it was checked, and a record id migration_107 accepts", () => {
     for (const k of COST_PROVIDERS) {
@@ -149,7 +176,7 @@ describe("the summary", () => {
       { day: "2026-10-12", reads: 2 },
     ],
     aiReadsSince: "2026-10-08T12:00:00.000Z",
-    testsMaps: { month: "2026-10", maps: 14_598 },
+    testsGoogle: { month: "2026-10", maps: 14_598, streetView: 0, addressLookups: 0 },
     entered: {},
     ...over,
   });
@@ -169,8 +196,8 @@ describe("the summary", () => {
   it("the tests' maps are this month's, and unknown away from the runner's laptop", () => {
     const testing = (i: CostInputs) => buildCostSummary(i).providers.find((p) => p.key === "testing")!.facts.testsMaps;
     expect(testing(input())).toBe(14_598);
-    expect(testing(input({ testsMaps: { month: "2026-09", maps: 5 } }))).toBe(0);
-    expect(testing(input({ testsMaps: null }))).toBeNull();
+    expect(testing(input({ testsGoogle: { month: "2026-09", maps: 5, streetView: 1, addressLookups: 1 } }))).toBe(0);
+    expect(testing(input({ testsGoogle: null }))).toBeNull();
   });
   it("adds every provider into one total", () => {
     const s = buildCostSummary(input());
@@ -240,7 +267,7 @@ describe("an amount entered on a tile", () => {
       today: "2026-11-10",
       aiReads: [],
       aiReadsSince: null,
-      testsMaps: null,
+      testsGoogle: null,
       entered: { vercel: [{ id: "x", periodStart: "2026-11-01", periodEnd: "2026-11-30", amount: 20, currency: "USD", cadRate: 1.4, note: null, enteredAt: "2026-11-01T00:00:00Z" }] },
     });
     expect(s.providers.find((p) => p.key === "vercel")!.figures).toEqual({ soFar: 9.33, today: 0.93, forecast: 28 });
@@ -250,7 +277,7 @@ describe("an amount entered on a tile", () => {
       today: "2026-10-12",
       aiReads: [{ day: "2026-10-09", reads: 100 }, { day: "2026-10-12", reads: 1 }],
       aiReadsSince: null,
-      testsMaps: null,
+      testsGoogle: null,
       entered: { ai: [{ id: "x", periodStart: "2026-10-09", periodEnd: "2026-10-09", amount: 2, currency: "USD", cadRate: 1.5, note: null, enteredAt: "2026-10-10T00:00:00Z" }] },
     });
     expect(s.providers.find((p) => p.key === "ai")!.figures.soFar).toBeCloseTo(3 + 0.15 * 1.38, 2);
@@ -263,5 +290,150 @@ describe("an amount entered on a tile", () => {
     for (const verb of ["GET", "POST", "DELETE"]) {
       expect(route).toMatch(new RegExp(`export async function ${verb}\\([^)]*\\): Promise<Response> \\{\\s*const denied = await requireFullAccess\\(\\);`));
     }
+  });
+});
+
+// ---- Slice #39.19: Street View and address look-ups ------------------------------------------
+
+describe("Street View and address look-ups — Google's two other charges", () => {
+  const input = (over: Partial<CostInputs> = {}): CostInputs => ({
+    today: "2026-11-10",
+    aiReads: [],
+    aiReadsSince: null,
+    testsGoogle: { month: "2026-11", maps: 40, streetView: 30, addressLookups: 6 },
+    entered: {},
+    ...over,
+  });
+  const tile = (i: CostInputs, k: "streetView" | "addressLookups" | "testing") => buildCostSummary(i).providers.find((p) => p.key === k)!;
+
+  it("sit beside „Google Maps”, with Google's page, the day it was read, and the maps' Google key line", () => {
+    expect(COST_PROVIDERS.indexOf("streetView")).toBe(COST_PROVIDERS.indexOf("googleMaps") + 1);
+    expect(COST_PROVIDERS.indexOf("addressLookups")).toBe(COST_PROVIDERS.indexOf("googleMaps") + 2);
+    for (const k of ["streetView", "addressLookups"] as const) {
+      expect(PROVIDER_FACTS[k].pricingUrl).toBe(PROVIDER_FACTS.googleMaps.pricingUrl);
+      expect(PROVIDER_FACTS[k].checked).toBe(GOOGLE_EXTRAS_CHECKED);
+      expect(PROVIDER_FACTS[k].liveKey).toEqual(PROVIDER_FACTS.googleMaps.liveKey);
+      expect(PROVIDER_FACTS[k].source).toBe("estimated");
+      expect(PROVIDER_FACTS[k].currency).toBe("CAD");
+    }
+    expect(GOOGLE_EXTRAS_CHECKED).toBe("2026-10-13");
+    expect([PROVIDER_ID.streetView, PROVIDER_ID.addressLookups]).toEqual(["google-street-view", "google-geocoding"]);
+  });
+
+  it("carry Google's prices as read on 2026-10-13: 5,000 panoramas free then US$14 per 1,000; 10,000 look-ups free then US$5", () => {
+    expect(GOOGLE_EXTRAS.streetView).toMatchObject({ sku: "Dynamic Street View", freePerMonth: 5_000, usdPer1000: 14 });
+    expect(GOOGLE_EXTRAS.addressLookups).toMatchObject({ sku: "Geocoding", freePerMonth: 10_000, usdPer1000: 5 });
+    expect(ro.providers.streetView.pricing).toContain("14 US$ la 1.000");
+    expect(ro.providers.addressLookups.pricing).toContain("5 US$ la 1.000");
+    expect(ro.providers.streetView.freeTier).toContain("5.000 de panorame");
+    expect(ro.providers.addressLookups.freeTier).toContain("10.000 de căutări");
+  });
+
+  it("the tests' ceilings and allowances are the test runner's own — the screen repeats them, so they must agree", () => {
+    expect(GOOGLE_EXTRAS.streetView.testsCeiling).toBe(STREET_VIEW_MONTHLY_CEILING);
+    expect(GOOGLE_EXTRAS.addressLookups.testsCeiling).toBe(ADDRESS_LOOKUPS_MONTHLY_CEILING);
+    expect(GOOGLE_EXTRAS.streetView.freePerMonth).toBe(STREET_VIEW_FREE_PER_MONTH);
+    expect(GOOGLE_EXTRAS.addressLookups.freePerMonth).toBe(ADDRESS_LOOKUPS_FREE_PER_MONTH);
+    expect(TESTS_MAPS_CEILING).toBe(MAPS_MONTHLY_CEILING);
+  });
+
+  it("people's use is a flat estimate per kind, beside the maps' CA$0.50 a day", () => {
+    expect(GOOGLE_STREET_VIEW_PEOPLE_PER_DAY).toBe(10);
+    expect(GOOGLE_ADDRESS_LOOKUPS_PEOPLE_PER_DAY).toBe(5);
+    expect(read("src/lib/costs/catalogue.ts")).toMatch(
+      /GOOGLE_MAPS_PEOPLE_DAILY_CAD = 0\.5;[\s\S]{0,1200}GOOGLE_STREET_VIEW_PEOPLE_PER_DAY = 10;\s*export const GOOGLE_ADDRESS_LOOKUPS_PEOPLE_PER_DAY = 5;/,
+    );
+  });
+
+  it("a month's use: the tests' pace carried to the month's end under their ceiling, plus people's estimate", () => {
+    const base = { today: "2026-11-10", testsCeiling: 1_500, peoplePerDay: 10, freePerMonth: 5_000, usdPer1000: 14, cadPerUsd: 1.38 };
+    expect(allowanceEstimate({ ...base, testsSoFar: 30 })).toEqual({ testsSoFar: 30, tests: 90, people: 300, total: 390, free: 5_000, paid: 0, cad: 0 });
+    // Not counted on this machine: the forecast takes the tests' ceiling, the most they can make.
+    expect(allowanceEstimate({ ...base, testsSoFar: null })).toMatchObject({ tests: 1_500, total: 1_800, paid: 0 });
+    // A fast month is held at the ceiling, but never below what is already counted.
+    expect(allowanceEstimate({ ...base, testsSoFar: 1_000 }).tests).toBe(1_500);
+    expect(allowanceEstimate({ ...base, testsSoFar: 1_600 }).tests).toBe(1_600);
+  });
+
+  it("past the free part, the paid part is priced at Google's rate in CA$", () => {
+    const e = allowanceEstimate({ today: "2026-11-10", testsSoFar: 1_600, testsCeiling: 1_500, peoplePerDay: 110, freePerMonth: 5_000, usdPer1000: 14, cadPerUsd: 1.38 });
+    expect(e).toMatchObject({ tests: 1_600, people: 3_300, total: 4_900, paid: 0 });
+    const f = allowanceEstimate({ today: "2026-11-10", testsSoFar: 1_600, testsCeiling: 1_500, peoplePerDay: 120, freePerMonth: 5_000, usdPer1000: 14, cadPerUsd: 1.38 });
+    expect(f).toMatchObject({ people: 3_600, total: 5_200, paid: 200, cad: 3.86 });
+  });
+
+  it("each tile: nothing billed, the month's use inside the free part — so CA$0.00, and the facts it shows", () => {
+    const sv = tile(input(), "streetView");
+    expect(sv.figures).toEqual({ soFar: 0, today: 0, forecast: 0 });
+    expect(sv.facts).toMatchObject({ testsSoFar: 30, testsMonth: 90, testsCeiling: 1_500, peoplePerDay: 10, peopleMonth: 300, monthUse: 390, free: 5_000, paid: 0 });
+    const al = tile(input(), "addressLookups");
+    expect(al.facts).toMatchObject({ testsSoFar: 6, testsMonth: 18, testsCeiling: 3_000, peoplePerDay: 5, peopleMonth: 150, monthUse: 168, free: 10_000 });
+  });
+
+  it("an amount entered from a bill counts as it does on every tile, and the estimate never lowers the forecast below it", () => {
+    const entered = { id: "x", periodStart: "2026-11-02", periodEnd: "2026-11-02", amount: 4, currency: "CAD", cadRate: 1, note: null, enteredAt: "2026-11-03T00:00:00Z" };
+    expect(tile(input({ entered: { streetView: [entered] } }), "streetView").figures).toEqual({ soFar: 4, today: 0, forecast: 4 });
+  });
+
+  it("where the tests' count is not there, it says „not counted” — never zero", () => {
+    expect(tile(input({ testsGoogle: null }), "streetView").facts.testsSoFar).toBeNull();
+    const legacy = input({ testsGoogle: { month: "2026-11", maps: 12, streetView: null, addressLookups: null } });
+    expect(tile(legacy, "addressLookups").facts.testsSoFar).toBeNull();
+    expect(tile(legacy, "testing").facts).toMatchObject({ testsMaps: 12, testsStreetView: null, testsAddressLookups: null });
+  });
+
+  it("„Testare” shows the tests' maps, panoramas and look-ups this month, each against its ceiling", () => {
+    expect(tile(input(), "testing").facts).toMatchObject({
+      testsMaps: 40,
+      testsStreetView: 30,
+      testsAddressLookups: 6,
+      mapsCeiling: 3_000,
+      streetViewCeiling: 1_500,
+      addressLookupsCeiling: 3_000,
+    });
+    expect(tile(input({ testsGoogle: { month: "2026-10", maps: 9, streetView: 9, addressLookups: 9 } }), "testing").facts).toMatchObject({
+      testsMaps: 0,
+      testsStreetView: 0,
+      testsAddressLookups: 0,
+    });
+  });
+
+  it("reads the runner's ledger — and a ledger from before 39.18 has no Street View or look-up count", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "costs-"));
+    try {
+      fs.mkdirSync(path.join(dir, ".test-runner"));
+      const write = (o: object) => fs.writeFileSync(path.join(dir, ".test-runner", "google-maps-month.json"), JSON.stringify(o));
+      write({ month: "2026-10", maps: 14_598, streetView: 2, addressLookups: 0, runs: [] });
+      expect(testsGoogleThisMonth(dir)).toEqual({ month: "2026-10", maps: 14_598, streetView: 2, addressLookups: 0 });
+      write({ month: "2026-10", maps: 14_598, runs: [] });
+      expect(testsGoogleThisMonth(dir)).toEqual({ month: "2026-10", maps: 14_598, streetView: null, addressLookups: null });
+      write({ month: 1 });
+      expect(testsGoogleThisMonth(dir)).toBeNull();
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+    expect(testsGoogleThisMonth(path.join(os.tmpdir(), "no-such-runner-here"))).toBeNull();
+  });
+
+  it("the sentences: each tile names its estimate as one, and „Testare” has a line per kind, counted or not", () => {
+    for (const [loc, m] of [["ro", ro], ["en", en]] as const) {
+      expect([loc, Object.keys(m.estimate.people).sort()]).toEqual([loc, ["addressLookups", "streetView"]]);
+      expect([loc, Object.keys(m.testing).sort()]).toEqual([
+        loc,
+        ["addressLookups", "addressLookupsNotCounted", "maps", "mapsUnknown", "streetView", "streetViewNotCounted"],
+      ]);
+      for (const k of ["maps", "streetView", "addressLookups"]) expect([loc, k, m.testing[k]]).toEqual([loc, k, expect.stringContaining("{ceiling}")]);
+    }
+    expect(ro.estimate.people.streetView).toContain("o estimare, nu o numărătoare");
+    expect(ro.estimate.people.addressLookups).toContain("o estimare, nu o numărătoare");
+    expect(ro.estimate.tests).toContain("numărate");
+    expect(ro.source.estimated).toMatch(/^Google nu a facturat nimic încă/);
+    expect([ro.providers.streetView.title, ro.providers.addressLookups.title]).toEqual(["Street View", "Adrese căutate"]);
+  });
+
+  it("the tile picks its basis and its use block by key", () => {
+    const tiles = read("src/app/admin/settings/_components/cost-tiles.tsx");
+    expect(tiles).toMatch(/p\.key === "streetView" \|\| p\.key === "addressLookups"\s*\?\s*"allowance"/);
+    expect(tiles).toMatch(/\(p\.key === "streetView" \|\| p\.key === "addressLookups"\) && <AllowanceUse p=\{p\} \/>/);
   });
 });

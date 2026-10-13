@@ -2,13 +2,10 @@
  * src/lib/costs/load.ts                                            (Slice #39.17)
  *
  * The reading behind „Setări → Costuri", server-side only: the paid AI reads
- * per day (`ai_paid_read`) and the tests' Google maps this month — the test
- * runner's ledger on this machine, `.test-runner/google-maps-month.json`
- * (Slice #39.16), absent anywhere else. No provider is called and no
- * credential is read: nothing here leaves the machine.
+ * per day (`ai_paid_read`) and the amounts Adrian entered. The tests' Google
+ * use is read by `./tests-ledger.ts` (no database, so jest reads it too). No
+ * provider is called and no credential is read: nothing here leaves the machine.
  */
-import fs from "node:fs";
-import path from "node:path";
 import { and, desc, eq, min, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { aiPaidRead, costRecord } from "@/db/schema";
@@ -33,19 +30,6 @@ export async function aiReadsByDay(): Promise<{ days: { day: string; reads: numb
   } catch (err) {
     console.error("[costs] could not count the paid reads:", err);
     return { days: [], since: null };
-  }
-}
-
-/** The runner's month of tests' maps, or null where there is no runner (any machine but Adrian's laptop). */
-export function testsMapsThisMonth(root: string = process.cwd()): { month: string; maps: number } | null {
-  try {
-    const raw = JSON.parse(fs.readFileSync(path.join(root, ".test-runner", "google-maps-month.json"), "utf8")) as {
-      month?: unknown;
-      maps?: unknown;
-    };
-    return typeof raw.month === "string" && typeof raw.maps === "number" ? { month: raw.month, maps: raw.maps } : null;
-  } catch {
-    return null;
   }
 }
 
