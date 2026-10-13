@@ -38,9 +38,12 @@ const filled = (s: string | null | undefined): boolean => !!s && s.trim().length
 export const meaningful = (notes: string | null | undefined): number =>
   (notes ?? "").replace(MARKER, "").split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
 
+/** A percentage to one decimal — what is printed is what is compared, so 57/100 is 57.0, not 56.999… */
+const pctOf = (hits: number, of: number): number => (of === 0 ? 0 : Math.round((hits / of) * 1000) / 10);
+
 function share(label: string, hits: number, of: number, min: number): CoverageLine {
-  const pct = of === 0 ? 0 : (hits / of) * 100;
-  return { label, target: `≥ ${min} %`, value: `${hits} / ${of} (${pct.toFixed(1)} %)`, met: of > 0 && pct >= min };
+  const pct = pctOf(hits, of);
+  return { label, target: `${min === 100 ? "=" : "≥"} ${min} %`, value: `${hits} / ${of} (${pct.toFixed(1)} %)`, met: of > 0 && pct >= min };
 }
 
 function exactly(label: string, n: number, want: number): CoverageLine {
@@ -102,4 +105,72 @@ export function formatCoverage(lines: CoverageLine[]): string {
   const rows = lines.map((l) => `${l.met ? "✓" : "✗"} ${l.label.padEnd(w)}  ${l.target.padEnd(8)}  ${l.value}`);
   const bad = lines.filter((l) => !l.met).length;
   return [...rows, bad === 0 ? `Toate cele ${lines.length} cerințe sunt îndeplinite.` : `! ${bad} din ${lines.length} cerințe NU sunt îndeplinite.`].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Properties (#39.21)
+// ---------------------------------------------------------------------------
+
+/** One property as read back: its kind, its stored corners projected to Stereo 70, its area, its owners. */
+export type PropertyRow = {
+  type: string | null;
+  useCategory: string | null;
+  hasAddress: boolean;
+  /** stored corners in Stereo 70 metres, or null when it has none */
+  corners: { n: number; e: number }[] | null;
+  /** calculated_area_mp, as the app's computeCornerGeometry stored it */
+  calculatedArea: number | null;
+  surface: number | null;
+  owners: number;
+  /** every owner alive today, or the single owner of an unsettled estate */
+  ownersFit: boolean;
+};
+
+export type PropertyFacts = {
+  rows: PropertyRow[];
+  target: number;
+  tpc: string;
+  curti: string;
+  /** pairs of new lots that overlap; new lots overlapping a property already in the database (the line aside) */
+  overlapsNew: number;
+  overlapsExisting: number;
+  /** drawn lots inside Bragadiru's range */
+  inRange: number;
+  /** drawn lots sharing an edge with another new lot */
+  touching: number;
+  /** the line cluster: lots standing on Adrian's line, and how much of it their edges cover */
+  onLine: { lots: number; covered: number; length: number };
+};
+
+function around(label: string, hits: number, of: number, want: number, slack = 3): CoverageLine {
+  const pct = pctOf(hits, of);
+  return { label, target: `≈ ${want} %`, value: `${hits} / ${of} (${pct.toFixed(1)} %)`, met: of > 0 && Math.abs(pct - want) <= slack };
+}
+
+export function propertyLines(f: PropertyFacts): CoverageLine[] {
+  const r = f.rows;
+  const drawn = r.filter((x) => x.corners && x.corners.length >= 3);
+  const areaAgrees = drawn.filter((x) => x.calculatedArea !== null && x.surface !== null && Math.abs(x.surface - x.calculatedArea) <= x.calculatedArea * 0.05);
+  return [
+    exactly("Proprietăți", r.length, f.target),
+    around(`„${f.curti}"`, r.filter((x) => x.useCategory === f.curti).length, r.length, 60),
+    around(`„${f.tpc}"`, r.filter((x) => x.type === f.tpc).length, r.length, 80),
+    share(`„${f.curti}" care sunt „${f.tpc}"`, r.filter((x) => x.useCategory === f.curti && x.type === f.tpc).length, r.filter((x) => x.useCategory === f.curti).length, 100),
+    around("Cu colțuri pe hartă", drawn.length, r.length, 60),
+    around("Cu adresă", r.filter((x) => x.hasAddress).length, r.length, 50),
+    share("Desenate în Bragadiru (Stereo 70)", f.inRange, drawn.length, 100),
+    share("Desenate în grupuri care se ating", f.touching, drawn.length, 50),
+    exactly("Suprapuneri între loturile noi", f.overlapsNew, 0),
+    exactly("Suprapuneri cu proprietăți existente", f.overlapsExisting, 0),
+    share("Suprafața declarată la ±5 % de cea desenată", areaAgrees.length, drawn.length, 100),
+    exactly("Loturi pe linia lui Adrian, spre SV", f.onLine.lots, 6),
+    {
+      label: "Linia acoperită de laturile lor de NE",
+      target: `= ${f.onLine.length.toFixed(2)} m`,
+      value: `${f.onLine.covered.toFixed(2)} m`,
+      met: Math.abs(f.onLine.covered - f.onLine.length) < 0.5,
+    },
+    share("Cu minimum un proprietar", r.filter((x) => x.owners >= 1).length, r.length, 100),
+    share("Proprietari în viață (sau succesiune nedezbătută)", r.filter((x) => x.ownersFit).length, r.length, 100),
+  ];
 }

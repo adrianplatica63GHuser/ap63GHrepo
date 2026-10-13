@@ -1,6 +1,6 @@
 /**
  * Big dev seed — fifteen times src/db/seed_dev_data.sql, ADDED to the local database, never wiping it.
- *                                                                   (Slices #39.20–#39.23; this is part 1 of 4)
+ *                                                                   (Slices #39.20–#39.23; parts 1 and 2 of 4)
  *
  *   Seed:    node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-dev-data-big/seed.ts
  *   Remove:  node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-dev-data-big/seed.ts --remove
@@ -8,10 +8,13 @@
  *
  * WHAT IT WRITES — part 1 (#39.20): 450 natural persons in families over five generations born from 1900 on, with
  * their family ties, and 450 judicial persons, more than half of them represented by one or two of those persons.
- * 39.21 adds properties, 39.22 documents, 39.23 links, notes, metadata, tags, groups and stamps.
+ * Part 2 (#39.21): 600 properties in Bragadiru — 80 % building plots, 60 % „Curți construcții", 60 % drawn (six of
+ * them lined up on Adrian's line), 50 % with an address — each owned by persons or companies of part 1.
+ * 39.22 adds documents, 39.23 links, notes, metadata, tags, groups and stamps.
  *
  * THROUGH THE APP'S OWN FUNCTIONS — createNaturalPerson, updateNaturalPerson, createJudicialPerson,
- * associatePersonsToPerson — so codes, version 0, role rules and display names behave as they do from the screens.
+ * associatePersonsToPerson, createProperty, associatePersonsToProperty — so codes, version 0, role rules, display
+ * names and a drawn lot's calculated area (computeCornerGeometry) behave as they do from the screens.
  * The one direct write is the back-dating of a married woman's name history: her maiden name is version 0 and
  * each later surname a version dated on the marriage (or the divorce that undid it), so `created_at` moves on
  * that person's `person_version`, `person` and `principal_object` rows — no field anyone typed.
@@ -19,7 +22,10 @@
  * REFERENCE DATA, ADDITIVE ONLY: person roles for ties the list lacks („Fost soț", „Fostă soție", „Frate vitreg",
  * „Soră vitregă", „Părinte vitreg", „Părinte adoptiv", „Bunic", „Bunică"), each with its kinship (migration_106) and its
  * converse; a missing kinship filled in, „valid for person" switched on; the person types „Notar" and „Expert"
- * and any company type that is missing. An existing row is never renamed or deleted.
+ * and any company type that is missing; the property type „Teren pentru Construcții" (with the panels a
+ * building plot needs, read from „Teren Construit" and „Teren Arabil") and the use category „Curți
+ * construcții" where they are missing, and any other type or category the mix uses; „valid for property" on
+ * „Proprietar" and „Coproprietar". An existing row is never renamed or deleted.
  *
  * SAFETY. It refuses to run unless DATABASE_URL points at this machine, and refuses a second seed while one is
  * recorded. Everything it creates is listed in .seed-dev-data-big/manifest.json — at the repository root, NOT
@@ -37,11 +43,18 @@ import {
   lookupJudicialPersonType,
   lookupPersonRole,
   lookupPersonType,
+  lookupPropertyType,
+  lookupTarla,
+  lookupUseCategory,
   naturalPerson,
   person,
   personPerson,
   personVersion,
   principalObject,
+  property,
+  propertyAddress,
+  propertyCorner,
+  propertyPerson,
 } from "../../src/db/schema";
 import {
   associatePersonsToPerson,
@@ -52,6 +65,9 @@ import {
 import { naturalPersonCreateSchema, naturalPersonUpdateSchema } from "../../src/lib/persons/validation";
 import { createJudicialPerson } from "../../src/lib/judicial-persons/queries";
 import { judicialPersonCreateSchema } from "../../src/lib/judicial-persons/validation";
+import { associatePersonsToProperty, createProperty, deleteProperties } from "../../src/lib/properties/queries";
+import { propertyCreateSchema } from "../../src/lib/properties/validation";
+import { stereo70ToWgs84, wgs84ToStereo70 } from "../../src/lib/geo/transdatRO";
 import { makeRng } from "./rng";
 import { addDays, yearOf } from "./dates";
 import { cuiDigits } from "./identifiers";
@@ -70,7 +86,9 @@ import {
 } from "./families";
 import { naturalDetails, type NaturalDetails } from "./persons";
 import { COMPANY_TYPES, generateCompanies, type CompanyPlan } from "./companies";
-import { coverageLines, formatCoverage, type JudicialRow, type NaturalRow } from "./coverage";
+import { coverageLines, formatCoverage, propertyLines, type CoverageLine, type JudicialRow, type NaturalRow, type PropertyRow } from "./coverage";
+import { CURTI, generateProperties, MIX, PROPERTY_TOTAL, TPC, type PropertyPlan, type TypeFlags } from "./properties";
+import { inRange, lotsOnLine, overlaps, sharesEdge, type Poly } from "./geometry";
 
 // ---------------------------------------------------------------------------
 // Run settings and guards
@@ -105,7 +123,7 @@ function assertLocalDatabase(): void {
 // Manifest — written after every create, so a run that stops half-way can still be removed
 // ---------------------------------------------------------------------------
 
-type Kind = "NATURAL" | "JUDICIAL";
+type Kind = "NATURAL" | "JUDICIAL" | "PROPERTY";
 type Obj = { key: string; kind: Kind; id: string; po: string; code: string; label: string };
 type Manifest = {
   version: 1;
@@ -167,7 +185,70 @@ const ROLE_SPECS: RoleSpec[] = [
 ];
 
 const roleId = new Map<string, string>();
-const ref = { personType: new Map<string, string>(), jType: new Map<string, string>(), citizenship: new Map<string, string>() };
+const ref = {
+  personType: new Map<string, string>(),
+  jType: new Map<string, string>(),
+  citizenship: new Map<string, string>(),
+  propType: new Map<string, string>(),
+  useCat: new Map<string, string>(),
+  typeFlags: new Map<string, TypeFlags>(),
+  tarla: new Map<string, string>(),
+};
+
+/** A name as Adrian may have typed it: exact first, else the same letters ignoring case and diacritics. */
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function byName<T extends { name: string }>(rows: T[], name: string): T | undefined {
+  return rows.find((r) => r.name === name) ?? rows.find((r) => fold(r.name) === fold(name));
+}
+
+async function ensurePropertyReferenceData(added: string[]): Promise<void> {
+  const types = await db.select().from(lookupPropertyType);
+  // a building plot gets an address and Street View like „Teren Construit", tarla and parcel like „Teren Arabil"
+  const built = byName(types, "Teren Construit");
+  const arable = byName(types, "Teren Arabil");
+  const want: Record<string, { tarla: boolean; address: boolean; streetView: boolean }> = {
+    [TPC]: { tarla: arable?.showTarlaParcela ?? true, address: built?.showAddress ?? true, streetView: built?.showStreetView ?? true },
+    "Teren Arabil": { tarla: true, address: false, streetView: false },
+    "Casă": { tarla: false, address: true, streetView: true },
+    "Teren Construit": { tarla: false, address: true, streetView: true },
+    Apartament: { tarla: false, address: true, streetView: true },
+    "Pășune": { tarla: true, address: false, streetView: false },
+  };
+  let sort = Math.max(0, ...types.map((t) => t.sortOrder)) + 1;
+  for (const name of [...new Set(MIX.map((m) => m.type))]) {
+    if (byName(types, name)) continue;
+    const f = want[name];
+    await db.insert(lookupPropertyType).values({ name, showTarlaParcela: f.tarla, showAddress: f.address, showStreetView: f.streetView, sortOrder: sort++ });
+    added.push(`Tip proprietate „${name}" (tarla/parcelă ${f.tarla ? "da" : "nu"}, adresă ${f.address ? "da" : "nu"}, Street View ${f.streetView ? "da" : "nu"})`);
+  }
+  const cats = await db.select().from(lookupUseCategory);
+  let csort = Math.max(0, ...cats.map((c) => c.sortOrder)) + 1;
+  for (const name of [...new Set(MIX.map((m) => m.use).filter((u): u is string => !!u))]) {
+    if (byName(cats, name)) continue;
+    await db.insert(lookupUseCategory).values({ name, sortOrder: csort++ });
+    added.push(`Categorie de folosință „${name}"`);
+  }
+  for (const name of ["Proprietar", "Coproprietar"]) {
+    const [row] = await db.select().from(lookupPersonRole).where(eq(lookupPersonRole.name, name));
+    if (!row) {
+      await db.insert(lookupPersonRole).values({ name, validForProperty: true, sortOrder: 100 });
+      added.push(`Rol persoană „${name}" (valabil pe proprietate)`);
+    } else if (!row.validForProperty) {
+      await db.update(lookupPersonRole).set({ validForProperty: true }).where(eq(lookupPersonRole.id, row.id));
+      added.push(`Rol persoană „${name}": validForProperty`);
+    }
+  }
+  // the names the plan uses → the ids and panels of the rows found (maybe under Adrian's own spelling)
+  const allTypes = await db.select().from(lookupPropertyType);
+  for (const name of new Set(MIX.map((m) => m.type))) {
+    const t = byName(allTypes, name)!;
+    ref.propType.set(name, t.id);
+    ref.typeFlags.set(name, { tarla: t.showTarlaParcela, address: t.showAddress });
+  }
+  const allCats = await db.select().from(lookupUseCategory);
+  for (const name of new Set(MIX.map((m) => m.use).filter((u): u is string => !!u))) ref.useCat.set(name, byName(allCats, name)!.id);
+  for (const t of await db.select().from(lookupTarla)) ref.tarla.set(t.indicativ, t.id);
+}
 
 async function ensureReferenceData(): Promise<void> {
   const added = manifest.referenceDataAdded;
@@ -225,6 +306,7 @@ async function ensureReferenceData(): Promise<void> {
     await db.insert(lookupCitizenship).values({ name: "Română", sortOrder: 1 });
     added.push(`Cetățenie „Română"`);
   }
+  await ensurePropertyReferenceData(added);
   for (const r of await db.select().from(lookupPersonType)) ref.personType.set(r.name, r.id);
   for (const r of await db.select().from(lookupJudicialPersonType)) ref.jType.set(r.name, r.id);
   for (const r of await db.select().from(lookupCitizenship)) ref.citizenship.set(r.name, r.id);
@@ -334,10 +416,128 @@ async function createJudicialPersons(companies: CompanyPlan[]): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Properties
+// ---------------------------------------------------------------------------
+
+/** Every property already in the database, as Stereo 70 polygons — the new lots must not overlap them. */
+async function existingPolygons(): Promise<{ polys: Poly[]; numbers: Set<string> }> {
+  const rows = await db.select({ id: propertyCorner.propertyId, seq: propertyCorner.sequenceNo, lat: propertyCorner.lat, lon: propertyCorner.lon }).from(propertyCorner);
+  const polys = projectCorners(rows);
+  const nums = await db.select({ c: property.cadastralNumber, cf: property.carteFunciara }).from(property);
+  const numbers = new Set<string>();
+  for (const n of nums) {
+    if (n.c) numbers.add(n.c.trim());
+    if (n.cf) numbers.add(n.cf.trim());
+  }
+  return { polys: [...polys.values()], numbers };
+}
+
+/** Corner rows grouped by property and projected to Stereo 70; a property outside the grid is skipped. */
+function projectCorners(rows: { id: string; seq: number; lat: number; lon: number }[]): Map<string, Poly> {
+  const by = new Map<string, { seq: number; lat: number; lon: number }[]>();
+  for (const r of rows) by.set(r.id, [...(by.get(r.id) ?? []), r]);
+  const out = new Map<string, Poly>();
+  for (const [id, cs] of by) {
+    if (cs.length < 3) continue;
+    try {
+      out.set(id, cs.sort((a, b) => a.seq - b.seq).map((c) => {
+        const s = wgs84ToStereo70(c.lat, c.lon);
+        return { n: s.north, e: s.east };
+      }));
+    } catch {
+      // a corner outside the grid's coverage cannot be measured; it cannot be overlapped in Bragadiru either
+    }
+  }
+  return out;
+}
+
+const roundCoord = (x: number) => Math.round(x * 1e8) / 1e8;
+
+async function createProperties(props: PropertyPlan[]): Promise<void> {
+  const ownerRole = roleId.get("Proprietar")!;
+  const coOwnerRole = roleId.get("Coproprietar")!;
+  let i = 0;
+  for (const p of props) {
+    const input = propertyCreateSchema.parse({
+      nickname: p.nickname,
+      propertyTypeId: ref.propType.get(p.type) ?? null,
+      useCategoryId: p.useCategory ? ref.useCat.get(p.useCategory) ?? null : null,
+      tarlaId: p.tarla ? ref.tarla.get(p.tarla) ?? null : null,
+      parcela: p.parcela,
+      cadastralNumber: p.cadastral,
+      carteFunciara: p.carteFunciara,
+      surfaceAreaMp: p.surface,
+      notes: p.notes,
+      address: p.address ? { ...p.address, country: "România", streetViewStreetLine: null } : null,
+      corners: (p.corners ?? []).map((c, k) => {
+        const w = stereo70ToWgs84(c.n, c.e);
+        return { lat: roundCoord(w.lat), lon: roundCoord(w.lon), originalIndex: k };
+      }),
+    });
+    const full = await createProperty(input, BY);
+    remember({ key: p.key, kind: "PROPERTY", id: full.property.id, po: full.property.principalObjectId, code: full.property.code, label: p.nickname });
+    const role = p.owners.length > 1 ? coOwnerRole : ownerRole;
+    await associatePersonsToProperty(full.property.id, p.owners.map((o) => obj(o.key).id), role);
+    if (++i % 100 === 0) console.log(`    ${i} / ${props.length}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Coverage, read back from the database
 // ---------------------------------------------------------------------------
 
-async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed: number): Promise<boolean> {
+async function propertyCoverage(props: PropertyPlan[], plan: FamilyPlan, existing: Poly[]): Promise<CoverageLine[]> {
+  const ids = manifest.objects.filter((o) => o.kind === "PROPERTY").map((o) => o.id);
+  const rows = await db
+    .select({ id: property.id, type: lookupPropertyType.name, use: lookupUseCategory.name, area: property.calculatedAreaMp, surface: property.surfaceAreaMp })
+    .from(property)
+    .leftJoin(lookupPropertyType, eq(property.propertyTypeId, lookupPropertyType.id))
+    .leftJoin(lookupUseCategory, eq(property.useCategoryId, lookupUseCategory.id))
+    .where(inArray(property.id, ids));
+  const addr = new Set((await db.select({ id: propertyAddress.propertyId }).from(propertyAddress).where(inArray(propertyAddress.propertyId, ids))).map((r) => r.id));
+  const corners = projectCorners(await db.select({ id: propertyCorner.propertyId, seq: propertyCorner.sequenceNo, lat: propertyCorner.lat, lon: propertyCorner.lon }).from(propertyCorner).where(inArray(propertyCorner.propertyId, ids)));
+  const links = await db.select({ p: propertyPerson.propertyId, who: propertyPerson.personId }).from(propertyPerson).where(inArray(propertyPerson.propertyId, ids));
+  const persons = new Map(plan.persons.map((p) => [obj(p.key).id, p]));
+  const companyIds = new Set(manifest.objects.filter((o) => o.kind === "JUDICIAL").map((o) => o.id));
+  const estates = new Set(props.filter((p) => p.ownership === "estate").map((p) => obj(p.key).id));
+  // the names the database stores, back to the plan's own spelling, so the lines read the plan's words
+  const typeName = new Map([...ref.propType].map(([k, v]) => [v, k]));
+  const typeIdOf = new Map((await db.select().from(lookupPropertyType)).map((t) => [t.name, t.id]));
+  const catName = new Map([...ref.useCat].map(([k, v]) => [v, k]));
+  const catIdOf = new Map((await db.select().from(lookupUseCategory)).map((c) => [c.name, c.id]));
+  const out: PropertyRow[] = rows.map((r) => {
+    const own = links.filter((l) => l.p === r.id).map((l) => l.who);
+    const fit = estates.has(r.id) ? own.length === 1 : own.every((w) => companyIds.has(w) || (persons.has(w) && !persons.get(w)!.dod));
+    return {
+      type: r.type ? typeName.get(typeIdOf.get(r.type)!) ?? r.type : null,
+      useCategory: r.use ? catName.get(catIdOf.get(r.use)!) ?? r.use : null,
+      hasAddress: addr.has(r.id),
+      corners: corners.get(r.id) ?? null,
+      calculatedArea: r.area === null ? null : Number(r.area),
+      surface: r.surface === null ? null : Number(r.surface),
+      owners: own.length,
+      ownersFit: own.length > 0 && fit,
+    };
+  });
+  const drawn = [...corners.values()];
+  let overlapsNew = 0;
+  for (let i = 0; i < drawn.length; i++) for (let j = i + 1; j < drawn.length; j++) if (overlaps(drawn[i], drawn[j])) overlapsNew++;
+  const overlapsExisting = drawn.filter((d) => existing.some((x) => overlaps(d, x))).length;
+  const touching = drawn.filter((d) => drawn.some((x) => x !== d && sharesEdge(d, x, 0.01))).length;
+  return propertyLines({
+    rows: out,
+    target: PROPERTY_TOTAL,
+    tpc: TPC,
+    curti: CURTI,
+    overlapsNew,
+    overlapsExisting,
+    inRange: drawn.filter((d) => inRange(d)).length,
+    touching,
+    onLine: lotsOnLine(drawn),
+  });
+}
+
+async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed: number, props: PropertyPlan[], existing: Poly[]): Promise<boolean> {
   const natIds = manifest.objects.filter((o) => o.kind === "NATURAL").map((o) => o.id);
   const jurIds = manifest.objects.filter((o) => o.kind === "JUDICIAL").map((o) => o.id);
   const nat = await db
@@ -365,7 +565,7 @@ async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed
   const judicial: JudicialRow[] = jur.map((r) => ({ cui: r.cui, phone: r.phone, email: r.email, notes: r.notes, representatives: [r.c1, r.c2].filter((x) => x && seedIds.has(x)).length }));
   const familyMembers = plan.persons.filter((p) => !p.single);
   const s = scenarioCounts(plan);
-  const lines = coverageLines({
+  const personLines = coverageLines({
     natural,
     judicial,
     generations: new Set(familyMembers.map((p) => p.generation)).size,
@@ -374,6 +574,7 @@ async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed
     scenarioMin: SCENARIO_MIN,
     targets: TARGET,
   });
+  const lines = [...personLines, ...(await propertyCoverage(props, plan, existing))];
   console.log("\nAcoperire (citită din baza de date):");
   console.log(formatCoverage(lines));
 
@@ -398,6 +599,8 @@ async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed
   show("bunic în viață lângă nepoți", plan.ties.find((t) => t.role === "Bunic" || t.role === "Bunică")?.holder);
   show("copil adoptat", plan.persons.find((p) => p.adoptiveParents.length > 0)?.key);
   show("frați vitregi", plan.ties.find((t) => t.role === "Frate vitreg" || t.role === "Soră vitregă")?.holder);
+  const line = props.filter((p) => p.cluster?.line).sort((a, b) => a.cluster!.index - b.cluster!.index);
+  console.log(`\nCele șase loturi de pe linia lui Adrian: ${line.map((p) => obj(p.key).code).join(", ")}`);
   console.log(`\nDate de referință adăugate / completate (${manifest.referenceDataAdded.length}):\n  ${manifest.referenceDataAdded.join("\n  ") || "nimic"}`);
   return lines.every((l) => l.met);
 }
@@ -413,11 +616,12 @@ async function remove(): Promise<void> {
   }
   const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8")) as Manifest;
   const ids = (k: Kind) => m.objects.filter((o) => o.kind === k).map((o) => o.id);
-  // companies first: they point at their representatives
+  // properties first (their owners go with the persons), then companies (they point at their representatives)
+  const props = await deleteProperties(ids("PROPERTY"));
   const jur = await deletePersons(ids("JUDICIAL"));
   const nat = await deletePersons(ids("NATURAL"));
   fs.renameSync(MANIFEST, MANIFEST.replace(/\.json$/, `.removed-${new Date().toISOString().replace(/[:.]/g, "")}.json`));
-  console.log(`Removed ${nat} natural persons and ${jur} judicial persons, with their ties, versions and addresses.`);
+  console.log(`Removed ${props} properties, ${nat} natural persons and ${jur} judicial persons, with their ties, corners, versions and addresses.`);
   console.log("Reference Data added by the seed was kept.");
 }
 
@@ -445,7 +649,19 @@ async function main(): Promise<void> {
   const takenCui = new Set((await db.select({ c: judicialPerson.cuiNumber }).from(judicialPerson).where(isNotNull(judicialPerson.cuiNumber))).map((r) => cuiDigits(r.c!)));
   const details = naturalDetails(plan, makeRng((SEED ^ 0x5eed) >>> 0), takenCnp);
   const companies = generateCompanies(makeRng((SEED ^ 0xc0de) >>> 0), plan, details, takenCui, TARGET.judicial);
-  console.log(`  plan: ${plan.persons.length} persons over ${MAX_GENERATION} generations, ${plan.unions.length} marriages, ${plan.ties.length} ties (attempt ${plan.attempt})`);
+  const existing = await existingPolygons();
+  const names = new Map(details.map((d) => [d.key, `${d.firstName} ${d.laterSurnames.at(-1)?.surname ?? d.lastName}`]));
+  for (const c of companies) names.set(c.key, c.name);
+  const props = generateProperties(makeRng((SEED ^ 0x9a9e) >>> 0), {
+    plan,
+    companies,
+    existing: existing.polys,
+    takenNumbers: existing.numbers,
+    tarlas: [...ref.tarla.keys()],
+    flags: ref.typeFlags,
+    names,
+  });
+  console.log(`  plan: ${plan.persons.length} persons over ${MAX_GENERATION} generations, ${plan.unions.length} marriages, ${plan.ties.length} ties (attempt ${plan.attempt}); ${props.length} properties, ${existing.polys.length} existing lots kept clear of`);
 
   console.log(`· ${details.length} natural persons`);
   await createNaturalPersons(plan, details);
@@ -455,10 +671,12 @@ async function main(): Promise<void> {
   const tieCounts = await createTies(plan);
   console.log(`· ${companies.length} judicial persons`);
   await createJudicialPersons(companies);
+  console.log(`· ${props.length} properties and their owners`);
+  await createProperties(props);
 
   manifest.finishedAt = new Date().toISOString();
   saveManifest();
-  const ok = await report(plan, tieCounts, renamed);
+  const ok = await report(plan, tieCounts, renamed, props, existing.polys);
   console.log(`\nDone in ${Math.round((Date.now() - t0) / 1000)} s. Manifest: ${path.relative(ROOT, MANIFEST)} — undo with --remove.`);
   if (!ok) process.exitCode = 1;
 }
