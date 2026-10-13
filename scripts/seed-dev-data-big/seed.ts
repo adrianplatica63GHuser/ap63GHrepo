@@ -96,7 +96,12 @@ import { inRange, lotsOnLine, overlaps, sharesEdge, type Poly } from "./geometry
 
 const BY = "seed-dev-data-big";
 const ROOT = process.cwd();
-const MANIFEST_DIR = path.join(ROOT, ".seed-dev-data-big");
+/**
+ * Where the manifest lives: .seed-dev-data-big/ at the repo root — or, for the runner's `seed-rehearsal` on a
+ * restored copy of the backup, the scratch folder it names in GA40_SEED_WORKDIR, so a rehearsal never leaves a
+ * manifest behind that would make the real run refuse.
+ */
+const MANIFEST_DIR = process.env.GA40_SEED_WORKDIR ? path.resolve(process.env.GA40_SEED_WORKDIR) : path.join(ROOT, ".seed-dev-data-big");
 const MANIFEST = path.join(MANIFEST_DIR, "manifest.json");
 const args = process.argv.slice(2);
 const REMOVE = args.includes("--remove");
@@ -611,7 +616,7 @@ async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed
 
 async function remove(): Promise<void> {
   if (!fs.existsSync(MANIFEST)) {
-    console.log("Nothing to remove: no .seed-dev-data-big/manifest.json.");
+    console.log(`Nothing to remove: no ${path.relative(ROOT, MANIFEST)}.`);
     return;
   }
   const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8")) as Manifest;
@@ -633,7 +638,7 @@ async function main(): Promise<void> {
   assertLocalDatabase();
   if (REMOVE) return remove();
   if (fs.existsSync(MANIFEST)) {
-    throw new Error("A previous big seed is still recorded in .seed-dev-data-big/manifest.json. Run with --remove first.");
+    throw new Error(`A previous big seed is still recorded in ${path.relative(ROOT, MANIFEST)}. Run with --remove first.`);
   }
   const t0 = Date.now();
   manifest = { version: 1, script: BY, seed: SEED, startedAt: new Date().toISOString(), finishedAt: null, objects: [], referenceDataAdded: [] };
@@ -684,7 +689,7 @@ async function main(): Promise<void> {
 main()
   .catch((err) => {
     console.error("\nSEED FAILED:", err instanceof Error ? err.message : err);
-    if (manifest?.objects.length) console.error("What was created is in .seed-dev-data-big/manifest.json — run with --remove to undo it.");
+    if (manifest?.objects.length) console.error(`What was created is in ${path.relative(ROOT, MANIFEST)} — run with --remove to undo it.`);
     process.exitCode = 1;
   })
   .finally(() => pool.end());
