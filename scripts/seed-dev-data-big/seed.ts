@@ -1,6 +1,6 @@
 /**
  * Big dev seed — fifteen times src/db/seed_dev_data.sql, ADDED to the local database, never wiping it.
- *                                                                   (Slices #39.20–#39.23; parts 1 to 3 of 4)
+ *                                                                   (Slices #39.20–#39.23)
  *
  *   Seed:    node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-dev-data-big/seed.ts
  *   Remove:  node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-dev-data-big/seed.ts --remove
@@ -13,7 +13,9 @@
  * Part 3 (#39.22): 1,050 documents — 430 sales contracts, 220 acte adiționale linked to them, 400 of the
  * catalogue's other types — each with its parties, properties and dummy page files, reading true against the
  * persons' lives and the properties' owners; chains of title from Legea 18/1991 to today.
- * 39.23 adds links, notes, metadata, tags, groups and stamps.
+ * Part 4 (#39.23): „Legături" — every object at 3–15 rows, topped up with links that make sense for the pair
+ * (links.ts); „Importanță", „Relevanță", „Proveniență" on 78 %, provenance trails on 5 %, back-dated; 24
+ * groups, 14 stamps and 146 tags of the seed's own, applied to its objects; „Vezi și" on 30 %.
  *
  * THROUGH THE APP'S OWN FUNCTIONS — createNaturalPerson, updateNaturalPerson, createJudicialPerson,
  * associatePersonsToPerson, createProperty, associatePersonsToProperty, createDocument, createDocumentPage,
@@ -42,9 +44,16 @@
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, pool } from "../../src/db";
 import {
+  entityMetadata,
+  entityMetadataVersion,
+  entityProvenanceLog,
+  entityTag,
+  groupMember,
+  stampMember,
+  entityCrossReference,
   document,
   documentDocument,
   documentPage,
@@ -56,6 +65,7 @@ import {
   lookupJudicialPersonType,
   lookupPersonRole,
   lookupPersonType,
+  lookupPropertyPropertyRole,
   lookupPropertyType,
   lookupTarla,
   lookupUseCategory,
@@ -79,7 +89,12 @@ import {
 import { naturalPersonCreateSchema, naturalPersonUpdateSchema } from "../../src/lib/persons/validation";
 import { createJudicialPerson } from "../../src/lib/judicial-persons/queries";
 import { judicialPersonCreateSchema } from "../../src/lib/judicial-persons/validation";
-import { associateDocumentsToProperty, associatePersonsToProperty, createProperty, deleteProperties } from "../../src/lib/properties/queries";
+import { associateDocumentsToProperty, associatePersonsToProperty, associatePropertiesToProperty, createProperty, deleteProperties } from "../../src/lib/properties/queries";
+import { addEntityTag, patchEntityMetadata } from "../../src/lib/metadata/queries";
+import { addEntityToGroup, addStampToEntity } from "../../src/lib/metadata/membership";
+import { addCrossRef } from "../../src/lib/metadata/cross-ref";
+import { createGroup, deleteGroup } from "../../src/lib/groups/queries";
+import { createStamp, deleteStamp } from "../../src/lib/stamps/queries";
 import { propertyCreateSchema } from "../../src/lib/properties/validation";
 import { stereo70ToWgs84, wgs84ToStereo70 } from "../../src/lib/geo/transdatRO";
 import { associateDocumentToDocument, associatePersonsToDocument, createDocument, deleteDocuments } from "../../src/lib/documents/queries";
@@ -104,12 +119,15 @@ import {
   type TieRole,
 } from "./families";
 import { naturalDetails, type NaturalDetails } from "./persons";
+import { tileRows, topUpLinks, type ExtraLinks } from "./links";
+import { GROUPS, planMetadata, STAMPS, TAGS, type MetadataPlan } from "./metadata";
 import { COMPANY_TYPES, generateCompanies, type CompanyPlan } from "./companies";
-import { coverageLines, documentLines, formatCoverage, propertyLines, type CoverageLine, type JudicialRow, type NaturalRow, type PropertyRow } from "./coverage";
+import { coverageLines, documentLines, finishLines, formatCoverage, meaningful, propertyLines, type CoverageLine, type JudicialRow, type NaturalRow, type PropertyRow } from "./coverage";
 import { CURTI, generateProperties, MIX, PROPERTY_TOTAL, TPC, type PropertyPlan, type TypeFlags } from "./properties";
 import { inRange, lotsOnLine, overlaps, sharesEdge, type Poly } from "./geometry";
 import {
   ACTS,
+  MAX_LINKS,
   CONTRACTS,
   DOC_TYPE_ROLES,
   DOCUMENT_TOTAL,
@@ -173,6 +191,8 @@ type Manifest = {
   startedAt: string;
   finishedAt: string | null;
   objects: Obj[];
+  groupIds: string[];
+  stampIds: string[];
   referenceDataAdded: string[];
 };
 
@@ -291,6 +311,42 @@ async function ensureDocumentReferenceData(added: string[]): Promise<void> {
   docRef.actForm = formOf("ACT_ADITIONAL");
 }
 
+const linkRef = { role: new Map<string, string>(), ppRole: new Map<string, string>() };
+
+/** The non-family roles „Legături"'s top-up uses, and „Adiacent" between properties — added where missing. */
+async function ensureLinkReferenceData(added: string[]): Promise<void> {
+  const want: { name: string; forPerson?: boolean; forProperty?: boolean; converse?: string; description: string }[] = [
+    { name: "Reprezentant legal / Mandatar", forPerson: true, converse: "Reprezentat(ă) / Mandant(ă)", description: "Reprezintă o persoană sau o firmă" },
+    { name: "Asociat / Acționar", forPerson: true, converse: "Societate", description: "Deține părți sociale sau acțiuni" },
+    { name: "Angajat", forPerson: true, converse: "Angajator", description: "Raport de muncă" },
+    { name: "Vecin", forProperty: true, description: "Proprietar sau ocupant al unui imobil învecinat" },
+  ];
+  let sort = Math.max(0, ...(await db.select().from(lookupPersonRole)).map((r) => r.sortOrder)) + 1;
+  for (const w of want) {
+    const [row] = await db.select().from(lookupPersonRole).where(eq(lookupPersonRole.name, w.name));
+    if (!row) {
+      await db.insert(lookupPersonRole).values({ name: w.name, description: w.description, sortOrder: sort++, validForPerson: !!w.forPerson, validForProperty: !!w.forProperty, converseName: w.converse ?? null });
+      added.push(`Rol persoană „${w.name}"`);
+      continue;
+    }
+    const set: Partial<typeof lookupPersonRole.$inferInsert> = {};
+    if (w.forPerson && !row.validForPerson) set.validForPerson = true;
+    if (w.forProperty && !row.validForProperty) set.validForProperty = true;
+    if (w.converse && !row.converseName && !row.converseNameMale && !row.converseNameFemale) set.converseName = w.converse;
+    if (Object.keys(set).length) {
+      await db.update(lookupPersonRole).set(set).where(eq(lookupPersonRole.id, row.id));
+      added.push(`Rol persoană „${w.name}": ${Object.keys(set).join(", ")}`);
+    }
+  }
+  for (const r of await db.select().from(lookupPersonRole)) linkRef.role.set(r.name, r.id);
+  const pp = await db.select().from(lookupPropertyPropertyRole);
+  if (!pp.some((r) => r.name === "Adiacent")) {
+    await db.insert(lookupPropertyPropertyRole).values({ name: "Adiacent", description: "Proprietăți cu latură comună", sortOrder: 100 });
+    added.push(`Relație între proprietăți „Adiacent"`);
+  }
+  for (const r of await db.select().from(lookupPropertyPropertyRole)) linkRef.ppRole.set(r.name, r.id);
+}
+
 /** A name as Adrian may have typed it: exact first, else the same letters ignoring case and diacritics. */
 const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 function byName<T extends { name: string }>(rows: T[], name: string): T | undefined {
@@ -404,6 +460,7 @@ async function ensureReferenceData(): Promise<void> {
   }
   await ensurePropertyReferenceData(added);
   await ensureDocumentReferenceData(added);
+  await ensureLinkReferenceData(added);
   for (const r of await db.select().from(lookupPersonType)) ref.personType.set(r.name, r.id);
   for (const r of await db.select().from(lookupJudicialPersonType)) ref.jType.set(r.name, r.id);
   for (const r of await db.select().from(lookupCitizenship)) ref.citizenship.set(r.name, r.id);
@@ -700,6 +757,161 @@ async function documentCoverage(docs: DocPlan[], plan: FamilyPlan, companies: Co
 }
 
 // ---------------------------------------------------------------------------
+// „Legături" top-up, metadata, groups, stamps, tags, „Vezi și"
+// ---------------------------------------------------------------------------
+
+/** The pairs of drawn lots that share an edge — what „Adiacent" may join. */
+function adjacency(props: PropertyPlan[]): [string, string][] {
+  const drawn = props.filter((p) => p.corners && p.cluster);
+  const out: [string, string][] = [];
+  for (let i = 0; i < drawn.length; i++) {
+    for (let j = i + 1; j < drawn.length; j++) {
+      if (drawn[i].cluster!.id === drawn[j].cluster!.id && sharesEdge(drawn[i].corners!, drawn[j].corners!)) out.push([drawn[i].key, drawn[j].key]);
+    }
+  }
+  return out;
+}
+
+async function writeExtraLinks(x: ExtraLinks): Promise<void> {
+  for (const l of x.personPerson) await associatePersonsToPerson(obj(l.other).id, [obj(l.holder).id], linkRef.role.get(l.role) ?? roleId.get(l.role)!);
+  for (const l of x.personProperty) await associatePersonsToProperty(obj(l.property).id, [obj(l.person).id], linkRef.role.get(l.role)!);
+  for (const l of x.propertyProperty) await associatePropertiesToProperty(obj(l.a).id, [obj(l.b).id], linkRef.ppRole.get(l.role)!);
+  for (const l of x.documentDocument) await associateDocumentToDocument(obj(l.from).id, [obj(l.to).id], docRef.ddRole.get(l.role)!);
+  for (const l of x.documentProperty) await associateDocumentsToProperty(obj(l.property).id, [obj(l.document).id]);
+}
+
+async function writeMetadata(m: MetadataPlan): Promise<void> {
+  const groupIds: string[] = [];
+  for (const [targetType, description] of GROUPS) {
+    const g = await createGroup({ targetType, description });
+    groupIds.push(g.id);
+    manifest.groupIds.push(g.id);
+    saveManifest();
+  }
+  const stampIds: string[] = [];
+  for (const [shortDescription, notes] of STAMPS) {
+    const s = await createStamp({ shortDescription, notes });
+    stampIds.push(s.id);
+    manifest.stampIds.push(s.id);
+    saveManifest();
+  }
+  for (const [k, idx] of m.groups) for (const i of idx) {
+    const r = await addEntityToGroup(obj(k).po, groupIds[i]);
+    if (!r.ok) throw new Error(`seed: group ${i} refused ${k}: ${r.error}`);
+  }
+  for (const [k, idx] of m.stamps) for (const i of idx) await addStampToEntity(obj(k).po, stampIds[i]);
+  let n = 0;
+  for (const [k, tags] of m.tags) {
+    for (const t of tags) await addEntityTag(obj(k).po, t);
+    if (++n % 500 === 0) console.log(`    tags: ${n} / ${m.tags.size}`);
+  }
+  // a trail first, so the object's own provenance is its last step; then the plain classifications
+  for (const [k, t] of m.trails) {
+    for (const v of t.values) await patchEntityMetadata(obj(k).po, { field: "provenance", value: v }, BY);
+    await backdateTrail(obj(k).po, t);
+  }
+  for (const [k, v] of m.provenance) if (!m.trails.has(k)) await patchEntityMetadata(obj(k).po, { field: "provenance", value: v }, BY);
+  for (const [k, v] of m.importance) await patchEntityMetadata(obj(k).po, { field: "importance", value: v }, BY);
+  for (const [k, v] of m.relevance) await patchEntityMetadata(obj(k).po, { field: "relevance", value: v }, BY);
+  for (const x of m.xrefs) await addCrossRef(obj(x.from).po, obj(x.to).po, x.note);
+}
+
+/**
+ * Spread one object's provenance trail over its dates: each provenance log row, and each metadata version that
+ * records a new provenance, on the day of its step. Only the metadata tables move — no object row is written.
+ */
+async function backdateTrail(po: string, t: { values: string[]; dates: string[] }): Promise<void> {
+  const at = (i: number) => new Date(`${t.dates[Math.min(i, t.dates.length - 1)]}T10:00:00Z`);
+  const [meta] = await db.select().from(entityMetadata).where(eq(entityMetadata.principalObjectId, po));
+  if (!meta) return;
+  const log = (await db.select().from(entityProvenanceLog).where(eq(entityProvenanceLog.entityMetadataId, meta.id))).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  for (const [i, l] of log.entries()) await db.update(entityProvenanceLog).set({ loggedAt: at(i).toISOString().slice(0, 10), createdAt: at(i) }).where(eq(entityProvenanceLog.id, l.id));
+  const mv = (await db.select().from(entityMetadataVersion).where(eq(entityMetadataVersion.entityMetadataId, meta.id))).sort((a, b) => a.versionNumber - b.versionNumber);
+  let k = -1;
+  let prev: string | null = null;
+  for (const v of mv) {
+    const p = (v.snapshot as { provenance: string | null } | null)?.provenance ?? null;
+    if (p !== prev) k++;
+    prev = p;
+    await db.update(entityMetadataVersion).set({ createdAt: at(Math.max(0, k)) }).where(eq(entityMetadataVersion.id, v.id));
+  }
+  await db.update(entityMetadata).set({ provenanceUpdatedAt: at(t.values.length - 1) }).where(eq(entityMetadata.id, meta.id));
+}
+
+async function finishCoverage(): Promise<CoverageLine[]> {
+  const objs = manifest.objects;
+  const ids = objs.map((o) => o.id);
+  const pos = objs.map((o) => o.po);
+  const rows = await relatedRows(ids);
+  const notesOf = async (kind: "PROPERTY" | "DOCUMENT"): Promise<[number, number]> => {
+    const ks = objs.filter((o) => o.kind === kind).map((o) => o.id);
+    const r = kind === "PROPERTY"
+      ? await db.select({ n: property.notes }).from(property).where(inArray(property.id, ks))
+      : await db.select({ n: document.notes }).from(document).where(inArray(document.id, ks));
+    return [r.filter((x) => meaningful(x.n) >= 5).length, ks.length];
+  };
+  const meta = await db.select().from(entityMetadata).where(inArray(entityMetadata.principalObjectId, pos));
+  const tags = await db.select({ po: entityTag.principalObjectId, t: entityTag.tag }).from(entityTag).where(inArray(entityTag.principalObjectId, pos));
+  const tagCount = new Map<string, number>();
+  for (const t of tags) tagCount.set(t.po, (tagCount.get(t.po) ?? 0) + 1);
+  const gm = await db.select({ po: groupMember.principalObjectId, g: groupMember.groupId }).from(groupMember).where(inArray(groupMember.groupId, manifest.groupIds));
+  const sm = await db.select({ po: stampMember.principalObjectId, s: stampMember.stampId }).from(stampMember).where(inArray(stampMember.stampId, manifest.stampIds));
+  const per = (xs: { po: string }[]) => {
+    const m = new Map<string, number>();
+    for (const x of xs) m.set(x.po, (m.get(x.po) ?? 0) + 1);
+    return Math.max(0, ...m.values());
+  };
+  const metaIds = meta.map((x) => x.id);
+  const logs = await db.select({ m: entityProvenanceLog.entityMetadataId }).from(entityProvenanceLog).where(inArray(entityProvenanceLog.entityMetadataId, metaIds));
+  const logCount = new Map<string, number>();
+  for (const l of logs) logCount.set(l.m, (logCount.get(l.m) ?? 0) + 1);
+  const xr = await db.select({ s: entityCrossReference.sourcePrincipalObjectId }).from(entityCrossReference).where(inArray(entityCrossReference.sourcePrincipalObjectId, pos));
+  const tagValues = [...tagCount.values()];
+  return finishLines({
+    objects: objs.length,
+    rows: objs.map((o) => rows.get(o.id) ?? 0),
+    notes: { properties: await notesOf("PROPERTY"), documents: await notesOf("DOCUMENT") },
+    classified: { importance: meta.filter((x) => x.importance).length, relevance: meta.filter((x) => x.relevance).length, provenance: meta.filter((x) => x.provenance).length },
+    groups: manifest.groupIds.length,
+    stamps: manifest.stampIds.length,
+    distinctTags: new Set(tags.map((t) => t.t)).size,
+    targets: { groups: GROUPS.length, stamps: STAMPS.length, tags: TAGS.length },
+    maxGroupsPerObject: per(gm),
+    maxStampsPerObject: per(sm),
+    tagsPerTagged: { min: tagValues.length ? Math.min(...tagValues) : 0, max: tagValues.length ? Math.max(...tagValues) : 0 },
+    // a trail is two or more recorded changes of „Proveniență" (the first value set is not a change)
+    trails: [...logCount.values()].filter((n) => n >= 2).length,
+    trailsMin: 100,
+    withXref: new Set(xr.map((x) => x.s)).size,
+  });
+}
+
+/** Rows on each object's „Legături" tile, exactly as the three link tables of its kind hold them. */
+async function relatedRows(idList: string[]): Promise<Map<string, number>> {
+  // one array parameter: drizzle would spread a JS array into thousands of parameters
+  const ids = `{${idList.join(",")}}`;
+  const res = await db.execute(sql`
+    SELECT p.id, (
+      (SELECT count(*) FROM person_person x WHERE x.person_id_a = p.id OR x.person_id_b = p.id) +
+      (SELECT count(*) FROM property_person x WHERE x.person_id = p.id) +
+      (SELECT count(*) FROM person_document x WHERE x.person_id = p.id))::int AS n
+    FROM person p WHERE p.id = ANY(${ids}::uuid[])
+    UNION ALL
+    SELECT r.id, (
+      (SELECT count(*) FROM property_property x WHERE x.property_id_a = r.id OR x.property_id_b = r.id) +
+      (SELECT count(*) FROM property_person x WHERE x.property_id = r.id) +
+      (SELECT count(*) FROM property_document x WHERE x.property_id = r.id))::int
+    FROM property r WHERE r.id = ANY(${ids}::uuid[])
+    UNION ALL
+    SELECT d.id, (
+      (SELECT count(*) FROM document_document x WHERE x.document_id_a = d.id OR x.document_id_b = d.id) +
+      (SELECT count(*) FROM person_document x WHERE x.document_id = d.id) +
+      (SELECT count(*) FROM property_document x WHERE x.document_id = d.id))::int
+    FROM document d WHERE d.id = ANY(${ids}::uuid[])`);
+  return new Map((res.rows as { id: string; n: number }[]).map((r) => [r.id, Number(r.n)]));
+}
+
+// ---------------------------------------------------------------------------
 // Coverage, read back from the database
 // ---------------------------------------------------------------------------
 
@@ -713,7 +925,12 @@ async function propertyCoverage(props: PropertyPlan[], plan: FamilyPlan, existin
     .where(inArray(property.id, ids));
   const addr = new Set((await db.select({ id: propertyAddress.propertyId }).from(propertyAddress).where(inArray(propertyAddress.propertyId, ids))).map((r) => r.id));
   const corners = projectCorners(await db.select({ id: propertyCorner.propertyId, seq: propertyCorner.sequenceNo, lat: propertyCorner.lat, lon: propertyCorner.lon }).from(propertyCorner).where(inArray(propertyCorner.propertyId, ids)));
-  const links = await db.select({ p: propertyPerson.propertyId, who: propertyPerson.personId }).from(propertyPerson).where(inArray(propertyPerson.propertyId, ids));
+  // owners only: a „Vecin" added to „Legături" (#39.23) is a link, not an owner
+  const ownerRoles = [roleId.get("Proprietar")!, roleId.get("Coproprietar")!];
+  const links = await db
+    .select({ p: propertyPerson.propertyId, who: propertyPerson.personId })
+    .from(propertyPerson)
+    .where(and(inArray(propertyPerson.propertyId, ids), inArray(propertyPerson.personRoleId, ownerRoles)));
   const persons = new Map(plan.persons.map((p) => [obj(p.key).id, p]));
   const companyIds = new Set(manifest.objects.filter((o) => o.kind === "JUDICIAL").map((o) => o.id));
   const estates = new Set(props.filter((p) => p.ownership === "estate").map((p) => obj(p.key).id));
@@ -791,7 +1008,12 @@ async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed
     scenarioMin: SCENARIO_MIN,
     targets: TARGET,
   });
-  const lines = [...personLines, ...(await propertyCoverage(props, plan, existing)), ...(await documentCoverage(docs, plan, companies, props))];
+  const lines = [
+    ...personLines,
+    ...(await propertyCoverage(props, plan, existing)),
+    ...(await documentCoverage(docs, plan, companies, props)),
+    ...(await finishCoverage()),
+  ];
   console.log("\nAcoperire (citită din baza de date):");
   console.log(formatCoverage(lines));
 
@@ -847,8 +1069,12 @@ async function remove(): Promise<void> {
   const props = await deleteProperties(ids("PROPERTY"));
   const jur = await deletePersons(ids("JUDICIAL"));
   const nat = await deletePersons(ids("NATURAL"));
+  let g = 0;
+  for (const id of m.groupIds ?? []) if (await deleteGroup(id)) g++;
+  let st = 0;
+  for (const id of m.stampIds ?? []) if (await deleteStamp(id)) st++;
   fs.renameSync(MANIFEST, MANIFEST.replace(/\.json$/, `.removed-${new Date().toISOString().replace(/[:.]/g, "")}.json`));
-  console.log(`Removed ${docs} documents with their page files, ${props} properties, ${nat} natural persons and ${jur} judicial persons, with their ties, corners, versions and addresses.`);
+  console.log(`Removed ${docs} documents with their page files, ${props} properties, ${nat} natural persons and ${jur} judicial persons, with their ties, corners, versions, addresses, tags, metadata and cross-references; ${g} groups and ${st} stamps.`);
   console.log("Reference Data added by the seed was kept.");
 }
 
@@ -863,7 +1089,7 @@ async function main(): Promise<void> {
     throw new Error(`A previous big seed is still recorded in ${path.relative(ROOT, MANIFEST)}. Run with --remove first.`);
   }
   const t0 = Date.now();
-  manifest = { version: 1, script: BY, seed: SEED, startedAt: new Date().toISOString(), finishedAt: null, objects: [], referenceDataAdded: [] };
+  manifest = { version: 1, script: BY, seed: SEED, startedAt: new Date().toISOString(), finishedAt: null, objects: [], groupIds: [], stampIds: [], referenceDataAdded: [] };
   saveManifest();
   console.log(`Big dev seed, part 1 (seed ${SEED}) …`);
 
@@ -910,6 +1136,15 @@ async function main(): Promise<void> {
   await createProperties(props);
   console.log(`· ${docs.length} documents, their parties, properties, links and page files`);
   await createDocuments(docs, details, plan, names);
+  const extra = topUpLinks(makeRng((SEED ^ 0x1e9a) >>> 0), { plan, companies, properties: props, documents: docs, edges: adjacency(props) });
+  const planned = tileRows(plan, props, docs, extra);
+  const over = [...planned].filter(([, n]) => n > MAX_LINKS);
+  if (over.length) throw new Error(`seed: the plan puts ${over.length} objects past ${MAX_LINKS} rows on „Legături" — a generator bug, nothing deleted to hide it`);
+  console.log(`· „Legături": ${Object.values(extra).reduce((s, x) => s + x.length, 0)} more links, so every object has 3–15 rows where the plan allows`);
+  await writeExtraLinks(extra);
+  const meta = planMetadata(makeRng((SEED ^ 0x7a65) >>> 0), manifest.objects.map((o) => ({ key: o.key, kind: o.kind, dead: !!plan.persons.find((p) => p.key === o.key)?.dod })));
+  console.log(`· ${GROUPS.length} groups, ${STAMPS.length} stamps, ${TAGS.length} tags, classifications, provenance trails, „Vezi și"`);
+  await writeMetadata(meta);
 
   manifest.finishedAt = new Date().toISOString();
   saveManifest();

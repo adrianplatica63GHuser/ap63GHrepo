@@ -213,3 +213,46 @@ export function documentLines(f: DocumentFacts): CoverageLine[] {
     atLeast("Lanțuri titlu → certificat → vânzare", f.chains, f.chainsMin),
   ];
 }
+
+// ---------------------------------------------------------------------------
+// Links, notes, metadata, groups, stamps, tags (#39.23)
+// ---------------------------------------------------------------------------
+
+export type FinishFacts = {
+  objects: number;
+  /** rows on each object’s „Legături" tile, read back */
+  rows: number[];
+  notes: { properties: [number, number]; documents: [number, number] };
+  classified: { importance: number; relevance: number; provenance: number };
+  groups: number;
+  stamps: number;
+  distinctTags: number;
+  targets: { groups: number; stamps: number; tags: number };
+  maxGroupsPerObject: number;
+  maxStampsPerObject: number;
+  tagsPerTagged: { min: number; max: number };
+  trails: number;
+  trailsMin: number;
+  withXref: number;
+};
+
+export function finishLines(f: FinishFacts): CoverageLine[] {
+  const within = f.rows.filter((n) => n >= 3 && n <= 15).length;
+  return [
+    share("Obiecte cu 3–15 rânduri în „Legături”", within, f.objects, 90),
+    { label: "Cele mai multe rânduri în „Legături”", target: "≤ 15", value: String(Math.max(0, ...f.rows)), met: Math.max(0, ...f.rows) <= 15 },
+    share("Proprietăți cu „Note extinse”", f.notes.properties[0], f.notes.properties[1], 70),
+    share("Documente cu „Note extinse”", f.notes.documents[0], f.notes.documents[1], 70),
+    share("Obiecte cu „Importanță”", f.classified.importance, f.objects, 70),
+    share("Obiecte cu „Relevanță”", f.classified.relevance, f.objects, 70),
+    share("Obiecte cu „Proveniență”", f.classified.provenance, f.objects, 70),
+    exactly("Grupuri", f.groups, f.targets.groups),
+    exactly("Ștampile", f.stamps, f.targets.stamps),
+    exactly("Etichete distincte", f.distinctTags, f.targets.tags),
+    { label: "Grupuri pe un obiect", target: "≤ 3", value: String(f.maxGroupsPerObject), met: f.maxGroupsPerObject <= 3 },
+    { label: "Ștampile pe un obiect", target: "≤ 4", value: String(f.maxStampsPerObject), met: f.maxStampsPerObject <= 4 },
+    { label: "Etichete pe un obiect", target: "3–10", value: `${f.tagsPerTagged.min}–${f.tagsPerTagged.max}`, met: f.tagsPerTagged.min >= 3 && f.tagsPerTagged.max <= 10 },
+    atLeast("Trasee de proveniență", f.trails, f.trailsMin),
+    around("Obiecte cu „Vezi și”", f.withXref, f.objects, 30),
+  ];
+}
