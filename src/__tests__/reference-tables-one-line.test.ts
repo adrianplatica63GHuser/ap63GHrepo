@@ -108,7 +108,7 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
   // header's longest word — measured in px at 1366 on the archive (field-widths.ts says where)].
   const OWN: [string, keyof typeof COLUMN, string, number][] = [
     ["judicial-person-types", "valueJudicialTypeName", "name", 87.2], //   „Consiliu Local"
-    ["property-types", "valuePropertyTypeName", "name", 125.3], //          „Vegetație Forestieră"
+    ["property-types", "valuePropertyTypeName", "name", 148.6], //          „Teren pentru Construcții" (#39.23)
     ["property-types", "valueFlagTarlaParcela", "showTarlaParcela", 59.2], // „PARCELĂ"
     ["property-types", "valueFlagAddress", "showAddress", 52.5], //         „ADRESĂ"
     ["property-types", "valueFlagStreetView", "showStreetView", 49.1], //   „STREET"
@@ -133,7 +133,8 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
 
   it("each is narrower than the shared column it replaced", () => {
     expect(columnRem("valueJudicialTypeName")).toBeLessThan(columnRem("valueName"));
-    expect(columnRem("valuePropertyTypeName")).toBeLessThan(columnRem("valueNameShort"));
+    // #39.23: „Teren pentru Construcții" made the property types' name wider than the M it replaced; still under XL.
+    expect(columnRem("valuePropertyTypeName")).toBeLessThan(columnRem("valueName"));
     for (const f of ["valueFlagTarlaParcela", "valueFlagAddress", "valueFlagStreetView"] as const) expect(columnRem(f)).toBeLessThan(columnRem("valueFlag"));
     expect(columnRem("valueDocTypeName")).toBeLessThan(columnRem("valueName"));
     expect(columnRem("valueDocTypeShortName")).toBeLessThan(columnRem("valueText"));

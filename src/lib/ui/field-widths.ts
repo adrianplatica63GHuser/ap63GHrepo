@@ -1277,9 +1277,10 @@ export const COLUMN = {
   // „too much wasted space"). Each as wide as its longest value or its header's longest word, whichever is wider —
   // measured in the runner's Chromium at 1366 px on the archive, 2026-10-10 (Arial: 14 px cells, 12 px uppercase
   // headers), and rounded up to the next quarter rem with at least 1 px to spare. A longer value added later is cut
-  // with „…" and whole on hover, as every reference cell is (#38.50). The seed's values are all shorter.
+  // with „…" and whole on hover, as every reference cell is (#38.50). The seeds' values all fit.
   valueJudicialTypeName: { content: 5.75, kind: "fixed" }, // „Consiliu Local" (87.2 px); was valueName's XL (272)
-  valuePropertyTypeName: { content: 8, kind: "fixed" }, //   „Vegetație Forestieră" (125.3 px); was valueNameShort's M (136)
+  // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed adds, was cut at 8 rem.
+  valuePropertyTypeName: { content: 9.5, kind: "fixed" }, // „Teren pentru Construcții" (148.6 px); was 8 for „Vegetație Forestieră" (125.3)
   valueFlagTarlaParcela: { content: 4, kind: "fixed" }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88)
   valueFlagAddress: { content: 3.5, kind: "fixed" }, //      ✓ / – under „ADRESĂ" (52.5 px)
   valueFlagStreetView: { content: 3.25, kind: "fixed" }, //  ✓ / – under „STREET" over „VIEW" (49.1 px): the header takes two lines
