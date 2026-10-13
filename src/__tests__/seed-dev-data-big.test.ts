@@ -1,7 +1,7 @@
 /**
  * The big dev seed's pure parts — identifiers, the family generator and its rules, the persons' fields, the
  * companies, the coverage table (Slice #39.20); the lots' geometry and the properties (Slice #39.21); the
- * documents and the rules they keep (Slice #39.22).
+ * documents and the rules they keep (Slice #39.22); „Legături", groups, stamps, tags and classifications (#39.23).
  *
  * The script itself (scripts/seed-dev-data-big/seed.ts) writes through the app's create functions and is
  * rehearsed against a database, not here; what it writes is decided entirely by the modules below, so these
@@ -31,7 +31,9 @@ import { meaningfulWords, naturalDetails } from "../../scripts/seed-dev-data-big
 import { COMPANY_TYPES, generateCompanies, MAX_REPRESENTED } from "../../scripts/seed-dev-data-big/companies";
 import { coverageLines, formatCoverage, propertyLines, type JudicialRow, type NaturalRow, type PropertyRow } from "../../scripts/seed-dev-data-big/coverage";
 import { ADRIAN_LINE, area, bearing, dist, inRange, lineCluster, lotsOnLine, overlaps, rowOfLots, sharesEdge, type Poly } from "../../scripts/seed-dev-data-big/geometry";
-import { DOCUMENT_TOTAL, documentViolations, docsPerParty, FOUR_FIELDS, generateDocuments, MAX_DOCS_PER_PARTY, type DocPlan } from "../../scripts/seed-dev-data-big/documents";
+import { DOCUMENT_TOTAL, documentViolations, docsPerParty, FOUR_FIELDS, generateDocuments, MAX_DOCS_PER_PARTY, MAX_LINKS, type DocPlan } from "../../scripts/seed-dev-data-big/documents";
+import { tileRows, topUpLinks } from "../../scripts/seed-dev-data-big/links";
+import { GROUPS, groupTargetOf, planMetadata, STAMPS, TAGS } from "../../scripts/seed-dev-data-big/metadata";
 import { CURTI, generateProperties, LINE_DEPTH, MAX_FAMILY_PLUS_OWNED, MAX_OWNED, MIX, PLOT_AREA, PROPERTY_TOTAL, sharesAddUp, TPC, type TypeFlags } from "../../scripts/seed-dev-data-big/properties";
 import { makeRng } from "../../scripts/seed-dev-data-big/rng";
 import { addDays, ageAt, dmy, yearOf } from "../../scripts/seed-dev-data-big/dates";
@@ -646,5 +648,114 @@ describe("the documents", () => {
     const act = acts[0];
     const c = byKey.get(act.links[0].to)!;
     expect(documentViolations([c, { ...act, date: addDays(c.date, -1) }], ctx).join(" | ")).toMatch(/not a contract dated before it/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Part 4 — „Legături", metadata, groups, stamps, tags (#39.23)
+// ---------------------------------------------------------------------------
+
+describe("„Legături”: every object at 3–15 rows", () => {
+  const plan = plans.get(2026)!;
+  const details = naturalDetails(plan, makeRng(7), new Set());
+  const companies = generateCompanies(makeRng(9), plan, details, new Set());
+  const flags = new Map<string, TypeFlags>([
+    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+  ]);
+  const props = generateProperties(makeRng(11), { plan, companies, existing: [], takenNumbers: new Set(), tarlas: ["52"], flags, names: new Map() });
+  const forms = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "db", "document-type-forms.json"), "utf8")).forms as Record<string, { key: string; type: string; options: { value: string }[] | null }[]>;
+  const optionsOf = (k: string) => Object.fromEntries(forms[k].filter((f) => f.type === "select").map((f) => [f.key, (f.options ?? []).map((o) => o.value)]));
+  const docs = generateDocuments(makeRng(13), { plan, details, companies, properties: props, contractForm: optionsOf("CONTRACT_VANZARE"), actForm: optionsOf("ACT_ADITIONAL") });
+  const drawn = props.filter((p) => p.corners);
+  const edges: [string, string][] = [];
+  for (let i = 0; i < drawn.length; i++) for (let j = i + 1; j < drawn.length; j++) if (drawn[i].cluster!.id === drawn[j].cluster!.id && sharesEdge(drawn[i].corners!, drawn[j].corners!)) edges.push([drawn[i].key, drawn[j].key]);
+  const before = tileRows(plan, props, docs);
+  const extra = topUpLinks(makeRng(17), { plan, companies, properties: props, documents: docs, edges });
+  const after = tileRows(plan, props, docs, extra);
+  const keys = [...plan.persons.map((p) => p.key), ...companies.map((c) => c.key), ...props.map((p) => p.key), ...docs.map((d) => d.key)];
+
+  it("39.20–39.22 already keep every object at 15 or fewer — nothing is deleted afterwards", () => {
+    expect(Math.max(...keys.map((k) => before.get(k) ?? 0))).toBeLessThanOrEqual(MAX_LINKS);
+  });
+
+  it("after the top-up at least 90 % have 3–15 rows, and none has more than 15", () => {
+    const within = keys.filter((k) => (after.get(k) ?? 0) >= 3 && (after.get(k) ?? 0) <= 15).length;
+    expect(within / keys.length).toBeGreaterThanOrEqual(0.9);
+    expect(Math.max(...keys.map((k) => after.get(k) ?? 0))).toBeLessThanOrEqual(MAX_LINKS);
+  });
+
+  it("every added link joins two of the seed's objects, with a role valid for the pair, never doubling a pair", () => {
+    const isPerson = (k: string) => k.startsWith("N") || k.startsWith("J");
+    const pairs = new Set(plan.ties.map((t) => [t.holder, t.other].sort().join("|")));
+    for (const l of extra.personPerson) {
+      expect(isPerson(l.holder) && isPerson(l.other)).toBe(true);
+      const pair = [l.holder, l.other].sort().join("|");
+      expect(pairs.has(pair)).toBe(false);
+      pairs.add(pair);
+      if (l.role === "Bunic" || l.role === "Bunică") expect(l.other.startsWith("N") && l.holder.startsWith("N")).toBe(true);
+      else expect(l.other.startsWith("J")).toBe(true);
+    }
+    const adj = new Set(edges.map(([a, b]) => [a, b].sort().join("|")));
+    for (const l of extra.propertyProperty) expect(adj.has([l.a, l.b].sort().join("|"))).toBe(true);
+    for (const l of extra.personProperty) expect(l.person.startsWith("N") && l.property.startsWith("P")).toBe(true);
+    const byKey = new Map(docs.map((d) => [d.key, d]));
+    for (const l of extra.documentDocument) expect(byKey.get(l.to)!.date >= byKey.get(l.from)!.date).toBe(true);
+  });
+});
+
+describe("groups, stamps, tags and classifications", () => {
+  const targets = [...Array(400)].map((_, i) => ({ key: `K${i}`, kind: (["NATURAL", "JUDICIAL", "PROPERTY", "DOCUMENT"] as const)[i % 4] }));
+  const m = planMetadata(makeRng(19), targets);
+  const kindOf = new Map(targets.map((t) => [t.key, t.kind]));
+
+  it("twice the SQL seed's: 24 groups, 14 stamps, 146 distinct tags as the app stores them", () => {
+    expect(GROUPS).toHaveLength(24);
+    expect(STAMPS).toHaveLength(14);
+    expect(new Set(TAGS).size).toBe(146);
+    for (const t of TAGS) expect(t).toBe(t.trim().toLowerCase());
+    for (const [, d] of GROUPS) expect(d.length).toBeLessThanOrEqual(500);
+  });
+
+  it("a group only of the object's own kind, one to three; stamps one to four; tags three to ten, every tag used", () => {
+    for (const [k, idx] of m.groups) {
+      expect(idx.length).toBeGreaterThanOrEqual(1);
+      expect(idx.length).toBeLessThanOrEqual(3);
+      for (const i of idx) expect(GROUPS[i][0]).toBe(groupTargetOf(kindOf.get(k)!));
+    }
+    for (const idx of m.stamps.values()) {
+      expect(idx.length).toBeGreaterThanOrEqual(1);
+      expect(idx.length).toBeLessThanOrEqual(4);
+    }
+    for (const tags of m.tags.values()) {
+      expect(tags.length).toBeGreaterThanOrEqual(3);
+      expect(tags.length).toBeLessThanOrEqual(10);
+      expect(new Set(tags).size).toBe(tags.length);
+    }
+    expect(new Set([...m.tags.values()].flat()).size).toBe(146);
+  });
+
+  it("each classification on at least 70 %, from its own list; trails change value at each step, in date order", () => {
+    expect(m.importance.size / targets.length).toBeGreaterThanOrEqual(0.7);
+    expect(m.relevance.size / targets.length).toBeGreaterThanOrEqual(0.7);
+    expect(m.provenance.size / targets.length).toBeGreaterThanOrEqual(0.7);
+    expect(m.trails.size).toBeGreaterThanOrEqual(Math.round(targets.length * 0.05));
+    for (const [k, t] of m.trails) {
+      expect(t.values.at(-1)).toBe(m.provenance.get(k));
+      for (let i = 1; i < t.values.length; i++) {
+        expect(t.values[i] === t.values[i - 1]).toBe(false);
+        expect(t.dates[i] > t.dates[i - 1]).toBe(true);
+      }
+    }
+  });
+
+  it("„Vezi și” on about 30 %, one to four each, never to itself", () => {
+    const from = new Map<string, number>();
+    for (const x of m.xrefs) {
+      expect(x.from === x.to).toBe(false);
+      from.set(x.from, (from.get(x.from) ?? 0) + 1);
+    }
+    expect(Math.abs(from.size / targets.length - 0.3)).toBeLessThan(0.02);
+    expect(Math.max(...from.values())).toBeLessThanOrEqual(4);
   });
 });
