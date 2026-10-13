@@ -92,7 +92,12 @@ import {
   MAPS_LOG_FILE,
   MAPS_CEILING_ENV,
   MAPS_LEDGER_FILE,
+  STREET_VIEW_CEILING_ENV,
+  ADDRESS_LOOKUPS_CEILING_ENV,
   addToMapsLedger,
+  extraCeiling,
+  extraCeilingSkipReason,
+  extrasInLog,
   mapsCeiling,
   mapsCeilingSkipReason,
   mapsInLog,
@@ -481,11 +486,19 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
   // that is thrown away too — is added to the month's ledger afterwards, whatever the run's verdict.
   const runId = path.basename(path.dirname(logFile));
   const month = mapsMonth(new Date());
-  const ceiling = mapsCeiling(readMapsLedger(), month);
-  let mapsMade = 0;
+  const ledgerNow = readMapsLedger();
+  const ceiling = mapsCeiling(ledgerNow, month);
+  // Slice #39.18: the same, kind by kind, for Street View panoramas and address look-ups.
+  const svCeiling = extraCeiling(ledgerNow, month, "streetView");
+  const alCeiling = extraCeiling(ledgerNow, month, "addressLookups");
+  const made = { maps: 0, streetView: 0, addressLookups: 0 };
   const countMapsLog = (): void => {
     try {
-      mapsMade += mapsInLog(parseMapsLog(fs.readFileSync(mapsLog, "utf8")));
+      const lines = parseMapsLog(fs.readFileSync(mapsLog, "utf8"));
+      const extras = extrasInLog(lines);
+      made.maps += mapsInLog(lines);
+      made.streetView += extras.streetView;
+      made.addressLookups += extras.addressLookups;
     } catch {
       /* no file: nothing was made */
     }
@@ -538,6 +551,8 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
       fs.rmSync(mapsLog, { force: true });
       const env: NodeJS.ProcessEnv = { ...CHILD_ENV, E2E_BASE_URL: `http://localhost:${RUNNER_PORT}`, [MAPS_LOG_ENV]: mapsLog };
       if (ceiling.reached) env[MAPS_CEILING_ENV] = mapsCeilingSkipReason(ceiling.used, month);
+      if (svCeiling.reached) env[STREET_VIEW_CEILING_ENV] = extraCeilingSkipReason("streetView", svCeiling.used, month);
+      if (alCeiling.reached) env[ADDRESS_LOOKUPS_CEILING_ENV] = extraCeilingSkipReason("addressLookups", alCeiling.used, month);
       const first = await runLogged(NODE, [BIN.playwright, ...playwrightArgs(files)], logFile, TIMEOUT.e2e, env);
       let r = first;
       let rerunNote = "";
@@ -569,7 +584,7 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
       if (webpack) notes.push("served with next dev --webpack");
       notes.push(...readMapsLog());
       countMapsLog();
-      notes.push(recordMaps(month, runId, mapsMade));
+      notes.push(...recordMaps(month, runId, made));
       return {
         status: r.timedOut ? "error" : r.exitCode === 0 ? "passed" : "failed",
         exitCode: r.exitCode,
@@ -1288,15 +1303,18 @@ function readMapsLedger(): MapsLedger | null {
   }
 }
 
-/** Adds one run's real maps to the month's ledger and returns the note that says where the month stands. */
-function recordMaps(month: string, runId: string, maps: number): string {
-  const next = addToMapsLedger(readMapsLedger(), month, runId, maps);
+/**
+ * Adds one run's real maps, Street View panoramas and address look-ups (Slice #39.18) to the month's ledger, and
+ * returns the three notes that say where the month stands.
+ */
+function recordMaps(month: string, runId: string, made: { maps: number; streetView: number; addressLookups: number }): string[] {
+  const next = addToMapsLedger(readMapsLedger(), month, runId, made.maps, made);
   try {
     writeJsonAtomic(path.join(CH, MAPS_LEDGER_FILE), next);
   } catch (e) {
     logLine(`maps ledger: ${(e as Error).message}`);
   }
-  return mapsCeiling(next, month).note;
+  return [mapsCeiling(next, month).note, extraCeiling(next, month, "streetView").note, extraCeiling(next, month, "addressLookups").note];
 }
 
 /** The runner deletes its own files — the bridge could not, before delete permission existed. */

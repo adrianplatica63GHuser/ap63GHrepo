@@ -1484,6 +1484,10 @@ export interface MapsLedger {
   month: string;
   /** Real maps the runner's tests made this month, plus any `seeded` count. */
   maps: number;
+  /** Street View panoramas the runner's tests built this month (Slice #39.18; a ledger written before it reads 0). */
+  streetView: number;
+  /** Address look-ups the runner's tests made this month (Slice #39.18; a ledger written before it reads 0). */
+  addressLookups: number;
   /** The run ids already counted, so a run is never counted twice. */
   runs: string[];
   /** A starting count written by hand for a month whose early runs were never counted, and why. */
@@ -1503,11 +1507,29 @@ export function mapsUsed(ledger: MapsLedger | null, month: string): number {
   return ledger && ledger.month === month ? ledger.maps : 0;
 }
 
-/** The ledger after one run's maps are added. Idempotent per run id; a new month starts at zero. */
-export function addToMapsLedger(ledger: MapsLedger | null, month: string, runId: string, maps: number): MapsLedger {
-  const current: MapsLedger = ledger && ledger.month === month ? ledger : { month, maps: 0, runs: [] };
-  if (current.runs.includes(runId) || !Number.isInteger(maps) || maps < 0) return current;
-  return { ...current, maps: current.maps + maps, runs: [...current.runs, runId] };
+/**
+ * The ledger after one run's maps — and, since Slice #39.18, its Street View panoramas and address look-ups — are
+ * added. Idempotent per run id; a new month starts at zero.
+ */
+export function addToMapsLedger(
+  ledger: MapsLedger | null,
+  month: string,
+  runId: string,
+  maps: number,
+  extras: { streetView?: number; addressLookups?: number } = {},
+): MapsLedger {
+  const current: MapsLedger = ledger && ledger.month === month ? ledger : { month, maps: 0, streetView: 0, addressLookups: 0, runs: [] };
+  const sv = extras.streetView ?? 0;
+  const al = extras.addressLookups ?? 0;
+  const ok = (n: number): boolean => Number.isInteger(n) && n >= 0;
+  if (current.runs.includes(runId) || !ok(maps) || !ok(sv) || !ok(al)) return current;
+  return {
+    ...current,
+    maps: current.maps + maps,
+    streetView: current.streetView + sv,
+    addressLookups: current.addressLookups + al,
+    runs: [...current.runs, runId],
+  };
 }
 
 /** Whether this month's e2e may still make real maps, and the line every result carries about it. */
@@ -1542,10 +1564,93 @@ export function parseMapsLedger(text: string): MapsLedger | null {
     if (typeof o.month !== "string" || !/^\d{4}-\d{2}$/.test(o.month)) return null;
     if (typeof o.maps !== "number" || !Number.isInteger(o.maps) || o.maps < 0) return null;
     if (!Array.isArray(o.runs) || !o.runs.every((r) => typeof r === "string")) return null;
+    // Slice #39.18: a ledger written before it has no Street View or look-up count — they read as zero.
+    const count = (v: unknown): number | null => (v === undefined ? 0 : typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null);
+    const streetView = count(o.streetView);
+    const addressLookups = count(o.addressLookups);
+    if (streetView === null || addressLookups === null) return null;
     const seeded =
       o.seeded && typeof o.seeded.maps === "number" && typeof o.seeded.note === "string" ? { maps: o.seeded.maps, note: o.seeded.note } : undefined;
-    return { month: o.month, maps: o.maps, runs: o.runs, ...(seeded ? { seeded } : {}) };
+    return { month: o.month, maps: o.maps, streetView, addressLookups, runs: o.runs, ...(seeded ? { seeded } : {}) };
   } catch {
     return null;
   }
+}
+
+// ---- the same ceiling for Street View panoramas and address look-ups (Slice #39.18) ----------------
+
+/**
+ * ⚠️ **AND THE SAME FOR GOOGLE'S TWO OTHER CHARGES.** A Street View panorama is billed as „Dynamic Street View" —
+ * 5,000 free a month, then US$14 per 1,000 — and an address look-up as „Geocoding" — 10,000 free a month, then
+ * US$5 per 1,000 (developers.google.com/maps/billing-and-pricing/pricing, read 2026-10-13). Each allowance is its
+ * own, apart from the maps' 10,000, and each is shared with the people using the app. The tests keep to the share
+ * 39.16 gave the maps — 30 % of the allowance — and leave the rest for Adrian and Ciprian. Past a kind's ceiling
+ * the runner sets that kind's variable: the kind is blocked for EVERY test, and a spec that opted in for it is
+ * SKIPPED with the ceiling named, never failed. Change a number here and nowhere else.
+ */
+export const STREET_VIEW_MONTHLY_CEILING = 1_500;
+/** Google's free „Dynamic Street View" panoramas a month, shared by the tests and the app's users. */
+export const STREET_VIEW_FREE_PER_MONTH = 5_000;
+export const ADDRESS_LOOKUPS_MONTHLY_CEILING = 3_000;
+/** Google's free „Geocoding" requests a month, shared by the tests and the app's users. */
+export const ADDRESS_LOOKUPS_FREE_PER_MONTH = 10_000;
+/** Set by the runner for its e2e run when that kind's ceiling is reached; the value is the skipped specs' reason. */
+export const STREET_VIEW_CEILING_ENV = "E2E_STREET_VIEW_CEILING";
+export const ADDRESS_LOOKUPS_CEILING_ENV = "E2E_ADDRESS_LOOKUPS_CEILING";
+
+export type GoogleExtraKind = "streetView" | "addressLookups";
+
+const EXTRA: Record<GoogleExtraKind, { ceiling: number; free: number; counted: string; blocked: string; ceilingName: string; constant: string }> = {
+  streetView: {
+    ceiling: STREET_VIEW_MONTHLY_CEILING,
+    free: STREET_VIEW_FREE_PER_MONTH,
+    counted: "Street View panoramas",
+    blocked: "Street View is blocked for every test and the specs that opted in for it are skipped",
+    ceilingName: "Street View ceiling reached",
+    constant: "STREET_VIEW_MONTHLY_CEILING",
+  },
+  addressLookups: {
+    ceiling: ADDRESS_LOOKUPS_MONTHLY_CEILING,
+    free: ADDRESS_LOOKUPS_FREE_PER_MONTH,
+    counted: "address look-ups",
+    blocked: "address look-ups are blocked for every test and the specs that opted in for them are skipped",
+    ceilingName: "Address look-up ceiling reached",
+    constant: "ADDRESS_LOOKUPS_MONTHLY_CEILING",
+  },
+};
+
+/** The kind's count as it stands for `month`: a ledger of an earlier month counts as nothing. */
+export function extraUsed(ledger: MapsLedger | null, month: string, kind: GoogleExtraKind): number {
+  return ledger && ledger.month === month ? (ledger[kind] ?? 0) : 0;
+}
+
+/** Whether this month's e2e may still let the kind through, and the line every result carries about it. */
+export function extraCeiling(ledger: MapsLedger | null, month: string, kind: GoogleExtraKind): { reached: boolean; used: number; note: string } {
+  const k = EXTRA[kind];
+  const used = extraUsed(ledger, month, kind);
+  const reached = used >= k.ceiling;
+  const fmt = (n: number): string => n.toLocaleString("en-US");
+  const label = k.counted.charAt(0).toUpperCase() + k.counted.slice(1);
+  return {
+    reached,
+    used,
+    note: reached
+      ? `${label} this month (${month}): ${fmt(used)} — the tests' ceiling of ${fmt(k.ceiling)} is reached, so ${k.blocked} until the month ends`
+      : `${label} this month (${month}): ${fmt(used)} of the tests' ceiling of ${fmt(k.ceiling)} — Google's free ${fmt(k.free)} are shared with the people using the app`,
+  };
+}
+
+/** The reason a spec that opted in for the kind shows when it is skipped. */
+export function extraCeilingSkipReason(kind: GoogleExtraKind, used: number, month: string): string {
+  const k = EXTRA[kind];
+  const fmt = (n: number): string => n.toLocaleString("en-US");
+  return `${k.ceilingName}: the tests made ${fmt(used)} ${k.counted} in ${month}, and allow themselves ${fmt(k.ceiling)} a month (scripts/test-runner/protocol.ts → ${k.constant})`;
+}
+
+/** The Street View panoramas and address look-ups one run's log adds up to. */
+export function extrasInLog(lines: readonly MapsLogLine[]): { streetView: number; addressLookups: number } {
+  return {
+    streetView: lines.reduce((n, l) => n + l.streetView, 0),
+    addressLookups: lines.reduce((n, l) => n + l.addressLookups, 0),
+  };
 }

@@ -22,10 +22,20 @@ import {
   type GoogleAllow,
 } from "../../e2e/helpers/google-maps";
 import {
+  ADDRESS_LOOKUPS_CEILING_ENV,
+  ADDRESS_LOOKUPS_FREE_PER_MONTH,
+  ADDRESS_LOOKUPS_MONTHLY_CEILING,
   MAPS_CEILING_ENV,
   MAPS_FREE_PER_MONTH,
   MAPS_MONTHLY_CEILING,
+  STREET_VIEW_CEILING_ENV,
+  STREET_VIEW_FREE_PER_MONTH,
+  STREET_VIEW_MONTHLY_CEILING,
   addToMapsLedger,
+  extraCeiling,
+  extraCeilingSkipReason,
+  extraUsed,
+  extrasInLog,
   mapsCeiling,
   mapsCeilingSkipReason,
   mapsInLog,
@@ -177,14 +187,24 @@ describe("the block stays in force", () => {
     expect(fs.readFileSync(path.join(E2E, "helpers", "test.ts"), "utf8")).toMatch(/^const BLOCK_BY_DEFAULT = true;$/m);
   });
 
-  it("every opt-in is `test.use({ realMaps: true });` with the reason on the same line", () => {
+  it("every opt-in is `test.use({ realMaps: true });` — or, since #39.18, realStreetView / realAddressLookups — alone on its line, with the reason", () => {
     const bad: string[] = [];
     for (const f of files) {
       for (const l of fs.readFileSync(f, "utf8").split(/\r?\n/)) {
-        if (!/realMaps/.test(l)) continue;
-        if (!/^test\.use\(\{ realMaps: true \}\); \/\/ \S.{9,}$/.test(l)) bad.push(`${rel(f)}: ${l.trim()}`);
+        if (!/realMaps|realStreetView|realAddressLookups/.test(l)) continue;
+        if (!/^test\.use\(\{ (realMaps|realStreetView|realAddressLookups): true \}\); \/\/ \S.{9,}$/.test(l)) bad.push(`${rel(f)}: ${l.trim()}`);
       }
     }
+    expect(bad).toEqual([]);
+  });
+
+  it("a spec that opts in for Street View or look-ups opts in for the map too — both come through the Maps JavaScript API", () => {
+    const bad = files
+      .filter((f) => {
+        const text = fs.readFileSync(f, "utf8");
+        return /realStreetView|realAddressLookups/.test(text) && !/^test\.use\(\{ realMaps: true \}\);/m.test(text);
+      })
+      .map(rel);
     expect(bad).toEqual([]);
   });
 });
@@ -192,7 +212,7 @@ describe("the block stays in force", () => {
 // ---- Slice #39.16: the tests' monthly ceiling ------------------------------------------
 
 describe("the month's ceiling on the tests' real maps", () => {
-  const ledger = (over: Partial<MapsLedger> = {}): MapsLedger => ({ month: "2026-11", maps: 0, runs: [], ...over });
+  const ledger = (over: Partial<MapsLedger> = {}): MapsLedger => ({ month: "2026-11", maps: 0, streetView: 0, addressLookups: 0, runs: [], ...over });
 
   it("is 3,000 of Google's free 10,000 — 7,000 left for the people using the app", () => {
     expect(MAPS_MONTHLY_CEILING).toBe(3_000);
@@ -209,10 +229,10 @@ describe("the month's ceiling on the tests' real maps", () => {
 
   it("adds a run once, and starts a new month at zero", () => {
     const a = addToMapsLedger(null, "2026-11", "r1", 24);
-    expect(a).toEqual({ month: "2026-11", maps: 24, runs: ["r1"] });
+    expect(a).toEqual({ month: "2026-11", maps: 24, streetView: 0, addressLookups: 0, runs: ["r1"] });
     expect(addToMapsLedger(a, "2026-11", "r1", 24)).toEqual(a);
-    expect(addToMapsLedger(a, "2026-11", "r2", 4)).toEqual({ month: "2026-11", maps: 28, runs: ["r1", "r2"] });
-    expect(addToMapsLedger(a, "2026-12", "r3", 2)).toEqual({ month: "2026-12", maps: 2, runs: ["r3"] });
+    expect(addToMapsLedger(a, "2026-11", "r2", 4)).toEqual({ month: "2026-11", maps: 28, streetView: 0, addressLookups: 0, runs: ["r1", "r2"] });
+    expect(addToMapsLedger(a, "2026-12", "r3", 2)).toEqual({ month: "2026-12", maps: 2, streetView: 0, addressLookups: 0, runs: ["r3"] });
     expect(addToMapsLedger(a, "2026-11", "r4", -1)).toEqual(a);
     expect(mapsUsed(a, "2026-12")).toBe(0);
   });
@@ -254,9 +274,18 @@ describe("the month's ceiling on the tests' real maps", () => {
   });
 
   it("reads a ledger back, and refuses one that is not", () => {
-    const good = { month: "2026-10", maps: 5, runs: ["a"], seeded: { maps: 3, note: "n" } };
+    const good = { month: "2026-10", maps: 5, streetView: 2, addressLookups: 1, runs: ["a"], seeded: { maps: 3, note: "n" } };
     expect(parseMapsLedger("﻿" + JSON.stringify(good))).toEqual(good);
-    expect(parseMapsLedger(JSON.stringify({ month: "2026-10", maps: 5, runs: ["a"] }))).toEqual({ month: "2026-10", maps: 5, runs: ["a"] });
+    // A ledger written before #39.18 — October's, on Adrian's laptop — reads zero for the two new counts.
+    expect(parseMapsLedger(JSON.stringify({ month: "2026-10", maps: 5, runs: ["a"] }))).toEqual({
+      month: "2026-10",
+      maps: 5,
+      streetView: 0,
+      addressLookups: 0,
+      runs: ["a"],
+    });
+    expect(parseMapsLedger(JSON.stringify({ ...good, streetView: -1 }))).toBeNull();
+    expect(parseMapsLedger(JSON.stringify({ ...good, addressLookups: "2" }))).toBeNull();
     expect(parseMapsLedger("{")).toBeNull();
     expect(parseMapsLedger(JSON.stringify({ ...good, month: "Oct" }))).toBeNull();
     expect(parseMapsLedger(JSON.stringify({ ...good, maps: -1 }))).toBeNull();
@@ -270,7 +299,7 @@ describe("the month's ceiling on the tests' real maps", () => {
       .replace(/^\s*\/\/.*$/gm, "");
     expect(code).toMatch(/const ceilingReached = process\.env\[MAPS_CEILING_ENV\];/);
     expect(code).toMatch(/const letThrough = \(realMaps \|\| !BLOCK_BY_DEFAULT\) && !ceilingReached;/);
-    expect(code).toMatch(/if \(realMaps && ceilingReached\) \{[\s\S]*?testInfo\.skip\(true, ceilingReached\);/);
+    expect(code).toMatch(/const skipFor = \(realMaps && ceilingReached\) \|\| [^;]*;\s*if \(skipFor\) \{[\s\S]*?testInfo\.skip\(true, skipFor\);/);
     expect(MAPS_CEILING_ENV).toBe("E2E_MAPS_CEILING");
   });
 
@@ -280,7 +309,7 @@ describe("the month's ceiling on the tests' real maps", () => {
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
     expect(code).toMatch(/if \(ceiling\.reached\) env\[MAPS_CEILING_ENV\] = mapsCeilingSkipReason\(ceiling\.used, month\);/);
-    expect(code).toMatch(/notes\.push\(recordMaps\(month, runId, mapsMade\)\);/);
+    expect(code).toMatch(/notes\.push\(\.\.\.recordMaps\(month, runId, made\)\);/);
   });
 });
 
@@ -473,5 +502,112 @@ describe("streetViewLookupsNote — the second note on the runner's e2e step", (
       line({ spec: "map/b.spec.ts", realMaps: true, addressLookups: 1 }),
     ]);
     expect(note).toMatch(/; ⚠️ Street View made by specs that did not opt in: map\/a\.spec\.ts; ⚠️ address look-ups made by specs that did not opt in: map\/b\.spec\.ts$/);
+  });
+});
+
+describe("the block by kind — a map spec gets the map, and nothing else", () => {
+  const code = fs
+    .readFileSync(path.join(E2E, "helpers", "test.ts"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+
+  it("lets Street View and look-ups through only to a spec that opted in for that kind, under its month's ceiling", () => {
+    expect(code).toMatch(/const letStreetView = letThrough && \(realStreetView \|\| !BLOCK_BY_DEFAULT\) && !streetViewCeiling;/);
+    expect(code).toMatch(/const letLookups = letThrough && \(realAddressLookups \|\| !BLOCK_BY_DEFAULT\) && !lookupsCeiling;/);
+    expect(code).toMatch(/googleCounterScript\(\{ streetView: letStreetView, addressLookups: letLookups \}\)/);
+  });
+
+  it("skips — never fails — a spec whose kind's month is used up", () => {
+    expect(code).toMatch(/\(realStreetView && streetViewCeiling\) \|\| \(realAddressLookups && lookupsCeiling\)/);
+    expect(code).toMatch(/const streetViewCeiling = process\.env\[STREET_VIEW_CEILING_ENV\];/);
+    expect(code).toMatch(/const lookupsCeiling = process\.env\[ADDRESS_LOOKUPS_CEILING_ENV\];/);
+  });
+
+  it("refuses an opt-in for Street View or look-ups without the map they come through", () => {
+    expect(code).toMatch(/if \(\(realStreetView \|\| realAddressLookups\) && !realMaps\) \{\s*throw new Error\(/);
+  });
+});
+
+describe("the month's ceilings on Street View panoramas and address look-ups", () => {
+  const ledger = (over: Partial<MapsLedger> = {}): MapsLedger => ({ month: "2026-11", maps: 0, streetView: 0, addressLookups: 0, runs: [], ...over });
+
+  it("is 30 % of each kind's own free allowance — the share 39.16 gave the maps", () => {
+    expect(STREET_VIEW_FREE_PER_MONTH).toBe(5_000);
+    expect(STREET_VIEW_MONTHLY_CEILING).toBe(1_500);
+    expect(ADDRESS_LOOKUPS_FREE_PER_MONTH).toBe(10_000);
+    expect(ADDRESS_LOOKUPS_MONTHLY_CEILING).toBe(3_000);
+    expect(MAPS_MONTHLY_CEILING / MAPS_FREE_PER_MONTH).toBe(0.3);
+    expect(STREET_VIEW_MONTHLY_CEILING / STREET_VIEW_FREE_PER_MONTH).toBe(0.3);
+    expect(ADDRESS_LOOKUPS_MONTHLY_CEILING / ADDRESS_LOOKUPS_FREE_PER_MONTH).toBe(0.3);
+    expect(STREET_VIEW_CEILING_ENV).toBe("E2E_STREET_VIEW_CEILING");
+    expect(ADDRESS_LOOKUPS_CEILING_ENV).toBe("E2E_ADDRESS_LOOKUPS_CEILING");
+  });
+
+  it("adds each run's panoramas and look-ups to the month, once", () => {
+    const a = addToMapsLedger(null, "2026-11", "r1", 4, { streetView: 2, addressLookups: 1 });
+    expect(a).toEqual({ month: "2026-11", maps: 4, streetView: 2, addressLookups: 1, runs: ["r1"] });
+    expect(addToMapsLedger(a, "2026-11", "r1", 4, { streetView: 2 })).toEqual(a);
+    expect(addToMapsLedger(a, "2026-11", "r2", 0, { streetView: -1 })).toEqual(a);
+    expect(addToMapsLedger(a, "2026-11", "r2", 0, { addressLookups: 3 })).toMatchObject({ streetView: 2, addressLookups: 4 });
+    expect(extraUsed(a, "2026-11", "streetView")).toBe(2);
+    expect(extraUsed(a, "2026-12", "streetView")).toBe(0);
+  });
+
+  it("October's two new counts start at zero: its ledger was written before them", () => {
+    const october = parseMapsLedger(JSON.stringify({ month: "2026-10", maps: 14_598, runs: [], seeded: { maps: 14_598, note: "n" } }));
+    expect(extraCeiling(october, "2026-10", "streetView")).toMatchObject({ reached: false, used: 0 });
+    expect(extraCeiling(october, "2026-10", "addressLookups")).toMatchObject({ reached: false, used: 0 });
+  });
+
+  it("every result says where each kind's month stands", () => {
+    expect(extraCeiling(ledger({ streetView: 1_499 }), "2026-11", "streetView")).toEqual({
+      reached: false,
+      used: 1_499,
+      note: "Street View panoramas this month (2026-11): 1,499 of the tests' ceiling of 1,500 — Google's free 5,000 are shared with the people using the app",
+    });
+    expect(extraCeiling(ledger({ addressLookups: 12 }), "2026-11", "addressLookups").note).toBe(
+      "Address look-ups this month (2026-11): 12 of the tests' ceiling of 3,000 — Google's free 10,000 are shared with the people using the app",
+    );
+  });
+
+  it("is reached at the ceiling, kind by kind — the maps' own ceiling is not the others'", () => {
+    const sv = extraCeiling(ledger({ streetView: 1_500 }), "2026-11", "streetView");
+    expect(sv.reached).toBe(true);
+    expect(sv.note).toBe(
+      "Street View panoramas this month (2026-11): 1,500 — the tests' ceiling of 1,500 is reached, so Street View is blocked for every test and the specs that opted in for it are skipped until the month ends",
+    );
+    expect(extraCeiling(ledger({ streetView: 1_500 }), "2026-11", "addressLookups").reached).toBe(false);
+    expect(extraCeiling(ledger({ maps: 99_999 }), "2026-11", "streetView").reached).toBe(false);
+    expect(extraCeiling(ledger({ addressLookups: 3_000 }), "2026-11", "addressLookups").note).toContain(
+      "address look-ups are blocked for every test and the specs that opted in for them are skipped",
+    );
+  });
+
+  it("the skip reasons name the ceiling and where it is set", () => {
+    expect(extraCeilingSkipReason("streetView", 1_512, "2026-11")).toBe(
+      "Street View ceiling reached: the tests made 1,512 Street View panoramas in 2026-11, and allow themselves 1,500 a month (scripts/test-runner/protocol.ts → STREET_VIEW_MONTHLY_CEILING)",
+    );
+    expect(extraCeilingSkipReason("addressLookups", 3_000, "2026-11")).toBe(
+      "Address look-up ceiling reached: the tests made 3,000 address look-ups in 2026-11, and allow themselves 3,000 a month (scripts/test-runner/protocol.ts → ADDRESS_LOOKUPS_MONTHLY_CEILING)",
+    );
+  });
+
+  it("adds up a run's log, kind by kind", () => {
+    expect(extrasInLog([])).toEqual({ streetView: 0, addressLookups: 0 });
+    expect(extrasInLog([line({ streetView: 2 }), line({ addressLookups: 3 }), line({ streetView: 1, addressLookups: 1 })])).toEqual({
+      streetView: 3,
+      addressLookups: 4,
+    });
+  });
+
+  it("the runner sets each kind's variable from its own ceiling, before the run", () => {
+    const runner = fs
+      .readFileSync(path.join(ROOT, "scripts", "test-runner", "runner.ts"), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(runner).toMatch(/if \(svCeiling\.reached\) env\[STREET_VIEW_CEILING_ENV\] = extraCeilingSkipReason\("streetView", svCeiling\.used, month\);/);
+    expect(runner).toMatch(
+      /if \(alCeiling\.reached\) env\[ADDRESS_LOOKUPS_CEILING_ENV\] = extraCeilingSkipReason\("addressLookups", alCeiling\.used, month\);/,
+    );
   });
 });
