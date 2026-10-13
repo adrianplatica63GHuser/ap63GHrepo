@@ -215,6 +215,8 @@ const TIMEOUT = {
   aiScore: 40 * MIN,
   // A dump, 65 MB of pages hashed twice, into OneDrive (Slice #37.11).
   backup: 15 * MIN,
+  // A restore, three seed runs of a few minutes each (Slice #39.21).
+  seedRehearsal: 45 * MIN,
   // A throwaway postgis, a restore, the pages, and a cold next dev for four lists.
   drill: 30 * MIN,
   measure: 5 * MIN,
@@ -994,6 +996,21 @@ async function stepRestoreDrill(id: string, logFile: string): Promise<StepOutcom
 }
 
 /**
+ * `scripts/backup/archive.ts seed-rehearsal` (Slice #39.21) — the newest backup restored into the drill's throwaway
+ * database, the big dev seed run, refused again and removed, every table counted. Fixed argv; the id is the
+ * runner's own. Exit 0 passed, 1 failed, 2 could not run.
+ */
+async function stepSeedRehearsal(id: string, logFile: string): Promise<StepOutcome> {
+  const r = await runLogged(NODE, [BIN.tsx, ARCHIVE_SCRIPT, "seed-rehearsal", "--result-id", id], logFile, TIMEOUT.seedRehearsal);
+  return {
+    status: r.timedOut || r.exitCode === null ? "error" : r.exitCode === 0 ? "passed" : r.exitCode === 1 ? "failed" : "error",
+    exitCode: r.exitCode,
+    summary: (r.timedOut ? "timed out; " : "") + summariseStep("seed-rehearsal", r.text, r.exitCode),
+    notes: [`the coverage table and every count are the step's log: ${rel(logFile)}`],
+  };
+}
+
+/**
  * `scripts/testing/measure-field-lengths.ts` — three read-only SELECTs, the
  * table printed to the step's log. Fixed argv. Exit 0 measured, 2 could not run.
  */
@@ -1247,6 +1264,9 @@ async function runRequest(req: RunRequest, receivedAt: string): Promise<void> {
           break;
         case "measure-fields":
           out = await stepMeasureFields(logFile);
+          break;
+        case "seed-rehearsal":
+          out = await stepSeedRehearsal(req.id, logFile);
           break;
       }
     } catch (e) {

@@ -7,6 +7,7 @@
  *   node node_modules/tsx/dist/cli.mjs scripts/backup/archive.ts backup
  *   node node_modules/tsx/dist/cli.mjs scripts/backup/archive.ts drill
  *   node node_modules/tsx/dist/cli.mjs scripts/backup/archive.ts where
+ *   node node_modules/tsx/dist/cli.mjs scripts/backup/archive.ts seed-rehearsal   (Slice #39.21)
  *
  * Normally run by the test runner — its `backup` and `restore-drill` sequences,
  * the backup at the start of `migrate-local`, and its own daily and monthly
@@ -31,6 +32,13 @@
  *
  * Exit: backup 0 written · 2 could not. drill 0 passed · 1 failed (the copy is
  * not the archive) · 2 could not run. The last line is `BACKUP: …` or `DRILL: …`.
+ *
+ * `seed-rehearsal` (Slice #39.21) uses the drill's throwaway database the same way — restored from the newest
+ * backup, removed at the end, pass or fail — and runs the big dev seed against it, then a second seed, then
+ * `--remove`, counting every table before and after. The seed's manifest goes to a scratch folder under
+ * `.test-runner\seed-rehearsal\`, never the repo's own, and its environment is the drill app's: every `.env`
+ * key blanked, DATABASE_URL the throwaway's. Exit 0 passed · 1 failed · 2 could not run; last line
+ * `SEED-REHEARSAL: …`.
  */
 import { spawn, spawnSync, type SpawnSyncReturns } from "child_process";
 import crypto from "crypto";
@@ -60,6 +68,8 @@ import {
   drillAppEnv,
   envFileKeys,
   reconcileDrill,
+  SEED_REHEARSAL_SCRIPT,
+  seedRehearsalVerdict,
   selectPrune,
   validateManifest,
   type AppProbe,
@@ -566,6 +576,114 @@ async function drill(resultId: string | null): Promise<number> {
   }
 }
 
+// ---- seed rehearsal (Slice #39.21) ------------------------------------------------------------
+
+const SEED_WORK = path.join(CHANNEL, "seed-rehearsal");
+const SEED_TIMEOUT_MS = 30 * 60_000;
+
+function runSeed(env: Record<string, string>, args: string[]): { exit: number | null; text: string } {
+  const r = spawnSync(process.execPath, [path.join(REPO, "node_modules", "tsx", "dist", "cli.mjs"), SEED_REHEARSAL_SCRIPT, ...args], {
+    cwd: REPO,
+    env: env as NodeJS.ProcessEnv,
+    encoding: "utf8",
+    maxBuffer: 64 * MB,
+    timeout: SEED_TIMEOUT_MS,
+    windowsHide: true,
+  });
+  const text = `${r.stdout ?? ""}${r.stderr ?? ""}${r.error ? `\n${r.error.message}` : ""}`;
+  return { exit: r.status, text };
+}
+
+async function seedRehearsal(resultId: string | null): Promise<number> {
+  const { root, why } = backupRoot();
+  if (!root) {
+    say(`SEED-REHEARSAL: could not run — ${why}`);
+    return 2;
+  }
+  const newest = listBackups(root)[0];
+  if (!newest) {
+    say(`SEED-REHEARSAL: could not run — no backup under ${root} yet; take one first (claude.sh request backup)`);
+    return 2;
+  }
+  const password = crypto.randomBytes(12).toString("hex");
+  const work = path.join(SEED_WORK, resultId ?? newest.name);
+  let started = false;
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(newest.dir, MANIFEST_FILE), "utf8")) as unknown;
+    const v = validateManifest(raw);
+    if (!v.ok) stop(`the manifest of ${newest.name} is not valid: ${v.problems.slice(0, 3).join("; ")}`);
+    say(`seed-rehearsal: restoring ${newest.name} (${newest.dir})`);
+    docker(["rm", "-f", "-v", DRILL_CONTAINER]); // a leftover from a run that died; ours by name
+    if (await portIsOpen(DRILL_PORT)) stop(`port ${DRILL_PORT} is in use by something that is not ours`);
+    const run = docker(["run", "-d", "--name", DRILL_CONTAINER, "--tmpfs", "/var/lib/postgresql/data", "-e", `POSTGRES_PASSWORD=${password}`, "-p", `127.0.0.1:${DRILL_PORT}:5432`, DRILL_IMAGE]);
+    if (run.status !== 0) stop(`docker run exited ${run.status}: ${lastLines(run.stderr)}`);
+    started = true;
+    let ready = false;
+    for (let i = 1; i <= 180 && !ready; i++) {
+      await sleep(1_000);
+      const p = drillPsql(password, "postgres", ["-c", "SELECT 1"]);
+      ready = p.status === 0 && p.stdout.trim() === "1";
+    }
+    if (!ready) stop(`${DRILL_CONTAINER} did not accept connections within 180 s`);
+    const create = drillPsql(password, "postgres", ["-c", `CREATE DATABASE ${DRILL_DATABASE} TEMPLATE template0`]);
+    if (create.status !== 0) stop(`CREATE DATABASE exited ${create.status}: ${lastLines(create.stderr)}`);
+    const cp = docker(["cp", path.join(newest.dir, v.manifest.dump.file), `${DRILL_CONTAINER}:/tmp/restore.dump`]);
+    if (cp.status !== 0) stop(`docker cp of the dump exited ${cp.status}: ${lastLines(cp.stderr)}`);
+    const restore = docker(["exec", "-e", `PGPASSWORD=${password}`, DRILL_CONTAINER, "pg_restore", "-h", "127.0.0.1", "-U", "postgres", "-d", DRILL_DATABASE, "--no-owner", "--no-privileges", "/tmp/restore.dump"]);
+    const restoreErrors = (restore.stderr ?? "").split(/\r?\n/).filter((l) => /^pg_restore: error:/.test(l));
+    if (restore.status !== 0 && restoreErrors.length === 0) restoreErrors.push(`pg_restore exited ${restore.status}: ${lastLines(restore.stderr)}`);
+    say(`seed-rehearsal: pg_restore ${restore.status === 0 ? "clean" : `exit ${restore.status}, ${restoreErrors.length} error(s)`}`);
+
+    const before = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
+    removeTree(work);
+    fs.mkdirSync(work, { recursive: true });
+    const keys: string[] = [];
+    for (const f of [".env", ".env.local", ".env.development", ".env.development.local"]) {
+      const p = path.join(REPO, f);
+      if (fs.existsSync(p)) keys.push(...envFileKeys(fs.readFileSync(p, "utf8")));
+    }
+    const url = `postgres://postgres:${password}@127.0.0.1:${DRILL_PORT}/${DRILL_DATABASE}`;
+    const env = { ...drillAppEnv(process.env, [...new Set(keys)], url, DRILL_DIST_DIR), GA40_SEED_WORKDIR: work };
+
+    const t0 = Date.now();
+    const seed = runSeed(env, []);
+    say(`seed-rehearsal: the seed exited ${seed.exit} in ${((Date.now() - t0) / 1000).toFixed(0)} s — its output:`);
+    say(seed.text.trimEnd());
+    const again = runSeed(env, []);
+    say(`seed-rehearsal: a second seed exited ${again.exit}: ${lastLines(again.text, 1)}`);
+    const t1 = Date.now();
+    const removed = runSeed(env, ["--remove"]);
+    say(`seed-rehearsal: --remove exited ${removed.exit} in ${((Date.now() - t1) / 1000).toFixed(0)} s: ${lastLines(removed.text, 2)}`);
+    const after = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
+
+    const report = seedRehearsalVerdict({
+      backup: newest.name,
+      restoreErrors,
+      seedExit: seed.exit,
+      seedOutput: seed.text,
+      reseedExit: again.exit,
+      reseedOutput: again.text,
+      removeExit: removed.exit,
+      before,
+      after,
+    });
+    for (const p of report.problems) say(`  PROBLEM ${p}`);
+    say(`SEED-REHEARSAL: ${report.line}`);
+    return report.verdict === "passed" ? 0 : 1;
+  } catch (e) {
+    const msg = e instanceof Stop ? e.message : ((e as Error).stack ?? String(e));
+    say(`SEED-REHEARSAL: could not run — ${msg.split(/\r?\n/)[0]}`);
+    if (!(e instanceof Stop)) process.stderr.write(`${msg}\n`);
+    return 2;
+  } finally {
+    if (started) {
+      const rm = spawnSync("docker", ["rm", "-f", "-v", DRILL_CONTAINER], { encoding: "utf8", windowsHide: true });
+      say(`seed-rehearsal: ${DRILL_CONTAINER} ${rm.status === 0 ? "removed" : `NOT removed (docker rm exit ${rm.status}) — docker rm -f -v ${DRILL_CONTAINER}`}`);
+    }
+    removeTree(work);
+  }
+}
+
 // ---- where -----------------------------------------------------------------------------------
 
 function where(): number {
@@ -593,9 +711,13 @@ function argValue(name: string): string | null {
 if (require.main === module) {
   const mode = process.argv[2];
   const resultId = argValue("--result-id");
-  const run = mode === "backup" ? backup() : mode === "drill" ? drill(resultId) : mode === "where" ? Promise.resolve(where()) : null;
+  const run =
+    mode === "backup" ? backup() :
+    mode === "drill" ? drill(resultId) :
+    mode === "seed-rehearsal" ? seedRehearsal(resultId) :
+    mode === "where" ? Promise.resolve(where()) : null;
   if (run === null) {
-    process.stderr.write("usage: archive.ts backup | drill [--result-id <id>] | where\n");
+    process.stderr.write("usage: archive.ts backup | drill [--result-id <id>] | seed-rehearsal [--result-id <id>] | where\n");
     process.exit(2);
   } else {
     void run.then(

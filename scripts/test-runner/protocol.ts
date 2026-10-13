@@ -88,6 +88,10 @@
  * (`decideAutoRegression`) — under an
  * `auto-` id, and its date survives result pruning in `regression.json`.
  *
+ * Slice #39.21 added `seed-rehearsal`: the newest backup restored into the drill's throwaway database, the big dev
+ * seed (scripts/seed-dev-data-big) run against it, refused a second time, removed, and every table counted before
+ * and after — so the seed is rehearsed on the archive without the archive leaving this laptop.
+ *
  * Slice #37.12 added `measure-fields`: `scripts/testing/measure-field-lengths.ts`,
  * three SELECTs in a read-only session that measure how long the values behind
  * every field on the detail screens really are, and print the table
@@ -140,6 +144,7 @@ export const STEPS = [
   "backup",
   "restore-drill",
   "measure-fields",
+  "seed-rehearsal",
 ] as const;
 export type StepName = (typeof STEPS)[number];
 
@@ -170,6 +175,8 @@ export const SEQUENCES = {
   backup: ["backup"],
   "restore-drill": ["restore-drill"],
   "measure-fields": ["measure-fields"],
+  // Slice #39.21: the big dev seed run, refused a second time and removed, on a restored copy of the newest backup.
+  "seed-rehearsal": ["seed-rehearsal"],
 } as const satisfies Record<string, readonly StepName[]>;
 
 export type SequenceName = keyof typeof SEQUENCES;
@@ -742,6 +749,11 @@ export function summariseStep(step: StepName, text: string, exitCode: number | n
     case "restore-drill": {
       // `scripts/backup/archive.ts drill` ends with one `DRILL:` line. (Slice #37.11)
       body = (lines.filter((l) => l.startsWith("DRILL:")).pop() ?? "").replace(/^DRILL:\s*/, "");
+      break;
+    }
+    case "seed-rehearsal": {
+      // `scripts/backup/archive.ts seed-rehearsal` ends with one `SEED-REHEARSAL:` line. (Slice #39.21)
+      body = (lines.filter((l) => l.startsWith("SEED-REHEARSAL:")).pop() ?? "").replace(/^SEED-REHEARSAL:\s*/, "");
       break;
     }
     case "measure-fields": {

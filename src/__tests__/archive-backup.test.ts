@@ -37,6 +37,7 @@ import {
   nextAutoRun,
   parseBackupFolderName,
   reconcileDrill,
+  seedRehearsalVerdict,
   selectPrune,
   validateManifest,
   type DrillObservation,
@@ -437,5 +438,44 @@ describe("the runner's sequences (Slice #37.11)", () => {
   it("each step's summary is its script's last BACKUP: or DRILL: line", () => {
     expect(summariseStep("backup", "copying\nBACKUP: 2026-09-28T162803Z — 48 tables\n", 0)).toBe("2026-09-28T162803Z — 48 tables (exit 0)");
     expect(summariseStep("restore-drill", "DRILL: FAILED — backup x: …\n", 1)).toBe("FAILED — backup x: … (exit 1)");
+  });
+});
+
+describe("the big dev seed's rehearsal on a restored copy (Slice #39.21)", () => {
+  const t = (table: string, rows: number) => ({ table, rows });
+  const before = [t("public.person", 60), t("public.property", 40), t("public.lookup_person_role", 41)];
+  const ok = {
+    backup: "2026-10-13T172633Z",
+    restoreErrors: [] as string[],
+    seedExit: 0,
+    seedOutput: "✓ Persoane fizice  = 450  450\nToate cele 45 cerințe sunt îndeplinite.\n",
+    reseedExit: 1,
+    reseedOutput: "SEED FAILED: A previous big seed is still recorded in .test-runner/seed-rehearsal/x/manifest.json. Run with --remove first.",
+    removeExit: 0,
+    before,
+    after: [t("public.person", 60), t("public.property", 40), t("public.lookup_person_role", 49)],
+  };
+
+  it("is its own sequence, summarised by its SEED-REHEARSAL: line", () => {
+    expect(SEQUENCES["seed-rehearsal"]).toEqual(["seed-rehearsal"]);
+    expect(summariseStep("seed-rehearsal", "restoring\nSEED-REHEARSAL: passed — backup x: …\n", 0)).toBe("passed — backup x: … (exit 0)");
+  });
+
+  it("passes on a clean seed, a refused second seed and every table back — a lookup table may only grow", () => {
+    const v = seedRehearsalVerdict(ok);
+    expect(v.verdict).toBe("passed");
+    expect(v.line).toMatch(/all 45 coverage lines; a second seed was refused; --remove brought every table back \(8 reference rows kept\)/);
+  });
+
+  it("fails on an unmet coverage line, a second seed let through, a table not back, a lookup that shrank", () => {
+    const unmet = seedRehearsalVerdict({ ...ok, seedExit: 1, seedOutput: "✗ PF cu CNP  ≥ 90 %  400 / 450 (88.9 %)\n" });
+    expect(unmet.verdict).toBe("failed");
+    expect(unmet.problems.join("; ")).toMatch(/the seed exited 1; coverage not met: PF cu CNP/);
+    expect(seedRehearsalVerdict({ ...ok, reseedExit: 0 }).problems).toEqual(["a second seed was not refused"]);
+    expect(seedRehearsalVerdict({ ...ok, after: [t("public.person", 61), t("public.property", 40), t("public.lookup_person_role", 41)] }).problems).toEqual([
+      "public.person: 60 → 61 after --remove",
+    ]);
+    expect(seedRehearsalVerdict({ ...ok, after: [t("public.person", 60), t("public.property", 40), t("public.lookup_person_role", 40)] }).verdict).toBe("failed");
+    expect(seedRehearsalVerdict({ ...ok, removeExit: 2 }).problems).toEqual(["--remove exited 2"]);
   });
 });

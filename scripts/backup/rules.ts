@@ -484,3 +484,61 @@ export function drillAppEnv(
   env.NO_COLOR = "1";
   return env;
 }
+
+// ---- the big dev seed's rehearsal on a restored copy (Slice #39.21) -------------------------
+
+/**
+ * `seed-rehearsal`: the newest backup restored into the drill's throwaway database (5434, no volume), the big dev
+ * seed run against it, a second seed (which must be refused), `--remove`, and the tables counted before and
+ * after. The archive's data never leaves this laptop — which is why this is a runner sequence: the cloud sandbox
+ * may not hold a copy of the archive (2026-10-13, refused twice).
+ */
+export const SEED_REHEARSAL_SCRIPT = "scripts/seed-dev-data-big/seed.ts";
+
+export interface SeedRehearsalObservation {
+  backup: string;
+  restoreErrors: readonly string[];
+  seedExit: number | null;
+  seedOutput: string;
+  reseedExit: number | null;
+  reseedOutput: string;
+  removeExit: number | null;
+  before: readonly TableCount[];
+  after: readonly TableCount[];
+}
+
+/**
+ * Passed when the seed ran clean with every coverage line met, a second seed was refused, and `--remove` brought
+ * every table back to its count — the lookup tables excepted, which may only GROW (the seed's Reference Data is
+ * additive and kept on purpose).
+ */
+export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "passed" | "failed"; line: string; problems: string[] } {
+  const problems: string[] = [];
+  for (const e of o.restoreErrors.slice(0, 3)) problems.push(`restore: ${e}`);
+  const met = /Toate cele (\d+) cerințe sunt îndeplinite\./.exec(o.seedOutput);
+  if (o.seedExit !== 0) problems.push(`the seed exited ${o.seedExit ?? "without an exit code"}`);
+  if (!met) {
+    const unmet = o.seedOutput.split(/\r?\n/).filter((l) => l.startsWith("✗")).map((l) => l.slice(2).trim());
+    problems.push(unmet.length ? `coverage not met: ${unmet.slice(0, 5).join("; ")}` : "the seed printed no coverage table");
+  }
+  if (o.reseedExit === 0 || !/A previous big seed is still recorded/.test(o.reseedOutput)) problems.push("a second seed was not refused");
+  if (o.removeExit !== 0) problems.push(`--remove exited ${o.removeExit ?? "without an exit code"}`);
+  const a = new Map(o.before.map((t) => [t.table, t.rows]));
+  let kept = 0;
+  for (const t of o.after) {
+    const was = a.get(t.table);
+    if (was === t.rows) continue;
+    if (/^public\.lookup_/.test(t.table) && was !== undefined && t.rows > was) {
+      kept += t.rows - was;
+      continue;
+    }
+    problems.push(`${t.table}: ${was ?? "missing"} → ${t.rows} after --remove`);
+  }
+  for (const t of o.before) if (!o.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after --remove`);
+  if (problems.length > 0) return { verdict: "failed", line: `FAILED — backup ${o.backup}: ${problems.slice(0, 4).join("; ")}`, problems };
+  return {
+    verdict: "passed",
+    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)`,
+    problems,
+  };
+}
