@@ -14,7 +14,7 @@
 import type { Rng } from "./rng";
 import { cuiDigits, makeCui } from "./identifiers";
 import { ageAt, yearOf } from "./dates";
-import { LOCALITIES, type Locality } from "./names";
+import { firstNamesFor, LOCALITIES, SURNAMES, type Locality } from "./names";
 import { TODAY, type FamilyPlan } from "./families";
 import { asciiSlug, NOTE_MARKER, type Address, type NaturalDetails } from "./persons";
 
@@ -23,6 +23,12 @@ export type CompanyType = (typeof COMPANY_TYPES)[number];
 
 /** How many companies may go without CUI, phone and e-mail. */
 export const NO_DATA_MAX = 30;
+/**
+ * Notaries' offices whose notary is not one of the seed's persons (#39.23): enough of them that 760 notarial
+ * documents fit with no office past 15 rows on „Legături". Founded 1991–2012, most of them early, so the
+ * 1990s' contracts have a notary too.
+ */
+export const EXTRA_NOTARY_OFFICES = 50;
 /** No person represents more than this many companies. */
 export const MAX_REPRESENTED = 4;
 /** The share of companies with a representative the generator aims at (Adrian asked for at least half). */
@@ -103,12 +109,20 @@ export function generateCompanies(r: Rng, plan: FamilyPlan, natural: NaturalDeta
     ...[...professionals("avocat în Baroul Ilfov"), ...professionals("avocată în Baroul Ilfov")].map((k): Office => ({ type: "Altele", phrase: "Cabinet de avocatură", name: (n) => `Cabinet de Avocat ${surnameNow(n)} ${n.firstName}`, does: "asistență juridică în litigii imobiliare și succesiuni", owner: k })),
     ...professionals("expert cadastral autorizat").map((k): Office => ({ type: "PFA", phrase: "Persoană fizică autorizată", name: (n) => `${surnameNow(n)} ${n.firstName} — Expert Cadastru PFA`, does: "lucrări de cadastru, intabulări și planuri de amplasament", owner: k })),
   ];
+  // offices of notaries who are not persons of the seed: a name, no representative
+  const invented = Array.from({ length: EXTRA_NOTARY_OFFICES }, () => {
+    const sex = r.chance(0.55) ? "FEMALE" : "MALE";
+    return `Biroul Individual Notarial ${r.pick(SURNAMES)} ${r.pick(firstNamesFor(sex, r.int(1945, 1980)))}`;
+  });
 
   for (let i = 0; i < total; i++) {
     const office = offices[i];
-    const type: CompanyType = office?.type ?? r.weighted(TYPE_WEIGHTS);
-    // an office opens once its professional is 25; any other company in 1991–2024
-    const founded = office ? r.int(Math.max(1991, yearOf(byKey.get(office.owner)!.dob) + 25), 2024) : r.int(1991, 2024);
+    const notaryOffice = !office ? invented[i - offices.length] : undefined;
+    const type: CompanyType = office?.type ?? (notaryOffice ? "Altele" : r.weighted(TYPE_WEIGHTS));
+    // an office opens once its professional is 25; an invented notary's in 1991–2012; any other company in 1991–2024
+    const founded = office
+      ? r.int(Math.max(1991, yearOf(byKey.get(office.owner)!.dob) + 25), 2024)
+      : notaryOffice ? r.weighted([[r.int(1991, 1996), 50], [r.int(1997, 2012), 50]] as [number, number][]) : r.int(1991, 2024);
     const domain = r.pick(DOMAINS);
     const reps: string[] = [];
     let name = "";
@@ -119,6 +133,9 @@ export function generateCompanies(r: Rng, plan: FamilyPlan, natural: NaturalDeta
       name = office.name(n);
       does = office.does;
       reps.push(office.owner);
+    } else if (notaryOffice) {
+      name = notaryOffice;
+      does = "servicii notariale: contracte de vânzare, succesiuni, procuri";
     } else if (type === "PFA" || type === "II" || type === "IF") {
       // owned by a person of the seed, who represents it
       const owners = adultsAt(founded).filter((p) => canRepresent(p.key));
@@ -198,7 +215,7 @@ export function generateCompanies(r: Rng, plan: FamilyPlan, natural: NaturalDeta
       email = `${r.pick(["office", "contact", "secretariat"])}.${slug.slice(0, 24)}@exemplu.ro`;
     }
     const where = hq.locality === "București" ? "București" : hq.locality;
-    const notes = `${office?.phrase ?? typePhrase(type)} cu sediul în ${where}, înființată în ${founded}; se ocupă de ${does}.${missing ? " Date de contact necunoscute, dosar vechi." : ""} ${NOTE_MARKER}`;
+    const notes = `${office?.phrase ?? (notaryOffice ? "Birou notarial" : typePhrase(type))} cu sediul în ${where}, înființată în ${founded}; se ocupă de ${does}.${missing ? " Date de contact necunoscute, dosar vechi." : ""} ${NOTE_MARKER}`;
     out.push({
       key: `J${String(i + 1).padStart(3, "0")}`,
       name,

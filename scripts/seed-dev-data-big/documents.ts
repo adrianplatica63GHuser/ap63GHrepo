@@ -32,9 +32,12 @@ export const DOCUMENT_TOTAL = 1050;
 export const CONTRACTS = 430;
 export const ACTS = 220;
 export const FIRST_DATE = "1990-01-01";
-/** Nobody is on more documents than this — the notaries and the busiest companies come closest. */
+/** Nobody is on more documents than this (39.22's Ask first 2) — „Legături"'s 15 below is the tighter of the two. */
 export const MAX_DOCS_PER_PARTY = 25;
-/** „Legături" for a natural person who is not a notary: family + properties + documents, kept at or under this. */
+/**
+ * „Legături" for every person and company — family + properties + documents — never past this (#39.23: the
+ * generator keeps every object at 15 or fewer rows; nothing is deleted afterwards to hide one that went over).
+ */
 export const MAX_LINKS = 15;
 /** The share of contracts whose form carries the four fields, price, currency and date of payment. */
 export const FORM_SHARE = 0.75;
@@ -184,12 +187,11 @@ class Docs {
     return !!c && c.founded <= yearOf(date);
   }
 
-  /** Room for one more document: never past 25, and a non-notary person never past 15 links. */
+  /** Room for one more document: never past 25 documents, and nobody — notary or company included — past 15 links. */
   room(k: string, extra = 1): boolean {
     const docs = this.docsOf.get(k) ?? 0;
     if (docs + extra > MAX_DOCS_PER_PARTY) return false;
-    if (this.persons.has(k) && !this.isNotary(k)) return (this.links.get(k) ?? 0) + extra <= MAX_LINKS;
-    return true;
+    return (this.links.get(k) ?? 0) + extra <= MAX_LINKS;
   }
 
   takeQuota(type: string): boolean {
@@ -226,10 +228,9 @@ class Docs {
   add(d: Omit<DocPlan, "key" | "notes"> & { notes?: string }): DocPlan {
     const doc: DocPlan = { ...d, key: `D${String(this.out.length + 1).padStart(4, "0")}`, notes: d.notes ?? this.notesFor(d) };
     this.out.push(doc);
-    for (const k of new Set(doc.parties.map((p) => p.key))) {
-      this.bump(this.docsOf, k);
-      this.bump(this.links, k);
-    }
+    for (const k of new Set(doc.parties.map((p) => p.key))) this.bump(this.docsOf, k);
+    // „Legături" shows one row per link — a person in two roles on one document is two rows
+    for (const p of doc.parties) this.bump(this.links, p.key);
     return doc;
   }
 
@@ -361,7 +362,7 @@ export function generateDocuments(r: Rng, ctx: DocumentContext): DocPlan[] {
     const date = between(r, first, last);
     if (!date || !b.room(x.key) || !heirs.every((k) => b.can(k, date))) return null;
     if (!b.takeQuota("CERTIFICAT_MOSTENITOR")) return null;
-    const notary = b.notary(date);
+    const notary = b.notary(date, heirs);
     const nr = b.number(date);
     const home = b.det.get(x.key)?.address;
     return b.add({
@@ -428,17 +429,18 @@ export function generateDocuments(r: Rng, ctx: DocumentContext): DocPlan[] {
       }
       if (keys.length === 0) continue;
       sellers = shareParties(keys, "Vânzător");
-      if (keys.length === 1 && r.chance(0.3)) {
+      if (keys.length === 1 && r.chance(0.3) && b.room(keys[0], 2)) {
         const t = title(keys[0], p, date);
         if (t) before = [t];
       }
     }
-    const notary = b.notary(date, [...avoid, ...sellers.map((s) => s.key)]);
-    const parties: Party[] = [...sellers, ...buyers, ...(notary ? [{ key: notary, role: "Notar", pct: null, mod: null } as Party] : [])];
+    const parties: Party[] = [...sellers, ...buyers];
     // sometimes a representative acts for a party, on a power of attorney
     let procura: DocPlan | null = null;
     if (r.chance(0.12)) {
-      const rep = b.someone(date, parties.map((x) => x.key), false, 21);
+      const candidate = b.someone(date, parties.map((x) => x.key), false, 21);
+      // the representative is on the procură and the contract: room for both
+      const rep = candidate && b.room(candidate, 2) ? candidate : null;
       const principal = [...sellers, ...buyers].find((x) => b.persons.has(x.key));
       if (rep && principal) {
         parties.push({ key: rep, role: "Reprezentant legal / Mandatar", pct: null, mod: null });
@@ -463,6 +465,9 @@ export function generateDocuments(r: Rng, ctx: DocumentContext): DocPlan[] {
         }
       }
     }
+    // the contract's notary is chosen after the procură's, so one office never takes both past its room
+    const notary = b.notary(date, parties.map((x) => x.key));
+    if (notary) parties.push({ key: notary, role: "Notar", pct: null, mod: null });
     const nr = b.number(date);
     const doc = b.add({
       type: "CONTRACT_VANZARE", nr, date,
