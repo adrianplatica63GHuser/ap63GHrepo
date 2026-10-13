@@ -19,6 +19,27 @@ paths:
 
 - **Coordinate axis order in Romanian cadastral text files**: The file columns are labeled `X [m]` (= Northing, ~300 000–850 000) and `Y [m]` (= Easting, ~200 000–800 000). This is the local Romanian geodetic convention where X points North — **opposite** to GDAL/PostGIS standard (X = Easting, Y = Northing). When calling `stereo70ToWgs84(north, east)`: pass the X column as `north` and the Y column as `east`. Valid Stereo70 range for the project area (Bragadiru, Ilfov): Northing ~320 000–325 000, Easting ~575 000–585 000.
 
+## What Google charges for, and what that means for tests and checks
+
+- **Three things on this app cost money per use, each under its own line on Google's bill** (pricing page read
+  2026-10-13 for Slice #39.18): a map created (`new google.maps.Map`, „Dynamic Maps" — 10,000 free a month, then US$7
+  per 1,000); a Street View panorama built (`StreetViewPanorama`, „Dynamic Street View" — 5,000 free, then US$14 per
+  1,000); and an address look-up (`Geocoder.geocode`, „Geocoding" — 10,000 free, then US$5 per 1,000). The coverage
+  check `StreetViewService.getPanorama` is „Street View Metadata", which is free. The people using the app and the
+  tests draw on the same allowances.
+- **So the app keeps Street View and look-ups on demand, and a change must keep them there.** The „Street View" tile
+  is off by default (`property-tiles.ts` → `PROP_TILE_REGISTRY.defaults`) and builds a panorama only after
+  `getPanorama` finds imagery; „Preia din Street View" makes one `geocode` per click. Nothing server-side calls Google
+  (grepped in #39.18) — a server route that did would pass straight under the tests' browser block, so one that
+  appears needs its own count.
+- **In e2e all three are blocked by default and counted when let through**, each with its own opt-in
+  (`realMaps`, `realStreetView`, `realAddressLookups`) and its own monthly ceiling. The rules, the numbers and the
+  ceilings are in `e2e/README.md` → „Google maps are blocked by default".
+- **Claude's own checks in the browser pane make none of the three it does not need.** A check by hand does not tick
+  the „Street View" tile, does not drag Google's Street View figure onto a map, and does not press „Preia din Street
+  View" — unless that is the slice's subject, and then the handover says how many panoramas and look-ups it made.
+  (Adrian, 2026-10-13, Slice #39.18. Same rule in `C:\dev\CLAUDE.md` → „Tests run targeted".)
+
 ## Harvested from the slice log
 
 - **Keep the Calculation working frame rotated to align `u` with the ROAD edge itself — not merely with a long side.** That alignment is what makes both of the road's long sides constant-`v` and the cap at constant-`u` truly perpendicular, so the road's east end (where it meets owner N) is an exact right angle while its west end just follows the polygon's existing slanted side. Every inter-owner border is a constant-`u` line, so the same rotation is what makes them perpendicular to the road too. It also makes the geometry orientation-agnostic across HORIZONTAL and VERTICAL polygons and all four start corners. Preserve this alignment as the Calculation feature is enhanced — do not re-derive the frame from a bounding box or from the longest side.

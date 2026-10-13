@@ -94,6 +94,22 @@ people using the app. The runner keeps the month's count — Google's month, on 
 `scripts/test-runner/protocol.ts`. October 2026 was seeded past it (the runner's records for Oct 1–11), so the map
 specs skip until November 1.
 
+**Street View and address look-ups are blocked too — even in a spec that opted in for the map** (Slice #39.18).
+Google bills them under their own lines, each with its own free allowance apart from the maps' 10,000: a Street View
+panorama („Dynamic Street View") 5,000 a month, then US$14 per 1,000; an address look-up („Geocoding", what „Preia
+din Street View" makes) 10,000 a month, then US$5 per 1,000 (Google's pricing page, read 2026-10-13). A spec whose
+subject is one of them opts in for it on a line of its own, beside `realMaps`, which both need:
+`test.use({ realStreetView: true }); // what it reads in the panorama` and
+`test.use({ realAddressLookups: true }); // what it reads from the look-up`. Without it the page's coverage check
+answers as Google does when it fails, so the panel shows its error and builds no panorama, and the look-up is
+refused. Both are counted: every runner result says „Street View panoramas: N · address look-ups: N" beside the
+maps' line, names the specs that made them, and flags any made by a spec that did not opt in. **Each has a monthly
+ceiling of its own, at the maps' share — 30 % of its allowance: 1,500 panoramas and 3,000 look-ups**
+(`STREET_VIEW_MONTHLY_CEILING`, `ADDRESS_LOOKUPS_MONTHLY_CEILING` in `scripts/test-runner/protocol.ts`), counted in the
+same `google-maps-month.json`. Past one, the runner sets `E2E_STREET_VIEW_CEILING` or `E2E_ADDRESS_LOOKUPS_CEILING`:
+that kind is blocked for every test, and a spec that opted in for it is **skipped**, not failed. October 2026's two
+counts start at zero — no record says otherwise.
+
 ---
 
 ## Running it

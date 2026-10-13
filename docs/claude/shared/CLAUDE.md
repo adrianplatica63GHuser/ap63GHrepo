@@ -111,6 +111,14 @@ block is the policy; every other file points here rather than repeating it.**
   tests are found the way the jest-shim staging list is (`C:\dev\.claude\rules\sandbox-and-toolchain.md`):
   grep `src/__tests__` and `e2e/` for the module's path and its message namespace. An empty e2e list
   is normal for a slice with no screen; `targeted` with nothing named runs lint and tsc only.
+- **Maps are not Google's only charge — Street View and address look-ups are the other two** (#39.18,
+  Adrian 2026-10-13: „the same treatment"). Each panorama and each look-up is billed under its own line, with its own
+  free allowance. In e2e both are blocked by default even for a spec that opted in for the map, counted on every
+  runner result, and capped per month — the opt-ins, the numbers and the ceilings are in `ga40prj\e2e\README.md` →
+  „Google maps are blocked by default". **Claude's own checks in the browser make none it does not need:** a check by
+  hand does not tick the property's „Street View" tile, does not drag Google's Street View figure onto a map, and
+  does not press „Preia din Street View" — unless that is the slice's subject, and then the handover says how many
+  panoramas and look-ups it made.
 - **The handover lists what ran and what was deliberately not run**, module by module, with the
   reason — so a red regression two weeks later can be traced to the slice that skipped it.
 - **A header may ask for more.** A line `Regression: full` in a slice header asks for the whole
