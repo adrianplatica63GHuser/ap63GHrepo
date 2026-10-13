@@ -1,12 +1,15 @@
 /**
  * The big dev seed's pure parts — identifiers, the family generator and its rules, the persons' fields, the
- * companies, the coverage table (Slice #39.20); the lots' geometry and the properties (Slice #39.21).
+ * companies, the coverage table (Slice #39.20); the lots' geometry and the properties (Slice #39.21); the
+ * documents and the rules they keep (Slice #39.22).
  *
  * The script itself (scripts/seed-dev-data-big/seed.ts) writes through the app's create functions and is
  * rehearsed against a database, not here; what it writes is decided entirely by the modules below, so these
  * tests are where a plan that breaks a rule — a child born after its father's death, a marriage at 17, a CNP
  * whose county disagrees with the place of birth — is caught.
  */
+import fs from "fs";
+import path from "path";
 import { cnpControlDigit, cnpSexDigit, cuiControlDigit, isValidCui, makeCnp, makeCui, parseCnp } from "../../scripts/seed-dev-data-big/identifiers";
 import {
   CNP_FROM,
@@ -28,9 +31,10 @@ import { meaningfulWords, naturalDetails } from "../../scripts/seed-dev-data-big
 import { COMPANY_TYPES, generateCompanies, MAX_REPRESENTED } from "../../scripts/seed-dev-data-big/companies";
 import { coverageLines, formatCoverage, propertyLines, type JudicialRow, type NaturalRow, type PropertyRow } from "../../scripts/seed-dev-data-big/coverage";
 import { ADRIAN_LINE, area, bearing, dist, inRange, lineCluster, lotsOnLine, overlaps, rowOfLots, sharesEdge, type Poly } from "../../scripts/seed-dev-data-big/geometry";
+import { DOCUMENT_TOTAL, documentViolations, docsPerParty, FOUR_FIELDS, generateDocuments, MAX_DOCS_PER_PARTY, type DocPlan } from "../../scripts/seed-dev-data-big/documents";
 import { CURTI, generateProperties, LINE_DEPTH, MAX_FAMILY_PLUS_OWNED, MAX_OWNED, MIX, PLOT_AREA, PROPERTY_TOTAL, sharesAddUp, TPC, type TypeFlags } from "../../scripts/seed-dev-data-big/properties";
 import { makeRng } from "../../scripts/seed-dev-data-big/rng";
-import { ageAt, dmy, yearOf } from "../../scripts/seed-dev-data-big/dates";
+import { addDays, ageAt, dmy, yearOf } from "../../scripts/seed-dev-data-big/dates";
 import { KINSHIP_SEED } from "@/lib/persons/kinship";
 import { isEmailShape } from "@/lib/persons/email-shape";
 
@@ -530,5 +534,117 @@ describe("the properties", () => {
     expect(lineFor(57).met).toBe(true);
     expect(lineFor(63).met).toBe(true);
     expect(lineFor(56).met).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Part 3 — documents (#39.22)
+// ---------------------------------------------------------------------------
+
+describe("the documents", () => {
+  const plan = plans.get(2026)!;
+  const details = naturalDetails(plan, makeRng(7), new Set());
+  const companies = generateCompanies(makeRng(9), plan, details, new Set());
+  const flags = new Map<string, TypeFlags>([
+    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+  ]);
+  const props = generateProperties(makeRng(11), { plan, companies, existing: [], takenNumbers: new Set(), tarlas: ["52", "61"], flags, names: new Map() });
+  // the forms as the repository holds them (src/db/document-type-forms.json — the screens' forms, exported)
+  const forms = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "db", "document-type-forms.json"), "utf8")).forms as Record<string, { key: string; type: string; options: { value: string }[] | null }[]>;
+  const optionsOf = (k: string) => Object.fromEntries(forms[k].filter((f) => f.type === "select").map((f) => [f.key, (f.options ?? []).map((o) => o.value)]));
+  const ctx = { plan, details, companies, properties: props, contractForm: optionsOf("CONTRACT_VANZARE"), actForm: optionsOf("ACT_ADITIONAL") };
+  const docs = generateDocuments(makeRng(13), ctx);
+  const contracts = docs.filter((d) => d.type === "CONTRACT_VANZARE");
+  const acts = docs.filter((d) => d.type === "ACT_ADITIONAL");
+  const byKey = new Map(docs.map((d) => [d.key, d]));
+
+  it("1,050 in all: at least 40 % sales contracts, at least half of them with an act adițional", () => {
+    expect(docs).toHaveLength(DOCUMENT_TOTAL);
+    expect(contracts.length / docs.length).toBeGreaterThanOrEqual(0.4);
+    const withAct = new Set(acts.map((a) => a.links.find((l) => l.role === "Act adițional la")!.to));
+    expect(withAct.size).toBe(acts.length);
+    expect(withAct.size / contracts.length).toBeGreaterThanOrEqual(0.5);
+    for (const a of acts) {
+      const c = byKey.get(a.links[0].to)!;
+      expect(c.type).toBe("CONTRACT_VANZARE");
+      expect(a.date > c.date).toBe(true);
+      expect(a.properties).toEqual(c.properties);
+    }
+  });
+
+  it("not one document breaks a rule: dates, lives, ages, owners, shares, links", () => {
+    expect(documentViolations(docs, ctx)).toEqual([]);
+  });
+
+  it("the four fields on at least 70 % of the contracts, each select value from its own options list", () => {
+    for (const k of FOUR_FIELDS) expect(contracts.filter((c) => c.customFields?.[k]).length / contracts.length).toBeGreaterThanOrEqual(0.7);
+    const priced = contracts.filter((c) => c.customFields?.pretTotal && c.customFields?.monedaPret && c.customFields?.dataPlatii);
+    expect(priced.length / contracts.length).toBeGreaterThanOrEqual(0.7);
+    for (const d of [...contracts, ...acts]) {
+      const form = d.type === "CONTRACT_VANZARE" ? ctx.contractForm : ctx.actForm;
+      for (const [k, v] of Object.entries(d.customFields ?? {})) if (form[k] && v !== null) expect([k, form[k].includes(v)]).toEqual([k, true]);
+    }
+    for (const c of priced) expect(/^\d+$/.test(c.customFields!.pretTotal!)).toBe(true);
+  });
+
+  it("a contract is normal, not a crowd: one to three sellers and buyers, a notary at most", () => {
+    for (const c of contracts) {
+      const n = (role: string) => c.parties.filter((x) => x.role === role).length;
+      expect(n("Vânzător")).toBeGreaterThanOrEqual(1);
+      expect(n("Vânzător")).toBeLessThanOrEqual(3);
+      expect(n("Cumpărător")).toBeGreaterThanOrEqual(1);
+      expect(n("Cumpărător")).toBeLessThanOrEqual(3);
+      expect(n("Notar")).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("none on more than 25 documents, most on one to six", () => {
+    const per = docsPerParty(docs);
+    expect(Math.max(...per.values())).toBeLessThanOrEqual(MAX_DOCS_PER_PARTY);
+    const few = [...per.values()].filter((n) => n >= 1 && n <= 6).length;
+    expect(few / per.size).toBeGreaterThan(0.6);
+  });
+
+  it("chains of title in date order: title → certificat de moștenitor → sale", () => {
+    let chains = 0;
+    for (const t of docs.filter((d) => d.type === "TITLU_PROPRIETATE")) {
+      for (const l of t.links) {
+        const cert = byKey.get(l.to)!;
+        if (cert.type !== "CERTIFICAT_MOSTENITOR") continue;
+        const sale = cert.links.map((m) => byKey.get(m.to)!).find((x) => x.type === "CONTRACT_VANZARE");
+        if (!sale) continue;
+        expect(t.date < cert.date && cert.date < sale.date).toBe(true);
+        // the heirs are the sellers
+        expect(cert.parties.filter((x) => x.role === "Moștenitor").map((x) => x.key).sort()).toEqual(sale.parties.filter((x) => x.role === "Vânzător").map((x) => x.key).sort());
+        chains++;
+      }
+    }
+    expect(chains).toBeGreaterThanOrEqual(20);
+  });
+
+  it("an identity card is its holder's, dated the day it was issued", () => {
+    const cards = docs.filter((d) => d.type === "CARTE_IDENTITATE");
+    expect(cards.length).toBeGreaterThan(0);
+    for (const c of cards) {
+      const d = details.find((x) => x.key === c.idCardOf)!;
+      expect(c.date).toBe(d.idCard!.from);
+      expect(c.parties.map((x) => x.key)).toEqual([d.key]);
+    }
+  });
+
+  it("documentViolations catches a dead seller, a minor seller, a buyer who is not the owner, an act before its contract", () => {
+    const sale = contracts[0];
+    const p = props.find((x) => x.key === sale.properties[0])!;
+    const dead = plan.persons.find((x) => x.dod && x.dod < "2000-01-01")!;
+    const child = plan.persons.find((x) => ageAt(x.dob, TODAY) < 10)!;
+    const stranger = plan.persons.find((x) => !x.dod && !p.owners.some((o) => o.key === x.key))!;
+    const bad = (patch: Partial<DocPlan>) => documentViolations([{ ...sale, ...patch }], ctx).join(" | ");
+    expect(bad({ date: "2010-01-01", parties: [{ key: dead.key, role: "Vânzător", pct: 100, mod: "NUME_PROPRIU" }, ...sale.parties.filter((x) => x.role !== "Vânzător")] })).toMatch(new RegExp(`after ${dead.key} died`));
+    expect(bad({ date: TODAY, parties: [{ key: child.key, role: "Vânzător", pct: 100, mod: "NUME_PROPRIU" }, ...sale.parties.filter((x) => x.role !== "Vânzător")] })).toMatch(/under 18/);
+    expect(bad({ parties: [...sale.parties.filter((x) => x.role !== "Cumpărător"), { key: stranger.key, role: "Cumpărător", pct: 100, mod: "NUME_PROPRIU" }] })).toMatch(/are not .*owners/);
+    const act = acts[0];
+    const c = byKey.get(act.links[0].to)!;
+    expect(documentViolations([c, { ...act, date: addDays(c.date, -1) }], ctx).join(" | ")).toMatch(/not a contract dated before it/);
   });
 });
