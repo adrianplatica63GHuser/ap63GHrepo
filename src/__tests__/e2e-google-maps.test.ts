@@ -10,8 +10,17 @@
 
 import fs from "fs";
 import path from "path";
+import vm from "vm";
 
-import { isGoogleMapsUrl, isMapsLoaderUrl } from "../../e2e/helpers/google-maps";
+import {
+  MAP_COUNTER_BINDING,
+  googleCounterScript,
+  isAddressLookupUrl,
+  isGoogleMapsUrl,
+  isMapsLoaderUrl,
+  isStreetViewUrl,
+  type GoogleAllow,
+} from "../../e2e/helpers/google-maps";
 import {
   MAPS_CEILING_ENV,
   MAPS_FREE_PER_MONTH,
@@ -25,6 +34,7 @@ import {
   mapsUsed,
   parseMapsLedger,
   parseMapsLog,
+  streetViewLookupsNote,
   type MapsLedger,
   type MapsLogLine,
 } from "../../scripts/test-runner/protocol";
@@ -94,6 +104,13 @@ const line = (o: Partial<MapsLogLine>): MapsLogLine => ({
   maps: 0,
   loaders: 0,
   blocked: 0,
+  realStreetView: false,
+  realAddressLookups: false,
+  streetView: 0,
+  streetViewRequests: 0,
+  streetViewBlocked: 0,
+  addressLookups: 0,
+  addressLookupsBlocked: 0,
   ...o,
 });
 
@@ -232,7 +249,7 @@ describe("the month's ceiling on the tests' real maps", () => {
 
   it("adds up a run's log", () => {
     expect(mapsInLog([])).toBe(0);
-    const l = (maps: number): MapsLogLine => ({ spec: "s", title: "t", realMaps: true, maps, loaders: 0, blocked: 0 });
+    const l = (maps: number): MapsLogLine => line({ spec: "s", realMaps: true, maps });
     expect(mapsInLog([l(2), l(0), l(22)])).toBe(24);
   });
 
@@ -264,5 +281,197 @@ describe("the month's ceiling on the tests' real maps", () => {
       .replace(/^\s*\/\/.*$/gm, "");
     expect(code).toMatch(/if \(ceiling\.reached\) env\[MAPS_CEILING_ENV\] = mapsCeilingSkipReason\(ceiling\.used, month\);/);
     expect(code).toMatch(/notes\.push\(recordMaps\(month, runId, mapsMade\)\);/);
+  });
+});
+
+// ---- Slice #39.18: Street View panoramas and address look-ups -----------------------------------
+
+describe("isStreetViewUrl / isAddressLookupUrl — Google's two other charges, by request", () => {
+  it.each([
+    "https://streetviewpixels-pa.googleapis.com/v1/tile?panoid=x&x=0&y=0&zoom=1",
+    "https://cbk0.googleapis.com/cbk?output=tile",
+    "https://maps.googleapis.com/maps/api/js/GeoPhotoService.GetMetadata?pb=x",
+    "https://maps.googleapis.com/maps/api/js/GeoPhotoService.SingleImageSearch?pb=x",
+    "https://maps.google.com/maps/photometa/v1?authuser=0",
+  ])("Street View: %s", (url) => {
+    expect(isStreetViewUrl(url)).toBe(true);
+    expect(isAddressLookupUrl(url)).toBe(false);
+  });
+
+  it.each([
+    "https://maps.googleapis.com/maps/api/js/GeocodeService.Search?5m2&callback=x",
+    "https://maps.googleapis.com/maps/api/geocode/json?latlng=44.4,26.1",
+  ])("address look-up: %s", (url) => {
+    expect(isAddressLookupUrl(url)).toBe(true);
+    expect(isStreetViewUrl(url)).toBe(false);
+  });
+
+  it.each([
+    "https://maps.googleapis.com/maps/api/js?key=K",
+    "https://maps.googleapis.com/maps/vt?pb=!1m5",
+    "https://maps.googleapis.com/maps/api/js/AuthenticationService.Authenticate",
+    "https://khms0.googleapis.com/kh?v=979",
+    "https://fonts.googleapis.com/css2?family=Inter",
+    "http://localhost:3100/properties/1",
+    "not a url",
+  ])("neither: %s", (url) => {
+    expect(isStreetViewUrl(url)).toBe(false);
+    expect(isAddressLookupUrl(url)).toBe(false);
+  });
+
+  it("every Street View and look-up request is also a Google Maps request, so a spec without realMaps blocks it already", () => {
+    for (const url of [
+      "https://streetviewpixels-pa.googleapis.com/v1/tile",
+      "https://maps.googleapis.com/maps/api/js/GeoPhotoService.GetMetadata",
+      "https://maps.googleapis.com/maps/api/js/GeocodeService.Search",
+      "https://maps.google.com/maps/photometa/v1",
+    ]) {
+      expect(isGoogleMapsUrl(url)).toBe(true);
+    }
+  });
+});
+
+/**
+ * The page-side counter, run against a stand-in `google.maps` shaped the way the app meets the real one: the
+ * bootstrap's `importLibrary` first, the API's classes and real `importLibrary` assigned later, and the app taking
+ * `StreetViewPanorama` and `Geocoder` from `importLibrary` (street-view-panel-inner.tsx, property-form.tsx).
+ */
+type Page = { reports: string[]; geocoded: number; run: (code: string) => Promise<unknown> };
+function page(allow: GoogleAllow): Page {
+  const reports: string[] = [];
+  const counter = { geocoded: 0 };
+  const ctx = vm.createContext({ setTimeout, __count: () => counter.geocoded++ });
+  vm.runInContext("var window = globalThis;", ctx);
+  (ctx as Record<string, unknown>)[MAP_COUNTER_BINDING] = (kind?: string) => reports.push(kind ?? "map");
+  vm.runInContext(googleCounterScript(allow), ctx);
+  // The bootstrap, as @vis.gl/react-google-maps installs it: google, google.maps, then a deferring importLibrary.
+  vm.runInContext(
+    `var g = window.google || (window.google = {});
+     var ns = g.maps || (g.maps = {});
+     var loaded;
+     var ready = new Promise((r) => { loaded = r; });
+     ns.importLibrary ? 0 : (ns.importLibrary = (name) => ready.then(() => ns.importLibrary(name)));
+     // The API arrives: its classes, and the real importLibrary over the bootstrap's.
+     class Map {}
+     class StreetViewPanorama { constructor(el, opts) { this.opts = opts; } }
+     class StreetViewService { getPanorama(req, cb) { cb({ location: { pano: "p1" } }, "OK"); return Promise.resolve({ data: {} }); } }
+     class Geocoder { geocode(req) { __count(); return Promise.resolve({ results: [{ formatted_address: "Strada X 1" }] }); } }
+     var LIBS = { maps: { Map }, streetView: { StreetViewPanorama, StreetViewService }, geocoding: { Geocoder } };
+     var Originals = { Map, StreetViewPanorama, Geocoder };
+     setTimeout(() => {
+       ns.Map = Map; ns.StreetViewPanorama = StreetViewPanorama; ns.StreetViewService = StreetViewService; ns.Geocoder = Geocoder;
+       ns.importLibrary = (name) => Promise.resolve(LIBS[name]);
+       loaded();
+     }, 0);`,
+    ctx,
+  );
+  return {
+    reports,
+    get geocoded() {
+      return counter.geocoded;
+    },
+    run: (code: string) => vm.runInContext(`(async () => { ${code} })()`, ctx) as Promise<unknown>,
+  };
+}
+
+describe("googleCounterScript — what the page counts, and what it stops", () => {
+  it("counts a map as before, and each Street View panorama, whichever way the app reached the class", async () => {
+    const p = page({ streetView: true, addressLookups: true });
+    const same = await p.run(`
+      const sv = await google.maps.importLibrary("streetView");
+      new sv.StreetViewPanorama({}, { pano: "p1" });
+      const a = new google.maps.StreetViewPanorama({}, {});
+      new google.maps.Map();
+      return a instanceof Originals.StreetViewPanorama && sv.StreetViewPanorama === google.maps.StreetViewPanorama;
+    `);
+    expect(same).toBe(true);
+    expect(p.reports).toEqual(["streetView", "streetView", "map"]);
+  });
+
+  it("counts each address look-up, and the free coverage check not at all", async () => {
+    const p = page({ streetView: true, addressLookups: true });
+    const status = await p.run(`
+      const g = await google.maps.importLibrary("geocoding");
+      const geocoder = new g.Geocoder();
+      const { results } = await geocoder.geocode({ location: { lat: 44.4, lng: 26.1 } });
+      await new google.maps.Geocoder().geocode({});
+      const sv = await google.maps.importLibrary("streetView");
+      return await new Promise((r) => new sv.StreetViewService().getPanorama({}, (d, s) => r(s + ":" + results.length)));
+    `);
+    expect(status).toBe("OK:1");
+    expect(p.reports).toEqual(["addressLookup", "addressLookup"]);
+    expect(p.geocoded).toBe(2);
+  });
+
+  it("when Street View is not allowed, the coverage check answers UNKNOWN_ERROR — so the app never builds a panorama", async () => {
+    const p = page({ streetView: false, addressLookups: true });
+    const out = await p.run(`
+      const sv = await google.maps.importLibrary("streetView");
+      const s = new sv.StreetViewService();
+      const viaCallback = await new Promise((r) => s.getPanorama({}, (d, st) => r(String(d) + ":" + st)));
+      const viaPromise = await s.getPanorama({}).then(() => "resolved", (e) => e.message);
+      return viaCallback + " | " + viaPromise;
+    `);
+    expect(out).toBe("null:UNKNOWN_ERROR | e2e: Street View is blocked (Slice #39.18)");
+    expect(p.reports).toEqual(["streetViewBlocked", "streetViewBlocked"]);
+  });
+
+  it("when address look-ups are not allowed, geocode rejects and Google is never asked", async () => {
+    const p = page({ streetView: true, addressLookups: false });
+    const out = await p.run(`
+      const g = await google.maps.importLibrary("geocoding");
+      return await new g.Geocoder().geocode({}).then(() => "resolved", (e) => e.message);
+    `);
+    expect(out).toBe("e2e: address look-ups are blocked (Slice #39.18)");
+    expect(p.reports).toEqual(["addressLookupBlocked"]);
+    expect(p.geocoded).toBe(0);
+  });
+
+  it("leaves the bootstrap's own test alone: importLibrary reads as absent until something installs one", () => {
+    const ctx = vm.createContext({});
+    vm.runInContext("var window = globalThis;", ctx);
+    vm.runInContext(googleCounterScript({ streetView: false, addressLookups: false }), ctx);
+    expect(vm.runInContext("window.google = {}; google.maps = {}; Boolean(google.maps.importLibrary)", ctx)).toBe(false);
+  });
+});
+
+describe("streetViewLookupsNote — the second note on the runner's e2e step", () => {
+  it("says „not counted” when there is no file — never zero", () => {
+    expect(streetViewLookupsNote(null)).toMatch(/^Street View panoramas · address look-ups: not counted/);
+  });
+
+  it("reads a line from before 39.18 as zero and false, and skips one whose new fields are malformed", () => {
+    const old = JSON.stringify({ spec: "map/a.spec.ts", title: "t", realMaps: true, maps: 1, loaders: 1, blocked: 0 });
+    const bad = JSON.stringify({ ...line({}), streetView: -1 });
+    const worse = JSON.stringify({ ...line({}), realStreetView: "yes" });
+    expect(parseMapsLog([old, bad, worse].join("\n"))).toEqual([line({ realMaps: true, maps: 1, loaders: 1 })]);
+  });
+
+  it("adds both kinds up and names who made them", () => {
+    const note = streetViewLookupsNote([
+      line({ spec: "property/sv.spec.ts", realMaps: true, realStreetView: true, streetView: 2, streetViewRequests: 9 }),
+      line({ spec: "property/geo.spec.ts", realMaps: true, realAddressLookups: true, addressLookups: 1 }),
+      line({ spec: "map/a.spec.ts", realMaps: true, streetViewBlocked: 1, addressLookupsBlocked: 2 }),
+    ]);
+    expect(note).toBe(
+      "Street View panoramas: 2 · address look-ups: 1 (9 Street View requests let through; blocked: 1 Street View, 2 look-ups; " +
+        "let through for Street View: property/sv.spec.ts; for look-ups: property/geo.spec.ts; " +
+        "Street View made by: property/sv.spec.ts; look-ups made by: property/geo.spec.ts)",
+    );
+  });
+
+  it("is quiet when nothing was made", () => {
+    expect(streetViewLookupsNote([line({}), line({ spec: "map/b.spec.ts", realMaps: true })])).toBe(
+      "Street View panoramas: 0 · address look-ups: 0 (0 Street View requests let through; blocked: 0 Street View, 0 look-ups; " +
+        "let through for Street View: none; for look-ups: none)",
+    );
+  });
+
+  it("calls out a panorama or a look-up made by a spec that did not opt in for it", () => {
+    const note = streetViewLookupsNote([
+      line({ spec: "map/a.spec.ts", realMaps: true, streetViewRequests: 3 }),
+      line({ spec: "map/b.spec.ts", realMaps: true, addressLookups: 1 }),
+    ]);
+    expect(note).toMatch(/; ⚠️ Street View made by specs that did not opt in: map\/a\.spec\.ts; ⚠️ address look-ups made by specs that did not opt in: map\/b\.spec\.ts$/);
   });
 });

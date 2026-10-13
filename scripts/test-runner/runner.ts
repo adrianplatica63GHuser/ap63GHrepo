@@ -101,6 +101,7 @@ import {
   type MapsLedger,
   mapsNote,
   parseMapsLog,
+  streetViewLookupsNote,
   failedE2eSpecs,
   PLAYWRIGHT_RERUN_ARGS,
   REGRESSION_STATE_FILE,
@@ -466,12 +467,15 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
   const devLog = logFile.replace(/e2e\.log$/, "dev-server.log");
   // Slice #39.14: the e2e fixture appends one line per test here; the note says how many real maps the run made.
   const mapsLog = path.join(path.dirname(logFile), MAPS_LOG_FILE);
-  const readMapsLog = (): string => {
+  // Slice #39.18: and, beside it, the Street View panoramas and address look-ups the run made.
+  const readMapsLog = (): string[] => {
+    let lines: ReturnType<typeof parseMapsLog> | null = null;
     try {
-      return mapsNote(parseMapsLog(fs.readFileSync(mapsLog, "utf8")));
+      lines = parseMapsLog(fs.readFileSync(mapsLog, "utf8"));
     } catch {
-      return mapsNote(null);
+      /* no file: said as such, never as zero */
     }
+    return [mapsNote(lines), streetViewLookupsNote(lines)];
   };
   // Slice #39.16: the month's ceiling. Decided once, before the run; every map the run makes — in an attempt
   // that is thrown away too — is added to the month's ledger afterwards, whatever the run's verdict.
@@ -563,7 +567,7 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
         continue;
       }
       if (webpack) notes.push("served with next dev --webpack");
-      notes.push(readMapsLog());
+      notes.push(...readMapsLog());
       countMapsLog();
       notes.push(recordMaps(month, runId, mapsMade));
       return {

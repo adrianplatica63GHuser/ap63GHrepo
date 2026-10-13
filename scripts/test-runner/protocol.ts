@@ -1327,6 +1327,24 @@ export type MapsLogLine = {
   loaders: number;
   /** Google Maps requests the fixture aborted. */
   blocked: number;
+  /**
+   * Slice #39.18 — Google's two other charges, counted the same way. A line written before 39.18 has none of these
+   * fields: its Street View and look-ups were never counted, and they read as zero and false.
+   */
+  /** Street View was let through: the spec opted in with `realStreetView` as well, or nothing was blocked. */
+  realStreetView: boolean;
+  /** Address look-ups were let through: the spec opted in with `realAddressLookups` as well, or nothing was blocked. */
+  realAddressLookups: boolean;
+  /** `StreetViewPanorama` objects built — what Google bills as „Dynamic Street View". */
+  streetView: number;
+  /** Street View requests (imagery, metadata) let through — a cross-check on `streetView`. */
+  streetViewRequests: number;
+  /** Street View coverage checks and requests the fixture stopped. */
+  streetViewBlocked: number;
+  /** `Geocoder.geocode` calls made — what Google bills as „Geocoding". */
+  addressLookups: number;
+  /** Address look-ups the fixture stopped. */
+  addressLookupsBlocked: number;
 };
 
 function nonNegativeInt(v: unknown): number | null {
@@ -1352,7 +1370,34 @@ export function parseMapsLog(text: string): MapsLogLine[] {
     const blocked = nonNegativeInt(o.blocked);
     if (typeof o.spec !== "string" || typeof o.title !== "string" || typeof o.realMaps !== "boolean") continue;
     if (maps === null || loaders === null || blocked === null) continue;
-    out.push({ spec: o.spec, title: o.title, realMaps: o.realMaps, maps, loaders, blocked });
+    // Slice #39.18's fields: absent on an older line (zero, false); present but malformed skips the line like any other.
+    const extra = {
+      streetView: o.streetView === undefined ? 0 : nonNegativeInt(o.streetView),
+      streetViewRequests: o.streetViewRequests === undefined ? 0 : nonNegativeInt(o.streetViewRequests),
+      streetViewBlocked: o.streetViewBlocked === undefined ? 0 : nonNegativeInt(o.streetViewBlocked),
+      addressLookups: o.addressLookups === undefined ? 0 : nonNegativeInt(o.addressLookups),
+      addressLookupsBlocked: o.addressLookupsBlocked === undefined ? 0 : nonNegativeInt(o.addressLookupsBlocked),
+    };
+    if (Object.values(extra).some((n) => n === null)) continue;
+    const flag = (v: unknown): boolean | null => (v === undefined ? false : typeof v === "boolean" ? v : null);
+    const realStreetView = flag(o.realStreetView);
+    const realAddressLookups = flag(o.realAddressLookups);
+    if (realStreetView === null || realAddressLookups === null) continue;
+    out.push({
+      spec: o.spec,
+      title: o.title,
+      realMaps: o.realMaps,
+      maps,
+      loaders,
+      blocked,
+      realStreetView,
+      realAddressLookups,
+      streetView: extra.streetView as number,
+      streetViewRequests: extra.streetViewRequests as number,
+      streetViewBlocked: extra.streetViewBlocked as number,
+      addressLookups: extra.addressLookups as number,
+      addressLookupsBlocked: extra.addressLookupsBlocked as number,
+    });
   }
   return out;
 }
@@ -1377,6 +1422,34 @@ export function mapsNote(lines: MapsLogLine[] | null): string {
     (specs.length && specs.length <= 12 ? `: ${specs.join(", ")}` : "") +
     ")" +
     (strays.length ? `; ⚠️ maps made by specs that did not opt in: ${strays.join(", ")}` : "")
+  );
+}
+
+/**
+ * Slice #39.18 — the note beside „Google maps loaded: N": „Street View panoramas: N · address look-ups: N", the
+ * specs that made them, and — loudest — any made by a spec that did not opt in for that kind.
+ */
+export function streetViewLookupsNote(lines: MapsLogLine[] | null): string {
+  if (lines === null) return `Street View panoramas · address look-ups: not counted — no ${MAPS_LOG_FILE} (the e2e fixture wrote none)`;
+  const sum = (k: "streetView" | "streetViewRequests" | "streetViewBlocked" | "addressLookups" | "addressLookupsBlocked"): number =>
+    lines.reduce((n, l) => n + l[k], 0);
+  const specsWhere = (f: (l: MapsLogLine) => boolean): string[] => [...new Set(lines.filter(f).map((l) => l.spec))].sort();
+  const list = (specs: string[]): string => (specs.length === 0 ? "none" : specs.length <= 12 ? specs.join(", ") : `${specs.length} specs`);
+  const svOptIn = specsWhere((l) => l.realStreetView);
+  const alOptIn = specsWhere((l) => l.realAddressLookups);
+  const svMade = specsWhere((l) => l.streetView > 0 || l.streetViewRequests > 0);
+  const alMade = specsWhere((l) => l.addressLookups > 0);
+  const svStrays = svMade.filter((s) => !svOptIn.includes(s));
+  const alStrays = alMade.filter((s) => !alOptIn.includes(s));
+  return (
+    `Street View panoramas: ${sum("streetView")} · address look-ups: ${sum("addressLookups")}` +
+    ` (${sum("streetViewRequests")} Street View requests let through; blocked: ${sum("streetViewBlocked")} Street View, ${sum("addressLookupsBlocked")} look-ups;` +
+    ` let through for Street View: ${list(svOptIn)}; for look-ups: ${list(alOptIn)}` +
+    (svMade.length ? `; Street View made by: ${list(svMade)}` : "") +
+    (alMade.length ? `; look-ups made by: ${list(alMade)}` : "") +
+    ")" +
+    (svStrays.length ? `; ⚠️ Street View made by specs that did not opt in: ${svStrays.join(", ")}` : "") +
+    (alStrays.length ? `; ⚠️ address look-ups made by specs that did not opt in: ${alStrays.join(", ")}` : "")
   );
 }
 

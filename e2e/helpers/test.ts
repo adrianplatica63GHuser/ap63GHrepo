@@ -30,7 +30,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test as base } from "@playwright/test";
 import { MAPS_CEILING_ENV, MAPS_LOG_ENV, type MapsLogLine } from "../../scripts/test-runner/protocol";
-import { MAP_COUNTER_BINDING, MAP_COUNTER_SCRIPT, isGoogleMapsUrl, isMapsLoaderUrl } from "./google-maps";
+import { MAP_COUNTER_BINDING, googleCounterScript, isGoogleMapsUrl, isMapsLoaderUrl, isStreetViewUrl, type GoogleCount } from "./google-maps";
 
 export * from "@playwright/test";
 
@@ -48,7 +48,7 @@ export const test = base.extend<MapsOptions & { googleMaps: void }>({
     async ({ context, realMaps }, use, testInfo) => {
       const ceilingReached = process.env[MAPS_CEILING_ENV];
       const letThrough = (realMaps || !BLOCK_BY_DEFAULT) && !ceilingReached;
-      const tally = { maps: 0, loaders: 0, blocked: 0 };
+      const tally = { maps: 0, loaders: 0, blocked: 0, streetView: 0, streetViewRequests: 0, streetViewBlocked: 0, addressLookups: 0, addressLookupsBlocked: 0 };
       const file = process.env[MAPS_LOG_ENV];
       const writeLine = (): void => {
         if (!file) return;
@@ -56,6 +56,8 @@ export const test = base.extend<MapsOptions & { googleMaps: void }>({
           spec: path.relative(path.join(__dirname, ".."), testInfo.file).replace(/\\/g, "/"),
           title: testInfo.titlePath.slice(1).join(" › "),
           realMaps: letThrough,
+          realStreetView: letThrough,
+          realAddressLookups: letThrough,
           ...tally,
         };
         fs.appendFileSync(file, JSON.stringify(line) + "\n");
@@ -67,12 +69,18 @@ export const test = base.extend<MapsOptions & { googleMaps: void }>({
         return;
       }
       if (letThrough) {
-        await context.exposeBinding(MAP_COUNTER_BINDING, () => {
-          tally.maps++;
+        // Slice #39.18: the same counter also sees each Street View panorama built and each address look-up made.
+        await context.exposeBinding(MAP_COUNTER_BINDING, (_source, kind?: GoogleCount) => {
+          if (kind === "streetView") tally.streetView++;
+          else if (kind === "addressLookup") tally.addressLookups++;
+          else if (kind === "streetViewBlocked") tally.streetViewBlocked++;
+          else if (kind === "addressLookupBlocked") tally.addressLookupsBlocked++;
+          else tally.maps++;
         });
-        await context.addInitScript({ content: MAP_COUNTER_SCRIPT });
+        await context.addInitScript({ content: googleCounterScript({ streetView: true, addressLookups: true }) });
         context.on("request", (r) => {
           if (isMapsLoaderUrl(r.url())) tally.loaders++;
+          if (isStreetViewUrl(r.url())) tally.streetViewRequests++;
         });
       } else {
         await context.route(isGoogleMapsUrl, (route) => {
