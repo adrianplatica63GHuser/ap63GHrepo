@@ -174,3 +174,42 @@ export function propertyLines(f: PropertyFacts): CoverageLine[] {
     share("Proprietari în viață (sau succesiune nedezbătută)", r.filter((x) => x.ownersFit).length, r.length, 100),
   ];
 }
+
+// ---------------------------------------------------------------------------
+// Documents (#39.22)
+// ---------------------------------------------------------------------------
+
+export type DocumentFacts = {
+  target: number;
+  /** read back from the database */
+  total: number;
+  contracts: number;
+  /** contracts with an „Act adițional la" link from an act */
+  contractsWithAct: number;
+  /** per form field of the four (label → contracts that have it) */
+  fourFields: { label: string; filled: number }[];
+  /** contracts whose form has price, currency and date of payment */
+  priced: number;
+  withPages: number;
+  maxPerParty: number;
+  maxAllowed: number;
+  /** broken rules in the plan (documentViolations) — must be none */
+  violations: number;
+  /** title → certificat de moștenitor → sale, linked in date order */
+  chains: number;
+  chainsMin: number;
+};
+
+export function documentLines(f: DocumentFacts): CoverageLine[] {
+  return [
+    exactly("Documente", f.total, f.target),
+    share("Contracte de vânzare", f.contracts, f.total, 40),
+    share("Contracte cu act adițional legat", f.contractsWithAct, f.contracts, 50),
+    ...f.fourFields.map((x) => share(`Contracte cu „${x.label}"`, x.filled, f.contracts, 70)),
+    share("Contracte cu preț, monedă și data plății", f.priced, f.contracts, 70),
+    share("Documente cu pagini (fișiere de test)", f.withPages, f.total, 100),
+    { label: "Cele mai multe documente pe o persoană", target: `≤ ${f.maxAllowed}`, value: String(f.maxPerParty), met: f.maxPerParty <= f.maxAllowed },
+    exactly("Reguli încălcate (date, vârste, proprietari, cote)", f.violations, 0),
+    atLeast("Lanțuri titlu → certificat → vânzare", f.chains, f.chainsMin),
+  ];
+}
