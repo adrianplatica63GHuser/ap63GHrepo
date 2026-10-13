@@ -221,8 +221,9 @@ export function generateProperties(r: Rng, ctx: PropertyContext): PropertyPlan[]
   // ── tarla and parcel: every lot whose type shows them; a cluster shares its tarla, consecutive parcels
   const usedParcel = new Set<string>();
   const parcelsFor = (tarla: string, n: number): number[] => {
-    for (;;) {
-      const base = r.int(1, 480);
+    // parcel numbers widen as a tarla fills, so a database with one or two tarla codes never runs out
+    for (let tries = 0; ; tries++) {
+      const base = r.int(1, 480 + tries * 10);
       const run = Array.from({ length: n }, (_, k) => base + k);
       if (run.every((p) => !usedParcel.has(`${tarla}|${p}`))) {
         run.forEach((p) => usedParcel.add(`${tarla}|${p}`));
