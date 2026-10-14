@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { ListAddressScope } from "@/components/list/use-list-address";
 import { getTranslations } from "next-intl/server";
 import { PropertyListView } from "./list-view";
 
@@ -13,7 +15,13 @@ export default async function PropertiesPage() {
           </h1>
         </header>
 
-        <PropertyListView />
+        {/* Slice #39.26: the list reads its view from the address (`useSearchParams`), and starts over when a link
+            changes it from outside (`ListAddressScope`). */}
+        <Suspense>
+          <ListAddressScope>
+            <PropertyListView />
+          </ListAddressScope>
+        </Suspense>
       </main>
     </div>
   );

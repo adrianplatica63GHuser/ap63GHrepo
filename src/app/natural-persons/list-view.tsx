@@ -17,6 +17,7 @@ import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
 import { IncursionTile } from "@/app/_components/incursion-tile";
+import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { ageFromDob, dmyFromIso } from "@/lib/persons/person-age";
@@ -125,9 +126,11 @@ export function NaturalPersonListView() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [searchInput,     setSearchInput]     = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [currentPage,     setCurrentPage]     = useState(0);
+  // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
+  const address = useListAddress();
+  const [searchInput,     setSearchInput]     = useState(address.search);
+  const [debouncedSearch, setDebouncedSearch] = useState(address.search);
+  const [currentPage,     setCurrentPage]     = useState(address.page);
 
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -145,13 +148,16 @@ export function NaturalPersonListView() {
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.person.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.person.defaults);
 
+  // Slice #39.26: only a search that changed goes back to the first page — on mount the address's page stands.
   useEffect(() => {
+    const next = searchInput.trim();
+    if (next === debouncedSearch) return;
     const handle = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
+      setDebouncedSearch(next);
       setCurrentPage(0);
     }, 250);
     return () => clearTimeout(handle);
-  }, [searchInput]);
+  }, [searchInput, debouncedSearch]);
 
   const query = useQuery<ListResponse>({
     queryKey: ["people", "list", debouncedSearch, currentPage],
@@ -167,6 +173,9 @@ export function NaturalPersonListView() {
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
   const pageKey = `${debouncedSearch}|${currentPage}`;
+  // Slice #39.26: the view, in the list's address; the scroll, in the session.
+  useWriteListAddress({ search: debouncedSearch, page: currentPage }, pageKey);
+  useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
@@ -246,7 +255,11 @@ export function NaturalPersonListView() {
 
   return (
     // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
-    <ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>
+    <ListPreviews
+      incursion={IncursionTile}
+      rowIds={query.data?.items.map((i) => i.id)}
+      address={{ kind: "person", row: address.row, tiles: address.tiles }}
+    >
       {/* Toolbar */}
       <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         <input

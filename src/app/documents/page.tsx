@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { ListAddressScope } from "@/components/list/use-list-address";
 import { getTranslations } from "next-intl/server";
 import { DocumentListView } from "./list-view";
 
@@ -33,7 +35,13 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
           </h1>
         </header>
 
-        <DocumentListView initialDocumentTypeIds={initialDocumentTypeIds} />
+        {/* Slice #39.26: the list reads its view from the address (`useSearchParams`), and starts over when a link
+            changes it from outside (`ListAddressScope`). */}
+        <Suspense>
+          <ListAddressScope>
+            <DocumentListView initialDocumentTypeIds={initialDocumentTypeIds} />
+          </ListAddressScope>
+        </Suspense>
       </main>
     </div>
   );

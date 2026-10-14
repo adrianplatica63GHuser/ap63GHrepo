@@ -21,6 +21,8 @@ import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
 import { IncursionTile } from "@/app/_components/incursion-tile";
+import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
+import { carryListAddress } from "@/lib/ui/list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { HintBubble } from "@/lib/ui/hint-bubble";
@@ -115,9 +117,16 @@ async function fetchCustomFieldValues(
   return body.items ?? [];
 }
 
+/** Slice #39.26: Acte's own filters in its address — „Expiră curând" and the custom field's key and value. */
+const DOCUMENT_ADDRESS_FILTERS = ["expiring", "field", "value"] as const;
+
 function buildDocumentsUrl(checkedIds: Set<string>, allTypeIds: string[]): string {
-  if (checkedIds.size === allTypeIds.length) return "/documents";
-  return `/documents?documentTypeIds=${Array.from(checkedIds).join(",")}`;
+  // Slice #39.26: the search and the list's own filters ride along in the address — a new set of types keeps them,
+  // as it did while they were React state; the page and the open tiles start over (`carryListAddress`).
+  const carried = carryListAddress(new URLSearchParams(window.location.search), DOCUMENT_ADDRESS_FILTERS);
+  if (checkedIds.size !== allTypeIds.length) carried.set("documentTypeIds", Array.from(checkedIds).join(","));
+  const qs = carried.toString();
+  return qs ? `/documents?${qs}` : "/documents";
 }
 
 function DocumentTypeFilterDropdown({
@@ -446,10 +455,12 @@ export function DocumentListView({
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [searchInput,     setSearchInput]     = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [currentPage,     setCurrentPage]     = useState(0);
-  const [expiringSoon,    setExpiringSoon]    = useState(false);
+  // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
+  const address = useListAddress(DOCUMENT_ADDRESS_FILTERS);
+  const [searchInput,     setSearchInput]     = useState(address.search);
+  const [debouncedSearch, setDebouncedSearch] = useState(address.search);
+  const [currentPage,     setCurrentPage]     = useState(address.page);
+  const [expiringSoon,    setExpiringSoon]    = useState(address.filters.expiring === "1");
   // ── Slice #34.10: the custom-field filter, the half of D-01 that needs code.
   //
   // ⚠️ **TWO pieces of state and not one `{key, value}` object**, because
@@ -459,8 +470,8 @@ export function DocumentListView({
   // tick boxes when a filter changes, and a filter missing from it leaves rows
   // selected that the filter has just taken off the screen — with the bulk
   // delete then acting on records nobody can see.
-  const [customFieldKey,   setCustomFieldKey]   = useState("");
-  const [customFieldValue, setCustomFieldValue] = useState("");
+  const [customFieldKey,   setCustomFieldKey]   = useState(address.filters.field ?? "");
+  const [customFieldValue, setCustomFieldValue] = useState(address.filters.value ?? "");
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -572,13 +583,16 @@ export function DocumentListView({
   }
 
 
+  // Slice #39.26: only a search that changed goes back to the first page — on mount the address's page stands.
   useEffect(() => {
+    const next = searchInput.trim();
+    if (next === debouncedSearch) return;
     const handle = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
+      setDebouncedSearch(next);
       setCurrentPage(0);
     }, 250);
     return () => clearTimeout(handle);
-  }, [searchInput]);
+  }, [searchInput, debouncedSearch]);
 
   // When initialDocumentTypeIds changes (sidebar navigation), reset to page 0.
   const typeFiltersKey =
@@ -629,6 +643,12 @@ export function DocumentListView({
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
   const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${currentPage}`;
+  // Slice #39.26: the view, in the list's address; the scroll, in the session.
+  useWriteListAddress(
+    { search: debouncedSearch, page: currentPage, filters: { expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue } },
+    pageKey,
+  );
+  useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
@@ -736,7 +756,11 @@ export function DocumentListView({
 
   return (
     // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
-    <ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>
+    <ListPreviews
+      incursion={IncursionTile}
+      rowIds={query.data?.items.map((i) => i.id)}
+      address={{ kind: "document", row: address.row, tiles: address.tiles }}
+    >
       {/* Toolbar — Slice #37.83: two rows. The first: the search, „Tip document",
           „Expiră curând", „Câmpuri afișate" and, at its end, „Adaugă act"'s group;
           choosing a field in „Câmp specific" no longer moves any of them. The

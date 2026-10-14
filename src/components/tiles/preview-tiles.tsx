@@ -31,7 +31,7 @@
  */
 import { useNameOr } from "@/components/record/use-name-or";
 import type { UnnamedKind } from "@/lib/ui/unnamed";
-import { createContext, useCallback, useContext, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
@@ -43,6 +43,7 @@ import { PAGES_PANEL_REM, PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, rem, type
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
 import { NO_ROW_TILES, closeRowTile, isLocked, isRowTileOpen, toggleRowTile, type RowTile, type RowTiles } from "@/lib/ui/row-tiles";
 import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
+import { replaceListAddress } from "@/components/list/use-list-address";
 
 // ── Which previews are open ───────────────────────────────────────────────────
 
@@ -173,11 +174,17 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
  * „Previzualizare" and „Legături" keep their own heights; „Incursiune" takes what is left down to the list's
  * bottom, never below its own minimum (Ask first 1). A page change, a search or a filter that takes the open row
  * off the screen closes all three (`rowIds`, Ask first 2). The detail screens' previews (`usePreviews`, two at most) are untouched.
+ *
+ * Slice #39.26 — THE OPEN TILES ARE IN THE LIST'S ADDRESS. Given `address`, the tiles start from the row and tiles
+ * the address held when the list mounted, and every change is written back into it (`?row=<id>&tiles=…`, replacing
+ * the history entry — `@/lib/ui/list-address`). So Back from a record opened beside them brings them back on the
+ * same row; a row that is gone or filtered out opens none, by the `rowIds` rule above.
  */
 export function ListPreviews({
   children,
   incursion: IncursionTile,
   rowIds,
+  address,
 }: {
   children: ReactNode;
   incursion?: IncursionTileComponent;
@@ -188,8 +195,21 @@ export function ListPreviews({
    * typing must not be closed by the search it was typed for.
    */
   rowIds?: readonly string[];
+  /**
+   * Slice #39.26: the list's kind, and the row and tiles its address held when it mounted. Absent (a test, a screen
+   * that is not one of the four lists), the tiles start closed and touch no address.
+   */
+  address?: { kind: PreviewKind; row: string | null; tiles: readonly RowTile[] };
 }) {
-  const [tiles, setTiles] = useState<RowTiles>(NO_ROW_TILES);
+  const [tiles, setTiles] = useState<RowTiles>(() =>
+    address && address.row !== null && address.tiles.length > 0
+      ? { row: { kind: address.kind, id: address.row }, open: address.tiles }
+      : NO_ROW_TILES,
+  );
+  const keepsAddress = address !== undefined;
+  useEffect(() => {
+    if (keepsAddress) replaceListAddress({ row: tiles.row?.id ?? null, tiles: tiles.open });
+  }, [tiles, keepsAddress]);
   if (tiles.row !== null && rowIds !== undefined && !rowIds.includes(tiles.row.id)) setTiles(NO_ROW_TILES);
   const toggle = useCallback((target: PreviewTarget, tile: RowTile) => setTiles((s) => toggleRowTile(s, target, tile)), []);
   const close = useCallback((tile: RowTile) => setTiles((s) => closeRowTile(s, tile)), []);
