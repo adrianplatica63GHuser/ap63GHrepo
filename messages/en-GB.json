@@ -4650,5 +4650,27 @@
     },
     "shared": "Shared documents",
     "sharedHint": "On each line, how many documents the two have in common"
+  },
+  "navigate": {
+    "button": "Navigate",
+    "title": "Navigate to {name}",
+    "titleUnnamed": "Navigate to the property",
+    "close": "Close",
+    "noTarget": "The property has neither a shape on the map nor an address: there is nowhere for a route to go.",
+    "toShape": "To the parcel: its centre on the map.",
+    "toAddress": "To the address: {address}",
+    "start": "Start",
+    "startDevice": "My location",
+    "startDeviceHint": "The phone that scans the code starts from where it is; on this computer, Google Maps asks the browser for its location.",
+    "startAddress": "From an address",
+    "startAddressLabel": "Start address",
+    "startAddressPlaceholder": "e.g. 10 Libertății St, Bragadiru",
+    "startAddressMissing": "Type the start address to show the link and the QR code.",
+    "qr": "QR code with the route to the property",
+    "qrHint": "Scan the code with your phone: Google Maps starts navigating.",
+    "open": "Open in Google Maps",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "byGoogle": "The route is drawn by Google Maps, by car, to the nearest road on its map."
   }
 }

@@ -61,6 +61,7 @@ import {
   versionLabelColor,
 } from "./form-schema";
 import { CornersManager } from "./corners-manager";
+import { NavigateButton } from "@/components/maps/navigate-dialog";
 import { StraightenDialog } from "./straighten-dialog";
 import { PropertyMiniMap } from "./property-mini-map";
 import { setMapFocusSource } from "@/lib/geo/map-focus";
@@ -1512,6 +1513,15 @@ export function PropertyForm({
                 />
               </ErrorBoundary>
             </div>
+          </div>
+          {/* Slice #39.35 (Ask first 4): „Navighează" beside the map that shows where the property is — directions
+              in Google Maps and a QR code for the phone, from the corners on screen or, without them, the address. */}
+          <div className="flex justify-end pt-2" data-navigate-row="">
+            <NavigateButton
+              target={{ corners, address: typeConfig.hideAddress ? null : watchedValues.address ?? null }}
+              name={watchedValues.nickname?.trim() || propertyCode || ""}
+              showLabel
+            />
           </div>
         </section>,
         )}

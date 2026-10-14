@@ -4650,5 +4650,27 @@
     },
     "shared": "Acte comune",
     "sharedHint": "Pe fiecare linie, câte acte au cei doi în comun"
+  },
+  "navigate": {
+    "button": "Navighează",
+    "title": "Navighează la {name}",
+    "titleUnnamed": "Navighează la proprietate",
+    "close": "Închide",
+    "noTarget": "Proprietatea nu are nici formă pe hartă, nici adresă: nu are unde duce un traseu.",
+    "toShape": "Spre parcelă: centrul ei pe hartă.",
+    "toAddress": "Spre adresa: {address}",
+    "start": "Pornire",
+    "startDevice": "Locația mea",
+    "startDeviceHint": "Telefonul care scanează codul pornește de unde este; pe acest calculator, Google Maps cere locația browserului.",
+    "startAddress": "De la o adresă",
+    "startAddressLabel": "Adresa de pornire",
+    "startAddressPlaceholder": "ex. Str. Libertății 10, Bragadiru",
+    "startAddressMissing": "Scrieți adresa de pornire, ca să apară linkul și codul QR.",
+    "qr": "Cod QR cu traseul spre proprietate",
+    "qrHint": "Scanați codul cu telefonul: Google Maps pornește navigarea.",
+    "open": "Deschide în Google Maps",
+    "copy": "Copiază linkul",
+    "copied": "Linkul a fost copiat",
+    "byGoogle": "Traseul îl trasează Google Maps, cu mașina, până la cel mai apropiat drum din hartă."
   }
 }

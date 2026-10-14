@@ -44,6 +44,7 @@ import { AreaDelimitedIcon, AreaFreeIcon } from "@/components/icons/area-icons";
 import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
 import { AREA_PULSE_CLASS, readAreaPulse, useAreaPulse } from "@/lib/ui/area-pulse";
 import { AreaLayer } from "./area-layer";
+import { NavigateButton } from "@/components/maps/navigate-dialog";
 import {
   FOCUS_BLINK,
   PROPERTY_MAP_PATH,
@@ -879,6 +880,8 @@ export default function PropertyMap() {
   const items         = data?.items ?? [];
   const allGroupCodes = useMemo(() => data?.allGroupCodes ?? [], [data?.allGroupCodes]);
   const withGeometry  = items.filter((p) => p.corners.length >= 1);
+  // #39.35: „Navighează" in the bubble takes the property's corners from here.
+  const cornersById   = useMemo(() => new globalThis.Map((data?.items ?? []).map((p) => [p.id, p.corners] as const)), [data?.items]);
 
   // Group filter — applied only on the "all" tab. A property is hidden only
   // when every group it belongs to is unchecked (see isPropertyVisibleForGroups).
@@ -2020,14 +2023,18 @@ export default function PropertyMap() {
                         onClick={() => togglePropertySelected(item.id)}
                       />
                     ) : (
-                      // Normal / selected-tab: „Deschide" — ArrowRight since #37.42 (A016)
-                      <IconButton
-                        href={`/properties/${item.id}`}
-                        icon={ArrowRight}
-                        label={t("map.openLink")}
-                        variant="secondary"
-                        size="xs"
-                      />
+                      // Normal / selected-tab: „Deschide" — ArrowRight since #37.42 (A016) — and, #39.35, „Navighează"
+                      // beside it: directions in Google Maps to the property's shape, with a QR code for the phone.
+                      <div className="flex items-center gap-1.5">
+                        <IconButton
+                          href={`/properties/${item.id}`}
+                          icon={ArrowRight}
+                          label={t("map.openLink")}
+                          variant="secondary"
+                          size="xs"
+                        />
+                        <NavigateButton target={{ corners: cornersById.get(item.id) ?? [], address: null }} name={item.label} size="xs" />
+                      </div>
                     )}
                   </div>
                 ))}
