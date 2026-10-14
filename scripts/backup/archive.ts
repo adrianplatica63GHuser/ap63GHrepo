@@ -653,6 +653,26 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
     say(`seed-rehearsal: the deaths backfill exited ${bRun.exit}: ${lastLines(bRun.text, 1)}`);
     const bAgain = runSeed(env, [], SEED_REHEARSAL_BACKFILL_SCRIPT);
     say(`seed-rehearsal: a second backfill exited ${bAgain.exit}: ${lastLines(bAgain.text, 1)}`);
+
+    // #39.30: an archive that already holds a big seed — Adrian's, recorded in the repo's own manifests — has its six
+    // lots on Adrian's line, exactly where a second seed must put its own (seed-rehearsal 20261014T134537Z-16101 met
+    // 6 overlaps there). So the restored copy's seeds are removed first, each by its own --remove over a copy of its
+    // manifest, and the rehearsal starts from the archive as it was before any seed.
+    const cleared: { exit: number | null; output: string }[] = [];
+    const liveInteractions = path.join(REPO, ".seed-dev-data-interactions", "manifest.json");
+    if (fs.existsSync(liveInteractions)) {
+      fs.copyFileSync(liveInteractions, path.join(work, "interactions-manifest.json"));
+      const r = runSeed(env, ["--remove"], SEED_REHEARSAL_INTERACTIONS_SCRIPT);
+      say(`seed-rehearsal: the archive's own interactions seed removed first, exit ${r.exit}: ${lastLines(r.text, 1)}`);
+      cleared.push({ exit: r.exit, output: r.text });
+    }
+    const liveBig = path.join(REPO, ".seed-dev-data-big", "manifest.json");
+    if (fs.existsSync(liveBig)) {
+      fs.copyFileSync(liveBig, path.join(work, "manifest.json"));
+      const r = runSeed(env, ["--remove"]);
+      say(`seed-rehearsal: the archive's own big seed removed first, exit ${r.exit}: ${lastLines(r.text, 2)}`);
+      cleared.push({ exit: r.exit, output: r.text });
+    }
     const before = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
 
     const t0 = Date.now();
@@ -690,6 +710,7 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
       removeExit: removed.exit,
       before,
       after,
+      cleared,
       backfill: {
         dryExit: bDry.exit,
         dryOutput: bDry.text,

@@ -495,6 +495,13 @@ describe("the big dev seed's rehearsal on a restored copy (Slice #39.21)", () =>
       expect(v.line).toMatch(/; the deaths backfill changed 3 as its --dry-run said, and a second run nothing$/);
     });
 
+    it("removes the archive's own seeds first, and fails when that removal does", () => {
+      const removed = { exit: 0, output: "Removed 1050 documents …" };
+      expect(seedRehearsalVerdict({ ...ok, backfill, cleared: [removed] }).line).toMatch(/; the archive's own seed removed first$/);
+      expect(seedRehearsalVerdict({ ...ok, backfill, cleared: [] }).line).not.toMatch(/removed first/);
+      expect(seedRehearsalVerdict({ ...ok, backfill, cleared: [{ exit: 1, output: "SEED FAILED" }] }).problems).toEqual(["removing the archive's own seed first exited 1"]);
+    });
+
     it("fails when the run and its --dry-run disagree, when a second run changes anything, when it printed no count", () => {
       expect(seedRehearsalVerdict({ ...ok, backfill: { ...backfill, runOutput: "Changed 2 persons (…)\n" } }).problems).toEqual(["the backfill's --dry-run said 3, the run changed 2"]);
       expect(seedRehearsalVerdict({ ...ok, backfill: { ...backfill, againOutput: "Changed 1 person (…)\n" } }).problems).toEqual(["a second backfill changed 1"]);

@@ -548,6 +548,8 @@ export interface SeedRehearsalObservation {
   interactions?: InteractionsRehearsalObservation;
   /** absent when the deaths backfill was not part of the run (#39.30) */
   backfill?: BackfillRehearsalObservation;
+  /** #39.30: the archive's own seeds, removed before the rehearsal's — empty or absent when it held none */
+  cleared?: readonly { exit: number | null; output: string }[];
 }
 
 /**
@@ -593,6 +595,8 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
     for (const t of i.after) if (ib.get(t.table) !== t.rows) problems.push(`${t.table}: ${ib.get(t.table) ?? "missing"} → ${t.rows} after the interactions --remove`);
     for (const t of i.before) if (!i.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after the interactions --remove`);
   }
+  for (const c of o.cleared ?? []) if (c.exit !== 0) problems.push(`removing the archive's own seed first exited ${c.exit ?? "without an exit code"}`);
+  const clearedLine = o.cleared && o.cleared.length > 0 ? `; the archive's own seed${o.cleared.length === 1 ? "" : "s"} removed first` : "";
   const bf = o.backfill;
   let bfLine = "";
   if (bf) {
@@ -613,7 +617,7 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
   const also = iMet ? `; the interactions seed met all ${iMet[1]} lines, a second was refused, its --remove brought every table back` : "";
   return {
     verdict: "passed",
-    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)${also}${bfLine}`,
+    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)${also}${bfLine}${clearedLine}`,
     problems,
   };
 }
