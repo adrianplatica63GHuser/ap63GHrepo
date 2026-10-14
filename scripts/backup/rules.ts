@@ -489,11 +489,29 @@ export function drillAppEnv(
 
 /**
  * `seed-rehearsal`: the newest backup restored into the drill's throwaway database (5434, no volume), the big dev
- * seed run against it, a second seed (which must be refused), `--remove`, and the tables counted before and
- * after. The archive's data never leaves this laptop — which is why this is a runner sequence: the cloud sandbox
+ * seed run against it, a second seed (which must be refused), the interactions seed's own round (#39.29),
+ * `--remove`, and the tables counted before and after. The archive's data never leaves this laptop — which is why this is a runner sequence: the cloud sandbox
  * may not hold a copy of the archive (2026-10-13, refused twice).
  */
 export const SEED_REHEARSAL_SCRIPT = "scripts/seed-dev-data-big/seed.ts";
+/**
+ * The interactions seed (#39.29) runs on the big seed's persons, so the rehearsal runs it between the big seed and the
+ * big seed's `--remove`: seed, a second seed (refused), its own `--remove`, and the tables must then read exactly as
+ * they did after the big seed — the interactions seed adds no Reference Data, so no table may differ at all.
+ */
+export const SEED_REHEARSAL_INTERACTIONS_SCRIPT = "scripts/seed-dev-data-interactions/seed.ts";
+
+/** What the rehearsal saw of the interactions seed. */
+export interface InteractionsRehearsalObservation {
+  seedExit: number | null;
+  seedOutput: string;
+  reseedExit: number | null;
+  reseedOutput: string;
+  removeExit: number | null;
+  /** after the big seed, before the interactions seed — and after the interactions seed's --remove */
+  before: readonly TableCount[];
+  after: readonly TableCount[];
+}
 
 export interface SeedRehearsalObservation {
   backup: string;
@@ -505,6 +523,8 @@ export interface SeedRehearsalObservation {
   removeExit: number | null;
   before: readonly TableCount[];
   after: readonly TableCount[];
+  /** absent when the interactions seed was not part of the run */
+  interactions?: InteractionsRehearsalObservation;
 }
 
 /**
@@ -535,10 +555,26 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
     problems.push(`${t.table}: ${was ?? "missing"} → ${t.rows} after --remove`);
   }
   for (const t of o.before) if (!o.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after --remove`);
+  const i = o.interactions;
+  let iMet: RegExpExecArray | null = null;
+  if (i) {
+    iMet = /Toate cele (\d+) cerințe sunt îndeplinite\./.exec(i.seedOutput);
+    if (i.seedExit !== 0) problems.push(`the interactions seed exited ${i.seedExit ?? "without an exit code"}`);
+    if (!iMet) {
+      const unmet = i.seedOutput.split(/\r?\n/).filter((l) => l.startsWith("✗")).map((l) => l.slice(2).trim());
+      problems.push(unmet.length ? `interactions coverage not met: ${unmet.slice(0, 5).join("; ")}` : "the interactions seed printed no coverage table");
+    }
+    if (i.reseedExit === 0 || !/A previous interactions seed is still recorded/.test(i.reseedOutput)) problems.push("a second interactions seed was not refused");
+    if (i.removeExit !== 0) problems.push(`the interactions --remove exited ${i.removeExit ?? "without an exit code"}`);
+    const ib = new Map(i.before.map((t) => [t.table, t.rows]));
+    for (const t of i.after) if (ib.get(t.table) !== t.rows) problems.push(`${t.table}: ${ib.get(t.table) ?? "missing"} → ${t.rows} after the interactions --remove`);
+    for (const t of i.before) if (!i.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after the interactions --remove`);
+  }
   if (problems.length > 0) return { verdict: "failed", line: `FAILED — backup ${o.backup}: ${problems.slice(0, 4).join("; ")}`, problems };
+  const also = iMet ? `; the interactions seed met all ${iMet[1]} lines, a second was refused, its --remove brought every table back` : "";
   return {
     verdict: "passed",
-    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)`,
+    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)${also}`,
     problems,
   };
 }

@@ -478,4 +478,33 @@ describe("the big dev seed's rehearsal on a restored copy (Slice #39.21)", () =>
     expect(seedRehearsalVerdict({ ...ok, after: [t("public.person", 60), t("public.property", 40), t("public.lookup_person_role", 40)] }).verdict).toBe("failed");
     expect(seedRehearsalVerdict({ ...ok, removeExit: 2 }).problems).toEqual(["--remove exited 2"]);
   });
+
+  describe("with the interactions seed's round (Slice #39.29)", () => {
+    const mid = [t("public.person", 960), t("public.interaction", 0)];
+    const round = {
+      seedExit: 0,
+      seedOutput: "✓ PJ cu interacțiuni  ≥ 70 %  342 / 450 (76.0 %)\nToate cele 13 cerințe sunt îndeplinite.\n",
+      reseedExit: 1,
+      reseedOutput: "SEED FAILED: A previous interactions seed is still recorded in x/interactions-manifest.json. Run with --remove first.",
+      removeExit: 0,
+      before: mid,
+      after: mid,
+    };
+
+    it("passes when its table is met, its second seed refused and every table back as the big seed left it", () => {
+      const v = seedRehearsalVerdict({ ...ok, interactions: round });
+      expect(v.verdict).toBe("passed");
+      expect(v.line).toMatch(/; the interactions seed met all 13 lines, a second was refused, its --remove brought every table back$/);
+    });
+
+    it("fails on an unmet line, a second seed let through, a row left behind", () => {
+      const unmet = seedRehearsalVerdict({ ...ok, interactions: { ...round, seedExit: 1, seedOutput: "✗ Interacțiuni cu documente atașate  ≥ 30 %  600 / 3000 (20.0 %)\n" } });
+      expect(unmet.problems).toEqual(["the interactions seed exited 1", "interactions coverage not met: Interacțiuni cu documente atașate  ≥ 30 %  600 / 3000 (20.0 %)"]);
+      expect(seedRehearsalVerdict({ ...ok, interactions: { ...round, reseedExit: 0 } }).problems).toEqual(["a second interactions seed was not refused"]);
+      expect(seedRehearsalVerdict({ ...ok, interactions: { ...round, after: [t("public.person", 960), t("public.interaction", 3)] } }).problems).toEqual([
+        "public.interaction: 0 → 3 after the interactions --remove",
+      ]);
+      expect(seedRehearsalVerdict({ ...ok, interactions: { ...round, removeExit: 1 } }).problems).toEqual(["the interactions --remove exited 1"]);
+    });
+  });
 });
