@@ -68,6 +68,37 @@ describe("the act adițional's 20 fields, each placed once", () => {
   });
 });
 
+describe("„Clauze completate”: three clauses change places (#39.31)", () => {
+  // Adrian, 2026-10-14: „Nedezmembrat contrar extrasului" takes „Notificare AML"'s
+  // place, „Notificare AML" takes „Nearendat"'s, „Nearendat" takes „Nedezmembrat"'s.
+  // A rotation of three order values (13, 14, 17); keys, labels and options stay.
+  const CLAUSES = () => parseTemplateFields(ACT).filter((f) => f.groupRo === "Clauze completate");
+
+  it("in the new order, by key and by label", () => {
+    expect(keysOf("Clauze completate")).toEqual([
+      "liberDeSarcini", "faraServituti", "nearendat", "notificareAml", "consimtamantRadiere",
+      "taxeLocaleLaZi", "nedezmembratContrar", "consimtamantDatePersonale", "celelalteClauzeNemodificate",
+    ]);
+    const order = Object.fromEntries(ACT.map((f) => [f.key, f.order] as const));
+    expect([order.nearendat, order.notificareAml, order.nedezmembratContrar]).toEqual([13, 14, 17]);
+    expect(CLAUSES().map((f) => f.labelRo).slice(2, 7)).toEqual([
+      "Nearendat", "Notificare AML", "Consimțământ radiere", "Taxe locale la zi", "Nedezmembrat contrar extrasului",
+    ]);
+  });
+
+  it("a stored value stays under its own label in the field's new place — values are read by key", () => {
+    const stored: Record<string, string> = { nearendat: "AFIRMAT", notificareAml: "EXCEPTIE", nedezmembratContrar: "NEMENTIONAT" };
+    const shown = CLAUSES()
+      .filter((f) => f.key in stored)
+      .map((f) => [f.labelRo, stored[f.key]]);
+    expect(shown).toEqual([
+      ["Nearendat", "AFIRMAT"],
+      ["Notificare AML", "EXCEPTIE"],
+      ["Nedezmembrat contrar extrasului", "NEMENTIONAT"],
+    ]);
+  });
+});
+
 describe("the template group „Actul modificat”", () => {
   it("is the fifth special group, in both languages — and not the tab's name, which says only where it is", () => {
     expect(TEMPLATE_FIELD_GROUPS.map((g) => g.id)).toEqual(["financial", "fees", "certificates", "identification", "amendedDeed"]);
