@@ -22,6 +22,8 @@
  *     the same width only because this spec sets it.
  *   - A blink on a Google map is not asserted pixel by pixel: the case's
  *     `data-focus-blink` goes `on` and then `done`, and the pictures show it.
+ *   - Step 2a (#39.27) clicks the map's centre — the rectangle's, after the focus — and a corner near the bottom
+ *     left, rather than reading pixels: the bubble is Google's `.gm-style-iw`.
  *   - Slice #37.38's pictures, not a step of the case: the form with its tile,
  *     the map mid-blink and the map after it, at 1920 px, into
  *     `playwright-report/map-focus/`. The sidebar's „Recente" list is painted
@@ -118,6 +120,19 @@ test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de
       nav.clear();
       await page.goto(`/properties/map?focus=${id}&z=${zoom}`);
       await expectFocused(page, nav, id, zoom, true);
+
+      // Step 2a (#39.27) — a click inside the property opens the bubble: its nickname and „Deschide"; a click on
+      // empty map closes it. The map is centred on the rectangle, so its centre is inside it; a corner of the map,
+      // at this zoom, is not. (#39.08 had made every property clickable, which swallowed the click: no bubble.)
+      const box = (await bigMap(page).boundingBox())!;
+      const bubble = page.locator(".gm-style-iw");
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(bubble).toHaveCount(1, { timeout: 15_000 });
+      await expect(bubble).toContainText(NICKNAME);
+      await expect(bubble.getByRole("link", { name: "Deschide", exact: true })).toHaveAttribute("href", `/properties/${id}`);
+      await page.screenshot({ path: `${SHOTS}/02a-bubble-1920.png`, mask: [recent(page)] });
+      await page.mouse.click(box.x + 40, box.y + box.height - 40);
+      await expect(bubble).toHaveCount(0, { timeout: 15_000 });
 
       // Step 3 — a reload is the ordinary map.
       await page.reload();

@@ -51,6 +51,7 @@ polygon blinks and `done` after.
 |---|---|---|
 | 1 | Opens `TC-MAP-01 Teren pe hartă` (`/properties/<id>`) | Its screen, headed `TC-MAP-01 Teren pe hartă`; the „Hartă" tile shows the rectangle, fitted, centred on 44.3702, 25.9804 — at a zoom of **19** at 1920 px |
 | 2 | Goes to `/properties/map?focus=<id>&z=19` (the tile's zoom) | The address then reads `/properties/map`. The map is centred on **44.3702, 25.9804** at zoom **19**, and the rectangle blinks green three times (about 2.4 s), then is blue like the others |
+| 2a | (#39.27) Clicks inside the rectangle, at the map's centre; then on empty map, near its bottom-left corner | A bubble opens over the rectangle: `TC-MAP-01 Teren pe hartă` and „Deschide", which goes to its screen. The click on empty map closes it |
 | 3 | Reloads the page | The ordinary map: every property fitted, nothing blinking |
 | 4 | „Proprietăți" in the sidebar, then „Hartă completă" | The ordinary map, as in step 3: the address is `/properties/map`, with no `focus` |
 
@@ -61,6 +62,10 @@ Step 2 is the assertion.
 Delete the property (`DELETE /api/properties/<id>`).
 
 ## Notes from the runs
+
+**2026-10-13 — Slice #39.27, step 2a added.** A click on a property opened no bubble from #39.08 on: that slice made every
+property shape clickable while no area tool was pressed, and a clickable shape swallows the click the map's hit-test
+needs. They are never clickable now.
 
 **2026-10-01 — run 1, `driven` (Slice #37.38).** Driven in the Claude desktop app's browser pane
 at 1920 × 1080, against `npm run dev` on 3000. The property was `PROP05842`.
