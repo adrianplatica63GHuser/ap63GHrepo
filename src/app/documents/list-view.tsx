@@ -571,8 +571,13 @@ export function DocumentListView({
   // way whatever anybody upstream does — which is why the memo above is a
   // tidiness fix and this is the guard. `typeFiltersKey` above already sets the
   // precedent for exactly the same reconciliation.
-  const customFieldKeysSignature = customFieldOptions.map((o) => o.key).join("\u0000");
-  const [prevKeysSignature, setPrevKeysSignature] = useState(customFieldKeysSignature);
+  //
+  // Slice #39.26: the key can now come from the ADDRESS — Back, or a type change that carries it — and the types may
+  // already be cached, so the signature would never change and a key the types on screen do not define would stay.
+  // So the first render with the types loaded checks too: `prevKeysSignature` starts as null, the types-not-yet-
+  // loaded signature is null as well, and a key is never judged against a list of types that has not arrived.
+  const customFieldKeysSignature = documentTypes === undefined ? null : customFieldOptions.map((o) => o.key).join("\u0000");
+  const [prevKeysSignature, setPrevKeysSignature] = useState<string | null>(null);
   if (prevKeysSignature !== customFieldKeysSignature) {
     setPrevKeysSignature(customFieldKeysSignature);
     if (customFieldKey && !customFieldOptions.some((o) => o.key === customFieldKey)) {
@@ -643,10 +648,11 @@ export function DocumentListView({
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
   const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${currentPage}`;
-  // Slice #39.26: the view, in the list's address; the scroll, in the session.
+  // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
+  // the type filter carries it, and measured in TC-DOC-08 a box emptied just before a tick came back with its old word.
   useWriteListAddress(
-    { search: debouncedSearch, page: currentPage, filters: { expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue } },
-    pageKey,
+    { search: searchInput, page: currentPage, filters: { expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue } },
+    `${searchInput}|${pageKey}`,
   );
   useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);

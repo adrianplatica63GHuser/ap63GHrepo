@@ -159,8 +159,9 @@ export function JudicialPersonListView() {
   const items      = query.data?.items ?? [];
 
   const pageKey = `${debouncedSearch}|${currentPage}`;
-  // Slice #39.26: the view, in the list's address; the scroll, in the session.
-  useWriteListAddress({ search: debouncedSearch, page: currentPage }, pageKey);
+  // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
+  // a link that carries it (Acte's type filter) must not find the box's last word missing.
+  useWriteListAddress({ search: searchInput, page: currentPage }, `${searchInput}|${currentPage}`);
   useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {

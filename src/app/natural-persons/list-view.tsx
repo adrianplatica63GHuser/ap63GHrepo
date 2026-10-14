@@ -173,8 +173,9 @@ export function NaturalPersonListView() {
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
   const pageKey = `${debouncedSearch}|${currentPage}`;
-  // Slice #39.26: the view, in the list's address; the scroll, in the session.
-  useWriteListAddress({ search: debouncedSearch, page: currentPage }, pageKey);
+  // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
+  // a link that carries it (Acte's type filter) must not find the box's last word missing.
+  useWriteListAddress({ search: searchInput, page: currentPage }, `${searchInput}|${currentPage}`);
   useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {

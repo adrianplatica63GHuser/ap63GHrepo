@@ -178,7 +178,8 @@ describe("the four lists keep their view in their address (#39.26)", () => {
     expect(view).toMatch(/const address = useListAddress\((DOCUMENT_ADDRESS_FILTERS)?\);/);
     expect(view).toContain("useState(address.search);");
     expect(view).toContain("useState(address.page);");
-    expect(view).toMatch(/useWriteListAddress\(/);
+    // The search as typed, not the debounced one — a link that carries it must find the box's word.
+    expect(view).toMatch(/useWriteListAddress\(\s*\{ search: searchInput, page: currentPage/);
     expect(view).toContain("useListScrollMemory(query.isSuccess);");
     expect(view).toContain(`address={{ kind: "${kind}", row: address.row, tiles: address.tiles }}`);
     // The search's debounce sends the list to its first page only when the search changed — on mount the address's

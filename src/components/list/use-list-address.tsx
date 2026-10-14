@@ -29,7 +29,7 @@ export function useListAddress(filterKeys: readonly string[] = []): ListAddress 
  * not one: two writes in one tick (a search and a tile) can reach the router as two updates.
  */
 const written: string[] = [];
-const MAX_WRITTEN = 8;
+const MAX_WRITTEN = 32;
 
 /** Writes `patch` into the current address, replacing the history entry; nothing when it would not change. */
 export function replaceListAddress(patch: Partial<ListAddress>): void {
@@ -85,8 +85,13 @@ export function useWriteListAddress(patch: Partial<ListAddress>, signature: stri
 
 /** What the person does that makes the scroll theirs again. */
 const USER_SCROLL = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
-/** About a second of holding the restored scroll, every 50 ms. */
-const HOLD_TRIES = 20;
+/**
+ * The restored scroll is set every 50 ms until it has held for `HOLD_AT` tries in a row (half a second), or for at
+ * most `HOLD_TRIES` (five seconds): the page reaches its height only once the tiles beside the list have read their
+ * rows, and until then the scroll area clamps it. Measured in the runner: a one-second hold stopped at 46 px of 228.
+ */
+const HOLD_TRIES = 100;
+const HOLD_AT = 10;
 
 /** The app shell's scroll area. */
 function pageScroll(): HTMLElement | null {
@@ -159,9 +164,10 @@ export function useListScrollMemory(ready: boolean): void {
       if (top !== undefined) wanted.current = null;
       return;
     }
-    // Held for a moment, not set once: the tiles beside the list read their rows after it, and a page that grows
-    // under the scroll moves it (measured: 47 px off, once). The moment Adrian scrolls, clicks or types, it is his.
+    // Held, not set once: the tiles beside the list read their rows after it, and the page grows under the scroll
+    // (`HOLD_TRIES`). The moment Adrian scrolls, clicks or types, it is his.
     let tries = 0;
+    let held = 0;
     let timer = 0;
     const stop = () => {
       window.clearTimeout(timer);
@@ -172,7 +178,8 @@ export function useListScrollMemory(ready: boolean): void {
     const put = () => {
       el.scrollTop = top;
       tries += 1;
-      if (tries < HOLD_TRIES) timer = window.setTimeout(put, 50);
+      held = Math.abs(el.scrollTop - top) <= 1 ? held + 1 : 0;
+      if (held < HOLD_AT && tries < HOLD_TRIES) timer = window.setTimeout(put, 50);
       else stop();
     };
     timer = window.setTimeout(put, 0);
