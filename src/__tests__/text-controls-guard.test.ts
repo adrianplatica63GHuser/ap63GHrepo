@@ -28,7 +28,8 @@
  *    words, decided so in #37.42 (the words are the place or the value);
  *  - A096 a link in a sentence that opens in the same tab — #37.46 gave the
  *    new-tab ones their ExternalLink and left this one as it was;
- *  - FOLD „Arată mai mult…" (#37.40), out of scope for icons;
+ *  - FOLD „Arată mai mult…" (#37.40), out of scope for icons — and a section's
+ *    title that opens and closes it (#39.33, `DisclosureSection`);
  *  - ICONBUTTON IconButton itself, whose children are its icon and words;
  *  - INFO the ⓘ's „i" (#38.08): a glyph drawn as a letter, aria-hidden — the
  *    button is named by its aria-label, so it shows no words.
@@ -269,6 +270,10 @@ const ALLOW: Record<string, Allowed[]> = {
   ],
   "src/components/forms/growing-text.tsx": [
     ["FOLD", "{expanded ? t(\"showLess\") : t(\"showMore\")}"],
+  ],
+  // Slice #39.33: a section that opens and closes — its title is the words, „>" after it (the log tile's five).
+  "src/lib/ui/disclosure-section.tsx": [
+    ["FOLD", "<span className=\"shrink-0\">{title}</span>"],
   ],
   "src/components/groups-filter-dropdown.tsx": [
     ["A015", "<span className=\"text-fade\">{label}</span> <span classNa"],
