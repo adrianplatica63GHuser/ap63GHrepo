@@ -7,8 +7,8 @@
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The properties carry `TC-E2E-PROP-13` (records.ts) and are removed in `finally`.
- *   - „Hartă" is ticked through `showTile`. The Google map stays blocked (no `realMaps`): „Navighează" is under the
- *     map, not on it, and builds its link without Google — which is the point.
+ *   - „Hartă" is ticked through `showTile`. The Google map stays blocked (the spec opts in for nothing): „Navighează"
+ *     is under the map, not on it, and builds its link without Google — which is the point.
  *   - Scanning the code with a phone is Adrian's (the slice's handover); here the code's own text is read.
  */
 

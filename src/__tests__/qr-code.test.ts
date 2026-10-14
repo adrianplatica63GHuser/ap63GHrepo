@@ -2,7 +2,7 @@
  * Slice #39.35 — the QR code encoder (`@/lib/qr/qr-code`), checked against ISO/IEC 18004's own worked values and
  * structure. (While it was written it was also compared with OpenCV's encoder and read back by OpenCV's decoder.)
  */
-import { blocksOf, dataCapacity, formatBits, qrMatrix, reedSolomon, versionBits, versionFor } from "@/lib/qr/qr-code";
+import { blocksOf, dataCapacity, formatBits, qrMatrix, reedSolomon, utf8, versionBits, versionFor } from "@/lib/qr/qr-code";
 
 describe("the tables", () => {
   it("level M's data capacity, from the standard: 16 codewords at version 1, 2 334 at 40", () => {
@@ -64,6 +64,13 @@ describe("the matrix", () => {
       expect(m[i]![6]).toBe(i % 2 === 0);
     }
     expect(m[n - 8]![8]).toBe(true);
+  });
+  it("UTF-8 by hand: ASCII, Romanian letters, the euro sign, an emoji — and a lone surrogate as U+FFFD", () => {
+    expect(utf8("a")).toEqual([0x61]);
+    expect(utf8("ș")).toEqual([0xc8, 0x99]);
+    expect(utf8("€")).toEqual([0xe2, 0x82, 0xac]);
+    expect(utf8("😀")).toEqual([0xf0, 0x9f, 0x98, 0x80]);
+    expect(utf8("\ud800")).toEqual([0xef, 0xbf, 0xbd]);
   });
   it("Romanian letters fit, as UTF-8 bytes", () => {
     expect(() => qrMatrix("Strada Școlii 5, Bragadiru, Ilfov, România — ăîâșț")).not.toThrow();

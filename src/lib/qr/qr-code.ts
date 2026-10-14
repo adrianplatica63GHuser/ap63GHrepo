@@ -90,8 +90,21 @@ export function reedSolomon(data: readonly number[], ec: number): number[] {
   return rem;
 }
 
-function utf8(text: string): number[] {
-  return Array.from(new TextEncoder().encode(text));
+/**
+ * The text's UTF-8 bytes, by hand rather than `TextEncoder`: jsdom, where the component's tests run, has none.
+ * A lone surrogate (half of an emoji) becomes U+FFFD, as `TextEncoder` would make it.
+ */
+export function utf8(text: string): number[] {
+  const out: number[] = [];
+  for (const ch of text) {
+    let cp = ch.codePointAt(0)!;
+    if (cp >= 0xd800 && cp <= 0xdfff) cp = 0xfffd;
+    if (cp < 0x80) out.push(cp);
+    else if (cp < 0x800) out.push(0xc0 | (cp >> 6), 0x80 | (cp & 63));
+    else if (cp < 0x10000) out.push(0xe0 | (cp >> 12), 0x80 | ((cp >> 6) & 63), 0x80 | (cp & 63));
+    else out.push(0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 63), 0x80 | ((cp >> 6) & 63), 0x80 | (cp & 63));
+  }
+  return out;
 }
 
 /** The final codeword sequence: data in byte mode, padded, split in blocks, error correction added, interleaved. */
