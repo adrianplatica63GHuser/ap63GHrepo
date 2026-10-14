@@ -4462,6 +4462,14 @@
     "log": {
       "collapse": "Restrânge",
       "manual": "Înregistrare manuală",
+      "related": "Asocieri",
+      "summary": {
+        "documents": "{count, plural, one {# act} few {# acte} other {# de acte}}",
+        "tags": "{count, plural, one {# etichetă} few {# etichete} other {# de etichete}}",
+        "property": "o proprietate",
+        "followUpNoDate": "fără dată",
+        "internalOn": "activă"
+      },
       "connections": "Conturi conectate",
       "notConnected": "Neconectat",
       "connect": "Conectează",

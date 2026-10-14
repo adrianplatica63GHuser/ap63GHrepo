@@ -7,12 +7,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { useNameOr } from "@/components/record/use-name-or";
 import { IconButton } from "@/lib/ui/icon-button";
+import { DisclosureSection } from "@/lib/ui/disclosure-section";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { screenBox } from "@/lib/ui/field-widths";
 import { INTERACTION_CHANNELS, INTERACTION_STATUSES, SUBJECT_MAX, type InteractionRecord } from "@/lib/interactions/model";
 import { CHANNEL_INK, CHANNEL_PILL, MODULE_CARD } from "@/lib/interactions/palette";
 import {
   DESCRIPTION_PROMPT,
+  FORM_FIELDS,
   checkForm,
   emptyForm,
   firstError,
@@ -28,6 +30,7 @@ import {
   type LogForm,
 } from "@/lib/interactions/form";
 import { CHANNEL_ICON, DIRECTION_ICON } from "@/components/interactions/interaction-pills";
+import { SECTION_OF_FIELD, errorIn, initialOpen, relatedCounts, type LogSection } from "@/lib/interactions/log-sections";
 import { PersonPicker } from "./filter-controls";
 import { RecordSearch } from "./pickers";
 import { useInteraction } from "./history-tile";
@@ -124,10 +127,14 @@ export function LogTile({
   // The version the form was filled from — what a change is saved over. Not `loaded.updatedAt`: a background read of
   // a newer copy must never make a save land over a change nobody here has seen (§7).
   const [readAt, setReadAt] = useState<string | null>(null);
+  // #39.33: which of the five sections are open — the defaults each time the form is filled (Ask first 1 and 5).
+  const [open, setOpen] = useState<ReadonlySet<LogSection>>(() => initialOpen(base, "new"));
   const dirty = isDirty(form, base);
 
   const reset = (next: LogForm, name: string | null, version: string | null = null) => {
     setReadAt(version);
+    // A version means a stored record, i.e. edit mode: its sections that hold a value open too.
+    setOpen(initialOpen(next, version ? "edit" : "new"));
     setBase(next);
     setForm(next);
     setPersonName(name);
@@ -176,7 +183,13 @@ export function LogTile({
     if (!result.ok) {
       setShowAll(true);
       const first = firstError(result.errors);
-      if (first) document.getElementById(FIELD_ID[first])?.focus();
+      if (first) {
+        // #39.33 (Ask first 3): a field in a closed section never blocks a save silently — its section opens, and
+        // the focus goes to it once it is drawn.
+        const section = SECTION_OF_FIELD[first];
+        setOpen((prev) => (prev.has(section) ? prev : new Set(prev).add(section)));
+        focusSoon(FIELD_ID[first]);
+      }
       return false;
     }
     if (mode === "edit" && (!loaded || !readAt)) return false;
@@ -288,6 +301,43 @@ export function LogTile({
     return () => window.removeEventListener("keydown", listener);
   }, []);
 
+  const toggle = (section: LogSection) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(section)) next.add(section);
+      return next;
+    });
+  /** What a closed section says after its title (Ask first 2), and the error it holds, if any, in red. */
+  const errorOf = (section: LogSection) => {
+    const e = errorIn(section, errors, FORM_FIELDS);
+    return e ? tl(`error.${e}`) : null;
+  };
+  const day = (iso: string) =>
+    new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
+  const related = relatedCounts(form);
+  const summaryOf: Record<LogSection, string | null> = {
+    connections: null,
+    manual: form.subject.trim() || null,
+    related:
+      [
+        related.documents > 0 ? tl("summary.documents", { count: related.documents }) : null,
+        related.tags > 0 ? tl("summary.tags", { count: related.tags }) : null,
+        related.property > 0 ? tl("summary.property") : null,
+      ]
+        .filter(Boolean)
+        .join(", ") || null,
+    followUp: form.followUp ? (form.followUpOn ? day(form.followUpOn) : tl("summary.followUpNoDate")) : null,
+    internal: form.internal ? tl("summary.internalOn") : null,
+  };
+  const sectionProps = (section: LogSection, title: string) => ({
+    id: `interaction-section-${section}`,
+    title,
+    open: open.has(section),
+    onToggle: () => toggle(section),
+    summary: summaryOf[section],
+    error: errorOf(section),
+  });
+
   const ids = {
     hintWhen: useId(),
     hintPerson: useId(),
@@ -333,7 +383,9 @@ export function LogTile({
         ))}
       </div>
 
-      <Connections />
+      <DisclosureSection {...sectionProps("connections", tl("connections"))}>
+        <Connections />
+      </DisclosureSection>
 
       <form
         noValidate
@@ -345,7 +397,6 @@ export function LogTile({
         }}
         className="flex flex-col gap-4"
       >
-        <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">{tl("manual")}</h3>
         {mode === "edit" && !loaded && (
           <p role="status" className="text-sm text-fade dark:text-zinc-400" data-log-loading="">
             {record.isError ? tl("loadFailed") : tl("loadingRecord")}
@@ -353,6 +404,8 @@ export function LogTile({
         )}
         <fieldset disabled={mode === "edit" && !loaded} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
 
+        <DisclosureSection {...sectionProps("manual", tl("manual"))}>
+        <div className="flex flex-col gap-4">
         <Field label={tl("channel")} labelId={ids.channel}>
           <div role="radiogroup" aria-labelledby={ids.channel} className="flex flex-wrap gap-1.5" data-log-channel="">
             {INTERACTION_CHANNELS.map((c, i) => {
@@ -490,13 +543,20 @@ export function LogTile({
           />
         </Field>
 
-        {/* 38.86: what the record links to — documents already in the archive, tags, one property. */}
+        </div>
+        </DisclosureSection>
+
+        {/* 38.86: what the record links to — documents already in the archive, tags, one property. #39.33: „Asocieri". */}
+        <DisclosureSection {...sectionProps("related", tl("related"))}>
+        <div className="flex flex-col gap-4">
         <LinkedDocuments documents={form.documents} onChange={(documents) => set({ documents })} />
         <TagChips tags={form.tags} onChange={(tags) => set({ tags })} />
         <RelatedProperty property={form.property} onChange={(property) => set({ property })} />
+        </div>
+        </DisclosureSection>
 
+        <DisclosureSection {...sectionProps("followUp", tl("followUp"))}>
         <div className="flex flex-col gap-1.5" data-log-follow-up="">
-          <span className="text-sm font-medium text-ink dark:text-zinc-100">{tl("followUp")}</span>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={form.followUp} onChange={(e) => set({ followUp: e.target.checked })} className="accent-[#3b5bdb]" />
@@ -521,9 +581,10 @@ export function LogTile({
             {shown("followUpOn") ? tl("error.followUpRequired") : tl("followUpHint")}
           </p>
         </div>
+        </DisclosureSection>
 
+        <DisclosureSection {...sectionProps("internal", tl("internal"))}>
         <div className="flex flex-col gap-1.5" data-log-internal="">
-          <span className="text-sm font-medium text-ink dark:text-zinc-100">{tl("internal")}</span>
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -550,6 +611,7 @@ export function LogTile({
             />
           )}
         </div>
+        </DisclosureSection>
 
         </fieldset>
 
@@ -735,7 +797,7 @@ function Connections() {
   ] as const;
   return (
     <div className="rounded-lg border border-slate-200 dark:border-zinc-700" data-connections="">
-      <h3 className="px-3 pt-2.5 text-sm font-semibold text-ink dark:text-zinc-100">{tl("connections")}</h3>
+      {/* #39.33: its title is the section's — „Conturi conectate", above. */}
       <ul className="divide-y divide-slate-200 dark:divide-zinc-700">
         {rows.map(({ key, name, Icon, ink }) => (
           <li key={key} className="flex flex-wrap items-center gap-3 px-3 py-2.5" data-connection={key}>

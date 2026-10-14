@@ -4462,6 +4462,14 @@
     "log": {
       "collapse": "Collapse",
       "manual": "Manual entry",
+      "related": "Related",
+      "summary": {
+        "documents": "{count, plural, one {# document} other {# documents}}",
+        "tags": "{count, plural, one {# tag} other {# tags}}",
+        "property": "a property",
+        "followUpNoDate": "no date",
+        "internalOn": "on"
+      },
       "connections": "Connected accounts",
       "notConnected": "Not connected",
       "connect": "Connect",
