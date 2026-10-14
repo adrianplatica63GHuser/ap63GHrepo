@@ -54,6 +54,8 @@ supabase_migrations.sql
 # the big dev seed's manifest (scripts/seed-dev-data-big, Slice #39.20) — kept out of
 # uploads/ so the backup's restore drill never counts it as a file without a row (FU-309)
 /.seed-dev-data-big/
+# … and the interactions seed's (scripts/seed-dev-data-interactions, Slice #39.29)
+/.seed-dev-data-interactions/
 
 # Adrian's machine-local Docker-stack switch scripts (Adrian <-> Ciprian UAT)
 # -- not part of the codebase, never meant to be shared/committed

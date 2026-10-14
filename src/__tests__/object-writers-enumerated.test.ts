@@ -329,6 +329,11 @@ const EXPECTED_WRITERS = [
   //    `principal_object` — none of the four tables — so it has no line here
   //    yet. The parts that back-date properties or documents add theirs.
 
+  // ── The interactions seed (scripts/seed-dev-data-interactions, Slice
+  //    #39.29) writes `interaction`, `interaction_document` and
+  //    `interaction_tag` ONLY through createInteraction, and removes through
+  //    deleteInteraction — none of the four tables, so no line here.
+
   // ── The SQL dev fixture. Slice #34.07 decided to leave it as SQL rather
   //    than rewrite it around the create functions, and its own header states
   //    every field it therefore does not write. That decision is what these

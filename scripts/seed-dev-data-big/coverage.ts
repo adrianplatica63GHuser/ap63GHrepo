@@ -41,16 +41,16 @@ export const meaningful = (notes: string | null | undefined): number =>
 /** A percentage to one decimal — what is printed is what is compared, so 57/100 is 57.0, not 56.999… */
 const pctOf = (hits: number, of: number): number => (of === 0 ? 0 : Math.round((hits / of) * 1000) / 10);
 
-function share(label: string, hits: number, of: number, min: number): CoverageLine {
+export function share(label: string, hits: number, of: number, min: number): CoverageLine {
   const pct = pctOf(hits, of);
   return { label, target: `${min === 100 ? "=" : "≥"} ${min} %`, value: `${hits} / ${of} (${pct.toFixed(1)} %)`, met: of > 0 && pct >= min };
 }
 
-function exactly(label: string, n: number, want: number): CoverageLine {
+export function exactly(label: string, n: number, want: number): CoverageLine {
   return { label, target: `= ${want}`, value: String(n), met: n === want };
 }
 
-function atLeast(label: string, n: number, want: number): CoverageLine {
+export function atLeast(label: string, n: number, want: number): CoverageLine {
   return { label, target: `≥ ${want}`, value: String(n), met: n >= want };
 }
 
