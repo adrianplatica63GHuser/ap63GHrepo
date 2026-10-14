@@ -31,6 +31,38 @@ export function clearRefusal(key: string, file: readonly StoredForm[]): string |
 }
 
 /**
+ * Why loading `key`'s form from the forms file onto Supabase is refused, or
+ * null when it may go ahead.                                    (Slice #39.31)
+ *
+ * The reverse of `clearRefusal`: only a type the forms file DOES hold a form
+ * for may be loaded, so the form written is always the file's — which is
+ * guarded on the file itself (`document-type-forms-file.test.ts`: no identity
+ * card, no catch-all) — and the database can only be brought closer to it.
+ */
+export function loadRefusal(key: string, file: readonly StoredForm[]): string | null {
+  if (!TYPE_KEY_PATTERN.test(key)) return `„${key}" is not a document-type key`;
+  if (!file.some((f) => f.key === key)) {
+    return `the forms file holds no form for ${key}; to take a form off Supabase, use clear`;
+  }
+  return null;
+}
+
+/** The one form the file holds for `key`, as the jsonb text `LOAD_FORM_SQL` takes; null when it holds none. */
+export function formJsonOf(key: string, file: readonly StoredForm[]): string | null {
+  const form = file.find((f) => f.key === key);
+  return form ? JSON.stringify(form.fields) : null;
+}
+
+/**
+ * The load's one write: one type's form, replaced by the file's. Never
+ * `document`, never `custom_fields` — a stored value is keyed by the field's
+ * key, so it stays where it is and shows under that field wherever the form
+ * now puts it. The text is cast server-side, the way `supabase-sync.ts` passes
+ * jsonb, so the array never round-trips through node-postgres' array literal.
+ */
+export const LOAD_FORM_SQL = `UPDATE lookup_document_type SET template_fields = $2::jsonb WHERE key = $1`;
+
+/**
  * The read-only counts for one type: its documents, and per form key how many
  * of them hold a non-empty value. Counts only — the values may be real CNPs
  * and ID numbers, so none is ever selected.

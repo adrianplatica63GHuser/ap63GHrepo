@@ -7,6 +7,14 @@
  *       local database — and, with a type key, that type's documents and, per
  *       key of its form on Supabase, how many hold a value. Counts only.
  *
+ *   npm run supabase:forms -- load TYPE_KEY
+ *       Writes that type's form from src/db/document-type-forms.json onto
+ *       Supabase, in one transaction, and prints the FORMS line after — how a
+ *       form edited locally (Form editor, then the runner's forms-export)
+ *       reaches the cloud without a migration or a full `supabase:sync`.
+ *       Refused unless the forms file holds a form for the type. Nothing in
+ *       `document` is read for values or written.              (Slice #39.31)
+ *
  *   npm run supabase:forms -- clear TYPE_KEY
  *       Sets that type's form to NULL on Supabase, in one transaction, and
  *       prints the FORMS line after. Refused unless the forms file holds no
@@ -27,10 +35,13 @@ import {
   CLEAR_FORM_SQL,
   FORMS_SQL,
   KEY_COUNTS_SQL,
+  LOAD_FORM_SQL,
   TYPE_COUNTS_SQL,
   TYPE_KEY_PATTERN,
   clearRefusal,
+  formJsonOf,
   formKeys,
+  loadRefusal,
 } from "../src/lib/documents/forms-on-supabase";
 
 const [command, typeKey] = process.argv.slice(2);
@@ -41,8 +52,9 @@ function stop(message: string): never {
   process.exit(1);
 }
 
-if (command !== "check" && command !== "clear") stop("Say `check [TYPE_KEY]` or `clear TYPE_KEY`.");
+if (command !== "check" && command !== "clear" && command !== "load") stop("Say `check [TYPE_KEY]`, `load TYPE_KEY` or `clear TYPE_KEY`.");
 if (command === "clear" && !typeKey) stop("`clear` needs a type key, e.g. clear ANTECONTRACT.");
+if (command === "load" && !typeKey) stop("`load` needs a type key, e.g. load ACT_ADITIONAL.");
 if (typeKey && !TYPE_KEY_PATTERN.test(typeKey)) stop(`„${typeKey}" is not a document-type key.`);
 if (!URL_ENV) stop("SUPABASE_SYNC_URL is not set in .env.");
 
@@ -89,6 +101,21 @@ async function main(): Promise<void> {
       if (typeKey) await counts(client, typeKey);
       console.log(await formsLine(client));
       await client.query("ROLLBACK");
+      return;
+    }
+    if (command === "load") {
+      const loadRefused = loadRefusal(typeKey!, file.forms);
+      if (loadRefused) stop(`Not loaded: ${loadRefused}.`);
+      await client.query("BEGIN");
+      const loaded = await client.query(LOAD_FORM_SQL, [typeKey, formJsonOf(typeKey!, file.forms)]);
+      if (loaded.rowCount !== 1) {
+        await client.query("ROLLBACK");
+        stop(`Not loaded: ${typeKey} is not a document type on Supabase.`);
+      }
+      await counts(client, typeKey!);
+      await client.query("COMMIT");
+      console.log(`${typeKey}: form loaded from the forms file; no document was touched`);
+      console.log(await formsLine(client));
       return;
     }
     const refusal = clearRefusal(typeKey!, file.forms);

@@ -567,6 +567,10 @@ describe("every server door that writes template_fields consults the predicate",
     // `clearRefusal` refuses it for any key the forms file still holds a form
     // for, so the database can only be brought closer to the file. Nothing in
     // the app imports it; it runs only from the script, only by Adrian.
+    // #39.31 gave the same file `load KEY`, which DOES write a form — but only
+    // the forms file's own form for that key (`loadRefusal` refuses a key the
+    // file holds none for), so it is argued exactly as the third writer is:
+    // the predicate is applied to the FILE, in `document-type-forms-file.test.ts`.
     expect(writers.sort()).toEqual(
       [DOC_QUERIES, VL_QUERIES, FORMS_FILE_WRITER, SUPABASE_FORMS_WRITER].map((p) => p.split("/").join(sep)).sort(),
     );
