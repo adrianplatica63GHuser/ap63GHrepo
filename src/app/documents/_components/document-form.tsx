@@ -92,6 +92,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { deleteFailureMessage } from "@/lib/documents/delete-failure";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { panelSubtitle } from "@/lib/ui/panel-subtitle";
@@ -876,17 +877,28 @@ export function DocumentForm({
     },
   });
 
+  // Slice #39.32: a failed delete says why in the screen's language — the
+  // route's own `error` is English — and the screen keeps its buttons: the
+  // dialog closes and the document stays open (`deleteFailureMessage`).
   const onDelete = async () => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch(
-        `/api/documents/${encodeURIComponent(documentId!)}`,
-        { method: "DELETE" },
-      );
+      let res: Response;
+      try {
+        res = await fetch(
+          `/api/documents/${encodeURIComponent(documentId!)}`,
+          { method: "DELETE" },
+        );
+      } catch {
+        throw new Error(deleteFailureMessage(null, t));
+      }
+      // An expired session is answered with the sign-in page, which `fetch`
+      // follows as a 200: without this the screen would leave for the list as
+      // though the document were gone (the same guard `safeMutate` has).
+      if (res.redirected) throw new Error(t("saveErrorSession"));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `${t("deleteError")} (HTTP ${res.status})`);
+        throw new Error(deleteFailureMessage(res.status, t));
       }
       // FU-228 (Slice #37.07): the record is gone, so „RECENTE" forgets it.
       forgetRecentlyViewed(documentId!);

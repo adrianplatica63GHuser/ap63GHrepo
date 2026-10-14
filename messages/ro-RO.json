@@ -1558,6 +1558,7 @@
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "saveErrorForeignKey": "O valoare la care se referă acest formular nu mai există. Alegeți altă valoare sau reîncărcați pagina.",
     "deleteError": "Ștergerea a eșuat",
+    "deleteNotFound": "Actul nu mai există în arhivă — poate a fost șters între timp.",
     "version": {
       "label": "v {n}",
       "historyChip": "{n} versiuni",

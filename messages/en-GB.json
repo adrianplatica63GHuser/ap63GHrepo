@@ -1558,6 +1558,7 @@
     "saveErrorSession": "Your session expired — please sign in again and retry.",
     "saveErrorForeignKey": "A value this form refers to no longer exists. Choose another value, or reload the page.",
     "deleteError": "Could not delete",
+    "deleteNotFound": "This document is no longer in the archive — it may have been deleted in the meantime.",
     "version": {
       "label": "v {n}",
       "historyChip": "{n} versions",
