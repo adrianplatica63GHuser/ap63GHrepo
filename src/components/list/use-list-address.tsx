@@ -150,7 +150,11 @@ export function useListScrollMemory(ready: boolean): void {
     const onScroll = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        if (wanted.current == null) writeMemory(keepScroll(readMemory(), at, el.scrollTop));
+        // Only while this list is the screen shown: the record a row opened is scrolled into view by Next before the
+        // list, kept hidden, lets go of the scroll area — measured in the runner, that wrote the record's 36 px over the
+        // list's 349 under the list's own slot.
+        if (wanted.current != null || historySlot() !== slot || window.location.pathname !== pathname) return;
+        writeMemory(keepScroll(readMemory(), at, el.scrollTop));
       }, 100);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
