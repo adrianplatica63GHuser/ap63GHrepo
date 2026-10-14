@@ -162,15 +162,27 @@ describe("the natural-person form mirrors the judicial-person form", () => {
     expect(uses(JUDICIAL, "cuiIsLocked")).toBe(2);
   });
 
-  it("neither form's Field even accepts a lock prop", () => {
+  it("neither form's Field even accepts a lock prop — but „Data decesului”'s „not yet” (#39.30)", () => {
     // Belt and braces on the check above, and the reason a stray
     // `disabled={…}` on either field would be a `tsc` error rather than a
     // silently ignored attribute: the prop does not exist.
-    for (const source of [NATURAL, JUDICIAL]) {
-      const props = /type FieldProps = \{[\s\S]*?\n\};/.exec(source);
-      expect(props).not.toBeNull();
-      expect(props![0]).not.toMatch(/\b(disabled|readOnly)\b/);
-    }
+    //
+    // #39.30 narrowed this. It read: „for (const source of [NATURAL, JUDICIAL]) … expect(props![0]).not.toMatch(
+    // /\b(disabled|readOnly)\b/)". The natural person's „Data decesului" can be filled only while „Decedat" is
+    // ticked (the CRM pattern Adrian asked for), so that form's Field takes `disabled` — and the lock this suite
+    // guards against is still refused where it matters: the CNP's element carries none (above), the lock flag is
+    // used twice and no more (above), and `disabled=` appears ONCE in „Identitate", on „Data decesului", gated on
+    // the tick. The judicial form's Field still has no such prop at all.
+    const judicial = /type FieldProps = \{[\s\S]*?\n\};/.exec(JUDICIAL);
+    expect(judicial).not.toBeNull();
+    expect(judicial![0]).not.toMatch(/\b(disabled|readOnly)\b/);
+    const natural = /type FieldProps = \{[\s\S]*?\n\};/.exec(NATURAL);
+    expect(natural).not.toBeNull();
+    expect(natural![0]).not.toMatch(/\breadOnly\b/);
+    const identity = NATURAL.slice(NATURAL.indexOf('data-panel="identity"'), NATURAL.indexOf('data-panel="id-card"'));
+    expect(identity.length).toBeGreaterThan(1000);
+    expect(identity.match(/\bdisabled=\{/g) ?? []).toHaveLength(1);
+    expect(NATURAL).toMatch(/name="dateOfDeath"[\s\S]{0,300}?disabled=\{!watchedValues\.isDeceased\}/);
   });
 });
 

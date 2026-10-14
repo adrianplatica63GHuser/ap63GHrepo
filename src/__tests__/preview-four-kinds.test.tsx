@@ -46,10 +46,25 @@ describe("loadPreview reads each kind's short set (Slice #37.70)", () => {
     const d = await loadPreview({ kind: "person", id: "p1" });
     expect(d.title).toBe("Pop Ana");
     expect(d.fields).toEqual({
-      nickname: "Ani", cnp: null, dateOfBirth: "12.03.1960", placeOfBirth: "Bragadiru",
+      nickname: "Ani", cnp: null, dateOfBirth: "12.03.1960", placeOfBirth: "Bragadiru", dateOfDeath: null,
       phone: "+40 700 000 001", email: "ana@example.ro", notes: "Clientă veche. Sună dimineața.",
     });
     expect(d.gender).toBe("FEMALE");
+    expect(d.isDeceased).toBe(false);
+  });
+
+  it("a dead person: „decedat: <date>” on line 2, only for a person marked „Decedat” (#39.30)", async () => {
+    stubFetch({
+      "/api/people/p3": { person: { displayName: "Pop Ion", notes: null }, natural: { lastName: "Pop", firstName: "Ion", dateOfBirth: "1921-05-01", isDeceased: true, dateOfDeath: "1998-04-30" } },
+      "/api/people/p4": { person: { displayName: "Pop Vasile", notes: null }, natural: { lastName: "Pop", firstName: "Vasile", isDeceased: false, dateOfDeath: null } },
+    });
+    const dead = await loadPreview({ kind: "person", id: "p3" });
+    expect([dead.isDeceased, dead.fields.dateOfDeath]).toEqual([true, "30.04.1998"]);
+    const alive = await loadPreview({ kind: "person", id: "p4" });
+    expect([alive.isDeceased, alive.fields.dateOfDeath]).toEqual([false, null]);
+    const tiles = readFileSync(join(process.cwd(), "src", "components", "tiles", "preview-tiles.tsx"), "utf8");
+    expect(tiles).toMatch(/name === "dateOfDeath" && data\.isDeceased && !data\.fields\.dateOfDeath \? t\("deathDateUnknown"\)/);
+    expect(tiles).toContain("${data.isDeceased ? ` ${DECEASED_MARK}` : \"\"}");
   });
 
   it("a person with every value missing: none", async () => {
@@ -248,7 +263,8 @@ describe("the persons' previews on four lines (#39.28)", () => {
 
   it("preview-tiles builds them: „CNP:”, „CUI:”, the birth word, „ · ” and „, ”, the notes cut, no count after the name", () => {
     const tiles = readFileSync(join(process.cwd(), "src", "components", "tiles", "preview-tiles.tsx"), "utf8");
-    expect(tiles).toContain('const prefix: Record<string, string> = { dateOfBirth: born, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") };');
+    // #39.30: + the death's word — it read „{ dateOfBirth: born, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") }".
+    expect(tiles).toContain('const prefix: Record<string, string> = { dateOfBirth: born, dateOfDeath: died, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") };');
     expect(tiles).toContain('sep: name === "dateOfBirth" ? ", " : " · ",');
     expect(tiles).toContain('cut: name === "notes",');
     expect(tiles).not.toContain('t("contacts"');

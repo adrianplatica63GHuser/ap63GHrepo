@@ -121,10 +121,11 @@ test.describe("TC-INHER-01 — arborele întreg", () => {
       await expect(hover).toContainText("3 legături de familie");
 
       lap("Step 5");
-      // Step 5 — no CNP, no identity card, no address: the route sends none of them.
+      // Step 5 — no CNP, no identity card, no address: the route sends none of them. (#39.30: „Decedat" and the
+      // date of death are the two keys it gained.)
       const data = (await (await page.request.get("/api/inheritance-tree")).json()) as { persons: Record<string, unknown>[] };
       const keys = new Set(data.persons.flatMap((p) => Object.keys(p)));
-      expect([...keys].sort()).toEqual(["dateOfBirth", "displayName", "firstName", "gender", "id", "lastName", "nickname"]);
+      expect([...keys].sort()).toEqual(["dateOfBirth", "dateOfDeath", "displayName", "firstName", "gender", "id", "isDeceased", "lastName", "nickname"]);
 
       lap("Step 6");
       // Step 6 — Ana's name opens her screen.

@@ -179,7 +179,8 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
 
   it("every field on the Natural Person form names its width in the file", () => {
     const panels = region(NP_FORM, "<fieldset disabled", "</fieldset>");
-    const uses = panels.match(/<(Field|SelectField|ReadOnlyField)\b/g) ?? [];
+    // #39.30: + „Decedat", a tick (`CheckField`), which names its width too.
+    const uses = panels.match(/<(Field|SelectField|ReadOnlyField|CheckField)\b/g) ?? [];
     const widths = panels.match(/width=\{NP\.[A-Za-z0-9]+\}/g) ?? [];
     expect(uses.length).toBeGreaterThan(20);
     expect(widths).toHaveLength(uses.length);
@@ -388,11 +389,12 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
   });
 
-  it("Adrian's rows: Nume | Prenume, Poreclă | CNP, Data nașterii | Vârstă | Gen, Locul nașterii | Tip profesional, then Note", () => {
+  it("Adrian's rows: Nume | Prenume, Poreclă | CNP, Data nașterii | Vârstă | Gen, Decedat | Data decesului (#39.30), Locul nașterii | Tip profesional, then Note", () => {
     expect(NP_ROWS.identity).toEqual([
       ["lastName", "firstName"],
       ["nickname", "cnp"],
       ["dateOfBirth", "age", "gender"],
+      ["isDeceased", "dateOfDeath"],
       ["placeOfBirth", "physicalPersonTypeId"],
       ["notes"],
     ]);
@@ -1077,7 +1079,8 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
       // Slice #37.60: the name is the heading; the person and the company draw PREVIEW_LINES.
       // #39.28: and their notes; the company loses „Tip" and „Nr. Reg. Com." — it read
       // person [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"]], company [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]].
-      person: [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"], ["notes"]],
+      // #39.30: + „Data decesului" — it read person [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"], ["notes"]].
+      person: [["nickname", "cnp"], ["dateOfBirth"], ["dateOfDeath"], ["placeOfBirth"], ["notes"]],
       company: [["nickname"], ["cuiNumber"], ["notes"]],
       // Slice #37.70: Adrian's rows for these two (preview-four-kinds.test.tsx).
       property: [["parcela", "tarlaId", "surfaceAreaMp"], ["nickname"], ["carteFunciara", "cadastralNumber"]],

@@ -45,7 +45,8 @@ test.describe("TC-INHER-03 — arborele în timp și actele din spatele lui", ()
     const ids: string[] = [];
     let doc: string | null = null;
     try {
-      const ion = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion", gender: "MALE", dateOfBirth: "1955-06-10" });
+      // #39.30: Ion died in 2010 — the tree marks him, and „Anul" only from 2010.
+      const ion = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion", gender: "MALE", dateOfBirth: "1955-06-10", isDeceased: true, dateOfDeath: "2010-04-01" });
       ids.push(ion);
       const ana = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ana", gender: "FEMALE", dateOfBirth: "1982-01-15" });
       ids.push(ana);
@@ -68,6 +69,11 @@ test.describe("TC-INHER-03 — arborele în timp și actele din spatele lui", ()
       await frame.locator("[data-tree-card]").getByRole("button", { name: "Închide", exact: true }).click();
       await expect(node(page, ion).locator("[data-tree-docs-count]")).toHaveText("1");
       await expect(node(page, ana).locator("[data-tree-docs-count]")).toHaveText("1");
+      // #39.30: Ion is dead today — „†" after his name, his years under it; Ana is not.
+      await expect(node(page, ion)).toHaveAttribute("data-tree-dead", "");
+      await expect(node(page, ion).locator("[data-tree-label]")).toContainText("†");
+      await expect(node(page, ion)).toContainText("1955–2010 · d. 01.04.2010");
+      await expect(node(page, ana)).not.toHaveAttribute("data-tree-dead", "");
 
       // Step 2 — Ion's badge: the list of his documents, one — the contract.
       await node(page, ion).getByRole("button", { name: "Un act", exact: true }).click();
@@ -103,8 +109,13 @@ test.describe("TC-INHER-03 — arborele în timp și actele din spatele lui", ()
       await expect(frame.locator("[data-tree-year]")).toHaveText("1970");
       await expect(node(page, ana)).toHaveAttribute("data-tree-faded", "");
       await expect(node(page, ion)).not.toHaveAttribute("data-tree-faded", "");
+      // #39.30: in 1970 Ion is alive; from 2010, dead.
+      await expect(node(page, ion)).not.toHaveAttribute("data-tree-dead", "");
       await page.mouse.move(5, 450);
       await page.screenshot({ path: `${SHOTS}/year-1970-1366.png`, mask: [page.locator(others)] });
+      await slider.fill("2010");
+      await expect(frame.locator("[data-tree-year]")).toHaveText("2010");
+      await expect(node(page, ion)).toHaveAttribute("data-tree-dead", "");
 
       // Step 5 — the contract, from Ion's list, opens its screen.
       await node(page, ion).getByRole("button", { name: "Un act", exact: true }).click();

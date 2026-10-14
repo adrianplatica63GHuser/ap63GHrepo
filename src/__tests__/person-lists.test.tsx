@@ -23,9 +23,10 @@ const keysOf = (src: string): string[] => [...src.matchAll(/\{ key: "(\w+)",\s+l
 describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () => {
   it("the Natural Persons list offers its „Identitate” fields less the name, the nickname and „Note”, in the panel's order", () => {
     const panel = SCREEN_ROWS.naturalPerson.identity.flat()
-      .filter((f) => !["lastName", "firstName", "nickname", "notes"].includes(f))
+      // #39.30: „Decedat" is not a column — it is the „†" after the name; „Data decesului" is offered.
+      .filter((f) => !["lastName", "firstName", "nickname", "notes", "isDeceased"].includes(f))
       .map((f) => (f === "physicalPersonTypeId" ? "professionalType" : f));
-    expect(panel).toEqual(["cnp", "dateOfBirth", "age", "gender", "placeOfBirth", "professionalType"]);
+    expect(panel).toEqual(["cnp", "dateOfBirth", "age", "gender", "dateOfDeath", "placeOfBirth", "professionalType"]);
     expect(keysOf(read("src", "app", "natural-persons", "list-view.tsx"))).toEqual(panel);
   });
 
@@ -106,8 +107,9 @@ describe("a person's and a company's preview: three compact lines (Slice #37.60)
   it("line 2 and line 3, by kind, and no name field under the name", () => {
     // #39.28: four lines — it read person [["nickname", "cnp"], ["dateOfBirth", "placeOfBirth"]], company
     // [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]].
+    // #39.30: line 2 gains „decedat: <date>" — it read [["nickname", "cnp", "dateOfBirth", "placeOfBirth"], …].
     expect(PREVIEW_LINES).toEqual({
-      person: [["nickname", "cnp", "dateOfBirth", "placeOfBirth"], ["phone", "email"], ["notes"]],
+      person: [["nickname", "cnp", "dateOfBirth", "placeOfBirth", "dateOfDeath"], ["phone", "email"], ["notes"]],
       company: [["nickname", "cuiNumber"], ["phone", "email"], ["notes"]],
     });
     for (const k of ["lastName", "firstName", "name", "code"]) {

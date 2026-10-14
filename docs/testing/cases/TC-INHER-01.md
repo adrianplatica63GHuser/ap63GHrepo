@@ -35,7 +35,7 @@ Nothing.
 | 2 | Types „Ana TC-E2E-INHER-01" in „Caută o persoană…", „Caută" | The tree centred on Ana at the near level (3): her card says her name, „n. 15.01.1982 · femeie" and her ties; the side card opens with „Deschide" |
 | 3 | Turns the wheel down over the tree, then up | Level 2 (names and „n. 1982"), then level 1 (dots and first names), then back to level 3 |
 | 4 | Hovers Ion | A small card: „Ion TC-E2E-INHER-01", „n. 10.06.1955", „3 legături de familie" |
-| 5 | (The route) | Each person carries only a name, a nickname, a gender and a date of birth — no CNP, no identity card, no address |
+| 5 | (The route) | Each person carries only a name, a nickname, a gender, a date of birth and — since #39.30 — „Decedat" and a date of death; no CNP, no identity card, no address |
 | 6 | Clicks Ana's name in the side card | Ana's screen, the tree's action panel expanded (#39.12, `?tree=open`) |
 
 ## At the end — leaving things as they were found
