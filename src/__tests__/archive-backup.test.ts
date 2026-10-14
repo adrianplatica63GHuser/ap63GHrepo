@@ -233,6 +233,16 @@ describe("the drill — what makes a restored copy the same archive", () => {
       expect(r.problems).toContain(`restored, not in the backup: ${extra}`);
     });
 
+    it("the dev seed's manifest is bookkeeping, not a page: kept in the backup, never a file without a row (FU-309)", () => {
+      const book = { path: "seed-dev-data.manifest.json", size: 10, sha256: SHA_A };
+      const r = reconcileDrill(obs({ manifest: { ...manifest(), files: [...manifest().files, book] }, restoredFiles: [...manifest().files, book] }));
+      expect(r.verdict).toBe("passed");
+      // the exemption is for that one name, at the top of uploads\ — not for a manifest anywhere
+      const other = "document-pages/x/seed-dev-data.manifest.json";
+      const r2 = reconcileDrill(obs({ manifest: { ...manifest(), files: [...manifest().files, { ...book, path: other }] }, restoredFiles: [...manifest().files, { ...book, path: other }] }));
+      expect(r2.problems).toEqual([`file without a row: ${other}`]);
+    });
+
     it("a path stored with backslashes is the same file", () => {
       const r = reconcileDrill(obs({ pagePaths: [P1.replace(/\//g, "\\"), P2] }));
       expect(r.verdict).toBe("passed");

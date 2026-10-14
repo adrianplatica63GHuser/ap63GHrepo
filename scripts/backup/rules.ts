@@ -277,6 +277,14 @@ function capped(prefix: string, items: string[]): string[] {
  * day old by design, so the rows restored are measured against the rows the
  * backup recorded, and live-now is reported beside them.
  */
+/**
+ * Files in `uploads\` that are bookkeeping, not pages: the small dev seed's manifest (scripts/seed-dev-data), which
+ * lists what --remove takes out. It stays in the backup — a restore needs it to undo the seed — but no
+ * `document_page` row can point at it, so the drill does not count it as a file without a row (FU-309, every
+ * automatic drill red over it since 2026-10-06; fixed in passing in #39.30).
+ */
+export const UPLOADS_BOOKKEEPING: readonly string[] = ["seed-dev-data.manifest.json"];
+
 export function reconcileDrill(o: DrillObservation): DrillReport {
   const problems: string[] = [];
   const details: string[] = [];
@@ -296,7 +304,7 @@ export function reconcileDrill(o: DrillObservation): DrillReport {
   const referenced = new Set(o.pagePaths.map(norm));
 
   const rowWithoutFile = [...referenced].filter((p) => !restored.has(p)).sort();
-  const fileWithoutRow = [...restored.keys()].filter((p) => !referenced.has(p)).sort();
+  const fileWithoutRow = [...restored.keys()].filter((p) => !referenced.has(p) && !UPLOADS_BOOKKEEPING.includes(p)).sort();
   const notRestored = [...manifestFiles.keys()].filter((p) => !restored.has(p)).sort();
   const notInBackup = [...restored.keys()].filter((p) => !manifestFiles.has(p)).sort();
   const hashDiffers = [...restored.entries()]
