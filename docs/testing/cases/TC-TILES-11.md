@@ -55,13 +55,19 @@ Nothing.
 | 9 | On each of the four lists, at 1920 and then 1366 px: searches `TC-E2E-INCURSION-H Rând 01` and presses the row's eye; then searches `TC-E2E-INCURSION-H` (15 rows) (#38.75) | With one row: the Incursiune's top is level with the list's top (the toolbar's), the tile keeps its own height, and the list is not stretched. With 15 rows: its top level with the list's top and its bottom with the list's bottom — the pagination's — within 2 px; the map or the page viewer grows into it. Where the window is too narrow for both, it stands under the list at its own height. Its tile is the light purple it wears on the object's own screen (`bg-card-pinned`), not the card's grey-blue. #39.25: on the two persons' lists the eye's tile is „Interacțiuni", which is as tall as its rows — these records have none, so it is the row's preview's height (102 px, ±2) with one row and with fifteen; the rest of this step is „Hartă"'s and „Pagini"'s |
 | 10 | On each of the four lists: searches `TC-E2E-LEGATURI-10`, presses the row's magnifier, then its chain link; then its eye; then the chain link; then the eye and the magnifier (#38.76, #39.04) | The row reads „Previzualizare", „Incursiune", „Legături", „Deschide", all inside the table's frame. The chain link, pressed, shows in the column the object's „Legături" — the document's three rows, the others' one — in the related green, its rows in the rows' calmer green; no radio, no „Asociază …", no „Dezasociază", no „Cotă"; the chain link reads pressed and the preview stays open above it. The eye after it opens its own tile under „Legături", both pressed; the chain link again closes „Legături" alone; the eye and the magnifier close the rest |
 | 11 | At 1920 px (#39.25): `TC-E2E-LEGATURI-H Singur` on „Persoane Fizice", then the documents `… Act doi` (two persons) and `… Act multe` (sixteen) on „Acte" — each row's chain link | No „Incursiune: …" bar above „Legături": the tile's own title line reads „Legături — <name>" with „Închide" at its right end, and nothing on the tile says „Deschide" or shows a „Previzualizare". Empty, the tile is the row's preview's height (102 px, ±2), and „Închide" closes it, the chain link then reading not pressed. Two rows: as tall as the rows, under the ceiling, nothing to scroll, each row's „Vizualizare" there. Sixteen rows: the ceiling's 436 px (±1), the rows scrolling inside |
+| 12 | At 1366 × 420 px (#39.26): on each of the four lists, searches `TC-E2E-INAPOI-12`, opens the row's tiles — „Previzualizare", „Legături" and the eye, but on „Proprietăți" not the eye (its map costs money) — scrolls the page with the wheel, presses the row's „Deschide", then goes back: the browser's Back on the first three, the app's „Înapoi" on „Acte". Last, „Acte" from the menu | The list's address carries the view (`?q=…&row=…&tiles=…`). Back on the record brings the list back at that address: the same search, the same tiles in the column on the same row, its buttons pressed, the row on screen, and the page's scroll within 2 px. From the menu, „Acte" opens clean: no search in the box, no address, no tile |
 
 ## At the end — leaving things as they were found
 
 Delete the six records (`DELETE` on each route), step 9's sixty, step 10's four and step 11's nineteen (the
-documents first, with their links); previews store nothing.
+documents first, with their links) and step 12's four; previews store nothing. Step 12 leaves a few scroll positions
+in the browser session (`ga:list-scroll`), which a closed tab forgets.
 
 ## Notes from the runs
+
+**2026-10-13 — Slice #39.26, step 12 added.** Back from a record returns to the list as it was left. The four lists
+keep their search, page, own filters and open row tiles in their address, and the page's scroll in the session by
+history slot. Before it, Back brought back a bare list.
 
 **2026-10-13 — Slice #39.25, step 9 changed and step 11 added.** The bar above the list's „Legături" and „Interacțiuni"
 is gone; „Închide" sits on the tile's own title line, after the record's name. „Legături" and „Interacțiuni" are as

@@ -200,8 +200,11 @@ describe("a look, not an edit (#38.72)", () => {
       // chain link between the eye and the arrow.
       expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("<LinksButton") && at("<LinksButton") < at("icon={ArrowRight}")]).toEqual([dir, true]);
       // #39.04: and the ids of the rows it shows (was `<ListPreviews incursion={IncursionTile}>`).
-      const open = "<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>";
-      expect([dir, view.includes(open)]).toEqual([dir, true]);
+      // #39.26: and the list's address, over several lines — it was the one line
+      // `<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>`.
+      const openMatch = view.match(/<ListPreviews\s+incursion=\{IncursionTile\}\s+rowIds=\{query\.data\?\.items\.map\(\(i\) => i\.id\)\}\s+address=\{\{[^}]*\}\}\s*>/);
+      expect([dir, openMatch !== null]).toEqual([dir, true]);
+      const open = openMatch![0];
       // Slice #38.75: around the whole list, its first child the toolbar; the table frame in `ListPreviewRow`.
       expect([dir, view.slice(view.indexOf(open) + open.length).trimStart().startsWith("{/* Toolbar")]).toEqual([dir, true]);
       expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);

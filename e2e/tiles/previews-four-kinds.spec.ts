@@ -681,3 +681,104 @@ test.describe("TC-TILES-11 — „Legături” beside the list, as tall as its r
     }
   });
 });
+
+// ── Step 12 (Slice #39.26): Back from a record returns to the list exactly as it was, open tiles included ───────────
+
+/** Step 12's own records. Its own marker, which neither holds the others' nor is held by them. */
+const BACK = `${E2E_MARKER}INAPOI-12`;
+
+/** What step 12 reads off a list: its search, the tiles' column, the row's pressed buttons, the page's scroll. */
+async function listState(page: Page, name: string) {
+  return page.evaluate((n) => {
+    const row = [...document.querySelectorAll<HTMLTableRowElement>("main [data-list-body] [data-list-edge] tbody tr")].find((r) => (r.textContent ?? "").includes(n));
+    return {
+      search: document.querySelector<HTMLInputElement>('main input[placeholder^="caută"]')?.value ?? null,
+      column: [...(document.querySelector("[data-list-row-tiles]")?.children ?? [])].map((c) =>
+        c.hasAttribute("data-preview") ? "preview" : c.getAttribute("data-incursion-view"),
+      ),
+      pressed: row ? [...row.querySelectorAll('[aria-pressed="true"]')].map((b) => b.getAttribute("aria-label")) : null,
+      scroll: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollTop),
+    };
+  }, name);
+}
+
+/**
+ * On one list: the record's row searched, its tiles opened, the page scrolled; the row's „Deschide”, then back — by
+ * the browser (`page.goBack()`, as its button, the mouse's and Alt+← do) or by the app's „Înapoi”. The list comes back
+ * with the same search, the same tiles on the same row, the row on screen, and the same scroll (±2 px).
+ */
+async function roundTrip(page: Page, list: string, name: string, tiles: readonly string[], back: "browser" | "app"): Promise<void> {
+  await page.goto(list);
+  const search = page.locator("main").locator('input[placeholder^="caută"]').first();
+  await expect(search).toBeVisible({ timeout: 30_000 });
+  await search.fill(name);
+  await expect(listRows(page)).toHaveCount(1, { timeout: 30_000 });
+  const row = listRows(page).filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
+  for (const t of tiles) {
+    const b = row.getByRole("button", { name: t, exact: true });
+    await expect(async () => {
+      if ((await b.getAttribute("aria-pressed")) !== "true") await b.click();
+      await expect(b).toHaveAttribute("aria-pressed", "true", { timeout: 3_000 });
+    }).toPass({ timeout: 30_000 });
+  }
+  await expect(page.locator("[data-list-row-tiles] > *")).toHaveCount(tiles.length, { timeout: 30_000 });
+  await page.waitForTimeout(800); // the tiles' reads settle, so the page is as tall as it will be
+  // A person's scroll — the wheel, over the page — so the list keeps it as it would Adrian's.
+  await page.mouse.move(700, 300);
+  await page.mouse.wheel(0, 2000);
+  await page.waitForTimeout(400);
+  const before = await listState(page, name);
+  const address = new URL(page.url()).search;
+  expect(address, `${list}: the view is in the address`).toContain("tiles=");
+
+  await row.getByRole("link", { name: "Deschide", exact: true }).click();
+  await expect(page).toHaveURL((u) => u.pathname.startsWith(`${list}/`), { timeout: 30_000 });
+  await page.waitForTimeout(1_500);
+  if (back === "browser") await page.goBack();
+  else await page.locator("[data-breadcrumb-back]").getByRole("button", { name: "Înapoi", exact: true }).click();
+
+  await expect(page).toHaveURL((u) => u.pathname === list && u.search === address, { timeout: 30_000 });
+  await expect(page.locator("[data-list-row-tiles] > *")).toHaveCount(tiles.length, { timeout: 30_000 });
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(1_500); // the scroll is held for about a second
+  const after = await listState(page, name);
+  expect({ search: after.search, column: after.column, pressed: after.pressed }, `${list}: the list as it was left`).toEqual({
+    search: before.search,
+    column: before.column,
+    pressed: before.pressed,
+  });
+  expect(Math.abs(after.scroll - before.scroll), `${list}: scroll ${before.scroll} → ${after.scroll}`).toBeLessThanOrEqual(2);
+  await page.mouse.move(1, 1);
+  await page.screenshot({ path: `playwright-report/back-keeps-list/${list.slice(1)}.png` });
+}
+
+test.describe("TC-TILES-11 — Back returns to the list as it was (#39.26)", () => {
+  test("step 12: on the four lists, search, tiles and scroll come back after the record; from the menu the list opens clean", async ({ page }) => {
+    test.slow();
+    // Short, so the page scrolls with the tiles open beside the list.
+    await page.setViewportSize({ width: 1366, height: 420 });
+    await removeLeftovers(page.request, BACK);
+    const made: [RecordKind, string][] = [];
+    try {
+      made.push(["person", await createNaturalPerson(page.request, { lastName: `${BACK} Popescu`, firstName: "Ion" })]);
+      made.push(["company", await createCompany(page.request, { name: `${BACK} Firmă` })]);
+      made.push(["property", await createProperty(page.request, { nickname: `${BACK} Teren` })]);
+      made.push(["document", await createDocumentOfType(page.request, "ADEVERINTA", `${BACK} Act`)]);
+
+      // Maps cost money (e2e/README.md): on Proprietăți the preview and „Legături”, never the eye's „Hartă”.
+      await roundTrip(page, "/natural-persons", BACK, ["Previzualizare", "Legături", "Incursiune"], "browser");
+      await roundTrip(page, "/judicial-persons", BACK, ["Previzualizare", "Legături", "Incursiune"], "browser");
+      await roundTrip(page, "/properties", BACK, ["Previzualizare", "Legături"], "browser");
+      await roundTrip(page, "/documents", BACK, ["Previzualizare", "Legături", "Incursiune"], "app");
+
+      // From the menu, after the record: clean — no search, no tile, from the top (Ask first #2).
+      await page.locator("nav").getByRole("link", { name: "Acte", exact: true }).click();
+      await expect(page).toHaveURL((u) => u.pathname === "/documents" && u.search === "", { timeout: 30_000 });
+      await expect(page.locator("main").locator('input[placeholder^="caută"]').first()).toHaveValue("", { timeout: 30_000 });
+      await expect(page.locator("[data-list-row-tiles]")).toHaveCount(0);
+    } finally {
+      for (const [kind, id] of made) await removeRecord(page.request, kind, id);
+    }
+  });
+});
