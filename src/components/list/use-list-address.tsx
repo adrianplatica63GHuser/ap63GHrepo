@@ -131,7 +131,7 @@ function writeMemory(memory: ScrollMemory): void {
  */
 export function useListScrollMemory(ready: boolean): void {
   const pathname = usePathname();
-  const wanted = useRef<number | null | undefined>(undefined);
+  const wanted = useRef<number | null>(null);
   useEffect(() => {
     const el = pageScroll();
     const slot = historySlot();
@@ -141,7 +141,10 @@ export function useListScrollMemory(ready: boolean): void {
     }
     const at = `${pathname}#${slot}`;
     // Decided before listening: the scroll area still holds the record's position until the list sets its own.
-    if (wanted.current === undefined) wanted.current = scrollFor(readMemory(), at);
+    // Read on EVERY showing, not once: Next 16 keeps a page left by a link hidden (React's Activity) and shows it
+    // again on Back — its effects run again, its refs do not start over. Measured in the runner: read once, the
+    // second showing kept the first's „nothing to restore", and the list came back at 46 px of 228.
+    wanted.current = scrollFor(readMemory(), at);
     // Timers, not animation frames: a frame never comes in a tab that is not painted, and the write must.
     let timer = 0;
     const onScroll = () => {
@@ -160,10 +163,7 @@ export function useListScrollMemory(ready: boolean): void {
     if (!ready) return;
     const top = wanted.current;
     const el = pageScroll();
-    if (top == null || !el) {
-      if (top !== undefined) wanted.current = null;
-      return;
-    }
+    if (top === null || !el) return;
     // Held, not set once: the tiles beside the list read their rows after it, and the page grows under the scroll
     // (`HOLD_TRIES`). The moment Adrian scrolls, clicks or types, it is his.
     let tries = 0;
