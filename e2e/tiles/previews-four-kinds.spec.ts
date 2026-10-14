@@ -700,6 +700,11 @@ async function listState(page: Page, name: string) {
       ),
       pressed: row ? [...row.querySelectorAll('[aria-pressed="true"]')].map((b) => b.getAttribute("aria-label")) : null,
       scroll: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollTop),
+      // What the scroll is kept by — said in a failure's message, never compared.
+      slot: (window as unknown as { navigation?: { currentEntry?: { key?: string } } }).navigation?.currentEntry?.key ?? null,
+      memory: sessionStorage.getItem("ga:list-scroll"),
+      max: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollHeight - document.querySelector<HTMLElement>("[data-page-scroll]")!.clientHeight),
+      load: (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type ?? null,
     };
   }, name);
 }
@@ -746,7 +751,10 @@ async function roundTrip(page: Page, list: string, name: string, tiles: readonly
   // The scroll is put back once the page is tall enough for it — the tiles beside the list read their rows after it,
   // and the runner's dev server compiles a route on its first call — and held up to five seconds; so it is polled.
   await expect
-    .poll(async () => Math.abs((await listState(page, name)).scroll - before.scroll), { timeout: 8_000, message: `${list}: the scroll comes back` })
+    .poll(async () => Math.abs((await listState(page, name)).scroll - before.scroll), {
+      timeout: 8_000,
+      message: `${list}: the scroll comes back — before ${JSON.stringify(before)}, now ${JSON.stringify(await listState(page, name))}`,
+    })
     .toBeLessThanOrEqual(2);
   const after = await listState(page, name);
   expect({ search: after.search, column: after.column, pressed: after.pressed }, `${list}: the list as it was left`).toEqual({
