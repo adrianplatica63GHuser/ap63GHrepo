@@ -1859,15 +1859,20 @@ export default function PropertyMap() {
                 strokeWeight={2}
                 fillColor={fillColor}
                 fillOpacity={fillOpacity}
-                // #39.08: while an area tool is pressed a click passes through a property to the map.
-                clickable={!areaOn}
+                // #39.27: never clickable — a click passes through a property to the map, whose own hit-test opens the
+                // bubble (#15.12) or, with an area tool pressed, takes the corner. #39.08 wrote `clickable={!areaOn}`,
+                // which made every property clickable whenever no tool was pressed: a clickable shape with no handler
+                // of its own swallows the click (@vis.gl/react-google-maps infers `clickable` from `onClick` only
+                // when it is not given), so the map never heard it and no bubble opened.
+                clickable={false}
               />
             ) : (
               <Circle
                 key={prop.id}
                 center={{ lat: prop.corners[0].lat, lng: prop.corners[0].lon }}
                 radius={25}
-                clickable={!areaOn}
+                // #39.27: never clickable, as the polygon above.
+                clickable={false}
                 strokeColor={strokeColor}
                 strokeOpacity={1}
                 strokeWeight={2}
