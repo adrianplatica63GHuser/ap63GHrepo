@@ -9,13 +9,14 @@
  *   - one phone and one e-mail — none for the earliest dead (NO_CONTACT_MAX);
  *   - an identity card for the living from 14 on;
  *   - the household's address, in and around Bragadiru;
- *   - notes of at least five words that say something about the person — and, for the dead, „Data decesului".
+ *   - notes of at least five words that say something about the person (since #39.30 a death is the person's own
+ *     „Decedat" and „Data decesului", no longer a line of the notes).
  *     A person has no death-date field of its own (only a „Certificat de moștenitor" has one), so the date is in
  *     the notes; 39.22's certificates carry it in the real field.
  */
 import type { Rng } from "./rng";
 import { makeCnp } from "./identifiers";
-import { addDays, addYears, ageAt, dmy, yearOf } from "./dates";
+import { addDays, addYears, ageAt, yearOf } from "./dates";
 import { LOCALITIES, LOCALITY_WEIGHTS, OCCUPATIONS, STUDIES, TRAITS, type Locality } from "./names";
 import { TODAY, type FamilyPlan, type PlanPerson } from "./families";
 
@@ -105,9 +106,11 @@ function notesFor(r: Rng, plan: FamilyPlan, p: PlanPerson, occupation: string | 
   const sibs = p.parents.length === 2 ? plan.persons.filter((x) => x.parents.join() === p.parents.join()).length : 0;
   if (sibs >= 6) out.push(`${f ? "Una" : "Unul"} dintre cei ${sibs} copii ai familiei ${p.birthSurname}.`);
   if (sibs === 1 && p.parents.length === 2) out.push(f ? "Singura fiică a părinților săi." : "Singurul fiu al părinților săi.");
-  if (p.dod) out.push(`Data decesului: ${dmy(p.dod)}.`);
-  else if (age >= 23 && r.chance(0.5)) out.push(r.pick(TRAITS));
-  else if (age >= 65 && r.chance(0.3)) out.push("S-a mutat în casa părintească după pensionare.");
+  // Slice #39.30: a death is the person's own „Decedat" and „Data decesului" now (seed.ts), not a line of the notes.
+  if (!p.dod) {
+    if (age >= 23 && r.chance(0.5)) out.push(r.pick(TRAITS));
+    else if (age >= 65 && r.chance(0.3)) out.push("S-a mutat în casa părintească după pensionare.");
+  }
   let text = out.join(" ");
   // Never fewer than five words that say something about the person.
   if (words(text) < 5) text = `${text} Locuiește în ${address.locality}, ${address.streetLine}.`.trim();

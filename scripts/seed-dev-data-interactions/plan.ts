@@ -6,7 +6,8 @@
  * out directions, append documents to 30% of the interactions".
  *
  * WHOSE: the big seed's persons only (its manifest), never the archive's. WHEN: an interaction falls inside the
- * person's adult life — not before 18, not after the death the big seed wrote into the notes („Data decesului") —
+ * person's adult life — not before 18, not after the person's „Data decesului" (#39.30; a database seeded before it
+ * has the date only in the notes, and the seed reads it there) —
  * and inside the archive's years (from 1960); a company's from 1991. A channel only from the year it existed (e-mail
  * 1998, SMS 1999, WhatsApp 2013). A date in the future only SCHEDULED (the module's rule, `checkWhen`), and
  * SCHEDULED only in the future (the seed's, so a planned meeting never reads as one in the past).
@@ -53,8 +54,10 @@ export type SeedPerson = {
   kind: "NATURAL" | "JUDICIAL";
   /** yyyy-mm-dd, or null (a company) */
   dob: string | null;
-  /** yyyy-mm-dd, or null — from the notes' „Data decesului" */
+  /** yyyy-mm-dd, or null — the person's „Data decesului" (#39.30; before it, the notes') */
   dod: string | null;
+  /** Slice #39.30: marked „Decedat" — with `dod` null, dead on a date nobody knows, and given no interaction. */
+  deceased?: boolean;
   documents: readonly { id: string; date: string | null }[];
   properties: readonly { id: string; label: string | null }[];
 };
@@ -88,6 +91,7 @@ export function deathFromNotes(notes: string | null | undefined): string | null 
 
 /** The span an interaction with `p` may fall in, up to `now`; null when there is none (a minor, a life before 1960). */
 export function lifeWindow(p: SeedPerson, now: Date): { from: number; to: number } | null {
+  if (p.deceased && !p.dod) return null;
   const start = p.kind === "JUDICIAL" ? time(COMPANY_START) : p.dob ? Math.max(time(addYears(p.dob, 18)), time(ARCHIVE_START)) : null;
   if (start === null) return null;
   const end = Math.min(p.dod ? time(p.dod) : Infinity, now.getTime());
@@ -182,7 +186,7 @@ export function planInteractions(rng: Rng, persons: readonly SeedPerson[], now: 
     const chosen = rng.shuffle(can).slice(0, Math.ceil(can.length * share));
     for (const p of chosen) {
       const w = lifeWindow(p, now)!;
-      const alive = p.dod === null;
+      const alive = p.dod === null && !p.deceased;
       let n = countFor(rng);
       if (alive && rng.chance(SCHEDULED_PER_PERSON) && n > 1) {
         out.push(scheduled(rng, p, now));

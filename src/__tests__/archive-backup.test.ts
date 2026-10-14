@@ -479,6 +479,32 @@ describe("the big dev seed's rehearsal on a restored copy (Slice #39.21)", () =>
     expect(seedRehearsalVerdict({ ...ok, removeExit: 2 }).problems).toEqual(["--remove exited 2"]);
   });
 
+  describe("with the deaths backfill first (Slice #39.30)", () => {
+    const backfill = {
+      dryExit: 0,
+      dryOutput: "DRY RUN — nothing is written. Decedați găsiți: 3 …\nWould change 3 persons (2 with a date, 1 without); 0 already marked, left as they were. 1 s.\n",
+      runExit: 0,
+      runOutput: "Changed 3 persons (2 with a date, 1 without); 0 already marked, left as they were. 2 s.\n",
+      againExit: 0,
+      againOutput: "Changed 0 persons (0 with a date, 0 without); 3 already marked, left as they were. 1 s.\n",
+    };
+
+    it("passes when the run changed what its --dry-run said, and a second run nothing", () => {
+      const v = seedRehearsalVerdict({ ...ok, backfill });
+      expect(v.verdict).toBe("passed");
+      expect(v.line).toMatch(/; the deaths backfill changed 3 as its --dry-run said, and a second run nothing$/);
+    });
+
+    it("fails when the run and its --dry-run disagree, when a second run changes anything, when it printed no count", () => {
+      expect(seedRehearsalVerdict({ ...ok, backfill: { ...backfill, runOutput: "Changed 2 persons (…)\n" } }).problems).toEqual(["the backfill's --dry-run said 3, the run changed 2"]);
+      expect(seedRehearsalVerdict({ ...ok, backfill: { ...backfill, againOutput: "Changed 1 person (…)\n" } }).problems).toEqual(["a second backfill changed 1"]);
+      expect(seedRehearsalVerdict({ ...ok, backfill: { ...backfill, runExit: 1, runOutput: "BACKFILL FAILED: x" } }).problems).toEqual([
+        "the backfill exited 1",
+        "the backfill printed no count",
+      ]);
+    });
+  });
+
   describe("with the interactions seed's round (Slice #39.29)", () => {
     const mid = [t("public.person", 960), t("public.interaction", 0)];
     const round = {

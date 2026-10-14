@@ -501,6 +501,27 @@ export const SEED_REHEARSAL_SCRIPT = "scripts/seed-dev-data-big/seed.ts";
  */
 export const SEED_REHEARSAL_INTERACTIONS_SCRIPT = "scripts/seed-dev-data-interactions/seed.ts";
 
+/**
+ * The deaths backfill (#39.30) runs FIRST, on the restored archive as it is: --dry-run, then the run, then a second run
+ * that must change nothing. The tables are counted after it, so the seeds' rounds are judged from there.
+ */
+export const SEED_REHEARSAL_BACKFILL_SCRIPT = "scripts/backfill-deceased/backfill.ts";
+
+export interface BackfillRehearsalObservation {
+  dryExit: number | null;
+  dryOutput: string;
+  runExit: number | null;
+  runOutput: string;
+  againExit: number | null;
+  againOutput: string;
+}
+
+/** „Would change 12 persons" / „Changed 12 persons" → 12; null when the line is not there. */
+export function backfillCount(output: string, verb: "Would change" | "Changed"): number | null {
+  const m = new RegExp(`^${verb} (\\d+) person`, "m").exec(output);
+  return m ? Number(m[1]) : null;
+}
+
 /** What the rehearsal saw of the interactions seed. */
 export interface InteractionsRehearsalObservation {
   seedExit: number | null;
@@ -525,6 +546,8 @@ export interface SeedRehearsalObservation {
   after: readonly TableCount[];
   /** absent when the interactions seed was not part of the run */
   interactions?: InteractionsRehearsalObservation;
+  /** absent when the deaths backfill was not part of the run (#39.30) */
+  backfill?: BackfillRehearsalObservation;
 }
 
 /**
@@ -570,11 +593,27 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
     for (const t of i.after) if (ib.get(t.table) !== t.rows) problems.push(`${t.table}: ${ib.get(t.table) ?? "missing"} → ${t.rows} after the interactions --remove`);
     for (const t of i.before) if (!i.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after the interactions --remove`);
   }
+  const bf = o.backfill;
+  let bfLine = "";
+  if (bf) {
+    const would = backfillCount(bf.dryOutput, "Would change");
+    const did = backfillCount(bf.runOutput, "Changed");
+    const again = backfillCount(bf.againOutput, "Changed");
+    if (bf.dryExit !== 0) problems.push(`the backfill --dry-run exited ${bf.dryExit ?? "without an exit code"}`);
+    if (bf.runExit !== 0) problems.push(`the backfill exited ${bf.runExit ?? "without an exit code"}`);
+    if (bf.againExit !== 0) problems.push(`the second backfill exited ${bf.againExit ?? "without an exit code"}`);
+    if (would === null || did === null || again === null) problems.push("the backfill printed no count");
+    else {
+      if (would !== did) problems.push(`the backfill's --dry-run said ${would}, the run changed ${did}`);
+      if (again !== 0) problems.push(`a second backfill changed ${again}`);
+    }
+    bfLine = `; the deaths backfill changed ${did ?? "?"} as its --dry-run said, and a second run nothing`;
+  }
   if (problems.length > 0) return { verdict: "failed", line: `FAILED — backup ${o.backup}: ${problems.slice(0, 4).join("; ")}`, problems };
   const also = iMet ? `; the interactions seed met all ${iMet[1]} lines, a second was refused, its --remove brought every table back` : "";
   return {
     verdict: "passed",
-    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)${also}`,
+    line: `passed — backup ${o.backup}: the seed met all ${met![1]} coverage lines; a second seed was refused; --remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)${also}${bfLine}`,
     problems,
   };
 }

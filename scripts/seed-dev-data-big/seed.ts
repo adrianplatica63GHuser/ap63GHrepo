@@ -483,6 +483,9 @@ async function createNaturalPersons(plan: FamilyPlan, details: NaturalDetails[])
       cnp: d.cnp,
       gender: p.sex,
       dateOfBirth: p.dob,
+      // Slice #39.30: the death is the person's own field.
+      isDeceased: p.dod !== null,
+      dateOfDeath: p.dod,
       placeOfBirth: p.birthPlace.label,
       idDocumentType: d.idCard ? "ID_CARD" : null,
       idDocumentNumber: d.idCard?.number ?? null,

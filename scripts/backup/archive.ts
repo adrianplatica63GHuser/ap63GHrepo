@@ -70,6 +70,7 @@ import {
   reconcileDrill,
   SEED_REHEARSAL_SCRIPT,
   SEED_REHEARSAL_INTERACTIONS_SCRIPT,
+  SEED_REHEARSAL_BACKFILL_SCRIPT,
   seedRehearsalVerdict,
   selectPrune,
   validateManifest,
@@ -635,7 +636,6 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
     if (restore.status !== 0 && restoreErrors.length === 0) restoreErrors.push(`pg_restore exited ${restore.status}: ${lastLines(restore.stderr)}`);
     say(`seed-rehearsal: pg_restore ${restore.status === 0 ? "clean" : `exit ${restore.status}, ${restoreErrors.length} error(s)`}`);
 
-    const before = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
     removeTree(work);
     fs.mkdirSync(work, { recursive: true });
     const keys: string[] = [];
@@ -645,6 +645,15 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
     }
     const url = `postgres://postgres:${password}@127.0.0.1:${DRILL_PORT}/${DRILL_DATABASE}`;
     const env = { ...drillAppEnv(process.env, [...new Set(keys)], url, DRILL_DIST_DIR), GA40_SEED_WORKDIR: work };
+
+    // #39.30: the deaths backfill first, on the archive as restored — and the tables counted after it.
+    const bDry = runSeed(env, ["--dry-run"], SEED_REHEARSAL_BACKFILL_SCRIPT);
+    say(`seed-rehearsal: the deaths backfill --dry-run exited ${bDry.exit}: ${lastLines(bDry.text, 1)}`);
+    const bRun = runSeed(env, [], SEED_REHEARSAL_BACKFILL_SCRIPT);
+    say(`seed-rehearsal: the deaths backfill exited ${bRun.exit}: ${lastLines(bRun.text, 1)}`);
+    const bAgain = runSeed(env, [], SEED_REHEARSAL_BACKFILL_SCRIPT);
+    say(`seed-rehearsal: a second backfill exited ${bAgain.exit}: ${lastLines(bAgain.text, 1)}`);
+    const before = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
 
     const t0 = Date.now();
     const seed = runSeed(env, []);
@@ -681,6 +690,14 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
       removeExit: removed.exit,
       before,
       after,
+      backfill: {
+        dryExit: bDry.exit,
+        dryOutput: bDry.text,
+        runExit: bRun.exit,
+        runOutput: bRun.text,
+        againExit: bAgain.exit,
+        againOutput: bAgain.text,
+      },
       interactions: {
         seedExit: iSeed.exit,
         seedOutput: iSeed.text,

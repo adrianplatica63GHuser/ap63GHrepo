@@ -76,18 +76,18 @@ async function loadPersons(): Promise<SeedPerson[]> {
   for (const c of chunks(ids)) for (const r of await db.select({ id: person.id }).from(person).where(inArray(person.id, c))) found.add(r.id);
   if (found.size !== ids.length) throw new Error(`Only ${found.size} of the big seed's ${ids.length} persons are in this database — its manifest is stale. Nothing written.`);
 
-  const nat = new Map<string, { dob: string | null; notes: string | null }>();
+  const nat = new Map<string, { dob: string | null; notes: string | null; deceased: boolean; dod: string | null }>();
   const docs = new Map<string, { id: string; date: string | null }[]>();
   const props = new Map<string, { id: string; label: string | null }[]>();
   for (const c of chunks(ids)) {
     // `notes` is on the parent `person` row
     const np = await db
-      .select({ id: naturalPerson.personId, dob: naturalPerson.dateOfBirth, notes: person.notes })
+      .select({ id: naturalPerson.personId, dob: naturalPerson.dateOfBirth, notes: person.notes, deceased: naturalPerson.isDeceased, dod: naturalPerson.dateOfDeath })
       .from(naturalPerson)
       .innerJoin(person, eq(person.id, naturalPerson.personId))
       .where(inArray(naturalPerson.personId, c));
     for (const r of np) {
-      nat.set(r.id, { dob: r.dob ? String(r.dob).slice(0, 10) : null, notes: r.notes });
+      nat.set(r.id, { dob: r.dob ? String(r.dob).slice(0, 10) : null, notes: r.notes, deceased: r.deceased, dod: r.dod });
     }
     const pd = await db
       .select({ p: personDocument.personId, id: document.id, date: document.dateDocument })
@@ -116,7 +116,9 @@ async function loadPersons(): Promise<SeedPerson[]> {
       id: o.id,
       kind: o.kind as "NATURAL" | "JUDICIAL",
       dob: n?.dob ?? null,
-      dod: deathFromNotes(n?.notes),
+      // Slice #39.30: the person's own field; a big seed run before it wrote the date into the notes only.
+      dod: n?.deceased ? n.dod : deathFromNotes(n?.notes),
+      deceased: Boolean(n?.deceased) || deathFromNotes(n?.notes) !== null,
       documents: docs.get(o.id) ?? [],
       properties: props.get(o.id) ?? [],
     };

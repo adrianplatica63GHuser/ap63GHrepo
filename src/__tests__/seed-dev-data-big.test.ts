@@ -36,7 +36,7 @@ import { tileRows, topUpLinks } from "../../scripts/seed-dev-data-big/links";
 import { GROUPS, groupTargetOf, planMetadata, STAMPS, TAGS } from "../../scripts/seed-dev-data-big/metadata";
 import { CURTI, generateProperties, LINE_DEPTH, MAX_FAMILY_PLUS_OWNED, MAX_OWNED, MIX, PLOT_AREA, PROPERTY_TOTAL, sharesAddUp, TPC, type TypeFlags } from "../../scripts/seed-dev-data-big/properties";
 import { makeRng } from "../../scripts/seed-dev-data-big/rng";
-import { addDays, ageAt, dmy, yearOf } from "../../scripts/seed-dev-data-big/dates";
+import { addDays, ageAt, yearOf } from "../../scripts/seed-dev-data-big/dates";
 import { KINSHIP_SEED } from "@/lib/persons/kinship";
 import { isEmailShape } from "@/lib/persons/email-shape";
 
@@ -255,12 +255,12 @@ describe("the natural persons' fields", () => {
     for (const e of emails) expect(isEmailShape(e)).toBe(true);
   });
 
-  it("every note says at least five words about the person, and a dead person's carries „Data decesului”", () => {
+  it("every note says at least five words about the person, and none carries „Data decesului” — the death is a field since #39.30", () => {
     for (const d of details) {
       expect([d.key, meaningfulWords(d.notes) >= 5]).toEqual([d.key, true]);
-      const p = byKey.get(d.key)!;
-      if (p.dod) expect(d.notes).toContain(`Data decesului: ${dmy(p.dod)}.`);
-      else expect(d.notes).not.toContain("Data decesului");
+      // #39.30 inverted this: it read „a dead person's carries „Data decesului: dd.mm.yyyy."". The date is now
+      // `isDeceased` / `dateOfDeath` on the person (seed.ts → createNaturalPerson), so no note repeats it.
+      expect(d.notes).not.toContain("Data decesului");
     }
   });
 
