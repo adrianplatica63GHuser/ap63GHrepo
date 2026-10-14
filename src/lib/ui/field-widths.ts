@@ -1292,7 +1292,16 @@ export const COLUMN = {
   // nickname, a title, a subject — its 90th percentile, the rest cut; and never narrower than its header's longest word
   // (a header may take two lines; a word cannot). Columns of their own, so the screens that share the older names —
   // the association views, the dashboard, the calculation screens — keep theirs.
-  listBadges: { content: 8, kind: "fixed" }, //             the property list's checkbox, „Nou!" and „Încrucișat" side by side (127 px)
+  // Slice #39.24 — Adrian: „decrease the space between checkbox and name to 30% of Current". Measured in the browser
+  // pane at 848 px on 2026-10-13: 144 px from the box's right edge to the nickname's first letter (this column's spare
+  // 112 px and both cells' 16-px padding). 30 % is 43 px: 16 (the box) + 11 spare = 27 px. It was 8 rem for the box,
+  // „Nou!" and „Încrucișat" side by side (127 px); now „Nou!" runs into the padding beside the box (13 px clear of the
+  // nickname) and „Încrucișat" takes a line under it, on the rare row that has one.
+  listBadges: { content: 27 / 16, kind: "fixed" }, //       the property list's checkbox — the gap to the nickname 43 px
+  // Slice #39.24 — Adrian: „decrease the space between checkbox and name to 50% of Current", on both persons' lists.
+  // Measured: 72 px (selectNew's spare 56 px and both cells' padding). 50 % is 36 px: 16 (the box) + 4 spare = 20 px.
+  // „Nou!" (30 px with its margin) runs into the padding beside the box, 6 px clear of the name. Acte keeps selectNew.
+  listSelectPerson: { content: 20 / 16, kind: "fixed" }, // the two persons' lists' checkbox — the gap to the name 36 px
   // Slice #38.72: three xs buttons side by side — the magnifier, the eye („Incursiune") and the arrow — 3 × 26 + 2 × 8 =
   // 94 px; it was 4 for two (60 px), and the third button was cut at the table's edge.
   // Slice #38.76: four — the chain link („Legături") after the eye — 4 × 26 + 3 × 8 = 128 px, 8 rem; it was 6 for three.
@@ -1303,8 +1312,10 @@ export const COLUMN = {
   listArea: { content: 5, kind: "fixed" }, //               the two areas, „1234567.89" — „CALCULATĂ" (76 px); values 55
   listCarteFunciara: { content: 3, kind: "fixed" }, //      Nr. CF — values 47 px
   listCadastral: { content: 6.5, kind: "fixed" }, //        Nr. cadastru — values 104 px
-  listUseCategory: { content: 5, kind: "fixed" }, //        Categorie de folosință — „FOLOSINȚĂ" (74 px); values 48
-  listPropertyType: { content: 6.75, kind: "fixed" }, //    Tip proprietate — values 107 px
+  // Slice #39.24 — Adrian: „add 50% to the width of these columns: Property Type, and Use Category". The column's
+  // width as it shows, padding included: 7 rem (112 px) → 10.5 (168), and 8.75 rem (140 px) → 13.125 (210).
+  listUseCategory: { content: 8.5, kind: "fixed" }, //      Categorie de folosință — was 5 („FOLOSINȚĂ", 74 px; values 48)
+  listPropertyType: { content: 11.125, kind: "fixed" }, //  Tip proprietate — was 6.75 (values 107 px)
   listLocality: { content: 6, kind: "fixed" }, //           Localitate, „Clinceni, Ilfov" — values 95 px
   listPersonName: { content: 8, kind: "fixed" }, //         a natural person's name — 90th percentile 116 px, longest 123
   listCompanyName: { content: 16.25, kind: "fixed" }, //    a judicial person's name — longest 259 px
@@ -1324,7 +1335,13 @@ export const COLUMN = {
   listNrDocument: { content: 5.75, kind: "fixed" }, //      Nr. document — values 90 px
   listInstitution: { content: 11, kind: "fixed" }, //       Instituție / Notariat — longest 173 px
   listSubject: { content: "XXL", kind: "fixed" }, //        Subiect, a sentence — 384 px, the rest on hover
-  listCount: { content: 5.25, kind: "fixed" }, //           Nr. pagini / Persoane / Proprietăți — „PROPRIETĂȚI" (84 px); values 8
+  // Slice #39.24 — Adrian: „the following columns display only one number so they can be more narrow: Pages, Persons,
+  // Properties". They shared listCount, 5.25 rem for „PROPRIETĂȚI". Each is now as wide as three digits (23.4 px) or its
+  // header's longest word, whichever is wider, measured in the browser pane (bold 12 px Arial, 0.3 px tracking), rounded
+  // up to the next quarter rem with at least 1 px to spare — the header may take two lines, a word cannot.
+  listPageCount: { content: 2.75, kind: "fixed" }, //       „Nr. pagini" on two lines: „PAGINI" 42.2 px, „PAGES" 42.6
+  listPersonCount: { content: 4.5, kind: "fixed" }, //      „PERSOANE" 69.8 px; „PERSONS" 60.8
+  listPropertyCount: { content: 5.25, kind: "fixed" }, //   „PROPRIETĂȚI" 84.0 px — one word, so no narrower than it was
   // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
   feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
   feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward

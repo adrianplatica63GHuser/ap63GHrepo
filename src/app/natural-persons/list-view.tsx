@@ -239,7 +239,7 @@ export function NaturalPersonListView() {
   // A stored key this build has no column for stays in storage and is not drawn.
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each.
-  const columns: ColumnName[] = ["selectNew", "listPersonName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
+  const columns: ColumnName[] = ["listSelectPerson", "listPersonName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
   const colCount = columns.length;
@@ -306,7 +306,7 @@ export function NaturalPersonListView() {
             <FixedColumns columns={columns} />
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
               <tr>
-                <th className="px-4 py-2" {...columnHead("selectNew")}>
+                <th className="px-4 py-2" {...columnHead("listSelectPerson")}>
                   <input
                     ref={headerCheckboxRef}
                     type="checkbox"

@@ -701,9 +701,9 @@ export function DocumentListView({
     { key: "dateDocument",  label: t("table.dateDocument"),  column: "listDate" },
     { key: "institution",   label: t("table.institution"),   column: "listInstitution" },
     { key: "subject",       label: t("table.subject"),       column: "listSubject" },
-    { key: "pageCount",     label: t("table.pageCount"),     column: "listCount" },
-    { key: "personCount",   label: t("table.personCount"),   column: "listCount" },
-    { key: "propertyCount", label: t("table.propertyCount"), column: "listCount" },
+    { key: "pageCount",     label: t("table.pageCount"),     column: "listPageCount" },
+    { key: "personCount",   label: t("table.personCount"),   column: "listPersonCount" },
+    { key: "propertyCount", label: t("table.propertyCount"), column: "listPropertyCount" },
     { key: "createdAt",     label: t("table.createdAt"),     column: "listDate" },
   ];
 

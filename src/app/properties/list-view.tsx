@@ -437,16 +437,21 @@ export function PropertyListView() {
                 >
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #37.16 had „the badges wrap — „Încrucișat" takes a line of its own rather than widening
-                        the column". Slice #38.57: one line per row — the column holds all three (`listBadges`). */}
-                    <span className="inline-flex flex-nowrap items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(item.id)}
-                        onChange={() => toggleOne(item.id)}
-                        aria-label={nameOr(item.nickname, "property")}
-                        className="h-4 w-4 rounded border-wire accent-cta"
-                      />
-                      <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                        the column". Slice #38.57: one line per row — the column holds all three (`listBadges`).
+                        Slice #39.24: the column is the box and 11 px (the gap to the nickname at 30 %, Adrian). „Nou!"
+                        stays beside the box and runs into the padding; „Încrucișat", on the rare row that has it,
+                        takes a line under them again. */}
+                    <span className="inline-flex flex-wrap items-center" data-select-badges="">
+                      <span className="inline-flex flex-nowrap items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleOne(item.id)}
+                          aria-label={nameOr(item.nickname, "property")}
+                          className="h-4 w-4 rounded border-wire accent-cta"
+                        />
+                        <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                      </span>
                       <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
                     </span>
                   </td>
