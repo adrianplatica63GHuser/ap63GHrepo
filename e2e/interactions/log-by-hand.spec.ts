@@ -66,6 +66,8 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       await expect(person).toHaveCount(0);
 
       // Step 2 — „Conturi conectate": both „Neconectat", „Conectează" inert, „Nimic nu se trimite fără confirmare."
+      // #39.33: a section that opens and closes, closed when the tile opens — opened here first.
+      await log.getByRole("button", { name: "Conturi conectate", exact: true }).click();
       const connections = log.locator("[data-connections]");
       await expect(connections.locator("[data-connection]")).toHaveCount(2);
       await expect(connections.getByText("Neconectat", { exact: true })).toHaveCount(2);

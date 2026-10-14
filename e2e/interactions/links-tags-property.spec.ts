@@ -52,6 +52,9 @@ test.describe("TC-INT-03 — acte legate, etichete și o proprietate", () => {
       await expect(log.getByRole("heading", { name: "Înregistrează o interacțiune" })).toBeVisible({ timeout: 30_000 });
       await log.getByLabel("Subiect", { exact: true }).fill("Vizită pe teren");
 
+      // #39.33: the documents, the tags and the property are in „Asocieri", closed when the tile opens.
+      await log.getByRole("button", { name: "Asocieri", exact: true }).click();
+
       // Step 1 — „Adaugă legătură", twice: the two documents, each a row with its „×".
       for (const title of [`${MARK} Contract v3`, `${MARK} Extras CF`]) {
         await log.getByRole("button", { name: "Adaugă legătură", exact: true }).click();
@@ -102,6 +105,7 @@ test.describe("TC-INT-03 — acte legate, etichete și o proprietate", () => {
 
       // Step 7 — a new record: „Adaugă etichetă" suggests the tag just used.
       await page.goto(`/natural-persons/${person}?log=new`); // #39.06: was `/interactions?person=${person}`
+      await log.getByRole("button", { name: "Asocieri", exact: true }).click(); // #39.33: a new record, closed again
       await log.getByRole("button", { name: "Adaugă etichetă", exact: true }).click();
       await log.getByRole("combobox", { name: "Etichetă nouă" }).fill(MARK);
       await expect(log.locator("[data-tag-suggestions]").getByRole("button", { name: TAG, exact: true })).toBeVisible({ timeout: 15_000 });
