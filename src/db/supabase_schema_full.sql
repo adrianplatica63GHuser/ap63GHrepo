@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-12 13:10
+-- Generated : 2026-10-14 09:33
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -921,6 +921,10 @@ CREATE TABLE public.natural_person (
     citizenship_id uuid,
     physical_person_type_id uuid,
     correspondence_same_as_home boolean DEFAULT false NOT NULL,
+    is_deceased boolean DEFAULT false NOT NULL,
+    date_of_death date,
+    CONSTRAINT natural_person_death_after_birth CHECK (((date_of_death IS NULL) OR (date_of_birth IS NULL) OR (date_of_death >= date_of_birth))),
+    CONSTRAINT natural_person_death_needs_deceased CHECK (((date_of_death IS NULL) OR is_deceased)),
     CONSTRAINT natural_person_has_name CHECK (((first_name IS NOT NULL) OR (last_name IS NOT NULL)))
 );
 
