@@ -11,7 +11,9 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const MAP = readFileSync(join(process.cwd(), "src", "app", "properties", "map", "property-map.tsx"), "utf8");
+const SOURCE = readFileSync(join(process.cwd(), "src", "app", "properties", "map", "property-map.tsx"), "utf8");
+/** The code alone — a behaviour guard reads no comment (the fix's own comment quotes the bug). */
+const MAP = SOURCE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
 
 describe("the map of all properties: a click reaches the map (#39.27)", () => {
   it("no property shape is ever clickable — the bug was `clickable={!areaOn}`", () => {
