@@ -58,16 +58,28 @@ export function InheritanceTreeScreen() {
     return id ? { id, n: 1 } : null;
   });
 
-  const onSearch = (e: FormEvent) => {
-    e.preventDefault();
-    const needle = foldForSearch(search);
-    if (!needle || !q.data || !layout) return;
+  // #39.34, fixed in passing: a search pressed before the tree has arrived was dropped without a word — measured,
+  // a search typed the moment the screen opened from a person's screen. It waits for the tree now, and runs then.
+  const [pending, setPending] = useState<string | null>(null);
+  const runSearch = (needle: string) => {
+    if (!q.data || !layout) return;
     const drawn = new Set(layout.nodes.map((n) => n.id));
     const hit = q.data.persons
       .filter((p) => drawn.has(p.id))
       .find((p) => foldForSearch([p.displayName, p.nickname ?? ""].join(" ")).includes(needle));
     setNotFound(!hit);
     if (hit) setFocus((f) => ({ id: hit.id, n: (f?.n ?? 0) + 1 }));
+  };
+  if (pending !== null && q.data && layout) {
+    setPending(null);
+    runSearch(pending);
+  }
+  const onSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const needle = foldForSearch(search);
+    if (!needle) return;
+    if (!q.data || !layout) setPending(needle);
+    else runSearch(needle);
   };
 
   const close = () => {
