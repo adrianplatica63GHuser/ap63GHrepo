@@ -61,8 +61,12 @@ describe("five people on three generations", () => {
     expect(rowsOf(l)).toEqual({ "0:0": ["G"], "0:1": ["P", "Q"], "0:2": ["C", "S"] });
   });
   it("one cluster, three rows", () => {
-    expect(l.clusters).toEqual([{ index: 0, size: 5, left: 0, right: 400 }]);
+    // #39.34: C stands under the middle of P and Q, S beside C — a slot wider than #39.11's evenly dealt rows.
+    expect(l.clusters).toEqual([{ index: 0, size: 5, left: 0, right: 500 }]);
     expect(l.height).toBe(450);
+    const x = Object.fromEntries(l.nodes.map((nd) => [nd.id, nd.x]));
+    expect(x.C).toBe((x.P! + x.Q!) / 2);
+    expect(x.G).toBe(x.P);
   });
   it("draws every tie", () => {
     expect(l.edges.map((e) => e.kind).sort()).toEqual(["parent", "parent", "parent", "spouse", "spouse"]);
@@ -118,7 +122,7 @@ describe("separate families", () => {
   });
 
   it("nothing to draw: an empty layout", () => {
-    expect(layoutTree([person("A")], [])).toEqual({ nodes: [], edges: [], clusters: [], width: 0, height: 0 });
+    expect(layoutTree([person("A")], [])).toEqual({ nodes: [], edges: [], clusters: [], runs: [], width: 0, height: 0 });
   });
 });
 

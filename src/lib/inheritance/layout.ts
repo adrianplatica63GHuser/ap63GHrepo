@@ -17,6 +17,11 @@
  */
 import { converseKinship, isKinship, type Kinship } from "@/lib/persons/kinship";
 import type { PersonGender, PersonRoleWords } from "@/lib/persons/relation-roles";
+import { CLUSTER_GAP, ROW_H, SLOT_W } from "./layout-constants";
+import { assignLanes, gapExtra, LANE_GAP, placeRows, runSpan, type FamilyRun } from "./placement";
+
+export { CLUSTER_GAP, ROW_H, SLOT_W };
+export type { FamilyRun };
 
 export type TreePerson = {
   id: string;
@@ -54,13 +59,11 @@ export type TreeLayout = {
   edges: TreeEdge[];
   /** Each family, largest first: its persons and its horizontal extent. */
   clusters: { index: number; size: number; left: number; right: number }[];
+  /** #39.34: each family's line from its parents to its children, with its own lane (`placement.ts`). */
+  runs: FamilyRun[];
   width: number;
   height: number;
 };
-
-export const SLOT_W = 200;
-export const ROW_H = 150;
-export const CLUSTER_GAP = 160;
 
 /** The holder's tie decides the line: PARENT → the holder above, CHILD → the other above, the rest side by side. */
 export function edgeOf(tie: TreeTie): TreeEdge | null {
@@ -120,24 +123,82 @@ export function layoutTree(persons: readonly TreePerson[], ties: readonly TreeTi
 
   const nodes: LaidNode[] = [];
   const clusters: TreeLayout["clusters"] = [];
+  const runs: FamilyRun[] = [];
+  const parentsOf = (id: string) => adj.get(id)!.flatMap((e) => (e.kind === "parent" && e.child === id ? [e.parent] : []));
+  const childrenOf = (id: string) => adj.get(id)!.flatMap((e) => (e.kind === "parent" && e.parent === id ? [e.child] : []));
+  const spousesOf = (id: string) => adj.get(id)!.flatMap((e) => (e.kind === "spouse" ? [e.a === id ? e.b : e.a] : []));
   let left = 0;
   let height = 0;
   families.forEach((group, index) => {
     const gen = generations(group, adj, byId);
     const rows = orderRows(group, gen, adj, byId);
-    const widest = Math.max(...rows.map((r) => r.length));
-    rows.forEach((row, g) => {
-      const offset = ((widest - row.length) * SLOT_W) / 2;
-      row.forEach((id, i) => {
-        nodes.push({ id, generation: g, cluster: index, x: left + offset + i * SLOT_W + SLOT_W / 2, y: g * ROW_H + ROW_H / 2 });
-      });
+    // #39.34: places solved so children stand under their own parents (`placeRows`), then shifted to `left`.
+    const xs = placeRows(rows, { parentsOf, childrenOf, spousesOf });
+    const all = [...xs.values()];
+    const shift = left + SLOT_W / 2 - Math.min(...all);
+    for (const [id, v] of xs) xs.set(id, v + shift);
+    const right = Math.max(...all) + shift + SLOT_W / 2;
+
+    // Each family's run: its children grouped by their parents; a couple's from between the two.
+    const familyRuns: Omit<FamilyRun, "laneY" | "lane">[] = [];
+    const byParents = new Map<string, { parents: string[]; children: string[] }>();
+    for (const child of group) {
+      const ps = parentsOf(child).sort();
+      if (!ps.length) continue;
+      const key = ps.join("|");
+      const f = byParents.get(key) ?? { parents: ps, children: [] };
+      f.children.push(child);
+      byParents.set(key, f);
+    }
+    for (const [key, f] of byParents) {
+      const couple = f.parents.length === 2 && spousesOf(f.parents[0]!).includes(f.parents[1]!);
+      const starts = couple ? [f.parents] : f.parents.map((p) => [p]);
+      for (const from of starts) {
+        familyRuns.push({
+          key: `${key}>${from.join("+")}`,
+          parents: from,
+          gap: Math.min(...from.map((p) => gen.get(p)!)),
+          from: { x: mean(from.map((p) => xs.get(p)!)), y: 0 },
+          children: [...f.children].sort((a, b) => xs.get(a)! - xs.get(b)!).map((id) => ({ id, x: xs.get(id)!, y: 0 })),
+        });
+      }
+    }
+    // Lanes per gap, and each gap as tall as its lanes need.
+    const lanes = new Map<number, number>();
+    const laneOf = new Map<string, number>();
+    for (const g of new Set(familyRuns.map((r) => r.gap))) {
+      const here = familyRuns.filter((r) => r.gap === g);
+      const assigned = assignLanes(here.map(runSpan));
+      here.forEach((r, i) => laneOf.set(r.key, assigned[i]!));
+      lanes.set(g, Math.max(...assigned) + 1);
+    }
+    const rowY: number[] = [];
+    let y = ROW_H / 2;
+    rows.forEach((_, g) => {
+      rowY.push(y);
+      y += ROW_H + gapExtra(lanes.get(g) ?? 0);
     });
-    clusters.push({ index, size: group.length, left, right: left + widest * SLOT_W });
-    height = Math.max(height, rows.length * ROW_H);
-    left += widest * SLOT_W + CLUSTER_GAP;
+    rows.forEach((row, g) => row.forEach((id) => nodes.push({ id, generation: g, cluster: index, x: xs.get(id)!, y: rowY[g]! })));
+    for (const r of familyRuns) {
+      const n = lanes.get(r.gap)!;
+      const lane = laneOf.get(r.key)!;
+      const mid = rowY[r.gap]! + (ROW_H + gapExtra(n)) / 2;
+      runs.push({
+        ...r,
+        lane,
+        laneY: mid + (lane - (n - 1) / 2) * LANE_GAP,
+        from: { x: r.from.x, y: rowY[r.gap]! },
+        children: r.children.map((c) => ({ ...c, y: rowY[gen.get(c.id)!]! })),
+      });
+    }
+    clusters.push({ index, size: group.length, left, right });
+    height = Math.max(height, y - ROW_H / 2);
+    left = right + CLUSTER_GAP;
   });
-  return { nodes, edges, clusters, width: Math.max(0, left - CLUSTER_GAP), height };
+  return { nodes, edges, clusters, runs, width: Math.max(0, left - CLUSTER_GAP), height };
 }
+
+const mean = (xs: readonly number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
 function firstBorn(group: string[], byId: Map<string, TreePerson>): string {
   return [...group].sort((a, b) => byBirth(byId.get(a)!, byId.get(b)!))[0]!;
