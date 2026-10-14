@@ -286,7 +286,9 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       await expect(page.locator("main").locator('input[placeholder^="caută"]').first()).toBeVisible({ timeout: 30_000 });
       await page.locator("main").locator('input[placeholder^="caută"]').first().fill(MARK);
       await expect(reopened).toHaveCount(1, { timeout: 30_000 });
-      await reopened.getByRole("button", { name: "Incursiune", exact: true }).click();
+      // #39.26: the reload keeps the view — the address held the open Incursiune, so it is open again (it read
+      // `await reopened.getByRole("button", { name: "Incursiune", exact: true }).click();`, which now closes it).
+      await expect(reopened.getByRole("button", { name: "Incursiune", exact: true })).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
       const peekPages = page.locator('[data-incursion="document"] section[aria-label="Pagini"]');
       const nameCell = peekPages.locator("[data-page-name]").first();
       await expect(nameCell).toHaveText("Plan de amplasament,…", { timeout: 30_000 });
