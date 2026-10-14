@@ -822,6 +822,12 @@ export function oneLineRowUnits(slots: readonly RowSlot[], contentRem: number, i
 export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "view", "preview"];
 
 /**
+ * Slice #39.25: „Legături" read-only, beside a list — „Relația" and „Vizualizare" only. The `share` slot is always
+ * empty there (#38.76), and „Previzualizare" was drawn disabled; Adrian: „please remove the disabled Preview button".
+ */
+export const RELATED_READONLY_SLOTS: readonly RowSlot[] = ["relation", "view"];
+
+/**
  * „Corelate"'s units: the fewest that hold its widest row — the icon, the
  * longest property name and all four slots: 4. The same on the four screens
  * (rule 17); #37.66 and #37.67 take it from here.
@@ -1105,6 +1111,36 @@ export const PREVIEW_WIDTHS: Readonly<Record<PreviewKind, Readonly<Record<string
 
 /** The width a preview shows a field without one at: the tile's whole inner width. */
 export const PREVIEW_FILL: FieldWidth = { step: "TILE", kind: "grows", fill: true };
+
+/**
+ * Slice #39.25 — „LEGĂTURI" AND „INTERACȚIUNI" BESIDE A LIST ARE AS TALL AS THEIR ROWS. Adrian, 2026-10-13: „if the
+ * Links or Interactions tiles are empty they should be the size of the preview tile not taller than that; if [they]
+ * have a few items, the height of the tile should be based on the number of items, not taller than that". So:
+ *   - an empty tile is the row's preview tile's height — `PREVIEW_TILE_HEIGHT_PX`, measured in the browser pane at
+ *     848 px on 2026-10-13: a person's and a company's 102 px (a company whose name takes two lines, 124), a
+ *     property's 195, a document's 643–665 with its page;
+ *   - a tile with rows is as tall as they are, never below that;
+ *   - a long one stops at `ROW_TILE_CEILING_PX` — #39.04's height for „Legături", „Pagini"'s empty 436 px (Ask
+ *     first #3) — and its rows scroll inside. A document's preview is taller than the ceiling, so its empty tile is
+ *     the ceiling's height.
+ * The eye's „Hartă" and „Pagini" keep #39.04's rule: they fill the column down to the list's bottom.
+ */
+export const PREVIEW_TILE_HEIGHT_PX: Readonly<Record<PreviewKind, number>> = { person: 102, company: 102, property: 195, document: 643 };
+export const ROW_TILE_CEILING_PX = PAGES_TILE_EMPTY_HEIGHT_PX;
+/** An EMPTY „Legături" or „Interacțiuni" tile's height for a row of `kind`: its preview's, under the ceiling. */
+export function rowTileMinPx(kind: PreviewKind): number {
+  return Math.min(PREVIEW_TILE_HEIGHT_PX[kind], ROW_TILE_CEILING_PX);
+}
+/**
+ * The tile's style: its empty height as `--row-tile-empty`, and the ceiling. The empty height is a floor only while
+ * the tile has no row — `ROW_TILE_EMPTY_CLASS` sets it, and each tile lifts it with `has-[[<its row>]]:min-h-0` —
+ * because a document's preview (643 px) is taller than the ceiling, and a floor on every tile would hold a document's
+ * four rows at 436 px instead of their own height.
+ */
+export function rowTileStyle(kind: PreviewKind): CSSProperties {
+  return { "--row-tile-empty": `${rowTileMinPx(kind)}px`, maxHeight: ROW_TILE_CEILING_PX } as CSSProperties;
+}
+export const ROW_TILE_EMPTY_CLASS = "min-h-[var(--row-tile-empty)]";
 
 // ---- table columns (#37.16) ------------------------------------------------------------
 

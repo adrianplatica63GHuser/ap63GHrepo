@@ -40,6 +40,9 @@
  * „Înscrisuri citate"). „Relația" stays: it is a bubble that shows a sentence and writes nothing. „Vizualizare"
  * and a double-click (Ask first #3) open the record read-only through the guard; „Previzualizare" is locked by
  * the open Incursiune (#38.72). The screen's own hooks still build the rows: no fork.
+ *
+ * Slice #39.25 — and no „Previzualizare" at all: it was drawn disabled, and Adrian asked for it gone, not greyed.
+ * Read-only rows have the two slots they can fill (`RELATED_READONLY_SLOTS`): „Relația" and „Vizualizare".
  */
 
 import { Building2, FileText, Link as LinkIcon, Map as MapIcon, Unlink, User, type LucideProps } from "lucide-react";
@@ -49,7 +52,7 @@ import { useTranslations } from "next-intl";
 import { OneLineRow, OneLineRows } from "@/components/tiles/one-line-rows";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { IconButton } from "@/lib/ui/icon-button";
-import { RELATED_SLOTS, type RowSlot } from "@/lib/ui/field-widths";
+import { RELATED_READONLY_SLOTS, RELATED_SLOTS, type RowSlot } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { RELATED_ROWS_SURFACE } from "@/lib/ui/tile-surface";
 import { partyGroupOrder } from "@/lib/documents/sale-parties";
@@ -206,7 +209,7 @@ export function RelatedTile({
                   {g.heading}
                 </p>
               )}
-              <OneLineRows slots={RELATED_SLOTS} label={g.heading ?? groupLabel(t, g.kind as RelatedKind)} bare>
+              <OneLineRows slots={readOnly ? RELATED_READONLY_SLOTS : RELATED_SLOTS} label={g.heading ?? groupLabel(t, g.kind as RelatedKind)} bare>
                 {g.rows.map((row) => {
                   const isSelected = row.key === selected?.key;
                   return (
@@ -221,7 +224,7 @@ export function RelatedTile({
                       kindLabel={kindLabel(t, row.kind)}
                       content={row.content}
                       title={row.title}
-                      buttons={readOnly ? withoutShare(row.buttons) : row.buttons}
+                      buttons={readOnly ? readOnlyButtons(row.buttons) : row.buttons}
                       // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
                       onClick={(e) => {
                         if (newTabIfAsked(e, row.href)) return;
@@ -284,9 +287,13 @@ export function RelatedTile({
   );
 }
 
-/** Slice #38.76: a read-only row's buttons — every slot but `share`, whose „Cotă" opens its values to edit. */
-export function withoutShare(buttons: RelatedRow["buttons"]): RelatedRow["buttons"] {
-  const { share: _share, ...rest } = buttons;
+/**
+ * Slice #38.76: a read-only row's buttons — every slot but `share`, whose „Cotă" opens its values to edit.
+ * Slice #39.25: and but `preview`, which was only ever drawn disabled there (was `withoutShare`).
+ */
+export function readOnlyButtons(buttons: RelatedRow["buttons"]): RelatedRow["buttons"] {
+  const { share: _share, preview: _preview, ...rest } = buttons;
   void _share;
+  void _preview;
   return rest;
 }

@@ -11,8 +11,8 @@
  *
  * ⚠️ **A LOOK, NOT AN EDIT** — like a preview (#37.24): no add, edit, delete, upload or reorder. It REUSES the
  * detail screens' tiles rather than drawing new ones, each in its read-only form:
- *   - „Interacțiuni" (`InteractionsTile`, #37.89; the person's history since #38.89, read-only) writes nothing; `fill` lets
- *     it take the width it is given instead of its fixed 40rem;
+ *   - „Interacțiuni" (`InteractionsTile`, #37.89; the person's history since #38.89, read-only) writes nothing; `peek`
+ *     (`fill` until #39.25) lets it take the width it is given instead of its fixed 40rem;
  *   - „Hartă" is `PropertyMiniMap` with `readOnly` and an `onChange` that does nothing, the corners read from
  *     the property's GET route, and no „Hartă extinsă" (that opens the editor's theater);
  *   - „Pagini" is `PagesPanel` in its `"peek"` mode, which draws neither „+ Adaugă pagină", nor a row's bin,
@@ -41,21 +41,29 @@
  * „Interacțiuni"), no longer filling what the row leaves — so a property's „Hartă" grows from 3 units to 40 rem.
  * „Legături" keeps its own height, „Interacțiuni"'s, its rows scrolling inside; the Incursiune („peek") takes what
  * the column leaves down to the list's bottom, never below its own minimum.
+ *
+ * Slice #39.25 — NO HEAD BAR, „ÎNCHIDE" ON THE TILE'S OWN LINE, AS TALL AS THE ROWS. Adrian: the „Incursiune: <name>"
+ * bar goes, with its „Deschide"; „Închide" comes down onto the tile's title line (`IncursionHead`), after the tile's
+ * name and the record's — „Legături — Popescu Ion" (Ask first #1) — and no „Deschide" is left on these tiles: neither
+ * the bar's nor „Interacțiuni"'s „Deschide în „Interacțiuni”". The row's own „Deschide" on the list stays, so the
+ * record is one click away. „Legături" and „Interacțiuni" are as tall as their rows, never above `ROW_TILE_CEILING_PX`
+ * (#39.04's), their rows scrolling past it; empty, the row's preview tile's height (`rowTileStyle`). The
+ * eye's „Hartă" and „Pagini" wear the same line (Ask first #2) and keep #39.04's height: down to the list's bottom.
+ * The section's aria-label still names the record.
  */
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ArrowRight, X } from "lucide-react";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { useNameOr } from "@/components/record/use-name-or";
 import { InteractionsTile } from "@/components/tiles/interactions-tile";
 import { loadPreview } from "@/components/tiles/preview-data";
-import { TileTitle } from "@/components/tiles/tile-title";
-import { IconButton } from "@/lib/ui/icon-button";
-import { INTERACTIONS_TILE_STYLE, MAP_BOX_HEIGHT_REM, rem } from "@/lib/ui/field-widths";
+import { IncursionHead } from "@/components/tiles/incursion-head";
+import { MAP_BOX_HEIGHT_REM, ROW_TILE_EMPTY_CLASS, rem, rowTileStyle } from "@/lib/ui/field-widths";
 import type { IncursionView } from "@/components/tiles/incursion-context";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { tileGroupOf } from "@/lib/ui/tiles";
-import { previewHref, type PreviewKind, type PreviewTarget } from "@/lib/ui/previews";
+import type { PreviewKind, PreviewTarget } from "@/lib/ui/previews";
 import { personLogHref } from "@/lib/interactions/links";
 import type { UnnamedKind } from "@/lib/ui/unnamed";
 import { PropertyMiniMap } from "@/app/properties/_components/property-mini-map";
@@ -101,48 +109,31 @@ export function IncursionTile({ target, view, onClose }: { target: PreviewTarget
   // The preview's own read and key: the record's name, refetched when another window saves it (#37.21).
   const q = useQuery({ queryKey: ["preview", target.kind, target.id], queryFn: () => loadPreview(target) });
   const name = q.data ? nameOr(q.data.title, UNNAMED_KIND[target.kind]) : q.isError ? tPreview("error") : tPreview("loading");
-  const href = previewHref(target);
+  const closeLabel = tPreview("close");
+  // Slice #39.25: the tile's own title line — its name, the record's, „Închide".
+  const head = (title: string) => <IncursionHead title={title} name={name} closeLabel={closeLabel} onClose={onClose} />;
+  // Slice #39.04: the column's width. #39.25: the eye's „Hartă" and „Pagini" fill the column's height; „Legături" and
+  // „Interacțiuni" are as tall as their rows.
+  const fills = view === "peek" && (target.kind === "property" || target.kind === "document");
   return (
     <section
       data-incursion={target.kind}
       data-incursion-view={view}
       aria-label={`${t("title")}: ${name}`}
-      // Slice #39.04: the column's width; the Incursiune fills the column's height, „Legături" keeps its own.
-      className={view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2" : "flex w-full min-w-0 flex-col gap-2"}
+      className={fills ? "flex w-full min-w-0 flex-1 flex-col" : "flex w-full min-w-0 flex-col"}
     >
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="min-w-0 truncate text-sm font-semibold text-ink dark:text-zinc-100" title={name}>
-          {t("title")}: {name}
-        </h2>
-        <div className="flex shrink-0 items-center gap-2">
-          <IconButton
-            href={href}
-            icon={ArrowRight}
-            label={tPreview("open")}
-            variant="secondary"
-            size="xs"
-            onClick={(e) => {
-              // A plain click asks about unsaved work first; Ctrl+click is the browser's (#37.24).
-              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
-              e.preventDefault();
-              guardedNavigate(href);
-            }}
-          />
-          <IconButton icon={X} label={tPreview("close")} variant="secondary" size="xs" onClick={onClose} />
-        </div>
-      </div>
       {view === "links" ? (
-        <IncursionLinks target={target} label={t("links")} />
+        <IncursionLinks target={target} label={t("links")} head={head(t("links"))} />
       ) : target.kind === "property" ? (
-        <IncursionMap propertyId={target.id} title={t("map")} surface={INCURSION_SURFACE.property} />
+        <IncursionMap propertyId={target.id} title={t("map")} head={head(t("map"))} surface={INCURSION_SURFACE.property} />
       ) : target.kind === "document" ? (
-        <IncursionPages documentId={target.id} surface={INCURSION_SURFACE.document} />
+        <IncursionPages documentId={target.id} surface={INCURSION_SURFACE.document} peekHead={{ name, closeLabel, onClose }} />
       ) : (
         <InteractionsTile
           personId={target.id}
           title={t("interactions")}
           surface={INCURSION_SURFACE[target.kind]}
-          fill
+          peek={{ head: head(t("interactions")), style: rowTileStyle(target.kind) }}
           // Slice #39.05: B alone, no C and no „Interacțiune nouă"; a row opens the person's screen with C on it.
           onRow={(id) => guardedNavigate(personLogHref(target.kind === "company" ? "/judicial-persons" : "/natural-persons", target.id, id))}
         />
@@ -152,7 +143,7 @@ export function IncursionTile({ target, view, onClose }: { target: PreviewTarget
 }
 
 /** „Hartă": the property's corners, read-only, the map as wide as the tile and — since #38.75 — as tall. */
-function IncursionMap({ propertyId, title, surface }: { propertyId: string; title: string; surface: string }) {
+function IncursionMap({ propertyId, title, head, surface }: { propertyId: string; title: string; head: ReactNode; surface: string }) {
   const tPreview = useTranslations("shared.preview");
   const q = useQuery({
     queryKey: ["incursion", "property", propertyId],
@@ -165,7 +156,7 @@ function IncursionMap({ propertyId, title, surface }: { propertyId: string; titl
   });
   return (
     <section data-tile="incursion-map" aria-label={title} className={`${surface} flex flex-1 flex-col`}>
-      <TileTitle title={title} />
+      {head}
       <div
         className="relative flex-1 overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
         style={{ minHeight: rem(MAP_BOX_HEIGHT_REM) }}
@@ -184,41 +175,47 @@ function IncursionMap({ propertyId, title, surface }: { propertyId: string; titl
 }
 
 /**
- * Slice #38.76: „Legături" — the object's related rows, read-only, through its own screen's tile and hooks; the
- * rows scroll inside the tile, so the tile is the list's height and not the rows'.
+ * Slice #38.76: „Legături" — the object's related rows, read-only, through its own screen's tile and hooks.
+ * Slice #39.25: as tall as its rows, under the ceiling, past which they scroll inside; empty, the row's preview's
+ * height (it was „Interacțiuni"'s height, whatever it held).
  */
-function IncursionLinks({ target, label }: { target: PreviewTarget; label: string }) {
+function IncursionLinks({ target, label, head }: { target: PreviewTarget; label: string; head: ReactNode }) {
   return (
     <section
       data-tile="incursion-links"
       aria-label={label}
-      className={`${LINKS_SURFACE[target.kind]} flex flex-col`}
-      // Slice #39.04: its own height — „Interacțiuni"'s — its rows scrolling past it; the column's rest is the Incursiune's.
-      style={{ height: INTERACTIONS_TILE_STYLE.minHeight }}
+      className={`${LINKS_SURFACE[target.kind]} flex flex-col ${ROW_TILE_EMPTY_CLASS} has-[[data-one-line-row]]:min-h-0`}
+      style={rowTileStyle(target.kind)}
     >
-      <TileTitle title={label} />
-      <div className="relative min-h-0 flex-1">
-        <div className="absolute inset-0 overflow-y-auto" data-incursion-links="">
-          {target.kind === "property" ? (
-            <PropertyRelatedTile propertyId={target.id} label={label} readOnly />
-          ) : target.kind === "document" ? (
-            <DocumentRelatedTile documentId={target.id} label={label} readOnly />
-          ) : (
-            <PersonRelatedTile
-              personId={target.id}
-              backBase={target.kind === "company" ? "/judicial-persons" : "/natural-persons"}
-              label={label}
-              readOnly
-            />
-          )}
-        </div>
+      {head}
+      <div className="min-h-0 overflow-y-auto" data-incursion-links="">
+        {target.kind === "property" ? (
+          <PropertyRelatedTile propertyId={target.id} label={label} readOnly />
+        ) : target.kind === "document" ? (
+          <DocumentRelatedTile documentId={target.id} label={label} readOnly />
+        ) : (
+          <PersonRelatedTile
+            personId={target.id}
+            backBase={target.kind === "company" ? "/judicial-persons" : "/natural-persons"}
+            label={label}
+            readOnly
+          />
+        )}
       </div>
     </section>
   );
 }
 
-/** „Pagini": the document's pages, in the panel's read-only `"peek"` mode. */
-function IncursionPages({ documentId, surface }: { documentId: string; surface: string }) {
+/** „Pagini": the document's pages, in the panel's read-only `"peek"` mode; #39.25: the name and „Închide" on its line. */
+function IncursionPages({
+  documentId,
+  surface,
+  peekHead,
+}: {
+  documentId: string;
+  surface: string;
+  peekHead: { name: string; closeLabel: string; onClose: () => void };
+}) {
   const state = usePagesPanelState(documentId);
-  return <PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} />;
+  return <PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} peekHead={peekHead} />;
 }

@@ -52,6 +52,7 @@ import { MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { TILE_SURFACE } from "@/lib/ui/tile-surface";
 import { TileSubtitle } from "@/components/tiles/tile-title";
+import { IncursionClose, IncursionName } from "@/components/tiles/incursion-head";
 import { pageRefusal, takeUnsavedPages } from "@/lib/documents/new-document-pages";
 import { nextRotation, rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
 import { RotatedImage } from "@/components/documents/rotated-image";
@@ -654,6 +655,11 @@ type Props = {
   surface?:         string;
   /** Slice #38.30: the line under „Pagini" saying what the tile holds — passed on the record's tile row. */
   subtitle?:        string;
+  /**
+   * Slice #39.25: in an Incursiune beside a list, the document's name after „Pagini" and „Închide" at the line's
+   * right end — the bar that held them above the tile is gone.
+   */
+  peekHead?:        { name: string; closeLabel: string; onClose: () => void };
 };
 
 /**
@@ -690,6 +696,7 @@ export function PagesPanel({
   sidebar = false,
   surface = TILE_SURFACE,
   subtitle,
+  peekHead,
 }: Props) {
   const {
     t,
@@ -748,9 +755,10 @@ export function PagesPanel({
       {/* Section header — and, since #38.30, the tile's subtitle under it. */}
       <div className="mb-3 min-w-0">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-            {t("sectionTitle")}
+        <div className={peekHead ? "flex min-w-0 items-center gap-3" : "flex items-center gap-3"}>
+          <h2 className={peekHead ? "flex min-w-0 items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400" : "text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400"}>
+            {peekHead ? <span className="shrink-0">{t("sectionTitle")}</span> : t("sectionTitle")}
+            {peekHead && <IncursionName name={peekHead.name} />}
           </h2>
           {pages.length > 1 && (
             <div className="flex items-center gap-1.5">
@@ -829,6 +837,7 @@ export function PagesPanel({
               onClick={() => setDialogOpen(true)}
             />
           )}
+          {peekHead && <IncursionClose label={peekHead.closeLabel} onClose={peekHead.onClose} />}
         </div>
       </div>
       <TileSubtitle text={subtitle} />

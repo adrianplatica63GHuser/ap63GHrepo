@@ -23,10 +23,10 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, Paperclip, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { INTERACTIONS_TILE_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX } from "@/lib/ui/field-widths";
+import { INTERACTIONS_TILE_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX, ROW_TILE_EMPTY_CLASS } from "@/lib/ui/field-widths";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { ChannelPill, DirectionMark, StatusPill } from "@/components/interactions/interaction-pills";
 import { PAGE_MAX, type InteractionListItem } from "@/lib/interactions/model";
@@ -40,13 +40,18 @@ const B_CONTENT_PX = PAGES_TILE_EMPTY_HEIGHT_PX - 26;
  * Slice #38.72: `fill` — beside a list, in an „Incursiune", the tile takes the width it is given rather than its
  * fixed 40rem; since #38.75 it grows to the height the Incursiune is given (the list's), never under its own.
  * On a person's screen its height is „Pagini"'s, and the rows scroll inside it.
+ *
+ * Slice #39.25 — `fill` became `peek`: beside a list the tile takes the column's width and is AS TALL AS ITS ROWS —
+ * empty, the row's preview's height; never above `ROW_TILE_CEILING_PX`, its rows scrolling past it (`peek.style`,
+ * `rowTileStyle`). Its title line is `peek.head` — the tile's name, the record's and „Închide" — and „Deschide în
+ * „Interacțiuni”" is not drawn (Adrian: „if an Open button was already on the tile, remove it").
  */
 export function InteractionsTile({
   personId,
   title,
   subtitle,
   surface,
-  fill = false,
+  peek,
   onNew,
   onRow,
   selectedId = null,
@@ -56,7 +61,8 @@ export function InteractionsTile({
   title: string;
   subtitle?: string;
   surface: string;
-  fill?: boolean;
+  /** Slice #39.25: beside a list — its title line, and its heights (`rowTileStyle`). */
+  peek?: { head: ReactNode; style: CSSProperties };
   /** Slice #39.05: „Interacțiune nouă" — drawn only when given (a person's screen: C expands on a new record). */
   onNew?: () => void;
   /** Slice #39.05: a row chosen — into C on a person's screen, the person's screen from an Incursiune. */
@@ -82,7 +88,7 @@ export function InteractionsTile({
   const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
   const items = history.data?.items ?? [];
 
-  const head = (
+  const head = peek ? peek.head : (
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <TileTitle title={title} subtitle={subtitle} />
@@ -107,9 +113,8 @@ export function InteractionsTile({
         )}
       </div>
   );
-  const rows = (
-      <div className="relative min-h-0 flex-1">
-        <div className="absolute inset-0 overflow-y-auto" data-interactions-rows="">
+  const body = (
+        <>
           {history.isPending ? (
             <p className="text-sm text-fade dark:text-zinc-400">{t("interactionsLoading")}</p>
           ) : history.isError ? (
@@ -188,6 +193,18 @@ export function InteractionsTile({
           {history.data && history.data.total > items.length && (
             <p className="mt-2 text-xs text-fade dark:text-zinc-400">{t("interactionsMore", { count: items.length })}</p>
           )}
+        </>
+  );
+  // Slice #39.25: beside a list the rows take their own height in the tile's flow and scroll once it reaches the
+  // ceiling; on a person's screen they fill the tile's fixed height, as before.
+  const rows = peek ? (
+      <div className="min-h-0 overflow-y-auto" data-interactions-rows="">
+        {body}
+      </div>
+  ) : (
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 overflow-y-auto" data-interactions-rows="">
+          {body}
         </div>
       </div>
   );
@@ -197,10 +214,10 @@ export function InteractionsTile({
       data-tile="interactions"
       data-panel="interactions"
       aria-label={title}
-      className={fill ? `${surface} flex flex-1 flex-col` : `${surface} flex flex-col`}
+      className={peek ? `${surface} flex flex-col ${ROW_TILE_EMPTY_CLASS} has-[[data-person-interaction]]:min-h-0` : `${surface} flex flex-col`}
       style={
-        fill
-          ? { minHeight: INTERACTIONS_TILE_STYLE.minHeight }
+        peek
+          ? peek.style
           : footer
             ? { ...INTERACTIONS_TILE_STYLE }
             : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }
