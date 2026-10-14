@@ -743,7 +743,11 @@ async function roundTrip(page: Page, list: string, name: string, tiles: readonly
   await expect(page).toHaveURL((u) => u.pathname === list && u.search === address, { timeout: 30_000 });
   await expect(page.locator("[data-list-row-tiles] > *")).toHaveCount(tiles.length, { timeout: 30_000 });
   await expect(row).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(1_500); // the scroll is held for about a second
+  // The scroll is put back once the page is tall enough for it — the tiles beside the list read their rows after it,
+  // and the runner's dev server compiles a route on its first call — and held up to five seconds; so it is polled.
+  await expect
+    .poll(async () => Math.abs((await listState(page, name)).scroll - before.scroll), { timeout: 8_000, message: `${list}: the scroll comes back` })
+    .toBeLessThanOrEqual(2);
   const after = await listState(page, name);
   expect({ search: after.search, column: after.column, pressed: after.pressed }, `${list}: the list as it was left`).toEqual({
     search: before.search,
