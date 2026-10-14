@@ -14,6 +14,7 @@ import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/l
 import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { lookupListState, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
+import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["select", "personName", "personType"];
@@ -27,7 +28,7 @@ const RESULTS_FILL = { units: RESULTS_UNITS, column: "personName" } as const;
 
 const PAGE_SIZE = 15;
 
-type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
+type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string; isDeceased?: boolean };
 type SearchResponse = { items: PersonSearchItem[]; total: number };
 type RoleItem = { id: string; name: string };
 
@@ -275,7 +276,7 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
                     <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)}
                       onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.displayName} />
                   </td>
-                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
+                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.displayName}{item.isDeceased && <DeceasedMark />}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
                   </td>

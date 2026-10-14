@@ -20,7 +20,8 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
-import { ageFromDob, dmyFromIso } from "@/lib/persons/person-age";
+import { dmyFromIso, personAgeText } from "@/lib/persons/person-age";
+import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 const PAGE_SIZE = 15;
 // Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.person.
@@ -34,6 +35,9 @@ type NaturalPersonListItem = {
   // Slice #37.60 — „Câmpuri afișate": the „Identitate" fields.
   cnp:              string | null;
   dateOfBirth:      string | null;
+  // Slice #39.30
+  isDeceased:       boolean;
+  dateOfDeath:      string | null;
   gender:           "MALE" | "FEMALE" | null;
   placeOfBirth:     string | null;
   professionalType: string | null;
@@ -143,6 +147,8 @@ export function NaturalPersonListView() {
     { key: "dateOfBirth",      label: t("fields.dateOfBirth"),          column: "listDate" },
     { key: "age",              label: t("fields.age"),                  column: "listAge" },
     { key: "gender",           label: t("fields.gender"),               column: "listGender" },
+    // Slice #39.30: „Data decesului" — „Decedat" itself is the „†" after the name.
+    { key: "dateOfDeath",      label: t("fields.dateOfDeath"),          column: "listDate" },
     { key: "placeOfBirth",     label: t("fields.placeOfBirth"),         column: "listBirthPlace" },
     { key: "professionalType", label: t("fields.physicalPersonTypeId"), column: "listProfessionalType" },
   ];
@@ -235,7 +241,9 @@ export function NaturalPersonListView() {
     switch (key) {
       case "cnp":              return item.cnp;
       case "dateOfBirth":      return dmyFromIso(item.dateOfBirth);
-      case "age":              return ageFromDob(item.dateOfBirth);
+      // Slice #39.30: stopped at the death and marked „78 †"; „Decedat" for a dead person with no date.
+      case "age":              return personAgeText(item, t("fields.isDeceased"));
+      case "dateOfDeath":      return dmyFromIso(item.dateOfDeath);
       case "gender":           return item.gender === "MALE" ? t("options.gender.MALE") : item.gender === "FEMALE" ? t("options.gender.FEMALE") : null;
       case "placeOfBirth":     return item.placeOfBirth;
       case "professionalType": return item.professionalType;
@@ -390,6 +398,7 @@ export function NaturalPersonListView() {
                     {item.displayName || (
                       <span className="text-fade italic">—</span>
                     )}
+                    {item.isDeceased && <DeceasedMark />}
                   </td>
                   <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(item.nickname)}>
                     {item.nickname || <span className="italic">—</span>}

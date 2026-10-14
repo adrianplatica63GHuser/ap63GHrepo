@@ -181,7 +181,10 @@ export const NATURAL_PERSON = {
   cnp: { step: "M", kind: "fixed", sample: "0000000000000" }, // 13 digits; m: 0
   gender: { step: "M", kind: "select" }, //                 „Masculin"
   dateOfBirth: { step: "M", kind: "fixed" }, //             dd.mm.yyyy and the calendar button
-  age: { step: "XS", kind: "fixed", sample: "000" }, //     beside the date it is worked out from
+  age: { step: "XS", kind: "fixed", sample: "000" }, //     beside the date it is worked out from; „78 †" for the dead (#39.30) fits too
+  // Slice #39.30 — „Decedat", a tick, and „Data decesului", a date like the birth's.
+  isDeceased: { step: "XS", kind: "fixed" }, //            a tick under its label
+  dateOfDeath: { step: "M", kind: "fixed" }, //             dd.mm.yyyy and the calendar button
   physicalPersonTypeId: { step: "M", kind: "select" }, //   m: 2 options, longest „Expert" (6); longer ones show on hover
   placeOfBirth: { step: "XL", kind: "grows" }, //           m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
@@ -248,6 +251,7 @@ const NATURAL_PERSON_ROWS = {
     ["lastName", "firstName"],
     ["nickname", "cnp"],
     ["dateOfBirth", "age", "gender"],
+    ["isDeceased", "dateOfDeath"],
     ["placeOfBirth", "physicalPersonTypeId"],
     ["notes"],
   ],
@@ -1058,7 +1062,8 @@ export const PREVIEW_INNER_REM: Readonly<Record<PreviewWidth, number>> = {
 export const PREVIEW_FIELDS = {
   // Slice #39.28: and how to reach them — one phone, one email — and their notes; a company loses its „Tip" and
   // „Nr. Reg. Com." (Ask first #2: Adrian set the lines).
-  person: ["nickname", "cnp", "dateOfBirth", "placeOfBirth", "phone", "email", "notes"],
+  // Slice #39.30: line 2 gains „decedat: <date>" for the dead.
+  person: ["nickname", "cnp", "dateOfBirth", "placeOfBirth", "dateOfDeath", "phone", "email", "notes"],
   company: ["nickname", "cuiNumber", "phone", "email", "notes"],
   // Slice #37.70: Tarla/Solă joins the property; the document loses „Tip document", and its
   // „Etichetă scurtă" is the heading only.
@@ -1085,7 +1090,7 @@ export type PreviewKind = keyof typeof PREVIEW_FIELDS;
  *   4: the notes, on one line, cut with „…", whole on hover, never widening the tile.
  */
 export const PREVIEW_LINES = {
-  person: [["nickname", "cnp", "dateOfBirth", "placeOfBirth"], ["phone", "email"], ["notes"]],
+  person: [["nickname", "cnp", "dateOfBirth", "placeOfBirth", "dateOfDeath"], ["phone", "email"], ["notes"]],
   company: [["nickname", "cuiNumber"], ["phone", "email"], ["notes"]],
 } as const satisfies Partial<Record<keyof typeof PREVIEW_FIELDS, readonly (readonly string[])[]>>;
 export type PreviewLinesKind = keyof typeof PREVIEW_LINES;

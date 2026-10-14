@@ -128,6 +128,8 @@ describe("NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS", () => {
       idDocumentNumber:         null,
       gender:                   null,
       dateOfBirth:              null,
+      isDeceased:               false,
+      dateOfDeath:              null,
       personalPhone1:           null,
       personalPhone2:           null,
       workPhone:                null,

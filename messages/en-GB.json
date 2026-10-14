@@ -646,6 +646,9 @@
       "noPage": "No page attached",
       "bornMale": "born:",
       "bornFemale": "born:",
+      "diedMale": "died:",
+      "diedFemale": "died:",
+      "deathDateUnknown": "date unknown",
       "cnpPrefix": "CNP:",
       "cuiPrefix": "CUI:",
       "fields": {
@@ -655,6 +658,7 @@
         "cnp": "CNP",
         "dateOfBirth": "Date of birth",
         "placeOfBirth": "Place of birth",
+        "dateOfDeath": "Date of death",
         "name": "Name",
         "companyType": "Type",
         "cui": "CUI",
@@ -1128,6 +1132,8 @@
       "idDocumentNumber": "ID Number",
       "gender": "Gender",
       "dateOfBirth": "Date of Birth",
+      "isDeceased": "Deceased",
+      "dateOfDeath": "Date of death",
       "personalPhone1": "Personal Phone 1",
       "personalPhone2": "Personal Phone 2",
       "workPhone": "Work Phone",
@@ -1182,7 +1188,12 @@
       "idLinkNone": "No ID card document linked",
       "idExpired": "EXPIRED",
       "idExpiringSoon": "EXPIRES IN {n} DAYS",
-      "idValid": "VALID"
+      "idValid": "VALID",
+      "death": {
+        "DEATH_WITHOUT_DECEASED": "A date of death can only be set for a person marked „Deceased\".",
+        "DEATH_BEFORE_BIRTH": "The date of death cannot be before the date of birth.",
+        "DEATH_IN_FUTURE": "The date of death cannot be in the future."
+      }
     },
     "tabs": {
       "details": "Details",
@@ -1204,7 +1215,7 @@
       "interactions": "Interactions"
     },
     "tileSubtitles": {
-      "identity": "Name, CNP, gender, date and place of birth",
+      "identity": "Name, CNP, gender, date and place of birth, death",
       "idCard": "Identity card or passport",
       "contact": "Phone numbers and e-mail addresses",
       "addresses": "Home and correspondence",
@@ -4568,11 +4579,14 @@
     "empty": "No family ties yet: choose „Kinship” on the roles in „Person Roles”.",
     "born": "b. {date}",
     "bornYear": "b. {year}",
+    "died": "d. {date}",
+    "deceased": "Deceased",
     "ties": "{count, plural, one {# family tie} other {# family ties}}",
     "more": "and {count} more",
     "nickname": "Nickname",
     "gender": "Gender",
     "birth": "Date of birth",
+    "death": "Date of death",
     "genders": {
       "MALE": "man",
       "FEMALE": "woman"
@@ -4622,7 +4636,7 @@
     "time": {
       "label": "Year",
       "today": "today",
-      "hint": "Whoever was born after the chosen year is faded"
+      "hint": "Whoever was born after the chosen year is faded; whoever had died by then is marked „†\""
     },
     "shared": "Shared documents",
     "sharedHint": "On each line, how many documents the two have in common"

@@ -167,6 +167,9 @@ export type NaturalPersonSnapshotFields = {
   idDocumentNumber:   string | null;
   gender:             string | null;
   dateOfBirth:        string | null;
+  // Slice #39.30 (migration_108 backfilled both into every older snapshot):
+  isDeceased:         boolean;
+  dateOfDeath:        string | null;
   personalPhone1:     string | null;
   personalPhone2:     string | null;
   workPhone:          string | null;

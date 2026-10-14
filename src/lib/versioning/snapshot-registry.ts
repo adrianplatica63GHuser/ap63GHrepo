@@ -153,6 +153,8 @@ export const NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS = [
   "idDocumentNumber",
   "gender",
   "dateOfBirth",
+  "isDeceased",
+  "dateOfDeath",
   "personalPhone1",
   "personalPhone2",
   "workPhone",

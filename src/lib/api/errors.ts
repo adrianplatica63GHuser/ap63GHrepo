@@ -7,6 +7,7 @@ import type { ZodError } from "zod/v4";
 import { RoleNotOfferedError } from "@/lib/admin/value-lists/role-attachment";
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
 import { ShareNotHeldError } from "@/lib/documents/share-not-held-error";
+import { DEATH_PROBLEM_TEXT, DeathRefusedError } from "@/lib/persons/death";
 
 /** Postgres errors come through pg with a numeric SQLSTATE code. */
 type PgError = {
@@ -70,6 +71,10 @@ export function pgErrorConstraint(err: unknown): string | undefined {
  * then fall through to a generic 500).
  */
 export function dbErrorToResponse(err: unknown): Response | null {
+  // Slice #39.30: „Data decesului" refused by the rules in src/lib/persons/death.ts — in Romanian, with its code.
+  if (err instanceof DeathRefusedError) {
+    return Response.json({ error: err.message, code: err.code }, { status: 400 });
+  }
   const top = err as PgError & { cause?: unknown };
   const e: PgError = unwrapPgError(err);
   const message = e?.message ?? top?.message ?? String(err);
@@ -116,6 +121,13 @@ export function dbErrorToResponse(err: unknown): Response | null {
   }
 
   // Check constraint violation
+  // Slice #39.30: migration_108's two checks say the same thing as the API's own rule, should a write reach them.
+  if (e.code === "23514" && e.constraint === "natural_person_death_needs_deceased") {
+    return Response.json({ error: DEATH_PROBLEM_TEXT.DEATH_WITHOUT_DECEASED, code: "DEATH_WITHOUT_DECEASED" }, { status: 400 });
+  }
+  if (e.code === "23514" && e.constraint === "natural_person_death_after_birth") {
+    return Response.json({ error: DEATH_PROBLEM_TEXT.DEATH_BEFORE_BIRTH, code: "DEATH_BEFORE_BIRTH" }, { status: 400 });
+  }
   if (e.code === "23514") {
     return Response.json(
       { error: "Database constraint violated", constraint: e.constraint },

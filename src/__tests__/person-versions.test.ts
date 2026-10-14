@@ -43,7 +43,7 @@ function addr(over: Partial<PersonAddressSnapshot> = {}): PersonAddressSnapshot 
 const EMPTY_NAT: NaturalPersonSnapshot["natural"] = {
   firstName: null, lastName: null, nickname: null, cnp: null,
   idDocumentType: null, idDocumentNumber: null, gender: null,
-  dateOfBirth: null, personalPhone1: null, personalPhone2: null,
+  dateOfBirth: null, isDeceased: false, dateOfDeath: null, personalPhone1: null, personalPhone2: null,
   workPhone: null, personalEmail1: null, personalEmail2: null,
   workEmail: null, placeOfBirth: null, idIssuingAuthority: null,
   idValidFrom: null, idValidUntil: null, idCardNumber: null,

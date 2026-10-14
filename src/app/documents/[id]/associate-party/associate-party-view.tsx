@@ -14,6 +14,7 @@ import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/
 import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 /** The results table, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["select", "personName", "personType"];
@@ -32,6 +33,7 @@ type PersonSearchItem = {
   code:        string;
   type:        "NATURAL" | "JUDICIAL";
   displayName: string;
+  isDeceased?: boolean;
 };
 
 type SearchResponse = { items: PersonSearchItem[]; total: number };
@@ -247,7 +249,7 @@ export function AssociatePartyView({ documentId, documentName, canConfigureRoles
                       aria-label={item.displayName}
                     />
                   </td>
-                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
+                  <td className="px-3 py-2 break-words font-medium text-ink dark:text-zinc-100">{item.displayName}{item.isDeceased && <DeceasedMark />}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
                   </td>

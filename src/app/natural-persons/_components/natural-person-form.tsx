@@ -76,7 +76,7 @@ import { firstErrorPath } from "@/lib/ui/tiles";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 
-import { ageFromDob } from "@/lib/persons/person-age";
+import { personAgeText } from "@/lib/persons/person-age";
 import { ParentsFold } from "@/components/persons/parents-fold";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { ParentsResolution } from "@/components/persons/parents-resolution";
@@ -92,8 +92,6 @@ import {
 
 type IdCardLink = { id: string; code: string; title: string | null } | null;
 
-/** Age in whole years — the same function the Natural Persons list's „Vârstă" reads (Slice #37.60). */
-const calculateAge = (dob: string): number | null => ageFromDob(dob);
 
 type Props = {
   /** "create" — POST /api/people; "edit" — PATCH /api/people/[personId]; "view" — read-only display */
@@ -232,7 +230,12 @@ export function NaturalPersonForm({
   const shownParents = followHolderSurname(parentDrafts, watchedValues.lastName ?? "");
 
   // Derived display values (recalculate on every render since watchedValues is live).
-  const calculatedAge = calculateAge(watchedValues.dateOfBirth);
+  // Slice #37.60 / #39.30: the age the Natural Persons list's „Vârstă" shows — counted to today, or stopped at the
+  // death and marked „†"; a dead person with no date has none (the tick beside it says „Decedat").
+  const calculatedAge = personAgeText(
+    { dateOfBirth: watchedValues.dateOfBirth, isDeceased: watchedValues.isDeceased, dateOfDeath: watchedValues.dateOfDeath },
+    "—",
+  );
   const idValidUntilDate = watchedValues.idValidUntil
     ? new Date(watchedValues.idValidUntil)
     : null;
@@ -510,10 +513,14 @@ export function NaturalPersonForm({
       // Slice #37.21: a save refused as stale writes nothing; the notice says so.
       if (recordSync.refused(err)) return false;
       // Slice #37.50: the lock's refusal is the trigger's English sentence; say it in Romanian.
+      // Slice #39.30: „Data decesului" refused by the route's own rule (the form checks the same one first).
+      const code = refusalCode(err);
       setSubmitError(
         refusalCode(err) === "CNP_LOCKED"
           ? t("hints.cnpLocked")
-          : err instanceof Error ? err.message : String(err),
+          : code === "DEATH_WITHOUT_DECEASED" || code === "DEATH_BEFORE_BIRTH" || code === "DEATH_IN_FUTURE"
+            ? t(`hints.death.${code}`)
+            : err instanceof Error ? err.message : String(err),
       );
       return false;
     } finally {
@@ -801,7 +808,7 @@ export function NaturalPersonForm({
             />
             <ReadOnlyField
               label={t("fields.age")}
-              value={calculatedAge !== null ? String(calculatedAge) : "—"}
+              value={calculatedAge ?? "—"}
               width={NP.age}
               field="age"
             />
@@ -818,6 +825,27 @@ export function NaturalPersonForm({
               ]}
               highlight={displayHighlights?.fields.gender}
               width={NP.gender}
+            />
+          </div>
+          {/* Slice #39.30 — „Decedat", off by default; „Data decesului" only while it is ticked, and optional. */}
+          <div className={STACKED_ROW_CLASS}>
+            <CheckField
+              label={t("fields.isDeceased")}
+              name="isDeceased"
+              control={control}
+              highlight={displayHighlights?.fields.isDeceased}
+              width={NP.isDeceased}
+              onTurnOff={() => form.setValue("dateOfDeath", "", { shouldDirty: true, shouldValidate: true })}
+            />
+            <Field
+              label={t("fields.dateOfDeath")}
+              name="dateOfDeath"
+              type="date"
+              register={register}
+              error={errors.dateOfDeath?.message}
+              highlight={displayHighlights?.fields.dateOfDeath}
+              width={NP.dateOfDeath}
+              disabled={!watchedValues.isDeceased}
             />
           </div>
           <div className={STACKED_ROW_CLASS}>
@@ -1347,6 +1375,8 @@ type FieldProps = {
    * the MRZ). Every other box ignores it and keeps its own width.
    */
   fillRem?: number;
+  /** Slice #39.30: a box that cannot be filled yet („Data decesului" until „Decedat" is ticked). */
+  disabled?: boolean;
 };
 
 /**
@@ -1361,7 +1391,7 @@ type FieldProps = {
 const BOX_CLASS =
   "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
-function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem }: FieldProps) {
+function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem, disabled }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
     BOX_CLASS,
@@ -1399,6 +1429,7 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
     <input
       type={type}
       {...register(name)}
+      disabled={disabled || undefined}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy}
       aria-labelledby={labelledBy}
@@ -1551,6 +1582,53 @@ function SelectField({
         )}
       </div>
     </label>
+  );
+}
+
+/**
+ * Slice #39.30 — a tick with its label above it, like the boxes beside it: „Decedat". Turning it off calls
+ * `onTurnOff`, which clears „Data decesului" (the pattern's rule: unticking clears the date).
+ */
+function CheckField({
+  label,
+  name,
+  control,
+  highlight,
+  width,
+  onTurnOff,
+}: {
+  label: string;
+  name: "isDeceased";
+  control: Control<FormValues>;
+  highlight?: HighlightColor;
+  width: FieldWidth;
+  onTurnOff: () => void;
+}) {
+  const ring = usePulseRing(highlight);
+  const box = boxStyle(width);
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <label className={STACKED_FIELD_CLASS} style={box}>
+          <span className={STACKED_LABEL_CLASS}>{label}</span>
+          <span className={`flex h-[1.875rem] items-center rounded-md ${ring}`} style={box} data-width-field={name} data-width-kind={width.kind}>
+            <input
+              type="checkbox"
+              name={name}
+              checked={field.value}
+              onChange={(e) => {
+                field.onChange(e.target.checked);
+                if (!e.target.checked) onTurnOff();
+              }}
+              onBlur={field.onBlur}
+              className="h-4 w-4 accent-cta"
+            />
+          </span>
+        </label>
+      )}
+    />
   );
 }
 

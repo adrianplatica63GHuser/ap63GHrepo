@@ -23,6 +23,7 @@ import {
   PERSON_ADDRESS_SNAPSHOT_KEYS,
 } from "@/lib/versioning/snapshot-registry";
 import type { LookupListState } from "@/hooks/use-lookup-options";
+import { DEATH_PROBLEM_TEXT, deathProblem } from "@/lib/persons/death";
 import {
   resolveSnapshotLookup,
   type SnapshotLookupOption,
@@ -60,6 +61,9 @@ export const formSchema = z
     idDocumentNumber: z.string(),
     gender: z.string(), // "" | "MALE" | "FEMALE"
     dateOfBirth: z.string(), // "" | "YYYY-MM-DD"
+    // Slice #39.30: „Decedat", and „Data decesului" — enabled only while it is ticked.
+    isDeceased: z.boolean(),
+    dateOfDeath: z.string(), // "" | "YYYY-MM-DD"
     personalPhone1: z.string(),
     personalPhone2: z.string(),
     workPhone: z.string(),
@@ -91,6 +95,11 @@ export const formSchema = z
       path: ["lastName"],
     },
   )
+  // Slice #39.30: the death rules, in the words the API answers with (src/lib/persons/death.ts).
+  .superRefine((d, ctx) => {
+    const problem = deathProblem({ isDeceased: d.isDeceased, dateOfDeath: d.isDeceased ? d.dateOfDeath : "", dateOfBirth: d.dateOfBirth });
+    if (problem) ctx.addIssue({ code: "custom", message: DEATH_PROBLEM_TEXT[problem], path: ["dateOfDeath"] });
+  })
   // Each address block: if any non-Country field is filled, Country must be too
   .refine(
     (d) => addressBlockHasCountryWhenNeeded(d.addresses.HOME),
@@ -145,6 +154,8 @@ export const emptyFormValues: FormValues = {
   idDocumentNumber: "",
   gender: "",
   dateOfBirth: "",
+  isDeceased: false,
+  dateOfDeath: "",
   personalPhone1: "",
   personalPhone2: "",
   workPhone: "",
@@ -180,6 +191,9 @@ type NaturalRow = {
   idDocumentNumber: string | null;
   gender: "MALE" | "FEMALE" | null;
   dateOfBirth: string | null;
+  // Slice #39.30 — optional, because a version written before migration_108 has neither:
+  isDeceased?: boolean;
+  dateOfDeath?: string | null;
   personalPhone1: string | null;
   personalPhone2: string | null;
   workPhone: string | null;
@@ -229,6 +243,8 @@ export function fromApiPayload(input: {
     idDocumentNumber: n?.idDocumentNumber ?? "",
     gender: n?.gender ?? "",
     dateOfBirth: n?.dateOfBirth ?? "",
+    isDeceased: n?.isDeceased ?? false,
+    dateOfDeath: n?.dateOfDeath ?? "",
     personalPhone1: n?.personalPhone1 ?? "",
     personalPhone2: n?.personalPhone2 ?? "",
     workPhone: n?.workPhone ?? "",
@@ -321,6 +337,9 @@ export function toApiPayload(
     idDocumentNumber: blank(values.idDocumentNumber),
     gender: blank(values.gender) as "MALE" | "FEMALE" | null,
     dateOfBirth: blank(values.dateOfBirth),
+    // Slice #39.30: unticking „Decedat" clears the date.
+    isDeceased: values.isDeceased,
+    dateOfDeath: values.isDeceased ? blank(values.dateOfDeath) : null,
     personalPhone1: blank(values.personalPhone1),
     personalPhone2: blank(values.personalPhone2),
     workPhone: blank(values.workPhone),
@@ -379,15 +398,15 @@ const NAT_STRING_KEYS = [
   ...NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS.filter(
     (key): key is Exclude<
       (typeof NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS)[number],
-      "correspondenceSameAsHome"
-    > => key !== "correspondenceSameAsHome",
+      "correspondenceSameAsHome" | "isDeceased"
+    > => key !== "correspondenceSameAsHome" && key !== "isDeceased",
   ),
   "notes",
-] as const satisfies readonly (keyof Omit<FormValues, "addresses" | "correspondenceSameAsHome">)[];
+] as const satisfies readonly (keyof Omit<FormValues, "addresses" | "correspondenceSameAsHome" | "isDeceased">)[];
 
 // Full diff key set — string fields plus the same-as-home flag (stringified
 // to "true"/"false" so it diffs uniformly). Mirrors JUD_DIFF_KEYS.
-const NAT_DIFF_KEYS = [...NAT_STRING_KEYS, "correspondenceSameAsHome"] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
+const NAT_DIFF_KEYS = [...NAT_STRING_KEYS, "correspondenceSameAsHome", "isDeceased"] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
 
 // The address block is the registry's outright — same six keys, no delta.
 const ADDR_KEYS: readonly (keyof PersonAddressSnapshot)[] = PERSON_ADDRESS_SNAPSHOT_KEYS;
@@ -414,6 +433,9 @@ function snapshotFieldMap(
     idDocumentNumber:   snap.natural.idDocumentNumber,
     gender:             snap.natural.gender,
     dateOfBirth:        snap.natural.dateOfBirth,
+    // Slice #39.30 — a version from before migration_108 reads as alive with no date.
+    isDeceased:         snap.natural.isDeceased ? "true" : "false",
+    dateOfDeath:        snap.natural.dateOfDeath ?? null,
     personalPhone1:     snap.natural.personalPhone1,
     personalPhone2:     snap.natural.personalPhone2,
     workPhone:          snap.natural.workPhone,
@@ -509,6 +531,7 @@ export function formValuesEqual(a: FormValues, b: FormValues): boolean {
     if (normVal(a[k]) !== normVal(b[k])) return false;
   }
   if (a.correspondenceSameAsHome !== b.correspondenceSameAsHome) return false;
+  if (a.isDeceased !== b.isDeceased) return false;
   for (const kind of ["HOME", "CORRESPONDENCE"] as const) {
     for (const k of ADDR_KEYS) {
       if (normVal(a.addresses[kind][k]) !== normVal(b.addresses[kind][k])) return false;

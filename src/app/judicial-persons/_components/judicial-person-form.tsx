@@ -73,6 +73,7 @@ import { jpTileOfField, type JpTile } from "./person-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 type Props = {
   mode: "create" | "edit" | "view";
@@ -1132,7 +1133,7 @@ function ContactPersonRow({
 
 const PICKER_PAGE_SIZE = 15;
 
-type PersonItem = { id: string; code: string; displayName: string };
+type PersonItem = { id: string; code: string; displayName: string; isDeceased?: boolean };
 type PickerT = {
   title: string;
   labelName: string;
@@ -1271,7 +1272,7 @@ function ContactPersonPickerDialog({
                         aria-label={p.displayName}
                       />
                     </td>
-                    <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{p.displayName}</td>
+                    <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{p.displayName}{p.isDeceased && <DeceasedMark />}</td>
                   </tr>
                 ))}
               </tbody>

@@ -18,6 +18,8 @@ export interface PreviewData {
   image?: { url: string; mimeType: string | null; rotation?: PageRotation } | null;
   /** A natural person's gender, for „născut:" / „născută:" (#37.70); undefined for the other kinds. */
   gender?: "MALE" | "FEMALE" | null;
+  /** Slice #39.30: a natural person marked „Decedat" — the „†" after the name, „decedat: …" on line 2. */
+  isDeceased?: boolean;
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -33,11 +35,11 @@ export function dmy(iso: string | null | undefined): string | null {
   return d && m && y ? `${d}.${m}.${y}` : iso;
 }
 
-type Row = Record<string, string | number | null | undefined>;
-const s = (v: string | number | null | undefined): string | null => (v === null || v === undefined || v === "" ? null : String(v));
+type Row = Record<string, string | number | boolean | null | undefined>;
+const s = (v: string | number | boolean | null | undefined): string | null => (v === null || v === undefined || v === "" ? null : String(v));
 
 /** Slice #39.28: the first filled of several, in the form's order (Ask first #1). */
-export function firstFilled(...values: (string | number | null | undefined)[]): string | null {
+export function firstFilled(...values: (string | number | boolean | null | undefined)[]): string | null {
   for (const v of values) {
     const t = s(v)?.trim();
     if (t) return t;
@@ -46,7 +48,7 @@ export function firstFilled(...values: (string | number | null | undefined)[]): 
 }
 
 /** Slice #39.28: notes on one line — every run of spaces and line breaks one space; empty is none. */
-export function oneLine(notes: string | number | null | undefined): string | null {
+export function oneLine(notes: string | number | boolean | null | undefined): string | null {
   const t = s(notes)?.replace(/\s+/g, " ").trim();
   return t ? t : null;
 }
@@ -67,12 +69,15 @@ export async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
           cnp: s(n.cnp),
           dateOfBirth: dmy(s(n.dateOfBirth)),
           placeOfBirth: s(n.placeOfBirth),
+          // Slice #39.30: only for the dead; a dead person with no date reads „decedat: dată necunoscută" (the tile).
+          dateOfDeath: n.isDeceased ? dmy(s(n.dateOfDeath)) : null,
           // Slice #39.28: line 3 and line 4.
           phone: firstFilled(n.personalPhone1, n.personalPhone2, n.workPhone),
           email: firstFilled(n.personalEmail1, n.personalEmail2, n.workEmail),
           notes: oneLine(r.person.notes),
         },
         gender: g === "MALE" || g === "FEMALE" ? g : null,
+        isDeceased: Boolean(n.isDeceased),
       };
     }
     case "company": {

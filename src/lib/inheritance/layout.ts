@@ -27,6 +27,9 @@ export type TreePerson = {
   gender: PersonGender;
   /** ISO yyyy-mm-dd, or null. */
   dateOfBirth: string | null;
+  /** Slice #39.30: „Decedat", and the date of death (ISO, or null — dead with the date unknown). */
+  isDeceased?: boolean;
+  dateOfDeath?: string | null;
 };
 
 /** One stored pair whose role names a family tie. */
@@ -276,4 +279,20 @@ export function birthYear(p: TreePerson): string | null {
 export function birthDate(p: TreePerson): string | null {
   const m = p.dateOfBirth ? /^(\d{4})-(\d{2})-(\d{2})/.exec(p.dateOfBirth) : null;
   return m ? `${m[3]}.${m[2]}.${m[1]}` : null;
+}
+
+/** Slice #39.30: „03.02.1998" from a dead person's date of death, or null (alive, or the date unknown). */
+export function deathDate(p: TreePerson): string | null {
+  const m = p.isDeceased && p.dateOfDeath ? /^(\d{4})-(\d{2})-(\d{2})/.exec(p.dateOfDeath) : null;
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : null;
+}
+
+/**
+ * Slice #39.30: a dead person's years as a genealogy writes them under the name — „1921–1998"; „1921–?" when the
+ * date of death is unknown, „?–1998" when the birth is. Null for the living (their line stays „n. 1921").
+ */
+export function lifeYears(p: TreePerson): string | null {
+  if (!p.isDeceased) return null;
+  const died = p.dateOfDeath && /^\d{4}/.test(p.dateOfDeath) ? p.dateOfDeath.slice(0, 4) : null;
+  return `${birthYear(p) ?? "?"}–${died ?? "?"}`;
 }

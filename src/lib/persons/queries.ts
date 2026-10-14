@@ -19,6 +19,7 @@ import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
+import { checkedDeath } from "@/lib/persons/death";
 import {
   NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS,
   PERSON_ADDRESS_SNAPSHOT_KEYS,
@@ -100,6 +101,9 @@ export type PersonListItem = {
    */
   cnp:              string | null;
   dateOfBirth:      string | null;
+  // Slice #39.30: „Decedat" and „Data decesului" — the † after the name, the age stopped at death.
+  isDeceased:       boolean;
+  dateOfDeath:      string | null;
   gender:           "MALE" | "FEMALE" | null;
   placeOfBirth:     string | null;
   professionalType: string | null;
@@ -188,6 +192,8 @@ export async function listPersons(opts: ListQuery): Promise<{
         // Slice #37.60: „Câmpuri afișate".
         cnp:              naturalPerson.cnp,
         dateOfBirth:      naturalPerson.dateOfBirth,
+        isDeceased:       sql<boolean>`coalesce(${naturalPerson.isDeceased}, false)`,
+        dateOfDeath:      naturalPerson.dateOfDeath,
         gender:           naturalPerson.gender,
         placeOfBirth:     naturalPerson.placeOfBirth,
         professionalType: lookupPersonType.name,
@@ -426,6 +432,9 @@ export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot
       idDocumentNumber:   n?.idDocumentNumber   ?? null,
       gender:             n?.gender             ?? null,
       dateOfBirth:        n?.dateOfBirth        ?? null,
+      // Slice #39.30:
+      isDeceased:         n?.isDeceased         ?? false,
+      dateOfDeath:        n?.dateOfDeath        ?? null,
       personalPhone1:     n?.personalPhone1     ?? null,
       personalPhone2:     n?.personalPhone2     ?? null,
       workPhone:          n?.workPhone          ?? null,
@@ -702,7 +711,9 @@ export async function createNaturalPerson(
   input: NaturalPersonCreate,
   updatedBy: string | null = null,
 ): Promise<PersonFull> {
-  const { addresses: addressList, notes, ...natFields } = input;
+  const { addresses: addressList, notes, ...given } = input;
+  // Slice #39.30: „Decedat" off clears the date; a date before the birth or in the future is refused.
+  const natFields = checkedDeath(given);
   const displayName =
     computeDisplayName(natFields.firstName, natFields.lastName) ||
     // The Zod refinement guarantees at least one of firstName/lastName,
@@ -743,6 +754,9 @@ export async function createNaturalPerson(
         idDocumentNumber: natFields.idDocumentNumber ?? null,
         gender: natFields.gender ?? null,
         dateOfBirth: natFields.dateOfBirth ?? null,
+        // Slice #39.30:
+        isDeceased: natFields.isDeceased ?? false,
+        dateOfDeath: natFields.dateOfDeath ?? null,
         personalPhone1: natFields.personalPhone1 ?? null,
         personalPhone2: natFields.personalPhone2 ?? null,
         workPhone: natFields.workPhone ?? null,
@@ -807,7 +821,7 @@ export async function updateNaturalPerson(
   /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
   baseVersion?: number,
 ): Promise<(PersonFull & { version: number | null }) | null> {
-  const { addresses: addressList, notes, ...natUpdate } = input;
+  const { addresses: addressList, notes, ...given } = input;
 
   return await db.transaction(async (tx) => {
     // Verify person exists and is not deleted.
@@ -821,6 +835,23 @@ export async function updateNaturalPerson(
     // Slice #37.21: locked, then checked — a save from an older version than the
     // latest is refused before it writes (`@/lib/versioning/base-version`).
     await assertBaseVersion(tx, "person", id, baseVersion);
+
+    // Slice #39.30: the death rules hold on the state AFTER the save, so a patch that names any of the three
+    // fields is merged with the row first. „Decedat" off clears the date even when the patch did not name it.
+    let natUpdate = given;
+    if (given.isDeceased !== undefined || given.dateOfDeath !== undefined || given.dateOfBirth !== undefined) {
+      const [cur] = await tx
+        .select({ isDeceased: naturalPerson.isDeceased, dateOfDeath: naturalPerson.dateOfDeath, dateOfBirth: naturalPerson.dateOfBirth })
+        .from(naturalPerson)
+        .where(eq(naturalPerson.personId, id))
+        .limit(1);
+      const merged = checkedDeath({
+        isDeceased: given.isDeceased ?? cur?.isDeceased ?? false,
+        dateOfDeath: given.dateOfDeath !== undefined ? given.dateOfDeath : (cur?.dateOfDeath ?? null),
+        dateOfBirth: given.dateOfBirth !== undefined ? given.dateOfBirth : (cur?.dateOfBirth ?? null),
+      });
+      natUpdate = { ...given, dateOfDeath: merged.dateOfDeath };
+    }
 
     // Update natural_person fields if any were provided.
     const hasNatUpdate = Object.values(natUpdate).some((v) => v !== undefined);
@@ -963,6 +994,8 @@ export type PersonSearchItem = {
   code:        string;
   type:        "NATURAL" | "JUDICIAL";
   displayName: string;
+  /** Slice #39.30: still offered — the archive records the past — and marked „†" by the pickers. */
+  isDeceased:  boolean;
 };
 
 export async function searchPersonsAll(opts: {
@@ -989,8 +1022,10 @@ export async function searchPersonsAll(opts: {
         code:        person.code,
         type:        person.type,
         displayName: person.displayName,
+        isDeceased:  sql<boolean>`coalesce(${naturalPerson.isDeceased}, false)`,
       })
       .from(person)
+      .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
       .where(where)
       .orderBy(person.code)
       .limit(opts.limit)

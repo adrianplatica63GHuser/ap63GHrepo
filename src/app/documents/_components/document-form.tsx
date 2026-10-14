@@ -99,6 +99,7 @@ import { hasPartiesTile } from "@/lib/documents/sale-parties";
 import { TILE_TITLE_CLASS, TileSubtitle, TileTitle } from "@/components/tiles/tile-title";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
+import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 /**
  * Slice #37.20 — the `order` a panel takes in the page's tile row. A notebook
@@ -177,7 +178,7 @@ async function fetchInstitutions(): Promise<InstitutionOption[]> {
 
 const SURVEYOR_PAGE_SIZE = 10;
 type PersonType = "NATURAL" | "JUDICIAL";
-type PersonSearchItem = { id: string; code: string; type: PersonType; displayName: string };
+type PersonSearchItem = { id: string; code: string; type: PersonType; displayName: string; isDeceased?: boolean };
 
 async function searchSurveyorPersons(
   name: string,
@@ -2422,7 +2423,7 @@ function SurveyorPickerDialog({
                         key={item.id}
                         className="border-t border-wire hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
                       >
-                        <td className="px-3 py-1.5 text-ink dark:text-zinc-200">{item.displayName}</td>
+                        <td className="px-3 py-1.5 text-ink dark:text-zinc-200">{item.displayName}{item.isDeceased && <DeceasedMark />}</td>
                         <td className="px-3 py-1.5 text-right">
                           <IconButton
                             icon={MousePointerClick}

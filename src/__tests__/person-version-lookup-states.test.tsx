@@ -113,6 +113,8 @@ const EMPTY_NATURAL: NaturalPersonSnapshot["natural"] = {
   idDocumentNumber: null,
   gender: null,
   dateOfBirth: null,
+  isDeceased: false,
+  dateOfDeath: null,
   personalPhone1: null,
   personalPhone2: null,
   workPhone: null,

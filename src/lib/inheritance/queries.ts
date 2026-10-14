@@ -4,8 +4,9 @@
  * A tie is a `person_person` pair whose role carries a kinship (#39.10, migration_106). Only natural persons: a pair
  * with a company at either end is not a family tie and is left out. VIEW ONLY: nothing here writes.
  *
- * ⚠️ **NO CNP, NO IDENTITY-CARD FIELD, NO ADDRESS.** The tree shows a name, a nickname, a gender and a birth date at
- * most; this query selects nothing else, so nothing else can reach the screen (TC-INHER-01 step 5 reads the keys).
+ * ⚠️ **NO CNP, NO IDENTITY-CARD FIELD, NO ADDRESS.** The tree shows a name, a nickname, a gender, a birth date and —
+ * since #39.30 — „Decedat" and the date of death at most; this query selects nothing else, so nothing else can reach
+ * the screen (TC-INHER-01 step 5 reads the keys).
  *
  * #39.13: and the documents the drawn persons are on — `person_document` rows — with each document's TYPE, NUMBER
  * and DATE only: not its title, which can carry a third party's name, and nothing of its pages.
@@ -52,6 +53,8 @@ export async function loadInheritanceTree(): Promise<InheritanceTreeData> {
         nickname: naturalPerson.nickname,
         gender: naturalPerson.gender,
         dateOfBirth: naturalPerson.dateOfBirth,
+        isDeceased: naturalPerson.isDeceased,
+        dateOfDeath: naturalPerson.dateOfDeath,
       })
       .from(person)
       .innerJoin(naturalPerson, eq(naturalPerson.personId, person.id))

@@ -9,9 +9,9 @@
  * THE DOCUMENTS are `person_document` rows (a person on a document, in any role): each person carries how many
  * documents they are on, and the list of them; a pair of related persons, how many documents they are BOTH on.
  *
- * TIME is the birth date: a person record has no death date, and the only one in the archive is a „Certificat de
- * moștenitor"'s `dataDecesului`, whose deceased is found by a role's NAME („Defunct") — which the tree never does
- * (#39.10). So the chronology is births only: a year chosen on the slider fades whoever was born after it.
+ * TIME is the birth date and, since Slice #39.30, the date of death: a year chosen on the slider fades whoever was
+ * born after it, and marks as dead whoever died in it or before (`diedBy`). With no year chosen — today — every
+ * person marked „Decedat" is dead, dated or not.
  */
 import type { TreePerson } from "@/lib/inheritance/layout";
 
@@ -99,6 +99,18 @@ export function bornAfter(person: Pick<TreePerson, "dateOfBirth">, year: number 
   if (year === null) return false;
   const born = yearOf(person.dateOfBirth);
   return born !== null && born > year;
+}
+
+/**
+ * Slice #39.30 — dead by `year`: marked „Decedat" and died in that year or before it. Null `year` is today: everyone
+ * marked dead is. A dead person with no date of death is dead today but not in a chosen year — the tree does not
+ * guess when they died, as it does not guess a birth.
+ */
+export function diedBy(person: Pick<TreePerson, "isDeceased" | "dateOfDeath">, year: number | null): boolean {
+  if (!person.isDeceased) return false;
+  if (year === null) return true;
+  const died = yearOf(person.dateOfDeath ?? null);
+  return died !== null && died <= year;
 }
 
 /** A document's date as the archive writes it: dd.mm.yyyy. */

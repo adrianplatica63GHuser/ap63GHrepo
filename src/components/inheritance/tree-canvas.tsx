@@ -32,6 +32,8 @@ import {
   SLOT_W,
   birthDate,
   birthYear,
+  deathDate,
+  lifeYears,
   levelAt,
   shortName,
   tieAlong,
@@ -44,6 +46,7 @@ import {
 import { personTreeHref } from "@/lib/inheritance/links";
 import {
   bornAfter,
+  diedBy,
   documentDay,
   documentsOf,
   pairKey,
@@ -53,6 +56,7 @@ import {
   type TreeDocument,
 } from "@/lib/inheritance/documents";
 import { roleHeldBy, personRoleShown } from "@/lib/persons/relation-roles";
+import { DECEASED_MARK } from "@/lib/persons/person-age";
 
 export type TreeData = { persons: TreePerson[]; ties: TreeTie[]; documents?: TreeDocument[]; appearances?: TreeAppearance[] };
 /** Centre on a person: a new `n` asks again for the same person. */
@@ -213,6 +217,8 @@ export function TreeCanvas({
 
   // #39.13: who is faded at the chosen year, and — „Acte comune" — each related pair's shared documents.
   const faded = useMemo(() => new Set(data.persons.filter((p) => bornAfter(p, year)).map((p) => p.id)), [data.persons, year]);
+  // Slice #39.30: who is dead at the chosen year — „†" after the name and „1921–1998" under it.
+  const dead = useMemo(() => new Set(data.persons.filter((p) => diedBy(p, year)).map((p) => p.id)), [data.persons, year]);
   const pairs = useMemo(() => {
     if (!shared || !docs) return [];
     const seen = new Map<string, { key: string; a: string; b: string; count: number }>();
@@ -256,6 +262,7 @@ export function TreeCanvas({
                   transform={`translate(${n.x} ${n.y})`}
                   opacity={faded.has(n.id) ? FADED : 1}
                   data-tree-faded={faded.has(n.id) ? "" : undefined}
+                  data-tree-dead={dead.has(n.id) ? "" : undefined}
                   onPointerEnter={() => setHover(n.id)}
                   onPointerLeave={() => setHover((h) => (h === n.id ? null : h))}
                   onClick={(e) => {
@@ -266,6 +273,7 @@ export function TreeCanvas({
                 >
                   <Node
                     person={p}
+                    dead={dead.has(n.id)}
                     level={level}
                     px={px}
                     ring={found === n.id || chosen === n.id || mark === n.id}
@@ -320,8 +328,12 @@ export function TreeCanvas({
           style={{ left: at.get(hover)!.x * view.scale + view.tx + 14, top: at.get(hover)!.y * view.scale + view.ty + 14 }}
           data-tree-hover=""
         >
-          <div className="font-semibold text-ink dark:text-zinc-100">{byId.get(hover)!.displayName}</div>
+          <div className="font-semibold text-ink dark:text-zinc-100">
+            {byId.get(hover)!.displayName}
+            {dead.has(hover) && <span title={t("deceased")}> {DECEASED_MARK}</span>}
+          </div>
           {birthDate(byId.get(hover)!) && <div className="text-fade">{t("born", { date: birthDate(byId.get(hover)!)! })}</div>}
+          {dead.has(hover) && <div className="text-fade">{deathDate(byId.get(hover)!) ? t("died", { date: deathDate(byId.get(hover)!)! }) : t("deceased")}</div>}
           <div className="text-fade">{t("ties", { count: tiesOf(hover).length })}</div>
           {docs && <div className="text-fade">{t("docs.count", { count: docs.byPerson.get(hover)?.length ?? 0 })}</div>}
         </div>
@@ -374,6 +386,7 @@ export function TreeCanvas({
           <div className="flex items-start justify-between gap-2">
             <Link href={linkOf(chosen)} onClick={open(chosen)} className="font-semibold text-cta hover:underline" data-tree-name-link="">
               {byId.get(chosen)!.displayName}
+              {dead.has(chosen) && <span title={t("deceased")}> {DECEASED_MARK}</span>}
             </Link>
             <IconButton icon={X} label={t("closeCard")} variant="secondary" size="xs" onClick={() => setChosen(null)} />
           </div>
@@ -394,6 +407,12 @@ export function TreeCanvas({
               <>
                 <dt className="text-fade">{t("birth")}</dt>
                 <dd>{birthDate(byId.get(chosen)!)}</dd>
+              </>
+            )}
+            {dead.has(chosen) && (
+              <>
+                <dt className="text-fade">{t("death")}</dt>
+                <dd data-tree-card-death="">{deathDate(byId.get(chosen)!) ?? t("deceased")}</dd>
               </>
             )}
           </dl>
@@ -471,6 +490,7 @@ function Lines({
  *  the date, the gender and the roles. Sizes are on-screen pixels (`px`), so the text reads the same at every zoom. */
 function Node({
   person,
+  dead,
   level,
   px,
   ring,
@@ -482,6 +502,8 @@ function Node({
   onDocs,
 }: {
   person: TreePerson;
+  /** Slice #39.30: dead at the slider's year — „†" after the name, „1921–1998" under it. */
+  dead: boolean;
   level: TreeLevel;
   px: (n: number) => number;
   ring: boolean;
@@ -501,7 +523,7 @@ function Node({
         {ring && <circle r={px(14)} fill="none" stroke="#f59e0b" strokeWidth={px(3)} />}
         <circle r={px(7)} fill={INK} />
         <text y={px(22)} textAnchor="middle" fontSize={px(12)} fill={INK} data-tree-label="">
-          {shortName(person)}
+          {dead ? `${shortName(person)} ${DECEASED_MARK}` : shortName(person)}
         </text>
       </>
     );
@@ -514,12 +536,15 @@ function Node({
   const lines: string[] = [];
   if (level === 2) {
     const y = birthYear(person);
-    if (y) lines.push(t("bornYear", { year: y }));
+    // Slice #39.30: the dead read „1921–1998" — the genealogist's span — instead of „n. 1921".
+    if (dead) lines.push(lifeYears(person)!);
+    else if (y) lines.push(t("bornYear", { year: y }));
   } else {
     const d = birthDate(person);
     const g = person.gender ? t(`genders.${person.gender}`) : null;
     const facts = [d ? t("born", { date: d }) : null, g].filter(Boolean).join(" · ");
     if (facts) lines.push(facts);
+    if (dead) lines.push(deathDate(person) ? `${lifeYears(person)} · ${t("died", { date: deathDate(person)! })}` : lifeYears(person)!);
     for (const tie of ties.slice(0, 3)) lines.push(`${tie.word} — ${shortName(byId.get(tie.other)!)}`);
     if (ties.length > 3) lines.push(t("more", { count: ties.length - 3 }));
   }
@@ -539,7 +564,7 @@ function Node({
       />
       <a href={href} onClick={onOpen(person.id)} data-tree-name-link="">
         <text x={0} y={-h / 2 + px(17)} textAnchor="middle" fontSize={px(13)} fontWeight={600} fill={INK} data-tree-label="">
-          {fit(person.displayName, 13)}
+          {dead ? `${fit(person.displayName, 13)} ${DECEASED_MARK}` : fit(person.displayName, 13)}
         </text>
       </a>
       {lines.map((l, i) => (

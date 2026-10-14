@@ -44,6 +44,7 @@ import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib
 import { NO_ROW_TILES, closeRowTile, isLocked, isRowTileOpen, toggleRowTile, type RowTile, type RowTiles } from "@/lib/ui/row-tiles";
 import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
 import { replaceListAddress } from "@/components/list/use-list-address";
+import { DECEASED_MARK } from "@/lib/persons/person-age";
 
 // ── Which previews are open ───────────────────────────────────────────────────
 
@@ -355,12 +356,16 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
   const born = data.gender === "FEMALE" ? t("bornFemale") : t("bornMale");
   // Slice #39.28 (Ask first #3): „CNP: …" and „CUI: …" printed before the number; „ · " between a line's values,
   // „, " between the date and the place of birth; the notes cut to one line.
-  const prefix: Record<string, string> = { dateOfBirth: born, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") };
+  // Slice #39.30: „decedat: 03.02.1998" („decedată:" for a woman), after the birth; a date unknown says so.
+  const died = data.gender === "FEMALE" ? t("diedFemale") : t("diedMale");
+  const prefix: Record<string, string> = { dateOfBirth: born, dateOfDeath: died, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") };
+  const valueOf = (name: string): string | null =>
+    name === "dateOfDeath" && data.isDeceased && !data.fields.dateOfDeath ? t("deathDateUnknown") : (data.fields[name] ?? null);
   const lines = kind in PREVIEW_LINES
     ? PREVIEW_LINES[kind as PreviewLinesKind].map((line) =>
         (line as readonly string[]).map((name) => ({
           label: label(name),
-          value: data.fields[name] ?? null,
+          value: valueOf(name),
           prefix: prefix[name],
           sep: name === "dateOfBirth" ? ", " : " · ",
           cut: name === "notes",
@@ -369,7 +374,7 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
   return (
     <PreviewTileBody
       lines={lines}
-      title={nameOr(data.title, UNNAMED_KIND[kind])}
+      title={`${nameOr(data.title, UNNAMED_KIND[kind])}${data.isDeceased ? ` ${DECEASED_MARK}` : ""}`}
       fields={PREVIEW_ROWS[kind].flatMap((row, i): PreviewField[] =>
         row.map((name) => ({
           label: label(name),

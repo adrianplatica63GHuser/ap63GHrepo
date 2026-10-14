@@ -68,6 +68,7 @@ export const NP_TILE_OF_TAB: Readonly<Record<string, NpTile | readonly NpTile[] 
 
 const IDENTITY = new Set([
   "lastName", "firstName", "nickname", "cnp", "gender", "dateOfBirth",
+  "isDeceased", "dateOfDeath", // Slice #39.30
   "physicalPersonTypeId", "placeOfBirth", "notes",
 ]);
 const ID_CARD = new Set([

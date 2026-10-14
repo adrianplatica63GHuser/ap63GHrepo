@@ -646,6 +646,9 @@
       "noPage": "Nicio pagină atașată",
       "bornMale": "născut:",
       "bornFemale": "născută:",
+      "diedMale": "decedat:",
+      "diedFemale": "decedată:",
+      "deathDateUnknown": "dată necunoscută",
       "cnpPrefix": "CNP:",
       "cuiPrefix": "CUI:",
       "fields": {
@@ -655,6 +658,7 @@
         "cnp": "CNP",
         "dateOfBirth": "Data nașterii",
         "placeOfBirth": "Locul nașterii",
+        "dateOfDeath": "Data decesului",
         "name": "Denumire",
         "companyType": "Tip",
         "cui": "CUI",
@@ -1128,6 +1132,8 @@
       "idDocumentNumber": "Nr. document",
       "gender": "Gen",
       "dateOfBirth": "Data nașterii",
+      "isDeceased": "Decedat",
+      "dateOfDeath": "Data decesului",
       "personalPhone1": "Telefon Personal 1",
       "personalPhone2": "Telefon Personal 2",
       "workPhone": "Telefon serviciu",
@@ -1182,7 +1188,12 @@
       "idLinkNone": "Niciun document de carte de identitate asociat",
       "idExpired": "EXPIRAT",
       "idExpiringSoon": "EXPIRĂ ÎN {n} ZILE",
-      "idValid": "VALABIL"
+      "idValid": "VALABIL",
+      "death": {
+        "DEATH_WITHOUT_DECEASED": "„Data decesului\" se poate completa doar pentru o persoană marcată „Decedat\".",
+        "DEATH_BEFORE_BIRTH": "„Data decesului\" nu poate fi înainte de „Data nașterii\".",
+        "DEATH_IN_FUTURE": "„Data decesului\" nu poate fi în viitor."
+      }
     },
     "tabs": {
       "details": "Detalii",
@@ -1204,7 +1215,7 @@
       "interactions": "Interacțiuni"
     },
     "tileSubtitles": {
-      "identity": "Nume, CNP, gen, data și locul nașterii",
+      "identity": "Nume, CNP, gen, data și locul nașterii, decesul",
       "idCard": "Carte de identitate sau pașaport",
       "contact": "Telefoane și adrese de e-mail",
       "addresses": "Domiciliu și corespondență",
@@ -4568,11 +4579,14 @@
     "empty": "Nicio legătură de familie încă: alegeți „Rudenie” pe rolurile din „Roluri Persoane”.",
     "born": "n. {date}",
     "bornYear": "n. {year}",
+    "died": "d. {date}",
+    "deceased": "Decedat",
     "ties": "{count, plural, one {o legătură de familie} few {# legături de familie} other {# de legături de familie}}",
     "more": "și încă {count}",
     "nickname": "Poreclă",
     "gender": "Gen",
     "birth": "Data nașterii",
+    "death": "Data decesului",
     "genders": {
       "MALE": "bărbat",
       "FEMALE": "femeie"
@@ -4622,7 +4636,7 @@
     "time": {
       "label": "Anul",
       "today": "azi",
-      "hint": "Cine s-a născut după anul ales apare estompat"
+      "hint": "Cine s-a născut după anul ales apare estompat; cine murise până atunci poartă „†”"
     },
     "shared": "Acte comune",
     "sharedHint": "Pe fiecare linie, câte acte au cei doi în comun"

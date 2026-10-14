@@ -18,6 +18,7 @@ import {
 import { INTERACTION_CHANNELS, INTERACTION_STATUSES, SUBJECT_MAX } from "@/lib/interactions/model";
 import { CHANNEL_INK, CHANNEL_PILL } from "@/lib/interactions/palette";
 import { CHANNEL_ICON, StatusPill } from "@/components/interactions/interaction-pills";
+import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 /**
  * The history's filter controls.   (Slice #38.84)
@@ -269,7 +270,7 @@ export function SubjectContains({ filters, onChange }: { filters: InteractionFil
   );
 }
 
-type PersonHit = { id: string; displayName: string | null; type: "NATURAL" | "JUDICIAL" };
+type PersonHit = { id: string; displayName: string | null; type: "NATURAL" | "JUDICIAL"; isDeceased?: boolean };
 
 /**
  * The person (§3): a typeahead over the client directory, matching on the name; choosing one is the scope, clearing
@@ -363,7 +364,7 @@ export function PersonPicker({
                 }}
                 className={buttonClass({ variant: "bare", size: "sm", className: "w-full hover:bg-slate-50 dark:hover:bg-zinc-800" })}
               >
-                <span className="min-w-0 flex-1 truncate text-left">{p.displayName && p.displayName.trim() ? p.displayName : tu("person")}</span>
+                <span className="min-w-0 flex-1 truncate text-left">{p.displayName && p.displayName.trim() ? p.displayName : tu("person")}{p.isDeceased && <DeceasedMark />}</span>
               </button>
             </li>
           ))}
