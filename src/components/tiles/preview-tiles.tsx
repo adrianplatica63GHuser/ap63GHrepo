@@ -353,20 +353,23 @@ function PreviewTile({ target, onClose, style }: { target: PreviewTarget; onClos
   // Slice #37.60: a person and a company — three compact lines (`PREVIEW_LINES`).
   // Slice #37.70: a person's date of birth reads „născut: 12.03.1960" — „născută:" for a woman.
   const born = data.gender === "FEMALE" ? t("bornFemale") : t("bornMale");
+  // Slice #39.28 (Ask first #3): „CNP: …" and „CUI: …" printed before the number; „ · " between a line's values,
+  // „, " between the date and the place of birth; the notes cut to one line.
+  const prefix: Record<string, string> = { dateOfBirth: born, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") };
   const lines = kind in PREVIEW_LINES
     ? PREVIEW_LINES[kind as PreviewLinesKind].map((line) =>
-        line.map((name) => ({
+        (line as readonly string[]).map((name) => ({
           label: label(name),
           value: data.fields[name] ?? null,
-          prefix: kind === "person" && name === "dateOfBirth" ? born : undefined,
+          prefix: prefix[name],
+          sep: name === "dateOfBirth" ? ", " : " · ",
+          cut: name === "notes",
         })))
     : undefined;
   return (
     <PreviewTileBody
       lines={lines}
       title={nameOr(data.title, UNNAMED_KIND[kind])}
-      // Slice #37.70: a company's contact persons, counted, after its name.
-      titleNote={data.contacts === undefined ? undefined : t("contacts", { count: data.contacts })}
       fields={PREVIEW_ROWS[kind].flatMap((row, i): PreviewField[] =>
         row.map((name) => ({
           label: label(name),

@@ -46,6 +46,16 @@ export type PreviewLineValue = {
    * value, like the value itself.
    */
   prefix?: string;
+  /**
+   * Slice #39.28: what stands between this value and the next one shown — „, " unless said („ · " between a
+   * person's nickname, CNP and birth; „, " between the date and the place of birth).
+   */
+  sep?: string;
+  /**
+   * Slice #39.28: the line's one value, cut with „…" where it does not fit and whole on hover — a person's notes. Its
+   * line takes the tile's width and adds none: the tile is as wide as its other lines, never as long as the notes.
+   */
+  cut?: boolean;
 };
 
 /** The lines to draw: each its non-empty values; a line with none is dropped. */
@@ -152,20 +162,37 @@ export function PreviewTileBody({
         </span>
       </div>
       {lines ? (
-        // Slice #37.60: two compact lines under the name — values only, „, " between them.
+        // Slice #37.60: two compact lines under the name — values only, „, " between them. #39.28: three, and the
+        // separators and the cut note are the values' own (`sep`, `cut`).
         <div className="flex flex-col gap-0.5 text-sm text-ink dark:text-zinc-100" data-preview-lines>
-          {compactLines(lines).map((line) => (
-            <p key={line.map((v) => v.label).join("|")} className="whitespace-nowrap" data-preview-line>
-              {line.map((v, i) => (
-                <span key={v.label} title={v.label} data-preview-value>
-                  <span className="sr-only">{v.label}: </span>
-                  {v.prefix ? `${v.prefix} ` : ""}
-                  {v.value}
-                  {i < line.length - 1 ? ", " : ""}
+          {compactLines(lines).map((line) =>
+            line.length === 1 && line[0].cut ? (
+              // Slice #39.28: `w-0 min-w-full` — the tile's width, none of its own (`TileSubtitle`'s rule) — then cut.
+              <p
+                key={line[0].label}
+                className="w-0 min-w-full truncate text-fade dark:text-zinc-400"
+                title={line[0].value ?? undefined}
+                data-preview-line
+                data-preview-cut=""
+              >
+                <span data-preview-value>
+                  <span className="sr-only">{line[0].label}: </span>
+                  {line[0].value}
                 </span>
-              ))}
-            </p>
-          ))}
+              </p>
+            ) : (
+              <p key={line.map((v) => v.label).join("|")} className="whitespace-nowrap" data-preview-line>
+                {line.map((v, i) => (
+                  <span key={v.label} title={v.label} data-preview-value>
+                    <span className="sr-only">{v.label}: </span>
+                    {v.prefix ? `${v.prefix} ` : ""}
+                    {v.value}
+                    {i < line.length - 1 ? (v.sep ?? ", ") : ""}
+                  </span>
+                ))}
+              </p>
+            ),
+          )}
         </div>
       ) : (
       /* Slice #37.33: labels above their values, in the record's screen's rows and widths;

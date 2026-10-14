@@ -1056,8 +1056,10 @@ export const PREVIEW_INNER_REM: Readonly<Record<PreviewWidth, number>> = {
  * „Denumire" — so Nume, Prenume and Denumire are not fields under it.
  */
 export const PREVIEW_FIELDS = {
-  person: ["nickname", "cnp", "dateOfBirth", "placeOfBirth"],
-  company: ["nickname", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber"],
+  // Slice #39.28: and how to reach them — one phone, one email — and their notes; a company loses its „Tip" and
+  // „Nr. Reg. Com." (Ask first #2: Adrian set the lines).
+  person: ["nickname", "cnp", "dateOfBirth", "placeOfBirth", "phone", "email", "notes"],
+  company: ["nickname", "cuiNumber", "phone", "email", "notes"],
   // Slice #37.70: Tarla/Solă joins the property; the document loses „Tip document", and its
   // „Etichetă scurtă" is the heading only.
   property: ["parcela", "tarlaId", "surfaceAreaMp", "nickname", "carteFunciara", "cadastralNumber"],
@@ -1074,9 +1076,17 @@ export type PreviewKind = keyof typeof PREVIEW_FIELDS;
  * value is left out, and a line with none is not drawn. The tile is as wide as
  * its widest line (and its buttons) need, not a panel's units.
  */
+/*
+ * Slice #39.28 — FOUR LINES. Adrian, 2026-10-13: the name; then „the nickname and then „CNP:" and the actual number,
+ * followed by date of birth and the place of birth" (a company: the nickname and „CUI:" and the number); then „the
+ * person's phone and the person's email, whatever is available"; then „notes, … truncated if it doesn't fit". So:
+ *   2: Poreclă · CNP: 1234567890123 · născut: 12.03.1960, Bragadiru     (a company: Poreclă · CUI: RO123)
+ *   3: the first filled phone · the first filled email                (personal 1, personal 2, work — Ask first #1)
+ *   4: the notes, on one line, cut with „…", whole on hover, never widening the tile.
+ */
 export const PREVIEW_LINES = {
-  person: [["nickname", "cnp"], ["dateOfBirth", "placeOfBirth"]],
-  company: [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
+  person: [["nickname", "cnp", "dateOfBirth", "placeOfBirth"], ["phone", "email"], ["notes"]],
+  company: [["nickname", "cuiNumber"], ["phone", "email"], ["notes"]],
 } as const satisfies Partial<Record<keyof typeof PREVIEW_FIELDS, readonly (readonly string[])[]>>;
 export type PreviewLinesKind = keyof typeof PREVIEW_LINES;
 
@@ -1125,7 +1135,9 @@ export const PREVIEW_FILL: FieldWidth = { step: "TILE", kind: "grows", fill: tru
  *     the ceiling's height.
  * The eye's „Hartă" and „Pagini" keep #39.04's rule: they fill the column down to the list's bottom.
  */
-export const PREVIEW_TILE_HEIGHT_PX: Readonly<Record<PreviewKind, number>> = { person: 102, company: 102, property: 195, document: 643 };
+// Slice #39.28: the persons' previews are four lines now — re-measured the same way: a person's 123 px, a company's 124
+// (146 when its name takes two lines). They were 102 and 102.
+export const PREVIEW_TILE_HEIGHT_PX: Readonly<Record<PreviewKind, number>> = { person: 123, company: 124, property: 195, document: 643 };
 export const ROW_TILE_CEILING_PX = PAGES_TILE_EMPTY_HEIGHT_PX;
 /** An EMPTY „Legături" or „Interacțiuni" tile's height for a row of `kind`: its preview's, under the ceiling. */
 export function rowTileMinPx(kind: PreviewKind): number {

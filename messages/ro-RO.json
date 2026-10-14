@@ -646,7 +646,8 @@
       "noPage": "Nicio pagină atașată",
       "bornMale": "născut:",
       "bornFemale": "născută:",
-      "contacts": "{count, plural, =0 {(niciun contact)} one {(1 contact)} other {(# contacte)}}",
+      "cnpPrefix": "CNP:",
+      "cuiPrefix": "CUI:",
       "fields": {
         "code": "Cod",
         "lastName": "Nume",
@@ -668,7 +669,10 @@
         "subject": "Subiect",
         "nrDocument": "Nr. document",
         "dateDocument": "Data",
-        "tarla": "Tarla/Solă"
+        "tarla": "Tarla/Solă",
+        "phone": "Telefon",
+        "email": "Email",
+        "notes": "Note"
       }
     },
     "recordSync": {

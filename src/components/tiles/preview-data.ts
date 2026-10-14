@@ -18,8 +18,6 @@ export interface PreviewData {
   image?: { url: string; mimeType: string | null; rotation?: PageRotation } | null;
   /** A natural person's gender, for „născut:" / „născută:" (#37.70); undefined for the other kinds. */
   gender?: "MALE" | "FEMALE" | null;
-  /** A company's filled contact-person slots, 0, 1 or 2 (#37.70); undefined for the other kinds. */
-  contacts?: number;
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -38,6 +36,21 @@ export function dmy(iso: string | null | undefined): string | null {
 type Row = Record<string, string | number | null | undefined>;
 const s = (v: string | number | null | undefined): string | null => (v === null || v === undefined || v === "" ? null : String(v));
 
+/** Slice #39.28: the first filled of several, in the form's order (Ask first #1). */
+export function firstFilled(...values: (string | number | null | undefined)[]): string | null {
+  for (const v of values) {
+    const t = s(v)?.trim();
+    if (t) return t;
+  }
+  return null;
+}
+
+/** Slice #39.28: notes on one line — every run of spaces and line breaks one space; empty is none. */
+export function oneLine(notes: string | number | null | undefined): string | null {
+  const t = s(notes)?.replace(/\s+/g, " ").trim();
+  return t ? t : null;
+}
+
 export async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
   const id = encodeURIComponent(target.id);
   switch (target.kind) {
@@ -54,23 +67,28 @@ export async function loadPreview(target: PreviewTarget): Promise<PreviewData> {
           cnp: s(n.cnp),
           dateOfBirth: dmy(s(n.dateOfBirth)),
           placeOfBirth: s(n.placeOfBirth),
+          // Slice #39.28: line 3 and line 4.
+          phone: firstFilled(n.personalPhone1, n.personalPhone2, n.workPhone),
+          email: firstFilled(n.personalEmail1, n.personalEmail2, n.workEmail),
+          notes: oneLine(r.person.notes),
         },
         gender: g === "MALE" || g === "FEMALE" ? g : null,
       };
     }
     case "company": {
-      const r = await getJson<{ person: Row; judicial: Row | null; judicialPersonTypeName: string | null }>(`/api/judicial-persons/${id}`);
+      const r = await getJson<{ person: Row; judicial: Row | null }>(`/api/judicial-persons/${id}`);
       const j = r.judicial ?? {};
       return {
         title: s(j.name) ?? s(r.person.displayName),
+        // Slice #39.28: Adrian's lines — no „Tip", no „Nr. Reg. Com." and no count of contact persons (#37.70's
+        // „(2 contacte)"), which they do not name (Ask first #2).
         fields: {
           nickname: s(j.nickname), // Slice #37.60: „Denumire" is the heading, not a field under it
-          judicialPersonTypeId: s(r.judicialPersonTypeName),
           cuiNumber: s(j.cuiNumber),
-          tradeRegisterNumber: s(j.tradeRegisterNumber),
+          phone: firstFilled(j.phone),
+          email: firstFilled(j.email),
+          notes: oneLine(r.person.notes),
         },
-        // Slice #37.70: the two slots (src/lib/judicial-persons/queries.ts), each filled one counting one.
-        contacts: (s(j.contactPerson1Id) ? 1 : 0) + (s(j.contactPerson2Id) ? 1 : 0),
       };
     }
     case "property": {
