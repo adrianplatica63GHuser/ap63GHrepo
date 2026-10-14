@@ -210,16 +210,18 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
     const property2 = await createProperty(page.request, { nickname: `${MARK} Livadă` });
     const doc2 = await createDocumentOfType(page.request, "ADEVERINTA", `${MARK} Adeverință Doi`);
     try {
-      // Step 1 — the person: „Ioni" and „născută: 12.03.1960, Bragadiru".
+      // Step 1 — the person: „Ioni · născută: 12.03.1960, Bragadiru" (#39.28: one line; it read
+      // ["Ioni", "născută: 12.03.1960, Bragadiru"]).
       const p = await preview(page, "/natural-persons", "Ioana");
       await expect(p.locator("h2")).toHaveText(`${MARK} Ioana`);
-      await expect.poll(() => linesOf(p)).toEqual(["Ioni", "născută: 12.03.1960, Bragadiru"]);
+      await expect.poll(() => linesOf(p)).toEqual(["Ioni · născută: 12.03.1960, Bragadiru"]);
       await closeByMagnifier(page, "Ioana");
 
-      // Step 2 — the company: „(2 contacte)" after its name, then „Firma".
+      // Step 2 — the company: „Firma". #39.28: no „(2 contacte)" after its name any more — Adrian's lines do not
+      // name it (it read `toHaveText("(2 contacte)")`).
       const c = await preview(page, "/judicial-persons", "Firmă");
       await expect(c.locator("h2")).toHaveText(`${MARK} Firmă SRL`);
-      await expect(c.locator("[data-preview-title-note]")).toHaveText("(2 contacte)");
+      await expect(c.locator("[data-preview-title-note]")).toHaveCount(0);
       await expect.poll(() => linesOf(c)).toEqual(["Firma"]);
       await closeByMagnifier(page, "Firmă");
 

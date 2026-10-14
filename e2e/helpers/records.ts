@@ -144,6 +144,10 @@ export async function createNaturalPerson(
     nickname?: string;
     dateOfBirth?: string;
     placeOfBirth?: string;
+    // Slice #39.28: the preview's line 3 and line 4 — a phone and an e-mail, invented, and the notes.
+    personalPhone2?: string;
+    workEmail?: string;
+    notes?: string;
   },
 ): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.person, {
@@ -157,7 +161,8 @@ export async function createNaturalPerson(
 export async function createCompany(
   request: APIRequestContext,
   // The rest since #37.60, for TC-PERS-04's columns and preview.
-  fields: { name: string; nickname?: string; cuiNumber?: string; tradeRegisterNumber?: string; judicialPersonTypeId?: string },
+  // `phone`, `email`, `notes` since #39.28, for the preview's lines 3 and 4.
+  fields: { name: string; nickname?: string; cuiNumber?: string; tradeRegisterNumber?: string; judicialPersonTypeId?: string; phone?: string; email?: string; notes?: string },
 ): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.company, {
     ...fields,

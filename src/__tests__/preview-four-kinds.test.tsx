@@ -9,7 +9,9 @@
  */
 import { render, screen } from "@testing-library/react";
 import { PreviewTileBody, compactLines } from "@/components/tiles/preview-tile-body";
-import { loadPreview } from "@/components/tiles/preview-data";
+import { firstFilled, loadPreview, oneLine } from "@/components/tiles/preview-data";
+import { readFileSync } from "fs";
+import { join } from "path";
 import {
   DOCUMENT, PREVIEW_FIELDS, PREVIEW_INNER_REM, PREVIEW_ROWS, PREVIEW_SUBJECT_REM, PREVIEW_UNITS, PREVIEW_WIDTHS, boxRem, rowRem,
 } from "@/lib/ui/field-widths";
@@ -28,21 +30,56 @@ function stubFetch(routes: Record<string, unknown>) {
 }
 
 describe("loadPreview reads each kind's short set (Slice #37.70)", () => {
-  it("a person: the four values and the gender", async () => {
-    stubFetch({ "/api/people/p1": { person: { displayName: "x" }, natural: { lastName: "Pop", firstName: "Ana", nickname: "Ani", cnp: null, dateOfBirth: "1960-03-12", placeOfBirth: "Bragadiru", gender: "FEMALE" } } });
+  // #39.28: and the first filled phone and e-mail, and the notes on one line — it read the four values alone,
+  // `{ nickname: "Ani", cnp: null, dateOfBirth: "12.03.1960", placeOfBirth: "Bragadiru" }`.
+  it("a person: the values of the four lines and the gender", async () => {
+    stubFetch({
+      "/api/people/p1": {
+        person: { displayName: "x", notes: "  Clientă veche.\n\nSună dimineața.  " },
+        natural: {
+          lastName: "Pop", firstName: "Ana", nickname: "Ani", cnp: null, dateOfBirth: "1960-03-12", placeOfBirth: "Bragadiru", gender: "FEMALE",
+          personalPhone1: "", personalPhone2: "+40 700 000 001", workPhone: "+40 21 000 0000",
+          personalEmail1: null, personalEmail2: null, workEmail: "ana@example.ro",
+        },
+      },
+    });
     const d = await loadPreview({ kind: "person", id: "p1" });
     expect(d.title).toBe("Pop Ana");
-    expect(d.fields).toEqual({ nickname: "Ani", cnp: null, dateOfBirth: "12.03.1960", placeOfBirth: "Bragadiru" });
+    expect(d.fields).toEqual({
+      nickname: "Ani", cnp: null, dateOfBirth: "12.03.1960", placeOfBirth: "Bragadiru",
+      phone: "+40 700 000 001", email: "ana@example.ro", notes: "Clientă veche. Sună dimineața.",
+    });
     expect(d.gender).toBe("FEMALE");
   });
 
-  it.each([[null, null, 0], ["c1", null, 1], [null, "c2", 1], ["c1", "c2", 2]])(
-    "a company with slots %s / %s counts %i contact persons",
-    async (one, two, count) => {
-      stubFetch({ "/api/judicial-persons/j1": { person: {}, judicial: { name: "Firma SRL", contactPerson1Id: one, contactPerson2Id: two }, judicialPersonTypeName: null } });
-      expect((await loadPreview({ kind: "company", id: "j1" })).contacts).toBe(count);
-    },
-  );
+  it("a person with every value missing: none", async () => {
+    stubFetch({ "/api/people/p2": { person: { displayName: "Fără nimic", notes: "   " }, natural: { lastName: null, firstName: null } } });
+    const d = await loadPreview({ kind: "person", id: "p2" });
+    expect(d.title).toBe("Fără nimic");
+    expect(Object.values(d.fields).every((v) => v === null)).toBe(true);
+  });
+
+  // #39.28 (Ask first #2): a company's preview no longer counts its contact persons — #37.70's
+  // „a company with slots %s / %s counts %i contact persons" — nor shows its „Tip" or „Nr. Reg. Com.".
+  it("a company: nickname, CUI, its phone, its e-mail and its notes — no type, no trade register, no count", async () => {
+    stubFetch({
+      "/api/judicial-persons/j1": {
+        person: { notes: "Firmă de construcții." },
+        judicial: { name: "Firma SRL", nickname: "Firma", cuiNumber: "RO1", tradeRegisterNumber: "J1/1/2020", phone: "021 000", email: "f@example.ro", contactPerson1Id: "c1", contactPerson2Id: "c2" },
+        judicialPersonTypeName: "SRL",
+      },
+    });
+    const d = await loadPreview({ kind: "company", id: "j1" });
+    expect(d.fields).toEqual({ nickname: "Firma", cuiNumber: "RO1", phone: "021 000", email: "f@example.ro", notes: "Firmă de construcții." });
+    expect(d).not.toHaveProperty("contacts");
+  });
+
+  it("the first filled of several, in the form's order; notes on one line", () => {
+    expect(firstFilled(null, "", "  ", "b", "c")).toBe("b");
+    expect(firstFilled(null, undefined)).toBeNull();
+    expect(oneLine("a\n\n  b\tc ")).toBe("a b c");
+    expect(oneLine(" \n ")).toBeNull();
+  });
 
   it("a property: its six values, Tarla/Solă as the tarla's indicativ", async () => {
     stubFetch({
@@ -125,8 +162,12 @@ describe("the messages and the rows (Slice #37.70)", () => {
   it("„născut:” / „născută:” and the plural count, Romanian first", () => {
     expect([ro.shared.preview.bornMale, ro.shared.preview.bornFemale]).toEqual(["născut:", "născută:"]);
     expect(en.shared.preview.bornMale).toBe("born:");
-    expect(ro.shared.preview.contacts).toBe("{count, plural, =0 {(niciun contact)} one {(1 contact)} other {(# contacte)}}");
-    expect(en.shared.preview.contacts).toBe("{count, plural, =0 {(no contacts)} one {(1 contact)} other {(# contacts)}}");
+    // #39.28: the count is gone (it held „{count, plural, =0 {(niciun contact)} …}"); „CNP:" and „CUI:" came.
+    expect(ro.shared.preview).not.toHaveProperty("contacts");
+    expect([ro.shared.preview.cnpPrefix, ro.shared.preview.cuiPrefix]).toEqual(["CNP:", "CUI:"]);
+    expect([en.shared.preview.cnpPrefix, en.shared.preview.cuiPrefix]).toEqual(["CNP:", "CUI:"]);
+    expect([ro.shared.preview.fields.phone, ro.shared.preview.fields.email, ro.shared.preview.fields.notes]).toEqual(["Telefon", "Email", "Note"]);
+    expect([en.shared.preview.fields.phone, en.shared.preview.fields.email, en.shared.preview.fields.notes]).toEqual(["Phone", "Email", "Notes"]);
     expect(ro.shared.preview.fields.tarla).toBe("Tarla/Solă");
     // „Tip document" is no longer asked for by the previews (its key stays for nobody).
   });
@@ -143,5 +184,73 @@ describe("the messages and the rows (Slice #37.70)", () => {
     expect(PREVIEW_SUBJECT_REM).toBe(PREVIEW_INNER_REM.pages - boxRem(DOCUMENT.nrDocument) - boxRem(DOCUMENT.dateDocument) - 1);
     expect(boxRem(PREVIEW_WIDTHS.document.subject)).toBe(PREVIEW_SUBJECT_REM);
     expect(rowRem(PREVIEW_ROWS.document[0].map((f) => PREVIEW_WIDTHS.document[f]))).toBeCloseTo(PREVIEW_INNER_REM.pages, 6);
+  });
+});
+
+/**
+ * #39.28 — Adrian, 2026-10-13: a person's preview is the name; „the nickname and then „CNP:" and the actual number,
+ * followed by date of birth and the place of birth"; the phone and the e-mail; and the notes, „truncated if it doesn't
+ * fit". A company's: the name; the nickname and „CUI:"; the phone and the e-mail; the notes.
+ */
+describe("the persons' previews on four lines (#39.28)", () => {
+  const NOTE = "Notă lungă ".repeat(30).trim();
+  function draw(lines: Parameters<typeof PreviewTileBody>[0]["lines"]) {
+    return render(<PreviewTileBody title="Pop Ana" fields={[]} lines={lines} openHref="/natural-persons/p1" labels={LABELS} onClose={() => {}} width="panel" />);
+  }
+  const text = (el: Element) =>
+    [...el.querySelectorAll("[data-preview-value]")].map((v) => [...v.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join("")).join("");
+
+  it("line 2 reads „Poreclă · CNP: … · născută: date, place”; line 3 the phone · the e-mail; line 4 the notes", () => {
+    const { container } = draw([
+      [
+        { label: "Poreclă", value: "Ani", sep: " · " },
+        { label: "CNP", value: "2600312000000", prefix: "CNP:", sep: " · " },
+        { label: "Data nașterii", value: "12.03.1960", prefix: "născută:", sep: ", " },
+        { label: "Locul nașterii", value: "Bragadiru", sep: " · " },
+      ],
+      [{ label: "Telefon", value: "+40 700 000 001", sep: " · " }, { label: "Email", value: "ana@example.ro", sep: " · " }],
+      [{ label: "Note", value: NOTE, cut: true }],
+    ]);
+    const lines = [...container.querySelectorAll("[data-preview-line]")];
+    expect(lines.map(text)).toEqual(["Ani · CNP: 2600312000000 · născută: 12.03.1960, Bragadiru", "+40 700 000 001 · ana@example.ro", NOTE]);
+  });
+
+  it("the notes' line is cut, whole on hover, and takes the tile's width without adding any", () => {
+    const { container } = draw([[{ label: "Poreclă", value: "Ani" }], [{ label: "Note", value: NOTE, cut: true }]]);
+    const cut = container.querySelector<HTMLElement>("[data-preview-cut]")!;
+    expect(cut.title).toBe(NOTE);
+    expect(cut.className).toMatch(/\bw-0\b/);
+    expect(cut.className).toMatch(/\bmin-w-full\b/);
+    expect(cut.className).toMatch(/\btruncate\b/);
+    expect(cut.className).not.toMatch(/whitespace-nowrap/);
+  });
+
+  it("a value the record lacks goes with its label and separator; a line with nothing is not drawn", () => {
+    const { container } = draw([
+      [
+        { label: "Poreclă", value: null, sep: " · " },
+        { label: "CNP", value: "2600312000000", prefix: "CNP:", sep: " · " },
+        { label: "Data nașterii", value: null, prefix: "născută:", sep: ", " },
+        { label: "Locul nașterii", value: "Bragadiru", sep: " · " },
+      ],
+      [{ label: "Telefon", value: null, sep: " · " }, { label: "Email", value: "", sep: " · " }],
+      [{ label: "Note", value: null, cut: true }],
+    ]);
+    expect([...container.querySelectorAll("[data-preview-line]")].map(text)).toEqual(["CNP: 2600312000000 · Bragadiru"]);
+    expect(container.textContent).not.toContain("născut");
+  });
+
+  it("every value missing: the name alone", () => {
+    const { container } = draw([[{ label: "Poreclă", value: null }], [{ label: "Telefon", value: null }], [{ label: "Note", value: null, cut: true }]]);
+    expect(container.querySelectorAll("[data-preview-line]")).toHaveLength(0);
+    expect(screen.getByRole("heading", { name: "Pop Ana" })).toBeTruthy();
+  });
+
+  it("preview-tiles builds them: „CNP:”, „CUI:”, the birth word, „ · ” and „, ”, the notes cut, no count after the name", () => {
+    const tiles = readFileSync(join(process.cwd(), "src", "components", "tiles", "preview-tiles.tsx"), "utf8");
+    expect(tiles).toContain('const prefix: Record<string, string> = { dateOfBirth: born, cnp: t("cnpPrefix"), cuiNumber: t("cuiPrefix") };');
+    expect(tiles).toContain('sep: name === "dateOfBirth" ? ", " : " · ",');
+    expect(tiles).toContain('cut: name === "notes",');
+    expect(tiles).not.toContain('t("contacts"');
   });
 });

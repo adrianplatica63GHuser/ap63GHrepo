@@ -561,14 +561,15 @@ describe("„Legături” and „Interacțiuni” beside the lists: no head bar,
   });
 
   it("heights: empty, the row's preview's (measured); a long one stops at #39.04's 436 px", () => {
-    expect(PREVIEW_TILE_HEIGHT_PX).toEqual({ person: 102, company: 102, property: 195, document: 643 });
+    // #39.28 re-measured the persons' four-line previews: it was `{ person: 102, company: 102, … }`.
+    expect(PREVIEW_TILE_HEIGHT_PX).toEqual({ person: 123, company: 124, property: 195, document: 643 });
     expect(ROW_TILE_CEILING_PX).toBe(PAGES_TILE_EMPTY_HEIGHT_PX);
     expect(ROW_TILE_CEILING_PX).toBe(436);
-    expect(rowTileMinPx("person")).toBe(102);
+    expect(rowTileMinPx("person")).toBe(123);
     expect(rowTileMinPx("property")).toBe(195);
     // A document's preview, with its page, is taller than the ceiling: its empty tile is the ceiling's height.
     expect(rowTileMinPx("document")).toBe(436);
-    expect(rowTileStyle("company")).toEqual({ "--row-tile-empty": "102px", maxHeight: 436 });
+    expect(rowTileStyle("company")).toEqual({ "--row-tile-empty": "124px", maxHeight: 436 });
     // The floor holds only while the tile is empty: a row lifts it, so a few rows are their own height.
     expect(ROW_TILE_EMPTY_CLASS).toBe("min-h-[var(--row-tile-empty)]");
   });

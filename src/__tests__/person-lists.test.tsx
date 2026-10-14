@@ -104,9 +104,11 @@ describe("the shared chooser", () => {
 
 describe("a person's and a company's preview: three compact lines (Slice #37.60)", () => {
   it("line 2 and line 3, by kind, and no name field under the name", () => {
+    // #39.28: four lines — it read person [["nickname", "cnp"], ["dateOfBirth", "placeOfBirth"]], company
+    // [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]].
     expect(PREVIEW_LINES).toEqual({
-      person: [["nickname", "cnp"], ["dateOfBirth", "placeOfBirth"]],
-      company: [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
+      person: [["nickname", "cnp", "dateOfBirth", "placeOfBirth"], ["phone", "email"], ["notes"]],
+      company: [["nickname", "cuiNumber"], ["phone", "email"], ["notes"]],
     });
     for (const k of ["lastName", "firstName", "name", "code"]) {
       expect([k, (PREVIEW_FIELDS.person as readonly string[]).includes(k) || (PREVIEW_FIELDS.company as readonly string[]).includes(k)]).toEqual([k, false]);

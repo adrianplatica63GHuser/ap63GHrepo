@@ -1074,8 +1074,10 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
   it("lays #37.24's short set in its screen's rows (a person, a company) or Adrian's (a property, a document — #37.70)", () => {
     expect(PREVIEW_ROWS).toEqual({
       // Slice #37.60: the name is the heading; the person and the company draw PREVIEW_LINES.
-      person: [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"]],
-      company: [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]],
+      // #39.28: and their notes; the company loses „Tip" and „Nr. Reg. Com." — it read
+      // person [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"]], company [["nickname", "judicialPersonTypeId"], ["cuiNumber", "tradeRegisterNumber"]].
+      person: [["nickname", "cnp"], ["dateOfBirth"], ["placeOfBirth"], ["notes"]],
+      company: [["nickname"], ["cuiNumber"], ["notes"]],
       // Slice #37.70: Adrian's rows for these two (preview-four-kinds.test.tsx).
       property: [["parcela", "tarlaId", "surfaceAreaMp"], ["nickname"], ["carteFunciara", "cadastralNumber"]],
       document: [["subject", "nrDocument", "dateDocument"]],

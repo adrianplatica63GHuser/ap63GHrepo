@@ -1,5 +1,5 @@
 /**
- * Case:   TC-PERS-04 — Listele de persoane: fără filtre de importanță și relevanță, câmpurile identității în „Câmpuri afișate", previzualizarea pe trei rânduri
+ * Case:   TC-PERS-04 — Listele de persoane: fără filtre de importanță și relevanță, câmpurile identității în „Câmpuri afișate", previzualizarea pe patru rânduri
  * Source: docs/testing/cases/TC-PERS-04.md, „Last green" 2026-10-02
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -23,6 +23,8 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}PERS-04`;
+/** #39.28: notes too long for the preview's line, so it is cut. Invented. */
+const NOTE = "Notă de test lungă despre o persoană inventată, scrisă ca să nu încapă pe rândul ei din previzualizare, oricât de lată ar fi fereastra";
 const CNP = "1800101420071";
 const SHOTS = "playwright-report/person-lists";
 
@@ -56,18 +58,21 @@ async function previewOf(page: Page): Promise<{ title: string; lines: string[]; 
 }
 
 test.describe("TC-PERS-04 — listele de persoane", () => {
-  test("fără filtre; „Câmpuri afișate” cu câmpurile identității; previzualizarea pe trei rânduri", async ({ page }) => {
+  test("fără filtre; „Câmpuri afișate” cu câmpurile identității; previzualizarea pe patru rânduri", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const personId = await createNaturalPerson(page.request, {
       lastName: MARK, firstName: "Ion", nickname: "Ionel TC", cnp: CNP, dateOfBirth: "1980-01-01", placeOfBirth: "Localitatea Exemplu",
+      // #39.28: the second phone and the work e-mail — the first FILLED of each is the one shown; the notes cut.
+      personalPhone2: "+40 700 000 001", workEmail: "ion.tc@example.ro", notes: NOTE,
     });
     const typesRes = await page.request.get("/api/admin/value-lists/judicial-person-types");
     const srl = ((await typesRes.json()) as { items: { id: string; name: string }[] }).items.find((t) => t.name === "SRL");
     expect(srl, "„SRL\" among the judicial-person types").toBeTruthy();
     const companyId = await createCompany(page.request, {
       name: `${MARK} Firmă de test SRL`, nickname: "Firma TC", cuiNumber: "RO99999990", tradeRegisterNumber: "J99/9999/2026", judicialPersonTypeId: srl!.id,
+      phone: "+40 700 000 002", email: "firma.tc@example.ro", notes: NOTE,
     });
     try {
       // Step 1 — „Persoane Fizice": the search box, no filters, „Câmpuri afișate 0/4".
@@ -102,11 +107,20 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await photograph(page, "natural-persons-chooser", main);
       await page.getByRole("heading", { level: 1 }).first().click();
 
-      // Step 4 — the preview: Nume Prenume, then two lines; no system ID.
+      // Step 4 — the preview: Nume Prenume, then three lines (#39.28); no system ID.
       await npRow.getByRole("button", { name: "Previzualizare", exact: true }).click();
       const np = await previewOf(page);
       expect(np.title).toBe(`${MARK} Ion`);
-      expect(np.lines).toEqual([`Ionel TC, ${CNP}`, "născut: 01.01.1980, Localitatea Exemplu"]); // #37.70: „născut:"
+      // #39.28: it read [`Ionel TC, ${CNP}`, "născut: 01.01.1980, Localitatea Exemplu"] — #37.70's two lines.
+      expect(np.lines).toEqual([
+        `Ionel TC · CNP: ${CNP} · născut: 01.01.1980, Localitatea Exemplu`,
+        "+40 700 000 001 · ion.tc@example.ro",
+        NOTE,
+      ]);
+      // The notes are cut on one line, whole on hover, and do not widen the tile.
+      const cut = page.locator("[data-preview] [data-preview-cut]");
+      await expect(cut).toHaveAttribute("title", NOTE);
+      expect(await cut.evaluate((el) => el.scrollWidth > el.clientWidth && getComputedStyle(el).textOverflow === "ellipsis")).toBe(true);
       await expect(page.locator("[data-preview]")).not.toContainText(/PPERS\d+/);
       await expect(page.locator("[data-preview]")).not.toContainText("Prenume");
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
@@ -139,9 +153,10 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await jpRow.getByRole("button", { name: "Previzualizare", exact: true }).click();
       const jp = await previewOf(page);
       expect(jp.title).toBe(`${MARK} Firmă de test SRL`);
-      // #37.70: the count of its contact persons after the heading.
-      await expect(page.locator("[data-preview] [data-preview-title-note]")).toHaveText("(niciun contact)");
-      expect(jp.lines).toEqual(["Firma TC, SRL", "RO99999990, J99/9999/2026"]);
+      // #39.28: no count of its contact persons after the heading (#37.70 read „(niciun contact)”), no „Tip”, no
+      // „Nr. Reg. Com.” — it read ["Firma TC, SRL", "RO99999990, J99/9999/2026"].
+      await expect(page.locator("[data-preview] [data-preview-title-note]")).toHaveCount(0);
+      expect(jp.lines).toEqual(["Firma TC · CUI: RO99999990", "+40 700 000 002 · firma.tc@example.ro", NOTE]);
       await expect(page.locator("[data-preview]")).not.toContainText(/JPERS\d+/);
       await photograph(page, "judicial-person-preview", page.locator("[data-preview]"));
     } finally {
