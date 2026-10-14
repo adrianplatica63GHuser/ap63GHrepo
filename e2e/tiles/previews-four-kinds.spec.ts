@@ -21,6 +21,7 @@ import {
   E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord,
   type RecordKind,
 } from "../helpers/records";
+import { ROW_TILE_CEILING_PX, rowTileMinPx } from "../../src/lib/ui/field-widths";
 
 const MARK = `${E2E_MARKER}TILES-11`;
 /**
@@ -385,6 +386,21 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
     await searchFor(page, one, 1);
     const short = await measure(page);
     const at = `${list} at ${width}`;
+    // #39.25: on the persons' lists the eye's tile is „Interacțiuni”, which is as tall as its rows now — these records
+    // have none, so it is the row's preview's height, beside the list or under it, however long the list. „Hartă” and
+    // „Pagini” keep #38.75's rule, below.
+    if (kind === "person" || kind === "company") {
+      expect(Math.abs(short.tile.height - rowTileMinPx(kind)), `${at}, one row: an empty „Interacțiuni” is the preview's height`).toBeLessThanOrEqual(2);
+      if (!short.wrapped) expect(Math.abs(short.tile.top - short.list.top), `${at}, one row: tops`).toBeLessThanOrEqual(2);
+      await searchFor(page, TALL, PAGE);
+      const tall = await measure(page);
+      expect(Math.abs(tall.tile.height - rowTileMinPx(kind)), `${at}, a page: still the preview's height`).toBeLessThanOrEqual(2);
+      expect(tall.surface, `${at}: the tile's fill is the pinned purple`).toBe(tall.pinned);
+      if (tall.wrapped) await page.locator("[data-incursion]").evaluate((el) => el.scrollIntoView({ block: "end" }));
+      await page.mouse.move(1, 1);
+      await page.screenshot({ path: `playwright-report/incursion-height/${shot}-${width}.png` });
+      continue;
+    }
     expect(short.surface, `${at}: the tile's fill is the pinned purple`).toBe(short.pinned);
     expect(short.surface, `${at}: not the card's grey-blue`).not.toBe(short.card);
     if (width === 1920) {
@@ -559,6 +575,101 @@ test.describe("TC-TILES-11 — the chain link shows „Legături” (#38.76)", (
       await links(page, "/judicial-persons", "Firmă", "company", 1, "judicial-persons");
       await links(page, "/properties", "Teren", "property", 1, "properties");
       await links(page, "/documents", "Act", "document", 3, "documents");
+    } finally {
+      for (const [kind, id] of made) await removeRecord(page.request, kind, id);
+    }
+  });
+});
+
+// ── Step 11 (Slice #39.25): „Legături” beside the list — no head bar, „Închide” on its line, as tall as its rows ─────
+
+/** Step 11's own records. Its own marker, which neither holds the others' nor is held by them. */
+const ROWS = `${E2E_MARKER}LEGATURI-H`;
+
+/** Opens the chain link on the row holding `name` and reads the tile. */
+async function linksTile(page: Page, list: string, name: string) {
+  await page.goto(list);
+  const search = page.locator("main").locator('input[placeholder^="caută"]').first();
+  await expect(search).toBeVisible({ timeout: 30_000 });
+  await search.fill(name);
+  const row = page.locator("main [data-list-body] [data-list-edge] tbody tr").filter({ hasText: name });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
+  await row.getByRole("button", { name: "Legături", exact: true }).click();
+  const tile = page.locator('[data-incursion-view="links"]');
+  await expect(tile.locator('[data-tile="incursion-links"]')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(800); // the rows' read settles
+  return { row, tile };
+}
+
+async function linksReading(page: Page) {
+  return page.locator('[data-incursion-view="links"]').evaluate((el) => {
+    const inner = el.querySelector<HTMLElement>("[data-incursion-links]")!;
+    return {
+      height: Math.round(el.getBoundingClientRect().height),
+      rows: el.querySelectorAll("[data-one-line-row]").length,
+      scrolls: inner.scrollHeight > inner.clientHeight + 1,
+      bars: el.querySelectorAll("[data-incursion-head]").length,
+      head: el.querySelector("[data-incursion-head] h2")!.textContent,
+      buttons: [...el.querySelectorAll<HTMLElement>("a, button")].map((b) => (b.getAttribute("aria-label") ?? b.textContent ?? "").trim()),
+      // The tile's own head line is its first child: nothing above it inside the section.
+      headFirst: el.firstElementChild!.firstElementChild!.hasAttribute("data-incursion-head"),
+    };
+  });
+}
+
+test.describe("TC-TILES-11 — „Legături” beside the list, as tall as its rows (#39.25)", () => {
+  test("step 11: empty, the preview's height; two rows, theirs; sixteen, the ceiling, scrolling; „Închide” on the tile's line", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    await removeLeftovers(page.request, ROWS);
+    const made: [RecordKind, string][] = [];
+    try {
+      const alone = await createNaturalPerson(page.request, { lastName: `${ROWS} Singur`, firstName: "Ion" });
+      made.push(["person", alone]);
+      const people: string[] = [];
+      for (let n = 1; n <= 16; n++) {
+        const id = await createNaturalPerson(page.request, { lastName: `${ROWS} Parte ${String(n).padStart(2, "0")}`, firstName: "Ana" });
+        people.push(id);
+        made.push(["person", id]);
+      }
+      const two = await createDocumentOfType(page.request, "ADEVERINTA", `${ROWS} Act doi`);
+      const many = await createDocumentOfType(page.request, "ADEVERINTA", `${ROWS} Act multe`);
+      made.unshift(["document", two], ["document", many]); // removed first, with their links
+      for (const [doc, ids] of [[two, people.slice(0, 2)], [many, people]] as const) {
+        const res = await page.request.post(`/api/documents/${doc}/persons`, { data: { personIds: ids } });
+        expect(res.ok(), `POST /api/documents/${doc}/persons: ${res.status()} ${await res.text()}`).toBeTruthy();
+      }
+
+      // Empty: the row's preview's height; the bar gone, „Închide” on the tile's line, no „Deschide”.
+      const empty = await linksTile(page, "/natural-persons", `${ROWS} Singur`);
+      const e = await linksReading(page);
+      expect({ rows: e.rows, bars: e.bars, headFirst: e.headFirst, buttons: e.buttons })
+        .toEqual({ rows: 0, bars: 1, headFirst: true, buttons: ["Închide"] });
+      expect(e.head).toMatch(/^Legături— .*Singur/);
+      expect(Math.abs(e.height - rowTileMinPx("person")), `empty: ${e.height} px`).toBeLessThanOrEqual(2);
+      await page.mouse.move(1, 1);
+      await page.screenshot({ path: "playwright-report/legaturi-height/empty-1920.png" });
+      await empty.tile.getByRole("button", { name: "Închide", exact: true }).click();
+      await expect(empty.tile).toHaveCount(0);
+      await expect(empty.row.getByRole("button", { name: "Legături", exact: true })).toHaveAttribute("aria-pressed", "false");
+
+      // Two rows: their own height — under the ceiling, nothing to scroll; no disabled „Previzualizare”.
+      await linksTile(page, "/documents", `${ROWS} Act doi`);
+      const t = await linksReading(page);
+      expect({ rows: t.rows, scrolls: t.scrolls }).toEqual({ rows: 2, scrolls: false });
+      expect(t.buttons.filter((b) => b === "Previzualizare" || b === "Deschide")).toEqual([]);
+      expect(t.buttons.filter((b) => b === "Vizualizare")).toHaveLength(2);
+      expect(t.height, `two rows: ${t.height} px`).toBeLessThan(ROW_TILE_CEILING_PX - 100);
+      await page.mouse.move(1, 1);
+      await page.screenshot({ path: "playwright-report/legaturi-height/two-1920.png" });
+
+      // Sixteen: the ceiling, the rows scrolling inside.
+      await linksTile(page, "/documents", `${ROWS} Act multe`);
+      const m = await linksReading(page);
+      expect({ rows: m.rows, scrolls: m.scrolls }).toEqual({ rows: 16, scrolls: true });
+      expect(Math.abs(m.height - ROW_TILE_CEILING_PX), `sixteen rows: ${m.height} px`).toBeLessThanOrEqual(1);
+      await page.mouse.move(1, 1);
+      await page.screenshot({ path: "playwright-report/legaturi-height/many-1920.png" });
     } finally {
       for (const [kind, id] of made) await removeRecord(page.request, kind, id);
     }

@@ -136,16 +136,35 @@ describe("B reaches C (#39.05)", () => {
 });
 
 describe("the Incursiune shows B only (#39.05)", () => {
-  it("no „Interacțiune nouă” without onNew, and no C", async () => {
+  // #39.25: `fill` became `peek` — the Incursiune's title line replaces the tile's own, and „Deschide în
+  // „Interacțiuni”" (`[data-interactions-open]`) is not drawn (Adrian: „if an Open button was already on the tile,
+  // remove it").
+  it("no „Interacțiune nouă” without onNew, no C, and in an Incursiune no „Deschide în „Interacțiuni”” (#39.25)", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <InteractionsTile personId="p1" title="Interacțiuni" surface="s" fill onRow={() => {}} />
+        <InteractionsTile personId="p1" title="Interacțiuni" surface="s" peek={{ head: <div data-peek-head="" />, style: { maxHeight: 436 } }} onRow={() => {}} />
       </QueryClientProvider>,
     );
     await waitFor(() => expect(row("i2")).not.toBeNull());
     expect(document.querySelector("[data-interactions-new]")).toBeNull();
     expect(document.querySelector("[data-person-log]")).toBeNull();
+    expect(document.querySelector("[data-interactions-open]")).toBeNull();
+    expect(document.querySelector("[data-peek-head]")).not.toBeNull();
+    const tile = document.querySelector<HTMLElement>('[data-tile="interactions"]')!;
+    expect(tile.style.maxHeight).toBe("436px");
+    expect(tile.className).toContain("has-[[data-person-interaction]]:min-h-0");
+  });
+
+  it("on a person's screen „Deschide în „Interacțiuni”” stays (#39.25 is the Incursiune's alone)", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <InteractionsTile personId="p1" title="Interacțiuni" surface="s" onRow={() => {}} />
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(row("i2")).not.toBeNull());
+    expect(document.querySelector("[data-interactions-open]")).not.toBeNull();
   });
 
   it("its rows open the person's screen with C expanded on the row (Ask first 4)", () => {

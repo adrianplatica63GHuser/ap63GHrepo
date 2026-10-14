@@ -17,7 +17,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
-import { RelatedTile, type RelatedRow } from "@/components/tiles/related-tile";
+import { RelatedTile, readOnlyButtons, type RelatedRow } from "@/components/tiles/related-tile";
+import { IncursionHead } from "@/components/tiles/incursion-head";
+import {
+  PAGES_TILE_EMPTY_HEIGHT_PX,
+  PREVIEW_TILE_HEIGHT_PX,
+  RELATED_READONLY_SLOTS,
+  RELATED_SLOTS,
+  ROW_TILE_CEILING_PX,
+  ROW_TILE_EMPTY_CLASS,
+  rowTileMinPx,
+  rowTileStyle,
+} from "@/lib/ui/field-widths";
 import { PagesPanel, PEEK_NAME_CHARS, peekName, usePagesPanelState } from "@/app/documents/_components/pages-panel";
 import { RELATED_TILE_SURFACE } from "@/lib/ui/tile-surface";
 import type { PreviewTarget } from "@/lib/ui/previews";
@@ -149,10 +160,13 @@ describe("a look, not an edit (#38.72)", () => {
     // #38.89: the tile now reads the person's history, so it is given the person.
     // #39.05: was `<InteractionsTile personId={target.id} title={t("interactions")} surface={INCURSION_SURFACE[target.kind]} fill />`
     // — the history alone still, and now a row opens the person's screen with C on it.
-    expect(TILE).toMatch(/<InteractionsTile\s+personId=\{target\.id\}\s+title=\{t\("interactions"\)\}\s+surface=\{INCURSION_SURFACE\[target\.kind\]\}\s+fill\s/);
+    // #39.25: `fill` became `peek={{ head: head(t("interactions")), style: rowTileStyle(target.kind) }}` — the title line
+    // with the name and „Închide", the tile as tall as its rows.
+    expect(TILE).toMatch(/<InteractionsTile\s+personId=\{target\.id\}\s+title=\{t\("interactions"\)\}\s+surface=\{INCURSION_SURFACE\[target\.kind\]\}\s+peek=\{\{ head: head\(t\("interactions"\)\), style: rowTileStyle\(target\.kind\) \}\}\s/);
     expect(TILE).toContain("<PropertyMiniMap corners={q.data} onChange={() => {}} readOnly />");
     expect(TILE).not.toContain("onFullScreen");
-    expect(TILE).toContain('<PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} />');
+    // #39.25: was `<PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} />`.
+    expect(TILE).toContain('<PagesPanel documentId={documentId} mode="peek" state={state} surface={surface} peekHead={peekHead} />');
   });
 
   it("„Pagini” in its peek mode draws neither the turn and its „Salvează”, nor a row's bin, nor „+ Adaugă pagină”, and leaves the unsaved note", () => {
@@ -166,8 +180,11 @@ describe("a look, not an edit (#38.72)", () => {
 
   // #38.72/#38.75 read: „fills the row beside the list, never narrower than the tile on its screen" —
   // `className="flex min-w-0 flex-1 flex-col gap-2 self-stretch"`, `style={{ minWidth: rem(INCURSION_MIN_REM[target.kind]) }}`.
-  it("is the column's width (#39.04); the Incursiune fills the column's height, „Legături” keeps its own", () => {
-    expect(TILE).toContain('className={view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2" : "flex w-full min-w-0 flex-col gap-2"}');
+  // #39.04 read: „is the column's width; the Incursiune fills the column's height, „Legături” keeps its own" —
+  // `className={view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2" : "flex w-full min-w-0 flex-col gap-2"}`.
+  it("is the column's width (#39.04); „Hartă” and „Pagini” fill the column's height, „Legături” and „Interacțiuni” are their rows' (#39.25)", () => {
+    expect(TILE).toContain('const fills = view === "peek" && (target.kind === "property" || target.kind === "document");');
+    expect(TILE).toContain('className={fills ? "flex w-full min-w-0 flex-1 flex-col" : "flex w-full min-w-0 flex-col"}');
     expect(TILE).not.toContain("export const INCURSION_MIN_REM");
     const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
     expect(tiles).toContain("export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };");
@@ -232,7 +249,8 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     expect(tiles).toContain('<div data-list-incursion-row className="flex flex-wrap items-start gap-4">');
     // #38.75 read `expect(TILE).toContain("self-stretch")`: the tile stretched itself; now the column does.
     expect(tiles).toMatch(/data-list-row-tiles className="[^"]*\bself-stretch\b/);
-    expect(TILE).toContain('view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2"');
+    // #39.25: was `view === "peek" ? "flex w-full min-w-0 flex-1 flex-col gap-2"` — the map and the pages only now.
+    expect(TILE).toContain('fills ? "flex w-full min-w-0 flex-1 flex-col"');
   });
 
   it("the map's box and the page viewer grow into the height, never below today's; „Interacțiuni” grows, its sentence at the top", () => {
@@ -243,7 +261,9 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     const interactions = read("src", "components", "tiles", "interactions-tile.tsx");
     // #38.89 changes this in place: it read `className={fill ? `${surface} flex-1` : surface}`. The tile is a column
     // now — its title, then its rows scrolling in what is left — and still grows in an Incursiune.
-    expect(interactions).toContain("className={fill ? `${surface} flex flex-1 flex-col` : `${surface} flex flex-col`}");
+    // #39.25: it read `className={fill ? `${surface} flex flex-1 flex-col` : `${surface} flex flex-col`}` — beside a list
+    // it no longer grows: it is as tall as its rows, under the ceiling.
+    expect(interactions).toContain("className={peek ? `${surface} flex flex-col ${ROW_TILE_EMPTY_CLASS} has-[[data-person-interaction]]:min-h-0` : `${surface} flex flex-col`}");
     const pages = read("src", "app", "documents", "_components", "pages-panel.tsx");
     expect(pages).toContain('mode === "peek" ? "flex flex-1 flex-col" : "",');
     expect(pages).toContain('"flex flex-1 flex-col gap-3 lg:flex-row lg:items-stretch"');
@@ -352,8 +372,11 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
     }
     expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related")),');
     // #39.04: was `flex flex-1 flex-col` — „Legături" keeps its own height in the column now.
-    expect(TILE).toContain("className={`${LINKS_SURFACE[target.kind]} flex flex-col`}");
-    expect(TILE).toContain("style={{ height: INTERACTIONS_TILE_STYLE.minHeight }}");
+    // #39.25: was `className={`${LINKS_SURFACE[target.kind]} flex flex-col`}` with `style={{ height: INTERACTIONS_TILE_STYLE.minHeight }}`
+    // — now as tall as its rows, under the ceiling, and the empty tile its preview's height.
+    expect(TILE).toContain("className={`${LINKS_SURFACE[target.kind]} flex flex-col ${ROW_TILE_EMPTY_CLASS} has-[[data-one-line-row]]:min-h-0`}");
+    expect(TILE).toContain("style={rowTileStyle(target.kind)}");
+    expect(TILE).not.toContain("INTERACTIONS_TILE_STYLE");
     // The rows keep their own, calmer green (#38.15): RelatedTile draws them, whatever `readOnly` is.
     expect(RELATED).toMatch(/data-related-rows=""\s*\/\/[^\n]*\n\s*className=\{RELATED_ROWS_SURFACE\}/);
   });
@@ -363,7 +386,11 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
   const rows: RelatedRow[] = [
     {
       key: "natural:1", kind: "natural", radioLabel: "Ion", content: "Ion", title: "Ion", href: "/natural-persons/1?readonly=true",
-      buttons: { share: <button type="button" data-share-button="">Cotă</button>, view: <span data-view="">Vizualizare</span> },
+      buttons: {
+        share: <button type="button" data-share-button="">Cotă</button>,
+        view: <span data-view="">Vizualizare</span>,
+        preview: <button type="button" disabled data-preview-button="">Previzualizare</button>,
+      },
       dissociate: jest.fn(async () => {}),
     },
     {
@@ -388,6 +415,7 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
 
   it("on its screen: radios, „Asociază …”, „Dezasociază”, the share button and what the screen passes", () => {
     const { container } = draw(false);
+    expect(container.querySelector("[data-preview-button]")).not.toBeNull();
     expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(2);
     expect(container.textContent).toContain("associatePerson");
     expect(container.textContent).toContain("dissociate");
@@ -396,6 +424,9 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
 
   it("read-only: the rows, their kinds' icons, „Vizualizare” and „Relația” — and no radio, no associate, no dissociate, no share, nothing below", () => {
     const { container } = draw(true);
+    // #39.25: and no „Previzualizare” — not even disabled — in a row of two slots, „Relația” and „Vizualizare”.
+    expect(container.querySelector("[data-preview-button]")).toBeNull();
+    expect([...container.querySelector("[data-one-line-row]")!.querySelectorAll("[data-slot]")].map((s) => s.getAttribute("data-slot"))).toEqual(["relation", "view"]);
     expect(container.querySelectorAll("[data-one-line-row]")).toHaveLength(2);
     expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(0);
     expect(container.textContent).not.toContain("associatePerson");
@@ -468,5 +499,73 @@ describe("„Pagini” in an Incursiune: three quarters for the scan, names cut 
     expect(pages).toContain('"order-1 w-full min-w-0 lg:order-2 lg:w-auto lg:flex-[1_1_0%]"');
     // The document's own screen keeps its 380 px list.
     expect(pages).toContain('"order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0"');
+  });
+});
+
+/**
+ * #39.25 — Adrian, 2026-10-13: the „Incursiune: <name>” bar above „Legături” and „Interacțiuni” goes with its „Deschide”;
+ * „Închide” comes down onto the tile's own title line; the disabled „Previzualizare” goes; an empty tile is the preview's
+ * height, one with a few rows its rows', and a long one stops at the ceiling and scrolls.
+ */
+describe("„Legături” and „Interacțiuni” beside the lists: no head bar, „Închide” on the tile's line, as tall as their rows (#39.25)", () => {
+  const TILE = read("src", "app", "_components", "incursion-tile.tsx");
+  const PAGES = read("src", "app", "documents", "_components", "pages-panel.tsx");
+
+  it("draws no bar above the tile and no „Deschide” on it — the name stays in the section's aria-label", () => {
+    expect(TILE).not.toContain('{t("title")}: {name}');
+    expect(TILE).not.toContain("ArrowRight");
+    expect(TILE).not.toContain("previewHref");
+    expect(TILE).not.toContain('tPreview("open")');
+    expect(TILE).toContain('aria-label={`${t("title")}: ${name}`}');
+  });
+
+  it("each of the four tiles carries the line: the tile's name, the record's, „Închide” (Ask first #1, #2)", () => {
+    expect(TILE).toContain("const head = (title: string) => <IncursionHead title={title} name={name} closeLabel={closeLabel} onClose={onClose} />;");
+    for (const v of ['head={head(t("links"))}', 'head={head(t("map"))}', 'peek={{ head: head(t("interactions"))', "peekHead={{ name, closeLabel, onClose }}"]) {
+      expect([v, TILE.includes(v)]).toEqual([v, true]);
+    }
+    expect(PAGES).toContain("{peekHead && <IncursionName name={peekHead.name} />}");
+    expect(PAGES).toContain("{peekHead && <IncursionClose label={peekHead.closeLabel} onClose={peekHead.onClose} />}");
+  });
+
+  it("the line reads „Legături — <name>”, the name cut with its whole text in the tooltip, and „Închide” closes", () => {
+    const onClose = jest.fn();
+    const { container } = render(<IncursionHead title="Legături" name="Popescu Ion" closeLabel="Închide" onClose={onClose} />);
+    const h2 = container.querySelector("h2")!;
+    expect(h2.textContent).toBe("Legături— Popescu Ion");
+    const nameEl = container.querySelector<HTMLElement>("[data-incursion-name]")!;
+    expect(nameEl.title).toBe("Popescu Ion");
+    expect(nameEl.className).toMatch(/\btruncate\b/);
+    expect(nameEl.className).toMatch(/\bnormal-case\b/);
+    fireEvent.click(container.querySelector("[data-incursion-close]")!);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(container.querySelectorAll("button, a")).toHaveLength(1);
+  });
+
+  it("a read-only row keeps „Relația” and „Vizualizare” only", () => {
+    expect(RELATED_READONLY_SLOTS).toEqual(["relation", "view"]);
+    expect(RELATED_SLOTS).toEqual(["share", "relation", "view", "preview"]);
+    const rest = readOnlyButtons({ share: "s", relation: "r", view: "v", preview: "p" });
+    expect(Object.keys(rest).sort()).toEqual(["relation", "view"]);
+  });
+
+  it("heights: empty, the row's preview's (measured); a long one stops at #39.04's 436 px", () => {
+    expect(PREVIEW_TILE_HEIGHT_PX).toEqual({ person: 102, company: 102, property: 195, document: 643 });
+    expect(ROW_TILE_CEILING_PX).toBe(PAGES_TILE_EMPTY_HEIGHT_PX);
+    expect(ROW_TILE_CEILING_PX).toBe(436);
+    expect(rowTileMinPx("person")).toBe(102);
+    expect(rowTileMinPx("property")).toBe(195);
+    // A document's preview, with its page, is taller than the ceiling: its empty tile is the ceiling's height.
+    expect(rowTileMinPx("document")).toBe(436);
+    expect(rowTileStyle("company")).toEqual({ "--row-tile-empty": "102px", maxHeight: 436 });
+    // The floor holds only while the tile is empty: a row lifts it, so a few rows are their own height.
+    expect(ROW_TILE_EMPTY_CLASS).toBe("min-h-[var(--row-tile-empty)]");
+  });
+
+  it("the rows are in the tile's flow, scrolling past the ceiling — not pinned to a fixed box", () => {
+    expect(TILE).toContain('<div className="min-h-0 overflow-y-auto" data-incursion-links="">');
+    expect(TILE).not.toContain('className="absolute inset-0 overflow-y-auto" data-incursion-links=""');
+    const interactions = read("src", "components", "tiles", "interactions-tile.tsx");
+    expect(interactions).toContain('<div className="min-h-0 overflow-y-auto" data-interactions-rows="">');
   });
 });
