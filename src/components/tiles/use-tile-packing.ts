@@ -125,6 +125,24 @@ interface FoundBox {
 }
 
 /**
+ * An element drawn over the screen rather than in the row — a dialog's overlay
+ * (`fixed inset-0`: ConfirmDialog, „Ștergeți actul?"), a toast — is never a box.
+ *                                                              (Slice #39.32)
+ *
+ * ⚠️ **A screen mounts its dialogs where its state lives, and that is inside the
+ * row.** The Document's form renders „Ștergeți actul?" beside its tiles, in the
+ * same `display: contents` wrapper. Taken for a box, the overlay was given
+ * `position: absolute` and a place in a column; `inset-0` then made it as tall
+ * as the row, the row grew to hold it, the overlay grew with the row — 12 million
+ * pixels, measured — and its panel, centred in it, left the screen. What was left
+ * was a grey rectangle under the first tile and no buttons, and the „Da" that
+ * would have sent the DELETE was out of reach, so the document stayed.
+ */
+export function isOverlay(el: HTMLElement): boolean {
+  return getComputedStyle(el).position === "fixed";
+}
+
+/**
  * The row's boxes, walking through `display: contents` wrappers, in the
  * order the row draws them: CSS `order` first (the Document orders its tiles
  * by its type's tile order), the DOM's among equals.
@@ -136,7 +154,7 @@ export function findBoxes(container: HTMLElement): FoundBox[] {
     for (const child of Array.from(parent.children)) {
       if (!(child instanceof HTMLElement) || child.hidden || child.dataset.tileOutline !== undefined) continue;
       const display = getComputedStyle(child).display;
-      if (display === "none") continue;
+      if (display === "none" || isOverlay(child)) continue;
       const own = child.dataset.tile ?? null;
       if (display === "contents") {
         walk(child, own ?? tile);
@@ -324,7 +342,7 @@ export function useTilePacking(
         for (const child of Array.from(parent.children)) {
           if (!(child instanceof HTMLElement) || child.hidden) continue;
           const display = getComputedStyle(child).display;
-          if (display === "none") continue;
+          if (display === "none" || isOverlay(child)) continue;
           if (display === "contents") walk(child);
           else out.push(child);
         }
