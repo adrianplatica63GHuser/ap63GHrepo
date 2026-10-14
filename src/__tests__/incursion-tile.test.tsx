@@ -542,6 +542,14 @@ describe("„Legături” and „Interacțiuni” beside the lists: no head bar,
     expect(container.querySelectorAll("button, a")).toHaveLength(1);
   });
 
+  it("read-only and empty, its sentence has no padding of its own, so the tile is the preview's height", () => {
+    const { container } = render(<RelatedTile readOnly label="Legături" rows={[]} loading={false} associate={[]} />);
+    const p = container.querySelector<HTMLElement>("[data-related-empty]")!;
+    expect(p.className).not.toMatch(/\bpy-6\b/);
+    const onScreen = render(<RelatedTile label="Legături" rows={[]} loading={false} associate={[]} />).container;
+    expect(onScreen.querySelector<HTMLElement>("[data-related-empty]")!.className).toMatch(/\bpx-4 py-6\b/);
+  });
+
   it("a read-only row keeps „Relația” and „Vizualizare” only", () => {
     expect(RELATED_READONLY_SLOTS).toEqual(["relation", "view"]);
     expect(RELATED_SLOTS).toEqual(["share", "relation", "view", "preview"]);

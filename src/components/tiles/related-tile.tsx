@@ -184,10 +184,14 @@ export function RelatedTile({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Slice #39.25: read-only, beside a list, the sentence is one line with no padding of its own — as
+          „Interacțiuni"'s is — so an empty tile is its row's preview's height (`rowTileStyle`), not 26 px taller. */}
       {loading ? (
-        <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
+        <p className={readOnly ? "text-sm text-fade dark:text-zinc-400" : "py-6 text-sm text-fade dark:text-zinc-400"}>{t("loading")}</p>
       ) : groups.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{emptyLabel ?? t("empty")}</p>
+        <p className={readOnly ? "text-sm text-fade dark:text-zinc-400" : "px-4 py-6 text-sm text-fade dark:text-zinc-400"} data-related-empty="">
+          {emptyLabel ?? t("empty")}
+        </p>
       ) : (
         <div
           role="group"
