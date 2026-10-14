@@ -705,6 +705,7 @@ async function listState(page: Page, name: string) {
       memory: sessionStorage.getItem("ga:list-scroll"),
       max: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollHeight - document.querySelector<HTMLElement>("[data-page-scroll]")!.clientHeight),
       load: (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type ?? null,
+      trace: JSON.stringify((window as unknown as { __gaScrollTrace?: unknown[] }).__gaScrollTrace ?? null),
     };
   }, name);
 }
@@ -772,6 +773,9 @@ test.describe("TC-TILES-11 — Back returns to the list as it was (#39.26)", () 
     test.slow();
     // Short, so the page scrolls with the tiles open beside the list.
     await page.setViewportSize({ width: 1366, height: 420 });
+    await page.addInitScript(() => {
+      (window as unknown as { __gaScrollTrace: unknown[] }).__gaScrollTrace = [];
+    });
     await removeLeftovers(page.request, BACK);
     const made: [RecordKind, string][] = [];
     try {

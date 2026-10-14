@@ -100,6 +100,13 @@ function pageScroll(): HTMLElement | null {
 
 const SCROLL_KEY = "ga:list-scroll";
 
+/** TEMPORARY (#39.26 diagnosis): a trace the e2e spec switches on with `window.__gaScrollTrace = []`. Dev only. */
+function trace(...what: unknown[]): void {
+  if (process.env.NODE_ENV === "production") return;
+  const t = (window as unknown as { __gaScrollTrace?: unknown[] }).__gaScrollTrace;
+  if (t) t.push([Math.round(performance.now()), ...what]);
+}
+
 /** The history slot shown — the Navigation API's `currentEntry.key` — or null where the browser has no such API. */
 function historySlot(): string | null {
   const nav = (window as unknown as { navigation?: { currentEntry?: { key?: string } | null } }).navigation;
@@ -145,6 +152,7 @@ export function useListScrollMemory(ready: boolean): void {
     // again on Back — its effects run again, its refs do not start over. Measured in the runner: read once, the
     // second showing kept the first's „nothing to restore", and the list came back at 46 px of 228.
     wanted.current = scrollFor(readMemory(), at);
+    trace("show", at, wanted.current, el.scrollTop);
     // Timers, not animation frames: a frame never comes in a tab that is not painted, and the write must.
     let timer = 0;
     const onScroll = () => {
@@ -154,6 +162,7 @@ export function useListScrollMemory(ready: boolean): void {
         // list, kept hidden, lets go of the scroll area — measured in the runner, that wrote the record's 36 px over the
         // list's 349 under the list's own slot.
         if (wanted.current != null || historySlot() !== slot || window.location.pathname !== pathname) return;
+        trace("keep", at, el.scrollTop);
         writeMemory(keepScroll(readMemory(), at, el.scrollTop));
       }, 100);
     };
@@ -164,6 +173,7 @@ export function useListScrollMemory(ready: boolean): void {
     };
   }, [pathname]);
   useEffect(() => {
+    trace("ready", ready, wanted.current);
     if (!ready) return;
     const top = wanted.current;
     const el = pageScroll();
@@ -179,13 +189,15 @@ export function useListScrollMemory(ready: boolean): void {
     };
     // Done: the position held, the time ran out, or Adrian took the scroll. Only then is the restore given up — an
     // effect run again (a refetch, the list shown again) only detaches, and the next run takes the restore over.
-    function done() {
+    function done(e?: Event) {
+      trace("done", e?.type ?? "end", tries, held, el.scrollTop);
       detach();
       wanted.current = null;
     }
     for (const e of USER_SCROLL) el.addEventListener(e, done, { passive: true, once: true });
     const put = () => {
       el.scrollTop = top;
+      if (tries < 3) trace("put", top, el.scrollTop, el.scrollHeight - el.clientHeight);
       tries += 1;
       held = Math.abs(el.scrollTop - top) <= 1 ? held + 1 : 0;
       if (held < HOLD_AT && tries < HOLD_TRIES) timer = window.setTimeout(put, 50);
