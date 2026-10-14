@@ -705,7 +705,6 @@ async function listState(page: Page, name: string) {
       memory: sessionStorage.getItem("ga:list-scroll"),
       max: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollHeight - document.querySelector<HTMLElement>("[data-page-scroll]")!.clientHeight),
       load: (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type ?? null,
-      trace: JSON.stringify((window as unknown as { __gaScrollTrace?: unknown[] }).__gaScrollTrace ?? null),
     };
   }, name);
 }
@@ -736,11 +735,17 @@ async function roundTrip(page: Page, list: string, name: string, tiles: readonly
   await page.mouse.move(700, 300);
   await page.mouse.wheel(0, 2000);
   await page.waitForTimeout(400);
+  // The row's „Deschide" brought into view first, as Adrian would see it before pressing it: Playwright's click
+  // scrolls an off-screen target into view itself, and the list rightly keeps THAT position (measured with a trace in
+  // 20261014T021521Z-11033: kept 349, then 36 by the click, and 36 restored).
+  const open = row.getByRole("link", { name: "Deschide", exact: true });
+  await open.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
   const before = await listState(page, name);
   const address = new URL(page.url()).search;
   expect(address, `${list}: the view is in the address`).toContain("tiles=");
 
-  await row.getByRole("link", { name: "Deschide", exact: true }).click();
+  await open.click();
   await expect(page).toHaveURL((u) => u.pathname.startsWith(`${list}/`), { timeout: 30_000 });
   await page.waitForTimeout(1_500);
   if (back === "browser") await page.goBack();
@@ -773,9 +778,6 @@ test.describe("TC-TILES-11 — Back returns to the list as it was (#39.26)", () 
     test.slow();
     // Short, so the page scrolls with the tiles open beside the list.
     await page.setViewportSize({ width: 1366, height: 420 });
-    await page.addInitScript(() => {
-      (window as unknown as { __gaScrollTrace: unknown[] }).__gaScrollTrace = [];
-    });
     await removeLeftovers(page.request, BACK);
     const made: [RecordKind, string][] = [];
     try {
