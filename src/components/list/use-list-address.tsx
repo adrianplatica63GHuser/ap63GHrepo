@@ -173,20 +173,25 @@ export function useListScrollMemory(ready: boolean): void {
     let tries = 0;
     let held = 0;
     let timer = 0;
-    const stop = () => {
+    const detach = () => {
       window.clearTimeout(timer);
-      wanted.current = null;
-      for (const e of USER_SCROLL) el.removeEventListener(e, stop);
+      for (const e of USER_SCROLL) el.removeEventListener(e, done);
     };
-    for (const e of USER_SCROLL) el.addEventListener(e, stop, { passive: true, once: true });
+    // Done: the position held, the time ran out, or Adrian took the scroll. Only then is the restore given up — an
+    // effect run again (a refetch, the list shown again) only detaches, and the next run takes the restore over.
+    function done() {
+      detach();
+      wanted.current = null;
+    }
+    for (const e of USER_SCROLL) el.addEventListener(e, done, { passive: true, once: true });
     const put = () => {
       el.scrollTop = top;
       tries += 1;
       held = Math.abs(el.scrollTop - top) <= 1 ? held + 1 : 0;
       if (held < HOLD_AT && tries < HOLD_TRIES) timer = window.setTimeout(put, 50);
-      else stop();
+      else done();
     };
     timer = window.setTimeout(put, 0);
-    return stop;
+    return detach;
   }, [ready]);
 }
