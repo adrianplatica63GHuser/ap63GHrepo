@@ -4591,6 +4591,7 @@
     "died": "d. {date}",
     "deceased": "Deceased",
     "ties": "{count, plural, one {# family tie} other {# family ties}}",
+    "tieFor": "{role} for: {name}",
     "more": "and {count} more",
     "nickname": "Nickname",
     "gender": "Gender",

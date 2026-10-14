@@ -4591,6 +4591,7 @@
     "died": "d. {date}",
     "deceased": "Decedat",
     "ties": "{count, plural, one {o legătură de familie} few {# legături de familie} other {# de legături de familie}}",
+    "tieFor": "{role} pentru: {name}",
     "more": "și încă {count}",
     "nickname": "Poreclă",
     "gender": "Gen",

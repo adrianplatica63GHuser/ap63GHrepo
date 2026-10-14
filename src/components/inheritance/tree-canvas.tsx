@@ -25,10 +25,10 @@ import { useTranslations } from "next-intl";
 import { ArrowRight, FileText, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
+import { runPath } from "@/lib/inheritance/placement";
 import {
   MAX_SCALE,
   MIN_SCALE,
-  ROW_H,
   SLOT_W,
   birthDate,
   birthYear,
@@ -37,6 +37,7 @@ import {
   levelAt,
   shortName,
   tieAlong,
+  type FamilyRun,
   type TreeEdge,
   type TreeLayout,
   type TreeLevel,
@@ -250,7 +251,7 @@ export function TreeCanvas({
       {view && layout.nodes.length > 0 && (
         <svg className="absolute inset-0 h-full w-full" role="img" aria-label={t("title")}>
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
-            <Lines edges={layout.edges} at={at} strokeWidth={px(1.5)} faded={faded} />
+            <Lines edges={layout.edges} runs={layout.runs} at={at} strokeWidth={px(1.5)} faded={faded} />
             {layout.nodes.map((n) => {
               const p = byId.get(n.id)!;
               return (
@@ -433,32 +434,30 @@ export function TreeCanvas({
   );
 }
 
-/** The lines: a parent's down to the child — from between the two when both parents are a couple — and couples,
- *  siblings with no parent drawn and other relatives (dashed) side by side. */
+/** The lines: each family's from its parents — from between the two when they are a couple — down its own lane
+ *  to each child, every turn rounded (#39.34, `runPath`); and couples, siblings with no parent drawn and other
+ *  relatives (dashed) side by side. */
 function Lines({
   edges,
+  runs,
   at,
   strokeWidth,
   faded,
 }: {
   edges: TreeEdge[];
+  runs: FamilyRun[];
   at: Map<string, { x: number; y: number }>;
   strokeWidth: number;
   /** #39.13: a line to someone not yet born fades with them. */
   faded: ReadonlySet<string>;
 }) {
-  const spouses = new Set(edges.flatMap((e) => (e.kind === "spouse" ? [[e.a, e.b].sort().join("|")] : [])));
   const parentsOf = new Map<string, string[]>();
   for (const e of edges) if (e.kind === "parent") parentsOf.set(e.child, [...(parentsOf.get(e.child) ?? []), e.parent]);
-  const paths: { key: string; d: string; dashed?: boolean; thick?: boolean; dim?: boolean }[] = [];
-  for (const [child, parents] of parentsOf) {
-    const c = at.get(child)!;
-    const couple = parents.length === 2 && spouses.has([...parents].sort().join("|"));
-    const froms = couple ? [{ x: (at.get(parents[0]!)!.x + at.get(parents[1]!)!.x) / 2, y: at.get(parents[0]!)!.y }] : parents.map((p) => at.get(p)!);
-    froms.forEach((f, i) => {
-      const mid = f.y + ROW_H / 2;
-      paths.push({ key: `p-${child}-${i}`, d: `M ${f.x} ${f.y} V ${mid} H ${c.x} V ${c.y}`, dim: faded.has(child) });
-    });
+  const paths: { key: string; d: string; dashed?: boolean; thick?: boolean; dim?: boolean; run?: string }[] = [];
+  for (const run of runs) {
+    for (const c of run.children) {
+      paths.push({ key: `p-${run.key}-${c.id}`, d: runPath(run.from, run.laneY, c), dim: faded.has(c.id), run: run.key });
+    }
   }
   const shareParent = (a: string, b: string) => (parentsOf.get(a) ?? []).some((p) => (parentsOf.get(b) ?? []).includes(p));
   for (const e of edges) {
@@ -480,6 +479,7 @@ function Lines({
           strokeWidth={p.thick ? strokeWidth * 2 : strokeWidth}
           strokeDasharray={p.dashed ? `${strokeWidth * 4} ${strokeWidth * 3}` : undefined}
           opacity={p.dim ? FADED : 1}
+          data-tree-run={p.run}
         />
       ))}
     </g>
@@ -545,7 +545,9 @@ function Node({
     const facts = [d ? t("born", { date: d }) : null, g].filter(Boolean).join(" · ");
     if (facts) lines.push(facts);
     if (dead) lines.push(deathDate(person) ? `${lifeYears(person)} · ${t("died", { date: deathDate(person)! })}` : lifeYears(person)!);
-    for (const tie of ties.slice(0, 3)) lines.push(`${tie.word} — ${shortName(byId.get(tie.other)!)}`);
+    // #39.34: „Fiică pentru: Bogdan Dumitrescu" — the other's name as their own box heads it, cut to fit (the
+    // whole line in the tooltip below).
+    for (const tie of ties.slice(0, 3)) lines.push(t("tieFor", { role: tie.word, name: byId.get(tie.other)!.displayName }));
     if (ties.length > 3) lines.push(t("more", { count: ties.length - 3 }));
   }
   const lineH = px(16);
@@ -568,7 +570,9 @@ function Node({
         </text>
       </a>
       {lines.map((l, i) => (
-        <text key={i} x={0} y={-h / 2 + px(17) + (i + 1) * lineH} textAnchor="middle" fontSize={px(11)} fill="#475569">
+        <text key={i} x={0} y={-h / 2 + px(17) + (i + 1) * lineH} textAnchor="middle" fontSize={px(11)} fill="#475569" data-tree-line="">
+          {/* #39.34 (Ask first 3): a line cut with „…" is whole in its tooltip; the box does not grow. */}
+          {fit(l, 11) !== l && <title>{l}</title>}
           {fit(l, 11)}
         </text>
       ))}
