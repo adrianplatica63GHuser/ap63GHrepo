@@ -89,6 +89,7 @@ import {
   keepFields,
   PREVIEW_FIELDS,
   PREVIEW_INNER_REM,
+  PREVIEW_LINES,
   PREVIEW_ROWS,
   PREVIEW_STYLE,
   PREVIEW_UNITS,
@@ -1088,10 +1089,16 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
     // Slice #37.70: the property's and the document's rows are Adrian's, no longer their screen's.
     expect(file).not.toMatch(/property: keepFields\(/);
     expect(file).not.toMatch(/document: keepFields\(/);
-    // Every field of the short set is on a row, and has its screen's width.
-    for (const kind of Object.keys(PREVIEW_FIELDS) as (keyof typeof PREVIEW_FIELDS)[]) {
+    // Every field of the short set is on a row, and has its screen's width — a property's and a document's, whose
+    // previews draw rows. #39.28: a person's and a company's draw PREVIEW_LINES only (#37.60), and their phone and
+    // e-mail are on no screen row under one name (personal 1, 2 or work), so for them every field is on a LINE.
+    // It read the rows and widths check for all four kinds.
+    for (const kind of ["property", "document"] as const) {
       expect([kind, [...PREVIEW_ROWS[kind].flat()].sort()]).toEqual([kind, [...PREVIEW_FIELDS[kind]].sort()]);
       for (const f of PREVIEW_FIELDS[kind]) expect([kind, f, Boolean(PREVIEW_WIDTHS[kind][f])]).toEqual([kind, f, true]);
+    }
+    for (const kind of ["person", "company"] as const) {
+      expect([kind, [...PREVIEW_LINES[kind].flat()].sort()]).toEqual([kind, [...PREVIEW_FIELDS[kind]].sort()]);
     }
   });
 
