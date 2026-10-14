@@ -884,15 +884,14 @@ export function DocumentForm({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      let res: Response;
-      try {
-        res = await fetch(
-          `/api/documents/${encodeURIComponent(documentId!)}`,
-          { method: "DELETE" },
-        );
-      } catch {
-        throw new Error(deleteFailureMessage(null, t));
-      }
+      // No answer at all (the network, the server down) is a failure too — a
+      // `.catch` rather than a nested try, so the first `} catch` of this
+      // function stays the one that restores the screen.
+      const res = await fetch(
+        `/api/documents/${encodeURIComponent(documentId!)}`,
+        { method: "DELETE" },
+      ).catch(() => null);
+      if (!res) throw new Error(deleteFailureMessage(null, t));
       // An expired session is answered with the sign-in page, which `fetch`
       // follows as a 200: without this the screen would leave for the list as
       // though the document were gone (the same guard `safeMutate` has).
