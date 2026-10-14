@@ -18,9 +18,16 @@ const MAP = SOURCE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/
 describe("the map of all properties: a click reaches the map (#39.27)", () => {
   it("no property shape is ever clickable — the bug was `clickable={!areaOn}`", () => {
     expect(MAP).not.toContain("clickable={!areaOn}");
-    const polygon = MAP.slice(MAP.indexOf("<Polygon"), MAP.indexOf("/>", MAP.indexOf("<Polygon")));
+    // Every property's own shape — `key={prop.id}`; the focus blink's overlay (`{...common}`, clickable: false) is
+    // another.
+    const shape = (tag: string) => {
+      const at = MAP.search(new RegExp(`<${tag}\\s+key=\\{prop\\.id\\}`));
+      expect([tag, at >= 0]).toEqual([tag, true]);
+      return MAP.slice(at, MAP.indexOf("/>", at));
+    };
+    const polygon = shape("Polygon");
     expect(polygon).toContain("clickable={false}");
-    const circle = MAP.slice(MAP.indexOf("<Circle"), MAP.indexOf("/>", MAP.indexOf("<Circle")));
+    const circle = shape("Circle");
     expect(circle).toContain("clickable={false}");
     // And neither has a click handler of its own that would make it take the click.
     expect(polygon).not.toMatch(/\bonClick=/);
