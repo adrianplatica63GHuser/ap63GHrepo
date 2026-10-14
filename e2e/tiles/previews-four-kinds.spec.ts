@@ -593,10 +593,16 @@ async function linksTile(page: Page, list: string, name: string) {
   await expect(search).toBeVisible({ timeout: 30_000 });
   await search.fill(name);
   const row = page.locator("main [data-list-body] [data-list-edge] tbody tr").filter({ hasText: name });
+  // The search is debounced: wait for the list to narrow to the one row, not just for the row — a press made while
+  // the page re-renders is lost (TC-DOC-24 met the same, 20261011T011204Z-4538) — and press again until it shows.
+  await expect(listRows(page)).toHaveCount(1, { timeout: 30_000 });
   await expect(row).toHaveCount(1, { timeout: 30_000 });
-  await row.getByRole("button", { name: "Legături", exact: true }).click();
   const tile = page.locator('[data-incursion-view="links"]');
-  await expect(tile.locator('[data-tile="incursion-links"]')).toBeVisible({ timeout: 30_000 });
+  await expect(async () => {
+    const chain = row.getByRole("button", { name: "Legături", exact: true });
+    if ((await chain.getAttribute("aria-pressed")) !== "true") await chain.click();
+    await expect(tile.locator('[data-tile="incursion-links"]')).toBeVisible({ timeout: 5_000 });
+  }).toPass({ timeout: 30_000 });
   await page.waitForTimeout(800); // the rows' read settles
   return { row, tile };
 }
