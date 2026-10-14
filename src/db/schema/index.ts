@@ -160,6 +160,12 @@ export const naturalPerson = pgTable(
     // read and write — avoids the Date-object timezone gotcha for a calendar
     // date with no time component.
     dateOfBirth: date("date_of_birth", { mode: "string" }),
+    // Slice #39.30 (migration_108) — „Decedat" and „Data decesului". The date is
+    // optional (a person can be known to be dead with the date unknown) and only
+    // on a person marked dead; never before the birth. Never in the future is the
+    // API's rule (src/lib/persons/death.ts): a CHECK cannot call now().
+    isDeceased: boolean("is_deceased").notNull().default(false),
+    dateOfDeath: date("date_of_death", { mode: "string" }),
 
     personalPhone1: text("personal_phone_1"),
     personalPhone2: text("personal_phone_2"),
@@ -198,6 +204,11 @@ export const naturalPerson = pgTable(
     check(
       "natural_person_has_name",
       sql`${t.firstName} IS NOT NULL OR ${t.lastName} IS NOT NULL`,
+    ),
+    check("natural_person_death_needs_deceased", sql`${t.dateOfDeath} IS NULL OR ${t.isDeceased}`),
+    check(
+      "natural_person_death_after_birth",
+      sql`${t.dateOfDeath} IS NULL OR ${t.dateOfBirth} IS NULL OR ${t.dateOfDeath} >= ${t.dateOfBirth}`,
     ),
     // NOTE: CNP uniqueness lives in SQL, not here. It is the partial unique
     // index `natural_person_cnp_unique` ON natural_person (cnp) WHERE cnp IS
