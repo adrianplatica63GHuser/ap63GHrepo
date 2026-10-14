@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | — |
+| **Last green** | 2026-10-14 |
 
 ## What this proves
 

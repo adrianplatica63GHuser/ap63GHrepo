@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-11 — „Decedat”: bifat, datat, refuzat înainte de naștere, debifat; vârsta se oprește la deces
- * Source: docs/testing/cases/TC-PERS-11.md, „Last green" —
+ * Source: docs/testing/cases/TC-PERS-11.md, „Last green" 2026-10-14
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *
