@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-15, FU-346 filed — 346 entries (FU-346 resolved in #39.52). Rows are status, columns are impact.
+As of 2026-10-15, FU-347 filed — 347 entries (FU-346 resolved in #39.52). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 81 | 77 | 22 | 199 |
+| open | 19 | 82 | 77 | 22 | 200 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 58 | 31 | 3 | 129 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 146 | 113 | 27 | 346 |
+| **total** | 60 | 147 | 113 | 27 | 347 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -430,3 +430,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-344 | 2026-10-15 #39.47 Handover.39.47.md | data risk | Reference data | The reference data gives the „Antecontract” type no person roles: „Promitent vânzător” and „Promitent cumpărător” exist only because the dev seed creates them, so on a rebuilt database or Ciprian's box an antecontract's parties are linked without a role. | scripts/seed-dev-data/seed.ts:214,262; src/db/sync-reference-data.sql (no Promitent row); runner run 20261015T183759Z-4121 printed the dev database's roles | user | S | open | Adrian to confirm the roles; then a migration and the sync file add them, „Deține cotă” as the seed has it. | 2026-10-15 |
 | FU-345 | 2026-10-15 #39.47 Handover.39.47.md | recommendation | Help | The manual's 6.7 says an antecontract usually states the price, the date by which the contract is signed and the advance paid — Romanian practice the application does not record (the type has no form), written as an assumption for Adrian to confirm. | src/lib/manual/content/ro-RO/06-documents.ts §6.7 | user | XS | open | Confirm, or correct the sentence in both languages. | 2026-10-15 |
 | FU-346 | 2026-10-15 #39.48 Handover.39.48.md | copy/i18n | Help | The „?” proposal for „Asociază Document” still teaches the role list's empty choice as „— fără rol —”; the list reads „fără rol” in italics now. | src/lib/help/proposals-data.ts (associate-document, howToRo/howToEn) | user | XS | resolved | 8d3cd371: „fără rol” in both proposals that named it (associate-document and associate-person), both languages, before #39.52 accepted every proposal. | 2026-10-15 |
+| FU-347 | 2026-10-15 #39.52 Handover.39.52.md | copy/i18n | Help | The English „?” texts quote the Romanian screen with an English gloss — „„Persoane Fizice” (natural persons)”, „„Nume” (name)” — while the English screen reads „Natural Persons” and „Name”; since #39.46 the English manual quotes the English screen. Accepted as written in #39.52, which wrote no new texts. | help_content.background_en / how_to_en, from src/lib/help/proposals-data.ts | user | M | open | A slice that rewrites every proposal's backgroundEn and howToEn against the English screen, as new proposals written against the texts accepted in #39.52; then one „Acceptă toate”. | 2026-10-15 |
