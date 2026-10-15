@@ -85,7 +85,8 @@ export function isFlatSectionActive(section: NavSectionMin, pathname: string): b
  */
 // Slice #39.11: + „Arbori de moștenire" — the domain's persons and their ties, view only, as „Interacțiuni" is theirs.
 // Slice #39.37: + „Manual de utilizare" — reading the manual is for every account.
-export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree", "/manual"];
+// Slice #39.42: + „Harta competențelor" — learning the application is for every account.
+export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree", "/manual", "/skills-map"];
 
 /**
  * What the sidebar draws at all (Slice #38.42): an item with an `href` and no

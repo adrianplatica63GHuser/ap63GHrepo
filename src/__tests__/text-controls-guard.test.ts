@@ -59,6 +59,13 @@ const ALLOW: Record<string, Allowed[]> = {
   // Slice #39.37: the user manual. A cross-reference in a sentence is a same-tab link whose words are the number
   // it points at (A096); the contents' rows are the chapters and sections themselves, as the sidebar's rows are
   // the places they open (A001). „Capitolul anterior / următor" carry LeadingIcon / TrailingIcon, so are not listed.
+  // Slice #39.42: „Harta competențelor”. The Path chips are a choice between values; a skill's name in the list
+  // view is the link to its quiz — the text is the data. The boxes themselves are drawn faces, not words.
+  "src/app/skills-map/_components/skills-map-view.tsx": [
+    ["A043", "{t(\"allPaths\")}"],
+    ["A043", "{pathShort(p.key)}"],
+    ["A113", "{s.name[lang]}"],
+  ],
   "src/app/manual/_components/manual-view.tsx": [
     ["A096", "{target.number}"],
     ["A001", "{`${c.number} ${c.title}`}"],

@@ -1409,7 +1409,8 @@
       "inheritanceTrees": "Inheritance trees",
       "miscFolders": "Miscellaneous folders",
       "singleFile": "Single file",
-      "userManual": "User manual"
+      "userManual": "User manual",
+      "skillsMap": "Skills map"
     },
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
@@ -1500,7 +1501,9 @@
         "admin-users": "Administration — Users & Access",
         "admin-global-search": "Administration — Global Search",
         "admin-help-content": "Help & learning — Help information",
-        "manual": "Help & learning — User manual"
+        "manual": "Help & learning — User manual",
+        "skills-map": "Help & learning — Skills map",
+        "skill-quiz": "Help & learning — A skill's quiz"
       },
       "hints": {
         "drag-select": "Map — drag a rectangle to select many properties",
@@ -4132,6 +4135,8 @@
       "globalSearch": "Global search",
       "helpContent": "Help information",
       "manual": "User manual",
+      "skillsMap": "Skills map",
+      "skillQuiz": "Quiz",
       "docTypeEngine": "DocTypeEngine",
       "changePassword": "Change password",
       "new": "New",
@@ -4329,6 +4334,62 @@
     "fileName": "User manual",
     "chapterNav": "The manual's chapters",
     "notFound": "There is no section „{id}” in the manual; the first chapter is open."
+  },
+  "skillsMap": {
+    "title": "Skills map",
+    "intro": "Each box is a skill of working with the archive, from the basic ones on the left to the expert ones on the right. An arrow runs from a skill to one that builds on it. Press an open box to take its quiz; a closed one tells you what it is missing.",
+    "level": "Level {level}",
+    "states": {
+      "closed": "Closed",
+      "open": "Open",
+      "mastered": "Mastered",
+      "obsolete": "Obsolete"
+    },
+    "stateHelp": {
+      "closed": "At least one skill before it is missing; its quiz is not available.",
+      "open": "Every skill before it is mastered; its quiz is available.",
+      "mastered": "Its quiz has been passed.",
+      "obsolete": "Mastered, and a skill that builds on it is mastered too."
+    },
+    "legend": "Legend",
+    "paths": "Paths",
+    "allPaths": "All paths",
+    "pathMastered": "path mastered",
+    "fit": "Fit",
+    "actualSize": "100%",
+    "list": "List",
+    "diagram": "Diagram",
+    "boxLabel": "{number} {name} — {level}, path {path} — {state}",
+    "loading": "Loading your progress…",
+    "loadFailed": "Your progress could not be loaded. Please reload the page.",
+    "panel": {
+      "close": "Close",
+      "levelPath": "{level} · path {path}",
+      "missing": "To open, it needs:",
+      "masteredOn": "Mastered on {date}.",
+      "obsoleteNote": "Obsolete: a skill that builds on it is mastered.",
+      "openQuiz": "Open the quiz",
+      "retryAt": "The quiz can be taken again from {when} (Toronto time)."
+    },
+    "listNumber": "No.",
+    "listSkill": "Skill",
+    "listPath": "Path",
+    "listState": "State",
+    "pathShort": {
+      "persons": "Persons",
+      "properties": "Properties",
+      "documents": "Documents",
+      "links": "Links",
+      "import": "Import",
+      "workspace": "Workspace"
+    }
+  },
+  "skillQuiz": {
+    "title": "Quiz — {number} {name}",
+    "preparing": "This skill's quiz is being prepared. Until then, go back to the map.",
+    "notOpen": "This skill is not open yet: master the skills before it first.",
+    "unknown": "There is no skill „{key}”.",
+    "back": "Back to the map"
   },
   "parentsFromIdCard": {
     "foldTitle": "The holder's parents",

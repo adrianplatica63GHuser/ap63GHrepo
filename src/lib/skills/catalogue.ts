@@ -208,8 +208,9 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: [],
     // #39.37: + the manual's screen and its case.
-    screens: ["dashboard", "manual"],
-    cases: ["TC-HELP-01", "TC-HELP-02"],
+    // #39.42: and the skills map with its quiz page — the help screens it is practised on; the skill is unchanged.
+    screens: ["dashboard", "manual", "skills-map", "skill-quiz"],
+    cases: ["TC-HELP-01", "TC-HELP-02", "TC-SKILL-01"],
   },
   {
     key: "persons-add-natural-person-by-hand",

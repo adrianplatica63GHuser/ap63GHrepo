@@ -3,6 +3,7 @@ import {
   BarChart3,
   BookOpen,
   BookOpenText,
+  Waypoints,
   Building2,
   Calculator,
   Database,
@@ -187,6 +188,8 @@ export const NAV_SECTIONS: NavSection[] = [
       // It edits the texts the „?" buttons show (#38.20's Ask first 1). Moved here from „Administrare".
       { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
       { key: "userManual", href: "/manual", icon: BookOpenText },
+      // Slice #39.42: „Harta competențelor” — the skills diagram; an Open box opens its quiz.
+      { key: "skillsMap", href: "/skills-map", icon: Waypoints },
     ],
   },
 ];

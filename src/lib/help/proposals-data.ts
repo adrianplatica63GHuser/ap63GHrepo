@@ -6,9 +6,10 @@
  * 2026-10-15); once the text is anything else, the entry is inert and may be deleted from this file.
  *
  * Nothing here is ever written to the database except by Adrian's own „Acceptă”.
- * „manual” has no entry: its text was written in #39.37 against the manual as it is.
+ * „manual” has no entry: its text was written in #39.37 against the manual as it is. A screen added since with no
+ * text yet carries a proposal written against no text (EMPTY_FINGERPRINT): „skills-map” and „skill-quiz” (#39.42).
  */
-import type { HelpProposal } from "./proposals";
+import { EMPTY_FINGERPRINT, type HelpProposal } from "./proposals";
 import type { HelpScreenKey } from "./registry";
 
 export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
@@ -259,5 +260,21 @@ export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
     howToRo: "Colțurile se lucrează în „Puncte de contur” sau pe „Hartă”, cu „Desenează”; un colț greșit se trage cu mouse-ul. „Mută mai sus” și „Mută mai jos” schimbă ordinea, deci și forma. Dacă apare „Ordinea colțurilor se încrucișează”, suprafața calculată nu mai are sens: „Îndreaptă ordinea” reface ordinea fără să mute colțurile.\n\nNimic nu se scrie în arhivă, nici „Salvează” de pe un rând de colț, până nu apăsați „Salvează” jos, sub hartă.\n\n„Navighează”, sub hartă, dă traseul până la teren, ca link Google Maps și cod QR. Fișa „Street View” e oprită până o bifați, pentru că Google taxează fiecare imagine.",
     backgroundEn: "A property's screen: its cadastral data, address, links and, in the light-purple column on the right, the parcel's map, its corners and Street View. The parcel's shape is given by its corners, in the order in which they are joined. The property's type, in italics after the nickname, decides which tiles can be shown.",
     howToEn: "Corners are worked on in „Puncte de contur” (the boundary points) or on „Hartă” (map), with „Desenează” (draw); a wrong corner is dragged with the mouse. „Mută mai sus” and „Mută mai jos” (move up, move down) change the order, and so the shape. If „Ordinea colțurilor se încrucișează” (the order of the corners crosses) appears, the calculated area means nothing: „Îndreaptă ordinea” (straighten the order) fixes the order without moving the corners.\n\nNothing is written to the archive, not even by a corner row's „Salvează”, until you press „Salvează” at the bottom, below the map.\n\n„Navighează” (directions), below the map, gives the route to the land, as a Google Maps link and a QR code. The „Street View” tile is off until you tick it, because Google charges for every view.",
+  },
+  "skills-map": {
+    against: EMPTY_FINGERPRINT,
+    reason: "a new screen (#39.42) with no text yet",
+    backgroundRo: "„Harta competențelor” arată, ca o hartă, ce se învață în lucrul cu arhiva: fiecare casetă este o competență, de la cele de bază, în stânga, la cele de expert, în dreapta. Culoarea casetei este a nivelului ei, iar desenul de peste ea arată unde sunteți: deschisă, stăpânită, închisă sau depășită.",
+    howToRo: "Apăsați o casetă deschisă ca să dați chestionarul ei. Cu cel puțin 80 % răspunsuri bune competența devine stăpânită, iar cele de dinaintea ei devin depășite. O casetă închisă, apăsată, spune ce competențe îi lipsesc.\n\nUn chestionar picat se poate relua după trei zile. Alegeți un traseu de deasupra hărții ca să vedeți doar competențele lui; „Potrivește” încape harta în fereastră, iar „Listă” arată aceleași competențe ca listă.",
+    backgroundEn: "„Harta competențelor” (the skills map) shows, as a map, what there is to learn about working with the archive: each box is a skill, from the basic ones on the left to the expert ones on the right. A box's colour is its level's, and what is drawn over it shows where you stand: open, mastered, closed or obsolete.",
+    howToEn: "Press an open box to take its quiz. With at least 80 % right answers the skill becomes mastered, and the ones before it become obsolete. A closed box, pressed, says which skills it is missing.\n\nA failed quiz can be taken again after three days. Choose a path above the map to see only its skills; „Potrivește” (fit) fits the map to the window, and „Listă” (list) shows the same skills as a list.",
+  },
+  "skill-quiz": {
+    against: EMPTY_FINGERPRINT,
+    reason: "a new screen (#39.42) with no text yet",
+    backgroundRo: "Pagina chestionarului unei competențe. Se deschide dintr-o casetă deschisă a „Hărții competențelor”; o competență închisă nu are încă chestionar.",
+    howToRo: "Chestionarul se trece cu cel puțin 80 % răspunsuri bune, iar atunci competența devine stăpânită pe hartă. Un chestionar picat se poate relua după trei zile; pagina spune data și ora de la care se poate.",
+    backgroundEn: "A skill's quiz page. It opens from an open box of „Harta competențelor” (the skills map); a closed skill has no quiz yet.",
+    howToEn: "The quiz is passed with at least 80 % right answers, and the skill then becomes mastered on the map. A failed quiz can be taken again after three days; the page says the date and hour from which it can.",
   },
 };

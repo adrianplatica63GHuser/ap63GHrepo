@@ -1409,7 +1409,8 @@
       "inheritanceTrees": "Arbori de moștenire",
       "miscFolders": "Dosare diverse",
       "singleFile": "Fișier individual",
-      "userManual": "Manual de utilizare"
+      "userManual": "Manual de utilizare",
+      "skillsMap": "Harta competențelor"
     },
     "collapse": "Restrânge bara laterală",
     "expand": "Extinde bara laterală",
@@ -1500,7 +1501,9 @@
         "admin-users": "Administrare — Utilizatori & Acces",
         "admin-global-search": "Administrare — Căutare globală",
         "admin-help-content": "Ajutor și învățare — Informații de ajutor",
-        "manual": "Ajutor și învățare — Manual de utilizare"
+        "manual": "Ajutor și învățare — Manual de utilizare",
+        "skills-map": "Ajutor și învățare — Harta competențelor",
+        "skill-quiz": "Ajutor și învățare — Chestionarul unei competențe"
       },
       "hints": {
         "drag-select": "Hartă — trage un dreptunghi pentru a selecta mai multe proprietăți",
@@ -4132,6 +4135,8 @@
       "globalSearch": "Căutare globală",
       "helpContent": "Informații de ajutor",
       "manual": "Manual de utilizare",
+      "skillsMap": "Harta competențelor",
+      "skillQuiz": "Chestionar",
       "docTypeEngine": "Distilare Tipizate",
       "changePassword": "Schimbă parola",
       "new": "Nou",
@@ -4329,6 +4334,62 @@
     "fileName": "Manual de utilizare",
     "chapterNav": "Capitolele manualului",
     "notFound": "Secțiunea „{id}” nu există în manual; s-a deschis primul capitol."
+  },
+  "skillsMap": {
+    "title": "Harta competențelor",
+    "intro": "Fiecare casetă este o competență a lucrului cu arhiva, de la cele de bază, în stânga, la cele de expert, în dreapta. O săgeată duce de la o competență la una care se sprijină pe ea. Apăsați o casetă deschisă ca să dați chestionarul ei; una închisă vă spune ce îi lipsește.",
+    "level": "Nivelul {level}",
+    "states": {
+      "closed": "Închisă",
+      "open": "Deschisă",
+      "mastered": "Stăpânită",
+      "obsolete": "Depășită"
+    },
+    "stateHelp": {
+      "closed": "Îi lipsește cel puțin o competență dinainte; chestionarul nu este disponibil.",
+      "open": "Toate competențele dinainte sunt stăpânite; chestionarul este disponibil.",
+      "mastered": "Chestionarul ei a fost trecut.",
+      "obsolete": "Stăpânită, iar o competență care se sprijină pe ea este stăpânită și ea."
+    },
+    "legend": "Legendă",
+    "paths": "Trasee",
+    "allPaths": "Toate traseele",
+    "pathMastered": "traseu stăpânit",
+    "fit": "Potrivește",
+    "actualSize": "100%",
+    "list": "Listă",
+    "diagram": "Diagramă",
+    "boxLabel": "{number} {name} — {level}, traseul {path} — {state}",
+    "loading": "Se încarcă progresul…",
+    "loadFailed": "Progresul nu a putut fi încărcat. Reîncărcați pagina.",
+    "panel": {
+      "close": "Închide",
+      "levelPath": "{level} · traseul {path}",
+      "missing": "Ca să se deschidă, îi lipsesc:",
+      "masteredOn": "Stăpânită pe {date}.",
+      "obsoleteNote": "Depășită: o competență care se sprijină pe ea este stăpânită.",
+      "openQuiz": "Deschide chestionarul",
+      "retryAt": "Chestionarul se poate relua din {when} (ora Toronto)."
+    },
+    "listNumber": "Nr.",
+    "listSkill": "Competența",
+    "listPath": "Traseul",
+    "listState": "Starea",
+    "pathShort": {
+      "persons": "Persoane",
+      "properties": "Proprietăți",
+      "documents": "Acte",
+      "links": "Legături",
+      "import": "Import",
+      "workspace": "Spațiul de lucru"
+    }
+  },
+  "skillQuiz": {
+    "title": "Chestionar — {number} {name}",
+    "preparing": "Chestionarul acestei competențe se pregătește. Până atunci, reveniți la hartă.",
+    "notOpen": "Competența nu este deschisă încă: întâi stăpâniți competențele dinainte.",
+    "unknown": "Nu există competența „{key}”.",
+    "back": "Înapoi la hartă"
   },
   "parentsFromIdCard": {
     "foldTitle": "Părinții titularului",

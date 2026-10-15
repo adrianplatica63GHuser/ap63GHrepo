@@ -183,6 +183,20 @@ export function buildSegments(
       segments.push({ label: t("manual"), href: accumulated });
       continue;
     }
+    // Slice #39.42: „Harta competențelor", in „Ajutor și învățare" too; a skill's quiz page under it.
+    if (part === "skills-map") {
+      const section = sectionOfScreen(accumulated);
+      if (section) {
+        sectionIdx = segments.length;
+        segments.push({ label: t(`sections.${section}`), href: null });
+      }
+      segments.push({ label: t("skillsMap"), href: accumulated });
+      continue;
+    }
+    if (parts[i - 1] === "skills-map") {
+      segments.push({ label: t("skillQuiz"), href: accumulated });
+      continue;
+    }
     // Slice #38.20: the reports page.
     if (part === "reports") { segments.push({ label: t("reports"), href: accumulated }); continue; }
     if (part === "admin") {
