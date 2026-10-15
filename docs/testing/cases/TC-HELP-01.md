@@ -37,8 +37,9 @@ rows, none blank). So the case changes **one field of one screen** and restores 
   screen now offers him a proposal to replace it — the case must pass on whichever text he keeps.
   On 2026-10-15 it was still the August text, which ends „Descriere completă: Manualul
   utilizatorului, capitolul 6.4."
-- Steps 8–11 change **all four fields** — „Acceptă" writes the proposal — and put them back the
-  same way.
+- Steps 8–14 (#39.52) work on **„Ajutor și învățare — Harta competențelor"** and **„Ajutor și
+  învățare — Chestionarul unei competențe"**, whose proposals were written against no text: each is
+  emptied, so its proposal is offered again, accepted, and its four fields put back the same way.
 
 Restoring the text leaves one trace: the row's `updated_at` moves to the day of the run. The
 text itself is identical.
@@ -51,7 +52,7 @@ back through the screen.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Ajutor și învățare" → „Informații de ajutor" (#39.37: was under „Administrare") | The heading „Informații de ajutor", two tabs „Ecrane" and „Sfaturi rapide", and the list of screens, each with „Complet" — except a screen whose help Adrian has still to write, which may read „Lipsă": today „Interacțiuni — Istoric" (#38.84) |
+| 1 | Opens „Ajutor și învățare" → „Informații de ajutor" (#39.37: was under „Administrare") | The heading „Informații de ajutor", two tabs „Ecrane" and „Sfaturi rapide", and the list of screens, each with „Complet" — none „Lipsă" since #39.52 accepted every proposal |
 | 2 | Presses „Administrare — Etichete" | Four fields — „Context (Engleză)", „Context (Română)", „Cum se folosește (Engleză)", „Cum se folosește (Română)" — „Salvează", and „Previzualizare", which shows each field under its own heading |
 | 3 | Notes the text in „Cum se folosește (Română)" | The stored text |
 | 4 | Replaces it with `TC-HELP-01 — text de ajutor scris de cazul de test.` | „Previzualizare" follows as it is typed |
@@ -62,21 +63,34 @@ back through the screen.
 
 Step 6 is the other end: what is written on the help screen is what the screen's „?" says.
 
-### A proposal accepted, then put back (#39.40)
+### A proposal accepted, then put back (#39.40; seeded since #39.52)
 
-Runs only while „Administrare — Etichete" is marked „Propunere" — while its text is still the
-one the proposal was written against. Once Adrian has accepted or rewritten it, there is nothing
-to accept, and the spec skips these steps and says why.
+Since #39.52 every proposal is accepted, so none waits. These steps seed their own: before step 8
+the four fields of „Ajutor și învățare — Harta competențelor" are emptied (the PUT „Salvează"
+sends), and its proposal — written against no text — is offered again.
 
 | # | A person does | And sees |
 |---|---|---|
-| 8 | Opens „Informații de ajutor" | „Administrare — Etichete" carries „Propunere" beside „Complet", and above the list „N de ecrane au un text propus din manual — le găsiți marcate „Propunere"." |
-| 9 | Presses „Administrare — Etichete" | „Un text propus pentru acest ecran": „Textul de acum" and „Propunerea" side by side, field by field — the current text the one noted; „Acceptă", „Editează", „Nu acum" |
+| 8 | Opens „Informații de ajutor" | „Ajutor și învățare — Harta competențelor" carries „Propunere", and above the list „1 ecran are un text propus din manual — îl găsiți marcat „Propunere"." |
+| 9 | Presses „Ajutor și învățare — Harta competențelor" | „Un text propus pentru acest ecran": „Textul de acum" and „Propunerea" side by side, field by field — the current text „—"; „Acceptă", „Editează", „Nu acum" |
 | 10 | Presses „Acceptă" | „Propunerea a fost salvată ca text al ecranului."; the proposal and the mark „Propunere" are gone, and the four boxes hold the proposal |
-| 11 | Opens „Etichete" and presses „?" | The panel shows the proposal's „Context" |
+| 11 | Opens „Harta competențelor" and presses „?" | The panel shows the proposal's „Context" |
 
-At the end of steps 8–11: the four fields put back as they were read, and „Administrare —
-Etichete" is marked „Propunere" again — the text is once more the one the proposal answers.
+At the end of steps 8–11: the four fields put back as they were read.
+
+### „Acceptă toate" (#39.52)
+
+Runs only when no proposal waits on the database — the case never accepts a proposal it did not
+seed. Before step 12 both „Ajutor și învățare — Harta competențelor" and „Ajutor și învățare —
+Chestionarul unei competențe" are emptied.
+
+| # | A person does | And sees |
+|---|---|---|
+| 12 | Opens „Informații de ajutor" and presses „Acceptă toate (2)" | A confirmation „Acceptați toate propunerile?": „Propunerile se salvează ca texte ale celor 2 ecrane de mai jos. Un ecran al cărui text s-a schimbat între timp este sărit, nu suprascris.", the two screens by name, „Acceptă toate" and „Anulează" |
+| 13 | Presses „Anulează" | The confirmation closes; both screens still carry „Propunere", and nothing was saved |
+| 14 | Presses „Acceptă toate (2)", then „Acceptă toate" | „2 texte propuse au fost salvate."; the button, the count line and both marks „Propunere" are gone; each screen's four fields are its proposal's |
+
+At the end of steps 12–14: both screens' four fields put back as they were read.
 
 ## At the end — leaving things as they were found
 
@@ -85,6 +99,8 @@ folosește (Română)", empty line included, and press „Salvează". On „Etic
 original sentence again.
 
 ## Notes from the runs
+
+**2026-10-15 — Slice #39.52.** Every proposal was accepted with the new „Acceptă toate", so none waits and steps 8–11, written against „Administrare — Etichete", would only ever skip. They now seed their own proposal on „Harta competențelor" and put its text back; steps 12–14 add „Acceptă toate", seeded the same way on two screens. Step 1 reads „Complet" on every screen. Written into the spec in the same slice and run by the test runner, not by hand, as #39.40's steps were: the case stays `automated`, and the #39.52 handover says so.
 
 **2026-10-15 — Slice #39.40.** Step 3 no longer pins the text (see „Shared state"); step 7 and steps 8–11 added with the slice that built them, and written into the spec in the same commit. They were run by the test runner, not by hand: the case stays `automated`, and the #39.40 handover says so.
 

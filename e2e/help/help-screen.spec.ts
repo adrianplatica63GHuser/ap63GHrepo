@@ -25,13 +25,20 @@
  *     a proposal to replace it. What the spec proves is unchanged: the text read is the text put back.
  *
  * Slice #39.40 adds step 7 — the panel's „Vezi în manual” opens the manual at the screen's section — and a
- * second test, steps 8–11: a proposal accepted on „Administrare — Etichete”, read behind „?”, and the text
- * put back, after which the proposal is offered again. Both tests change the same row, so they run serially.
+ * second test, steps 8–11: a proposal accepted, read behind „?”, and the text put back.
+ *
+ * Slice #39.52: every proposal is accepted on Adrian's database, so none is offered any more and the second test
+ * SEEDS its own: it empties „Ajutor și învățare — Harta competențelor”, whose proposal was written against no
+ * text, so the proposal is offered again; and it gives the text back at the end, byte for byte. A third test,
+ * steps 12–14, does the same for two screens and accepts them with „Acceptă toate”. It never accepts a proposal
+ * it did not seed: when any other proposal waits on the database, it skips and says so. And every screen must
+ * read „Complet” now — the list of screens allowed to read „Lipsă” is empty.
  */
 
 import { test, expect } from "../helpers/test";
 import { readHelp, writeHelp } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
+import { HELP_PROPOSALS } from "../../src/lib/help/proposals-data";
 
 const SCREEN = "admin-tags";
 /** The manual section „Administrare — Etichete” points at (HELP_SCREENS in src/lib/help/registry.ts). */
@@ -42,14 +49,16 @@ const TC_TEXT = "TC-E2E-HELP-01 — text de ajutor scris de cazul de test.";
  * is his, the handover proposes it). Each may read „Lipsă"; every other screen must read „Complet". The list may
  * outlive the gap: once the text is written the screen reads „Complet" and still passes. (Slice #38.84)
  */
-const HELP_TO_WRITE = [
-  "Interacțiuni — Istoric",
-  // Slice #39.42: two new screens, each with a proposal written against no text (#39.40).
-  "Ajutor și învățare — Harta competențelor",
-  "Ajutor și învățare — Chestionarul unei competențe",
-  // Slice #39.45: „Întreabă”, with a proposal written against no text.
-  "Ajutor și învățare — Întreabă",
+const HELP_TO_WRITE: readonly string[] = [
+  // Slice #39.52: none left — every proposal was accepted, the four screens that had no text among them.
+];
+
+/** Slice #39.52: the screens whose proposals were written against no text, emptied to offer them again. */
+const SEEDED = [
+  { key: "skills-map", label: "Ajutor și învățare — Harta competențelor", path: "/skills-map" },
+  { key: "skill-quiz", label: "Ajutor și învățare — Chestionarul unei competențe", path: null },
 ] as const;
+const EMPTY = { backgroundEn: "", backgroundRo: "", howToEn: "", howToRo: "" };
 
 test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în spatele „?”", () => {
   test.describe.configure({ mode: "serial" });
@@ -144,41 +153,47 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
       expect(await readHelp(page.request, SCREEN)).toEqual(before);
     }
   });
-  test("o propunere acceptată pe „Administrare — Etichete”, citită în „?”; apoi textul pus înapoi", async ({ page }) => {
+  test("o propunere acceptată, citită în „?”; apoi textul pus înapoi", async ({ page }) => {
     test.slow();
-    const before = await readHelp(page.request, SCREEN);
-
-    // Step 8 — „Informații de ajutor”: the screen is marked „Propunere”, and a line above the list counts them.
-    await page.goto("/admin/help-content");
-    const screenButton = page.getByRole("button", { name: /^Administrare — Etichete/ });
-    await expect(screenButton).toContainText("Complet", { timeout: 30_000 });
-    // The proposal is offered only while the text is the one it was written against: once Adrian has accepted
-    // or rewritten it there is nothing to accept here, and the case says so rather than fail.
-    test.skip(!(await screenButton.textContent())?.includes("Propunere"), "No proposal is offered for „Administrare — Etichete” on this database.");
-    await expect(page.locator("[data-help-proposals-count]")).toContainText(/(are|au) un text propus din manual/);
+    const seeded = SEEDED[0];
+    const proposalText = HELP_PROPOSALS[seeded.key]!;
+    const before = await readHelp(page.request, seeded.key);
 
     try {
+      // Seeding — the screen emptied, so its proposal, written against no text, is offered again.
+      await writeHelp(page.request, seeded.key, EMPTY);
+
+      // Step 8 — „Informații de ajutor”: the screen is marked „Propunere”, and a line above the list counts them.
+      await page.goto("/admin/help-content");
+      const screenButton = page.getByRole("button", { name: new RegExp(`^${seeded.label}`) });
+      await expect(screenButton).toContainText("Propunere", { timeout: 30_000 });
+      await expect(page.locator("[data-help-proposals-count]")).toContainText(/(are|au) un text propus din manual/);
+
       // Step 9 — the screen: its text and the proposal side by side, field by field.
       await screenButton.click();
-      const proposal = page.locator(`[data-help-proposal="${SCREEN}"]`);
+      const proposal = page.locator(`[data-help-proposal="${seeded.key}"]`);
       await expect(proposal).toBeVisible();
       await expect(proposal.getByText("Textul de acum", { exact: true })).toBeVisible();
       await expect(proposal.getByText("Propunerea", { exact: true })).toBeVisible();
-      await expect(proposal.locator('[data-proposal-field="howToRo"] p').nth(1)).toHaveText(before.howToRo ?? "—");
-      const proposedHowToRo = (await proposal.locator('[data-proposal-field="howToRo"] p').nth(3).textContent()) ?? "";
-      expect(proposedHowToRo).not.toBe("");
+      await expect(proposal.locator('[data-proposal-field="howToRo"] p').nth(1)).toHaveText("—");
+      expect(((await proposal.locator('[data-proposal-field="howToRo"] p').nth(3).textContent()) ?? "").trim()).not.toBe("");
 
       // Step 10 — „Acceptă”: saved, the mark gone, the boxes holding the proposal.
       await proposal.getByRole("button", { name: "Acceptă", exact: true }).click();
       await expect(page.getByText("Propunerea a fost salvată ca text al ecranului.", { exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(proposal).toBeHidden();
       await expect(screenButton).not.toContainText("Propunere");
-      const after = await readHelp(page.request, SCREEN);
-      expect(after.howToRo).toBe(proposedHowToRo);
-      await expect(page.locator("main textarea").nth(3)).toHaveValue(proposedHowToRo);
+      const after = await readHelp(page.request, seeded.key);
+      expect(after).toEqual({
+        backgroundEn: proposalText.backgroundEn,
+        backgroundRo: proposalText.backgroundRo,
+        howToEn: proposalText.howToEn,
+        howToRo: proposalText.howToRo,
+      });
+      await expect(page.locator("main textarea").nth(3)).toHaveValue(proposalText.howToRo);
 
-      // Step 11 — „Etichete”, „?”: the proposal is the screen's help now.
-      await page.goto("/admin/tags");
+      // Step 11 — „Harta competențelor”, „?”: the proposal is the screen's help now.
+      await page.goto(seeded.path);
       await page
         .getByRole("button", { name: "Ajutor", exact: true })
         .and(page.locator(":not(nav[data-sidebar-nav] *)"))
@@ -189,14 +204,63 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
         .filter({ has: page.getByRole("heading", { name: "Ajutor", exact: true }) })
         .filter({ hasText: "Cum se folosește" })
         .last();
-      await expect(panel.getByText(after.backgroundRo ?? "", { exact: true })).toBeVisible();
+      await expect(panel.getByText(proposalText.backgroundRo, { exact: true })).toBeVisible();
     } finally {
-      // At the end — Adrian's text back, byte for byte; the proposal is offered again, because the text is the
-      // one it was written against.
-      await writeHelp(page.request, SCREEN, before);
-      expect(await readHelp(page.request, SCREEN)).toEqual(before);
+      // At the end — the text back, byte for byte.
+      await writeHelp(page.request, seeded.key, before);
+      expect(await readHelp(page.request, seeded.key)).toEqual(before);
     }
+  });
+
+  test("„Acceptă toate”: două propuneri, o confirmare, amândouă salvate; apoi textele puse înapoi", async ({ page }) => {
+    test.slow();
+    // Never accept what the spec did not seed: with any proposal already waiting, the case is not run.
     await page.goto("/admin/help-content");
-    await expect(page.getByRole("button", { name: /^Administrare — Etichete/ })).toContainText("Propunere", { timeout: 30_000 });
+    await expect(page.getByRole("button", { name: /^Administrare — Etichete/ })).toContainText("Complet", { timeout: 30_000 });
+    test.skip(
+      (await page.locator("[data-help-proposals-count]").count()) > 0,
+      "Proposals already wait on this database; „Acceptă toate” would accept them too, and the spec accepts only what it seeded.",
+    );
+    const before = await Promise.all(SEEDED.map((s) => readHelp(page.request, s.key)));
+
+    try {
+      // Seeding — both screens emptied, so both proposals are offered.
+      for (const s of SEEDED) await writeHelp(page.request, s.key, EMPTY);
+
+      // Step 12 — „Acceptă toate (2)” above the list; pressed, a confirmation naming the two screens.
+      await page.reload();
+      const acceptAll = page.getByRole("button", { name: "Acceptă toate (2)", exact: true });
+      await expect(acceptAll).toBeVisible({ timeout: 30_000 });
+      await acceptAll.click();
+      const dialog = page.getByRole("alertdialog", { name: "Acceptați toate propunerile?" });
+      await expect(dialog).toBeVisible();
+      await expect(dialog).toContainText("Propunerile se salvează ca texte ale celor 2 ecrane de mai jos.");
+      await expect(dialog.locator("[data-help-accept-all-screen]")).toHaveCount(2);
+      for (const s of SEEDED) await expect(dialog.getByText(s.label, { exact: true })).toBeVisible();
+
+      // Step 13 — „Anulează”: nothing saved; both screens still „Propunere”.
+      await dialog.getByRole("button", { name: "Anulează", exact: true }).click();
+      await expect(dialog).toBeHidden();
+      for (const s of SEEDED) await expect(page.getByRole("button", { name: new RegExp(`^${s.label}`) })).toContainText("Propunere");
+      for (const s of SEEDED) expect(await readHelp(page.request, s.key)).toEqual(EMPTY);
+
+      // Step 14 — „Acceptă toate” again, then „Acceptă toate” in the dialog: both saved, the marks and the button gone.
+      await acceptAll.click();
+      await dialog.getByRole("button", { name: "Acceptă toate", exact: true }).click();
+      await expect(page.getByText("2 texte propuse au fost salvate.", { exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator("[data-help-accept-all] button")).toHaveCount(0);
+      await expect(page.locator("[data-help-proposals-count]")).toHaveCount(0);
+      for (const s of SEEDED) {
+        await expect(page.getByRole("button", { name: new RegExp(`^${s.label}`) })).not.toContainText("Propunere");
+        const p = HELP_PROPOSALS[s.key]!;
+        expect(await readHelp(page.request, s.key)).toEqual({ backgroundEn: p.backgroundEn, backgroundRo: p.backgroundRo, howToEn: p.howToEn, howToRo: p.howToRo });
+      }
+    } finally {
+      // At the end — both texts back, byte for byte.
+      for (const [i, s] of SEEDED.entries()) {
+        await writeHelp(page.request, s.key, before[i]);
+        expect(await readHelp(page.request, s.key)).toEqual(before[i]);
+      }
+    }
   });
 });
