@@ -48,6 +48,11 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/(all-roles)/admin/global-search/_components/global-search-view.tsx": [
     ["A113", "{row.entityType === \"PROPERTY\" ? propertyLabel(row, nameOr(n"], // #37.57: the name is the link
   ],
+  // Slice #39.48: „Legături”'s line „Părțile actului (3) sunt în fișa „Părți”.” — its „Părți” is a word in a sentence
+  // that brings the tile into view on the same screen (A096).
+  "src/app/documents/_components/document-related-tile.tsx": [
+    ["A096", "{chunks}"],
+  ],
   "src/app/_components/dashboard-client.tsx": [
     ["A113", "{data === undefined ? ( <Skeleton className=\"h-8 w-12\" /"],
     ["A113", "{nameOr(doc.title, \"document\")}"], // #37.57: the title is the link
