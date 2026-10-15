@@ -248,11 +248,11 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
     await expect(panel).toBeHidden();
 
     // Step 7 — „Listă” follows the Path and the view: the Path's skills, no „Starea”, no links.
-    await page.getByRole("button", { name: "Listă" }).click();
+    await page.getByRole("button", { name: "Listă", exact: true }).click();
     await expect(page.locator("[data-skill-row]")).toHaveCount(inProperties.size);
     await expect(page.locator("[data-skills-list] th").filter({ hasText: "Starea" })).toHaveCount(0);
     await expect(page.locator("[data-skill-row] a")).toHaveCount(0);
-    await page.getByRole("button", { name: "Diagramă" }).click();
+    await page.getByRole("button", { name: "Diagramă", exact: true }).click();
     await expect(page.locator('[data-map-view="overview"]').filter({ visible: true })).toHaveAttribute("aria-pressed", "true");
 
     if (process.env.GA40_MANUAL_FIGURES) {
@@ -297,7 +297,7 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
       await expect(b).toHaveAttribute("data-shown", (await b.getAttribute("data-state"))!);
     }
     await expect(page.locator("[data-legend]").filter({ visible: true })).toHaveCount(4);
-    await page.getByRole("button", { name: "Toate traseele" }).click();
+    await page.getByRole("button", { name: "Toate traseele", exact: true }).click();
     await expect(box(page, key("1.1"))).toHaveCSS("opacity", "1");
     await expect(box(page, key("4.1"))).toHaveCSS("opacity", "1");
   });
