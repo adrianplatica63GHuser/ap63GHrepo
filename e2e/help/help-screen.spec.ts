@@ -20,8 +20,13 @@
  *     shown. Not changed here.
  *   - The sentence written is `TC-E2E-HELP-01 — text de ajutor scris de cazul
  *     de test.` — the case's, with the TC-E2E- marker every spec write carries.
- *   - Step 3's „checks it is the text above" compares the stored field with the
- *     case file's text, character for character, before anything is written.
+ *   - Step 3's „notes the text" reads the stored field before anything is written; since Slice #39.40 the spec
+ *     no longer pins it to the case file's sentence, because the text is Adrian's and the screen now offers him
+ *     a proposal to replace it. What the spec proves is unchanged: the text read is the text put back.
+ *
+ * Slice #39.40 adds step 7 — the panel's „Vezi în manual” opens the manual at the screen's section — and a
+ * second test, steps 8–11: a proposal accepted on „Administrare — Etichete”, read behind „?”, and the text
+ * put back, after which the proposal is offered again. Both tests change the same row, so they run serially.
  */
 
 import { test, expect } from "../helpers/test";
@@ -29,9 +34,8 @@ import { readHelp, writeHelp } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
 
 const SCREEN = "admin-tags";
-const ORIGINAL_HOW_TO_RO =
-  "Etichetele se adaugă din fila META INFO a unei înregistrări, una câte una.\n\n" +
-  "Descriere completă: Manualul utilizatorului, capitolul 6.4.";
+/** The manual section „Administrare — Etichete” points at (HELP_SCREENS in src/lib/help/registry.ts). */
+const MANUAL_SECTION = "admin-groups-tags";
 const TC_TEXT = "TC-E2E-HELP-01 — text de ajutor scris de cazul de test.";
 /**
  * Screens registered before their help is written — Adrian writes it, on this very screen (#37.23's rule: the text
@@ -41,11 +45,12 @@ const TC_TEXT = "TC-E2E-HELP-01 — text de ajutor scris de cazul de test.";
 const HELP_TO_WRITE = ["Interacțiuni — Istoric"] as const;
 
 test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în spatele „?”", () => {
+  test.describe.configure({ mode: "serial" });
+
   test("textul scris pe „Informații de ajutor” e cel din „?”; apoi pus înapoi identic", async ({ page }) => {
     test.slow();
     const before = await readHelp(page.request, SCREEN);
-    // Step 3's check, made before anything is written: the stored text is the case's.
-    expect(before.howToRo).toBe(ORIGINAL_HOW_TO_RO);
+    const originalHowToRo = before.howToRo ?? "";
 
     try {
       // Step 1 — „Ajutor și învățare" → „Informații de ajutor" (#39.37: was „Administrare"): the heading, „Ecrane", „Sfaturi rapide",
@@ -77,7 +82,7 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
       const howToRo = page.locator("main textarea").nth(3);
 
       // Step 3 — the field holds the text above.
-      await expect(howToRo).toHaveValue(ORIGINAL_HOW_TO_RO);
+      await expect(howToRo).toHaveValue(originalHowToRo);
 
       // Step 4 — the new sentence; „Previzualizare" follows.
       await howToRo.fill(TC_TEXT);
@@ -113,16 +118,78 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
       await expect(panel.getByRole("heading", { name: "Cum se folosește", exact: true })).toBeVisible();
       await expect(panel.getByText(TC_TEXT, { exact: true })).toBeVisible();
 
+      // Step 7 (#39.40) — „Vezi în manual: §…” under the text opens the manual at the screen's section.
+      const manualLink = panel.getByRole("link", { name: /^Vezi în manual: §\d+(\.\d+)* \S/ });
+      await expect(manualLink).toBeVisible();
+      await manualLink.click();
+      await expect(page).toHaveURL(new RegExp(`/manual\\?s=${MANUAL_SECTION}$`), { timeout: 30_000 });
+      await expect(page.locator(`[id="${MANUAL_SECTION}"]`).filter({ visible: true })).toBeVisible({ timeout: 30_000 });
+
       // ── At the end — the text above back into the field, empty line included, „Salvează" ──
       await page.goto("/admin/help-content");
       await page.getByRole("button", { name: /^Administrare — Etichete/ }).click({ timeout: 30_000 });
       await expect(howToRo).toHaveValue(TC_TEXT, { timeout: 15_000 });
-      await howToRo.fill(ORIGINAL_HOW_TO_RO);
+      await howToRo.fill(originalHowToRo);
       await save.click();
       await expect(page.getByText("Salvat", { exact: true })).toBeVisible({ timeout: 15_000 });
     } finally {
       await writeHelp(page.request, SCREEN, before);
       expect(await readHelp(page.request, SCREEN)).toEqual(before);
     }
+  });
+  test("o propunere acceptată pe „Administrare — Etichete”, citită în „?”; apoi textul pus înapoi", async ({ page }) => {
+    test.slow();
+    const before = await readHelp(page.request, SCREEN);
+
+    // Step 8 — „Informații de ajutor”: the screen is marked „Propunere”, and a line above the list counts them.
+    await page.goto("/admin/help-content");
+    const screenButton = page.getByRole("button", { name: /^Administrare — Etichete/ });
+    await expect(screenButton).toContainText("Complet", { timeout: 30_000 });
+    // The proposal is offered only while the text is the one it was written against: once Adrian has accepted
+    // or rewritten it there is nothing to accept here, and the case says so rather than fail.
+    test.skip(!(await screenButton.textContent())?.includes("Propunere"), "No proposal is offered for „Administrare — Etichete” on this database.");
+    await expect(page.locator("[data-help-proposals-count]")).toContainText(/(are|au) un text propus din manual/);
+
+    try {
+      // Step 9 — the screen: its text and the proposal side by side, field by field.
+      await screenButton.click();
+      const proposal = page.locator(`[data-help-proposal="${SCREEN}"]`);
+      await expect(proposal).toBeVisible();
+      await expect(proposal.getByText("Textul de acum", { exact: true })).toBeVisible();
+      await expect(proposal.getByText("Propunerea", { exact: true })).toBeVisible();
+      await expect(proposal.locator('[data-proposal-field="howToRo"] p').nth(1)).toHaveText(before.howToRo ?? "—");
+      const proposedHowToRo = (await proposal.locator('[data-proposal-field="howToRo"] p').nth(3).textContent()) ?? "";
+      expect(proposedHowToRo).not.toBe("");
+
+      // Step 10 — „Acceptă”: saved, the mark gone, the boxes holding the proposal.
+      await proposal.getByRole("button", { name: "Acceptă", exact: true }).click();
+      await expect(page.getByText("Propunerea a fost salvată ca text al ecranului.", { exact: true })).toBeVisible({ timeout: 15_000 });
+      await expect(proposal).toBeHidden();
+      await expect(screenButton).not.toContainText("Propunere");
+      const after = await readHelp(page.request, SCREEN);
+      expect(after.howToRo).toBe(proposedHowToRo);
+      await expect(page.locator("main textarea").nth(3)).toHaveValue(proposedHowToRo);
+
+      // Step 11 — „Etichete”, „?”: the proposal is the screen's help now.
+      await page.goto("/admin/tags");
+      await page
+        .getByRole("button", { name: "Ajutor", exact: true })
+        .and(page.locator(":not(nav[data-sidebar-nav] *)"))
+        .first()
+        .click({ timeout: 30_000 });
+      const panel = page
+        .locator("div")
+        .filter({ has: page.getByRole("heading", { name: "Ajutor", exact: true }) })
+        .filter({ hasText: "Cum se folosește" })
+        .last();
+      await expect(panel.getByText(after.backgroundRo ?? "", { exact: true })).toBeVisible();
+    } finally {
+      // At the end — Adrian's text back, byte for byte; the proposal is offered again, because the text is the
+      // one it was written against.
+      await writeHelp(page.request, SCREEN, before);
+      expect(await readHelp(page.request, SCREEN)).toEqual(before);
+    }
+    await page.goto("/admin/help-content");
+    await expect(page.getByRole("button", { name: /^Administrare — Etichete/ })).toContainText("Propunere", { timeout: 30_000 });
   });
 });
