@@ -225,6 +225,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "learning-skills": "What the skills map is: the levels, the paths, the arrows between skills, and how to follow your progress.",
   "learning-skills-states": "What a skill's colours and states mean — open, mastered, closed, obsolete — and when they change.",
   "learning-skills-use": "How to use the map: take an open box's quiz, see what a closed one is missing, choose a path, switch to list or diagram.",
+  "learning-skills-paths": "What a path holds — its expert skills and everything they need, from any path — the grey arrows, and the two views, “My progress” and “Overview”.",
   "learning-quizzes": "How the skill quizzes work: how they open, how to take one, how to pass, and what happens after.",
   "learning-quizzes-take": "How to take a quiz: choose one answer each, send it, variants and shuffled order, what happens if you leave the page.",
   "learning-quizzes-result": "What you need to pass (80 %), what you see after passing or failing, and how long before you can retry.",

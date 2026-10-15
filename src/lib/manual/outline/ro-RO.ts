@@ -225,6 +225,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "learning-skills": "Ce este harta competențelor: nivelurile, traseele, săgețile dintre competențe și cum îți urmărești progresul.",
   "learning-skills-states": "Ce înseamnă culorile și stările unei competențe: deschisă, stăpânită, închisă, depășită, și când se schimbă.",
   "learning-skills-use": "Cum folosești harta: dai chestionarul unei casete deschise, vezi ce îi lipsește uneia închise, alegi un traseu, listă sau diagramă.",
+  "learning-skills-paths": "Ce cuprinde un traseu — competențele lui de expert și tot ce le trebuie, din orice traseu — săgețile gri, și cele două vizualizări, „Progresul meu” și „Prezentare”.",
   "learning-quizzes": "Cum funcționează chestionarele competențelor: cum se deschid, cum se dau, cum se trec și ce se întâmplă după.",
   "learning-quizzes-take": "Cum dai un chestionar: alegi câte un răspuns, trimiți, variantele și ordinea care se schimbă, ce se întâmplă dacă pleci de pe pagină.",
   "learning-quizzes-result": "Cât trebuie să ai ca să treci (80 %), ce vezi după un chestionar trecut sau picat și după cât timp îl poți da din nou.",

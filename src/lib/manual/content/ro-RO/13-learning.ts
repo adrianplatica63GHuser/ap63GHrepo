@@ -64,8 +64,27 @@ O competență fără nimic înainte — toate cele de bază — este deschisă 
 - Apăsați o casetă deschisă ca să dați chestionarul ei (secțiunea [[learning-quizzes]]).
 - O casetă închisă, apăsată, arată ce competențe îi lipsesc ca să se deschidă, fiecare cu starea ei. O casetă stăpânită sau depășită spune de când e stăpânită.
 - Când țineți mouse-ul pe o casetă, săgețile ei ies în față, iar celelalte se estompează.
-- Deasupra hărții stau traseele, de la „Persoane” la „Spațiul de lucru”. Alegeți unul ca să rămână în față doar competențele lui; „Toate traseele” le aduce înapoi. Un traseu e stăpânit când toate competențele lui avansate și de expert sunt stăpânite sau depășite; atunci are bifa verde.
+- Deasupra hărții stau traseele, de la „Persoane” la „Spațiul de lucru” (secțiunea [[learning-skills-paths]]). „Toate traseele” arată toată harta.
 - „Potrivește” încape harta în lățimea ferestrei, iar „100%” o arată în mărime naturală. „Listă” arată aceleași competențe ca listă, pe niveluri; „Diagramă” aduce harta înapoi.
+
+### 13.3.3 Traseele și cele două vizualizări {#learning-skills-paths}
+
+Un traseu este tot ce vă trebuie ca să ajungeți la competențele lui de expert: competențele lui de expert, toate competențele pe care se sprijină ele, din orice traseu, și celelalte competențe ale traseului. Traseul „Proprietăți” cuprinde deci și competențe de „Spațiul de lucru”, de „Persoane” sau de „Legături”, fiindcă fără ele nu se ajunge la expertul proprietăților. Fiecare casetă își păstrează numele traseului ei.
+
+- Alegeți un traseu, iar competențele lui rămân în față; celelalte se estompează, la locul lor, ca harta să nu sară de la un traseu la altul. Sub trasee scrie câte competențe are traseul.
+- O săgeată e albastru închis doar când ambele capete sunt în traseu. Celelalte sunt gri deschis, cu vârful la fel de gri. Când țineți mouse-ul pe o casetă, săgețile ei ies în față, și vârfurile lor, chiar dacă nu sunt în traseu.
+- Un traseu e stăpânit când toate competențele lui avansate și de expert sunt stăpânite sau depășite; atunci are bifa verde. O competență stăpânită pe un traseu este stăpânită pe toate traseele care au nevoie de ea.
+
+Harta se vede în două feluri, cu butoanele de lângă trasee:
+
+| Butonul | Ce arată |
+|---|---|
+| „Progresul meu” | unde sunteți: fiecare casetă în starea ei — deschisă, stăpânită, închisă sau depășită (secțiunea [[learning-skills-states]]). Așa se deschide pagina |
+| „Prezentare” | harta așa cum e gândită: fiecare casetă în culoarea nivelului ei, deschisă, fără gri și fără bife (Figura [[fig-learning-skills-path]]). O casetă apăsată arată ce cuprinde competența și unde o găsiți în manual |
+
+Alegerea ține și pentru „Toate traseele” și pentru „Listă”: în „Prezentare”, lista nu are coloana „Starea”.
+
+![13.2 Traseul „Proprietăți”, în „Prezentare”](skills-map-path.png){#fig-learning-skills-path}
 
 ## 13.4 Chestionarele {#learning-quizzes}
 

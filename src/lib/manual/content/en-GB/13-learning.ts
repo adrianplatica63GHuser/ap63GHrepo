@@ -64,8 +64,27 @@ A skill with nothing before it — every basic one — is open from the start. W
 - Press an open box to take its quiz (section [[learning-quizzes]]).
 - A closed box, pressed, shows which skills it needs to open, each with its state. A mastered or obsolete box says since when it is mastered.
 - When you hold the mouse over a box, its arrows come forward and the others fade.
-- Above the map stand the paths, from „Persons” to „Workspace”. Choose one to keep only its skills in front; „All paths” brings them all back. A path is mastered when all its advanced and expert skills are mastered or obsolete; it then carries the green tick.
+- Above the map stand the paths, from „Persons” to „Workspace” (section [[learning-skills-paths]]). „All paths” shows the whole map.
 - „Fit” fits the map to the window's width, and „100%” shows it at full size. „List” shows the same skills as a list, by level; „Diagram” brings the map back.
+
+### 13.3.3 The paths and the two views {#learning-skills-paths}
+
+A path is everything you need to reach its expert skills: its expert skills, every skill they build on, from any path, and the path's other skills. So the „Properties” path also holds „Workspace”, „Persons” and „Links” skills, because without them there is no reaching the properties' expert. Each box keeps its own path's name.
+
+- Choose a path, and its skills stay in front; the others fade, where they stand, so the map does not jump from one path to another. Under the paths it says how many skills the path has.
+- An arrow is dark blue only when both its ends are in the path. The others are light grey, their heads just as grey. When you hold the mouse over a box, its arrows come forward, heads included, even outside the path.
+- A path is mastered when all its advanced and expert skills are mastered or obsolete; it then carries the green tick. A skill mastered on one path is mastered on every path that needs it.
+
+The map can be seen two ways, with the buttons beside the paths:
+
+| The button | What it shows |
+|---|---|
+| „My progress” | where you stand: every box in its state — open, mastered, closed or obsolete (section [[learning-skills-states]]). The page opens this way |
+| „Overview” | the map as it is meant: every box in its level's colour, open, with no grey and no ticks (Figure [[fig-learning-skills-path]]). A box, pressed, shows what the skill covers and where the manual teaches it |
+
+The choice holds for „All paths” and for „List” too: in „Overview”, the list has no „State” column.
+
+![13.2 The „Properties” path, in „Overview”](skills-map-path.png){#fig-learning-skills-path}
 
 ## 13.4 The quizzes {#learning-quizzes}
 
