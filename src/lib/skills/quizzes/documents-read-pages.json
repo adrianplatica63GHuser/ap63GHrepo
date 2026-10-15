@@ -1,0 +1,476 @@
+{
+  "skill": "documents-read-pages",
+  "manual": [
+    "documents-add-read",
+    "documents-add-rotate",
+    "documents-add"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "documents-add",
+          "ro": {
+            "question": "Ați deschis un act. Unde îi găsiți paginile scanate?",
+            "explanation": "Paginile se văd în fișa „Pagini”, mov, în dreapta formularului — pe un ecran îngust, sub el."
+          },
+          "en": {
+            "question": "You have opened a document. Where do you find its scanned pages?",
+            "explanation": "The pages are shown in the „Pagini” (pages) tile, purple, to the right of the form — on a narrow screen, below it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În fișa „Detalii act”, sub câmpurile tipului",
+              "en": "In the „Detalii act” tile, under the type's fields"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În fișa mov „Pagini”, în dreapta formularului",
+              "en": "In the purple „Pagini” tile, to the right of the form"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe fișa „Legături”, printre actele legate",
+              "en": "On the „Legături” tile, among the linked documents"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Într-o coloană „Pagini” a listei „Acte”",
+              "en": "In a „Pagini” column of the „Acte” list"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-add-read",
+          "ro": {
+            "question": "Pagina din fișă e prea mică pentru a citi textul. Cum o vedeți mai mare?",
+            "explanation": "„Pagini extinse” deschide paginile pe toată fereastra, destul de mari ca să se citească; „✕ Restrânge” le închide."
+          },
+          "en": {
+            "question": "The page in the tile is too small to read the text. How do you see it larger?",
+            "explanation": "„Pagini extinse” (expanded pages) opens the pages over the whole window, large enough to read; „✕ Restrânge” (collapse) closes them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cu „Tipărire”, care o deschide mărită",
+              "en": "With „Tipărire” (print), which opens it enlarged"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cu „Câmpuri afișate”, bifând „Nr. pagini”",
+              "en": "With „Câmpuri afișate”, ticking „Nr. pagini”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu creionul „Notițe pagină” de pe rând",
+              "en": "With the „Notițe pagină” pen on the row"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Cu „Pagini extinse”, pe toată fereastra",
+              "en": "With „Pagini extinse”, over the whole window"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "O pagină a fost scanată întoarsă. Ce face fiecare apăsare pe „Rotește la dreapta”?",
+            "explanation": "Fiecare apăsare pe „Rotește la dreapta” rotește pagina cu un sfert de tură; rotirea se păstrează abia cu „Salvează rotirea”."
+          },
+          "en": {
+            "question": "A page was scanned the wrong way round. What does each press of „Rotește la dreapta” (rotate right) do?",
+            "explanation": "Each press of „Rotește la dreapta” turns the page a quarter turn; the turn is kept only with „Salvează rotirea” (save rotation)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "O rotește cu un sfert de tură",
+              "en": "It turns it a quarter turn"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O întoarce cu susul în jos",
+              "en": "It turns it upside down"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O rotește și o salvează imediat",
+              "en": "It turns it and saves it at once"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rotește toate paginile actului",
+              "en": "It turns all the document's pages"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "Ați rotit o pagină și ați apăsat „Salvează rotirea”. Ce s-a păstrat?",
+            "explanation": "„Salvează rotirea” păstrează rotirea, iar de atunci pagina se deschide așa, și în „Pagini extinse”; fișierul însuși nu se schimbă."
+          },
+          "en": {
+            "question": "You turned a page and pressed „Salvează rotirea” (save rotation). What has been kept?",
+            "explanation": "„Salvează rotirea” keeps the turn, and from then on the page opens that way, in „Pagini extinse” too; the file itself is not changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișierul paginii a fost înlocuit cu cel rotit",
+              "en": "The page's file has been replaced by the turned one"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rotirea se vede doar în fișă, nu și extins",
+              "en": "The turn shows only in the tile, not when expanded"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pagina se deschide rotită; fișierul rămâne neschimbat",
+              "en": "The page opens turned; the file stays unchanged"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rotirea ține doar până închideți browserul",
+              "en": "The turn lasts only until you close the browser"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "Ați scris o notiță unei pagini cu creionul „Notițe pagină” și ați apăsat „Salvează”. Unde o vedeți apoi?",
+            "explanation": "Creionul deschide „Note pagină”; după „Salvează”, coloana „Note” a rândului paginii arată ce ați salvat."
+          },
+          "en": {
+            "question": "You wrote a note on a page with the „Notițe pagină” (page notes) pen and pressed „Salvează”. Where do you see it afterwards?",
+            "explanation": "The pen opens „Note pagină”; after „Salvează”, the „Note” column of the page's row shows what you saved."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Note extinse”, din „Identificarea actului”",
+              "en": "In „Note extinse”, on „Identificarea actului”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrisă peste imaginea paginii, în colț",
+              "en": "Written over the page's image, in a corner"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În câmpul „Subiect” al actului",
+              "en": "In the document's „Subiect” field"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În coloana „Note” a rândului paginii",
+              "en": "In the „Note” column of the page's row"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-add-read",
+          "ro": {
+            "question": "Deschideți o pagină și în locul ei apare o imagine discretă, „Fișierul paginii nu este disponibil”. Ce înseamnă?",
+            "explanation": "O pagină al cărei fișier lipsește din arhivă arată imaginea „Fișierul paginii nu este disponibil”, nu o eroare."
+          },
+          "en": {
+            "question": "You open a page and a quiet picture appears instead, „Fișierul paginii nu este disponibil” (the page's file is not available). What does it mean?",
+            "explanation": "A page whose file is missing from the archive shows the picture „Fișierul paginii nu este disponibil”, not an error."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Fișierul paginii lipsește din arhivă",
+              "en": "The page's file is missing from the archive"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Fișierul e Word și nu se poate previzualiza",
+              "en": "The file is Word and cannot be previewed"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pagina se încarcă încă; reveniți mai târziu",
+              "en": "The page is still uploading; come back later"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aplicația a dat o eroare și trebuie repornită",
+              "en": "The application failed and must be restarted"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "documents-add-read",
+          "ro": {
+            "question": "Un act are cinci pagini. Cum vedeți în fișa „Pagini” o anumită pagină dintre ele?",
+            "explanation": "Un clic pe rândul unei pagini o arată în fișă; cu două pagini sau mai multe apare și numărătoarea lor."
+          },
+          "en": {
+            "question": "A document has five pages. How do you see a particular one of them in the „Pagini” tile?",
+            "explanation": "A click on a page's row shows it in the tile; with two pages or more, their count appears as well."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Tipărire” pe rândul ei",
+              "en": "Press „Tipărire” (print) on its row"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Faceți un clic pe rândul ei",
+              "en": "Click once on its row"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrieți numărul ei în „Număr pagină”",
+              "en": "Type its number into „Număr pagină”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Mută mai sus” până ajunge prima",
+              "en": "Press „Mută mai sus” until it is first"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-add-read",
+          "ro": {
+            "question": "O pagină a actului este un document Word. Ce vedeți când o deschideți în fișă?",
+            "explanation": "Un fișier care nu se poate arăta în browser, de exemplu un document Word, spune „Acest tip de fișier nu poate fi previzualizat în browser.” și se poate descărca."
+          },
+          "en": {
+            "question": "One of the document's pages is a Word document. What do you see when you open it in the tile?",
+            "explanation": "A file the browser cannot show, a Word document for example, says „Acest tip de fișier nu poate fi previzualizat în browser.” (this type of file cannot be previewed in the browser) and can be downloaded."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Imaginea „Fișierul paginii nu este disponibil”",
+              "en": "The picture „Fișierul paginii nu este disponibil”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Documentul, transformat singur în PDF",
+              "en": "The document, turned into a PDF by itself"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Un mesaj că nu se poate previzualiza; se poate descărca",
+              "en": "A message that it cannot be previewed; it can be downloaded"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O eroare, pentru că Word nu se acceptă ca pagină",
+              "en": "An error, because Word is not accepted as a page"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "Ați rotit o pagină cu „Rotește la dreapta”, dar plecați de pe act fără „Salvează rotirea”. Ce se întâmplă cu rotirea?",
+            "explanation": "O rotire nesalvată se pierde când plecați, fără întrebare."
+          },
+          "en": {
+            "question": "You turned a page with „Rotește la dreapta”, but you leave the document without „Salvează rotirea”. What happens to the turn?",
+            "explanation": "An unsaved turn is lost when you leave, without a question."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aplicația vă întreabă întâi dacă o păstrați",
+              "en": "The application first asks whether to keep it"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se salvează singură, odată cu actul",
+              "en": "It is saved by itself, along with the document"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămâne până închideți browserul",
+              "en": "It stays until you close the browser"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Se pierde, fără nicio întrebare",
+              "en": "It is lost, without any question"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "Ce pagini se pot roti cu „Rotește la dreapta”?",
+            "explanation": "Se rotesc doar paginile imagine, adică fotografiile și scanările."
+          },
+          "en": {
+            "question": "Which pages can be turned with „Rotește la dreapta”?",
+            "explanation": "Only image pages can be rotated, that is photographs and scans."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Doar paginile imagine (fotografii, scanări)",
+              "en": "Only image pages (photographs, scans)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate, inclusiv PDF-urile și documentele Word",
+              "en": "All of them, PDFs and Word documents included"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar paginile PDF, pagină cu pagină",
+              "en": "Only PDF pages, page by page"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar paginile deschise în „Pagini extinse”",
+              "en": "Only pages opened in „Pagini extinse”"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "Unde găsiți creionul „Notițe pagină”, cu care scrieți notițe unei pagini?",
+            "explanation": "Pe rândul fiecărei pagini sunt „Notițe pagină” (un creion), „Tipărire” și „Șterge”."
+          },
+          "en": {
+            "question": "Where do you find the „Notițe pagină” (page notes) pen, with which you write notes on a page?",
+            "explanation": "On each page's row are „Notițe pagină” (a pen), „Tipărire” (print) and „Șterge” (delete)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În bara de butoane a actului, lângă „Salvează”",
+              "en": "On the document's button bar, next to „Salvează”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Numai în „Pagini extinse”, deasupra paginii",
+              "en": "Only in „Pagini extinse”, above the page"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe rândul fiecărei pagini, lângă „Tipărire”",
+              "en": "On each page's row, next to „Tipărire”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În fișa „Identificarea actului”, la „Note extinse”",
+              "en": "On the „Identificarea actului” tile, at „Note extinse”"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-add-rotate",
+          "ro": {
+            "question": "Notița unei pagini nu mai este valabilă. Cum o scoateți, fără să pierdeți pagina?",
+            "explanation": "Creionul „Notițe pagină” deschide notițele paginii: goliți „Note pagină” și apăsați „Salvează”; „Șterge” de pe rând ar șterge pagina."
+          },
+          "en": {
+            "question": "A page's note is no longer valid. How do you take it out without losing the page?",
+            "explanation": "The „Notițe pagină” pen opens the page's notes: clear „Note pagină” and press „Salvează”; „Șterge” on the row would delete the page."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Șterge” pe rândul paginii",
+              "en": "Press „Șterge” on the page's row"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cu creionul, goliți „Note pagină” și salvați",
+              "en": "With the pen, clear „Note pagină” and save"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se poate scoate, doar se poate schimba",
+              "en": "It cannot be removed, only changed"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Încărcați din nou pagina, fără notiță",
+              "en": "Upload the page again, without the note"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

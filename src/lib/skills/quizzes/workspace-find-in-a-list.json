@@ -1,0 +1,460 @@
+{
+  "skill": "workspace-find-in-a-list",
+  "manual": [
+    "start-lists",
+    "start-example-find",
+    "persons-list",
+    "properties-list",
+    "documents-list"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "start-lists",
+          "ro": {
+            "question": "Câte înregistrări arată o listă pe o pagină, de exemplu lista „Persoane Fizice”?",
+            "explanation": "Fiecare dintre cele patru liste arată câte 15 înregistrări pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
+          },
+          "en": {
+            "question": "How many records does a list show on one page, for instance the „Persoane Fizice” list?",
+            "explanation": "Each of the four lists shows 15 records a page, and the buttons under the table move from page to page."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "10",
+              "en": "10"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "25",
+              "en": "25"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "15",
+              "en": "15"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "50",
+              "en": "50"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "start-lists",
+          "ro": {
+            "question": "Bifați căsuța din capul tabelului unei liste. Ce rânduri ați selectat?",
+            "explanation": "Bifa din capul tabelului selectează rândurile paginii curente, nu ale întregii liste."
+          },
+          "en": {
+            "question": "You tick the box at the head of a list's table. Which rows have you selected?",
+            "explanation": "The tick box at the head of the table selects the rows of the current page, not of the whole list."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Rândurile paginii curente",
+              "en": "The rows of the current page"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate rândurile listei, de pe toate paginile",
+              "en": "Every row of the list, on every page"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rândurile găsite de căutare, pe toate paginile",
+              "en": "The rows the search found, on every page"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Coloanele bifate în „Câmpuri afișate”",
+              "en": "The columns ticked in „Câmpuri afișate”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-example-find",
+          "ro": {
+            "question": "Ați căutat o persoană după nume și au rămas mai multe persoane cu același nume. Ce vă sfătuiește manualul?",
+            "explanation": "Dacă rămân mai multe persoane cu același nume, adăugați din „Câmpuri afișate” o coloană care le deosebește, de pildă data nașterii, apoi apăsați „Deschide” pe rândul căutat."
+          },
+          "en": {
+            "question": "You searched for a person by name and several persons with the same name remain. What does the manual advise?",
+            "explanation": "If several persons with the same name remain, add from „Câmpuri afișate” a column that tells them apart, such as the date of birth, then press „Deschide” on the row you want."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrieți CNP-ul persoanei în caseta de căutare",
+              "en": "Type the person's CNP in the search box"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Restrângeți lista cu filtrul „Relevanță”",
+              "en": "Narrow the list with the „Relevanță” filter"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Adăugați din „Câmpuri afișate” o coloană care le deosebește",
+              "en": "Add from „Câmpuri afișate” a column that tells them apart"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "persons-list",
+          "ro": {
+            "question": "Pe lista persoanelor fizice, câte coloane puteți adăuga odată din „Câmpuri afișate”?",
+            "explanation": "„Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată; butonul arată câte ați ales, de exemplu „Câmpuri afișate 2/4”."
+          },
+          "en": {
+            "question": "On the list of natural persons, how many columns can you add at a time from „Câmpuri afișate” (displayed fields)?",
+            "explanation": "„Câmpuri afișate” adds columns to the table, at most four at a time; the button shows how many you chose, for instance „Câmpuri afișate 2/4”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cel mult două",
+              "en": "At most two"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cel mult opt",
+              "en": "At most eight"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Oricâte, fără limită",
+              "en": "As many as you like"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Cel mult patru",
+              "en": "At most four"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "start-lists",
+          "ro": {
+            "question": "Ați găsit rândul căutat. Ce buton de pe rând deschide ecranul înregistrării?",
+            "explanation": "„Deschide”, pe un rând, deschide înregistrarea; „Adaugă …”, deasupra tabelului, creează una nouă."
+          },
+          "en": {
+            "question": "You have found the row you wanted. Which button on the row opens the record's screen?",
+            "explanation": "„Deschide” (open), on a row, opens the record; „Adaugă …”, above the table, creates a new one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Previzualizare”",
+              "en": "„Previzualizare” (preview)"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Deschide”",
+              "en": "„Deschide” (open)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Legături”",
+              "en": "„Legături” (links)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Incursiune”",
+              "en": "„Incursiune” (a look inside)"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "properties-list",
+          "ro": {
+            "question": "Pe lista proprietăților ați bifat patru coloane în „Câmpuri afișate”. Ce se întâmplă cu celelalte căsuțe?",
+            "explanation": "Când ați bifat patru, celelalte căsuțe devin gri până debifați una."
+          },
+          "en": {
+            "question": "On the list of properties you have ticked four columns in „Câmpuri afișate”. What happens to the other boxes?",
+            "explanation": "Once you have ticked four, the other boxes turn grey until you untick one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Devin gri până debifați una dintre cele patru",
+              "en": "They turn grey until you untick one of the four"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La a cincea bifă, prima coloană aleasă iese din tabel",
+              "en": "At a fifth tick, the first column chosen leaves the table"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămân active, iar coloanele în plus trec pe a doua pagină",
+              "en": "They stay active, and the extra columns go to a second page"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "start-lists",
+          "ro": {
+            "question": "După ce caută caseta de căutare din capul listei persoanelor?",
+            "explanation": "Caseta de căutare caută după cod, nume și, la persoane, după e-mail sau telefon."
+          },
+          "en": {
+            "question": "What does the search box at the top of the list of persons search by?",
+            "explanation": "The search box searches by code, by name and, for persons, by e-mail or phone."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Numai după numele întreg, scris exact",
+              "en": "Only by the full name, typed exactly"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "După nume, CNP și data nașterii",
+              "en": "By name, CNP and date of birth"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "După cod, nume, e-mail sau telefon",
+              "en": "By code, name, e-mail or phone"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "După nume, adresă și localitate",
+              "en": "By name, address and locality"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "start-lists",
+          "ro": {
+            "question": "Înregistrarea căutată nu este pe prima pagină a listei. Cum treceți la următoarea?",
+            "explanation": "Listele arată câte 15 înregistrări pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
+          },
+          "en": {
+            "question": "The record you want is not on the list's first page. How do you move to the next one?",
+            "explanation": "The lists show 15 records a page, and the buttons under the table move from page to page."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cu butoanele de sub tabel",
+              "en": "With the buttons under the table"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cu butoanele de lângă „Adaugă …”, deasupra tabelului",
+              "en": "With the buttons beside „Adaugă …”, above the table"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Derulând în jos: lista încarcă singură restul",
+              "en": "By scrolling down: the list loads the rest by itself"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scriind numărul paginii în caseta de căutare",
+              "en": "By typing the page number in the search box"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "start-lists",
+          "ro": {
+            "question": "La ce folosește „Câmpuri afișate” pe o listă?",
+            "explanation": "„Câmpuri afișate” alege coloanele listei: bifați ce vreți să vedeți și debifați ce nu vă trebuie."
+          },
+          "en": {
+            "question": "What is „Câmpuri afișate” (displayed fields) for, on a list?",
+            "explanation": "„Câmpuri afișate” chooses the list's columns: tick what you want to see and untick what you do not need."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Păstrează doar rândurile în care câmpurile bifate sunt completate",
+              "en": "It keeps only the rows whose ticked fields are filled in"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Alege coloanele listei: bifați ce vreți să vedeți",
+              "en": "It chooses the list's columns: tick what you want to see"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Alege fișele pe care le arată ecranul înregistrării",
+              "en": "It chooses the tiles the record's screen shows"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "persons-list",
+          "ro": {
+            "question": "Căutați ID-ul de sistem al unei persoane fizice. Unde îl găsiți?",
+            "explanation": "ID-ul de sistem al persoanei nu apare în listă; îl vedeți pe ecranul ei, în colțul fișei „Identitate”."
+          },
+          "en": {
+            "question": "You are looking for a natural person's system ID. Where do you find it?",
+            "explanation": "The person's system ID does not appear in the list; you see it on their screen, in the corner of the „Identitate” tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În listă, adăugându-l ca coloană din „Câmpuri afișate”",
+              "en": "In the list, by adding it as a column from „Câmpuri afișate”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În rezumatul pe care îl arată „Previzualizare” pe rând",
+              "en": "In the summary that „Previzualizare” shows on the row"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În prima coloană a listei, înaintea numelui",
+              "en": "In the list's first column, before the name"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe ecranul persoanei, în colțul fișei „Identitate”",
+              "en": "On the person's screen, in the corner of the „Identitate” tile"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "persons-list",
+          "ro": {
+            "question": "Pe lista persoanelor fizice apăsați „Previzualizare” pe un rând. Ce vedeți?",
+            "explanation": "„Previzualizare” arată, lângă listă, un rezumat scurt: numele, porecla și CNP-ul, data și locul nașterii; un al doilea clic pe același buton îl închide."
+          },
+          "en": {
+            "question": "On the list of natural persons you press „Previzualizare” (preview) on a row. What do you see?",
+            "explanation": "„Previzualizare” shows, beside the list, a short summary: the name, the nickname and CNP, the date and place of birth; a second click on the same button closes it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Un rezumat scurt al persoanei, lângă listă",
+              "en": "A short summary of the person, beside the list"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ecranul persoanei, deschis în locul listei",
+              "en": "The person's screen, opened in place of the list"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fișa „Interacțiuni” a persoanei, lângă listă",
+              "en": "The person's „Interacțiuni” tile, beside the list"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legăturile persoanei, gata de modificat",
+              "en": "The person's links, ready to be changed"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-list",
+          "ro": {
+            "question": "Pe lista actelor, coloana „Tip” arată „CVC”. Cum aflați denumirea întreagă a tipului fără să deschideți actul?",
+            "explanation": "„Tip” arată denumirea scurtă a tipului; țineți mouse-ul pe celulă și bula arată denumirea întreagă."
+          },
+          "en": {
+            "question": "On the list of documents, the „Tip” (type) column shows „CVC”. How do you learn the type's full name without opening the document?",
+            "explanation": "„Tip” shows the type's short name; hold the mouse over the cell and the bubble shows the full name."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifați „Tip document” în „Câmpuri afișate”",
+              "en": "Tick „Tip document” in „Câmpuri afișate”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Faceți dublu-clic pe celulă",
+              "en": "Double-click the cell"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Țineți mouse-ul pe celulă și citiți bula",
+              "en": "Hold the mouse over the cell and read the bubble"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Lărgiți coloana „Tip” trăgând de marginea ei",
+              "en": "Widen the „Tip” column by dragging its edge"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

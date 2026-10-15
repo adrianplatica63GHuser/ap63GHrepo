@@ -91,7 +91,7 @@ describe("arrowsCross", () => {
 describe("a small graph the sweeps must untangle", () => {
   // Catalogue order puts x1 over x2 and y2 over y1, so their arrows cross; the layout must uncross them.
   const mk = (key: string, level: SkillLevel, predecessors: string[] = []): Skill => ({
-    key, number: key, level, path: "persons", name: { ro: key, en: key }, description: { ro: key, en: key }, predecessors, screens: [], cases: [],
+    key, number: key, level, path: "persons", name: { ro: key, en: key }, description: { ro: key, en: key }, predecessors, screens: [], cases: [], manual: [],
   });
   it("leaves no crossing where none is needed", () => {
     const G = [mk("x1", 1), mk("x2", 1), mk("y2", 2, ["x2"]), mk("y1", 2, ["x1"])];

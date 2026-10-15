@@ -1,0 +1,478 @@
+{
+  "skill": "documents-create-document",
+  "manual": [
+    "documents-add",
+    "documents-add-pages",
+    "documents-add-delete",
+    "documents-identification",
+    "documents-list"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "documents-list",
+          "ro": {
+            "question": "Vreți să adăugați în arhivă un act nou. De unde porniți?",
+            "explanation": "Pe lista „Acte” („Domeniu” → „Acte”), butonul „Adaugă act” stă la capătul primului rând al barei de deasupra tabelului."
+          },
+          "en": {
+            "question": "You want to add a new document to the archive. Where do you start?",
+            "explanation": "On the „Acte” (Documents) list („Domeniu” → „Acte”), the button „Adaugă act” (add document) sits at the end of the first row of the bar above the table."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din bara laterală, „Domeniu” → „Act nou”",
+              "en": "From the sidebar, „Domeniu” → „Act nou” (new document)"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe „Acte”, cu „Adaugă act” din bara de deasupra tabelului",
+              "en": "On „Acte”, with „Adaugă act” in the bar above the table"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe fișa „Legături” a unei persoane, cu „Asociază act”",
+              "en": "On a person's „Legături” (links) tile, with „Asociază act”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Date de referință” → „Tipuri de Document”, cu „Adaugă”",
+              "en": "In „Date de referință” → „Tipuri de Document”, with „Adaugă”"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-add",
+          "ro": {
+            "question": "S-a deschis „Act nou”. Ce alegeți întâi?",
+            "explanation": "Manualul cere să alegeți întâi „Tip document”, apoi să completați câmpurile și să apăsați „Salvează”; tipul hotărăște ce câmpuri are formularul."
+          },
+          "en": {
+            "question": "„Act nou” (new document) has opened. What do you choose first?",
+            "explanation": "The manual says to choose „Tip document” (document type) first, then fill in the fields and press „Salvează” (save); the type decides which fields the form has."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Etichetă scurtă”, ca actul să aibă un titlu",
+              "en": "„Etichetă scurtă” (short label), so the document has a title"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Paginile, cu „+ Adaugă pagină”",
+              "en": "The pages, with „+ Adaugă pagină” (add page)"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Tip document”, apoi celelalte câmpuri",
+              "en": "„Tip document” (document type), then the other fields"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Stare procesare”, ca să fie „Neprocesat”",
+              "en": "„Stare procesare”, so that it reads „Neprocesat”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Ce câmp al actului devine titlul lui, cel din coloana „Titlu” a listei „Acte”?",
+            "explanation": "„Etichetă scurtă”, din fișa „Identificarea actului”, este titlul actului — cel din coloana „Titlu” a listei."
+          },
+          "en": {
+            "question": "Which field of the document becomes its title, the one in the „Titlu” (title) column of the „Acte” list?",
+            "explanation": "„Etichetă scurtă” (short label), on the tile „Identificarea actului”, is the document's title — the one in the list's „Titlu” column."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Etichetă scurtă”, din „Identificarea actului”",
+              "en": "„Etichetă scurtă” (short label), in „Identificarea actului”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Subiect”, din „Identificarea actului”",
+              "en": "„Subiect” (subject), in „Identificarea actului”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Numărul actului, de exemplu „Nr. document”",
+              "en": "The document's number, for instance „Nr. document”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Denumire pagină” a primei pagini",
+              "en": "The „Denumire pagină” (page name) of the first page"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-add-pages",
+          "ro": {
+            "question": "Pe „Act nou” ați ales trei scanări cu „+ Adaugă pagină” și le-ați pus în ordine. Ce se întâmplă când apăsați „Salvează”?",
+            "explanation": "La „Salvează” se creează actul și apoi se încarcă paginile, în ordinea în care le-ați pus în „Pagini”."
+          },
+          "en": {
+            "question": "On „Act nou” you chose three scans with „+ Adaugă pagină” and put them in order. What happens when you press „Salvează”?",
+            "explanation": "On „Salvează” the document is created and the pages are then uploaded, in the order you put them in „Pagini”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Actul se salvează, iar paginile trebuie alese din nou",
+              "en": "The document is saved, and the pages must be chosen again"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se încarcă paginile, în ordinea numelor fișierelor",
+              "en": "The pages are uploaded, in the order of the file names"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fiecare pagină așteaptă să apăsați „Încarcă” pe ea",
+              "en": "Each page waits for you to press „Încarcă” (upload) on it"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Se creează actul, apoi se încarcă paginile în ordinea aleasă",
+              "en": "The document is created, then the pages upload in the chosen order"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "documents-add-pages",
+          "ro": {
+            "question": "Încercați să adăugați ca pagină un fișier care nu este nici imagine, nici PDF, nici document Word, Excel, OpenOffice sau text. Ce se întâmplă?",
+            "explanation": "Un alt fel de fișier este refuzat chiar acolo, cu explicația „Acest tip de fișier nu poate fi adăugat ca pagină”."
+          },
+          "en": {
+            "question": "You try to add as a page a file that is neither an image nor a PDF nor a Word, Excel, OpenOffice or text document. What happens?",
+            "explanation": "Any other kind of file is refused on the spot, with the explanation „Acest tip de fișier nu poate fi adăugat ca pagină” (this type of file cannot be added as a page)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se adaugă, dar nu poate fi previzualizat în browser",
+              "en": "It is added, but it cannot be previewed in the browser"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Este refuzat pe loc, cu o explicație",
+              "en": "It is refused on the spot, with an explanation"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se adaugă și se transformă singur în PDF",
+              "en": "It is added and turned into a PDF by itself"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Este primit, dar refuzat abia la „Salvează”",
+              "en": "It is accepted, but refused only at „Salvează”"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-add-delete",
+          "ro": {
+            "question": "Ați apăsat „Șterge” pe un act creat din greșeală, iar aplicația întreabă „Ștergeți actul?”. Ce se întâmplă dacă răspundeți „Da”?",
+            "explanation": "„Da” șterge actul și vă întoarce la „Acte”; ștergerea nu se poate anula."
+          },
+          "en": {
+            "question": "You pressed „Șterge” (delete) on a document created by mistake, and the application asks „Ștergeți actul?” (delete the document?). What happens if you answer „Da” (yes)?",
+            "explanation": "„Da” deletes the document and takes you back to „Acte”; a delete cannot be undone."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Actul se șterge, vă întoarceți la „Acte”, fără anulare",
+              "en": "It is deleted, you return to „Acte”, and it cannot be undone"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Actul trece într-un coș, de unde se poate recupera",
+              "en": "It goes to a bin, from which it can be recovered"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Actul rămâne deschis, cu starea „Șters”",
+              "en": "It stays open, with the status „Șters” (deleted)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se șterg doar paginile, iar actul rămâne gol",
+              "en": "Only the pages are deleted, and the document stays empty"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "documents-add",
+          "ro": {
+            "question": "Ați completat „Act nou” și ați apăsat „Salvează”. Ce vedeți imediat după aceea?",
+            "explanation": "Actul se deschide pe ecranul lui, cu titlul în capul ecranului și cu starea „Neprocesat”."
+          },
+          "en": {
+            "question": "You filled in „Act nou” and pressed „Salvează”. What do you see right afterwards?",
+            "explanation": "The document opens on its own screen, its title at the head of the screen and its status „Neprocesat” (not processed)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lista „Acte”, cu actul nou sus",
+              "en": "The „Acte” list, with the new document at the top"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Un „Act nou” gol, pentru actul următor",
+              "en": "An empty „Act nou”, for the next document"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Ecranul actului, cu starea „Neprocesat”",
+              "en": "The document's screen, with the status „Neprocesat”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ecranul actului, cu starea „Procesat cu AI”",
+              "en": "The document's screen, with the status „Procesat cu AI”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-add-pages",
+          "ro": {
+            "question": "Pe un act salvat ați deschis fereastra „Adaugă pagină”, dar „Salvează” este inactiv. Ce lipsește?",
+            "explanation": "„Salvează” rămâne inactiv până alegeți un fișier cu „Încarcă”; „Număr pagină” este deja completat, iar celelalte câmpuri pot rămâne goale."
+          },
+          "en": {
+            "question": "On a saved document you opened the dialog „Adaugă pagină” (add page), but „Salvează” is disabled. What is missing?",
+            "explanation": "„Salvează” stays disabled until you choose a file with „Încarcă” (upload); „Număr pagină” is already filled in and the other fields may stay empty."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ați lăsat „Denumire pagină” necompletată",
+              "en": "You left „Denumire pagină” (page name) empty"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu ați ales încă un fișier cu „Încarcă”",
+              "en": "You have not yet chosen a file with „Încarcă”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu ați scris nimic la „Note pagină”",
+              "en": "You have written nothing in „Note pagină” (page notes)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu ați schimbat „Număr pagină”",
+              "en": "You have not changed „Număr pagină” (page number)"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-add-pages",
+          "ro": {
+            "question": "Adăugați o pagină și lăsați „Denumire pagină” goală. Cum se va numi pagina?",
+            "explanation": "Dacă lăsați „Denumire pagină” goală, pagina primește numele fișierului."
+          },
+          "en": {
+            "question": "You add a page and leave „Denumire pagină” (page name) empty. What will the page be called?",
+            "explanation": "If you leave „Denumire pagină” empty, the page takes the file's name."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Va rămâne fără nume până o redenumiți",
+              "en": "It will stay nameless until you rename it"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Va primi „Etichetă scurtă” a actului",
+              "en": "It will take the document's „Etichetă scurtă”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se poate salva fără denumire",
+              "en": "It cannot be saved without a name"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Va primi numele fișierului încărcat",
+              "en": "It will take the name of the uploaded file"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-add-pages",
+          "ro": {
+            "question": "Pe „Act nou” ați ales mai multe scanări, dar a doua trebuie să fie prima. Cum schimbați ordinea înainte de salvare?",
+            "explanation": "Paginile alese așteaptă în „Pagini”, cu miniatura lor, iar ordinea lor o schimbați cu „Mută mai sus” și „Mută mai jos”."
+          },
+          "en": {
+            "question": "On „Act nou” you chose several scans, but the second must come first. How do you change the order before saving?",
+            "explanation": "The chosen pages wait in „Pagini”, each with its thumbnail, and you change their order with „Mută mai sus” and „Mută mai jos” (move up, move down)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cu „Mută mai sus” și „Mută mai jos” în „Pagini”",
+              "en": "With „Mută mai sus” and „Mută mai jos” in „Pagini”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Schimbând „Număr pagină” la fiecare pagină",
+              "en": "By changing „Număr pagină” on each page"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se poate; ordinea se schimbă după salvare",
+              "en": "It cannot be done; the order changes after saving"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ștergându-le și alegându-le din nou, în ordine",
+              "en": "By removing them and choosing them again, in order"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-add-pages",
+          "ro": {
+            "question": "Pe „Act nou” ați ales pagini, dar plecați de pe formular fără să apăsați „Salvează”. Ce face aplicația?",
+            "explanation": "Dacă plecați de pe formular cu pagini alese, aplicația vă întreabă întâi, ca la orice modificare nesalvată."
+          },
+          "en": {
+            "question": "On „Act nou” you chose pages, but you leave the form without pressing „Salvează”. What does the application do?",
+            "explanation": "If you leave the form with pages chosen, the application asks first, as with any unsaved change."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Creează singură actul, cu paginile alese",
+              "en": "It creates the document by itself, with the chosen pages"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Vă întreabă întâi, ca la orice modificare nesalvată",
+              "en": "It asks you first, as with any unsaved change"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pierde paginile alese, fără nicio întrebare",
+              "en": "It loses the chosen pages, without any question"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Păstrează paginile pentru următorul „Act nou”",
+              "en": "It keeps the pages for the next „Act nou”"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-add-delete",
+          "ro": {
+            "question": "Un act întreg a fost creat din greșeală și vreți să-l ștergeți. Ce apăsați?",
+            "explanation": "Actul se șterge cu „Șterge” din bara de butoane a actului, care întreabă „Ștergeți actul?”; „Șterge” de pe rândul unei pagini și „Elimină pagina” privesc doar paginile."
+          },
+          "en": {
+            "question": "A whole document was created by mistake and you want to delete it. What do you press?",
+            "explanation": "The document is deleted with „Șterge” on the document's button bar, which asks „Ștergeți actul?”; „Șterge” on a page's row and „Elimină pagina” concern only the pages."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Șterge” de pe rândul unei pagini, în „Pagini”",
+              "en": "„Șterge” on a page's row, in „Pagini”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Elimină pagina”, până nu mai rămâne niciuna",
+              "en": "„Elimină pagina” (remove page), until none is left"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Șterge”, din bara de butoane a actului",
+              "en": "„Șterge”, on the document's button bar"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Dezasociază”, pe fișa „Legături” a actului",
+              "en": "„Dezasociază” (dissociate), on the document's „Legături” tile"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

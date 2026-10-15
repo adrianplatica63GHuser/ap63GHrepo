@@ -1,0 +1,459 @@
+{
+  "skill": "workspace-read-help",
+  "manual": [
+    "start-help",
+    "learning-help",
+    "learning-manual",
+    "intro-how-to-read"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "start-help",
+          "ro": {
+            "question": "Unde găsiți butonul „?”, ajutorul unui ecran?",
+            "explanation": "Butonul „?” stă în capătul din dreapta al barei de navigare și deschide ajutorul ecranului."
+          },
+          "en": {
+            "question": "Where do you find the „?” button, a screen's help?",
+            "explanation": "The „?” button sits at the right-hand end of the navigation bar and opens the screen's help."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Jos în bara laterală, lângă „Recente”",
+              "en": "At the bottom of the sidebar, beside „Recente”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În capătul din dreapta al barei de navigare",
+              "en": "At the right-hand end of the navigation bar"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În bara de butoane, lângă creion",
+              "en": "In the button bar, beside the pencil"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În colțul din dreapta-sus al primei fișe",
+              "en": "In the top right-hand corner of the first tile"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "learning-help",
+          "ro": {
+            "question": "Ați apăsat „?” pe un ecran. Ce vă arată?",
+            "explanation": "„?” arată un „Context” — de ce există ecranul — și un „Cum se folosește” — ce se face pe el; sub ele stă „Vezi în manual”."
+          },
+          "en": {
+            "question": "You pressed „?” on a screen. What does it show you?",
+            "explanation": "„?” shows a „Context” — why the screen exists — and a „Cum se folosește” — what is done on it; under them stands „Vezi în manual”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Capitolul întreg din manual despre ecranul acela",
+              "en": "The whole manual chapter about that screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lista butoanelor ecranului, fiecare cu numele lui",
+              "en": "The list of the screen's buttons, each with its name"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Context” și „Cum se folosește”, apoi „Vezi în manual”",
+              "en": "„Context” and „Cum se folosește”, then „Vezi în manual”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-help",
+          "ro": {
+            "question": "Pe un ecran se lucrează cu un gest care nu se vede, de exemplu o tragere sau un dublu-clic. Cum vi-l explică aplicația?",
+            "explanation": "Acolo unde un gest nu se vede — o tragere, un dublu-clic — un bec mic, lângă locul acela, îl explică."
+          },
+          "en": {
+            "question": "A screen is worked with a gesture you cannot see, such as a drag or a double-click. How does the application explain it?",
+            "explanation": "Where a gesture cannot be seen — a drag, a double-click — a small light bulb beside that place explains it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cu un mesaj sus pe ecran, la prima deschidere",
+              "en": "With a message at the top of the screen, the first time it opens"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cu un bec mic, lângă locul acela",
+              "en": "With a small light bulb, beside that place"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu un semn ⓘ în bara de butoane",
+              "en": "With an ⓘ sign in the button bar"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Numai în manual, nu și pe ecran",
+              "en": "Only in the manual, not on the screen"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "learning-manual",
+          "ro": {
+            "question": "De unde deschideți manualul de utilizare?",
+            "explanation": "Manualul se deschide din bara laterală, „Ajutor și învățare” → „Manual de utilizare”."
+          },
+          "en": {
+            "question": "Where do you open the user manual from?",
+            "explanation": "The manual opens from the sidebar, „Ajutor și învățare” → „Manual de utilizare”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din „Setări” → „Despre”",
+              "en": "From „Setări” → „Despre” (about)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din „Administrare” → „Informații de ajutor”",
+              "en": "From „Administrare” → „Informații de ajutor”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din „Rapoarte” → „Căutare globală”",
+              "en": "From „Rapoarte” → „Căutare globală”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Din „Ajutor și învățare” → „Manual de utilizare”",
+              "en": "From „Ajutor și învățare” → „Manual de utilizare”"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "learning-manual",
+          "ro": {
+            "question": "Citiți în manual „secțiunea 2.5” și vreți să mergeți acolo. Care este calea cea mai scurtă?",
+            "explanation": "Numerele din text care trimit la altă secțiune, la alt capitol sau la o figură sunt legături: apăsați-le și manualul se deschide acolo."
+          },
+          "en": {
+            "question": "You read „section 2.5” in the manual and want to go there. What is the shortest way?",
+            "explanation": "The numbers in the text that point at another section, another chapter or a figure are links: press one and the manual opens there."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apăsați numărul: este o legătură",
+              "en": "Press the number: it is a link"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrieți „2.5” în „Căutare globală”",
+              "en": "Type „2.5” in „Căutare globală”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Capitolul anterior” până ajungeți",
+              "en": "Press „Capitolul anterior” until you get there"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "learning-manual",
+          "ro": {
+            "question": "Ați trimis unui coleg adresa unei secțiuni din manual. Între timp manualul a primit capitole noi, iar numerele s-au schimbat. Ce deschide adresa?",
+            "explanation": "Adresa din browser numește secțiunea deschisă: deschisă, duce direct la aceeași secțiune, chiar dacă manualul a primit capitole noi și numerele s-au schimbat."
+          },
+          "en": {
+            "question": "You sent a colleague the address of a section of the manual. Meanwhile the manual has gained chapters and the numbers have changed. What does the address open?",
+            "explanation": "The address in the browser names the section that is open: opened, it goes straight to the same section, even if the manual has gained chapters and the numbers have changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Secțiunea care poartă acum numărul vechi",
+              "en": "The section that now carries the old number"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Aceeași secțiune, sub numărul ei nou",
+              "en": "The same section, under its new number"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Primul capitol, cu un mesaj că secțiunea s-a mutat",
+              "en": "The first chapter, with a message that the section moved"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Cuprins”, ca să căutați din nou secțiunea",
+              "en": "„Cuprins”, so you look for the section again"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "learning-help",
+          "ro": {
+            "question": "În ajutorul „?” al unui ecran, sub „Context” și „Cum se folosește”, stă „Vezi în manual”. Ce face?",
+            "explanation": "„Vezi în manual” arată numărul și titlul secțiunii din manual care descrie ecranul pe larg; apăsați-l și manualul se deschide acolo."
+          },
+          "en": {
+            "question": "In a screen's „?” help, under „Context” and „Cum se folosește”, stands „Vezi în manual” (see in the manual). What does it do?",
+            "explanation": "„Vezi în manual” shows the number and title of the manual section that describes the screen in full; press it and the manual opens there."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Descarcă manualul ca document Word",
+              "en": "It downloads the manual as a Word document"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Deschide manualul la cuprins, de la început",
+              "en": "It opens the manual at the contents, from the start"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Deschide „Informații de ajutor”, ca să schimbați textul",
+              "en": "It opens „Informații de ajutor”, so you change the text"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Deschide manualul la secțiunea care descrie ecranul",
+              "en": "It opens the manual at the section that describes the screen"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "start-help",
+          "ro": {
+            "question": "Cine scrie textele de ajutor din spatele lui „?”?",
+            "explanation": "Textele de ajutor le scrie administratorul, în „Informații de ajutor”."
+          },
+          "en": {
+            "question": "Who writes the help texts behind „?”?",
+            "explanation": "The help texts are written by the administrator, in „Informații de ajutor”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Administratorul, în „Informații de ajutor”",
+              "en": "The administrator, in „Informații de ajutor”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimeni: sunt fixe, venite odată cu aplicația",
+              "en": "Nobody: they are fixed, shipped with the application"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fiecare utilizator, pentru contul lui, în „Setări”",
+              "en": "Each user, for their own account, in „Setări”"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "learning-manual",
+          "ro": {
+            "question": "Ați terminat de citit un capitol al manualului. Cum treceți la următorul fără să vă întoarceți la cuprins?",
+            "explanation": "La sfârșitul fiecărui capitol, „Capitolul anterior” și „Capitolul următor” vă duc mai departe fără să vă întoarceți la cuprins."
+          },
+          "en": {
+            "question": "You have finished reading a chapter of the manual. How do you move to the next one without going back to the contents?",
+            "explanation": "At the end of each chapter, „Capitolul anterior” and „Capitolul următor” take you on without going back to the contents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Derulați în jos: capitolul următor urmează pe aceeași pagină",
+              "en": "Scroll down: the next chapter follows on the same page"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apăsați „Capitolul următor”, la sfârșitul capitolului",
+              "en": "Press „Capitolul următor”, at the end of the chapter"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Înapoi”, în bara de navigare",
+              "en": "Press „Înapoi”, in the navigation bar"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „?”, care deschide capitolul următor",
+              "en": "Press „?”, which opens the next chapter"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "learning-manual",
+          "ro": {
+            "question": "Ce primiți cu „Descarcă (Word)” din manual?",
+            "explanation": "„Descarcă (Word)” face din manual un document Word, în limba în care folosiți aplicația, cu toate capitolele și figurile; este același text cu cel de pe ecran."
+          },
+          "en": {
+            "question": "What do you get with the manual's „Descarcă (Word)” (download as Word)?",
+            "explanation": "„Descarcă (Word)” turns the manual into a Word document, in the language you use the application in, with every chapter and figure; it is the same text as on the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar capitolul deschis acum, ca document Word",
+              "en": "Only the chapter open now, as a Word document"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Manualul întreg, mereu în română, fără figuri",
+              "en": "The whole manual, always in Romanian, without figures"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Manualul întreg, în limba aplicației, cu figurile",
+              "en": "The whole manual, in the application's language, with the figures"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O copie veche, salvată la ultima actualizare",
+              "en": "An old copy, saved at the last update"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "intro-how-to-read",
+          "ro": {
+            "question": "Cineva vă spune să citiți „Figura 2.3”. Unde o găsiți?",
+            "explanation": "Capitolele, secțiunile și figurile sunt numerotate, așa că o trimitere ca „secțiunea 2.5” sau „Figura 2.3” se găsește după număr, în cuprins."
+          },
+          "en": {
+            "question": "Someone tells you to read „Figure 2.3”. Where do you find it?",
+            "explanation": "Chapters, sections and figures are numbered, so a reference such as „section 2.5” or „Figure 2.3” is found by its number, in the contents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În ajutorul „?” al tabloului de bord",
+              "en": "In the dashboard's „?” help"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Informații de ajutor”, la „Sfaturi rapide”",
+              "en": "In „Informații de ajutor”, under „Sfaturi rapide”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Recente”, printre ultimele ecrane văzute",
+              "en": "In „Recente”, among the screens seen last"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În manual, după număr, în cuprins",
+              "en": "In the manual, by its number, in the contents"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "intro-how-to-read",
+          "ro": {
+            "question": "Cu ce se încheie fiecare capitol al manualului?",
+            "explanation": "Fiecare capitol se încheie cu exemple și cazuri de utilizare: sarcini obișnuite, pas cu pas."
+          },
+          "en": {
+            "question": "What does each chapter of the manual end with?",
+            "explanation": "Each chapter ends with examples and use cases: ordinary tasks, step by step."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cu exemple și cazuri de utilizare, pas cu pas",
+              "en": "With examples and use cases, step by step"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cu un chestionar despre capitolul acela",
+              "en": "With a quiz about that chapter"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu lista butoanelor din capitol și a numelor lor",
+              "en": "With a list of the chapter's buttons and their names"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cu un glosar al cuvintelor din capitol",
+              "en": "With a glossary of the chapter's words"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

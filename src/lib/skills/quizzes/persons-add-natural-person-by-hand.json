@@ -1,0 +1,453 @@
+{
+  "skill": "persons-add-natural-person-by-hand",
+  "manual": [
+    "persons-add",
+    "persons-add-save",
+    "persons-add-tiles",
+    "persons-list"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "persons-add",
+          "ro": {
+            "question": "Sunteți pe lista persoanelor fizice și vreți să adăugați de mână o persoană nouă. Ce faceți?",
+            "explanation": "Pe lista persoanelor fizice apăsați „Adaugă persoană”. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe."
+          },
+          "en": {
+            "question": "You are on the list of natural persons and want to add a new person by hand. What do you do?",
+            "explanation": "On the list of natural persons you press „Adaugă persoană” (add person). The screen „Persoană fizică nouă” opens straight away: an empty form divided into tiles."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Adaugă persoană”, apoi alegeți „Introducere manuală” în fereastra care se deschide.",
+              "en": "Press „Adaugă persoană”, then choose „Introducere manuală” (manual entry) in the window that opens."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apăsați „Adaugă persoană”; se deschide direct formularul „Persoană fizică nouă”.",
+              "en": "Press „Adaugă persoană”; the form „Persoană fizică nouă” (new natural person) opens straight away."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Previzualizare” pe un rând și completați rezumatul de lângă listă.",
+              "en": "Press „Previzualizare” (preview) on a row and fill in the summary beside the list."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Deschide” pe ultimul rând al listei și scrieți peste datele lui.",
+              "en": "Press „Deschide” (open) on the last row of the list and type over its details."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Ce trebuie neapărat completat ca o persoană nouă să se poată salva?",
+            "explanation": "Singurul lucru cerut este numele: completați cel puțin „Nume” sau „Prenume”. Restul se poate completa și mai târziu."
+          },
+          "en": {
+            "question": "What must be filled in for a new person to be saved?",
+            "explanation": "The only thing required is the name: fill in at least „Nume” or „Prenume”. The rest can be filled in later."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Nume”, „Prenume” și „CNP”.",
+              "en": "„Nume”, „Prenume” and „CNP”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„CNP” și „Data nașterii”.",
+              "en": "„CNP” and „Data nașterii” (date of birth)."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cel puțin „Nume” sau „Prenume”.",
+              "en": "At least „Nume” (surname) or „Prenume” (first name)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Toate câmpurile din fișa „Identitate”.",
+              "en": "Every field in the „Identitate” tile."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Ați completat o persoană nouă și apăsați „Salvează”. Ce se întâmplă?",
+            "explanation": "Aplicația vă întoarce la listă. Persoana nouă este sus, cu „Nou!” lângă nume."
+          },
+          "en": {
+            "question": "You have filled in a new person and you press „Salvează”. What happens?",
+            "explanation": "The application returns you to the list. The new person is at the top, with „Nou!” beside the name."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Vă întoarceți la listă; persoana nouă este sus, cu „Nou!” lângă nume.",
+              "en": "You return to the list; the new person is at the top, with „Nou!” (new) beside the name."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rămâneți pe ecranul persoanei, care primește în cap „v 1”.",
+              "en": "You stay on the person's screen, which gets „v 1” at the top."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Vă întoarceți la listă; persoana stă la locul ei în ordinea numelor, fără niciun semn.",
+              "en": "You return to the list; the person stands in their place in name order, with no mark."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aplicația vă întreabă dacă vreți să mai adăugați o persoană.",
+              "en": "The application asks whether you want to add another person."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Adăugați o persoană și îi știți CNP-ul. Când e bine să-l scrieți?",
+            "explanation": "Dacă știți CNP-ul, scrieți-l acum, la adăugare: după salvare nu se mai poate schimba."
+          },
+          "en": {
+            "question": "You are adding a person and you know their CNP. When should you type it?",
+            "explanation": "If you know the CNP, type it now, when adding the person: once saved it can no longer be changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Oricând mai târziu; CNP-ul se poate corecta la fiecare salvare.",
+              "en": "Any time later; the CNP can be corrected at every save."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Abia după prima salvare, când persoana are deja o versiune.",
+              "en": "Only after the first save, once the person already has a version."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Acum, la adăugare: după salvare CNP-ul nu se mai poate schimba.",
+              "en": "Now, when adding: once saved, the CNP can no longer be changed."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "persons-list",
+          "ro": {
+            "question": "Ați adăugat o persoană cu numele Popescu și prenumele Ion. Cum apare ea în coloana „Nume” a listei?",
+            "explanation": "În coloana „Nume”, prenumele vine primul: o persoană cu numele Popescu și prenumele Ion apare ca „Ion Popescu”."
+          },
+          "en": {
+            "question": "You added a person whose surname is Popescu and whose first name is Ion. How do they appear in the list's „Nume” column?",
+            "explanation": "In the „Nume” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Popescu Ion”",
+              "en": "„Popescu Ion”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„POPESCU, Ion”",
+              "en": "„POPESCU, Ion”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Popescu I.”",
+              "en": "„Popescu I.”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Ion Popescu”",
+              "en": "„Ion Popescu”"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "persons-add-tiles",
+          "ro": {
+            "question": "În ce fișă a formularului scrieți telefoanele și adresele de e-mail ale persoanei?",
+            "explanation": "Fișa „Contact” cuprinde telefoanele și adresele de e-mail; „Adrese” ține adresa de domiciliu și pe cea de corespondență."
+          },
+          "en": {
+            "question": "In which tile of the form do you type the person's telephone numbers and e-mail addresses?",
+            "explanation": "The „Contact” tile holds the telephone numbers and e-mail addresses; „Adrese” holds the home and correspondence addresses."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Identitate”",
+              "en": "„Identitate” (identity)"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Contact”",
+              "en": "„Contact”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Adrese”",
+              "en": "„Adrese” (addresses)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Act de identitate”",
+              "en": "„Act de identitate” (identity document)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "persons-add-tiles",
+          "ro": {
+            "question": "Ați scris ceva într-o fișă a formularului, apoi ați ascuns fișa cu bifele din capul ecranului. Ce se întâmplă cu ce ați scris?",
+            "explanation": "O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel."
+          },
+          "en": {
+            "question": "You typed something in a tile of the form, then hid the tile with the ticks at the top of the screen. What happens to what you typed?",
+            "explanation": "A hidden tile does not lose its data: what you typed in it is saved all the same."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se pierde la salvare, pentru că fișa nu se mai vede.",
+              "en": "It is lost on saving, because the tile is no longer shown."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se salvează doar dacă bifați fișa din nou înainte de „Salvează”.",
+              "en": "It is saved only if you tick the tile again before „Salvează”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Se salvează la fel: o fișă ascunsă nu își pierde datele.",
+              "en": "It is saved all the same: a hidden tile does not lose its data."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Un câmp cerut a rămas gol într-o fișă pe care ați ascuns-o, iar voi apăsați „Salvează”. Ce face aplicația?",
+            "explanation": "La salvare, fișa ascunsă reapare, aplicația vă duce la câmpul gol și scrie dedesubt ce lipsește. Nu se salvează nimic până nu îl completați."
+          },
+          "en": {
+            "question": "A required field was left empty in a tile you have hidden, and you press „Salvează”. What does the application do?",
+            "explanation": "On saving, the hidden tile reappears, the application takes you to the empty field and writes underneath what is missing. Nothing is saved until you fill it in."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Fișa reapare, vă duce la câmp și scrie ce lipsește; nu se salvează nimic.",
+              "en": "The tile reappears, it takes you to the field and writes what is missing; nothing is saved."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Salvează persoana fără câmpul acela și vă întoarce la listă.",
+              "en": "It saves the person without that field and returns you to the list."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Salvează persoana și lasă fișa ascunsă, cu „Modificări nesalvate” sus.",
+              "en": "It saves the person and leaves the tile hidden, with „Modificări nesalvate” at the top."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "persons-list",
+          "ro": {
+            "question": "Vreți să regăsiți în listă o persoană pe care ați adăugat-o. Ce scrieți în caseta de căutare?",
+            "explanation": "Caseta de căutare păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume."
+          },
+          "en": {
+            "question": "You want to find again in the list a person you added. What do you type in the search box?",
+            "explanation": "The search box keeps in the table only the persons who match what you type; part of the name is enough."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Numele întreg, exact cum l-ați salvat, altfel nu apare nimic.",
+              "en": "The full name, exactly as you saved it, or nothing appears."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O parte din nume ajunge; rămân doar persoanele care se potrivesc.",
+              "en": "Part of the name is enough; only the persons who match remain."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar CNP-ul; numele se caută din „Câmpuri afișate”.",
+              "en": "Only the CNP; names are searched from „Câmpuri afișate”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar ID-ul de sistem, pe care îl vedeți în listă.",
+              "en": "Only the system ID, which you see in the list."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "persons-list",
+          "ro": {
+            "question": "Ce înseamnă „Nou!” lângă un nume din lista persoanelor fizice?",
+            "explanation": "„Nou!” stă lângă o persoană adăugată sau schimbată de curând."
+          },
+          "en": {
+            "question": "What does „Nou!” beside a name in the list of natural persons mean?",
+            "explanation": "„Nou!” stands beside a person added or changed recently."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Persoana nu are încă un CNP salvat.",
+              "en": "The person has no CNP saved yet."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Persoana nu a fost încă deschisă de nimeni.",
+              "en": "Nobody has opened the person yet."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Persoana a fost creată dintr-o carte de identitate.",
+              "en": "The person was created from an identity card."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Persoana a fost adăugată sau schimbată de curând.",
+              "en": "The person was added or changed recently."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "persons-list",
+          "ro": {
+            "question": "Unde vedeți ID-ul de sistem al unei persoane fizice?",
+            "explanation": "ID-ul de sistem nu apare în listă; îl vedeți pe ecranul persoanei, în colțul fișei „Identitate”."
+          },
+          "en": {
+            "question": "Where do you see a natural person's system ID?",
+            "explanation": "The system ID does not appear in the list; you see it on the person's screen, in the corner of the „Identitate” tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În lista persoanelor, în prima coloană.",
+              "en": "In the list of persons, in the first column."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe ecranul persoanei, în colțul fișei „Identitate”.",
+              "en": "On the person's screen, in the corner of the „Identitate” tile."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Câmpuri afișate”, bifând coloana lui.",
+              "en": "In „Câmpuri afișate”, by ticking its column."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În rezumatul deschis cu „Previzualizare”.",
+              "en": "In the summary opened with „Previzualizare”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "După ce ați salvat o persoană, aflați și data ei de naștere. Cum o adăugați?",
+            "explanation": "O persoană se modifică pe ecranul ei: schimbați câmpurile și apăsați „Salvează”. Fiecare salvare face o versiune nouă."
+          },
+          "en": {
+            "question": "After saving a person, you also learn their date of birth. How do you add it?",
+            "explanation": "A person is changed on their own screen: change the fields and press „Salvează”. Every save makes a new version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Adăugați persoana din nou, de data aceasta cu data nașterii.",
+              "en": "Add the person again, this time with the date of birth."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu se mai poate: data nașterii se scrie doar la adăugare.",
+              "en": "You cannot any more: the date of birth is typed only when adding."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Deschideți persoana, completați „Data nașterii” și apăsați „Salvează”.",
+              "en": "Open the person, fill in „Data nașterii” and press „Salvează”."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

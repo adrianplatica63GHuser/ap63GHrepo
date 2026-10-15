@@ -1,0 +1,477 @@
+{
+  "skill": "links-read-related-tile",
+  "manual": [
+    "links-related",
+    "start-tiles",
+    "links-associate-role",
+    "start-preview"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe ce înregistrări găsiți fișa „Legături”?",
+            "explanation": "Fiecare persoană fizică, firmă, proprietate și act are fișa „Legături”: tot ce este legat de înregistrare, într-un singur loc."
+          },
+          "en": {
+            "question": "On which records do you find the „Legături” tile?",
+            "explanation": "Every natural person, company, property and document has the „Legături” tile: everything linked to the record, in one place."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar pe acte, unde stau părțile și proprietățile lor",
+              "en": "Only on documents, where their parties and properties are"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar pe persoane fizice și firme",
+              "en": "Only on natural persons and companies"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe fiecare persoană fizică, firmă, proprietate și act",
+              "en": "On every natural person, company, property and document"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar pe înregistrările care au deja cel puțin o legătură",
+              "en": "Only on records that already have at least one link"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe ecranul unei înregistrări nu vedeți fișa „Legături”. Ce faceți?",
+            "explanation": "Dacă nu o vedeți, bifați „Legături” printre fișele din capul ecranului."
+          },
+          "en": {
+            "question": "On a record's screen you do not see the „Legături” tile. What do you do?",
+            "explanation": "If you do not see it, tick „Legături” among the tiles at the top of the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifați „Legături” printre fișele din capul ecranului",
+              "en": "You tick „Legături” among the tiles at the top of the screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați creionul: fișa apare doar când modificați",
+              "en": "You press the pencil: the tile appears only while you edit"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Faceți întâi o asociere; fișa apare după prima legătură",
+              "en": "You make an association first; the tile appears after the first link"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschideți înregistrarea din „Căutare globală”, nu din listă",
+              "en": "You open the record from „Căutare globală”, not from the list"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-related",
+          "ro": {
+            "question": "În ce ordine stau rândurile pe fișa „Legături”?",
+            "explanation": "Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele juridice, proprietățile, actele — cu o linie subțire între două feluri."
+          },
+          "en": {
+            "question": "In what order are the rows on the „Legături” tile?",
+            "explanation": "The rows always come in the same order — natural persons, judicial persons, properties, documents — with a thin line between two kinds."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În ordinea în care s-au făcut legăturile, cele noi sus",
+              "en": "In the order the links were made, the newest at the top"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alfabetic, după nume, oricare ar fi felul înregistrării",
+              "en": "Alphabetically by name, whatever the kind of record"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Actele întâi, apoi proprietățile, apoi persoanele",
+              "en": "Documents first, then properties, then persons"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Persoane fizice, persoane juridice, proprietăți, acte",
+              "en": "Natural persons, judicial persons, properties, documents"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-related",
+          "ro": {
+            "question": "Ce arată rândul unei persoane pe fișa „Legături”?",
+            "explanation": "Pentru o persoană sau o firmă, rândul arată numele și, în paranteză, rolul; fiecare rând stă pe o singură linie."
+          },
+          "en": {
+            "question": "What does a person's row show on the „Legături” tile?",
+            "explanation": "For a person or a company, the row shows the name and, in brackets, the role; each row stays on one line."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Codul persoanei, fără nume și fără rol",
+              "en": "The person's code, with no name and no role"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Numele și, în paranteză, rolul",
+              "en": "The name and, in brackets, the role"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Numele pe o linie și rolul pe linia de dedesubt",
+              "en": "The name on one line and the role on the line below"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar numele; rolul se vede numai în „Clasificare”",
+              "en": "Only the name; the role shows only in „Clasificare”"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-related",
+          "ro": {
+            "question": "Ce face butonul „Relația” de pe un rând din „Legături”?",
+            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două înregistrări, de pildă Rol: „Vânzător”; un clic în afara bulei sau Esc o închide."
+          },
+          "en": {
+            "question": "What does the „Relația” button on a „Legături” row do?",
+            "explanation": "„Relația” shows, in a bubble, what links the two records, for instance Rol: „Vânzător”; a click outside the bubble or Esc closes it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Deschide înregistrarea legată numai pentru citire",
+              "en": "It opens the linked record read-only"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Deschide ecranul de asociere, ca să schimbați rolul",
+              "en": "It opens the association screen, so you can change the role"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Arată într-o bulă ce leagă cele două înregistrări",
+              "en": "It shows in a bubble what links the two records"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide înregistrarea legată alături, pe același ecran",
+              "en": "It opens the linked record alongside, on the same screen"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare, unde găsiți vânzătorii și cumpărătorii?",
+            "explanation": "Pe un contract de vânzare-cumpărare, vânzătorii și cumpărătorii stau în fișa „Părți”, grupați pe rol, iar „Legături” ține celelalte legături ale contractului."
+          },
+          "en": {
+            "question": "On a sale contract, where do you find the sellers and the buyers?",
+            "explanation": "On a sale contract, the sellers and buyers stand in the „Părți” (parties) tile, grouped by role, and „Legături” holds the contract's other links."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În fișa „Părți”, grupați pe rol",
+              "en": "In the „Părți” tile, grouped by role"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe primele rânduri din „Legături”, înaintea proprietăților",
+              "en": "On the first rows of „Legături”, before the properties"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Clasificare”, la „Proveniență”",
+              "en": "In „Clasificare”, under „Proveniență”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Legături”, dar doar după ce apăsați „Cotă”",
+              "en": "In „Legături”, but only after you press „Cotă”"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-related",
+          "ro": {
+            "question": "Fișa „Legături” a unei proprietăți spune „Nimic corelat încă.”. Ce înseamnă?",
+            "explanation": "Când nu e legat nimic de înregistrare, fișa „Legături” spune „Nimic corelat încă.”."
+          },
+          "en": {
+            "question": "A property's „Legături” tile says „Nimic corelat încă.” (nothing linked yet). What does it mean?",
+            "explanation": "When nothing is linked to the record, the „Legături” tile says „Nimic corelat încă.”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Legăturile există, dar se încarcă încă",
+              "en": "The links exist, but are still loading"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "De proprietate nu este legat încă nimic",
+              "en": "Nothing is linked to the property yet"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Legăturile sunt ascunse până apăsați „Toate”",
+              "en": "The links are hidden until you press „Toate”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Proprietatea nu a fost încă salvată",
+              "en": "The property has not been saved yet"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-related",
+          "ro": {
+            "question": "Ce arată rândul unui act pe fișa „Legături”?",
+            "explanation": "Pentru un act, rândul arată eticheta scurtă și, în paranteză, tipul actului."
+          },
+          "en": {
+            "question": "What does a document's row show on the „Legături” tile?",
+            "explanation": "For a document, the row shows the short label and, in brackets, the document's type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Titlul întreg al actului și data lui",
+              "en": "The document's full title and its date"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Eticheta scurtă și, în paranteză, rolul persoanei",
+              "en": "The short label and, in brackets, the person's role"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Numărul de pagini și, în paranteză, codul actului",
+              "en": "The number of pages and, in brackets, the document's code"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Eticheta scurtă și, în paranteză, tipul actului",
+              "en": "The short label and, in brackets, the document's type"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-related",
+          "ro": {
+            "question": "Apăsați „Vizualizare” pe rândul unei persoane legate. Ce se întâmplă?",
+            "explanation": "„Vizualizare” deschide înregistrarea legată numai pentru citire; „Modifică”, jos pe ecranul ei, o face modificabilă."
+          },
+          "en": {
+            "question": "You press „Vizualizare” on a linked person's row. What happens?",
+            "explanation": "„Vizualizare” opens the linked record read-only; „Modifică”, at the bottom of its screen, makes it editable."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Se deschide persoana numai pentru citire; „Modifică” o face modificabilă",
+              "en": "The person opens read-only; „Modifică” makes it editable"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se deschide persoana gata de modificat, cu „Salvează” activ",
+              "en": "The person opens ready to edit, with „Salvează” active"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Persoana se deschide alături, fără să plecați de pe ecran",
+              "en": "The person opens alongside, without you leaving the screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apare o bulă cu rolul persoanei în legătură",
+              "en": "A bubble appears with the person's role in the link"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-related",
+          "ro": {
+            "question": "Lucrați la un contract și vreți să vedeți datele cumpărătorului fără să plecați de pe contract. Ce apăsați pe rândul lui?",
+            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran."
+          },
+          "en": {
+            "question": "You are working on a contract and want to see the buyer's details without leaving the contract. What do you press on his row?",
+            "explanation": "„Previzualizare” (preview) opens the linked record alongside, without leaving the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Vizualizare”",
+              "en": "„Vizualizare”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Relația”",
+              "en": "„Relația”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Previzualizare”",
+              "en": "„Previzualizare”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Cotă”",
+              "en": "„Cotă”"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-associate-role",
+          "ro": {
+            "question": "Pe ecranul unei fiice, tatăl ei a fost bifat ca „Părinte”. Cum apare fiica pe fișa „Legături” a tatălui?",
+            "explanation": "Celălalt capăt arată rolul invers, potrivit genului persoanei: pe ecranul tatălui, ea apare ca „Fiică”."
+          },
+          "en": {
+            "question": "On a daughter's screen, her father was ticked as „Părinte” (parent). How does the daughter appear on the father's „Legături” tile?",
+            "explanation": "The other end shows the reverse role, matched to the person's gender: on the father's screen she appears as „Fiică” (daughter)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ca „Părinte”, la fel ca pe ecranul ei",
+              "en": "As „Părinte”, the same as on her screen"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Ca „Fiică”",
+              "en": "As „Fiică” (daughter)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fără rol, pentru că legătura s-a făcut de pe ecranul ei",
+              "en": "With no role, because the link was made from her screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu apare deloc până nu legați și de pe ecranul lui",
+              "en": "She does not appear at all until you also link from his screen"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe rândul unei persoane din „Legături” unui act stă un buton portocaliu, „Cotă”. La ce folosește?",
+            "explanation": "„Cotă”, portocaliu, ține cota-parte a unei persoane pe un act."
+          },
+          "en": {
+            "question": "On a person's row in a document's „Legături” there is an orange button, „Cotă”. What is it for?",
+            "explanation": "„Cotă” (share), in orange, holds a person's share in a document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Arată că legătura s-a făcut fără rol",
+              "en": "It shows that the link was made with no role"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Arată că persoana are modificări nesalvate",
+              "en": "It shows that the person has unsaved changes"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Arată că persoana e marcată ca foarte importantă",
+              "en": "It shows that the person is marked as very important"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ține cota-parte a persoanei pe act",
+              "en": "It holds the person's share in the document"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

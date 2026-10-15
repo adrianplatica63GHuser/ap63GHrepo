@@ -9,7 +9,7 @@
  *
  * The rules are src/lib/skills/progress.ts; this file only reads and writes skill_attempt (migration_109).
  */
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { skillAttempt, type SkillAttemptItem } from "@/db/schema";
 import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
@@ -113,6 +113,18 @@ export async function recordAttempt(
     startedAt: input.startedAt,
   });
   return { ok: true, passed, correctCount, questionCount, progress: await getProgress(userId, now) };
+}
+
+/** The variant of a user's last attempt at a skill, or null — so the next attempt can take another (#39.43). */
+export async function lastVariant(userId: string, skillKey: string): Promise<string | null> {
+  if (!usableUser(userId)) return null;
+  const [row] = await db
+    .select({ variant: skillAttempt.quizVariant })
+    .from(skillAttempt)
+    .where(and(eq(skillAttempt.userId, userId), eq(skillAttempt.skillKey, skillKey)))
+    .orderBy(desc(skillAttempt.finishedAt))
+    .limit(1);
+  return row?.variant ?? null;
 }
 
 /** How many attempts a user has — what the reset script reports before it deletes. */

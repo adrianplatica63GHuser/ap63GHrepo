@@ -1,0 +1,478 @@
+{
+  "skill": "properties-read-the-map",
+  "manual": [
+    "map-what-open",
+    "map-what-bubble",
+    "map-what",
+    "properties-navigate",
+    "map-select"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "map-what-open",
+          "ro": {
+            "question": "Sunteți în lista „Proprietăți”. Cum deschideți harta tuturor proprietăților?",
+            "explanation": "Din lista „Proprietăți”, harta se deschide cu butonul „Hartă completă”, din dreapta, de lângă „Adaugă proprietate”."
+          },
+          "en": {
+            "question": "You are in the „Proprietăți” list. How do you open the map of all properties?",
+            "explanation": "From the „Proprietăți” list, the map opens with the „Hartă completă” button, on the right, beside „Adaugă proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifați „Hartă” în „Câmpuri afișate”.",
+              "en": "Tick „Hartă” in „Câmpuri afișate”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apăsați „Hartă completă”, în dreapta, lângă „Adaugă proprietate”.",
+              "en": "Press „Hartă completă” (full map), on the right, beside „Adaugă proprietate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Deschide” pe un rând, apoi „Hartă extinsă”.",
+              "en": "Press „Deschide” on a row, then „Hartă extinsă” (expanded map)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Previzualizare” pe un rând.",
+              "en": "Press „Previzualizare” on a row."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "map-what",
+          "ro": {
+            "question": "O proprietate din arhivă nu are încă niciun colț. Cum apare ea pe harta proprietăților?",
+            "explanation": "O proprietate fără colțuri nu are contur, deci nu apare pe hartă; colțurile i se pot adăuga oricând, în „Puncte de contur”."
+          },
+          "en": {
+            "question": "A property in the archive has no corners yet. How does it appear on the properties map?",
+            "explanation": "A property without corners has no outline, so it does not appear on the map; corners can be added to it at any time, in „Puncte de contur”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ca un punct albastru, la adresa ei.",
+              "en": "As a blue dot, at its address."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Clipind în roz, până îi adăugați colțuri.",
+              "en": "Blinking pink, until you add corners to it."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu apare: fără colțuri nu are contur.",
+              "en": "It does not appear: without corners it has no outline."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ca o formă goală, în centrul hărții.",
+              "en": "As an empty shape, in the centre of the map."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "map-what-bubble",
+          "ro": {
+            "question": "Ce face un clic în interiorul unei proprietăți de pe hartă?",
+            "explanation": "Un clic în interiorul unei proprietăți deschide deasupra ei o bulă, cu numele proprietății și butoanele „Deschide” și „Navighează”."
+          },
+          "en": {
+            "question": "What does a click inside a property on the map do?",
+            "explanation": "A click inside a property opens a bubble above it, with the property's name and the buttons „Deschide” and „Navighează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Deschide o bulă cu numele ei, „Deschide” și „Navighează”.",
+              "en": "It opens a bubble with its name, „Deschide” and „Navighează”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Deschide direct ecranul proprietății.",
+              "en": "It opens the property's screen directly."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O selectează, ca s-o puteți șterge.",
+              "en": "It selects it, so you can delete it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pune un colț nou pe conturul ei.",
+              "en": "It puts a new corner on its outline."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "map-what-bubble",
+          "ro": {
+            "question": "Care este calea cea mai scurtă de pe hartă la ecranul unei proprietăți?",
+            "explanation": "Mai repede decât prin bulă, un dublu-clic pe o proprietate o deschide direct, fără bulă."
+          },
+          "en": {
+            "question": "What is the shortest way from the map to a property's screen?",
+            "explanation": "Faster than through the bubble, a double-click on a property opens it directly, with no bubble."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un clic dreapta pe proprietate.",
+              "en": "A right-click on the property."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Selectează”, apoi „Afișează selectate”.",
+              "en": "„Selectează”, then „Afișează selectate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Tragerea unui dreptunghi peste ea.",
+              "en": "Dragging a rectangle over it."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Un dublu-clic pe proprietate, fără bulă.",
+              "en": "A double-click on the property, with no bubble."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "properties-navigate",
+          "ro": {
+            "question": "Ați apăsat „Navighează” și vreți ca telefonul să vă ducă la teren de unde vă aflați. Ce faceți?",
+            "explanation": "Cu „Locația mea” la „Pornire”, telefonul care scanează codul pornește de unde se află: scanați codul QR, iar Google Maps pornește navigarea."
+          },
+          "en": {
+            "question": "You pressed „Navighează” and want the phone to take you to the land from where you are. What do you do?",
+            "explanation": "With „Locația mea” at „Pornire”, the phone that scans the code starts from where it is: scan the QR code, and Google Maps starts the navigation."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Alegeți „De la o adresă” și lăsați adresa de pornire goală.",
+              "en": "Choose „De la o adresă” and leave the starting address empty."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Lăsați „Locația mea” la „Pornire” și scanați codul QR cu telefonul.",
+              "en": "Leave „Locația mea” (my location) at „Pornire” (start) and scan the QR code with the phone."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Deschide în Google Maps”; telefonul pornește singur.",
+              "en": "Press „Deschide în Google Maps”; the phone starts by itself."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Copiază linkul”; telefonul îl primește singur.",
+              "en": "Press „Copiază linkul”; the phone receives it by itself."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "map-select",
+          "ro": {
+            "question": "Ați apăsat „Selectează”, iar acum harta nu se mai mută când o trageți cu mouse-ul. De ce?",
+            "explanation": "În modul de selecție, o tragere nu mai mută harta, ci desenează un dreptunghi. „Anulează selecția” vă scoate din modul acesta, iar harta se mișcă din nou la tragere."
+          },
+          "en": {
+            "question": "You pressed „Selectează”, and now the map no longer moves when you drag it with the mouse. Why?",
+            "explanation": "In selection mode a drag no longer moves the map but draws a rectangle. „Anulează selecția” takes you out of this mode, and the map moves again when dragged."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Harta s-a blocat; trebuie reîncărcată pagina.",
+              "en": "The map has frozen; the page must be reloaded."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tragerea mută acum colțurile proprietăților.",
+              "en": "Dragging now moves the properties' corners."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Tragerea desenează acum un dreptunghi; „Anulează selecția” o întoarce.",
+              "en": "Dragging now draws a rectangle; „Anulează selecția” turns it back."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Harta se mută doar după ce apăsați „SATELIT”.",
+              "en": "The map moves only after you press „SATELIT”."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "map-what",
+          "ro": {
+            "question": "Cum este potrivită harta proprietăților când o deschideți?",
+            "explanation": "Harta se deschide potrivită astfel încât să încapă toate proprietățile pe care le desenează."
+          },
+          "en": {
+            "question": "How is the properties map fitted when you open it?",
+            "explanation": "The map opens fitted so that every property it draws fits on it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ultima proprietate pe care ați deschis-o.",
+              "en": "On the last property you opened."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Astfel încât să încapă toate proprietățile desenate.",
+              "en": "So that every property drawn fits on it."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe proprietatea adăugată cel mai recent.",
+              "en": "On the property added most recently."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe locul unde v-a lăsat ultima dată.",
+              "en": "On the place where it left you last time."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "map-what-open",
+          "ro": {
+            "question": "Ați deschis harta cu „Hartă completă”. Cum vă întoarceți la lista proprietăților?",
+            "explanation": "Bara de navigare arată atunci „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă."
+          },
+          "en": {
+            "question": "You opened the map with „Hartă completă”. How do you get back to the list of properties?",
+            "explanation": "The navigation bar then reads „Acasă › Proprietăți › Hartă completă”, and a click on „Proprietăți” takes you back to the list."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Un clic pe „Proprietăți” în „Acasă › Proprietăți › Hartă completă”.",
+              "en": "A click on „Proprietăți” in „Acasă › Proprietăți › Hartă completă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Un dublu-clic pe hartă, în afara proprietăților.",
+              "en": "A double-click on the map, outside the properties."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Instrumente” → „Calcul suprafață”, în bara laterală.",
+              "en": "„Instrumente” → „Calcul suprafață”, in the sidebar."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Tasta Escape, ca la „Hartă extinsă”.",
+              "en": "The Escape key, as with „Hartă extinsă”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "map-what-bubble",
+          "ro": {
+            "question": "S-a deschis bula unei proprietăți și vreți s-o închideți. Ce faceți?",
+            "explanation": "Un clic pe hartă, în afara oricărei proprietăți, închide bula."
+          },
+          "en": {
+            "question": "A property's bubble has opened and you want to close it. What do you do?",
+            "explanation": "A click on the map outside any property closes the bubble."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un dublu-clic pe bulă.",
+              "en": "A double-click on the bubble."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „HARTĂ”, sus pe hartă.",
+              "en": "Press „HARTĂ”, at the top of the map."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Un clic pe hartă, în afara oricărei proprietăți.",
+              "en": "A click on the map, outside any property."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Anulează selecția”.",
+              "en": "Press „Anulează selecția”."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "properties-navigate",
+          "ro": {
+            "question": "Din bula unei proprietăți apăsați „Navighează”. Proprietatea are colțuri. Spre ce punct duce traseul?",
+            "explanation": "Dacă proprietatea are colțuri, traseul duce la centrul parcelei („Spre parcelă: centrul ei pe hartă.”)."
+          },
+          "en": {
+            "question": "From a property's bubble you press „Navighează”. The property has corners. Towards which point does the route go?",
+            "explanation": "If the property has corners, the route goes to the parcel's centre („Spre parcelă: centrul ei pe hartă.”)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Spre primul colț din „Puncte de contur”.",
+              "en": "Towards the first corner in „Puncte de contur”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Spre adresa poștală a proprietății.",
+              "en": "Towards the property's postal address."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Spre colțul cel mai apropiat de drum.",
+              "en": "Towards the corner nearest the road."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Spre centrul parcelei de pe hartă.",
+              "en": "Towards the parcel's centre on the map."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "map-what",
+          "ro": {
+            "question": "Ce fac butoanele „HARTĂ” și „SATELIT”, sus pe harta proprietăților?",
+            "explanation": "„HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți."
+          },
+          "en": {
+            "question": "What do the „HARTĂ” and „SATELIT” buttons at the top of the properties map do?",
+            "explanation": "„HARTĂ” and „SATELIT” choose the street map or the satellite image, as on a property's „Hartă” tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Aleg harta străzilor sau imaginea din satelit.",
+              "en": "They choose the street map or the satellite image."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„HARTĂ” arată proprietățile, „SATELIT” le ascunde.",
+              "en": "„HARTĂ” shows the properties, „SATELIT” hides them."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trec de la harta completă la harta unei proprietăți.",
+              "en": "They switch from the full map to a property's map."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„SATELIT” deschide Street View la centrul hărții.",
+              "en": "„SATELIT” opens Street View at the map's centre."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "properties-navigate",
+          "ro": {
+            "question": "În fereastra „Navighează”, la „Pornire” ați ales „De la o adresă”, dar codul QR nu apare. De ce?",
+            "explanation": "Cu „De la o adresă” scrieți adresa de pornire la „Adresa de pornire”; până o scrieți, linkul și codul QR nu apar."
+          },
+          "en": {
+            "question": "In the „Navighează” window, at „Pornire” you chose „De la o adresă”, but the QR code does not appear. Why?",
+            "explanation": "With „De la o adresă” you type the starting address at „Adresa de pornire”; until you type it, the link and the QR code do not appear."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Proprietatea nu are o adresă poștală.",
+              "en": "The property has no postal address."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu ați scris încă adresa la „Adresa de pornire”.",
+              "en": "You have not yet typed the address at „Adresa de pornire” (starting address)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Codul QR apare doar cu „Locația mea”.",
+              "en": "The QR code appears only with „Locația mea”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trebuie apăsat întâi „Copiază linkul”.",
+              "en": "„Copiază linkul” must be pressed first."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

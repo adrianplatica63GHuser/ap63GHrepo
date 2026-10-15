@@ -1,0 +1,459 @@
+{
+  "skill": "workspace-read-a-record-screen",
+  "manual": [
+    "start-tiles",
+    "intro-objects",
+    "start-preview",
+    "admin-settings-account"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Pe ecranul unei înregistrări, la ce folosesc bifele din capul ecranului?",
+            "explanation": "Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit."
+          },
+          "en": {
+            "question": "On a record's screen, what are the tick boxes at the top of the screen for?",
+            "explanation": "The tick boxes at the top of the screen choose which tiles show; „Toate” shows them all, and „Implicit” returns to the usual set."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Marchează fișele pe care le-ați verificat",
+              "en": "They mark the tiles you have checked"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Aleg ce fișe se văd pe ecran",
+              "en": "They choose which tiles show on the screen"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Aleg fișele care se șterg odată cu coșul",
+              "en": "They choose the tiles the bin deletes"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aleg ce fișe se pot modifica cu creionul",
+              "en": "They choose which tiles the pencil can edit"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Unde găsiți ID-ul de sistem al unei înregistrări deschise?",
+            "explanation": "ID-ul de sistem al înregistrării stă în colțul din dreapta-sus al primei fișe."
+          },
+          "en": {
+            "question": "Where do you find the system ID of an open record?",
+            "explanation": "The record's system ID sits in the top right-hand corner of the first tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În bara de navigare, după numele ecranului",
+              "en": "In the navigation bar, after the screen's name"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În bara de butoane, lângă creion",
+              "en": "In the button bar, beside the pencil"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În colțul din dreapta-sus al primei fișe",
+              "en": "In the top right-hand corner of the first tile"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În ultima fișă, sub „Etichete și grupuri”",
+              "en": "In the last tile, under „Etichete și grupuri”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Ați debifat câteva fișe și vreți să reveniți la setul obișnuit. Ce apăsați?",
+            "explanation": "„Implicit” revine la setul obișnuit de fișe, iar „Toate” le arată pe toate."
+          },
+          "en": {
+            "question": "You have unticked a few tiles and want to go back to the usual set. What do you press?",
+            "explanation": "„Implicit” returns to the usual set of tiles, while „Toate” shows them all."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Implicit”",
+              "en": "„Implicit” (default)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Toate”",
+              "en": "„Toate” (all)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Înapoi”",
+              "en": "„Înapoi” (back)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Salvarea, din bara de butoane",
+              "en": "The save, in the button bar"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "intro-objects",
+          "ro": {
+            "question": "Codul de sistem al unei înregistrări începe cu PROP. Ce fel de înregistrare este?",
+            "explanation": "Codul spune felul înregistrării: PPERS pentru o persoană fizică, JPERS pentru o persoană juridică, PROP pentru o proprietate și DOC pentru un act."
+          },
+          "en": {
+            "question": "A record's system code begins with PROP. What kind of record is it?",
+            "explanation": "The code tells the kind of record: PPERS for a natural person, JPERS for a legal person, PROP for a property and DOC for a document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O persoană fizică",
+              "en": "A natural person"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Un act",
+              "en": "A document"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O persoană juridică",
+              "en": "A legal person"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "O proprietate",
+              "en": "A property"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Nu știți ce face un buton cu pictogramă din bara de butoane. Cum îi aflați numele?",
+            "explanation": "Un buton cu pictogramă își arată numele când treceți cu mouse-ul peste el."
+          },
+          "en": {
+            "question": "You do not know what an icon button in the button bar does. How do you learn its name?",
+            "explanation": "An icon button shows its name when the mouse passes over it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Faceți dublu-clic pe el",
+              "en": "Double-click it"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Treceți cu mouse-ul peste el",
+              "en": "Pass the mouse over it"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îl căutați în „Setări”, la „Contul meu”",
+              "en": "Look it up in „Setări”, under „Contul meu”"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Ce au deosebit fișele mov deschis — harta, colțurile, Street View, paginile unui act?",
+            "explanation": "Fișele mov deschis — harta, colțurile, Street View, paginile unui act — stau pe loc; celelalte se pot trage într-un loc liber."
+          },
+          "en": {
+            "question": "What is special about the light purple tiles — the map, the corners, Street View, a document's pages?",
+            "explanation": "The light purple tiles — the map, the corners, Street View, a document's pages — stay where they are; the others can be dragged into a free place."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu se pot ascunde cu bifele",
+              "en": "They cannot be hidden with the tick boxes"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Sunt numai pentru citit",
+              "en": "They are read-only"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Stau pe loc: nu se mută",
+              "en": "They stay where they are: they do not move"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apar numai după salvare",
+              "en": "They appear only after saving"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Unde stă bara de butoane cu creionul, salvarea și coșul?",
+            "explanation": "Bara de butoane, ultimul lucru de pe ecran, ține creionul (modificați), salvarea și coșul (ștergeți)."
+          },
+          "en": {
+            "question": "Where is the button bar with the pencil, the save and the bin?",
+            "explanation": "The button bar, the last thing on the screen, holds the pencil (edit), the save and the bin (delete)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "La capătul ecranului, după toate fișele",
+              "en": "At the end of the screen, after all the tiles"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Sus, deasupra fișelor, lângă bife",
+              "en": "At the top, above the tiles, beside the tick boxes"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În bara de navigare, lângă „?”",
+              "en": "In the navigation bar, beside „?”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În colțul din dreapta-sus al primei fișe",
+              "en": "In the top right-hand corner of the first tile"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Vreți să schimbați datele unei înregistrări deschise. Ce buton din bara de butoane apăsați întâi?",
+            "explanation": "Creionul înseamnă „modificați”; salvarea păstrează ce ați schimbat, iar coșul șterge înregistrarea."
+          },
+          "en": {
+            "question": "You want to change an open record's data. Which button in the button bar do you press first?",
+            "explanation": "The pencil means „edit”; the save keeps what you changed, and the bin deletes the record."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Coșul",
+              "en": "The bin"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Salvarea",
+              "en": "The save"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Creionul",
+              "en": "The pencil"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Ce face un dublu-clic pe o fișă?",
+            "explanation": "O fișă se trage de spațiul ei gol într-un loc liber; un dublu-clic pe ea o urcă sub fișa de deasupra."
+          },
+          "en": {
+            "question": "What does a double-click on a tile do?",
+            "explanation": "A tile is dragged by its empty space into a free place; a double-click raises it under the tile above."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O deschide pe tot ecranul",
+              "en": "It opens it full-screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O pune pe modificare, ca creionul",
+              "en": "It puts it in edit mode, like the pencil"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O ascunde, ca și cum ați debifa-o",
+              "en": "It hides it, as if you unticked it"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "O urcă sub fișa de deasupra",
+              "en": "It raises it under the tile above"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Vreți ca „Implicit” să arate, pe ecranul unei proprietăți, fișele alese de dumneavoastră. Unde le alegeți?",
+            "explanation": "În „Setări” → „Contul meu”, la „Implicitele mele”, bifați pentru fiecare fel de înregistrare fișele pe care să le arate „Implicit” și apăsați „Salvează”; setul este al contului, nu al browserului."
+          },
+          "en": {
+            "question": "You want „Implicit” to show, on a property's screen, the tiles you chose. Where do you choose them?",
+            "explanation": "In „Setări” → „Contul meu”, under „Implicitele mele”, you tick for each kind of record the tiles „Implicit” should show and press „Salvează”; the set belongs to the account, not the browser."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul proprietății, cu salvarea din bara de butoane",
+              "en": "On the property's screen, with the save in the button bar"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Setări” → „Contul meu”, la „Implicitele mele”",
+              "en": "In „Setări” → „Contul meu”, under „Implicitele mele”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe lista proprietăților, în „Câmpuri afișate”",
+              "en": "On the list of properties, in „Câmpuri afișate”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Setări”, la „Praguri de timp”",
+              "en": "In „Setări”, under „Praguri de timp”"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "intro-objects",
+          "ro": {
+            "question": "Codul de sistem al unei înregistrări începe cu JPERS. Ce fel de înregistrare este?",
+            "explanation": "JPERS înseamnă o persoană juridică — o firmă, o asociație, o instituție; PPERS este o persoană fizică, PROP o proprietate, DOC un act."
+          },
+          "en": {
+            "question": "A record's system code begins with JPERS. What kind of record is it?",
+            "explanation": "JPERS means a legal person — a company, an association, an institution; PPERS is a natural person, PROP a property, DOC a document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "O persoană juridică",
+              "en": "A legal person"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O persoană fizică",
+              "en": "A natural person"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un act",
+              "en": "A document"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O proprietate",
+              "en": "A property"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "start-preview",
+          "ro": {
+            "question": "Lucrați pe un contract de vânzare, cu o modificare încă nesalvată, și vreți să vedeți cumpărătorul. Ce face „Previzualizare”?",
+            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+          },
+          "en": {
+            "question": "You are working on a sale contract, with a change not yet saved, and want to see the buyer. What does „Previzualizare” (preview) do?",
+            "explanation": "„Previzualizare” opens the linked record beside yours, without leaving the screen, and an unsaved change on the main screen is left untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Deschide cumpărătorul în locul contractului, după ce vă întreabă de modificare",
+              "en": "It opens the buyer in place of the contract, after asking about the change"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Deschide cumpărătorul numai după ce salvați contractul",
+              "en": "It opens the buyer only after you save the contract"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Deschide cumpărătorul alături, iar modificarea rămâne neatinsă",
+              "en": "It opens the buyer beside it, and the change is left untouched"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

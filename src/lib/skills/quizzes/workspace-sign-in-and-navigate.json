@@ -1,0 +1,460 @@
+{
+  "skill": "workspace-sign-in-and-navigate",
+  "manual": [
+    "start-sign-in",
+    "start-sidebar",
+    "start-breadcrumb",
+    "start-recent",
+    "intro-purpose"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "start-sign-in",
+          "ro": {
+            "question": "Ați scris adresa de e-mail și parola și ați apăsat „Conectare”. Ce ecran se deschide?",
+            "explanation": "După conectare se deschide tabloul de bord, primul ecran al aplicației."
+          },
+          "en": {
+            "question": "You have typed your e-mail address and password and pressed „Conectare” (sign in). Which screen opens?",
+            "explanation": "After signing in, the dashboard opens: the application's first screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lista „Persoane Fizice”",
+              "en": "The „Persoane Fizice” (natural persons) list"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Tablou de bord”",
+              "en": "„Tablou de bord” (the dashboard)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Manual de utilizare”",
+              "en": "„Manual de utilizare” (the user manual)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Setări”, la „Contul meu”",
+              "en": "„Setări”, under „Contul meu” (my account)"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "start-sidebar",
+          "ro": {
+            "question": "În ce secțiune a barei laterale găsiți listele Persoane Fizice, Persoane Juridice, Proprietăți și Acte?",
+            "explanation": "Secțiunea „Domeniu” cuprinde cele patru liste: Persoane Fizice, Persoane Juridice, Proprietăți, Acte."
+          },
+          "en": {
+            "question": "In which section of the sidebar do you find the lists Persoane Fizice, Persoane Juridice, Proprietăți and Acte?",
+            "explanation": "The „Domeniu” section holds the four lists: Persoane Fizice, Persoane Juridice, Proprietăți, Acte."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Rapoarte”",
+              "en": "„Rapoarte” (reports)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Administrare”",
+              "en": "„Administrare” (administration)"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Domeniu”",
+              "en": "„Domeniu” (domain)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Instrumente”",
+              "en": "„Instrumente” (tools)"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-breadcrumb",
+          "ro": {
+            "question": "Ați schimbat un câmp, nu ați salvat și apăsați „Înapoi”. Aplicația vă întreabă ce faceți. Ce face „Anulează”?",
+            "explanation": "„Anulează” vă lasă pe ecran cu ce ați scris, iar „Renunță” pleacă fără să salveze."
+          },
+          "en": {
+            "question": "You changed a field, did not save, and press „Înapoi” (back). The application asks what to do. What does „Anulează” do?",
+            "explanation": "„Anulează” keeps you on the screen with what you typed, while „Renunță” leaves without saving."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Vă lasă pe ecran, cu ce ați scris",
+              "en": "It keeps you on the screen, with what you typed"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pleacă de pe ecran fără să salveze",
+              "en": "It leaves the screen without saving"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Salvează modificarea, apoi pleacă",
+              "en": "It saves the change, then leaves"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Șterge ce ați scris și rămâne pe ecran",
+              "en": "It wipes what you typed and stays on the screen"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "start-recent",
+          "ro": {
+            "question": "Vreți să redeschideți o înregistrare pe care ați văzut-o mai devreme. Unde sunt ultimele înregistrări deschise de dumneavoastră?",
+            "explanation": "„Recente”, jos în bara laterală, ține ultimele înregistrări pe care le-ați deschis; un clic pe una o redeschide."
+          },
+          "en": {
+            "question": "You want to reopen a record you saw earlier. Where are the records you opened last?",
+            "explanation": "„Recente”, at the bottom of the sidebar, holds the records you opened last; a click on one opens it again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În bara de navigare, după „Acasă”",
+              "en": "In the navigation bar, after „Acasă” (home)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Setări”, la „Contul meu”",
+              "en": "In „Setări”, under „Contul meu” (my account)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În ajutorul ecranului, sub „?”",
+              "en": "In the screen's help, under „?”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Recente”, jos în bara laterală",
+              "en": "In „Recente” (recent), at the bottom of the sidebar"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "start-sidebar",
+          "ro": {
+            "question": "Ce face „Restrânge bara laterală”?",
+            "explanation": "„Restrânge bara laterală” o strânge la câte o pictogramă pentru fiecare secțiune, ca să lase mai mult loc ecranului; „Extinde bara laterală” o readuce."
+          },
+          "en": {
+            "question": "What does „Restrânge bara laterală” (collapse the sidebar) do?",
+            "explanation": "„Restrânge bara laterală” narrows the bar to one icon per section, to leave the screen more room; „Extinde bara laterală” brings it back."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ascunde bara până la următoarea conectare",
+              "en": "It hides the bar until you next sign in"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O strânge la câte o pictogramă pe secțiune",
+              "en": "It narrows it to one icon per section"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Închide secțiunile deschise și arată tabloul de bord",
+              "en": "It closes the open sections and shows the dashboard"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scoate din bară ecranele pe care nu le folosiți",
+              "en": "It removes from the bar the screens you do not use"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "start-sign-in",
+          "ro": {
+            "question": "Un coleg nou nu are încă un cont. Cum ajunge să lucreze în arhivă?",
+            "explanation": "Cine nu are încă un cont cere acces din pagina de conectare; cererea ajunge la administrator, care o aprobă sau o respinge în „Utilizatori & Acces”."
+          },
+          "en": {
+            "question": "A new colleague has no account yet. How does he come to work in the archive?",
+            "explanation": "Someone without an account yet requests access from the sign-in page; the request reaches the administrator, who approves or rejects it in „Utilizatori & Acces”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Își face singur contul, din „Setări” → „Contul meu”",
+              "en": "He makes his own account, in „Setări” → „Contul meu”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se conectează cu e-mailul și își alege parola acolo",
+              "en": "He signs in with his e-mail and picks a password there"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cere acces din pagina de conectare, iar administratorul aprobă",
+              "en": "He requests access from the sign-in page, and the administrator approves"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "start-sign-in",
+          "ro": {
+            "question": "Ați terminat lucrul și vreți să ieșiți din aplicație. Unde este „Ieșire”?",
+            "explanation": "Jos în bara laterală sunt „Schimbă parola” și „Ieșire”; sus scrie cu ce nume sunteți conectat („Autentificat ca …”)."
+          },
+          "en": {
+            "question": "You have finished work and want to leave the application. Where is „Ieșire” (sign out)?",
+            "explanation": "At the bottom of the sidebar are „Schimbă parola” and „Ieșire”; at its top it says whom you are signed in as („Autentificat ca …”)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Sus în bara laterală, lângă „Autentificat ca …”",
+              "en": "At the top of the sidebar, beside „Autentificat ca …”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În capătul din dreapta al barei de navigare",
+              "en": "At the right-hand end of the navigation bar"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Jos în bara laterală, lângă „Schimbă parola”",
+              "en": "At the bottom of the sidebar, beside „Schimbă parola”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe „Tablou de bord”, în colțul din dreapta-sus",
+              "en": "On „Tablou de bord”, in the top right-hand corner"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "start-breadcrumb",
+          "ro": {
+            "question": "Ce arată bara de navigare de deasupra fiecărui ecran, de exemplu „Acasă › Administrare › Etichete”?",
+            "explanation": "Bara de navigare arată unde vă aflați: „Acasă”, apoi secțiunea și ecranul; un nume din bară care este link vă duce înapoi la ecranul acela."
+          },
+          "en": {
+            "question": "What does the navigation bar above every screen show, for instance „Acasă › Administrare › Etichete”?",
+            "explanation": "The navigation bar shows where you are: „Acasă”, then the section and the screen; a name in the bar that is a link takes you back to that screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Unde vă aflați: secțiunea și ecranul, cu nume pe care se poate apăsa",
+              "en": "Where you are: the section and the screen, with names you can press"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ultimele ecrane pe care le-ați deschis, în ordinea deschiderii",
+              "en": "The screens you opened last, in the order you opened them"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Toate ecranele secțiunii deschise acum în bara laterală",
+              "en": "All the screens of the section now open in the sidebar"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "start-breadcrumb",
+          "ro": {
+            "question": "Aveți o modificare nesalvată, apăsați „Înapoi”, iar la întrebarea aplicației alegeți „Renunță”. Ce se întâmplă?",
+            "explanation": "„Renunță” pleacă fără să salveze; „Anulează” v-ar fi lăsat pe ecran cu ce ați scris."
+          },
+          "en": {
+            "question": "You have an unsaved change, press „Înapoi”, and at the application's question you choose „Renunță” (discard). What happens?",
+            "explanation": "„Renunță” leaves without saving; „Anulează” would have kept you on the screen with what you typed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rămâneți pe ecran, cu ce ați scris",
+              "en": "You stay on the screen, with what you typed"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Modificarea se salvează, apoi plecați",
+              "en": "The change is saved, then you leave"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Modificarea se păstrează pentru data viitoare",
+              "en": "The change is kept for next time"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Plecați de pe ecran fără să salvați",
+              "en": "You leave the screen without saving"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "start-sidebar",
+          "ro": {
+            "question": "Vreți să deschideți „Căutare globală”. În ce secțiune a barei laterale se află?",
+            "explanation": "Secțiunea „Rapoarte” cuprinde Interacțiuni, Arbori de moștenire și Căutare globală."
+          },
+          "en": {
+            "question": "You want to open „Căutare globală” (global search). In which section of the sidebar is it?",
+            "explanation": "The „Rapoarte” section holds Interacțiuni, Arbori de moștenire and Căutare globală."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Domeniu”",
+              "en": "„Domeniu” (domain)"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Rapoarte”",
+              "en": "„Rapoarte” (reports)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Instrumente”",
+              "en": "„Instrumente” (tools)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Administrare”",
+              "en": "„Administrare” (administration)"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "intro-purpose",
+          "ro": {
+            "question": "Ce găsiți pe „Tablou de bord”?",
+            "explanation": "Tabloul de bord arată ce s-a adăugat în ultimele șapte zile, înregistrările ale căror metadate nu au mai fost actualizate de mult, actele care expiră în curând și ce s-a lucrat recent."
+          },
+          "en": {
+            "question": "What do you find on „Tablou de bord” (the dashboard)?",
+            "explanation": "The dashboard shows what was added in the last seven days, the records whose metadata has not been updated for a long time, the documents that expire soon and what was worked on recently."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toate persoanele și proprietățile arhivei, într-un singur tabel",
+              "en": "All the archive's persons and properties, in a single table"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cererile de cont care așteaptă aprobarea administratorului",
+              "en": "The account requests waiting for the administrator's approval"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Ce s-a adăugat recent, ce e vechi, ce expiră curând și ce s-a lucrat",
+              "en": "What was added lately, what is stale, what expires soon and what was worked on"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "start-recent",
+          "ro": {
+            "question": "Ce se întâmplă când faceți clic pe „Recente”, jos în bara laterală?",
+            "explanation": "Un clic pe „Recente” deschide sau strânge lista ultimelor înregistrări deschise, iar un clic pe o înregistrare din ea o redeschide."
+          },
+          "en": {
+            "question": "What happens when you click „Recente” (recent), at the bottom of the sidebar?",
+            "explanation": "A click on „Recente” opens or folds the list of the records you opened last, and a click on a record in it opens that record again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Se deschide sau se strânge lista ultimelor înregistrări deschise",
+              "en": "The list of the records you opened last opens or folds"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se redeschide direct ultima înregistrare pe care ați văzut-o",
+              "en": "The last record you saw opens again straight away"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se deschide tabloul de bord, cu ce s-a adăugat azi",
+              "en": "The dashboard opens, with what was added today"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se arată înregistrările schimbate azi de toți utilizatorii",
+              "en": "The records changed today by all users are shown"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

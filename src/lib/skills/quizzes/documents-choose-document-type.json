@@ -1,0 +1,477 @@
+{
+  "skill": "documents-choose-document-type",
+  "manual": [
+    "documents-type",
+    "documents-list",
+    "admin-reference-data-document-types",
+    "documents-identification"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "documents-list",
+          "ro": {
+            "question": "Pe „Acte”, în căsuța de căutare de sub „Toate tipurile” (la „Tip document:”), scrieți „mostenitor”, fără diacritice. Ce se întâmplă?",
+            "explanation": "Căutarea merge după o parte din nume, chiar fără diacritice: „mostenitor” găsește „Certificat de Moștenitor”, și rămân doar tipurile potrivite."
+          },
+          "en": {
+            "question": "On „Acte”, in the search box under „Toate tipurile” (all types, in „Tip document:”), you type „mostenitor”, without diacritics. What happens?",
+            "explanation": "The search works on part of the name, even without diacritics: „mostenitor” finds „Certificat de Moștenitor”, and only the matching types remain."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu găsește nimic; trebuie scris „moștenitor”",
+              "en": "It finds nothing; you must type „moștenitor”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu găsește nimic; trebuie scris numele de la început",
+              "en": "It finds nothing; the name must be typed from its start"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Rămâne „Certificat de Moștenitor”, printre cele potrivite",
+              "en": "„Certificat de Moștenitor” remains, among the matches"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Găsește și bifează singur „Certificat de Moștenitor”",
+              "en": "It finds and ticks „Certificat de Moștenitor” by itself"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-list",
+          "ro": {
+            "question": "În coloana „Tip” a listei „Acte” scrie „CVC”. Cum vedeți denumirea întreagă a tipului?",
+            "explanation": "„Tip” arată denumirea scurtă a tipului; țineți mouse-ul pe celulă și bula arată denumirea întreagă, de exemplu „Contract de Vânzare”."
+          },
+          "en": {
+            "question": "The „Tip” (type) column of the „Acte” list reads „CVC”. How do you see the type's full name?",
+            "explanation": "„Tip” shows the type's short name; rest the mouse on the cell and the bubble shows the full name, for example „Contract de Vânzare”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Țineți mouse-ul pe celulă și citiți bula",
+              "en": "Rest the mouse on the cell and read the bubble"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lărgiți coloana „Tip” până încape numele",
+              "en": "Widen the „Tip” column until the name fits"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Adăugați coloana „Denumire” din „Câmpuri afișate”",
+              "en": "Add a „Denumire” column from „Câmpuri afișate”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Faceți clic pe celulă, care deschide tipul",
+              "en": "Click the cell, which opens the type"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-type",
+          "ro": {
+            "question": "Pe „Act nou” deschideți lista „Tip document”. După ce recunoașteți un tip care are formular propriu?",
+            "explanation": "Tipurile care au formular propriu se citesc în listă cu „(are formular)” după nume — de exemplu „Contract de Vânzare (are formular)”."
+          },
+          "en": {
+            "question": "On „Act nou” you open the „Tip document” list. How do you recognise a type that has a form of its own?",
+            "explanation": "Types that have a form of their own read „(are formular)” (has a form) after their name in the list — for example „Contract de Vânzare (are formular)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Numele lui este scris cu litere îngroșate",
+              "en": "Its name is written in bold letters"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Are lângă nume un semn verde cu o bifă",
+              "en": "It has a green sign with a check beside it"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apare primul în listă, înaintea celorlalte",
+              "en": "It comes first in the list, before the others"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Are „(are formular)” scris după nume",
+              "en": "It has „(are formular)” written after its name"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-type",
+          "ro": {
+            "question": "Ce hotărăște tipul ales la „Tip document”?",
+            "explanation": "Tipul hotărăște ce câmpuri are formularul, cum se numesc emitentul, numărul și data și ce roluri pot avea persoanele legate de act."
+          },
+          "en": {
+            "question": "What does the type chosen under „Tip document” decide?",
+            "explanation": "The type decides which fields the form has, what the issuer, the number and the date are called, and which roles the people linked to the document can have."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar ce scrie în coloana „Tip” a listei",
+              "en": "Only what the list's „Tip” column says"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Câmpurile formularului, numele lor și rolurile persoanelor",
+              "en": "The form's fields, their names and the people's roles"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ce fel de fișiere se pot adăuga ca pagini",
+              "en": "Which kinds of file can be added as pages"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ce utilizatori pot deschide actul",
+              "en": "Which users can open the document"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Ați ales tipul „Contract de Vânzare”. Cum se numesc acum, în „Identificarea actului”, emitentul, numărul și data actului?",
+            "explanation": "La „Contract de Vânzare”, emitentul este „Notariat”, numărul „Nr. act autentic” și data „Data autentificării”."
+          },
+          "en": {
+            "question": "You chose the type „Contract de Vânzare”. What are the issuer, the number and the date now called in „Identificarea actului”?",
+            "explanation": "For „Contract de Vânzare” the issuer is „Notariat”, the number „Nr. act autentic” and the date „Data autentificării”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Emitent”, „Nr. document”, „Data”",
+              "en": "„Emitent”, „Nr. document”, „Data”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Notariat”, „Nr. certificat de moștenitor”, „Data eliberării”",
+              "en": "„Notariat”, „Nr. certificat de moștenitor”, „Data eliberării”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Notariat”, „Nr. act autentic”, „Data autentificării”",
+              "en": "„Notariat”, „Nr. act autentic”, „Data autentificării”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Instituție / Notariat”, „Nr. document”, „Data conținutului”",
+              "en": "„Instituție / Notariat”, „Nr. document”, „Data conținutului”"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "În „Date de referință” → „Tipuri de Document” vreți să vedeți doar tipurile care au formular. Ce faceți?",
+            "explanation": "Deasupra tabelului, bifa „Cu formular” arată doar tipurile care au formular; amândouă bifele, sau niciuna, arată toate tipurile."
+          },
+          "en": {
+            "question": "In „Date de referință” → „Tipuri de Document” you want to see only the types that have a form. What do you do?",
+            "explanation": "Above the table, the tick „Cu formular” (with a form) shows only the types that have a form; both ticks, or neither, show every type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifați doar „Cu formular”, deasupra tabelului",
+              "en": "Tick only „Cu formular”, above the table"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Bifați și „Cu formular”, și „Fără formular”",
+              "en": "Tick both „Cu formular” and „Fără formular”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Bifați doar „Fără formular”, deasupra tabelului",
+              "en": "Tick only „Fără formular”, above the table"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ordonați lista după coloana „Folosit de”",
+              "en": "Sort the list by the „Folosit de” column"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "documents-list",
+          "ro": {
+            "question": "La „Tip document:”, toate tipurile erau bifate. Scrieți ceva în căsuța de căutare și multe tipuri dispar din listă. Ce s-a întâmplat cu bifele lor?",
+            "explanation": "Căutarea doar ascunde rânduri, nu schimbă nicio bifă."
+          },
+          "en": {
+            "question": "Under „Tip document:” every type was ticked. You type something in the search box and many types disappear from the list. What happened to their ticks?",
+            "explanation": "The search only hides rows; it never changes a tick."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tipurile ascunse au fost debifate",
+              "en": "The hidden types have been unticked"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Au rămas bifate doar tipurile găsite",
+              "en": "Only the types found are still ticked"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "S-au golit toate, iar butonul spune „Niciun tip”",
+              "en": "All were cleared, and the button says „Niciun tip”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic: căutarea doar ascunde rânduri",
+              "en": "Nothing: the search only hides rows"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-list",
+          "ro": {
+            "question": "Unde se alege denumirea scurtă a unui tip, cea care apare în coloana „Tip” a listei „Acte”?",
+            "explanation": "Denumirea scurtă se alege pentru fiecare tip în „Date de referință”, la „Tipuri de Document”, în câmpul „Denumire scurtă”."
+          },
+          "en": {
+            "question": "Where is a type's short name chosen, the one that appears in the „Tip” column of the „Acte” list?",
+            "explanation": "The short name is chosen for each type in „Date de referință”, under „Tipuri de Document”, in the field „Denumire scurtă” (short name)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe „Act nou”, sub câmpul „Tip document”",
+              "en": "On „Act nou”, under the „Tip document” field"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Date de referință” → „Tipuri de Document”",
+              "en": "In „Date de referință” → „Tipuri de Document”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Câmpuri afișate”, deasupra listei „Acte”",
+              "en": "In „Câmpuri afișate”, above the „Acte” list"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Etichetă scurtă”, pe fiecare act în parte",
+              "en": "In „Etichetă scurtă”, on each document separately"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-list",
+          "ro": {
+            "question": "Pentru tipul „Certificat de Moștenitor” nu s-a ales nicio denumire scurtă. Ce arată coloana „Tip” a listei „Acte”?",
+            "explanation": "Lăsată goală, lista scurtează singură denumirea, fără începutul „Contract de”, „Act de”, „Încheiere de”, „Certificat de” — aici „Moștenitor”."
+          },
+          "en": {
+            "question": "No short name has been chosen for the type „Certificat de Moștenitor”. What does the „Tip” column of the „Acte” list show?",
+            "explanation": "Left empty, the list shortens the name by itself, dropping a leading „Contract de”, „Act de”, „Încheiere de”, „Certificat de” — here „Moștenitor”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Denumirea întreagă, „Certificat de Moștenitor”",
+              "en": "The full name, „Certificat de Moștenitor”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Numele scurtat singur, fără „Certificat de”",
+              "en": "The name shortened by itself, without „Certificat de”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cheia tipului, scrisă cu majuscule",
+              "en": "The type's key, written in capitals"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O celulă goală, până alegeți o denumire",
+              "en": "An empty cell, until you choose a name"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-type",
+          "ro": {
+            "question": "Alegeți la „Tip document” un tip fără „(are formular)” după nume. Ce rămâne în formularul actului?",
+            "explanation": "Un tip fără formular păstrează doar câmpurile generale ale actului."
+          },
+          "en": {
+            "question": "Under „Tip document” you choose a type without „(are formular)” after its name. What remains in the document's form?",
+            "explanation": "A type with no form keeps only the document's general fields."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Doar câmpurile generale ale actului",
+              "en": "Only the document's general fields"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic; actul nu se poate salva",
+              "en": "Nothing; the document cannot be saved"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Formularul contractului de vânzare",
+              "en": "The form of the sale contract"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O fereastră care cere să creați formularul",
+              "en": "A window asking you to create the form"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-type",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare ați ales cu bifele din capul ecranului ce fișe se văd. Apoi deschideți un plan. Ce fișe vedeți?",
+            "explanation": "Alegerea fișelor se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui."
+          },
+          "en": {
+            "question": "On a sale contract you chose which tiles are shown, with the ticks at the head of the screen. Then you open a plan. Which tiles do you see?",
+            "explanation": "The choice of tiles is remembered per type: a sale contract and a plan each keep their own arrangement."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aceleași ca la contract, pentru toate actele",
+              "en": "The same as on the contract, for every document"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate fișele, pentru că alegerea nu se ține minte",
+              "en": "Every tile, because the choice is not remembered"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Aranjamentul ales pentru tipul planului",
+              "en": "The arrangement chosen for the plan's type"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „Identificarea actului” și „Pagini”",
+              "en": "Only „Identificarea actului” and „Pagini”"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "Care tipuri de document nu pot avea deloc formular?",
+            "explanation": "Cartea de identitate și tipul de rezervă pentru actele neclasificate nu pot avea formular; celelalte pot primi unul cu „Creează formularul”."
+          },
+          "en": {
+            "question": "Which document types cannot have a form at all?",
+            "explanation": "The identity card and the catch-all type for unclassified documents cannot have a form; the others can be given one with „Creează formularul” (create the form)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tipurile cu starea „Creat la import”",
+              "en": "The types with the status „Creat la import”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tipurile pe care nu le folosește niciun act",
+              "en": "The types that no document uses"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Tipurile cu starea „Adăugat manual”",
+              "en": "The types with the status „Adăugat manual”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Cartea de identitate și tipul pentru acte neclasificate",
+              "en": "The identity card and the type for unclassified documents"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

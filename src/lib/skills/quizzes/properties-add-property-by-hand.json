@@ -1,0 +1,466 @@
+{
+  "skill": "properties-add-property-by-hand",
+  "manual": [
+    "properties-add",
+    "properties-type",
+    "properties-add-one-parcel",
+    "properties-add-cadastral",
+    "properties-type-hidden"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "properties-add",
+          "ro": {
+            "question": "Ați apăsat „Adaugă proprietate”. Ce alegeți în fereastra „Adaugă Proprietate” ca să completați proprietatea de mână?",
+            "explanation": "„Introducere manuală” este calea în care completați detaliile proprietății manual; se deschide ecranul „Proprietate nouă”."
+          },
+          "en": {
+            "question": "You pressed „Adaugă proprietate”. What do you choose in the window „Adaugă Proprietate” to fill in the property by hand?",
+            "explanation": "„Introducere manuală” is the way in which you fill in the property's details by hand; the screen „Proprietate nouă” opens."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Din fișier text”",
+              "en": "„Din fișier text” (from a text file)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Din imagine scanată”",
+              "en": "„Din imagine scanată” (from a scanned image)"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Introducere manuală”",
+              "en": "„Introducere manuală” (manual entry)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Din folder text”",
+              "en": "„Din folder text” (from a text folder)"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "properties-add-cadastral",
+          "ro": {
+            "question": "Cum completați „Nr. tarla / sola” pe o proprietate nouă?",
+            "explanation": "„Nr. tarla / sola” se alege dintr-o listă, nu se scrie: lista cuprinde „niciunul” și tarlalele care există deja în arhivă. „Nr. parcelă” se scrie liber."
+          },
+          "en": {
+            "question": "How do you fill in „Nr. tarla / sola” on a new property?",
+            "explanation": "„Nr. tarla / sola” is chosen from a list, not typed: the list holds „niciunul” and the tarlas already in the archive. „Nr. parcelă” is typed freely."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "O alegeți dintr-o listă cu „niciunul” și tarlalele deja aflate în arhivă.",
+              "en": "You choose it from a list with „niciunul” (none) and the tarlas already in the archive."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O scrieți liber, la fel ca „Nr. parcelă”.",
+              "en": "You type it freely, just like „Nr. parcelă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O completează aplicația din „Nr. cadastru”.",
+              "en": "The application fills it in from „Nr. cadastru”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O calculează aplicația din colțurile parcelei.",
+              "en": "The application calculates it from the parcel's corners."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "properties-type",
+          "ro": {
+            "question": "Pe ecranul unei proprietăți, unde citiți ce fișe arată tipul ei și ce fișe nu arată?",
+            "explanation": "În capul ecranului, după poreclă și tip, stă un ⓘ, „Despre tipul proprietății”. Bula lui spune ce fișe arată tipul acesta și ce fișe nu arată."
+          },
+          "en": {
+            "question": "On a property's screen, where do you read which tiles its type shows and which it does not?",
+            "explanation": "At the top of the screen, after the nickname and the type, there is an ⓘ, „Despre tipul proprietății”. Its bubble says which tiles this type shows and which it does not."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În fișa „Clasificare”, la proveniență.",
+              "en": "In the „Clasificare” tile, under provenance."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Câmpuri afișate”, pe lista proprietăților.",
+              "en": "In „Câmpuri afișate”, on the list of properties."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În bara de navigare, după numele ecranului.",
+              "en": "In the navigation bar, after the screen's name."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În bula lui ⓘ „Despre tipul proprietății”, din capul ecranului.",
+              "en": "In the bubble of the ⓘ „Despre tipul proprietății” (about the property's type), at the top of the screen."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "properties-type",
+          "ro": {
+            "question": "Alegeți alt tip în „Tip proprietate”, dar nu ați salvat încă. Ce se întâmplă cu titlul ecranului?",
+            "explanation": "Când alegeți alt tip, titlul și bula se schimbă pe loc, înainte de salvare."
+          },
+          "en": {
+            "question": "You choose another type in „Tip proprietate” but have not saved yet. What happens to the screen's heading?",
+            "explanation": "When you choose another type, the heading and the bubble change at once, before saving."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se schimbă abia după ce apăsați „Salvează”.",
+              "en": "It changes only after you press „Salvează”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Titlul și bula se schimbă pe loc, înainte de salvare.",
+              "en": "The heading and the bubble change at once, before saving."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămâne același; tipul se vede doar în listă.",
+              "en": "It stays the same; the type is seen only in the list."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "properties-add-one-parcel",
+          "ro": {
+            "question": "Salvați o proprietate nouă cu o tarla și o parcelă care au deja o proprietate în arhivă. Ce face aplicația?",
+            "explanation": "Arhiva ține o singură proprietate pentru fiecare parcelă: aplicația o refuză, rămâneți pe „Proprietate nouă”, iar sub formular apare „Această parcelă are deja o proprietate”."
+          },
+          "en": {
+            "question": "You save a new property with a tarla and a parcela that already have a property in the archive. What does the application do?",
+            "explanation": "The archive keeps one property per parcel: the application refuses it, you stay on „Proprietate nouă”, and below the form appears „Această parcelă are deja o proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O salvează, iar pe hartă cele două proprietăți clipesc în roz.",
+              "en": "It saves it, and on the map the two properties blink pink."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O salvează ca versiune nouă a proprietății care există.",
+              "en": "It saves it as a new version of the property that exists."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "O refuză: rămâneți pe „Proprietate nouă”, cu „Această parcelă are deja o proprietate”.",
+              "en": "It refuses it: you stay on „Proprietate nouă”, with „Această parcelă are deja o proprietate” (this parcel already has a property)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Vă întreabă dacă vreți totuși să creați a doua proprietate.",
+              "en": "It asks whether you want to create the second property anyway."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "properties-add-cadastral",
+          "ro": {
+            "question": "Ați apăsat „Salvează” pe o proprietate nouă. Cum vă dați seama că a fost creată?",
+            "explanation": "Vă întoarceți în listă. Proprietatea nouă stă sus, cu insigna „Nou!”, iar numărul de sub listă a crescut cu unu."
+          },
+          "en": {
+            "question": "You pressed „Salvează” on a new property. How can you tell it was created?",
+            "explanation": "You go back to the list. The new property is at the top, badged „Nou!”, and the count below the list has gone up by one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Sunteți în listă: e sus, cu „Nou!”, iar numărul de sub listă a crescut cu unu.",
+              "en": "You are in the list: it is at the top, with „Nou!”, and the count below the list has gone up by one."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rămâneți pe ecranul ei, iar în cap apare „v 1”.",
+              "en": "You stay on its screen, and „v 1” appears at the top."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apare „Proprietatea a fost importată cu succes.”, cu „Închide”.",
+              "en": "„Proprietatea a fost importată cu succes.” appears, with „Închide”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se deschide „Hartă completă”, cu proprietatea nouă în centru.",
+              "en": "„Hartă completă” opens, with the new property in the centre."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "properties-type",
+          "ro": {
+            "question": "În capul ecranului unei proprietăți scrie, după poreclă, „(Teren Arabil)”, în cursiv. Ce este aceasta?",
+            "explanation": "Ecranul unei proprietăți are în cap porecla ei, apoi tipul, între paranteze și în cursiv. Tipul îl alegeți în „Tip proprietate”."
+          },
+          "en": {
+            "question": "At the top of a property's screen, after the nickname, it reads „(Teren Arabil)”, in italics. What is it?",
+            "explanation": "A property's screen is headed by its nickname, then its type, in brackets and in italics. You choose the type in „Tip proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Categorie de folosință” a proprietății.",
+              "en": "The property's „Categorie de folosință” (land-use category)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Tipul proprietății, ales în „Tip proprietate”.",
+              "en": "The property's type, chosen in „Tip proprietate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Grupul din care face parte proprietatea.",
+              "en": "The group the property belongs to."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Proveniența proprietății, din „Clasificare”.",
+              "en": "The property's provenance, from „Clasificare”."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "properties-type",
+          "ro": {
+            "question": "La „Tip proprietate” alegeți „niciunul”. Ce apare în titlu după poreclă?",
+            "explanation": "Dacă alegeți „niciunul”, după poreclă nu mai apare nimic."
+          },
+          "en": {
+            "question": "At „Tip proprietate” you choose „niciunul” (none). What appears in the heading after the nickname?",
+            "explanation": "If you choose „niciunul”, nothing appears after the nickname."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„(niciunul)”, în cursiv.",
+              "en": "„(niciunul)”, in italics."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„(Fără tip)”, în cursiv.",
+              "en": "„(Fără tip)” (no type), in italics."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ultimul tip ales, până la salvare.",
+              "en": "The last type chosen, until saving."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic: titlul rămâne doar porecla.",
+              "en": "Nothing: the heading is just the nickname."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "properties-type-hidden",
+          "ro": {
+            "question": "Ați ales un tip care nu arată „Adresă”. Cum arată bifa „Adresă” din capul ecranului?",
+            "explanation": "Pentru un asemenea tip, bifa este nebifată și inactivă, cu numele în cursiv, iar mesajul ei spune că tipul ales nu afișează fișa. „Toate” și „Implicit” nu o ating."
+          },
+          "en": {
+            "question": "You chose a type that does not show „Adresă”. What does the „Adresă” tick at the top of the screen look like?",
+            "explanation": "For such a type the tick is unticked and inactive, its name in italics, and its message says that the chosen type does not show the tile. „Toate” and „Implicit” do not touch it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nebifată și inactivă, cu numele în cursiv; „Toate” nu o atinge.",
+              "en": "Unticked and inactive, its name in italics; „Toate” (all) does not touch it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Dispare cu totul din capul ecranului.",
+              "en": "It disappears from the top of the screen altogether."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nebifată, dar „Toate” o bifează din nou.",
+              "en": "Unticked, but „Toate” ticks it again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Bifată, dar fișa „Adresă” se arată goală.",
+              "en": "Ticked, but the „Adresă” tile shows empty."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "properties-add-one-parcel",
+          "ro": {
+            "question": "Aplicația a refuzat proprietatea nouă cu „Această parcelă are deja o proprietate”. Cum ajungeți la proprietatea care există?",
+            "explanation": "Linkul „Deschide …” de sub mesaj vă duce la proprietatea care există. Nu s-a scris nimic."
+          },
+          "en": {
+            "question": "The application refused the new property with „Această parcelă are deja o proprietate”. How do you get to the property that exists?",
+            "explanation": "The link „Deschide …” under the message takes you to the property that exists. Nothing was written."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Salvează” a doua oară.",
+              "en": "Press „Salvează” a second time."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „Anulează”, care vă duce la ea.",
+              "en": "Press „Anulează”, which takes you to it."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cu linkul „Deschide …” de sub mesaj.",
+              "en": "With the link „Deschide …” under the message."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din „Recente”, unde a fost pusă sus.",
+              "en": "From „Recente”, where it was put at the top."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "properties-add-cadastral",
+          "ro": {
+            "question": "Ce este „Suprafață calculată (m²)” pe o proprietate?",
+            "explanation": "„Suprafață calculată (m²)” o calculează aplicația din colțuri, iar „Suprafață oficială (m²)” este suprafața din acte."
+          },
+          "en": {
+            "question": "What is „Suprafață calculată (m²)” on a property?",
+            "explanation": "„Suprafață calculată (m²)” is calculated by the application from the corners, while „Suprafață oficială (m²)” is the area in the papers."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Suprafața din acte, pe care o scrieți voi.",
+              "en": "The area in the papers, which you type yourselves."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Suprafața pe care o calculează aplicația din colțuri.",
+              "en": "The area the application calculates from the corners."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Suprafața din cartea funciară, preluată după „Nr. CF”.",
+              "en": "The area in the land register, fetched by „Nr. CF”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "properties-add-cadastral",
+          "ro": {
+            "question": "Unde găsiți „Salvează”, „Șterge” și „Anulează” pe ecranul „Proprietate nouă”?",
+            "explanation": "Stau jos de tot, sub hartă. Sunt pictograme — o dischetă, un coș, un X — și își arată numele când treceți cu mouse-ul peste ele."
+          },
+          "en": {
+            "question": "Where do you find „Salvează”, „Șterge” and „Anulează” on the screen „Proprietate nouă”?",
+            "explanation": "They are at the very bottom, below the map. They are icons — a floppy disk, a bin, an X — and show their names when you move the mouse over them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Sus, lângă poreclă, ca butoane cu text.",
+              "en": "At the top, beside the nickname, as text buttons."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Identificare cadastrală”, sub „Note”.",
+              "en": "In the „Identificare cadastrală” tile, under „Note”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În fereastra „Adaugă Proprietate”, sub cele patru căi.",
+              "en": "In the window „Adaugă Proprietate”, under the four ways in."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Jos de tot, sub hartă: o dischetă, un coș și un X.",
+              "en": "At the very bottom, below the map: a floppy disk, a bin and an X."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

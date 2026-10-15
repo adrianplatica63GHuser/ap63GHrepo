@@ -1,0 +1,454 @@
+{
+  "skill": "persons-add-judicial-person",
+  "manual": [
+    "companies-add",
+    "companies-add-contact",
+    "companies-people-contact",
+    "companies-add-edit",
+    "companies-add-identity"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "companies-add",
+          "ro": {
+            "question": "Cum adăugați o firmă nouă în arhivă?",
+            "explanation": "Pe lista firmelor, „Persoane Juridice”, apăsați „Adaugă persoană juridică”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare."
+          },
+          "en": {
+            "question": "How do you add a new firm to the archive?",
+            "explanation": "On the list of firms, „Persoane Juridice”, press „Adaugă persoană juridică”. The form „Persoană juridică nouă” opens straight away, with no other question."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică”; formularul se deschide direct.",
+              "en": "On „Persoane Juridice”, press „Adaugă persoană juridică” (add judicial person); the form opens straight away."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe „Persoane Fizice”, apăsați „Adaugă persoană” și alegeți „Tip” „SRL”.",
+              "en": "On „Persoane Fizice”, press „Adaugă persoană” and choose „Tip” „SRL”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică” și alegeți întâi forma firmei într-o fereastră.",
+              "en": "On „Persoane Juridice”, press „Adaugă persoană juridică” and first choose the firm's form in a window."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "companies-add",
+          "ro": {
+            "question": "Care este singurul câmp obligatoriu al unei firme noi?",
+            "explanation": "Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este o înregistrare adevărată și se completează mai târziu."
+          },
+          "en": {
+            "question": "Which is the only required field of a new firm?",
+            "explanation": "The only required field is „Denumire”. A firm that has only its name is a real record and is completed later."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Nr. înregistrare (CUI)”",
+              "en": "„Nr. înregistrare (CUI)” (registration code)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Denumire” și „Tip”",
+              "en": "„Denumire” and „Tip” (form)"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Denumire”",
+              "en": "„Denumire” (name)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Telefon firmă”",
+              "en": "„Telefon firmă” (firm phone)"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "companies-add-contact",
+          "ro": {
+            "question": "Unde scrieți telefonul și e-mailul firmei înseși?",
+            "explanation": "Fișa „Reprezentanți și contact” începe cu datele firmei: „Telefon firmă” și „E-mail firmă”. Ele sunt ale firmei, nu ale unei persoane de contact."
+          },
+          "en": {
+            "question": "Where do you type the firm's own phone and e-mail?",
+            "explanation": "The „Reprezentanți și contact” tile starts with the firm's own details: „Telefon firmă” and „E-mail firmă”. They belong to the firm, not to a contact person."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În fișa „Date de înregistrare”, sub CUI.",
+              "en": "In the „Date de înregistrare” tile, under the CUI."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe ecranul persoanei de contact, în fișa ei „Contact”.",
+              "en": "On the contact person's screen, in their „Contact” tile."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În fișa „Adrese”, lângă „Adresă sediu social”.",
+              "en": "In the „Adrese” tile, beside „Adresă sediu social”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În fișa „Reprezentanți și contact”, la „Telefon firmă” și „E-mail firmă”.",
+              "en": "In the „Reprezentanți și contact” tile, at „Telefon firmă” and „E-mail firmă”."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "companies-people-contact",
+          "ro": {
+            "question": "Vreți să treceți la „Persoană de contact 1” un om care nu este încă în arhivă. Ce faceți?",
+            "explanation": "O persoană de contact nu se scrie de mână: se alege dintre persoanele fizice deja aflate în arhivă. Adăugați întâi omul în „Persoane Fizice”, apoi alegeți-l aici."
+          },
+          "en": {
+            "question": "You want to put at „Persoană de contact 1” someone who is not yet in the archive. What do you do?",
+            "explanation": "A contact person is not typed by hand: it is chosen from the natural persons already in the archive. Add the person in „Persoane Fizice” first, then choose them here."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îi scrieți numele de mână în „Persoană de contact 1” și salvați.",
+              "en": "Type their name by hand at „Persoană de contact 1” and save."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Îl adăugați întâi în „Persoane Fizice”, apoi îl alegeți la „Persoană de contact 1”.",
+              "en": "Add them in „Persoane Fizice” first, then choose them at „Persoană de contact 1”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îl scrieți în „Note”, iar aplicația îl creează la salvare.",
+              "en": "Write them in „Note”, and the application creates them on saving."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Asociază persoană” și îl creați din fereastra de asociere.",
+              "en": "Press „Asociază persoană” and create them from the association window."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "companies-add-edit",
+          "ro": {
+            "question": "Schimbați ceva pe o firmă care există deja și apăsați „Salvează”. Ce se întâmplă?",
+            "explanation": "De data aceasta ecranul rămâne pe firmă. Fiecare salvare face o versiune nouă: capul ecranului trece, de exemplu, de la „v 0” la „v 1”."
+          },
+          "en": {
+            "question": "You change something on a firm that already exists and press „Salvează”. What happens?",
+            "explanation": "This time the screen stays on the firm. Every save makes a new version: the top of the screen goes, for instance, from „v 0” to „v 1”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ecranul rămâne pe firmă, iar capul lui trece la o versiune nouă, de pildă „v 1”.",
+              "en": "The screen stays on the firm, and its top moves to a new version, for instance „v 1”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Vă întoarceți la listă, unde firma stă sus, marcată „Nou!”, fără versiune nouă.",
+              "en": "You go back to the list, where the firm stands at the top, marked „Nou!”, with no new version."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Firma veche rămâne, iar alături se creează o a doua firmă, cu datele noi.",
+              "en": "The old firm remains, and a second firm with the new details is created beside it."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "companies-add-identity",
+          "ro": {
+            "question": "Ați salvat o firmă cu un CUI greșit. Cum îl îndreptați?",
+            "explanation": "Odată salvat, CUI-ul nu mai poate fi modificat. Un CUI greșit se îndreaptă ștergând firma și creând-o din nou."
+          },
+          "en": {
+            "question": "You saved a firm with a wrong CUI. How do you put it right?",
+            "explanation": "Once saved, the CUI can no longer be changed. A wrong CUI is put right by deleting the firm and creating it again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrieți CUI-ul corect peste cel vechi și apăsați „Salvează”.",
+              "en": "Type the correct CUI over the old one and press „Salvează”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Mergeți la „Versiunea anterioară” și o faceți curentă.",
+              "en": "Go to „Versiunea anterioară” (previous version) and make it current."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Ștergeți firma și o creați din nou, cu CUI-ul corect.",
+              "en": "Delete the firm and create it again, with the correct CUI."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate întâmpla: aplicația refuză un CUI greșit.",
+              "en": "It cannot happen: the application refuses a wrong CUI."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "companies-add",
+          "ro": {
+            "question": "Ați apăsat „Salvează” pe o firmă nouă. Unde o găsiți apoi?",
+            "explanation": "Aplicația vă întoarce la listă, unde firma nouă stă sus, marcată „Nou!”. O deschideți cu „Deschide”."
+          },
+          "en": {
+            "question": "You pressed „Salvează” on a new firm. Where do you find it then?",
+            "explanation": "The application takes you back to the list, where the new firm stands at the top, marked „Nou!”. You open it with „Deschide”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rămâneți pe ecranul ei, care arată „v 1” în cap.",
+              "en": "You stay on its screen, which shows „v 1” at the top."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Sus în lista firmelor, marcată „Nou!”; o deschideți cu „Deschide”.",
+              "en": "At the top of the list of firms, marked „Nou!”; you open it with „Deschide”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În lista firmelor, la locul ei în ordinea denumirilor.",
+              "en": "In the list of firms, in its place in name order."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar în „Recente”, până o căutați după CUI.",
+              "en": "Only in „Recente”, until you search for it by CUI."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "companies-add-contact",
+          "ro": {
+            "question": "La „E-mail firmă” ați scris ceva care nu are forma unei adrese și apăsați „Salvează”. Ce se întâmplă?",
+            "explanation": "Un e-mail care nu are forma unei adrese nu se salvează: sub câmp apare „Adresa de e-mail nu pare corectă — de exemplu office@firma.ro”, iar firma rămâne neschimbată."
+          },
+          "en": {
+            "question": "At „E-mail firmă” you typed something that does not have the shape of an address, and you press „Salvează”. What happens?",
+            "explanation": "An e-mail that does not have the shape of an address is not saved: under the field appears „Adresa de e-mail nu pare corectă — de exemplu office@firma.ro”, and the firm stays unchanged."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Firma se salvează, iar adresa este încadrată cu roșu.",
+              "en": "The firm is saved, and the address is framed in red."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Firma se salvează fără e-mail, iar câmpul se golește.",
+              "en": "The firm is saved without the e-mail, and the field is emptied."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Sub câmp apare că adresa nu pare corectă, iar firma rămâne neschimbată.",
+              "en": "Under the field it says the address does not look right, and the firm stays unchanged."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "companies-list",
+          "ro": {
+            "question": "Vreți să vedeți, direct în lista firmelor, persoana de contact a fiecăreia. Ce faceți?",
+            "explanation": "„Câmpuri afișate” adaugă coloane listei; una dintre ele este „Persoană de contact”, care arată prima persoană de contact a firmei."
+          },
+          "en": {
+            "question": "You want to see each firm's contact person directly in the list of firms. What do you do?",
+            "explanation": "„Câmpuri afișate” adds columns to the list; one of them is „Persoană de contact”, which shows the firm's first contact person."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifați „Persoană de contact” în „Câmpuri afișate”.",
+              "en": "Tick „Persoană de contact” in „Câmpuri afișate” (the columns shown)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: coloana „Persoană de contact” se vede de la început.",
+              "en": "Nothing: the „Persoană de contact” column is shown from the start."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Incursiune” pe fiecare rând.",
+              "en": "Press „Incursiune” on each row."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scrieți „contact” în caseta de căutare.",
+              "en": "Type „contact” in the search box."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "companies-add-edit",
+          "ro": {
+            "question": "Ați schimbat ceva pe o firmă, dar încă nu ați salvat. Ce vă arată ecranul?",
+            "explanation": "Cât timp aveți modificări nesalvate, sus scrie „Modificări nesalvate”."
+          },
+          "en": {
+            "question": "You changed something on a firm but have not saved yet. What does the screen show you?",
+            "explanation": "While you have unsaved changes, the top says „Modificări nesalvate” (unsaved changes)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Câmpul schimbat se încadrează cu verde.",
+              "en": "The changed field is framed in green."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Sus scrie „Modificări nesalvate”.",
+              "en": "The top says „Modificări nesalvate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Capul ecranului trece deja la „v 1”.",
+              "en": "The top of the screen already moves to „v 1”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Lângă denumire apare „Nou!”.",
+              "en": "„Nou!” appears beside the name."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "companies-add-edit",
+          "ro": {
+            "question": "Ați schimbat telefonul unei firme acum câteva luni. Cum vedeți ce telefon avea înainte?",
+            "explanation": "Cu „Versiunea anterioară” și „Versiunea următoare” vedeți firma așa cum era la fiecare salvare; telefonul și e-mailul firmei sunt păstrate în istoric."
+          },
+          "en": {
+            "question": "You changed a firm's phone a few months ago. How do you see what phone it had before?",
+            "explanation": "With „Versiunea anterioară” and „Versiunea următoare” you see the firm as it was at each save; the firm's phone and e-mail are kept in the history."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În fișa „Interacțiuni”, unde se notează fiecare schimbare.",
+              "en": "In the „Interacțiuni” tile, where every change is noted."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu se poate: telefonul vechi se pierde la salvare.",
+              "en": "You cannot: the old phone is lost on saving."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cu „Versiunea anterioară”, care arată firma ca la salvarea de dinainte.",
+              "en": "With „Versiunea anterioară”, which shows the firm as at the save before."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Legături”, pe rândul persoanei de contact.",
+              "en": "In „Legături”, on the contact person's row."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "companies-add-addresses",
+          "ro": {
+            "question": "Firma primește corespondența la sediu. Cum completați „Adresă corespondență”?",
+            "explanation": "Când firma primește corespondența la sediu, bifați „Aceeași cu adresa sediului social” și nu mai scrieți adresa a doua oară."
+          },
+          "en": {
+            "question": "The firm receives its post at its registered office. How do you fill in „Adresă corespondență”?",
+            "explanation": "When the firm receives its post at its office, tick „Aceeași cu adresa sediului social” and do not type the address a second time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O lăsați goală; aplicația o completează singură cu sediul.",
+              "en": "Leave it empty; the application fills it with the office by itself."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Bifați „Aceeași cu adresa sediului social”.",
+              "en": "Tick „Aceeași cu adresa sediului social” (same as the registered office)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O scrieți la persoana de contact, în fișa ei.",
+              "en": "Type it on the contact person, in their tile."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

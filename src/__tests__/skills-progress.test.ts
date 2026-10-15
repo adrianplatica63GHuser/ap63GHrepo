@@ -34,6 +34,7 @@ function mk(key: string, level: SkillLevel, predecessors: string[] = [], path: S
     predecessors,
     screens: [],
     cases: [],
+    manual: [],
   };
 }
 

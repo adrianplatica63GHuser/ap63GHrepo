@@ -1,0 +1,478 @@
+{
+  "skill": "workspace-global-search",
+  "manual": [
+    "reports-search-filters",
+    "reports-search",
+    "reports-search-results",
+    "reports-example-tag",
+    "start-sidebar"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "start-sidebar",
+          "ro": {
+            "question": "În ce secțiune a barei laterale găsiți ecranul „Căutare globală”?",
+            "explanation": "Secțiunea „Rapoarte” din bara laterală cuprinde „Interacțiuni”, „Arbori de moștenire” și „Căutare globală”."
+          },
+          "en": {
+            "question": "In which section of the sidebar do you find the „Căutare globală” (global search) screen?",
+            "explanation": "The sidebar's „Rapoarte” (reports) section holds „Interacțiuni”, „Arbori de moștenire” and „Căutare globală”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Domeniu”, lângă cele patru liste",
+              "en": "„Domeniu” (domain), next to the four lists"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Instrumente”, lângă „Distilare Tipizate”",
+              "en": "„Instrumente” (tools), next to „Distilare Tipizate”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Rapoarte”, lângă „Interacțiuni” și „Arbori de moștenire”",
+              "en": "„Rapoarte” (reports), next to „Interacțiuni” and „Arbori de moștenire”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Administrare”, lângă „Grupuri” și „Etichete”",
+              "en": "„Administrare” (administration), next to „Grupuri” and „Etichete”"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "reports-search",
+          "ro": {
+            "question": "În ce înregistrări caută „Căutare globală”?",
+            "explanation": "„Căutare globală” caută dintr-un singur loc în toate cele trei feluri de înregistrări: persoane (fizice și juridice), proprietăți și acte."
+          },
+          "en": {
+            "question": "Which records does „Căutare globală” (global search) search?",
+            "explanation": "„Căutare globală” searches from one place across all three kinds of record: persons (natural and legal), properties and documents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Persoane fizice și juridice, proprietăți și acte",
+              "en": "Natural and legal persons, properties and documents"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar persoane fizice și persoane juridice",
+              "en": "Only natural persons and legal persons"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Persoane, proprietăți, acte și interacțiuni",
+              "en": "Persons, properties, documents and interactions"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar actele, după textul scanărilor lor",
+              "en": "Only documents, by the text of their scans"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Scrieți „Popescu” la „Căutare nume / cod”, alegeți „Proprietate” la „Tip entitate” și apăsați „Caută”. Ce rezultate primiți?",
+            "explanation": "Toate filtrele puse se aplică împreună: un rezultat trebuie să le îndeplinească pe toate. Rămân doar proprietățile al căror nume sau cod conține „Popescu”."
+          },
+          "en": {
+            "question": "You type „Popescu” in „Căutare nume / cod”, choose „Proprietate” at „Tip entitate” and press „Caută”. Which results do you get?",
+            "explanation": "All the filters set apply together: a result must meet every one of them. Only the properties whose name or code contains „Popescu” remain."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tot ce se numește „Popescu”, plus toate proprietățile",
+              "en": "Everything named „Popescu”, plus every property"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Persoanele „Popescu” împreună cu proprietățile lor",
+              "en": "The persons named „Popescu” together with their properties"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar rezultatele primului filtru completat",
+              "en": "Only the results of the first filter filled in"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Doar proprietățile al căror nume sau cod conține „Popescu”",
+              "en": "Only the properties whose name or code contains „Popescu”"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Vreți să vedeți la un loc persoanele, terenurile și actele etichetate „prioritar”. Ce faceți?",
+            "explanation": "Scrieți eticheta la „Etichetă”, lăsați „Tip entitate” pe „Orice” și apăsați „Caută”: persoanele, proprietățile și actele apar în același tabel."
+          },
+          "en": {
+            "question": "You want to see together the persons, plots and documents tagged „prioritar”. What do you do?",
+            "explanation": "Type the tag in „Etichetă” (tag), leave „Tip entitate” on „Orice” (any) and press „Caută”: persons, properties and documents appear in the same table."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrieți „prioritar” la „Căutare nume / cod” și apăsați „Caută”",
+              "en": "Type „prioritar” in „Căutare nume / cod” and press „Caută”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Scrieți „prioritar” la „Etichetă”, lăsați „Tip entitate” pe „Orice” și apăsați „Caută”",
+              "en": "Type „prioritar” in „Etichetă”, leave „Tip entitate” on „Orice” and press „Caută”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrieți „prioritar” la „Cod grup” și alegeți „Document” la „Tip entitate”",
+              "en": "Type „prioritar” in „Cod grup” and choose „Document” at „Tip entitate”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alegeți „prioritar” la „Importanță” și apăsați „Caută”",
+              "en": "Choose „prioritar” at „Importanță” and press „Caută”"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-search-results",
+          "ro": {
+            "question": "Cum este numită o proprietate în tabelul de rezultate?",
+            "explanation": "O proprietate este numită după tarla și parcelă, cu porecla între paranteze."
+          },
+          "en": {
+            "question": "How is a property named in the results table?",
+            "explanation": "A property is named by its tarla and parcel, with its nickname in brackets."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "După numele proprietarului ei",
+              "en": "By its owner's name"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar după codul ei din arhivă",
+              "en": "Only by its code in the archive"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "După tarla și parcelă, cu porecla între paranteze",
+              "en": "By tarla and parcel, with its nickname in brackets"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "După poreclă, cu tarlaua și parcela între paranteze",
+              "en": "By nickname, with tarla and parcel in brackets"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "reports-search-results",
+          "ro": {
+            "question": "O căutare găsește mai multe persoane decât pot fi arătate. Ce face ecranul?",
+            "explanation": "Se arată cel mult 50 de rezultate pentru fiecare fel de înregistrare, câte 15 pe pagină. Când sunt mai multe, ecranul vă spune și vă cere să restrângeți căutarea — adăugați un filtru."
+          },
+          "en": {
+            "question": "A search finds more persons than can be shown. What does the screen do?",
+            "explanation": "At most 50 results are shown for each kind of record, 15 to a page. When there are more, the screen says so and asks you to narrow the search — add a filter."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Arată cel mult 50, câte 15 pe pagină, și vă cere să adăugați un filtru",
+              "en": "It shows at most 50, 15 to a page, and asks you to add a filter"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Le arată pe toate, câte 15 pe pagină, oricâte ar fi",
+              "en": "It shows all of them, 15 to a page, however many there are"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Arată doar primele 15 și ascunde restul fără să spună",
+              "en": "It shows only the first 15 and hides the rest without saying"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu arată nimic și golește singur filtrele",
+              "en": "It shows nothing and empties the filters by itself"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "reports-search",
+          "ro": {
+            "question": "Când este „Căutare globală” locul potrivit în care să căutați?",
+            "explanation": "Este locul în care căutați când nu știți în ce listă se află ce căutați, sau când vreți să vedeți împreună tot ce poartă un nume, o etichetă ori o ștampilă."
+          },
+          "en": {
+            "question": "When is „Căutare globală” the right place to search?",
+            "explanation": "It is where you search when you do not know which list holds what you are after, or when you want to see together everything that carries a name, a tag or a stamp."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Când căutați o interacțiune după subiectul ei",
+              "en": "When you look for an interaction by its subject"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Când nu știți în ce listă se află ce căutați",
+              "en": "When you do not know which list holds what you are after"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Când vreți să modificați mai multe înregistrări deodată",
+              "en": "When you want to change several records at once"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Când căutați un cuvânt din textul unei scanări",
+              "en": "When you look for a word in the text of a scan"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Ce face butonul „Resetează”?",
+            "explanation": "„Resetează” golește toate filtrele și ascunde rezultatele."
+          },
+          "en": {
+            "question": "What does the „Resetează” (reset) button do?",
+            "explanation": "„Resetează” empties every filter and hides the results."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Repetă ultima căutare, cu aceleași filtre",
+              "en": "It repeats the last search, with the same filters"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Golește doar căsuța de nume și păstrează rezultatele",
+              "en": "It empties only the name box and keeps the results"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Golește toate filtrele și ascunde rezultatele",
+              "en": "It empties every filter and hides the results"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Arată toate înregistrările din arhivă, fără filtre",
+              "en": "It shows every record in the archive, with no filters"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Ce filtru alege între „Persoană fizică” și „Persoană juridică”?",
+            "explanation": "„Tip entitate” alege între „Orice”, „Persoană”, „Proprietate” și „Document”, iar „Subtip persoană” alege între „Persoană fizică” și „Persoană juridică”."
+          },
+          "en": {
+            "question": "Which filter chooses between „Persoană fizică” (natural person) and „Persoană juridică” (legal person)?",
+            "explanation": "„Tip entitate” chooses between „Orice”, „Persoană”, „Proprietate” and „Document”, and „Subtip persoană” (person subtype) chooses between „Persoană fizică” and „Persoană juridică”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Tip entitate”",
+              "en": "„Tip entitate” (entity type)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Proveniență”",
+              "en": "„Proveniență” (provenance)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Relevanță”",
+              "en": "„Relevanță” (relevance)"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Subtip persoană”",
+              "en": "„Subtip persoană” (person subtype)"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Ce spune filtrul „Proveniență” despre o înregistrare?",
+            "explanation": "„Proveniență” spune cum a intrat înregistrarea în arhivă, de exemplu „Manual (Adaugă nou)” pentru una scrisă de mână."
+          },
+          "en": {
+            "question": "What does the „Proveniență” (provenance) filter tell about a record?",
+            "explanation": "„Proveniență” says how the record came into the archive, for instance „Manual (Adaugă nou)” for one typed in by hand."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cum a intrat înregistrarea în arhivă, de exemplu scrisă de mână",
+              "en": "How the record came into the archive, for instance typed in by hand"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cine a modificat ultima dată înregistrarea",
+              "en": "Who last changed the record"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din ce localitate este proprietatea sau persoana",
+              "en": "Which locality the property or person is from"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cât de importantă este înregistrarea pentru firmă",
+              "en": "How important the record is for the business"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-search-results",
+          "ro": {
+            "question": "Ce arată coloana „Tip” din tabelul de rezultate?",
+            "explanation": "„Tip” spune „Persoană”, „Proprietate” sau „Document”, adică ce fel de înregistrare este rezultatul."
+          },
+          "en": {
+            "question": "What does the „Tip” (type) column of the results table show?",
+            "explanation": "„Tip” says „Persoană”, „Proprietate” or „Document”, that is, what kind of record the result is."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tipul actului, de exemplu contract de vânzare-cumpărare",
+              "en": "The document type, for instance a sale-purchase contract"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Persoană”, „Proprietate” sau „Document”",
+              "en": "„Persoană”, „Proprietate” or „Document”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar „Persoană fizică” sau „Persoană juridică”",
+              "en": "Only „Persoană fizică” or „Persoană juridică”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Felul terenului, de exemplu arabil sau intravilan",
+              "en": "The kind of land, for instance arable or built-up"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "reports-search-results",
+          "ro": {
+            "question": "După „Caută” apare „Nicio entitate nu corespunde filtrelor selectate.”. Ce înseamnă?",
+            "explanation": "Nicio înregistrare nu îndeplinește toate filtrele puse, pentru că filtrele se aplică împreună; scoateți sau schimbați un filtru și căutați din nou."
+          },
+          "en": {
+            "question": "After „Caută”, „Nicio entitate nu corespunde filtrelor selectate.” appears. What does it mean?",
+            "explanation": "No record meets every filter you set, because the filters apply together; remove or change a filter and search again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Căutarea nu a mers și trebuie încercată mai târziu",
+              "en": "The search did not work and must be tried again later"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu aveți drepturi să vedeți rezultatele",
+              "en": "You have no rights to see the results"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ați apăsat „Caută” fără să completați niciun filtru",
+              "en": "You pressed „Caută” without filling in any filter"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nicio înregistrare nu îndeplinește toate filtrele puse",
+              "en": "No record meets every filter you set"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

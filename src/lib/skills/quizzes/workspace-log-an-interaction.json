@@ -1,0 +1,477 @@
+{
+  "skill": "workspace-log-an-interaction",
+  "manual": [
+    "reports-interactions-log",
+    "persons-interactions",
+    "reports-interactions-links",
+    "reports-interactions"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "reports-interactions",
+          "ro": {
+            "question": "Unde înregistrați o interacțiune nouă cu un client?",
+            "explanation": "Ecranul „Interacțiuni” este doar istoricul: aici căutați și citiți. O interacțiune nouă se înregistrează pe ecranul persoanei, în fișa ei „Interacțiuni”."
+          },
+          "en": {
+            "question": "Where do you record a new interaction with a client?",
+            "explanation": "The „Interacțiuni” screen is the history alone: there you search and read. A new interaction is recorded on the person's screen, in their „Interacțiuni” tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul „Interacțiuni” din „Rapoarte”, cu un buton de deasupra listei",
+              "en": "On the „Interacțiuni” screen in „Rapoarte”, with a button above the list"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe ecranul persoanei, în fișa „Interacțiuni”, cu „Înregistrează o interacțiune”",
+              "en": "On the person's screen, in the „Interacțiuni” tile, with „Înregistrează o interacțiune”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Căutare globală”, după ce ați găsit persoana",
+              "en": "In „Căutare globală”, after you have found the person"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Conturi conectate”, după ce ați conectat Gmail",
+              "en": "In „Conturi conectate”, after you have connected Gmail"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Formularul de înregistrare nu are nicio căsuță pentru persoană. De ce?",
+            "explanation": "Interacțiunea este a persoanei de pe ecran: formularul se deschide pe ecranul ei, deja legat de ea."
+          },
+          "en": {
+            "question": "The recording form has no box for the person. Why?",
+            "explanation": "The interaction belongs to the person on the screen: the form opens on their screen, already tied to them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Persoana se alege după aceea, în secțiunea „Asocieri”",
+              "en": "The person is chosen afterwards, in the „Asocieri” section"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Persoana se completează singură din contul Gmail",
+              "en": "The person is filled in by itself from the Gmail account"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Interacțiunea este a persoanei de pe ecran",
+              "en": "The interaction belongs to the person on the screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Persoana se alege în fereastra care apare la „Salvează”",
+              "en": "The person is chosen in the window that appears at „Salvează”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "La „Conturi conectate”, Gmail și WhatsApp Business arată „Neconectat”. Puteți totuși înregistra un mesaj primit pe WhatsApp?",
+            "explanation": "Butoanele „Conectează” nu fac încă nimic: o interacțiune se înregistrează de mână, fără niciun cont conectat, în „Înregistrare manuală”."
+          },
+          "en": {
+            "question": "At „Conturi conectate”, Gmail and WhatsApp Business show „Neconectat” (not connected). Can you still record a message received on WhatsApp?",
+            "explanation": "The „Conectează” buttons do nothing yet: an interaction is recorded by hand, with no account connected, in „Înregistrare manuală”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Da, de mână, în „Înregistrare manuală”, fără niciun cont conectat",
+              "en": "Yes, by hand, in „Înregistrare manuală”, with no account connected"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu, întâi apăsați „Conectează” la WhatsApp Business",
+              "en": "No, first press „Conectează” for WhatsApp Business"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar ca „Notă internă”, nu ca interacțiune",
+              "en": "Only as a „Notă internă”, not as an interaction"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar după ce administratorul conectează contul firmei",
+              "en": "Only after the administrator connects the firm's account"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "La ce folosește câmpul „Subiect”?",
+            "explanation": "Subiectul este ce apare în istoric și ce se folosește la filtrare, deci păstrați-l scurt; descrierea ține restul."
+          },
+          "en": {
+            "question": "What is the „Subiect” (subject) field for?",
+            "explanation": "The subject is what appears in the history and what filtering uses, so keep it short; the description holds the rest."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ține tot textul convorbirii, cât mai complet",
+              "en": "It holds the whole text of the conversation, as fully as possible"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Este văzut doar de echipă, nu și în istoric",
+              "en": "It is seen by the team only, not in the history"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Este titlul mementoului trimis la data aleasă",
+              "en": "It is the title of the reminder sent on the chosen date"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apare în istoric și se folosește la filtrare, deci îl păstrați scurt",
+              "en": "It appears in the history and filtering uses it, so you keep it short"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "În secțiunea „Memento” bifați „Setează un memento” și alegeți „Data mementoului”. Ce face aplicația cu această dată?",
+            "explanation": "Data se păstrează și se vede în istoric; aplicația nu trimite notificări."
+          },
+          "en": {
+            "question": "In the „Memento” (reminder) section you tick „Setează un memento” and choose „Data mementoului”. What does the application do with that date?",
+            "explanation": "The date is kept and shown in the history; the application sends no notifications."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Vă trimite un e-mail în ziua aleasă",
+              "en": "It sends you an e-mail on the chosen day"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O păstrează și o arată în istoric, fără să trimită notificări",
+              "en": "It keeps it and shows it in the history, sending no notifications"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trimite clientului un SMS în ziua aleasă",
+              "en": "It sends the client a text message on the chosen day"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Vă arată o notificare pe ecran în ziua aleasă",
+              "en": "It shows you a notification on screen on the chosen day"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Notați acum o întâlnire stabilită pentru săptămâna viitoare, cu data ei. Ce stare alegeți?",
+            "explanation": "O dată din viitor se poate alege doar cu starea „Programată”: altfel apare „Datele viitoare sunt pentru ce e programat. …”."
+          },
+          "en": {
+            "question": "You note now a meeting arranged for next week, with its date. Which status do you choose?",
+            "explanation": "A date in the future can be chosen only with the status „Programată” (scheduled): otherwise „Datele viitoare sunt pentru ce e programat. …” appears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Înregistrată”",
+              "en": "„Înregistrată” (logged)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Așteaptă răspuns”",
+              "en": "„Așteaptă răspuns” (awaiting reply)"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Programată”",
+              "en": "„Programată” (scheduled)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Trimisă”",
+              "en": "„Trimisă” (sent)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Când se deschide formularul, care dintre cele cinci secțiuni este deschisă?",
+            "explanation": "Fiecare secțiune are un titlu urmat de o săgeată; un clic pe titlu o deschide, al doilea o închide. Când formularul se deschide, doar „Înregistrare manuală” este deschisă."
+          },
+          "en": {
+            "question": "When the form opens, which of its five sections is open?",
+            "explanation": "Each section is a title followed by an arrow; a click on the title opens it, a second click closes it. When the form opens, only „Înregistrare manuală” is open."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toate cinci, una sub alta",
+              "en": "All five, one under another"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar „Conturi conectate”",
+              "en": "Only „Conturi conectate”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Niciuna, până când apăsați un titlu",
+              "en": "None, until you press a title"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Doar „Înregistrare manuală”",
+              "en": "Only „Înregistrare manuală”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Ce face „Salvează și adaugă”?",
+            "explanation": "„Salvează și adaugă” salvează și lasă formularul gata pentru următoarea interacțiune, cu același canal și același sens, subiectul gol."
+          },
+          "en": {
+            "question": "What does „Salvează și adaugă” (save and add) do?",
+            "explanation": "„Salvează și adaugă” saves and leaves the form ready for the next interaction, with the same channel and the same direction, the subject empty."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Salvează și lasă formularul gata pentru următoarea, cu același canal și sens",
+              "en": "It saves and leaves the form ready for the next one, with the same channel and direction"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Salvează și deschide „Asocieri”, ca să adăugați un act",
+              "en": "It saves and opens „Asocieri”, so that you add a document"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Salvează și copiază interacțiunea la o altă persoană",
+              "en": "It saves and copies the interaction to another person"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Salvează și adaugă singur un memento pentru a doua zi",
+              "en": "It saves and adds a reminder for the next day by itself"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "reports-interactions-links",
+          "ro": {
+            "question": "În „Asocieri”, la „Acte legate”, legați de interacțiune un contract din arhivă. Ce se întâmplă cu actul?",
+            "explanation": "Actul nu se copiază și nici nu se încarcă din nou: interacțiunea doar trimite la el. „×” de lângă act scoate legătura."
+          },
+          "en": {
+            "question": "In „Asocieri”, at „Acte legate” (linked documents), you link a contract from the archive to the interaction. What happens to the document?",
+            "explanation": "The document is neither copied nor uploaded again: the interaction only points to it. The „×” next to the document removes the link."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se face o copie a lui, atașată interacțiunii",
+              "en": "A copy of it is made and attached to the interaction"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Trebuie să încărcați din nou scanarea lui",
+              "en": "You must upload its scan again"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu se copiază și nu se încarcă din nou: interacțiunea doar trimite la el",
+              "en": "It is not copied or uploaded again: the interaction only points to it"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Este mutat printre actele persoanei de pe ecran",
+              "en": "It is moved among the documents of the person on the screen"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Apăsați „Salvează” fără să fi scris un subiect. Ce se întâmplă?",
+            "explanation": "„Salvează” nu răspunde până când formularul nu este complet. Fără subiect, apare „Adaugă un subiect scurt. Acesta apare în istoric.”."
+          },
+          "en": {
+            "question": "You press „Salvează” without having typed a subject. What happens?",
+            "explanation": "„Salvează” does not respond until the form is complete. With no subject, „Adaugă un subiect scurt. Acesta apare în istoric.” (add a short subject; it appears in the history) appears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se salvează, cu subiectul luat din descriere",
+              "en": "It is saved, with the subject taken from the description"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se salvează cu subiectul gol, pe starea „Înregistrată”",
+              "en": "It is saved with an empty subject, as „Înregistrată”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Formularul se închide și ce ați scris se pierde",
+              "en": "The form closes and what you typed is lost"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu se salvează și apare „Adaugă un subiect scurt. Acesta apare în istoric.”",
+              "en": "It is not saved and „Adaugă un subiect scurt. Acesta apare în istoric.” appears"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Ați bifat „Setează un memento”, n-ați ales data și ați închis secțiunea „Memento”. Ce se întâmplă când apăsați „Salvează”?",
+            "explanation": "O secțiune închisă cu o greșeală spune greșeala după titlu, de exemplu „Memento · Alege data mementoului.”. Salvarea o deschide și duce cursorul la câmpul de corectat."
+          },
+          "en": {
+            "question": "You ticked „Setează un memento”, chose no date and closed the „Memento” section. What happens when you press „Salvează”?",
+            "explanation": "A closed section with a mistake says the mistake after its title, for instance „Memento · Alege data mementoului.”. Saving opens it and puts the cursor on the field to correct."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Salvarea deschide secțiunea și duce cursorul la câmpul de corectat",
+              "en": "Saving opens the section and puts the cursor on the field to correct"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Interacțiunea se salvează, iar mementoul se scoate singur",
+              "en": "The interaction is saved and the reminder is dropped by itself"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Mementoul primește singur data de azi",
+              "en": "The reminder takes today's date by itself"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apare „Renunți la interacțiunea nesalvată?”",
+              "en": "„Renunți la interacțiunea nesalvată?” appears"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "persons-interactions",
+          "ro": {
+            "question": "Ați completat canalul și subiectul și ați apăsat „Salvează”. Ce vedeți?",
+            "explanation": "Apare „Interacțiune înregistrată”, iar interacțiunea apare în istoricul persoanei, în fișa „Interacțiuni”."
+          },
+          "en": {
+            "question": "You filled in the channel and the subject and pressed „Salvează”. What do you see?",
+            "explanation": "„Interacțiune înregistrată” (interaction recorded) appears, and the interaction appears in the person's history, in the „Interacțiuni” tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Interacțiunea așteaptă aprobarea administratorului",
+              "en": "The interaction waits for the administrator's approval"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Mesajul pleacă la client prin canalul ales",
+              "en": "The message goes to the client through the chosen channel"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Interacțiune înregistrată”, iar interacțiunea apare în istoricul persoanei",
+              "en": "„Interacțiune înregistrată”, and the interaction appears in the person's history"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Interacțiunea apare doar pe ecranul „Interacțiuni”, nu și la persoană",
+              "en": "The interaction appears only on the „Interacțiuni” screen, not on the person"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

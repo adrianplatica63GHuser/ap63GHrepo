@@ -1,0 +1,478 @@
+{
+  "skill": "import-prepare-folder",
+  "manual": [
+    "import-folder-structure",
+    "import-folder-files",
+    "import-folder-shared",
+    "import-overview",
+    "import-folder"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "import-overview",
+          "ro": {
+            "question": "În timpul importului, sistemul găsește în dosarul ales ceva de îndreptat. Ce face?",
+            "explanation": "Sistemul nu vă atinge fișierele: nu le mută, nu le redenumește și nu le șterge. Se oprește și vă spune ce este de îndreptat; faceți schimbarea în File Explorer, reveniți și apăsați din nou butonul de verificare."
+          },
+          "en": {
+            "question": "During the import, the system finds something to put right in the chosen folder. What does it do?",
+            "explanation": "The system does not touch your files: it never moves, renames or deletes them. It stops and tells you what to put right; you make the change in File Explorer, come back and press the check button again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Mută sau redenumește singur fișierul și merge mai departe",
+              "en": "It moves or renames the file by itself and carries on"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Șterge fișierul cu problemă din folder și merge mai departe",
+              "en": "It deletes the problem file from the folder and carries on"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Se oprește și spune ce este de îndreptat; îndreptați în File Explorer și verificați din nou",
+              "en": "It stops and says what to put right; you fix it in File Explorer and check again"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Sare peste fișier și importă restul, fără să vă spună nimic",
+              "en": "It skips the file and imports the rest, without telling you anything"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Cum numiți folderul proprietății din tarlaua 40, parcela 212/40?",
+            "explanation": "Numele este tarlaua, o liniuță și parcela; „per” ține locul semnului „/”, interzis în numele unui folder. Tarlaua 40, parcela 212/40 se scrie „40-212per40”."
+          },
+          "en": {
+            "question": "How do you name the folder of the property in tarla 40, parcel 212/40?",
+            "explanation": "The name is the tarla, a dash and the parcel; „per” stands for the „/” sign, which a folder name cannot contain. Tarla 40, parcel 212/40 is written „40-212per40”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„40-212per40”",
+              "en": "„40-212per40”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„40-212/40”",
+              "en": "„40-212/40”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„212per40-40”",
+              "en": "„212per40-40”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„T40-P212-40”",
+              "en": "„T40-P212-40”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Un contract este scanat pe trei pagini. Cum îl puneți în folderul proprietății, ca să fie importat ca un singur document?",
+            "explanation": "Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului, cu fișiere numite doar cu un număr — 1.jpg, 2.jpg, 3.jpg —, fără două la fel și fără sărituri."
+          },
+          "en": {
+            "question": "A contract is scanned on three pages. How do you put it in the property folder so that it is imported as one document?",
+            "explanation": "The pages of a scanned document sit in a subfolder whose name is the document's title, with files named with just a number — 1.jpg, 2.jpg, 3.jpg — with no two the same and no gaps."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ca trei fișiere direct în folderul proprietății: „Contract-1.jpg”, „Contract-2.jpg”, „Contract-3.jpg”",
+              "en": "As three files directly in the property folder: „Contract-1.jpg”, „Contract-2.jpg”, „Contract-3.jpg”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Într-un subfolder numit cu titlul contractului, cu paginile 1.jpg, 2.jpg și 3.jpg",
+              "en": "In a subfolder named with the contract's title, with the pages 1.jpg, 2.jpg and 3.jpg"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Într-un subfolder „comune”, cu paginile numite „pagina 1”, „pagina 2”, „pagina 3”",
+              "en": "In a „comune” subfolder, with the pages named „pagina 1”, „pagina 2”, „pagina 3”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Direct în folderul ales, lângă folderul proprietății, cu titlul contractului",
+              "en": "Directly in the chosen folder, next to the property folder, with the contract's title"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "import-folder-files",
+          "ro": {
+            "question": "La pasul „Restricții”, care dintre aceste fișiere este refuzat și trebuie înlocuit sau scos din folder?",
+            "explanation": "Tabelele .csv sunt refuzate: salvați-le ca PDF. Scanările, fotografiile, PDF-urile și documentele Word se importă."
+          },
+          "en": {
+            "question": "At the „Restricții” (constraints) step, which of these files is refused and must be replaced or taken out of the folder?",
+            "explanation": ".csv tables are refused: save them as PDF. Scans, photographs, PDFs and Word documents are imported."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un contract salvat ca PDF",
+              "en": "A contract saved as PDF"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O scanare .jpg a unei cărți de identitate",
+              "en": "A .jpg scan of an identity card"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O cerere scrisă ca document Word",
+              "en": "An application written as a Word document"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Un tabel salvat ca fișier .csv",
+              "en": "A table saved as a .csv file"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "import-folder-shared",
+          "ro": {
+            "question": "Ce se întâmplă cu documentele pe care le puneți în folderul „comune”?",
+            "explanation": "„comune” ține documentele care privesc toate proprietățile din import: fiecare este legat de fiecare proprietate. Documentele din „flotante” sunt cele care rămân nelegate."
+          },
+          "en": {
+            "question": "What happens to the documents you put in the „comune” (shared) folder?",
+            "explanation": "„comune” holds the documents that concern every property in the import: each is linked to every property. It is the documents in „flotante” that stay unlinked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Fiecare document este legat de fiecare proprietate din import",
+              "en": "Each document is linked to every property in the import"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se salvează etichetate, dar nelegate de nicio proprietate",
+              "en": "They are saved with their tags, but linked to no property"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Sunt legate doar de prima proprietate din folderul ales",
+              "en": "They are linked only to the first property in the chosen folder"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Sunt ignorate, ca fișierele de sistem Windows",
+              "en": "They are ignored, like Windows system files"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "import-overview",
+          "ro": {
+            "question": "Până la ce pas nu intră nimic în arhivă, așa că puteți renunța oricând?",
+            "explanation": "„Informare” spune că nimic nu intră în arhivă până la pasul „Import”, iar până atunci puteți renunța oricând."
+          },
+          "en": {
+            "question": "Up to which step does nothing enter the archive, so that you can give up at any time?",
+            "explanation": "„Informare” says that nothing enters the archive until the „Import” step, and until then you can give up at any time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Până la pasul „Structură”",
+              "en": "Until the „Structură” (structure) step"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Până la pasul „Duplicate”",
+              "en": "Until the „Duplicate” (duplicates) step"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Până la pasul „Import”",
+              "en": "Until the „Import” step"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Până la pasul „Scanare”",
+              "en": "Until the „Scanare” (scanning) step"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Ce poate conține folderul pe care îl alegeți la pasul „Structură”?",
+            "explanation": "Folderul ales conține numai foldere: câte unul pentru fiecare proprietate, plus, dacă vă trebuie, „comune” și „flotante”. Niciun fișier direct în el."
+          },
+          "en": {
+            "question": "What may the folder you choose at the „Structură” (structure) step contain?",
+            "explanation": "The chosen folder holds only folders: one for each property, plus, if you need them, „comune” and „flotante”. No file directly in it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Foldere de proprietăți și, alături, scanările care nu au încă un folder",
+              "en": "Property folders and, next to them, the scans that have no folder yet"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Numai foldere: câte unul pe proprietate, plus „comune” și „flotante”, dacă vă trebuie",
+              "en": "Only folders: one per property, plus „comune” and „flotante” if you need them"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un singur folder de proprietate, cu toate actele lui",
+              "en": "A single property folder, with all its documents"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Orice fișiere și foldere, pe care sistemul le sortează singur",
+              "en": "Any files and folders, which the system sorts by itself"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Cum trebuie să fie fișierul de coordonate dintr-un folder de proprietate?",
+            "explanation": "Un folder de proprietate are cel mult un fișier de coordonate, .txt, cu numele început cu „coord”; fără el, proprietatea se creează fără contur."
+          },
+          "en": {
+            "question": "What must the coordinate file in a property folder be like?",
+            "explanation": "A property folder has at most one coordinate file, a .txt whose name starts with „coord”; without one, the property is created with no outline."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un tabel .csv cu colțurile, cu orice nume",
+              "en": "A .csv table of the corners, with any name"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Câte un fișier .txt pentru fiecare colț al terenului",
+              "en": "One .txt file for each corner of the land"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cel mult unul, .txt, cu numele început cu „coord”",
+              "en": "At most one, a .txt whose name starts with „coord”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O imagine .jpg a planului, numită „coord”",
+              "en": "A .jpg image of the plan, named „coord”"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Ce devine un fișier aflat direct în folderul proprietății, nu într-un folder de pagini?",
+            "explanation": "Un fișier aflat direct în folderul proprietății este un document în sine, cu denumirea lui ca titlu."
+          },
+          "en": {
+            "question": "What becomes of a file lying directly in the property folder, not in a page folder?",
+            "explanation": "A file lying directly in the property folder is a document in its own right, with its file name as the title."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Un document în sine, cu denumirea fișierului ca titlu",
+              "en": "A document in its own right, with the file name as its title"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O pagină în plus a primului document din folder",
+              "en": "An extra page of the first document in the folder"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un fișier refuzat, care trebuie mutat într-un subfolder",
+              "en": "A refused file, which must be moved into a subfolder"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Un fișier ignorat, care nu oprește importul",
+              "en": "An ignored file, which does not stop the import"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "import-folder-files",
+          "ro": {
+            "question": "În folderul unei proprietăți se află o scanare numită „folder.jpg”. Ce spune verificarea de la „Restricții”?",
+            "explanation": "O scanare numită „folder.jpg” este refuzată, pentru că Windows folosește acest nume pentru iconița folderului; trebuie înlocuită sau scoasă din folder."
+          },
+          "en": {
+            "question": "A property folder holds a scan named „folder.jpg”. What does the „Restricții” (constraints) check say?",
+            "explanation": "A scan named „folder.jpg” is refused, because Windows uses that name for the folder's icon; it must be replaced or taken out of the folder."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se importă ca orice altă scanare, cu titlul „folder”",
+              "en": "It is imported like any other scan, titled „folder”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Este ignorată, fără să vă oprească, ca un fișier de sistem",
+              "en": "It is ignored, without stopping you, like a system file"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Devine imaginea proprietății în arhivă",
+              "en": "It becomes the property's picture in the archive"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Este refuzată: Windows folosește numele pentru iconița folderului",
+              "en": "It is refused: Windows uses the name for the folder's icon"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "import-folder-shared",
+          "ro": {
+            "question": "Ați numit folderul documentelor comune „Comune”, cu literă mare. Ce se întâmplă?",
+            "explanation": "„comune” și „flotante” se scriu exact așa, cu litere mici; „Comune” este o greșeală pe care verificarea o arată."
+          },
+          "en": {
+            "question": "You named the folder of shared documents „Comune”, with a capital letter. What happens?",
+            "explanation": "„comune” and „flotante” are spelt exactly so, in small letters; „Comune” is a mistake the check points out."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: sistemul nu face diferența între literele mari și mici",
+              "en": "Nothing: the system does not tell capital and small letters apart"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Verificarea îl arată ca greșeală, de îndreptat",
+              "en": "The check shows it as a mistake to put right"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Documentele din el se salvează nelegate, ca în „flotante”",
+              "en": "The documents in it are saved unlinked, as in „flotante”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Folderul este ignorat, iar documentele lui nu se importă",
+              "en": "The folder is ignored and its documents are not imported"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "import-overview",
+          "ro": {
+            "question": "Ați îndreptat în File Explorer ce v-a cerut un pas de verificare și reveniți la el. Ce faceți?",
+            "explanation": "Fiecare pas de verificare se lucrează la fel: citiți regulile, bifați că le-ați citit, apăsați butonul de verificare. Bifa se cere din nou la fiecare verificare, deci și după fiecare îndreptare."
+          },
+          "en": {
+            "question": "You have put right in File Explorer what a checking step asked for, and you come back to it. What do you do?",
+            "explanation": "Every checking step works the same way: read the rules, tick that you have read them, press the check button. The tick is asked for again at every check, so also after every fix."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifați din nou că ați citit regulile și apăsați butonul de verificare",
+              "en": "Tick again that you have read the rules and press the check button"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: sistemul vede singur schimbarea și trece mai departe",
+              "en": "Nothing: the system sees the change by itself and moves on"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Renunță la import” și o luați de la „Informare”",
+              "en": "Press „Renunță la import” and start again from „Informare”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați butonul de verificare; bifa de dinainte rămâne valabilă",
+              "en": "Press the check button; the earlier tick still holds"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
