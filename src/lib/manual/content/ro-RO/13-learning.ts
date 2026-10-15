@@ -67,7 +67,7 @@ O competență fără nimic înainte — toate cele de bază — este deschisă 
 
 ## 13.4 Chestionarele {#learning-quizzes}
 
-Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]). Chestionarele competențelor de bază sunt gata; cele ale nivelurilor următoare vin pe rând. Până atunci, pagina unei competențe fără chestionar spune că acesta se pregătește.
+Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]).
 
 ### 13.4.1 Cum se dă un chestionar {#learning-quizzes-take}
 

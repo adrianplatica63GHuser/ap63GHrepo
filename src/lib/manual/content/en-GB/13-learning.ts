@@ -67,7 +67,7 @@ A skill with nothing before it — every basic one — is open from the start. W
 
 ## 13.4 The quizzes {#learning-quizzes}
 
-Every skill of the map has a quiz; you open it by pressing its box while it is open (section [[learning-skills]]). The quizzes of the basic skills are ready; those of the higher levels follow. Until then, the page of a skill with no quiz says it is being prepared.
+Every skill of the map has a quiz; you open it by pressing its box while it is open (section [[learning-skills]]).
 
 ### 13.4.1 Taking a quiz {#learning-quizzes-take}
 
