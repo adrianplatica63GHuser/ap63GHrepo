@@ -153,7 +153,7 @@ fixed fixture where the existing one will do.
 | [TC-HELP-03](cases/TC-HELP-03.md) | „Întreabă”: o întrebare în cuvinte proprii primește răspunsul manualului, sau că manualul nu răspunde | help | happy | — | `automated` | 2026-10-15 | `e2e/help/ask.spec.ts` |
 | [TC-SKILL-01](cases/TC-SKILL-01.md) | „Harta competențelor”: casetele, stările, traseele, lista și chestionarul unei competențe deschise | help | happy | — | `automated` | 2026-10-15 | `e2e/help/skills-map.spec.ts` |
 | [TC-SKILL-02](cases/TC-SKILL-02.md) | Chestionarul unei competențe deschise: întrebările, „Trimite”, plecarea întreabă întâi | help | happy | — | `automated` | 2026-10-15 | `e2e/help/skills-quiz.spec.ts` |
-| [TC-SKILL-03](cases/TC-SKILL-03.md) | Un traseu pe „Harta competențelor”, în „Progresul meu” și în „Prezentare” | help | happy | — | `confirmed` | 2026-10-15 | `e2e/help/skills-map.spec.ts` |
+| [TC-SKILL-03](cases/TC-SKILL-03.md) | Un traseu pe „Harta competențelor”, în „Progresul meu” și în „Prezentare” | help | happy | — | `automated` | 2026-10-15 | `e2e/help/skills-map.spec.ts` |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `automated` | 2026-10-07 | `e2e/calculation/side-road.spec.ts` |
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |

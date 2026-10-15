@@ -5,7 +5,7 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-15 |
 
 ## What this proves
@@ -49,6 +49,9 @@ Nothing.
 Nothing is written by this case.
 
 ## Notes from the runs
+
+**2026-10-15 — `automated` (Slice #39.50).** Its spec, a test in `e2e/help/skills-map.spec.ts`, green in the test
+runner's e2e runs `20261015T200908Z-7260` and `20261015T201330Z-1261`.
 
 **2026-10-15, third run (Slice #39.50) — `confirmed` again, after a change to the screen.** The figures run
 showed the Path's note naming the Path by its long name, „The Properties and the map path” in English; the note
