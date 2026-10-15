@@ -150,7 +150,7 @@ fixed fixture where the existing one will do.
 | [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
 | [TC-HELP-02](cases/TC-HELP-02.md) | „Manual de utilizare”: din bara laterală, o secțiune deschisă după link, descărcat ca Word | help | happy | — | `automated` | 2026-10-14 | `e2e/help/manual.spec.ts` |
-| [TC-HELP-03](cases/TC-HELP-03.md) | „Întreabă”: o întrebare în cuvinte proprii găsește secțiunile manualului, și în capul manualului | help | happy | — | `automated` | 2026-10-15 | `e2e/help/ask.spec.ts` |
+| [TC-HELP-03](cases/TC-HELP-03.md) | „Întreabă”: o întrebare în cuvinte proprii primește răspunsul manualului, sau că manualul nu răspunde | help | happy | — | `automated` | 2026-10-15 | `e2e/help/ask.spec.ts` |
 | [TC-SKILL-01](cases/TC-SKILL-01.md) | „Harta competențelor”: casetele, stările, traseele, lista și chestionarul unei competențe deschise | help | happy | — | `automated` | 2026-10-15 | `e2e/help/skills-map.spec.ts` |
 | [TC-SKILL-02](cases/TC-SKILL-02.md) | Chestionarul unei competențe deschise: întrebările, „Trimite”, plecarea întreabă întâi | help | happy | — | `automated` | 2026-10-15 | `e2e/help/skills-quiz.spec.ts` |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `automated` | 2026-10-07 | `e2e/calculation/side-road.spec.ts` |

@@ -1,4 +1,4 @@
-# TC-HELP-03 — „Întreabă”: o întrebare în cuvinte proprii găsește secțiunile manualului, și în capul manualului
+# TC-HELP-03 — „Întreabă”: o întrebare în cuvinte proprii primește răspunsul manualului, sau că manualul nu răspunde
 
 | | |
 |---|---|
@@ -10,19 +10,18 @@
 
 ## What this proves
 
-Slice #39.45 gave „Ajutor și învățare” a question box, „Întreabă”, answered from the user manual. Its built-in
-search finds, at once and for nothing, the sections that answer a question in plain words — with or without
-diacritics, by the beginning of a word — and shows each with its number, title, chapter and the matching sentences,
-the words found marked, each a link into the manual. The same box stands at the top of „Manual de utilizare”. A
-question the manual does not answer is told so.
+Slice #39.45 gave „Ajutor și învățare” a question box, „Întreabă”, answered from the user manual. Since #39.49 it
+answers by what the question MEANS: Claude reads the manual's outline, picks the sections that answer, and writes a
+short answer from them that names them; the page shows that answer, its section marks as links, and the same
+sections listed under it — or, when no section answers, the single sentence „Manualul nu răspunde la această
+întrebare.” with a link to the contents, and no list. The same box stands at the top of „Manual de utilizare”.
 
-The defect is any of these: a question without diacritics finding nothing, or other sections than with them; the
-section that answers missing from the first results; a result that does not lead to its section; a question
-nothing matches showing sections anyway.
+The defect is any of these: a list of sections shown when the manual does not answer; an answer without its section
+links; a link that does not lead to its section; the question not sent as typed.
 
-„Răspuns AI” is not pressed: a real AI call costs money and its words change from one call to the next. Its
-route is checked by jest with Claude mocked (`src/__tests__/manual-ask.test.ts`), and the slice's handover records
-the one question asked by hand.
+In the automated run the route is answered by a stub (page.route): a real AI call costs money and its words change.
+The route itself is checked by jest with Claude mocked (`src/__tests__/manual-ask.test.ts`). A hand run asks Claude
+for real; the slice's handover records the questions asked by hand and what they cost.
 
 ## Before you start
 
@@ -38,10 +37,10 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Ajutor și învățare” → „Întreabă” | The heading „Întreabă”, a line saying what the box does, the box with „Caută”; the breadcrumb „Acasă › Ajutor și învățare › Întreabă” |
-| 2 | Types „cum adaug o persoana”, without diacritics, and presses Enter | A line saying how many sections answer, and at most five sections, the first „§3.2 O persoană adăugată de mână”. Each shows its chapter and one or two sentences, the words found marked. Below them, „Răspuns AI”, not pressed |
+| 1 | Opens „Ajutor și învățare” → „Întreabă” | The heading „Întreabă”, a line saying what the box does, the box with the button „Întreabă” (no „Caută”); the breadcrumb „Acasă › Ajutor și învățare › Întreabă” |
+| 2 | Types „vreau să trec în arhivă un om nou, cum fac?” — worded unlike the manual — and presses Enter | A short answer naming „§3.2” as a link, under it „§3.2 O persoană adăugată de mână” as a link, and „Scris de AI doar din aceste secțiuni. …” |
 | 3 | Presses „§3.2 O persoană adăugată de mână” | The address `/manual?s=persons-add`; the manual at „3.2 O persoană adăugată de mână”; at its top, the same box |
-| 4 | In the manual's box, types „xqzvw plmkj” and presses „Caută” | „Manualul nu pare să răspundă la întrebarea aceasta. Încercați alte cuvinte sau căutați în cuprins.”, and no section |
+| 4 | In the manual's box, types „ce vreme e mâine la Bragadiru?” and presses „Întreabă” | „Manualul nu răspunde la această întrebare.” with „Deschide cuprinsul manualului”, and no section, no list |
 
 ## At the end — leaving things as they were found
 
