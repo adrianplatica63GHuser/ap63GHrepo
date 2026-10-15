@@ -107,8 +107,9 @@ export function icuPattern(message: string): RegExp | null {
     return branches.length ? `(?:${branches.join("|")})` : ANY;
   }
   const body = seq(false, "");
+  // Too generic to mean anything: no letter or digit of its own outside the placeholders („{name} ({n})”).
+  if (!/[\p{L}\p{N}]/u.test(body.replace(/\\./g, "").split(ANY).join(""))) return null;
   const re = new RegExp(`^${body.split(ANY).join(".+?")}$`, "u");
-  // Too generic to mean anything: it matches a nonsense string.
   if (re.test("zq xj zq") || re.test("7")) return null;
   return re;
 }
