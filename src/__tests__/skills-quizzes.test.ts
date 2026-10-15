@@ -1,10 +1,10 @@
 /**
- * The quizzes — their files, and how an attempt is drawn and scored.                          (Slice #39.43)
+ * The quizzes — their files, and how an attempt is drawn and scored.                (Slices #39.43, #39.44)
  *
  * Every quiz file is checked against Adrian's rules and the manual: multiple choice, exactly one correct
  * option, both languages, a question count within its level's range, at least two variants with no question
  * repeated, and every section id a section of the manual in both languages. Every skill of the catalogue
- * names the manual sections it rests on. And the browser is never handed an answer.
+ * has its quiz and names the manual sections it rests on. And the browser is never handed an answer.
  */
 import { SKILLS } from "@/lib/skills/catalogue";
 import { manualTarget } from "@/lib/manual/manual";
@@ -26,9 +26,8 @@ const skill = (key: string) => SKILLS.find((s) => s.key === key)!;
 const files = Object.values(QUIZZES);
 
 describe("the quiz files", () => {
-  it("every Basic skill has its quiz (#39.43), and every quiz is a skill of the catalogue", () => {
-    const basic = SKILLS.filter((s) => s.level === 1).map((s) => s.key).sort();
-    expect(basic.filter((k) => !QUIZZES[k])).toEqual([]);
+  it("every skill of the catalogue has its quiz (Basic #39.43, the rest #39.44), and every quiz is a skill", () => {
+    expect(SKILLS.map((s) => s.key).filter((k) => !QUIZZES[k])).toEqual([]);
     for (const k of Object.keys(QUIZZES)) expect({ k, known: !!SKILLS.find((s) => s.key === k) }).toEqual({ k, known: true });
   });
 
@@ -41,6 +40,22 @@ describe("the quiz files", () => {
     for (const v of q.variants) {
       expect(v.questions.length).toBeGreaterThanOrEqual(lo);
       expect(v.questions.length).toBeLessThanOrEqual(hi);
+    }
+  });
+
+  // #39.44: a quiz whose right answer is usually the longest one can be passed without reading the manual. With
+  // three or four options, chance makes it the strictly longest a quarter to a third of the time.
+  it.each(files.map((q) => [q.skill, q] as const))("%s: the right option is not usually the longest one, in either language", (_k, q) => {
+    for (const lang of ["ro", "en"] as const) {
+      const questions = q.variants.flatMap((v) => v.questions);
+      const longest = questions.filter((x) => {
+        const lengths = x.options.map((o) => o[lang].length);
+        const right = lengths[x.options.findIndex((o) => o.correct)];
+        return lengths.filter((l) => l >= right).length === 1;
+      }).length;
+      const share = Math.round((100 * longest) / questions.length);
+      // On a failure this prints the language and the share, in per cent.
+      expect({ lang, over50: share > 50 ? share : 0 }).toEqual({ lang, over50: 0 });
     }
   });
 

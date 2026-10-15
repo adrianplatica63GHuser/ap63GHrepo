@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Instrumente”, lângă „Distilare Tipizate”",
-              "en": "„Instrumente” (tools), next to „Distilare Tipizate”"
+              "ro": "„Instrumente”, lângă „Calcul drum lateral” și „Calcul suprafață”",
+              "en": "„Instrumente” (tools), next to „Calcul drum lateral” and „Calcul suprafață”"
             },
             {
               "id": "o3",
@@ -76,8 +76,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Persoane, proprietăți, acte și interacțiuni",
-              "en": "Persons, properties, documents and interactions"
+              "ro": "Persoane, proprietăți, acte și interacțiunile cu clienții",
+              "en": "Persons, properties, documents and the interactions with clients"
             },
             {
               "id": "o4",
@@ -108,8 +108,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Persoanele „Popescu” împreună cu proprietățile lor",
-              "en": "The persons named „Popescu” together with their properties"
+              "ro": "Persoanele numite „Popescu”, împreună cu toate proprietățile lor",
+              "en": "The persons named „Popescu”, together with all their properties"
             },
             {
               "id": "o3",
@@ -152,8 +152,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Scrieți „prioritar” la „Cod grup” și alegeți „Document” la „Tip entitate”",
-              "en": "Type „prioritar” in „Cod grup” and choose „Document” at „Tip entitate”"
+              "ro": "Scrieți „prioritar” la „Cod grup”, alegeți „Document” la „Tip entitate” și apăsați „Caută”",
+              "en": "Type „prioritar” in „Cod grup”, choose „Document” at „Tip entitate” and press „Caută”"
             },
             {
               "id": "o4",
@@ -197,7 +197,7 @@
               "id": "o4",
               "correct": false,
               "ro": "După poreclă, cu tarlaua și parcela între paranteze",
-              "en": "By nickname, with tarla and parcel in brackets"
+              "en": "By its nickname, with tarla and parcel in brackets"
             }
           ]
         },
@@ -228,8 +228,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Arată doar primele 15 și ascunde restul fără să spună",
-              "en": "It shows only the first 15 and hides the rest without saying"
+              "ro": "Arată doar primele 15 rezultate și le ascunde pe celelalte fără să vă spună",
+              "en": "It shows only the first 15 results and hides the others without telling you"
             },
             {
               "id": "o4",
@@ -259,8 +259,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Când căutați o interacțiune după subiectul ei",
-              "en": "When you look for an interaction by its subject"
+              "ro": "Când căutați o interacțiune după subiectul ei sau după dată",
+              "en": "When you look for an interaction by its subject or by its date"
             },
             {
               "id": "o2",

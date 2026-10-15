@@ -25,8 +25,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Pe ecranul „Interacțiuni” din „Rapoarte”, cu un buton de deasupra listei",
-              "en": "On the „Interacțiuni” screen in „Rapoarte”, with a button above the list"
+              "ro": "Pe ecranul „Interacțiuni” din „Rapoarte”, cu butonul „Înregistrează o interacțiune” de deasupra listei",
+              "en": "On the „Interacțiuni” screen in „Rapoarte”, with the „Înregistrează o interacțiune” button above the list"
             },
             {
               "id": "o2",
@@ -107,8 +107,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Nu, întâi apăsați „Conectează” la WhatsApp Business",
-              "en": "No, first press „Conectează” for WhatsApp Business"
+              "ro": "Nu, întâi apăsați „Conectează” la Gmail sau la WhatsApp Business, în „Conturi conectate”",
+              "en": "No, first press „Conectează” for Gmail or WhatsApp Business, in „Conturi conectate”"
             },
             {
               "id": "o3",
@@ -139,8 +139,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Ține tot textul convorbirii, cât mai complet",
-              "en": "It holds the whole text of the conversation, as fully as possible"
+              "ro": "Ține tot textul convorbirii, cât mai complet, ca să găsiți interacțiunea după orice cuvânt",
+              "en": "It holds the whole text of the conversation, as fully as possible, so you find it by any word"
             },
             {
               "id": "o2",
@@ -177,8 +177,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Vă trimite un e-mail în ziua aleasă",
-              "en": "It sends you an e-mail on the chosen day"
+              "ro": "Vă trimite un e-mail în ziua aleasă, la adresa din contul cu care v-ați conectat",
+              "en": "It sends you an e-mail on the chosen day, to the address of the account you signed in with"
             },
             {
               "id": "o2",
@@ -314,8 +314,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Salvează și adaugă singur un memento pentru a doua zi",
-              "en": "It saves and adds a reminder for the next day by itself"
+              "ro": "Salvează și adaugă singur un memento pentru a doua zi, ca să nu uitați să reveniți la client",
+              "en": "It saves and adds a reminder for the next day by itself, so you don't forget to come back to the client"
             }
           ]
         },
@@ -334,8 +334,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Se face o copie a lui, atașată interacțiunii",
-              "en": "A copy of it is made and attached to the interaction"
+              "ro": "Se face o copie a lui, atașată interacțiunii, ca să rămână chiar dacă actul se șterge din arhivă",
+              "en": "A copy of it is made and attached to the interaction, so it stays even if the document is deleted from the archive"
             },
             {
               "id": "o2",

@@ -37,8 +37,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Se păstrează doar dacă apăsați „Fă curentă” înainte",
-              "en": "They are kept only if you press „Fă curentă” beforehand"
+              "ro": "Se păstrează doar dacă apăsați „Fă curentă” înainte de „Salvează”, altfel se pierd",
+              "en": "They are kept only if you press „Fă curentă” before „Salvează”; otherwise they are lost"
             },
             {
               "id": "o4",
@@ -113,8 +113,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Aplicația întreabă dacă vreți totuși o versiune nouă",
-              "en": "The application asks whether you still want a new version"
+              "ro": "Aplicația întreabă dacă vreți totuși o versiune nouă, cu „OK” și „Anulează”",
+              "en": "The application asks whether you still want a new version, with „OK” and „Anulează”"
             },
             {
               "id": "o4",
@@ -157,8 +157,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Arată două versiuni una lângă alta, cu diferențele colorate",
-              "en": "It shows two versions side by side, with the differences in colour"
+              "ro": "Arată două versiuni una lângă alta, cu diferențele colorate și datele salvărilor",
+              "en": "It shows two versions side by side, with the differences in colour and the dates of the saves"
             }
           ]
         },
@@ -346,8 +346,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Apăsați de două ori „N versiuni”, care le deschide alăturate",
-              "en": "You press „N versiuni” twice, which opens them side by side"
+              "ro": "Apăsați de două ori „N versiuni”, care deschide cele două versiuni alăturate, cu diferențele marcate",
+              "en": "You press „N versiuni” twice, which opens the two versions side by side, with the differences marked"
             },
             {
               "id": "o4",
@@ -422,8 +422,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Apăsați „Anulează” pe ecranul persoanei, care desface salvarea",
-              "en": "You press „Anulează” on the person's screen, which undoes the save"
+              "ro": "Apăsați „Anulează” pe ecranul persoanei, care desface ultima salvare și readuce prenumele vechi",
+              "en": "You press „Anulează” on the person's screen, which undoes the last save and brings back the old first name"
             },
             {
               "id": "o4",

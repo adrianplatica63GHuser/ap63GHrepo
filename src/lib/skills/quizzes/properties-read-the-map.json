@@ -38,8 +38,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Apăsați „Deschide” pe un rând, apoi „Hartă extinsă”.",
-              "en": "Press „Deschide” on a row, then „Hartă extinsă” (expanded map)."
+              "ro": "Apăsați „Deschide” pe un rând, apoi „Hartă extinsă” de pe fișa „Hartă” a proprietății.",
+              "en": "Press „Deschide” on a row, then „Hartă extinsă” (expanded map) on the property's „Hartă” tab."
             },
             {
               "id": "o4",
@@ -82,8 +82,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Ca o formă goală, în centrul hărții.",
-              "en": "As an empty shape, in the centre of the map."
+              "ro": "Ca o formă goală, în centrul hărții, până îi desenați colțurile.",
+              "en": "As an empty shape in the centre of the map, until you draw its corners."
             }
           ]
         },
@@ -185,13 +185,13 @@
               "id": "o2",
               "correct": true,
               "ro": "Lăsați „Locația mea” la „Pornire” și scanați codul QR cu telefonul.",
-              "en": "Leave „Locația mea” (my location) at „Pornire” (start) and scan the QR code with the phone."
+              "en": "Leave „Locația mea” at „Pornire” and scan the QR code with the phone."
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Apăsați „Deschide în Google Maps”; telefonul pornește singur.",
-              "en": "Press „Deschide în Google Maps”; the phone starts by itself."
+              "ro": "Apăsați „Deschide în Google Maps”; traseul se trimite singur și pe telefon.",
+              "en": "Press „Deschide în Google Maps”; the route is sent to the phone by itself as well."
             },
             {
               "id": "o4",
@@ -222,8 +222,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Tragerea mută acum colțurile proprietăților.",
-              "en": "Dragging now moves the properties' corners."
+              "ro": "Tragerea mută acum colțurile proprietăților, ca la „Desenează” pe fișa „Hartă”.",
+              "en": "Dragging now moves the properties' corners, as with „Desenează” on the „Hartă” tab."
             },
             {
               "id": "o3",
@@ -335,8 +335,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Un dublu-clic pe bulă.",
-              "en": "A double-click on the bubble."
+              "ro": "Un dublu-clic pe bulă, deasupra numelui proprietății.",
+              "en": "A double-click on the bubble, above the property's name."
             },
             {
               "id": "o2",
@@ -456,13 +456,13 @@
               "id": "o2",
               "correct": true,
               "ro": "Nu ați scris încă adresa la „Adresa de pornire”.",
-              "en": "You have not yet typed the address at „Adresa de pornire” (starting address)."
+              "en": "You have not yet typed the address at „Adresa de pornire”."
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Codul QR apare doar cu „Locația mea”.",
-              "en": "The QR code appears only with „Locația mea”."
+              "ro": "Codul QR apare doar cu „Locația mea”, nu cu „De la o adresă”.",
+              "en": "The QR code appears only with „Locația mea”, not with „De la o adresă”."
             },
             {
               "id": "o4",

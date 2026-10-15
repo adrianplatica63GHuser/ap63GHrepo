@@ -140,8 +140,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "În bara de navigare, după „Acasă”",
-              "en": "In the navigation bar, after „Acasă” (home)"
+              "ro": "În bara de navigare, după „Acasă” și secțiune",
+              "en": "In the navigation bar, after „Acasă” (home) and the section"
             },
             {
               "id": "o2",
@@ -449,8 +449,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Se arată înregistrările schimbate azi de toți utilizatorii",
-              "en": "The records changed today by all users are shown"
+              "ro": "Se arată înregistrările schimbate azi de toți utilizatorii arhivei",
+              "en": "The records changed today by all the archive's users are shown"
             }
           ]
         }

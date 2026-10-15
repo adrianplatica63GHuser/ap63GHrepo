@@ -70,8 +70,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "O scrieți liber, la fel ca „Nr. parcelă”.",
-              "en": "You type it freely, just like „Nr. parcelă”."
+              "ro": "O scrieți liber, cu cifre, la fel ca „Nr. parcelă”, iar aplicația o verifică la salvare.",
+              "en": "You type it freely, in digits, just like „Nr. parcelă”, and the application checks it when saving."
             },
             {
               "id": "o3",
@@ -108,8 +108,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "În „Câmpuri afișate”, pe lista proprietăților.",
-              "en": "In „Câmpuri afișate”, on the list of properties."
+              "ro": "În „Câmpuri afișate”, pe lista proprietăților, unde fiecare tip are rândul lui de fișe.",
+              "en": "In „Câmpuri afișate” (fields shown), on the list of properties, where each type has its own row of tiles."
             },
             {
               "id": "o3",
@@ -185,13 +185,13 @@
               "id": "o3",
               "correct": true,
               "ro": "O refuză: rămâneți pe „Proprietate nouă”, cu „Această parcelă are deja o proprietate”.",
-              "en": "It refuses it: you stay on „Proprietate nouă”, with „Această parcelă are deja o proprietate” (this parcel already has a property)."
+              "en": "It refuses it: you stay on „Proprietate nouă”, with „Această parcelă are deja o proprietate”."
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "Vă întreabă dacă vreți totuși să creați a doua proprietate.",
-              "en": "It asks whether you want to create the second property anyway."
+              "ro": "Vă întreabă dacă vreți totuși să creați a doua proprietate pe aceeași parcelă, cu „Da” și „Nu”.",
+              "en": "It asks whether you want to create a second property on the same parcel anyway, with „Da” (yes) and „Nu” (no)."
             }
           ]
         },
@@ -228,8 +228,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Se deschide „Hartă completă”, cu proprietatea nouă în centru.",
-              "en": "„Hartă completă” opens, with the new property in the centre."
+              "ro": "Se deschide „Hartă completă”, cu proprietatea nouă în centru și numărul ei de cadastru deasupra.",
+              "en": "„Hartă completă” (the full map) opens, with the new property in the centre and its cadastral number above it."
             }
           ]
         }
@@ -347,8 +347,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Bifată, dar fișa „Adresă” se arată goală.",
-              "en": "Ticked, but the „Adresă” tile shows empty."
+              "ro": "Bifată, dar fișa „Adresă” se arată goală, cu un mesaj că tipul nu are adresă poștală.",
+              "en": "Ticked, but the „Adresă” tile shows empty, with a message that the type has no postal address."
             }
           ]
         },
@@ -449,8 +449,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "În fereastra „Adaugă Proprietate”, sub cele patru căi.",
-              "en": "In the window „Adaugă Proprietate”, under the four ways in."
+              "ro": "În fereastra „Adaugă Proprietate”, sub cele patru căi, ca butoane cu text.",
+              "en": "In the window „Adaugă Proprietate”, under the four ways in, as text buttons."
             },
             {
               "id": "o4",

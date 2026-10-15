@@ -391,8 +391,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Ștergându-le și alegându-le din nou, în ordine",
-              "en": "By removing them and choosing them again, in order"
+              "ro": "Ștergându-le și alegându-le din nou, una câte una, în ordine",
+              "en": "By removing them and choosing them again, one by one, in order"
             }
           ]
         },
@@ -423,8 +423,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Pierde paginile alese, fără nicio întrebare",
-              "en": "It loses the chosen pages, without any question"
+              "ro": "Pierde paginile alese, fără nicio întrebare sau avertisment",
+              "en": "It loses the chosen pages, without any question or warning"
             },
             {
               "id": "o4",

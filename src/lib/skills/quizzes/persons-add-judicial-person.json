@@ -38,8 +38,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică” și alegeți întâi forma firmei într-o fereastră.",
-              "en": "On „Persoane Juridice”, press „Adaugă persoană juridică” and first choose the firm's form in a window."
+              "ro": "Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică” și alegeți întâi forma firmei („Tip”) într-o fereastră separată.",
+              "en": "On „Persoane Juridice”, press „Adaugă persoană juridică” and first choose the firm's form („Tip”) in a separate window."
             }
           ]
         },
@@ -152,8 +152,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Apăsați „Asociază persoană” și îl creați din fereastra de asociere.",
-              "en": "Press „Asociază persoană” and create them from the association window."
+              "ro": "Apăsați „Asociază persoană” în „Legături” și îl creați chiar din fereastra „Asociere persoană corelată”.",
+              "en": "Press „Asociază persoană” in „Legături” and create them right in the „Asociere persoană corelată” window."
             }
           ]
         },
@@ -247,8 +247,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Rămâneți pe ecranul ei, care arată „v 1” în cap.",
-              "en": "You stay on its screen, which shows „v 1” at the top."
+              "ro": "Rămâneți pe ecranul ei, care arată în cap „v 1”, iar firma nu apare încă în listă.",
+              "en": "You stay on its screen, which shows „v 1” at the top, and the firm is not in the list yet."
             },
             {
               "id": "o2",
@@ -291,8 +291,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Firma se salvează fără e-mail, iar câmpul se golește.",
-              "en": "The firm is saved without the e-mail, and the field is emptied."
+              "ro": "Firma se salvează fără e-mail, iar câmpul se golește ca să scrieți adresa din nou.",
+              "en": "The firm is saved without the e-mail, and the field is emptied so that you type the address again."
             },
             {
               "id": "o3",
@@ -323,8 +323,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Nimic: coloana „Persoană de contact” se vede de la început.",
-              "en": "Nothing: the „Persoană de contact” column is shown from the start."
+              "ro": "Nimic: coloana „Persoană de contact” se vede de la început, după „Poreclă”.",
+              "en": "Nothing: the „Persoană de contact” column is shown from the start, after „Poreclă”."
             },
             {
               "id": "o3",

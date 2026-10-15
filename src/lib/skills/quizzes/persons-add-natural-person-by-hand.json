@@ -81,8 +81,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Toate câmpurile din fișa „Identitate”.",
-              "en": "Every field in the „Identitate” tile."
+              "ro": "Toate câmpurile din fișa „Identitate”, inclusiv „CNP”.",
+              "en": "Every field in the „Identitate” (identity) tile, including „CNP”."
             }
           ]
         },
@@ -114,7 +114,7 @@
               "id": "o3",
               "correct": false,
               "ro": "Vă întoarceți la listă; persoana stă la locul ei în ordinea numelor, fără niciun semn.",
-              "en": "You return to the list; the person stands in their place in name order, with no mark."
+              "en": "You return to the list; the person stands in their own place in name order, with no mark at all."
             },
             {
               "id": "o4",
@@ -258,8 +258,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Se salvează doar dacă bifați fișa din nou înainte de „Salvează”.",
-              "en": "It is saved only if you tick the tile again before „Salvează”."
+              "ro": "Se salvează doar dacă bifați fișa din nou înainte să apăsați „Salvează”.",
+              "en": "It is saved only if you tick the tile again before you press „Salvează”."
             },
             {
               "id": "o3",
