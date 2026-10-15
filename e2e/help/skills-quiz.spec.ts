@@ -10,6 +10,10 @@
  * 1.2 and 1.3 are seeded as passed, and sees 1.1 Mastered and 2.13 open on the map; it fails 1.4 and is told
  * when it reopens. Those attempts are real ones, so the test runs only on an account that had none, and
  * deletes every attempt of the account in a `finally` (scripts/skills/reset-progress.ts).
+ *
+ * AND A THIRD, ALSO NOT A STEP OF THE CASE (#39.44): an Expert quiz passed through the page masters its Path. The
+ * import Path's Advanced skills and everything they and its Expert skill rest on are seeded as passed; 4.5 is
+ * passed by the page; the Path's chip then carries the badge. Same account rule, same `finally`.
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -21,6 +25,25 @@ type QuizJson = { variants: { id: string; questions: { id: string; options: { id
 const quizFile = (key: string): QuizJson =>
   JSON.parse(fs.readFileSync(path.join("src", "lib", "skills", "quizzes", `${key}.json`), "utf8")) as QuizJson;
 const key = (number: string) => SKILLS.find((s) => s.number === number)!.key;
+/** A skill's number as numbers, so 1.10 sorts after 1.9. */
+const order = (n: string) => n.split(".").map(Number);
+const byNumber = (x: string, y: string) => {
+  const [a, b] = [order(SKILLS.find((s) => s.key === x)!.number), order(SKILLS.find((s) => s.key === y)!.number)];
+  return a[0] - b[0] || a[1] - b[1];
+};
+/** Every skill the given ones rest on, however far back. */
+function before(keys: string[]): Set<string> {
+  const out = new Set<string>();
+  const stack = [...keys];
+  while (stack.length) {
+    for (const p of SKILLS.find((s) => s.key === stack.pop())!.predecessors) {
+      if (out.has(p)) continue;
+      out.add(p);
+      stack.push(p);
+    }
+  }
+  return out;
+}
 
 function script(file: string, ...args: string[]): number {
   const email = process.env.E2E_EMAIL;
@@ -155,6 +178,38 @@ test.describe("TC-SKILL-02 — Chestionarul unei competențe", () => {
       await page.goto(`/skills-map/${key("1.4")}`);
       await expect(main(page).locator("[data-quiz-cooling]")).toContainText("Chestionarul se poate relua din", { timeout: 30_000 });
       await expect(main(page).locator("[data-quiz-form]")).toHaveCount(0);
+    } finally {
+      script("reset-progress.ts", "--apply");
+    }
+  });
+  test("an Expert quiz passed through the page masters its Path — not a step of the case (#39.44)", async ({ page }) => {
+    test.slow();
+    test.skip(hasOwnAttempts(), "The e2e account has quiz attempts of its own; nothing is recorded over them.");
+    script("set-progress.ts", "--clear", "--apply");
+    try {
+      const expert = SKILLS.find((s) => s.path === "import" && s.level === 4)!;
+      const high = SKILLS.filter((s) => s.path === "import" && s.level >= 3).map((s) => s.key);
+      // Predecessors first: a skill's number sorts after every one it rests on.
+      const seed = [...new Set([...high, ...before(high)])].filter((k) => k !== expert.key).sort(byNumber);
+      script("set-progress.ts", "--pass", seed.join(","), "--apply");
+
+      await page.goto("/skills-map");
+      const chip = page.locator('[data-path-chip="import"]').filter({ visible: true });
+      await expect(page.locator(`[data-skill="${expert.key}"]`).filter({ visible: true })).toHaveAttribute("data-state", "open", { timeout: 30_000 });
+      await expect(chip).not.toContainText("traseu stăpânit");
+
+      await openQuiz(page, expert.key);
+      const n = await main(page).locator("[data-quiz-question]").count();
+      expect(n).toBe(12);
+      await answerAll(page, expert.key, true);
+      await main(page).getByRole("button", { name: "Trimite" }).click();
+      const passed = main(page).locator('[data-quiz-result="passed"]');
+      await expect(passed).toBeVisible({ timeout: 30_000 });
+      await expect(passed).toContainText("12 răspunsuri bune din 12");
+
+      await page.goto("/skills-map");
+      await expect(page.locator(`[data-skill="${expert.key}"]`).filter({ visible: true })).toHaveAttribute("data-state", "mastered", { timeout: 30_000 });
+      await expect(chip).toContainText("traseu stăpânit");
     } finally {
       script("reset-progress.ts", "--apply");
     }
