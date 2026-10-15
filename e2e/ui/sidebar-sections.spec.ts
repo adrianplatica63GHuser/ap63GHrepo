@@ -1,5 +1,5 @@
 /**
- * Case:   TC-NAV-01 — Bara laterală arată doar ce există: șapte secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
+ * Case:   TC-NAV-01 — Bara laterală arată doar ce există: opt secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
  * Source: docs/testing/cases/TC-NAV-01.md, „Last green" 2026-10-06
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -22,13 +22,15 @@ import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "
 const SHOTS = "playwright-report/sidebar-sections";
 
 // Slice #39.02: „Rapoarte" between „Import" and „Administrare" (was six, without it).
-const SECTIONS = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări"] as const;
+// Slice #39.37: „Ajutor și învățare" last (was seven, without it).
+const SECTIONS = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări", "Ajutor și învățare"] as const;
 
 /** What #38.42 stopped drawing: placeholders and a placeholder page. #39.02 brought „Rapoarte" back. */
 const GONE = [
   // #39.11: „Arbori de moștenire" left this list — it has its screen.
   "Funcții", "Studiu", "Ajutor", "În lucru", "Verificare corelări",
-  "Dosare diverse", "Fișier individual", "Cursuri", "Chestionare", "Punctaj", "Manual de utilizare", "Întreabă AI",
+  // #39.37: „Manual de utilizare" left this list — it has its screen, in „Ajutor și învățare".
+  "Dosare diverse", "Fișier individual", "Cursuri", "Chestionare", "Punctaj", "Întreabă AI",
 ] as const;
 
 /** Each section's items, in order, with their addresses. */
@@ -57,7 +59,11 @@ const ITEMS: Record<string, [string, string][]> = {
     ["Grupuri", "/admin/groups"],
     ["Ștampile", "/admin/stamps"],
     ["Etichete", "/admin/tags"],
+  ],
+  // Slice #39.37: „Informații de ajutor" moved here from „Administrare", its address unchanged.
+  "Ajutor și învățare": [
     ["Informații de ajutor", "/admin/help-content"],
+    ["Manual de utilizare", "/manual"],
   ],
 };
 
@@ -79,13 +85,14 @@ const LINKS: [string, string | null, string][] = [
   ["Grupuri", "Administrare", "Grupuri"],
   ["Ștampile", "Administrare", "Ștampile"],
   ["Etichete", "Administrare", "Etichete"],
-  ["Informații de ajutor", "Administrare", "Informații de ajutor"],
+  ["Informații de ajutor", "Ajutor și învățare", "Informații de ajutor"], // #39.37: was under „Administrare"
+  ["Manual de utilizare", "Ajutor și învățare", "Manual de utilizare"], // #39.37
   ["Setări", null, "Setări"],
   // #39.11: last — its screen is the whole page, over the sidebar, and step 4 leaves it by its address.
   ["Arbori de moștenire", "Rapoarte", "Arbori de moștenire"],
 ];
 
-const ICONS = ["lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-chart-column", "lucide-shield-check", "lucide-settings"];
+const ICONS = ["lucide-layout-dashboard", "lucide-database", "lucide-workflow", "lucide-upload", "lucide-chart-column", "lucide-shield-check", "lucide-settings", "lucide-life-buoy"];
 
 const recent = (page: Page) =>
   page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) });
@@ -133,14 +140,14 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     fs.mkdirSync(SHOTS, { recursive: true });
   });
 
-  test("seven sections, every link opens its screen, no placeholder is drawn", async ({ page }) => {
+  test("eight sections, every link opens its screen, no placeholder is drawn", async ({ page }) => {
     test.setTimeout(240_000);
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto("/admin/settings");
     const nav = sidebar(page);
     await expect(nav).toBeVisible({ timeout: 30_000 });
 
-    // Step 1 — the seven sections, top to bottom; nothing #38.42 stopped drawing.
+    // Step 1 — the eight sections, top to bottom; nothing #38.42 stopped drawing.
     await expect(sectionRows(page)).toHaveCount(SECTIONS.length);
     expect((await sectionRows(page).allInnerTexts()).map((t) => t.trim().split("\n")[0])).toEqual([...SECTIONS]);
 
@@ -193,7 +200,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     await expect(page.locator("main a")).toHaveCount(0);
     await expect(crumbTrail(page)).toHaveText(["Acasă", "Setări"]);
 
-    // Step 6 — collapsed: seven icons, one per section, each named by its section.
+    // Step 6 — collapsed: eight icons, one per section, each named by its section.
     await page.getByRole("button", { name: "Restrânge bara laterală", exact: true }).click();
     await expect(page.getByRole("button", { name: "Extinde bara laterală", exact: true })).toBeVisible();
     const rows = sectionRows(page);
@@ -215,6 +222,9 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       ["Rapoarte", "Interacțiuni", ["Acasă", "Rapoarte", "Interacțiuni"]],
       ["Administrare", "Date de referință", ["Acasă", "Administrare", "Date de referință"]],
       ["Import", "Dosare de proprietăți", ["Acasă", "Import"]],
+      // #39.37: the two screens of „Ajutor și învățare".
+      ["Ajutor și învățare", "Informații de ajutor", ["Acasă", "Ajutor și învățare", "Informații de ajutor"]],
+      ["Ajutor și învățare", "Manual de utilizare", ["Acasă", "Ajutor și învățare", "Manual de utilizare"]],
     ] as const) {
       await openSection(page, section);
       const link = nav.getByRole("link", { name: label, exact: true });

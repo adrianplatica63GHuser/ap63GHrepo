@@ -48,13 +48,13 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
     expect(before.howToRo).toBe(ORIGINAL_HOW_TO_RO);
 
     try {
-      // Step 1 — „Administrare" → „Informații de ajutor": the heading, „Ecrane", „Sfaturi rapide",
+      // Step 1 — „Ajutor și învățare" → „Informații de ajutor" (#39.37: was „Administrare"): the heading, „Ecrane", „Sfaturi rapide",
       // every screen „Complet" once the list has loaded (FU-227).
       await page.goto("/");
       const nav = sidebar(page);
       const helpLink = nav.getByRole("link", { name: "Informații de ajutor", exact: true });
       if (!(await helpLink.isVisible())) {
-        await nav.getByRole("button", { name: "Administrare", exact: true }).click();
+        await nav.getByRole("button", { name: "Ajutor și învățare", exact: true }).click();
       }
       await helpLink.click();
       await expect(page).toHaveURL(/\/admin\/help-content$/, { timeout: 30_000 });

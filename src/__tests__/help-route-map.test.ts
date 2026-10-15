@@ -87,6 +87,8 @@ describe("resolveHelpScreenKey", () => {
       ["/admin/users", "admin-users"],
       ["/admin/global-search", "admin-global-search"],
       ["/admin/help-content", "admin-help-content"],
+      ["/manual", "manual"], // Slice #39.37
+      ["/manual?s=start-sidebar", "manual"], // the section in the query, the screen the same
       ["/admin/groups", "admin-groups"],
       ["/admin/groups/[id]", "admin-group-editor"],
       ["/admin/stamps", "admin-stamps"],
@@ -151,6 +153,7 @@ describe("resolveHelpScreenKey", () => {
       "/admin/users",
       "/admin/global-search",
       "/admin/help-content",
+      "/manual",
     ];
 
     it.each(routes)("%s resolves to a key present in HELP_SCREENS", (route) => {

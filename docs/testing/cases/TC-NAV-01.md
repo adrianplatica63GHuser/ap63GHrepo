@@ -1,4 +1,4 @@
-# TC-NAV-01 — Bara laterală arată doar ce există: șapte secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
+# TC-NAV-01 — Bara laterală arată doar ce există: opt secțiuni, fiecare legătură își deschide ecranul, niciun „În curând"
 
 | | |
 |---|---|
@@ -10,9 +10,12 @@
 
 ## What this proves
 
-Since Slice #38.42 the left sidebar draws only what exists. Top to bottom it reads seven sections
-(six until #39.02): „Tablou de bord", „Domeniu", „Instrumente" (called „Funcții" until #38.42),
-„Import", „Rapoarte", „Administrare" and „Setări".
+Since Slice #38.42 the left sidebar draws only what exists. Top to bottom it reads eight sections
+(six until #39.02, seven until #39.37): „Tablou de bord", „Domeniu", „Instrumente" (called „Funcții"
+until #38.42), „Import", „Rapoarte", „Administrare", „Setări" and „Ajutor și învățare".
+- **„Ajutor și învățare" holds „Informații de ajutor" and „Manual de utilizare"** (Slice #39.37): the
+  first moved from „Administrare" with its address unchanged, the second is the user manual. It stands
+  where the placeholders „Studiu" and „Ajutor" stood.
 - **„Rapoarte" holds „Interacțiuni" and „Căutare globală"** (Slice #39.02), moved from „Domeniu" and
   „Instrumente" with their addresses unchanged. „Arbori de moștenire" joins them when its screen exists.
 - **Placeholders are not drawn.** An item whose screen is not built draws nothing, and neither does a
@@ -42,13 +45,13 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare", „Setări" — no „Funcții", „Studiu" or „Ajutor" |
-| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte. „Instrumente": Distilare Tipizate, Calcul drum lateral, Calcul suprafață (#39.09). „Import": Dosare de proprietăți. „Rapoarte": Interacțiuni, Arbori de moștenire (#39.11), Căutare globală (#39.02). „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete, Informații de ajutor. No item is drawn faded, and nothing says „În curând" |
-| 3 | Presses each link in turn: „Tablou de bord", the four of „Domeniu", the three of „Instrumente", „Dosare de proprietăți", the three of „Rapoarte" („Arbori de moștenire" last: its screen covers the whole page, #39.11), the six of „Administrare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Distilare Tipizate", „Calcul", „Toate Proprietățile" (the map, `?area=1`), „Import", „Interacțiuni", „Căutare globală", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Setări", „Arbori de moștenire" — and the item pressed is the sidebar's active one |
+| 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare", „Setări", „Ajutor și învățare" (#39.37) — no „Funcții", „Studiu" or „Ajutor" |
+| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte. „Instrumente": Distilare Tipizate, Calcul drum lateral, Calcul suprafață (#39.09). „Import": Dosare de proprietăți. „Rapoarte": Interacțiuni, Arbori de moștenire (#39.11), Căutare globală (#39.02). „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete. „Ajutor și învățare": Informații de ajutor, Manual de utilizare (#39.37). No item is drawn faded, and nothing says „În curând" |
+| 3 | Presses each link in turn: „Tablou de bord", the four of „Domeniu", the three of „Instrumente", „Dosare de proprietăți", the three of „Rapoarte" („Arbori de moștenire" last: its screen covers the whole page, #39.11), the five of „Administrare", the two of „Ajutor și învățare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Distilare Tipizate", „Calcul", „Toate Proprietățile" (the map, `?area=1`), „Import", „Interacțiuni", „Căutare globală", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Manual de utilizare", „Setări", „Arbori de moștenire" — and the item pressed is the sidebar's active one |
 | 4 | Types `/reports` into the address bar | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte"; no link in the sidebar points at `/reports` |
 | 5 | „Setări" | „Setări" with „Praguri de timp" (#38.40; #38.41 put „Contul meu" first); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
-| 6 | „Restrânge bara laterală" | Seven icons, one per section, each named by its section; then „Extinde bara laterală" |
-| 7 | „Administrare" → „Etichete"; „Rapoarte" → „Căutare globală"; „Rapoarte" → „Interacțiuni"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Rapoarte › Căutare globală", „Acasă › Rapoarte › Interacțiuni", „Acasă › Administrare › Date de referință" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
+| 6 | „Restrânge bara laterală" | Eight icons, one per section, each named by its section; then „Extinde bara laterală" |
+| 7 | „Administrare" → „Etichete"; „Rapoarte" → „Căutare globală"; „Rapoarte" → „Interacțiuni"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți"; „Ajutor și învățare" → „Informații de ajutor"; „Ajutor și învățare" → „Manual de utilizare" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Rapoarte › Căutare globală", „Acasă › Rapoarte › Interacțiuni", „Acasă › Administrare › Date de referință", „Acasă › Ajutor și învățare › Informații de ajutor", „Acasă › Ajutor și învățare › Manual de utilizare" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
 | 8 | (Slice #39.03, a test person `TC-E2E-NAV-01-BACK` „Înapoi" of its own, at 1366 × 768) From „Persoane Fizice" opens the person, then presses „Înapoi" | „Înapoi" with a left arrow is the bar's first item, at its left edge, then a rule and a gap, then „Acasă › …"; the „?" stays at the right. Pressed: back on „Persoane Fizice" |
 | 9 | Opens the person again, changes „Prenume", presses „Înapoi"; „Anulează"; „Înapoi" again, „Renunță" | „Modificări nesalvate"; „Anulează" keeps the person's screen with what was typed; „Renunță" goes back to the list, nothing saved |
 | 10 | Types the person's address into the bar, then presses „Înapoi" | Nothing in the tab to go back to: the parent crumb, „Persoane Fizice" |
@@ -58,6 +61,10 @@ Nothing.
 Steps 1–7 create nothing. Steps 8–10's test person is removed at the end. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-14 — Slice #39.37, steps 1–3, 6 and 7 changed.** „Ajutor și învățare" is drawn last, in
+place of the placeholders „Studiu" and „Ajutor", with „Informații de ajutor" (from „Administrare", its
+address unchanged) and „Manual de utilizare". Its icon is `life-buoy`.
 
 **2026-10-11 — Slice #39.03, steps 8–10 added.** „Înapoi" first on the breadcrumb bar, through the
 unsaved-changes guard; with nothing in the tab to go back to, the parent crumb.

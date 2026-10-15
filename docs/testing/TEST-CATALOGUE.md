@@ -149,6 +149,7 @@ fixed fixture where the existing one will do.
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
 | [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
+| [TC-HELP-02](cases/TC-HELP-02.md) | „Manual de utilizare”: din bara laterală, o secțiune deschisă după link, descărcat ca Word | help | happy | — | `draft` | — | — |
 | [TC-CALC-01](cases/TC-CALC-01.md) | Calculul cu drum lateral pe un teren cunoscut, și istoricul lui | calculation | happy | `09.tc.calc.file` | `automated` | 2026-10-07 | `e2e/calculation/side-road.spec.ts` |
 | [TC-USERS-01](cases/TC-USERS-01.md) | O cerere de acces respinsă, citită în „Istoric” | users | happy | — | `driven` | 2026-09-27 | — |
 | [TC-SET-01](cases/TC-SET-01.md) | O setare schimbată, văzută după salvare și pusă la loc exact | settings | happy | — | `driven` | 2026-09-27 | — |
@@ -208,7 +209,7 @@ fixed fixture where the existing one will do.
 | [TC-ICON-06](cases/TC-ICON-06.md) | Importul, până la „Restricții": „Verifică din nou" și „Continuă" cu pictogramele lângă cuvinte | import | happy | a folder made in the browser | `automated` | 2026-10-01 | `e2e/ui/icon-import.spec.ts` |
 | [TC-ICON-07](cases/TC-ICON-07.md) | Pictograma înregistrării înaintea numelui: persoană fizică, persoană juridică, proprietate, act | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/record-heading.spec.ts` |
 | [TC-SYSID-01](cases/TC-SYSID-01.md) | ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou; listele fără „Cod" | ui | happy | — | `automated` | 2026-10-02 | `e2e/ui/system-id.spec.ts` |
-| [TC-NAV-01](cases/TC-NAV-01.md) | Bara laterală arată doar ce există: șapte secțiuni, fiecare legătură își deschide ecranul, niciun „În curând" | nav | happy | — | `automated` | 2026-10-06 | `e2e/ui/sidebar-sections.spec.ts` |
+| [TC-NAV-01](cases/TC-NAV-01.md) | Bara laterală arată doar ce există: opt secțiuni, fiecare legătură își deschide ecranul, niciun „În curând" | nav | happy | — | `automated` | 2026-10-06 | `e2e/ui/sidebar-sections.spec.ts` |
 | [TC-INT-01](cases/TC-INT-01.md) | „Interacțiuni”: istoricul, cele mai noi întâi, filtrat din bara de unelte și din coloane | interactions | happy | — | `automated` | 2026-10-10 | `e2e/interactions/history.spec.ts` |
 | [TC-INT-02](cases/TC-INT-02.md) | „Interacțiuni”: un apel telefonic înregistrat de mână, fără niciun cont conectat | interactions | happy | — | `automated` | 2026-10-10 | `e2e/interactions/log-by-hand.spec.ts` |
 | [TC-INT-03](cases/TC-INT-03.md) | „Interacțiuni”: acte legate, etichete și o proprietate | interactions | happy | — | `automated` | 2026-10-10 | `e2e/interactions/links-tags-property.spec.ts` |

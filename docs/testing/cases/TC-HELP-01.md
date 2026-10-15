@@ -50,7 +50,7 @@ text above ever stops being the stored one, the case file is updated first.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Administrare" → „Informații de ajutor" | The heading „Informații de ajutor", two tabs „Ecrane" and „Sfaturi rapide", and the list of screens, each with „Complet" — except a screen whose help Adrian has still to write, which may read „Lipsă": today „Interacțiuni — Istoric" (#38.84) |
+| 1 | Opens „Ajutor și învățare" → „Informații de ajutor" (#39.37: was under „Administrare") | The heading „Informații de ajutor", two tabs „Ecrane" and „Sfaturi rapide", and the list of screens, each with „Complet" — except a screen whose help Adrian has still to write, which may read „Lipsă": today „Interacțiuni — Istoric" (#38.84) |
 | 2 | Presses „Administrare — Etichete" | Four fields — „Context (Engleză)", „Context (Română)", „Cum se folosește (Engleză)", „Cum se folosește (Română)" — „Salvează", and „Previzualizare", which shows each field under its own heading |
 | 3 | Notes the text in „Cum se folosește (Română)" and checks it is the text above | It is |
 | 4 | Replaces it with `TC-HELP-01 — text de ajutor scris de cazul de test.` | „Previzualizare" follows as it is typed |
@@ -81,5 +81,7 @@ screen opens, every screen in the list read **„Lipsă"** — the badge treated
 does not refill when the list arrives, so „Salvează" would have written blanks over the stored
 help. The badge now waits for the list, and the editor is re-seeded once the list has loaded
 (`help-content-hub.tsx`). Step 1's „Complet" is read after the list has loaded.
+
+**2026-10-14 — Slice #39.37.** „Informații de ajutor" moved to the new section „Ajutor și învățare", its address unchanged; step 1 opens it from there, and the spec follows. The list of screens gains „Ajutor și învățare — Manual de utilizare", whose help #39.37 wrote, so it reads „Complet" like the rest.
 
 **2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Informații de ajutor" and „Administrare" → „Etichete". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).

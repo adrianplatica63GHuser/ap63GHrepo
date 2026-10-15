@@ -1364,8 +1364,7 @@
       "reports": "Rapoarte",
       "administration": "Administrare",
       "settings": "Setări",
-      "study": "Studiu",
-      "helpSection": "Ajutor"
+      "helpLearning": "Ajutor și învățare"
     },
     "items": {
       "naturalPerson": "Persoană Fizică",
@@ -1410,11 +1409,7 @@
       "inheritanceTrees": "Arbori de moștenire",
       "miscFolders": "Dosare diverse",
       "singleFile": "Fișier individual",
-      "courses": "Cursuri",
-      "quizzes": "Chestionare",
-      "score": "Punctaj",
-      "userManual": "Manual de utilizare",
-      "askAi": "Întreabă AI"
+      "userManual": "Manual de utilizare"
     },
     "collapse": "Restrânge bara laterală",
     "expand": "Extinde bara laterală",
@@ -1489,7 +1484,8 @@
         "admin-settings": "Administrare — Setări",
         "admin-users": "Administrare — Utilizatori & Acces",
         "admin-global-search": "Administrare — Căutare globală",
-        "admin-help-content": "Administrare — Informații de ajutor"
+        "admin-help-content": "Ajutor și învățare — Informații de ajutor",
+        "manual": "Ajutor și învățare — Manual de utilizare"
       },
       "hints": {
         "drag-select": "Hartă — trage un dreptunghi pentru a selecta mai multe proprietăți",
@@ -4106,7 +4102,8 @@
         "functions": "Instrumente",
         "importSection": "Import",
         "reports": "Rapoarte",
-        "administration": "Administrare"
+        "administration": "Administrare",
+        "helpLearning": "Ajutor și învățare"
       },
       "groups": "Grupuri",
       "stamps": "Ștampile",
@@ -4119,6 +4116,7 @@
       "settings": "Setări",
       "globalSearch": "Căutare globală",
       "helpContent": "Informații de ajutor",
+      "manual": "Manual de utilizare",
       "docTypeEngine": "Distilare Tipizate",
       "changePassword": "Schimbă parola",
       "new": "Nou",
@@ -4302,6 +4300,20 @@
     "analysis": "Veți putea filtra și grupa după perioadă, loc, tip sau persoană, compara o perioadă cu alta, urmări cum evoluează o cifră în timp pentru a vedea tendințele, și găsi excepțiile — cazurile care nu se potrivesc tiparului obișnuit. Pornind de la un total, veți putea coborî până la cazurile din spatele lui.",
     "results": "Rezultatele vor veni ca tabele pe care le puteți sorta și exporta și ca o varietate largă de grafice: bare, linii, diagrame circulare, hărți, axe de timp și diagrame de legături.",
     "noSkills": "Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza."
+  },
+  "manual": {
+    "title": "Manual de utilizare",
+    "contents": "Cuprins",
+    "download": "Descarcă (Word)",
+    "downloading": "Se pregătește documentul…",
+    "downloadFailed": "Documentul Word nu a putut fi pregătit. Încercați din nou.",
+    "figure": "Figura",
+    "missingFigure": "Figura lipsește",
+    "previous": "Capitolul anterior",
+    "next": "Capitolul următor",
+    "fileName": "Manual de utilizare",
+    "chapterNav": "Capitolele manualului",
+    "notFound": "Secțiunea „{id}” nu există în manual; s-a deschis primul capitol."
   },
   "parentsFromIdCard": {
     "foldTitle": "Părinții titularului",

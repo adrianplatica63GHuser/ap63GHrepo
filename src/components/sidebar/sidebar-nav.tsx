@@ -384,7 +384,7 @@ export function SidebarNav() {
   );
 
   // ── i18n label maps (explicit keys — required for next-intl type safety) ──
-  // Slice #38.20: the nine sections (nav-config.ts).
+  // Slice #38.20: the sections (nav-config.ts); #39.37 — eight.
   const sectionLabels: Record<string, string> = {
     dashboard:      t("sections.dashboard"),
     domain:         t("sections.domain"),
@@ -393,8 +393,7 @@ export function SidebarNav() {
     reports:        t("sections.reports"),
     administration: t("sections.administration"),
     settings:       t("sections.settings"),
-    study:          t("sections.study"),
-    helpSection:    t("sections.helpSection"),
+    helpLearning:   t("sections.helpLearning"), // Slice #39.37
   };
 
   const itemLabels: Record<string, string> = {
@@ -421,11 +420,7 @@ export function SidebarNav() {
     inheritanceTrees:          t("items.inheritanceTrees"),
     miscFolders:               t("items.miscFolders"),
     singleFile:                t("items.singleFile"),
-    courses:                   t("items.courses"),
-    quizzes:                   t("items.quizzes"),
-    score:                     t("items.score"),
     userManual:                t("items.userManual"),
-    askAi:                     t("items.askAi"),
     globalSearch:              t("items.globalSearch"),
     // Slice #32.19 — the three screens that had no sidebar entry at all.
     groups:                    t("items.groups"),

@@ -89,6 +89,9 @@ export const HELP_SCREENS = [
   { key: "admin-users" },
   { key: "admin-global-search" },
   { key: "admin-help-content" },
+
+  // ── Ajutor și învățare (Slice #39.37) ───────────────────────────────────
+  { key: "manual" },
 ] as const;
 
 export type HelpScreenKey = (typeof HELP_SCREENS)[number]["key"];

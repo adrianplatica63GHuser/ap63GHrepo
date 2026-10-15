@@ -1364,8 +1364,7 @@
       "reports": "Reporting",
       "administration": "Administration",
       "settings": "Settings",
-      "study": "Study",
-      "helpSection": "Help"
+      "helpLearning": "Help & learning"
     },
     "items": {
       "naturalPerson": "Natural Person",
@@ -1410,11 +1409,7 @@
       "inheritanceTrees": "Inheritance trees",
       "miscFolders": "Miscellaneous folders",
       "singleFile": "Single file",
-      "courses": "Courses",
-      "quizzes": "Quizzes",
-      "score": "Score",
-      "userManual": "User manual",
-      "askAi": "Ask AI"
+      "userManual": "User manual"
     },
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
@@ -1489,7 +1484,8 @@
         "admin-settings": "Administration — Settings",
         "admin-users": "Administration — Users & Access",
         "admin-global-search": "Administration — Global Search",
-        "admin-help-content": "Administration — Help Content"
+        "admin-help-content": "Help & learning — Help information",
+        "manual": "Help & learning — User manual"
       },
       "hints": {
         "drag-select": "Map — drag a rectangle to select many properties",
@@ -4106,7 +4102,8 @@
         "functions": "Tools",
         "importSection": "Import",
         "reports": "Reporting",
-        "administration": "Administration"
+        "administration": "Administration",
+        "helpLearning": "Help & learning"
       },
       "groups": "Groups",
       "stamps": "Stamps",
@@ -4119,6 +4116,7 @@
       "settings": "Settings",
       "globalSearch": "Global search",
       "helpContent": "Help information",
+      "manual": "User manual",
       "docTypeEngine": "DocTypeEngine",
       "changePassword": "Change password",
       "new": "New",
@@ -4302,6 +4300,20 @@
     "analysis": "You will be able to filter and group by period, place, type or person, compare one period with another, follow how a figure changes over time to see the trends, and find the exceptions — the cases that do not fit the usual pattern. Starting from a total, you will be able to drill down to the cases behind it.",
     "results": "The results will come as tables you can sort and export, and as a wide range of charts: bars, lines, pie charts, maps, timelines and link diagrams.",
     "noSkills": "No technical knowledge is needed: choose what you want to find out, and the system does the analysis."
+  },
+  "manual": {
+    "title": "User manual",
+    "contents": "Contents",
+    "download": "Download (Word)",
+    "downloading": "Preparing the document…",
+    "downloadFailed": "The Word document could not be prepared. Try again.",
+    "figure": "Figure",
+    "missingFigure": "Figure missing",
+    "previous": "Previous chapter",
+    "next": "Next chapter",
+    "fileName": "User manual",
+    "chapterNav": "The manual's chapters",
+    "notFound": "There is no section „{id}” in the manual; the first chapter is open."
   },
   "parentsFromIdCard": {
     "foldTitle": "The holder's parents",

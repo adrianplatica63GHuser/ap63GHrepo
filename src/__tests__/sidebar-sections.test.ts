@@ -37,10 +37,11 @@ const RO = JSON.parse(read("messages", "ro-RO.json")) as Msgs;
 const EN = JSON.parse(read("messages", "en-GB.json")) as Msgs;
 const nav = (m: Msgs) => m.nav as { sections: Record<string, string>; items: Record<string, string>; comingSoon: string };
 
-describe("the nine sections in the config, in order, each with its items", () => {
+// #39.37: was „the nine sections" — „Studiu" and „Ajutor" (placeholders) last; „Ajutor și învățare" replaces both.
+describe("the eight sections in the config, in order, each with its items", () => {
   it("top to bottom", () => {
     expect(NAV_SECTIONS.map((s) => nav(RO).sections[s.key])).toEqual([
-      "Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări", "Studiu", "Ajutor",
+      "Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări", "Ajutor și învățare",
     ]);
   });
 
@@ -56,10 +57,10 @@ describe("the nine sections in the config, in order, each with its items", () =>
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
       // #39.11: „Arbori de moștenire" had no href.
       ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", "/inheritance-tree"], ["Căutare globală", "/admin/global-search"]]],
-      ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Informații de ajutor", "/admin/help-content"]]],
+      // #39.37: „Informații de ajutor" moved to „Ajutor și învățare"; „Studiu" and „Ajutor" are gone.
+      ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"]]],
       ["Setări", "/admin/settings", []],
-      ["Studiu", null, [["Cursuri", null], ["Chestionare", null], ["Punctaj", null]]],
-      ["Ajutor", null, [["Manual de utilizare", null], ["Întreabă AI", null]]],
+      ["Ajutor și învățare", null, [["Informații de ajutor", "/admin/help-content"], ["Manual de utilizare", "/manual"]]],
     ]);
   });
 
@@ -113,15 +114,17 @@ describe("what is drawn (#38.42)", () => {
   const ro = (s: { key: string; items: { key: string }[] }) => [nav(RO).sections[s.key], s.items.map((i) => nav(RO).items[i.key])];
 
   // #39.02: was „six sections" — Domeniu ending „Acte", „Interacțiuni"; Instrumente opening „Căutare globală"; no Rapoarte.
-  it("seven sections, each with only built screens — „Rapoarte” between „Import” and „Administrare”", () => {
+  // #39.37: was „seven sections", ending „Administrare" [… „Etichete", „Informații de ajutor"], „Setări".
+  it("eight sections, each with only built screens — „Ajutor și învățare” last", () => {
     expect(drawn.map(ro)).toEqual([
       ["Tablou de bord", []],
       ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
       ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral", "Calcul suprafață"]], // #39.09: + „Calcul suprafață"
       ["Import", ["Dosare de proprietăți"]],
       ["Rapoarte", ["Interacțiuni", "Arbori de moștenire", "Căutare globală"]], // #39.11: + „Arbori de moștenire"
-      ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Informații de ajutor"]],
+      ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete"]],
       ["Setări", []],
+      ["Ajutor și învățare", ["Informații de ajutor", "Manual de utilizare"]],
     ]);
   });
 
@@ -133,10 +136,11 @@ describe("what is drawn (#38.42)", () => {
   });
 
   it("an href brings a placeholder back; `wip` hides a page", () => {
+    // #39.37: was over „Studiu" → „Cursuri", a placeholder section that left the config.
     const withHref = NAV_SECTIONS.map((s) =>
-      s.key === "study" ? { ...s, items: s.items.map((i) => (i.key === "courses" ? { ...i, href: "/courses" } : i)) } : s,
+      s.key === "importSection" ? { ...s, items: s.items.map((i) => (i.key === "miscFolders" ? { ...i, href: "/misc" } : i)) } : s,
     );
-    expect(drawnSections(withHref).find((s) => s.key === "study")?.items.map((i) => i.key)).toEqual(["courses"]);
+    expect(drawnSections(withHref).find((s) => s.key === "importSection")?.items.map((i) => i.key)).toEqual(["import", "miscFolders"]);
     // #39.02: was „`wip` going brings a page back", over the „În lucru" item that left the config.
     const wip = NAV_SECTIONS.map((s) => (s.key === "reports" ? { ...s, items: s.items.map((i) => ({ ...i, wip: true as const })) } : s));
     expect(drawnSections(wip).some((s) => s.key === "reports")).toBe(false);
@@ -166,7 +170,8 @@ describe("the active section and item for every route", () => {
     ["/admin/groups/x", "administration", "/admin/groups"],
     ["/admin/stamps", "administration", "/admin/stamps"],
     ["/admin/tags", "administration", "/admin/tags"],
-    ["/admin/help-content", "administration", "/admin/help-content"],
+    ["/admin/help-content", "helpLearning", "/admin/help-content"], // #39.37: was "administration"
+    ["/manual", "helpLearning", "/manual"], // #39.37
   ])("%s → section %s, item %s", (route, section, item) => {
     expect(getActiveSectionKey(route, NAV_SECTIONS)).toBe(section);
     expect(getActiveHref(route, NAV_SECTIONS)).toBe(item);
@@ -178,7 +183,8 @@ describe("an account without an app_users row sees what a `user` saw before #38.
     const seen = sectionsFor(NAV_SECTIONS, false);
     const hrefs = seen.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter(Boolean);
     // #39.11: + „Arbori de moștenire", view only, the domain's persons as „Interacțiuni" is.
-    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree"]);
+    // #39.37: + „Manual de utilizare".
+    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree", "/manual"]);
   });
 
   it("the sidebar renders `sectionsFor(NAV_SECTIONS, fullAccess)`", () => {
@@ -250,7 +256,12 @@ describe("breadcrumbs name the section, not „Admin”", () => {
     expect(trail("/admin/groups")).toEqual(["Acasă", "Administrare (text)", "Grupuri"]);
     expect(trail("/admin/stamps")).toEqual(["Acasă", "Administrare (text)", "Ștampile"]);
     expect(trail("/admin/tags")).toEqual(["Acasă", "Administrare (text)", "Etichete"]);
-    expect(trail("/admin/help-content")).toEqual(["Acasă", "Administrare (text)", "Informații de ajutor"]);
+    // #39.37: was ["Acasă", "Administrare (text)", "Informații de ajutor"].
+    expect(trail("/admin/help-content")).toEqual(["Acasă", "Ajutor și învățare (text)", "Informații de ajutor"]);
+  });
+
+  it("„Manual de utilizare” under „Ajutor și învățare”, as text (#39.37)", () => {
+    expect(trail("/manual")).toEqual(["Acasă", "Ajutor și învățare (text)", "Manual de utilizare"]);
   });
 
   it("„Interacțiuni” under „Rapoarte”, as text, though its address is not under /admin/ (#39.02)", () => {

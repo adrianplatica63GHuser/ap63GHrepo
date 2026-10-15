@@ -1,19 +1,16 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
-  Bot,
   BookOpen,
   BookOpenText,
   Building2,
   Calculator,
-  ClipboardCheck,
   Database,
   FileText,
   FileUp,
   FolderInput,
   Folders,
   GitCompareArrows,
-  GraduationCap,
   HelpCircle,
   LayoutDashboard,
   LifeBuoy,
@@ -26,7 +23,6 @@ import {
   ShieldCheck,
   Stamp,
   Tags,
-  Trophy,
   Upload,
   User,
   UserCog,
@@ -62,7 +58,10 @@ export type NavSection = {
 };
 
 /**
- * THE LEFT NAVIGATION IN NINE SECTIONS — SEVEN OF THEM DRAWN.  (Slice #38.20, #38.42, #39.02)
+ * THE LEFT NAVIGATION IN EIGHT SECTIONS, ALL DRAWN.  (Slice #38.20, #38.42, #39.02, #39.37)
+ *
+ * Slice #39.37: „Ajutor și învățare" replaces the two placeholders „Studiu" and „Ajutor" at the bottom,
+ * holding „Informații de ajutor" (from „Administrare", its URL unchanged) and „Manual de utilizare".
  *
  * Slice #39.02: „Rapoarte" is drawn again, between „Import" and „Administrare",
  * holding „Interacțiuni" and „Căutare globală" (and, from #39.11, „Arbori de
@@ -169,8 +168,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "groups", href: "/admin/groups", icon: Users },
       { key: "stamps", href: "/admin/stamps", icon: Stamp },
       { key: "tags", href: "/admin/tags", icon: Tags },
-      // It edits the texts the „?" buttons show (#38.20's Ask first 1).
-      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
+      // Slice #39.37: „Informații de ajutor" moved to „Ajutor și învățare", its URL unchanged.
     ],
   },
   {
@@ -180,20 +178,15 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [],
   },
   {
-    key: "study",
-    icon: GraduationCap,
-    items: [
-      { key: "courses", icon: BookOpenText },
-      { key: "quizzes", icon: ClipboardCheck },
-      { key: "score", icon: Trophy },
-    ],
-  },
-  {
-    key: "helpSection",
+    // Slice #39.37: „Ajutor și învățare" — the help, the manual and (#39.42) the skills map with its quizzes,
+    // in one section at the bottom, where the two placeholders „Studiu" and „Ajutor" stood (Ask first 1).
+    // „Harta competențelor" joins in #39.42 and „Întreabă" in #39.45; an item with no screen draws nothing.
+    key: "helpLearning",
     icon: LifeBuoy,
     items: [
-      { key: "userManual", icon: BookOpen },
-      { key: "askAi", icon: Bot },
+      // It edits the texts the „?" buttons show (#38.20's Ask first 1). Moved here from „Administrare".
+      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
+      { key: "userManual", href: "/manual", icon: BookOpenText },
     ],
   },
 ];

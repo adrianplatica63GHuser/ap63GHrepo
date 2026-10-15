@@ -135,6 +135,9 @@ export function resolveHelpScreenKey(pathname: string): HelpScreenKey | null {
     }
   }
 
+  // ── Manual de utilizare (Slice #39.37) — one screen, the section in ?s= ──
+  if (head === "manual") return second ? null : "manual";
+
   // ── Interacțiuni (Slice #38.84) — one screen ────────────────────────────
   if (head === "interactions") return second ? null : "interactions";
 
