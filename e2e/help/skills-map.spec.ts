@@ -1,6 +1,8 @@
 /**
  * Case:   TC-SKILL-01 — „Harta competențelor”: casetele, stările, traseele, lista și chestionarul unei competențe deschise
  * Source: docs/testing/cases/TC-SKILL-01.md, „Last green" 2026-10-15
+ * Case:   TC-SKILL-03 — Un traseu pe „Harta competențelor”, în „Progresul meu” și în „Prezentare”
+ * Source: docs/testing/cases/TC-SKILL-03.md, „Last green" 2026-10-15
  *
  * A translation of the case file, step for step, on an account with no attempts — what a person sees the
  * first time: every Basic skill Open, every other skill Closed.
@@ -11,12 +13,17 @@
  * deleted in a `finally`. It skips, and says why, when the account holds attempts of its own: real progress is
  * never drawn over. With GA40_MANUAL_FIGURES set (e2e/help/manual.spec.ts named in the same run) it also shoots
  * the manual's figure of the map, once per language (#39.46).
+ *
+ * TC-SKILL-03 (#39.50) runs on ANY account: a Path and the two views depend on no attempt, and it writes nothing.
+ * The Path's skills come from src/lib/skills/paths.ts, as the screen's do. With GA40_MANUAL_FIGURES set it shoots
+ * the manual's figure of the Path „Proprietăți” in „Prezentare”, once per language.
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import { test, expect, type Page } from "../helpers/test";
 import { openSection, sidebar } from "../helpers/sidebar";
 import { SKILLS } from "../../src/lib/skills/catalogue";
+import { PATH_SKILLS } from "../../src/lib/skills/paths";
 
 const FIGURES = "playwright-report/manual-figures";
 
@@ -173,5 +180,125 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
     } finally {
       setProgress("--clear", "--apply");
     }
+  });
+  test("TC-SKILL-03 — un traseu, în „Progresul meu” și în „Prezentare”", async ({ page }) => {
+    const arrow = (from: string, to: string) => page.locator(`[data-arrow="${key(from)}>${key(to)}"]`);
+    const frame = page.locator("[data-skills-frame]").filter({ visible: true });
+    const inProperties = PATH_SKILLS.properties;
+
+    // Step 1 — the map opens in „Progresul meu”, with the four states' legend.
+    await openMap(page);
+    await expect(page.locator('[data-map-view="progress"]').filter({ visible: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-map-view="overview"]').filter({ visible: true })).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator("[data-legend]").filter({ visible: true })).toHaveCount(4);
+
+    // Step 2 — the Path „Proprietăți”: its note, and every box in it — other Paths' skills included — at full strength.
+    await page.locator('[data-path-chip="properties"]').filter({ visible: true }).click();
+    await expect(page.locator('[data-path-note="properties"]')).toHaveText(
+      `Traseul Proprietăți și hartă: ${inProperties.size} competențe — competențele lui de expert, tot ce le trebuie înainte, din orice traseu, și celelalte competențe ale lui.`,
+    );
+    for (const n of ["4.2", "1.2", "1.6", "1.12"]) expect(inProperties.has(key(n))).toBe(true);
+    expect(SKILLS.filter((s) => inProperties.has(s.key) && s.path !== "properties").length).toBeGreaterThan(0);
+    for (const s of SKILLS) await expect(box(page, s.key)).toHaveCSS("opacity", inProperties.has(s.key) ? "1" : "0.25");
+
+    // Step 3 — an arrow inside the Path is navy, head and all; one leaving it is grey, its head grey too.
+    await expect(arrow("3.3", "4.2")).toHaveAttribute("data-arrow-head", "navy");
+    await expect(arrow("3.3", "4.2")).toHaveAttribute("stroke", "#1e3a6e");
+    await expect(arrow("3.7", "4.3")).toHaveAttribute("data-arrow-head", "grey");
+    await expect(arrow("3.7", "4.3")).toHaveAttribute("stroke", "#b8bec7");
+    // Every arrow's head is its line's colour.
+    for (const l of await page.locator("[data-arrow]").all()) {
+      const head = await l.getAttribute("data-arrow-head");
+      expect(await l.getAttribute("stroke")).toBe(head === "navy" ? "#1e3a6e" : "#b8bec7");
+      expect(await l.getAttribute("marker-end")).toBe(`url(#skills-arrow-${head})`);
+    }
+
+    // Step 4 — hovering 4.3, outside the Path, brings its own arrows forward in navy; leaving greys them again.
+    await box(page, key("4.3")).hover();
+    await expect(arrow("3.7", "4.3")).toHaveAttribute("data-arrow-head", "navy");
+    await expect(arrow("3.7", "4.3")).toHaveAttribute("opacity", "1");
+    await page.mouse.move(5, 5);
+    await expect(arrow("3.7", "4.3")).toHaveAttribute("data-arrow-head", "grey");
+
+    // Step 5 — „Prezentare”: every box Open-faced, no grey, no dotted frame, no badge; the levels' legend; the Path kept.
+    await page.locator('[data-map-view="overview"]').filter({ visible: true }).click();
+    await expect(page.locator('[data-map-view="overview"]').filter({ visible: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(frame.locator('[data-shown]:not([data-shown="open"])')).toHaveCount(0);
+    await expect(frame.locator("[data-skill]")).toHaveCount(SKILLS.length);
+    await expect(frame.locator('[data-frame^="dotted"]')).toHaveCount(0);
+    await expect(frame.locator("[data-mastery-badge]")).toHaveCount(0);
+    await expect(page.locator("[data-path-chip] [data-mastery-badge]")).toHaveCount(0);
+    for (const l of ["De bază", "Intermediar", "Avansat", "Expert"]) await expect(page.locator("[data-legend-level]").getByText(l, { exact: true })).toBeVisible();
+    await expect(page.locator("[data-overview-note]")).toHaveText(
+      "„Prezentare” arată fiecare casetă în culoarea nivelului ei, deschisă, fără stări și fără bife. „Progresul meu” arată unde sunteți.",
+    );
+    await expect(box(page, key("1.1"))).toHaveCSS("opacity", "0.25");
+    await expect(box(page, key("4.2"))).toHaveCSS("opacity", "1");
+
+    // Step 6 — a box opens its panel — no quiz, no state; the skill and its manual sections.
+    const s18 = SKILLS.find((s) => s.number === "1.8")!;
+    await box(page, s18.key).click();
+    const panel = page.locator(`[data-skill-panel="${s18.key}"]`);
+    await expect(panel).toBeVisible();
+    await expect(page).toHaveURL(/\/skills-map$/);
+    await expect(panel).toContainText(s18.description.ro);
+    await expect(panel).toContainText("În manual:");
+    for (const st of ["Deschisă", "Stăpânită", "Închisă", "Depășită"]) await expect(panel).not.toContainText(st);
+    await panel.getByRole("button", { name: "Închide" }).click();
+    await expect(panel).toBeHidden();
+
+    // Step 7 — „Listă” follows the Path and the view: the Path's skills, no „Starea”, no links.
+    await page.getByRole("button", { name: "Listă" }).click();
+    await expect(page.locator("[data-skill-row]")).toHaveCount(inProperties.size);
+    await expect(page.locator("[data-skills-list] th").filter({ hasText: "Starea" })).toHaveCount(0);
+    await expect(page.locator("[data-skill-row] a")).toHaveCount(0);
+    await page.getByRole("button", { name: "Diagramă" }).click();
+    await expect(page.locator('[data-map-view="overview"]').filter({ visible: true })).toHaveAttribute("aria-pressed", "true");
+
+    if (process.env.GA40_MANUAL_FIGURES) {
+      // The manual's figure 13.2: the Path „Proprietăți” in „Prezentare”, once per language. Nothing here is a
+      // record of the archive, and the view shows no progress of anyone's; „Recente” is blurred as on every figure.
+      await page.setViewportSize({ width: 1366, height: 900 });
+      for (const [locale, recentTitle] of [["ro-RO", "Recente"], ["en-GB", "Recently viewed"]] as const) {
+        const dir = `${FIGURES}/${locale}`;
+        fs.mkdirSync(dir, { recursive: true });
+        if (locale !== "ro-RO") {
+          await page.context().addCookies([{ name: "NEXT_LOCALE", value: locale, domain: "localhost", path: "/" }]);
+          await page.goto("/skills-map");
+          await expect(frame).toBeVisible({ timeout: 30_000 });
+          await page.locator('[data-path-chip="properties"]').filter({ visible: true }).click();
+          await page.locator('[data-map-view="overview"]').filter({ visible: true }).click();
+          await expect(page.locator('[data-path-note="properties"]')).toBeVisible();
+        }
+        await page.waitForTimeout(800);
+        await page.evaluate((t) => {
+          const recent = [...document.querySelectorAll<HTMLElement>("aside div.border-t")].find((d) => (d.textContent ?? "").includes(t));
+          if (recent) recent.style.filter = "blur(7px)";
+        }, recentTitle);
+        await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+        await frame.evaluate((el) => {
+          for (let n: Element | null = el; n; n = n.parentElement) n.scrollTop = 0;
+          window.scrollTo(0, 0);
+        });
+        await page.mouse.move(5, 5);
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: `${dir}/skills-map-path.png` });
+        expect(fs.existsSync(`${dir}/skills-map-path.png`)).toBe(true);
+      }
+      await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", domain: "localhost", path: "/" }]);
+      await page.goto("/skills-map");
+      await expect(frame).toBeVisible({ timeout: 30_000 });
+    }
+
+    // Step 8 — „Progresul meu” draws the account's own states again; „Toate traseele” brings every box back.
+    await page.locator('[data-map-view="progress"]').filter({ visible: true }).click();
+    for (const s of SKILLS) {
+      const b = box(page, s.key);
+      await expect(b).toHaveAttribute("data-shown", (await b.getAttribute("data-state"))!);
+    }
+    await expect(page.locator("[data-legend]").filter({ visible: true })).toHaveCount(4);
+    await page.getByRole("button", { name: "Toate traseele" }).click();
+    await expect(box(page, key("1.1"))).toHaveCSS("opacity", "1");
+    await expect(box(page, key("4.1"))).toHaveCSS("opacity", "1");
   });
 });

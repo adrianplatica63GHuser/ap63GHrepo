@@ -92,7 +92,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01", "TC-NAV-01", "TC-SET-02", "TC-SET-03", "TC-SET-04"],
   "/reports":                              ["TC-NAV-01"],
   "/manual":                               ["TC-HELP-02", "TC-NAV-01"], // Slice #39.37
-  "/skills-map":                           ["TC-SKILL-01", "TC-NAV-01"], // Slice #39.42
+  "/skills-map":                           ["TC-SKILL-01", "TC-NAV-01", "TC-SKILL-03"], // Slices #39.42, #39.50
   "/skills-map/[skill]":                   ["TC-SKILL-01", "TC-SKILL-02"], // Slices #39.42, #39.43
   "/ask":                                  ["TC-HELP-03", "TC-NAV-01"], // Slice #39.45
   "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07", "TC-DOC-15", "TC-AUTH-02", "TC-VL-02", "TC-VL-03", "TC-VL-04", "TC-VL-05", "TC-VL-06", "TC-VL-07", "TC-VL-08", "TC-VL-09", "TC-VL-10"],
