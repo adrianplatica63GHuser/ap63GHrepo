@@ -65,6 +65,7 @@ const ITEMS: Record<string, [string, string][]> = {
     ["Informații de ajutor", "/admin/help-content"],
     ["Manual de utilizare", "/manual"],
     ["Harta competențelor", "/skills-map"], // #39.42
+    ["Întreabă", "/ask"], // #39.45
   ],
 };
 
@@ -89,6 +90,7 @@ const LINKS: [string, string | null, string][] = [
   ["Informații de ajutor", "Ajutor și învățare", "Informații de ajutor"], // #39.37: was under „Administrare"
   ["Manual de utilizare", "Ajutor și învățare", "Manual de utilizare"], // #39.37
   ["Harta competențelor", "Ajutor și învățare", "Harta competențelor"], // #39.42
+  ["Întreabă", "Ajutor și învățare", "Întreabă"], // #39.45
   ["Setări", null, "Setări"],
   // #39.11: last — its screen is the whole page, over the sidebar, and step 4 leaves it by its address.
   ["Arbori de moștenire", "Rapoarte", "Arbori de moștenire"],
@@ -228,6 +230,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       ["Ajutor și învățare", "Informații de ajutor", ["Acasă", "Ajutor și învățare", "Informații de ajutor"]],
       ["Ajutor și învățare", "Manual de utilizare", ["Acasă", "Ajutor și învățare", "Manual de utilizare"]],
       ["Ajutor și învățare", "Harta competențelor", ["Acasă", "Ajutor și învățare", "Harta competențelor"]], // #39.42
+      ["Ajutor și învățare", "Întreabă", ["Acasă", "Ajutor și învățare", "Întreabă"]], // #39.45
     ] as const) {
       await openSection(page, section);
       const link = nav.getByRole("link", { name: label, exact: true });

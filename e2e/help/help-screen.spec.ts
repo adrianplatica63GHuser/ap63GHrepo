@@ -47,6 +47,8 @@ const HELP_TO_WRITE = [
   // Slice #39.42: two new screens, each with a proposal written against no text (#39.40).
   "Ajutor și învățare — Harta competențelor",
   "Ajutor și învățare — Chestionarul unei competențe",
+  // Slice #39.45: „Întreabă”, with a proposal written against no text.
+  "Ajutor și învățare — Întreabă",
 ] as const;
 
 test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în spatele „?”", () => {
