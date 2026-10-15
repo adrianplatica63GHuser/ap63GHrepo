@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-14, FU-334 filed — 334 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
+As of 2026-10-14, FU-336 filed — 336 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 76 | 77 | 16 | 188 |
+| open | 19 | 78 | 77 | 16 | 190 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 57 | 31 | 3 | 128 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 140 | 113 | 21 | 334 |
+| **total** | 60 | 142 | 113 | 21 | 336 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -418,3 +418,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-332 | 2026-10-14 #39.38 Handover.39.38.md | debt | Tests & e2e | Many case files still name tiles and tabs as they were: „Corelate” (now „Legături”), „Clasificări” / „Conexiuni” (now „Clasificare” / „Etichete și grupuri”), „Date cadastrale” (now „Identificare cadastrală”), a firm's „Identitate” (now „Date de înregistrare”), the document's old DETALII · ASOCIERI · PERSOANE tabs; their specs are green, so the drift is in titles, notes and steps a person reads — and a manual or a quiz written from them repeats it. | TC-PROP-07, TC-PERS-05, TC-DOC-10 titles; TC-PROP-06, TC-PROP-12; TC-PERS-07 notes; TC-DOC-01 step 6; TC-AI-01; messages/ro-RO.json *.tiles.* | dev | S | open | Sweep the case files against messages/ro-RO.json, title and steps, in one slice; the specs need no change where they already match the screen. | 2026-10-14 |
 | FU-333 | 2026-10-14 #39.38 Handover.39.38.md | defect | Tooling & CI | The big dev seed's page files do not open: a seed document's „Pagini” draws the missing-file placeholder on Adrian's server and the runner's alike, so no screen or figure can show a seed document's page. | /documents/3a8616eb-… (D0001) on localhost:3000, 2026-10-14; scripts/seed-dev-data-big/documents.ts | dev | S | open | Unverified: whether the seed writes its dummy files where the storage layer reads them. #39.38's figure 6.1 uses a TC-E2E- contract with a synthetic page instead. | 2026-10-14 |
 | FU-334 | 2026-10-14 #39.38 TC-TILES-03 step 7 | copy/i18n | Properties | The property form's validation message under „Suprafață oficială (m²)” is English on the Romanian screen: „Surface area must be a positive number”, as FU-261 is for the persons' forms. | docs/testing/cases/TC-TILES-03.md step 7 | user | XS | open | Move it to the message files as FU-261 proposes for the persons. | 2026-10-14 |
+| FU-335 | 2026-10-14 #39.39 the manual's chapters 8–12 | copy/i18n | Several | Labels in the message files that name screens and tiles by their old names: `docTypeEngine.saved.toImport` reads „Mergi la Import în sistem” (the item is „Dosare de proprietăți”, the heading „Import”); `help.admin.hints.map-selected-tab` calls the tab „Afișează selectate” (it reads „Proprietăți Selectate”); `help.admin.screens.properties-map` still reads „Proprietăți — Hartă”; `calculationHistory.detail` keeps labels of the old five-section file („Orientare”, „Lungime (latura lungă)”, „Colțul drumului / prop. 1”); `settings.timeFrames.examples.metadata_review_warning` says «Meta info»; `interactions.screen.selectHint` and `log.sticky` look unused since the module screen lost its form. | messages/ro-RO.json, the keys named | user | S | open | One copy slice: rename each to the screen's current name, delete the unused keys, and add them to their copy suites' lists. | 2026-10-14 |
+| FU-336 | 2026-10-14 #39.39 the manual's chapter 12 | copy/i18n | Users & access | `usersAccess.feedback.*NoEmail` tells a business user to „verificați RESEND_API_KEY” when an approval's e-mail could not be sent — an environment key only a developer can check. | messages/ro-RO.json usersAccess.feedback | user | XS | open | Say the account was created and the e-mail was not sent, and that the administrator should check the e-mail settings; keep the key's name in the server log. | 2026-10-14 |
