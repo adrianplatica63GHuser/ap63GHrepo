@@ -16,6 +16,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { BookOpenText, Search, Sparkles } from "lucide-react";
 import { IconButton, LeadingIcon } from "@/lib/ui/icon-button";
+import { rem, SCALE } from "@/lib/ui/field-widths";
 import { answerRuns, QUESTION_MAX } from "@/lib/manual/ask";
 import type { Highlighted } from "@/lib/manual/search";
 
@@ -90,7 +91,8 @@ export function AskBox({ compact = false }: { compact?: boolean }) {
           maxLength={QUESTION_MAX}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder={t("placeholder")}
-          className="min-w-0 flex-1 rounded-md border border-card-rim bg-white px-3 py-2 text-sm text-ink dark:bg-zinc-900 dark:text-zinc-100"
+          style={{ width: rem(SCALE.XXL) }}
+          className="rounded-md border border-card-rim bg-white px-3 py-2 text-sm text-ink dark:bg-zinc-900 dark:text-zinc-100"
           data-ask-input
         />
         <IconButton icon={Search} label={t("search")} showLabel variant="primary" type="submit" busy={searching} busyLabel={t("searching")} disabled={!question.trim() || searching} />
