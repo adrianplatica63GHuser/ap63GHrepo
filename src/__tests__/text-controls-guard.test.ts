@@ -185,9 +185,6 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{t(\"deleteConfirm.no\")}"],
     ["A110", "{t(\"deleteConfirm.yes\")}"],
   ],
-  "src/app/documents/_components/succession-parties-panel.tsx": [
-    ["A113", "{item.displayName}"],
-  ],
   // Slice #38.84 — „Interacțiuni": the period's trigger names its range; a person, a document and a count are data.
   "src/app/interactions/_components/filter-controls.tsx": [
     ["A113", "<span className=\"min-w-0 flex-1 truncate text-left\">{p.displayName"], // a person found, by name

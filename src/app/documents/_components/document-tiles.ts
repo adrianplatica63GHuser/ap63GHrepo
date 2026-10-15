@@ -24,7 +24,7 @@
  *
  * Nothing stored shows what Detalii showed: the general data, the first
  * notebook tab (or the type's own fields), the page image, and — on a
- * Certificat de Moștenitor — the parties.
+ * document with „Părți" — the parties.
  *
  * PURE — no React. Imported by the page and by tests alike.
  */
@@ -36,8 +36,6 @@ export interface DocumentLayout {
   typeKey: string | null;
   /** `templateTabsOf(fields)` — `[]` for a type with no notebook. */
   tabs: readonly string[];
-  /** A Certificat de Moștenitor: the parties panel is offered as a tile. */
-  succession: boolean;
   /**
    * Slice #38.32: the type has fields of its own, so „Detalii act" (or its
    * notebook tiles) has something to hold. Until #38.32 the fields tile always
@@ -52,7 +50,9 @@ export interface DocumentLayout {
   /**
    * Slice #38.33: a saved contract de vânzare — „Părți", its sellers and buyers
    * with their shares (`@/lib/documents/sale-parties`), is offered as a tile.
-   * Absent means false.
+   * Since #39.48 the act adițional's and the certificat de moștenitor's too: one
+   * tile, one rule; the certificate's own „succession" tile is gone. Absent
+   * means false.
    */
   parties?: boolean;
   /**
@@ -143,7 +143,7 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
   // „Corelate", „Clasificări" and „Conexiuni", then „Pagini" at the right.
   // Slice #38.33: a contract de vânzare's „Părți" stands after its type tiles, as a certificate's does.
   const parties = layout.parties ? [PARTIES_TILE] : [];
-  const record = ["general", ...typeTiles, ...parties, ...(layout.succession ? ["succession"] : [])];
+  const record = ["general", ...typeTiles, ...parties];
   const fixed = layout.pages ? ["pages"] : [];
   const all = [...record, ...DOCUMENT_LIST_TILES, ...fixed];
   return {
@@ -154,7 +154,6 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       ...(layout.pages ? ["pages"] : []),
       ...typeTiles.slice(0, 1),
       ...parties,
-      ...(layout.succession ? ["succession"] : []),
     ],
     // Hidden, never unmounted: the form's panels, and the page image and the
     // parties panel, which hold state of their own (an upload, a party row).
@@ -162,7 +161,6 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       "general",
       ...(layout.pages ? ["pages"] : []),
       ...typeTiles,
-      ...(layout.succession ? ["succession"] : []),
     ],
     // Slice #37.56: the page image stands at the right of the row, top-aligned.
     placement: { right: fixed },
@@ -179,6 +177,8 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
       metadata: ["classification", "connections"],
       // …and one that stored any of the three lists, with „Corelate" (#37.65).
       ...RELATED_WAS,
+      // A certificate's „Părți" was its own tile, „succession", until #39.48.
+      succession: PARTIES_TILE,
     },
   };
 }

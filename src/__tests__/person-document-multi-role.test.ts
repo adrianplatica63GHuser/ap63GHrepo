@@ -219,7 +219,6 @@ describe("every delete names the ROW, not the (person, document) pair", () => {
   it.each([
     "app/documents/_components/document-persons-tab.tsx",
     "app/documents/_components/person-document-tab.tsx",
-    "app/documents/_components/succession-parties-panel.tsx",
   ])("%s keys its rows on linkId and never on the person", (file) => {
     const src = stripComments(read(...file.split("/")));
     // #37.65: the Document's persons are „Corelate"'s rows, keyed `person:<linkId>`; #37.67: a person's

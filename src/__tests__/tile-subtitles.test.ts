@@ -31,7 +31,7 @@ const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
 const UNTITLED: Readonly<Record<string, readonly string[]>> = { property: ["map", "streetView"] };
 
 /** A document with every tile a no-notebook type can have: the fields tile, „Părți", „Pagini". */
-const DOC_ALL = documentTileRegistry({ typeKey: "X", tabs: [], succession: true, pages: true, parties: true }).all;
+const DOC_ALL = documentTileRegistry({ typeKey: "X", tabs: [], pages: true, parties: true }).all;
 
 const SCREENS = [
   ["property", PROP_TILE_REGISTRY.all, "src/app/properties/_components"],
@@ -61,7 +61,7 @@ describe("every registered tile on the four screens has a subtitle, in both lang
   }
 
   it("the notebook tab tiles are the only document tiles left out — they are the type's own words", () => {
-    const withTabs = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe"], succession: false, pages: true }).all;
+    const withTabs = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe"], pages: true }).all;
     expect(withTabs.filter((k) => !DOC_ALL.includes(k))).toEqual(["tab:Preț și taxe"]);
   });
 });
@@ -122,7 +122,6 @@ describe("each screen draws the line", () => {
     expect(read("src", "components", "tiles", "list-tile.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} />");
     expect(read("src", "components", "tiles", "interactions-tile.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} />");
     expect(read("src", "components", "address", "address-block.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} />");
-    expect(read("src", "app", "documents", "_components", "succession-parties-panel.tsx")).toContain('<TileTitle title={t("sectionTitle")} subtitle={subtitle} />');
     expect(read("src", "app", "documents", "_components", "pages-panel.tsx")).toContain("<TileSubtitle text={subtitle} />");
   });
 });

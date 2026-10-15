@@ -659,7 +659,6 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     // #38.33: a CVC's „Părți" is a list tile the size of „Legături".
     expect(page).toMatch(/<ListTile tile="parties"[^>]*units=\{LIST_UNITS\.document\.related\}/);
     expect(page).not.toMatch(/compactCellRem/);
-    expect(code(read("src", "app", "documents", "_components", "succession-parties-panel.tsx"))).toMatch(/style=\{PANEL_UNIT_STYLE\.document\.succession\}/);
   });
 });
 

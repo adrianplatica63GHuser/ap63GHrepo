@@ -117,7 +117,7 @@ describe("the template group „Actul modificat”", () => {
 
 describe("the tiles", () => {
   const reg = documentTileRegistry({
-    typeKey: "ACT_ADITIONAL", tabs: ["Actul modificat", "Ce modifică"], succession: false, pages: true, parties: true,
+    typeKey: "ACT_ADITIONAL", tabs: ["Actul modificat", "Ce modifică"], pages: true, parties: true,
   });
   const k = tabTileKey;
 

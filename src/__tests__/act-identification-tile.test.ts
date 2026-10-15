@@ -69,10 +69,10 @@ describe("the tile", () => {
 
 describe("a type with no fields of its own", () => {
   it("offers no empty „Detalii act” — the issuer, number and date were all it held", () => {
-    const cm = documentTileRegistry({ typeKey: "CERTIFICAT_MOSTENITOR", tabs: [], succession: true, pages: true, ownFields: false });
+    const cm = documentTileRegistry({ typeKey: "CERTIFICAT_MOSTENITOR", tabs: [], pages: true, ownFields: false, parties: true });
     expect(cm.all).not.toContain(FIELDS_TILE);
-    expect(cm.defaults).toEqual(["general", "pages", "succession"]);
-    const pad = documentTileRegistry({ typeKey: "PLAN_AMPLASAMENT_DELIMITARE", tabs: [], succession: false, pages: true, ownFields: true });
+    expect(cm.defaults).toEqual(["general", "pages", "parties"]); // #39.48: „Părți” as on the sale contract
+    const pad = documentTileRegistry({ typeKey: "PLAN_AMPLASAMENT_DELIMITARE", tabs: [], pages: true, ownFields: true });
     expect(pad.defaults).toEqual(["general", "pages", FIELDS_TILE]);
     expect(FORM).toContain("ownFields: typeHasForm");
     expect(FORM).toContain("const typeHasForm = documentTypeHasForm(selectedType?.templateFields);");

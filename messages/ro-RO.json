@@ -1752,7 +1752,6 @@
       "general": "Identificarea actului",
       "pages": "Pagini",
       "fields": "Detalii act",
-      "succession": "Părți",
       "persons": "Persoane",
       "properties": "Proprietăți",
       "associations": "Acte corelate",
@@ -1764,12 +1763,11 @@
     "tileSubtitles": {
       "general": "Tip, emitent, număr, dată",
       "fields": "Câmpurile proprii tipului de act",
-      "succession": "Defunctul și moștenitorii",
       "pages": "Imaginile paginilor actului",
       "related": "Persoane, proprietăți și acte legate de acest act",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
-      "parties": "Vânzătorii și cumpărătorii, cu cotele lor"
+      "parties": "Părțile actului, cu rolul și cota lor"
     },
     "tabs": {
       "details": "Detalii",
@@ -1916,18 +1914,6 @@
       "referenceGone": "Lista de înscrisuri s-a schimbat între timp. Închideți și redeschideți această fereastră.",
       "selfReference": "Un document nu poate fi legat de el însuși.",
       "saveError": "Operația a eșuat. Încercați din nou."
-    },
-    "successionParties": {
-      "sectionTitle": "Părți",
-      "addButton": "Adaugă parte",
-      "empty": "Nicio parte adăugată",
-      "loading": "Se încarcă…",
-      "error": "Eroare la încărcarea părților",
-      "colName": "Nume",
-      "colRole": "Rol",
-      "remove": "Elimină",
-      "removing": "Se elimină…",
-      "removeError": "Eliminarea a eșuat"
     },
     "associateParty": {
       "title": "Adaugă parte la certificat",
@@ -2101,7 +2087,8 @@
       "tablistLabel": "Secțiunile formularului"
     },
     "parties": {
-      "empty": "Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor."
+      "empty": "Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.",
+      "elsewhere": "{count, plural, =0 {Actul nu are încă părți; ele se adaugă în fișa <tile>„Părți”</tile>.} other {Părțile actului (#) sunt în fișa <tile>„Părți”</tile>.}}"
     },
     "amended": {
       "link": "Leagă actul modificat",

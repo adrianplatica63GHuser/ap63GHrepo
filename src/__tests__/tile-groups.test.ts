@@ -9,9 +9,9 @@ import { NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles
 import { JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
 import { documentTileRegistry, type DocumentLayout } from "@/app/documents/_components/document-tiles";
 
-const CVC: DocumentLayout = { typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe", "Cadastru și CF"], succession: false, pages: true };
-const MOSTENITOR: DocumentLayout = { typeKey: "CERTIFICAT_MOSTENITOR", tabs: [], succession: true, pages: true };
-const UNSAVED: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: false };
+const CVC: DocumentLayout = { typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe", "Cadastru și CF"], pages: true };
+const MOSTENITOR: DocumentLayout = { typeKey: "CERTIFICAT_MOSTENITOR", tabs: [], pages: true, parties: true };
+const UNSAVED: DocumentLayout = { typeKey: null, tabs: [], pages: false };
 
 const REGISTRIES: [string, TileRegistry<string>][] = [
   ["property", PROP_TILE_REGISTRY as TileRegistry<string>],
@@ -57,7 +57,7 @@ describe("the groups as the header lists them", () => {
   });
   it("Document: Date generale, the type's own tiles, Părți; then the lists; Pagini at the right", () => {
     expect(documentTileRegistry(MOSTENITOR).groups).toEqual({
-      record: ["general", "fields", "succession"],
+      record: ["general", "fields", "parties"],
       related: ["related"],
       meta: ["classification", "connections"],
       family: [], // #39.12

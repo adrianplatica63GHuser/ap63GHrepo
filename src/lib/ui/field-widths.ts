@@ -728,13 +728,12 @@ export const PANEL_UNITS = {
   },
   //  general 3 — Tip document and Emitent at XXL, 24rem; fees 3 — the fees group's fields,
   //  3 units at least as before #38.32 (a wider group widens it: `packFieldRows`).
-  //  pages 4 — PAGES_PANEL_REM is exactly unitsRem(4) (rule 20). succession 3 — Nume,
-  //  Calitate and „Elimină".
+  //  pages 4 — PAGES_PANEL_REM is exactly unitsRem(4) (rule 20). (succession 3 went with the
+  //  certificate's own „Părți" panel in #39.48.)
   document: {
     ...panelUnitsOf(SCREEN_ROWS.document, DOCUMENT),
     fees: 3,
     pages: 4,
-    succession: 3,
   },
 } as const;
 

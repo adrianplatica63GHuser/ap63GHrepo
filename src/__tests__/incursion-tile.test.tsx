@@ -277,7 +277,7 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
   });
 
   it("each tile's surface is its registry group's on its own screen — the fixed group's purple, for all three", () => {
-    const saved = documentTileRegistry({ typeKey: null, tabs: [], succession: false, pages: true });
+    const saved = documentTileRegistry({ typeKey: null, tabs: [], pages: true });
     for (const group of [
       tileGroupOf(NP_TILE_REGISTRY, "interactions"),
       tileGroupOf(JP_TILE_REGISTRY, "interactions"),
@@ -363,7 +363,7 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
   });
 
   it("wears its screen's green: the registry's `related` group, RELATED_TILE_SURFACE, on all four", () => {
-    const saved = documentTileRegistry({ typeKey: null, tabs: [], succession: false, pages: true });
+    const saved = documentTileRegistry({ typeKey: null, tabs: [], pages: true });
     for (const group of [
       tileGroupOf(NP_TILE_REGISTRY, "related"),
       tileGroupOf(JP_TILE_REGISTRY, "related"),

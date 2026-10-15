@@ -78,7 +78,7 @@ import { PropertyRelatedTile } from "@/app/properties/_components/property-relat
 import { DocumentRelatedTile } from "@/app/documents/_components/document-related-tile";
 
 /** What an Incursiune shows of a document: a saved one, whose „Pagini" its screen offers. */
-const SAVED_DOCUMENT: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: true };
+const SAVED_DOCUMENT: DocumentLayout = { typeKey: null, tabs: [], pages: true };
 
 /**
  * Slice #38.75: each kind's tile wears its own screen's surface — the registry's group for that tile, never a

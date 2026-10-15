@@ -1752,7 +1752,6 @@
       "general": "Document identification",
       "pages": "Pages",
       "fields": "Document details",
-      "succession": "Parties",
       "persons": "Persons",
       "properties": "Properties",
       "associations": "Related documents",
@@ -1764,12 +1763,11 @@
     "tileSubtitles": {
       "general": "Type, issuer, number, date",
       "fields": "The fields specific to this document type",
-      "succession": "The deceased and the heirs",
       "pages": "Scans of the document's pages",
       "related": "People, properties and documents linked to this document",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
-      "parties": "The sellers and the buyers, with their shares"
+      "parties": "The document's parties, with their role and share"
     },
     "tabs": {
       "details": "Details",
@@ -1916,18 +1914,6 @@
       "referenceGone": "The list of instruments changed in the meantime. Close and reopen this dialog.",
       "selfReference": "A document cannot be linked to itself.",
       "saveError": "The operation failed. Please try again."
-    },
-    "successionParties": {
-      "sectionTitle": "Parties",
-      "addButton": "Add Party",
-      "empty": "No parties added yet",
-      "loading": "Loading…",
-      "error": "Failed to load parties",
-      "colName": "Name",
-      "colRole": "Role",
-      "remove": "Remove",
-      "removing": "Removing…",
-      "removeError": "Could not remove party"
     },
     "associateParty": {
       "title": "Add Party to Certificate",
@@ -2101,7 +2087,8 @@
       "tablistLabel": "Form sections"
     },
     "parties": {
-      "empty": "No party linked yet. Link the sellers and the buyers with their role and share."
+      "empty": "No party linked yet. Link the parties with their role and share.",
+      "elsewhere": "{count, plural, =0 {The document has no parties yet; they are added in the <tile>“Parties”</tile> tile.} other {The document's parties (#) are in the <tile>“Parties”</tile> tile.}}"
     },
     "amended": {
       "link": "Link the amended deed",

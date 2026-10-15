@@ -158,8 +158,8 @@ describe("„Corelate”", () => {
 });
 
 describe("„Corelate” in the registry", () => {
-  const CVC = { typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe"], succession: false, pages: true };
-  const PLAN = { typeKey: "PLAN_PARCELAR", tabs: [], succession: false, pages: true };
+  const CVC = { typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe"], pages: true };
+  const PLAN = { typeKey: "PLAN_PARCELAR", tabs: [], pages: true };
 
   it("lists related and not the three", () => {
     for (const layout of [CVC, PLAN]) {

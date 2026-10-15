@@ -118,6 +118,7 @@ export function RelatedTile({
   rows,
   loading,
   associate,
+  aboveRows,
   belowRows,
   extraButtons,
   underButtons,
@@ -133,6 +134,11 @@ export function RelatedTile({
   loading: boolean;
   /** The „Asociază …" buttons, in order. */
   associate: readonly RelatedAssociate[];
+  /**
+   * Slice #39.48: above the rows — on a document's „Legături", the line saying its
+   * parties are in „Părți". Not drawn read-only.
+   */
+  aboveRows?: ReactNode;
   /** Under the rows, above the buttons: totals, each list's messages. */
   belowRows?: ReactNode;
   /** After the buttons, in their row („Înscrisuri citate"). */
@@ -184,6 +190,7 @@ export function RelatedTile({
 
   return (
     <div className="flex flex-col gap-4">
+      {readOnly ? null : aboveRows}
       {/* Slice #39.25: read-only, beside a list, the sentence is one line with no padding of its own — as
           „Interacțiuni"'s is — so an empty tile is its row's preview's height (`rowTileStyle`), not 26 px taller. */}
       {loading ? (

@@ -16,7 +16,7 @@ const ROOT = join(__dirname, "..", "..");
 const read = (...p: string[]) => readFileSync(join(ROOT, ...p), "utf8");
 const META = read("src", "components", "entity-metadata-tab.tsx");
 const BOTH = ["classification", "connections"];
-const DOC_REG = documentTileRegistry({ typeKey: "ADEVERINTA", tabs: [], succession: false, pages: true });
+const DOC_REG = documentTileRegistry({ typeKey: "ADEVERINTA", tabs: [], pages: true });
 
 describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
   it("each registry lists both and no „metadata”", () => {

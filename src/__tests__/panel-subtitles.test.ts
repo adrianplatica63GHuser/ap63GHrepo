@@ -57,7 +57,6 @@ describe('„Cadastru și CF" (#37.90, split by #38.33)', () => {
     const reg = documentTileRegistry({
       typeKey: "CONTRACT_VANZARE",
       tabs: ["Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"],
-      succession: false,
       pages: true,
     });
     const stored = JSON.stringify([tabTileKey("Cadastru și carte funciară"), tabTileKey("Formalități")]);

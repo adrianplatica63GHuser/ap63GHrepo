@@ -85,7 +85,7 @@ type Props = {
 const NO_RIGHT: readonly string[] = [];
 
 /** Until the form has loaded the types, the row knows no type: general data and the page image. */
-const NO_TYPE_YET: DocumentLayout = { typeKey: null, tabs: [], succession: false, pages: true, ready: false };
+const NO_TYPE_YET: DocumentLayout = { typeKey: null, tabs: [], pages: true, ready: false };
 
 export function DocumentDetailTiles({
   documentId,
@@ -142,7 +142,6 @@ export function DocumentDetailTiles({
       general:      t("tiles.general"),
       pages:        t("tiles.pages"),
       [FIELDS_TILE]: t("tiles.fields"),
-      succession:   t("tiles.succession"),
       parties:      t("tiles.parties"),
       related:      t("tiles.related"),
       classification: t("tiles.classification"),
@@ -220,7 +219,7 @@ export function DocumentDetailTiles({
           {layout.parties && choice.isShown("parties") && (
             <div className="max-w-full" style={{ order: order("parties") }}>
               <ListTile tile="parties" title={labels.parties} subtitle={t("tileSubtitles.parties")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "parties"))}>
-                <DocumentPartiesTile documentId={documentId} label={labels.parties} />
+                <DocumentPartiesTile documentId={documentId} label={labels.parties} typeKey={layout.typeKey} />
               </ListTile>
             </div>
           )}

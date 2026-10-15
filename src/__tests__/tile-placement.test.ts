@@ -51,11 +51,11 @@ describe("the split", () => {
   });
 
   it("puts a Document's page image at the right, and only when the document has pages", () => {
-    const withPages = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe"], succession: false, pages: true });
+    const withPages = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: ["Preț și taxe"], pages: true });
     expect(withPages.placement?.right).toEqual(["pages"]);
     expect(splitTiles(withPages.defaults, withPages)).toEqual({ left: ["general", "tab:Preț și taxe"], right: ["pages"] });
     expect(splitTiles(["general"], withPages).right).toEqual([]);
-    const noPages = documentTileRegistry({ typeKey: null, tabs: [], succession: false, pages: false });
+    const noPages = documentTileRegistry({ typeKey: null, tabs: [], pages: false });
     expect(noPages.placement?.right).toEqual([]);
     expect(splitTiles(noPages.defaults, noPages).right).toEqual([]);
   });

@@ -11,6 +11,7 @@ import path from "path";
 import {
   DOC_TILE_OF_TAB,
   FIELDS_TILE,
+  PARTIES_TILE,
   documentTileRegistry,
   markedTiles,
   tabTileKey,
@@ -23,9 +24,9 @@ const read = (...p: string[]): string => fs.readFileSync(path.join(ROOT, ...p), 
 const code = (src: string): string => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
 const CVC_TABS = ["Instrument", "Cadastru", "Stare juridică", "Conformitate"];
-const CVC = { typeKey: "CONTRACT_VANZARE", tabs: CVC_TABS, succession: false, pages: true };
-const PLAN = { typeKey: "PLAN_PARCELAR", tabs: [] as string[], succession: false, pages: true };
-const MOSTENITOR = { typeKey: "CERTIFICAT_MOSTENITOR", tabs: [] as string[], succession: true, pages: true };
+const CVC = { typeKey: "CONTRACT_VANZARE", tabs: CVC_TABS, pages: true };
+const PLAN = { typeKey: "PLAN_PARCELAR", tabs: [] as string[], pages: true };
+const MOSTENITOR = { typeKey: "CERTIFICAT_MOSTENITOR", tabs: [] as string[], pages: true, parties: true };
 
 describe("HIGHLIGHTS ARE NOT LOST IN A HIDDEN TILE — the marker", () => {
   const all = documentTileRegistry(CVC).all;
@@ -69,10 +70,14 @@ describe("the registry is built from the type on screen", () => {
     expect(tileOfTabIndex([], 0)).toBe(FIELDS_TILE);
   });
 
-  it("the parties are a tile on a Certificat de Moștenitor only, shown by default as the panel was", () => {
-    expect(documentTileRegistry(MOSTENITOR).all).toContain("succession");
-    expect(documentTileRegistry(MOSTENITOR).defaults).toContain("succession");
-    expect(documentTileRegistry(CVC).all).not.toContain("succession");
+  // #39.48: a certificate's „Părți" is the same tile as the sale contract's, offered when the layout says so
+  // (`hasPartiesTile`), shown by default as its own panel was; a browser that stored the old „succession" opens it.
+  it("the parties are „Părți” on a Certificat de Moștenitor too, shown by default, and the old tile's tick carries over", () => {
+    expect(documentTileRegistry(MOSTENITOR).all).toContain(PARTIES_TILE);
+    expect(documentTileRegistry(MOSTENITOR).defaults).toContain(PARTIES_TILE);
+    expect(documentTileRegistry(MOSTENITOR).all).not.toContain("succession");
+    expect(documentTileRegistry(MOSTENITOR).renamed?.succession).toBe(PARTIES_TILE);
+    expect(documentTileRegistry(CVC).all).not.toContain(PARTIES_TILE); // a layout without `parties`: an unsaved one
   });
 
   it("no page image before the document is saved", () => {
@@ -86,7 +91,7 @@ describe("the registry is built from the type on screen", () => {
 
   it("the form's tiles are hidden, never unmounted; the lists may unmount", () => {
     const reg = documentTileRegistry(MOSTENITOR);
-    expect(reg.form).toEqual(["general", "pages", FIELDS_TILE, "succession"]);
+    expect(reg.form).toEqual(["general", "pages", FIELDS_TILE]); // #39.48: „Părți" is a list tile, as on the sale contract
     for (const list of ["related", "classification", "connections"]) expect(reg.form).not.toContain(list);
   });
 

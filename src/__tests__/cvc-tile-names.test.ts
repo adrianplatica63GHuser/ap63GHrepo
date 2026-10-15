@@ -118,7 +118,7 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
 
 describe("a remembered tile choice survives the rename (#37.54, #38.33)", () => {
   const TABS = ["Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"];
-  const reg = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: TABS, succession: false, pages: true, parties: true });
+  const reg = documentTileRegistry({ typeKey: "CONTRACT_VANZARE", tabs: TABS, pages: true, parties: true });
   const k = tabTileKey;
 
   it("maps each old tab key to its new tile or tiles, for the tabs the type has", () => {
@@ -148,7 +148,7 @@ describe("a remembered tile choice survives the rename (#37.54, #38.33)", () => 
   });
 
   it("maps nothing for a type that does not have the new tabs", () => {
-    const other = documentTileRegistry({ typeKey: "ACT_ADITIONAL", tabs: ["Act adițional"], succession: false, pages: true });
+    const other = documentTileRegistry({ typeKey: "ACT_ADITIONAL", tabs: ["Act adițional"], pages: true });
     // #37.63: META INFO's two halves, and #37.65: „Corelate" for the three lists — on every type.
     expect(other.renamed).toEqual({ metadata: ["classification", "connections"], persons: "related", properties: "related", associations: "related" });
   });

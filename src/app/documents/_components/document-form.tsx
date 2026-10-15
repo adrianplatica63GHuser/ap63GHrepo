@@ -69,7 +69,6 @@ import { SALE_OBJECT_FIELD_KEY } from "@/lib/documents/sale-object-description";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { NewPagesPanel } from "./new-pages-panel";
 import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
-import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { AmendedDeedLink, useParentDeed } from "./amended-deed-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
@@ -421,8 +420,6 @@ export function DocumentForm({
   );
   const selectedTypeKey = selectedType?.key;
   const cfg = getTypeConfig(selectedTypeKey);
-  // True only for CERTIFICAT_MOSTENITOR — drives the merged Succession Details section.
-  const isMostenitor = selectedTypeKey === "CERTIFICAT_MOSTENITOR";
 
   // Slice #21.03.Import: the selected type's template fields, if any (Phase 3
   // — reintroduces type-specific fields as data, not hardcoded sections).
@@ -1044,7 +1041,7 @@ export function DocumentForm({
   // nothing.
   const onTileLayout = tiles?.onLayout;
   const tileLayoutSig = JSON.stringify({
-    layout: { typeKey: selectedTypeKey ?? null, tabs, succession: isMostenitor, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm, parties: mode !== "create" && !!documentId && hasPartiesTile(selectedTypeKey) },
+    layout: { typeKey: selectedTypeKey ?? null, tabs, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm, parties: mode !== "create" && !!documentId && hasPartiesTile(selectedTypeKey) },
     highlighted: Object.entries(displayHighlights ?? {})
       .filter(([, colour]) => !!colour)
       .map(([field]) => tileOfPath(field)),
@@ -1747,25 +1744,6 @@ export function DocumentForm({
       </div>
     ) : (
       formElement
-    )}
-
-    {/* ── Succession Parties panel (CERTIFICAT_MOSTENITOR only) ──────────
-         Outside <form> + fieldset so TanStack Query state stays separate
-         from React Hook Form. Only rendered once the document is saved. ── */}
-    {mode !== "create" && documentId && isMostenitor && (
-      // Slice #37.20: as tiles, „Părți" is a tile, offered only here — hidden,
-      // not unmounted, like the panel it was.
-      <div
-        {...tileProps("succession")}
-        className={tileShown("succession") ? "" : "hidden"}
-        style={tiles ? { order: tiles.order("succession") } : undefined}
-      >
-        <SuccessionPartiesPanel
-          documentId={documentId}
-          mode={effectiveMode === "view" ? "view" : "edit"}
-          subtitle={t("tileSubtitles.succession")}
-        />
-      </div>
     )}
 
     {/* Slice #20.16: Theater overlay — full-screen pages viewer portal.
