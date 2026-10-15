@@ -11,7 +11,7 @@
  * scripts/skills/adopt-progress.ts does about it; the script only reads the counts and writes what it says.
  *
  *   - Nothing to move → nothing to do.
- *   - The box still runs without accounts (UAT_NO_AUTH=true) → refused: its progress already is the box's,
+ *   - The box still runs without accounts (isUatNoAuth()) → refused: its progress already is the box's,
  *     and moving it would hide it from the only person who uses the box.
  *   - The account named is not an account of this box → refused: the attempts would go to an id nobody signs in as.
  *   - The account already has attempts of its own → refused, unless --merge: two histories become one only
@@ -23,7 +23,7 @@
 export type AdoptionFacts = {
   /** Attempts stored under „uat-no-auth”. */
   boxAttempts: number;
-  /** True when the box runs without accounts (UAT_NO_AUTH=true). */
+  /** True when the box runs without accounts — isUatNoAuth(). */
   boxWithoutAccounts: boolean;
   /** The account to receive them: its user id and its own attempts, or null when no account matches. */
   target: { userId: string; attempts: number } | null;
@@ -56,7 +56,7 @@ export function describePlan(plan: AdoptionPlan, who: string, apply: boolean): s
     case "refuse":
       switch (plan.reason) {
         case "box-without-accounts":
-          return "This box runs without accounts (UAT_NO_AUTH=true): its progress already belongs to the box, and to the one person who uses it. Nothing was changed.";
+          return "This box runs without accounts: its progress already belongs to the box, and to the one person who uses it. Nothing was changed.";
         case "no-such-account":
           return `No account ${who} on this box. Nothing was changed.`;
         case "target-is-the-box":
