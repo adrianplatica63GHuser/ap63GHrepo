@@ -24,6 +24,7 @@ import path from "node:path";
 import { test, expect, type Page } from "../helpers/test";
 import { openSection, sidebar } from "../helpers/sidebar";
 import { readZipStore } from "../../src/lib/docx/zip-store";
+import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 
 const FIGURES = "playwright-report/manual-figures";
 const BLUR = "blur(7px)";
@@ -129,7 +130,13 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     expect(doc).toContain(">Cuprins<");
     expect(doc).toContain(">1  Introducere<");
     expect(doc).toContain(">13  Ajutor și învățare<");
-    expect(names.filter((n) => n.startsWith("word/media/"))).toHaveLength(6);
+    // One picture per figure of the Romanian manual, counted from its sources (#39.38 added chapters 3–7's).
+    const roDir = path.join(process.cwd(), "src", "lib", "manual", "content", "ro-RO");
+    const figureCount = fs
+      .readdirSync(roDir)
+      .reduce((n, f) => n + (fs.readFileSync(path.join(roDir, f), "utf8").match(/^!\[/gm)?.length ?? 0), 0);
+    expect(figureCount).toBeGreaterThan(6);
+    expect(names.filter((n) => n.startsWith("word/media/"))).toHaveLength(figureCount);
     expect(doc).not.toContain("Figura lipsește");
   });
 });
@@ -153,6 +160,15 @@ async function blurRecent(page: Page): Promise<void> {
 }
 
 /** Off every row (no hover in the picture), and without `next dev`'s own badge in the corner. */
+/** Any box holding a 13-digit number — a CNP, in an editable form or a read-only version alike — blurred. */
+async function blurCnp(page: Page): Promise<void> {
+  await page.evaluate((f) => {
+    for (const el of document.querySelectorAll<HTMLInputElement>("input")) {
+      if (/^\s*\d{13}\s*$/.test(el.value)) el.style.filter = f;
+    }
+  }, BLUR);
+}
+
 async function still(page: Page): Promise<void> {
   await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
   await page.mouse.move(5, 5);
@@ -164,7 +180,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     test.skip(!process.env.GA40_MANUAL_FIGURES, "Runs only when e2e/help/manual.spec.ts is named on the command line.");
     const objects = seed();
     test.skip(!objects, "The big dev seed is not in this database (.seed-dev-data-big/manifest.json is absent).");
-    test.setTimeout(240_000);
+    test.setTimeout(480_000);
     const naturals = objects!.filter((o) => o.kind === "NATURAL");
     const seedIds = new Set(objects!.map((o) => o.id));
     const person = naturals[0];
@@ -214,6 +230,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
         }
       }
     }, BLUR);
+    await blurCnp(page);
     await blurRecent(page);
     await still(page);
     await page.screenshot({ path: `${FIGURES}/record.png` });
@@ -252,7 +269,156 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
     await page.screenshot({ path: `${FIGURES}/help.png` });
 
-    for (const f of ["dashboard", "sidebar", "breadcrumb", "list", "record", "help"]) {
+    // ── Slice #39.38: chapters 3–7 ──────────────────────────────────────────────────────────────────────────
+    const judicial = objects!.filter((o) => o.kind === "JUDICIAL")[0];
+    const property = objects!.filter((o) => o.kind === "PROPERTY")[0];
+    const sale = objects!.find((o) => o.kind === "DOCUMENT" && o.label.startsWith("Contract de vânzare"))!;
+    const tile = (key: string) => page.locator(`[data-tile="${key}"]`).filter({ visible: true }).first();
+    const tick = async (label: string, on: boolean) => {
+      const box = page.getByRole("checkbox", { name: label, exact: true });
+      if ((await box.count()) && (await box.isChecked()) !== on) await box.setChecked(on);
+    };
+    /** Rows of a list or of „Rezultate” whose record is not the seed's are blurred. */
+    const blurNotSeed = async (prefix: string) =>
+      page.evaluate(
+        ([pre, ids, f]) => {
+          for (const tr of document.querySelectorAll<HTMLElement>("tbody tr")) {
+            const href = tr.querySelector(`a[href^='${pre as string}']`)?.getAttribute("href") ?? "";
+            if (!(ids as string[]).includes(href.split("/").pop() ?? "")) tr.style.filter = f as string;
+          }
+        },
+        [prefix, [...seedIds], BLUR] as const,
+      );
+
+    // Figura 3.1 — a new natural person's form.
+    await page.goto("/natural-persons/new");
+    // The new form is panels ([data-panel]), not yet the record's tiles.
+    await expect(page.locator("h1").filter({ visible: true }).first()).toHaveText("Persoană fizică nouă", { timeout: 60_000 });
+    await page.waitForTimeout(1000);
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/persons-new.png` });
+
+    // Figura 3.2 — the „Arbore de moștenire" tile of the seed's YOUNGEST person (the first, born 1907, has a family too
+    // large to read in one tile): seed persons only.
+    await page.goto(`/natural-persons/${naturals[naturals.length - 1].id}`);
+    await expect(tile("inheritanceTree")).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(2000);
+    await still(page);
+    await tile("inheritanceTree").screenshot({ path: `${FIGURES}/persons-tree.png` });
+
+    // Figura 7.3 — on the first seed person again.
+    await page.goto(`/natural-persons/${person.id}`);
+    await expect(tile("identity")).toBeVisible({ timeout: 60_000 });
+
+    // Figura 7.3 — the person's versions: „2 versiuni" opens the strip on the version before the current one (view
+    // only; nothing is made current). With two versions „Versiunea anterioară" is then inactive, so it is not pressed.
+    const versions = page.getByRole("button", { name: /^\d+ versiuni$/ }).first();
+    await versions.click();
+    await expect(page.getByRole("button", { name: "Fă curentă", exact: true }).first()).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    await page.evaluate((f) => {
+      for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
+        const label = el.getAttribute("aria-label") ?? "";
+        if (/CNP/i.test(label)) el.style.filter = f;
+      }
+      for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
+        if (/^\s*CNP/.test(lbl.textContent ?? "") && lbl.htmlFor) {
+          const box = document.getElementById(lbl.htmlFor);
+          if (box) box.style.filter = f;
+        }
+      }
+    }, BLUR);
+    await blurCnp(page);
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/links-versions.png` });
+
+    // Figura 4.1 — a judicial person's screen.
+    await page.goto(`/judicial-persons/${judicial.id}`);
+    await expect(page.locator("[data-tile]").first()).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(1500);
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/companies-record.png` });
+
+    // Figura 5.1 — the list of properties, searched for the seed's building plots; rows not the seed's blurred.
+    await page.goto("/properties");
+    const psearch = page.locator("main").getByRole("searchbox").or(page.locator("main input[type=search], main input[placeholder]")).first();
+    await expect(psearch).toBeVisible({ timeout: 60_000 });
+    await psearch.fill("Teren curți construcții");
+    await page.waitForTimeout(2500);
+    await blurNotSeed("/properties/");
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/properties-list.png` });
+
+    // Figura 5.2 — a property's screen, the map tiles hidden (no map load), and Figura 7.2 — its „Legături".
+    await page.goto(`/properties/${property.id}`);
+    await expect(tile("cadastral")).toBeVisible({ timeout: 60_000 });
+    for (const label of ["Hartă", "Puncte de contur", "Street View"]) await tick(label, false);
+    await page.waitForTimeout(1500);
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/properties-record.png` });
+    // „Legături" is not among a fresh browser's default tiles: shown for its picture, then hidden again.
+    await tick("Legături", true);
+    await expect(tile("related")).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    await still(page);
+    await tile("related").screenshot({ path: `${FIGURES}/links-related.png` });
+    await tick("Legături", false);
+    for (const label of ["Hartă", "Puncte de contur", "Street View"]) await tick(label, true); // left as found
+
+    // Figura 7.1 — the association screen, searched for one seed document by its code.
+    await page.goto(`/properties/${property.id}/associate-document`);
+    const asearch = page.locator("main input").first();
+    await expect(asearch).toBeVisible({ timeout: 60_000 });
+    await asearch.fill(sale.code);
+    await asearch.press("Enter");
+    await page.waitForTimeout(2500);
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/links-associate.png` });
+
+    // Figura 6.2 — the seed's sale contract, „Părți" shown, the whole page.
+    await page.goto(`/documents/${sale.id}`);
+    await expect(tile("general")).toBeVisible({ timeout: 60_000 });
+    await tick("Părți", true);
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/documents-sale.png`, fullPage: true });
+    await tick("Părți", false); // left as found
+
+    // Figura 6.1 — „Pagini" with a page in it. The seed's page files do not open, so a TC-E2E- contract of its own,
+    // its page the repo's synthetic fixture, removed in `finally`.
+    const MARK = `${E2E_MARKER}MANUAL-FIG`;
+    await removeLeftovers(page.request, MARK);
+    const docId = await createSaleContract(page.request, `${MARK} Act`);
+    try {
+      const up = await page.request.post(`/api/documents/${docId}/pages`, {
+        multipart: {
+          file: { name: "tc-e2e-pagina-1.jpg", mimeType: "image/jpeg", buffer: fs.readFileSync(path.join("e2e", "fixtures", "tc-e2e-pagina-1.jpg")) },
+          pageNumber: "1",
+        },
+      });
+      expect(up.ok()).toBeTruthy();
+      await page.goto(`/documents/${docId}`);
+      await expect(tile("pages").locator("img").first()).toBeVisible({ timeout: 60_000 });
+      await page.waitForTimeout(1500);
+      await still(page);
+      await tile("pages").screenshot({ path: `${FIGURES}/documents-pages.png` });
+    } finally {
+      await removeRecord(page.request, "document", docId);
+    }
+
+    for (const f of [
+      "dashboard", "sidebar", "breadcrumb", "list", "record", "help",
+      "persons-new", "persons-tree", "companies-record", "properties-list", "properties-record",
+      "documents-pages", "documents-sale", "links-associate", "links-related", "links-versions",
+    ]) {
       expect(fs.existsSync(`${FIGURES}/${f}.png`)).toBe(true);
     }
   });
