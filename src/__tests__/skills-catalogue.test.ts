@@ -129,6 +129,11 @@ describe("the skills catalogue", () => {
     }
   });
 
+  it("spells Romanian with comma-below ș and ț, never the cedilla look-alikes (romanian-diacritics.test.ts)", () => {
+    const romanian = [...SKILLS.flatMap((s) => [s.name.ro, s.description.ro]), ...SKILL_PATHS.flatMap((p) => [p.name.ro, p.description.ro])];
+    expect(romanian.filter((t) => /[\u015E\u015F\u0162\u0163]/.test(t))).toEqual([]);
+  });
+
   it("is a graph every non-Expert skill takes somewhere, but an Advanced one may end a Path", () => {
     for (const s of SKILLS.filter((x) => x.level <= 2)) {
       expect({ skill: s.number, opens: successorsOf(s.key).length > 0 }).toEqual({ skill: s.number, opens: true });
