@@ -64,8 +64,14 @@ export function isUatNoAuth(): boolean {
  * no author rather than a fake one — inventing an address would put an
  * unverifiable value into updated_by.
  */
+/**
+ * The id a box without accounts keys its one user on — and so what its quiz attempts are stored under
+ * (skill_attempt.user_id, Slice #39.41). scripts/skills/adopt-progress.ts moves them to an account (#39.51).
+ */
+export const UAT_USER_ID = "uat-no-auth";
+
 const UAT_USER: CurrentUser = {
-  id: "uat-no-auth",
+  id: UAT_USER_ID,
   email: null,
   isUat: true,
 };
