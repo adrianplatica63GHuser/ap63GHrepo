@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 6 Acte {#documents}
 
-Un act este un înscris din arhivă — un contract, un certificat, o autorizație, un plan — de un anumit tip, cu paginile lui scanate atașate. Capitolul acesta vă arată lista actelor, cum adăugați un act și paginile lui, ce înseamnă tipul actului și formularul lui, cum legați persoanele și proprietățile de act și cum arată trei acte cu un ecran al lor: contractul de vânzare-cumpărare, actul adițional și certificatul de moștenitor.
+Un act este un înscris din arhivă — un contract, un certificat, o autorizație, un plan — de un anumit tip, cu paginile lui scanate atașate. Capitolul acesta vă arată lista actelor, cum adăugați un act și paginile lui, ce înseamnă tipul actului și formularul lui, cum legați persoanele și proprietățile de act și cum arată trei acte cu un ecran al lor: contractul de vânzare-cumpărare, antecontractul care îl pregătește, actul adițional și certificatul de moștenitor.
 
 ## 6.1 Lista actelor {#documents-list}
 
@@ -126,9 +126,27 @@ Fișele formularului și panourile lor:
 
 **„Obiectul vânzării”** spune ce se vinde. „Descrierea obiectului” se compune din proprietățile contractului, din părți și din „Scop vânzare” — de exemplu „2 imobile, 7.400 mp în total”. Se completează singură când deschideți un contract cu câmpul gol. După ce legați o proprietate nouă, apăsați „Recompune” ca să fie scrisă din nou, apoi „Salvează”.
 
-## 6.7 Actul adițional și certificatul de moștenitor {#documents-dependent}
+Un contract încheiat după un antecontract se leagă de el, iar „Temei preț” și „Stare plată” pot pomeni antecontractul (secțiunea [[documents-antecontract]]).
 
-### 6.7.1 Actul adițional {#documents-dependent-addendum}
+## 6.7 Antecontractul {#documents-antecontract}
+
+Antecontractul — promisiunea de vânzare — este actul prin care vânzătorul și cumpărătorul se obligă să încheie mai târziu contractul de vânzare-cumpărare. El nu transferă proprietatea; o transferă contractul de vânzare-cumpărare care îl îndeplinește (secțiunea [[documents-sale]]). De obicei spune prețul, termenul până la care se încheie contractul și avansul plătit.
+
+În arhivă, antecontractul este un act de tipul „Antecontract”. Îl adăugați ca pe orice act, cu paginile lui (secțiunea [[documents-add]]). Fișa „Identificarea actului” are denumirile generale — „Emitent”, „Nr. document” și „Data” — și câmpurile generale „Etichetă scurtă”, „Subiect” și „Note extinse” (secțiunea [[documents-identification]]).
+
+**Antecontractul nu are formular propriu.** În lista „Tip document” scrie doar „Antecontract”, fără „(are formular)”, așa că actul păstrează numai câmpurile generale: ce promite el se citește din paginile lui, iar ce vreți să găsiți ușor — prețul, termenul — scrieți în „Subiect” sau în „Note extinse”. Contractul de vânzare-cumpărare are, dimpotrivă, cel mai bogat formular din arhivă, cu fișele lui de la „Preț și plată” la „Taxe și cheltuieli”, pentru că el este actul care transferă proprietatea. Formularul unui tip se construiește în „Distilare Tipizate” din actele de acel tip; antecontractul nu are încă unul, iar un superutilizator i-l poate construi acolo (secțiunea [[tools-doc-type-engine]]).
+
+Antecontractul nu are fișa „Părți”: vânzătorul, cumpărătorul și ceilalți se leagă pe „Legături”, cu „Asociază persoană” (secțiunea [[links-associate]]). Rolurile pe care le pot avea se pregătesc în „Date de referință”, la „Roluri Persoane” (secțiunea [[admin-reference-data]]); câtă vreme tipul nu are niciun rol pregătit, ecranul de asociere spune asta, iar persoana se leagă fără rol.
+
+**Legătura cu contractul.** Când contractul de vânzare-cumpărare care îndeplinește antecontractul este și el în arhivă, legați-le: pe antecontract apăsați „Asociază act”, bifați contractul, alegeți la „Tip legătură” „Antecontract al” și apăsați „Asociază selecția” (secțiunea [[links-references-documents]]). „Relația” arată apoi pe antecontract „acest document „Antecontract al”” urmat de contract, iar pe contract antecontractul, „Antecontract al”, „acest document” (Figura [[fig-documents-antecontract]]). Un contract adus cu importul care pomenește antecontractul îl are printre „Înscrisuri citate”; dacă antecontractul este în arhivă, „Leagă” face aceeași legătură.
+
+![6.3 Fișa „Legături” a unui antecontract, legat de contractul de vânzare-cumpărare care îl îndeplinește](documents-antecontract.png){#fig-documents-antecontract}
+
+Pe contract, antecontractul apare și în formular: în „[Preț]”, „Temei preț” ține actul pe care se sprijină prețul — de exemplu antecontractul, cu numărul și data lui —, iar în „[Plată]”, „Stare plată” poate fi „Achitat la antecontract”.
+
+## 6.8 Actul adițional și certificatul de moștenitor {#documents-dependent}
+
+### 6.8.1 Actul adițional {#documents-dependent-addendum}
 
 Un act adițional modifică un alt act. Are fișele „Identificarea actului” (cu numele notariale și „Onorariu notarial”), „Actul modificat”, „Ce modifică” și „Părți”.
 
@@ -138,7 +156,7 @@ Dacă actul modificat nu este în arhivă, fișa scrie „Actul modificat nu e �
 
 „Ce modifică” ține „Motiv completare”, „Efect urmărit”, „Preț neschimbat” și clauzele schimbate.
 
-### 6.7.2 Certificatul de moștenitor {#documents-dependent-inheritance}
+### 6.8.2 Certificatul de moștenitor {#documents-dependent-inheritance}
 
 În „Identificarea actului” al unui certificat de moștenitor stau „Notariat”, „Nr. certificat de moștenitor” și „Data eliberării”. Defunctul și moștenitorii sunt părțile certificatului, în „Părți”:
 
@@ -148,9 +166,9 @@ Dacă actul modificat nu este în arhivă, fișa scrie „Actul modificat nu e �
 
 „Părți” arată un tabel cu „Nume” și „Rol”; „Elimină” scoate o parte. Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu. Fiecare persoană vede certificatul printre legăturile ei, cu rolul ei.
 
-## 6.8 Exemple și cazuri de utilizare {#documents-examples}
+## 6.9 Exemple și cazuri de utilizare {#documents-examples}
 
-### 6.8.1 Arhivați un contract de vânzare-cumpărare {#documents-example-sale}
+### 6.9.1 Arhivați un contract de vânzare-cumpărare {#documents-example-sale}
 
 Aveți scanat un contract de vânzare-cumpărare pentru un teren din Bragadiru.
 
@@ -160,7 +178,16 @@ Aveți scanat un contract de vânzare-cumpărare pentru un teren din Bragadiru.
 4. Bifați „Părți” și asociați vânzătorul și cumpărătorul cu rolul lor, apoi scrieți-le cota (secțiunea [[documents-parties]]).
 5. Pe „Legături”, asociați terenul, apoi în „Obiectul vânzării” apăsați „Recompune” și „Salvează” (secțiunea [[documents-sale]]).
 
-### 6.8.2 Înregistrați un certificat de moștenitor {#documents-example-inheritance}
+### 6.9.2 Înregistrați un antecontract și contractul care îl îndeplinește {#documents-example-antecontract}
+
+Vânzătorul și cumpărătorul unui teren din Bragadiru au semnat întâi un antecontract, iar după câteva luni contractul de vânzare-cumpărare.
+
+1. „Acte” → „Adaugă act”; la „Tip document” alegeți „Antecontract”, adăugați paginile, completați „Etichetă scurtă”, „Nr. document” și „Data” și apăsați „Salvează” (secțiunea [[documents-antecontract]]).
+2. Pe „Legături”, asociați vânzătorul și cumpărătorul (secțiunea [[links-associate]]).
+3. Arhivați contractul de vânzare-cumpărare (secțiunea [[documents-example-sale]]). Dacă prețul s-a plătit la antecontract, alegeți în „[Plată]”, la „Stare plată”, „Achitat la antecontract”.
+4. Deschideți antecontractul, apăsați „Asociază act”, bifați contractul, alegeți „Antecontract al” și apăsați „Asociază selecția”. Pe contract, „Relația” citește: antecontractul, „Antecontract al”, „acest document” (secțiunea [[links-references-documents]]).
+
+### 6.9.3 Înregistrați un certificat de moștenitor {#documents-example-inheritance}
 
 O persoană a murit, iar doi moștenitori au primit un certificat de moștenitor.
 
@@ -168,7 +195,7 @@ O persoană a murit, iar doi moștenitori au primit un certificat de moștenitor
 2. În „Părți”, adăugați defunctul cu rolul „Defunct”, apoi fiecare moștenitor cu rolul „Moștenitor” (secțiunea [[documents-dependent-inheritance]]).
 3. Pe „Legături”, apăsați „Cotă” la fiecare moștenitor și scrieți cota lui (secțiunea [[documents-parties]]).
 
-### 6.8.3 Găsiți contractele achitate integral {#documents-example-filter}
+### 6.9.4 Găsiți contractele achitate integral {#documents-example-filter}
 
 1. Pe „Acte”, deschideți „Tip document:”, debifați „Toate tipurile” și bifați doar „Contract de Vânzare” (secțiunea [[documents-list]]).
 2. La „Câmp specific:” alegeți „Stare plată”, apoi „Achitat integral”.

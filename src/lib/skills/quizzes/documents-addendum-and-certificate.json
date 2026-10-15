@@ -4,7 +4,7 @@
     "documents-dependent-addendum",
     "documents-dependent-inheritance",
     "links-references-documents",
-    "documents-example-inheritance",
+    "documents-antecontract",
     "documents-parties"
   ],
   "variants": [
@@ -384,6 +384,82 @@
               "en": "The certificate, on „Legături”, but with no role; the role shows only on the document."
             }
           ]
+        },
+        {
+          "id": "a11",
+          "section": "documents-antecontract",
+          "ro": {
+            "question": "Ciprian vrea să înregistreze antecontractul prin care Andrei Munteanu promite să-și vândă terenul. După ce alege „Antecontract” la „Tip document”, de ce nu vede fișele „Preț și plată” și „Taxe și cheltuieli”, ca la contractul de vânzare?",
+            "explanation": "Antecontractul nu are formular propriu: în listă scrie doar „Antecontract”, fără „(are formular)”, așa că actul păstrează numai câmpurile generale. Formularul unui tip se construiește în „Distilare Tipizate”."
+          },
+          "en": {
+            "question": "Ciprian wants to record the preliminary contract in which Andrei Munteanu promises to sell his land. After choosing „Antecontract” under „Document Type”, why does he not see the „Preț și plată” and „Taxe și cheltuieli” tiles, as on the sale contract?",
+            "explanation": "The preliminary contract has no form of its own: the list shows just „Antecontract”, without „(has a form)”, so the document keeps only the general fields. A type's form is built in „DocTypeEngine”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pentru că fișele apar abia după ce se adaugă paginile și se salvează actul.",
+              "en": "Because the tiles appear only once the pages are added and the document is saved."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pentru că tipul „Antecontract” nu are încă formular, doar câmpurile generale.",
+              "en": "Because the „Antecontract” type has no form yet, only the general fields."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pentru că fișele lui stau ascunse și trebuie bifate una câte una în capul ecranului.",
+              "en": "Because its tiles are hidden and must be ticked one by one at the top of the screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pentru că antecontractul primește formularul contractului abia după ce sunt legate.",
+              "en": "Because the preliminary contract receives the contract's form only once the two are linked."
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "documents-antecontract",
+          "ro": {
+            "question": "Contractul de vânzare care îndeplinește antecontractul lui Andrei Munteanu a intrat și el în arhivă. Ce face Ciprian pe antecontract ca să le lege?",
+            "explanation": "Pe antecontract, „Asociază act”, bifați contractul, alegeți la „Tip legătură” „Antecontract al” și apăsați „Asociază selecția”. „Relația” citește apoi legătura corect din ambele capete."
+          },
+          "en": {
+            "question": "The sale contract that fulfils Andrei Munteanu's preliminary contract is now in the archive too. What does Ciprian do on the preliminary contract to link them?",
+            "explanation": "On the preliminary contract, „Associate document”, tick the contract, choose „Antecontract al” under „Link type” and press „Associate Selected”. „Relationship” then reads the link the right way from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrie numărul contractului în „Note extinse”, iar aplicația face singură legătura.",
+              "en": "Types the contract's number in „Enhanced Notes”, and the application makes the link by itself."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Adaugă contractul în fișa „Părți” a antecontractului, cu rolul „Cumpărător”.",
+              "en": "Adds the contract to the preliminary contract's „Parties” tile, with the role „Cumpărător”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Asociază act”, bifează contractul și alege „Antecontract al” la „Tip legătură”.",
+              "en": "„Associate document”, ticks the contract and chooses „Antecontract al” under „Link type”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Schimbă tipul antecontractului în „Contract de Vânzare” și le unește într-un singur act.",
+              "en": "Changes the preliminary contract's type to „Contract de Vânzare” and merges the two into one document."
+            }
+          ]
         }
       ]
     },
@@ -761,6 +837,82 @@
               "correct": false,
               "ro": "„Creează schiță”, ca să facă un act nou pentru certificat.",
               "en": "„Creează schiță” (create a draft), to make a new document for the certificate."
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "documents-antecontract",
+          "ro": {
+            "question": "Ce face un antecontract, spre deosebire de contractul de vânzare-cumpărare?",
+            "explanation": "Antecontractul este o promisiune: vânzătorul și cumpărătorul se obligă să încheie mai târziu contractul de vânzare-cumpărare. El nu transferă proprietatea; o transferă contractul care îl îndeplinește."
+          },
+          "en": {
+            "question": "What does a preliminary contract do, unlike the sale contract?",
+            "explanation": "The preliminary contract is a promise: the seller and the buyer bind themselves to sign the sale contract later. It does not transfer ownership; the sale contract that fulfils it does."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Transferă proprietatea, iar contractul de vânzare doar o confirmă mai târziu la notar.",
+              "en": "It transfers ownership, and the sale contract only confirms it later at the notary."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Promite vânzarea pentru mai târziu; proprietatea trece abia prin contract.",
+              "en": "It promises the sale for later; ownership passes only through the contract."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Înlocuiește contractul de vânzare atunci când prețul se plătește în rate.",
+              "en": "It replaces the sale contract when the price is paid in instalments."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Este copia contractului de vânzare pe care o păstrează cumpărătorul.",
+              "en": "It is the copy of the sale contract that the buyer keeps."
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "documents-antecontract",
+          "ro": {
+            "question": "Pe contractul de vânzare, unde arată Ciprian actul pe care se sprijină prețul — antecontractul, cu numărul și data lui?",
+            "explanation": "În „[Preț]”, „Temei preț” ține actul pe care se sprijină prețul — de exemplu antecontractul, cu numărul și data lui."
+          },
+          "en": {
+            "question": "On the sale contract, where does Ciprian show the deed the price rests on — the preliminary contract, with its number and date?",
+            "explanation": "In „[Preț]”, „Temei preț” holds the deed the price rests on — the preliminary contract, for instance, with its number and date."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Note extinse” ale antecontractului, nu pe contract.",
+              "en": "In the preliminary contract's „Enhanced Notes”, not on the contract."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La „Alocare preț”, în panoul „[Preț]” al contractului.",
+              "en": "Under „Alocare preț”, in the contract's „[Preț]” panel."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "La „Temei preț”, în „[Preț]”.",
+              "en": "Under „Temei preț”, in „[Preț]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La „Stare plată”, în panoul „[Plată]” al contractului.",
+              "en": "Under „Stare plată”, in the contract's „[Plată]” panel."
             }
           ]
         }

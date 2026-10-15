@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 6 Documents {#documents}
 
-A document is a deed held in the archive — a contract, a certificate, a permit, a plan — of a given type, with its scanned pages attached. This chapter shows you the list of documents, how to add a document and its pages, what a document's type and its form mean, how to link people and properties to a document, and what the three documents with a screen of their own look like: the sale contract, the addendum and the certificate of inheritance.
+A document is a deed held in the archive — a contract, a certificate, a permit, a plan — of a given type, with its scanned pages attached. This chapter shows you the list of documents, how to add a document and its pages, what a document's type and its form mean, how to link people and properties to a document, and what the three documents with a screen of their own look like: the sale contract, the preliminary contract that prepares it, the addendum and the certificate of inheritance.
 
 ## 6.1 The list of documents {#documents-list}
 
@@ -126,9 +126,27 @@ The form's tiles and their panels:
 
 **„Obiectul vânzării”** says what is being sold. „Descrierea obiectului” (description of the object) is composed from the contract's properties, its parties and „Scop vânzare” (purpose of the sale) — for example „2 imobile, 7.400 mp în total” (2 properties, 7,400 m² in all). It fills itself in when you open a contract with the field empty. After you link a new property, press „Recompose” to have it written again, then „Save”.
 
-## 6.7 The addendum and the certificate of inheritance {#documents-dependent}
+A contract signed after a preliminary contract is linked to it, and „Temei preț” and „Stare plată” can mention the preliminary contract (section [[documents-antecontract]]).
 
-### 6.7.1 The addendum {#documents-dependent-addendum}
+## 6.7 The preliminary contract {#documents-antecontract}
+
+The preliminary contract — the antecontract, a promise to sell — is the deed by which the seller and the buyer bind themselves to sign the sale contract later. It does not transfer ownership; the sale contract that fulfils it does (section [[documents-sale]]). It usually states the price, the date by which the contract is to be signed, and the advance paid.
+
+In the archive, a preliminary contract is a document of the type „Antecontract”. You add it like any document, with its pages (section [[documents-add]]). Its „Document identification” tile has the general names — „Issuer”, „Document No.” and „Date” — and the general fields „Short Label”, „Subject” and „Enhanced Notes” (section [[documents-identification]]).
+
+**The preliminary contract has no form of its own.** The „Document Type” list shows just „Antecontract”, without „(has a form)”, so the document keeps only the general fields: what it promises is read from its pages, and what you want to find easily — the price, the date — you write in „Subject” or „Enhanced Notes”. The sale contract, by contrast, has the richest form in the archive, with its tiles from „Preț și plată” to „Taxe și cheltuieli”, because it is the deed that transfers ownership. A type's form is built in „DocTypeEngine” from documents of that type; the preliminary contract has none yet, and a superuser can build one there (section [[tools-doc-type-engine]]).
+
+The preliminary contract has no „Parties” tile: the seller, the buyer and the others are linked on „Links”, with „Associate person” (section [[links-associate]]). The roles they can have are prepared in „Reference Data”, under „Person Roles” (section [[admin-reference-data]]); as long as the type has no role prepared, the association screen says so, and the person is linked without a role.
+
+**The link to the contract.** When the sale contract that fulfils the preliminary contract is in the archive too, link them: on the preliminary contract press „Associate document”, tick the contract, choose „Antecontract al” under „Link type” and press „Associate Selected” (section [[links-references-documents]]). „Relationship” then shows on the preliminary contract „this document “Antecontract al”” followed by the contract, and on the contract the preliminary contract, „Antecontract al”, „this document” (Figure [[fig-documents-antecontract]]). A contract brought in by the import that mentions the preliminary contract has it among its „Cited instruments”; if the preliminary contract is in the archive, „Link” makes the same link.
+
+![6.3 The „Links” tile of a preliminary contract, linked to the sale contract that fulfils it](documents-antecontract.png){#fig-documents-antecontract}
+
+On the contract, the preliminary contract shows in the form too: in „[Preț]”, „Temei preț” holds the deed the price rests on — the preliminary contract, for instance, with its number and date —, and in „[Plată]”, „Stare plată” can be „Achitat la antecontract”.
+
+## 6.8 The addendum and the certificate of inheritance {#documents-dependent}
+
+### 6.8.1 The addendum {#documents-dependent-addendum}
 
 An addendum amends another document. It has the tiles „Document identification” (with the notarial names and „Onorariu notarial”), „Actul modificat” (the amended document), „Ce modifică” (what it changes) and „Parties”.
 
@@ -138,7 +156,7 @@ If the amended document is not in the archive, the tile reads „The amended dee
 
 „Ce modifică” holds „Motiv completare” (reason for the addition), „Efect urmărit” (intended effect), „Preț neschimbat” (price unchanged) and the clauses changed.
 
-### 6.7.2 The certificate of inheritance {#documents-dependent-inheritance}
+### 6.8.2 The certificate of inheritance {#documents-dependent-inheritance}
 
 The „Document identification” of a certificate of inheritance holds „Notary Office”, „Certificate of Inheritance No.” and „Issue date”. The deceased and the heirs are the certificate's parties, in „Parties”:
 
@@ -148,9 +166,9 @@ The „Document identification” of a certificate of inheritance holds „Notar
 
 „Parties” shows a table of „Name” and „Role”; „Remove” takes a party out. On „Links” the heirs have „Share” and the deceased does not. Each person sees the certificate among their own links, with their role.
 
-## 6.8 Examples and use cases {#documents-examples}
+## 6.9 Examples and use cases {#documents-examples}
 
-### 6.8.1 File a sale contract {#documents-example-sale}
+### 6.9.1 File a sale contract {#documents-example-sale}
 
 You have a scanned sale contract for a plot of land in Bragadiru.
 
@@ -160,7 +178,16 @@ You have a scanned sale contract for a plot of land in Bragadiru.
 4. Tick „Parties” and associate the seller and the buyer with their roles, then type in their shares (section [[documents-parties]]).
 5. On „Links”, associate the plot, then in „Obiectul vânzării” press „Recompose” and „Save” (section [[documents-sale]]).
 
-### 6.8.2 Record a certificate of inheritance {#documents-example-inheritance}
+### 6.9.2 Record a preliminary contract and the contract that fulfils it {#documents-example-antecontract}
+
+The seller and the buyer of a plot in Bragadiru first signed a preliminary contract, and a few months later the sale contract.
+
+1. „Documents” → „Add new Document”; under „Document Type” choose „Antecontract”, add the pages, fill in „Short Label”, „Document No.” and „Date” and press „Save” (section [[documents-antecontract]]).
+2. On „Links”, associate the seller and the buyer (section [[links-associate]]).
+3. File the sale contract (section [[documents-example-sale]]). If the price was paid under the preliminary contract, choose „Achitat la antecontract” for „Stare plată” in „[Plată]”.
+4. Open the preliminary contract, press „Associate document”, tick the contract, choose „Antecontract al” and press „Associate Selected”. On the contract, „Relationship” reads: the preliminary contract, „Antecontract al”, „this document” (section [[links-references-documents]]).
+
+### 6.9.3 Record a certificate of inheritance {#documents-example-inheritance}
 
 A person has died, and two heirs have received a certificate of inheritance.
 
@@ -168,7 +195,7 @@ A person has died, and two heirs have received a certificate of inheritance.
 2. In „Parties”, add the deceased with the role „Defunct”, then each heir with the role „Moștenitor” (section [[documents-dependent-inheritance]]).
 3. On „Links”, press „Share” on each heir and type in their share (section [[documents-parties]]).
 
-### 6.8.3 Find the contracts paid in full {#documents-example-filter}
+### 6.9.4 Find the contracts paid in full {#documents-example-filter}
 
 1. On „Documents”, open „Document type:”, untick „All types” and tick only „Contract de Vânzare” (section [[documents-list]]).
 2. Under „Type-specific field:” choose „Stare plată”, then „Achitat integral”.

@@ -532,6 +532,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       expect(link.ok(), `POST references ${link.status()}`).toBeTruthy();
       await page.goto(`/documents/${anteId}`);
       await expect(tile("general")).toBeVisible({ timeout: 60_000 });
+      // The tile bar renders after the first tile: `tick` skips a box that is not there yet.
+      await expect(page.getByRole("checkbox", { name: S.links, exact: true })).toBeVisible({ timeout: 30_000 });
       await tick(S.links, true);
       await expect(tile("related")).toBeVisible({ timeout: 30_000 });
       await expect(tile("related")).toContainText(/Contract de v[âa]nzare/i, { timeout: 30_000 });

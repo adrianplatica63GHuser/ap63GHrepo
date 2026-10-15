@@ -780,7 +780,9 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["documents-add-parties", "links-references-and-parts"],
     screens: ["document-detail", "associate-reference", "associate-party"],
     cases: ["TC-DOC-11", "TC-DOC-20", "TC-ASSOC-12"],
-    manual: ["documents-dependent-addendum", "documents-dependent-inheritance", "links-references-documents", "documents-example-inheritance", "documents-parties"],
+    // #39.47: the antecontract's section in place of the certificate's worked example, so the skill's „de ce
+    // antecontractul are alt formular” is taught and asked.
+    manual: ["documents-dependent-addendum", "documents-dependent-inheritance", "links-references-documents", "documents-antecontract", "documents-parties"],
   },
   {
     key: "links-follow-a-chain",
