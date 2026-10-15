@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-14, FU-336 filed — 336 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
+As of 2026-10-15, FU-343 filed — 343 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 78 | 77 | 16 | 190 |
+| open | 19 | 79 | 77 | 22 | 197 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 57 | 31 | 3 | 128 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 142 | 113 | 21 | 336 |
+| **total** | 60 | 143 | 113 | 27 | 343 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -420,3 +420,10 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-334 | 2026-10-14 #39.38 TC-TILES-03 step 7 | copy/i18n | Properties | The property form's validation message under „Suprafață oficială (m²)” is English on the Romanian screen: „Surface area must be a positive number”, as FU-261 is for the persons' forms. | docs/testing/cases/TC-TILES-03.md step 7 | user | XS | open | Move it to the message files as FU-261 proposes for the persons. | 2026-10-14 |
 | FU-335 | 2026-10-14 #39.39 the manual's chapters 8–12 | copy/i18n | Several | Labels in the message files that name screens and tiles by their old names: `docTypeEngine.saved.toImport` reads „Mergi la Import în sistem” (the item is „Dosare de proprietăți”, the heading „Import”); `help.admin.hints.map-selected-tab` calls the tab „Afișează selectate” (it reads „Proprietăți Selectate”); `help.admin.screens.properties-map` still reads „Proprietăți — Hartă”; `calculationHistory.detail` keeps labels of the old five-section file („Orientare”, „Lungime (latura lungă)”, „Colțul drumului / prop. 1”); `settings.timeFrames.examples.metadata_review_warning` says «Meta info»; `interactions.screen.selectHint` and `log.sticky` look unused since the module screen lost its form. | messages/ro-RO.json, the keys named | user | S | open | One copy slice: rename each to the screen's current name, delete the unused keys, and add them to their copy suites' lists. | 2026-10-14 |
 | FU-336 | 2026-10-14 #39.39 the manual's chapter 12 | copy/i18n | Users & access | `usersAccess.feedback.*NoEmail` tells a business user to „verificați RESEND_API_KEY” when an approval's e-mail could not be sent — an environment key only a developer can check. | messages/ro-RO.json usersAccess.feedback | user | XS | open | Say the account was created and the e-mail was not sent, and that the administrator should check the e-mail settings; keep the key's name in the server log. | 2026-10-14 |
+| FU-337 | 2026-10-15 #39.46 Handover.39.46.md | copy/i18n | Help | The quizzes' English variants quote the Romanian interface — about three thousand „…” with Romanian letters in `en` texts across src/lib/skills/quizzes/*.json (e.g. „Asociază act”, „Asociază selecția”) — where the English manual now quotes the English screen. | src/lib/skills/quizzes/documents-add-parties.json | cosmetic | M | open | A slice like #39.46 for the quizzes: the same labels check (src/lib/manual/labels.ts) over the en variants. | 2026-10-15 |
+| FU-338 | 2026-10-15 #39.46 Handover.39.46.md | defect | Help | Quiz explanations name a role that no longer exists, „Coproprietari / Coindivizari” (the reference data's role is „Coproprietar”), in both languages; #39.46 corrected the manual's two mentions. | src/lib/skills/quizzes/links-link-records-both-ways.json (lines 133, 137, 594); src/db/sync-reference-data.sql:391 | user | XS | open | Replace with „Coproprietar” in both languages. | 2026-10-15 |
+| FU-339 | 2026-10-15 #39.46 Handover.39.46.md | copy/i18n | Help | The English „?” help texts (proposals' `*En` fields) quote Romanian labels — 202 quotes with Romanian letters in 68 English fields, e.g. „Creează proprietățile”, „Lățime drum”. | src/lib/help/proposals-data.ts | cosmetic | S | open | Rewrite against messages/en-GB.json, keeping Romanian data values. | 2026-10-15 |
+| FU-340 | 2026-10-15 #39.46 Handover.39.46.md | copy/i18n | i18n | Untranslated en-GB.json values the English screen shows in Romanian: `property.table.tarlaSola`, `.parcela`, `.carteFunciara`; `document.fields.institution` („Institution / Notariat”); the whole of `group.infoPanel.*` and `stamp.infoPanel.*`; `ask.intro` („Manual de utilizare”, „Răspuns AI”); `settings.ai.uses.ask`; `calculationHistory.detail.oldRunNoRerun`. | messages/en-GB.json | cosmetic | S | open |  | 2026-10-15 |
+| FU-341 | 2026-10-15 #39.46 Handover.39.46.md | copy/i18n | i18n | Romanian composed in code on the English screen: the sale object's summary („2 imobile, 7.400 mp în total”), the interactions export's file name („interactiuni-<date>.csv”), and the area label's Romanian number format on the map. | src/lib/documents/sale-object-description.ts:149; src/lib/interactions/export.ts:106; src/lib/geo/area-tool.ts:51 | cosmetic | S | open |  | 2026-10-15 |
+| FU-342 | 2026-10-15 #39.46 Handover.39.46.md | copy/i18n | Help | The skills catalogue's English names quote Romanian labels — e.g. 1.13 „Read the „Legături” tile” — on the English skills map. | src/lib/skills/catalogue.ts | cosmetic | XS | open | Quote the en-GB strings; the names are data, so no message key changes. | 2026-10-15 |
+| FU-343 | 2026-10-15 #39.46 Handover.39.46.md | copy/i18n | UI shell | The English interface names one thing two ways: „Make Current” (person, firm, document) and „Make current” (`shared.entityMetadata.version.makeCurrent`); the sidebar's „Reporting”, „Inheritance trees” against the breadcrumb's „Reports”, „Inheritance Trees”; „Help Information” against the page's „Help information”. | messages/en-GB.json | cosmetic | XS | open | One spelling each; the manual follows the sidebar. | 2026-10-15 |
