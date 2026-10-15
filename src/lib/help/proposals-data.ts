@@ -277,4 +277,12 @@ export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
     backgroundEn: "A skill's quiz page. It opens from an open box of „Harta competențelor” (the skills map); a closed skill has no quiz yet. Each question has three or four answers, only one of them right.",
     howToEn: "Choose one answer to every question; „Trimite” (Send) can be pressed only once all of them have an answer. The quiz is passed with at least 80 % right answers, and the skill then becomes mastered on the map and the page shows each question's explanation. A failed quiz shows the manual sections to read again and can be taken again after three days; the page says the date and hour from which it can. If you leave the page with answers chosen, the application asks first.",
   },
+  ask: {
+    against: EMPTY_FINGERPRINT,
+    reason: "a new screen (#39.45) with no text yet",
+    backgroundRo: "Întrebări cu cuvintele dumneavoastră, la care răspunde „Manual de utilizare”. Aceeași căsuță stă și în capul manualului.",
+    howToRo: "Scrieți întrebarea și apăsați Enter sau „Caută”: apar pe loc secțiunile din manual care răspund, cu propozițiile potrivite și cuvintele găsite marcate. Căutarea nu trimite nimic în afară și nu costă nimic; merge cu și fără diacritice și găsește și începutul unui cuvânt. Apăsați titlul unei secțiuni ca să o citiți în manual.\n\n„Răspuns AI”, doar dacă îl apăsați, trimite întrebarea și secțiunile găsite la Claude, care scrie un răspuns scurt numai din ele și numește secțiunile; o citire plătită, sub un cent. Dacă secțiunile nu răspund, aplicația spune că manualul nu spune, nu ghicește.",
+    backgroundEn: "Questions in your own words, answered by „Manual de utilizare” (the user manual). The same box stands at the top of the manual.",
+    howToEn: "Type the question and press Enter or „Caută” (search): the manual sections that answer it appear at once, with the matching sentences and the words found marked. The search sends nothing out and costs nothing; it works with and without diacritics and finds the beginning of a word. Press a section's title to read it in the manual.\n\n„Răspuns AI” (AI answer), only when you press it, sends the question and the sections found to Claude, which writes a short answer from them alone and names the sections; one paid read, under a cent. If the sections do not answer, the application says the manual does not say; it does not guess.",
+  },
 };

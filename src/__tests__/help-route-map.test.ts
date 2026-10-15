@@ -91,6 +91,8 @@ describe("resolveHelpScreenKey", () => {
       ["/skills-map", "skills-map"], // Slice #39.42
       ["/skills-map/persons-person-from-id-card", "skill-quiz"], // Slice #39.42
       ["/skills-map/a/b", null], // Slice #39.42: nothing deeper than a skill
+      ["/ask", "ask"], // Slice #39.45
+      ["/ask/x", null], // Slice #39.45
       ["/manual?s=start-sidebar", "manual"], // the section in the query, the screen the same
       ["/admin/groups", "admin-groups"],
       ["/admin/groups/[id]", "admin-group-editor"],
@@ -159,6 +161,7 @@ describe("resolveHelpScreenKey", () => {
       "/manual",
       "/skills-map",
       "/skills-map/[skill]",
+      "/ask",
     ];
 
     it.each(routes)("%s resolves to a key present in HELP_SCREENS", (route) => {

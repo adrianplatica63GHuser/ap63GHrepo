@@ -96,6 +96,8 @@ export const HELP_SCREENS = [
   // Slice #39.42: the skills diagram, and the page a skill's quiz opens on (#39.43 fills it).
   { key: "skills-map", manual: "learning-skills" },
   { key: "skill-quiz", manual: "learning-quizzes" },
+  // Slice #39.45: „Întreabă”.
+  { key: "ask", manual: "learning-ask" },
 ] as const satisfies readonly { key: string; manual: string }[];
 
 export type HelpScreenKey = (typeof HELP_SCREENS)[number]["key"];

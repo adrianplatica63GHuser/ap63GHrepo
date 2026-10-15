@@ -17,6 +17,13 @@ export const CLUSTER_MODEL = "claude-sonnet-4-6";
 /** The import's classification of a folder's files. */
 export const CLASSIFY_MODEL = "claude-haiku-4-5-20251001";
 
+/**
+ * „Întreabă”'s „Răspuns AI”: a short answer written from the manual sections the search found (#39.45, Ask first 2:
+ * the smallest model the application already uses — the same as CLASSIFY_MODEL, kept as its own name so a change
+ * to one does not move the other, and so „Setări → AI” lists it).
+ */
+export const ASK_MODEL = "claude-haiku-4-5-20251001";
+
 /** An identity card's read, unless ANTHROPIC_VISION_MODEL names another. */
 export const ID_CARD_MODEL_DEFAULT = "claude-sonnet-4-6";
 
@@ -25,7 +32,7 @@ export function idCardModel(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 /** What „Setări → AI" lists: each use, and the model it calls with here and now. */
-export type AiModelUse = { use: "extract" | "idCard" | "classify" | "cluster"; model: string };
+export type AiModelUse = { use: "extract" | "idCard" | "classify" | "cluster" | "ask"; model: string };
 
 export function aiModelsInUse(env: NodeJS.ProcessEnv = process.env): AiModelUse[] {
   return [
@@ -33,5 +40,6 @@ export function aiModelsInUse(env: NodeJS.ProcessEnv = process.env): AiModelUse[
     { use: "idCard", model: idCardModel(env) },
     { use: "classify", model: CLASSIFY_MODEL },
     { use: "cluster", model: CLUSTER_MODEL },
+    { use: "ask", model: ASK_MODEL },
   ];
 }

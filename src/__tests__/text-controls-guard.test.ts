@@ -66,6 +66,10 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A043", "{pathShort(p.key)}"],
     ["A113", "{s.name[lang]}"],
   ],
+  // Slice #39.45: „Întreabă”'s AI answer names its sections in the sentence, as the manual's cross-references do (A096).
+  "src/app/ask/_components/ask-box.tsx": [
+    ["A096", "{`§${run.number}`}"],
+  ],
   "src/app/manual/_components/manual-view.tsx": [
     ["A096", "{target.number}"],
     ["A001", "{`${c.number} ${c.title}`}"],

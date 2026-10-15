@@ -9,7 +9,7 @@ import path from "path";
 import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
 import { TIME_FRAME_GROUPS, exampleValue, groupingProblems } from "@/lib/time-frames/groups";
 import { databaseOf, environmentName, readBackupStatus } from "@/lib/settings/system-status";
-import { aiModelsInUse, CLASSIFY_MODEL, EXTRACT_MODEL, ID_CARD_MODEL_DEFAULT } from "@/lib/ai/models";
+import { aiModelsInUse, ASK_MODEL, CLASSIFY_MODEL, EXTRACT_MODEL, ID_CARD_MODEL_DEFAULT } from "@/lib/ai/models";
 import { monthStart } from "@/lib/ai/paid-read-month";
 
 const ROOT = path.join(__dirname, "..", "..");
@@ -153,7 +153,10 @@ describe("„AI” reads the constants the calls use", () => {
       { use: "idCard", model: ID_CARD_MODEL_DEFAULT },
       { use: "classify", model: CLASSIFY_MODEL },
       { use: "cluster", model: expect.any(String) },
+      { use: "ask", model: ASK_MODEL }, // #39.45
     ]);
+    // Ask first 2: the smallest model the application already uses.
+    expect(ASK_MODEL).toBe(CLASSIFY_MODEL);
     expect(aiModelsInUse(env({ ANTHROPIC_VISION_MODEL: "x-model" }))[1]).toEqual({ use: "idCard", model: "x-model" });
   });
 
@@ -209,6 +212,7 @@ describe("the paid reads (migration_100)", () => {
     ["src/app/api/admin/doc-type-engine/cluster/route.ts", "cluster"],
     ["src/app/api/admin/import/scan-folder/route.ts", "scan-folder"],
     ["src/app/api/admin/import/extract-id-card/route.ts", "extract-id-card"],
+    ["src/app/api/manual/ask/route.ts", "ask-manual"], // #39.45
   ])("%s records every answer it gets, as %s", (file, route) => {
     const src = read(file);
     expect(src).toContain(`recordPaidRead({`);
@@ -222,7 +226,7 @@ describe("the paid reads (migration_100)", () => {
       );
     const calling = walk("src/app/api").filter((f) => /fetch\(ANTHROPIC_API_URL|callAnthropic\(/.test(read(f)));
     expect(calling.filter((f) => !read(f).includes("recordPaidRead(")).sort()).toEqual([]);
-    expect(calling.length).toBe(5);
+    expect(calling.length).toBe(6); // #39.45: + „Întreabă”
   });
 
   it("the words, at 0, 1, 7 and 20", () => {

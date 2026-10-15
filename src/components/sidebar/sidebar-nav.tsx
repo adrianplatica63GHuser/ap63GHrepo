@@ -422,6 +422,7 @@ export function SidebarNav() {
     singleFile:                t("items.singleFile"),
     userManual:                t("items.userManual"),
     skillsMap:                 t("items.skillsMap"), // Slice #39.42
+    ask:                       t("items.ask"), // Slice #39.45
     globalSearch:              t("items.globalSearch"),
     // Slice #32.19 — the three screens that had no sidebar entry at all.
     groups:                    t("items.groups"),

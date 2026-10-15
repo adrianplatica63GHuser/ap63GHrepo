@@ -60,7 +60,7 @@ describe("the eight sections in the config, in order, each with its items", () =
       // #39.37: „Informații de ajutor" moved to „Ajutor și învățare"; „Studiu" and „Ajutor" are gone.
       ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"]]],
       ["Setări", "/admin/settings", []],
-      ["Ajutor și învățare", null, [["Informații de ajutor", "/admin/help-content"], ["Manual de utilizare", "/manual"], ["Harta competențelor", "/skills-map"]]], // #39.42: + the map
+      ["Ajutor și învățare", null, [["Informații de ajutor", "/admin/help-content"], ["Manual de utilizare", "/manual"], ["Harta competențelor", "/skills-map"], ["Întreabă", "/ask"]]], // #39.42: + the map; #39.45: + „Întreabă”
     ]);
   });
 
@@ -124,7 +124,7 @@ describe("what is drawn (#38.42)", () => {
       ["Rapoarte", ["Interacțiuni", "Arbori de moștenire", "Căutare globală"]], // #39.11: + „Arbori de moștenire"
       ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete"]],
       ["Setări", []],
-      ["Ajutor și învățare", ["Informații de ajutor", "Manual de utilizare", "Harta competențelor"]], // #39.42
+      ["Ajutor și învățare", ["Informații de ajutor", "Manual de utilizare", "Harta competențelor", "Întreabă"]], // #39.42, #39.45
     ]);
   });
 
@@ -173,6 +173,7 @@ describe("the active section and item for every route", () => {
     ["/admin/help-content", "helpLearning", "/admin/help-content"], // #39.37: was "administration"
     ["/manual", "helpLearning", "/manual"], // #39.37
     ["/skills-map", "helpLearning", "/skills-map"], // #39.42
+    ["/ask", "helpLearning", "/ask"], // #39.45
   ])("%s → section %s, item %s", (route, section, item) => {
     expect(getActiveSectionKey(route, NAV_SECTIONS)).toBe(section);
     expect(getActiveHref(route, NAV_SECTIONS)).toBe(item);
@@ -184,8 +185,8 @@ describe("an account without an app_users row sees what a `user` saw before #38.
     const seen = sectionsFor(NAV_SECTIONS, false);
     const hrefs = seen.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter(Boolean);
     // #39.11: + „Arbori de moștenire", view only, the domain's persons as „Interacțiuni" is.
-    // #39.37: + „Manual de utilizare". #39.42: + „Harta competențelor".
-    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree", "/manual", "/skills-map"]);
+    // #39.37: + „Manual de utilizare". #39.42: + „Harta competențelor". #39.45: + „Întreabă".
+    expect(hrefs).toEqual(["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree", "/manual", "/skills-map", "/ask"]);
   });
 
   it("the sidebar renders `sectionsFor(NAV_SECTIONS, fullAccess)`", () => {
@@ -259,6 +260,10 @@ describe("breadcrumbs name the section, not „Admin”", () => {
     expect(trail("/admin/tags")).toEqual(["Acasă", "Administrare (text)", "Etichete"]);
     // #39.37: was ["Acasă", "Administrare (text)", "Informații de ajutor"].
     expect(trail("/admin/help-content")).toEqual(["Acasă", "Ajutor și învățare (text)", "Informații de ajutor"]);
+  });
+
+  it("„Întreabă” under „Ajutor și învățare” (#39.45)", () => {
+    expect(trail("/ask")).toEqual(["Acasă", "Ajutor și învățare (text)", "Întreabă"]);
   });
 
   it("„Harta competențelor” under „Ajutor și învățare”, and a skill's quiz under the map (#39.42)", () => {

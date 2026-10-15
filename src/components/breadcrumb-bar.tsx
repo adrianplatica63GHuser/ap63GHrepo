@@ -183,6 +183,16 @@ export function buildSegments(
       segments.push({ label: t("manual"), href: accumulated });
       continue;
     }
+    // Slice #39.45: „Întreabă", in „Ajutor și învățare" too.
+    if (part === "ask") {
+      const section = sectionOfScreen(accumulated);
+      if (section) {
+        sectionIdx = segments.length;
+        segments.push({ label: t(`sections.${section}`), href: null });
+      }
+      segments.push({ label: t("ask"), href: accumulated });
+      continue;
+    }
     // Slice #39.42: „Harta competențelor", in „Ajutor și învățare" too; a skill's quiz page under it.
     if (part === "skills-map") {
       const section = sectionOfScreen(accumulated);

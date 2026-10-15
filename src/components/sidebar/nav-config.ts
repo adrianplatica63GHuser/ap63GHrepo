@@ -4,6 +4,7 @@ import {
   BookOpen,
   BookOpenText,
   Waypoints,
+  MessageCircleQuestion,
   Building2,
   Calculator,
   Database,
@@ -190,6 +191,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "userManual", href: "/manual", icon: BookOpenText },
       // Slice #39.42: „Harta competențelor” — the skills diagram; an Open box opens its quiz.
       { key: "skillsMap", href: "/skills-map", icon: Waypoints },
+      // Slice #39.45: „Întreabă” — a question in plain words, answered from the manual (Ask first 3).
+      { key: "ask", href: "/ask", icon: MessageCircleQuestion },
     ],
   },
 ];

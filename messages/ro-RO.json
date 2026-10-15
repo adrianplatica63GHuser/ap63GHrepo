@@ -1410,7 +1410,8 @@
       "miscFolders": "Dosare diverse",
       "singleFile": "Fișier individual",
       "userManual": "Manual de utilizare",
-      "skillsMap": "Harta competențelor"
+      "skillsMap": "Harta competențelor",
+      "ask": "Întreabă"
     },
     "collapse": "Restrânge bara laterală",
     "expand": "Extinde bara laterală",
@@ -1503,7 +1504,8 @@
         "admin-help-content": "Ajutor și învățare — Informații de ajutor",
         "manual": "Ajutor și învățare — Manual de utilizare",
         "skills-map": "Ajutor și învățare — Harta competențelor",
-        "skill-quiz": "Ajutor și învățare — Chestionarul unei competențe"
+        "skill-quiz": "Ajutor și învățare — Chestionarul unei competențe",
+        "ask": "Ajutor și învățare — Întreabă"
       },
       "hints": {
         "drag-select": "Hartă — trage un dreptunghi pentru a selecta mai multe proprietăți",
@@ -3920,7 +3922,8 @@
         "extract": "Extragerea datelor din acte",
         "idCard": "Citirea cărților de identitate",
         "classify": "Clasificarea fișierelor la import",
-        "cluster": "Gruparea mostrelor (Instrumente)"
+        "cluster": "Gruparea mostrelor (Instrumente)",
+        "ask": "Răspunsul AI din „Întreabă”"
       }
     },
     "about": {
@@ -4137,6 +4140,7 @@
       "manual": "Manual de utilizare",
       "skillsMap": "Harta competențelor",
       "skillQuiz": "Chestionar",
+      "ask": "Întreabă",
       "docTypeEngine": "Distilare Tipizate",
       "changePassword": "Schimbă parola",
       "new": "Nou",
@@ -4384,6 +4388,24 @@
       "import": "Import",
       "workspace": "Spațiul de lucru"
     }
+  },
+  "ask": {
+    "title": "Întreabă",
+    "intro": "Scrieți o întrebare cu cuvintele dumneavoastră. Aplicația caută în „Manual de utilizare” secțiunile care răspund la ea; „Răspuns AI” scrie, la cerere, un răspuns scurt din ele.",
+    "label": "Întrebarea",
+    "placeholder": "De exemplu: cum adaug o persoană?",
+    "search": "Caută",
+    "searching": "Se caută…",
+    "searchFailed": "Căutarea nu a reușit. Încercați din nou.",
+    "noResults": "Manualul nu pare să răspundă la întrebarea aceasta. Încercați alte cuvinte sau căutați în cuprins.",
+    "found": "{count, plural, one {O secțiune din manual răspunde} few {# secțiuni din manual răspund} other {# de secțiuni din manual răspund}}",
+    "aiAnswer": "Răspuns AI",
+    "aiAsking": "Se scrie răspunsul…",
+    "aiNote": "Trimite întrebarea și aceste secțiuni la Claude, care scrie un răspuns scurt doar din ele — o citire plătită, sub un cent.",
+    "aiWrittenFrom": "Scris de AI doar din secțiunile de mai sus. Verificați în manual înainte să vă bazați pe el.",
+    "aiNotInManual": "Secțiunile găsite nu răspund la întrebare: manualul nu spune. Încercați alte cuvinte.",
+    "aiNotConfigured": "Răspunsul AI nu este configurat pe acest server.",
+    "aiFailed": "Răspunsul AI nu a reușit. Încercați din nou peste puțin timp."
   },
   "skillQuiz": {
     "title": "Chestionar — {number} {name}",

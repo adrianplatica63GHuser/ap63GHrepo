@@ -141,6 +141,9 @@ export function resolveHelpScreenKey(pathname: string): HelpScreenKey | null {
   // ── Harta competențelor (Slice #39.42) — the map, and a skill's quiz under it ──
   if (head === "skills-map") return second ? (parts.length === 2 ? "skill-quiz" : null) : "skills-map";
 
+  // ── Întreabă (Slice #39.45) — one screen ──
+  if (head === "ask") return second ? null : "ask";
+
   // ── Interacțiuni (Slice #38.84) — one screen ────────────────────────────
   if (head === "interactions") return second ? null : "interactions";
 
