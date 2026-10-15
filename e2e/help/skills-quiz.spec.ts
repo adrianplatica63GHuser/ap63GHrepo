@@ -36,7 +36,8 @@ function before(keys: string[]): Set<string> {
   const out = new Set<string>();
   const stack = [...keys];
   while (stack.length) {
-    for (const p of SKILLS.find((s) => s.key === stack.pop())!.predecessors) {
+    const k = stack.pop()!;
+    for (const p of SKILLS.find((s) => s.key === k)!.predecessors) {
       if (out.has(p)) continue;
       out.add(p);
       stack.push(p);
