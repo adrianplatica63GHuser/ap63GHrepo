@@ -5,7 +5,7 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-14 |
 
 ## What this proves
@@ -65,3 +65,8 @@ pictures in the sandbox and opened in LibreOffice, is 21 pages, the chapters eac
 file needed no correction.
 
 **2026-10-14 — run 2, `confirmed`.** The same pane and window, every step again, unchanged and green.
+
+**2026-10-14 — `automated`.** `e2e/help/manual.spec.ts`, translated from this file, green in the runner's
+targeted run 20261015T005652Z-31201 on a98ef35. Its first run (20261015T005213Z-17172) found the router's
+hidden copy of the page before — two `#fig-list` after `page.goto` — and both the screen and the spec now take
+the visible one (FU-330).

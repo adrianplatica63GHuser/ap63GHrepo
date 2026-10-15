@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-14, FU-329 filed — 329 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
+As of 2026-10-14, FU-331 filed — 331 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 75 | 73 | 16 | 183 |
+| open | 19 | 75 | 75 | 16 | 185 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 57 | 31 | 3 | 128 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 139 | 109 | 21 | 329 |
+| **total** | 60 | 139 | 111 | 21 | 331 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -413,3 +413,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-327 | 2026-10-12 #39.16 runner records Oct 1–11 against Costs.Oct12.jpg; widened 2026-10-13 #39.19 | test gap | Map | Maps, Street View panoramas and address look-ups made by people — and by Claude's hand checks of screens — are counted nowhere: Oct 1–8's bill implies about 1,800 more maps than the tests' records, and „Setări → Costuri" can only forecast people's use as estimates — a flat CA$0.50 a day for maps, about 10 panoramas and 5 look-ups a day for the „Street View" and „Adrese căutate" tiles (#39.19). | src/lib/costs/catalogue.ts — GOOGLE_MAPS_PEOPLE_DAILY_CAD, GOOGLE_STREET_VIEW_PEOPLE_PER_DAY, GOOGLE_ADDRESS_LOOKUPS_PEOPLE_PER_DAY; nothing outside e2e/helpers/test.ts counts a google.maps.Map, a StreetViewPanorama or a Geocoder.geocode | dev | S | open | Count each map, panorama and look-up made in the browser — the counters the e2e fixture already uses (e2e/helpers/google-maps.ts → googleCounterScript) — per day, into cost_record as 'counted', and forecast from the count instead of the estimates. | 2026-10-13 |
 | FU-328 | 2026-10-12 #39.17 0bfda81 | recommendation | AI | A paid AI read is recorded without its tokens, so „Costuri → AI" can only price every read at an upper bound (30,000 in, 4,000 out at Sonnet 4.6, US$0.15); the Messages API's `usage` is in every answer and nothing reads it. | src/lib/ai/paid-reads.ts:24 — recordPaidRead({route, model, success}); src/lib/costs/catalogue.ts — AI_READ_UPPER | dev | S | open | A migration adding input_tokens/output_tokens to ai_paid_read, filled from `usage` at the five call sites; the tile then prices each read at its own model's price. | 2026-10-12 |
 | FU-329 | 2026-10-12 #39.17 0bfda81 | next-slice idea | Tooling & CI | No provider's own billing figures are connected — no Anthropic Admin key, Google billing export, Supabase, Vercel or GitHub token exists — so the runner's daily cost collection the 39.17 header proposed has nothing to collect; every figure is counted or entered. | .env.example — the commented „Setări → Costuri" keys; src/lib/costs/catalogue.ts — PROVIDER_FACTS[*].liveKey | dev | M | open | Once Adrian adds a key: a runner sequence that reads it daily into cost_record as 'live', and the key added to DRILL_BLANKED_KEYS (scripts/backup/rules.ts). | 2026-10-12 |
+| FU-330 | 2026-10-14 #39.37 20261015T005213Z-17172 | debt | UI shell | The router keeps the page before mounted and hidden, ids and all, so after a navigation between two addresses of one screen the document holds two elements with the same id; a `document.getElementById` — three of them move focus — can then act on the hidden copy (the manual's scroll did, before a98ef35). | runner 20261015T005213Z-17172 (two `#fig-list` after `page.goto`); `document.getElementById` in src/app/admin/import/_components/import-structure-stage.tsx, src/app/documents/_components/document-form.tsx, src/app/interactions/_components/log-tile.tsx | dev | S | open | Unverified: whether those three reach a screen reopened at another address. Fix: resolve ids inside the component's own root, as manual-view.tsx does since a98ef35. | 2026-10-14 |
+| FU-331 | 2026-10-14 #39.37 runner 20261015T005146Z-9096, 20261015T005201Z-18874 | tooling | Tooling & CI | A runner request takes at most 50 `only` entries and 4,096 bytes, so a slice whose targeted list is longer — #39.37's was 134: three e2e specs, and the jest suites that read the message files or walk every source file — needs several runs on one commit, each restarting lint and tsc. | scripts/test-runner/protocol.ts — MAX_ONLY_ENTRIES and the request's size cap | dev | S | open | Raise both caps, or let `only` name a directory or a glob; lint and tsc run once a request either way. | 2026-10-14 |
