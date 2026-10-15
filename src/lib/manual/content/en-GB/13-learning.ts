@@ -1,11 +1,11 @@
 /**
- * Manual, en-GB, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42, 13.4 in #39.43; 13.5 is a heading until 39.45 writes it. (Slice #39.37)
+ * Manual, en-GB, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42, 13.4 in #39.43, 13.5 in #39.45. (Slice #39.37)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 13 Help and learning {#learning}
 
-This chapter describes what helps you learn the application. The first four sections, about the manual, the „?” help, the skills map and the quizzes, are written; the others are written as their screens are ready.
+This chapter describes what helps you learn the application: the manual, the „?” help, the skills map, the quizzes and „Întreabă” (ask), which answers a question from the manual.
 
 ## 13.1 The user manual {#learning-manual}
 
@@ -91,4 +91,26 @@ After a failed quiz the right answers are not shown: you would carry them into t
 A failed quiz can be taken again after three days, counted from the failed attempt. The date and hour are given in Toronto time, on the result page and on the skill's page.
 
 ## 13.5 Ask {#learning-ask}
+
+„Întreabă” (ask) answers, from this manual, a question written in your own words. Open it from the sidebar, „Ajutor și învățare” → „Întreabă”; the same box also stands at the top of „Manual de utilizare” (the user manual).
+
+### 13.5.1 The search {#learning-ask-search}
+
+Type the question — for example „how do I add a person?” — and press Enter or „Caută” (search). At once, at most five sections of the manual that answer it appear, the best match first. Each shows its number and title, its chapter and the sentences that match the question, with the words found marked. Press the title to read the section in the manual.
+
+- The search sends nothing outside the application and costs nothing.
+- Diacritics do not matter: „adaug”, „adăug” and „adaugă” find the same sections.
+- The beginning of a word is enough: „adaug” also finds „adăugarea”.
+- Small words, such as „how”, „where” or „a”, are not searched for.
+
+If no section matches, the application says „The manual does not seem to answer this question.” Try other words, or look in „Cuprins” (contents) (section [[learning-manual]]).
+
+### 13.5.2 „Răspuns AI” {#learning-ask-ai}
+
+Below the sections found stands „Răspuns AI” (AI answer). Only if you press it, the application sends the question and those sections to Claude, which writes from them an answer of at most three sentences. The answer names the sections it rests on, for example „§3.2”; press the number to read the section.
+
+- Claude receives only the question and the text of the sections found — nothing from the archive's records, and no earlier questions.
+- If the sections do not answer the question, the application says the manual does not say, instead of guessing.
+- An AI answer is a paid read, under a cent. „Setări” → „Costuri” → „AI” counts it with the other paid reads (section [[admin-settings-costs]]).
+- The answer is written by AI: check the section it names before relying on it.
 `;

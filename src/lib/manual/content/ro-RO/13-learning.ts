@@ -1,11 +1,11 @@
 /**
- * Manual, ro-RO, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42, 13.4 in #39.43; 13.5 is a heading until 39.45 writes it. (Slice #39.37)
+ * Manual, ro-RO, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42, 13.4 in #39.43, 13.5 in #39.45. (Slice #39.37)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 13 Ajutor și învățare {#learning}
 
-Capitolul acesta descrie ce vă ajută să învățați aplicația. Primele patru secțiuni, despre manual, despre ajutorul „?”, despre harta competențelor și despre chestionare, sunt scrise; celelalte se scriu pe măsură ce ecranele lor sunt gata.
+Capitolul acesta descrie ce vă ajută să învățați aplicația: manualul, ajutorul „?”, harta competențelor, chestionarele și „Întreabă”, care răspunde din manual la o întrebare.
 
 ## 13.1 Manualul de utilizare {#learning-manual}
 
@@ -91,4 +91,26 @@ După un chestionar picat, răspunsurile bune nu se arată: le-ați lua cu dumne
 Un chestionar picat se poate relua după trei zile, socotite de la încercarea picată. Data și ora sunt spuse în ora Toronto, pe pagina rezultatului și pe pagina competenței.
 
 ## 13.5 Întreabă {#learning-ask}
+
+„Întreabă” răspunde din acest manual la o întrebare scrisă cu cuvintele dumneavoastră. Îl deschideți din bara laterală, „Ajutor și învățare” → „Întreabă”; aceeași căsuță stă și în capul „Manual de utilizare”.
+
+### 13.5.1 Căutarea {#learning-ask-search}
+
+Scrieți întrebarea — de exemplu „cum adaug o persoană?” — și apăsați Enter sau „Caută”. Apar pe loc cel mult cinci secțiuni ale manualului care răspund, cea mai potrivită întâi. Fiecare arată numărul și titlul ei, capitolul ei și propozițiile care se potrivesc cu întrebarea, cu cuvintele găsite marcate. Apăsați titlul ca să citiți secțiunea în manual.
+
+- Căutarea nu trimite nimic în afara aplicației și nu costă nimic.
+- Diacriticele nu contează: „adaug”, „adăug” și „adaugă” găsesc aceleași secțiuni.
+- Ajunge începutul unui cuvânt: „adaug” găsește și „adăugarea”.
+- Cuvintele mici, ca „cum”, „unde” sau „o”, nu se caută.
+
+Dacă nicio secțiune nu se potrivește, aplicația spune „Manualul nu pare să răspundă la întrebarea aceasta.” Încercați alte cuvinte sau căutați în „Cuprins” (secțiunea [[learning-manual]]).
+
+### 13.5.2 „Răspuns AI” {#learning-ask-ai}
+
+Sub secțiunile găsite stă „Răspuns AI”. Numai dacă îl apăsați, aplicația trimite întrebarea și aceste secțiuni la Claude, care scrie din ele un răspuns de cel mult trei propoziții. Răspunsul numește secțiunile pe care se sprijină, de exemplu „§3.2”; apăsați numărul ca să citiți secțiunea.
+
+- Claude primește doar întrebarea și textul secțiunilor găsite — nimic din înregistrările arhivei și nici întrebările de dinainte.
+- Dacă secțiunile nu răspund la întrebare, aplicația spune că manualul nu spune, în loc să ghicească.
+- Un răspuns AI este o citire plătită, sub un cent. „Setări” → „Costuri” → „AI” o numără cu celelalte citiri plătite (secțiunea [[admin-settings-costs]]).
+- Răspunsul este scris de AI: verificați în secțiunea numită înainte să vă bazați pe el.
 `;
