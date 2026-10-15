@@ -5,7 +5,7 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-15 |
 
 ## What this proves
@@ -48,6 +48,8 @@ Nothing.
 Nothing is written, and nothing is paid: the search sends nothing out.
 
 ## Notes from the runs
+
+**2026-10-15 — `automated` (Slice #39.45).** Its spec, `e2e/help/ask.spec.ts`, green in the test runner's e2e runs `20261015T140013Z-31349` and `20261015T140530Z-24594`.
 
 **2026-10-15, second run (Slice #39.45) — `confirmed`: the file held line for line.** Driven again from the
 dashboard, by script in the browser pane, every step checked against this file: unchanged.
