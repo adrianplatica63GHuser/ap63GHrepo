@@ -206,18 +206,18 @@
           "section": "documents-dependent-inheritance",
           "ro": {
             "question": "Gheorghe Ionescu a murit, iar fiicele lui, Maria și Elena, au primit un certificat de moștenitor. Certificatul este salvat. Cum le pune Ciprian pe toate trei ca părți?",
-            "explanation": "În „Părți”, „+ Adaugă parte” deschide „Adaugă parte la certificat”: se alege o singură persoană odată, apoi „Defunct” sau „Moștenitor” la „Rol”, și „Adaugă parte”."
+            "explanation": "Pe fișa „Părți” a certificatului, „Asociază persoană” deschide „Adaugă parte la certificat”: se alege o singură persoană odată, apoi „Defunct” sau „Moștenitor” la „Rol”, și „Adaugă parte”."
           },
           "en": {
             "question": "Gheorghe Ionescu has died, and his daughters, Maria and Elena, have received a certificate of inheritance. The certificate is saved. How does Ciprian put all three on it as parties?",
-            "explanation": "In „Părți”, „+ Adaugă parte” opens „Adaugă parte la certificat”: one person is chosen at a time, then „Defunct” or „Moștenitor” under „Rol”, and „Adaugă parte”."
+            "explanation": "On the certificate's „Parties” tile, „Associate person” opens „Add Party to Certificate”: one person is chosen at a time, then „Defunct” or „Moștenitor” under „Role”, and „Add Party”."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Cu „Asociază persoană” le bifează pe toate trei deodată, cu rolul „Moștenitor”.",
-              "en": "With „Asociază persoană” he ticks all three at once, with the role „Moștenitor”."
+              "ro": "Cu „Asociază persoană” de pe „Legături” le bifează pe toate trei deodată, cu rolul „Moștenitor”.",
+              "en": "With „Associate person” on „Links” he ticks all three at once, with the role „Moștenitor”."
             },
             {
               "id": "o2",
@@ -228,8 +228,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Cu „+ Adaugă parte”, pe rând: Gheorghe ca „Defunct”, apoi fiecare fiică ca „Moștenitor”.",
-              "en": "With „+ Adaugă parte”, one at a time: Gheorghe as „Defunct”, then each daughter as „Moștenitor”."
+              "ro": "Cu „Asociază persoană” din „Părți”, pe rând: Gheorghe ca „Defunct”, apoi fiecare fiică ca „Moștenitor”.",
+              "en": "With „Associate person” on „Parties”, one at a time: Gheorghe as „Defunct”, then each daughter as „Moștenitor”."
             }
           ]
         },
@@ -238,24 +238,24 @@
           "section": "documents-example-inheritance",
           "ro": {
             "question": "Pe același certificat, Maria și Elena moștenesc câte jumătate. Unde scrie Ciprian cotele lor?",
-            "explanation": "Pe „Legături”, moștenitorii au „Cotă”: apăsați „Cotă” la fiecare moștenitor și scrieți cota lui. Defunctul nu are „Cotă”."
+            "explanation": "Moștenitorii dețin o cotă, așa că sunt părțile certificatului și stau în „Părți”, fiecare cu „Cotă”: apăsați „Cotă” la fiecare și scrieți cota. Defunctul, pe „Legături”, nu are „Cotă”."
           },
           "en": {
             "question": "On the same certificate, Maria and Elena inherit half each. Where does Ciprian type their shares?",
-            "explanation": "On „Legături” the heirs have „Cotă”: press „Cotă” on each heir and type in their share. The deceased has no „Cotă”."
+            "explanation": "The heirs hold a share, so they are the certificate's parties and stand in „Parties”, each with „Share”: press „Share” on each and type in the share. The deceased, on „Links”, has no „Share”."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "În tabelul din „Părți”, într-o coloană de lângă „Rol”.",
-              "en": "In the „Părți” table, in a column beside „Rol”."
+              "ro": "Pe ecranul fiecărei moștenitoare, în fișa „Identitate”.",
+              "en": "On each heir's own screen, in the „Identity” tile."
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "Pe „Legături”, cu „Cotă” pe rândul fiecărei moștenitoare.",
-              "en": "On „Legături”, with „Cotă” on each heir's row."
+              "ro": "În „Părți”, cu „Cotă” pe rândul fiecărei moștenitoare.",
+              "en": "In „Parties”, with „Share” on each heir's row."
             },
             {
               "id": "o3",
@@ -698,12 +698,12 @@
           "id": "b7",
           "section": "documents-dependent-inheritance",
           "ro": {
-            "question": "Pe „Legături” al unui certificat, Ciprian vede „Cotă” la cele două moștenitoare, dar nu și la defunct. Ce face?",
-            "explanation": "Așa trebuie să fie: pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu."
+            "question": "Pe un certificat, Ciprian vede cele două moștenitoare în „Părți”, fiecare cu „Cotă”, iar defunctul pe „Legături”, fără „Cotă”. Ce face?",
+            "explanation": "Așa trebuie să fie: moștenitorii dețin o cotă și stau în „Părți”, cu „Cotă”; defunctul nu deține cotă, așa că stă pe „Legături”, fără „Cotă”."
           },
           "en": {
-            "question": "On a certificate's „Legături”, Ciprian sees „Cotă” on the two heirs but not on the deceased. What does he do?",
-            "explanation": "That is how it should be: on „Legături” the heirs have „Cotă” and the deceased does not."
+            "question": "On a certificate, Ciprian sees the two heirs in „Parties”, each with „Share”, and the deceased on „Links”, with no „Share”. What does he do?",
+            "explanation": "That is how it should be: the heirs hold a share and stand in „Parties”, with „Share”; the deceased holds none, so he stands on „Links”, with no „Share”."
           },
           "options": [
             {
@@ -721,8 +721,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Nimic: defunctul nu are „Cotă”, doar moștenitorii au.",
-              "en": "Nothing: the deceased has no „Cotă”, only the heirs do."
+              "ro": "Nimic: defunctul nu deține cotă, așa că nu e parte; doar moștenitorii au „Cotă”.",
+              "en": "Nothing: the deceased holds no share, so he is not a party; only the heirs have „Share”."
             },
             {
               "id": "o4",
@@ -737,24 +737,24 @@
           "section": "documents-dependent-inheritance",
           "ro": {
             "question": "Ciprian a adăugat-o din greșeală pe Elena, o moștenitoare, cu rolul „Defunct”. Cum repară?",
-            "explanation": "În „Părți”, „Elimină” scoate o parte; o adăugați apoi din nou cu „+ Adaugă parte”, alegând la „Rol” „Moștenitor”."
+            "explanation": "Cu rolul „Defunct”, Elena nu deține cotă, așa că stă pe „Legături”. „Dezasociază” scoate legătura selectată; o adăugați apoi din nou cu „Asociază persoană” din „Părți”, alegând „Moștenitor”."
           },
           "en": {
             "question": "Ciprian has by mistake added Elena, an heir, with the role „Defunct”. How does he put it right?",
-            "explanation": "In „Părți”, „Elimină” (remove) takes a party out; you then add her again with „+ Adaugă parte”, choosing „Moștenitor” under „Rol”."
+            "explanation": "With the role „Defunct”, Elena holds no share, so she stands on „Links”. „Dissociate” removes the selected link; you then add her again with „Associate person” on „Parties”, choosing „Moștenitor”."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "În „Părți”, „Elimină” pe rândul ei, apoi „+ Adaugă parte” cu „Moștenitor”.",
-              "en": "In „Părți”, „Elimină” on her row, then „+ Adaugă parte” with „Moștenitor”."
+              "ro": "Pe „Legături”, îi alege rândul și apasă „Dezasociază”, apoi o adaugă din nou, din „Părți”, ca „Moștenitor”.",
+              "en": "On „Links”, he selects her row and presses „Dissociate”, then adds her again, from „Parties”, as „Moștenitor”."
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Schimbă rolul direct în celula „Rol” din tabelul „Părți”, din „Defunct” în „Moștenitor”.",
-              "en": "He changes the role directly in the „Rol” cell of the „Părți” table, from „Defunct” to „Moștenitor”."
+              "ro": "Îi schimbă rolul direct pe rândul ei, din „Defunct” în „Moștenitor”, fără să o scoată.",
+              "en": "He changes her role directly on her row, from „Defunct” to „Moștenitor”, without removing her."
             },
             {
               "id": "o3",

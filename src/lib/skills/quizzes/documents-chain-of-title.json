@@ -206,11 +206,11 @@
           "section": "documents-dependent-inheritance",
           "ro": {
             "question": "Certificatul din 2009 spune că Maria și Andrei moștenesc de la Gheorghe Ionescu câte jumătate din teren. Ce trebuie să arate „Legături” al certificatului ca lanțul să aibă cotele?",
-            "explanation": "Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu: Maria și Andrei au fiecare cota 1/2, iar Gheorghe, „Defunct”, rămâne fără cotă."
+            "explanation": "Moștenitorii au „Cotă” — în „Părți” —, iar defunctul, pe „Legături”, nu are: Maria și Andrei au fiecare cota 1/2, iar Gheorghe, „Defunct”, rămâne fără cotă."
           },
           "en": {
             "question": "The 2009 certificate says Maria and Andrei each inherit half the land from Gheorghe Ionescu. What should the certificate's „Legături” show for the chain to have the shares?",
-            "explanation": "On „Legături” the heirs have „Cotă” and the deceased does not: Maria and Andrei each have the share 1/2, and Gheorghe, „Defunct”, stays without a share."
+            "explanation": "The heirs have „Share” — in „Parties” — and the deceased, on „Links”, has none: Maria and Andrei each have the share 1/2, and Gheorghe, „Defunct”, stays without a share."
           },
           "options": [
             {

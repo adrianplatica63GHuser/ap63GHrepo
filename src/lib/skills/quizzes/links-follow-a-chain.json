@@ -605,24 +605,24 @@
           "section": "documents-dependent-inheritance",
           "ro": {
             "question": "Pe certificatul de moștenitor al lui Andrei Munteanu, Ciprian vrea să afle ce cotă a primit Elena, una dintre moștenitoare. Unde se uită?",
-            "explanation": "Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu; „Părți” arată doar un tabel cu „Nume” și „Rol”."
+            "explanation": "Moștenitorii dețin o cotă și stau în „Părți”, fiecare cu „Cotă”; defunctul stă pe „Legături”, fără cotă."
           },
           "en": {
             "question": "On Andrei Munteanu's certificate of inheritance, Ciprian wants to find out what share Elena, one of the heirs, received. Where does he look?",
-            "explanation": "On „Legături”, the heirs have „Cotă” (share), and the deceased does not; „Părți” shows only a table with „Nume” and „Rol”."
+            "explanation": "The heirs hold a share and stand in „Parties”, each with „Share”; the deceased stands on „Links”, with no share."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "În tabelul „Părți” al certificatului, la „Rol”",
-              "en": "In the certificate's „Părți” table, under „Rol”"
+              "ro": "În „Identificarea actului” al certificatului, la „Note extinse”",
+              "en": "In the certificate's „Document identification”, under „Enhanced Notes”"
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "Pe „Legături” al certificatului, la „Cotă” de pe rândul Elenei",
-              "en": "On the certificate's „Legături”, at „Cotă” on Elena's row"
+              "ro": "În „Părți” al certificatului, la „Cotă” de pe rândul Elenei",
+              "en": "In the certificate's „Parties”, at „Share” on Elena's row"
             },
             {
               "id": "o3",

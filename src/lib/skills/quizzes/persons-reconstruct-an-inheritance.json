@@ -205,12 +205,12 @@
           "id": "a6",
           "section": "documents-dependent-inheritance",
           "ro": {
-            "question": "Ciprian înregistrează certificatul de moștenitor după Gheorghe Munteanu, cu moștenitorii Elena și Andrei. Cum îi trece în „Părți”?",
-            "explanation": "„+ Adaugă parte” deschide „Adaugă parte la certificat”, unde se alege o singură persoană odată, cu rolul „Defunct” sau „Moștenitor”."
+            "question": "Ciprian înregistrează certificatul de moștenitor după Gheorghe Munteanu, cu moștenitorii Elena și Andrei. Cum îi trece pe toți trei pe certificat?",
+            "explanation": "Pe fișa „Părți”, „Asociază persoană” deschide „Adaugă parte la certificat”, unde se alege o singură persoană odată, cu rolul „Defunct” sau „Moștenitor”."
           },
           "en": {
-            "question": "Ciprian is recording the certificate of inheritance after Gheorghe Munteanu, with the heirs Elena and Andrei. How does he enter them in „Părți” (parties)?",
-            "explanation": "„+ Adaugă parte” (add party) opens „Adaugă parte la certificat” (add a party to the certificate), where one person is chosen at a time, with the role „Defunct” (deceased) or „Moștenitor” (heir)."
+            "question": "Ciprian is recording the certificate of inheritance after Gheorghe Munteanu, with the heirs Elena and Andrei. How does he put all three on the certificate?",
+            "explanation": "On the „Parties” tile, „Associate person” opens „Add Party to Certificate”, where one person is chosen at a time, with the role „Defunct” or „Moștenitor”."
           },
           "options": [
             {
@@ -222,8 +222,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Câte unul, cu „+ Adaugă parte”: Gheorghe ca „Defunct”, apoi fiecare ca „Moștenitor”.",
-              "en": "One at a time, with „+ Adaugă parte”: Gheorghe as „Defunct”, then each as „Moștenitor”."
+              "ro": "Câte unul, cu „Asociază persoană” din „Părți”: Gheorghe ca „Defunct”, apoi fiecare ca „Moștenitor”.",
+              "en": "One at a time, with „Associate person” on „Parties”: Gheorghe as „Defunct”, then each as „Moștenitor”."
             },
             {
               "id": "o3",
@@ -244,11 +244,11 @@
           "section": "documents-dependent-inheritance",
           "ro": {
             "question": "Pe „Legături” ale certificatului, Ciprian vrea să scrie cota lui Gheorghe Munteanu, defunctul, dar pe rândul lui nu găsește „Cotă”. Ce s-a întâmplat?",
-            "explanation": "Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu; cota se scrie doar la moștenitori."
+            "explanation": "Defunctul nu deține cotă, așa că stă pe „Legături”, fără „Cotă”; moștenitorii au „Cotă”, în „Părți”."
           },
           "en": {
             "question": "On the certificate's „Legături”, Ciprian wants to write the share of Gheorghe Munteanu, the deceased, but finds no „Cotă” (share) on his row. What has happened?",
-            "explanation": "On „Legături”, the heirs have „Cotă” and the deceased does not; the share is written only for the heirs."
+            "explanation": "The deceased holds no share, so he stands on „Links”, with no „Share”; the heirs have „Share”, in „Parties”."
           },
           "options": [
             {
@@ -272,8 +272,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Cota defunctului se scrie în „Părți”, în tabelul cu „Nume” și „Rol”.",
-              "en": "The deceased's share is written in „Părți”, in the table with „Nume” and „Rol”."
+              "ro": "Cota defunctului se scrie în „Părți”, după ce i se dă rolul „Moștenitor”.",
+              "en": "The deceased's share is written in „Parties”, once he is given the role „Moștenitor”."
             }
           ]
         },
@@ -319,11 +319,11 @@
           "id": "a9",
           "section": "documents-parties",
           "ro": {
-            "question": "Pe „Legături” ale certificatului, „Cotă” are pe rândul Elenei contur portocaliu, iar pe rândul lui Andrei este plin portocaliu. Ce îi spune asta lui Ciprian?",
+            "question": "În „Părți” ale certificatului, „Cotă” are pe rândul Elenei contur portocaliu, iar pe rândul lui Andrei este plin portocaliu. Ce îi spune asta lui Ciprian?",
             "explanation": "Un „Cotă” plin portocaliu este încă gol; cu contur portocaliu are valori. Cota lui Andrei nu a fost scrisă încă."
           },
           "en": {
-            "question": "On the certificate's „Legături”, „Cotă” has an orange outline on Elena's row and is solid orange on Andrei's. What does that tell Ciprian?",
+            "question": "In the certificate's „Parties”, „Share” has an orange outline on Elena's row and is solid orange on Andrei's. What does that tell Ciprian?",
             "explanation": "A solid orange „Cotă” is still empty; with an orange outline it has values. Andrei's share has not been written yet."
           },
           "options": [
@@ -666,12 +666,12 @@
           "id": "b6",
           "section": "documents-dependent-inheritance",
           "ro": {
-            "question": "În „Părți” ale certificatului, Ciprian a adăugat-o din greșeală pe Elena Munteanu cu rolul „Defunct”, în loc de „Moștenitor”. Cum îndreaptă?",
-            "explanation": "„Părți” arată un tabel cu „Nume” și „Rol”, iar „Elimină” scoate o parte; apoi o adăugați din nou cu „+ Adaugă parte”, cu rolul potrivit."
+            "question": "Pe certificat, Ciprian a adăugat-o din greșeală pe Elena Munteanu cu rolul „Defunct”, în loc de „Moștenitor”. Cum repară?",
+            "explanation": "Ca „Defunct”, Elena nu deține cotă și stă pe „Legături”; acolo „Dezasociază” scoate legătura selectată, iar apoi o adăugați din nou cu „Asociază persoană” din „Părți”, cu rolul potrivit."
           },
           "en": {
-            "question": "In the certificate's „Părți”, Ciprian added Elena Munteanu by mistake with the role „Defunct” instead of „Moștenitor”. How does he put it right?",
-            "explanation": "„Părți” shows a table of „Nume” and „Rol”, and „Elimină” (remove) takes a party out; then you add her again with „+ Adaugă parte”, with the right role."
+            "question": "On the certificate, Ciprian added Elena Munteanu by mistake with the role „Defunct” instead of „Moștenitor”. How does he put it right?",
+            "explanation": "As „Defunct”, Elena holds no share and stands on „Links”; there „Dissociate” removes the selected link, and you then add her again with „Associate person” on „Parties”, with the right role."
           },
           "options": [
             {
@@ -689,8 +689,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Apasă „Elimină” pe rândul ei, apoi o adaugă din nou ca „Moștenitor”.",
-              "en": "He presses „Elimină” on her row, then adds her again as „Moștenitor”."
+              "ro": "O dezasociază de pe „Legături”, apoi o adaugă din nou, din „Părți”, ca „Moștenitor”.",
+              "en": "He dissociates her on „Links”, then adds her again, from „Parties”, as „Moștenitor”."
             },
             {
               "id": "o4",
@@ -905,8 +905,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "În tabelul „Părți”, în coloana de lângă „Rol”.",
-              "en": "In the „Părți” table, in the column beside „Rol”."
+              "ro": "Pe „Legături” ale certificatului, pe rândul lui Gheorghe.",
+              "en": "On the certificate's „Links”, on Gheorghe's row."
             },
             {
               "id": "o2",
@@ -917,8 +917,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Pe „Legături” ale certificatului, ținând mouse-ul pe „Cotă” la Andrei.",
-              "en": "On the certificate's „Legături”, holding the mouse over „Cotă” on Andrei's row."
+              "ro": "În „Părți” ale certificatului, ținând mouse-ul pe „Cotă” la Andrei.",
+              "en": "In the certificate's „Parties”, holding the mouse over „Share” on Andrei's row."
             },
             {
               "id": "o4",
