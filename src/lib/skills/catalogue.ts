@@ -217,8 +217,9 @@ export const SKILLS: readonly Skill[] = [
     predecessors: [],
     // #39.37: + the manual's screen and its case.
     // #39.42: and the skills map with its quiz page — the help screens it is practised on; the skill is unchanged.
+    // #39.43: and the quiz itself, TC-SKILL-02.
     screens: ["dashboard", "manual", "skills-map", "skill-quiz"],
-    cases: ["TC-HELP-01", "TC-HELP-02", "TC-SKILL-01"],
+    cases: ["TC-HELP-01", "TC-HELP-02", "TC-SKILL-01", "TC-SKILL-02"],
     manual: ["start-help", "learning-help", "learning-manual", "intro-how-to-read"],
   },
   {
