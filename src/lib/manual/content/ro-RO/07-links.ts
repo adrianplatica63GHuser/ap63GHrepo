@@ -68,7 +68,7 @@ Pe rânduri pot sta câteva butoane:
 - „Previzualizare” o deschide alături, fără să plecați de pe ecran (secțiunea [[start-preview]]).
 - „Cotă”, portocaliu, ține cota-parte a unei persoane pe un act (secțiunea [[documents-parties]]).
 
-Sub rânduri stau „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”; pe un act, după ele, și „Înscrisuri citate” (secțiunea [[links-references]]). Pe un contract de vânzare-cumpărare, vânzătorii și cumpărătorii stau în fișa „Părți”, grupați pe rol, iar „Legături” ține celelalte legături ale contractului.
+Sub rânduri stau „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”; pe un act, după ele, și „Înscrisuri citate” (secțiunea [[links-references]]). Pe un contract de vânzare-cumpărare, un act adițional sau un certificat de moștenitor, părțile stau în fișa „Părți”, grupate pe rol, iar „Legături” ține celelalte legături ale actului și, deasupra lor, un rând care spune câte părți sunt în „Părți” (secțiunea [[documents-parties]]).
 
 ![7.2 Fișa „Legături” a unei înregistrări](links-related.png){#fig-links-related}
 

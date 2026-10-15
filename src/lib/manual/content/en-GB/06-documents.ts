@@ -88,7 +88,9 @@ The document's classification, tags, groups and stamps sit on the tiles „Class
 
 ## 6.5 Parties, roles and shares {#documents-parties}
 
-The people, properties and documents linked to a document sit on the tile „Links” (section [[links-related]]): natural persons first, then judicial persons, properties and documents, each row on a single line, with the icon of its kind. A person reads „Name (Role)”, a document „Short label (Type)”. On a document's row, „Relationship” shows how the two documents are linked. Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”, which removes the selected row's link (section [[links-associate]]). „Cited instruments” opens the panel of the deeds the document cites (section [[links-references]]). On a sale contract, the sellers and buyers stand, with their role and share, in the „Parties” tile (section [[documents-sale]]).
+The people, properties and documents linked to a document sit on the tile „Links” (section [[links-related]]): natural persons first, then judicial persons, properties and documents, each row on a single line, with the icon of its kind. A person reads „Name (Role)”, a document „Short label (Type)”. On a document's row, „Relationship” shows how the two documents are linked. Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”, which removes the selected row's link (section [[links-associate]]). „Cited instruments” opens the panel of the deeds the document cites (section [[links-references]]). On a document with a „Parties” tile, the parties stand there (below).
+
+**The „Parties” tile.** The sale contract, the addendum and the certificate of inheritance have, besides „Links”, the tile „Parties”, with the same rule on all three. A party is a person whose role holds a share on that type of document: a contract's seller and buyer, a certificate's heir. While „Parties” is ticked, the parties stand there only, grouped under their role's name, each with its „Share”, and „Links” holds the document's other links — the notary, a certificate's deceased — and, above them, a line saying how many parties are in „Parties”, for instance „The document's parties (3) are in the “Parties” tile.”. Press „Parties” in that line to reach the tile. If you untick „Parties”, the parties go back to „Links”. So each link has one place where it is seen and from which it is removed.
 
 **The role** says in what capacity the person appears in the document: „Vânzător” (seller), „Cumpărător” (buyer), „Notar” (notary), „Reprezentant legal / Mandatar” (legal representative / proxy). It is chosen under „Role”, on the screen „Associate Person”, and the roles offered depend on the document's type.
 
@@ -122,7 +124,7 @@ The form's tiles and their panels:
 
 „[Taxe și onorarii]” holds „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” and „Taxă timbru și publicitate”.
 
-**The „Parties” tile** holds the sellers and the buyers; it is not shown at first, so tick it. The parties are grouped under their role's name — „Vânzător” first, then „Cumpărător” —, each row with its „Share” (section [[documents-parties]]). A contract with no parties reads „No party linked yet. Link the sellers and the buyers with their role and share.”. „Associate person” adds a party: search for the person by „Name” or „Code”, choose „Role”, tick the row and press „Associate Selected”. „Dissociate” removes the selected party. The contract's other people, the notary for instance, sit on „Links”, and the properties sold are linked from there too.
+**The „Parties” tile** holds the sellers and the buyers, by the rule in section [[documents-parties]]. The parties are grouped under their role's name — „Vânzător” first, then „Cumpărător” —, each row with its „Share” (section [[documents-parties]]). A contract with no parties reads „No party linked yet. Link the parties with their role and share.”. „Associate person” adds a party: search for the person by „Name” or „Code”, choose „Role”, tick the row and press „Associate Selected”. „Dissociate” removes the selected party. The contract's other people, the notary for instance, sit on „Links”, and the properties sold are linked from there too.
 
 **„Obiectul vânzării”** says what is being sold. „Descrierea obiectului” (description of the object) is composed from the contract's properties, its parties and „Scop vânzare” (purpose of the sale) — for example „2 imobile, 7.400 mp în total” (2 properties, 7,400 m² in all). It fills itself in when you open a contract with the field empty. After you link a new property, press „Recompose” to have it written again, then „Save”.
 
@@ -148,7 +150,7 @@ On the contract, the preliminary contract shows in the form too: in „[Preț]�
 
 ### 6.8.1 The addendum {#documents-dependent-addendum}
 
-An addendum amends another document. It has the tiles „Document identification” (with the notarial names and „Onorariu notarial”), „Actul modificat” (the amended document), „Ce modifică” (what it changes) and „Parties”.
+An addendum amends another document. It has the tiles „Document identification” (with the notarial names and „Onorariu notarial”), „Actul modificat” (the amended document), „Ce modifică” (what it changes) and „Parties”, which holds, as on the contract, the sellers and the buyers (section [[documents-parties]]).
 
 „Actul modificat” links the addendum to the contract it amends. Save the addendum first, then press „Link the amended deed”, search under „Search for the amended deed” by label or number, and press „Link “…”” on the right document. The tile then shows the linked document, its type and „Open”; „Unlink” undoes the link.
 
@@ -158,13 +160,13 @@ If the amended document is not in the archive, the tile reads „The amended dee
 
 ### 6.8.2 The certificate of inheritance {#documents-dependent-inheritance}
 
-The „Document identification” of a certificate of inheritance holds „Notary Office”, „Certificate of Inheritance No.” and „Issue date”. The deceased and the heirs are the certificate's parties, in „Parties”:
+The „Document identification” of a certificate of inheritance holds „Notary Office”, „Certificate of Inheritance No.” and „Issue date”. The deceased and the heirs are added from the „Parties” tile:
 
-1. Press „+ Add Party”. „Add Party to Certificate” opens.
+1. Press „Associate person”. „Add Party to Certificate” opens.
 2. Search for the person by „Name” or „Code” and choose them — here one person is chosen at a time.
 3. Choose „Defunct” (deceased) or „Moștenitor” (heir) under „Role” and press „Add Party”.
 
-„Parties” shows a table of „Name” and „Role”; „Remove” takes a party out. On „Links” the heirs have „Share” and the deceased does not. Each person sees the certificate among their own links, with their role.
+The certificate follows the contract's rule (section [[documents-parties]]): the heirs hold a share, so they are its parties and stand in „Parties”, under „Moștenitor”, each with their „Share”; the deceased holds none, so he stands on „Links”, with the notary. „Dissociate” removes the selected link. Each person sees the certificate among their own links, with their role.
 
 ## 6.9 Examples and use cases {#documents-examples}
 
@@ -192,8 +194,8 @@ The seller and the buyer of a plot in Bragadiru first signed a preliminary contr
 A person has died, and two heirs have received a certificate of inheritance.
 
 1. Add a document of the type „Certificat de Moștenitor” and save it (section [[documents-add]]).
-2. In „Parties”, add the deceased with the role „Defunct”, then each heir with the role „Moștenitor” (section [[documents-dependent-inheritance]]).
-3. On „Links”, press „Share” on each heir and type in their share (section [[documents-parties]]).
+2. With „Associate person”, on „Parties”, add the deceased with the role „Defunct”, then each heir with the role „Moștenitor” (section [[documents-dependent-inheritance]]). The deceased appears on „Links”, the heirs in „Parties”.
+3. In „Parties”, press „Share” on each heir and type in their share (section [[documents-parties]]).
 
 ### 6.9.4 Find the contracts paid in full {#documents-example-filter}
 

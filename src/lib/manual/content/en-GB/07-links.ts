@@ -68,7 +68,7 @@ A row can carry a few buttons:
 - „Preview” opens it alongside, without leaving the screen (section [[start-preview]]).
 - „Share”, in orange, holds a person's share in a document (section [[documents-parties]]).
 
-Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”; on a document, after them, also „Cited instruments” (section [[links-references]]). On a sale contract, the sellers and buyers stand in the „Parties” tile, grouped by role, and „Links” holds the contract's other links.
+Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”; on a document, after them, also „Cited instruments” (section [[links-references]]). On a sale contract, an addendum or a certificate of inheritance, the parties stand in the „Parties” tile, grouped by role, and „Links” holds the document's other links and, above them, a line saying how many parties are in „Parties” (section [[documents-parties]]).
 
 ![7.2 A record's „Links” tile](links-related.png){#fig-links-related}
 

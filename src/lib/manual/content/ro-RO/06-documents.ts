@@ -88,7 +88,9 @@ Clasificarea, etichetele, grupurile și ștampilele actului stau în fișele „
 
 ## 6.5 Părțile, rolurile și cota-parte {#documents-parties}
 
-Persoanele, proprietățile și actele legate de un act stau în fișa „Legături” (secțiunea [[links-related]]): întâi persoanele fizice, apoi persoanele juridice, proprietățile și actele, fiecare rând pe o singură linie, cu pictograma felului lui. O persoană se citește „Nume (Rol)”, un act „Etichetă scurtă (Tip)”. Pe rândul unui act, „Relația” arată în ce fel sunt legate cele două acte. Sub rânduri sunt „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”, care scoate legătura rândului selectat (secțiunea [[links-associate]]). „Înscrisuri citate” deschide panoul înscrisurilor pe care actul le citează (secțiunea [[links-references]]). Pe un contract de vânzare-cumpărare, vânzătorii și cumpărătorii stau, cu rolul și cota lor, în fișa „Părți” (secțiunea [[documents-sale]]).
+Persoanele, proprietățile și actele legate de un act stau în fișa „Legături” (secțiunea [[links-related]]): întâi persoanele fizice, apoi persoanele juridice, proprietățile și actele, fiecare rând pe o singură linie, cu pictograma felului lui. O persoană se citește „Nume (Rol)”, un act „Etichetă scurtă (Tip)”. Pe rândul unui act, „Relația” arată în ce fel sunt legate cele două acte. Sub rânduri sunt „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”, care scoate legătura rândului selectat (secțiunea [[links-associate]]). „Înscrisuri citate” deschide panoul înscrisurilor pe care actul le citează (secțiunea [[links-references]]). Pe un act cu fișa „Părți”, părțile stau acolo (mai jos).
+
+**Fișa „Părți”.** Contractul de vânzare-cumpărare, actul adițional și certificatul de moștenitor au, pe lângă „Legături”, fișa „Părți”, cu aceeași regulă pe toate trei. O parte este o persoană al cărei rol deține o cotă pe acel tip de act: vânzătorul și cumpărătorul unui contract, moștenitorul unui certificat. Cât timp „Părți” este bifată, părțile stau numai acolo, pe grupe, sub numele rolului, fiecare cu „Cotă” ei, iar „Legături” ține celelalte legături ale actului — notarul, defunctul unui certificat — și, deasupra lor, un rând care spune câte părți sunt în „Părți”, de exemplu „Părțile actului (3) sunt în fișa „Părți”.”. Apăsați „Părți” în acel rând ca să ajungeți la fișă. Dacă debifați „Părți”, părțile se întorc pe „Legături”. Așa, fiecare legătură are un singur loc din care se vede și din care se scoate.
 
 **Rolul** spune în ce calitate apare persoana în act: „Vânzător”, „Cumpărător”, „Notar”, „Reprezentant legal / Mandatar”. Se alege la „Rol”, pe ecranul „Asociere persoană”, iar rolurile oferite depind de tipul actului.
 
@@ -122,7 +124,7 @@ Fișele formularului și panourile lor:
 
 În „[Taxe și onorarii]” stau „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” și „Taxă timbru și publicitate”.
 
-**Fișa „Părți”** ține vânzătorii și cumpărătorii; nu se vede de la început, așa că bifați-o. Părțile stau pe grupe, sub numele rolului — „Vânzător” întâi, apoi „Cumpărător” —, fiecare rând cu „Cotă” lui (secțiunea [[documents-parties]]). Un contract fără părți spune „Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.” „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. „Dezasociază” scoate partea selectată. Celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”, iar proprietățile vândute se leagă tot de acolo.
+**Fișa „Părți”** ține vânzătorii și cumpărătorii, după regula din secțiunea [[documents-parties]]. Părțile stau pe grupe, sub numele rolului — „Vânzător” întâi, apoi „Cumpărător” —, fiecare rând cu „Cotă” lui (secțiunea [[documents-parties]]). Un contract fără părți spune „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.” „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. „Dezasociază” scoate partea selectată. Celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”, iar proprietățile vândute se leagă tot de acolo.
 
 **„Obiectul vânzării”** spune ce se vinde. „Descrierea obiectului” se compune din proprietățile contractului, din părți și din „Scop vânzare” — de exemplu „2 imobile, 7.400 mp în total”. Se completează singură când deschideți un contract cu câmpul gol. După ce legați o proprietate nouă, apăsați „Recompune” ca să fie scrisă din nou, apoi „Salvează”.
 
@@ -148,7 +150,7 @@ Pe contract, antecontractul apare și în formular: în „[Preț]”, „Temei 
 
 ### 6.8.1 Actul adițional {#documents-dependent-addendum}
 
-Un act adițional modifică un alt act. Are fișele „Identificarea actului” (cu numele notariale și „Onorariu notarial”), „Actul modificat”, „Ce modifică” și „Părți”.
+Un act adițional modifică un alt act. Are fișele „Identificarea actului” (cu numele notariale și „Onorariu notarial”), „Actul modificat”, „Ce modifică” și „Părți”, care ține, ca la contract, vânzătorii și cumpărătorii (secțiunea [[documents-parties]]).
 
 „Actul modificat” leagă actul adițional de contractul pe care îl modifică. Salvați întâi actul adițional, apoi apăsați „Leagă actul modificat”, căutați la „Caută actul modificat” după etichetă sau număr și apăsați „Leagă” pe actul potrivit. Fișa arată atunci actul legat, tipul lui și „Deschide”; „Dezleagă” desface legătura.
 
@@ -158,13 +160,13 @@ Dacă actul modificat nu este în arhivă, fișa scrie „Actul modificat nu e �
 
 ### 6.8.2 Certificatul de moștenitor {#documents-dependent-inheritance}
 
-În „Identificarea actului” al unui certificat de moștenitor stau „Notariat”, „Nr. certificat de moștenitor” și „Data eliberării”. Defunctul și moștenitorii sunt părțile certificatului, în „Părți”:
+În „Identificarea actului” al unui certificat de moștenitor stau „Notariat”, „Nr. certificat de moștenitor” și „Data eliberării”. Defunctul și moștenitorii se adaugă de pe fișa „Părți”:
 
-1. Apăsați „+ Adaugă parte”. Se deschide „Adaugă parte la certificat”.
+1. Apăsați „Asociază persoană”. Se deschide „Adaugă parte la certificat”.
 2. Căutați persoana după „Nume” sau „Cod” și alegeți-o — aici se alege o singură persoană odată.
 3. Alegeți la „Rol” „Defunct” sau „Moștenitor” și apăsați „Adaugă parte”.
 
-„Părți” arată un tabel cu „Nume” și „Rol”; „Elimină” scoate o parte. Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu. Fiecare persoană vede certificatul printre legăturile ei, cu rolul ei.
+Certificatul urmează regula contractului (secțiunea [[documents-parties]]): moștenitorii dețin o cotă, așa că sunt părțile lui și stau în „Părți”, sub „Moștenitor”, fiecare cu „Cotă” lui; defunctul nu deține cotă, așa că stă pe „Legături”, cu notarul. „Dezasociază” scoate legătura selectată. Fiecare persoană vede certificatul printre legăturile ei, cu rolul ei.
 
 ## 6.9 Exemple și cazuri de utilizare {#documents-examples}
 
@@ -192,8 +194,8 @@ Vânzătorul și cumpărătorul unui teren din Bragadiru au semnat întâi un an
 O persoană a murit, iar doi moștenitori au primit un certificat de moștenitor.
 
 1. Adăugați un act de tipul „Certificat de Moștenitor” și salvați-l (secțiunea [[documents-add]]).
-2. În „Părți”, adăugați defunctul cu rolul „Defunct”, apoi fiecare moștenitor cu rolul „Moștenitor” (secțiunea [[documents-dependent-inheritance]]).
-3. Pe „Legături”, apăsați „Cotă” la fiecare moștenitor și scrieți cota lui (secțiunea [[documents-parties]]).
+2. Cu „Asociază persoană”, pe „Părți”, adăugați defunctul cu rolul „Defunct”, apoi fiecare moștenitor cu rolul „Moștenitor” (secțiunea [[documents-dependent-inheritance]]). Defunctul apare pe „Legături”, moștenitorii în „Părți”.
+3. În „Părți”, apăsați „Cotă” la fiecare moștenitor și scrieți cota lui (secțiunea [[documents-parties]]).
 
 ### 6.9.4 Găsiți contractele achitate integral {#documents-example-filter}
 
