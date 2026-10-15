@@ -64,3 +64,30 @@ export const MANUAL_SOURCES: Readonly<Record<ManualLocale, readonly { source: st
     { source: "en-GB/13-learning", text: EN13 },
   ],
 };
+
+/**
+ * The Word document's own words, per language (Slice #39.46).
+ *
+ * Each language's download is a document in THAT language whatever the screen's language is — an English manual is
+ * handed out from a Romanian screen too (Ask first 3) — so the document's title, „Cuprins”, „Figura” and its file
+ * name belong to the manual, not to the screen's messages. `manual-labels.test.ts` holds title, contents, figure and
+ * missingFigure equal to each language's `manual.*` message, so the screen and the document cannot drift apart.
+ */
+export const MANUAL_DOCUMENT_LABELS: Readonly<
+  Record<ManualLocale, { title: string; contents: string; figure: string; missingFigure: string; fileName: string }>
+> = {
+  "ro-RO": {
+    title: "Manual de utilizare",
+    contents: "Cuprins",
+    figure: "Figura",
+    missingFigure: "Figura lipsește",
+    fileName: "Manual de utilizare GA40.docx",
+  },
+  "en-GB": {
+    title: "User manual",
+    contents: "Contents",
+    figure: "Figure",
+    missingFigure: "Figure missing",
+    fileName: "GA40 User Manual.docx",
+  },
+};

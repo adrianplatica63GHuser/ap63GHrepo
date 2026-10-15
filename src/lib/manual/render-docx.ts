@@ -2,7 +2,7 @@
  * „Descarcă (Word)” — the user manual as a .docx, from the same model the screen draws.     (Slice #39.37)
  *
  * Ask first 3: built from the source on request, in the application's language, figures included. The browser
- * builds it (`manual-view.tsx`): it fetches each figure's PNG from /manual/figures, hands the bytes here, and
+ * builds it (`manual-view.tsx`): it fetches each figure's PNG from /manual/figures/<locale>, hands the bytes here, and
  * saves what comes back — so the download needs no server route and no file the server must find on disk, on
  * Vercel, on Ciprian's box or here alike.
  *

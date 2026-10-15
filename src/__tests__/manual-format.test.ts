@@ -5,13 +5,14 @@
  *
  * The parser on small sources made by hand — every block and inline kind — and each rule of `validateManual` and
  * `compareManuals` broken alone; then the real manual: no issue in either language, the same sections and
- * figures in both, every figure's picture present in public/manual/figures, and every id `manualHref` builds
- * resolving to a section of the screen.
+ * figures in both, every figure's picture present in each language's own set — public/manual/figures/<locale>,
+ * shot in that language's interface (#39.46) — and every id `manualHref` builds resolving to a section of the screen.
  */
 
 import { existsSync } from "fs";
 import { join } from "path";
 import {
+  MANUAL_LOCALES,
   buildManual,
   compareManuals,
   parseChapter,
@@ -19,7 +20,7 @@ import {
   validateManual,
   type ManualIssueCode,
 } from "@/lib/manual/format";
-import { getManual, manualHref, manualIssues, manualLocale, manualTarget } from "@/lib/manual/manual";
+import { figureUrl, getManual, manualHref, manualIssues, manualLocale, manualTarget, otherManualLocale } from "@/lib/manual/manual";
 
 const chapter = (n: number, body: string) => `# ${n} Capitolul ${n} {#c${n}}\n\n${body}`;
 const manualOf = (...texts: string[]) => buildManual("ro-RO", texts.map((text, i) => ({ source: `c${i + 1}`, text })));
@@ -162,10 +163,17 @@ describe("the real manual", () => {
     }
   });
 
-  it("has a picture in public/manual/figures for every figure", () => {
-    const files = getManual("ro-RO").chapters.flatMap((c) => c.blocks.flatMap((b) => (b.kind === "figure" ? [b.file] : [])));
+  it.each(MANUAL_LOCALES.map((l) => [l]))("has a picture of its own in public/manual/figures/%s for every figure", (locale) => {
+    const files = getManual(locale).chapters.flatMap((c) => c.blocks.flatMap((b) => (b.kind === "figure" ? [b.file] : [])));
     expect(files.length).toBeGreaterThan(0);
-    expect(files.filter((f) => !existsSync(join(process.cwd(), "public", "manual", "figures", f)))).toEqual([]);
+    expect(files.filter((f) => !existsSync(join(process.cwd(), "public", "manual", "figures", locale, f)))).toEqual([]);
+  });
+
+  it("serves each language's figures from its own set, and names the other language for the second download", () => {
+    expect(figureUrl("ro-RO", "list.png")).toBe("/manual/figures/ro-RO/list.png");
+    expect(figureUrl("en-GB", "list.png")).toBe("/manual/figures/en-GB/list.png");
+    expect(otherManualLocale("ro-RO")).toBe("en-GB");
+    expect(otherManualLocale("en-GB")).toBe("ro-RO");
   });
 
   it("links by id and shows the current number", () => {

@@ -22,7 +22,11 @@ import {
 
 export const MANUAL_ROUTE = "/manual";
 
-/** Where a figure's picture is served from: one set, shot in the Romanian UI, for both languages. */
+/**
+ * Where a figure's picture is served from: ONE SET PER LANGUAGE, each shot in that language's interface
+ * (Slice #39.46 — until then one Romanian set served both, and the English manual showed Romanian screens).
+ * `public/manual/figures/<locale>/<file>`; the file names are the same in both, the figure lines name only the file.
+ */
 export const MANUAL_FIGURES_PATH = "/manual/figures";
 
 const cache = new Map<ManualLocale, { manual: Manual; issues: ManualIssue[] }>();
@@ -67,6 +71,11 @@ export function manualHref(id?: string): string {
   return id ? `${MANUAL_ROUTE}?s=${encodeURIComponent(id)}` : MANUAL_ROUTE;
 }
 
-export function figureUrl(file: string): string {
-  return `${MANUAL_FIGURES_PATH}/${file}`;
+export function figureUrl(locale: ManualLocale, file: string): string {
+  return `${MANUAL_FIGURES_PATH}/${locale}/${file}`;
+}
+
+/** The other language's manual — the one the second download button hands out (#39.46). */
+export function otherManualLocale(locale: ManualLocale): ManualLocale {
+  return locale === "ro-RO" ? "en-GB" : "ro-RO";
 }

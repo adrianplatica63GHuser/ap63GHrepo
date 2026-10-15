@@ -10,6 +10,11 @@
  *
  * „Descarcă (Word)” builds the .docx HERE, from the same model the chapter is drawn from: it fetches each
  * figure's PNG, reads its size, and saves what `renderManualDocx` returns (Ask first 3).
+ *
+ * #39.46: two manuals, one language each. The chapter and its figures are the screen language's — each language
+ * has its own figure set, shot in its own interface — and beside „Descarcă (Word)” a second button hands out the
+ * OTHER language's manual, so an English manual can be given from a Romanian screen. Each download is wholly in
+ * its language: its text, its figures, its title and its file name (MANUAL_DOCUMENT_LABELS).
  */
 
 import Link from "next/link";
@@ -19,8 +24,9 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { IconButton, LeadingIcon, TrailingIcon } from "@/lib/ui/icon-button";
 import { PROSE_STYLE, rem } from "@/lib/ui/field-widths";
-import type { Block, Inline, Manual, ManualChapter } from "@/lib/manual/format";
-import { figureUrl, getManual, manualHref, manualLocale } from "@/lib/manual/manual";
+import type { Block, Inline, Manual, ManualChapter, ManualLocale } from "@/lib/manual/format";
+import { MANUAL_DOCUMENT_LABELS } from "@/lib/manual/content";
+import { figureUrl, getManual, manualHref, manualLocale, otherManualLocale } from "@/lib/manual/manual";
 import { pngSize, renderManualDocx, type FigureImage } from "@/lib/manual/render-docx";
 
 const CONTENTS_STYLE = { width: rem(18) };
@@ -108,7 +114,7 @@ function ChapterBody({ chapter, manual, figureLabel }: { chapter: ManualChapter;
         out.push(
           <figure key={i} id={b.id} className="scroll-mt-4 flex flex-col gap-2" data-manual-figure={b.file}>
             {/* eslint-disable-next-line @next/next/no-img-element -- a static figure of the manual, at its own size */}
-            <img src={figureUrl(b.file)} alt={b.caption} className="h-auto max-w-full rounded border border-wire" />
+            <img src={figureUrl(manual.locale, b.file)} alt={b.caption} className="h-auto max-w-full rounded border border-wire" />
             <figcaption className="text-sm italic text-fade">{`${figureLabel} ${b.number} — ${b.caption}`}</figcaption>
           </figure>,
         );
@@ -124,7 +130,7 @@ async function fetchFigures(manual: Manual): Promise<Map<string, FigureImage>> {
   await Promise.all(
     files.map(async (file) => {
       try {
-        const res = await fetch(figureUrl(file));
+        const res = await fetch(figureUrl(manual.locale, file));
         if (!res.ok) return;
         const data = new Uint8Array(await res.arrayBuffer());
         const size = pngSize(data);
@@ -145,7 +151,8 @@ export function ManualView() {
   const target = asked ? manual.targets.get(asked) : undefined;
   const chapterIndex = Math.max(0, target ? manual.chapters.findIndex((c) => c.id === target.chapterId) : 0);
   const chapter = manual.chapters[chapterIndex];
-  const [busy, setBusy] = useState(false);
+  const other = otherManualLocale(locale);
+  const [busy, setBusy] = useState<ManualLocale | null>(null);
   const [failed, setFailed] = useState(false);
   // The router can keep the page before this one mounted, hidden — with the same ids in it. So an id is looked
   // up inside THIS screen, never with document.getElementById.
@@ -159,23 +166,21 @@ export function ManualView() {
     root.current?.querySelector(`[id="${target.id}"]`)?.scrollIntoView({ block: "start" });
   }, [target]);
 
-  async function download() {
-    setBusy(true);
+  async function download(which: ManualLocale) {
+    setBusy(which);
     setFailed(false);
     try {
-      const figures = await fetchFigures(manual);
-      const bytes = renderManualDocx({
-        manual,
-        figures,
-        labels: { title: t("title"), contents: t("contents"), figure: t("figure"), missingFigure: t("missingFigure") },
-      });
+      const book = getManual(which);
+      const { fileName, ...labels } = MANUAL_DOCUMENT_LABELS[which];
+      const figures = await fetchFigures(book);
+      const bytes = renderManualDocx({ manual: book, figures, labels });
       const blob = new Blob([bytes as BlobPart], {
         type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${t("fileName")}.docx`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -183,7 +188,7 @@ export function ManualView() {
     } catch {
       setFailed(true);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -197,12 +202,24 @@ export function ManualView() {
         <IconButton
           icon={Download}
           label={t("download")}
-          busy={busy}
+          busy={busy === locale}
+          disabled={busy !== null && busy !== locale}
           busyLabel={t("downloading")}
           showLabel
           variant="secondary"
           size="sm"
-          onClick={download}
+          onClick={() => download(locale)}
+        />
+        <IconButton
+          icon={Download}
+          label={t("downloadOther")}
+          busy={busy === other}
+          disabled={busy !== null && busy !== other}
+          busyLabel={t("downloading")}
+          showLabel
+          variant="secondary"
+          size="sm"
+          onClick={() => download(other)}
         />
       </div>
       {failed && (
