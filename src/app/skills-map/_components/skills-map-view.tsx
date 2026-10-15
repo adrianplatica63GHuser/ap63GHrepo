@@ -12,7 +12,12 @@
  *     one still needs, when a Mastered or Obsolete one was mastered.
  *   - Hovering or focusing a box brings its own arrows forward and fades the rest.
  *   - The Paths are chips above the map: choosing one fades every skill outside it; a mastered Path's chip
- *     carries the green badge, and every box names its Path.
+ *     carries the green badge, and every box names its Path. Slice #39.50: a Path is everything it takes to
+ *     reach its Expert skills, other Paths' skills included (src/lib/skills/paths.ts), and an arrow outside it
+ *     is grey, its head as grey as its line.
+ *   - Slice #39.50: two views. „Progresul meu” (the default) draws each box in the user's state; „Prezentare”
+ *     draws every box as its level's colour, Open, with no badge and no grey — the map as it is meant, not as
+ *     the user stands on it. Both follow the chosen Path, in the diagram and in „Listă”.
  *   - „Potrivește” fits the map to the window's width (the default), „100%” draws it at full size; the frame
  *     scrolls both ways. „Listă” shows the same skills as a list, by level.
  */
@@ -20,11 +25,12 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { Check, List, Maximize2, Waypoints, X, ZoomIn } from "lucide-react";
+import { Check, CircleCheck, List, Maximize2, Presentation, Waypoints, X, ZoomIn } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { SKILLS, SKILL_LEVELS, SKILL_PATHS, type Skill, type SkillLevel, type SkillPathKey } from "@/lib/skills/catalogue";
 import { layoutSkills } from "@/lib/skills/layout";
 import { boxAppearance, MASTERY_GREEN } from "@/lib/skills/appearance";
+import { ARROW_GREY, ARROW_NAVY, arrowLook, inPath as pathHas, PATH_SKILLS } from "@/lib/skills/paths";
 import type { SkillState } from "@/lib/skills/progress";
 import { SectionList, type SectionLinkData } from "./section-list";
 
@@ -45,6 +51,9 @@ async function fetchProgress(): Promise<ProgressDto> {
 }
 
 const STATES: readonly SkillState[] = ["open", "mastered", "closed", "obsolete"];
+
+/** The two ways of seeing the map (#39.50): the user's real progress, or the map as it is meant. */
+type MapView = "progress" | "overview";
 
 export function skillHref(key: string): string {
   return `/skills-map/${encodeURIComponent(key)}`;
@@ -106,6 +115,8 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
   const [view, setView] = useState<"diagram" | "list">("diagram");
   const [zoom, setZoom] = useState<"fit" | "actual">("fit");
   const [path, setPath] = useState<SkillPathKey | null>(null);
+  const [mode, setMode] = useState<MapView>("progress");
+  const overview = mode === "overview";
   const [focused, setFocused] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -134,13 +145,15 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
   const pathShort = (p: SkillPathKey) => t(`pathShort.${p}`);
   const stateName = (s: SkillState) => t(`states.${s}`);
   const label = (s: Skill, st: SkillState) =>
-    t("boxLabel", { number: s.number, name: s.name[lang], level: levelName(s.level), path: pathName(s.path), state: stateName(st) });
+    overview
+      ? t("boxLabelOverview", { number: s.number, name: s.name[lang], level: levelName(s.level), path: pathName(s.path) })
+      : t("boxLabel", { number: s.number, name: s.name[lang], level: levelName(s.level), path: pathName(s.path), state: stateName(st) });
   const date = (iso: string) =>
     new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "America/Toronto" }).format(new Date(iso));
 
   // The frame's padding (p-4) is inside clientWidth.
   const scale = zoom === "fit" && frameWidth > 32 ? Math.min(1, (frameWidth - 32) / layout.width) : 1;
-  const inPath = (key: string) => !path || byKey.get(key)?.path === path;
+  const inPath = (key: string) => pathHas(key, path);
   const touches = (from: string, to: string) => focused === from || focused === to;
 
   const selectedSkill = selected ? byKey.get(selected) : undefined;
@@ -174,7 +187,7 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${path === p.key ? "border-cta bg-cta-pale text-cta" : "border-card-rim text-ink dark:text-zinc-200"}`}
           >
             {pathShort(p.key)}
-            {progress.data?.paths[p.key] && (
+            {!overview && progress.data?.paths[p.key] && (
               <>
                 <MasteryBadge small />
                 <span className="sr-only">{t("pathMastered")}</span>
@@ -183,6 +196,31 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
           </button>
         ))}
         <span className="ml-auto flex items-center gap-2">
+          <span className="flex items-center gap-1" role="group" aria-label={t("views")} data-map-views>
+            <IconButton
+              icon={CircleCheck}
+              label={t("myProgress")}
+              showLabel
+              variant="secondary"
+              size="sm"
+              aria-pressed={!overview}
+              data-map-view="progress"
+              onClick={() => setMode("progress")}
+            />
+            <IconButton
+              icon={Presentation}
+              label={t("overview")}
+              showLabel
+              variant="secondary"
+              size="sm"
+              aria-pressed={overview}
+              data-map-view="overview"
+              onClick={() => {
+                setMode("overview");
+                setSelected(null);
+              }}
+            />
+          </span>
           {view === "diagram" && (
             <>
               <IconButton icon={Maximize2} label={t("fit")} showLabel variant="secondary" size="sm" aria-pressed={zoom === "fit"} onClick={() => setZoom("fit")} />
@@ -197,18 +235,34 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
         </span>
       </div>
 
-      {/* The legend: the four states, on an Intermediate box. */}
+      {path && (
+        <p className="text-sm text-fade" data-path-note={path}>
+          {t("pathNote", { path: pathName(path), count: PATH_SKILLS[path].size })}
+        </p>
+      )}
+
+      {/* The legend: in „Progresul meu” the four states, on an Intermediate box; in „Prezentare” the four levels. */}
       <div className="flex flex-wrap gap-4 rounded-lg border border-card-rim bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900" aria-label={t("legend")} role="group">
-        {STATES.map((st) => (
-          <div key={st} className="flex items-center gap-2 text-xs text-ink dark:text-zinc-200" data-legend={st}>
-            <span className="relative block h-7 w-12 shrink-0">
-              <BoxFace skill={{ level: 2, number: "" }} name="" state={st} pathLabel="" />
-            </span>
-            <span>
-              <span className="font-semibold">{stateName(st)}</span> — {t(`stateHelp.${st}`)}
-            </span>
-          </div>
-        ))}
+        {overview
+          ? SKILL_LEVELS.map((lv) => (
+              <div key={lv.level} className="flex items-center gap-2 text-xs text-ink dark:text-zinc-200" data-legend-level={lv.level}>
+                <span className="relative block h-7 w-12 shrink-0">
+                  <BoxFace skill={{ level: lv.level, number: "" }} name="" state="open" pathLabel="" />
+                </span>
+                <span className="font-semibold">{lv.name[lang]}</span>
+              </div>
+            ))
+          : STATES.map((st) => (
+              <div key={st} className="flex items-center gap-2 text-xs text-ink dark:text-zinc-200" data-legend={st}>
+                <span className="relative block h-7 w-12 shrink-0">
+                  <BoxFace skill={{ level: 2, number: "" }} name="" state={st} pathLabel="" />
+                </span>
+                <span>
+                  <span className="font-semibold">{stateName(st)}</span> — {t(`stateHelp.${st}`)}
+                </span>
+              </div>
+            ))}
+        {overview && <p className="w-full text-xs text-fade" data-overview-note>{t("overviewNote")}</p>}
       </div>
 
       {progress.isPending && <p role="status" className="text-sm text-fade">{t("loading")}</p>}
@@ -231,13 +285,16 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
 
               <svg className="absolute inset-0" width={layout.width} height={layout.height} aria-hidden="true">
                 <defs>
-                  <marker id="skills-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M0,0 L10,5 L0,10 z" fill="#1e3a6e" />
+                  {/* One head per colour: a head is its line's colour, and the line's opacity covers it (#39.50). */}
+                  <marker id="skills-arrow-navy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" fill={ARROW_NAVY} />
+                  </marker>
+                  <marker id="skills-arrow-grey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" fill={ARROW_GREY} />
                   </marker>
                 </defs>
                 {layout.arrows.map((a) => {
-                  const lit = focused ? touches(a.from, a.to) : true;
-                  const kept = inPath(a.from) && inPath(a.to);
+                  const look = arrowLook({ kept: inPath(a.from) && inPath(a.to), focused: focused !== null, lit: touches(a.from, a.to) });
                   return (
                     <line
                       key={`${a.from}>${a.to}`}
@@ -245,11 +302,12 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                       y1={a.y1}
                       x2={a.x2 - 2}
                       y2={a.y2}
-                      stroke="#1e3a6e"
-                      strokeWidth={focused && lit ? 2.5 : 1.4}
-                      strokeOpacity={!kept ? 0.08 : focused ? (lit ? 1 : 0.12) : 0.55}
-                      markerEnd="url(#skills-arrow)"
+                      stroke={look.colour}
+                      strokeWidth={look.width}
+                      opacity={look.opacity}
+                      markerEnd={`url(#skills-arrow-${look.head})`}
                       data-arrow={`${a.from}>${a.to}`}
+                      data-arrow-head={look.head}
                     />
                   );
                 })}
@@ -259,11 +317,14 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                 const skill = byKey.get(b.key)!;
                 const p = stateOf(b.key);
                 const st: SkillState = p?.state ?? "closed";
+                // „Prezentare” draws every box Open; the real state stays on data-state for anyone who asks.
+                const shown: SkillState = overview ? "open" : st;
                 const style = { left: b.x, top: b.y, width: b.width, height: b.height, opacity: inPath(b.key) ? 1 : 0.25 };
                 const common = {
                   "aria-label": label(skill, st),
                   "data-skill": b.key,
                   "data-state": st,
+                  "data-shown": shown,
                   onMouseEnter: () => setFocused(b.key),
                   onMouseLeave: () => setFocused(null),
                   onFocus: () => setFocused(b.key),
@@ -271,13 +332,13 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                   className: "absolute block rounded-lg text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-400",
                   style,
                 };
-                return st === "open" ? (
+                return st === "open" && !overview ? (
                   <Link key={b.key} href={skillHref(b.key)} {...common}>
-                    <BoxFace skill={skill} name={skill.name[lang]} state={st} pathLabel={pathShort(skill.path)} />
+                    <BoxFace skill={skill} name={skill.name[lang]} state={shown} pathLabel={pathShort(skill.path)} />
                   </Link>
                 ) : (
                   <button key={b.key} type="button" onClick={() => setSelected(b.key)} {...common}>
-                    <BoxFace skill={skill} name={skill.name[lang]} state={st} pathLabel={pathShort(skill.path)} />
+                    <BoxFace skill={skill} name={skill.name[lang]} state={shown} pathLabel={pathShort(skill.path)} />
                   </button>
                 );
               })}
@@ -299,7 +360,7 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                     <th className="w-16 py-1">{t("listNumber")}</th>
                     <th className="py-1">{t("listSkill")}</th>
                     <th className="w-44 py-1">{t("listPath")}</th>
-                    <th className="w-32 py-1">{t("listState")}</th>
+                    {!overview && <th className="w-32 py-1">{t("listState")}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -309,7 +370,7 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                       <tr key={s.key} className="border-t border-card-rim dark:border-zinc-800" data-skill-row={s.key} data-state={st}>
                         <td className="py-1.5 font-semibold">{s.number}</td>
                         <td className="py-1.5">
-                          {st === "open" ? (
+                          {st === "open" && !overview ? (
                             <Link href={skillHref(s.key)} className="text-cta hover:underline">
                               {s.name[lang]}
                             </Link>
@@ -318,12 +379,14 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                           )}
                         </td>
                         <td className="py-1.5 text-fade">{pathShort(s.path)}</td>
-                        <td className="py-1.5">
-                          <span className="inline-flex items-center gap-1.5">
-                            {stateName(st)}
-                            {(st === "mastered" || st === "obsolete") && <MasteryBadge small />}
-                          </span>
-                        </td>
+                        {!overview && (
+                          <td className="py-1.5">
+                            <span className="inline-flex items-center gap-1.5">
+                              {stateName(st)}
+                              {(st === "mastered" || st === "obsolete") && <MasteryBadge small />}
+                            </span>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -347,11 +410,15 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
             <IconButton icon={X} label={t("panel.close")} variant="bare" size="xs" onClick={() => setSelected(null)} />
           </div>
           <p className="text-xs text-fade">{t("panel.levelPath", { level: levelName(selectedSkill.level), path: pathName(selectedSkill.path) })}</p>
-          <p>
-            <span className="font-semibold">{stateName(selectedProgress.state)}</span> — {t(`stateHelp.${selectedProgress.state}`)}
-          </p>
+          {!overview && (
+            <p>
+              <span className="font-semibold">{stateName(selectedProgress.state)}</span> — {t(`stateHelp.${selectedProgress.state}`)}
+            </p>
+          )}
           <p className="text-fade">{selectedSkill.description[lang]}</p>
-          {selectedProgress.state === "closed" && (
+          {/* #39.50: „Prezentare” shows no state, so its panel is the skill and where the manual teaches it. */}
+          {overview && <SectionList title={t("panel.sections")} sections={sections[selectedSkill.key] ?? []} />}
+          {!overview && selectedProgress.state === "closed" && (
             <div className="flex flex-col gap-1" data-skill-missing>
               <p className="font-semibold">{t("panel.missing")}</p>
               <ul className="flex list-disc flex-col gap-0.5 pl-5">
@@ -370,12 +437,12 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
               </ul>
             </div>
           )}
-          {(selectedProgress.state === "mastered" || selectedProgress.state === "obsolete") && selectedProgress.masteredAt && (
+          {!overview && (selectedProgress.state === "mastered" || selectedProgress.state === "obsolete") && selectedProgress.masteredAt && (
             <p>{t("panel.masteredOn", { date: date(selectedProgress.masteredAt) })}</p>
           )}
-          {selectedProgress.state === "obsolete" && <p className="text-fade">{t("panel.obsoleteNote")}</p>}
+          {!overview && selectedProgress.state === "obsolete" && <p className="text-fade">{t("panel.obsoleteNote")}</p>}
           {/* Slice #39.43: a mastered skill's manual sections. */}
-          {(selectedProgress.state === "mastered" || selectedProgress.state === "obsolete") && (
+          {!overview && (selectedProgress.state === "mastered" || selectedProgress.state === "obsolete") && (
             <SectionList title={t("panel.sections")} sections={sections[selectedSkill.key] ?? []} />
           )}
         </aside>
