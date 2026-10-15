@@ -10,7 +10,7 @@
  * scripts/skills/set-progress.ts — through recordAttempt, the rules' own gate — every row marked `tc-e2e` and
  * deleted in a `finally`. It skips, and says why, when the account holds attempts of its own: real progress is
  * never drawn over. With GA40_MANUAL_FIGURES set (e2e/help/manual.spec.ts named in the same run) it also shoots
- * the manual's figure of the map.
+ * the manual's figure of the map, once per language (#39.46).
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -140,24 +140,35 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
 
       if (process.env.GA40_MANUAL_FIGURES) {
         // The manual's figure: the map with the four states on it, fitted to a laptop's width. Nothing on this
-        // screen is a record of the archive; „Recente” is blurred as on every figure.
-        fs.mkdirSync(FIGURES, { recursive: true });
+        // screen is a record of the archive; „Recente” is blurred as on every figure. #39.46: once per language,
+        // each in its own interface, into playwright-report/manual-figures/<locale>/.
         await page.setViewportSize({ width: 1366, height: 900 });
-        await page.waitForTimeout(800);
-        await page.evaluate(() => {
-          const recent = [...document.querySelectorAll<HTMLElement>("aside div.border-t")].find((d) => /Recente/i.test(d.textContent ?? ""));
-          if (recent) recent.style.filter = "blur(7px)";
-        });
-        await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
-        // The app shell scrolls its content column, not the window: every scrolling box above the map back to its top.
-        await page.locator("[data-skills-frame]").filter({ visible: true }).evaluate((el) => {
-          for (let n: Element | null = el; n; n = n.parentElement) n.scrollTop = 0;
-          window.scrollTo(0, 0);
-        });
-        await page.mouse.move(5, 5);
-        await page.waitForTimeout(400);
-        await page.screenshot({ path: `${FIGURES}/skills-map.png` });
-        expect(fs.existsSync(`${FIGURES}/skills-map.png`)).toBe(true);
+        for (const [locale, recentTitle] of [["ro-RO", "Recente"], ["en-GB", "Recently viewed"]] as const) {
+          const dir = `${FIGURES}/${locale}`;
+          fs.mkdirSync(dir, { recursive: true });
+          if (locale !== "ro-RO") {
+            await page.context().addCookies([{ name: "NEXT_LOCALE", value: locale, domain: "localhost", path: "/" }]);
+            await page.goto("/skills-map");
+            await expect(page.locator("[data-skills-frame]").filter({ visible: true })).toBeVisible({ timeout: 30_000 });
+            await expect(box(page, key("2.13"))).toHaveAttribute("data-state", "mastered");
+          }
+          await page.waitForTimeout(800);
+          await page.evaluate((t) => {
+            const recent = [...document.querySelectorAll<HTMLElement>("aside div.border-t")].find((d) => (d.textContent ?? "").includes(t));
+            if (recent) recent.style.filter = "blur(7px)";
+          }, recentTitle);
+          await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+          // The app shell scrolls its content column, not the window: every scrolling box above the map back to its top.
+          await page.locator("[data-skills-frame]").filter({ visible: true }).evaluate((el) => {
+            for (let n: Element | null = el; n; n = n.parentElement) n.scrollTop = 0;
+            window.scrollTo(0, 0);
+          });
+          await page.mouse.move(5, 5);
+          await page.waitForTimeout(400);
+          await page.screenshot({ path: `${dir}/skills-map.png` });
+          expect(fs.existsSync(`${dir}/skills-map.png`)).toBe(true);
+        }
+        await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", domain: "localhost", path: "/" }]);
       }
     } finally {
       setProgress("--clear", "--apply");

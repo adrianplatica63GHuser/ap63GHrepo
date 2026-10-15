@@ -10,8 +10,10 @@
  *
  * AND A SECOND TEST THAT IS NOT A STEP OF THE CASE: „the manual's figures” (Slice #39.37's Ask first 5). It opens
  * each screen a figure shows, on the big dev seed's INVENTED records (.seed-dev-data-big/manifest.json), and
- * saves the picture under playwright-report/manual-figures/, from where a slice copies it into
- * public/manual/figures/ — so a figure is re-shot, not redrawn, when its screen changes. It runs only when this
+ * saves the picture under playwright-report/manual-figures/<locale>/, from where a slice copies it into
+ * public/manual/figures/<locale>/ — so a figure is re-shot, not redrawn, when its screen changes. Since #39.46 it
+ * shoots every figure TWICE, once per language, each in its own interface (the NEXT_LOCALE cookie), because each
+ * manual is wholly in its language, its pictures included; the words it looks for come from messages/<locale>.json. It runs only when this
  * file is named on the command line (`claude.sh request e2e e2e/help/manual.spec.ts`; playwright.config.ts sets
  * GA40_MANUAL_FIGURES), never in the whole regression, and it skips when the seed is not in the database.
  * Whatever on a figure is not the seed's — a list row of the archive, the dashboard's lists, „Recente” — and the
@@ -121,7 +123,7 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "Descarcă (Word)", exact: true }).click();
     const file = await download;
-    expect(file.suggestedFilename()).toBe("Manual de utilizare.docx");
+    expect(file.suggestedFilename()).toBe("Manual de utilizare GA40.docx");
     const parts = readZipStore(new Uint8Array(fs.readFileSync(await file.path())));
     const names = parts.map((p) => p.name);
     expect(names).toContain("word/document.xml");
@@ -138,6 +140,25 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     expect(figureCount).toBeGreaterThan(6);
     expect(names.filter((n) => n.startsWith("word/media/"))).toHaveLength(figureCount);
     expect(doc).not.toContain("Figura lipsește");
+
+    // Step 9 (#39.46) — „Descarcă în engleză (Word)”: the English manual, from this Romanian screen — wholly English.
+    const download2 = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Descarcă în engleză (Word)", exact: true }).click();
+    const file2 = await download2;
+    expect(file2.suggestedFilename()).toBe("GA40 User Manual.docx");
+    const parts2 = readZipStore(new Uint8Array(fs.readFileSync(await file2.path())));
+    const doc2 = new TextDecoder().decode(parts2.find((p) => p.name === "word/document.xml")?.data);
+    expect(doc2).toContain(">User manual<");
+    expect(doc2).toContain(">Contents<");
+    expect(doc2).toContain(">1  Introduction<");
+    // Chapter 13's English title as its source writes it, escaped as Word's XML holds it.
+    const en13 = fs.readFileSync(path.join(process.cwd(), "src", "lib", "manual", "content", "en-GB", "13-learning.ts"), "utf8");
+    const title13 = /^# 13 (.+?) \{#learning\}$/m.exec(en13)?.[1] ?? "";
+    expect(title13).not.toBe("");
+    expect(doc2).toContain(`>13  ${title13.replace(/&/g, "&amp;")}<`);
+    expect(doc2).not.toContain(">Cuprins<");
+    expect(doc2).not.toContain("Figure missing");
+    expect(parts2.filter((p) => p.name.startsWith("word/media/"))).toHaveLength(figureCount);
   });
 });
 
@@ -151,12 +172,51 @@ function seed(): SeedObject[] | null {
   return (JSON.parse(fs.readFileSync(file, "utf8")) as { objects: SeedObject[] }).objects;
 }
 
+/**
+ * The words the figures test looks for, in the language it shoots (#39.46: each manual has its own set, shot in
+ * its own interface). Taken from messages/<locale>.json by key, so the English set is found by the English screen's
+ * own strings; the data values of the seed („Teren curți construcții”) are the same in both.
+ */
+type Messages = { [k: string]: string | Messages };
+function figureStrings(locale: "ro-RO" | "en-GB") {
+  const all = JSON.parse(fs.readFileSync(path.join(process.cwd(), "messages", `${locale}.json`), "utf8")) as Messages;
+  const m = (key: string): string => {
+    const v = key.split(".").reduce<string | Messages>((o, k) => (o as Messages)[k], all);
+    if (typeof v !== "string") throw new Error(`messages/${locale}.json has no string at ${key}`);
+    return v;
+  };
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const ro = locale === "ro-RO";
+  return {
+    recent: m("navigation.recentlyViewed.title"),
+    recentActivity: m("dashboard.recentActivity.title"),
+    domain: m("nav.sections.domain"),
+    breadcrumb: m("navigation.breadcrumb.ariaLabel"),
+    personSearch: m("naturalPerson.searchPlaceholder"),
+    chooseFields: m("naturalPerson.chooseFields"),
+    newPerson: m("naturalPerson.createTitle"),
+    versions: new RegExp(`^${esc(m("naturalPerson.version.historyChip")).replace("\\{n\\}", "\\d+")}$`),
+    makeCurrent: m("naturalPerson.version.makeCurrent"),
+    mapTiles: [m("property.tiles.map"), m("property.tiles.corners"), m("property.tiles.streetView")],
+    links: m("property.tiles.related"),
+    parties: m("document.tiles.parties"),
+    search: m("globalSearch.search"),
+    results: ro ? /\d+ rezultat/ : /\d+ result/,
+    // An identity document's fields, by their label: over-blurring is the safe direction.
+    idLabel: ro ? /CNP|Serie|Număr/i : /CNP|Series|Number/i,
+    idLabelStart: ro ? /^\s*(CNP|Serie|Nr\.|Număr)/ : /^\s*(CNP|Series|No\.|Number)/,
+  };
+}
+
 /** Blur the „Recente" bar of the sidebar, whose records are whatever the account opened last. */
-async function blurRecent(page: Page): Promise<void> {
-  await page.evaluate((f) => {
-    const recent = [...document.querySelectorAll<HTMLElement>("aside div.border-t")].find((d) => /Recente/i.test(d.textContent ?? ""));
-    if (recent) recent.style.filter = f;
-  }, BLUR);
+async function blurRecent(page: Page, title: string): Promise<void> {
+  await page.evaluate(
+    ([f, t]) => {
+      const recent = [...document.querySelectorAll<HTMLElement>("aside div.border-t")].find((d) => (d.textContent ?? "").includes(t));
+      if (recent) recent.style.filter = f;
+    },
+    [BLUR, title] as const,
+  );
 }
 
 /** Off every row (no hover in the picture), and without `next dev`'s own badge in the corner. */
@@ -176,20 +236,23 @@ async function still(page: Page): Promise<void> {
 }
 
 test.describe("the manual's figures (Slice #39.37) — only when this file is named", () => {
-  test("shot from the dev seed's invented records", async ({ page }) => {
+  for (const locale of ["ro-RO", "en-GB"] as const) test(`shot from the dev seed's invented records, in ${locale}`, async ({ page }) => {
     test.skip(!process.env.GA40_MANUAL_FIGURES, "Runs only when e2e/help/manual.spec.ts is named on the command line.");
+    const S = figureStrings(locale);
+    const dir = `${FIGURES}/${locale}`;
+    await page.context().addCookies([{ name: "NEXT_LOCALE", value: locale, domain: "localhost", path: "/" }]);
     const objects = seed();
     test.skip(!objects, "The big dev seed is not in this database (.seed-dev-data-big/manifest.json is absent).");
     test.setTimeout(480_000);
     const naturals = objects!.filter((o) => o.kind === "NATURAL");
     const seedIds = new Set(objects!.map((o) => o.id));
     const person = naturals[0];
-    fs.mkdirSync(FIGURES, { recursive: true });
+    fs.mkdirSync(dir, { recursive: true });
     await page.setViewportSize({ width: 1366, height: 768 });
 
     // Figura 1.1 — the dashboard. Its lists name records of the whole archive: blurred.
     await page.goto("/");
-    await expect(page.getByText("Activitate recentă", { exact: false }).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
     await page.waitForTimeout(1500);
     // The dashboard has no <main>: its four tiles are [data-panel] sections, and two of them list records.
     await page.evaluate((f) => {
@@ -199,45 +262,50 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       if (lists.length === 0) throw new Error("The dashboard's lists were not found, so nothing would be blurred.");
       lists.forEach((el) => (el.style.filter = f));
     }, BLUR);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/dashboard.png` });
+    await page.screenshot({ path: `${dir}/dashboard.png` });
 
     // Figura 2.1 — the sidebar, „Domeniu" open.
-    await openSection(page, "Domeniu");
-    await blurRecent(page);
+    await openSection(page, S.domain);
+    await blurRecent(page, S.recent);
     await still(page);
-    await sidebar(page).locator("xpath=ancestor::aside").screenshot({ path: `${FIGURES}/sidebar.png` });
+    await sidebar(page).locator("xpath=ancestor::aside").screenshot({ path: `${dir}/sidebar.png` });
 
     // Figura 2.2 — the navigation bar, on a seed person's screen.
     await page.goto(`/natural-persons/${person.id}`);
-    const bar = page.getByRole("navigation", { name: "Fir de navigare" }).filter({ visible: true });
+    const bar = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true });
     await expect(bar).toContainText(person.label.split(" ")[0], { timeout: 60_000 });
     await still(page);
-    await bar.screenshot({ path: `${FIGURES}/breadcrumb.png` });
+    await bar.screenshot({ path: `${dir}/breadcrumb.png` });
 
     // Figura 2.4 — the person's screen and its tiles; the CNP blurred, „Recente" blurred.
     await page.waitForTimeout(1500);
-    await page.evaluate((f) => {
-      for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
-        const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
-        if (/CNP|Serie|Număr/i.test(label)) el.style.filter = f;
-      }
-      for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
-        if (/^\s*(CNP|Serie|Nr\.|Număr)/.test(lbl.textContent ?? "") && lbl.htmlFor) {
-          const box = document.getElementById(lbl.htmlFor);
-          if (box) box.style.filter = f;
+    await page.evaluate(
+      ([f, any, start]) => {
+        const label1 = new RegExp(any, "i");
+        const label2 = new RegExp(start);
+        for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
+          const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
+          if (label1.test(label)) el.style.filter = f;
         }
-      }
-    }, BLUR);
+        for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
+          if (label2.test(lbl.textContent ?? "") && lbl.htmlFor) {
+            const box = document.getElementById(lbl.htmlFor);
+            if (box) box.style.filter = f;
+          }
+        }
+      },
+      [BLUR, S.idLabel.source, S.idLabelStart.source] as const,
+    );
     await blurCnp(page);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/record.png` });
+    await page.screenshot({ path: `${dir}/record.png` });
 
     // Figura 2.3 — the list, searched by the seed person's surname, „Câmpuri afișate" open; rows not the seed's blurred.
     await page.goto("/natural-persons");
-    const search = page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon");
+    const search = page.locator("main").getByPlaceholder(S.personSearch);
     await expect(search).toBeVisible({ timeout: 60_000 });
     await search.fill(person.label.split(" ").slice(-1)[0]);
     await page.waitForTimeout(2000);
@@ -251,23 +319,23 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       },
       [[...seedIds], BLUR] as const,
     );
-    await page.getByRole("button", { name: "Câmpuri afișate" }).first().click();
-    await blurRecent(page);
+    await page.getByRole("button", { name: S.chooseFields }).first().click();
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/list.png` });
+    await page.screenshot({ path: `${dir}/list.png` });
     await page.keyboard.press("Escape");
 
     // Figura 2.5 — the „?" of the list, open.
     await page.goto("/natural-persons");
     await expect(search).toBeVisible({ timeout: 60_000 });
-    const help = page.getByRole("navigation", { name: "Fir de navigare" }).filter({ visible: true }).locator(":scope > span.ml-auto button").first();
+    const help = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true }).locator(":scope > span.ml-auto button").first();
     await expect(help).toBeVisible({ timeout: 30_000 });
     await help.click();
     await page.waitForTimeout(800);
     await page.evaluate((f) => document.querySelectorAll<HTMLElement>("main tbody").forEach((el) => (el.style.filter = f)), BLUR);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
-    await page.screenshot({ path: `${FIGURES}/help.png` });
+    await page.screenshot({ path: `${dir}/help.png` });
 
     // ── Slice #39.38: chapters 3–7 ──────────────────────────────────────────────────────────────────────────
     const judicial = objects!.filter((o) => o.kind === "JUDICIAL")[0];
@@ -293,11 +361,11 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figura 3.1 — a new natural person's form.
     await page.goto("/natural-persons/new");
     // The new form is panels ([data-panel]), not yet the record's tiles.
-    await expect(page.locator("h1").filter({ visible: true }).first()).toHaveText("Persoană fizică nouă", { timeout: 60_000 });
+    await expect(page.locator("h1").filter({ visible: true }).first()).toHaveText(S.newPerson, { timeout: 60_000 });
     await page.waitForTimeout(1000);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/persons-new.png` });
+    await page.screenshot({ path: `${dir}/persons-new.png` });
 
     // Figura 3.2 — the „Arbore de moștenire" tile of the seed's YOUNGEST person (the first, born 1907, has a family too
     // large to read in one tile): seed persons only.
@@ -305,7 +373,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await expect(tile("inheritanceTree")).toBeVisible({ timeout: 60_000 });
     await page.waitForTimeout(2000);
     await still(page);
-    await tile("inheritanceTree").screenshot({ path: `${FIGURES}/persons-tree.png` });
+    await tile("inheritanceTree").screenshot({ path: `${dir}/persons-tree.png` });
 
     // Figura 7.3 — on the first seed person again.
     await page.goto(`/natural-persons/${person.id}`);
@@ -313,9 +381,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
 
     // Figura 7.3 — the person's versions: „2 versiuni" opens the strip on the version before the current one (view
     // only; nothing is made current). With two versions „Versiunea anterioară" is then inactive, so it is not pressed.
-    const versions = page.getByRole("button", { name: /^\d+ versiuni$/ }).first();
+    const versions = page.getByRole("button", { name: S.versions }).first();
     await versions.click();
-    await expect(page.getByRole("button", { name: "Fă curentă", exact: true }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: S.makeCurrent, exact: true }).first()).toBeVisible({ timeout: 30_000 });
     await page.waitForTimeout(1500);
     await page.evaluate((f) => {
       for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
@@ -330,17 +398,17 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       }
     }, BLUR);
     await blurCnp(page);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/links-versions.png` });
+    await page.screenshot({ path: `${dir}/links-versions.png` });
 
     // Figura 4.1 — a judicial person's screen.
     await page.goto(`/judicial-persons/${judicial.id}`);
     await expect(page.locator("[data-tile]").first()).toBeVisible({ timeout: 60_000 });
     await page.waitForTimeout(1500);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/companies-record.png` });
+    await page.screenshot({ path: `${dir}/companies-record.png` });
 
     // Figura 5.1 — the list of properties, searched for the seed's building plots; rows not the seed's blurred.
     await page.goto("/properties");
@@ -349,26 +417,26 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await psearch.fill("Teren curți construcții");
     await page.waitForTimeout(2500);
     await blurNotSeed("/properties/");
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/properties-list.png` });
+    await page.screenshot({ path: `${dir}/properties-list.png` });
 
     // Figura 5.2 — a property's screen, the map tiles hidden (no map load), and Figura 7.2 — its „Legături".
     await page.goto(`/properties/${property.id}`);
     await expect(tile("cadastral")).toBeVisible({ timeout: 60_000 });
-    for (const label of ["Hartă", "Puncte de contur", "Street View"]) await tick(label, false);
+    for (const label of S.mapTiles) await tick(label, false);
     await page.waitForTimeout(1500);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/properties-record.png` });
+    await page.screenshot({ path: `${dir}/properties-record.png` });
     // „Legături" is not among a fresh browser's default tiles: shown for its picture, then hidden again.
-    await tick("Legături", true);
+    await tick(S.links, true);
     await expect(tile("related")).toBeVisible({ timeout: 30_000 });
     await page.waitForTimeout(1500);
     await still(page);
-    await tile("related").screenshot({ path: `${FIGURES}/links-related.png` });
-    await tick("Legături", false);
-    for (const label of ["Hartă", "Puncte de contur", "Street View"]) await tick(label, true); // left as found
+    await tile("related").screenshot({ path: `${dir}/links-related.png` });
+    await tick(S.links, false);
+    for (const label of S.mapTiles) await tick(label, true); // left as found
 
     // Figura 7.1 — the association screen, searched for one seed document by its code.
     await page.goto(`/properties/${property.id}/associate-document`);
@@ -377,20 +445,20 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await asearch.fill(sale.code);
     await asearch.press("Enter");
     await page.waitForTimeout(2500);
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/links-associate.png` });
+    await page.screenshot({ path: `${dir}/links-associate.png` });
 
     // Figura 6.2 — the seed's sale contract, „Părți" shown, the whole page.
     await page.goto(`/documents/${sale.id}`);
     await expect(tile("general")).toBeVisible({ timeout: 60_000 });
-    await tick("Părți", true);
+    await tick(S.parties, true);
     await page.waitForTimeout(2500);
     await page.evaluate(() => window.scrollTo(0, 0));
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/documents-sale.png`, fullPage: true });
-    await tick("Părți", false); // left as found
+    await page.screenshot({ path: `${dir}/documents-sale.png`, fullPage: true });
+    await tick(S.parties, false); // left as found
 
     // Figura 6.1 — „Pagini" with a page in it. The seed's page files do not open, so a TC-E2E- contract of its own,
     // its page the repo's synthetic fixture, removed in `finally`.
@@ -409,7 +477,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await expect(tile("pages").locator("img").first()).toBeVisible({ timeout: 60_000 });
       await page.waitForTimeout(1500);
       await still(page);
-      await tile("pages").screenshot({ path: `${FIGURES}/documents-pages.png` });
+      await tile("pages").screenshot({ path: `${dir}/documents-pages.png` });
     } finally {
       await removeRecord(page.request, "document", docId);
     }
@@ -426,9 +494,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await page.goto(url);
       await expect(page.locator("h1").filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
       await page.waitForTimeout(2500);
-      await blurRecent(page);
+      await blurRecent(page, S.recent);
       await still(page);
-      await page.screenshot({ path: `${FIGURES}/${file}.png` });
+      await page.screenshot({ path: `${dir}/${file}.png` });
     }
 
     // Figura 11.1 — „Căutare globală” with the results of a search for a seed person's surname. Any row whose
@@ -436,8 +504,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.goto("/admin/global-search");
     const surname = person.label.split(" ").pop() ?? person.label;
     await page.getByPlaceholder(/Popescu/).filter({ visible: true }).first().fill(surname);
-    await page.getByRole("button", { name: "Caută", exact: true }).filter({ visible: true }).first().click();
-    await expect(page.getByText(/\d+ rezultat/).filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
+    await page.getByRole("button", { name: S.search, exact: true }).filter({ visible: true }).first().click();
+    await expect(page.getByText(S.results).filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
     await page.waitForTimeout(1500);
     await page.evaluate(
       ([ids, f]) => {
@@ -448,9 +516,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       },
       [[...seedIds], BLUR] as const,
     );
-    await blurRecent(page);
+    await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${FIGURES}/reports-search.png` });
+    await page.screenshot({ path: `${dir}/reports-search.png` });
 
     for (const f of [
       "dashboard", "sidebar", "breadcrumb", "list", "record", "help",
@@ -458,7 +526,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       "documents-pages", "documents-sale", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",
     ]) {
-      expect(fs.existsSync(`${FIGURES}/${f}.png`)).toBe(true);
+      expect(fs.existsSync(`${dir}/${f}.png`)).toBe(true);
     }
   });
 });
