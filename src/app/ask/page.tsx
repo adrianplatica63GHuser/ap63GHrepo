@@ -4,7 +4,8 @@ import { AskBox } from "./_components/ask-box";
 /**
  * /ask — „Întreabă”, in „Ajutor și învățare”.                                                    (Slice #39.45)
  *
- * A question in plain words, answered from the user manual: the sections at once, a short AI answer on request.
+ * A question in plain words, answered from the user manual by what it means (#39.49): the answer with its sections,
+ * or a plain „the manual does not answer this”.
  * The same box stands at the top of „Manual de utilizare”. Manual 13.5.
  */
 export default async function AskPage() {

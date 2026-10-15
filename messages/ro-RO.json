@@ -3910,7 +3910,7 @@
         "idCard": "Citirea cărților de identitate",
         "classify": "Clasificarea fișierelor la import",
         "cluster": "Gruparea mostrelor (Instrumente)",
-        "ask": "Răspunsul AI din „Întreabă”"
+        "ask": "Răspunsurile din „Întreabă”"
       }
     },
     "about": {
@@ -4378,21 +4378,18 @@
   },
   "ask": {
     "title": "Întreabă",
-    "intro": "Scrieți o întrebare cu cuvintele dumneavoastră. Aplicația caută în „Manual de utilizare” secțiunile care răspund la ea; „Răspuns AI” scrie, la cerere, un răspuns scurt din ele.",
+    "intro": "Scrieți o întrebare cu cuvintele dumneavoastră. Claude citește cuprinsul „Manualului de utilizare”, alege secțiunile care răspund la ea și scrie din ele un răspuns scurt — sau vă spune că manualul nu răspunde.",
     "label": "Întrebarea",
     "placeholder": "De exemplu: cum adaug o persoană?",
-    "search": "Caută",
-    "searching": "Se caută…",
-    "searchFailed": "Căutarea nu a reușit. Încercați din nou.",
-    "noResults": "Manualul nu pare să răspundă la întrebarea aceasta. Încercați alte cuvinte sau căutați în cuprins.",
-    "found": "{count, plural, one {O secțiune din manual răspunde} few {# secțiuni din manual răspund} other {# de secțiuni din manual răspund}}",
-    "aiAnswer": "Răspuns AI",
-    "aiAsking": "Se scrie răspunsul…",
-    "aiNote": "Trimite întrebarea și aceste secțiuni la Claude, care scrie un răspuns scurt doar din ele — o citire plătită, sub un cent.",
-    "aiWrittenFrom": "Scris de AI doar din secțiunile de mai sus. Verificați în manual înainte să vă bazați pe el.",
-    "aiNotInManual": "Secțiunile găsite nu răspund la întrebare: manualul nu spune. Încercați alte cuvinte.",
-    "aiNotConfigured": "Răspunsul AI nu este configurat pe acest server.",
-    "aiFailed": "Răspunsul AI nu a reușit. Încercați din nou peste puțin timp."
+    "ask": "Întreabă",
+    "asking": "Se caută răspunsul…",
+    "note": "Întrebarea și cuprinsul manualului merg la Claude; nimic din arhivă. Fiecare întrebare este o citire plătită, de obicei sub un cent.",
+    "notInManual": "Manualul nu răspunde la această întrebare.",
+    "openContents": "Deschide cuprinsul manualului",
+    "sources": "Secțiunile pe care se sprijină răspunsul:",
+    "writtenBy": "Scris de AI doar din aceste secțiuni. Verificați în manual înainte să vă bazați pe el.",
+    "notConfigured": "Răspunsurile nu sunt configurate pe acest server.",
+    "failed": "Întrebarea nu a primit răspuns. Încercați din nou peste puțin timp."
   },
   "skillQuiz": {
     "title": "Chestionar — {number} {name}",
