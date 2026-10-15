@@ -1,6 +1,6 @@
 /**
  * Case:   TC-SKILL-01 — „Harta competențelor”: casetele, stările, traseele, lista și chestionarul unei competențe deschise
- * Source: docs/testing/cases/TC-SKILL-01.md
+ * Source: docs/testing/cases/TC-SKILL-01.md, „Last green" 2026-10-15
  *
  * A translation of the case file, step for step, on an account with no attempts — what a person sees the
  * first time: every Basic skill Open, every other skill Closed.
@@ -151,7 +151,7 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
         await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
         // The app shell scrolls its content column, not the window: every scrolling box above the map back to its top.
         await page.locator("[data-skills-frame]").filter({ visible: true }).evaluate((el) => {
-          for (let n: HTMLElement | null = el; n; n = n.parentElement) n.scrollTop = 0;
+          for (let n: Element | null = el; n; n = n.parentElement) n.scrollTop = 0;
           window.scrollTo(0, 0);
         });
         await page.mouse.move(5, 5);
