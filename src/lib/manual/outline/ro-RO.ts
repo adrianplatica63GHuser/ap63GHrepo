@@ -221,7 +221,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "admin-example-threshold": "Cum schimbi temporar un prag, de ex. fereastra „expiră curând”, și cum revii apoi la valoarea inițială.",
   "learning-manual": "Cum deschizi și citești manualul: cuprinsul, legăturile dintre secțiuni, adresa unei secțiuni și descărcarea lui ca Word, în română sau în engleză.",
   "learning-help": "Ce arată „?” de pe fiecare ecran, cum ajungi din el la secțiunea din manual și unde se scriu textele de ajutor.",
-  "learning-help-proposals": "Ce înseamnă „Propunere” la textele de ajutor și cum o accepți, o editezi sau o lași pentru mai târziu.",
+  "learning-help-proposals": "Ce înseamnă „Propunere” la textele de ajutor, cum o accepți, o editezi sau o lași pentru mai târziu, și cum le accepți pe toate deodată.",
   "learning-skills": "Ce este harta competențelor: nivelurile, traseele, săgețile dintre competențe și cum îți urmărești progresul.",
   "learning-skills-states": "Ce înseamnă culorile și stările unei competențe: deschisă, stăpânită, închisă, depășită, și când se schimbă.",
   "learning-skills-use": "Cum folosești harta: dai chestionarul unei casete deschise, vezi ce îi lipsește uneia închise, alegi un traseu, listă sau diagramă.",

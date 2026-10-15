@@ -221,7 +221,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "admin-example-threshold": "How to change a threshold temporarily, such as the „expiring soon” window, and later set it back to its original value.",
   "learning-manual": "How to open and read the manual: the contents, links between sections, a section's address, and downloading it as Word, in Romanian or in English.",
   "learning-help": "What each screen's „?” shows, how it leads to the manual's section, and where the help texts are written.",
-  "learning-help-proposals": "What a „Proposal” for a help text means and how to accept it, edit it or leave it for later.",
+  "learning-help-proposals": "What a „Proposal” for a help text means, how to accept it, edit it or leave it for later, and how to accept them all at once.",
   "learning-skills": "What the skills map is: the levels, the paths, the arrows between skills, and how to follow your progress.",
   "learning-skills-states": "What a skill's colours and states mean — open, mastered, closed, obsolete — and when they change.",
   "learning-skills-use": "How to use the map: take an open box's quiz, see what a closed one is missing, choose a path, switch to list or diagram.",

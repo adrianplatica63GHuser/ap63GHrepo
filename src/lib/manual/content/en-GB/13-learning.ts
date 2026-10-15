@@ -30,7 +30,7 @@ The texts behind „?” are written in „Help & learning” → „Help Inform
 
 ### 13.2.1 Proposed texts {#learning-help-proposals}
 
-Beside some screens in the list stands „Proposal”: for them there is a proposed text, written from this manual, usually because the current text points at a chapter that no longer exists or names a tab whose name has changed. Above the list, a line says how many screens have a proposal.
+When the manual changes, a screen's text can fall behind: it points at a section that no longer exists, or names a tab whose name has changed. Then „Proposal” appears beside that screen in the list: a proposed text, written from this manual. Above the list, a line says how many screens have a proposal. When no proposal waits, that line does not appear either.
 
 Open the screen: the current text and the proposal stand side by side, field by field, in Romanian and in English.
 
@@ -38,7 +38,9 @@ Open the screen: the current text and the proposal stand side by side, field by 
 - „Edit” puts the proposal in the boxes underneath, so you can change it. Nothing is saved until you press „Save”.
 - „Not now” sets it aside; you find it again the next time you open „Help Information”.
 
-Your text is never changed without your choosing. A proposal is tied to the text it found: if you write something else over it, the proposal disappears by itself, because it no longer answers the text you have.
+To accept them all at once, press the „Accept all” button above the list, which also shows how many there are. A confirmation, „Accept every proposal?”, names the screens: „Accept all” saves them one after another, and „Cancel” changes nothing. At the end, a line says how many texts were saved.
+
+Your text is never changed without your choosing. A proposal is tied to the text it found: if you write something else over it, the proposal disappears by itself, because it no longer answers the text you have. „Accept all” does not write over a text changed in the meantime either: that screen is skipped.
 
 ## 13.3 The skills map {#learning-skills}
 

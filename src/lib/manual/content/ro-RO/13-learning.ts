@@ -30,7 +30,7 @@ Textele din spatele lui „?” se scriu în „Ajutor și învățare” → �
 
 ### 13.2.1 Textele propuse {#learning-help-proposals}
 
-Lângă unele ecrane din listă stă „Propunere”: pentru ele există un text propus, scris din acest manual, de obicei pentru că textul de acum trimite la un capitol care nu mai există sau numește o filă care și-a schimbat numele. Deasupra listei, un rând spune câte ecrane au o propunere.
+Când manualul se schimbă, textul unui ecran poate rămâne în urmă: trimite la o secțiune care nu mai există sau numește o filă care și-a schimbat numele. Atunci, lângă ecranul acela din listă apare „Propunere”: un text propus, scris din acest manual. Deasupra listei, un rând spune câte ecrane au o propunere. Când nu așteaptă nicio propunere, nici rândul acesta nu apare.
 
 Deschideți ecranul: textul de acum și propunerea stau unul lângă altul, câmp cu câmp, în română și în engleză.
 
@@ -38,7 +38,9 @@ Deschideți ecranul: textul de acum și propunerea stau unul lângă altul, câm
 - „Editează” pune propunerea în casetele de dedesubt, ca s-o schimbați. Nu se salvează nimic până nu apăsați „Salvează”.
 - „Nu acum” o lasă deoparte; o regăsiți data viitoare când deschideți ecranul „Informații de ajutor”.
 
-Textul dumneavoastră nu este schimbat niciodată fără să alegeți. O propunere este legată de textul pe care l-a găsit: dacă scrieți altceva peste el, propunerea dispare singură, pentru că nu mai răspunde textului pe care îl aveți.
+Ca să le acceptați pe toate deodată, apăsați butonul „Acceptă toate” de deasupra listei, care arată și câte sunt. O confirmare, „Acceptați toate propunerile?”, numește ecranele: „Acceptă toate” le salvează pe rând, iar „Anulează” nu schimbă nimic. La sfârșit, un rând spune câte texte s-au salvat.
+
+Textul dumneavoastră nu este schimbat niciodată fără să alegeți. O propunere este legată de textul pe care l-a găsit: dacă scrieți altceva peste el, propunerea dispare singură, pentru că nu mai răspunde textului pe care îl aveți. Nici „Acceptă toate” nu scrie peste un text schimbat între timp: ecranul acela este sărit.
 
 ## 13.3 Harta competențelor {#learning-skills}
 
