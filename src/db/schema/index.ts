@@ -2283,3 +2283,49 @@ export const costRecord = pgTable(
     index("cost_record_provider_period_idx").on(t.provider, t.periodStart),
   ],
 );
+
+// ── skill_attempt (Slice #39.41, migration_109) ──────────────────────────────
+// One finished quiz per row: whose (the id getCurrentUser() gives — the Supabase
+// user id, or 'uat-no-auth' on a box without accounts, hence no FK to
+// app_users), which skill (its stable key), which variant, the questions and
+// answers, and whether it passed. States are computed from these rows by
+// src/lib/skills/progress.ts and never stored.
+export type SkillAttemptItem = {
+  /** The question's id within its quiz. */
+  question: string;
+  /** The option the user chose; null when the question was left unanswered. */
+  answer: string | null;
+  correct: boolean;
+};
+
+export const skillAttempt = pgTable(
+  "skill_attempt",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    skillKey: text("skill_key").notNull(),
+    quizVariant: text("quiz_variant").notNull(),
+    items: jsonb("items").$type<SkillAttemptItem[]>().notNull(),
+    questionCount: integer("question_count").notNull(),
+    correctCount: integer("correct_count").notNull(),
+    passed: boolean("passed").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("skill_attempt_user_check", sql`${t.userId} <> '' AND ${t.userId} <> 'anonymous'`),
+    check("skill_attempt_skill_check", sql`${t.skillKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("skill_attempt_variant_check", sql`${t.quizVariant} ~ '^[a-z0-9-]{1,40}$'`),
+    check(
+      "skill_attempt_items_check",
+      sql`jsonb_typeof(${t.items}) = 'array' AND jsonb_array_length(${t.items}) = ${t.questionCount}`,
+    ),
+    check(
+      "skill_attempt_count_check",
+      sql`${t.questionCount} > 0 AND ${t.correctCount} >= 0 AND ${t.correctCount} <= ${t.questionCount}`,
+    ),
+    check("skill_attempt_passed_check", sql`${t.passed} = (${t.correctCount} * 5 >= ${t.questionCount} * 4)`),
+    check("skill_attempt_time_check", sql`${t.finishedAt} >= ${t.startedAt}`),
+    index("skill_attempt_user_idx").on(t.userId, t.skillKey, t.finishedAt),
+  ],
+);
