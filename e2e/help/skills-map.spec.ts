@@ -98,12 +98,12 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
     await page.getByRole("button", { name: "Diagramă" }).click();
     await expect(page.locator("[data-skills-frame]")).toBeVisible();
 
-    // Step 6 — an Open box opens its quiz page; until #39.43 it says the quiz is being prepared.
+    // Step 6 — an Open box opens its quiz page, with its quiz (#39.43; the quiz itself is TC-SKILL-02).
     const open = BASIC[0];
     await box(page, open.key).click();
     await expect(page).toHaveURL(new RegExp(`/skills-map/${open.key}$`), { timeout: 30_000 });
     await expect(page.getByRole("heading", { name: `Chestionar — ${open.number} ${open.name.ro}` }).filter({ visible: true })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText("Chestionarul acestei competențe se pregătește.", { exact: false }).filter({ visible: true })).toBeVisible();
+    await expect(page.locator("main[data-skill-quiz] [data-quiz-form]").filter({ visible: true })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("link", { name: "Înapoi la hartă" }).click();
     await expect(page).toHaveURL(/\/skills-map$/, { timeout: 30_000 });
   });
