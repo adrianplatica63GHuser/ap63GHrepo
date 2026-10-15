@@ -88,7 +88,7 @@ Alegerea ține și pentru „Toate traseele” și pentru „Listă”: în „P
 
 ## 13.4 Chestionarele {#learning-quizzes}
 
-Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]).
+Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]). Progresul ține de cont: fiecare își vede chestionarele lui, pe orice calculator se conectează; pe o instalare fără conturi, progresul ține de instalare.
 
 ### 13.4.1 Cum se dă un chestionar {#learning-quizzes-take}
 
