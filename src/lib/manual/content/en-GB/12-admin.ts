@@ -136,7 +136,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 | Context (Engleză) | the same context, in English |
 | Cum se folosește (Engleză) | the same instructions, in English |
 
-„Previzualizare” (preview) shows the text as it will appear, as you type. „Salvează” saves it, and the screen confirms with „Salvat” (saved). From then on, the „?” on that screen opens the „Ajutor” (help) panel, with „Context” and „Cum se folosește”, as you wrote them.
+„Previzualizare” (preview) shows the text as it will appear, as you type. „Salvează” saves it, and the screen confirms with „Salvat” (saved). From then on, the „?” on that screen opens the „Ajutor” (help) panel, with „Context” and „Cum se folosește”, as you wrote them, and under them „Vezi în manual” (see in the manual), with the section of this manual that describes the screen. A screen marked „Propunere” (proposal) has a text proposed from the manual, which you accept, edit or set aside (section [[learning-help-proposals]]).
 
 „Sfaturi rapide” holds the light-bulb hints: choose a hint from the list and write its text in „Text sfat (Română)” and „Text sfat (Engleză)” (hint text, Romanian and English). A hint that stands on several screens says „Apare pe … ecrane — textul se salvează pe toate.” (appears on … screens — the text is saved on all of them).
 

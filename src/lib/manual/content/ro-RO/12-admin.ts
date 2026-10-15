@@ -136,7 +136,7 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 | Context (Engleză) | același context, în engleză |
 | Cum se folosește (Engleză) | aceleași instrucțiuni, în engleză |
 
-„Previzualizare” arată textul așa cum va apărea, pe măsură ce scrieți. „Salvează” îl salvează, iar ecranul confirmă cu „Salvat”. De acum, „?” de pe ecranul acela deschide panoul „Ajutor”, cu „Context” și „Cum se folosește”, așa cum le-ați scris.
+„Previzualizare” arată textul așa cum va apărea, pe măsură ce scrieți. „Salvează” îl salvează, iar ecranul confirmă cu „Salvat”. De acum, „?” de pe ecranul acela deschide panoul „Ajutor”, cu „Context” și „Cum se folosește”, așa cum le-ați scris, iar sub ele „Vezi în manual”, cu secțiunea acestui manual care descrie ecranul. Un ecran marcat „Propunere” are un text propus din manual, pe care îl acceptați, îl editați sau îl lăsați deoparte (secțiunea [[learning-help-proposals]]).
 
 „Sfaturi rapide” ține sfaturile cu bec: alegeți un sfat din listă și scrieți-i textul în „Text sfat (Română)” și „Text sfat (Engleză)”. Un sfat care stă pe mai multe ecrane spune „Apare pe … ecrane — textul se salvează pe toate.”.
 
