@@ -15,7 +15,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PROSE_STYLE, rem } from "@/lib/ui/field-widths";
@@ -147,13 +147,16 @@ export function ManualView() {
   const chapter = manual.chapters[chapterIndex];
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  // The router can keep the page before this one mounted, hidden — with the same ids in it. So an id is looked
+  // up inside THIS screen, never with document.getElementById.
+  const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!target) {
-      window.scrollTo({ top: 0 });
+    if (!target || target.kind === "chapter") {
+      root.current?.scrollIntoView({ block: "start" });
       return;
     }
-    document.getElementById(target.kind === "chapter" ? "manual-top" : target.id)?.scrollIntoView({ block: "start" });
+    root.current?.querySelector(`[id="${target.id}"]`)?.scrollIntoView({ block: "start" });
   }, [target]);
 
   async function download() {
@@ -188,7 +191,7 @@ export function ManualView() {
   const next = manual.chapters[chapterIndex + 1];
 
   return (
-    <div className="flex flex-col gap-4" data-manual-screen id="manual-top">
+    <div ref={root} className="flex scroll-mt-4 flex-col gap-4" data-manual-screen>
       <div className="flex flex-wrap items-center gap-4">
         <h1 className="text-2xl font-bold text-ink dark:text-zinc-100">{t("title")}</h1>
         <IconButton

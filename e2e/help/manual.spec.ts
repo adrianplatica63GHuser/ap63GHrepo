@@ -28,11 +28,15 @@ import { readZipStore } from "../../src/lib/docx/zip-store";
 const FIGURES = "playwright-report/manual-figures";
 const BLUR = "blur(7px)";
 
+// The router can keep the page before mounted and hidden, ids and all: every locator takes the visible one.
 function chapterNav(page: Page) {
-  return page.getByRole("navigation", { name: "Capitolele manualului", exact: true });
+  return page.getByRole("navigation", { name: "Capitolele manualului", exact: true }).filter({ visible: true });
 }
 function article(page: Page) {
-  return page.locator("article[data-manual-chapter]");
+  return page.locator("article[data-manual-chapter]").filter({ visible: true });
+}
+function byId(page: Page, id: string) {
+  return page.locator(`[id="${id}"]`).filter({ visible: true });
 }
 
 test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
@@ -73,13 +77,13 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     // Step 3 — „2.2 Bara laterală": the heading in view, the table, Figura 2.1 with its picture.
     await nav.getByRole("link", { name: "2.2 Bara laterală", exact: true }).click();
     await expect(page).toHaveURL(/\/manual\?s=start-sidebar$/);
-    const h = page.locator("#start-sidebar");
+    const h = byId(page, "start-sidebar");
     await expect(h).toHaveText("2.2 Bara laterală");
     await expect(h).toBeInViewport();
     const table = article(page).locator("table").first();
     await expect(table.locator("th")).toHaveText(["Secțiunea", "Ce cuprinde"]);
     await expect(table.locator("tbody tr").last().locator("td").first()).toHaveText("Ajutor și învățare");
-    const fig = page.locator("#fig-sidebar");
+    const fig = byId(page, "fig-sidebar");
     await expect(fig.locator("figcaption")).toHaveText("Figura 2.1 — Bara laterală, cu secțiunea „Domeniu” deschisă");
     await expect.poll(() => fig.locator("img").evaluate((i: HTMLImageElement) => i.naturalWidth)).toBeGreaterThan(0);
 
@@ -88,20 +92,20 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     await expect(ref).toHaveText("2.8");
     await ref.click();
     await expect(page).toHaveURL(/\/manual\?s=start-help$/);
-    await expect(page.locator("#start-help")).toHaveText("2.8 Ajutorul din spatele „?”");
-    await expect(page.locator("#start-help")).toBeInViewport();
+    await expect(byId(page, "start-help")).toHaveText("2.8 Ajutorul din spatele „?”");
+    await expect(byId(page, "start-help")).toBeInViewport();
 
     // Step 5 — a figure by its address.
     await page.goto("/manual?s=fig-list");
-    await expect(page.locator("#fig-list figcaption")).toHaveText(
+    await expect(byId(page, "fig-list").locator("figcaption")).toHaveText(
       "Figura 2.3 — Lista persoanelor fizice, cu „Câmpuri afișate” deschis",
       { timeout: 30_000 },
     );
-    await expect(page.locator("#fig-list")).toBeInViewport();
+    await expect(byId(page, "fig-list")).toBeInViewport();
 
     // Step 6 — an address naming no section.
     await page.goto("/manual?s=nu-exista");
-    await expect(page.getByRole("status")).toHaveText(
+    await expect(page.getByRole("status").filter({ visible: true })).toHaveText(
       "Secțiunea „nu-exista” nu există în manual; s-a deschis primul capitol.",
       { timeout: 30_000 },
     );
