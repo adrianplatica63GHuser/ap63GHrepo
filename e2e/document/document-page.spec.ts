@@ -322,9 +322,9 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
         // The type's own fields arrive with the type list, after the general
         // ones: measured before they are drawn, the 1400-px read has fewer boxes
         // than the 2400-px one (first run). The Certificat has none of its own;
-        // its parties panel is what it adds.
+        // its „Părți" tile is what it adds (#39.48: the sale contract's tile).
         await expect(
-          page.locator(key === "CERTIFICAT_MOSTENITOR" ? '[data-panel="succession-parties"]' : '[data-width-field^="customFields."]').first(),
+          page.locator(key === "CERTIFICAT_MOSTENITOR" ? '[data-tile="parties"]' : '[data-width-field^="customFields."]').first(),
         ).toBeAttached({ timeout: 30_000 });
         await expectDocumentWidths(page);
         // Slice #37.31 — the Plan parcelar's „Câmpuri specifice" and the certificate's „Părți", pictured.

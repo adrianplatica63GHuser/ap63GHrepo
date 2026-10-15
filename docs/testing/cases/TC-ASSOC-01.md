@@ -54,7 +54,7 @@ Two consequences for the steps:
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-01 Contract de test` | The document's detail screen |
-| 2 | Looks at the tile **„Părți"** | „Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.", with „Asociază persoană" and „Dezasociază" |
+| 2 | Looks at the tile **„Părți"** | „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.", with „Asociază persoană" and „Dezasociază" |
 | 3 | Presses „Părți"'s „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`, the document's title under it, the filters „Nume" (placeholder „Nume…") and „Cod" („Cod…"), a table Nume · Tip, and below it a select „Rol" with the placeholder „— fără rol —" |
 | 4 | Types `TC-PERS-01` into „Nume" | One row: `Ion TC-PERS-01` (no system ID), „Tip" = „Fizică" |
 | 5 | Chooses **„Cumpărător"** in „Rol" | The role is selected. On a Contract de Vânzare the select offers „Cumpărător", „Moștenitor", „Notar", „Reprezentant legal / Mandatar" and „Vânzător" |
@@ -96,7 +96,7 @@ appears on this screen.)
 
 **Select the row first** — its radio button at the left — and then press „Dezasociază";
 the button is disabled while no row is selected. „Părți" then reads
-„Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor." The person and the document are left for the cases that follow; only the link
+„Nicio parte asociată încă. Asociați părțile cu rolul și cota lor." The person and the document are left for the cases that follow; only the link
 is removed.
 
 ## Notes from the runs

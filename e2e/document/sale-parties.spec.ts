@@ -88,9 +88,15 @@ test.describe("TC-DOC-19 — „Părți” pe un contract de vânzare", () => {
       await expect(parties.getByRole("button", { name: "Asociază proprietate", exact: true })).toHaveCount(0);
       await photograph(page, "cvc-parties", parties);
 
-      // Step 2 — „Legături": the notary only.
+      // Step 2 — „Legături": the notary only, and (#39.48) one line saying the two parties are in „Părți”, whose
+      // „Părți” brings that tile into view.
       const links = await showTile(page, "Legături");
       await expect(rowTexts(links)).toHaveText([`${NOTARY} (Notar)`], { timeout: 30_000 });
+      const line = links.locator("[data-parties-elsewhere]");
+      await expect(line).toHaveText("Părțile actului (2) sunt în fișa „Părți”.");
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await line.getByRole("button", { name: "„Părți”", exact: true }).click();
+      await expect(parties).toBeInViewport({ timeout: 15_000 });
       await photograph(page, "cvc-page", null);
 
       // Step 3 — „Părți"'s „Asociază persoană", then „Anulează": back on the contract.

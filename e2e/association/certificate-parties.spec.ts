@@ -1,5 +1,5 @@
 /**
- * Case:   TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca părți pe un Certificat de Moștenitor
+ * Case:   TC-ASSOC-12 — Defunctul și doi moștenitori adăugați pe un Certificat de Moștenitor
  * Source: docs/testing/cases/TC-ASSOC-12.md, „Last green" 2026-09-26
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -36,6 +36,11 @@
  *     proprietate" and „Asociază act" (the case's steps as corrected on 2026-10-03).
  *   - Slice #37.67: so are each person's „Persoane", „Proprietăți" and „Acte": the certificate on one
  *     line — „Etichetă scurtă (Tip)" — and the person's quality behind „Relația" (step 8).
+ *
+ * Slice #39.48: ONE RULE FOR THE THREE TYPES WITH „PĂRȚI". The certificate's „Părți" is the sale contract's
+ * tile: its parties — the links whose role holds a share, the heirs — grouped by role, each with „Cotă";
+ * „Legături" the rest — the deceased — and a line saying where the parties are. Its „Asociază persoană" still
+ * opens „Adaugă parte la certificat". So steps 2, 5–7 and the cleanup read the tiles, not a table.
  */
 
 import { test, expect, type Page } from "../helpers/test";
@@ -54,8 +59,11 @@ const HEIR = `Maria ${MARK} Mostenitor`;
 const SECOND_HEIR = `Ion ${MARK} Mostenitor`;
 const CERTIFICATE = `${MARK} Certificat de test`;
 
+/** The certificate's „Părți" tile (#39.48: the sale contract's), found by its tile, not its title. */
+const partiesOf = (page: Page) => page.locator('[data-tile="parties"]').filter({ visible: true });
+
 /**
- * „+ Adaugă parte" is a button that navigates once the page is interactive; a
+ * „Asociază persoană" on „Părți" is a button that navigates once the page is interactive; a
  * press the moment the certificate renders can do nothing, and the screen it
  * opens compiles on first request under `next dev` (the first runner run,
  * 20260927T004011Z-17430, sat 30 s on the certificate). So it is pressed until
@@ -64,7 +72,7 @@ const CERTIFICATE = `${MARK} Certificat de test`;
 async function openAddParty(page: Page, documentId: string) {
   await expect(async () => {
     if (/associate-party$/.test(page.url())) return;
-    await page.getByRole("button", { name: "+ Adaugă parte" }).click({ timeout: 5_000 });
+    await partiesOf(page).getByRole("button", { name: "Asociază persoană", exact: true }).click({ timeout: 5_000 });
     await expect(page).toHaveURL(new RegExp(`/documents/${documentId}/associate-party$`), { timeout: 15_000 });
   }).toPass({ timeout: 90_000 });
 }
@@ -83,19 +91,18 @@ async function pickParty(page: Page, documentId: string, person: string, role: "
   await expect(page).toHaveURL(new RegExp(`/documents/${documentId}$`), { timeout: 30_000 });
 }
 
-/** „Părți": the table whose second column is „Rol". */
-const partiesOf = (page: Page) =>
-  page.locator('[data-panel="succession-parties"]').getByRole("table");
-
-/** The „Părți" row of one person, and the role it reads. */
+/** The „Părți" row of one heir: one line, „Nume (Rol)", with its „Cotă". */
 async function expectParty(page: Page, person: string, role: string) {
-  const row = partiesOf(page).locator("tbody tr").filter({ hasText: person });
+  const row = lineRow(partiesOf(page), person);
   await expect(row).toHaveCount(1, { timeout: 15_000 });
-  await expect(row.locator("[data-party-role]")).toHaveText(role);
+  await expect(row.locator("[data-row-content]")).toHaveText(`${person} (${role})`);
+  await expect(row.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(1);
 }
 
-test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca părți pe un Certificat de Moștenitor", () => {
-  test("trei părți cu rolul lor în „Părți”, și după reîncărcare; legătura văzută din ambele capete", async ({ page }) => {
+const PARTIES_EMPTY = "Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.";
+
+test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați pe un Certificat de Moștenitor", () => {
+  test("moștenitorii în „Părți” cu rolul și cota lor, defunctul pe „Legături”, și după reîncărcare; legătura văzută din ambele capete", async ({ page }) => {
     // Room for a first-request compile of the screen it opens (below) and for the `finally`.
     test.setTimeout(300_000);
     await removeLeftovers(page.request, MARK);
@@ -105,16 +112,18 @@ test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca păr
     const documentId = await createDocumentOfType(page.request, "CERTIFICAT_MOSTENITOR", CERTIFICATE);
 
     try {
-      // Step 2 — the certificate: a section „Părți", „Nicio parte adăugată" and „+ Adaugă parte".
+      // Step 2 — the certificate: the tile „Părți", ticked, empty, with „Asociază persoană"; „Legături" says the
+      // parties are added there.
       await page.goto(`/documents/${documentId}`);
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       await expect(tileBox(page, "Identificarea actului")).toBeChecked({ timeout: 30_000 });
       await expect(tileBox(page, "Părți")).toBeChecked({ timeout: 30_000 });
-      await expect(page.getByRole("heading", { name: "Părți", exact: true })).toBeVisible({ timeout: 30_000 });
-      // The panel draws its title before its list answers; under load (full
+      // The tile draws its title before its list answers; under load (full
       // 20260928T233256Z-25761) the list took longer than the default 5 s.
-      await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "+ Adaugă parte" })).toBeVisible();
+      await expect(partiesOf(page).getByText(PARTIES_EMPTY)).toBeVisible({ timeout: 30_000 });
+      await expect(partiesOf(page).getByRole("button", { name: "Asociază persoană", exact: true })).toBeVisible();
+      const links = await showTile(page, "Legături");
+      await expect(links.locator("[data-parties-elsewhere]")).toHaveText("Actul nu are încă părți; ele se adaugă în fișa „Părți”.", { timeout: 30_000 });
 
       // Step 3 — „+ Adaugă parte": the screen, the title, „Nume" / „Cod", Nume · Tip with a radio
       // per row, a pager, „Rol" with the certificate's roles, „Selectați o persoană".
@@ -140,39 +149,36 @@ test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca păr
       await expect(page.getByText("Calitate", { exact: true })).toHaveCount(0);
       await expect(page.getByText("Selectați o persoană", { exact: true })).toBeVisible();
 
-      // Steps 4–5 — the deceased, „Defunct", „Adaugă parte": „Părți" is Nume · Rol, one row, „Elimină".
+      // Steps 4–5 — the deceased, „Defunct", „Adaugă parte": he holds no share, so he is not a party — „Părți"
+      // stays empty and „Legături" has him, „Nume (Rol)", without „Cotă".
       await pickParty(page, documentId, DECEASED, "Defunct");
       const parties = partiesOf(page);
-      await expect(parties.getByRole("columnheader", { name: "Rol", exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(parties.getByRole("columnheader", { name: "Calitate" })).toHaveCount(0);
-      await expect(parties.locator("tbody tr")).toHaveCount(1, { timeout: 15_000 });
-      await expectParty(page, DECEASED, "Defunct");
-      await expect(parties.getByRole("button", { name: "Elimină" })).toHaveCount(1);
+      await expect(parties.getByText(PARTIES_EMPTY)).toBeVisible({ timeout: 30_000 });
+      const deceasedRow = lineRow(links, DECEASED);
+      await expect(deceasedRow.locator("[data-row-content]")).toHaveText(`${DECEASED} (Defunct)`, { timeout: 15_000 });
+      await expect(deceasedRow.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
 
-      // Step 6 — the two heirs, „Moștenitor": three rows.
+      // Step 6 — the two heirs, „Moștenitor": „Părți" holds them under „Moștenitor", each with „Cotă".
       for (const heir of [HEIR, SECOND_HEIR]) {
         await openAddParty(page, documentId);
         await pickParty(page, documentId, heir, "Moștenitor");
       }
-      await expect(parties.locator("tbody tr")).toHaveCount(3, { timeout: 15_000 });
+      await expect(parties.locator("[data-party-group-heading]")).toHaveText(["Moștenitor"], { timeout: 15_000 });
+      await expect(parties.locator("[data-row-content]")).toHaveCount(2);
 
-      // …and the same three after a reload: the role is stored, not held on the screen.
+      // …and the same after a reload: the role is stored, not held on the screen.
       await page.reload();
-      await expect(parties.locator("tbody tr")).toHaveCount(3, { timeout: 30_000 });
-      await expectParty(page, DECEASED, "Defunct");
+      await expect(parties.locator("[data-row-content]")).toHaveCount(2, { timeout: 30_000 });
       await expectParty(page, HEIR, "Moștenitor");
       await expectParty(page, SECOND_HEIR, "Moștenitor");
 
-      // Step 7 — „Legături": the three people, „Nume (Rol)"; an heir holds a share on the
-      // certificate (its orange „Cotă"), the deceased does not (Ask first 1, migration_099).
-      const personsTile = await showTile(page, "Legături");
-      for (const [person, role] of [[DECEASED, "Defunct"], [HEIR, "Moștenitor"], [SECOND_HEIR, "Moștenitor"]] as const) {
-        const r = lineRow(personsTile, person);
-        await expect(r).toHaveCount(1, { timeout: 15_000 });
-        await expect(r.locator("[data-row-content]")).toHaveText(`${person} (${role})`);
-        await expect(r.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(role === "Moștenitor" ? 1 : 0);
-      }
-      await expect(personsTile.getByRole("columnheader")).toHaveCount(0);
+      // Step 7 — „Legături": the deceased only, and the line — two parties, in „Părți"; its „Părți" brings the
+      // tile into view. One home for each link (#38.33's rule, the certificate's since #39.48).
+      await expect(links.locator("[data-row-content]")).toHaveText([`${DECEASED} (Defunct)`], { timeout: 15_000 });
+      const line = links.locator("[data-parties-elsewhere]");
+      await expect(line).toHaveText("Părțile actului (2) sunt în fișa „Părți”.");
+      await line.getByRole("button", { name: "„Părți”", exact: true }).click();
+      await expect(parties).toBeInViewport({ timeout: 15_000 });
 
       // Step 8 — each person's „Legături": the title, „Certificat de Moștenitor", the role behind „Relația".
       for (const [id, person, role] of [[heirId, HEIR, "Moștenitor"], [deceasedId, DECEASED, "Defunct"]] as const) {
@@ -186,17 +192,17 @@ test.describe("TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca păr
         await page.keyboard.press("Escape");
       }
 
-      // ── At the end — „Elimină" on each row, no question, no „Salvează"; still gone after a reload ──
+      // ── At the end — „Dezasociază" on each heir in „Părți"; empty again, and after a reload ──
       await page.goto(`/documents/${documentId}`);
-      await expect(parties.locator("tbody tr")).toHaveCount(3, { timeout: 30_000 });
-      for (const left of [2, 1]) {
-        await parties.getByRole("button", { name: "Elimină" }).first().click();
-        await expect(parties.locator("tbody tr")).toHaveCount(left, { timeout: 15_000 });
+      await expect(parties.locator("[data-row-content]")).toHaveCount(2, { timeout: 30_000 });
+      for (const [heir, left] of [[HEIR, 1], [SECOND_HEIR, 0]] as const) {
+        await parties.getByRole("radio", { name: `${heir} — Moștenitor` }).check();
+        await parties.getByRole("button", { name: "Dezasociază", exact: true }).click();
+        await expect(parties.locator("[data-row-content]")).toHaveCount(left, { timeout: 15_000 });
       }
-      await parties.getByRole("button", { name: "Elimină" }).first().click();
-      await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 15_000 });
+      await expect(parties.getByText(PARTIES_EMPTY)).toBeVisible({ timeout: 15_000 });
       await page.reload();
-      await expect(page.getByText("Nicio parte adăugată")).toBeVisible({ timeout: 30_000 });
+      await expect(partiesOf(page).getByText(PARTIES_EMPTY)).toBeVisible({ timeout: 30_000 });
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "person", secondHeirId);

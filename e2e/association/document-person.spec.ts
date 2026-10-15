@@ -51,7 +51,7 @@ const MARK = `${E2E_MARKER}ASSOC-01`;
 const PERSON = `Ion ${MARK}`; // prenume first, as every list renders it
 const DOC_TITLE = `${MARK} Contract de test`;
 const ROW = `${PERSON} — Cumpărător`; // the accessible-name suffix of the row's controls
-const PARTIES_EMPTY = "Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.";
+const PARTIES_EMPTY = "Nicio parte asociată încă. Asociați părțile cu rolul și cota lor."; // #39.48: the same words on the three types with „Părți”
 
 test.describe("TC-ASSOC-01 — Persoană asociată actului cu rol și cotă-parte", () => {
   test("rol Cumpărător, cotă 50% cu avertisment, indiviziune, apoi 100%", async ({ page }) => {

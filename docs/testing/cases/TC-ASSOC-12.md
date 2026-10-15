@@ -1,4 +1,4 @@
-# TC-ASSOC-12 — Defunctul și doi moștenitori adăugați ca părți pe un Certificat de Moștenitor
+# TC-ASSOC-12 — Defunctul și doi moștenitori adăugați pe un Certificat de Moștenitor
 
 | | |
 |---|---|
@@ -10,11 +10,13 @@
 
 ## What this proves
 
-A Certificat de Moștenitor made by hand shows „Părți" and „+ Adaugă parte" at once, and three
-people can be added to it as parties — one in the role **Defunct**, two in the role
-**Moștenitor** — each landing in „Părți" with its role, still there after a reload. The heirs hold
-a share on the certificate and the deceased does not. The link is then visible from the other end
-too: each person lists the certificate among its documents.
+A Certificat de Moștenitor made by hand shows „Părți" at once, and three people can be added to
+it through „Adaugă parte la certificat" — one in the role **Defunct**, two in the role
+**Moștenitor**. Since #39.48 the certificate follows the sale contract's rule: the heirs hold a
+share, so they are its parties and land in „Părți" with their role and „Cotă", still there after a
+reload; the deceased holds none, so he is on „Legături", which says in one line where the parties
+are. Each link has one home. The link is then visible from the other end too: each person lists
+the certificate among its documents.
 
 ## Before you start
 
@@ -44,12 +46,12 @@ All four are deleted at the end.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Creates the three people and the certificate above | Each on its list, badged „Nou!" |
-| 2 | Opens the certificate | Tab „Detalii"; at the bottom of the form, after „Pagini", a section **„Părți"**: „Nicio parte adăugată" and „+ Adaugă parte" |
-| 3 | Presses „+ Adaugă parte" | „Adaugă parte la certificat" at `/documents/[id]/associate-party`, the certificate's title under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with **one choice per row** (a radio, not a tick box), a pager, and **„Rol"**, a list of the certificate's roles („alegeți rolul"), among them „Defunct" and „Moștenitor"; the hint reads „Selectați o persoană" |
+| 2 | Opens the certificate; ticks „Legături" | The tile **„Părți"**, ticked: „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor." and „Asociază persoană"; on „Legături" the line „Actul nu are încă părți; ele se adaugă în fișa „Părți”." |
+| 3 | Presses „Asociază persoană" on „Părți" | „Adaugă parte la certificat" at `/documents/[id]/associate-party`, the certificate's title under it, the filters „Nume" („Nume…") and „Cod" („Cod…"), a table Nume · Tip with **one choice per row** (a radio, not a tick box), a pager, and **„Rol"**, a list of the certificate's roles („alegeți rolul"), among them „Defunct" and „Moștenitor"; the hint reads „Selectați o persoană" |
 | 4 | Chooses `Vasile TC-ASSOC-12 Defunct` | The hint becomes „Alegeți rolul persoanei în certificat"; „Adaugă parte" stays disabled |
-| 5 | Chooses „Defunct" in „Rol", then presses „Adaugă parte" | Back on the certificate's „Detalii". „Părți" is a table Nume · Rol with one row — `Vasile TC-ASSOC-12 Defunct`, „Defunct", „Elimină" |
-| 6 | Presses „+ Adaugă parte" again for `Maria TC-ASSOC-12 Mostenitor` and then for `Ion TC-ASSOC-12 Mostenitor`, each with „Moștenitor" | Three rows; after a reload, the same three, each with its role |
-| 7 | Ticks the certificate's tile **„Legături"** | The three people, one line each and no headings: „Vasile … (Defunct)", „Maria … (Moștenitor)", „Ion … (Moștenitor)"; each heir has the orange „Cotă", the deceased none |
+| 5 | Chooses „Defunct" in „Rol", then presses „Adaugă parte" | Back on the certificate. The deceased holds no share, so he is not a party: „Părți" is still empty, and „Legături" has „Vasile TC-ASSOC-12 Defunct (Defunct)", without „Cotă" |
+| 6 | Presses „Asociază persoană" on „Părți" again for `Maria TC-ASSOC-12 Mostenitor` and then for `Ion TC-ASSOC-12 Mostenitor`, each with „Moștenitor" | „Părți": the heading „Moștenitor" over the two heirs, each „Nume (Moștenitor)" with the orange „Cotă"; after a reload, the same |
+| 7 | Looks at **„Legături"**, then presses „Părți" in its first line | The deceased only, and above him „Părțile actului (2) sunt în fișa „Părți”."; „Părți" brings the tile „Părți" into view |
 | 8 | Opens `Maria TC-ASSOC-12 Mostenitor`, tile **„Legături"** („Acte" before #37.67), and presses „Relația" on the certificate | One line: `TC-ASSOC-12 Certificat de test (Certificat de Moștenitor)`; the bubble `Rol: „Moștenitor”`. On `Vasile TC-ASSOC-12 Defunct` the same, with „Defunct" |
 
 Steps 5 and 6 are the assertion that the roles are recorded; steps 7 and 8 are the other end.
@@ -59,8 +61,9 @@ certificate's roles. The spec asserts it; the next hand run confirms it on the s
 
 ## At the end — leaving things as they were found
 
-On the certificate's „Părți", „Elimină" on each row — it removes at once, asks nothing, and needs
-no „Salvează" (still gone after a reload) — until „Nicio parte adăugată". Then „Șterge" and
+On the certificate's „Părți", each heir's radio and „Dezasociază" — it removes at once, asks
+nothing, and needs no „Salvează" (still gone after a reload) — until „Nicio parte asociată încă.
+Asociați părțile cu rolul și cota lor." Then „Șterge" and
 **„Da"** on the certificate („Ștergeți actul?") and on each person („Ștergeți persoana?").
 
 ## Notes from the runs

@@ -38,7 +38,7 @@ The window is 1366 × 900.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-19 CVC`, tile „Părți" | The heading „Vânzător" over `Ion TC-DOC-19 (Vânzător)`, then the heading „Cumpărător" over `TC-DOC-19 Firmă SRL (Cumpărător)`; each row on one line with an orange „Cotă". Under them „Asociază persoană" and „Dezasociază", no „Asociază proprietate" |
-| 2 | Looks at „Legături" | One row: `Maria TC-DOC-19 (Notar)` — neither the seller nor the buyer |
+| 2 | Looks at „Legături", then presses „Părți" in its first line | One row: `Maria TC-DOC-19 (Notar)` — neither the seller nor the buyer — and above it the line „Părțile actului (2) sunt în fișa „Părți”." (#39.48); „Părți" brings the tile „Părți" into view |
 | 3 | Presses „Părți"'s „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the CVC, „Părți" as it was |
 | 4 | Selects Ion's radio on „Părți" and presses „Dezasociază" | Ion and the heading „Vânzător" go; the buyer stays on „Părți" and Maria on „Legături" |
 
